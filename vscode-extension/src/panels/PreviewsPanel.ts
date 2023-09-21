@@ -14,6 +14,7 @@ import { getNonce } from "../utilities/getNonce";
 import { runIOS } from "./runIOS";
 import { Preview } from "./preview";
 import { Devtools } from "./devtools";
+import { Metro } from "./metro";
 import * as path from "path";
 
 const crypto = require("crypto");
@@ -69,6 +70,7 @@ export class PreviewsPanel {
   private _devtools: Devtools | undefined;
   private _previewEnabled = false;
   private _lastEditorFilename: string | undefined;
+  private _metro: Metro | undefined;
 
   private constructor(panel: WebviewPanel, context: ExtensionContext) {
     this._panel = panel;
@@ -173,14 +175,18 @@ export class PreviewsPanel {
       return;
     }
 
-    const metroPort = 8081; //portHash(`metro://workspaceDir`);
+    const metroPort = portHash(`metro://workspaceDir`);
     const devtoolsPort = 8097; //portHash(`devtools://workspaceDir`);
     console.log("Ports metro:", metroPort, "devtools:", devtoolsPort);
-    // this._metro = new Metro(workspaceDir, metroPort);
+    this._metro = new Metro(workspaceDir, metroPort);
+
+    console.log("Launching metro on port", metroPort);
+    await this._metro.start();
+    console.log("Metro started");
 
     this._devtools = new Devtools({ port: devtoolsPort });
 
-    await runIOS(workspaceDir);
+    await runIOS(workspaceDir, metroPort);
 
     const preview = new Preview((previewURL: string) => {
       console.log("preview ready", previewURL);
