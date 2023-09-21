@@ -67,15 +67,17 @@ function Preview({ previewURL, isInspecting }) {
   }
   return (
     <div className="phone-wrapper">
-      <img
-        src={previewURL}
-        className="phone-content"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseUp}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-      />
-      <img src={imageSrc(iphone14)} className="phone-frame" />
+      <div className="phone-wrapper-wrapper">
+        <img
+          src={previewURL}
+          className="phone-content"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseUp}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+        />
+        <img src={imageSrc(iphone14)} className="phone-frame" />
+      </div>
     </div>
   );
 }
@@ -120,8 +122,8 @@ function App() {
     return () => window.removeEventListener("message", listener);
   }, []);
   return (
-    <main style={{ padding: 10 }}>
-      <div style={{ marginBottom: 10 }}>
+    <main>
+      <div style={{ margin: 10, }}>
         <VSCodeButton
           onClick={() => {
             setPreviewState("loading");
