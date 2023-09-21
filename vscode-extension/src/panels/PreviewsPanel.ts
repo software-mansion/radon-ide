@@ -180,7 +180,7 @@ export class PreviewsPanel {
 
     this._devtools = new Devtools({ port: devtoolsPort });
 
-    // await runIOS(workspaceDir);
+    await runIOS(workspaceDir);
 
     const preview = new Preview((previewURL: string) => {
       console.log("preview ready", previewURL);

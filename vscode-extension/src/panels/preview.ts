@@ -34,7 +34,7 @@ export class Preview {
   constructor(onReadyCallback: (previewURL: string) => void) {
     console.log("Launching preview server", findSimulatorStreamBinary());
 
-    this.subprocess = child_process.spawn(findSimulatorStreamBinary(), ["android", "RNPreviews"]);
+    this.subprocess = child_process.spawn(findSimulatorStreamBinary(), ["ios", "RNPreviews"]);
 
     const rl = readline.createInterface({
       input: this.subprocess.stdout,
