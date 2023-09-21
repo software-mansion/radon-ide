@@ -25,4 +25,10 @@ export function activate(context: ExtensionContext) {
 
   // Add command to the extension context
   context.subscriptions.push(showPreviewsPanel);
+
+  if (process.env.RNSZ_DEV === "true") {
+    commands.executeCommand("RNStudio.showPreviewsPanel", (e: any) => {
+      console.log(e);
+    });
+  }
 }

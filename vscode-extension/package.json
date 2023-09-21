@@ -2,6 +2,9 @@
   "name": "hello-world-react-vite",
   "displayName": "hello-world-react-vite",
   "description": "A hello world sample extension to demonstrate using React + Vite with the Webview UI Toolkit for VS Code.",
+  "activationEvents": [
+    "*"
+  ],
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.75.0"
@@ -17,6 +20,7 @@
   },
   "scripts": {
     "install:all": "npm install && cd webview-ui && npm install",
+    "build:all": "cd webview-ui && npm run build",
     "start:webview": "cd webview-ui && npm run start",
     "build:webview": "cd webview-ui && npm run build",
     "vscode:prepublish": "npm run compile",
