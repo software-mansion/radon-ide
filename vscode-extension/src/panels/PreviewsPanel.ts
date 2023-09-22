@@ -12,6 +12,7 @@ import {
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { runIOS } from "./runIOS";
+import { runAndroid } from "./runAndroid";
 import { Preview } from "./preview";
 import { Devtools } from "./devtools";
 import { Metro } from "./metro";
@@ -186,7 +187,8 @@ export class PreviewsPanel {
 
     this._devtools = new Devtools({ port: devtoolsPort });
 
-    await runIOS(workspaceDir, metroPort);
+    // await runIOS(workspaceDir, metroPort);
+    await runAndroid(workspaceDir, metroPort);
 
     const preview = new Preview((previewURL: string) => {
       console.log("preview ready", previewURL);

@@ -1,7 +1,7 @@
 {
-  "name": "hello-world-react-vite",
-  "displayName": "hello-world-react-vite",
-  "description": "A hello world sample extension to demonstrate using React + Vite with the Webview UI Toolkit for VS Code.",
+  "name": "react-native-sztudio",
+  "displayName": "react-native-sztudio",
+  "description": "A sztudio.",
   "activationEvents": [
     "*"
   ],
@@ -45,6 +45,7 @@
     "@react-native-community/cli": "^11.3.7",
     "@vscode/codicons": "^0.0.33",
     "chrome-remote-interface": "^0.33.0",
+    "execa": "^8.0.1",
     "xdl": "^60.0.10"
   }
 }
