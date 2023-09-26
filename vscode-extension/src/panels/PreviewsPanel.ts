@@ -193,7 +193,7 @@ export class PreviewsPanel {
 
     if (platform === "Android") {
       deviceId = await getSelectedDeviceId();
-      await runAndroid(path.join(workspaceDir, "android"), deviceId, metroPort);
+      await runAndroid(path.join(workspaceDir, "android"), deviceId, metroPort, devtoolsPort);
     } else {
       await runIOS(workspaceDir, metroPort);
     }

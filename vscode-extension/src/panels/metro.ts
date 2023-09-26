@@ -35,7 +35,7 @@ export class Metro {
         if (line.includes("Welcome to Metro")) {
           resolve();
         }
-        process.stdout.write(`metro: ${line}`);
+        console.log(`metro: ${line}`);
       });
     });
     return initPromise;

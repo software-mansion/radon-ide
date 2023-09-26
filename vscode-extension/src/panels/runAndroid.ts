@@ -33,7 +33,12 @@ export async function getSelectedDeviceId() {
   return emulators[0]!;
 }
 
-export async function runAndroid(projectDir: string, deviceId: string, metroPort: number) {
+export async function runAndroid(
+  projectDir: string,
+  deviceId: string,
+  metroPort: number,
+  devtoolsPort: number
+) {
   console.log("Using emulator", deviceId);
   const gradleArgs = [
     "-x",
@@ -42,8 +47,9 @@ export async function runAndroid(projectDir: string, deviceId: string, metroPort
     `-PreactNativeDevServerPort=${metroPort}`,
   ];
   await build(projectDir, gradleArgs);
-  // adb reverse
+  // adb reverse for metro and devtools
   await execa(ADB_PATH, ["-s", deviceId, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
+  await execa(ADB_PATH, ["-s", deviceId, "reverse", `tcp:${devtoolsPort}`, `tcp:${devtoolsPort}`]);
   const artifactPath = path.join(projectDir, "app/build/outputs/apk/debug/app-debug.apk");
   // install apk
   console.log("Installing apk", artifactPath);
