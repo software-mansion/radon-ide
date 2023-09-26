@@ -31,10 +31,16 @@ function findSimulatorStreamBinary() {
 export class Preview {
   private subprocess: ChildProcess;
 
-  constructor(onReadyCallback: (previewURL: string) => void) {
+  constructor(
+    platform: "Android" | "iOS",
+    deviceId: string,
+    onReadyCallback: (previewURL: string) => void
+  ) {
     console.log("Launching preview server", findSimulatorStreamBinary());
 
-    this.subprocess = child_process.spawn(findSimulatorStreamBinary(), ["ios", "RNPreviews"]);
+    const streamArgs = [platform === "Android" ? "android" : "ios", deviceId];
+
+    this.subprocess = child_process.spawn(findSimulatorStreamBinary(), streamArgs);
 
     const rl = readline.createInterface({
       input: this.subprocess.stdout,

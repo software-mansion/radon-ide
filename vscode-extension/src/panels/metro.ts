@@ -20,7 +20,7 @@ export class Metro {
   public async start() {
     this.subprocess = child_process.spawn(
       `${this.appRoot}/node_modules/react-native/scripts/packager.sh`,
-      [],
+      ["--reset-cache"],
       { env: { ...process.env, RCT_METRO_PORT: this.port } }
     );
 

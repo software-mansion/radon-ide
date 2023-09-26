@@ -12,13 +12,15 @@ import {
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { runIOS } from "./runIOS";
-import { runAndroid } from "./runAndroid";
+import { getSelectedDeviceId, runAndroid } from "./runAndroid";
 import { Preview } from "./preview";
 import { Devtools } from "./devtools";
 import { Metro } from "./metro";
 import * as path from "path";
 
 const crypto = require("crypto");
+
+const platform = "Android"; // "iOS";
 
 async function openFileAtPosition(filePath: string, line: number, column: number) {
   const existingDocument = workspace.textDocuments.find((document) => {
@@ -187,10 +189,16 @@ export class PreviewsPanel {
 
     this._devtools = new Devtools({ port: devtoolsPort });
 
-    // await runIOS(workspaceDir, metroPort);
-    await runAndroid(workspaceDir, metroPort);
+    let deviceId = "RNPreviews";
 
-    const preview = new Preview((previewURL: string) => {
+    if (platform === "Android") {
+      deviceId = await getSelectedDeviceId();
+      await runAndroid(path.join(workspaceDir, "android"), deviceId, metroPort);
+    } else {
+      await runIOS(workspaceDir, metroPort);
+    }
+
+    const preview = new Preview(platform, deviceId, (previewURL: string) => {
       console.log("preview ready", previewURL);
       this._panel.webview.postMessage({
         command: "previewReady",
