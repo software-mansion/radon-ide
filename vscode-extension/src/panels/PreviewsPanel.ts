@@ -202,6 +202,7 @@ export class PreviewsPanel {
       console.log("preview ready", previewURL);
       this._panel.webview.postMessage({
         command: "previewReady",
+        platform,
         previewURL,
       });
       window.showInformationMessage("Preview ready 🚀");

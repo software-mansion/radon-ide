@@ -7,13 +7,17 @@ import {
 } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
 import { useEffect, useState } from "react";
+
 import iphone14 from "../../assets/iphone14.png";
+import pixel7 from "../../assets/pixel7.png";
+
 console.log = function (...args) {
   vscode.postMessage({
     command: "log",
     text: args.map((arg) => JSON.stringify(arg)).join(" "),
   });
 };
+
 function imageSrc(imageName) {
   try {
     let baseUri = document.querySelector("base")?.getAttribute("href") || "";
@@ -23,6 +27,7 @@ function imageSrc(imageName) {
     return "";
   }
 }
+
 function sendTouch(event, type) {
   const imgRect = event.currentTarget.getBoundingClientRect();
   const x = (event.clientX - imgRect.left) / imgRect.width;
@@ -34,7 +39,7 @@ function sendTouch(event, type) {
     type,
   });
 }
-function Preview({ previewURL, isInspecting }) {
+function Preview({ previewURL, platform, isInspecting }) {
   const [isPressing, setIsPressing] = useState(false);
   function handleMouseMove(e) {
     e.preventDefault();
@@ -70,13 +75,13 @@ function Preview({ previewURL, isInspecting }) {
       <div className="phone-wrapper-wrapper">
         <img
           src={previewURL}
-          className="phone-content"
+          className={`phone-content phone-content-${platform === "Android" ? "android" : "ios"}`}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseUp}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
         />
-        <img src={imageSrc(iphone14)} className="phone-frame" />
+        <img src={imageSrc(platform === "Android" ? pixel7 : iphone14)} className="phone-frame" />
       </div>
     </div>
   );
@@ -100,6 +105,7 @@ function PreviewsList({ previews, onSelect }) {
   );
 }
 function App() {
+  const [platform, setPlatform] = useState("iOS");
   const [previewState, setPreviewState] = useState(undefined);
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
@@ -112,6 +118,7 @@ function App() {
       switch (message.command) {
         case "previewReady":
           setPreviewState("ready");
+          setPlatform(message.platform);
           setPreviewURL(message.previewURL);
           break;
         case "previewsList":
@@ -123,7 +130,7 @@ function App() {
   }, []);
   return (
     <main>
-      <div style={{ margin: 10, }}>
+      <div style={{ margin: 10 }}>
         <VSCodeButton
           onClick={() => {
             setPreviewState("loading");
@@ -169,7 +176,9 @@ function App() {
       </div>
 
       {previewState === "loading" && <VSCodeProgressRing />}
-      {previewURL && <Preview isInspecting={isInspecing} previewURL={previewURL} />}
+      {previewURL && (
+        <Preview isInspecting={isInspecing} previewURL={previewURL} platform={platform} />
+      )}
     </main>
   );
 }

@@ -39,6 +39,9 @@ main {
   max-width: calc(95% - 22px);
   margin-top: calc(3% + 4px);
   margin-left: 5%;
+}
+
+.phone-content-ios {
   border-radius: 12%/6%;
 }
 
