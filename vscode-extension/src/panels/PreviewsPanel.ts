@@ -110,6 +110,7 @@ export class PreviewsPanel {
             Uri.joinPath(context.extensionUri, "webview-ui/build"),
             Uri.parse("http://localhost:8060"),
           ],
+          retainContextWhenHidden: true,
         }
       );
 
