@@ -11,16 +11,16 @@ import {
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
-import { runIOS } from "./runIOS";
-import { getSelectedDeviceId, runAndroid } from "./runAndroid";
-import { Preview } from "./preview";
+import { buildIos } from "../build/buildIOS";
 import { Devtools } from "./devtools";
 import { Metro } from "./metro";
 import * as path from "path";
+import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 
 const crypto = require("crypto");
 
-const platform = "Android"; // "iOS";
+let platform: "iOS" | "Android";
+platform = "iOS";
 
 async function openFileAtPosition(filePath: string, line: number, column: number) {
   const existingDocument = workspace.textDocuments.find((document) => {
@@ -68,21 +68,21 @@ export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
   private readonly _context: ExtensionContext;
-  private _disposables: Disposable[] = [];
-  private _preview: Preview | undefined;
-  private _devtools: Devtools | undefined;
-  private _previewEnabled = false;
-  private _lastEditorFilename: string | undefined;
-  private _metro: Metro | undefined;
+  private disposables: Disposable[] = [];
+  private device: IosSimulatorDevice | undefined;
+  private devtools: Devtools | undefined;
+  private previewEnabled = false;
+  private lastEditorFilename: string | undefined;
+  private metro: Metro | undefined;
 
   private constructor(panel: WebviewPanel, context: ExtensionContext) {
     this._panel = panel;
     this._context = context;
-    this._lastEditorFilename = window.activeTextEditor?.document.fileName;
+    this.lastEditorFilename = window.activeTextEditor?.document.fileName;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
-    this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    this._panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
     // Set the HTML content for the webview panel
     this._panel.webview.html = this._getWebviewContent(this._panel.webview, context.extensionUri);
@@ -129,8 +129,8 @@ export class PreviewsPanel {
     this._panel.dispose();
 
     // Dispose of all disposables (i.e. commands) for the current webview panel
-    while (this._disposables.length) {
-      const disposable = this._disposables.pop();
+    while (this.disposables.length) {
+      const disposable = this.disposables.pop();
       if (disposable) {
         disposable.dispose();
       }
@@ -182,24 +182,22 @@ export class PreviewsPanel {
     const metroPort = portHash(`metro://workspaceDir`);
     const devtoolsPort = 8097; //portHash(`devtools://workspaceDir`);
     console.log("Ports metro:", metroPort, "devtools:", devtoolsPort);
-    this._metro = new Metro(workspaceDir, metroPort);
+    this.metro = new Metro(workspaceDir, metroPort);
 
     console.log("Launching metro on port", metroPort);
-    await this._metro.start();
+    await this.metro.start();
     console.log("Metro started");
 
-    this._devtools = new Devtools({ port: devtoolsPort });
+    this.devtools = new Devtools({ port: devtoolsPort });
 
-    let deviceId = "RNPreviews";
+    this.device = new IosSimulatorDevice();
 
-    if (platform === "Android") {
-      deviceId = await getSelectedDeviceId();
-      await runAndroid(path.join(workspaceDir, "android"), deviceId, metroPort, devtoolsPort);
-    } else {
-      await runIOS(workspaceDir, metroPort);
-    }
+    const { appPath, bundleID } = await buildIos(workspaceDir, metroPort);
 
-    const preview = new Preview(platform, deviceId, (previewURL: string) => {
+    await this.device.bootDevice();
+    await this.device.installApp(appPath);
+    await this.device.launchApp(bundleID);
+    this.device.startPreview((previewURL) => {
       console.log("preview ready", previewURL);
       this._panel.webview.postMessage({
         command: "previewReady",
@@ -207,18 +205,16 @@ export class PreviewsPanel {
         previewURL,
       });
       window.showInformationMessage("Preview ready 🚀");
-      this._preview?.shutdown();
-      this._preview = preview;
     });
   }
 
   private inspectElement(xRatio: number, yRatio: number) {
-    this._devtools?.send("startInspectingNative");
-    this._devtools?.addListener((event: string, payload: any) => {
+    this.devtools?.send("startInspectingNative");
+    this.devtools?.addListener((event: string, payload: any) => {
       if (event === "selectFiber") {
         const id: number = payload;
         console.log("Inspect eleemnt", id);
-        this._devtools?.send("inspectElement", {
+        this.devtools?.send("inspectElement", {
           id,
           rendererID: 1,
           forceFullData: true,
@@ -238,7 +234,7 @@ export class PreviewsPanel {
         }
         if (payload.value.owners.length > 0) {
           console.log("Inspect", payload.value.owners[0].id);
-          this._devtools?.send("inspectElement", {
+          this.devtools?.send("inspectElement", {
             id: payload.value.owners[0].id,
             rendererID: 1,
             forceFullData: true,
@@ -249,8 +245,8 @@ export class PreviewsPanel {
       }
     });
     setTimeout(() => {
-      this._preview?.sendTouch(xRatio, yRatio, "Down");
-      this._preview?.sendTouch(xRatio, yRatio, "Up");
+      this.device?.sendTouch(xRatio, yRatio, "Down");
+      this.device?.sendTouch(xRatio, yRatio, "Up");
     }, 200);
   }
 
@@ -268,13 +264,13 @@ export class PreviewsPanel {
             this.launchProject();
             return;
           case "touch":
-            this._preview?.sendTouch(message.xRatio, message.yRatio, message.type);
+            this.device?.sendTouch(message.xRatio, message.yRatio, message.type);
             return;
           case "inspect":
             this.inspectElement(message.xRatio, message.yRatio);
             return;
           case "stopInspecting":
-            this._devtools?.send("stopInspectingNative");
+            this.devtools?.send("stopInspectingNative");
             return;
           case "stopPreview":
             this.stopPreview();
@@ -288,16 +284,16 @@ export class PreviewsPanel {
         }
       },
       undefined,
-      this._disposables
+      this.disposables
     );
   }
 
   private selectPreview(appKey: string) {
-    this._previewEnabled = true;
-    this._devtools?.rpc("rnp_listPreviews", { appKey: "main" }, "rnp_previewsList", (payload) => {
+    this.previewEnabled = true;
+    this.devtools?.rpc("rnp_listPreviews", { appKey: "main" }, "rnp_previewsList", (payload) => {
       const { previews } = payload;
       if (previews.find((preview) => preview.appKey === appKey)) {
-        this._devtools?.send("rnp_runApplication", { appKey });
+        this.devtools?.send("rnp_runApplication", { appKey });
       } else {
         console.log("nono", appKey, previews);
       }
@@ -306,13 +302,13 @@ export class PreviewsPanel {
 
   private startPreview() {
     console.log("start prevbiew");
-    this._previewEnabled = true;
-    this._devtools?.rpc("rnp_listPreviews", { appKey: "main" }, "rnp_previewsList", (payload) => {
+    this.previewEnabled = true;
+    this.devtools?.rpc("rnp_listPreviews", { appKey: "main" }, "rnp_previewsList", (payload) => {
       const { previews } = payload;
-      if (this._lastEditorFilename) {
+      if (this.lastEditorFilename) {
         // find preview name that matches the current filename
         const filteredPreviews = previews.filter((preview) => {
-          return preview.fileName === this._lastEditorFilename;
+          return preview.fileName === this.lastEditorFilename;
         });
         filteredPreviews.sort((a, b) => a.lineNumber - b.lineNumber);
         if (filteredPreviews.length > 0) {
@@ -324,7 +320,7 @@ export class PreviewsPanel {
         } else {
           let href = path.relative(
             workspace.workspaceFolders?.[0]?.uri?.fsPath || "",
-            this._lastEditorFilename
+            this.lastEditorFilename
           );
           href = removeExtension(href);
           if (href.endsWith("index")) {
@@ -334,21 +330,21 @@ export class PreviewsPanel {
             href = href.substring(3);
           }
           console.log("Href", href);
-          this._devtools?.send("rnp_openRouterLink", { href });
+          this.devtools?.send("rnp_openRouterLink", { href });
         }
       }
     });
   }
 
   private stopPreview() {
-    this._previewEnabled = false;
-    this._devtools?.send("rnp_runApplication", { appKey: "main" });
+    this.previewEnabled = false;
+    this.devtools?.send("rnp_runApplication", { appKey: "main" });
   }
 
   private onActiveFileChange(filename) {
     console.log("LastEditor", filename);
-    this._lastEditorFilename = filename;
-    if (this._previewEnabled) {
+    this.lastEditorFilename = filename;
+    if (this.previewEnabled) {
       this.startPreview();
     }
   }

@@ -34,11 +34,12 @@ export class Preview {
   constructor(
     platform: "Android" | "iOS",
     deviceId: string,
+    iosDeviceSetPath: string | undefined,
     onReadyCallback: (previewURL: string) => void
   ) {
     console.log("Launching preview server", findSimulatorStreamBinary());
 
-    const streamArgs = [platform === "Android" ? "android" : "ios", deviceId];
+    const streamArgs = platform === "Android" ? ["android"] : ["ios", deviceId, iosDeviceSetPath];
 
     this.subprocess = child_process.spawn(findSimulatorStreamBinary(), streamArgs);
 
