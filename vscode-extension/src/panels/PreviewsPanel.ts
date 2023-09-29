@@ -182,7 +182,7 @@ export class PreviewsPanel {
     const metroPort = portHash(`metro://workspaceDir`);
     const devtoolsPort = 8097; //portHash(`devtools://workspaceDir`);
     console.log("Ports metro:", metroPort, "devtools:", devtoolsPort);
-    this._metro = new Metro(workspaceDir, metroPort);
+    this._metro = new Metro(workspaceDir, this._context.extensionPath, metroPort);
 
     console.log("Launching metro on port", metroPort);
     await this._metro.start();
