@@ -39,9 +39,12 @@ export class Preview {
   ) {
     console.log("Launching preview server", findSimulatorStreamBinary());
 
-    const streamArgs = platform === "Android" ? ["android"] : ["ios", deviceId, iosDeviceSetPath];
+    const streamArgs =
+      platform === "Android" ? ["android", deviceId] : ["ios", deviceId, iosDeviceSetPath];
 
-    this.subprocess = child_process.spawn(findSimulatorStreamBinary(), streamArgs);
+    const streamServerBinary = findSimulatorStreamBinary();
+    console.log("Launch preview", streamServerBinary, streamArgs);
+    this.subprocess = child_process.spawn(streamServerBinary, streamArgs);
 
     const rl = readline.createInterface({
       input: this.subprocess.stdout,

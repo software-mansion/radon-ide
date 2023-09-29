@@ -16,6 +16,8 @@ import { Devtools } from "./devtools";
 import { Metro } from "./metro";
 import * as path from "path";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
+import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
+import { buildAndroid } from "../build/buildAndroid";
 
 const crypto = require("crypto");
 
@@ -69,7 +71,7 @@ export class PreviewsPanel {
   private readonly _panel: WebviewPanel;
   private readonly _context: ExtensionContext;
   private disposables: Disposable[] = [];
-  private device: IosSimulatorDevice | undefined;
+  private device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
   private devtools: Devtools | undefined;
   private previewEnabled = false;
   private lastEditorFilename: string | undefined;
@@ -190,13 +192,25 @@ export class PreviewsPanel {
 
     this.devtools = new Devtools({ port: devtoolsPort });
 
-    this.device = new IosSimulatorDevice();
+    if (platform === "Android") {
+      this.device = new AndroidEmulatorDevice();
+      console.log("Building");
+      const { apkPath, packageName } = await buildAndroid(workspaceDir, metroPort);
+      console.log("Booting");
+      await this.device.bootDevice();
+      console.log("Installing");
+      await this.device.installApp(apkPath);
+      console.log("Launching");
+      await this.device.launchApp(packageName, metroPort, devtoolsPort);
+      console.log("Done");
+    } else {
+      this.device = new IosSimulatorDevice();
+      const { appPath, bundleID } = await buildIos(workspaceDir, metroPort);
+      await this.device.bootDevice();
+      await this.device.installApp(appPath);
+      await this.device.launchApp(bundleID);
+    }
 
-    const { appPath, bundleID } = await buildIos(workspaceDir, metroPort);
-
-    await this.device.bootDevice();
-    await this.device.installApp(appPath);
-    await this.device.launchApp(bundleID);
     this.device.startPreview((previewURL) => {
       console.log("preview ready", previewURL);
       this._panel.webview.postMessage({
