@@ -204,6 +204,7 @@ function App() {
       <VSCodeDropdown
         onChange={(e) => {
           setDevice(devices.find((d) => d.id === e.target.value));
+          setPreviewURL(undefined);
           vscode.postMessage({
             commage: "changeDevice",
             deviceId: e.target.value,
