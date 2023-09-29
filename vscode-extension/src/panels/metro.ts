@@ -8,7 +8,7 @@ export class Metro {
   private subprocess?: ChildProcess;
   private appRoot: string;
   private extensionRoot: string;
-  private port: number;
+  public readonly port: number;
 
   constructor(appRoot: string, extensionRoot: string, port: number) {
     this.appRoot = appRoot;
@@ -22,24 +22,24 @@ export class Metro {
 
   public async start() {
     this.subprocess = child_process.spawn(
-      'node',
+      "node",
       [
-        path.join(this.extensionRoot, 'lib/metro.js'),
+        path.join(this.extensionRoot, "lib/metro.js"),
         this.port,
         this.appRoot,
-        'index.js',
+        "index.js",
         this.extensionRoot,
       ],
       {
         cwd: this.appRoot,
         env: {
           ...process.env,
-          RCT_METRO_PORT: this.port
-        }
+          RCT_METRO_PORT: this.port,
+        },
       }
     );
 
-    this.subprocess.stderr.on('data', (data) => {
+    this.subprocess.stderr.on("data", (data) => {
       console.error(`metro stderr: ${data}`);
     });
 

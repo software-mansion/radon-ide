@@ -21,9 +21,6 @@ import { buildAndroid } from "../builders/buildAndroid";
 
 const crypto = require("crypto");
 
-let platform: "iOS" | "Android";
-platform = "iOS";
-
 async function openFileAtPosition(filePath: string, line: number, column: number) {
   const existingDocument = workspace.textDocuments.find((document) => {
     console.log("Existing document list", document.uri.fsPath);
@@ -76,6 +73,8 @@ export class PreviewsPanel {
   private previewEnabled = false;
   private lastEditorFilename: string | undefined;
   private metro: Metro | undefined;
+  private iOSBuild: Promise<{ appPath: string; bundleID: string }> | undefined;
+  private androidBuild: Promise<{ apkPath: string; packageName: string }> | undefined;
 
   private constructor(panel: WebviewPanel, context: ExtensionContext) {
     this._panel = panel;
@@ -93,6 +92,8 @@ export class PreviewsPanel {
     this._setWebviewMessageListener(this._panel.webview);
 
     this._setupEditorListeners(context);
+
+    this.launchProject();
   }
 
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
@@ -185,40 +186,41 @@ export class PreviewsPanel {
     const devtoolsPort = 8097; //portHash(`devtools://workspaceDir`);
     console.log("Ports metro:", metroPort, "devtools:", devtoolsPort);
     this.metro = new Metro(workspaceDir, this._context.extensionPath, metroPort);
+    this.devtools = new Devtools({ port: devtoolsPort });
+
+    console.log("Launching builds");
+    this.iOSBuild = buildIos(workspaceDir, metroPort);
+    this.androidBuild = buildAndroid(workspaceDir, metroPort);
 
     console.log("Launching metro on port", metroPort);
     await this.metro.start();
     console.log("Metro started");
+  }
 
-    this.devtools = new Devtools({ port: devtoolsPort });
-
-    if (platform === "Android") {
-      this.device = new AndroidEmulatorDevice();
-      console.log("Building");
-      const { apkPath, packageName } = await buildAndroid(workspaceDir, metroPort);
-      console.log("Booting");
-      await this.device.bootDevice();
-      console.log("Installing");
-      await this.device.installApp(apkPath);
-      console.log("Launching");
-      await this.device.launchApp(packageName, metroPort, devtoolsPort);
-      console.log("Done");
-    } else {
-      this.device = new IosSimulatorDevice();
-      const { appPath, bundleID } = await buildIos(workspaceDir, metroPort);
-      await this.device.bootDevice();
-      await this.device.installApp(appPath);
-      await this.device.launchApp(bundleID);
+  private async selectDevice(deviceId: string) {
+    console.log("Device selected", deviceId);
+    if (deviceId.startsWith("ios")) {
+      const device = new IosSimulatorDevice();
+      const { appPath, bundleID } = await this.iOSBuild!;
+      await device.bootDevice();
+      await device.installApp(appPath);
+      await device.launchApp(bundleID);
+      this.device = device;
+    } else if (deviceId.startsWith("android")) {
+      const device = new AndroidEmulatorDevice();
+      const { apkPath, packageName } = await this.androidBuild!;
+      await device.bootDevice();
+      await device.installApp(apkPath);
+      await device.launchApp(packageName, this.metro!.port, this.devtools!.port);
+      this.device = device;
     }
 
-    this.device.startPreview((previewURL) => {
-      console.log("preview ready", previewURL);
+    this.device!.startPreview((previewURL) => {
       this._panel.webview.postMessage({
-        command: "previewReady",
-        platform,
+        command: "deviceReady",
+        deviceId: deviceId,
         previewURL,
       });
-      window.showInformationMessage("Preview ready 🚀");
     });
   }
 
@@ -273,6 +275,9 @@ export class PreviewsPanel {
         switch (command) {
           case "log":
             console.log(`Webview: ${text}`);
+            return;
+          case "changeDevice":
+            this.selectDevice(message.deviceId);
             return;
           case "runCommand":
             this.launchProject();

@@ -45,6 +45,13 @@ main {
   border-radius: 12%/6%;
 }
 
+.phone-content-loading {
+  background-color: rgba(255,255,255,0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .phone-frame {
   position: absolute;
   top: 0px;

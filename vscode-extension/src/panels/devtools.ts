@@ -2,11 +2,13 @@ const http = require("http");
 const { Server } = require("ws");
 
 export class Devtools {
+  public readonly port: number;
   private server: any;
   private socket: any;
   private listeners: Set<(event: string, payload: any) => void> = new Set();
 
   constructor({ port }: { port: number }) {
+    this.port = port;
     this.server = http.createServer(() => {});
     const wss = new Server({ server: this.server });
 

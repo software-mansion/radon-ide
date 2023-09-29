@@ -11,6 +11,25 @@ import { useEffect, useState } from "react";
 import iphone14 from "../../assets/iphone14.png";
 import pixel7 from "../../assets/pixel7.png";
 
+const devices = [
+  {
+    id: "ios-17-iphone-15pro",
+    platform: "iOS",
+    name: "iPhone 15 Pro – iOS 17",
+    width: 1179,
+    height: 2556,
+    backgroundImage: iphone14,
+  },
+  {
+    id: "android-33-pixel-7",
+    platform: "Android",
+    name: "Pixel 7 – Android 13",
+    width: 412,
+    height: 869,
+    backgroundImage: pixel7,
+  },
+];
+
 console.log = function (...args) {
   vscode.postMessage({
     command: "log",
@@ -39,7 +58,8 @@ function sendTouch(event, type) {
     type,
   });
 }
-function Preview({ previewURL, platform, isInspecting }) {
+
+function Preview({ previewURL, device, isInspecting }) {
   const [isPressing, setIsPressing] = useState(false);
   function handleMouseMove(e) {
     e.preventDefault();
@@ -70,18 +90,28 @@ function Preview({ previewURL, platform, isInspecting }) {
     }
     setIsPressing(false);
   }
+  const phoneContentClass = `phone-content-${device.platform === "Android" ? "android" : "ios"}`;
   return (
     <div className="phone-wrapper">
       <div className="phone-wrapper-wrapper">
-        <img
-          src={previewURL}
-          className={`phone-content phone-content-${platform === "Android" ? "android" : "ios"}`}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseUp}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-        />
-        <img src={imageSrc(platform === "Android" ? pixel7 : iphone14)} className="phone-frame" />
+        {previewURL && (
+          <img
+            src={previewURL}
+            className={`phone-content ${phoneContentClass}`}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseUp}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+          />
+        )}
+        {!previewURL && (
+          <div
+            style={{ width: device.width, height: device.height }}
+            className={`phone-content ${phoneContentClass} phone-content-loading`}>
+            <VSCodeProgressRing />
+          </div>
+        )}
+        <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
       </div>
     </div>
   );
@@ -105,8 +135,7 @@ function PreviewsList({ previews, onSelect }) {
   );
 }
 function App() {
-  const [platform, setPlatform] = useState("iOS");
-  const [previewState, setPreviewState] = useState(undefined);
+  const [device, setDevice] = useState(devices[0]);
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -116,30 +145,26 @@ function App() {
       const message = event.data;
       console.log("MSG", message);
       switch (message.command) {
-        case "previewReady":
-          setPreviewState("ready");
-          setPlatform(message.platform);
-          setPreviewURL(message.previewURL);
-          break;
+        case "deviceReady":
+          if (message.deviceId == device.id) {
+            setPreviewURL(message.previewURL);
+          }
         case "previewsList":
           setPreviewsList(message.previews);
       }
     };
     window.addEventListener("message", listener);
+
+    vscode.postMessage({
+      command: "changeDevice",
+      deviceId: device.id,
+    });
+
     return () => window.removeEventListener("message", listener);
   }, []);
   return (
     <main>
       <div style={{ margin: 10 }}>
-        <VSCodeButton
-          onClick={() => {
-            setPreviewState("loading");
-            vscode.postMessage({
-              command: "runCommand",
-            });
-          }}>
-          ▶
-        </VSCodeButton>
         <VSCodeButton
           appearance={isInspecing ? "primary" : "secondary"}
           onClick={() => {
@@ -175,10 +200,21 @@ function App() {
         )}
       </div>
 
-      {previewState === "loading" && <VSCodeProgressRing />}
-      {previewURL && (
-        <Preview isInspecting={isInspecing} previewURL={previewURL} platform={platform} />
-      )}
+      <Preview isInspecting={isInspecing} previewURL={previewURL} device={device} />
+      <VSCodeDropdown
+        onChange={(e) => {
+          setDevice(devices.find((d) => d.id === e.target.value));
+          vscode.postMessage({
+            commage: "changeDevice",
+            deviceId: e.target.value,
+          });
+        }}>
+        {devices.map((device) => (
+          <VSCodeOption key={device.id} value={device.id}>
+            {device.name}
+          </VSCodeOption>
+        ))}
+      </VSCodeDropdown>
     </main>
   );
 }
