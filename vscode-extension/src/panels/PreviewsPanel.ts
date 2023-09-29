@@ -11,13 +11,13 @@ import {
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
-import { buildIos } from "../build/buildIOS";
+import { buildIos } from "../building/buildIOS";
 import { Devtools } from "./devtools";
 import { Metro } from "./metro";
 import * as path from "path";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { buildAndroid } from "../build/buildAndroid";
+import { buildAndroid } from "../building/buildAndroid";
 
 const crypto = require("crypto");
 
