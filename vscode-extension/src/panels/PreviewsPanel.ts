@@ -11,13 +11,13 @@ import {
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
-import { buildIos } from "../building/buildIOS";
+import { buildIos } from "../builders/buildIOS";
 import { Devtools } from "./devtools";
 import { Metro } from "./metro";
 import * as path from "path";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { buildAndroid } from "../building/buildAndroid";
+import { buildAndroid } from "../builders/buildAndroid";
 
 const crypto = require("crypto");
 
@@ -184,7 +184,7 @@ export class PreviewsPanel {
     const metroPort = portHash(`metro://workspaceDir`);
     const devtoolsPort = 8097; //portHash(`devtools://workspaceDir`);
     console.log("Ports metro:", metroPort, "devtools:", devtoolsPort);
-    this.metro = new Metro(workspaceDir, metroPort);
+    this.metro = new Metro(workspaceDir, this._context.extensionPath, metroPort);
 
     console.log("Launching metro on port", metroPort);
     await this.metro.start();
