@@ -69,14 +69,9 @@ async function runServer(_argv, ctx, args) {
         filePath: previewPath,
         type: "sourceFile",
       };
-    } else if (moduleName === "./index") {
+    } else if (moduleName.match(/sztudio-runtime/)) {
       return {
         filePath: runtimePath,
-        type: "sourceFile",
-      };
-    } else if (moduleName.match(/sztudio-original-entry-file/)) {
-      return {
-        filePath: appEntryPath,
         type: "sourceFile",
       };
     }
@@ -87,6 +82,10 @@ async function runServer(_argv, ctx, args) {
 
   // no idea why this is required / not default?
   metroConfig.resolver.nodeModulesPaths = [nodeModules];
+
+  metroConfig.transformer.babelTransformerPath = require.resolve(
+    path.join(extensionLib, './babel_transformer.js')
+  );
 
   if (args.assetPlugins) {
     metroConfig.transformer.assetPlugins = args.assetPlugins.map((plugin) =>

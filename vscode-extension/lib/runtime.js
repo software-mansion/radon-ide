@@ -2,7 +2,6 @@ require("expo-router/entry");
 const { useContext, useEffect, useRef } = require("react");
 const { AppRegistry, RootTagContext, View } = require("react-native");
 const { useRouter } = require("expo-router");
-require("sztudio-original-entry-file");
 
 global.rnsz_previews ||= new Map();
 
