@@ -260,10 +260,22 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number): Promise
 async function checkEmulatorOnline(serial: string): Promise<boolean> {
   try {
     const { stdout } = await execa(ADB_PATH, ["-s", serial, "get-state"]);
-    return stdout.trim() === "device";
+    if (stdout.trim() === "device") {
+      const { stdout } = await execa(ADB_PATH, [
+        "-s",
+        serial,
+        "shell",
+        "getprop",
+        "sys.boot_completed",
+      ]);
+      if (stdout.trim() === "1") {
+        return true;
+      }
+    }
   } catch (error) {
-    return false;
+    // do nothing
   }
+  return false;
 }
 
 function getOrCreateAvdDirectory() {

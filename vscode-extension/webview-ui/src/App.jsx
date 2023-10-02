@@ -206,7 +206,7 @@ function App() {
           setDevice(devices.find((d) => d.id === e.target.value));
           setPreviewURL(undefined);
           vscode.postMessage({
-            commage: "changeDevice",
+            command: "changeDevice",
             deviceId: e.target.value,
           });
         }}>
