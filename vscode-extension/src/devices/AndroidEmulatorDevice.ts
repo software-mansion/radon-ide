@@ -1,5 +1,6 @@
 import { ChildProcess } from "child_process";
 import { Preview } from "./preview";
+import { DeviceBase } from "./DeviceBase";
 
 const execa = require("execa");
 const readline = require("readline");
@@ -25,10 +26,9 @@ interface EmulatorProcessInfo {
   grpcToken: string;
 }
 
-export class AndroidEmulatorDevice {
+export class AndroidEmulatorDevice extends DeviceBase {
   private avdDirectory = getOrCreateAvdDirectory();
   private emulatorProcess: ChildProcess | undefined;
-  private preview: Preview | undefined;
   private serial: string | undefined;
 
   get name() {
@@ -36,6 +36,9 @@ export class AndroidEmulatorDevice {
   }
 
   async bootDevice() {
+    if (this.emulatorProcess) {
+      return;
+    }
     const { process, serial } = await findOrCreateEmulator(this.avdDirectory);
     this.emulatorProcess = process;
     this.serial = serial;
@@ -67,17 +70,8 @@ export class AndroidEmulatorDevice {
     await execa(ADB_PATH, ["-s", this.name, "install", "-r", apkPath]);
   }
 
-  async startPreview(onReadyCallback: (previewURL: string) => void) {
-    if (!this.emulatorProcess) {
-      await this.bootDevice();
-    }
-    this.preview = new Preview("Android", this.name, undefined, (previewURL) => {
-      onReadyCallback(previewURL);
-    });
-  }
-
-  sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.preview?.sendTouch(xRatio, yRatio, type);
+  makePreview(): Preview {
+    return new Preview(["android", this.name!]);
   }
 }
 

@@ -145,10 +145,8 @@ function App() {
       const message = event.data;
       console.log("MSG", message);
       switch (message.command) {
-        case "deviceReady":
-          if (message.deviceId == device.id) {
-            setPreviewURL(message.previewURL);
-          }
+        case "appReady":
+          setPreviewURL(message.previewURL);
         case "previewsList":
           setPreviewsList(message.previews);
       }

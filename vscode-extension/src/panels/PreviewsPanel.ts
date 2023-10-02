@@ -199,28 +199,41 @@ export class PreviewsPanel {
 
   private async selectDevice(deviceId: string) {
     console.log("Device selected", deviceId);
+    let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
+
+    const waitForAppReady = new Promise<void>((res) => {
+      const listener = (event: string, payload: any) => {
+        if (event === "rnp_appReady" && device === this.device) {
+          this.devtools?.removeListener(listener);
+          res();
+        }
+      };
+      this.devtools?.addListener(listener);
+    });
+
     if (deviceId.startsWith("ios")) {
-      const device = new IosSimulatorDevice();
+      device = new IosSimulatorDevice();
+      this.device = device;
       const { appPath, bundleID } = await this.iOSBuild!;
       await device.bootDevice();
       await device.installApp(appPath);
       await device.launchApp(bundleID);
-      this.device = device;
     } else if (deviceId.startsWith("android")) {
-      const device = new AndroidEmulatorDevice();
+      device = new AndroidEmulatorDevice();
+      this.device = device;
       const { apkPath, packageName } = await this.androidBuild!;
       await device.bootDevice();
       await device.installApp(apkPath);
       await device.launchApp(packageName, this.metro!.port, this.devtools!.port);
-      this.device = device;
     }
 
-    this.device!.startPreview((previewURL) => {
-      this._panel.webview.postMessage({
-        command: "deviceReady",
-        deviceId: deviceId,
-        previewURL,
-      });
+    const waitForPreview = this.device!.startPreview();
+
+    await Promise.all([waitForAppReady, waitForPreview]);
+    this._panel.webview.postMessage({
+      command: "appReady",
+      deviceId: deviceId,
+      previewURL: device!.previewURL!,
     });
   }
 

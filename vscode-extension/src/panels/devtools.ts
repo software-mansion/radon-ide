@@ -20,6 +20,7 @@ export class Devtools {
       ws.on("message", (message: string) => {
         try {
           const { event, payload } = JSON.parse(message);
+          console.log("Devtools msg", event);
           this.listeners.forEach((listener) => listener(event, payload));
         } catch (e) {
           console.log("Error", e);

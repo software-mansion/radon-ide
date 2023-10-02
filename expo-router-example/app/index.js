@@ -14,7 +14,7 @@ export default function Home() {
       <Link href="/details">Go to details</Link>
       <NiceButton
         onPress={() => {
-          alert('yo');
+          alert('yoo');
         }}
       />
       <UglyButton />

@@ -1,3 +1,4 @@
+import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
 
 const execa = require("execa");
@@ -43,8 +44,7 @@ interface DeviceTypeInfo {
   name: string;
 }
 
-export class IosSimulatorDevice {
-  private preview: Preview | undefined;
+export class IosSimulatorDevice extends DeviceBase {
   private deviceUdid: string | undefined;
   private deviceSetPath = getOrCreateDeviceSet();
 
@@ -83,15 +83,8 @@ export class IosSimulatorDevice {
     ]);
   }
 
-  async startPreview(onReadyCallback: (previewURL: string) => void) {
-    await this.bootDevice();
-    this.preview = new Preview("iOS", this.deviceUdid!, this.deviceSetPath, (previewURL) => {
-      onReadyCallback(previewURL);
-    });
-  }
-
-  sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.preview?.sendTouch(xRatio, yRatio, type);
+  makePreview(): Preview {
+    return new Preview(["ios", this.deviceUdid!, this.deviceSetPath]);
   }
 }
 
