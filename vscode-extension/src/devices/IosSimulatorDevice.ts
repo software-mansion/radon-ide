@@ -1,4 +1,4 @@
-import { DeviceBase } from "./DeviceBase";
+import { DeviceBase, DeviceSettings } from "./DeviceBase";
 import { Preview } from "./preview";
 
 const execa = require("execa");
@@ -58,6 +58,27 @@ export class IosSimulatorDevice extends DeviceBase {
 
   async bootDevice() {
     this.deviceUdid = await findOrCreateSimulator(this.deviceSetPath);
+  }
+
+  async changeSettings(settings: DeviceSettings) {
+    await execa("xcrun", [
+      "simctl",
+      "--set",
+      this.deviceSetPath,
+      "ui",
+      this.deviceUdid!,
+      "appearance",
+      settings.appearance,
+    ]);
+    await execa("xcrun", [
+      "simctl",
+      "--set",
+      this.deviceSetPath,
+      "ui",
+      this.deviceUdid!,
+      "content_size",
+      convertToSimctlSize(settings.contentSize),
+    ]);
   }
 
   async launchApp(bundleID: string) {
@@ -186,4 +207,23 @@ function getOrCreateDeviceSet() {
   }
 
   return deviceSetLocation;
+}
+
+function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
+  switch (size) {
+    case "xsmall":
+      return "extra-small";
+    case "small":
+      return "small";
+    case "normal":
+      return "medium";
+    case "large":
+      return "large";
+    case "xlarge":
+      return "extra-large";
+    case "xxlarge":
+      return "extra-extra-large";
+    case "xxxlarge":
+      return "extra-extra-extra-large";
+  }
 }

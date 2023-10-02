@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 
 import iphone14 from "../../assets/iphone14.png";
 import pixel7 from "../../assets/pixel7.png";
+import { settings } from "cluster";
 
 const devices = [
   {
@@ -136,6 +137,10 @@ function PreviewsList({ previews, onSelect }) {
 }
 function App() {
   const [device, setDevice] = useState(devices[0]);
+  const [deviceSettings, setDeviceSettings] = useState({
+    appearance: "dark",
+    contentSize: "normal",
+  });
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -155,6 +160,7 @@ function App() {
 
     vscode.postMessage({
       command: "changeDevice",
+      settings: deviceSettings,
       deviceId: device.id,
     });
 
@@ -205,6 +211,7 @@ function App() {
           setPreviewURL(undefined);
           vscode.postMessage({
             command: "changeDevice",
+            settings: deviceSettings,
             deviceId: e.target.value,
           });
         }}>
@@ -213,6 +220,39 @@ function App() {
             {device.name}
           </VSCodeOption>
         ))}
+      </VSCodeDropdown>
+      <VSCodeDropdown
+        value={deviceSettings.appearance}
+        onChange={(e) => {
+          const newSettings = { ...deviceSettings, appearance: e.target.value };
+          setDeviceSettings(newSettings);
+          vscode.postMessage({
+            command: "changeDeviceSettings",
+            settings: newSettings,
+            deviceId: e.target.value,
+          });
+        }}>
+        <VSCodeOption value={"light"}>Light</VSCodeOption>
+        <VSCodeOption value={"dark"}>Dark</VSCodeOption>
+      </VSCodeDropdown>
+      <VSCodeDropdown
+        value={deviceSettings.contentSize}
+        onChange={(e) => {
+          const newSettings = { ...deviceSettings, contentSize: e.target.value };
+          setDeviceSettings(newSettings);
+          vscode.postMessage({
+            command: "changeDeviceSettings",
+            settings: newSettings,
+            deviceId: e.target.value,
+          });
+        }}>
+        <VSCodeOption value={"xsmall"}>Extra small</VSCodeOption>
+        <VSCodeOption value={"small"}>Small</VSCodeOption>
+        <VSCodeOption value={"normal"}>Normal</VSCodeOption>
+        <VSCodeOption value={"large"}>Large</VSCodeOption>
+        <VSCodeOption value={"xlarge"}>Extra large</VSCodeOption>
+        <VSCodeOption value={"xxlarge"}>XX large</VSCodeOption>
+        <VSCodeOption value={"xxxlarge"}>XXX large</VSCodeOption>
       </VSCodeDropdown>
     </main>
   );

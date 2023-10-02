@@ -18,6 +18,7 @@ import * as path from "path";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { buildAndroid } from "../builders/buildAndroid";
+import { DeviceSettings } from "../devices/DeviceBase";
 
 const crypto = require("crypto");
 
@@ -197,7 +198,11 @@ export class PreviewsPanel {
     console.log("Metro started");
   }
 
-  private async selectDevice(deviceId: string) {
+  private async changeDeviceSettings(deviceId: string, settings: DeviceSettings) {
+    await this.device?.changeSettings(settings);
+  }
+
+  private async selectDevice(deviceId: string, settings: DeviceSettings) {
     console.log("Device selected", deviceId);
     let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
 
@@ -216,6 +221,7 @@ export class PreviewsPanel {
       this.device = device;
       const { appPath, bundleID } = await this.iOSBuild!;
       await device.bootDevice();
+      await device.changeSettings(settings);
       await device.installApp(appPath);
       await device.launchApp(bundleID);
     } else if (deviceId.startsWith("android")) {
@@ -223,6 +229,7 @@ export class PreviewsPanel {
       this.device = device;
       const { apkPath, packageName } = await this.androidBuild!;
       await device.bootDevice();
+      await device.changeSettings(settings);
       await device.installApp(apkPath);
       await device.launchApp(packageName, this.metro!.port, this.devtools!.port);
     }
@@ -290,7 +297,10 @@ export class PreviewsPanel {
             console.log(`Webview: ${text}`);
             return;
           case "changeDevice":
-            this.selectDevice(message.deviceId);
+            this.selectDevice(message.deviceId, message.settings);
+            return;
+          case "changeDeviceSettings":
+            this.changeDeviceSettings(message.deviceId, message.settings);
             return;
           case "runCommand":
             this.launchProject();

@@ -1,6 +1,6 @@
 import { ChildProcess } from "child_process";
 import { Preview } from "./preview";
-import { DeviceBase } from "./DeviceBase";
+import { DeviceBase, DeviceSettings } from "./DeviceBase";
 
 const execa = require("execa");
 const readline = require("readline");
@@ -33,6 +33,19 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   get name() {
     return this.serial ?? "emulator-unknown";
+  }
+
+  async changeSettings(settings: DeviceSettings) {
+    await execa(ADB_PATH, [
+      "-s",
+      this.name,
+      "shell",
+      "settings",
+      "put",
+      "system",
+      "font_scale",
+      convertToAdbFontSize(settings.contentSize).toString(),
+    ]);
   }
 
   async bootDevice() {
@@ -285,4 +298,23 @@ function getOrCreateAvdDirectory() {
   }
 
   return avdDirectory;
+}
+
+function convertToAdbFontSize(size: DeviceSettings["contentSize"]): number {
+  switch (size) {
+    case "xsmall":
+      return 0.75;
+    case "small":
+      return 0.85;
+    case "normal":
+      return 1;
+    case "large":
+      return 1.3;
+    case "xlarge":
+      return 1.4;
+    case "xxlarge":
+      return 1.5;
+    case "xxxlarge":
+      return 1.6;
+  }
 }

@@ -1,10 +1,16 @@
 import { Preview } from "./preview";
 
+export interface DeviceSettings {
+  appearance: "light" | "dark";
+  contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
+}
+
 export abstract class DeviceBase {
   private preview: Preview | undefined;
 
   abstract get name(): string | undefined;
   abstract bootDevice(): Promise<void>;
+  abstract changeSettings(settings: DeviceSettings): Promise<void>;
   abstract makePreview(): Preview;
 
   get previewURL(): string | undefined {
