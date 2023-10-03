@@ -129,7 +129,6 @@ function Preview({ previewURL, device, isInspecting }) {
     <div className="phone-wrapper">
       {previewURL && (
         <div className="phone-content">
-          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
           <img
             src={previewURL}
             className={`phone-sized phone-screen`}
@@ -138,6 +137,7 @@ function Preview({ previewURL, device, isInspecting }) {
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
           />
+          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
         </div>
       )}
       {!previewURL && (
