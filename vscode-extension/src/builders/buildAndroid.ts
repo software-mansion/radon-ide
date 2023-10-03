@@ -28,6 +28,7 @@ export async function buildAndroid(workspaceDir: string, metroPort: number) {
     "lint",
     "-PreactNativeArchitectures=arm64-v8a", // TODO: check emulator architecture
     `-PreactNativeDevServerPort=${metroPort}`,
+    `assembleDebug`,
   ];
   await build(androidSourceDir, gradleArgs);
   const apkPath = path.join(androidSourceDir, "app/build/outputs/apk/debug/app-debug.apk");
