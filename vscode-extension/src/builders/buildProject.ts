@@ -1,6 +1,5 @@
 import { IOSProjectInfo } from "@react-native-community/cli-types";
-import { CLIError, printRunDoctorTip, getLoader } from "@react-native-community/cli-tools";
-import type { ChildProcess, SpawnOptionsWithoutStdio } from "child_process";
+import type { ChildProcess } from "child_process";
 
 const child_process = require("child_process");
 
@@ -44,7 +43,6 @@ export function buildProject(
       xcodebuildArgs.push(...args.extraParams);
     }
 
-    const loader = getLoader();
     console.log(`Building using "xcodebuild ${xcodebuildArgs.join(" ")}`);
     let xcodebuildOutputFormatter: ChildProcess | any;
     if (!args.verbose) {
@@ -77,8 +75,6 @@ export function buildProject(
       buildOutput += stringData;
       if (xcodebuildOutputFormatter) {
         xcodebuildOutputFormatter.stdin.write(data);
-      } else {
-        console.log(`Building the app${".".repeat(buildOutput.length % 10)}`);
       }
     });
 
@@ -88,23 +84,9 @@ export function buildProject(
     buildProcess.on("close", (code: number) => {
       if (xcodebuildOutputFormatter) {
         xcodebuildOutputFormatter.stdin.end();
-      } else {
-        loader.stop();
       }
       if (code !== 0) {
-        printRunDoctorTip();
-        reject(
-          new CLIError(
-            `
-            Failed to build iOS project.
-
-            "xcodebuild" exited with error code '${code}'. To debug build
-            logs further, consider building your app with Xcode.app, by opening
-            '${xcodeProject.name}'.
-          `,
-            xcodebuildOutputFormatter ? undefined : buildOutput + "\n" + errorOutput
-          )
-        );
+        reject(new Error("Failed to build iOS project."));
         return;
       }
       console.log("Successfully built the app");
