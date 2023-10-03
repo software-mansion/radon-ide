@@ -111,7 +111,7 @@ async function createEmulator(avdDirectory: string) {
   const avdLocation = path.join(avdDirectory, AVD_NAME + ".avd");
   const configIni = path.join(avdLocation, "config.ini");
 
-  fs.mkdirSync(avdDirectory, { recursive: true });
+  fs.mkdirSync(avdLocation, { recursive: true });
 
   const avdIniData = [
     ["avd.ini.encoding", "UTF-8"],
@@ -204,7 +204,7 @@ async function startEmulator(avdDirectory: string) {
 
 async function findOrCreateEmulator(avdDirectory: string) {
   // first, we check if emulator already exists
-  if (!fs.existsSync(avdDirectory)) {
+  if (!fs.existsSync(path.join(avdDirectory, AVD_NAME + ".ini"))) {
     await createEmulator(avdDirectory);
   }
 
