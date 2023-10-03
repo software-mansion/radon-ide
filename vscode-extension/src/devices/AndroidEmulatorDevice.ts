@@ -193,7 +193,7 @@ async function startEmulator(avdDirectory: string) {
         const iniFile = match![1];
         const emulatorInfo = await parseAvdIniFile(iniFile);
         const emulatorSerial = `emulator-${emulatorInfo.serialPort}`;
-        await waitForEmulatorOnline(emulatorSerial, 10000);
+        await waitForEmulatorOnline(emulatorSerial, 60000);
         resolve({ process: subprocess, serial: emulatorSerial });
       }
       console.log(`emu: ${line}`);

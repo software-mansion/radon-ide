@@ -61,7 +61,7 @@ function setCssPropertiesForDevice(device) {
 
   document.documentElement.style.setProperty(
     "--phone-content-aspect-ratio",
-    `${device.width} / ${device.height}`,
+    `${device.width} / ${device.height}`
   );
 }
 
@@ -244,13 +244,15 @@ function App() {
       <div class="button-group">
         <VSCodeDropdown
           onChange={(e) => {
-            setDevice(devices.find((d) => d.id === e.target.value));
-            setPreviewURL(undefined);
-            vscode.postMessage({
-              command: "changeDevice",
-              settings: deviceSettings,
-              deviceId: e.target.value,
-            });
+            if (device.id !== e.target.value) {
+              setDevice(devices.find((d) => d.id === e.target.value));
+              setPreviewURL(undefined);
+              vscode.postMessage({
+                command: "changeDevice",
+                settings: deviceSettings,
+                deviceId: e.target.value,
+              });
+            }
           }}>
           {devices.map((device) => (
             <VSCodeOption key={device.id} value={device.id}>
