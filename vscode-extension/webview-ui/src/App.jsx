@@ -20,6 +20,9 @@ const devices = [
     width: 1179,
     height: 2556,
     backgroundImage: iphone14,
+    backgroundMargins: [29, 33, 30, 36],
+    backgroundSize: [1232, 608],
+    backgroundBorderRadius: "12% / 6%",
   },
   {
     id: "android-33-pixel-7",
@@ -28,8 +31,39 @@ const devices = [
     width: 412,
     height: 869,
     backgroundImage: pixel7,
+    backgroundMargins: [58, 62, 62, 58],
+    backgroundSize: [2541, 1200],
+    backgroundBorderRadius: "4% / 2%",
   },
 ];
+
+function setCssPropertiesForDevice(device) {
+  // top right bottom left
+  const m = device.backgroundMargins;
+  const size = device.backgroundSize;
+  document.documentElement.style.setProperty(
+    "--phone-content-margins",
+    `${((m[0] + m[2]) / size[0]) * 100}% 0% 0% ${(m[1] / size[1]) * 100}%`
+  );
+
+  document.documentElement.style.setProperty(
+    "--phone-content-height",
+    `${((size[0] - m[0] - m[2]) / size[0]) * 100}%`
+  );
+  document.documentElement.style.setProperty(
+    "--phone-content-width",
+    `${((size[1] - m[1] - m[3]) / size[1]) * 100}%`
+  );
+  document.documentElement.style.setProperty(
+    "--phone-content-border-radius",
+    device.backgroundBorderRadius
+  );
+
+  document.documentElement.style.setProperty(
+    "--phone-content-aspect-ratio",
+    `${device.width} / ${device.height}`,
+  );
+}
 
 console.log = function (...args) {
   vscode.postMessage({
@@ -91,29 +125,29 @@ function Preview({ previewURL, device, isInspecting }) {
     }
     setIsPressing(false);
   }
-  const phoneContentClass = `phone-content-${device.platform === "Android" ? "android" : "ios"}`;
   return (
     <div className="phone-wrapper">
-      <div className="phone-wrapper-wrapper">
-        {previewURL && (
+      {previewURL && (
+        <div className="phone-content">
+          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
           <img
             src={previewURL}
-            className={`phone-content ${phoneContentClass}`}
+            className={`phone-sized phone-screen`}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseUp}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
           />
-        )}
-        {!previewURL && (
-          <div
-            style={{ width: device.width, height: device.height }}
-            className={`phone-content ${phoneContentClass} phone-content-loading`}>
+        </div>
+      )}
+      {!previewURL && (
+        <div className="phone-content">
+          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
+          <div className="phone-sized phone-screen phone-content-loading">
             <VSCodeProgressRing />
           </div>
-        )}
-        <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -146,6 +180,8 @@ function App() {
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [previewsList, setPreviewsList] = useState([]);
   useEffect(() => {
+    setCssPropertiesForDevice(device);
+
     const listener = (event) => {
       const message = event.data;
       console.log("MSG", message);
@@ -205,55 +241,57 @@ function App() {
       </div>
 
       <Preview isInspecting={isInspecing} previewURL={previewURL} device={device} />
-      <VSCodeDropdown
-        onChange={(e) => {
-          setDevice(devices.find((d) => d.id === e.target.value));
-          setPreviewURL(undefined);
-          vscode.postMessage({
-            command: "changeDevice",
-            settings: deviceSettings,
-            deviceId: e.target.value,
-          });
-        }}>
-        {devices.map((device) => (
-          <VSCodeOption key={device.id} value={device.id}>
-            {device.name}
-          </VSCodeOption>
-        ))}
-      </VSCodeDropdown>
-      <VSCodeDropdown
-        value={deviceSettings.appearance}
-        onChange={(e) => {
-          const newSettings = { ...deviceSettings, appearance: e.target.value };
-          setDeviceSettings(newSettings);
-          vscode.postMessage({
-            command: "changeDeviceSettings",
-            settings: newSettings,
-            deviceId: e.target.value,
-          });
-        }}>
-        <VSCodeOption value={"light"}>Light</VSCodeOption>
-        <VSCodeOption value={"dark"}>Dark</VSCodeOption>
-      </VSCodeDropdown>
-      <VSCodeDropdown
-        value={deviceSettings.contentSize}
-        onChange={(e) => {
-          const newSettings = { ...deviceSettings, contentSize: e.target.value };
-          setDeviceSettings(newSettings);
-          vscode.postMessage({
-            command: "changeDeviceSettings",
-            settings: newSettings,
-            deviceId: e.target.value,
-          });
-        }}>
-        <VSCodeOption value={"xsmall"}>Extra small</VSCodeOption>
-        <VSCodeOption value={"small"}>Small</VSCodeOption>
-        <VSCodeOption value={"normal"}>Normal</VSCodeOption>
-        <VSCodeOption value={"large"}>Large</VSCodeOption>
-        <VSCodeOption value={"xlarge"}>Extra large</VSCodeOption>
-        <VSCodeOption value={"xxlarge"}>XX large</VSCodeOption>
-        <VSCodeOption value={"xxxlarge"}>XXX large</VSCodeOption>
-      </VSCodeDropdown>
+      <div class="button-group">
+        <VSCodeDropdown
+          onChange={(e) => {
+            setDevice(devices.find((d) => d.id === e.target.value));
+            setPreviewURL(undefined);
+            vscode.postMessage({
+              command: "changeDevice",
+              settings: deviceSettings,
+              deviceId: e.target.value,
+            });
+          }}>
+          {devices.map((device) => (
+            <VSCodeOption key={device.id} value={device.id}>
+              {device.name}
+            </VSCodeOption>
+          ))}
+        </VSCodeDropdown>
+        <VSCodeDropdown
+          value={deviceSettings.appearance}
+          onChange={(e) => {
+            const newSettings = { ...deviceSettings, appearance: e.target.value };
+            setDeviceSettings(newSettings);
+            vscode.postMessage({
+              command: "changeDeviceSettings",
+              settings: newSettings,
+              deviceId: e.target.value,
+            });
+          }}>
+          <VSCodeOption value={"light"}>Light</VSCodeOption>
+          <VSCodeOption value={"dark"}>Dark</VSCodeOption>
+        </VSCodeDropdown>
+        <VSCodeDropdown
+          value={deviceSettings.contentSize}
+          onChange={(e) => {
+            const newSettings = { ...deviceSettings, contentSize: e.target.value };
+            setDeviceSettings(newSettings);
+            vscode.postMessage({
+              command: "changeDeviceSettings",
+              settings: newSettings,
+              deviceId: e.target.value,
+            });
+          }}>
+          <VSCodeOption value={"xsmall"}>Extra small</VSCodeOption>
+          <VSCodeOption value={"small"}>Small</VSCodeOption>
+          <VSCodeOption value={"normal"}>Normal</VSCodeOption>
+          <VSCodeOption value={"large"}>Large</VSCodeOption>
+          <VSCodeOption value={"xlarge"}>Extra large</VSCodeOption>
+          <VSCodeOption value={"xxlarge"}>XX large</VSCodeOption>
+          <VSCodeOption value={"xxxlarge"}>XXX large</VSCodeOption>
+        </VSCodeDropdown>
+      </div>
     </main>
   );
 }
