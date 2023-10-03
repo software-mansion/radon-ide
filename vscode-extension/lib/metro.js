@@ -83,6 +83,7 @@ async function runServer(_argv, ctx, args) {
   // no idea why this is required / not default?
   metroConfig.resolver.nodeModulesPaths = [nodeModules];
 
+  process.env.RNSZTUDIO_ORIGINAL_BABEL_TRANSFORMER_PATH = metroConfig.transformer.babelTransformerPath;
   metroConfig.transformer.babelTransformerPath = require.resolve(
     path.join(extensionLib, './babel_transformer.js')
   );
