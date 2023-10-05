@@ -178,6 +178,8 @@ function App() {
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [expandedLogs, setExpandedLogs] = useState(false);
   const [previewsList, setPreviewsList] = useState([]);
   useEffect(() => {
     setCssPropertiesForDevice(device);
@@ -191,6 +193,10 @@ function App() {
           setPreviewURL(message.previewURL);
         case "previewsList":
           setPreviewsList(message.previews);
+          break;
+        case "consoleLog":
+          setLogs((logs) => [...logs, message.payload]);
+          break;
       }
     };
     window.addEventListener("message", listener);
@@ -301,6 +307,36 @@ function App() {
           <VSCodeOption value={"xxlarge"}>XX large</VSCodeOption>
           <VSCodeOption value={"xxxlarge"}>XXX large</VSCodeOption>
         </VSCodeDropdown>
+        <VSCodeButton
+          appearance={expandedLogs ? "primary" : "secondary"}
+          onClick={() => setExpandedLogs(!expandedLogs)}>
+          <span slot="start" class="codicon codicon-output" />
+          Logs
+        </VSCodeButton>
+      </div>
+      <div
+        style={{
+          width: 'calc(100% - 4px)',
+          flex: expandedLogs ? '1 0 0%' : '0 0 0px',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          flexDirection: 'column',
+          minHeight: expandedLogs ? "280px" : "0px",
+          height: expandedLogs ? "auto" : "0px",
+          border: expandedLogs ? "calc(var(--border-width) * 1px) solid var(--dropdown-border)" : "none",
+        }}>
+        <div
+          className="logs"
+          style={{
+            overflowY: "scroll",
+            height: "100%",
+          }}>
+          {logs.map((log, index) => (
+            <div key={index} className="log">
+              {JSON.stringify(log)}
+            </div>
+          ))}
+        </div>
       </div>
     </main>
   );

@@ -1,12 +1,87 @@
 require("expo-router/entry");
 const { useContext, useEffect, useRef } = require("react");
-const { AppRegistry, RootTagContext, View } = require("react-native");
+const { LogBox, AppRegistry, RootTagContext, View } = require("react-native");
+import RCTLog from "react-native/Libraries/Utilities/RCTLog";
 const { useRouter } = require("expo-router");
 
 global.rnsz_previews ||= new Map();
 
 // window.__REACT_DEVTOOLS_PORT__
 const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+
+let isLogCatcherInstalled = false;
+let originalConsole;
+let consoleImpl;
+var g_agent;
+
+const isWarningModuleWarning = (...args: Array<mixed>) => {
+  return typeof args[0] === 'string' && args[0].startsWith('Warning: ');
+};
+
+const registerLog =
+  (level) =>
+  (...args) => {
+    if (level == "error") {
+      if (!isWarningModuleWarning(...args)) {
+        originalConsole.log("isWarningModuleWarning was false!");
+        // Only show LogBox for the 'warning' module, otherwise pass through.
+        // By passing through, this will get picked up by the React console override,
+        // potentially adding the component stack. React then passes it back to the
+        // React Native ExceptionsManager, which reports it to LogBox as an error.
+        //
+        // The 'warning' module needs to be handled here because React internally calls
+        // `console.error('Warning: ')` with the component stack already included.
+        originalConsole.error(...args);
+        return;
+      }
+      originalConsole.log("isWarningModuleWarning was true!");
+    }
+
+
+    if (g_agent != null && g_agent._bridge != null) {
+      g_agent._bridge.send("rnp_consoleLog", { args });
+    } else {
+      originalConsole[level](...args);
+      if (g_agent == null) {
+        originalConsole.log("g_agent was null");
+      } else if (g_agent._bridge == null) {
+        originalConsole.log("g_agent._bridge was null");
+      }
+    }
+  };
+
+const LogCatcher = {
+  install() {
+    if (isLogCatcherInstalled) {
+      return;
+    }
+
+    isLogCatcherInstalled = true;
+
+    originalConsole = {
+      error: console.error.bind(console),
+      warn: console.warn.bind(console),
+      info: console.info.bind(console),
+      log: console.log.bind(console),
+    };
+
+    consoleImpl = {
+      error: registerLog("error"),
+      warn: registerLog("warn"),
+      info: registerLog("info"),
+      log: registerLog("log"),
+    };
+
+    console.error = consoleImpl.error;
+    console.warn = consoleImpl.warn;
+    console.info = consoleImpl.info;
+    console.log = consoleImpl.log;
+
+    RCTLog.setWarningHandler((...args) => {
+      consoleImpl.warn(...args);
+    });
+  },
+};
 
 function PreviewAppWrapper({ children, ...rest }) {
   console.log("PreviewAppWrapper");
@@ -18,6 +93,8 @@ function PreviewAppWrapper({ children, ...rest }) {
   useEffect(() => {
     function _attachToDevtools(agent) {
       agentRef.current = agent;
+      g_agent = agent;
+      console.log("agnet set")
       agent._bridge.addListener("rnp_openRouterLink", (payload) => {
         push(payload.href);
       });
@@ -32,6 +109,9 @@ function PreviewAppWrapper({ children, ...rest }) {
           initialProps: {},
         });
       });
+
+      LogBox.uninstall();
+      LogCatcher.install();
     }
 
     if (hook.reactDevtoolsAgent) {

@@ -216,6 +216,15 @@ export class PreviewsPanel {
       this.devtools?.addListener(listener);
     });
 
+    const logListener = (event: string, payload: any) => {
+      if (event === "rnp_consoleLog" && device === this.device) {
+        this._panel.webview.postMessage({
+          command: "consoleLog",
+          payload,
+        });
+      }
+    };
+
     if (deviceId.startsWith("ios")) {
       device = new IosSimulatorDevice();
       this.device = device;
@@ -237,6 +246,8 @@ export class PreviewsPanel {
     const waitForPreview = this.device!.startPreview();
 
     await Promise.all([waitForAppReady, waitForPreview]);
+    this.devtools?.addListener(logListener);
+
     this._panel.webview.postMessage({
       command: "appReady",
       deviceId: deviceId,

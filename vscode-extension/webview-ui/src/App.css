@@ -77,4 +77,11 @@ vscode-dropdown > .codicon {
   margin-left: -4px;
 }
 
+.logs {
+  display: flex;
+  flex-direction: column-reverse;
+  min-height: 0;
+  width: calc(100% - 6px);
+
+  background-color: var(--dropdown-background);
 }
