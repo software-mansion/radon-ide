@@ -142,10 +142,10 @@ function Preview({ previewURL, device, isInspecting }) {
       )}
       {!previewURL && (
         <div className="phone-content">
-          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
           <div className="phone-sized phone-screen phone-content-loading">
             <VSCodeProgressRing />
           </div>
+          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
         </div>
       )}
     </div>
@@ -181,7 +181,8 @@ function App() {
   const [previewsList, setPreviewsList] = useState([]);
   useEffect(() => {
     setCssPropertiesForDevice(device);
-
+  }, [device]);
+  useEffect(() => {
     const listener = (event) => {
       const message = event.data;
       console.log("MSG", message);
@@ -204,7 +205,7 @@ function App() {
   }, []);
   return (
     <main>
-      <div style={{ margin: 10 }}>
+      <div className="button-group" style={{ marginBottom: 0 }}>
         <VSCodeButton
           appearance={isInspecing ? "primary" : "secondary"}
           onClick={() => {
@@ -214,7 +215,9 @@ function App() {
               });
             }
             setIsInspecting(!isInspecing);
-          }}>
+          }}
+        >
+          <span slot="start" class="codicon codicon-inspect" />
           Inspect
         </VSCodeButton>
         <VSCodeButton
@@ -224,7 +227,9 @@ function App() {
               command: isPreviewing ? "stopPreview" : "startPreview",
             });
             setIsPreviewing(!isPreviewing);
-          }}>
+          }}
+        >
+          <span slot="start" class="codicon codicon-arrow-swap" />
           Sync
         </VSCodeButton>
         {isPreviewing && false && previewsList.length > 0 && (
@@ -254,6 +259,7 @@ function App() {
               });
             }
           }}>
+          <span slot="start" class="codicon codicon-device-mobile" />
           {devices.map((device) => (
             <VSCodeOption key={device.id} value={device.id}>
               {device.name}
@@ -271,6 +277,7 @@ function App() {
               deviceId: e.target.value,
             });
           }}>
+          <span slot="start" class="codicon codicon-color-mode" />
           <VSCodeOption value={"light"}>Light</VSCodeOption>
           <VSCodeOption value={"dark"}>Dark</VSCodeOption>
         </VSCodeDropdown>
@@ -285,6 +292,7 @@ function App() {
               deviceId: e.target.value,
             });
           }}>
+          <span slot="start" class="codicon codicon-text-size" />
           <VSCodeOption value={"xsmall"}>Extra small</VSCodeOption>
           <VSCodeOption value={"small"}>Small</VSCodeOption>
           <VSCodeOption value={"normal"}>Normal</VSCodeOption>

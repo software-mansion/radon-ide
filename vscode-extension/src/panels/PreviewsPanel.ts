@@ -112,6 +112,7 @@ export class PreviewsPanel {
           localResourceRoots: [
             Uri.joinPath(context.extensionUri, "out"),
             Uri.joinPath(context.extensionUri, "webview-ui/build"),
+            Uri.joinPath(context.extensionUri, "webview-ui/node_modules"),
             Uri.parse("http://localhost:8060"),
           ],
           retainContextWhenHidden: true,
@@ -147,9 +148,8 @@ export class PreviewsPanel {
     // The JS file from the React build output
     const scriptUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.js"]);
     const baseUri = getUri(webview, extensionUri, ["webview-ui", "build"]);
-    const codiconsUri = webview.asWebviewUri(
-      Uri.joinPath(extensionUri, "node_modules", "@vscode/codicons", "dist", "codicon.css")
-    );
+
+    const codiconsUri = getUri(webview, extensionUri, ["webview-ui", "node_modules", "@vscode/codicons", "dist", "codicon.css"]);
 
     const nonce = getNonce();
 
@@ -160,7 +160,7 @@ export class PreviewsPanel {
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
           <link rel="stylesheet" href="${codiconsUri}" >
           <base href="${baseUri}">

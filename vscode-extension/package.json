@@ -43,7 +43,6 @@
   },
   "dependencies": {
     "@react-native-community/cli": "^11.3.7",
-    "@vscode/codicons": "^0.0.33",
     "chrome-remote-interface": "^0.33.0",
     "execa": "^5.1.1",
     "xdl": "^60.0.10"
