@@ -225,6 +225,8 @@ export class PreviewsPanel {
       this.devtools?.addListener(listener);
     });
 
+    let workspaceDir = workspace.workspaceFolders?.[0]?.uri?.fsPath;
+    let workspaceRegex = new RegExp(`^${workspaceDir}`);
     const logListener = (event: string, payload: any) => {
       if (event === "rnp_consoleLog" && device === this.device) {
         if (payload.mode == 'error') {
@@ -241,7 +243,14 @@ export class PreviewsPanel {
               this._panel.webview.postMessage({
                 command: "consoleStack",
                 text: msg,
-                stack: data.stack,
+                stack:
+                  data.stack.map(entry => (
+                    {
+                      ...entry,
+                      file: entry.file.replace(workspaceRegex, '.'),
+                      fullPath: entry.file,
+                    }
+                  )),
                 isFatal,
               });
             });

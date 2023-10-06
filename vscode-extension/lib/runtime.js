@@ -93,6 +93,8 @@ function PreviewAppWrapper({ children, ...rest }) {
         });
       });
 
+      LogBox.uninstall();
+      console.reportErrorsAsExceptions = false;
       LogCatcher.install();
     }
 

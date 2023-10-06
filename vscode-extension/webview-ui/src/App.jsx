@@ -359,17 +359,17 @@ function App() {
                     !entry.collapse && (
                       <div
                         key={index}
-                        style={{ color: "white", cursor: "pointer", textDecoration: "underline" }}
+                        style={{ color: "white", cursor: "pointer", marginBottom: '8px', }}
                         onClick={() => {
                           vscode.postMessage({
                             command: "openFile",
-                            file: entry.file,
+                            file: entry.fullPath,
                             lineNumber: entry.lineNumber,
                             column: entry.column,
                           });
                         }}>
                         <div>{entry.methodName}</div>
-                        <div>{entry.file}:{entry.lineNumber}:{entry.column}</div>
+                        <div style={{ marginLeft: "24px" }}>{entry.file}:{entry.lineNumber}:{entry.column}</div>
                       </div>
                     )
                   ))}
