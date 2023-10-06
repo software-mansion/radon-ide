@@ -10,6 +10,13 @@ export function activate(context: ExtensionContext) {
     }
   );
 
+  const reloadMetro = commands.registerCommand(
+    "RNStudio.reloadMetro",
+    (fileName?: string, lineNumber?: number) => {
+      PreviewsPanel.reloadMetro();
+    }
+  );
+
   context.subscriptions.push(
     languages.registerCodeLensProvider(
       { scheme: "file", language: "javascript" },
@@ -25,6 +32,8 @@ export function activate(context: ExtensionContext) {
 
   // Add command to the extension context
   context.subscriptions.push(showPreviewsPanel);
+
+  context.subscriptions.push(reloadMetro);
 
   if (process.env.RNSZ_DEV === "true") {
     commands.executeCommand("RNStudio.showPreviewsPanel", (e: any) => {

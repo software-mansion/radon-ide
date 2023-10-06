@@ -198,6 +198,15 @@ export class PreviewsPanel {
     console.log("Metro started");
   }
 
+  public static reloadMetro() {
+    if (PreviewsPanel.currentPanel) {
+      PreviewsPanel.currentPanel.metro?.reload();
+    } else {
+      // warning
+
+    }
+  }
+
   private async changeDeviceSettings(deviceId: string, settings: DeviceSettings) {
     await this.device?.changeSettings(settings);
   }

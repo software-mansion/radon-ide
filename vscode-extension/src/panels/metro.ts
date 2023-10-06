@@ -59,4 +59,8 @@ export class Metro {
     });
     return initPromise;
   }
+
+  public async reload() {
+    await fetch(`http://localhost:${this.port}/reload`);
+  }
 }

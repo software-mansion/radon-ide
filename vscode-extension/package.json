@@ -15,6 +15,10 @@
       {
         "command": "RNStudio.showPreviewsPanel",
         "title": "RNStudio: Open Previews"
+      },
+      {
+        "command": "RNStudio.reloadMetro",
+        "title": "RNStudio: Reload Metro"
       }
     ]
   },
