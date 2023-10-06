@@ -227,10 +227,30 @@ export class PreviewsPanel {
 
     const logListener = (event: string, payload: any) => {
       if (event === "rnp_consoleLog" && device === this.device) {
-        this._panel.webview.postMessage({
-          command: "consoleLog",
-          payload,
-        });
+        if (payload.mode == 'error') {
+          let [msg, stack, isFatal] = payload.args;
+          // post!
+          fetch(`http://localhost:${this.metro!.port}/symbolicate`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ stack }),
+          }).then((res) => res.json())
+            .then((data) => {
+              this._panel.webview.postMessage({
+                command: "consoleStack",
+                text: msg,
+                stack: data.stack,
+                isFatal,
+              });
+            });
+        } else {
+          this._panel.webview.postMessage({
+            command: "consoleLog",
+            text: JSON.stringify(payload.args),
+          });
+        }
       }
     };
 
@@ -327,6 +347,9 @@ export class PreviewsPanel {
             return;
           case "touch":
             this.device?.sendTouch(message.xRatio, message.yRatio, message.type);
+            return;
+          case "openFile":
+            openFileAtPosition(message.file, message.lineNumber, message.column);
             return;
           case "inspect":
             this.inspectElement(message.xRatio, message.yRatio);

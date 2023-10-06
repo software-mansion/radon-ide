@@ -82,6 +82,7 @@ vscode-dropdown > .codicon {
   flex-direction: column-reverse;
   min-height: 0;
   width: calc(100% - 6px);
+  font-family: Menlo, Monaco, 'Courier New', monospace;
 
   background-color: var(--dropdown-background);
 }

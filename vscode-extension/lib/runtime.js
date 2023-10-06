@@ -4,6 +4,11 @@ const { LogBox, AppRegistry, RootTagContext, View } = require("react-native");
 import RCTLog from "react-native/Libraries/Utilities/RCTLog";
 const { useRouter } = require("expo-router");
 
+global.__fbDisableExceptionsManager = true;
+
+const parseErrorStack = require('react-native/Libraries/Core/Devtools/parseErrorStack');
+const ErrorUtils = require('react-native/Libraries/vendor/core/ErrorUtils');
+
 global.rnsz_previews ||= new Map();
 
 // window.__REACT_DEVTOOLS_PORT__
@@ -11,44 +16,22 @@ const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
 
 let isLogCatcherInstalled = false;
 let originalConsole;
-let consoleImpl;
 var g_agent;
 
-const isWarningModuleWarning = (...args: Array<mixed>) => {
-  return typeof args[0] === 'string' && args[0].startsWith('Warning: ');
-};
-
-const registerLog =
-  (level) =>
-  (...args) => {
-    if (level == "error") {
-      if (!isWarningModuleWarning(...args)) {
-        originalConsole.log("isWarningModuleWarning was false!");
-        // Only show LogBox for the 'warning' module, otherwise pass through.
-        // By passing through, this will get picked up by the React console override,
-        // potentially adding the component stack. React then passes it back to the
-        // React Native ExceptionsManager, which reports it to LogBox as an error.
-        //
-        // The 'warning' module needs to be handled here because React internally calls
-        // `console.error('Warning: ')` with the component stack already included.
-        originalConsole.error(...args);
-        return;
-      }
-      originalConsole.log("isWarningModuleWarning was true!");
+const trySend = (...args) => {
+  if (g_agent != null && g_agent._bridge != null) {
+    g_agent._bridge.send("rnp_consoleLog", ...args);
+  } else {
+    originalConsole[level](...args);
+    if (g_agent == null) {
+      originalConsole.log("g_agent was null");
+    } else if (g_agent._bridge == null) {
+      originalConsole.log("g_agent._bridge was null");
     }
+  }
+}
 
-
-    if (g_agent != null && g_agent._bridge != null) {
-      g_agent._bridge.send("rnp_consoleLog", { args });
-    } else {
-      originalConsole[level](...args);
-      if (g_agent == null) {
-        originalConsole.log("g_agent was null");
-      } else if (g_agent._bridge == null) {
-        originalConsole.log("g_agent._bridge was null");
-      }
-    }
-  };
+const registerLog = (level) => (...args) => { trySend({ mode: 'log', args }); };
 
 const LogCatcher = {
   install() {
@@ -65,21 +48,21 @@ const LogCatcher = {
       log: console.log.bind(console),
     };
 
-    consoleImpl = {
-      error: registerLog("error"),
-      warn: registerLog("warn"),
-      info: registerLog("info"),
-      log: registerLog("log"),
+    console.error = registerLog("error");
+    console.warn = registerLog("warn");
+    console.info = registerLog("info");
+    console.log = registerLog("log");
+
+    const handleError = (e, isFatal) => {
+      try {
+        const stack = parseErrorStack(e?.stack);
+        trySend({ mode: 'error', args: [e.message, stack, isFatal] });
+      } catch (ee) {
+        console.log('Failed to print error: ', ee.message);
+        throw e;
+      }
     };
-
-    console.error = consoleImpl.error;
-    console.warn = consoleImpl.warn;
-    console.info = consoleImpl.info;
-    console.log = consoleImpl.log;
-
-    RCTLog.setWarningHandler((...args) => {
-      consoleImpl.warn(...args);
-    });
+    ErrorUtils.setGlobalHandler(handleError);
   },
 };
 
@@ -110,7 +93,6 @@ function PreviewAppWrapper({ children, ...rest }) {
         });
       });
 
-      LogBox.uninstall();
       LogCatcher.install();
     }
 

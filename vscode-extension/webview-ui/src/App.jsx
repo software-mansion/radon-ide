@@ -131,6 +131,9 @@ function Preview({ previewURL, device, isInspecting }) {
         <div className="phone-content">
           <img
             src={previewURL}
+            style={{
+              cursor: isInspecting ? "crosshair" : "default",
+            }}
             className={`phone-sized phone-screen`}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseUp}
@@ -195,7 +198,18 @@ function App() {
           setPreviewsList(message.previews);
           break;
         case "consoleLog":
-          setLogs((logs) => [...logs, message.payload]);
+          setLogs((logs) => [{ type: "log", text: message.text }, ...logs]);
+          break;
+        case "consoleStack":
+          setLogs((logs) => [
+            {
+              type: "stack",
+              text: message.text,
+              stack: message.stack,
+              isFatal: message.isFatal,
+            },
+            ...logs,
+          ]);
           break;
       }
     };
@@ -321,7 +335,7 @@ function App() {
           display: 'flex',
           justifyContent: 'flex-end',
           flexDirection: 'column',
-          minHeight: expandedLogs ? "280px" : "0px",
+          minHeight: expandedLogs ? "380px" : "0px",
           height: expandedLogs ? "auto" : "0px",
           border: expandedLogs ? "calc(var(--border-width) * 1px) solid var(--dropdown-border)" : "none",
         }}>
@@ -333,7 +347,36 @@ function App() {
           }}>
           {logs.map((log, index) => (
             <div key={index} className="log">
-              {JSON.stringify(log)}
+              {log.type === "stack" ? (
+                <div className="log-stack"
+                  style={{
+                    backgroundColor: log.isFatal ? "red" : "transparent",
+                    padding: "2px",
+                    marginTop: "8px",
+                  }}>
+                  <div className="log-stack-text">{log.text}</div>
+                  {log.stack.map((entry, index) => (
+                    !entry.collapse && (
+                      <div
+                        key={index}
+                        style={{ color: "white", cursor: "pointer", textDecoration: "underline" }}
+                        onClick={() => {
+                          vscode.postMessage({
+                            command: "openFile",
+                            file: entry.file,
+                            lineNumber: entry.lineNumber,
+                            column: entry.column,
+                          });
+                        }}>
+                        <div>{entry.methodName}</div>
+                        <div>{entry.file}:{entry.lineNumber}:{entry.column}</div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              ) : (
+                <div>{log.text}</div>
+              )}
             </div>
           ))}
         </div>

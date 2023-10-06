@@ -1,14 +1,21 @@
+import { useState, useEffect } from "react";
 import { Button } from "react-native";
 import { preview } from "@preview";
 
 export function UglyButton() {
+  const [a, setA] = useState(0);
+  if (a === 1) {
+    useEffect(() => {
+      console.log("useEffect");
+    }, []);
+  }
+
   return (
     <Button
-      title="Bleh"
+      title="Throw error"
       onPress={() => {
-        console.log("Pressed!");
-        console.warn("Warning! Bleh");
-        throw new Error("Bleh");
+        console.log("nice");
+        setA(a + 1);
       }}
     />
   );
