@@ -1,6 +1,13 @@
-import { commands, languages, ExtensionContext } from "vscode";
+import {
+  commands,
+  languages,
+  debug,
+  ExtensionContext,
+  DebugConfigurationProviderTriggerKind,
+} from "vscode";
 import { PreviewsPanel } from "./panels/PreviewsPanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
+import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 
 export function activate(context: ExtensionContext) {
   const showPreviewsPanel = commands.registerCommand(
@@ -8,6 +15,22 @@ export function activate(context: ExtensionContext) {
     (fileName?: string, lineNumber?: number) => {
       PreviewsPanel.render(context, fileName, lineNumber);
     }
+  );
+
+  context.subscriptions.push(
+    debug.registerDebugConfigurationProvider(
+      "com.swmansion.react-native-preview",
+      new DebugConfigProvider(),
+      DebugConfigurationProviderTriggerKind.Dynamic
+    )
+  );
+
+  context.subscriptions.push(
+    debug.registerDebugConfigurationProvider(
+      "pwa-node",
+      new DebugConfigProvider(),
+      DebugConfigurationProviderTriggerKind.Dynamic
+    )
   );
 
   context.subscriptions.push(

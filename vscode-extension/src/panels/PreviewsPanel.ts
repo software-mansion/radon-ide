@@ -8,6 +8,8 @@ import {
   ViewColumn,
   ExtensionContext,
   Range,
+  debug,
+  extensions,
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
@@ -242,6 +244,22 @@ export class PreviewsPanel {
       deviceId: deviceId,
       previewURL: device!.previewURL!,
     });
+
+    await debug.startDebugging(
+      undefined,
+      {
+        type: "com.swmansion.react-native-preview",
+        name: "React Native Preview Debugger",
+        request: "attach",
+        metroPort: this.metro!.port,
+      },
+      {
+        suppressDebugStatusbar: true,
+        suppressDebugView: true,
+        suppressDebugToolbar: true,
+        suppressSaveBeforeStart: true,
+      }
+    );
   }
 
   private inspectElement(xRatio: number, yRatio: number) {
