@@ -3,6 +3,7 @@ import {
   DebugSession,
   InitializedEvent,
   StoppedEvent,
+  Event,
   ContinuedEvent,
   OutputEvent,
   Thread,
@@ -11,8 +12,8 @@ import {
   Breakpoint,
   Source,
   StackFrame,
-} from "vscode-debugadapter";
-import { DebugProtocol } from "vscode-debugprotocol";
+} from "@vscode/debugadapter";
+import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
 
@@ -23,29 +24,20 @@ export class DebugAdapter extends DebugSession {
   private sourceMaps: Array<[string, number, SourceMapConsumer]> = [];
   private stoppedStackFrames: StackFrame[] = [];
 
+  public _yollo = "yollo";
+
   constructor(configuration: DebugConfiguration) {
     super();
     this.configuration = configuration;
     this.connection = new WebSocket(configuration.websocketAddress);
 
     this.connection.on("open", () => {
-      // this.sendEvent(new InitializedEvent());
-      // this.connection.send()
       this.sendCDPMessage("Runtime.enable", {});
       this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
       this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
       this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 });
       this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] });
       this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {});
-
-      // this.configuration.breakpoints.forEach((breakpoint) => {
-      //   this.sendCDPMessage("Debugger.setBreakpointByUrl", {
-      //     lineNumber: breakpoint.line,
-      //     url: breakpoint.url,
-      //     columnNumber: 0,
-      //     condition: "",
-      //   });
-      // });
     });
 
     this.connection.on("close", () => {
@@ -85,7 +77,7 @@ export class DebugAdapter extends DebugSession {
           this.handleDebuggerPaused(message);
           break;
         case "Debugger.resumed":
-          this.sendEvent(new ContinuedEvent(1));
+          this.sendEvent(new ContinuedEvent(this.threads[0].id));
           break;
         case "Runtime.consoleAPICalled":
           this.sendEvent(
@@ -98,42 +90,24 @@ export class DebugAdapter extends DebugSession {
     });
   }
 
-  // private async resolveSoyrceLocation(lineNumber: number, columnNumber: number) {
-  //   let sourceURL = "";
-  //   let sourceLine = lineNumber;
-  //   let sourceColumn = columnNumber;
-  //   this.sourceMaps.forEach(([url, consumer]) => {
-  //     const sources = [];
-  //     consumer.eachMapping((mapping) => {
-  //       sources.push(mapping.source);
-  //     });
-  //     const pos = consumer.originalPositionFor({ line: lineNumber, column: columnNumber });
-  //     if (pos.line != null) {
-  //       sourceURL = consumer.sourceRoot + "/" + pos.source;
-  //       sourceLine = pos.line;
-  //       sourceColumn = pos.column;
-  //     }
-  //   });
-  //   return { sourceURL, sourceLine, sourceColumn };
-  // }
   private findOriginalPosition(scriptId: number, lineNumber: number, columnNumber: number) {
+    let sourceURL: string | null = null;
     let scriptURL = "";
-    let sourceURL = "";
     let sourceLine = lineNumber;
     let sourceColumn = columnNumber;
     this.sourceMaps.forEach(([url, id, consumer]) => {
       if (id === scriptId) {
-        sourceURL = scriptURL = url;
+        scriptURL = url;
 
         const pos = consumer.originalPositionFor({ line: lineNumber, column: columnNumber });
         if (pos.source != null) {
           sourceURL = pos.source;
         }
         if (pos.line != null) {
-          sourceLine = pos.line;
+          sourceLine = pos.line + 1;
         }
         if (pos.column != null) {
-          sourceColumn = pos.column;
+          sourceColumn = pos.column + 1;
         }
       }
     });
@@ -151,12 +125,13 @@ export class DebugAdapter extends DebugSession {
       return new StackFrame(
         index,
         cdpFrame.functionName,
-        new Source(scriptURL, sourceURL),
+        sourceURL ? new Source(scriptURL, sourceURL) : undefined,
         lineNumber,
         columnNumber
       );
     });
     this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id));
+    this.sendEvent(new Event("paused"));
   }
 
   private cdpMessageId = 0;
@@ -286,6 +261,7 @@ export class DebugAdapter extends DebugSession {
     // Implement continuing execution
     await this.sendCDPMessage("Debugger.resume", {});
     this.sendResponse(response);
+    this.sendEvent(new Event("continued"));
   }
 
   protected disconnectRequest(
@@ -295,5 +271,14 @@ export class DebugAdapter extends DebugSession {
     // Implement disconnecting from the debugger
     this.connection.close();
     this.sendResponse(response);
+  }
+
+  protected customRequest(
+    command: string,
+    response: DebugProtocol.Response,
+    args: any,
+    request?: DebugProtocol.Request | undefined
+  ): void {
+    console.log("Custom req", command);
   }
 }

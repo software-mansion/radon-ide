@@ -245,6 +245,20 @@ export class PreviewsPanel {
       previewURL: device!.previewURL!,
     });
 
+    debug.onDidReceiveDebugSessionCustomEvent((e) => {
+      console.log("Custom event", e);
+      if (e.session.configuration.type === "com.swmansion.react-native-preview") {
+        if (e.event === "continued") {
+          this._panel.webview.postMessage({
+            command: "debuggerResumed",
+          });
+        } else if (e.event === "paused") {
+          this._panel.webview.postMessage({
+            command: "debuggerPaused",
+          });
+        }
+      }
+    });
     await debug.startDebugging(
       undefined,
       {
@@ -313,6 +327,9 @@ export class PreviewsPanel {
         switch (command) {
           case "log":
             console.log(`Webview: ${text}`);
+            return;
+          case "debugResume":
+            debug.activeDebugSession?.customRequest("continue");
             return;
           case "changeDevice":
             this.selectDevice(message.deviceId, message.settings);

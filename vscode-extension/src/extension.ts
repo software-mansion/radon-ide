@@ -20,14 +20,30 @@ export function activate(context: ExtensionContext) {
     }
   );
 
-  const startDebuggingSession = commands.registerCommand("RNStudio.startDebuggingSession", () => {
-    debug.startDebugging(workspace.workspaceFolders?.[0], {
-      type: "com.swmansion.react-native-preview",
-      request: "attach",
-      name: "React Native Preview Debugger",
-      metroPort: 8081,
-    });
-  });
+  const startDebuggingSession = commands.registerCommand(
+    "RNStudio.startDebuggingSession",
+    async () => {
+      debug.onDidReceiveDebugSessionCustomEvent((e) => {
+        console.log("Custom event", e);
+        debug.activeDebugSession?.customRequest("yollo");
+      });
+      await debug.startDebugging(
+        workspace.workspaceFolders?.[0],
+        {
+          type: "com.swmansion.react-native-preview",
+          request: "attach",
+          name: "React Native Preview Debugger",
+          metroPort: 8081,
+        },
+        {
+          // suppressDebugStatusbar: true,
+          // suppressDebugView: true,
+          // suppressDebugToolbar: true,
+          // suppressSaveBeforeStart: true,
+        }
+      );
+    }
+  );
   context.subscriptions.push(startDebuggingSession);
 
   context.subscriptions.push(

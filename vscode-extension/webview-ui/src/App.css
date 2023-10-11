@@ -55,6 +55,15 @@ main {
   top: 0;
 }
 
+.phone-debug-overlay {
+  position: absolute;
+  top: 0;
+  background-color: rgba(0,0,0,0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .phone-content-loading {
   display: flex;
   justify-content: center;

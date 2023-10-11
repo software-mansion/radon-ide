@@ -94,7 +94,7 @@ function sendTouch(event, type) {
   });
 }
 
-function Preview({ previewURL, device, isInspecting }) {
+function Preview({ previewURL, device, isInspecting, debugPaused }) {
   const [isPressing, setIsPressing] = useState(false);
   function handleMouseMove(e) {
     e.preventDefault();
@@ -137,6 +137,21 @@ function Preview({ previewURL, device, isInspecting }) {
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
           />
+          {debugPaused && (
+            <div className="phone-sized phone-debug-overlay">
+              Paused in debugger
+              <br />
+              <VSCodeButton
+                appearance={"primary"}
+                onClick={() => {
+                  vscode.postMessage({
+                    command: "debugResume",
+                  });
+                }}>
+                ⏵
+              </VSCodeButton>
+            </div>
+          )}
           <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
         </div>
       )}
@@ -177,6 +192,7 @@ function App() {
   });
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
+  const [debugPaused, setDebugPaused] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [previewsList, setPreviewsList] = useState([]);
   useEffect(() => {
@@ -190,6 +206,10 @@ function App() {
           setPreviewURL(message.previewURL);
         case "previewsList":
           setPreviewsList(message.previews);
+        case "debugPaused":
+          setDebugPaused(true);
+        case "debugResumed":
+          setDebugPaused(false);
       }
     };
     window.addEventListener("message", listener);
@@ -240,7 +260,12 @@ function App() {
         )}
       </div>
 
-      <Preview isInspecting={isInspecing} previewURL={previewURL} device={device} />
+      <Preview
+        isInspecting={isInspecing}
+        previewURL={previewURL}
+        device={device}
+        debugPaused={debugPaused}
+      />
       <div class="button-group">
         <VSCodeDropdown
           onChange={(e) => {
