@@ -2,12 +2,15 @@ import {
   commands,
   languages,
   debug,
+  workspace,
   ExtensionContext,
+  DebugSession,
   DebugConfigurationProviderTriggerKind,
 } from "vscode";
 import { PreviewsPanel } from "./panels/PreviewsPanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
+import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
 
 export function activate(context: ExtensionContext) {
   const showPreviewsPanel = commands.registerCommand(
@@ -16,6 +19,16 @@ export function activate(context: ExtensionContext) {
       PreviewsPanel.render(context, fileName, lineNumber);
     }
   );
+
+  const startDebuggingSession = commands.registerCommand("RNStudio.startDebuggingSession", () => {
+    debug.startDebugging(workspace.workspaceFolders?.[0], {
+      type: "com.swmansion.react-native-preview",
+      request: "attach",
+      name: "React Native Preview Debugger",
+      metroPort: 8081,
+    });
+  });
+  context.subscriptions.push(startDebuggingSession);
 
   context.subscriptions.push(
     debug.registerDebugConfigurationProvider(
@@ -30,6 +43,13 @@ export function activate(context: ExtensionContext) {
       "pwa-node",
       new DebugConfigProvider(),
       DebugConfigurationProviderTriggerKind.Dynamic
+    )
+  );
+
+  context.subscriptions.push(
+    debug.registerDebugAdapterDescriptorFactory(
+      "com.swmansion.react-native-preview",
+      new DebugAdapterDescriptorFactory()
     )
   );
 

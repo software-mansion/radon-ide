@@ -15,6 +15,28 @@
       {
         "command": "RNStudio.showPreviewsPanel",
         "title": "RNStudio: Open Previews"
+      },
+      {
+        "command": "RNStudio.startDebuggingSession",
+        "title": "RNStudio: Start Debugger"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "typescript"
+      },
+      {
+        "language": "javascript"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "com.swmansion.react-native-preview",
+        "label": "React Native Preview",
+        "languages": [
+          "javascript",
+          "typescript"
+        ]
       }
     ]
   },
@@ -46,6 +68,9 @@
     "@vscode/codicons": "^0.0.33",
     "chrome-remote-interface": "^0.33.0",
     "execa": "^5.1.1",
+    "source-map": "^0.7.4",
+    "@vscode/debugadapter": "^1.51.0",
+    "@vscode/debugprotocol": "^1.51.0",
     "xdl": "^60.0.10"
   }
 }
