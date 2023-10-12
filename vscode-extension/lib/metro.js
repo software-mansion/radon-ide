@@ -23,11 +23,11 @@ const runtimePath = path.join(extensionLib, "runtime.js");
 const previewPath = path.join(extensionLib, "preview.js");
 
 const ctx = require(nodeModules + "@react-native-community/cli-config").default(appRoot);
-const loadMetroConfig = require(nodeModules +
-  "@react-native-community/cli-plugin-metro/build/tools/loadMetroConfig.js").default;
+const loadMetroConfig = require(
+  nodeModules + "@react-native-community/cli-plugin-metro/build/tools/loadMetroConfig.js"
+).default;
 const metro = require(nodeModules + "metro");
 const metroCore = require(nodeModules + "metro-core");
-const { InspectorProxy } = require(nodeModules + "metro-inspector-proxy");
 const cliServerApi = require(nodeModules + "@react-native-community/cli-server-api");
 // const cliTools = require(nodeModules + "@react-native-community/cli-tools").default;
 
@@ -83,10 +83,9 @@ async function runServer(_argv, ctx, args) {
   // no idea why this is required / not default?
   metroConfig.resolver.nodeModulesPaths = [nodeModules];
 
-  process.env.RNSZTUDIO_ORIGINAL_BABEL_TRANSFORMER_PATH =
-    metroConfig.transformer.babelTransformerPath;
+  process.env.RNSZTUDIO_ORIGINAL_BABEL_TRANSFORMER_PATH = metroConfig.transformer.babelTransformerPath;
   metroConfig.transformer.babelTransformerPath = require.resolve(
-    path.join(extensionLib, "./babel_transformer.js")
+    path.join(extensionLib, './babel_transformer.js')
   );
 
   if (args.assetPlugins) {
@@ -108,43 +107,6 @@ async function runServer(_argv, ctx, args) {
     }
     return middleware.use(metroMiddleware);
   };
-
-  metroConfig.server.runInspectorProxy = false;
-  const inspectorProxy = new InspectorProxy();
-
-  Object.assign(
-    websocketEndpoints,
-    inspectorProxy.createWebSocketListeners({
-      address: () => {
-        return { family: "IPv6" };
-      },
-    })
-  );
-  websocketEndpoints["/inspector/device"].on("connection", () => {
-    inspectorProxy._devices.forEach((device) => {
-      const interceptMessageFromDebugger_orig = device._interceptMessageFromDebugger.bind(device);
-      device._interceptMessageFromDebugger = (request, debuggerInfo, socket) => {
-        if (request.method === "Debugger.getPossibleBreakpoints") {
-          socket.send(
-            JSON.stringify({
-              id: request.id,
-              result: { locations: [] },
-            })
-          );
-          return true;
-        } else if (request.method === "Runtime.callFunctionOn") {
-          socket.send(
-            JSON.stringify({
-              id: request.id,
-              result: {},
-            })
-          );
-          return true;
-        }
-        return interceptMessageFromDebugger_orig(request, debuggerInfo, socket);
-      };
-    });
-  });
 
   const serverInstance = await metro.runServer(metroConfig, {
     host: args.host,
