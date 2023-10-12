@@ -131,7 +131,7 @@ export class DebugAdapter extends DebugSession {
       );
     });
     this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id));
-    this.sendEvent(new Event("paused"));
+    this.sendEvent(new Event("rnp_paused"));
   }
 
   private cdpMessageId = 0;
@@ -261,7 +261,7 @@ export class DebugAdapter extends DebugSession {
     // Implement continuing execution
     await this.sendCDPMessage("Debugger.resume", {});
     this.sendResponse(response);
-    this.sendEvent(new Event("continued"));
+    this.sendEvent(new Event("rnp_continued"));
   }
 
   protected disconnectRequest(

@@ -248,11 +248,11 @@ export class PreviewsPanel {
     debug.onDidReceiveDebugSessionCustomEvent((e) => {
       console.log("Custom event", e);
       if (e.session.configuration.type === "com.swmansion.react-native-preview") {
-        if (e.event === "continued") {
+        if (e.event === "rnp_continued") {
           this._panel.webview.postMessage({
             command: "debuggerResumed",
           });
-        } else if (e.event === "paused") {
+        } else if (e.event === "rnp_paused") {
           this._panel.webview.postMessage({
             command: "debuggerPaused",
           });

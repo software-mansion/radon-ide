@@ -204,12 +204,16 @@ function App() {
       switch (message.command) {
         case "appReady":
           setPreviewURL(message.previewURL);
+          break;
         case "previewsList":
           setPreviewsList(message.previews);
-        case "debugPaused":
+          break;
+        case "debuggerPaused":
           setDebugPaused(true);
-        case "debugResumed":
+          break;
+        case "debuggerResumed":
           setDebugPaused(false);
+          break;
       }
     };
     window.addEventListener("message", listener);
