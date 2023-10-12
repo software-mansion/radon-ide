@@ -34,6 +34,7 @@ export class Metro {
         cwd: this.appRoot,
         env: {
           ...process.env,
+          // DEBUG: "Metro:InspectorProxy",
           RCT_METRO_PORT: this.port,
         },
       }

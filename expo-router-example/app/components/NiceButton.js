@@ -1,5 +1,5 @@
-import { Button } from "react-native";
-import { preview } from "@preview";
+import { Button } from 'react-native';
+import { preview } from '@preview';
 
 export function NiceButton({ color }) {
   return (
@@ -7,9 +7,9 @@ export function NiceButton({ color }) {
       title="Write some logs"
       color={color}
       onPress={() => {
-        console.log("Nice button pressed (log)");
-        console.warn("Nice button pressed (warn)");
-        throw new Error("from nice button");
+        console.log('Nice button pressed (log)');
+        console.warn('Nice button pressed (warn)');
+        throw new Error('from nice button');
       }}
     />
   );

@@ -176,7 +176,12 @@ export class DebugAdapter extends DebugSession {
       consumer.eachMapping((mapping) => {
         sources.push(mapping.source);
       });
-      const pos = consumer.generatedPositionFor({ source, line, column });
+      const pos = consumer.generatedPositionFor({
+        source,
+        line,
+        column,
+        bias: SourceMapConsumer.LEAST_UPPER_BOUND,
+      });
       if (pos.line != null) {
         originalSourceURL = sourceURL;
         position = pos;
@@ -184,7 +189,7 @@ export class DebugAdapter extends DebugSession {
     });
     if (position.line != null) {
       const result = await this.sendCDPMessage("Debugger.setBreakpointByUrl", {
-        lineNumber: position.line,
+        lineNumber: position.line - 1,
         url: originalSourceURL,
         columnNumber: position.column,
         condition: "",
@@ -259,7 +264,7 @@ export class DebugAdapter extends DebugSession {
     args: DebugProtocol.ContinueArguments
   ): Promise<void> {
     // Implement continuing execution
-    await this.sendCDPMessage("Debugger.resume", {});
+    await this.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
     this.sendResponse(response);
     this.sendEvent(new Event("rnp_continued"));
   }

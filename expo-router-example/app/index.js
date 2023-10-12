@@ -11,7 +11,7 @@ export default function Home() {
     <View
       ref={ref}
       style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Link href="/details">Go to details</Link>
+      <Link href="/details">Go to detailz</Link>
       <NiceButton
         onPress={() => {
           alert('yoo');
