@@ -131,6 +131,9 @@ function Preview({ previewURL, device, isInspecting, debugPaused }) {
         <div className="phone-content">
           <img
             src={previewURL}
+            style={{
+              cursor: isInspecting ? "crosshair" : "default",
+            }}
             className={`phone-sized phone-screen`}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseUp}
@@ -157,10 +160,10 @@ function Preview({ previewURL, device, isInspecting, debugPaused }) {
       )}
       {!previewURL && (
         <div className="phone-content">
-          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
           <div className="phone-sized phone-screen phone-content-loading">
             <VSCodeProgressRing />
           </div>
+          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
         </div>
       )}
     </div>
@@ -194,10 +197,13 @@ function App() {
   const [isInspecing, setIsInspecting] = useState(false);
   const [debugPaused, setDebugPaused] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [expandedLogs, setExpandedLogs] = useState(false);
   const [previewsList, setPreviewsList] = useState([]);
   useEffect(() => {
     setCssPropertiesForDevice(device);
-
+  }, [device]);
+  useEffect(() => {
     const listener = (event) => {
       const message = event.data;
       console.log("MSG", message);
@@ -214,6 +220,20 @@ function App() {
         case "debuggerResumed":
           setDebugPaused(false);
           break;
+        case "consoleLog":
+          setLogs((logs) => [{ type: "log", text: message.text }, ...logs]);
+          break;
+        case "consoleStack":
+          setLogs((logs) => [
+            {
+              type: "stack",
+              text: message.text,
+              stack: message.stack,
+              isFatal: message.isFatal,
+            },
+            ...logs,
+          ]);
+          break;
       }
     };
     window.addEventListener("message", listener);
@@ -228,7 +248,7 @@ function App() {
   }, []);
   return (
     <main>
-      <div style={{ margin: 10 }}>
+      <div className="button-group" style={{ marginBottom: 0 }}>
         <VSCodeButton
           appearance={isInspecing ? "primary" : "secondary"}
           onClick={() => {
@@ -238,7 +258,9 @@ function App() {
               });
             }
             setIsInspecting(!isInspecing);
-          }}>
+          }}
+        >
+          <span slot="start" class="codicon codicon-inspect" />
           Inspect
         </VSCodeButton>
         <VSCodeButton
@@ -248,7 +270,9 @@ function App() {
               command: isPreviewing ? "stopPreview" : "startPreview",
             });
             setIsPreviewing(!isPreviewing);
-          }}>
+          }}
+        >
+          <span slot="start" class="codicon codicon-arrow-swap" />
           Sync
         </VSCodeButton>
         {isPreviewing && false && previewsList.length > 0 && (
@@ -283,6 +307,7 @@ function App() {
               });
             }
           }}>
+          <span slot="start" class="codicon codicon-device-mobile" />
           {devices.map((device) => (
             <VSCodeOption key={device.id} value={device.id}>
               {device.name}
@@ -300,6 +325,7 @@ function App() {
               deviceId: e.target.value,
             });
           }}>
+          <span slot="start" class="codicon codicon-color-mode" />
           <VSCodeOption value={"light"}>Light</VSCodeOption>
           <VSCodeOption value={"dark"}>Dark</VSCodeOption>
         </VSCodeDropdown>
@@ -314,6 +340,7 @@ function App() {
               deviceId: e.target.value,
             });
           }}>
+          <span slot="start" class="codicon codicon-text-size" />
           <VSCodeOption value={"xsmall"}>Extra small</VSCodeOption>
           <VSCodeOption value={"small"}>Small</VSCodeOption>
           <VSCodeOption value={"normal"}>Normal</VSCodeOption>
@@ -322,6 +349,65 @@ function App() {
           <VSCodeOption value={"xxlarge"}>XX large</VSCodeOption>
           <VSCodeOption value={"xxxlarge"}>XXX large</VSCodeOption>
         </VSCodeDropdown>
+        <VSCodeButton
+          appearance={expandedLogs ? "primary" : "secondary"}
+          onClick={() => setExpandedLogs(!expandedLogs)}>
+          <span slot="start" class="codicon codicon-output" />
+          Logs
+        </VSCodeButton>
+      </div>
+      <div
+        style={{
+          width: 'calc(100% - 4px)',
+          flex: expandedLogs ? '1 0 0%' : '0 0 0px',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          flexDirection: 'column',
+          minHeight: expandedLogs ? "380px" : "0px",
+          height: expandedLogs ? "auto" : "0px",
+          border: expandedLogs ? "calc(var(--border-width) * 1px) solid var(--dropdown-border)" : "none",
+        }}>
+        <div
+          className="logs"
+          style={{
+            overflowY: "scroll",
+            height: "100%",
+          }}>
+          {logs.map((log, index) => (
+            <div key={index} className="log">
+              {log.type === "stack" ? (
+                <div className="log-stack"
+                  style={{
+                    backgroundColor: log.isFatal ? "red" : "transparent",
+                    padding: "2px",
+                    marginTop: "8px",
+                  }}>
+                  <div className="log-stack-text">{log.text}</div>
+                  {log.stack.map((entry, index) => (
+                    !entry.collapse && (
+                      <div
+                        key={index}
+                        style={{ color: "white", cursor: "pointer", marginBottom: '8px', }}
+                        onClick={() => {
+                          vscode.postMessage({
+                            command: "openFile",
+                            file: entry.fullPath,
+                            lineNumber: entry.lineNumber,
+                            column: entry.column,
+                          });
+                        }}>
+                        <div>{entry.methodName}</div>
+                        <div style={{ marginLeft: "24px" }}>{entry.file}:{entry.lineNumber}:{entry.column}</div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              ) : (
+                <div>{log.text}</div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </main>
   );

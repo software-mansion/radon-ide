@@ -17,6 +17,10 @@
         "title": "RNStudio: Open Previews"
       },
       {
+        "command": "RNStudio.reloadMetro",
+        "title": "RNStudio: Reload Metro"
+      },
+      {
         "command": "RNStudio.startDebuggingSession",
         "title": "RNStudio: Start Debugger"
       }
@@ -65,7 +69,6 @@
   },
   "dependencies": {
     "@react-native-community/cli": "^11.3.7",
-    "@vscode/codicons": "^0.0.33",
     "chrome-remote-interface": "^0.33.0",
     "execa": "^5.1.1",
     "source-map": "^0.7.4",

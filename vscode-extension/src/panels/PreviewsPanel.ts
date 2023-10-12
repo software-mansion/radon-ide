@@ -114,6 +114,7 @@ export class PreviewsPanel {
           localResourceRoots: [
             Uri.joinPath(context.extensionUri, "out"),
             Uri.joinPath(context.extensionUri, "webview-ui/build"),
+            Uri.joinPath(context.extensionUri, "webview-ui/node_modules"),
             Uri.parse("http://localhost:8060"),
           ],
           retainContextWhenHidden: true,
@@ -149,9 +150,8 @@ export class PreviewsPanel {
     // The JS file from the React build output
     const scriptUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.js"]);
     const baseUri = getUri(webview, extensionUri, ["webview-ui", "build"]);
-    const codiconsUri = webview.asWebviewUri(
-      Uri.joinPath(extensionUri, "node_modules", "@vscode/codicons", "dist", "codicon.css")
-    );
+
+    const codiconsUri = getUri(webview, extensionUri, ["webview-ui", "node_modules", "@vscode/codicons", "dist", "codicon.css"]);
 
     const nonce = getNonce();
 
@@ -162,7 +162,7 @@ export class PreviewsPanel {
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
           <link rel="stylesheet" href="${codiconsUri}" >
           <base href="${baseUri}">
@@ -200,6 +200,15 @@ export class PreviewsPanel {
     console.log("Metro started");
   }
 
+  public static reloadMetro() {
+    if (PreviewsPanel.currentPanel) {
+      PreviewsPanel.currentPanel.metro?.reload();
+    } else {
+      // warning
+
+    }
+  }
+
   private async changeDeviceSettings(deviceId: string, settings: DeviceSettings) {
     await this.device?.changeSettings(settings);
   }
@@ -217,6 +226,44 @@ export class PreviewsPanel {
       };
       this.devtools?.addListener(listener);
     });
+
+    let workspaceDir = workspace.workspaceFolders?.[0]?.uri?.fsPath;
+    let workspaceRegex = new RegExp(`^${workspaceDir}`);
+    const logListener = (event: string, payload: any) => {
+      if (event === "rnp_consoleLog" && device === this.device) {
+        if (payload.mode == 'error') {
+          let [msg, stack, isFatal] = payload.args;
+          // post!
+          fetch(`http://localhost:${this.metro!.port}/symbolicate`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ stack }),
+          }).then((res) => res.json())
+            .then((data) => {
+              this._panel.webview.postMessage({
+                command: "consoleStack",
+                text: msg,
+                stack:
+                  data.stack.map(entry => (
+                    {
+                      ...entry,
+                      file: entry.file.replace(workspaceRegex, '.'),
+                      fullPath: entry.file,
+                    }
+                  )),
+                isFatal,
+              });
+            });
+        } else {
+          this._panel.webview.postMessage({
+            command: "consoleLog",
+            text: JSON.stringify(payload.args),
+          });
+        }
+      }
+    };
 
     if (deviceId.startsWith("ios")) {
       device = new IosSimulatorDevice();
@@ -239,6 +286,8 @@ export class PreviewsPanel {
     const waitForPreview = this.device!.startPreview();
 
     await Promise.all([waitForAppReady, waitForPreview]);
+    this.devtools?.addListener(logListener);
+
     this._panel.webview.postMessage({
       command: "appReady",
       deviceId: deviceId,
@@ -342,6 +391,9 @@ export class PreviewsPanel {
             return;
           case "touch":
             this.device?.sendTouch(message.xRatio, message.yRatio, message.type);
+            return;
+          case "openFile":
+            openFileAtPosition(message.file, message.lineNumber, message.column);
             return;
           case "inspect":
             this.inspectElement(message.xRatio, message.yRatio);
