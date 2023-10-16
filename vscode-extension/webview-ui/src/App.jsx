@@ -197,9 +197,11 @@ function App() {
   const [isInspecing, setIsInspecting] = useState(false);
   const [debugPaused, setDebugPaused] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [logs, setLogs] = useState([]);
   const [expandedLogs, setExpandedLogs] = useState(false);
   const [previewsList, setPreviewsList] = useState([]);
+  const [appURL, setAppURL] = useState('/');
   useEffect(() => {
     setCssPropertiesForDevice(device);
   }, [device]);
@@ -220,9 +222,9 @@ function App() {
         case "debuggerResumed":
           setDebugPaused(false);
           break;
-        case "consoleLog":
-          setLogs((logs) => [{ type: "log", text: message.text }, ...logs]);
-          break;
+        // case "consoleLog":
+        //   setLogs((logs) => [{ type: "log", text: message.text }, ...logs]);
+        //   break;
         case "consoleStack":
           setLogs((logs) => [
             {
@@ -233,6 +235,9 @@ function App() {
             },
             ...logs,
           ]);
+          break;
+        case "appUrlChanged":
+          setAppURL(message.url);
           break;
       }
     };
@@ -275,6 +280,18 @@ function App() {
           <span slot="start" class="codicon codicon-arrow-swap" />
           Sync
         </VSCodeButton>
+        <VSCodeButton
+          appearance={isFollowing ? "primary" : "secondary"}
+          onClick={() => {
+            vscode.postMessage({
+              command: isFollowing ? "stopFollowing" : "startFollowing",
+            });
+            setIsFollowing(!isFollowing);
+          }}
+        >
+          <span slot="start" class="codicon codicon-arrow-right" />
+          Follow
+        </VSCodeButton>
         {isPreviewing && false && previewsList.length > 0 && (
           <PreviewsList
             previews={previewsList}
@@ -286,6 +303,25 @@ function App() {
             }}
           />
         )}
+      </div>
+
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "400px",
+          background: "var(--dropdown-background)",
+          height: "16px",
+          textAlign: "start",
+          verticalAlign: "middle",
+          color: "var(--dropdown-foreground)",
+          fontSize: "16px",
+          margin: "8px",
+          padding: "8px 0",
+          paddingLeft: "8px",
+          fontFamily: "var(--font-family)",
+        }}
+      >
+        {appURL}
       </div>
 
       <Preview

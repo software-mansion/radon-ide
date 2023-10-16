@@ -1,8 +1,8 @@
 require("expo-router/entry");
-const { useContext, useEffect, useRef } = require("react");
+const { useContext, useEffect, useRef, useSyncExternalStore } = require("react");
 const { LogBox, AppRegistry, RootTagContext, View } = require("react-native");
-import RCTLog from "react-native/Libraries/Utilities/RCTLog";
 const { useRouter } = require("expo-router");
+const { store } = require("expo-router/src/global-state/router-store");
 
 global.__fbDisableExceptionsManager = true;
 
@@ -17,6 +17,7 @@ const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
 let isLogCatcherInstalled = false;
 let originalConsole;
 var g_agent;
+let rnsz_fileRouteMap = {};
 
 const trySend = (...args) => {
   if (g_agent != null && g_agent._bridge != null) {
@@ -66,6 +67,32 @@ const LogCatcher = {
   },
 };
 
+
+function updateUrlInExtension(agent, href) {
+  if (!agent) {
+    return;
+  };
+
+  let url = href['pathname'];
+  if (href['params'] && Object.keys(href['params']).length > 0) {
+    url += '?' + Object.keys(href['params']).map((key) => {
+      const value = href['params'][key];
+      return `${key}=${JSON.stringify(value)}`;
+    }).join('&');
+  }
+
+  agent._bridge.send("rnp_appUrlChanged", { url });
+};
+
+function updateFileRouteMap(filename) {
+  const snapshot = store.routeInfoSnapshot();
+
+  rnsz_fileRouteMap[filename] = {
+    pathname: snapshot.pathname,
+    params: Object.assign({}, snapshot.params),
+  }
+};
+
 function PreviewAppWrapper({ children, ...rest }) {
   console.log("PreviewAppWrapper");
   const rootTag = useContext(RootTagContext);
@@ -73,11 +100,23 @@ function PreviewAppWrapper({ children, ...rest }) {
   const appReadyEventSent = useRef(false);
   const { push } = useRouter();
 
+  const routeInfo = useSyncExternalStore(
+    store.subscribeToRootState,
+    store.routeInfoSnapshot,
+    store.routeInfoSnapshot,
+  );
+
+  const pathname = routeInfo?.pathname;
+  const params = routeInfo?.params;
+
+  useEffect(() => {
+    updateUrlInExtension(agentRef.current, { pathname, params });
+  }, [pathname, params]);
+
   useEffect(() => {
     function _attachToDevtools(agent) {
       agentRef.current = agent;
       g_agent = agent;
-      console.log("agnet set")
       agent._bridge.addListener("rnp_openRouterLink", (payload) => {
         push(payload.href);
       });
@@ -91,6 +130,17 @@ function PreviewAppWrapper({ children, ...rest }) {
           rootTag,
           initialProps: {},
         });
+      });
+
+      agent._bridge.addListener("rnp_editorFileChanged", (payload) => {
+        if (payload.followEnabled) {
+          const lastRouteForEditorFile = rnsz_fileRouteMap[payload.filename];
+          if (lastRouteForEditorFile != null) {
+            push(lastRouteForEditorFile);
+          }
+        } else {
+          updateFileRouteMap(payload.filename);
+        }
       });
 
       LogBox.uninstall();

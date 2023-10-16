@@ -74,6 +74,7 @@ export class PreviewsPanel {
   private device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
   private devtools: Devtools | undefined;
   private previewEnabled = false;
+  private followEnabled = false;
   private lastEditorFilename: string | undefined;
   private metro: Metro | undefined;
   private iOSBuild: Promise<{ appPath: string; bundleID: string }> | undefined;
@@ -265,6 +266,15 @@ export class PreviewsPanel {
       }
     };
 
+    const appURLListener = (event: string, payload: any) => {
+      if (event === "rnp_appUrlChanged" && device === this.device) {
+        this._panel.webview.postMessage({
+          command: "appUrlChanged",
+          url: payload.url,
+        });
+      }
+    };
+
     if (deviceId.startsWith("ios")) {
       device = new IosSimulatorDevice();
       this.device = device;
@@ -287,6 +297,7 @@ export class PreviewsPanel {
 
     await Promise.all([waitForAppReady, waitForPreview]);
     this.devtools?.addListener(logListener);
+    this.devtools?.addListener(appURLListener);
 
     this._panel.webview.postMessage({
       command: "appReady",
@@ -407,6 +418,12 @@ export class PreviewsPanel {
           case "startPreview":
             this.startPreview();
             return;
+          case "stopFollowing":
+            this.followEnabled = false;
+            return;
+          case "startFollowing":
+            this.followEnabled = true;
+            return;
           case "selectPreview":
             this.selectPreview(message.appKey);
             return;
@@ -473,6 +490,7 @@ export class PreviewsPanel {
   private onActiveFileChange(filename) {
     console.log("LastEditor", filename);
     this.lastEditorFilename = filename;
+    this.devtools?.send("rnp_editorFileChanged", { filename, followEnabled: this.followEnabled });
     if (this.previewEnabled) {
       this.startPreview();
     }
