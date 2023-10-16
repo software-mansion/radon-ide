@@ -260,7 +260,13 @@ export class PreviewsPanel {
         } else {
           this._panel.webview.postMessage({
             command: "consoleLog",
-            text: JSON.stringify(payload.args),
+            // text: JSON.stringify(payload.args),
+            text: payload.args.map((arg) => {
+              if (typeof arg === "object") {
+                return JSON.stringify(arg);
+              }
+              return arg;
+            }).join(" "),
           });
         }
       }
