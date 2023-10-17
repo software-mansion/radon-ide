@@ -6,8 +6,8 @@ const { store } = require("expo-router/src/global-state/router-store");
 
 global.__fbDisableExceptionsManager = true;
 
-const parseErrorStack = require('react-native/Libraries/Core/Devtools/parseErrorStack');
-const ErrorUtils = require('react-native/Libraries/vendor/core/ErrorUtils');
+const parseErrorStack = require("react-native/Libraries/Core/Devtools/parseErrorStack");
+const ErrorUtils = require("react-native/Libraries/vendor/core/ErrorUtils");
 
 global.rnsz_previews ||= new Map();
 
@@ -19,20 +19,29 @@ let originalConsole;
 var g_agent;
 let rnsz_fileRouteMap = {};
 
-const trySend = (...args) => {
+const trySend = (type, args, stack) => {
+  if (!stack) {
+    const error = new Error();
+    // take off the top two lines of the stack, which just point to this file
+    stack = parseErrorStack(error.stack).slice(2);
+  }
   if (g_agent != null && g_agent._bridge != null) {
-    g_agent._bridge.send("rnp_consoleLog", ...args);
+    g_agent._bridge.send("rnp_consoleLog", { type, args, stack });
   } else {
-    originalConsole[level](...args);
+    originalConsole[type](...args);
     if (g_agent == null) {
       originalConsole.log("g_agent was null");
     } else if (g_agent._bridge == null) {
       originalConsole.log("g_agent._bridge was null");
     }
   }
-}
+};
 
-const registerLog = (level) => (...args) => { trySend({ mode: 'log', args }); };
+const registerLog =
+  (level) =>
+  (...args) => {
+    trySend(level, args);
+  };
 
 const LogCatcher = {
   install() {
@@ -57,9 +66,9 @@ const LogCatcher = {
     const handleError = (e, isFatal) => {
       try {
         const stack = parseErrorStack(e?.stack);
-        trySend({ mode: 'error', args: [e.message, stack, isFatal] });
+        trySend(isFatal ? "fatalException" : "uncaughtException", e.message, stack);
       } catch (ee) {
-        console.log('Failed to print error: ', ee.message);
+        console.log("Failed to print error: ", ee.message);
         throw e;
       }
     };
@@ -67,22 +76,25 @@ const LogCatcher = {
   },
 };
 
-
 function updateUrlInExtension(agent, href) {
   if (!agent) {
     return;
-  };
+  }
 
-  let url = href['pathname'];
-  if (href['params'] && Object.keys(href['params']).length > 0) {
-    url += '?' + Object.keys(href['params']).map((key) => {
-      const value = href['params'][key];
-      return `${key}=${JSON.stringify(value)}`;
-    }).join('&');
+  let url = href["pathname"];
+  if (href["params"] && Object.keys(href["params"]).length > 0) {
+    url +=
+      "?" +
+      Object.keys(href["params"])
+        .map((key) => {
+          const value = href["params"][key];
+          return `${key}=${JSON.stringify(value)}`;
+        })
+        .join("&");
   }
 
   agent._bridge.send("rnp_appUrlChanged", { url });
-};
+}
 
 function updateFileRouteMap(filename) {
   const snapshot = store.routeInfoSnapshot();
@@ -90,8 +102,8 @@ function updateFileRouteMap(filename) {
   rnsz_fileRouteMap[filename] = {
     pathname: snapshot.pathname,
     params: Object.assign({}, snapshot.params),
-  }
-};
+  };
+}
 
 function PreviewAppWrapper({ children, ...rest }) {
   console.log("PreviewAppWrapper");
@@ -103,7 +115,7 @@ function PreviewAppWrapper({ children, ...rest }) {
   const routeInfo = useSyncExternalStore(
     store.subscribeToRootState,
     store.routeInfoSnapshot,
-    store.routeInfoSnapshot,
+    store.routeInfoSnapshot
   );
 
   const pathname = routeInfo?.pathname;

@@ -9,6 +9,7 @@ import {
   ExtensionContext,
   Range,
   debug,
+  commands,
   extensions,
 } from "vscode";
 import { getUri } from "../utilities/getUri";
@@ -152,7 +153,13 @@ export class PreviewsPanel {
     const scriptUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.js"]);
     const baseUri = getUri(webview, extensionUri, ["webview-ui", "build"]);
 
-    const codiconsUri = getUri(webview, extensionUri, ["webview-ui", "node_modules", "@vscode/codicons", "dist", "codicon.css"]);
+    const codiconsUri = getUri(webview, extensionUri, [
+      "webview-ui",
+      "node_modules",
+      "@vscode/codicons",
+      "dist",
+      "codicon.css",
+    ]);
 
     const nonce = getNonce();
 
@@ -206,7 +213,6 @@ export class PreviewsPanel {
       PreviewsPanel.currentPanel.metro?.reload();
     } else {
       // warning
-
     }
   }
 
@@ -232,43 +238,8 @@ export class PreviewsPanel {
     let workspaceRegex = new RegExp(`^${workspaceDir}`);
     const logListener = (event: string, payload: any) => {
       if (event === "rnp_consoleLog" && device === this.device) {
-        if (payload.mode == 'error') {
-          let [msg, stack, isFatal] = payload.args;
-          // post!
-          fetch(`http://localhost:${this.metro!.port}/symbolicate`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ stack }),
-          }).then((res) => res.json())
-            .then((data) => {
-              this._panel.webview.postMessage({
-                command: "consoleStack",
-                text: msg,
-                stack:
-                  data.stack.map(entry => (
-                    {
-                      ...entry,
-                      file: entry.file.replace(workspaceRegex, '.'),
-                      fullPath: entry.file,
-                    }
-                  )),
-                isFatal,
-              });
-            });
-        } else {
-          this._panel.webview.postMessage({
-            command: "consoleLog",
-            // text: JSON.stringify(payload.args),
-            text: payload.args.map((arg) => {
-              if (typeof arg === "object") {
-                return JSON.stringify(arg);
-              }
-              return arg;
-            }).join(" "),
-          });
-        }
+        debug.activeDebugSession?.customRequest("rnp_consoleLog", payload);
+        this._panel.webview.postMessage({ command: "logEvent", type: payload.type });
       }
     };
 
@@ -432,6 +403,9 @@ export class PreviewsPanel {
             return;
           case "selectPreview":
             this.selectPreview(message.appKey);
+            return;
+          case "openLogs":
+            commands.executeCommand("workbench.panel.repl.view.focus");
             return;
         }
       },

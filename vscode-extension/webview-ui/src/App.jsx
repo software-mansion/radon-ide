@@ -191,14 +191,16 @@ function LogPanel({ expandedLogs, logs }) {
   return (
     <div
       style={{
-        width: 'calc(100% - 4px)',
-        flex: expandedLogs ? '1 0 0%' : '0 0 0px',
-        display: 'flex',
-        justifyContent: 'flex-end',
-        flexDirection: 'column',
+        width: "calc(100% - 4px)",
+        flex: expandedLogs ? "1 0 0%" : "0 0 0px",
+        display: "flex",
+        justifyContent: "flex-end",
+        flexDirection: "column",
         minHeight: expandedLogs ? "380px" : "0px",
         height: expandedLogs ? "auto" : "0px",
-        border: expandedLogs ? "calc(var(--border-width) * 1px) solid var(--dropdown-border)" : "none",
+        border: expandedLogs
+          ? "calc(var(--border-width) * 1px) solid var(--dropdown-border)"
+          : "none",
       }}>
       <div
         className="logs"
@@ -209,35 +211,39 @@ function LogPanel({ expandedLogs, logs }) {
         {logs.map((log, index) => (
           <div key={index} className="log">
             {log.type === "stack" ? (
-              <div className="log-stack"
+              <div
+                className="log-stack"
                 style={{
                   backgroundColor: log.isFatal ? "red" : "transparent",
                   padding: "2px",
                   marginTop: "8px",
                 }}>
                 <div className="log-stack-text">{log.text}</div>
-                {log.stack.map((entry, index) => (
-                  !entry.collapse && (
-                    <div
-                      key={index}
-                      style={{ color: "white", cursor: "pointer", marginBottom: '8px', }}
-                      onClick={() => {
-                        vscode.postMessage({
-                          command: "openFile",
-                          file: entry.fullPath,
-                          lineNumber: entry.lineNumber,
-                          column: entry.column,
-                        });
-                      }}>
-                      <div>{entry.methodName}</div>
-                      <div style={{ marginLeft: "24px" }}>{entry.file}:{entry.lineNumber}:{entry.column}</div>
-                    </div>
-                  )
-                ))}
+                {log.stack.map(
+                  (entry, index) =>
+                    !entry.collapse && (
+                      <div
+                        key={index}
+                        style={{ color: "white", cursor: "pointer", marginBottom: "8px" }}
+                        onClick={() => {
+                          vscode.postMessage({
+                            command: "openFile",
+                            file: entry.fullPath,
+                            lineNumber: entry.lineNumber,
+                            column: entry.column,
+                          });
+                        }}>
+                        <div>{entry.methodName}</div>
+                        <div style={{ marginLeft: "24px" }}>
+                          {entry.file}:{entry.lineNumber}:{entry.column}
+                        </div>
+                      </div>
+                    )
+                )}
               </div>
             ) : (
-                <div>{log.text}</div>
-              )}
+              <div>{log.text}</div>
+            )}
           </div>
         ))}
       </div>
@@ -257,9 +263,10 @@ function App() {
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [logCounter, setLogCounter] = useState(0);
   const [expandedLogs, setExpandedLogs] = useState(false);
   const [previewsList, setPreviewsList] = useState([]);
-  const [appURL, setAppURL] = useState('/');
+  const [appURL, setAppURL] = useState("/");
   useEffect(() => {
     setCssPropertiesForDevice(device);
   }, [device]);
@@ -280,6 +287,8 @@ function App() {
         case "debuggerResumed":
           setDebugPaused(false);
           break;
+        case "logEvent":
+          setLogCounter((logCounter) => logCounter + 1);
         case "consoleLog":
           setLogs((logs) => [{ type: "log", text: message.text }, ...logs]);
           break;
@@ -321,8 +330,7 @@ function App() {
               });
             }
             setIsInspecting(!isInspecing);
-          }}
-        >
+          }}>
           <span slot="start" class="codicon codicon-inspect" />
           Inspect
         </VSCodeButton>
@@ -333,8 +341,7 @@ function App() {
               command: isPreviewing ? "stopPreview" : "startPreview",
             });
             setIsPreviewing(!isPreviewing);
-          }}
-        >
+          }}>
           <span slot="start" class="codicon codicon-arrow-swap" />
           Sync
         </VSCodeButton>
@@ -345,8 +352,7 @@ function App() {
               command: isFollowing ? "stopFollowing" : "startFollowing",
             });
             setIsFollowing(!isFollowing);
-          }}
-        >
+          }}>
           <span slot="start" class="codicon codicon-arrow-right" />
           Follow
         </VSCodeButton>
@@ -377,8 +383,7 @@ function App() {
           padding: "8px 0",
           paddingLeft: "8px",
           fontFamily: "var(--font-family)",
-        }}
-      >
+        }}>
         {appURL}
       </div>
 
@@ -444,10 +449,13 @@ function App() {
           <VSCodeOption value={"xxxlarge"}>XXX large</VSCodeOption>
         </VSCodeDropdown>
         <VSCodeButton
-          appearance={expandedLogs ? "primary" : "secondary"}
-          onClick={() => setExpandedLogs(!expandedLogs)}>
+          appearance={"secondary"}
+          onClick={() => {
+            setLogCounter(0);
+            vscode.postMessage({ command: "openLogs" });
+          }}>
           <span slot="start" class="codicon codicon-output" />
-          Logs
+          Logs {logCounter > 0 && `(${logCounter})`}
         </VSCodeButton>
       </div>
       <LogPanel expandedLogs={expandedLogs} logs={logs} />

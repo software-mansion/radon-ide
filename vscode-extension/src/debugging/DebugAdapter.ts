@@ -111,7 +111,32 @@ export class DebugAdapter extends DebugSession {
         }
       }
     });
-    return { sourceURL, lineNumber: sourceLine, columnNumber: sourceColumn, scriptURL: scriptURL };
+    return { sourceURL, lineNumber: sourceLine, columnNumber: sourceColumn, scriptURL };
+  }
+
+  private findOriginalPositionFromScript(
+    scriptURL: string,
+    lineNumber: number,
+    columnNumber: number
+  ) {
+    let sourceURL: string | null = null;
+    let sourceLine = lineNumber;
+    let sourceColumn = columnNumber;
+    this.sourceMaps.forEach(([url, id, consumer]) => {
+      if (url === scriptURL) {
+        const pos = consumer.originalPositionFor({ line: lineNumber, column: columnNumber });
+        if (pos.source != null) {
+          sourceURL = pos.source;
+        }
+        if (pos.line != null) {
+          sourceLine = pos.line + 1;
+        }
+        if (pos.column != null) {
+          sourceColumn = pos.column + 1;
+        }
+      }
+    });
+    return { sourceURL, lineNumber: sourceLine, columnNumber: sourceColumn, scriptURL };
   }
 
   private async handleDebuggerPaused(message: any) {
@@ -284,6 +309,21 @@ export class DebugAdapter extends DebugSession {
     args: any,
     request?: DebugProtocol.Request | undefined
   ): void {
-    console.log("Custom req", command);
+    console.log("Custom req", command, args);
+    if (command === "rnp_consoleLog") {
+      const outputEvent = new OutputEvent((args.args || []).join(" ") + "\n", "console");
+      if (args.stack && args.stack.length > 0) {
+        const { file, lineNumber: bundleLineNumber, column } = args.stack[0];
+        const { lineNumber, columnNumber, sourceURL } = this.findOriginalPositionFromScript(
+          file,
+          bundleLineNumber,
+          column
+        );
+        outputEvent.body.source = new Source(sourceURL, sourceURL);
+        outputEvent.body.line = lineNumber - 1; // idk why it sometimes wants 0-based numbers and other times it doesn't
+        outputEvent.body.column = columnNumber;
+      }
+      this.sendEvent(outputEvent);
+    }
   }
 }
