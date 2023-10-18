@@ -17,7 +17,7 @@ import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
 
-function typeToTag(type) {
+function typeToTag(type: string) {
   switch (type) {
     case "info":
       return "[INFO]";
@@ -27,6 +27,26 @@ function typeToTag(type) {
       return "[ERR] ";
     default:
       return "[LOG] ";
+  }
+}
+
+class MyBreakpoint extends Breakpoint {
+  public readonly line: number;
+  public readonly column: number | undefined;
+  private _id: number | undefined;
+  constructor(verified: boolean, line: number, column?: number, source?: Source) {
+    super(verified, line, column, source);
+    this.column = column;
+    this.line = line;
+  }
+  setId(id: number): void {
+    super.setId(id);
+    this._id = id;
+  }
+  getId(): number | undefined {
+    // we cannot use `get id` here, because Breakpoint actually has a private field
+    // called id, and it'd collide with this getter making it impossible to set it
+    return this._id;
   }
 }
 
@@ -83,6 +103,7 @@ export class DebugAdapter extends DebugSession {
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
             this.sourceMaps.push([message.params.url, message.params.scriptId, consumer]);
+            this.updateBreakpointsInSource(message.params.url, consumer);
           }
           this.sendEvent(new InitializedEvent());
           break;
@@ -206,7 +227,7 @@ export class DebugAdapter extends DebugSession {
     this.sendResponse(response);
   }
 
-  private async setCDPBreakpoint(source: string, line: number, column: number) {
+  private toGeneratedPosition(file: string, line: number, column: number) {
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
     this.sourceMaps.forEach(([sourceURL, scriptId, consumer]) => {
@@ -215,7 +236,7 @@ export class DebugAdapter extends DebugSession {
         sources.push(mapping.source);
       });
       const pos = consumer.generatedPositionFor({
-        source,
+        source: file,
         line,
         column,
         bias: SourceMapConsumer.LEAST_UPPER_BOUND,
@@ -225,11 +246,19 @@ export class DebugAdapter extends DebugSession {
         position = pos;
       }
     });
-    if (position.line != null) {
+    if (position.line === null) {
+      return null;
+    }
+    return { source: originalSourceURL, line: position.line, column: position.column };
+  }
+
+  private async setCDPBreakpoint(file: string, line: number, column: number) {
+    const generatedPos = this.toGeneratedPosition(file, line, column);
+    if (generatedPos) {
       const result = await this.sendCDPMessage("Debugger.setBreakpointByUrl", {
-        lineNumber: position.line - 1,
-        url: originalSourceURL,
-        columnNumber: position.column,
+        lineNumber: generatedPos.line - 1,
+        url: generatedPos.source,
+        columnNumber: generatedPos.column,
         condition: "",
       });
       if (result && result.breakpointId !== undefined) {
@@ -239,24 +268,83 @@ export class DebugAdapter extends DebugSession {
     return null;
   }
 
+  private breakpoints = new Map<string, Array<MyBreakpoint>>();
+
+  private updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
+    // this method gets called after we are informed that a new script has been parsed. If we
+    // had breakpoints set in that script, we need to let the runtime know about it
+
+    const pathsToUpdate = new Set<string>();
+    consumer.eachMapping((mapping) => {
+      if (this.breakpoints.has(mapping.source)) {
+        pathsToUpdate.add(mapping.source);
+      }
+    });
+
+    pathsToUpdate.forEach((path) => {
+      const breakpoints = this.breakpoints.get(path) || [];
+      breakpoints.forEach(async (bp) => {
+        if (bp.verified) {
+          this.sendCDPMessage("Debugger.removeBreakpoint", { breakpointId: bp.getId() });
+        }
+        const newId = await this.setCDPBreakpoint(path, bp.line, bp.column || 0);
+        if (newId !== null) {
+          bp.setId(newId);
+          bp.verified = true;
+        } else {
+          bp.verified = false;
+        }
+      });
+    });
+  }
+
   protected async setBreakPointsRequest(
     response: DebugProtocol.SetBreakpointsResponse,
     args: DebugProtocol.SetBreakpointsArguments
   ): Promise<void> {
     const path = args.source.path as string;
 
-    const actualBreakpoints = (args.breakpoints || []).map(async (bp) => {
-      const breakpointId = await this.setCDPBreakpoint(path, bp.line, bp.column || 0);
-      if (breakpointId !== null) {
-        const actualBreakpoint = new Breakpoint(true, bp.line, bp.column);
-        actualBreakpoint.setId(breakpointId);
-        return actualBreakpoint;
+    const previousBreakpoints = this.breakpoints.get(path) || [];
+
+    const breakpoints = (args.breakpoints || []).map((bp) => {
+      const previousBp = previousBreakpoints.find(
+        (prevBp) => prevBp.line === bp.line && prevBp.column === bp.column
+      );
+      if (previousBp) {
+        return previousBp;
       } else {
-        return new Breakpoint(false, bp.line, bp.column);
+        return new MyBreakpoint(false, bp.line, bp.column);
       }
     });
 
-    const resolvedBreakpoints = await Promise.all<DebugProtocol.Breakpoint>(actualBreakpoints);
+    // remove old breakpoints
+    previousBreakpoints.forEach((bp) => {
+      if (
+        bp.verified &&
+        !breakpoints.find((newBp) => newBp.line === bp.line && newBp.column === bp.column)
+      ) {
+        this.sendCDPMessage("Debugger.removeBreakpoint", { breakpointId: bp.getId() });
+      }
+    });
+
+    this.breakpoints.set(path, breakpoints);
+
+    const resolvedBreakpoints = await Promise.all<Breakpoint>(
+      breakpoints.map(async (bp) => {
+        if (bp.verified) {
+          return bp;
+        } else {
+          const breakpointId = await this.setCDPBreakpoint(path, bp.line, bp.column || 0);
+          if (breakpointId !== null) {
+            bp.verified = true;
+            bp.setId(breakpointId);
+            return bp;
+          } else {
+            return bp;
+          }
+        }
+      })
+    );
 
     // send back the actual breakpoint positions
     response.body = {
