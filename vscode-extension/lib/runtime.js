@@ -107,7 +107,6 @@ function updateFileRouteMap(filename) {
 }
 
 function PreviewAppWrapper({ children, ...rest }) {
-  console.log("PreviewAppWrapper");
   const rootTag = useContext(RootTagContext);
   const agentRef = useRef(undefined);
   const appReadyEventSent = useRef(false);
@@ -172,7 +171,6 @@ function PreviewAppWrapper({ children, ...rest }) {
     <View
       style={{ flex: 1 }}
       onLayout={() => {
-        console.log("ON LAYOUT", !!agentRef.current);
         if (!appReadyEventSent.current && agentRef.current) {
           appReadyEventSent.current = true;
           agentRef.current._bridge.send("rnp_appReady", {
@@ -186,6 +184,5 @@ function PreviewAppWrapper({ children, ...rest }) {
 }
 
 AppRegistry.setWrapperComponentProvider((appParameters) => {
-  console.log("Hey!", appParameters);
   return PreviewAppWrapper;
 });
