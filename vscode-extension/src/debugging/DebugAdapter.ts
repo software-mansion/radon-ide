@@ -17,6 +17,19 @@ import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
 
+function typeToTag(type) {
+  switch (type) {
+    case "info":
+      return "[INFO]";
+    case "warn":
+      return "[WARN]";
+    case "error":
+      return "[ERR] ";
+    default:
+      return "[LOG] ";
+  }
+}
+
 export class DebugAdapter extends DebugSession {
   private connection: WebSocket;
   private configuration: DebugConfiguration;
@@ -311,7 +324,10 @@ export class DebugAdapter extends DebugSession {
   ): void {
     console.log("Custom req", command, args);
     if (command === "rnp_consoleLog") {
-      const outputEvent = new OutputEvent((args.args || []).join(" ") + "\n", "console");
+      const outputEvent = new OutputEvent(
+        typeToTag(args.type) + " " + (args.args || []).join(" ") + "\n",
+        "console"
+      );
       if (args.stack && args.stack.length > 0) {
         const { file, lineNumber: bundleLineNumber, column } = args.stack[0];
         const { lineNumber, columnNumber, sourceURL } = this.findOriginalPositionFromScript(
