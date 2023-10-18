@@ -16,8 +16,8 @@ export default function Home() {
       <Link href="/another?id=100">/another?id=100</Link>
       <NiceButton
         onPress={() => {
-          console.log('Nice button pressed (log)');
-          console.warn('Nice button pressed (warn)');
+          console.log('Nice button pressed');
+          console.warn('Nice button pressed again');
         }}
       />
       <Button

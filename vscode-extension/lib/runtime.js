@@ -1,6 +1,7 @@
 require("expo-router/entry");
 const { useContext, useEffect, useRef, useSyncExternalStore } = require("react");
 const { LogBox, AppRegistry, RootTagContext, View } = require("react-native");
+const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
 const { useRouter } = require("expo-router");
 const { store } = require("expo-router/src/global-state/router-store");
 
@@ -174,7 +175,9 @@ function PreviewAppWrapper({ children, ...rest }) {
         console.log("ON LAYOUT", !!agentRef.current);
         if (!appReadyEventSent.current && agentRef.current) {
           appReadyEventSent.current = true;
-          agentRef.current._bridge.send("rnp_appReady");
+          agentRef.current._bridge.send("rnp_appReady", {
+            appKey: SceneTracker.getActiveScene().name,
+          });
         }
       }}>
       {children}

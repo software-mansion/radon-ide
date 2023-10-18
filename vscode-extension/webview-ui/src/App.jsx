@@ -169,24 +169,6 @@ function Preview({ previewURL, device, isInspecting, debugPaused }) {
     </div>
   );
 }
-function PreviewsList({ previews, onSelect }) {
-  return (
-    <VSCodeDropdown
-      onChange={(e) => {
-        const selectedKey = e?.target?.value;
-        vscode.postMessage({
-          command: "selectPreview",
-          appKey: selectedKey,
-        });
-      }}>
-      {previews.map((preview) => (
-        <VSCodeOption key={preview.appKey} value={preview.appKey}>
-          {preview.name} {preview.props}
-        </VSCodeOption>
-      ))}
-    </VSCodeDropdown>
-  );
-}
 function LogPanel({ expandedLogs, logs }) {
   return (
     <div
@@ -251,6 +233,26 @@ function LogPanel({ expandedLogs, logs }) {
   );
 }
 
+function UrlBar({ url }) {
+  if (url.startsWith("preview://")) {
+    const previewName = url.split("/").pop();
+    return (
+      <div className="url-bar">
+        <span>{previewName}</span>
+        <span
+          class="codicon codicon-close"
+          onClick={() => {
+            vscode.postMessage({
+              command: "closePreview",
+            });
+          }}
+        />
+      </div>
+    );
+  }
+  return <div className="url-bar">{url}</div>;
+}
+
 function App() {
   const [device, setDevice] = useState(devices[0]);
   const [deviceSettings, setDeviceSettings] = useState({
@@ -260,12 +262,10 @@ function App() {
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
   const [debugPaused, setDebugPaused] = useState(false);
-  const [isPreviewing, setIsPreviewing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [logs, setLogs] = useState([]);
   const [logCounter, setLogCounter] = useState(0);
   const [expandedLogs, setExpandedLogs] = useState(false);
-  const [previewsList, setPreviewsList] = useState([]);
   const [appURL, setAppURL] = useState("/");
   useEffect(() => {
     setCssPropertiesForDevice(device);
@@ -277,9 +277,6 @@ function App() {
       switch (message.command) {
         case "appReady":
           setPreviewURL(message.previewURL);
-          break;
-        case "previewsList":
-          setPreviewsList(message.previews);
           break;
         case "debuggerPaused":
           setDebugPaused(true);
@@ -335,17 +332,6 @@ function App() {
           Inspect
         </VSCodeButton>
         <VSCodeButton
-          appearance={isPreviewing ? "primary" : "secondary"}
-          onClick={() => {
-            vscode.postMessage({
-              command: isPreviewing ? "stopPreview" : "startPreview",
-            });
-            setIsPreviewing(!isPreviewing);
-          }}>
-          <span slot="start" class="codicon codicon-arrow-swap" />
-          Sync
-        </VSCodeButton>
-        <VSCodeButton
           appearance={isFollowing ? "primary" : "secondary"}
           onClick={() => {
             vscode.postMessage({
@@ -356,35 +342,6 @@ function App() {
           <span slot="start" class="codicon codicon-arrow-right" />
           Follow
         </VSCodeButton>
-        {isPreviewing && false && previewsList.length > 0 && (
-          <PreviewsList
-            previews={previewsList}
-            onSelect={(appKey) => {
-              vscode.postMessage({
-                command: "selectPreview",
-                appKey,
-              });
-            }}
-          />
-        )}
-      </div>
-
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "400px",
-          background: "var(--dropdown-background)",
-          height: "16px",
-          textAlign: "start",
-          verticalAlign: "middle",
-          color: "var(--dropdown-foreground)",
-          fontSize: "16px",
-          margin: "8px",
-          padding: "8px 0",
-          paddingLeft: "8px",
-          fontFamily: "var(--font-family)",
-        }}>
-        {appURL}
       </div>
 
       <Preview
@@ -393,6 +350,9 @@ function App() {
         device={device}
         debugPaused={debugPaused}
       />
+
+      <UrlBar url={appURL} />
+
       <div class="button-group">
         <VSCodeDropdown
           onChange={(e) => {

@@ -74,7 +74,6 @@ export class PreviewsPanel {
   private disposables: Disposable[] = [];
   private device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
   private devtools: Devtools | undefined;
-  private previewEnabled = false;
   private followEnabled = false;
   private lastEditorFilename: string | undefined;
   private metro: Metro | undefined;
@@ -127,7 +126,7 @@ export class PreviewsPanel {
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
-      PreviewsPanel.currentPanel.selectPreview(`preview:/${fileName}:${lineNumber}`);
+      PreviewsPanel.currentPanel.startPreview(`preview:/${fileName}:${lineNumber}`);
     }
   }
 
@@ -244,6 +243,20 @@ export class PreviewsPanel {
     };
 
     const appURLListener = (event: string, payload: any) => {
+      if (event === "rnp_appReady") {
+        const { appKey } = payload;
+        if (appKey.startsWith("preview")) {
+          this._panel.webview.postMessage({
+            command: "appUrlChanged",
+            url: appKey,
+          });
+        } else {
+          this._panel.webview.postMessage({
+            command: "appUrlChanged",
+            url: "/",
+          });
+        }
+      }
       if (event === "rnp_appUrlChanged" && device === this.device) {
         this._panel.webview.postMessage({
           command: "appUrlChanged",
@@ -389,20 +402,14 @@ export class PreviewsPanel {
           case "stopInspecting":
             this.devtools?.send("stopInspectingNative");
             return;
-          case "stopPreview":
+          case "closePreview":
             this.stopPreview();
-            return;
-          case "startPreview":
-            this.startPreview();
             return;
           case "stopFollowing":
             this.followEnabled = false;
             return;
           case "startFollowing":
             this.followEnabled = true;
-            return;
-          case "selectPreview":
-            this.selectPreview(message.appKey);
             return;
           case "openLogs":
             commands.executeCommand("workbench.panel.repl.view.focus");
@@ -414,66 +421,18 @@ export class PreviewsPanel {
     );
   }
 
-  private selectPreview(appKey: string) {
-    this.previewEnabled = true;
-    this.devtools?.rpc("rnp_listPreviews", { appKey: "main" }, "rnp_previewsList", (payload) => {
-      const { previews } = payload;
-      if (previews.find((preview) => preview.appKey === appKey)) {
-        this.devtools?.send("rnp_runApplication", { appKey });
-      } else {
-        console.log("nono", appKey, previews);
-      }
-    });
-  }
-
-  private startPreview() {
-    console.log("start prevbiew");
-    this.previewEnabled = true;
-    this.devtools?.rpc("rnp_listPreviews", { appKey: "main" }, "rnp_previewsList", (payload) => {
-      const { previews } = payload;
-      if (this.lastEditorFilename) {
-        // find preview name that matches the current filename
-        const filteredPreviews = previews.filter((preview) => {
-          return preview.fileName === this.lastEditorFilename;
-        });
-        filteredPreviews.sort((a, b) => a.lineNumber - b.lineNumber);
-        if (filteredPreviews.length > 0) {
-          this.selectPreview(filteredPreviews[0].appKey);
-          this._panel.webview.postMessage({
-            command: "previewsList",
-            previews: filteredPreviews,
-          });
-        } else {
-          let href = path.relative(
-            workspace.workspaceFolders?.[0]?.uri?.fsPath || "",
-            this.lastEditorFilename
-          );
-          href = removeExtension(href);
-          if (href.endsWith("index")) {
-            href = href.slice(0, -5);
-          }
-          if (href.startsWith("app")) {
-            href = href.substring(3);
-          }
-          console.log("Href", href);
-          this.devtools?.send("rnp_openRouterLink", { href });
-        }
-      }
-    });
+  private startPreview(appKey: string) {
+    this.devtools?.send("rnp_runApplication", { appKey });
   }
 
   private stopPreview() {
-    this.previewEnabled = false;
     this.devtools?.send("rnp_runApplication", { appKey: "main" });
   }
 
-  private onActiveFileChange(filename) {
+  private onActiveFileChange(filename: string) {
     console.log("LastEditor", filename);
     this.lastEditorFilename = filename;
     this.devtools?.send("rnp_editorFileChanged", { filename, followEnabled: this.followEnabled });
-    if (this.previewEnabled) {
-      this.startPreview();
-    }
   }
 
   private _setupEditorListeners(context: ExtensionContext) {
@@ -485,8 +444,4 @@ export class PreviewsPanel {
       })
     );
   }
-}
-
-function removeExtension(filename) {
-  return filename.replace(/\.[^\.]+$/, "");
 }

@@ -95,3 +95,25 @@ vscode-dropdown > .codicon {
 
   background-color: var(--dropdown-background);
 }
+
+.url-bar {
+  min-width: 60%;
+  background: var(--dropdown-background);
+  height: 16px;
+  text-align: start;
+  vertical-align: middle;
+  color: var(--dropdown-foreground);
+  font-size: 16px;
+  line-height: 16px;
+  margin: 8px;
+  padding: 8px 0;
+  padding-left: 8px;
+  font-family: var(--font-family);
+  border-radius: 10px;
+  opacity: 0.5;
+}
+
+.url-bar .codicon-close {
+  float: right;
+  margin-right: 5px;
+}
