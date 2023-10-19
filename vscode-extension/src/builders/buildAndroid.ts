@@ -30,7 +30,13 @@ export async function buildAndroid(workspaceDir: string, metroPort: number) {
     `-PreactNativeDevServerPort=${metroPort}`,
     `assembleDebug`,
   ];
-  await build(androidSourceDir, gradleArgs);
+  try {
+    await build(androidSourceDir, gradleArgs);
+  } catch (e) {
+    console.error("Error building Android", e);
+    throw e;
+  }
+  console.log("android build sucessful");
   const apkPath = path.join(androidSourceDir, "app/build/outputs/apk/debug/app-debug.apk");
   const packageName = await extractPackageName(apkPath);
   return { apkPath, packageName };

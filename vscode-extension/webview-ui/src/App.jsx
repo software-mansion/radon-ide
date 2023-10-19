@@ -142,8 +142,7 @@ function Preview({ previewURL, device, isInspecting, debugPaused }) {
           />
           {debugPaused && (
             <div className="phone-sized phone-debug-overlay">
-              Paused in debugger
-              <br />
+              Paused in debugger&nbsp;
               <VSCodeButton
                 appearance={"primary"}
                 onClick={() => {

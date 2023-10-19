@@ -17,8 +17,9 @@ const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
 
 let isLogCatcherInstalled = false;
 let originalConsole;
-var g_agent;
+let g_agent;
 let rnsz_fileRouteMap = {};
+let activeEditorFile = undefined;
 
 const trySend = (type, args, stack) => {
   if (!stack) {
@@ -27,7 +28,11 @@ const trySend = (type, args, stack) => {
     stack = parseErrorStack(error.stack).slice(2);
   }
   if (g_agent != null && g_agent._bridge != null) {
-    g_agent._bridge.send("rnp_consoleLog", { type, args, stack });
+    g_agent._bridge.send("rnp_consoleLog", {
+      type,
+      args: args.map(JSON.stringify),
+      stack,
+    });
   } else {
     originalConsole[type](...args);
     if (g_agent == null) {
@@ -77,33 +82,48 @@ const LogCatcher = {
   },
 };
 
-function updateUrlInExtension(agent, href) {
-  if (!agent) {
-    return;
-  }
+function updateRouteMap() {
+  const snapshot = store.routeInfoSnapshot();
 
-  let url = href["pathname"];
-  if (href["params"] && Object.keys(href["params"]).length > 0) {
+  if (activeEditorFile) {
+    rnsz_fileRouteMap[activeEditorFile] = {
+      pathname: snapshot.pathname,
+      params: Object.assign({}, snapshot.params),
+    };
+  }
+}
+
+function handleRouteChange(pathname, params) {
+  updateRouteMap();
+
+  let url = pathname;
+  if (params && Object.keys(params).length > 0) {
     url +=
       "?" +
-      Object.keys(href["params"])
+      Object.keys(params)
         .map((key) => {
-          const value = href["params"][key];
+          const value = params[key];
           return `${key}=${JSON.stringify(value)}`;
         })
         .join("&");
   }
 
-  agent._bridge.send("rnp_appUrlChanged", { url });
+  g_agent && g_agent._bridge.send("rnp_appUrlChanged", { url });
 }
 
-function updateFileRouteMap(filename) {
-  const snapshot = store.routeInfoSnapshot();
+function inferRouteForFile(filename) {
+  return rnsz_fileRouteMap[filename];
+}
 
-  rnsz_fileRouteMap[filename] = {
-    pathname: snapshot.pathname,
-    params: Object.assign({}, snapshot.params),
-  };
+function handleActiveFileChange(filename, follow) {
+  activeEditorFile = filename;
+  if (follow) {
+    const route = inferRouteForFile(filename);
+    if (route) {
+      return route;
+    }
+  }
+  updateRouteMap();
 }
 
 function PreviewAppWrapper({ children, ...rest }) {
@@ -122,7 +142,7 @@ function PreviewAppWrapper({ children, ...rest }) {
   const params = routeInfo?.params;
 
   useEffect(() => {
-    updateUrlInExtension(agentRef.current, { pathname, params });
+    handleRouteChange(pathname, params);
   }, [pathname, params]);
 
   useEffect(() => {
@@ -145,14 +165,8 @@ function PreviewAppWrapper({ children, ...rest }) {
       });
 
       agent._bridge.addListener("rnp_editorFileChanged", (payload) => {
-        if (payload.followEnabled) {
-          const lastRouteForEditorFile = rnsz_fileRouteMap[payload.filename];
-          if (lastRouteForEditorFile != null) {
-            push(lastRouteForEditorFile);
-          }
-        } else {
-          updateFileRouteMap(payload.filename);
-        }
+        const newRoute = handleActiveFileChange(payload.filename, payload.followEnabled);
+        newRoute && push(newRoute);
       });
 
       LogBox.uninstall();

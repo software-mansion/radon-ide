@@ -270,7 +270,7 @@ export class DebugAdapter extends DebugSession {
 
   private breakpoints = new Map<string, Array<MyBreakpoint>>();
 
-  private updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
+private updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
     // this method gets called after we are informed that a new script has been parsed. If we
     // had breakpoints set in that script, we need to let the runtime know about it
 

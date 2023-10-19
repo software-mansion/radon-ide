@@ -86,6 +86,7 @@ export function buildProject(
         xcodebuildOutputFormatter.stdin.end();
       }
       if (code !== 0) {
+        console.error(errorOutput);
         reject(new Error("Failed to build iOS project."));
         return;
       }
