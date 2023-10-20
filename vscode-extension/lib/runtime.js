@@ -17,8 +17,8 @@ const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
 
 let isLogCatcherInstalled = false;
 let originalConsole;
-let g_agent;
-let rnsz_fileRouteMap = {};
+let agent;
+let fileRouteMap = {};
 let activeEditorFile = undefined;
 
 const trySend = (type, args, stack) => {
@@ -27,17 +27,17 @@ const trySend = (type, args, stack) => {
     // take off the top two lines of the stack, which just point to this file
     stack = parseErrorStack(error.stack).slice(2);
   }
-  if (g_agent != null && g_agent._bridge != null) {
-    g_agent._bridge.send("rnp_consoleLog", {
+  if (agent != null && agent._bridge != null) {
+    agent._bridge.send("rnp_consoleLog", {
       type,
       args: args.map(JSON.stringify),
       stack,
     });
   } else {
     originalConsole[type](...args);
-    if (g_agent == null) {
+    if (agent == null) {
       originalConsole.log("g_agent was null");
-    } else if (g_agent._bridge == null) {
+    } else if (agent._bridge == null) {
       originalConsole.log("g_agent._bridge was null");
     }
   }
@@ -86,7 +86,7 @@ function updateRouteMap() {
   const snapshot = store.routeInfoSnapshot();
 
   if (activeEditorFile) {
-    rnsz_fileRouteMap[activeEditorFile] = {
+    fileRouteMap[activeEditorFile] = {
       pathname: snapshot.pathname,
       params: Object.assign({}, snapshot.params),
     };
@@ -108,11 +108,11 @@ function handleRouteChange(pathname, params) {
         .join("&");
   }
 
-  g_agent && g_agent._bridge.send("rnp_appUrlChanged", { url });
+  agent && agent._bridge.send("rnp_appUrlChanged", { url });
 }
 
 function inferRouteForFile(filename) {
-  return rnsz_fileRouteMap[filename];
+  return fileRouteMap[filename];
 }
 
 function handleActiveFileChange(filename, follow) {
@@ -128,7 +128,6 @@ function handleActiveFileChange(filename, follow) {
 
 function PreviewAppWrapper({ children, ...rest }) {
   const rootTag = useContext(RootTagContext);
-  const agentRef = useRef(undefined);
   const appReadyEventSent = useRef(false);
   const { push } = useRouter();
 
@@ -146,9 +145,8 @@ function PreviewAppWrapper({ children, ...rest }) {
   }, [pathname, params]);
 
   useEffect(() => {
-    function _attachToDevtools(agent) {
-      agentRef.current = agent;
-      g_agent = agent;
+    function _attachToDevtools(agent_) {
+      agent = agent_;
       agent._bridge.addListener("rnp_openRouterLink", (payload) => {
         push(payload.href);
       });
@@ -170,8 +168,8 @@ function PreviewAppWrapper({ children, ...rest }) {
       });
 
       LogBox.uninstall();
-      console.reportErrorsAsExceptions = false;
-      LogCatcher.install();
+      // console.reportErrorsAsExceptions = false;
+      // LogCatcher.install();
     }
 
     if (hook.reactDevtoolsAgent) {
@@ -185,9 +183,9 @@ function PreviewAppWrapper({ children, ...rest }) {
     <View
       style={{ flex: 1 }}
       onLayout={() => {
-        if (!appReadyEventSent.current && agentRef.current) {
+        if (!appReadyEventSent.current && agent) {
           appReadyEventSent.current = true;
-          agentRef.current._bridge.send("rnp_appReady", {
+          agent._bridge.send("rnp_appReady", {
             appKey: SceneTracker.getActiveScene().name,
           });
         }
