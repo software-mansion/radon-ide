@@ -242,7 +242,7 @@ function UrlBar({ url }) {
           class="codicon codicon-close"
           onClick={() => {
             vscode.postMessage({
-              command: "closePreview",
+              command: "openAppHome",
             });
           }}
         />

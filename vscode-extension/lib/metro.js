@@ -1,31 +1,16 @@
-/**
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- * Fork of: https://github.com/react-native-community/cli/blob/v11.3.7/packages/cli-plugin-metro/src/commands/start/runServer.ts
- */
-
 const path = require("path");
 
-const length = process.argv.length;
-const port = parseInt(process.argv[length - 4]);
-const appRoot = process.argv[length - 3];
-const appEntryFilename = process.argv[length - 2];
-const extensionRoot = process.argv[length - 1];
+const appRoot = process.argv[2];
+const extensionLib = process.argv[3];
+const dynamicConfigFile = process.argv[4];
 
 const nodeModules = path.join(appRoot, "node_modules") + "/";
-const extensionLib = path.join(extensionRoot, "lib");
-
-const appEntryPath = path.join(appRoot, appEntryFilename);
 const runtimePath = path.join(extensionLib, "runtime.js");
 const previewPath = path.join(extensionLib, "preview.js");
 
 const ctx = require(nodeModules + "@react-native-community/cli-config").default(appRoot);
-const loadMetroConfig = require(
-  nodeModules + "@react-native-community/cli-plugin-metro/build/tools/loadMetroConfig.js"
-).default;
+const loadMetroConfig = require(nodeModules +
+  "@react-native-community/cli-plugin-metro/build/tools/loadMetroConfig.js").default;
 const metro = require(nodeModules + "metro");
 const metroCore = require(nodeModules + "metro-core");
 const cliServerApi = require(nodeModules + "@react-native-community/cli-server-api");
@@ -49,8 +34,8 @@ async function runServer(_argv, ctx, args) {
     maxWorkers: args.maxWorkers,
     port: args.port,
     resetCache: true, // args.resetCache,
-    watchFolders: [appRoot, extensionLib], //, args.watchFolders,
-    projectRoot: appRoot, // args.projectRoot,
+    watchFolders: [...(args.watchFolders || []), appRoot, extensionLib],
+    projectRoot: appRoot,
     sourceExts: args.sourceExts,
     reporter,
   });
@@ -74,6 +59,15 @@ async function runServer(_argv, ctx, args) {
         filePath: runtimePath,
         type: "sourceFile",
       };
+    } else if (moduleName.match(/sztudio-dynamic-config/)) {
+      // return {
+      //   filePath: dynamicConfigFile,
+      //   type: "sourceFile",
+      // };
+      return {
+        type: "sourceFile",
+        filePath: dynamicConfigFile,
+      };
     }
 
     // Optionally, chain to the standard Metro resolver.
@@ -83,9 +77,10 @@ async function runServer(_argv, ctx, args) {
   // no idea why this is required / not default?
   metroConfig.resolver.nodeModulesPaths = [nodeModules];
 
-  process.env.RNSZTUDIO_ORIGINAL_BABEL_TRANSFORMER_PATH = metroConfig.transformer.babelTransformerPath;
+  process.env.RNSZTUDIO_ORIGINAL_BABEL_TRANSFORMER_PATH =
+    metroConfig.transformer.babelTransformerPath;
   metroConfig.transformer.babelTransformerPath = require.resolve(
-    path.join(extensionLib, './babel_transformer.js')
+    path.join(extensionLib, "./babel_transformer.js")
   );
 
   if (args.assetPlugins) {

@@ -7,78 +7,25 @@ import {
   Uri,
   ViewColumn,
   ExtensionContext,
-  Range,
   debug,
   commands,
-  extensions,
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
-import { buildIos } from "../builders/buildIOS";
-import { Devtools } from "./devtools";
-import { Metro } from "./metro";
-import * as path from "path";
-import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
-import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { buildAndroid } from "../builders/buildAndroid";
+
+import { Project } from "../project/project";
+
 import { DeviceSettings } from "../devices/DeviceBase";
-
-const crypto = require("crypto");
-
-async function openFileAtPosition(filePath: string, line: number, column: number) {
-  const existingDocument = workspace.textDocuments.find((document) => {
-    console.log("Existing document list", document.uri.fsPath);
-    return document.uri.fsPath === filePath;
-  });
-
-  if (existingDocument) {
-    // If the file is already open, show (focus on) its editor
-    await window.showTextDocument(existingDocument, {
-      selection: new Range(line, column, line, column),
-      viewColumn: ViewColumn.One,
-    });
-  } else {
-    // If the file is not open, open it in a new editor
-    const document = await workspace.openTextDocument(filePath);
-    await window.showTextDocument(document, {
-      selection: new Range(line, column, line, column),
-      viewColumn: ViewColumn.One,
-    });
-  }
-}
-
-function isFileInWorkspace(workspaceDir: string, filePath: string): boolean {
-  // Get the relative path from the workspace directory to the file
-  const relative = path.relative(workspaceDir, filePath);
-
-  // If the relative path starts with "..", the file is outside the workspace
-  return (
-    !relative.startsWith("..") && !path.isAbsolute(relative) && !relative.startsWith("node_modules")
-  );
-}
-
-function portHash(name: string) {
-  const hash = crypto.createHash("sha256");
-  hash.update(name);
-  const hashBytes = hash.digest();
-
-  // Convert hash bytes to BigInt
-  const hashNumber = BigInt(`0x${hashBytes.toString("hex")}`);
-  return 45000 + Number(hashNumber % BigInt(4000));
-}
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
   private readonly _context: ExtensionContext;
+  private readonly project: Project;
   private disposables: Disposable[] = [];
-  private device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
-  private devtools: Devtools | undefined;
+
   private followEnabled = false;
   private lastEditorFilename: string | undefined;
-  private metro: Metro | undefined;
-  private iOSBuild: Promise<{ appPath: string; bundleID: string }> | undefined;
-  private androidBuild: Promise<{ apkPath: string; packageName: string }> | undefined;
 
   private constructor(panel: WebviewPanel, context: ExtensionContext) {
     this._panel = panel;
@@ -97,7 +44,9 @@ export class PreviewsPanel {
 
     this._setupEditorListeners(context);
 
-    this.launchProject();
+    this.project = new Project(context);
+    this.project.start();
+    this.disposables.push(this.project);
   }
 
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
@@ -125,9 +74,9 @@ export class PreviewsPanel {
       PreviewsPanel.currentPanel = new PreviewsPanel(panel, context);
     }
 
-    if (fileName !== undefined && lineNumber !== undefined) {
-      PreviewsPanel.currentPanel.startPreview(`preview:/${fileName}:${lineNumber}`);
-    }
+    // if (fileName !== undefined && lineNumber !== undefined) {
+    //   PreviewsPanel.currentPanel.startPreview(`preview:/${fileName}:${lineNumber}`);
+    // }
   }
 
   public dispose() {
@@ -185,187 +134,26 @@ export class PreviewsPanel {
     `;
   }
 
-  private async launchProject() {
-    let workspaceDir = workspace.workspaceFolders?.[0]?.uri?.fsPath;
-    if (!workspaceDir) {
-      console.warn("No workspace directory found");
-      return;
-    }
-
-    const metroPort = portHash(`metro://workspaceDir`);
-    const devtoolsPort = 8097; //portHash(`devtools://workspaceDir`);
-    console.log("Ports metro:", metroPort, "devtools:", devtoolsPort);
-    this.metro = new Metro(workspaceDir, this._context.extensionPath, metroPort);
-    this.devtools = new Devtools({ port: devtoolsPort });
-
-    console.log("Launching builds");
-    this.iOSBuild = buildIos(workspaceDir, metroPort);
-    this.androidBuild = buildAndroid(workspaceDir, metroPort);
-
-    console.log("Launching metro on port", metroPort);
-    await this.metro.start();
-    console.log("Metro started");
-  }
-
-  public static reloadMetro() {
-    if (PreviewsPanel.currentPanel) {
-      PreviewsPanel.currentPanel.metro?.reload();
-    } else {
-      // warning
-    }
-  }
-
-  private async changeDeviceSettings(deviceId: string, settings: DeviceSettings) {
-    await this.device?.changeSettings(settings);
-  }
-
-  private async selectDevice(deviceId: string, settings: DeviceSettings) {
-    console.log("Device selected", deviceId);
-    let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
-
-    const waitForAppReady = new Promise<void>((res) => {
-      const listener = (event: string, payload: any) => {
-        if (event === "rnp_appReady" && device === this.device) {
-          this.devtools?.removeListener(listener);
-          res();
-        }
-      };
-      this.devtools?.addListener(listener);
-    });
-
-    let workspaceDir = workspace.workspaceFolders?.[0]?.uri?.fsPath;
-    let workspaceRegex = new RegExp(`^${workspaceDir}`);
-    const logListener = (event: string, payload: any) => {
-      if (event === "rnp_consoleLog" && device === this.device) {
-        debug.activeDebugSession?.customRequest("rnp_consoleLog", payload);
-        this._panel.webview.postMessage({ command: "logEvent", type: payload.type });
-      }
-    };
-
-    const appURLListener = (event: string, payload: any) => {
-      if (event === "rnp_appReady") {
-        const { appKey } = payload;
-        if (appKey.startsWith("preview")) {
-          this._panel.webview.postMessage({
-            command: "appUrlChanged",
-            url: appKey,
-          });
-        } else {
-          this._panel.webview.postMessage({
-            command: "appUrlChanged",
-            url: "/",
-          });
-        }
-      }
-      if (event === "rnp_appUrlChanged" && device === this.device) {
-        this._panel.webview.postMessage({
-          command: "appUrlChanged",
-          url: payload.url,
-        });
-      }
-    };
-
-    if (deviceId.startsWith("ios")) {
-      device = new IosSimulatorDevice();
-      this.device = device;
-      const { appPath, bundleID } = await this.iOSBuild!;
-      await device.bootDevice();
-      await device.changeSettings(settings);
-      await device.installApp(appPath);
-      await device.launchApp(bundleID);
-    } else if (deviceId.startsWith("android")) {
-      device = new AndroidEmulatorDevice();
-      this.device = device;
-      const { apkPath, packageName } = await this.androidBuild!;
-      await device.bootDevice();
-      await device.changeSettings(settings);
-      await device.installApp(apkPath);
-      await device.launchApp(packageName, this.metro!.port, this.devtools!.port);
-    }
-
-    const waitForPreview = this.device!.startPreview();
-
-    await Promise.all([waitForAppReady, waitForPreview]);
-    this.devtools?.addListener(logListener);
-    this.devtools?.addListener(appURLListener);
-
+  public notifyAppReady(deviceId: string, previewURL: string) {
     this._panel.webview.postMessage({
       command: "appReady",
       deviceId: deviceId,
-      previewURL: device!.previewURL!,
+      previewURL: previewURL,
     });
-
-    debug.onDidReceiveDebugSessionCustomEvent((e) => {
-      console.log("Custom event", e);
-      if (e.session.configuration.type === "com.swmansion.react-native-preview") {
-        if (e.event === "rnp_continued") {
-          this._panel.webview.postMessage({
-            command: "debuggerResumed",
-          });
-        } else if (e.event === "rnp_paused") {
-          this._panel.webview.postMessage({
-            command: "debuggerPaused",
-          });
-        }
-      }
-    });
-    await debug.startDebugging(
-      undefined,
-      {
-        type: "com.swmansion.react-native-preview",
-        name: "React Native Preview Debugger",
-        request: "attach",
-        metroPort: this.metro!.port,
-      },
-      {
-        suppressDebugStatusbar: true,
-        suppressDebugView: true,
-        suppressDebugToolbar: true,
-        suppressSaveBeforeStart: true,
-      }
-    );
   }
 
-  private inspectElement(xRatio: number, yRatio: number) {
-    this.devtools?.send("startInspectingNative");
-    this.devtools?.addListener((event: string, payload: any) => {
-      if (event === "selectFiber") {
-        const id: number = payload;
-        console.log("Inspect eleemnt", id);
-        this.devtools?.send("inspectElement", {
-          id,
-          rendererID: 1,
-          forceFullData: true,
-          requesID: 77,
-          path: null,
-        });
-      } else if (event === "inspectedElement") {
-        try {
-          console.log("PL", payload);
-          const { fileName, lineNumber, columnNumber } = payload.value.source;
-          if (isFileInWorkspace(workspace.workspaceFolders?.[0]?.uri?.fsPath || "", fileName)) {
-            openFileAtPosition(fileName, lineNumber - 1, columnNumber - 1);
-            return;
-          }
-        } catch (e) {
-          console.log("Err", e);
-        }
-        if (payload.value.owners.length > 0) {
-          console.log("Inspect", payload.value.owners[0].id);
-          this.devtools?.send("inspectElement", {
-            id: payload.value.owners[0].id,
-            rendererID: 1,
-            forceFullData: true,
-            requesID: 77,
-            path: null,
-          });
-        }
-      }
-    });
-    setTimeout(() => {
-      this.device?.sendTouch(xRatio, yRatio, "Down");
-      this.device?.sendTouch(xRatio, yRatio, "Up");
-    }, 200);
+  public notifyAppUrlChanged(appKey: string) {
+    if (appKey.startsWith("preview")) {
+      this._panel.webview.postMessage({
+        command: "appUrlChanged",
+        url: appKey,
+      });
+    } else {
+      this._panel.webview.postMessage({
+        command: "appUrlChanged",
+        url: "/",
+      });
+    }
   }
 
   private _setWebviewMessageListener(webview: Webview) {
@@ -382,28 +170,22 @@ export class PreviewsPanel {
             debug.activeDebugSession?.customRequest("continue");
             return;
           case "changeDevice":
-            this.selectDevice(message.deviceId, message.settings);
+            this.project.selectDevice(message.deviceId, message.settings);
             return;
           case "changeDeviceSettings":
-            this.changeDeviceSettings(message.deviceId, message.settings);
-            return;
-          case "runCommand":
-            this.launchProject();
+            this.project.changeDeviceSettings(message.deviceId, message.settings);
             return;
           case "touch":
-            this.device?.sendTouch(message.xRatio, message.yRatio, message.type);
-            return;
-          case "openFile":
-            openFileAtPosition(message.file, message.lineNumber, message.column);
+            this.project.sendTouch(message.deviceId, message.xRatio, message.yRatio, message.type);
             return;
           case "inspect":
-            this.inspectElement(message.xRatio, message.yRatio);
+            this.project.inspectElementAt(message.xRatio, message.yRatio);
             return;
           case "stopInspecting":
-            this.devtools?.send("stopInspectingNative");
+            this.project.stopInspecting();
             return;
-          case "closePreview":
-            this.stopPreview();
+          case "openAppHome":
+            this.project.openAppHome();
             return;
           case "stopFollowing":
             this.followEnabled = false;
@@ -421,18 +203,10 @@ export class PreviewsPanel {
     );
   }
 
-  private startPreview(appKey: string) {
-    this.devtools?.send("rnp_runApplication", { appKey });
-  }
-
-  private stopPreview() {
-    this.devtools?.send("rnp_runApplication", { appKey: "main" });
-  }
-
   private onActiveFileChange(filename: string) {
     console.log("LastEditor", filename);
     this.lastEditorFilename = filename;
-    this.devtools?.send("rnp_editorFileChanged", { filename, followEnabled: this.followEnabled });
+    this.project.onActiveFileChange(filename, this.followEnabled);
   }
 
   private _setupEditorListeners(context: ExtensionContext) {

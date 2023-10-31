@@ -1,4 +1,5 @@
 import { ChildProcess } from "child_process";
+import { Disposable } from "vscode";
 
 const path = require("path");
 const fs = require("fs");
@@ -28,13 +29,17 @@ function findSimulatorStreamBinary() {
   return newestFile;
 }
 
-export class Preview {
+export class Preview implements Disposable {
   private subprocess: ChildProcess | undefined;
   private args: string[];
   public streamURL: string | undefined;
 
   constructor(args: string[]) {
     this.args = args;
+  }
+
+  dispose() {
+    this.subprocess?.kill();
   }
 
   async start() {

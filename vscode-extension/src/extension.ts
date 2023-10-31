@@ -8,6 +8,7 @@ import {
   DebugConfigurationProviderTriggerKind,
 } from "vscode";
 import { PreviewsPanel } from "./panels/PreviewsPanel";
+import { Project } from "./project/project";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
@@ -23,7 +24,7 @@ export function activate(context: ExtensionContext) {
   const reloadMetro = commands.registerCommand(
     "RNStudio.reloadMetro",
     (fileName?: string, lineNumber?: number) => {
-      PreviewsPanel.reloadMetro();
+      Project.currentProject?.reloadMetro();
     }
   );
 

@@ -1,51 +1,48 @@
-import { ChildProcess } from "child_process";
-
-const child_process = require("child_process");
-const readline = require("readline");
-const path = require("path");
+import { ChildProcess, spawn } from "child_process";
+import os from "os";
+import fs from "fs";
+import path from "path";
+import readline from "readline";
 
 export class Metro {
   private subprocess?: ChildProcess;
-  private appRoot: string;
-  private extensionRoot: string;
-  public readonly port: number;
 
-  constructor(appRoot: string, extensionRoot: string, port: number) {
-    this.appRoot = appRoot;
-    this.extensionRoot = extensionRoot;
-    this.port = port;
-  }
+  constructor(
+    private readonly appRoot: string,
+    private readonly extensionRoot: string,
+    public readonly port: number,
+    private readonly devtoolsPort: number
+  ) {}
 
   public shutdown() {
     this.subprocess?.kill();
   }
 
   public async start() {
-    this.subprocess = child_process.spawn(
+    this.subprocess = spawn(
       "node",
       [
         path.join(this.extensionRoot, "lib/metro.js"),
-        this.port,
         this.appRoot,
-        "index.js",
-        this.extensionRoot,
+        path.join(this.extensionRoot, "lib"),
       ],
       {
         cwd: this.appRoot,
         env: {
           ...process.env,
           // DEBUG: "Metro:InspectorProxy",
-          RCT_METRO_PORT: this.port,
+          RCT_METRO_PORT: this.port.toString(),
+          RCT_DEVTOOLS_PORT: this.devtoolsPort.toString(),
         },
       }
     );
 
-    this.subprocess.stderr.on("data", (data) => {
+    this.subprocess?.stderr?.on("data", (data) => {
       console.error(`metro stderr: ${data}`);
     });
 
     const rl = readline.createInterface({
-      input: this.subprocess!.stdout,
+      input: this.subprocess!.stdout!,
       output: process.stdout,
       terminal: false,
     });

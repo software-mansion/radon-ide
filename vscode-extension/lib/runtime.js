@@ -7,80 +7,13 @@ const { store } = require("expo-router/src/global-state/router-store");
 
 global.__fbDisableExceptionsManager = true;
 
-const parseErrorStack = require("react-native/Libraries/Core/Devtools/parseErrorStack");
-const ErrorUtils = require("react-native/Libraries/vendor/core/ErrorUtils");
-
 global.rnsz_previews ||= new Map();
 
-// window.__REACT_DEVTOOLS_PORT__
 const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
 
-let isLogCatcherInstalled = false;
-let originalConsole;
 let agent;
 let fileRouteMap = {};
 let activeEditorFile = undefined;
-
-const trySend = (type, args, stack) => {
-  if (!stack) {
-    const error = new Error();
-    // take off the top two lines of the stack, which just point to this file
-    stack = parseErrorStack(error.stack).slice(2);
-  }
-  if (agent != null && agent._bridge != null) {
-    agent._bridge.send("rnp_consoleLog", {
-      type,
-      args: args.map(JSON.stringify),
-      stack,
-    });
-  } else {
-    originalConsole[type](...args);
-    if (agent == null) {
-      originalConsole.log("g_agent was null");
-    } else if (agent._bridge == null) {
-      originalConsole.log("g_agent._bridge was null");
-    }
-  }
-};
-
-const registerLog =
-  (level) =>
-  (...args) => {
-    trySend(level, args);
-  };
-
-const LogCatcher = {
-  install() {
-    if (isLogCatcherInstalled) {
-      return;
-    }
-
-    isLogCatcherInstalled = true;
-
-    originalConsole = {
-      error: console.error.bind(console),
-      warn: console.warn.bind(console),
-      info: console.info.bind(console),
-      log: console.log.bind(console),
-    };
-
-    console.error = registerLog("error");
-    console.warn = registerLog("warn");
-    console.info = registerLog("info");
-    console.log = registerLog("log");
-
-    const handleError = (e, isFatal) => {
-      try {
-        const stack = parseErrorStack(e?.stack);
-        trySend(isFatal ? "fatalException" : "uncaughtException", e.message, stack);
-      } catch (ee) {
-        console.log("Failed to print error: ", ee.message);
-        throw e;
-      }
-    };
-    ErrorUtils.setGlobalHandler(handleError);
-  },
-};
 
 function updateRouteMap() {
   const snapshot = store.routeInfoSnapshot();
@@ -127,6 +60,7 @@ function handleActiveFileChange(filename, follow) {
 }
 
 function PreviewAppWrapper({ children, ...rest }) {
+  console.log("REDNER");
   const rootTag = useContext(RootTagContext);
   const appReadyEventSent = useRef(false);
   const { push } = useRouter();
@@ -169,7 +103,6 @@ function PreviewAppWrapper({ children, ...rest }) {
 
       LogBox.uninstall();
       // console.reportErrorsAsExceptions = false;
-      // LogCatcher.install();
     }
 
     if (hook.reactDevtoolsAgent) {
