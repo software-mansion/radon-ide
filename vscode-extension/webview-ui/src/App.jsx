@@ -320,11 +320,9 @@ function App() {
         <VSCodeButton
           appearance={isInspecing ? "primary" : "secondary"}
           onClick={() => {
-            if (isInspecing) {
-              vscode.postMessage({
-                command: "stopInspecting",
-              });
-            }
+            vscode.postMessage({
+              command: isInspecing ? "stopInspecting" : "startInspecting",
+            });
             setIsInspecting(!isInspecing);
           }}>
           <span slot="start" class="codicon codicon-inspect" />

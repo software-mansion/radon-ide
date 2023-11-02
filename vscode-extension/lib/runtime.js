@@ -2,6 +2,8 @@ require("expo-router/entry");
 const { useContext, useEffect, useRef, useSyncExternalStore } = require("react");
 const { LogBox, AppRegistry, RootTagContext, View } = require("react-native");
 const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
+const ReactNativeFeatureFlags = require("react-native/Libraries/ReactNative/ReactNativeFeatureFlags");
+const RNVersion = require("react-native/Libraries/Core/ReactNativeVersion");
 const { useRouter } = require("expo-router");
 const { store } = require("expo-router/src/global-state/router-store");
 
@@ -10,6 +12,17 @@ global.__fbDisableExceptionsManager = true;
 global.rnsz_previews ||= new Map();
 
 const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+
+// There is a bug in React Native's DevtoolsOverlay where the code treats shouldEmitW3CPointerEvents as a boolean
+// instead of a function returning a boolean. As a result, it thinks the flag is enabled while in our case
+// we don't need it enabled. Without this code inspector feature would not work.
+if (
+  RNVersion.version.major === 0 &&
+  RNVersion.version.minor <= 71 &&
+  typeof ReactNativeFeatureFlags.shouldEmitW3CPointerEvents === "function"
+) {
+  ReactNativeFeatureFlags.shouldEmitW3CPointerEvents = false;
+}
 
 let agent;
 let fileRouteMap = {};
@@ -60,7 +73,6 @@ function handleActiveFileChange(filename, follow) {
 }
 
 function PreviewAppWrapper({ children, ...rest }) {
-  console.log("REDNER");
   const rootTag = useContext(RootTagContext);
   const appReadyEventSent = useRef(false);
   const { push } = useRouter();

@@ -15,7 +15,7 @@ export class Devtools {
     const wss = new Server({ server: this.server });
 
     wss.on("connection", (ws: any) => {
-      console.log("Client connected");
+      console.log("Devtools client connected");
       this.socket = ws;
 
       // When data is received from a client

@@ -9,6 +9,8 @@ import { PreviewsPanel } from "../panels/PreviewsPanel";
 
 export class DeviceSession implements Disposable {
   private device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
+  private inspecting = false;
+  private inspectingDownSent = false;
 
   constructor(
     public readonly deviceId: string,
@@ -27,7 +29,6 @@ export class DeviceSession implements Disposable {
   ) {
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {
-        console.log("EVT", event);
         if (event === "rnp_appReady") {
           this.devtools?.removeListener(listener);
           res();
@@ -54,10 +55,7 @@ export class DeviceSession implements Disposable {
 
     const waitForPreview = this.device.startPreview();
 
-    console.log("WAIT HERE");
-    // await Promise.all([waitForAppReady, waitForPreview]);
-    await waitForPreview;
-    console.log("THE WAIT IS OVER");
+    await Promise.all([waitForAppReady, waitForPreview]);
 
     PreviewsPanel.currentPanel?.notifyAppReady(this.deviceId, this.device.previewURL!);
 
@@ -83,30 +81,20 @@ export class DeviceSession implements Disposable {
   }
 
   public startInspecting() {
+    this.inspecting = true;
+    this.inspectingDownSent = false;
     this.devtools.send("startInspectingNative");
   }
 
   public stopInspecting() {
+    this.inspecting = false;
     this.devtools.send("stopInspectingNative");
   }
 
-  public openAppHome() {
-    this.devtools.send("rnp_runApplication", { appKey: "main" });
-  }
-
-  public startPreview(appKey: string) {
-    this.devtools.send("rnp_runApplication", { appKey });
-  }
-
-  public onActiveFileChange(filename: string, followEnabled: boolean) {
-    this.devtools.send("rnp_editorFileChanged", { filename, followEnabled });
-  }
-
-  public async changeDeviceSettings(deviceId: string, settings: DeviceSettings) {
-    await this.device?.changeSettings(settings);
-  }
-
   public inspectElementAt(xRatio: number, yRatio: number) {
+    if (!this.inspecting) {
+      return;
+    }
     this.devtools?.addListener((event: string, payload: any) => {
       if (event === "selectFiber") {
         const id: number = payload;
@@ -142,8 +130,24 @@ export class DeviceSession implements Disposable {
       }
     });
     // simulate click on specific location, we assume inspecting has been started
-    this.device?.sendTouch(xRatio, yRatio, "Down");
-    this.device?.sendTouch(xRatio, yRatio, "Up");
+    this.device?.sendTouch(xRatio, yRatio, this.inspectingDownSent ? "Move" : "Down");
+    this.inspectingDownSent = true;
+  }
+
+  public openAppHome() {
+    this.devtools.send("rnp_runApplication", { appKey: "main" });
+  }
+
+  public startPreview(appKey: string) {
+    this.devtools.send("rnp_runApplication", { appKey });
+  }
+
+  public onActiveFileChange(filename: string, followEnabled: boolean) {
+    this.devtools.send("rnp_editorFileChanged", { filename, followEnabled });
+  }
+
+  public async changeDeviceSettings(deviceId: string, settings: DeviceSettings) {
+    await this.device?.changeSettings(settings);
   }
 }
 

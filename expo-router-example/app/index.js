@@ -4,6 +4,8 @@ import { Link } from 'expo-router';
 import { NiceButton } from './components/NiceButton';
 import { UglyButton } from './components/UglyButton';
 
+const obj = { a: 7678 };
+
 export default function Home() {
   const ref = useRef(null);
 
@@ -16,8 +18,9 @@ export default function Home() {
       <Link href="/another?id=100">/another?id=100</Link>
       <NiceButton
         onPress={() => {
-          console.log('Nice button pressed');
+          console.log('Nice button pressed', obj);
           console.warn('Nice button pressed again');
+          console.log('WWW', window.__REACT_DEVTOOLS_PORT__);
         }}
       />
       <Button

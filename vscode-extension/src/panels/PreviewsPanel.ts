@@ -181,6 +181,9 @@ export class PreviewsPanel {
           case "inspect":
             this.project.inspectElementAt(message.xRatio, message.yRatio);
             return;
+          case "startInspecting":
+            this.project.startInspecting();
+            return;
           case "stopInspecting":
             this.project.stopInspecting();
             return;
