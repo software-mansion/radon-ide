@@ -2,7 +2,6 @@ const path = require("path");
 
 const appRoot = process.argv[2];
 const extensionLib = process.argv[3];
-const dynamicConfigFile = process.argv[4];
 
 const nodeModules = path.join(appRoot, "node_modules") + "/";
 const runtimePath = path.join(extensionLib, "runtime.js");
@@ -58,15 +57,6 @@ async function runServer(_argv, ctx, args) {
       return {
         filePath: runtimePath,
         type: "sourceFile",
-      };
-    } else if (moduleName.match(/sztudio-dynamic-config/)) {
-      // return {
-      //   filePath: dynamicConfigFile,
-      //   type: "sourceFile",
-      // };
-      return {
-        type: "sourceFile",
-        filePath: dynamicConfigFile,
       };
     }
 
