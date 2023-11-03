@@ -3,7 +3,6 @@ const { useContext, useEffect, useRef, useSyncExternalStore } = require("react")
 const { LogBox, AppRegistry, RootTagContext, View, Platform } = require("react-native");
 const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
 const ReactNativeFeatureFlags = require("react-native/Libraries/ReactNative/ReactNativeFeatureFlags");
-const RNVersion = require("react-native/Libraries/Core/ReactNativeVersion");
 const { useRouter } = require("expo-router");
 const { store } = require("expo-router/src/global-state/router-store");
 

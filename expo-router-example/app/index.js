@@ -13,7 +13,7 @@ export default function Home() {
     <View
       ref={ref}
       style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Link href="/details">Go to detailz</Link>
+      <Link href="/details">Go to details</Link>
       <Link href="/another">/another</Link>
       <Link href="/another?id=100">/another?id=100</Link>
       <NiceButton
