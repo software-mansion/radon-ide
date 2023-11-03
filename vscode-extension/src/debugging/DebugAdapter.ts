@@ -136,6 +136,7 @@ export class DebugAdapter extends DebugSession {
     outputEvent.body.line = lineNumber - 1; // idk why it sometimes wants 0-based numbers and other times it doesn't
     outputEvent.body.column = columnNumber;
     this.sendEvent(outputEvent);
+    this.sendEvent(new Event("rnp_consoleLog", { category: outputEvent.body.category }));
   }
 
   private findOriginalPosition(scriptId: number, lineNumber: number, columnNumber: number) {

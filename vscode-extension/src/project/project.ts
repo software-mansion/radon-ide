@@ -1,4 +1,4 @@
-import { Disposable, workspace, ExtensionContext } from "vscode";
+import { Disposable, workspace, ExtensionContext, debug } from "vscode";
 import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -17,8 +17,7 @@ export class Project implements Disposable {
   private androidBuild: Promise<{ apkPath: string; packageName: string }> | undefined;
 
   private session: DeviceSession | undefined;
-  private logsListeners: ((message: { type: string }) => void)[] = [];
-  private logMonitoringStarted = false;
+  private logsListeners: ((message: { category: string }) => void)[] = [];
 
   constructor(context: ExtensionContext) {
     if (Project.currentProject) {
@@ -69,6 +68,12 @@ export class Project implements Disposable {
     console.log("Launching builds");
     this.iOSBuild = buildIos(workspaceDir, metroPort);
     this.androidBuild = buildAndroid(workspaceDir, metroPort);
+
+    debug.onDidReceiveDebugSessionCustomEvent((event) => {
+      if (event.event === "rnp_consoleLog") {
+        this.logsListeners.forEach((listener) => listener(event.body));
+      }
+    });
 
     console.log("Launching metro on port", metroPort);
     await this.metro.start();

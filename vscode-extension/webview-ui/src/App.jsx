@@ -285,6 +285,7 @@ function App() {
           break;
         case "logEvent":
           setLogCounter((logCounter) => logCounter + 1);
+          break;
         case "consoleLog":
           setLogs((logs) => [{ type: "log", text: message.text }, ...logs]);
           break;
