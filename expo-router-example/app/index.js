@@ -19,6 +19,7 @@ export default function Home() {
       <NiceButton
         onPress={() => {
           console.log('Nice button pressed', obj);
+          console.warn('Yollo');
           // console.warn('Nice button pressed again');
           // console.log('WWW', window.__REACT_DEVTOOLS_PORT__);
         }}

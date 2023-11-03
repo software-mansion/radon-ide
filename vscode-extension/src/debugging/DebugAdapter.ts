@@ -17,16 +17,13 @@ import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
 
-function typeToTag(type: string) {
+function typeToCategory(type: string) {
   switch (type) {
-    case "info":
-      return "[INFO]";
-    case "warn":
-      return "[WARN]";
+    case "warning":
     case "error":
-      return "[ERR] ";
+      return "stderr";
     default:
-      return "[LOG] ";
+      return "stdout";
   }
 }
 
@@ -114,14 +111,31 @@ export class DebugAdapter extends DebugSession {
           this.sendEvent(new ContinuedEvent(this.threads[0].id));
           break;
         case "Runtime.consoleAPICalled":
-          this.sendEvent(
-            new OutputEvent(`${message.params.type}: ${message.params.args.join(" ")}`, "console")
-          );
+          this.handleConsoleAPICall(message);
           break;
         default:
           break;
       }
     });
+  }
+
+  private handleConsoleAPICall(message: any) {
+    const [scriptURL, generatedLineNumber, generatedColumn] = message.params.args
+      .slice(-3)
+      .map((v) => v.value);
+    const args = message.params.args.slice(0, -3).map((v) => v.value);
+
+    const outputEvent = new OutputEvent((args || []).join(" ") + "\n", "console");
+    const { lineNumber, columnNumber, sourceURL } = this.findOriginalPositionFromScript(
+      scriptURL,
+      generatedLineNumber,
+      generatedColumn
+    );
+    outputEvent.body.category = typeToCategory(message.params.type);
+    outputEvent.body.source = new Source(sourceURL, sourceURL);
+    outputEvent.body.line = lineNumber - 1; // idk why it sometimes wants 0-based numbers and other times it doesn't
+    outputEvent.body.column = columnNumber;
+    this.sendEvent(outputEvent);
   }
 
   private findOriginalPosition(scriptId: number, lineNumber: number, columnNumber: number) {
@@ -270,7 +284,7 @@ export class DebugAdapter extends DebugSession {
 
   private breakpoints = new Map<string, Array<MyBreakpoint>>();
 
-private updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
+  private updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
     // this method gets called after we are informed that a new script has been parsed. If we
     // had breakpoints set in that script, we need to let the runtime know about it
 
@@ -411,23 +425,5 @@ private updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer
     request?: DebugProtocol.Request | undefined
   ): void {
     console.log("Custom req", command, args);
-    if (command === "rnp_consoleLog") {
-      const outputEvent = new OutputEvent(
-        typeToTag(args.type) + " " + (args.args || []).join(" ") + "\n",
-        "console"
-      );
-      if (args.stack && args.stack.length > 0) {
-        const { file, lineNumber: bundleLineNumber, column } = args.stack[0];
-        const { lineNumber, columnNumber, sourceURL } = this.findOriginalPositionFromScript(
-          file,
-          bundleLineNumber,
-          column
-        );
-        outputEvent.body.source = new Source(sourceURL, sourceURL);
-        outputEvent.body.line = lineNumber - 1; // idk why it sometimes wants 0-based numbers and other times it doesn't
-        outputEvent.body.column = columnNumber;
-      }
-      this.sendEvent(outputEvent);
-    }
   }
 }

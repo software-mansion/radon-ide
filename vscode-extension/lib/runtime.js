@@ -3,6 +3,7 @@ const { useContext, useEffect, useRef, useSyncExternalStore } = require("react")
 const { LogBox, AppRegistry, RootTagContext, View, Platform } = require("react-native");
 const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
 const ReactNativeFeatureFlags = require("react-native/Libraries/ReactNative/ReactNativeFeatureFlags");
+const parseErrorStack = require("react-native/Libraries/Core/Devtools/parseErrorStack");
 const { useRouter } = require("expo-router");
 const { store } = require("expo-router/src/global-state/router-store");
 
@@ -23,6 +24,18 @@ if (
 ) {
   ReactNativeFeatureFlags.shouldEmitW3CPointerEvents = false;
 }
+
+function wrapConsole(consoleFunc) {
+  return function (...args) {
+    const location = parseErrorStack(new Error().stack)[1];
+    args.push(location.file, location.lineNumber, location.column);
+    return consoleFunc.apply(console, args);
+  };
+}
+console.log = wrapConsole(console.log);
+console.warn = wrapConsole(console.warn);
+console.error = wrapConsole(console.error);
+console.info = wrapConsole(console.info);
 
 let agent;
 let fileRouteMap = {};
