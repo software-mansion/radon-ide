@@ -7,13 +7,20 @@ const nodeModules = path.join(appRoot, "node_modules") + "/";
 const runtimePath = path.join(extensionLib, "runtime.js");
 const previewPath = path.join(extensionLib, "preview.js");
 
-const ctx = require(nodeModules + "@react-native-community/cli-config").default(appRoot);
-const loadMetroConfig = require(nodeModules +
-  "@react-native-community/cli-plugin-metro/build/tools/loadMetroConfig.js").default;
-const metro = require(nodeModules + "metro");
-const metroCore = require(nodeModules + "metro-core");
-const cliServerApi = require(nodeModules + "@react-native-community/cli-server-api");
-// const cliTools = require(nodeModules + "@react-native-community/cli-tools").default;
+// Instead of using require in this code, we should use require_root, which will
+// resolve modules relative to the app root, not the extension lib root.
+function require_root(module) {
+  const path = require.resolve(module, { paths: [appRoot] });
+  return require(path);
+}
+
+const ctx = require_root("@react-native-community/cli-config").default(appRoot);
+const loadMetroConfig = require_root(
+  "@react-native-community/cli-plugin-metro/build/tools/loadMetroConfig.js"
+).default;
+const metro = require_root("metro");
+const metroCore = require_root(nodeModules + "metro-core");
+const cliServerApi = require_root(nodeModules + "@react-native-community/cli-server-api");
 
 async function runServer(_argv, ctx, args) {
   let reportEvent;
@@ -70,12 +77,13 @@ async function runServer(_argv, ctx, args) {
   process.env.RNSZTUDIO_ORIGINAL_BABEL_TRANSFORMER_PATH =
     metroConfig.transformer.babelTransformerPath;
   metroConfig.transformer.babelTransformerPath = require.resolve(
-    path.join(extensionLib, "./babel_transformer.js")
+    path.join(extensionLib, "./babel_transformer.js"),
+    { paths: [appRoot] }
   );
 
   if (args.assetPlugins) {
     metroConfig.transformer.assetPlugins = args.assetPlugins.map((plugin) =>
-      require.resolve(plugin)
+      require.resolve(plugin, { paths: [appRoot] })
     );
   }
   const { middleware, websocketEndpoints, messageSocketEndpoint, eventsSocketEndpoint } =
@@ -122,7 +130,7 @@ async function runServer(_argv, ctx, args) {
 }
 function getReporterImpl(customLogReporterPath) {
   if (customLogReporterPath === undefined) {
-    return require(nodeModules + "metro/src/lib/TerminalReporter");
+    return require_root("metro/src/lib/TerminalReporter");
   }
   try {
     // First we let require resolve it, so we can require packages in node_modules

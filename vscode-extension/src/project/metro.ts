@@ -31,6 +31,7 @@ export class Metro {
         env: {
           ...process.env,
           // DEBUG: "Metro:InspectorProxy",
+          NODE_PATH: path.join(this.appRoot, "node_modules"),
           RCT_METRO_PORT: this.port.toString(),
           RCT_DEVTOOLS_PORT: this.devtoolsPort.toString(),
         },

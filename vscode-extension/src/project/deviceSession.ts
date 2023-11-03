@@ -95,7 +95,7 @@ export class DeviceSession implements Disposable {
     if (!this.inspecting) {
       return;
     }
-    this.devtools?.addListener((event: string, payload: any) => {
+    const listener = (event: string, payload: any) => {
       if (event === "selectFiber") {
         const id: number = payload;
         console.log("Inspect eleemnt", id);
@@ -103,7 +103,7 @@ export class DeviceSession implements Disposable {
           id,
           rendererID: 1,
           forceFullData: true,
-          requesID: 77,
+          requestID: 77,
           path: null,
         });
       } else if (event === "inspectedElement") {
@@ -112,6 +112,7 @@ export class DeviceSession implements Disposable {
           const { fileName, lineNumber, columnNumber } = payload.value.source;
           if (isFileInWorkspace(workspace.workspaceFolders?.[0]?.uri?.fsPath || "", fileName)) {
             openFileAtPosition(fileName, lineNumber - 1, columnNumber - 1);
+            this.devtools?.removeListener(listener);
             return;
           }
         } catch (e) {
@@ -123,12 +124,13 @@ export class DeviceSession implements Disposable {
             id: payload.value.owners[0].id,
             rendererID: 1,
             forceFullData: true,
-            requesID: 77,
+            requestID: 77,
             path: null,
           });
         }
       }
-    });
+    };
+    this.devtools?.addListener(listener);
     // simulate click on specific location, we assume inspecting has been started
     this.device?.sendTouch(xRatio, yRatio, this.inspectingDownSent ? "Move" : "Down");
     this.inspectingDownSent = true;

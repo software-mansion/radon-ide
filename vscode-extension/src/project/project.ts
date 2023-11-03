@@ -17,6 +17,8 @@ export class Project implements Disposable {
   private androidBuild: Promise<{ apkPath: string; packageName: string }> | undefined;
 
   private session: DeviceSession | undefined;
+  private logsListeners: ((message: { type: string }) => void)[] = [];
+  private logMonitoringStarted = false;
 
   constructor(context: ExtensionContext) {
     if (Project.currentProject) {
@@ -24,6 +26,22 @@ export class Project implements Disposable {
     }
     Project.currentProject = this;
     this.context = context;
+  }
+
+  private maybeBeginLogMonitoring() {
+    if (!this.logMonitoringStarted && this.devtools) {
+      this.logMonitoringStarted = true;
+      this.devtools.addListener((event, payload) => {
+        if (event === "rnp_consoleLog") {
+          this.logsListeners.forEach((listener) => listener(payload));
+        }
+      });
+    }
+  }
+
+  public addLogsListener(listener: (message: { type: string }) => void) {
+    this.logsListeners.push(listener);
+    this.maybeBeginLogMonitoring();
   }
 
   public dispose() {
@@ -43,9 +61,10 @@ export class Project implements Disposable {
 
     const metroPort = portHash(`metro://workspaceDir`); // TODO: use workspace directory here
     const devtoolsPort = portHash(`devtools://workspaceDir`);
-    console.log("Ports metro:", metroPort, "devtools:", devtoolsPort);
+    console.log("Ports metro:", metroPort, "devtools:", devtoolsPort, { a: 100 });
     this.metro = new Metro(workspaceDir, this.context.extensionPath, metroPort, devtoolsPort);
     this.devtools = new Devtools({ port: devtoolsPort });
+    this.maybeBeginLogMonitoring();
 
     console.log("Launching builds");
     this.iOSBuild = buildIos(workspaceDir, metroPort);

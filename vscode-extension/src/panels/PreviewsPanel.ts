@@ -46,6 +46,12 @@ export class PreviewsPanel {
 
     this.project = new Project(context);
     this.project.start();
+    this.project.addLogsListener((payload) => {
+      this._panel.webview.postMessage({
+        command: "logEvent",
+        type: payload.type,
+      });
+    });
     this.disposables.push(this.project);
   }
 
