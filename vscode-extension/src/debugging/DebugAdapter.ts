@@ -16,6 +16,7 @@ import {
 import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
+import { formatMessage } from "./logFormatting";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -119,19 +120,19 @@ export class DebugAdapter extends DebugSession {
     });
   }
 
-  private handleConsoleAPICall(message: any) {
+  private async handleConsoleAPICall(message: any) {
     const [scriptURL, generatedLineNumber, generatedColumn] = message.params.args
       .slice(-3)
       .map((v) => v.value);
-    const args = message.params.args.slice(0, -3).map((v) => v.value);
 
-    const outputEvent = new OutputEvent((args || []).join(" ") + "\n", "console");
+    const output = await formatMessage(message.params.args.slice(0, -3), this);
+
+    const outputEvent = new OutputEvent(output + "\n", typeToCategory(message.params.type));
     const { lineNumber, columnNumber, sourceURL } = this.findOriginalPositionFromScript(
       scriptURL,
       generatedLineNumber,
       generatedColumn
     );
-    outputEvent.body.category = typeToCategory(message.params.type);
     outputEvent.body.source = new Source(sourceURL, sourceURL);
     outputEvent.body.line = lineNumber - 1; // idk why it sometimes wants 0-based numbers and other times it doesn't
     outputEvent.body.column = columnNumber;
@@ -211,7 +212,7 @@ export class DebugAdapter extends DebugSession {
   private cdpMessageId = 0;
   private cdpMessagePromises: Map<number, (result: any) => void> = new Map();
 
-  private async sendCDPMessage(method: string, params: object) {
+  public async sendCDPMessage(method: string, params: object) {
     const message = {
       id: ++this.cdpMessageId,
       method: method,
