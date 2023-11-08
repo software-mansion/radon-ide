@@ -53,13 +53,10 @@ export function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     languages.registerCodeLensProvider(
-      { scheme: "file", language: "javascript" },
-      new PreviewCodeLensProvider()
-    )
-  );
-  context.subscriptions.push(
-    languages.registerCodeLensProvider(
-      { scheme: "file", language: "typescript" },
+      [
+        { scheme: "file", language: "typescriptreact" },
+        { scheme: "file", language: "javascript" },
+      ],
       new PreviewCodeLensProvider()
     )
   );

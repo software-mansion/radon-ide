@@ -1,5 +1,5 @@
-require('expo-router/entry');
-const { AppRegistry, View } = require('react-native');
+require("expo-router/entry");
+const { AppRegistry, View } = require("react-native");
 
 global.rnsz_previews ||= new Map();
 
@@ -12,7 +12,7 @@ function stringifyProps(obj) {
     }
   }
 
-  return keyValuePairs.join(' ');
+  return keyValuePairs.join(" ");
 }
 
 export function preview(component) {
@@ -21,12 +21,10 @@ export function preview(component) {
   }
 
   const name = `preview:/${component._source.fileName}:${component._source.lineNumber}`;
-  console.log('Comp', Object.keys(component), component.props);
+  console.log("Comp", name, Object.keys(component), component.props);
   function Preview() {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        {component}
-      </View>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>{component}</View>
     );
   }
   global.rnsz_previews.set(name, {

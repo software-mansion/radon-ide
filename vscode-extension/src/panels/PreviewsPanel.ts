@@ -98,9 +98,9 @@ export class PreviewsPanel {
       PreviewsPanel.currentPanel = new PreviewsPanel(panel, context);
     }
 
-    // if (fileName !== undefined && lineNumber !== undefined) {
-    //   PreviewsPanel.currentPanel.startPreview(`preview:/${fileName}:${lineNumber}`);
-    // }
+    if (fileName !== undefined && lineNumber !== undefined) {
+      PreviewsPanel.currentPanel.project.startPreview(`preview:/${fileName}:${lineNumber}`);
+    }
   }
 
   public dispose() {

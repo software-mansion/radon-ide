@@ -94,6 +94,7 @@ function handleActiveFileChange(filename, follow) {
 }
 
 function PreviewAppWrapper({ children, ...rest }) {
+  console.log("Render preview app wrapper");
   const rootTag = useContext(RootTagContext);
   const appReadyEventSent = useRef(false);
   const { push } = useRouter();
@@ -123,6 +124,7 @@ function PreviewAppWrapper({ children, ...rest }) {
         });
       });
       agent._bridge.addListener("rnp_runApplication", (payload) => {
+        console.log("Run application", payload);
         AppRegistry.runApplication(payload.appKey, {
           rootTag,
           initialProps: {},

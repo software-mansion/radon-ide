@@ -64,7 +64,7 @@ main {
   align-items: center;
 }
 
-.phone-debug-overlay {
+.phone-exception-overlay {
   background-color: rgba(255,0,0,0.9);
 }
 

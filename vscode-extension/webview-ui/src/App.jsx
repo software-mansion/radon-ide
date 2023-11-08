@@ -95,7 +95,6 @@ function sendTouch(event, type) {
 }
 
 function Preview({ previewURL, device, isInspecting, debugPaused, debugException }) {
-  console.log("Redner", debugException);
   const [isPressing, setIsPressing] = useState(false);
   function handleMouseMove(e) {
     e.preventDefault();
