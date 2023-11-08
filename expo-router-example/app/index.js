@@ -20,6 +20,7 @@ export default function Home() {
         onPress={() => {
           console.log('Nice button pressed', obj);
           console.warn('Yollo');
+          console.warn('Yollo3');
           // console.warn('Nice button pressed again');
           // console.log('WWW', window.__REACT_DEVTOOLS_PORT__);
         }}

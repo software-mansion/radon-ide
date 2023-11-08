@@ -46,11 +46,29 @@ export class PreviewsPanel {
 
     this.project = new Project(context);
     this.project.start();
-    this.project.addLogsListener((payload) => {
-      this._panel.webview.postMessage({
-        command: "logEvent",
-        type: payload.type,
-      });
+    this.project.addEventMonitor({
+      onLogReceived: (message) => {
+        this._panel.webview.postMessage({
+          command: "logEvent",
+          type: message.type,
+        });
+      },
+      onDebuggerPaused: () => {
+        this._panel.webview.postMessage({
+          command: "debuggerPaused",
+        });
+      },
+      onDebuggerContinued: () => {
+        this._panel.webview.postMessage({
+          command: "debuggerContinued",
+        });
+      },
+      onUncaughtException: (isFatal) => {
+        this._panel.webview.postMessage({
+          command: "uncaughtException",
+          isFatal: isFatal,
+        });
+      },
     });
     this.disposables.push(this.project);
   }

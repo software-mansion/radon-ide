@@ -7,6 +7,13 @@ import { buildAndroid } from "../builders/buildAndroid";
 import { DeviceSettings } from "../devices/DeviceBase";
 import crypto from "crypto";
 
+export interface EventMonitor {
+  onLogReceived: (message: { type: string }) => void;
+  onDebuggerPaused: () => void;
+  onDebuggerContinued: () => void;
+  onUncaughtException: (isFatal: boolean) => void;
+}
+
 export class Project implements Disposable {
   public static currentProject: Project | undefined;
 
@@ -17,7 +24,7 @@ export class Project implements Disposable {
   private androidBuild: Promise<{ apkPath: string; packageName: string }> | undefined;
 
   private session: DeviceSession | undefined;
-  private logsListeners: ((message: { category: string }) => void)[] = [];
+  private eventMonitors: Array<EventMonitor> = [];
 
   constructor(context: ExtensionContext) {
     if (Project.currentProject) {
@@ -27,20 +34,8 @@ export class Project implements Disposable {
     this.context = context;
   }
 
-  private maybeBeginLogMonitoring() {
-    if (!this.logMonitoringStarted && this.devtools) {
-      this.logMonitoringStarted = true;
-      this.devtools.addListener((event, payload) => {
-        if (event === "rnp_consoleLog") {
-          this.logsListeners.forEach((listener) => listener(payload));
-        }
-      });
-    }
-  }
-
-  public addLogsListener(listener: (message: { type: string }) => void) {
-    this.logsListeners.push(listener);
-    this.maybeBeginLogMonitoring();
+  public addEventMonitor(monitor: EventMonitor) {
+    this.eventMonitors.push(monitor);
   }
 
   public dispose() {
@@ -63,15 +58,28 @@ export class Project implements Disposable {
     console.log("Ports metro:", metroPort, "devtools:", devtoolsPort, { a: 100 });
     this.metro = new Metro(workspaceDir, this.context.extensionPath, metroPort, devtoolsPort);
     this.devtools = new Devtools({ port: devtoolsPort });
-    this.maybeBeginLogMonitoring();
 
     console.log("Launching builds");
     this.iOSBuild = buildIos(workspaceDir, metroPort);
     this.androidBuild = buildAndroid(workspaceDir, metroPort);
 
     debug.onDidReceiveDebugSessionCustomEvent((event) => {
-      if (event.event === "rnp_consoleLog") {
-        this.logsListeners.forEach((listener) => listener(event.body));
+      switch (event.event) {
+        case "rnp_consoleLog":
+          this.eventMonitors.forEach((monitor) => monitor.onLogReceived(event.body));
+          break;
+        case "rnp_paused":
+          this.eventMonitors.forEach((monitor) => {
+            if (event.body?.reason === "exception") {
+              monitor.onUncaughtException(event.body.isFatal);
+            } else {
+              monitor.onDebuggerPaused();
+            }
+          });
+          break;
+        case "rnp_continued":
+          this.eventMonitors.forEach((monitor) => monitor.onDebuggerContinued());
+          break;
       }
     });
 

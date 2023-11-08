@@ -7,6 +7,14 @@ const parseErrorStack = require("react-native/Libraries/Core/Devtools/parseError
 const { useRouter } = require("expo-router");
 const { store } = require("expo-router/src/global-state/router-store");
 
+function sztudioBreakOnError(error, isFatal) {
+  const message = error.message;
+  const stack = parseErrorStack(error.stack);
+  debugger;
+}
+
+global.ErrorUtils.setGlobalHandler(sztudioBreakOnError);
+
 global.__fbDisableExceptionsManager = true;
 
 global.rnsz_previews ||= new Map();

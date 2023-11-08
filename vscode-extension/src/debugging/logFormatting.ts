@@ -35,7 +35,7 @@ function format(anything: any) {
     depth: 2,
     colors: false,
     maxArrayLength: 20,
-    maxStringLength: 100,
+    maxStringLength: 300,
     compact: true,
   });
   if (typeof anything === "string") {
@@ -59,10 +59,10 @@ function formatObject(propertiesResult: any) {
         obj[prop.name] = prop.value.value;
         break;
       case "object":
-        obj[prop.name] = prop.description || "[Object]";
+        obj[prop.name] = prop.description || new Object();
         break;
       case "function":
-        obj[prop.name] = prop.description || "[Function]";
+        obj[prop.name] = prop.description || new Function();
         break;
     }
   });

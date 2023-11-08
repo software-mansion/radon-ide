@@ -190,23 +190,91 @@ export class DebugAdapter extends DebugSession {
   }
 
   private async handleDebuggerPaused(message: any) {
-    this.stoppedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
-      const cdpLocation = cdpFrame.location;
-      const { sourceURL, lineNumber, columnNumber, scriptURL } = this.findOriginalPosition(
-        cdpLocation.scriptId,
-        cdpLocation.lineNumber,
-        cdpLocation.columnNumber
+    if (
+      message.params.reason === "other" &&
+      message.params.callFrames[0].functionName === "sztudioBreakOnError"
+    ) {
+      // this is a workaround for an issue with hermes which does not provide a full stack trace
+      // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception
+      // reporting handler, and access the actual error's stack trace from local variable
+      const localScropeObjectId = message.params.callFrames[0].scopeChain?.find(
+        (scope) => scope.type === "local"
+      )?.object?.objectId;
+      const res = await this.sendCDPMessage("Runtime.getProperties", {
+        objectId: localScropeObjectId,
+        ownProperties: true,
+      });
+      const errorMessage = res.result.find((prop: any) => prop.name === "message")?.value?.value;
+      const isFatal = res.result.find((prop: any) => prop.name === "isFatal")?.value?.value;
+      const stackObject = res.result.find((prop: any) => prop.name === "stack");
+      const stackResponse = await this.sendCDPMessage("Runtime.getProperties", {
+        objectId: stackObject.value.objectId,
+        ownProperties: true,
+      });
+      const stackFrames = [];
+      await Promise.all(
+        stackResponse.result.map(async (stackObjEntry: any) => {
+          // we process entry with numerical names
+          if (stackObjEntry.name.match(/^\d+$/)) {
+            const index = parseInt(stackObjEntry.name, 10);
+            const res = await this.sendCDPMessage("Runtime.getProperties", {
+              objectId: stackObjEntry.value.objectId,
+              ownProperties: true,
+            });
+            let genUrl = "",
+              methodName = "",
+              genLine = 0,
+              genColumn = 0;
+            res.result.forEach((prop: any) => {
+              switch (prop.name) {
+                case "methodName":
+                  methodName = prop.value.value;
+                  break;
+                case "file":
+                  genUrl = prop.value.value;
+                  break;
+                case "lineNumber":
+                  genLine = prop.value.value;
+                  break;
+                case "column":
+                  genColumn = prop.value.value;
+                  break;
+              }
+            });
+            const { sourceURL, lineNumber, columnNumber, scriptURL } =
+              this.findOriginalPositionFromScript(genUrl, genLine, genColumn);
+            stackFrames[index] = new StackFrame(
+              index,
+              methodName,
+              sourceURL ? new Source(scriptURL, sourceURL) : undefined,
+              lineNumber,
+              columnNumber
+            );
+          }
+        })
       );
-      return new StackFrame(
-        index,
-        cdpFrame.functionName,
-        sourceURL ? new Source(scriptURL, sourceURL) : undefined,
-        lineNumber,
-        columnNumber
-      );
-    });
-    this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id));
-    this.sendEvent(new Event("rnp_paused"));
+      this.stoppedStackFrames = stackFrames;
+      this.sendEvent(new StoppedEvent("exception", this.threads[0].id, errorMessage));
+      this.sendEvent(new Event("rnp_paused", { reason: "exception", isFatal: isFatal }));
+    } else {
+      this.stoppedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
+        const cdpLocation = cdpFrame.location;
+        const { sourceURL, lineNumber, columnNumber, scriptURL } = this.findOriginalPosition(
+          cdpLocation.scriptId,
+          cdpLocation.lineNumber,
+          cdpLocation.columnNumber
+        );
+        return new StackFrame(
+          index,
+          cdpFrame.functionName,
+          sourceURL ? new Source(scriptURL, sourceURL) : undefined,
+          lineNumber,
+          columnNumber
+        );
+      });
+      this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id, "Yollo"));
+      this.sendEvent(new Event("rnp_paused"));
+    }
   }
 
   private cdpMessageId = 0;

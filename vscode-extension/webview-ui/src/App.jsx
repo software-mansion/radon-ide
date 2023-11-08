@@ -94,7 +94,8 @@ function sendTouch(event, type) {
   });
 }
 
-function Preview({ previewURL, device, isInspecting, debugPaused }) {
+function Preview({ previewURL, device, isInspecting, debugPaused, debugException }) {
+  console.log("Redner", debugException);
   const [isPressing, setIsPressing] = useState(false);
   function handleMouseMove(e) {
     e.preventDefault();
@@ -143,6 +144,20 @@ function Preview({ previewURL, device, isInspecting, debugPaused }) {
           {debugPaused && (
             <div className="phone-sized phone-debug-overlay">
               Paused in debugger&nbsp;
+              <VSCodeButton
+                appearance={"primary"}
+                onClick={() => {
+                  vscode.postMessage({
+                    command: "debugResume",
+                  });
+                }}>
+                ⏵
+              </VSCodeButton>
+            </div>
+          )}
+          {debugException && (
+            <div className="phone-sized phone-debug-overlay phone-exception-overlay">
+              Uncaught exception&nbsp;
               <VSCodeButton
                 appearance={"primary"}
                 onClick={() => {
@@ -261,6 +276,7 @@ function App() {
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
   const [debugPaused, setDebugPaused] = useState(false);
+  const [debugException, setDebugException] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [logs, setLogs] = useState([]);
   const [logCounter, setLogCounter] = useState(0);
@@ -280,8 +296,12 @@ function App() {
         case "debuggerPaused":
           setDebugPaused(true);
           break;
-        case "debuggerResumed":
+        case "debuggerContinued":
           setDebugPaused(false);
+          setDebugException(null);
+          break;
+        case "uncaughtException":
+          setDebugException(message.isFatal ? "fatal" : "exception");
           break;
         case "logEvent":
           setLogCounter((logCounter) => logCounter + 1);
@@ -347,6 +367,7 @@ function App() {
         previewURL={previewURL}
         device={device}
         debugPaused={debugPaused}
+        debugException={debugException}
       />
 
       <UrlBar url={appURL} />
