@@ -64,22 +64,25 @@ function handleRouteChange(pathname, params) {
   updateRouteMap();
 
   let url = pathname;
-  if (params && Object.keys(params).length > 0) {
-    url +=
-      "?" +
-      Object.keys(params)
-        .map((key) => {
-          const value = params[key];
-          return `${key}=${JSON.stringify(value)}`;
-        })
-        .join("&");
-  }
-
+  // if (params && Object.keys(params).length > 0) {
+  //   url +=
+  //     "?" +
+  //     Object.keys(params)
+  //       .map((key) => {
+  //         const value = params[key];
+  //         return `${key}=${JSON.stringify(value)}`;
+  //       })
+  //       .join("&");
+  // }
   agent && agent._bridge.send("rnp_appUrlChanged", { url });
 }
 
 function inferRouteForFile(filename) {
   return fileRouteMap[filename];
+}
+
+function isPreviewUrl(url) {
+  return url.startsWith("preview://");
 }
 
 function handleActiveFileChange(filename, follow) {
@@ -94,7 +97,6 @@ function handleActiveFileChange(filename, follow) {
 }
 
 function PreviewAppWrapper({ children, ...rest }) {
-  console.log("Render preview app wrapper");
   const rootTag = useContext(RootTagContext);
   const appReadyEventSent = useRef(false);
   const { push } = useRouter();
@@ -115,9 +117,6 @@ function PreviewAppWrapper({ children, ...rest }) {
   useEffect(() => {
     function _attachToDevtools(agent_) {
       agent = agent_;
-      agent._bridge.addListener("rnp_openRouterLink", (payload) => {
-        push(payload.href);
-      });
       agent._bridge.addListener("rnp_listPreviews", () => {
         agent._bridge.send("rnp_previewsList", {
           previews: [...global.rnsz_previews.values()],
@@ -125,10 +124,26 @@ function PreviewAppWrapper({ children, ...rest }) {
       });
       agent._bridge.addListener("rnp_runApplication", (payload) => {
         console.log("Run application", payload);
-        AppRegistry.runApplication(payload.appKey, {
-          rootTag,
-          initialProps: {},
-        });
+        const wantPreview = isPreviewUrl(payload.appKey);
+
+        if (wantPreview) {
+          AppRegistry.runApplication(payload.appKey, {
+            rootTag,
+            initialProps: {},
+          });
+          return;
+        }
+
+        const isRunningPreview = isPreviewUrl(SceneTracker.getActiveScene().name);
+        if (isRunningPreview) {
+          AppRegistry.runApplication("main", {
+            rootTag,
+            initialProps: {},
+          });
+          push(payload.appKey);
+        } else {
+          push(payload.appKey);
+        }
       });
 
       agent._bridge.addListener("rnp_editorFileChanged", (payload) => {

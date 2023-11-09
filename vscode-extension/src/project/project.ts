@@ -107,8 +107,8 @@ export class Project implements Disposable {
     this.session?.stopInspecting();
   }
 
-  public openAppHome() {
-    this.session?.openAppHome();
+  public openUrl(url: string) {
+    this.session?.openUrl(url);
   }
 
   public startPreview(appKey: string) {

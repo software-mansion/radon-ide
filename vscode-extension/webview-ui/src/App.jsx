@@ -246,24 +246,77 @@ function LogPanel({ expandedLogs, logs }) {
   );
 }
 
-function UrlBar({ url }) {
+function formatAppKey(url) {
   if (url.startsWith("preview://")) {
-    const previewName = url.split("/").pop();
-    return (
-      <div className="url-bar">
-        <span>{previewName}</span>
-        <span
-          class="codicon codicon-close"
-          onClick={() => {
-            vscode.postMessage({
-              command: "openAppHome",
-            });
-          }}
-        />
-      </div>
-    );
+    return url.split("/").pop();
   }
-  return <div className="url-bar">{url}</div>;
+  return url;
+}
+
+function UrlBar() {
+  const [urlList, setUrlList] = useState(["/"]);
+
+  useEffect(() => {
+    const listener = (event) => {
+      const message = event.data;
+      if (message.command === "appUrlChanged") {
+        // put new url at the top of the list and remove duplicates
+        const newUrl = message.url;
+        setUrlList((urlList) => [newUrl, ...urlList.filter((url) => url !== newUrl)]);
+        console.log("SET URL LIST", [newUrl, ...urlList.filter((url) => url !== newUrl)]);
+      }
+    };
+    window.addEventListener("message", listener);
+    return () => window.removeEventListener("message", listener);
+  }, []);
+  // if (url.startsWith("preview://")) {
+  //   const previewName = url.split("/").pop();
+  //   return (
+  //     <div className="url-bar">
+  //       <span>{previewName}</span>
+  //       <span
+  //         class="codicon codicon-close"
+  //         onClick={() => {
+  //           vscode.postMessage({
+  //             command: "openAppHome",
+  //           });
+  //         }}
+  //       />
+  //     </div>
+  //   );
+  // }
+  // return <div className="url-bar">{url}</div>;
+  return (
+    <>
+      <VSCodeButton appearance={"secondary"} title="Go back" onClick={() => {}}>
+        <span class="codicon codicon-arrow-left" />
+      </VSCodeButton>
+      <VSCodeDropdown
+        onChange={(e) => {
+          vscode.postMessage({
+            command: "openUrl",
+            url: e.target.value,
+          });
+          // if (device.id !== e.target.value) {
+          //   setDevice(devices.find((d) => d.id === e.target.value));
+          //   setPreviewURL(undefined);
+          //   vscode.postMessage({
+          //     command: "changeDevice",
+          //     settings: deviceSettings,
+          //     deviceId: e.target.value,
+          //   });
+          // }
+        }}>
+        <span slot="start" class="codicon codicon-link" />
+        &nbsp;
+        {urlList.map((url) => (
+          <VSCodeOption key={url} value={url}>
+            {formatAppKey(url)}
+          </VSCodeOption>
+        ))}
+      </VSCodeDropdown>
+    </>
+  );
 }
 
 function App() {
@@ -336,7 +389,47 @@ function App() {
   }, []);
   return (
     <main>
-      <div className="button-group" style={{ marginBottom: 0 }}>
+      <div className="bar-spacer" />
+      <Preview
+        isInspecting={isInspecing}
+        previewURL={previewURL}
+        device={device}
+        debugPaused={debugPaused}
+        debugException={debugException}
+      />
+      <div className="bar-spacer" />
+
+      <div className="button-group-top">
+        <VSCodeButton
+          appearance={isFollowing ? "primary" : "secondary"}
+          title="Follow active editor on the device"
+          onClick={() => {
+            vscode.postMessage({
+              command: isFollowing ? "stopFollowing" : "startFollowing",
+            });
+            setIsFollowing(!isFollowing);
+          }}>
+          <span class="codicon codicon-magnet" />
+        </VSCodeButton>
+
+        <span class="group-separator" />
+
+        <UrlBar url={appURL} />
+
+        <div class="spacer" />
+
+        <VSCodeButton
+          appearance={"secondary"}
+          onClick={() => {
+            setLogCounter(0);
+            vscode.postMessage({ command: "openLogs" });
+          }}>
+          <span slot="start" class="codicon codicon-output" />
+          Logs {logCounter > 0 && `(${logCounter})`}
+        </VSCodeButton>
+      </div>
+
+      <div class="button-group-bottom">
         <VSCodeButton
           appearance={isInspecing ? "primary" : "secondary"}
           onClick={() => {
@@ -345,33 +438,11 @@ function App() {
             });
             setIsInspecting(!isInspecing);
           }}>
-          <span slot="start" class="codicon codicon-inspect" />
-          Inspect
+          <span class="codicon codicon-inspect" />
         </VSCodeButton>
-        <VSCodeButton
-          appearance={isFollowing ? "primary" : "secondary"}
-          onClick={() => {
-            vscode.postMessage({
-              command: isFollowing ? "stopFollowing" : "startFollowing",
-            });
-            setIsFollowing(!isFollowing);
-          }}>
-          <span slot="start" class="codicon codicon-arrow-right" />
-          Follow
-        </VSCodeButton>
-      </div>
 
-      <Preview
-        isInspecting={isInspecing}
-        previewURL={previewURL}
-        device={device}
-        debugPaused={debugPaused}
-        debugException={debugException}
-      />
+        <span class="group-separator" />
 
-      <UrlBar url={appURL} />
-
-      <div class="button-group">
         <VSCodeDropdown
           onChange={(e) => {
             if (device.id !== e.target.value) {
@@ -391,6 +462,9 @@ function App() {
             </VSCodeOption>
           ))}
         </VSCodeDropdown>
+
+        <div class="spacer" />
+
         <VSCodeDropdown
           value={deviceSettings.appearance}
           onChange={(e) => {
@@ -406,6 +480,7 @@ function App() {
           <VSCodeOption value={"light"}>Light</VSCodeOption>
           <VSCodeOption value={"dark"}>Dark</VSCodeOption>
         </VSCodeDropdown>
+
         <VSCodeDropdown
           value={deviceSettings.contentSize}
           onChange={(e) => {
@@ -426,15 +501,6 @@ function App() {
           <VSCodeOption value={"xxlarge"}>XX large</VSCodeOption>
           <VSCodeOption value={"xxxlarge"}>XXX large</VSCodeOption>
         </VSCodeDropdown>
-        <VSCodeButton
-          appearance={"secondary"}
-          onClick={() => {
-            setLogCounter(0);
-            vscode.postMessage({ command: "openLogs" });
-          }}>
-          <span slot="start" class="codicon codicon-output" />
-          Logs {logCounter > 0 && `(${logCounter})`}
-        </VSCodeButton>
       </div>
       <LogPanel expandedLogs={expandedLogs} logs={logs} />
     </main>

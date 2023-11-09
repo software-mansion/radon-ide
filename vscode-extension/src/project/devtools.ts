@@ -36,7 +36,9 @@ export class Devtools {
       if (event === "rnp_appReady") {
         console.log("App ready");
         const { appKey } = payload;
-        PreviewsPanel.currentPanel?.notifyAppUrlChanged(appKey);
+        if (appKey !== "main") {
+          PreviewsPanel.currentPanel?.notifyAppUrlChanged(appKey);
+        }
       } else if (event === "rnp_appUrlChanged") {
         PreviewsPanel.currentPanel?.notifyAppUrlChanged(payload.url);
       }

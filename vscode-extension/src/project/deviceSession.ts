@@ -136,8 +136,8 @@ export class DeviceSession implements Disposable {
     this.inspectingDownSent = true;
   }
 
-  public openAppHome() {
-    this.devtools.send("rnp_runApplication", { appKey: "main" });
+  public openUrl(url: string) {
+    this.devtools.send("rnp_runApplication", { appKey: url });
   }
 
   public startPreview(appKey: string) {

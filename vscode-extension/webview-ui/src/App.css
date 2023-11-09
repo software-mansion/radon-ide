@@ -21,14 +21,30 @@ main {
 
   height: 100%;
   width: 100%;
+  background-color: rgba(255,255,255,0.05);
+}
+
+.bar-spacer {
+  flex: 1;
+  max-height: 45px;
+}
+
+.group-separator {
+  width: 1px;
+  background-color: red;
+  margin-left: 5px;
+  margin-right: 5px;
+  height: 100%;
 }
 
 .phone-wrapper {
+  flex: 1;
   display: flex;
   justify-content: center;
   overflow: auto;
 
   width: 100%;
+  min-height: 650px;
   position: relative;
 }
 
@@ -77,13 +93,27 @@ main {
   z-index: -1;
 }
 
-.button-group {
+.spacer {
+  flex: 1;
+}
+
+.button-group-top, .button-group-bottom {
   display: flex;
   flex-flow: row wrap;
   align-items: center;
+  width: calc(100% - 20px);
 
   margin: 10px;
   gap: 4px;
+  position: absolute;
+}
+
+.button-group-top {
+  top: 0;
+}
+
+.button-group-bottom {
+  bottom: 0;
 }
 
 vscode-dropdown > .codicon {

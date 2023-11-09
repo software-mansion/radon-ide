@@ -167,17 +167,10 @@ export class PreviewsPanel {
   }
 
   public notifyAppUrlChanged(appKey: string) {
-    if (appKey.startsWith("preview")) {
-      this._panel.webview.postMessage({
-        command: "appUrlChanged",
-        url: appKey,
-      });
-    } else {
-      this._panel.webview.postMessage({
-        command: "appUrlChanged",
-        url: "/",
-      });
-    }
+    this._panel.webview.postMessage({
+      command: "appUrlChanged",
+      url: appKey,
+    });
   }
 
   private _setWebviewMessageListener(webview: Webview) {
@@ -211,8 +204,8 @@ export class PreviewsPanel {
           case "stopInspecting":
             this.project.stopInspecting();
             return;
-          case "openAppHome":
-            this.project.openAppHome();
+          case "openUrl":
+            this.project.openUrl(message.url);
             return;
           case "stopFollowing":
             this.followEnabled = false;
