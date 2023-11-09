@@ -123,7 +123,6 @@ function PreviewAppWrapper({ children, ...rest }) {
         });
       });
       agent._bridge.addListener("rnp_runApplication", (payload) => {
-        console.log("Run application", payload);
         const wantPreview = isPreviewUrl(payload.appKey);
 
         if (wantPreview) {

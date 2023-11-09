@@ -247,7 +247,7 @@ export class DebugAdapter extends DebugSession {
               index,
               methodName,
               sourceURL ? new Source(scriptURL, sourceURL) : undefined,
-              lineNumber,
+              lineNumber - 3,
               columnNumber
             );
           }

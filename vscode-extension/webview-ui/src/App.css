@@ -24,6 +24,17 @@ main {
   background-color: rgba(255,255,255,0.05);
 }
 
+.log-counter {
+  background-color: #38ACDD;
+  border-radius: 50%;
+  max-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 5px;
+  color: #001a72;
+}
+
 .bar-spacer {
   flex: 1;
   max-height: 45px;
@@ -81,7 +92,25 @@ main {
 }
 
 .phone-exception-overlay {
-  background-color: rgba(255,0,0,0.9);
+  background-color: rgba(255,106,89,0.85);
+  color: #001A72;
+}
+
+.continue-button, .uncaught-button {
+  background-color: #ff6259;
+  border-radius: 10px;
+  border: 1px solid #E65F50;
+  padding: 5px;
+  color: #001a72;
+}
+
+.continue-button {
+  background-color: #87cce8;
+  border-color: #38acdd;
+}
+
+.continue-button::before {
+  display: block;
 }
 
 .phone-content-loading {

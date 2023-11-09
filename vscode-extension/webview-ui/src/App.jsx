@@ -4,6 +4,7 @@ import {
   VSCodeDropdown,
   VSCodeOption,
   VSCodeProgressRing,
+  VSCodeTag,
 } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
 import { useEffect, useState } from "react";
@@ -142,30 +143,30 @@ function Preview({ previewURL, device, isInspecting, debugPaused, debugException
           />
           {debugPaused && (
             <div className="phone-sized phone-debug-overlay">
-              Paused in debugger&nbsp;
-              <VSCodeButton
-                appearance={"primary"}
+              <button
+                className="continue-button"
                 onClick={() => {
                   vscode.postMessage({
                     command: "debugResume",
                   });
                 }}>
-                ⏵
-              </VSCodeButton>
+                Paused in debugger&nbsp;
+                <span class="codicon codicon-debug-continue" />
+              </button>
             </div>
           )}
           {debugException && (
             <div className="phone-sized phone-debug-overlay phone-exception-overlay">
-              Uncaught exception&nbsp;
-              <VSCodeButton
-                appearance={"primary"}
+              <button
+                class="uncaught-button"
                 onClick={() => {
                   vscode.postMessage({
                     command: "debugResume",
                   });
                 }}>
-                ⏵
-              </VSCodeButton>
+                Uncaught exception&nbsp;
+                <span class="codicon codicon-debug-continue" />
+              </button>
             </div>
           )}
           <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
@@ -288,7 +289,16 @@ function UrlBar() {
   // return <div className="url-bar">{url}</div>;
   return (
     <>
-      <VSCodeButton appearance={"secondary"} title="Go back" onClick={() => {}}>
+      <VSCodeButton
+        appearance={"secondary"}
+        title="Go back"
+        disabled={urlList.length < 2}
+        onClick={() => {
+          vscode.postMessage({
+            command: "openUrl",
+            url: urlList[1],
+          });
+        }}>
         <span class="codicon codicon-arrow-left" />
       </VSCodeButton>
       <VSCodeDropdown
@@ -297,18 +307,7 @@ function UrlBar() {
             command: "openUrl",
             url: e.target.value,
           });
-          // if (device.id !== e.target.value) {
-          //   setDevice(devices.find((d) => d.id === e.target.value));
-          //   setPreviewURL(undefined);
-          //   vscode.postMessage({
-          //     command: "changeDevice",
-          //     settings: deviceSettings,
-          //     deviceId: e.target.value,
-          //   });
-          // }
         }}>
-        <span slot="start" class="codicon codicon-link" />
-        &nbsp;
         {urlList.map((url) => (
           <VSCodeOption key={url} value={url}>
             {formatAppKey(url)}
@@ -317,6 +316,13 @@ function UrlBar() {
       </VSCodeDropdown>
     </>
   );
+}
+
+function LogCounter({ count }) {
+  if (count <= 0) {
+    return null;
+  }
+  return <span className="log-counter">{count}</span>;
 }
 
 function App() {
@@ -424,8 +430,9 @@ function App() {
             setLogCounter(0);
             vscode.postMessage({ command: "openLogs" });
           }}>
-          <span slot="start" class="codicon codicon-output" />
-          Logs {logCounter > 0 && `(${logCounter})`}
+          <span slot="start" class="codicon codicon-debug-console" />
+          Logs
+          <LogCounter count={logCounter} />
         </VSCodeButton>
       </div>
 
