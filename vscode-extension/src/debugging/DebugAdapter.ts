@@ -54,8 +54,8 @@ export class DebugAdapter extends DebugSession {
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, number, SourceMapConsumer]> = [];
   private stoppedStackFrames: StackFrame[] = [];
-
-  public _yollo = "yollo";
+  private linesStartAt1 = true;
+  private columnsStartAt1 = true;
 
   constructor(configuration: DebugConfiguration) {
     super();
@@ -121,72 +121,60 @@ export class DebugAdapter extends DebugSession {
   }
 
   private async handleConsoleAPICall(message: any) {
-    const [scriptURL, generatedLineNumber, generatedColumn] = message.params.args
+    // Since console.log stack is extracted from Error, unlike other messages sent over CDP
+    // the line and column numbers are 1-based
+    const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args
       .slice(-3)
       .map((v) => v.value);
 
     const output = await formatMessage(message.params.args.slice(0, -3), this);
 
     const outputEvent = new OutputEvent(output + "\n", typeToCategory(message.params.type));
-    const { lineNumber, columnNumber, sourceURL } = this.findOriginalPositionFromScript(
+    const { lineNumber1Based, columnNumber0Based, sourceURL } = this.findOriginalPosition(
       scriptURL,
-      generatedLineNumber,
-      generatedColumn
+      generatedLineNumber1Based,
+      generatedColumn1Based - 1
     );
     outputEvent.body.source = new Source(sourceURL, sourceURL);
-    outputEvent.body.line = lineNumber - 1; // idk why it sometimes wants 0-based numbers and other times it doesn't
-    outputEvent.body.column = columnNumber;
+    outputEvent.body.line = this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1;
+    outputEvent.body.column = this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based;
     this.sendEvent(outputEvent);
     this.sendEvent(new Event("rnp_consoleLog", { category: outputEvent.body.category }));
   }
 
-  private findOriginalPosition(scriptId: number, lineNumber: number, columnNumber: number) {
-    let sourceURL: string | null = null;
-    let scriptURL = "";
-    let sourceLine = lineNumber;
-    let sourceColumn = columnNumber;
-    this.sourceMaps.forEach(([url, id, consumer]) => {
-      if (id === scriptId) {
-        scriptURL = url;
-
-        const pos = consumer.originalPositionFor({ line: lineNumber, column: columnNumber });
-        if (pos.source != null) {
-          sourceURL = pos.source;
-        }
-        if (pos.line != null) {
-          sourceLine = pos.line + 1;
-        }
-        if (pos.column != null) {
-          sourceColumn = pos.column + 1;
-        }
-      }
-    });
-    return { sourceURL, lineNumber: sourceLine, columnNumber: sourceColumn, scriptURL };
-  }
-
-  private findOriginalPositionFromScript(
-    scriptURL: string,
-    lineNumber: number,
-    columnNumber: number
+  private findOriginalPosition(
+    scriptIdOrURL: number | string,
+    lineNumber1Based: number,
+    columnNumber0Based: number
   ) {
-    let sourceURL: string | null = null;
-    let sourceLine = lineNumber;
-    let sourceColumn = columnNumber;
+    let scriptURL = "__script__";
+    let sourceURL = "__source__";
+    let sourceLine1Based = lineNumber1Based;
+    let sourceColumn0Based = columnNumber0Based;
     this.sourceMaps.forEach(([url, id, consumer]) => {
-      if (url === scriptURL) {
-        const pos = consumer.originalPositionFor({ line: lineNumber, column: columnNumber });
+      if (id === scriptIdOrURL || url === scriptIdOrURL) {
+        scriptURL = url;
+        const pos = consumer.originalPositionFor({
+          line: lineNumber1Based,
+          column: columnNumber0Based,
+        });
         if (pos.source != null) {
           sourceURL = pos.source;
         }
         if (pos.line != null) {
-          sourceLine = pos.line + 1;
+          sourceLine1Based = pos.line;
         }
         if (pos.column != null) {
-          sourceColumn = pos.column + 1;
+          sourceColumn0Based = pos.column;
         }
       }
     });
-    return { sourceURL, lineNumber: sourceLine, columnNumber: sourceColumn, scriptURL };
+    return {
+      sourceURL,
+      lineNumber1Based: sourceLine1Based,
+      columnNumber0Based: sourceColumn0Based,
+      scriptURL,
+    };
   }
 
   private async handleDebuggerPaused(message: any) {
@@ -223,8 +211,8 @@ export class DebugAdapter extends DebugSession {
             });
             let genUrl = "",
               methodName = "",
-              genLine = 0,
-              genColumn = 0;
+              genLine1Based = 0,
+              genColumn1Based = 0;
             res.result.forEach((prop: any) => {
               switch (prop.name) {
                 case "methodName":
@@ -234,21 +222,21 @@ export class DebugAdapter extends DebugSession {
                   genUrl = prop.value.value;
                   break;
                 case "lineNumber":
-                  genLine = prop.value.value;
+                  genLine1Based = prop.value.value;
                   break;
                 case "column":
-                  genColumn = prop.value.value;
+                  genColumn1Based = prop.value.value;
                   break;
               }
             });
-            const { sourceURL, lineNumber, columnNumber, scriptURL } =
-              this.findOriginalPositionFromScript(genUrl, genLine, genColumn);
+            const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
+              this.findOriginalPosition(genUrl, genLine1Based, genColumn1Based - 1);
             stackFrames[index] = new StackFrame(
               index,
               methodName,
               sourceURL ? new Source(scriptURL, sourceURL) : undefined,
-              lineNumber - 3,
-              columnNumber
+              this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+              this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
             );
           }
         })
@@ -259,17 +247,18 @@ export class DebugAdapter extends DebugSession {
     } else {
       this.stoppedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
         const cdpLocation = cdpFrame.location;
-        const { sourceURL, lineNumber, columnNumber, scriptURL } = this.findOriginalPosition(
-          cdpLocation.scriptId,
-          cdpLocation.lineNumber,
-          cdpLocation.columnNumber
-        );
+        const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
+          this.findOriginalPosition(
+            cdpLocation.scriptId,
+            cdpLocation.lineNumber + 1, // cdp line and column numbers are 0-based
+            cdpLocation.columnNumber
+          );
         return new StackFrame(
           index,
           cdpFrame.functionName,
           sourceURL ? new Source(scriptURL, sourceURL) : undefined,
-          lineNumber,
-          columnNumber
+          this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+          this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
         );
       });
       this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id, "Yollo"));
@@ -296,6 +285,8 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.InitializeResponse,
     args: DebugProtocol.InitializeRequestArguments
   ): void {
+    this.linesStartAt1 = args.linesStartAt1 || true;
+    this.columnsStartAt1 = args.columnsStartAt1 || true;
     response.body = response.body || {};
     // response.body.supportsConditionalBreakpoints = true;
     // response.body.supportsHitConditionalBreakpoints = true;
@@ -311,7 +302,7 @@ export class DebugAdapter extends DebugSession {
     this.sendResponse(response);
   }
 
-  private toGeneratedPosition(file: string, line: number, column: number) {
+  private toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
     this.sourceMaps.forEach(([sourceURL, scriptId, consumer]) => {
@@ -321,8 +312,8 @@ export class DebugAdapter extends DebugSession {
       });
       const pos = consumer.generatedPositionFor({
         source: file,
-        line,
-        column,
+        line: lineNumber1Based,
+        column: columnNumber0Based,
         bias: SourceMapConsumer.LEAST_UPPER_BOUND,
       });
       if (pos.line != null) {
@@ -333,16 +324,21 @@ export class DebugAdapter extends DebugSession {
     if (position.line === null) {
       return null;
     }
-    return { source: originalSourceURL, line: position.line, column: position.column };
+    return {
+      source: originalSourceURL,
+      lineNumber1Based: position.line,
+      columnNumber0Based: position.column,
+    };
   }
 
   private async setCDPBreakpoint(file: string, line: number, column: number) {
     const generatedPos = this.toGeneratedPosition(file, line, column);
     if (generatedPos) {
       const result = await this.sendCDPMessage("Debugger.setBreakpointByUrl", {
-        lineNumber: generatedPos.line - 1,
+        // in CDP line and column numbers are 0-based
+        lineNumber: generatedPos.lineNumber1Based - 1,
         url: generatedPos.source,
-        columnNumber: generatedPos.column,
+        columnNumber: generatedPos.columnNumber0Based,
         condition: "",
       });
       if (result && result.breakpointId !== undefined) {
@@ -371,7 +367,11 @@ export class DebugAdapter extends DebugSession {
         if (bp.verified) {
           this.sendCDPMessage("Debugger.removeBreakpoint", { breakpointId: bp.getId() });
         }
-        const newId = await this.setCDPBreakpoint(path, bp.line, bp.column || 0);
+        const newId = await this.setCDPBreakpoint(
+          path,
+          this.linesStartAt1 ? bp.line : bp.line + 1,
+          this.columnsStartAt1 ? (bp.column || 1) - 1 : bp.column || 0
+        );
         if (newId !== null) {
           bp.setId(newId);
           bp.verified = true;

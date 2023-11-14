@@ -34,6 +34,11 @@ export class Metro {
           NODE_PATH: path.join(this.appRoot, "node_modules"),
           RCT_METRO_PORT: this.port.toString(),
           RCT_DEVTOOLS_PORT: this.devtoolsPort.toString(),
+          // we disable env plugins as they add additional lines at the top of the bundle that are not
+          // taken into acount by source maps. As a result, this messes up line numbers reported by hermes
+          // and makes it hard to translate them back to original locations. Once this is fixed, we
+          // can restore this plugin.
+          EXPO_NO_CLIENT_ENV_VARS: "true",
         },
       }
     );

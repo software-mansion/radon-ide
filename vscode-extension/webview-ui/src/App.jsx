@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 
 import iphone14 from "../../assets/iphone14.png";
 import pixel7 from "../../assets/pixel7.png";
-import { settings } from "cluster";
 
 const devices = [
   {
@@ -270,23 +269,6 @@ function UrlBar() {
     window.addEventListener("message", listener);
     return () => window.removeEventListener("message", listener);
   }, []);
-  // if (url.startsWith("preview://")) {
-  //   const previewName = url.split("/").pop();
-  //   return (
-  //     <div className="url-bar">
-  //       <span>{previewName}</span>
-  //       <span
-  //         class="codicon codicon-close"
-  //         onClick={() => {
-  //           vscode.postMessage({
-  //             command: "openAppHome",
-  //           });
-  //         }}
-  //       />
-  //     </div>
-  //   );
-  // }
-  // return <div className="url-bar">{url}</div>;
   return (
     <>
       <VSCodeButton
@@ -500,13 +482,13 @@ function App() {
             });
           }}>
           <span slot="start" class="codicon codicon-text-size" />
-          <VSCodeOption value={"xsmall"}>Extra small</VSCodeOption>
-          <VSCodeOption value={"small"}>Small</VSCodeOption>
-          <VSCodeOption value={"normal"}>Normal</VSCodeOption>
-          <VSCodeOption value={"large"}>Large</VSCodeOption>
-          <VSCodeOption value={"xlarge"}>Extra large</VSCodeOption>
-          <VSCodeOption value={"xxlarge"}>XX large</VSCodeOption>
-          <VSCodeOption value={"xxxlarge"}>XXX large</VSCodeOption>
+          <VSCodeOption value="xsmall">Extra small</VSCodeOption>
+          <VSCodeOption value="small">Small</VSCodeOption>
+          <VSCodeOption value="normal">Normal</VSCodeOption>
+          <VSCodeOption value="large">Large</VSCodeOption>
+          <VSCodeOption value="xlarge">Extra large</VSCodeOption>
+          <VSCodeOption value="xxlarge">XX large</VSCodeOption>
+          <VSCodeOption value="xxxlarge">XXX large</VSCodeOption>
         </VSCodeDropdown>
       </div>
       <LogPanel expandedLogs={expandedLogs} logs={logs} />
