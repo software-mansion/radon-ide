@@ -12,10 +12,10 @@ import {
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
+import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
+import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
 import { Project } from "../project/project";
-
-import { DeviceSettings } from "../devices/DeviceBase";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
@@ -25,12 +25,10 @@ export class PreviewsPanel {
   private disposables: Disposable[] = [];
 
   private followEnabled = false;
-  private lastEditorFilename: string | undefined;
 
   private constructor(panel: WebviewPanel, context: ExtensionContext) {
     this._panel = panel;
     this._context = context;
-    this.lastEditorFilename = window.activeTextEditor?.document.fileName;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
@@ -196,13 +194,26 @@ export class PreviewsPanel {
             this.project.sendTouch(message.deviceId, message.xRatio, message.yRatio, message.type);
             return;
           case "inspect":
-            this.project.inspectElementAt(message.xRatio, message.yRatio);
-            return;
-          case "startInspecting":
-            this.project.startInspecting();
-            return;
-          case "stopInspecting":
-            this.project.stopInspecting();
+            this.project.inspectElementAt(message.xRatio, message.yRatio, (inspectData) => {
+              this._panel.webview.postMessage({
+                command: "inspectData",
+                data: inspectData,
+              });
+              if (message.type === "Down") {
+                // find last element in inspectData.hierarchy with source that belongs to the workspace
+                for (let i = inspectData.hierarchy.length - 1; i >= 0; i--) {
+                  const element = inspectData.hierarchy[i];
+                  if (isFileInWorkspace(element.source.fileName)) {
+                    openFileAtPosition(
+                      element.source.fileName,
+                      element.source.lineNumber - 1,
+                      element.source.columnNumber - 1
+                    );
+                    break;
+                  }
+                }
+              }
+            });
             return;
           case "openUrl":
             this.project.openUrl(message.url);
@@ -225,7 +236,6 @@ export class PreviewsPanel {
 
   private onActiveFileChange(filename: string) {
     console.log("LastEditor", filename);
-    this.lastEditorFilename = filename;
     this.project.onActiveFileChange(filename, this.followEnabled);
   }
 

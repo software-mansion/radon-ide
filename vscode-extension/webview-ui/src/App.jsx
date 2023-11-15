@@ -94,25 +94,72 @@ function sendTouch(event, type) {
   });
 }
 
-function Preview({ previewURL, device, isInspecting, debugPaused, debugException }) {
+function throttle(func, limit) {
+  let timeout;
+  let recentArgs;
+
+  return function (...args) {
+    const force = args[args.length - 1] === true; // Check if the last argument is true (force flag)
+
+    if (force) {
+      timeout = null;
+      clearTimeout(timeout);
+      func(...args);
+      return;
+    }
+
+    if (!timeout) {
+      timeout = setTimeout(() => {
+        timeout = null;
+        func(...recentArgs);
+        recentArgs = null;
+      }, limit);
+    }
+    recentArgs = args;
+  };
+}
+
+function sendInspectUnthrottled(event, type) {
+  const imgRect = event.target.getBoundingClientRect();
+  const x = (event.clientX - imgRect.left) / imgRect.width;
+  const y = (event.clientY - imgRect.top) / imgRect.height;
+  vscode.postMessage({
+    command: "inspect",
+    xRatio: x,
+    yRatio: y,
+    type,
+  });
+}
+
+const sendInspect = throttle(sendInspectUnthrottled, 50);
+
+function Preview({
+  previewURL,
+  device,
+  isInspecting,
+  debugPaused,
+  debugException,
+  inspectData,
+  setIsInspecting,
+  setInspectData,
+}) {
   const [isPressing, setIsPressing] = useState(false);
   function handleMouseMove(e) {
     e.preventDefault();
     if (isPressing) {
       sendTouch(e, "Move");
+    } else if (isInspecting) {
+      sendInspect(e, "Move");
     }
   }
   function handleMouseDown(e) {
     e.preventDefault();
     if (isInspecting) {
-      const imgRect = e.currentTarget.getBoundingClientRect();
-      const x = (e.clientX - imgRect.left) / imgRect.width;
-      const y = (e.clientY - imgRect.top) / imgRect.height;
-      vscode.postMessage({
-        command: "inspect",
-        xRatio: x,
-        yRatio: y,
-      });
+      sendInspect(e, "Down", true);
+      setIsInspecting(false);
+    } else if (inspectData) {
+      // if element is highlighted, we clear it here and ignore first click (don't send it to device)
+      setInspectData(null);
     } else {
       setIsPressing(true);
       sendTouch(e, "Move");
@@ -125,6 +172,19 @@ function Preview({ previewURL, device, isInspecting, debugPaused, debugException
     }
     setIsPressing(false);
   }
+  function handleMouseLeave(e) {
+    e.preventDefault();
+    if (isPressing) {
+      handleMouseUp(e);
+    }
+    if (isInspecting) {
+      // we force inspect event here to make sure no extra events are throttled
+      // and will be dispatched later on
+      sendInspect(e, "Leave", true);
+      setInspectData(null);
+    }
+  }
+  const inspectFrame = inspectData?.frame;
   return (
     <div className="phone-wrapper">
       {previewURL && (
@@ -136,10 +196,23 @@ function Preview({ previewURL, device, isInspecting, debugPaused, debugException
             }}
             className={`phone-sized phone-screen`}
             onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
           />
+          {inspectFrame && (
+            <div className="phone-sized phone-inspect-overlay">
+              <div
+                className="inspect-area"
+                style={{
+                  left: `${inspectFrame.x * 100}%`,
+                  top: `${inspectFrame.y * 100}%`,
+                  width: `${inspectFrame.width * 100}%`,
+                  height: `${inspectFrame.height * 100}%`,
+                }}
+              />
+            </div>
+          )}
           {debugPaused && (
             <div className="phone-sized phone-debug-overlay">
               <button
@@ -168,6 +241,7 @@ function Preview({ previewURL, device, isInspecting, debugPaused, debugException
               </button>
             </div>
           )}
+
           <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
         </div>
       )}
@@ -263,7 +337,6 @@ function UrlBar() {
         // put new url at the top of the list and remove duplicates
         const newUrl = message.url;
         setUrlList((urlList) => [newUrl, ...urlList.filter((url) => url !== newUrl)]);
-        console.log("SET URL LIST", [newUrl, ...urlList.filter((url) => url !== newUrl)]);
       }
     };
     window.addEventListener("message", listener);
@@ -321,6 +394,7 @@ function App() {
   const [logs, setLogs] = useState([]);
   const [logCounter, setLogCounter] = useState(0);
   const [expandedLogs, setExpandedLogs] = useState(false);
+  const [inspectData, setInspectData] = useState(null);
   const [appURL, setAppURL] = useState("/");
   useEffect(() => {
     setCssPropertiesForDevice(device);
@@ -328,10 +402,12 @@ function App() {
   useEffect(() => {
     const listener = (event) => {
       const message = event.data;
-      console.log("MSG", message);
       switch (message.command) {
         case "appReady":
           setPreviewURL(message.previewURL);
+          break;
+        case "inspectData":
+          setInspectData(message.data);
           break;
         case "debuggerPaused":
           setDebugPaused(true);
@@ -384,6 +460,9 @@ function App() {
         device={device}
         debugPaused={debugPaused}
         debugException={debugException}
+        inspectData={inspectData}
+        setIsInspecting={setIsInspecting}
+        setInspectData={setInspectData}
       />
       <div className="bar-spacer" />
 
@@ -422,9 +501,9 @@ function App() {
         <VSCodeButton
           appearance={isInspecing ? "primary" : "secondary"}
           onClick={() => {
-            vscode.postMessage({
-              command: isInspecing ? "stopInspecting" : "startInspecting",
-            });
+            if (isInspecing) {
+              setInspectData(null);
+            }
             setIsInspecting(!isInspecing);
           }}>
           <span class="codicon codicon-inspect" />

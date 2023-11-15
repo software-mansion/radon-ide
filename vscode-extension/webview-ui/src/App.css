@@ -113,6 +113,20 @@ main {
   display: block;
 }
 
+.phone-inspect-overlay {
+  position: absolute;
+  top: 0;
+  background-color: rgba(0,0,0,0.2);
+  display: flex;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.inspect-area {
+  position: absolute;
+  background-color: rgba(56, 172, 221,0.85);
+}
+
 .phone-content-loading {
   display: flex;
   justify-content: center;
@@ -134,7 +148,7 @@ main {
 
   margin: 10px;
   gap: 4px;
-  position: absolute;
+  position: fixed;
 }
 
 .button-group-top {

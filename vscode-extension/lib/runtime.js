@@ -1,13 +1,15 @@
 require("expo-router/entry");
 const { useContext, useEffect, useRef, useSyncExternalStore } = require("react");
-const { LogBox, AppRegistry, RootTagContext, View, Platform } = require("react-native");
+const { LogBox, AppRegistry, RootTagContext, View, Platform, Dimensions } = require("react-native");
 const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
 const ReactNativeFeatureFlags = require("react-native/Libraries/ReactNative/ReactNativeFeatureFlags");
 const parseErrorStack = require("react-native/Libraries/Core/Devtools/parseErrorStack");
+const getInspectorDataForViewAtPoint = require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
 const { useRouter } = require("expo-router");
 const { store } = require("expo-router/src/global-state/router-store");
 
 function sztudioBreakOnError(error, isFatal) {
+  // the below variables are accessed from the debugger and hence are necessary despite being unused in the code
   const message = error.message;
   const stack = parseErrorStack(error.stack);
   debugger;
@@ -20,18 +22,6 @@ global.__fbDisableExceptionsManager = true;
 global.rnsz_previews ||= new Map();
 
 const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-
-// There is a bug in React Native's DevtoolsOverlay where the code treats shouldEmitW3CPointerEvents as a boolean
-// instead of a function returning a boolean. As a result, it thinks the flag is enabled while in our case
-// we don't need it enabled. Without this code inspector feature would not work.
-const RNVersion = Platform.constants.reactNativeVersion;
-if (
-  RNVersion.major === 0 &&
-  RNVersion.minor <= 71 &&
-  typeof ReactNativeFeatureFlags.shouldEmitW3CPointerEvents === "function"
-) {
-  ReactNativeFeatureFlags.shouldEmitW3CPointerEvents = false;
-}
 
 function wrapConsole(consoleFunc) {
   return function (...args) {
@@ -99,6 +89,7 @@ function handleActiveFileChange(filename, follow) {
 function PreviewAppWrapper({ children, ...rest }) {
   const rootTag = useContext(RootTagContext);
   const appReadyEventSent = useRef(false);
+  const mainContainerRef = useRef();
   const { push } = useRouter();
 
   const routeInfo = useSyncExternalStore(
@@ -145,6 +136,32 @@ function PreviewAppWrapper({ children, ...rest }) {
         }
       });
 
+      agent._bridge.addListener("rnp_inspect", (payload) => {
+        const { width, height } = Dimensions.get("window");
+        getInspectorDataForViewAtPoint(
+          mainContainerRef.current,
+          payload.x * width,
+          payload.y * height,
+          (viewData) => {
+            const frame = viewData.frame;
+            const scaledFrame = {
+              x: frame.left / width,
+              y: frame.top / height,
+              width: frame.width / width,
+              height: frame.height / height,
+            };
+            const hierarchy = viewData.hierarchy.map((item) => {
+              return { name: item.name, source: item.getInspectorData().source };
+            });
+            agent._bridge.send("rnp_inspectData", {
+              id: payload.id,
+              frame: scaledFrame,
+              hierarchy,
+            });
+          }
+        );
+      });
+
       agent._bridge.addListener("rnp_editorFileChanged", (payload) => {
         const newRoute = handleActiveFileChange(payload.filename, payload.followEnabled);
         newRoute && push(newRoute);
@@ -163,6 +180,7 @@ function PreviewAppWrapper({ children, ...rest }) {
 
   return (
     <View
+      ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={() => {
         if (!appReadyEventSent.current && agent) {

@@ -95,16 +95,8 @@ export class Project implements Disposable {
     // }
   }
 
-  public inspectElementAt(xRatio: number, yRatio: number) {
-    this.session?.inspectElementAt(xRatio, yRatio);
-  }
-
-  public startInspecting() {
-    this.session?.startInspecting();
-  }
-
-  public stopInspecting() {
-    this.session?.stopInspecting();
+  public inspectElementAt(xRatio: number, yRatio: number, callback: (inspectData: any) => void) {
+    this.session?.inspectElementAt(xRatio, yRatio, callback);
   }
 
   public openUrl(url: string) {
