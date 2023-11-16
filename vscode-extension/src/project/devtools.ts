@@ -1,9 +1,10 @@
+import { Disposable } from "vscode";
 import { PreviewsPanel } from "../panels/PreviewsPanel";
 
 const http = require("http");
 const { Server } = require("ws");
 
-export class Devtools {
+export class Devtools implements Disposable {
   public readonly port: number;
   private server: any;
   private socket: any;
@@ -45,7 +46,7 @@ export class Devtools {
     });
   }
 
-  public shutdown() {
+  public dispose() {
     this.server.close();
   }
 

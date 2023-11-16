@@ -71,10 +71,6 @@ export class Preview implements Disposable {
     return result;
   }
 
-  public shutdown() {
-    this.subprocess?.kill();
-  }
-
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
     this.subprocess?.stdin?.write(`touch${type} ${xRatio} ${yRatio}\n`);
   }

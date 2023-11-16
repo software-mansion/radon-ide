@@ -1,10 +1,9 @@
 import { ChildProcess, spawn } from "child_process";
-import os from "os";
-import fs from "fs";
 import path from "path";
 import readline from "readline";
+import { Disposable } from "vscode";
 
-export class Metro {
+export class Metro implements Disposable {
   private subprocess?: ChildProcess;
 
   constructor(
@@ -14,7 +13,7 @@ export class Metro {
     private readonly devtoolsPort: number
   ) {}
 
-  public shutdown() {
+  public dispose() {
     this.subprocess?.kill();
   }
 

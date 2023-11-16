@@ -37,6 +37,8 @@ export class Project implements Disposable {
 
   public dispose() {
     this.session?.dispose();
+    this.metro?.dispose();
+    this.devtools?.dispose();
   }
 
   public reloadMetro() {
