@@ -20,7 +20,6 @@ import { Project } from "../project/project";
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
-  private readonly _context: ExtensionContext;
   private readonly project: Project;
   private disposables: Disposable[] = [];
 
@@ -28,7 +27,6 @@ export class PreviewsPanel {
 
   private constructor(panel: WebviewPanel, context: ExtensionContext) {
     this._panel = panel;
-    this._context = context;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
@@ -94,6 +92,7 @@ export class PreviewsPanel {
       );
 
       PreviewsPanel.currentPanel = new PreviewsPanel(panel, context);
+      commands.executeCommand("workbench.action.lockEditorGroup");
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {

@@ -27,9 +27,6 @@ export class Project implements Disposable {
   private eventMonitors: Array<EventMonitor> = [];
 
   constructor(context: ExtensionContext) {
-    if (Project.currentProject) {
-      throw new Error("Only one project instance can be created");
-    }
     Project.currentProject = this;
     this.context = context;
   }
