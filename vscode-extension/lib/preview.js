@@ -21,7 +21,6 @@ export function preview(component) {
   }
 
   const name = `preview:/${component._source.fileName}:${component._source.lineNumber}`;
-  console.log("Comp", name, Object.keys(component), component.props);
   function Preview() {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>{component}</View>

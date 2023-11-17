@@ -7,7 +7,7 @@ import loadConfig from "@react-native-community/cli-config";
 import { BuildFlags, buildProject } from "./buildProject";
 import { getConfigurationScheme } from "@react-native-community/cli-platform-ios/build/tools/getConfigurationScheme";
 
-export async function buildIos(workspaceDir: string, metroPort: number) {
+export async function buildIos(workspaceDir: string) {
   const ctx = loadConfig(workspaceDir);
 
   const { xcodeProject, sourceDir } = ctx.project.ios!;

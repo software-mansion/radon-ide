@@ -63,7 +63,7 @@ export class Preview implements Disposable {
 
     rl.on("line", (line: string) => {
       if (line.includes("http://")) {
-        console.log("Preview server ready");
+        console.log("Preview server ready", line);
         this.streamURL = line;
         resolve(this.streamURL);
       }

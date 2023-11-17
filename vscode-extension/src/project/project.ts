@@ -59,8 +59,8 @@ export class Project implements Disposable {
     this.devtools = new Devtools({ port: devtoolsPort });
 
     console.log("Launching builds");
-    this.iOSBuild = buildIos(workspaceDir, metroPort);
-    this.androidBuild = buildAndroid(workspaceDir, metroPort);
+    this.iOSBuild = buildIos(workspaceDir);
+    this.androidBuild = buildAndroid(workspaceDir);
 
     debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {

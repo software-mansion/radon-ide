@@ -20,14 +20,13 @@ async function extractPackageName(artifactPath: string) {
   return packageName;
 }
 
-export async function buildAndroid(workspaceDir: string, metroPort: number) {
+export async function buildAndroid(workspaceDir: string) {
   const ctx = loadConfig(workspaceDir);
   const androidSourceDir = ctx.project.android!.sourceDir;
   const gradleArgs = [
     "-x",
     "lint",
     "-PreactNativeArchitectures=arm64-v8a", // TODO: check emulator architecture
-    `-PreactNativeDevServerPort=${metroPort}`,
     `assembleDebug`,
   ];
   try {

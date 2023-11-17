@@ -1,20 +1,19 @@
 import { ChildProcess } from "child_process";
 import { Preview } from "./preview";
 import { DeviceBase, DeviceSettings } from "./DeviceBase";
-
-const execa = require("execa");
-const readline = require("readline");
-const child_process = require("child_process");
-const os = require("os");
-const path = require("path");
-const fs = require("fs");
+import execa from "execa";
+import readline from "readline";
+import child_process from "child_process";
+import os from "os";
+import path from "path";
+import fs from "fs";
+import xml2js from "xml2js";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
 const PREFFERED_SYSTEM_IMAGE = "android-33";
 
 const ANDROID_HOME = process.env.ANDROID_HOME || path.join(os.homedir(), "Library/Android/sdk");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
-const AAPT_PATH = path.join(ANDROID_HOME, "build-tools", "33.0.0", "aapt");
 
 interface EmulatorProcessInfo {
   pid: number;
@@ -33,6 +32,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   get name() {
     return this.serial ?? "emulator-unknown";
+  }
+
+  public dispose(): void {
+    super.dispose();
+    this.emulatorProcess?.kill();
   }
 
   async changeSettings(settings: DeviceSettings) {
@@ -57,15 +61,45 @@ export class AndroidEmulatorDevice extends DeviceBase {
     this.serial = serial;
   }
 
-  async launchApp(packageName: string, metroPort: number, devtoolsPort: number) {
-    await execa(ADB_PATH, ["-s", this.name, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
-    await execa(ADB_PATH, [
-      "-s",
-      this.name,
-      "reverse",
-      `tcp:${devtoolsPort}`,
-      `tcp:${devtoolsPort}`,
-    ]);
+  async configureMetroPort(packageName: string, metroPort: number) {
+    // read preferences
+    let prefs: any;
+    try {
+      const { stdout } = await execa(ADB_PATH, [
+        "shell",
+        "run-as",
+        packageName,
+        "cat",
+        `/data/data/${packageName}/shared_prefs/${packageName}_preferences.xml`,
+      ]);
+      prefs = await xml2js.parseStringPromise(stdout, { explicitArray: true });
+    } catch (e) {
+      // preferences file does not exists
+      prefs = { map: {} };
+    }
+
+    // filter out existing debug_http_host record
+    prefs.map.string = prefs.map.string?.filter((s: any) => s.$.name !== "debug_http_host") || [];
+    // add new debug_http_host record poiting to 10.0.2.2:metroPort (localhost from emulator)
+    prefs.map.string.push({ $: { name: "debug_http_host" }, _: `10.0.2.2:${metroPort}` });
+    const prefsXML = new xml2js.Builder().buildObject(prefs);
+
+    // write prefs
+    await execa(
+      ADB_PATH,
+      [
+        "shell",
+        `run-as ${packageName} sh -c 'cat > /data/data/${packageName}/shared_prefs/${packageName}_preferences.xml'`,
+      ],
+      {
+        // pass serialized prefs as input:
+        input: prefsXML,
+      }
+    );
+  }
+
+  async launchApp(packageName: string, metroPort: number) {
+    await this.configureMetroPort(packageName, metroPort);
     await execa(ADB_PATH, [
       "-s",
       this.name,

@@ -48,7 +48,7 @@ export class DeviceSession implements Disposable {
       await this.device.bootDevice();
       await this.device.changeSettings(settings);
       await this.device.installApp(apkPath);
-      await this.device.launchApp(packageName, this.metro!.port, this.devtools!.port);
+      await this.device.launchApp(packageName, this.metro!.port);
     }
 
     const waitForPreview = this.device.startPreview();
