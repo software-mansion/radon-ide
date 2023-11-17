@@ -61,7 +61,6 @@ export function buildProject(
       env: {
         ...process.env,
         RCT_NO_LAUNCH_PACKAGER: "true",
-        RCT_METRO_PORT: (args?.port || 8081).toString(),
         NODE_BINARY: "/usr/local/bin/node",
       },
       cwd: args.buildCwd,

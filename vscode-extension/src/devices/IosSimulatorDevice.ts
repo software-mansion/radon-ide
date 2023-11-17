@@ -81,7 +81,40 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  async launchApp(bundleID: string) {
+  async configureMetroPort(bundleID: string, metroPort: number) {
+    const { stdout: appDataLocation } = await execa("xcrun", [
+      "simctl",
+      "--set",
+      this.deviceSetPath,
+      "get_app_container",
+      this.deviceUdid!,
+      bundleID,
+      "data",
+    ]);
+    const userDefaultsLocation = path.join(
+      appDataLocation,
+      "Library",
+      "Preferences",
+      `${bundleID}.plist`
+    );
+    console.log("Defaults location", userDefaultsLocation);
+    try {
+      await execa("/usr/libexec/PlistBuddy", [
+        "-c",
+        `Add :RCT_jsLocation string localhost:${metroPort}`,
+        userDefaultsLocation,
+      ]);
+    } catch (e) {
+      await execa("/usr/libexec/PlistBuddy", [
+        "-c",
+        `Set :RCT_jsLocation localhost:${metroPort}`,
+        userDefaultsLocation,
+      ]);
+    }
+  }
+
+  async launchApp(bundleID: string, metroPort: number) {
+    await this.configureMetroPort(bundleID, metroPort);
     await execa("xcrun", [
       "simctl",
       "--set",

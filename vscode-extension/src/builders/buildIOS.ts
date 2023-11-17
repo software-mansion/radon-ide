@@ -26,7 +26,6 @@ export async function buildIos(workspaceDir: string, metroPort: number) {
     mode: getConfigurationScheme({ scheme, mode: "" }, sourceDir),
     verbose: true,
     buildCwd: sourceDir,
-    port: metroPort,
   };
 
   const buildOutput = await buildProject(xcodeProject, undefined, scheme, buildFlags);

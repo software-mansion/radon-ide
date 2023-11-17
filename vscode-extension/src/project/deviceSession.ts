@@ -41,7 +41,7 @@ export class DeviceSession implements Disposable {
       await this.device.bootDevice();
       await this.device.changeSettings(settings);
       await this.device.installApp(appPath);
-      await this.device.launchApp(bundleID);
+      await this.device.launchApp(bundleID, this.metro!.port);
     } else {
       this.device = new AndroidEmulatorDevice();
       const { apkPath, packageName } = await androidBuild;
