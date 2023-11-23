@@ -14,4 +14,13 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    host: "0.0.0.0",
+    port: 8887,
+    strictPort: true,
+    hmr: {
+      host: "0.0.0.0",
+      port: 8886,
+    },
+  },
 });

@@ -119,7 +119,7 @@ export class PreviewsPanel {
     // The CSS file from the React build output
     const stylesUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.css"]);
     // The JS file from the React build output
-    const scriptUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.js"]);
+    const scriptUri = getUri(webview, extensionUri, ["webview-ui-webpack", "build", "bundle.js"]);
     const baseUri = getUri(webview, extensionUri, ["webview-ui", "build"]);
 
     const codiconsUri = getUri(webview, extensionUri, [
@@ -131,6 +131,19 @@ export class PreviewsPanel {
     ]);
 
     const nonce = getNonce();
+
+    return `<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
+	<body>
+		<div id="root"></div>
+
+		<script src="http://localhost:3000/bundle.js" />
+	</body>
+	</html>`;
 
     // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
     return /*html*/ `
