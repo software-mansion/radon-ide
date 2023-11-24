@@ -16,6 +16,7 @@ import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
 import { Project } from "../project/project";
+import { getDevServerScriptUrl, isDev } from "../utilities/common";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
@@ -117,9 +118,10 @@ export class PreviewsPanel {
 
   private _getWebviewContent(webview: Webview, extensionUri: Uri) {
     // The CSS file from the React build output
-    const stylesUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.css"]);
+    const stylesUri = getUri(webview, extensionUri, ["webview-ui", "build", "main.css"]);
     // The JS file from the React build output
-    const scriptUri = getUri(webview, extensionUri, ["webview-ui-webpack", "build", "bundle.js"]);
+    const scriptUri = isDev() ? getDevServerScriptUrl() : getUri(webview, extensionUri, ["webview-ui", "build", "bundle.js"]);
+    console.log("SCRIPT URI", scriptUri);
     const baseUri = getUri(webview, extensionUri, ["webview-ui", "build"]);
 
     const codiconsUri = getUri(webview, extensionUri, [
@@ -132,19 +134,6 @@ export class PreviewsPanel {
 
     const nonce = getNonce();
 
-    return `<!DOCTYPE html>
-	<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	</head>
-	<body>
-		<div id="root"></div>
-
-		<script src="http://localhost:3000/bundle.js" />
-	</body>
-	</html>`;
-
     // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
     return /*html*/ `
       <!DOCTYPE html>
@@ -152,14 +141,14 @@ export class PreviewsPanel {
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">
-          <link rel="stylesheet" type="text/css" href="${stylesUri}">
+          ${isDev() ? '' : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`}
+          ${isDev() ? '' : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
           <link rel="stylesheet" href="${codiconsUri}" >
           <base href="${baseUri}">
         </head>
         <body>
           <div id="root"></div>
-          <script>
+          <script nonce="${nonce}">
             window.baseUri = "${baseUri}";
           </script>
           <script type="module" nonce="${nonce}" src="${scriptUri}"></script>

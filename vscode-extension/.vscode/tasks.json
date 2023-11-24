@@ -4,15 +4,40 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "run-dev",
+			"dependsOn": ["watch", "dev-server"]
+		},
+		{
+			"label": "run-production-build",
+			"dependsOn": ["build-frontend", "watch"]
+		},
+		{
+			"label": "build-frontend",
 			"type": "npm",
 			"script": "build:webview",
 			"group": {
 				"kind": "build",
-				"isDefault": true
 			},
-			"dependsOn": [
-				"watch"
-			]
+		},
+		{
+            "label": "dev-server",
+            "type": "npm",
+            "script": "start:webview",
+			"isBackground": true,
+            "problemMatcher": {
+                "owner": "webpack",
+                "pattern": {
+                    "regexp": "^(.*):\\s+(error|warning|info)\\s+(.*)$",
+                    "file": 1,
+                    "severity": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "compiled successfully",
+                    "endsPattern": "compiled successfully" 
+                }
+            }
 		},
 		{
 			"label": "watch",
@@ -27,6 +52,6 @@
 				"kind": "build",
 				"isDefault": false
 			}
-		}
+		},
 	]
 }
