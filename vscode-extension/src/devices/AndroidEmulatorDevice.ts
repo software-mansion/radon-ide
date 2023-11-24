@@ -8,6 +8,7 @@ import os from "os";
 import path from "path";
 import fs from "fs";
 import xml2js from "xml2js";
+import { retry } from "../utilities/retry";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
 const PREFFERED_SYSTEM_IMAGE = "android-33";
@@ -114,7 +115,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async installApp(apkPath: string) {
-    await execa(ADB_PATH, ["-s", this.name, "install", "-r", apkPath]);
+    // adb install sometimes fails because we call it too early after the device is initialized.
+    // we haven't found a better way to test if device is ready and already wait for boot_completed
+    // flag in waitForEmulatorOnline. The workaround therefore is to retry install command.
+    await retry(() => execa(ADB_PATH, ["-s", this.name, "install", "-r", apkPath]), 2, 1000);
   }
 
   makePreview(): Preview {
