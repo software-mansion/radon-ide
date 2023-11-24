@@ -15,7 +15,27 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
-			"preLaunchTask": "${defaultBuildTask}"
+			"preLaunchTask": "run-dev",
+			"env": {
+				"ENVIRONMENT": "DEVELOPMENT",
+				"DEV_SCRIPT_URL": "http://localhost:3000/bundle.js"
+			}
+		},
+		{
+			"name": "Run Extension (production build)",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			"preLaunchTask": "run-production-build",
+			"env": {
+				"ENVIRONMENT": "PRODUCTION",
+				"DEV_SCRIPT_URL": "http://localhost:3000/bundle.js"
+			}
 		},
 		{
 			"name": "Extension Tests",

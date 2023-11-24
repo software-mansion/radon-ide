@@ -8,9 +8,8 @@ import {
 } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
 import { useEffect, useState } from "react";
-
-import iphone14 from "../../assets/iphone14.png";
-import pixel7 from "../../assets/pixel7.png";
+import iphone14 from "../assets/iphone14.png";
+import pixel7 from "../assets/pixel7.png";
 
 const devices = [
   {
@@ -71,16 +70,6 @@ console.log = function (...args) {
     text: args.map((arg) => JSON.stringify(arg)).join(" "),
   });
 };
-
-function imageSrc(imageName) {
-  try {
-    let baseUri = document.querySelector("base")?.getAttribute("href") || "";
-    return baseUri.replace(/\/+$/, "") + "/" + imageName.replace(/^\/+/, "");
-  } catch (e) {
-    console.log("Error", imageName, window.baseUri);
-    return "";
-  }
-}
 
 function sendTouch(event, type) {
   const imgRect = event.currentTarget.getBoundingClientRect();
@@ -223,26 +212,26 @@ function Preview({
                   });
                 }}>
                 Paused in debugger&nbsp;
-                <span class="codicon codicon-debug-continue" />
+                <span className="codicon codicon-debug-continue" />
               </button>
             </div>
           )}
           {debugException && (
             <div className="phone-sized phone-debug-overlay phone-exception-overlay">
               <button
-                class="uncaught-button"
+                className="uncaught-button"
                 onClick={() => {
                   vscode.postMessage({
                     command: "debugResume",
                   });
                 }}>
                 Uncaught exception&nbsp;
-                <span class="codicon codicon-debug-continue" />
+                <span className="codicon codicon-debug-continue" />
               </button>
             </div>
           )}
 
-          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
+          <img src={device.backgroundImage} className="phone-frame" />
         </div>
       )}
       {!previewURL && (
@@ -250,7 +239,7 @@ function Preview({
           <div className="phone-sized phone-screen phone-content-loading">
             <VSCodeProgressRing />
           </div>
-          <img src={imageSrc(device.backgroundImage)} className="phone-frame" />
+          <img src={device.backgroundImage} className="phone-frame" />
         </div>
       )}
     </div>
@@ -354,7 +343,7 @@ function UrlBar() {
             url: urlList[1],
           });
         }}>
-        <span class="codicon codicon-arrow-left" />
+        <span className="codicon codicon-arrow-left" />
       </VSCodeButton>
       <VSCodeDropdown
         onChange={(e) => {
@@ -476,14 +465,14 @@ function App() {
             });
             setIsFollowing(!isFollowing);
           }}>
-          <span class="codicon codicon-magnet" />
+          <span className="codicon codicon-magnet" />
         </VSCodeButton>
 
-        <span class="group-separator" />
+        <span className="group-separator" />
 
         <UrlBar url={appURL} />
-
-        <div class="spacer" />
+        
+        <div className="spacer" />
 
         <VSCodeButton
           appearance={"secondary"}
@@ -491,13 +480,13 @@ function App() {
             setLogCounter(0);
             vscode.postMessage({ command: "openLogs" });
           }}>
-          <span slot="start" class="codicon codicon-debug-console" />
+          <span slot="start" className="codicon codicon-debug-console" />
           Logs
           <LogCounter count={logCounter} />
         </VSCodeButton>
       </div>
 
-      <div class="button-group-bottom">
+      <div className="button-group-bottom">
         <VSCodeButton
           appearance={isInspecing ? "primary" : "secondary"}
           onClick={() => {
@@ -506,10 +495,10 @@ function App() {
             }
             setIsInspecting(!isInspecing);
           }}>
-          <span class="codicon codicon-inspect" />
+          <span className="codicon codicon-inspect" />
         </VSCodeButton>
 
-        <span class="group-separator" />
+        <span className="group-separator" />
 
         <VSCodeDropdown
           onChange={(e) => {
@@ -523,7 +512,7 @@ function App() {
               });
             }
           }}>
-          <span slot="start" class="codicon codicon-device-mobile" />
+          <span slot="start" className="codicon codicon-device-mobile" />
           {devices.map((device) => (
             <VSCodeOption key={device.id} value={device.id}>
               {device.name}
@@ -531,7 +520,7 @@ function App() {
           ))}
         </VSCodeDropdown>
 
-        <div class="spacer" />
+        <div className="spacer" />
 
         <VSCodeDropdown
           value={deviceSettings.appearance}
@@ -544,7 +533,7 @@ function App() {
               deviceId: e.target.value,
             });
           }}>
-          <span slot="start" class="codicon codicon-color-mode" />
+          <span slot="start" className="codicon codicon-color-mode" />
           <VSCodeOption value={"light"}>Light</VSCodeOption>
           <VSCodeOption value={"dark"}>Dark</VSCodeOption>
         </VSCodeDropdown>
@@ -560,7 +549,7 @@ function App() {
               deviceId: e.target.value,
             });
           }}>
-          <span slot="start" class="codicon codicon-text-size" />
+          <span slot="start" className="codicon codicon-text-size" />
           <VSCodeOption value="xsmall">Extra small</VSCodeOption>
           <VSCodeOption value="small">Small</VSCodeOption>
           <VSCodeOption value="normal">Normal</VSCodeOption>

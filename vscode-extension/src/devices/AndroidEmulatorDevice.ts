@@ -90,7 +90,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
       ADB_PATH,
       [
         "shell",
-        `run-as ${packageName} sh -c 'cat > /data/data/${packageName}/shared_prefs/${packageName}_preferences.xml'`,
+        `run-as ${packageName} sh -c 'mkdir -p /data/data/${packageName}/shared_prefs && cat > /data/data/${packageName}/shared_prefs/${packageName}_preferences.xml'`,
       ],
       {
         // pass serialized prefs as input:
