@@ -50,7 +50,7 @@
     "start:webview": "cd webview-ui && npm run serve",
     "build:webview": "cd webview-ui && npm run build",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc --noEmitOnError true -p ./",
+    "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts"
