@@ -1,14 +1,18 @@
-import { Disposable, debug } from "vscode";
+import { Disposable, debug, DebugSession } from "vscode";
 import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DeviceSettings } from "../devices/DeviceBase";
 import { PreviewsPanel } from "../panels/PreviewsPanel";
+import fetch from "node-fetch";
+
+const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
 export class DeviceSession implements Disposable {
   private device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
   private inspectCallID = 7621;
+  private debugSession: DebugSession | undefined;
 
   constructor(
     public readonly deviceId: string,
@@ -17,6 +21,7 @@ export class DeviceSession implements Disposable {
   ) {}
 
   public dispose() {
+    this.debugSession && debug.stopDebugging(this.debugSession);
     this.device?.dispose();
   }
 
@@ -55,23 +60,64 @@ export class DeviceSession implements Disposable {
 
     await Promise.all([waitForAppReady, waitForPreview]);
 
-    PreviewsPanel.currentPanel?.notifyAppReady(this.deviceId, this.device.previewURL!);
-
-    await debug.startDebugging(
-      undefined,
-      {
-        type: "com.swmansion.react-native-preview",
-        name: "React Native Preview Debugger",
-        request: "attach",
-        metroPort: this.metro!.port,
-      },
-      {
-        suppressDebugStatusbar: true,
-        suppressDebugView: true,
-        suppressDebugToolbar: true,
-        suppressSaveBeforeStart: true,
+    const websocketAddress = await this.waitForDebuggerURL(WAIT_FOR_DEBUGGER_TIMEOUT);
+    if (websocketAddress) {
+      const debugStarted = await debug.startDebugging(
+        undefined,
+        {
+          type: "com.swmansion.react-native-preview",
+          name: "React Native Preview Debugger",
+          request: "attach",
+          websocketAddress,
+        },
+        {
+          suppressDebugStatusbar: true,
+          suppressDebugView: true,
+          suppressDebugToolbar: true,
+          suppressSaveBeforeStart: true,
+        }
+      );
+      if (debugStarted) {
+        this.debugSession = debug.activeDebugSession;
       }
-    );
+    } else {
+      console.error("Couldn't connect to debugger");
+    }
+
+    PreviewsPanel.currentPanel?.notifyAppReady(this.deviceId, this.device.previewURL!);
+  }
+
+  private async waitForDebuggerURL(timeoutMs: number) {
+    const startTime = Date.now();
+    let websocketAddress: string | undefined;
+    while (!websocketAddress && Date.now() - startTime < timeoutMs) {
+      websocketAddress = await this.getDebuggerURL();
+      await new Promise((res) => setTimeout(res, 1000));
+    }
+    return websocketAddress;
+  }
+
+  private async getDebuggerURL() {
+    // query list from http://localhost:${metroPort}/json/list
+    const list = await fetch(`http://localhost:${this.metro!.port}/json/list`);
+    const listJson = await list.json();
+    // with metro, pages are identified as "deviceId-pageId", we search for the most
+    // recent device id and want want to use special -1 page identifier (reloadable page)
+    let recentDeviceId = -1;
+    let websocketAddress: string | undefined;
+    for (const page of listJson) {
+      // pageId can sometimes be negative so we can't just use .split('-') here
+      const matches = page.id.match(/(\d+)-(-?\d+)/);
+      if (matches) {
+        const deviceId = parseInt(matches[1]);
+        const pageId = parseInt(matches[2]);
+        if (deviceId > recentDeviceId && pageId === -1) {
+          recentDeviceId = deviceId;
+          websocketAddress = page.webSocketDebuggerUrl;
+        }
+      }
+    }
+    return websocketAddress;
   }
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {

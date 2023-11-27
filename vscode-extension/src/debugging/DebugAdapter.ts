@@ -189,7 +189,7 @@ export class DebugAdapter extends DebugSession {
       // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception
       // reporting handler, and access the actual error's stack trace from local variable
       const localScropeObjectId = message.params.callFrames[0].scopeChain?.find(
-        (scope: any) => scope?.type === "local"
+        (scope: any) => scope.type === "local"
       )?.object?.objectId;
       const res = await this.sendCDPMessage("Runtime.getProperties", {
         objectId: localScropeObjectId,

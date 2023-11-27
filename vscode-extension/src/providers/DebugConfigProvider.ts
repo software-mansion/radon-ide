@@ -13,12 +13,11 @@ export class DebugConfigProvider implements DebugConfigurationProvider {
     debugConfiguration: DebugConfiguration,
     token?: CancellationToken | undefined
   ): ProviderResult<DebugConfiguration> {
-    const metroPort = debugConfiguration.metroPort;
     return {
       ...debugConfiguration,
       request: "attach",
       name: "React Native Preview Debugger",
-      websocketAddress: `ws://localhost:${metroPort}/inspector/debug?device=0&page=1`,
+      websocketAddress: debugConfiguration.websocketAddress,
       internalConsoleOptions: "neverOpen",
     };
   }
