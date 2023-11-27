@@ -1,4 +1,4 @@
-import util from "util";
+import util, { InspectOptions } from "util";
 import { DebugAdapter } from "./DebugAdapter";
 
 export interface CDPRemoteObject {
@@ -35,7 +35,6 @@ function format(anything: any) {
     depth: 2,
     colors: false,
     maxArrayLength: 20,
-    maxStringLength: 300,
     compact: true,
   });
   if (typeof anything === "string") {
@@ -46,8 +45,8 @@ function format(anything: any) {
 }
 
 function formatObject(propertiesResult: any) {
-  const obj = {};
-  propertiesResult.forEach((prop) => {
+  const obj: any = {};
+  propertiesResult.forEach((prop: any) => {
     if (prop.name === "__proto__") {
       // do not include __proto__ in the formatted output
       return;

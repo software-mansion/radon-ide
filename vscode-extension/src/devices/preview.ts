@@ -1,19 +1,18 @@
 import { ChildProcess } from "child_process";
 import { Disposable } from "vscode";
-
-const path = require("path");
-const fs = require("fs");
-const fg = require("fast-glob");
-const child_process = require("child_process");
-const readline = require("readline");
+import path from "path";
+import fs from "fs";
+import fg from "fast-glob";
+import child_process from "child_process";
+import readline from "readline";
 
 function findSimulatorStreamBinary() {
-  const derivedDataPath = path.join(process.env.HOME, "Library/Developer/Xcode/DerivedData");
+  const derivedDataPath = path.join(process.env.HOME!, "Library/Developer/Xcode/DerivedData");
   const entries = fg.sync("SimulatorStreamServer*/**/Build/Products/Debug/SimulatorStreamServer", {
     cwd: derivedDataPath,
   });
 
-  let newestFile = null;
+  let newestFile: string | undefined;
   let newestMTime = 0;
 
   entries.forEach((entry) => {
@@ -25,6 +24,10 @@ function findSimulatorStreamBinary() {
       newestFile = absolutePath;
     }
   });
+
+  if (!newestFile) {
+    throw new Error("Couldn't locate simulator streamer binary");
+  }
 
   return newestFile;
 }

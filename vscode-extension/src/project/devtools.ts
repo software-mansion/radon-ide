@@ -1,8 +1,7 @@
 import { Disposable } from "vscode";
 import { PreviewsPanel } from "../panels/PreviewsPanel";
-
-const http = require("http");
-const { Server } = require("ws");
+import http from "http";
+import { Server } from "ws";
 
 export class Devtools implements Disposable {
   public readonly port: number;

@@ -125,7 +125,7 @@ export class DebugAdapter extends DebugSession {
     // the line and column numbers are 1-based
     const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args
       .slice(-3)
-      .map((v) => v.value);
+      .map((v: any) => v.value);
 
     const output = await formatMessage(message.params.args.slice(0, -3), this);
 
@@ -135,8 +135,11 @@ export class DebugAdapter extends DebugSession {
       generatedLineNumber1Based,
       generatedColumn1Based - 1
     );
+    // @ts-ignore source is a valid field
     outputEvent.body.source = new Source(sourceURL, sourceURL);
+    // @ts-ignore line is a valid field
     outputEvent.body.line = this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1;
+    // @ts-ignore column is a valid field
     outputEvent.body.column = this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based;
     this.sendEvent(outputEvent);
     this.sendEvent(new Event("rnp_consoleLog", { category: outputEvent.body.category }));
@@ -186,7 +189,7 @@ export class DebugAdapter extends DebugSession {
       // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception
       // reporting handler, and access the actual error's stack trace from local variable
       const localScropeObjectId = message.params.callFrames[0].scopeChain?.find(
-        (scope) => scope.type === "local"
+        (scope: any) => scope?.type === "local"
       )?.object?.objectId;
       const res = await this.sendCDPMessage("Runtime.getProperties", {
         objectId: localScropeObjectId,
@@ -199,7 +202,7 @@ export class DebugAdapter extends DebugSession {
         objectId: stackObject.value.objectId,
         ownProperties: true,
       });
-      const stackFrames = [];
+      const stackFrames: Array<StackFrame> = [];
       await Promise.all(
         stackResponse.result.map(async (stackObjEntry: any) => {
           // we process entry with numerical names

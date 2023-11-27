@@ -471,7 +471,7 @@ function App() {
         <span className="group-separator" />
 
         <UrlBar url={appURL} />
-        
+
         <div className="spacer" />
 
         <VSCodeButton
