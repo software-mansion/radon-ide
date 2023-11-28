@@ -1,0 +1,10 @@
+.log-counter {
+    background-color: #38ACDD;
+    border-radius: 50%;
+    max-height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 5px;
+    color: #001a72;
+  }

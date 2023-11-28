@@ -1,0 +1,34 @@
+.button-group-top, .button-group-bottom {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  width: 100%;
+
+  margin: 10px;
+  gap: 4px;
+}
+
+.button-group-top {
+    margin-bottom: 8px;
+}
+
+.button-group-bottom {
+    margin-top: 8px;
+}
+
+.bar-spacer {
+  flex: 1;
+  max-height: 45px;
+}
+
+.group-separator {
+  width: 1px;
+  background-color: red;
+  margin-left: 5px;
+  margin-right: 5px;
+  height: 100%;
+}
+
+.spacer {
+  flex: 1;
+}

@@ -1,0 +1,92 @@
+.phone-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  overflow: auto;
+
+  width: 100%;
+  min-height: 650px;
+  position: relative;
+}
+
+.phone-content {
+  display: flex;
+  overflow: auto;
+
+  position: relative;
+}
+
+.phone-sized {
+  height: var(--phone-content-height);
+  width: var(--phone-content-width);
+  margin: var(--phone-content-margins);
+  border-radius: var(--phone-content-border-radius);
+}
+
+.phone-screen {
+  position: absolute;
+  top: 0;
+}
+
+.phone-inspect-overlay {
+  position: absolute;
+  top: 0;
+  background-color: rgba(0,0,0,0.2);
+  display: flex;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.inspect-area {
+  position: absolute;
+  background-color: rgba(56, 172, 221,0.85);
+}
+
+
+.phone-debug-overlay {
+  position: absolute;
+  top: 0;
+  background-color: rgba(0,0,0,0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.continue-button, .uncaught-button {
+  background-color: #ff6259;
+  border-radius: 10px;
+  border: 1px solid #E65F50;
+  padding: 5px;
+  color: #001a72;
+}
+
+.continue-button {
+  background-color: #87cce8;
+  border-color: #38acdd;
+}
+
+.continue-button::before {
+  display: block;
+}
+
+vscode-dropdown > .codicon {
+  margin-left: -4px;
+}
+
+.phone-exception-overlay {
+  background-color: rgba(255,106,89,0.85);
+  color: #001A72;
+}
+
+.phone-frame {
+  pointer-events: none;
+}
+
+.phone-content-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: rgba(255,255,255,0.15);
+  z-index: -1;
+}
