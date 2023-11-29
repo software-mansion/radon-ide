@@ -249,14 +249,17 @@ export class PreviewsPanel {
             commands.executeCommand("workbench.panel.repl.view.focus");
             return;
           case "refreshDependencies":
-            this._checkDependencies();
+            this._refreshDependencies();
             return;
           case "openExternalUrl":
             openExternalUrl(message.url);
             return;
           case "installIOSDependencies":
-            this._handleIOSDependenciesInstallation();
+            this._installIOSDependencies();
             return;
+          case "handlePrerequisites":
+            this._handlePrerequisites();
+            return;  
         }
       },
       undefined,
@@ -264,7 +267,32 @@ export class PreviewsPanel {
     );
   }
 
-  private async _handleIOSDependenciesInstallation() {
+  private async _handlePrerequisites() {
+    const { iosDependencies } = await this._checkDependencies();
+
+    if (!iosDependencies) {
+      await this._installIOSDependencies();
+    }
+
+    const dependenciesDiagnostic = await this._checkDependencies();
+
+    this._panel.webview.postMessage({
+      command: "checkedDependencies",
+      dependencies: dependenciesDiagnostic,
+    });
+  }
+
+  private async _refreshDependencies() {
+    const dependenciesDiagnostic = await this._checkDependencies();
+    this._panel.webview.postMessage({
+      command: "checkedDependencies",
+      dependencies: dependenciesDiagnostic,
+    });
+  }
+
+
+
+  private async _installIOSDependencies() {
     try {
       const { stdout, stderr } = await installIOSDependencies(getWorkspacePath());
       const isSuccess = !!stdout.length && !stderr.length;
@@ -295,7 +323,7 @@ export class PreviewsPanel {
     const podCli = checkPodInstalled();
     const iosDependencies = checkIosDependenciesInstalled();
 
-    const messageObject = await Promise.all([
+    return Promise.all([
       xcodebuild,
       xcrun,
       simctl,
@@ -308,11 +336,6 @@ export class PreviewsPanel {
       podCli,
       iosDependencies,
     }));
-
-    this._panel.webview.postMessage({
-      command: "checkedDependencies",
-      dependencies: messageObject,
-    });
   }
 
   private _onActiveFileChange(filename: string) {

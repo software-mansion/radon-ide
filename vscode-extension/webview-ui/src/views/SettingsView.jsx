@@ -13,11 +13,6 @@ function SettingsView({ setEmulatorDisabled }) {
   const [dependencies, setDependencies] = useState(null);
   const [iosDepsInstalling, setIosDepsInstalling] = useState(false);
 
-  const refreshDependencies = () =>
-    vscode.postMessage({
-      command: "refreshDependencies",
-    });
-
   useEffect(() => {
     const listener = (event) => {
       const message = event.data;
@@ -34,7 +29,9 @@ function SettingsView({ setEmulatorDisabled }) {
 
     window.addEventListener("message", listener);
 
-    refreshDependencies();
+    vscode.postMessage({
+      command: "handlePrerequisites",
+    });
 
     return () => window.removeEventListener("message", listener);
   }, []);
@@ -55,7 +52,11 @@ function SettingsView({ setEmulatorDisabled }) {
           title="Check dependencies"
           appearance="secondary"
           disabled={dependenciesLoading}
-          onClick={() => refreshDependencies()}>
+          onClick={() =>
+            vscode.postMessage({
+              command: "refreshDependencies",
+            })
+          }>
           <span className="codicon codicon-refresh" />
         </VSCodeButton>
       </div>
