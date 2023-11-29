@@ -4,12 +4,12 @@ import {
   VSCodeDropdown,
   VSCodeOption,
   VSCodeProgressRing,
-  VSCodeTag,
 } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
 import { useEffect, useRef, useState } from "react";
 import iphone14 from "../assets/iphone14.png";
 import pixel7 from "../assets/pixel7.png";
+import { keyboardEventToHID } from "./utilities/keyMapping";
 
 const devices = [
   {
@@ -186,14 +186,18 @@ function Preview({
 
   useEffect(() => {
     function keyEventHandler(e) {
+      e.preventDefault();
       if (document.activeElement === wrapperDivRef.current) {
-        console.log("EVT", e);
-        sendKey(4, "Down");
-        sendKey(4, "Up");
+        const hidCode = keyboardEventToHID(e);
+        sendKey(hidCode, e.type === "keydown" ? "Down" : "Up");
       }
     }
     document.addEventListener("keydown", keyEventHandler);
-    return () => document.removeEventListener("keydown", keyEventHandler);
+    document.addEventListener("keyup", keyEventHandler);
+    return () => {
+      document.removeEventListener("keydown", keyEventHandler);
+      document.removeEventListener("keyup", keyEventHandler);
+    };
   }, []);
 
   const inspectFrame = inspectData?.frame;
