@@ -214,6 +214,9 @@ export class PreviewsPanel {
           case "touch":
             this.project.sendTouch(message.deviceId, message.xRatio, message.yRatio, message.type);
             return;
+          case "key":
+            this.project.sendKey(message.deviceId, message.keyCode, message.type);
+            return;
           case "inspect":
             this.project.inspectElementAt(message.xRatio, message.yRatio, (inspectData) => {
               this._panel.webview.postMessage({
@@ -259,7 +262,7 @@ export class PreviewsPanel {
             return;
           case "handlePrerequisites":
             this._handlePrerequisites();
-            return;  
+            return;
         }
       },
       undefined,
@@ -289,8 +292,6 @@ export class PreviewsPanel {
       dependencies: dependenciesDiagnostic,
     });
   }
-
-
 
   private async _installIOSDependencies() {
     try {
@@ -323,19 +324,15 @@ export class PreviewsPanel {
     const podCli = checkPodInstalled();
     const iosDependencies = checkIosDependenciesInstalled();
 
-    return Promise.all([
-      xcodebuild,
-      xcrun,
-      simctl,
-      podCli,
-      iosDependencies,
-    ]).then(([xcodebuild, xcrun, simctl, podCli, iosDependencies]) => ({
-      xcodebuild,
-      xcrun,
-      simctl,
-      podCli,
-      iosDependencies,
-    }));
+    return Promise.all([xcodebuild, xcrun, simctl, podCli, iosDependencies]).then(
+      ([xcodebuild, xcrun, simctl, podCli, iosDependencies]) => ({
+        xcodebuild,
+        xcrun,
+        simctl,
+        podCli,
+        iosDependencies,
+      })
+    );
   }
 
   private _onActiveFileChange(filename: string) {

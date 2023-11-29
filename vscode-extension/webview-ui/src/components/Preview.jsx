@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { vscode } from "../utilities/vscode";
 import { throttle } from "../utilities/common";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import './Preview.css';
+import { keyboardEventToHID } from "../utilities/keyMapping";
+import "./Preview.css";
 
 function sendTouch(event, type) {
   const imgRect = event.currentTarget.getBoundingClientRect();
@@ -12,6 +13,14 @@ function sendTouch(event, type) {
     command: "touch",
     xRatio: x,
     yRatio: y,
+    type,
+  });
+}
+
+function sendKey(keyCode, type) {
+  vscode.postMessage({
+    command: "key",
+    keyCode,
     type,
   });
 }
@@ -40,6 +49,7 @@ function Preview({
   setIsInspecting,
   setInspectData,
 }) {
+  const wrapperDivRef = useRef(null);
   const [isPressing, setIsPressing] = useState(false);
   function handleMouseMove(e) {
     e.preventDefault();
@@ -51,6 +61,7 @@ function Preview({
   }
   function handleMouseDown(e) {
     e.preventDefault();
+    wrapperDivRef.current.focus();
     if (isInspecting) {
       sendInspect(e, "Down", true);
       setIsInspecting(false);
@@ -81,9 +92,26 @@ function Preview({
       setInspectData(null);
     }
   }
+
+  useEffect(() => {
+    function keyEventHandler(e) {
+      e.preventDefault();
+      if (document.activeElement === wrapperDivRef.current) {
+        const hidCode = keyboardEventToHID(e);
+        sendKey(hidCode, e.type === "keydown" ? "Down" : "Up");
+      }
+    }
+    document.addEventListener("keydown", keyEventHandler);
+    document.addEventListener("keyup", keyEventHandler);
+    return () => {
+      document.removeEventListener("keydown", keyEventHandler);
+      document.removeEventListener("keyup", keyEventHandler);
+    };
+  }, []);
+
   const inspectFrame = inspectData?.frame;
   return (
-    <div className="phone-wrapper">
+    <div className="phone-wrapper" tabIndex={0} ref={wrapperDivRef}>
       {previewURL && (
         <div className="phone-content">
           <img

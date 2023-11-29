@@ -7,7 +7,13 @@
   width: 100%;
   min-height: 650px;
   position: relative;
+  user-select: none;
 }
+
+.phone-wrapper:hover, .phone-wrapper:focus-visible {
+  outline: none;
+}
+
 
 .phone-content {
   display: flex;

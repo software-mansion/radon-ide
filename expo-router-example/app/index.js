@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Button, View } from 'react-native';
+import { Button, TextInput, View } from 'react-native';
 import { Link } from 'expo-router';
 import { NiceButton } from './components/NiceButton';
 import { UglyButton } from './components/UglyButton';
@@ -23,6 +23,14 @@ export default function Home() {
           console.warn('Yollo3');
           // console.warn('Nice button pressed again');
           // console.log('WWW', window.__REACT_DEVTOOLS_PORT__);
+        }}
+      />
+      <TextInput
+        style={{
+          height: 40,
+          borderColor: 'gray',
+          borderWidth: 1,
+          width: '70%',
         }}
       />
       <Button

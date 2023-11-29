@@ -58,6 +58,7 @@
   "devDependencies": {
     "@types/glob": "^7.1.3",
     "@types/node": "^16.18.65",
+    "@types/node-fetch": "^2.6.9",
     "@types/vscode": "^1.46.0",
     "@types/ws": "^8.5.10",
     "@types/xml2js": "^0.4.14",

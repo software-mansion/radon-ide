@@ -126,6 +126,10 @@ export class DeviceSession implements Disposable {
     this.device?.sendTouch(xRatio, yRatio, type);
   }
 
+  public sendKey(keyCode: number, direction: "Up" | "Down") {
+    this.device?.sendKey(keyCode, direction);
+  }
+
   public inspectElementAt(xRatio: number, yRatio: number, callback: (inspecData: any) => void) {
     const id = this.inspectCallID++;
     const listener = (event: string, payload: any) => {

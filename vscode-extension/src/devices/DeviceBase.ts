@@ -26,6 +26,10 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.sendTouch(xRatio, yRatio, type);
   }
 
+  public sendKey(keyCode: number, direction: "Up" | "Down") {
+    this.preview?.sendKey(keyCode, direction);
+  }
+
   async startPreview() {
     await this.bootDevice();
     this.preview = this.makePreview();
