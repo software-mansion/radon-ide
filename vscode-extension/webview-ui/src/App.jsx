@@ -7,7 +7,7 @@ import {
   VSCodeTag,
 } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import iphone14 from "../assets/iphone14.png";
 import pixel7 from "../assets/pixel7.png";
 
@@ -64,12 +64,20 @@ function setCssPropertiesForDevice(device) {
   );
 }
 
-console.log = function (...args) {
+// console.log = function (...args) {
+//   vscode.postMessage({
+//     command: "log",
+//     text: args.map((arg) => JSON.stringify(arg)).join(" "),
+//   });
+// };
+
+function sendKey(keyCode, type) {
   vscode.postMessage({
-    command: "log",
-    text: args.map((arg) => JSON.stringify(arg)).join(" "),
+    command: "key",
+    keyCode,
+    type,
   });
-};
+}
 
 function sendTouch(event, type) {
   const imgRect = event.currentTarget.getBoundingClientRect();
@@ -132,6 +140,7 @@ function Preview({
   setIsInspecting,
   setInspectData,
 }) {
+  const wrapperDivRef = useRef(null);
   const [isPressing, setIsPressing] = useState(false);
   function handleMouseMove(e) {
     e.preventDefault();
@@ -143,6 +152,7 @@ function Preview({
   }
   function handleMouseDown(e) {
     e.preventDefault();
+    wrapperDivRef.current.focus();
     if (isInspecting) {
       sendInspect(e, "Down", true);
       setIsInspecting(false);
@@ -173,9 +183,22 @@ function Preview({
       setInspectData(null);
     }
   }
+
+  useEffect(() => {
+    function keyEventHandler(e) {
+      if (document.activeElement === wrapperDivRef.current) {
+        console.log("EVT", e);
+        sendKey(4, "Down");
+        sendKey(4, "Up");
+      }
+    }
+    document.addEventListener("keydown", keyEventHandler);
+    return () => document.removeEventListener("keydown", keyEventHandler);
+  }, []);
+
   const inspectFrame = inspectData?.frame;
   return (
-    <div className="phone-wrapper">
+    <div className="phone-wrapper" tabIndex={0} ref={wrapperDivRef}>
       {previewURL && (
         <div className="phone-content">
           <img

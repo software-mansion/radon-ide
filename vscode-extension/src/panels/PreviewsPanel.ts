@@ -120,7 +120,9 @@ export class PreviewsPanel {
     // The CSS file from the React build output
     const stylesUri = getUri(webview, extensionUri, ["webview-ui", "build", "main.css"]);
     // The JS file from the React build output
-    const scriptUri = isDev() ? getDevServerScriptUrl() : getUri(webview, extensionUri, ["webview-ui", "build", "bundle.js"]);
+    const scriptUri = isDev()
+      ? getDevServerScriptUrl()
+      : getUri(webview, extensionUri, ["webview-ui", "build", "bundle.js"]);
     console.log("SCRIPT URI", scriptUri);
     const baseUri = getUri(webview, extensionUri, ["webview-ui", "build"]);
 
@@ -141,8 +143,12 @@ export class PreviewsPanel {
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          ${isDev() ? '' : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`}
-          ${isDev() ? '' : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
+          ${
+            isDev()
+              ? ""
+              : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`
+          }
+          ${isDev() ? "" : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
           <link rel="stylesheet" href="${codiconsUri}" >
           <base href="${baseUri}">
         </head>
@@ -193,6 +199,9 @@ export class PreviewsPanel {
             return;
           case "touch":
             this.project.sendTouch(message.deviceId, message.xRatio, message.yRatio, message.type);
+            return;
+          case "key":
+            this.project.sendKey(message.deviceId, message.keyCode, message.type);
             return;
           case "inspect":
             this.project.inspectElementAt(message.xRatio, message.yRatio, (inspectData) => {

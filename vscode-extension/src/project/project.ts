@@ -94,6 +94,10 @@ export class Project implements Disposable {
     // }
   }
 
+  public sendKey(deviceId: string, keyCode: number, direction: "Up" | "Down") {
+    this.session?.sendKey(keyCode, direction);
+  }
+
   public inspectElementAt(xRatio: number, yRatio: number, callback: (inspectData: any) => void) {
     this.session?.inspectElementAt(xRatio, yRatio, callback);
   }

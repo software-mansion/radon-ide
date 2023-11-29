@@ -77,4 +77,8 @@ export class Preview implements Disposable {
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
     this.subprocess?.stdin?.write(`touch${type} ${xRatio} ${yRatio}\n`);
   }
+
+  public sendKey(keyCode: number, direction: "Up" | "Down") {
+    this.subprocess?.stdin?.write(`key${direction} ${keyCode}\n`);
+  }
 }
