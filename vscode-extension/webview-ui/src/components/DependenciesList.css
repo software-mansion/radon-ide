@@ -1,0 +1,34 @@
+li {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  margin: 12px 0;
+}
+
+ul {
+  list-style-type: none;
+  max-width: 40%;
+  padding: 0;
+}
+
+code {
+  display: inline;
+  white-space: nowrap;
+}
+
+.checklist-icon {
+    margin-right: 12px;
+}
+
+.play-button {
+  cursor: pointer;
+  margin: 0 4px;
+  display: inline;
+  align-items: flex-end;
+}
+
+.loading-spinner {
+  display: inline-flex;
+  width: 24px;
+  height: 16px;
+}

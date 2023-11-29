@@ -1,0 +1,7 @@
+.green-icon {
+    color: var(--vscode-debugIcon-startForeground);
+}
+
+.red-icon {
+    color: var(--vscode-debugIcon-stopForeground);
+}

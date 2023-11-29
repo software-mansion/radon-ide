@@ -6,6 +6,7 @@ import loadConfig from "@react-native-community/cli-config";
 
 import { BuildFlags, buildProject } from "./buildProject";
 import { getConfigurationScheme } from "@react-native-community/cli-platform-ios/build/tools/getConfigurationScheme";
+import { promisify } from "util";
 
 export async function buildIos(workspaceDir: string) {
   const ctx = loadConfig(workspaceDir);
@@ -134,4 +135,22 @@ function getPlatformName(buildOutput: string) {
     );
   }
   return platformNameMatch[1];
+}
+
+export async function installIOSDependencies(workspaceDir: string) {
+  const ctx = loadConfig(workspaceDir);
+  const iosDirPath = ctx.project.ios?.sourceDir;
+
+  if (!iosDirPath) {
+    throw new Error(`ios directory was not found inside the workspace.`);
+  }
+
+  const asyncExec = promisify(child_process.exec);
+  return asyncExec("pod install", {
+    cwd: iosDirPath,
+    env: {
+      ...process.env,
+      LANG: "en_US.UTF-8",
+    },
+  });
 }

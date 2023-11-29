@@ -5,6 +5,7 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DeviceSettings } from "../devices/DeviceBase";
 import { PreviewsPanel } from "../panels/PreviewsPanel";
+import { checkXCodeBuildInstalled } from "../utilities/hostDependenciesChecks";
 import fetch from "node-fetch";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
@@ -30,6 +31,7 @@ export class DeviceSession implements Disposable {
     androidBuild: Promise<{ apkPath: string; packageName: string }>,
     settings: DeviceSettings
   ) {
+    await checkXCodeBuildInstalled();
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {
         if (event === "rnp_appReady") {

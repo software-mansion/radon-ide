@@ -1,8 +1,9 @@
 import { workspace } from "vscode";
 import path from "path";
+import { getWorkspacePath } from "./common";
 
 export function isFileInWorkspace(filePath: string): boolean {
-  const workspaceDir = workspace.workspaceFolders?.[0]?.uri?.fsPath || "";
+  const workspaceDir = getWorkspacePath();
   // Get the relative path from the workspace directory to the file
   const relative = path.relative(workspaceDir, filePath);
 

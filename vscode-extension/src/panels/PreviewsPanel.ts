@@ -3,7 +3,6 @@ import {
   Webview,
   WebviewPanel,
   window,
-  workspace,
   Uri,
   ViewColumn,
   ExtensionContext,
@@ -16,7 +15,17 @@ import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
 import { Project } from "../project/project";
-import { getDevServerScriptUrl, isDev } from "../utilities/common";
+import { getDevServerScriptUrl, getWorkspacePath, isDev } from "../utilities/common";
+import {
+  checkIosDependenciesInstalled,
+  checkPodInstalled,
+  checkSimctlInstalled,
+  checkXCodeBuildInstalled,
+  checkXcrunInstalled,
+} from "../utilities/hostDependenciesChecks";
+import { installIOSDependencies } from "../builders/buildIOS";
+import { openExternalUrl } from "../utilities/vsc";
+import vscode from "vscode";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
@@ -42,6 +51,9 @@ export class PreviewsPanel {
     this._setupEditorListeners(context);
 
     this.project = new Project(context);
+  }
+
+  private _startProject() {
     this.project.start();
     this.project.addEventMonitor({
       onLogReceived: (message) => {
@@ -120,8 +132,9 @@ export class PreviewsPanel {
     // The CSS file from the React build output
     const stylesUri = getUri(webview, extensionUri, ["webview-ui", "build", "main.css"]);
     // The JS file from the React build output
-    const scriptUri = isDev() ? getDevServerScriptUrl() : getUri(webview, extensionUri, ["webview-ui", "build", "bundle.js"]);
-    console.log("SCRIPT URI", scriptUri);
+    const scriptUri = isDev()
+      ? getDevServerScriptUrl()
+      : getUri(webview, extensionUri, ["webview-ui", "build", "bundle.js"]);
     const baseUri = getUri(webview, extensionUri, ["webview-ui", "build"]);
 
     const codiconsUri = getUri(webview, extensionUri, [
@@ -141,8 +154,12 @@ export class PreviewsPanel {
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          ${isDev() ? '' : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`}
-          ${isDev() ? '' : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
+          ${
+            isDev()
+              ? ""
+              : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`
+          }
+          ${isDev() ? "" : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
           <link rel="stylesheet" href="${codiconsUri}" >
           <base href="${baseUri}">
         </head>
@@ -181,6 +198,9 @@ export class PreviewsPanel {
         switch (command) {
           case "log":
             console.log(`Webview: ${text}`);
+            return;
+          case "startProject":
+            this._startProject();
             return;
           case "debugResume":
             debug.activeDebugSession?.customRequest("continue");
@@ -228,6 +248,15 @@ export class PreviewsPanel {
           case "openLogs":
             commands.executeCommand("workbench.panel.repl.view.focus");
             return;
+          case "refreshDependencies":
+            this._checkDependencies();
+            return;
+          case "openExternalUrl":
+            openExternalUrl(message.url);
+            return;
+          case "installIOSDependencies":
+            this._handleIOSDependenciesInstallation();
+            return;
         }
       },
       undefined,
@@ -235,7 +264,58 @@ export class PreviewsPanel {
     );
   }
 
-  private onActiveFileChange(filename: string) {
+  private async _handleIOSDependenciesInstallation() {
+    try {
+      const { stdout, stderr } = await installIOSDependencies(getWorkspacePath());
+      const isSuccess = !!stdout.length && !stderr.length;
+      if (!isSuccess) {
+        vscode.window.showErrorMessage(
+          `Error occured while installing ios dependencies: ${stderr}.`
+        );
+      } else {
+        vscode.window.showInformationMessage("Successfully installed ios dependencies.");
+        this._checkDependencies();
+      }
+
+      this._panel.webview.postMessage({
+        command: "installationComplete",
+      });
+    } catch (_) {
+      vscode.window.showErrorMessage(`Internal extension error.`);
+      this._panel.webview.postMessage({
+        command: "installationComplete",
+      });
+    }
+  }
+
+  private async _checkDependencies() {
+    const xcodebuild = checkXCodeBuildInstalled();
+    const xcrun = checkXcrunInstalled();
+    const simctl = checkSimctlInstalled();
+    const podCli = checkPodInstalled();
+    const iosDependencies = checkIosDependenciesInstalled();
+
+    const messageObject = await Promise.all([
+      xcodebuild,
+      xcrun,
+      simctl,
+      podCli,
+      iosDependencies,
+    ]).then(([xcodebuild, xcrun, simctl, podCli, iosDependencies]) => ({
+      xcodebuild,
+      xcrun,
+      simctl,
+      podCli,
+      iosDependencies,
+    }));
+
+    this._panel.webview.postMessage({
+      command: "checkedDependencies",
+      dependencies: messageObject,
+    });
+  }
+
+  private _onActiveFileChange(filename: string) {
     console.log("LastEditor", filename);
     this.project.onActiveFileChange(filename, this.followEnabled);
   }
@@ -244,7 +324,7 @@ export class PreviewsPanel {
     context.subscriptions.push(
       window.onDidChangeActiveTextEditor((editor) => {
         if (editor) {
-          this.onActiveFileChange(editor.document.fileName);
+          this._onActiveFileChange(editor.document.fileName);
         }
       })
     );

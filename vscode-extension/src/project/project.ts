@@ -6,6 +6,7 @@ import { buildIos } from "../builders/buildIOS";
 import { buildAndroid } from "../builders/buildAndroid";
 import { DeviceSettings } from "../devices/DeviceBase";
 import crypto from "crypto";
+import { getWorkspacePath } from "../utilities/common";
 
 export interface EventMonitor {
   onLogReceived: (message: { type: string }) => void;
@@ -46,7 +47,7 @@ export class Project implements Disposable {
   }
 
   public async start() {
-    let workspaceDir = workspace.workspaceFolders?.[0]?.uri?.fsPath;
+    let workspaceDir = getWorkspacePath();
     if (!workspaceDir) {
       console.warn("No workspace directory found");
       return;

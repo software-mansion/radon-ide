@@ -171,7 +171,7 @@ function PreviewView() {
         <VSCodeDropdown
           onChange={(e) => {
             if (device.id !== e.target.value) {
-              setDevice(devices.find((d) => d.id === e.target.value));
+              setDevice(DEVICES.find((d) => d.id === e.target.value));
               setPreviewURL(undefined);
               vscode.postMessage({
                 command: "changeDevice",

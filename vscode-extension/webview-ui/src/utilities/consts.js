@@ -25,4 +25,6 @@ export const DEVICES = [
         backgroundBorderRadius: "4% / 2%",
     },
 ];
+
+export const XCODE_DOWNLOAD_URL = "https://developer.apple.com/xcode/resources/";
   
