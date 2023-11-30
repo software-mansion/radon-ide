@@ -16,6 +16,7 @@
 				"${workspaceFolder}/out/**/*.js"
 			],
 			"preLaunchTask": "run-dev",
+			"postDebugTask": "stop-debug-session",
 			"env": {
 				"ENVIRONMENT": "DEVELOPMENT",
 				"DEV_SCRIPT_URL": "http://localhost:3000/bundle.js"

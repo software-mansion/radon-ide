@@ -53,5 +53,33 @@
 				"isDefault": false
 			}
 		},
+		{
+			"label": "stop-dev-server",
+			"type": "shell",
+			"command": "kill $(cat webview-ui/.webpack-dev-server-pidfile) && rm webview-ui/.webpack-dev-server-pidfile",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			},
+			"group": "build"
+		  },
+		  {
+			"label": "stop-debug-session",
+			"command": "sleep 1 && echo ${input:terminate}",
+			"type": "shell",
+			"problemMatcher": []
+		  }
+	],
+	"inputs": [
+		{
+			"id": "terminate",
+			"type": "command",
+			"command": "workbench.action.tasks.terminate",
+			"args": "terminateAll"
+		  }
 	]
 }
