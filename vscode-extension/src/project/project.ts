@@ -23,6 +23,7 @@ export class Project implements Disposable {
   private devtools: Devtools | undefined;
   private iOSBuild: Promise<{ appPath: string; bundleID: string }> | undefined;
   private androidBuild: Promise<{ apkPath: string; packageName: string }> | undefined;
+  private debugSessionListener: Disposable | undefined;
 
   private session: DeviceSession | undefined;
   private eventMonitors: Array<EventMonitor> = [];
@@ -40,6 +41,8 @@ export class Project implements Disposable {
     this.session?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
+    this.debugSessionListener?.dispose();
+    this.eventMonitors = [];
   }
 
   public reloadMetro() {
@@ -63,7 +66,7 @@ export class Project implements Disposable {
     this.iOSBuild = buildIos(workspaceDir);
     this.androidBuild = buildAndroid(workspaceDir);
 
-    debug.onDidReceiveDebugSessionCustomEvent((event) => {
+    this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
         case "rnp_consoleLog":
           this.eventMonitors.forEach((monitor) => monitor.onLogReceived(event.body));

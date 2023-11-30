@@ -53,7 +53,7 @@ export class PreviewsPanel {
     this.project = new Project(context);
   }
 
-  private _startProject() {
+  private async _startProject() {
     this.project.start();
     this.project.addEventMonitor({
       onLogReceived: (message) => {
@@ -103,7 +103,6 @@ export class PreviewsPanel {
           retainContextWhenHidden: true,
         }
       );
-
       PreviewsPanel.currentPanel = new PreviewsPanel(panel, context);
       commands.executeCommand("workbench.action.lockEditorGroup");
     }
@@ -263,6 +262,9 @@ export class PreviewsPanel {
           case "handlePrerequisites":
             this._handlePrerequisites();
             return;
+          case "restartProject":
+            this._resetProject();
+            return;
         }
       },
       undefined,
@@ -270,10 +272,19 @@ export class PreviewsPanel {
     );
   }
 
-  private async _handlePrerequisites() {
-    const { iosDependencies } = await this._checkDependencies();
+  private async _resetProject() {
+    this.project.dispose();
+    await this._handlePrerequisites();
+    this._startProject();
+    this._panel.webview.postMessage({
+      command: "projectRestarted",
+    });
+  }
 
-    if (!iosDependencies) {
+  private async _handlePrerequisites() {
+    const { iosDependencies, podCli } = await this._checkDependencies();
+
+    if (!iosDependencies && podCli) {
       await this._installIOSDependencies();
     }
 
