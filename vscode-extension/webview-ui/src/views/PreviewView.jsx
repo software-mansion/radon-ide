@@ -53,6 +53,7 @@ function PreviewView() {
   const [expandedLogs, setExpandedLogs] = useState(false);
   const [inspectData, setInspectData] = useState(null);
   const [appURL, setAppURL] = useState("/");
+  const [restartButtonDisabled, setRestartButtonDisabled] = useState(false);
 
   useEffect(() => {
     setCssPropertiesForDevice(device);
@@ -97,6 +98,14 @@ function PreviewView() {
           break;
         case "appUrlChanged":
           setAppURL(message.url);
+          break;
+        case "projectRestarted":
+          setRestartButtonDisabled(false);
+          vscode.postMessage({
+            command: "changeDevice",
+            settings: deviceSettings,
+            deviceId: device.id,
+          });
           break;
       }
     };
@@ -187,6 +196,19 @@ function PreviewView() {
             </VSCodeOption>
           ))}
         </VSCodeDropdown>
+
+        <VSCodeButton
+          appearance="secondary"
+          disabled={restartButtonDisabled}
+          onClick={() => {
+            setRestartButtonDisabled(true);
+            setPreviewURL(undefined);
+            vscode.postMessage({
+              command: "restartProject",
+            });
+          }}>
+          <span className="codicon codicon-refresh" />
+        </VSCodeButton>
 
         <div className="spacer" />
 

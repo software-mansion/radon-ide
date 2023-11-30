@@ -53,7 +53,7 @@ export class PreviewsPanel {
     this.project = new Project(context);
   }
 
-  private _startProject() {
+  private async _startProject() {
     this.project.start();
     this.project.addEventMonitor({
       onLogReceived: (message) => {
@@ -259,7 +259,10 @@ export class PreviewsPanel {
             return;
           case "handlePrerequisites":
             this._handlePrerequisites();
-            return;  
+            return;
+          case "restartProject":
+            this._resetProject();
+            return;
         }
       },
       undefined,
@@ -267,10 +270,19 @@ export class PreviewsPanel {
     );
   }
 
-  private async _handlePrerequisites() {
-    const { iosDependencies } = await this._checkDependencies();
+  private async _resetProject() {
+    this.project.dispose();
+    await this._handlePrerequisites();
+    this._startProject();
+    this._panel.webview.postMessage({
+      command: "projectRestarted",
+    });
+  }
 
-    if (!iosDependencies) {
+  private async _handlePrerequisites() {
+    const { iosDependencies, podCli } = await this._checkDependencies();
+
+    if (!iosDependencies && podCli) {
       await this._installIOSDependencies();
     }
 
@@ -289,8 +301,6 @@ export class PreviewsPanel {
       dependencies: dependenciesDiagnostic,
     });
   }
-
-
 
   private async _installIOSDependencies() {
     try {
@@ -323,19 +333,15 @@ export class PreviewsPanel {
     const podCli = checkPodInstalled();
     const iosDependencies = checkIosDependenciesInstalled();
 
-    return Promise.all([
-      xcodebuild,
-      xcrun,
-      simctl,
-      podCli,
-      iosDependencies,
-    ]).then(([xcodebuild, xcrun, simctl, podCli, iosDependencies]) => ({
-      xcodebuild,
-      xcrun,
-      simctl,
-      podCli,
-      iosDependencies,
-    }));
+    return Promise.all([xcodebuild, xcrun, simctl, podCli, iosDependencies]).then(
+      ([xcodebuild, xcrun, simctl, podCli, iosDependencies]) => ({
+        xcodebuild,
+        xcrun,
+        simctl,
+        podCli,
+        iosDependencies,
+      })
+    );
   }
 
   private _onActiveFileChange(filename: string) {
