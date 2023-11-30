@@ -14,6 +14,7 @@ const AVD_NAME = "ReactNativePreviewVSCode";
 const PREFFERED_SYSTEM_IMAGE = "android-33";
 
 const ANDROID_HOME = process.env.ANDROID_HOME || path.join(os.homedir(), "Library/Android/sdk");
+export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
 
 interface EmulatorProcessInfo {
@@ -210,10 +211,8 @@ async function createEmulator(avdDirectory: string) {
 }
 
 async function startEmulator(avdDirectory: string) {
-  const emulatorBinary = path.join(ANDROID_HOME, "emulator", "emulator");
-
   const subprocess = child_process.spawn(
-    emulatorBinary,
+    EMULATOR_BINARY,
     ["-avd", AVD_NAME, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
     { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
   );

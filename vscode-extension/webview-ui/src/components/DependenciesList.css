@@ -1,5 +1,5 @@
 li {
-  font-size: 16px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   margin: 12px 0;
@@ -7,8 +7,12 @@ li {
 
 ul {
   list-style-type: none;
-  max-width: 40%;
+  max-width: 60%;
   padding: 0;
+}
+
+ul li:first-child {
+  margin-top: 0;
 }
 
 code {
@@ -31,4 +35,10 @@ code {
   display: inline-flex;
   width: 24px;
   height: 16px;
+}
+
+.section-header {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 24px 0;
 }

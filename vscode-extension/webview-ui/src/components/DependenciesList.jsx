@@ -1,5 +1,5 @@
 import { VSCodeButton, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { XCODE_DOWNLOAD_URL } from "../utilities/consts";
+import { ANDROID_STUDIO_DOWNLOAD_URL, XCODE_DOWNLOAD_URL } from "../utilities/consts";
 import { vscode } from "../utilities/vscode";
 import Anchor from "./Anchor";
 import "./DependenciesList.css";
@@ -37,6 +37,7 @@ function InstallIosDependenciesButton({ iosDepsInstalling, setIosDepsInstalling 
 function DependenciesList({ dependencies, iosDepsInstalling, setIosDepsInstalling }) {
   return (
     <ul>
+      <li className="section-header">--- IOS ---</li>
       <li>
         <ConditionalIcon condition={dependencies.xcodebuild} />
         {dependencies.xcodebuild ? (
@@ -106,6 +107,19 @@ function DependenciesList({ dependencies, iosDepsInstalling, setIosDepsInstallin
               setIosDepsInstalling={setIosDepsInstalling}
             />
             &nbsp; , so we can install them for you.
+          </div>
+        )}
+      </li>
+      <li className="section-header">--- ANDROID ---</li>
+      <li>
+        <ConditionalIcon condition={dependencies.androidEmulator} />
+        {dependencies.androidEmulator ? (
+          <div>Android Emulator</div>
+        ) : (
+          <div>
+            Android Emulator not found. You can get it by installing Android Studio. You can get
+            it&nbsp;
+            <Anchor url={ANDROID_STUDIO_DOWNLOAD_URL}>here</Anchor>.
           </div>
         )}
       </li>

@@ -26,5 +26,6 @@ export const DEVICES = [
     },
 ];
 
-export const XCODE_DOWNLOAD_URL = "https://developer.apple.com/xcode/resources/";
+export const XCODE_DOWNLOAD_URL = "https://developer.apple.com/xcode/resources";
+export const ANDROID_STUDIO_DOWNLOAD_URL = "https://developer.android.com/studio";
   

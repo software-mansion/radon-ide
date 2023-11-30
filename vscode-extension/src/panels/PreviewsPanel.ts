@@ -17,6 +17,7 @@ import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { Project } from "../project/project";
 import { getDevServerScriptUrl, getWorkspacePath, isDev } from "../utilities/common";
 import {
+  checkAdroidEmulatorExists,
   checkIosDependenciesInstalled,
   checkPodInstalled,
   checkSimctlInstalled,
@@ -334,14 +335,16 @@ export class PreviewsPanel {
     const simctl = checkSimctlInstalled();
     const podCli = checkPodInstalled();
     const iosDependencies = checkIosDependenciesInstalled();
+    const androidEmulator = checkAdroidEmulatorExists();
 
-    return Promise.all([xcodebuild, xcrun, simctl, podCli, iosDependencies]).then(
-      ([xcodebuild, xcrun, simctl, podCli, iosDependencies]) => ({
+    return Promise.all([xcodebuild, xcrun, simctl, podCli, iosDependencies, androidEmulator]).then(
+      ([xcodebuild, xcrun, simctl, podCli, iosDependencies, androidEmulator]) => ({
         xcodebuild,
         xcrun,
         simctl,
         podCli,
         iosDependencies,
+        androidEmulator,
       })
     );
   }
