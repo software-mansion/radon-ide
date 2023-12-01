@@ -23,7 +23,7 @@
 
 .group-separator {
   width: 1px;
-  background-color: red;
+  background-color: var(--divider-background);
   margin-left: 5px;
   margin-right: 5px;
   height: 100%;

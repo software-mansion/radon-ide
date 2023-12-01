@@ -30,7 +30,10 @@ function App() {
 
   return (
     <main>
-      <VSCodePanels className="panels" aria-label="Default" activeid={emulatorDisabled ? SETTINGS_TAB_ID : EMULATOR_TAB_ID}>
+      <VSCodePanels
+        className="panels"
+        aria-label="Default"
+        activeid={emulatorDisabled ? SETTINGS_TAB_ID : EMULATOR_TAB_ID}>
         <VSCodePanelTab disabled={emulatorDisabled} id="tab-1">
           EMULATOR
         </VSCodePanelTab>
