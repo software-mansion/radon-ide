@@ -2,9 +2,7 @@ import {
   commands,
   languages,
   debug,
-  workspace,
   ExtensionContext,
-  DebugSession,
   DebugConfigurationProviderTriggerKind,
 } from "vscode";
 import { PreviewsPanel } from "./panels/PreviewsPanel";

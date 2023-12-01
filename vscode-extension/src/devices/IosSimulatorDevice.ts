@@ -1,3 +1,4 @@
+import { ExtensionContext } from "vscode";
 import { DeviceBase, DeviceSettings } from "./DeviceBase";
 import { Preview } from "./preview";
 
@@ -47,6 +48,10 @@ interface DeviceTypeInfo {
 export class IosSimulatorDevice extends DeviceBase {
   private deviceUdid: string | undefined;
   private deviceSetPath = getOrCreateDeviceSet();
+
+  constructor(private context: ExtensionContext) {
+    super();
+  }
 
   get name(): string | undefined {
     return this.deviceUdid;
@@ -138,7 +143,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   makePreview(): Preview {
-    return new Preview(["ios", this.deviceUdid!, this.deviceSetPath]);
+    return new Preview(this.context, ["ios", this.deviceUdid!, this.deviceSetPath]);
   }
 }
 

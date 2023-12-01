@@ -1,4 +1,4 @@
-import { Disposable, debug, DebugSession } from "vscode";
+import { Disposable, debug, DebugSession, ExtensionContext } from "vscode";
 import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
@@ -16,6 +16,7 @@ export class DeviceSession implements Disposable {
   private debugSession: DebugSession | undefined;
 
   constructor(
+    private context: ExtensionContext,
     public readonly deviceId: string,
     public readonly devtools: Devtools,
     public readonly metro: Metro
@@ -43,14 +44,14 @@ export class DeviceSession implements Disposable {
     });
 
     if (this.deviceId.startsWith("ios")) {
-      this.device = new IosSimulatorDevice();
+      this.device = new IosSimulatorDevice(this.context);
       const { appPath, bundleID } = await iosBuild;
       await this.device.bootDevice();
       await this.device.changeSettings(settings);
       await this.device.installApp(appPath);
       await this.device.launchApp(bundleID, this.metro!.port);
     } else {
-      this.device = new AndroidEmulatorDevice();
+      this.device = new AndroidEmulatorDevice(this.context);
       const { apkPath, packageName } = await androidBuild;
       await this.device.bootDevice();
       await this.device.changeSettings(settings);

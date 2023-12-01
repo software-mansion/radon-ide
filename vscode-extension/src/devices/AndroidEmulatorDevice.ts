@@ -10,6 +10,7 @@ import fs from "fs";
 import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
 import { getCpuArchitecture } from "../utilities/common";
+import { ExtensionContext } from "vscode";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
 const PREFFERED_SYSTEM_IMAGE = "android-33";
@@ -32,6 +33,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private avdDirectory = getOrCreateAvdDirectory();
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
+
+  constructor(private context: ExtensionContext) {
+    super();
+  }
 
   get name() {
     return this.serial ?? "emulator-unknown";
@@ -124,7 +129,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   makePreview(): Preview {
-    return new Preview(["android", this.name!]);
+    return new Preview(this.context, ["android", this.name!]);
   }
 }
 
