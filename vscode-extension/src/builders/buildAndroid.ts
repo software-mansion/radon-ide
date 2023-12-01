@@ -1,4 +1,5 @@
 import loadConfig from "@react-native-community/cli-config";
+import { getCpuArchitecture } from "../utilities/common";
 
 const execa = require("execa");
 const path = require("path");
@@ -23,10 +24,11 @@ async function extractPackageName(artifactPath: string) {
 export async function buildAndroid(workspaceDir: string) {
   const ctx = loadConfig(workspaceDir);
   const androidSourceDir = ctx.project.android!.sourceDir;
+  const cpuArchitecture = getCpuArchitecture();
   const gradleArgs = [
     "-x",
     "lint",
-    "-PreactNativeArchitectures=arm64-v8a", // TODO: check emulator architecture
+    `-PreactNativeArchitectures=${cpuArchitecture}`,
     `assembleDebug`,
   ];
   try {

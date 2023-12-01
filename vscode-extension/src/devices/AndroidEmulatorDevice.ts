@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
+import { getCpuArchitecture } from "../utilities/common";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
 const PREFFERED_SYSTEM_IMAGE = "android-33";
@@ -149,6 +150,7 @@ async function createEmulator(avdDirectory: string) {
   const avdIni = path.join(avdDirectory, AVD_NAME + ".ini");
   const avdLocation = path.join(avdDirectory, AVD_NAME + ".avd");
   const configIni = path.join(avdLocation, "config.ini");
+  const cpuArchitecture = getCpuArchitecture();
 
   fs.mkdirSync(avdLocation, { recursive: true });
 
@@ -163,7 +165,7 @@ async function createEmulator(avdDirectory: string) {
   const configIniData = [
     ["AvdId", "ReactNativePreviewVSCode"],
     ["PlayStore.enabled", "true"],
-    ["abi.type", "arm64-v8a"],
+    ["abi.type", cpuArchitecture],
     ["avd.ini.displayname", "ReactNativePreviewVSCode"],
     ["avd.ini.encoding", "UTF-8"],
     ["disk.dataPartition.size", "6442450944"],
