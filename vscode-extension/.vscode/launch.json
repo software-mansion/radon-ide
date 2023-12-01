@@ -4,9 +4,42 @@
 // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 {
 	"version": "0.2.0",
+	"compounds": [
+		{
+			"type": "extensionHost",
+			"name": "Run Extension",
+			"configurations": ["watch-extension", "webview-dev-server", "Extension-dev"],
+			"stopAll": true,
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			]
+		}
+	],
 	"configurations": [
 		{
-			"name": "Run Extension",
+			"name": "webview-dev-server",
+            "type": "node",
+			"request": "launch",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": ["run", "start:webview"],
+			"presentation": {
+				"group": "123",
+			},
+			"console": "integratedTerminal"
+		},
+		{
+			"name": "watch-extension",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": ["run", "watch"],
+			"presentation": {
+				"group": "123",
+			},
+			"console": "integratedTerminal"
+		},
+		{
+			"name": "Extension-dev",
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
@@ -15,8 +48,6 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
-			"preLaunchTask": "run-dev",
-			"postDebugTask": "stop-debug-session",
 			"env": {
 				"ENVIRONMENT": "DEVELOPMENT",
 				"DEV_SCRIPT_URL": "http://localhost:3000/bundle.js"
@@ -50,6 +81,6 @@
 				"${workspaceFolder}/out/test/**/*.js"
 			],
 			"preLaunchTask": "${defaultBuildTask}"
-		}
-	]
+		},
+	],
 }
