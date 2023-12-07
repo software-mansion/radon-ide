@@ -124,7 +124,7 @@ export class Project implements Disposable {
     await this.session?.changeDeviceSettings(deviceId, settings);
   }
 
-  public async selectDevice(deviceId: string, settings: DeviceSettings, androidImagePath?: string) {
+  public async selectDevice(deviceId: string, settings: DeviceSettings, androidImagePath: string) {
     console.log("Device selected", deviceId);
     this.session?.dispose();
     this.session = new DeviceSession(deviceId, this.devtools!, this.metro!);

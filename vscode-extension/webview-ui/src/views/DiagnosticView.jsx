@@ -9,7 +9,7 @@ function checkIfAllDependenciesInstalled(dependencies) {
   return Object.values(dependencies).every((installed) => installed);
 }
 
-function DiagnosticView({ setEmulatorDisabled }) {
+function DiagnosticView({ setProjectStarted }) {
   const [dependencies, setDependencies] = useState(null);
   const [loading, setLoading] = useState(false);
   const [iosDepsInstalling, setIosDepsInstalling] = useState(false);
@@ -21,7 +21,7 @@ function DiagnosticView({ setEmulatorDisabled }) {
         case "checkedDependencies":
           setDependencies(message.dependencies);
           setLoading(false);
-          setEmulatorDisabled(!checkIfAllDependenciesInstalled(message.dependencies));
+          setProjectStarted(!checkIfAllDependenciesInstalled(message.dependencies));
           break;
         case "installationComplete":
           setIosDepsInstalling(false);

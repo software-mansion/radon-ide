@@ -5,7 +5,7 @@ import PreviewView from "./views/PreviewView";
 import DiagnosticView from "./views/DiagnosticView";
 import { useEffect, useState } from "react";
 import AndroidImagesView from "./views/AndroidImagesView";
-import GlobalStateProvider from "./components/GlobalStateContext";
+import GlobalStateProvider, { useGlobalStateContext } from "./components/GlobalStateContext";
 
 console.log = function (...args) {
   vscode.postMessage({
@@ -19,43 +19,42 @@ const SETTINGS_TAB_ID = "tab-2";
 const ANDROID_IMAGES_TAB_ID = "tab-3";
 
 function App() {
-  const [emulatorDisabled, setEmulatorDisabled] = useState(true);
+  const [previewDisabled, setPreviewDisabled] = useState(true);
   const [projectStarted, setProjectStarted] = useState(false);
+  const { state: globalState } = useGlobalStateContext();
+
+  console.log("NEW STATRE", globalState);
 
   useEffect(() => {
-    if (!emulatorDisabled && !projectStarted) {
+    console.log("TUTAJ", !previewDisabled, !projectStarted, !!globalState?.devices?.length);
+    if (!previewDisabled && !projectStarted && !!globalState?.devices?.length) {
       setProjectStarted(true);
-      vscode.postMessage({
-        command: "startProject",
-      });
     }
-  }, [emulatorDisabled, projectStarted]);
+  }, [previewDisabled, projectStarted, globalState]);
 
   return (
     <main>
-      <GlobalStateProvider>
         <VSCodePanels
           className="panels"
           aria-label="Default"
-          activeid={emulatorDisabled ? SETTINGS_TAB_ID : EMULATOR_TAB_ID}>
-          <VSCodePanelTab disabled={emulatorDisabled} id="tab-1">
+          activeid={previewDisabled ? SETTINGS_TAB_ID : EMULATOR_TAB_ID}>
+          <VSCodePanelTab disabled={previewDisabled} id="tab-1">
             EMULATOR
           </VSCodePanelTab>
           <VSCodePanelTab id="tab-2">SETTINGS</VSCodePanelTab>
-          <VSCodePanelTab disabled={emulatorDisabled} id="tab-3">
+          <VSCodePanelTab disabled={previewDisabled} id="tab-3">
             ANDROID IMAGES
           </VSCodePanelTab>
           <VSCodePanelView className="tab-view" id={EMULATOR_TAB_ID}>
-            {projectStarted && <PreviewView />}
+            {projectStarted && <PreviewView initialDevice={globalState.devices[0]} />}
           </VSCodePanelView>
           <VSCodePanelView className="tab-view" id={SETTINGS_TAB_ID}>
-            <DiagnosticView setEmulatorDisabled={setEmulatorDisabled} />
+            <DiagnosticView setProjectStarted={setPreviewDisabled} />
           </VSCodePanelView>
           <VSCodePanelView className="tab-view" id={ANDROID_IMAGES_TAB_ID}>
             <AndroidImagesView />
           </VSCodePanelView>
         </VSCodePanels>
-      </GlobalStateProvider>
     </main>
   );
 }

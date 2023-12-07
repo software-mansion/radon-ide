@@ -6,6 +6,7 @@ import { VSCodeButton, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-t
 import UrlBar from "../components/UrlBar";
 import LogPanel from "../components/LogPanel";
 import LogCounter from "../components/LogCounter";
+import { useGlobalStateContext } from "../components/GlobalStateContext";
 import "./View.css";
 import "./PreviewView.css";
 
@@ -37,12 +38,14 @@ function setCssPropertiesForDevice(device) {
   );
 }
 
-function PreviewView() {
-  const [device, setDevice] = useState(DEVICES[0]);
-  const [deviceSettings, setDeviceSettings] = useState({
-    appearance: "dark",
-    contentSize: "normal",
-  });
+const INITIAL_DEVICE_SETTINGS = {
+  appearance: "dark",
+  contentSize: "normal",
+};
+
+function PreviewView({ initialDevice }) {
+  const [device, setDevice] = useState(initialDevice);
+  const [deviceSettings, setDeviceSettings] = useState(INITIAL_DEVICE_SETTINGS);
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
   const [debugPaused, setDebugPaused] = useState(false);
@@ -54,6 +57,7 @@ function PreviewView() {
   const [inspectData, setInspectData] = useState(null);
   const [appURL, setAppURL] = useState("/");
   const [restartButtonDisabled, setRestartButtonDisabled] = useState(false);
+  const { state: globalState } = useGlobalStateContext();
 
   useEffect(() => {
     setCssPropertiesForDevice(device);
@@ -113,7 +117,10 @@ function PreviewView() {
     window.addEventListener("message", listener);
 
     vscode.postMessage({
-      command: "listInstalledAndroidImages",
+      command: "startProject",
+      settings: INITIAL_DEVICE_SETTINGS,
+      deviceId: initialDevice.id,
+      androidImagePath: initialDevice.systemImage
     });
 
     return () => window.removeEventListener("message", listener);
@@ -179,9 +186,10 @@ function PreviewView() {
         <VSCodeDropdown
           onChange={(e) => {
             if (device.id !== e.target.value) {
-              const newDevice = DEVICES.find((d) => d.id === e.target.value);
+              const newDevice = globalState?.devices.find((d) => d.id === e.target.value);
               setDevice(newDevice);
               setPreviewURL(undefined);
+              console.log("NEW DEVICE, CHANGE DEVICE", newDevice);
               vscode.postMessage({
                 command: "changeDevice",
                 settings: deviceSettings,
@@ -191,7 +199,7 @@ function PreviewView() {
             }
           }}>
           <span slot="start" className="codicon codicon-device-mobile" />
-          {DEVICES.map((device) => (
+          {globalState?.devices.map((device) => (
             <VSCodeOption key={device.id} value={device.id}>
               {device.name}
             </VSCodeOption>

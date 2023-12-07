@@ -10,7 +10,7 @@ export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
 
   abstract get name(): string | undefined;
-  abstract bootDevice(): Promise<void>;
+  abstract bootDevice(imagePath?: string): Promise<void>;
   abstract changeSettings(settings: DeviceSettings): Promise<void>;
   abstract makePreview(): Preview;
 
@@ -31,7 +31,7 @@ export abstract class DeviceBase implements Disposable {
   }
 
   async startPreview() {
-    await this.bootDevice();
+    // await this.bootDevice();
     this.preview = this.makePreview();
     return this.preview.start();
   }

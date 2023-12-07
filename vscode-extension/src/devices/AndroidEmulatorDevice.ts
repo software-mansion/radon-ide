@@ -10,9 +10,7 @@ import fs from "fs";
 import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
-import {
-  ANDROID_HOME,
-} from "../utilities/android";
+import { ANDROID_HOME } from "../utilities/android";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
@@ -58,34 +56,30 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
-  async getSystemImage(androidImagePath?: string) {
+  async getSystemImage(androidImagePath: string) {
     const [installedImages] = await getAndroidSystemImages();
 
-    if (androidImagePath) {
-      const choosenAndroidImage = installedImages.find((image) => image.path === androidImagePath);
-      if (!choosenAndroidImage) {
-        throw new Error("Android with given path is not installed!");
-      }
-
-      return choosenAndroidImage;
+    const choosenAndroidImage = installedImages.find((image) => image.path === androidImagePath);
+    if (!choosenAndroidImage) {
+      throw new Error("Android with given path is not installed!");
     }
 
-    const preferredImage = installedImages.find(
-      (image) => image.path === PREFERRED_SYSTEM_IMAGE_PATH
-    );
-    return preferredImage || installedImages[0];
+    return choosenAndroidImage;
   }
 
-  async bootDevice(androidImagePath?: string) {
+  async bootDevice(androidImagePath: string) {
     if (this.emulatorProcess) {
-      this.emulatorProcess.kill()
+      this.emulatorProcess.kill();
     }
+
+    console.log("ANDROID PATH", androidImagePath);
     const systemImage = await this.getSystemImage(androidImagePath);
     const { process, serial } = await findOrCreateEmulator(
       this.avdDirectory,
       path.join(ANDROID_HOME, systemImage.location!)
       // "/Users/mateusz-kowalski/Library/Android/sdk/system-images/android-33"
     );
+    console.log("LOCATION", systemImage.location);
     this.emulatorProcess = process;
     this.serial = serial;
   }
@@ -260,10 +254,12 @@ async function startEmulator(avdDirectory: string) {
 
 async function findOrCreateEmulator(avdDirectory: string, systemImageLocation: string) {
   // first, we check if emulator already exists
-  if (!fs.existsSync(path.join(avdDirectory, AVD_NAME + ".ini"))) {
-    await createEmulator(avdDirectory, systemImageLocation);
-  }
+  // if (!fs.existsSync(path.join(avdDirectory, AVD_NAME + ".ini"))) {
+  fs.existsSync(`rm -rf ${avdDirectory}`);
+  await createEmulator(avdDirectory, systemImageLocation);
+  // }
 
+  console.log("creating emulator", systemImageLocation);
   // otherwise if emulator already exists, we try to launch it
   return await startEmulator(avdDirectory);
 }

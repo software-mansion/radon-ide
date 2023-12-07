@@ -205,7 +205,7 @@ export class PreviewsPanel {
 
   private _setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
-      (message: any) => {
+      async (message: any) => {
         const command = message.command;
         const text = message.text;
 
@@ -214,12 +214,15 @@ export class PreviewsPanel {
             console.log(`Webview: ${text}`);
             return;
           case "startProject":
-            this._startProject();
+            console.log("START PROJECT");
+            await this._startProject();
+            this.project.selectDevice(message.deviceId, message.settings, message.androidImagePath);
             return;
           case "debugResume":
             debug.activeDebugSession?.customRequest("continue");
             return;
           case "changeDevice":
+            console.log("CHANGE DEVICE", message.androidImagePath);
             this.project.selectDevice(message.deviceId, message.settings, message.androidImagePath);
             return;
           case "changeDeviceSettings":

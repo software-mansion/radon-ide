@@ -30,7 +30,7 @@ export class DeviceSession implements Disposable {
     iosBuild: Promise<{ appPath: string; bundleID: string }>,
     androidBuild: Promise<{ apkPath: string; packageName: string }>,
     settings: DeviceSettings,
-    androidImagePath?: string
+    androidImagePath: string
   ) {
     await checkXCodeBuildInstalled();
     const waitForAppReady = new Promise<void>((res) => {
@@ -46,22 +46,24 @@ export class DeviceSession implements Disposable {
     if (this.deviceId.startsWith("ios")) {
       this.device = new IosSimulatorDevice();
       const { appPath, bundleID } = await iosBuild;
-      console.log("CHECK1")
+
       await this.device.bootDevice();
-      console.log("CHECK2")
+
       await this.device.changeSettings(settings);
-      console.log("CHECK3")
+
       await this.device.installApp(appPath);
-      console.log("CHECK4")
       await this.device.launchApp(bundleID, this.metro!.port);
-      console.log("CHECK5")
     } else {
       this.device = new AndroidEmulatorDevice();
       const { apkPath, packageName } = await androidBuild;
       await this.device.bootDevice(androidImagePath);
+      console.log("CHECK1");
       await this.device.changeSettings(settings);
+      console.log("CHECK2");
       await this.device.installApp(apkPath);
+      console.log("CHECK3");
       await this.device.launchApp(packageName, this.metro!.port);
+      console.log("CHECK4");
     }
 
     const waitForPreview = this.device.startPreview();
