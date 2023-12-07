@@ -17,6 +17,7 @@ export const DEVICES = [
         id: "android-33-pixel-7",
         platform: "Android",
         name: "Pixel 7 – Android 13",
+        systemImage: null,
         width: 412,
         height: 869,
         backgroundImage: pixel7,
@@ -28,4 +29,5 @@ export const DEVICES = [
 
 export const XCODE_DOWNLOAD_URL = "https://developer.apple.com/xcode/resources";
 export const ANDROID_STUDIO_DOWNLOAD_URL = "https://developer.android.com/studio";
+export const ANDROID_CMDLINE_TOOLS_DOWNLOAD_URL = "https://developer.android.com/studio#command-line-tools-only";
   

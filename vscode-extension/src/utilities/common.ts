@@ -1,5 +1,6 @@
 import { workspace } from "vscode";
 import os from "os";
+import path from "path";
 
 export function isDev() {
   return process.env.ENVIRONMENT === "DEVELOPMENT";
@@ -10,7 +11,8 @@ export function getDevServerScriptUrl() {
 }
 
 export function getWorkspacePath() {
-  return workspace.workspaceFolders?.[0]?.uri?.fsPath ?? "";
+  // return workspace.workspaceFolders?.[0]?.uri?.fsPath ?? "";
+  return "/Users/mateusz-kowalski/SWM/Sztudio/react-native-sztudio/expo-router-example";
 }
 
 export function getCpuArchitecture() {
@@ -20,6 +22,10 @@ export function getCpuArchitecture() {
     case "ia32":
       return "x86_64";
     default:
-      "arm64-v8a";
+      return "arm64-v8a";
   }
+}
+
+export function getAppCachesDir() {
+  return path.join(os.homedir(), "Library", "Caches", "com.swmansion.react-native-preview-vscode");
 }

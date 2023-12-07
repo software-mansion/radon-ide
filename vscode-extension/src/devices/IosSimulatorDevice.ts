@@ -1,3 +1,4 @@
+import { getAppCachesDir } from "../utilities/common";
 import { DeviceBase, DeviceSettings } from "./DeviceBase";
 import { Preview } from "./preview";
 
@@ -228,12 +229,7 @@ async function findOrCreateSimulator(deviceSetLocation: string) {
 }
 
 function getOrCreateDeviceSet() {
-  const appCachesDir = path.join(
-    os.homedir(),
-    "Library",
-    "Caches",
-    "com.swmansion.react-native-preview-vscode"
-  );
+  const appCachesDir = getAppCachesDir();
   const deviceSetLocation = path.join(appCachesDir, "Devices", "iOS");
   if (!fs.existsSync(deviceSetLocation)) {
     fs.mkdirSync(deviceSetLocation, { recursive: true });

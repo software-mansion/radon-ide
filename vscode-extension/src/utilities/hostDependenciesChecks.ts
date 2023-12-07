@@ -51,3 +51,7 @@ export async function checkIosDependenciesInstalled() {
 export async function checkAdroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
 }
+
+export async function checkSdkManagerInstalled() {
+  return checkIfCLIInstalled("sdkmanager --version");
+}

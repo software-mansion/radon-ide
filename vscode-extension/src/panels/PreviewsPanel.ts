@@ -20,6 +20,7 @@ import {
   checkAdroidEmulatorExists,
   checkIosDependenciesInstalled,
   checkPodInstalled,
+  checkSdkManagerInstalled,
   checkSimctlInstalled,
   checkXCodeBuildInstalled,
   checkXcrunInstalled,
@@ -27,11 +28,20 @@ import {
 import { installIOSDependencies } from "../builders/buildIOS";
 import { openExternalUrl } from "../utilities/vsc";
 import vscode from "vscode";
+import {
+  AndroidImageEntry,
+  getAndroidSystemImages,
+  installSystemImages,
+  removeSystemImages,
+} from "../utilities/sdkmanager";
+import { ensureXcodeCommandLineToolsInstalledAsync } from "xdl/build/Simulator";
+import { GlobalStateManager } from "./GlobalStateManager";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
   private readonly project: Project;
+  private readonly globalStateManager: GlobalStateManager;
   private disposables: Disposable[] = [];
 
   private followEnabled = false;
@@ -48,6 +58,10 @@ export class PreviewsPanel {
 
     // Set an event listener to listen for messages passed from the webview context
     this._setWebviewMessageListener(this._panel.webview);
+
+    // Set the manager to listen and change the persisting storage for the extension.
+    this.globalStateManager = new GlobalStateManager(context, this._panel.webview);
+    this.globalStateManager.startListening();
 
     this._setupEditorListeners(context);
 
@@ -206,7 +220,7 @@ export class PreviewsPanel {
             debug.activeDebugSession?.customRequest("continue");
             return;
           case "changeDevice":
-            this.project.selectDevice(message.deviceId, message.settings);
+            this.project.selectDevice(message.deviceId, message.settings, message.androidImagePath);
             return;
           case "changeDeviceSettings":
             this.project.changeDeviceSettings(message.deviceId, message.settings);
@@ -266,11 +280,66 @@ export class PreviewsPanel {
           case "restartProject":
             this._resetProject();
             return;
+          case "listAllAndroidImages":
+            this._listAllAndroidImages();
+            return;
+          case "listInstalledAndroidImages":
+            this._listInstalledAndroidImages();
+            return;
+          case "processAndroidImageChanges":
+            this._processAndroidImageChanges(message.toRemove, message.toInstall);
+            return;
         }
       },
       undefined,
       this.disposables
     );
+  }
+
+  private async _processAndroidImageChanges(
+    toRemove: AndroidImageEntry[],
+    toInstall: AndroidImageEntry[]
+  ) {
+    const streamInstallStdoutProgress = (line: string) => {
+      this._panel.webview.postMessage({
+        command: "streamAndroidInstallationProgress",
+        stream: line,
+      });
+    };
+
+    if (!!toInstall.length) {
+      const toInstallImagePaths = toInstall.map((imageToInstall) => imageToInstall.path);
+      await installSystemImages(toInstallImagePaths, streamInstallStdoutProgress);
+    }
+
+    if (!!toRemove.length) {
+      const toRemoveImagePaths = toRemove.map((imageToRemove) => imageToRemove.location!);
+      await removeSystemImages(toRemoveImagePaths);
+    }
+
+    const [installedImages, availableImages] = await getAndroidSystemImages();
+    this._panel.webview.postMessage({
+      command: "installProcessFinished",
+      installedImages,
+      availableImages,
+    });
+  }
+
+  private async _listAllAndroidImages() {
+    const [installedImages, availableImages] = await getAndroidSystemImages();
+    this._panel.webview.postMessage({
+      command: "allAndroidImagesListed",
+      installedImages,
+      availableImages,
+    });
+  }
+
+  private async _listInstalledAndroidImages() {
+    const [installedImages] = await getAndroidSystemImages();
+    this._panel.webview.postMessage({
+      command: "installedAndroidImagesListed",
+      images: installedImages,
+    });
   }
 
   private async _resetProject() {
@@ -336,15 +405,25 @@ export class PreviewsPanel {
     const podCli = checkPodInstalled();
     const iosDependencies = checkIosDependenciesInstalled();
     const androidEmulator = checkAdroidEmulatorExists();
+    const sdkManager = checkSdkManagerInstalled();
 
-    return Promise.all([xcodebuild, xcrun, simctl, podCli, iosDependencies, androidEmulator]).then(
-      ([xcodebuild, xcrun, simctl, podCli, iosDependencies, androidEmulator]) => ({
+    return Promise.all([
+      xcodebuild,
+      xcrun,
+      simctl,
+      podCli,
+      iosDependencies,
+      androidEmulator,
+      sdkManager,
+    ]).then(
+      ([xcodebuild, xcrun, simctl, podCli, iosDependencies, androidEmulator, sdkManager]) => ({
         xcodebuild,
         xcrun,
         simctl,
         podCli,
         iosDependencies,
         androidEmulator,
+        sdkManager,
       })
     );
   }

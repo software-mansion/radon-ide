@@ -105,6 +105,7 @@ function PreviewView() {
             command: "changeDevice",
             settings: deviceSettings,
             deviceId: device.id,
+            androidImagePath: device?.systemImage?.path,
           });
           break;
       }
@@ -112,9 +113,7 @@ function PreviewView() {
     window.addEventListener("message", listener);
 
     vscode.postMessage({
-      command: "changeDevice",
-      settings: deviceSettings,
-      deviceId: device.id,
+      command: "listInstalledAndroidImages",
     });
 
     return () => window.removeEventListener("message", listener);
@@ -180,12 +179,14 @@ function PreviewView() {
         <VSCodeDropdown
           onChange={(e) => {
             if (device.id !== e.target.value) {
-              setDevice(DEVICES.find((d) => d.id === e.target.value));
+              const newDevice = DEVICES.find((d) => d.id === e.target.value);
+              setDevice(newDevice);
               setPreviewURL(undefined);
               vscode.postMessage({
                 command: "changeDevice",
                 settings: deviceSettings,
-                deviceId: e.target.value,
+                deviceId: newDevice.id,
+                androidImagePath: newDevice?.systemImage?.path,
               });
             }
           }}>

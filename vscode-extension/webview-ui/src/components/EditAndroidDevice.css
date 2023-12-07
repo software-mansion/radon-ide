@@ -1,0 +1,12 @@
+.edit-device-panel {
+    display: flex;
+    gap: 12px;    
+}
+
+.device-dropdown {
+    width: 200px;
+}
+
+.image-dropdown {
+    min-width: 350px;
+}

@@ -9,14 +9,17 @@ import path from "path";
 import fs from "fs";
 import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
-import { getCpuArchitecture } from "../utilities/common";
+import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
+import {
+  ANDROID_HOME,
+} from "../utilities/android";
+import { getAndroidSystemImages } from "../utilities/sdkmanager";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
-const PREFFERED_SYSTEM_IMAGE = "android-33";
 
-const ANDROID_HOME = process.env.ANDROID_HOME || path.join(os.homedir(), "Library/Android/sdk");
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
+const PREFERRED_SYSTEM_IMAGE_PATH = "system-images;android-33;google_apis_playstore;arm64-v8a";
 
 interface EmulatorProcessInfo {
   pid: number;
@@ -55,11 +58,34 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
-  async bootDevice() {
-    if (this.emulatorProcess) {
-      return;
+  async getSystemImage(androidImagePath?: string) {
+    const [installedImages] = await getAndroidSystemImages();
+
+    if (androidImagePath) {
+      const choosenAndroidImage = installedImages.find((image) => image.path === androidImagePath);
+      if (!choosenAndroidImage) {
+        throw new Error("Android with given path is not installed!");
+      }
+
+      return choosenAndroidImage;
     }
-    const { process, serial } = await findOrCreateEmulator(this.avdDirectory);
+
+    const preferredImage = installedImages.find(
+      (image) => image.path === PREFERRED_SYSTEM_IMAGE_PATH
+    );
+    return preferredImage || installedImages[0];
+  }
+
+  async bootDevice(androidImagePath?: string) {
+    if (this.emulatorProcess) {
+      this.emulatorProcess.kill()
+    }
+    const systemImage = await this.getSystemImage(androidImagePath);
+    const { process, serial } = await findOrCreateEmulator(
+      this.avdDirectory,
+      path.join(ANDROID_HOME, systemImage.location!)
+      // "/Users/mateusz-kowalski/Library/Android/sdk/system-images/android-33"
+    );
     this.emulatorProcess = process;
     this.serial = serial;
   }
@@ -128,25 +154,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 }
 
-async function getPreferredSystemImage() {
-  const appCachesDir = path.join(
-    os.homedir(),
-    "Library",
-    "Caches",
-    "com.swmansion.react-native-preview-vscode"
-  );
-  const sysImagesDirectory = path.join(appCachesDir, "Devices", "Android", "system-images");
-  const sysImageLocation = path.join(sysImagesDirectory, PREFFERED_SYSTEM_IMAGE);
-  if (!fs.existsSync(sysImageLocation)) {
-    // TODO: download and unzip
-    throw new Error("Downloading images is not yet supported.");
-  }
-
-  return [PREFFERED_SYSTEM_IMAGE, sysImageLocation as string];
-}
-
-async function createEmulator(avdDirectory: string) {
-  const [sysImageName, sysImageLocation] = await getPreferredSystemImage();
+async function createEmulator(avdDirectory: string, systemImageLocation: string) {
   const avdIni = path.join(avdDirectory, AVD_NAME + ".ini");
   const avdLocation = path.join(avdDirectory, AVD_NAME + ".avd");
   const configIni = path.join(avdLocation, "config.ini");
@@ -157,7 +165,6 @@ async function createEmulator(avdDirectory: string) {
   const avdIniData = [
     ["avd.ini.encoding", "UTF-8"],
     ["path", avdLocation],
-    ["target", sysImageName],
   ];
   const avdIniContent = avdIniData.map(([key, value]) => `${key}=${value}`).join("\n");
   await fs.promises.writeFile(avdIni, avdIniContent, "utf-8");
@@ -179,7 +186,7 @@ async function createEmulator(avdDirectory: string) {
     ["hw.battery", "yes"],
     ["hw.camera.back", "virtualscene"],
     ["hw.camera.front", "emulated"],
-    ["hw.cpu.arch", "arm64"],
+    ["hw.cpu.arch", os.arch()],
     ["hw.cpu.ncore", "4"],
     ["hw.dPad", "no"],
     ["hw.device.hash2", "MD5:3db3250dab5d0d93b29353040181c7e9"],
@@ -199,7 +206,7 @@ async function createEmulator(avdDirectory: string) {
     ["hw.sensors.orientation", "yes"],
     ["hw.sensors.proximity", "yes"],
     ["hw.trackBall", "no"],
-    ["image.sysdir.1", sysImageLocation],
+    ["image.sysdir.1", systemImageLocation],
     ["runtime.network.latency", "none"],
     ["runtime.network.speed", "full"],
     ["sdcard.size", "512M"],
@@ -225,6 +232,16 @@ async function startEmulator(avdDirectory: string) {
     terminal: false,
   });
 
+  const rlErr = readline.createInterface({
+    input: subprocess!.stderr,
+    output: process.stderr,
+    terminal: false,
+  });
+
+  rlErr.on("line", (line: string) => {
+    console.error(line);
+  });
+
   const initPromise = new Promise<{ process: ChildProcess; serial: string }>((resolve, reject) => {
     rl.on("line", async (line: string) => {
       if (line.includes("Advertising in:")) {
@@ -241,10 +258,10 @@ async function startEmulator(avdDirectory: string) {
   return initPromise;
 }
 
-async function findOrCreateEmulator(avdDirectory: string) {
+async function findOrCreateEmulator(avdDirectory: string, systemImageLocation: string) {
   // first, we check if emulator already exists
   if (!fs.existsSync(path.join(avdDirectory, AVD_NAME + ".ini"))) {
-    await createEmulator(avdDirectory);
+    await createEmulator(avdDirectory, systemImageLocation);
   }
 
   // otherwise if emulator already exists, we try to launch it
@@ -325,12 +342,7 @@ async function checkEmulatorOnline(serial: string): Promise<boolean> {
 }
 
 function getOrCreateAvdDirectory() {
-  const appCachesDir = path.join(
-    os.homedir(),
-    "Library",
-    "Caches",
-    "com.swmansion.react-native-preview-vscode"
-  );
+  const appCachesDir = getAppCachesDir();
   const avdDirectory = path.join(appCachesDir, "Devices", "Android", "avd");
   if (!fs.existsSync(avdDirectory)) {
     fs.mkdirSync(avdDirectory, { recursive: true });

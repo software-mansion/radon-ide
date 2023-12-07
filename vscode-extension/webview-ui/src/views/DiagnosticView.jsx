@@ -1,5 +1,5 @@
 import "./View.css";
-import "./SettingsView.css";
+import "./DiagnosticView.css";
 import { useEffect, useState } from "react";
 import { vscode } from "../utilities/vscode";
 import { VSCodeButton, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
@@ -9,7 +9,7 @@ function checkIfAllDependenciesInstalled(dependencies) {
   return Object.values(dependencies).every((installed) => installed);
 }
 
-function SettingsView({ setEmulatorDisabled }) {
+function DiagnosticView({ setEmulatorDisabled }) {
   const [dependencies, setDependencies] = useState(null);
   const [loading, setLoading] = useState(false);
   const [iosDepsInstalling, setIosDepsInstalling] = useState(false);
@@ -73,4 +73,4 @@ function SettingsView({ setEmulatorDisabled }) {
   );
 }
 
-export default SettingsView;
+export default DiagnosticView;

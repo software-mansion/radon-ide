@@ -7,6 +7,7 @@ import { buildAndroid } from "../builders/buildAndroid";
 import { DeviceSettings } from "../devices/DeviceBase";
 import crypto from "crypto";
 import { getWorkspacePath } from "../utilities/common";
+import { AndroidImageEntry, getAndroidSystemImages } from "../utilities/sdkmanager";
 
 export interface EventMonitor {
   onLogReceived: (message: { type: string }) => void;
@@ -24,6 +25,7 @@ export class Project implements Disposable {
   private iOSBuild: Promise<{ appPath: string; bundleID: string }> | undefined;
   private androidBuild: Promise<{ apkPath: string; packageName: string }> | undefined;
   private debugSessionListener: Disposable | undefined;
+  private systemImage: AndroidImageEntry | undefined;
 
   private session: DeviceSession | undefined;
   private eventMonitors: Array<EventMonitor> = [];
@@ -122,11 +124,11 @@ export class Project implements Disposable {
     await this.session?.changeDeviceSettings(deviceId, settings);
   }
 
-  public async selectDevice(deviceId: string, settings: DeviceSettings) {
+  public async selectDevice(deviceId: string, settings: DeviceSettings, androidImagePath?: string) {
     console.log("Device selected", deviceId);
     this.session?.dispose();
     this.session = new DeviceSession(deviceId, this.devtools!, this.metro!);
-    await this.session.start(this.iOSBuild!, this.androidBuild!, settings);
+    await this.session.start(this.iOSBuild!, this.androidBuild!, settings, androidImagePath);
   }
 }
 

@@ -1,11 +1,11 @@
 import loadConfig from "@react-native-community/cli-config";
 import { getCpuArchitecture } from "../utilities/common";
+import { ANDROID_HOME } from "../utilities/android";
 
 const execa = require("execa");
 const path = require("path");
 const os = require("os");
 
-const ANDROID_HOME = process.env.ANDROID_HOME || path.join(os.homedir(), "Library/Android/sdk");
 const AAPT_PATH = path.join(ANDROID_HOME, "build-tools", "33.0.0", "aapt");
 
 async function build(projectDir: string, gradleArgs: string[]) {
