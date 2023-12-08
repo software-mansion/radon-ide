@@ -17,6 +17,7 @@ import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
 import { formatMessage } from "./logFormatting";
+import { Logger } from "../Logger";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -497,6 +498,6 @@ export class DebugAdapter extends DebugSession {
     args: any,
     request?: DebugProtocol.Request | undefined
   ): void {
-    console.log("Custom req", command, args);
+    Logger.log(`Custom req ${command} ${args}`);
   }
 }

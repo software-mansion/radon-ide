@@ -2,6 +2,7 @@ import { Disposable } from "vscode";
 import { PreviewsPanel } from "../panels/PreviewsPanel";
 import http from "http";
 import { Server } from "ws";
+import { Logger } from "../Logger";
 
 export class Devtools implements Disposable {
   public readonly port: number;
@@ -15,17 +16,17 @@ export class Devtools implements Disposable {
     const wss = new Server({ server: this.server });
 
     wss.on("connection", (ws: any) => {
-      console.log("Devtools client connected");
+      Logger.log("Devtools client connected");
       this.socket = ws;
 
       // When data is received from a client
       ws.on("message", (message: string) => {
         try {
           const { event, payload } = JSON.parse(message);
-          console.log("Devtools msg", event);
+          Logger.log(`Devtools msg ${event}`);
           this.listeners.forEach((listener) => listener(event, payload));
         } catch (e) {
-          console.log("Error", e);
+          Logger.error(`Error ${e}`, "Devtools websocket");
         }
       });
     });
@@ -34,7 +35,7 @@ export class Devtools implements Disposable {
 
     this.addListener((event, payload) => {
       if (event === "rnp_appReady") {
-        console.log("App ready");
+        Logger.log("App ready");
         const { appKey } = payload;
         if (appKey !== "main") {
           PreviewsPanel.currentPanel?.notifyAppUrlChanged(appKey);

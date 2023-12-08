@@ -8,6 +8,7 @@ import { DeviceSettings } from "../devices/DeviceBase";
 import crypto from "crypto";
 import { getWorkspacePath } from "../utilities/common";
 import { AndroidImageEntry, getAndroidSystemImages } from "../utilities/sdkmanager";
+import { Logger } from "../Logger";
 
 export interface EventMonitor {
   onLogReceived: (message: { type: string }) => void;
@@ -54,17 +55,17 @@ export class Project implements Disposable {
   public async start() {
     let workspaceDir = getWorkspacePath();
     if (!workspaceDir) {
-      console.warn("No workspace directory found");
+      Logger.warn("No workspace directory found");
       return;
     }
 
     const metroPort = portHash(`metro://workspaceDir`); // TODO: use workspace directory here
     const devtoolsPort = portHash(`devtools://workspaceDir`);
-    console.log("Ports metro:", metroPort, "devtools:", devtoolsPort, { a: 100 });
+    Logger.log(`Ports metro: ${metroPort} devtools: ${devtoolsPort} ${{ a: 100 }}`);
     this.metro = new Metro(workspaceDir, this.context.extensionPath, metroPort, devtoolsPort);
     this.devtools = new Devtools({ port: devtoolsPort });
 
-    console.log("Launching builds");
+    Logger.log("Launching builds");
     this.iOSBuild = buildIos(workspaceDir);
     this.androidBuild = buildAndroid(workspaceDir);
 
@@ -88,9 +89,9 @@ export class Project implements Disposable {
       }
     });
 
-    console.log("Launching metro on port", metroPort);
+    Logger.log(`Launching metro on port ${metroPort}`);
     await this.metro.start();
-    console.log("Metro started");
+    Logger.log(`Metro started`);
   }
 
   public sendTouch(deviceId: string, xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
@@ -125,7 +126,7 @@ export class Project implements Disposable {
   }
 
   public async selectDevice(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
-    console.log(`Device selected ${deviceId}, with system image Path: ${systemImagePath}`);
+    Logger.log(`Device selected ${deviceId}, with system image Path: ${systemImagePath}`);
     this.session?.dispose();
     this.session = new DeviceSession(deviceId, this.devtools!, this.metro!);
     await this.session.start(this.iOSBuild!, this.androidBuild!, settings, systemImagePath);

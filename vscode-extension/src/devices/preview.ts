@@ -3,8 +3,9 @@ import { Disposable } from "vscode";
 import path from "path";
 import fs from "fs";
 import fg from "fast-glob";
-import child_process from "child_process";
 import readline from "readline";
+import { spawnWithLog } from "../utilities/subprocess";
+import { Logger } from "../Logger";
 
 function findSimulatorStreamBinary() {
   const derivedDataPath = path.join(process.env.HOME!, "Library/Developer/Xcode/DerivedData");
@@ -46,15 +47,15 @@ export class Preview implements Disposable {
   }
 
   async start() {
-    console.log("Launching preview server", findSimulatorStreamBinary());
+    Logger.log(`Launching preview server ${findSimulatorStreamBinary()}`);
 
     const streamServerBinary = findSimulatorStreamBinary();
-    console.log("Launch preview", streamServerBinary, this.args);
-    const subprocess = child_process.spawn(streamServerBinary, this.args);
+    Logger.log(`Launch preview ${streamServerBinary} ${this.args}`);
+    const subprocess = spawnWithLog(streamServerBinary, this.args, {});
     this.subprocess = subprocess;
 
     const rl = readline.createInterface({
-      input: subprocess.stdout,
+      input: subprocess.stdout!,
       output: process.stdout,
       terminal: false,
     });
@@ -66,7 +67,7 @@ export class Preview implements Disposable {
 
     rl.on("line", (line: string) => {
       if (line.includes("http://")) {
-        console.log("Preview server ready", line);
+        Logger.log(`Preview server ready ${line}`);
         this.streamURL = line;
         resolve(this.streamURL);
       }

@@ -1,6 +1,7 @@
 import loadConfig from "@react-native-community/cli-config";
 import { getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
+import { Logger } from "../Logger";
 
 const execa = require("execa");
 const path = require("path");
@@ -34,10 +35,10 @@ export async function buildAndroid(workspaceDir: string) {
   try {
     await build(androidSourceDir, gradleArgs);
   } catch (e) {
-    console.error("Error building Android", e);
+    Logger.error(`Error building Android ${e}`);
     throw e;
   }
-  console.log("Android build sucessful");
+  Logger.log("Android build sucessful");
   const apkPath = path.join(androidSourceDir, "app/build/outputs/apk/debug/app-debug.apk");
   const packageName = await extractPackageName(apkPath);
   return { apkPath, packageName };

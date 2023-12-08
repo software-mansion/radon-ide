@@ -1,6 +1,7 @@
 import { getAppCachesDir } from "../utilities/common";
 import { DeviceBase, DeviceSettings } from "./DeviceBase";
 import { Preview } from "./preview";
+import { Logger } from "../Logger";
 
 const execa = require("execa");
 const os = require("os");
@@ -98,7 +99,7 @@ export class IosSimulatorDevice extends DeviceBase {
       "Preferences",
       `${bundleID}.plist`
     );
-    console.log("Defaults location", userDefaultsLocation);
+    Logger.log(`Defaults location ${userDefaultsLocation}`);
     try {
       await execa("/usr/libexec/PlistBuddy", [
         "-c",
@@ -208,7 +209,7 @@ async function findOrCreateSimulator(deviceSetLocation: string) {
     // second, select the newest runtime
     const runtime = await getNewestAvailableRuntime();
 
-    console.log("Create simulator", deviceType.name, "with runtime", runtime.name);
+    Logger.log(`Create simulator ${deviceType.name} with runtime ${runtime.name}`);
     // create new simulator with selected runtime
     await execa("xcrun", [
       "simctl",

@@ -5,13 +5,12 @@ import path from "path";
 import { getWorkspacePath } from "./common";
 import fs from "fs";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
-
-const asyncExec = promisify(child_process.exec);
+import { execWithLog } from "./subprocess";
 
 async function checkIfCLIInstalled(command: string) {
   try {
     // We are not checking the stderr here, because some of the CLIs put the warnings there.
-    const { stdout } = await asyncExec(command, { encoding: "utf8" });
+    const { stdout } = await execWithLog(command, { encoding: "utf8" });
     return !!stdout.length;
   } catch (_) {
     return false;

@@ -37,6 +37,7 @@ import {
 import { ensureXcodeCommandLineToolsInstalledAsync } from "xdl/build/Simulator";
 import { GlobalStateManager } from "./GlobalStateManager";
 import { DeviceSettings } from "../devices/DeviceBase";
+import { Logger } from "../Logger";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
@@ -181,7 +182,7 @@ export class PreviewsPanel {
         const command = message.command;
         const text = message.text;
 
-        console.log(`Extension received a message with command ${command}.`);
+        Logger.log(`Extension received a message with command ${command}.`);
 
         switch (command) {
           case "log":
@@ -429,7 +430,7 @@ export class PreviewsPanel {
   }
 
   private _onActiveFileChange(filename: string) {
-    console.log("LastEditor", filename);
+    Logger.log(`LastEditor ${filename}`);
     this.project.onActiveFileChange(filename, this.followEnabled);
   }
 

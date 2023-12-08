@@ -1,10 +1,8 @@
-import child_process from "child_process";
-import { promisify } from "util";
 import readline from "readline";
 import path from "path";
 import { ANDROID_HOME } from "./android";
-
-const asyncExec = promisify(child_process.exec);
+import { execWithLog, spawnWithLog } from "./subprocess";
+import { Logger } from "../Logger";
 
 interface SdkRepositoryEntry {
   path: string;
@@ -23,7 +21,7 @@ function getApiLevelFromImagePath(imagePath: string): number {
 }
 
 async function runSdkManagerList() {
-  const { stdout } = await asyncExec("sdkmanager --list");
+  const { stdout } = await execWithLog("sdkmanager --list");
   return stdout;
 }
 
@@ -86,14 +84,15 @@ export async function installSystemImages(
   onLine?: (line: string) => void
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    const downloadProcess = child_process.spawn(
+    const downloadProcess = spawnWithLog(
       `sdkmanager ${sysImagePaths.map((imgPath) => `"${imgPath}"`).join(" ")}`,
+      [],
       {
         shell: true,
       }
     );
 
-    if (onLine) {
+    if (onLine && downloadProcess.stdout) {
       const rl = readline.createInterface({
         input: downloadProcess.stdout,
       });
@@ -118,8 +117,8 @@ export async function installSystemImages(
 export async function removeSystemImages(sysImagePaths: string[]) {
   const removalPromises = sysImagePaths.map((sysImagePath) => {
     const pathToRemove = path.join(ANDROID_HOME, sysImagePath);
-    console.log(`Removing directory ${pathToRemove}`);
-    asyncExec(`rm -rf ${pathToRemove}`);
+    Logger.log(`Removing directory ${pathToRemove}`);
+    return execWithLog(`rm -rf ${pathToRemove}`);
   });
   return Promise.all(removalPromises);
 }

@@ -1,7 +1,7 @@
 import { IOSProjectInfo } from "@react-native-community/cli-types";
 import type { ChildProcess } from "child_process";
-
-const child_process = require("child_process");
+import { execSyncWithLog, spawnWithLog } from "../utilities/subprocess";
+import { Logger } from "../Logger";
 
 export type BuildFlags = {
   mode: string;
@@ -43,17 +43,13 @@ export function buildProject(
       xcodebuildArgs.push(...args.extraParams);
     }
 
-    console.log(`Building using "xcodebuild ${xcodebuildArgs.join(" ")}`);
+    Logger.log(`Building using "xcodebuild ${xcodebuildArgs.join(" ")}`);
     let xcodebuildOutputFormatter: ChildProcess | any;
     if (!args.verbose) {
       if (xcbeautifyAvailable()) {
-        xcodebuildOutputFormatter = child_process.spawn("xcbeautify", [], {
-          stdio: ["pipe", process.stdout, process.stderr],
-        });
+        xcodebuildOutputFormatter = spawnWithLog("xcbeautify", [], {});
       } else if (xcprettyAvailable()) {
-        xcodebuildOutputFormatter = child_process.spawn("xcpretty", [], {
-          stdio: ["pipe", process.stdout, process.stderr],
-        });
+        xcodebuildOutputFormatter = spawnWithLog("xcpretty", [], {});
       }
     }
 
@@ -66,10 +62,9 @@ export function buildProject(
       cwd: args.buildCwd,
     };
 
-    const buildProcess = child_process.spawn("xcodebuild", xcodebuildArgs, processOptions);
+    const buildProcess = spawnWithLog("xcodebuild", xcodebuildArgs, processOptions);
     let buildOutput = "";
-    let errorOutput = "";
-    buildProcess.stdout.on("data", (data: Buffer) => {
+    buildProcess.stdout?.on("data", (data: Buffer) => {
       const stringData = data.toString();
       buildOutput += stringData;
       if (xcodebuildOutputFormatter) {
@@ -77,19 +72,15 @@ export function buildProject(
       }
     });
 
-    buildProcess.stderr.on("data", (data: Buffer) => {
-      errorOutput += data;
-    });
     buildProcess.on("close", (code: number) => {
       if (xcodebuildOutputFormatter) {
         xcodebuildOutputFormatter.stdin.end();
       }
       if (code !== 0) {
-        console.error(errorOutput);
         reject(new Error("Failed to build iOS project."));
         return;
       }
-      console.log("Successfully built the app");
+      Logger.log("Successfully built the app");
       resolve(buildOutput);
     });
   });
@@ -97,9 +88,7 @@ export function buildProject(
 
 function xcbeautifyAvailable() {
   try {
-    child_process.execSync("xcbeautify --version", {
-      stdio: [0, "pipe", "ignore"],
-    });
+    execSyncWithLog("xcbeautify --version");
   } catch (error) {
     return false;
   }
@@ -108,9 +97,7 @@ function xcbeautifyAvailable() {
 
 function xcprettyAvailable() {
   try {
-    child_process.execSync("xcpretty --version", {
-      stdio: [0, "pipe", "ignore"],
-    });
+    execSyncWithLog("xcpretty --version");
   } catch (error) {
     return false;
   }

@@ -3,7 +3,6 @@ import { Preview } from "./preview";
 import { DeviceBase, DeviceSettings } from "./DeviceBase";
 import execa from "execa";
 import readline from "readline";
-import child_process from "child_process";
 import os from "os";
 import path from "path";
 import fs from "fs";
@@ -12,6 +11,8 @@ import { retry } from "../utilities/retry";
 import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
+import { spawnWithLog } from "../utilities/subprocess";
+import { Logger } from "../Logger";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
 
@@ -210,26 +211,16 @@ async function createEmulator(avdDirectory: string, systemImageLocation: string)
 }
 
 async function startEmulator(avdDirectory: string) {
-  const subprocess = child_process.spawn(
+  const subprocess = spawnWithLog(
     EMULATOR_BINARY,
     ["-avd", AVD_NAME, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
     { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
   );
 
   const rl = readline.createInterface({
-    input: subprocess!.stdout,
+    input: subprocess!.stdout!,
     output: process.stdout,
     terminal: false,
-  });
-
-  const rlErr = readline.createInterface({
-    input: subprocess!.stderr,
-    output: process.stderr,
-    terminal: false,
-  });
-
-  rlErr.on("line", (line: string) => {
-    console.error(line);
   });
 
   const initPromise = new Promise<{ process: ChildProcess; serial: string }>((resolve, reject) => {
@@ -242,7 +233,6 @@ async function startEmulator(avdDirectory: string) {
         await waitForEmulatorOnline(emulatorSerial, 60000);
         resolve({ process: subprocess, serial: emulatorSerial });
       }
-      console.log(`emu: ${line}`);
     });
   });
   return initPromise;
@@ -251,7 +241,7 @@ async function startEmulator(avdDirectory: string) {
 async function findOrCreateEmulator(avdDirectory: string, systemImageLocation: string) {
   // first, we check if emulator already exists, so we can remove the old one and create new one
   if (!fs.existsSync(path.join(avdDirectory, AVD_NAME + ".ini"))) {
-    console.log(`Removing directory ${avdDirectory}`);
+    Logger.log(`Removing directory ${avdDirectory}`);
     fs.existsSync(`rm -rf ${avdDirectory}`);
   }
   await createEmulator(avdDirectory, systemImageLocation);
