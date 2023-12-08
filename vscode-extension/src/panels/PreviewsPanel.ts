@@ -36,6 +36,7 @@ import {
 } from "../utilities/sdkmanager";
 import { ensureXcodeCommandLineToolsInstalledAsync } from "xdl/build/Simulator";
 import { GlobalStateManager } from "./GlobalStateManager";
+import { DeviceSettings } from "../devices/DeviceBase";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
@@ -66,35 +67,6 @@ export class PreviewsPanel {
     this._setupEditorListeners(context);
 
     this.project = new Project(context);
-  }
-
-  private async _startProject() {
-    this.project.start();
-    this.project.addEventMonitor({
-      onLogReceived: (message) => {
-        this._panel.webview.postMessage({
-          command: "logEvent",
-          type: message.type,
-        });
-      },
-      onDebuggerPaused: () => {
-        this._panel.webview.postMessage({
-          command: "debuggerPaused",
-        });
-      },
-      onDebuggerContinued: () => {
-        this._panel.webview.postMessage({
-          command: "debuggerContinued",
-        });
-      },
-      onUncaughtException: (isFatal) => {
-        this._panel.webview.postMessage({
-          command: "uncaughtException",
-          isFatal: isFatal,
-        });
-      },
-    });
-    this.disposables.push(this.project);
   }
 
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
@@ -163,28 +135,28 @@ export class PreviewsPanel {
 
     // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
     return /*html*/ `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          ${
-            isDev()
-              ? ""
-              : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`
-          }
-          ${isDev() ? "" : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
-          <link rel="stylesheet" href="${codiconsUri}" >
-          <base href="${baseUri}">
-        </head>
-        <body>
-          <div id="root"></div>
-          <script nonce="${nonce}">
-            window.baseUri = "${baseUri}";
-          </script>
-          <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
-        </body>
-      </html>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    ${
+      isDev()
+        ? ""
+        : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`
+    }
+    ${isDev() ? "" : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
+    <link rel="stylesheet" href="${codiconsUri}" >
+    <base href="${baseUri}">
+    </head>
+    <body>
+    <div id="root"></div>
+    <script nonce="${nonce}">
+    window.baseUri = "${baseUri}";
+    </script>
+    <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+    </body>
+    </html>
     `;
   }
 
@@ -205,7 +177,7 @@ export class PreviewsPanel {
 
   private _setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
-      async (message: any) => {
+      (message: any) => {
         const command = message.command;
         const text = message.text;
 
@@ -214,16 +186,15 @@ export class PreviewsPanel {
             console.log(`Webview: ${text}`);
             return;
           case "startProject":
-            console.log("START PROJECT");
-            await this._startProject();
-            this.project.selectDevice(message.deviceId, message.settings, message.androidImagePath);
+            console.log("START PROJECT", message);
+            this._startProject(message.deviceId, message.settings, message.systemImagePath);
             return;
           case "debugResume":
             debug.activeDebugSession?.customRequest("continue");
             return;
           case "changeDevice":
-            console.log("CHANGE DEVICE", message.androidImagePath);
-            this.project.selectDevice(message.deviceId, message.settings, message.androidImagePath);
+            console.log("CHANGE DEVICE", message);
+            this.project.selectDevice(message.deviceId, message.settings, message.systemImagePath);
             return;
           case "changeDeviceSettings":
             this.project.changeDeviceSettings(message.deviceId, message.settings);
@@ -281,7 +252,7 @@ export class PreviewsPanel {
             this._handlePrerequisites();
             return;
           case "restartProject":
-            this._resetProject();
+            this._resetProject(message.deviceId, message.settings, message.systemImagePath);
             return;
           case "listAllAndroidImages":
             this._listAllAndroidImages();
@@ -345,13 +316,41 @@ export class PreviewsPanel {
     });
   }
 
-  private async _resetProject() {
+  private async _startProject(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
+    await this.project.start();
+    this.project.addEventMonitor({
+      onLogReceived: (message) => {
+        this._panel.webview.postMessage({
+          command: "logEvent",
+          type: message.type,
+        });
+      },
+      onDebuggerPaused: () => {
+        this._panel.webview.postMessage({
+          command: "debuggerPaused",
+        });
+      },
+      onDebuggerContinued: () => {
+        this._panel.webview.postMessage({
+          command: "debuggerContinued",
+        });
+      },
+      onUncaughtException: (isFatal) => {
+        this._panel.webview.postMessage({
+          command: "uncaughtException",
+          isFatal: isFatal,
+        });
+      },
+    });
+    this.disposables.push(this.project);
+    console.log("here", systemImagePath);
+    this.project.selectDevice(deviceId, settings, systemImagePath);
+  }
+
+  private async _resetProject(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
     this.project.dispose();
     await this._handlePrerequisites();
-    this._startProject();
-    this._panel.webview.postMessage({
-      command: "projectRestarted",
-    });
+    this._startProject(deviceId, settings, systemImagePath);
   }
 
   private async _handlePrerequisites() {

@@ -30,7 +30,7 @@ export class DeviceSession implements Disposable {
     iosBuild: Promise<{ appPath: string; bundleID: string }>,
     androidBuild: Promise<{ apkPath: string; packageName: string }>,
     settings: DeviceSettings,
-    androidImagePath: string
+    systemImagePath: string
   ) {
     await checkXCodeBuildInstalled();
     const waitForAppReady = new Promise<void>((res) => {
@@ -56,7 +56,7 @@ export class DeviceSession implements Disposable {
     } else {
       this.device = new AndroidEmulatorDevice();
       const { apkPath, packageName } = await androidBuild;
-      await this.device.bootDevice(androidImagePath);
+      await this.device.bootDevice(systemImagePath);
       console.log("CHECK1");
       await this.device.changeSettings(settings);
       console.log("CHECK2");

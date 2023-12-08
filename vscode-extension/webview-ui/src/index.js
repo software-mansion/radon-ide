@@ -7,9 +7,9 @@ import GlobalStateProvider from "./components/GlobalStateContext";
 const render = () => {
     ReactDOM.render(
     <React.StrictMode>
-        <GlobalStateProvider>
+      <GlobalStateProvider>
         <App />
-        </GlobalStateProvider>
+      </GlobalStateProvider>
     </React.StrictMode>, 
     document.getElementById('root'));
 }

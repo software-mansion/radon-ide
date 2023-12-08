@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { vscode } from "../utilities/vscode";
 import { DEVICES } from "../utilities/consts";
 import Preview from "../components/Preview";
@@ -44,7 +44,7 @@ const INITIAL_DEVICE_SETTINGS = {
 };
 
 function PreviewView({ initialDevice }) {
-  const [device, setDevice] = useState(initialDevice);
+  const [deviceId, setDeviceId] = useState(initialDevice.id);
   const [deviceSettings, setDeviceSettings] = useState(INITIAL_DEVICE_SETTINGS);
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
@@ -56,8 +56,12 @@ function PreviewView({ initialDevice }) {
   const [expandedLogs, setExpandedLogs] = useState(false);
   const [inspectData, setInspectData] = useState(null);
   const [appURL, setAppURL] = useState("/");
-  const [restartButtonDisabled, setRestartButtonDisabled] = useState(false);
   const { state: globalState } = useGlobalStateContext();
+
+  const device = useMemo(
+    () => globalState.devices.find((device) => deviceId === device.id),
+    [deviceId, globalState]
+  );
 
   useEffect(() => {
     setCssPropertiesForDevice(device);
@@ -103,15 +107,6 @@ function PreviewView({ initialDevice }) {
         case "appUrlChanged":
           setAppURL(message.url);
           break;
-        case "projectRestarted":
-          setRestartButtonDisabled(false);
-          vscode.postMessage({
-            command: "changeDevice",
-            settings: deviceSettings,
-            deviceId: device.id,
-            androidImagePath: device?.systemImage?.path,
-          });
-          break;
       }
     };
     window.addEventListener("message", listener);
@@ -120,7 +115,7 @@ function PreviewView({ initialDevice }) {
       command: "startProject",
       settings: INITIAL_DEVICE_SETTINGS,
       deviceId: initialDevice.id,
-      androidImagePath: initialDevice.systemImage
+      systemImagePath: initialDevice.systemImage,
     });
 
     return () => window.removeEventListener("message", listener);
@@ -187,14 +182,14 @@ function PreviewView({ initialDevice }) {
           onChange={(e) => {
             if (device.id !== e.target.value) {
               const newDevice = globalState?.devices.find((d) => d.id === e.target.value);
-              setDevice(newDevice);
+              setDeviceId(newDevice.id);
               setPreviewURL(undefined);
               console.log("NEW DEVICE, CHANGE DEVICE", newDevice);
               vscode.postMessage({
                 command: "changeDevice",
                 settings: deviceSettings,
                 deviceId: newDevice.id,
-                androidImagePath: newDevice?.systemImage?.path,
+                systemImagePath: newDevice?.systemImage?.path,
               });
             }
           }}>
@@ -208,12 +203,13 @@ function PreviewView({ initialDevice }) {
 
         <VSCodeButton
           appearance="secondary"
-          disabled={restartButtonDisabled}
           onClick={() => {
-            setRestartButtonDisabled(true);
             setPreviewURL(undefined);
             vscode.postMessage({
               command: "restartProject",
+              settings: deviceSettings,
+              deviceId: device.id,
+              systemImagePath: device.systemImage?.path,
             });
           }}>
           <span className="codicon codicon-refresh" />

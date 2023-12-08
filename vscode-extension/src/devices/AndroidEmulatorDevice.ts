@@ -61,7 +61,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
     const choosenAndroidImage = installedImages.find((image) => image.path === androidImagePath);
     if (!choosenAndroidImage) {
-      throw new Error("Android with given path is not installed!");
+      throw new Error(`Android with given path: "${androidImagePath}", is not installed!`);
     }
 
     return choosenAndroidImage;

@@ -23,10 +23,8 @@ function App() {
   const [projectStarted, setProjectStarted] = useState(false);
   const { state: globalState } = useGlobalStateContext();
 
-  console.log("NEW STATRE", globalState);
 
   useEffect(() => {
-    console.log("TUTAJ", !previewDisabled, !projectStarted, !!globalState?.devices?.length);
     if (!previewDisabled && !projectStarted && !!globalState?.devices?.length) {
       setProjectStarted(true);
     }
