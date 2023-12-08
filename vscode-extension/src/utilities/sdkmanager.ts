@@ -101,11 +101,6 @@ export async function installSystemImages(
       rl.on("line", onLine);
     }
 
-    readline.createInterface({
-      input: downloadProcess.stderr,
-      output: process.stderr,
-    });
-
     downloadProcess.on("exit", (code) => {
       if (code !== 0) {
         reject(new Error(`Command exited with code ${code}`));
@@ -121,8 +116,10 @@ export async function installSystemImages(
 }
 
 export async function removeSystemImages(sysImagePaths: string[]) {
-  const removalPromises = sysImagePaths.map((sysImagePath) =>
-    asyncExec(`rm -rf ${path.join(ANDROID_HOME, sysImagePath)}`)
-  );
+  const removalPromises = sysImagePaths.map((sysImagePath) => {
+    const pathToRemove = path.join(ANDROID_HOME, sysImagePath);
+    console.log(`Removing directory ${pathToRemove}`);
+    asyncExec(`rm -rf ${pathToRemove}`);
+  });
   return Promise.all(removalPromises);
 }

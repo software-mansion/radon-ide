@@ -181,19 +181,18 @@ export class PreviewsPanel {
         const command = message.command;
         const text = message.text;
 
+        console.log(`Extension received a message with command ${command}.`);
+
         switch (command) {
           case "log":
-            console.log(`Webview: ${text}`);
             return;
           case "startProject":
-            console.log("START PROJECT", message);
             this._startProject(message.deviceId, message.settings, message.systemImagePath);
             return;
           case "debugResume":
             debug.activeDebugSession?.customRequest("continue");
             return;
           case "changeDevice":
-            console.log("CHANGE DEVICE", message);
             this.project.selectDevice(message.deviceId, message.settings, message.systemImagePath);
             return;
           case "changeDeviceSettings":
@@ -343,7 +342,6 @@ export class PreviewsPanel {
       },
     });
     this.disposables.push(this.project);
-    console.log("here", systemImagePath);
     this.project.selectDevice(deviceId, settings, systemImagePath);
   }
 

@@ -17,7 +17,6 @@ const AVD_NAME = "ReactNativePreviewVSCode";
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
-const PREFERRED_SYSTEM_IMAGE_PATH = "system-images;android-33;google_apis_playstore;arm64-v8a";
 
 interface EmulatorProcessInfo {
   pid: number;
@@ -72,14 +71,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
       this.emulatorProcess.kill();
     }
 
-    console.log("ANDROID PATH", androidImagePath);
     const systemImage = await this.getSystemImage(androidImagePath);
     const { process, serial } = await findOrCreateEmulator(
       this.avdDirectory,
       path.join(ANDROID_HOME, systemImage.location!)
-      // "/Users/mateusz-kowalski/Library/Android/sdk/system-images/android-33"
     );
-    console.log("LOCATION", systemImage.location);
     this.emulatorProcess = process;
     this.serial = serial;
   }
@@ -253,14 +249,13 @@ async function startEmulator(avdDirectory: string) {
 }
 
 async function findOrCreateEmulator(avdDirectory: string, systemImageLocation: string) {
-  // first, we check if emulator already exists
-  // if (!fs.existsSync(path.join(avdDirectory, AVD_NAME + ".ini"))) {
-  fs.existsSync(`rm -rf ${avdDirectory}`);
+  // first, we check if emulator already exists, so we can remove the old one and create new one
+  if (!fs.existsSync(path.join(avdDirectory, AVD_NAME + ".ini"))) {
+    console.log(`Removing directory ${avdDirectory}`);
+    fs.existsSync(`rm -rf ${avdDirectory}`);
+  }
   await createEmulator(avdDirectory, systemImageLocation);
-  // }
 
-  console.log("creating emulator", systemImageLocation);
-  // otherwise if emulator already exists, we try to launch it
   return await startEmulator(avdDirectory);
 }
 

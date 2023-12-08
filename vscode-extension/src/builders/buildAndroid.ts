@@ -37,7 +37,7 @@ export async function buildAndroid(workspaceDir: string) {
     console.error("Error building Android", e);
     throw e;
   }
-  console.log("android build sucessful");
+  console.log("Android build sucessful");
   const apkPath = path.join(androidSourceDir, "app/build/outputs/apk/debug/app-debug.apk");
   const packageName = await extractPackageName(apkPath);
   return { apkPath, packageName };

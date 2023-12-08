@@ -46,24 +46,17 @@ export class DeviceSession implements Disposable {
     if (this.deviceId.startsWith("ios")) {
       this.device = new IosSimulatorDevice();
       const { appPath, bundleID } = await iosBuild;
-
       await this.device.bootDevice();
-
       await this.device.changeSettings(settings);
-
       await this.device.installApp(appPath);
       await this.device.launchApp(bundleID, this.metro!.port);
     } else {
       this.device = new AndroidEmulatorDevice();
       const { apkPath, packageName } = await androidBuild;
       await this.device.bootDevice(systemImagePath);
-      console.log("CHECK1");
       await this.device.changeSettings(settings);
-      console.log("CHECK2");
       await this.device.installApp(apkPath);
-      console.log("CHECK3");
       await this.device.launchApp(packageName, this.metro!.port);
-      console.log("CHECK4");
     }
 
     const waitForPreview = this.device.startPreview();

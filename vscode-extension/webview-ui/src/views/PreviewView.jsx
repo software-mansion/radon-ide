@@ -184,7 +184,6 @@ function PreviewView({ initialDevice }) {
               const newDevice = globalState?.devices.find((d) => d.id === e.target.value);
               setDeviceId(newDevice.id);
               setPreviewURL(undefined);
-              console.log("NEW DEVICE, CHANGE DEVICE", newDevice);
               vscode.postMessage({
                 command: "changeDevice",
                 settings: deviceSettings,

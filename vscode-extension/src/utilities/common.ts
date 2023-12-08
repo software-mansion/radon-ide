@@ -11,8 +11,7 @@ export function getDevServerScriptUrl() {
 }
 
 export function getWorkspacePath() {
-  // return workspace.workspaceFolders?.[0]?.uri?.fsPath ?? "";
-  return "/Users/mateusz-kowalski/SWM/Sztudio/react-native-sztudio/expo-router-example";
+  return workspace.workspaceFolders?.[0]?.uri?.fsPath ?? "";
 }
 
 export function getCpuArchitecture() {
