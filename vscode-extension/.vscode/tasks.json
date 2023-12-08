@@ -49,5 +49,13 @@
 				"isDefault": false
 			}
 		},
+		{
+			"label": "build-extension",
+			"type": "npm",
+			"script": "compile",
+			"group": {
+				"kind": "build"
+			}
+		}
 	],
 }

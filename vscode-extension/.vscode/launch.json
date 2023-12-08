@@ -8,7 +8,8 @@
 		{
 			"type": "extensionHost",
 			"name": "Run Extension",
-			"configurations": ["watch-extension", "webview-dev-server", "Extension-dev"],
+			"configurations": ["webview-dev-server", "Extension-dev"],
+			"preLaunchTask": "build-extension",
 			"stopAll": true,
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"
@@ -22,9 +23,6 @@
 			"request": "launch",
 			"runtimeExecutable": "npm",
 			"runtimeArgs": ["run", "start:webview"],
-			"presentation": {
-				"group": "123",
-			},
 			"console": "integratedTerminal"
 		},
 		{
@@ -33,9 +31,6 @@
 			"request": "launch",
 			"runtimeExecutable": "npm",
 			"runtimeArgs": ["run", "watch"],
-			"presentation": {
-				"group": "123",
-			},
 			"console": "integratedTerminal"
 		},
 		{
