@@ -83,9 +83,7 @@ export class PreviewsPanel {
           enableScripts: true,
           localResourceRoots: [
             Uri.joinPath(context.extensionUri, "out"),
-            Uri.joinPath(context.extensionUri, "webview-ui/build"),
-            Uri.joinPath(context.extensionUri, "webview-ui/node_modules"),
-            Uri.parse("http://localhost:8060"),
+            Uri.joinPath(context.extensionUri, "node_modules"),
           ],
           retainContextWhenHidden: true,
         }
@@ -116,15 +114,14 @@ export class PreviewsPanel {
 
   private _getWebviewContent(webview: Webview, extensionUri: Uri) {
     // The CSS file from the React build output
-    const stylesUri = getUri(webview, extensionUri, ["webview-ui", "build", "main.css"]);
+    const stylesUri = getUri(webview, extensionUri, ["out", "main.css"]);
     // The JS file from the React build output
     const scriptUri = isDev()
       ? getDevServerScriptUrl()
-      : getUri(webview, extensionUri, ["webview-ui", "build", "bundle.js"]);
-    const baseUri = getUri(webview, extensionUri, ["webview-ui", "build"]);
+      : getUri(webview, extensionUri, ["out", "bundle.js"]);
+    const baseUri = getUri(webview, extensionUri, ["out"]);
 
     const codiconsUri = getUri(webview, extensionUri, [
-      "webview-ui",
       "node_modules",
       "@vscode/codicons",
       "dist",
@@ -135,28 +132,28 @@ export class PreviewsPanel {
 
     // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
     return /*html*/ `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    ${
-      isDev()
-        ? ""
-        : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`
-    }
-    ${isDev() ? "" : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
-    <link rel="stylesheet" href="${codiconsUri}" >
-    <base href="${baseUri}">
-    </head>
-    <body>
-    <div id="root"></div>
-    <script nonce="${nonce}">
-    window.baseUri = "${baseUri}";
-    </script>
-    <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
-    </body>
-    </html>
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          ${
+            isDev()
+              ? ""
+              : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`
+          }
+          ${isDev() ? "" : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
+          <link rel="stylesheet" href="${codiconsUri}" >
+          <base href="${baseUri}">
+        </head>
+        <body>
+          <div id="root"></div>
+          <script nonce="${nonce}">
+            window.baseUri = "${baseUri}";
+          </script>
+          <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+        </body>
+      </html>
     `;
   }
 
@@ -180,6 +177,7 @@ export class PreviewsPanel {
       (message: any) => {
         const command = message.command;
         const text = message.text;
+        console.log("Recv message from webview", message);
 
         console.log(`Extension received a message with command ${command}.`);
 
@@ -360,6 +358,7 @@ export class PreviewsPanel {
 
     const dependenciesDiagnostic = await this._checkDependencies();
 
+    console.log("Dependencies checked", dependenciesDiagnostic);
     this._panel.webview.postMessage({
       command: "checkedDependencies",
       dependencies: dependenciesDiagnostic,

@@ -19,7 +19,6 @@ export interface EventMonitor {
 export class Project implements Disposable {
   public static currentProject: Project | undefined;
 
-  private readonly context: ExtensionContext;
   private metro: Metro | undefined;
   private devtools: Devtools | undefined;
   private iOSBuild: Promise<{ appPath: string; bundleID: string }> | undefined;
@@ -30,9 +29,8 @@ export class Project implements Disposable {
   private session: DeviceSession | undefined;
   private eventMonitors: Array<EventMonitor> = [];
 
-  constructor(context: ExtensionContext) {
+  constructor(private readonly context: ExtensionContext) {
     Project.currentProject = this;
-    this.context = context;
   }
 
   public addEventMonitor(monitor: EventMonitor) {
@@ -127,7 +125,7 @@ export class Project implements Disposable {
   public async selectDevice(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
     console.log(`Device selected ${deviceId}, with system image Path: ${systemImagePath}`);
     this.session?.dispose();
-    this.session = new DeviceSession(deviceId, this.devtools!, this.metro!);
+    this.session = new DeviceSession(this.context, deviceId, this.devtools!, this.metro!);
     await this.session.start(this.iOSBuild!, this.androidBuild!, settings, systemImagePath);
   }
 }
