@@ -6,6 +6,8 @@ import { getWorkspacePath } from "./common";
 import fs from "fs";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 
+export { checkSdkManagerInstalled } from "./sdkmanager";
+
 const asyncExec = promisify(child_process.exec);
 
 async function checkIfCLIInstalled(command: string) {
@@ -51,8 +53,4 @@ export async function checkIosDependenciesInstalled() {
 
 export async function checkAdroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
-}
-
-export async function checkSdkManagerInstalled() {
-  return checkIfCLIInstalled("sdkmanager --version");
 }

@@ -3,8 +3,9 @@ import { promisify } from "util";
 import readline from "readline";
 import path from "path";
 import { ANDROID_HOME } from "./android";
+import execa from "execa";
 
-const asyncExec = promisify(child_process.exec);
+const SDKMANAGER_BIN_PATH = path.join(ANDROID_HOME, "cmdline-tools", "latest", "bin", "sdkmanager");
 
 interface SdkRepositoryEntry {
   path: string;
@@ -23,7 +24,7 @@ function getApiLevelFromImagePath(imagePath: string): number {
 }
 
 async function runSdkManagerList() {
-  const { stdout } = await asyncExec("sdkmanager --list");
+  const { stdout } = await execa(SDKMANAGER_BIN_PATH, ["--list"]);
   return stdout;
 }
 
@@ -119,7 +120,16 @@ export async function removeSystemImages(sysImagePaths: string[]) {
   const removalPromises = sysImagePaths.map((sysImagePath) => {
     const pathToRemove = path.join(ANDROID_HOME, sysImagePath);
     console.log(`Removing directory ${pathToRemove}`);
-    asyncExec(`rm -rf ${pathToRemove}`);
+    return execa(`rm -rf ${pathToRemove}`);
   });
   return Promise.all(removalPromises);
+}
+
+export async function checkSdkManagerInstalled() {
+  try {
+    await execa(SDKMANAGER_BIN_PATH, ["--version"]);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
