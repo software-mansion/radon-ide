@@ -4,10 +4,10 @@
 
 # Whitelist needed files
 !out/*.js
-!out/*.html
 !out/*.css
 !out/*.png
 !out/bin/**
 !lib/*
 !node_modules/@vscode/codicons/dist/*
 !node_modules/source-map/**
+!LICENSE.txt

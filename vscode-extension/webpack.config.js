@@ -93,12 +93,8 @@ function webviewConfig(_, options) {
     output: {
       path: path.resolve(__dirname, "out"),
       filename: "bundle.js",
+      publicPath: "",
     },
-    plugins: [
-      new HtmlWebpackPlugin({
-        template: "./src/webview/index.html",
-      }),
-    ],
     devServer: {
       port: 3000,
       allowedHosts: "all",
@@ -108,6 +104,7 @@ function webviewConfig(_, options) {
         "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization",
       },
     },
+    plugins: [],
   };
 
   if (options.mode === "production") {

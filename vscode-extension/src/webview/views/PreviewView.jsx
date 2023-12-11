@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { vscode } from "../utilities/vscode";
-import { DEVICES } from "../utilities/consts";
 import Preview from "../components/Preview";
 import { VSCodeButton, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
 import UrlBar from "../components/UrlBar";

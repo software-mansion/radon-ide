@@ -1,0 +1,9 @@
+License
+
+Copyright (c) 2023 Software Mansion <swmansion.com>
+
+At this time, the software and its source code are not licensed for use, modification, or distribution. The authors retains all rights to the software.
+
+Future licensing of this software is under consideration and may be subject to change. Please check back for updates regarding the licensing status.
+
+For any inquiries or requests regarding the use of the software, please contact contact@swmansion.com

@@ -23,7 +23,6 @@ function App() {
   const [projectStarted, setProjectStarted] = useState(false);
   const { state: globalState } = useGlobalStateContext();
 
-
   useEffect(() => {
     if (!previewDisabled && !projectStarted && !!globalState?.devices?.length) {
       setProjectStarted(true);
@@ -32,27 +31,27 @@ function App() {
 
   return (
     <main>
-        <VSCodePanels
-          className="panels"
-          aria-label="Default"
-          activeid={previewDisabled ? SETTINGS_TAB_ID : EMULATOR_TAB_ID}>
-          <VSCodePanelTab disabled={previewDisabled} id="tab-1">
-            EMULATOR
-          </VSCodePanelTab>
-          <VSCodePanelTab id="tab-2">SETTINGS</VSCodePanelTab>
-          <VSCodePanelTab disabled={previewDisabled} id="tab-3">
-            ANDROID IMAGES
-          </VSCodePanelTab>
-          <VSCodePanelView className="tab-view" id={EMULATOR_TAB_ID}>
-            {projectStarted && <PreviewView initialDevice={globalState.devices[0]} />}
-          </VSCodePanelView>
-          <VSCodePanelView className="tab-view" id={SETTINGS_TAB_ID}>
-            <DiagnosticView setProjectStarted={setPreviewDisabled} />
-          </VSCodePanelView>
-          <VSCodePanelView className="tab-view" id={ANDROID_IMAGES_TAB_ID}>
-            <AndroidImagesView />
-          </VSCodePanelView>
-        </VSCodePanels>
+      <VSCodePanels
+        className="panels"
+        aria-label="Default"
+        activeid={previewDisabled ? SETTINGS_TAB_ID : EMULATOR_TAB_ID}>
+        <VSCodePanelTab disabled={previewDisabled} id="tab-1">
+          EMULATOR
+        </VSCodePanelTab>
+        <VSCodePanelTab id="tab-2">SETTINGZ</VSCodePanelTab>
+        <VSCodePanelTab disabled={previewDisabled} id="tab-3">
+          ANDROID IMAGES
+        </VSCodePanelTab>
+        <VSCodePanelView className="tab-view" id={EMULATOR_TAB_ID}>
+          {projectStarted && <PreviewView initialDevice={globalState.devices[0]} />}
+        </VSCodePanelView>
+        <VSCodePanelView className="tab-view" id={SETTINGS_TAB_ID}>
+          <DiagnosticView setProjectStarted={setPreviewDisabled} />
+        </VSCodePanelView>
+        <VSCodePanelView className="tab-view" id={ANDROID_IMAGES_TAB_ID}>
+          <AndroidImagesView />
+        </VSCodePanelView>
+      </VSCodePanels>
     </main>
   );
 }

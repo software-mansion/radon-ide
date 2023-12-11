@@ -18,7 +18,7 @@ export default function GlobalStateProvider({ children }) {
       const message = event.data;
       switch (message.command) {
         case "getState":
-          const persistedState = message.state;
+          const persistedState = null; //message.state;
           if (!persistedState) {
             const newState = { devices: DEVICES };
             vscode.postMessage({
@@ -75,12 +75,9 @@ export default function GlobalStateProvider({ children }) {
     [localState]
   );
 
-  const updateDevices = useCallback(
-    (devices) => {
-      setLocalState((current) => ({ ...current, devices: devices }));
-    },
-    []
-  );
+  const updateDevices = useCallback((devices) => {
+    setLocalState((current) => ({ ...current, devices: devices }));
+  }, []);
 
   const value = useMemo(
     () => ({

@@ -119,7 +119,7 @@ export class PreviewsPanel {
     const scriptUri = isDev()
       ? getDevServerScriptUrl()
       : getUri(webview, extensionUri, ["out", "bundle.js"]);
-    const baseUri = getUri(webview, extensionUri, ["out"]);
+    const baseUri = getUri(webview, extensionUri, ["out/"]);
 
     const codiconsUri = getUri(webview, extensionUri, [
       "node_modules",
