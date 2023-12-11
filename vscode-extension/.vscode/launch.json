@@ -24,14 +24,6 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "watch-extension",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "watch"],
-      "console": "integratedTerminal"
-    },
-    {
       "name": "Extension-dev",
       "type": "extensionHost",
       "request": "launch",
@@ -41,29 +33,6 @@
         "ENVIRONMENT": "DEVELOPMENT",
         "DEV_SCRIPT_URL": "http://localhost:3000/bundle.js"
       }
-    },
-    {
-      "name": "Run Extension (production build)",
-      "type": "extensionHost",
-      "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
-      "outFiles": ["${workspaceFolder}/out/**/*.js"],
-      "preLaunchTask": "run-production-build",
-      "env": {
-        "ENVIRONMENT": "PRODUCTION",
-        "DEV_SCRIPT_URL": "http://localhost:3000/bundle.js"
-      }
-    },
-    {
-      "name": "Extension Tests",
-      "type": "extensionHost",
-      "request": "launch",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
-      ],
-      "outFiles": ["${workspaceFolder}/out/test/**/*.js"],
-      "preLaunchTask": "${defaultBuildTask}"
     }
   ]
 }

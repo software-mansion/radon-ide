@@ -1,61 +1,15 @@
 // See https://go.microsoft.com/fwlink/?LinkId=733558
 // for the documentation about the tasks.json format
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "run-production-build",
-			"dependsOn": ["build-frontend", "watch"]
-		},
-		{
-			"label": "build-frontend",
-			"type": "npm",
-			"script": "build:webview",
-			"group": {
-				"kind": "build",
-			},
-		},
-		{
-            "label": "dev-server",
-            "type": "npm",
-            "script": "start:webview",
-			"isBackground": true,
-            "problemMatcher": {
-                "owner": "webpack",
-                "pattern": {
-                    "regexp": "^(.*):\\s+(error|warning|info)\\s+(.*)$",
-                    "file": 1,
-                    "severity": 2,
-                    "message": 3
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": "compiled successfully",
-                    "endsPattern": "compiled successfully" 
-                }
-            }
-		},
-		{
-			"label": "watch",
-			"type": "npm",
-			"script": "watch",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			}
-		},
-		{
-			"label": "build-extension",
-			"type": "npm",
-			"script": "compile",
-			"group": {
-				"kind": "build"
-			}
-		}
-	],
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-extension",
+      "type": "npm",
+      "script": "build:extension-debug",
+      "group": {
+        "kind": "build"
+      }
+    }
+  ]
 }

@@ -3,7 +3,7 @@
   "displayName": "react-native-sztudio",
   "description": "A sztudio.",
   "activationEvents": [
-    "*"
+    "workspaceContains:node_modules/react-native"
   ],
   "version": "0.0.1",
   "engines": {
@@ -46,13 +46,13 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "npm run build-sim-controller -- Debug && webpack",
+    "build:extension-debug": "webpack",
+    "build:sim-controller-debug": "npm run build:sim-controller -- Debug",
+    "build:sim-controller": "./scripts/build-sim-controller.sh",
+    "build:debug": "npm run build:extension-debug && npm run build:sim-controller-debug",
     "package": "npm run build-sim-controller && webpack --mode production --devtool hidden-source-map",
     "start:webview": "webpack serve --mode development",
-    "start": "webpack serve --mode development",
-    "watch": "webpack",
-    "lint": "eslint src --ext ts",
-    "build-sim-controller": "./scripts/build-sim-controller.sh"
+    "lint": "eslint src --ext ts"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
