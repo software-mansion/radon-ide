@@ -8,7 +8,11 @@ export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
 
-  constructor(private readonly appRoot: string, private readonly extensionRoot: string) {}
+  constructor(
+    private readonly appRoot: string,
+    private readonly extensionRoot: string,
+    private readonly devtoolsPort: number
+  ) {}
 
   public get port() {
     return this._port;
@@ -32,6 +36,7 @@ export class Metro implements Disposable {
           ...process.env,
           NODE_PATH: path.join(this.appRoot, "node_modules"),
           RCT_METRO_PORT: "0",
+          RCT_DEVTOOLS_PORT: this.devtoolsPort.toString(),
           // we disable env plugins as they add additional lines at the top of the bundle that are not
           // taken into acount by source maps. As a result, this messes up line numbers reported by hermes
           // and makes it hard to translate them back to original locations. Once this is fixed, we

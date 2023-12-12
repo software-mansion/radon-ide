@@ -54,8 +54,9 @@ export class Project implements Disposable {
       return;
     }
 
-    this.metro = new Metro(workspaceDir, this.context.extensionPath);
     this.devtools = new Devtools();
+    await this.devtools.start();
+    this.metro = new Metro(workspaceDir, this.context.extensionPath, this.devtools.port);
 
     Logger.log("Launching builds");
     this.iOSBuild = buildIos(workspaceDir);
@@ -81,8 +82,8 @@ export class Project implements Disposable {
       }
     });
 
-    Logger.log(`Launching metro and devtools`);
-    await Promise.all([this.metro.start(), this.devtools.start()]);
+    Logger.log(`Launching metro`);
+    await this.metro.start();
     Logger.log(`Metro started on port ${this.metro.port} devtools on port ${this.devtools.port}`);
   }
 
