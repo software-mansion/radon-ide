@@ -5,13 +5,16 @@ import { Server } from "ws";
 import { Logger } from "../Logger";
 
 export class Devtools implements Disposable {
-  public readonly port: number;
+  private _port = 0;
   private server: any;
   private socket: any;
   private listeners: Set<(event: string, payload: any) => void> = new Set();
 
-  constructor({ port }: { port: number }) {
-    this.port = port;
+  public get port() {
+    return this._port;
+  }
+
+  public async start() {
     this.server = http.createServer(() => {});
     const wss = new Server({ server: this.server });
 
@@ -31,8 +34,6 @@ export class Devtools implements Disposable {
       });
     });
 
-    this.server.listen(port, () => {});
-
     this.addListener((event, payload) => {
       if (event === "rnp_appReady") {
         Logger.log("App ready");
@@ -43,6 +44,13 @@ export class Devtools implements Disposable {
       } else if (event === "rnp_appUrlChanged") {
         PreviewsPanel.currentPanel?.notifyAppUrlChanged(payload.url);
       }
+    });
+
+    return new Promise<void>((resolve) => {
+      this.server.listen(0, () => {
+        this._port = this.server.address().port;
+        resolve();
+      });
     });
   }
 

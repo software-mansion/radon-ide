@@ -6,13 +6,13 @@ import { spawnWithLog } from "../utilities/subprocess";
 
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
+  private _port = 0;
 
-  constructor(
-    private readonly appRoot: string,
-    private readonly extensionRoot: string,
-    public readonly port: number,
-    private readonly devtoolsPort: number
-  ) {}
+  constructor(private readonly appRoot: string, private readonly extensionRoot: string) {}
+
+  public get port() {
+    return this._port;
+  }
 
   public dispose() {
     this.subprocess?.kill();
@@ -30,10 +30,8 @@ export class Metro implements Disposable {
         cwd: this.appRoot,
         env: {
           ...process.env,
-          // DEBUG: "Metro:InspectorProxy",
           NODE_PATH: path.join(this.appRoot, "node_modules"),
-          RCT_METRO_PORT: this.port.toString(),
-          RCT_DEVTOOLS_PORT: this.devtoolsPort.toString(),
+          RCT_METRO_PORT: "0",
           // we disable env plugins as they add additional lines at the top of the bundle that are not
           // taken into acount by source maps. As a result, this messes up line numbers reported by hermes
           // and makes it hard to translate them back to original locations. Once this is fixed, we
@@ -51,7 +49,9 @@ export class Metro implements Disposable {
 
     const initPromise = new Promise<void>((resolve, reject) => {
       rl.on("line", (line: string) => {
-        if (line.includes("Welcome to Metro")) {
+        if (line.startsWith("METRO_READY")) {
+          // parse metro port from the message, message is in format: METRO_READY <port_number>
+          this._port = parseInt(line.split(" ")[1]);
           resolve();
         }
       });
@@ -60,6 +60,6 @@ export class Metro implements Disposable {
   }
 
   public async reload() {
-    await fetch(`http://localhost:${this.port}/reload`);
+    await fetch(`http://localhost:${this._port}/reload`);
   }
 }

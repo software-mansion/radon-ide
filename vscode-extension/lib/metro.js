@@ -127,6 +127,7 @@ async function runServer(_argv, ctx, args) {
   //
   serverInstance.keepAliveTimeout = 30000;
   // await _cliTools(ctx.root);
+  console.log("METRO_READY", serverInstance.address().port);
 }
 function getReporterImpl(customLogReporterPath) {
   if (customLogReporterPath === undefined) {
@@ -146,4 +147,4 @@ function getReporterImpl(customLogReporterPath) {
   }
 }
 
-runServer({}, ctx, {});
+runServer({}, ctx, { port: 0 });

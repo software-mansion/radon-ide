@@ -5,7 +5,6 @@ import { DeviceSession } from "./deviceSession";
 import { buildIos } from "../builders/buildIOS";
 import { buildAndroid } from "../builders/buildAndroid";
 import { DeviceSettings } from "../devices/DeviceBase";
-import crypto from "crypto";
 import { getWorkspacePath } from "../utilities/common";
 import { Logger } from "../Logger";
 
@@ -55,11 +54,8 @@ export class Project implements Disposable {
       return;
     }
 
-    const metroPort = portHash(`metro://workspaceDir`); // TODO: use workspace directory here
-    const devtoolsPort = portHash(`devtools://workspaceDir`);
-    Logger.log(`Ports metro: ${metroPort} devtools: ${devtoolsPort} ${{ a: 100 }}`);
-    this.metro = new Metro(workspaceDir, this.context.extensionPath, metroPort, devtoolsPort);
-    this.devtools = new Devtools({ port: devtoolsPort });
+    this.metro = new Metro(workspaceDir, this.context.extensionPath);
+    this.devtools = new Devtools();
 
     Logger.log("Launching builds");
     this.iOSBuild = buildIos(workspaceDir);
@@ -85,9 +81,9 @@ export class Project implements Disposable {
       }
     });
 
-    Logger.log(`Launching metro on port ${metroPort}`);
-    await this.metro.start();
-    Logger.log(`Metro started`);
+    Logger.log(`Launching metro and devtools`);
+    await Promise.all([this.metro.start(), this.devtools.start()]);
+    Logger.log(`Metro started on port ${this.metro.port} devtools on port ${this.devtools.port}`);
   }
 
   public sendTouch(deviceId: string, xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
@@ -127,14 +123,4 @@ export class Project implements Disposable {
     this.session = new DeviceSession(this.context, deviceId, this.devtools!, this.metro!);
     await this.session.start(this.iOSBuild!, this.androidBuild!, settings, systemImagePath);
   }
-}
-
-function portHash(name: string) {
-  const hash = crypto.createHash("sha256");
-  hash.update(name);
-  const hashBytes = hash.digest();
-
-  // Convert hash bytes to BigInt
-  const hashNumber = BigInt(`0x${hashBytes.toString("hex")}`);
-  return 45000 + Number(hashNumber % BigInt(4000));
 }
