@@ -1,7 +1,8 @@
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess } from "child_process";
 import path from "path";
 import readline from "readline";
 import { Disposable } from "vscode";
+import { spawnWithLog } from "../utilities/subprocess";
 
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
@@ -18,7 +19,7 @@ export class Metro implements Disposable {
   }
 
   public async start() {
-    this.subprocess = spawn(
+    this.subprocess = spawnWithLog(
       "node",
       [
         path.join(this.extensionRoot, "lib/metro.js"),
@@ -42,10 +43,6 @@ export class Metro implements Disposable {
       }
     );
 
-    this.subprocess?.stderr?.on("data", (data) => {
-      console.error(`metro stderr: ${data}`);
-    });
-
     const rl = readline.createInterface({
       input: this.subprocess!.stdout!,
       output: process.stdout,
@@ -57,7 +54,6 @@ export class Metro implements Disposable {
         if (line.includes("Welcome to Metro")) {
           resolve();
         }
-        console.log(`metro: ${line}`);
       });
     });
     return initPromise;

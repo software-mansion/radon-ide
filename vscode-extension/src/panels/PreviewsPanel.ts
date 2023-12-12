@@ -20,7 +20,6 @@ import {
   checkAdroidEmulatorExists,
   checkIosDependenciesInstalled,
   checkPodInstalled,
-  checkSdkManagerInstalled,
   checkSimctlInstalled,
   checkXCodeBuildInstalled,
   checkXcrunInstalled,
@@ -30,6 +29,7 @@ import { openExternalUrl } from "../utilities/vsc";
 import vscode from "vscode";
 import {
   AndroidImageEntry,
+  checkSdkManagerInstalled,
   getAndroidSystemImages,
   installSystemImages,
   removeSystemImages,
@@ -37,6 +37,7 @@ import {
 import { ensureXcodeCommandLineToolsInstalledAsync } from "xdl/build/Simulator";
 import { GlobalStateManager } from "./GlobalStateManager";
 import { DeviceSettings } from "../devices/DeviceBase";
+import { Logger } from "../Logger";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
@@ -176,10 +177,8 @@ export class PreviewsPanel {
     webview.onDidReceiveMessage(
       (message: any) => {
         const command = message.command;
-        const text = message.text;
-        console.log("Recv message from webview", message);
 
-        console.log(`Extension received a message with command ${command}.`);
+        Logger.log(`Extension received a message with command ${command}.`);
 
         switch (command) {
           case "log":
@@ -358,7 +357,7 @@ export class PreviewsPanel {
 
     const dependenciesDiagnostic = await this._checkDependencies();
 
-    console.log("Dependencies checked", dependenciesDiagnostic);
+    Logger.log(`Dependencies checked ${dependenciesDiagnostic}`);
     this._panel.webview.postMessage({
       command: "checkedDependencies",
       dependencies: dependenciesDiagnostic,
@@ -389,8 +388,9 @@ export class PreviewsPanel {
       this._panel.webview.postMessage({
         command: "installationComplete",
       });
-    } catch (_) {
+    } catch (e) {
       vscode.window.showErrorMessage(`Internal extension error.`);
+      Logger.error(`${e}`);
       this._panel.webview.postMessage({
         command: "installationComplete",
       });
@@ -428,7 +428,7 @@ export class PreviewsPanel {
   }
 
   private _onActiveFileChange(filename: string) {
-    console.log("LastEditor", filename);
+    Logger.log(`LastEditor ${filename}`);
     this.project.onActiveFileChange(filename, this.followEnabled);
   }
 

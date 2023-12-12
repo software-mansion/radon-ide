@@ -1,4 +1,5 @@
 import { window, workspace, ViewColumn, Range } from "vscode";
+import { Logger } from "../Logger";
 
 export async function openFileAtPosition(
   filePath: string,
@@ -6,7 +7,7 @@ export async function openFileAtPosition(
   column0Based: number
 ) {
   const existingDocument = workspace.textDocuments.find((document) => {
-    console.log("Existing document list", document.uri.fsPath);
+    Logger.log(`Existing document list ${document.uri.fsPath}`);
     return document.uri.fsPath === filePath;
   });
 

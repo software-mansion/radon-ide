@@ -1,8 +1,9 @@
 import { ChildProcess } from "child_process";
 import { Disposable, ExtensionContext } from "vscode";
 import path from "path";
-import child_process from "child_process";
 import readline from "readline";
+import { spawnWithLog } from "../utilities/subprocess";
+import { Logger } from "../Logger";
 
 export class Preview implements Disposable {
   private subprocess: ChildProcess | undefined;
@@ -22,12 +23,12 @@ export class Preview implements Disposable {
       "sim-controller"
     );
 
-    console.log("Launch preview", simControllerBinary, this.args);
-    const subprocess = child_process.spawn(simControllerBinary, this.args);
+    Logger.log(`Launch preview ${simControllerBinary} ${this.args}`);
+    const subprocess = spawnWithLog(simControllerBinary, this.args, {});
     this.subprocess = subprocess;
 
     const rl = readline.createInterface({
-      input: subprocess.stdout,
+      input: subprocess.stdout!,
       output: process.stdout,
       terminal: false,
     });
@@ -39,7 +40,7 @@ export class Preview implements Disposable {
 
     rl.on("line", (line: string) => {
       if (line.includes("http://")) {
-        console.log("Preview server ready", line);
+        Logger.log(`Preview server ready ${line}`);
         this.streamURL = line;
         resolve(this.streamURL);
       }

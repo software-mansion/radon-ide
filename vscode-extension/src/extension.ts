@@ -10,8 +10,12 @@ import { Project } from "./project/project";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
+import { Logger } from "./Logger";
 
 export function activate(context: ExtensionContext) {
+  Logger.setLogLevel("INFO");
+  Logger.changeConsoleLogMode(true);
+
   const showPreviewsPanel = commands.registerCommand(
     "RNStudio.showPreviewsPanel",
     (fileName?: string, lineNumber?: number) => {
@@ -66,7 +70,7 @@ export function activate(context: ExtensionContext) {
 
   if (process.env.RNSZ_DEV === "true") {
     commands.executeCommand("RNStudio.showPreviewsPanel", (e: any) => {
-      console.log(e);
+      Logger.error(e);
     });
   }
 }

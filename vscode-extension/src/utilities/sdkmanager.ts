@@ -1,9 +1,8 @@
-import child_process from "child_process";
-import { promisify } from "util";
 import readline from "readline";
 import path from "path";
 import { ANDROID_HOME } from "./android";
-import execa from "execa";
+import { execaWithLog, spawnWithLog } from "./subprocess";
+import { Logger } from "../Logger";
 
 const SDKMANAGER_BIN_PATH = path.join(ANDROID_HOME, "cmdline-tools", "latest", "bin", "sdkmanager");
 
@@ -24,7 +23,7 @@ function getApiLevelFromImagePath(imagePath: string): number {
 }
 
 async function runSdkManagerList() {
-  const { stdout } = await execa(SDKMANAGER_BIN_PATH, ["--list"]);
+  const { stdout } = await execaWithLog(SDKMANAGER_BIN_PATH, ["--list"]);
   return stdout;
 }
 
@@ -87,14 +86,15 @@ export async function installSystemImages(
   onLine?: (line: string) => void
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    const downloadProcess = child_process.spawn(
+    const downloadProcess = spawnWithLog(
       `sdkmanager ${sysImagePaths.map((imgPath) => `"${imgPath}"`).join(" ")}`,
+      [],
       {
         shell: true,
       }
     );
 
-    if (onLine) {
+    if (onLine && downloadProcess.stdout) {
       const rl = readline.createInterface({
         input: downloadProcess.stdout,
       });
@@ -119,15 +119,15 @@ export async function installSystemImages(
 export async function removeSystemImages(sysImagePaths: string[]) {
   const removalPromises = sysImagePaths.map((sysImagePath) => {
     const pathToRemove = path.join(ANDROID_HOME, sysImagePath);
-    console.log(`Removing directory ${pathToRemove}`);
-    return execa(`rm -rf ${pathToRemove}`);
+    Logger.log(`Removing directory ${pathToRemove}`);
+    return execaWithLog(`rm -rf ${pathToRemove}`);
   });
   return Promise.all(removalPromises);
 }
 
 export async function checkSdkManagerInstalled() {
   try {
-    await execa(SDKMANAGER_BIN_PATH, ["--version"]);
+    await execaWithLog(SDKMANAGER_BIN_PATH, ["--version"]);
     return true;
   } catch (_) {
     return false;

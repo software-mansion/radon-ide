@@ -1,12 +1,11 @@
-const child_process = require("child_process");
 const path = require("path");
-const execa = require("execa");
 import { IOSProjectInfo } from "@react-native-community/cli-types";
 import loadConfig from "@react-native-community/cli-config";
 
 import { BuildFlags, buildProject } from "./buildProject";
 import { getConfigurationScheme } from "@react-native-community/cli-platform-ios/build/tools/getConfigurationScheme";
-import { promisify } from "util";
+import { execFileSyncWithLog, execWithLog, execaWithLog } from "../utilities/subprocess";
+import { Logger } from "../Logger";
 
 export async function buildIos(workspaceDir: string) {
   const ctx = loadConfig(workspaceDir);
@@ -18,10 +17,8 @@ export async function buildIos(workspaceDir: string) {
   }
 
   const scheme = path.basename(xcodeProject.name, path.extname(xcodeProject.name)) as string;
-
-  console.log(
-    `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${xcodeProject.name}"`
-  );
+  
+  Logger.log(`Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${xcodeProject.name}"`);
 
   const buildFlags: BuildFlags = {
     mode: getConfigurationScheme({ scheme, mode: "" }, sourceDir),
@@ -40,7 +37,7 @@ export async function buildIos(workspaceDir: string) {
   );
 
   const bundleID = (
-    await execa("/usr/libexec/PlistBuddy", [
+    await execaWithLog("/usr/libexec/PlistBuddy", [
       "-c",
       "Print:CFBundleIdentifier",
       path.join(appPath, "Info.plist"),
@@ -59,7 +56,7 @@ async function getTargetPaths(buildSettings: string, scheme: string, target: str
 
   if (target) {
     if (!targets.includes(target)) {
-      console.log(
+      Logger.log(
         `Target ${target} not found for scheme ${scheme}, automatically selected target ${selectedTarget}`
       );
     } else {
@@ -92,7 +89,7 @@ async function getBuildPath(
   target: string | undefined,
   isCatalyst: boolean = false
 ) {
-  const buildSettings = child_process.execFileSync(
+  const buildSettings = execFileSyncWithLog(
     "xcodebuild",
     [
       xcodeProject.isWorkspace ? "-workspace" : "-project",
@@ -110,7 +107,7 @@ async function getBuildPath(
   );
 
   const { targetBuildDir, executableFolderPath } = await getTargetPaths(
-    buildSettings,
+    buildSettings.toString(),
     scheme,
     target
   );
@@ -145,8 +142,7 @@ export async function installIOSDependencies(workspaceDir: string) {
     throw new Error(`ios directory was not found inside the workspace.`);
   }
 
-  const asyncExec = promisify(child_process.exec);
-  return asyncExec("pod install", {
+  return execWithLog("pod install", {
     cwd: iosDirPath,
     env: {
       ...process.env,

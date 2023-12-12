@@ -7,6 +7,7 @@ import { DeviceSettings } from "../devices/DeviceBase";
 import { PreviewsPanel } from "../panels/PreviewsPanel";
 import { checkXCodeBuildInstalled } from "../utilities/hostDependenciesChecks";
 import fetch from "node-fetch";
+import { Logger } from "../Logger";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
@@ -85,7 +86,7 @@ export class DeviceSession implements Disposable {
         this.debugSession = debug.activeDebugSession;
       }
     } else {
-      console.error("Couldn't connect to debugger");
+      Logger.error("Couldn't connect to debugger");
     }
 
     PreviewsPanel.currentPanel?.notifyAppReady(this.deviceId, this.device.previewURL!);

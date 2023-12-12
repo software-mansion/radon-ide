@@ -1,19 +1,16 @@
-const child_process = require("child_process");
-import { promisify } from "util";
 import loadConfig from "@react-native-community/cli-config";
 import path from "path";
 import { getWorkspacePath } from "./common";
 import fs from "fs";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 
-export { checkSdkManagerInstalled } from "./sdkmanager";
-
-const asyncExec = promisify(child_process.exec);
+import { execWithLog } from "./subprocess";
+import { Logger } from "../Logger";
 
 async function checkIfCLIInstalled(command: string) {
   try {
     // We are not checking the stderr here, because some of the CLIs put the warnings there.
-    const { stdout } = await asyncExec(command, { encoding: "utf8" });
+    const { stdout } = await execWithLog(command, { encoding: "utf8" });
     return !!stdout.length;
   } catch (_) {
     return false;
@@ -40,7 +37,7 @@ export async function checkIosDependenciesInstalled() {
   const ctx = loadConfig(getWorkspacePath());
   const iosDirPath = ctx.project.ios?.sourceDir;
 
-  console.log("Check pods in", iosDirPath, getWorkspacePath(), ctx);
+  Logger.log(`Check pods in ${iosDirPath} ${getWorkspacePath()}, ${ctx}`);
   if (!iosDirPath) {
     return false;
   }

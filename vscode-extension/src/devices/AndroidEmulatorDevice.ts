@@ -1,9 +1,7 @@
 import { ChildProcess } from "child_process";
 import { Preview } from "./preview";
 import { DeviceBase, DeviceSettings } from "./DeviceBase";
-import execa from "execa";
 import readline from "readline";
-import child_process from "child_process";
 import os from "os";
 import path from "path";
 import fs from "fs";
@@ -13,6 +11,8 @@ import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { ExtensionContext } from "vscode";
+import { execaWithLog, spawnWithLog } from "../utilities/subprocess";
+import { Logger } from "../Logger";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
 
@@ -48,7 +48,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async changeSettings(settings: DeviceSettings) {
-    await execa(ADB_PATH, [
+    await execaWithLog(ADB_PATH, [
       "-s",
       this.name,
       "shell",
@@ -89,7 +89,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // read preferences
     let prefs: any;
     try {
-      const { stdout } = await execa(ADB_PATH, [
+      const { stdout } = await execaWithLog(ADB_PATH, [
         "shell",
         "run-as",
         packageName,
@@ -109,7 +109,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     const prefsXML = new xml2js.Builder().buildObject(prefs);
 
     // write prefs
-    await execa(
+    await execaWithLog(
       ADB_PATH,
       [
         "shell",
@@ -124,7 +124,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async launchApp(packageName: string, metroPort: number) {
     await this.configureMetroPort(packageName, metroPort);
-    await execa(ADB_PATH, [
+    await execaWithLog(ADB_PATH, [
       "-s",
       this.name,
       "shell",
@@ -141,7 +141,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // adb install sometimes fails because we call it too early after the device is initialized.
     // we haven't found a better way to test if device is ready and already wait for boot_completed
     // flag in waitForEmulatorOnline. The workaround therefore is to retry install command.
-    await retry(() => execa(ADB_PATH, ["-s", this.name, "install", "-r", apkPath]), 2, 1000);
+    await retry(() => execaWithLog(ADB_PATH, ["-s", this.name, "install", "-r", apkPath]), 2, 1000);
   }
 
   makePreview(): Preview {
@@ -215,26 +215,16 @@ async function createEmulator(avdDirectory: string, systemImageLocation: string)
 }
 
 async function startEmulator(avdDirectory: string) {
-  const subprocess = child_process.spawn(
+  const subprocess = spawnWithLog(
     EMULATOR_BINARY,
     ["-avd", AVD_NAME, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
     { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
   );
 
   const rl = readline.createInterface({
-    input: subprocess!.stdout,
+    input: subprocess!.stdout!,
     output: process.stdout,
     terminal: false,
-  });
-
-  const rlErr = readline.createInterface({
-    input: subprocess!.stderr,
-    output: process.stderr,
-    terminal: false,
-  });
-
-  rlErr.on("line", (line: string) => {
-    console.error(line);
   });
 
   const initPromise = new Promise<{ process: ChildProcess; serial: string }>((resolve, reject) => {
@@ -247,7 +237,6 @@ async function startEmulator(avdDirectory: string) {
         await waitForEmulatorOnline(emulatorSerial, 60000);
         resolve({ process: subprocess, serial: emulatorSerial });
       }
-      console.log(`emu: ${line}`);
     });
   });
   return initPromise;
@@ -256,7 +245,7 @@ async function startEmulator(avdDirectory: string) {
 async function findOrCreateEmulator(avdDirectory: string, systemImageLocation: string) {
   // first, we check if emulator already exists, so we can remove the old one and create new one
   if (!fs.existsSync(path.join(avdDirectory, AVD_NAME + ".ini"))) {
-    console.log(`Removing directory ${avdDirectory}`);
+    Logger.log(`Removing directory ${avdDirectory}`);
     fs.existsSync(`rm -rf ${avdDirectory}`);
   }
   await createEmulator(avdDirectory, systemImageLocation);
@@ -318,9 +307,9 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number): Promise
 
 async function checkEmulatorOnline(serial: string): Promise<boolean> {
   try {
-    const { stdout } = await execa(ADB_PATH, ["-s", serial, "get-state"]);
+    const { stdout } = await execaWithLog(ADB_PATH, ["-s", serial, "get-state"]);
     if (stdout.trim() === "device") {
-      const { stdout } = await execa(ADB_PATH, [
+      const { stdout } = await execaWithLog(ADB_PATH, [
         "-s",
         serial,
         "shell",
