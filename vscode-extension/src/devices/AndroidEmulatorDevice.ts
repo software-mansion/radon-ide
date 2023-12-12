@@ -1,7 +1,6 @@
 import { ChildProcess } from "child_process";
 import { Preview } from "./preview";
 import { DeviceBase, DeviceSettings } from "./DeviceBase";
-import execa from "execa";
 import readline from "readline";
 import os from "os";
 import path from "path";
@@ -11,7 +10,7 @@ import { retry } from "../utilities/retry";
 import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
-import { spawnWithLog } from "../utilities/subprocess";
+import { execaWithLog, spawnWithLog } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
@@ -44,7 +43,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async changeSettings(settings: DeviceSettings) {
-    await execa(ADB_PATH, [
+    await execaWithLog(ADB_PATH, [
       "-s",
       this.name,
       "shell",
@@ -85,7 +84,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // read preferences
     let prefs: any;
     try {
-      const { stdout } = await execa(ADB_PATH, [
+      const { stdout } = await execaWithLog(ADB_PATH, [
         "shell",
         "run-as",
         packageName,
@@ -105,7 +104,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     const prefsXML = new xml2js.Builder().buildObject(prefs);
 
     // write prefs
-    await execa(
+    await execaWithLog(
       ADB_PATH,
       [
         "shell",
@@ -120,7 +119,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async launchApp(packageName: string, metroPort: number) {
     await this.configureMetroPort(packageName, metroPort);
-    await execa(ADB_PATH, [
+    await execaWithLog(ADB_PATH, [
       "-s",
       this.name,
       "shell",
@@ -137,7 +136,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // adb install sometimes fails because we call it too early after the device is initialized.
     // we haven't found a better way to test if device is ready and already wait for boot_completed
     // flag in waitForEmulatorOnline. The workaround therefore is to retry install command.
-    await retry(() => execa(ADB_PATH, ["-s", this.name, "install", "-r", apkPath]), 2, 1000);
+    await retry(() => execaWithLog(ADB_PATH, ["-s", this.name, "install", "-r", apkPath]), 2, 1000);
   }
 
   makePreview(): Preview {
@@ -303,9 +302,9 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number): Promise
 
 async function checkEmulatorOnline(serial: string): Promise<boolean> {
   try {
-    const { stdout } = await execa(ADB_PATH, ["-s", serial, "get-state"]);
+    const { stdout } = await execaWithLog(ADB_PATH, ["-s", serial, "get-state"]);
     if (stdout.trim() === "device") {
-      const { stdout } = await execa(ADB_PATH, [
+      const { stdout } = await execaWithLog(ADB_PATH, [
         "-s",
         serial,
         "shell",

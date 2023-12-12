@@ -2,6 +2,7 @@ import { promisify } from "util";
 import child_process from "child_process";
 import { Logger } from "../Logger";
 import readline from "readline";
+import execa from "execa";
 
 const promisifiedExec = promisify(child_process.exec);
 
@@ -68,6 +69,40 @@ export function execSyncWithLog(...args: Parameters<typeof child_process.execSyn
     return result;
   } catch (e) {
     Logger.error(`${e}`, args[0]);
+    throw e;
+  }
+}
+
+export async function execaWithLog(...args: [string, string[]?, execa.Options?]) {
+  try {
+    const result = await execa(...args);
+    const { stdout, stderr, command } = result;
+    if (!!stdout.length) {
+      Logger.debug(stdout, command);
+    }
+    if (!!stderr.length) {
+      Logger.error(stderr, command);
+    }
+    return result;
+  } catch (e) {
+    Logger.error(`${e}`);
+    throw e;
+  }
+}
+
+export async function execaCommandWithLog(...args: [string, execa.Options?]) {
+  try {
+    const result = await execa.command(...args);
+    const { stdout, stderr, command } = result;
+    if (!!stdout.length) {
+      Logger.debug(stdout, command);
+    }
+    if (!!stderr.length) {
+      Logger.error(stderr, command);
+    }
+    return result;
+  } catch (e) {
+    Logger.error(`${e}`);
     throw e;
   }
 }

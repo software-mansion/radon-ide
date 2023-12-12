@@ -50,7 +50,7 @@ export class Logger {
     const formattedDate = `${logDate.toLocaleDateString()} ${logDate.toLocaleTimeString()}`;
 
     const outputString = `${formattedDate} [${logLevel}] ${
-      !!source?.length && `(${source})`
+      !!source?.length ? `(${source})` : ''
     } ${message}`;
 
     this.messagesArchive.push(outputString);

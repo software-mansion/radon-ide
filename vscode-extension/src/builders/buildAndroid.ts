@@ -2,21 +2,20 @@ import loadConfig from "@react-native-community/cli-config";
 import { getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
+import { execaWithLog } from "../utilities/subprocess";
 
-const execa = require("execa");
 const path = require("path");
-const os = require("os");
 
 const AAPT_PATH = path.join(ANDROID_HOME, "build-tools", "33.0.0", "aapt");
 
 async function build(projectDir: string, gradleArgs: string[]) {
-  await execa("./gradlew", gradleArgs, {
+  await execaWithLog("./gradlew", gradleArgs, {
     cwd: projectDir,
   });
 }
 
 async function extractPackageName(artifactPath: string) {
-  const { stdout } = await execa(AAPT_PATH, ["dump", "badging", artifactPath]);
+  const { stdout } = await execaWithLog(AAPT_PATH, ["dump", "badging", artifactPath]);
   const packageLine = stdout.split("\n").find((line: string) => line.startsWith("package: name="));
   const packageName = packageLine!.split("'")[1];
   return packageName;

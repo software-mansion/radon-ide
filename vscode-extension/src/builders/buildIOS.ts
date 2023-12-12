@@ -1,12 +1,10 @@
 const path = require("path");
-const execa = require("execa");
 import { IOSProjectInfo } from "@react-native-community/cli-types";
 import loadConfig from "@react-native-community/cli-config";
 
 import { BuildFlags, buildProject } from "./buildProject";
 import { getConfigurationScheme } from "@react-native-community/cli-platform-ios/build/tools/getConfigurationScheme";
-import { promisify } from "util";
-import { execFileSyncWithLog, execWithLog } from "../utilities/subprocess";
+import { execFileSyncWithLog, execWithLog, execaWithLog } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 
 export async function buildIos(workspaceDir: string) {
@@ -39,7 +37,7 @@ export async function buildIos(workspaceDir: string) {
   );
 
   const bundleID = (
-    await execa("/usr/libexec/PlistBuddy", [
+    await execaWithLog("/usr/libexec/PlistBuddy", [
       "-c",
       "Print:CFBundleIdentifier",
       path.join(appPath, "Info.plist"),
