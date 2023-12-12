@@ -9,7 +9,6 @@
       "type": "extensionHost",
       "name": "Run Extension",
       "configurations": ["webview-dev-server", "Extension-dev"],
-      "preLaunchTask": "build-extension",
       "stopAll": true,
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"]
     }
@@ -27,6 +26,7 @@
       "name": "Extension-dev",
       "type": "extensionHost",
       "request": "launch",
+      "preLaunchTask": "build-extension",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"],
       "env": {
