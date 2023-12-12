@@ -5,7 +5,8 @@ import PreviewView from "./views/PreviewView";
 import DiagnosticView from "./views/DiagnosticView";
 import { useEffect, useState } from "react";
 import AndroidImagesView from "./views/AndroidImagesView";
-import GlobalStateProvider, { useGlobalStateContext } from "./components/GlobalStateContext";
+import { useGlobalStateContext } from "./components/GlobalStateContext";
+import InternalErrorView from "./views/InternalErrorView";
 
 console.log = function (...args) {
   vscode.postMessage({
@@ -21,6 +22,7 @@ const ANDROID_IMAGES_TAB_ID = "tab-3";
 function App() {
   const [previewDisabled, setPreviewDisabled] = useState(true);
   const [projectStarted, setProjectStarted] = useState(false);
+  const [unhandledError, setUnhandledError] = useState(undefined);
   const { state: globalState } = useGlobalStateContext();
 
   useEffect(() => {
@@ -28,6 +30,25 @@ function App() {
       setProjectStarted(true);
     }
   }, [previewDisabled, projectStarted, globalState]);
+
+  useEffect(() => {
+    const listener = (event) => {
+      const message = event.data;
+      switch (message.command) {
+        case "unhandledError":
+          setUnhandledError(message.error);
+          break;
+      }
+    };
+
+    window.addEventListener("message", listener);
+
+    return () => window.removeEventListener("message", listener);
+  }, []);
+
+  if (unhandledError) {
+    return <InternalErrorView />;
+  }
 
   return (
     <main>

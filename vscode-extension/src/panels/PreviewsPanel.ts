@@ -15,7 +15,13 @@ import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
 import { Project } from "../project/project";
-import { getDevServerScriptUrl, getWorkspacePath, isDev } from "../utilities/common";
+import {
+  getDevServerScriptUrl,
+  getLogsDir,
+  getWorkspacePath,
+  isDev,
+  openLocationInFinder,
+} from "../utilities/common";
 import {
   checkAdroidEmulatorExists,
   checkIosDependenciesInstalled,
@@ -68,6 +74,15 @@ export class PreviewsPanel {
     this._setupEditorListeners(context);
 
     this.project = new Project(context);
+  }
+
+  public handleProcessError(error: Error | any) {
+    Logger.error(`Uncaught Error: ${error}`);
+    this._panel.webview.postMessage({
+      command: "unhandledError",
+      error,
+      logsDirPath: getLogsDir(),
+    });
   }
 
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
@@ -259,6 +274,9 @@ export class PreviewsPanel {
           case "processAndroidImageChanges":
             this._processAndroidImageChanges(message.toRemove, message.toInstall);
             return;
+          case "openLogsDirInFinder":
+            openLocationInFinder(getLogsDir());
+            return;
         }
       },
       undefined,
@@ -389,11 +407,11 @@ export class PreviewsPanel {
         command: "installationComplete",
       });
     } catch (e) {
-      vscode.window.showErrorMessage(`Internal extension error.`);
       Logger.error(`${e}`);
       this._panel.webview.postMessage({
         command: "installationComplete",
       });
+      throw e;
     }
   }
 
