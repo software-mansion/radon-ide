@@ -11,10 +11,33 @@ import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger } from "./Logger";
+import { dumpLogsToFile } from "./utilities/common";
+import vscode from "vscode";
+
+function handleUncaughtErrors() {
+  process.on("unhandledRejection", (error) => {
+    Logger.error(`Uncaught Rejection: ${error}`);
+    vscode.window.showErrorMessage("Internal extension error.");
+    dumpLogsToFile(error);
+    if (PreviewsPanel.currentPanel) {
+      PreviewsPanel.currentPanel.handleProcessError(error);
+    }
+  });
+
+  process.on("uncaughtException", (error) => {
+    Logger.error(`Uncaught Exception: ${error}`);
+    vscode.window.showErrorMessage("Internal extension error.");
+    dumpLogsToFile(error);
+    if (PreviewsPanel.currentPanel) {
+      PreviewsPanel.currentPanel.handleProcessError(error);
+    }
+  });
+}
 
 export function activate(context: ExtensionContext) {
   Logger.setLogLevel("INFO");
   Logger.changeConsoleLogMode(true);
+  handleUncaughtErrors();
 
   const showPreviewsPanel = commands.registerCommand(
     "RNStudio.showPreviewsPanel",

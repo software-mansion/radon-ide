@@ -1,6 +1,6 @@
 import { vscode } from "../utilities/vscode";
 
-function Anchor({ url, children }) {
+function Anchor({ url, children, onClick }) {
   const handleClick = (e) => {
     e.preventDefault();
     vscode.postMessage({
@@ -9,7 +9,7 @@ function Anchor({ url, children }) {
     });
   };
 
-  return <a href="#" onClick={handleClick}>{children}</a>;
+  return <a href="#" onClick={onClick ?? handleClick}>{children}</a>;
 }
 
 export default Anchor;

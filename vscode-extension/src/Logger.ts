@@ -8,9 +8,13 @@ type Stringifiable = {
 
 export class Logger {
   private static outputChannel = window.createOutputChannel("react-native-sztudio");
-  private static messagesArchive: string[] = [];
+  private static messageArchives: string[] = [];
   private static logLevel: LogLevel = "DEBUG";
   private static consoleLogEnabled: boolean = true;
+
+  public static getMessageArchives(): readonly string[] {
+    return this.messageArchives;
+  }
 
   public static changeConsoleLogMode(enabled: boolean) {
     this.consoleLogEnabled = enabled;
@@ -50,10 +54,10 @@ export class Logger {
     const formattedDate = `${logDate.toLocaleDateString()} ${logDate.toLocaleTimeString()}`;
 
     const outputString = `${formattedDate} [${logLevel}] ${
-      !!source?.length ? `(${source})` : ''
+      !!source?.length ? `(${source})` : ""
     } ${message}`;
 
-    this.messagesArchive.push(outputString);
+    this.messageArchives.push(outputString);
     if (Logger.consoleLogEnabled) {
       if (logLevel === "DEBUG" || logLevel === "INFO") {
         console.log(outputString);

@@ -1,4 +1,4 @@
-import { VSCodeButton, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import {
   ANDROID_CMDLINE_TOOLS_DOWNLOAD_URL,
   ANDROID_STUDIO_DOWNLOAD_URL,
