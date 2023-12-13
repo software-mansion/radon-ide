@@ -2,6 +2,7 @@ import { IOSProjectInfo } from "@react-native-community/cli-types";
 import type { ChildProcess } from "child_process";
 import { execSyncWithLog, spawnWithLog } from "../utilities/subprocess";
 import { Logger } from "../Logger";
+import { IOS_FAIL_ERROR_MESSAGE } from "../utilities/common";
 
 export type BuildFlags = {
   mode: string;
@@ -77,7 +78,7 @@ export function buildProject(
         xcodebuildOutputFormatter.stdin.end();
       }
       if (code !== 0) {
-        reject(new Error("Failed to build iOS project."));
+        reject(new Error(`${IOS_FAIL_ERROR_MESSAGE} Failed to build iOS project.`));
         return;
       }
       Logger.log("Successfully built the app");

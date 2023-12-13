@@ -1,10 +1,9 @@
 import { workspace } from "vscode";
 import os from "os";
 import path from "path";
-import fs from "fs";
-import { getUri } from "./getUri";
-import { Logger } from "../Logger";
-import { execWithLog } from "./subprocess";
+
+export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
+export const IOS_FAIL_ERROR_MESSAGE = "IOS failed.";
 
 export function isDev() {
   return process.env.ENVIRONMENT === "DEVELOPMENT";
@@ -37,21 +36,6 @@ export function getLogsDir() {
   return path.join(getAppCachesDir(), "Logs");
 }
 
-export function dumpLogsToFile(error?: Error | any) {
-  const logsDir = getLogsDir();
-  if (!fs.existsSync(logsDir)) {
-    fs.mkdirSync(logsDir);
-  }
-
-  const logDate = new Date();
-  const fileName = `logs-${logDate
-    .toLocaleDateString()
-    .replace(/\//g, "-")}-${logDate.toLocaleTimeString()}`;
-  const stackTrace = error?.stack;
-  const fileContent = Logger.getMessageArchives().join("\n") + "\n" + stackTrace;
-  fs.writeFileSync(path.join(logsDir, fileName), fileContent);
-}
-
-export function openLocationInFinder(location: string) {
-  execWithLog(`open ${getLogsDir()}`);
+export function isDeviceIOS(deviceId: string) {
+  return deviceId.startsWith("ios");
 }

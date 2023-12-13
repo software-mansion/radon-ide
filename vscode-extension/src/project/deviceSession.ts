@@ -8,6 +8,11 @@ import { PreviewsPanel } from "../panels/PreviewsPanel";
 import { checkXCodeBuildInstalled } from "../utilities/hostDependenciesChecks";
 import fetch from "node-fetch";
 import { Logger } from "../Logger";
+import {
+  ANDROID_FAIL_ERROR_MESSAGE,
+  IOS_FAIL_ERROR_MESSAGE,
+  isDeviceIOS,
+} from "../utilities/common";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
@@ -34,7 +39,6 @@ export class DeviceSession implements Disposable {
     settings: DeviceSettings,
     systemImagePath: string
   ) {
-    await checkXCodeBuildInstalled();
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {
         if (event === "rnp_appReady") {
@@ -45,7 +49,7 @@ export class DeviceSession implements Disposable {
       this.devtools?.addListener(listener);
     });
 
-    if (this.deviceId.startsWith("ios")) {
+    if (isDeviceIOS(this.deviceId)) {
       this.device = new IosSimulatorDevice(this.context);
       const { appPath, bundleID } = await iosBuild;
       await this.device.bootDevice();

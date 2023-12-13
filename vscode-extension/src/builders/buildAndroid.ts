@@ -1,5 +1,5 @@
 import loadConfig from "@react-native-community/cli-config";
-import { getCpuArchitecture } from "../utilities/common";
+import { ANDROID_FAIL_ERROR_MESSAGE, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { execaWithLog } from "../utilities/subprocess";
@@ -9,9 +9,13 @@ const path = require("path");
 const AAPT_PATH = path.join(ANDROID_HOME, "build-tools", "33.0.0", "aapt");
 
 async function build(projectDir: string, gradleArgs: string[]) {
-  await execaWithLog("./gradlew", gradleArgs, {
-    cwd: projectDir,
-  });
+  try {
+    await execaWithLog("./gradlew", gradleArgs, {
+      cwd: projectDir,
+    });
+  } catch (error) {
+    throw new Error(`${ANDROID_FAIL_ERROR_MESSAGE}, ${error}`);
+  }
 }
 
 async function extractPackageName(artifactPath: string) {
@@ -31,12 +35,7 @@ export async function buildAndroid(workspaceDir: string) {
     `-PreactNativeArchitectures=${cpuArchitecture}`,
     `assembleDebug`,
   ];
-  try {
-    await build(androidSourceDir, gradleArgs);
-  } catch (e) {
-    Logger.error(`Error building Android ${e}`);
-    throw e;
-  }
+  await build(androidSourceDir, gradleArgs);
   Logger.log("Android build sucessful");
   const apkPath = path.join(androidSourceDir, "app/build/outputs/apk/debug/app-debug.apk");
   const packageName = await extractPackageName(apkPath);

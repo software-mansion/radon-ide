@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { vscode } from "../utilities/vscode";
 import { throttle } from "../utilities/common";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { VSCodeProgressRing, VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
 
@@ -48,6 +48,8 @@ function Preview({
   inspectData,
   setIsInspecting,
   setInspectData,
+  isError,
+  onRestartClick,
 }) {
   const wrapperDivRef = useRef(null);
   const [isPressing, setIsPressing] = useState(false);
@@ -112,7 +114,7 @@ function Preview({
   const inspectFrame = inspectData?.frame;
   return (
     <div className="phone-wrapper" tabIndex={0} ref={wrapperDivRef}>
-      {previewURL && (
+      {previewURL && !isError && (
         <div className="phone-content">
           <img
             src={previewURL}
@@ -170,10 +172,21 @@ function Preview({
           <img src={device.backgroundImage} className="phone-frame" />
         </div>
       )}
-      {!previewURL && (
+      {!previewURL && !isError && (
         <div className="phone-content">
           <div className="phone-sized phone-screen phone-content-loading">
             <VSCodeProgressRing />
+          </div>
+          <img src={device.backgroundImage} className="phone-frame" />
+        </div>
+      )}
+      {isError && (
+        <div className="phone-content">
+          <div className="phone-sized phone-screen extension-error-screen">
+            <h2>An error occurred inside the extension. Click the button to restart the emulator.</h2>
+            <VSCodeButton appearance="secondary" onClick={onRestartClick}>
+              <span className="codicon codicon-refresh" />
+            </VSCodeButton>
           </div>
           <img src={device.backgroundImage} className="phone-frame" />
         </div>

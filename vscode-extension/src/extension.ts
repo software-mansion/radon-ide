@@ -11,26 +11,20 @@ import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger } from "./Logger";
-import { dumpLogsToFile } from "./utilities/common";
 import vscode from "vscode";
+
+function handleError(error: Error | any) {
+  Logger.openOutputChannel();
+  vscode.window.showErrorMessage("Internal extension error.", "Dismiss");
+}
 
 function handleUncaughtErrors() {
   process.on("unhandledRejection", (error) => {
-    Logger.error(`Uncaught Rejection: ${error}`);
-    vscode.window.showErrorMessage("Internal extension error.");
-    dumpLogsToFile(error);
-    if (PreviewsPanel.currentPanel) {
-      PreviewsPanel.currentPanel.handleProcessError(error);
-    }
+    handleError(error);
   });
 
   process.on("uncaughtException", (error) => {
-    Logger.error(`Uncaught Exception: ${error}`);
-    vscode.window.showErrorMessage("Internal extension error.");
-    dumpLogsToFile(error);
-    if (PreviewsPanel.currentPanel) {
-      PreviewsPanel.currentPanel.handleProcessError(error);
-    }
+    handleError(error);
   });
 }
 

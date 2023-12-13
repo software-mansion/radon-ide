@@ -16,11 +16,13 @@ import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
 import { Project } from "../project/project";
 import {
+  ANDROID_FAIL_ERROR_MESSAGE,
+  IOS_FAIL_ERROR_MESSAGE,
   getDevServerScriptUrl,
   getLogsDir,
   getWorkspacePath,
   isDev,
-  openLocationInFinder,
+  isDeviceIOS,
 } from "../utilities/common";
 import {
   checkAdroidEmulatorExists,
@@ -74,15 +76,6 @@ export class PreviewsPanel {
     this._setupEditorListeners(context);
 
     this.project = new Project(context);
-  }
-
-  public handleProcessError(error: Error | any) {
-    Logger.error(`Uncaught Error: ${error}`);
-    this._panel.webview.postMessage({
-      command: "unhandledError",
-      error,
-      logsDirPath: getLogsDir(),
-    });
   }
 
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
@@ -205,7 +198,7 @@ export class PreviewsPanel {
             debug.activeDebugSession?.customRequest("continue");
             return;
           case "changeDevice":
-            this.project.selectDevice(message.deviceId, message.settings, message.systemImagePath);
+            this._handleSelectDevice(message.deviceId, message.settings, message.systemImagePath);
             return;
           case "changeDeviceSettings":
             this.project.changeDeviceSettings(message.deviceId, message.settings);
@@ -273,9 +266,6 @@ export class PreviewsPanel {
             return;
           case "processAndroidImageChanges":
             this._processAndroidImageChanges(message.toRemove, message.toInstall);
-            return;
-          case "openLogsDirInFinder":
-            openLocationInFinder(getLogsDir());
             return;
         }
       },
@@ -357,7 +347,26 @@ export class PreviewsPanel {
       },
     });
     this.disposables.push(this.project);
-    this.project.selectDevice(deviceId, settings, systemImagePath);
+    this._handleSelectDevice(deviceId, settings, systemImagePath);
+  }
+
+  private async _handleSelectDevice(
+    deviceId: string,
+    settings: DeviceSettings,
+    systemImagePath: string
+  ) {
+    try {
+      await this.project.selectDevice(deviceId, settings, systemImagePath);
+    } catch (error) {
+      const isStringError = typeof error === "string";
+      this._panel.webview.postMessage({
+        command: "projectError",
+        androidBuildFailed: isStringError && error.startsWith(ANDROID_FAIL_ERROR_MESSAGE),
+        iosBuildFailed: isStringError && error.startsWith(IOS_FAIL_ERROR_MESSAGE),
+        error,
+      });
+      throw error;
+    }
   }
 
   private async _resetProject(deviceId: string, settings: DeviceSettings, systemImagePath: string) {

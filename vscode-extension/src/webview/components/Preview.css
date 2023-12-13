@@ -34,6 +34,16 @@
   top: 0;
 }
 
+.extension-error-screen {
+  background-color: rgba(255,106,89,0.85);
+  box-sizing: border-box;
+  display: flex;
+  padding: 20px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .phone-inspect-overlay {
   position: absolute;
   top: 0;

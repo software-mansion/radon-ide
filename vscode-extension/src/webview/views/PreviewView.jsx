@@ -55,6 +55,7 @@ function PreviewView({ initialDevice }) {
   const [expandedLogs, setExpandedLogs] = useState(false);
   const [inspectData, setInspectData] = useState(null);
   const [appURL, setAppURL] = useState("/");
+  const [isError, setIsError] = useState(false);
   const { state: globalState } = useGlobalStateContext();
 
   const device = useMemo(
@@ -106,6 +107,15 @@ function PreviewView({ initialDevice }) {
         case "appUrlChanged":
           setAppURL(message.url);
           break;
+        case "projectError":
+          if (
+            (!message.androidBuildFailed && device.platform === "Android") ||
+            (!message.iosBuildFailed && device.platorm === "iOS")
+          ) {
+            setIsError(false);
+          }
+          setIsError(true);
+          break;
       }
     };
     window.addEventListener("message", listener);
@@ -119,6 +129,17 @@ function PreviewView({ initialDevice }) {
 
     return () => window.removeEventListener("message", listener);
   }, []);
+
+  const handleRestart = () => {
+    setPreviewURL(undefined);
+    setIsError(false);
+    vscode.postMessage({
+      command: "restartProject",
+      settings: deviceSettings,
+      deviceId: device.id,
+      systemImagePath: device.systemImage?.path,
+    });
+  };
 
   return (
     <div className="panel-view">
@@ -161,6 +182,8 @@ function PreviewView({ initialDevice }) {
         inspectData={inspectData}
         setIsInspecting={setIsInspecting}
         setInspectData={setInspectData}
+        isError={isError}
+        onRestartClick={handleRestart}
       />
 
       <div className="button-group-bottom">
@@ -183,6 +206,7 @@ function PreviewView({ initialDevice }) {
               const newDevice = globalState?.devices.find((d) => d.id === e.target.value);
               setDeviceId(newDevice.id);
               setPreviewURL(undefined);
+              setIsError(false);
               vscode.postMessage({
                 command: "changeDevice",
                 settings: deviceSettings,
@@ -199,17 +223,7 @@ function PreviewView({ initialDevice }) {
           ))}
         </VSCodeDropdown>
 
-        <VSCodeButton
-          appearance="secondary"
-          onClick={() => {
-            setPreviewURL(undefined);
-            vscode.postMessage({
-              command: "restartProject",
-              settings: deviceSettings,
-              deviceId: device.id,
-              systemImagePath: device.systemImage?.path,
-            });
-          }}>
+        <VSCodeButton appearance="secondary" onClick={handleRestart}>
           <span className="codicon codicon-refresh" />
         </VSCodeButton>
 
