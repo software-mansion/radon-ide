@@ -5,10 +5,6 @@ import path from "path";
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
 export const IOS_FAIL_ERROR_MESSAGE = "IOS failed.";
 
-export function isDev() {
-  return process.env.ENVIRONMENT === "DEVELOPMENT";
-}
-
 export function getDevServerScriptUrl() {
   return process.env.DEV_SCRIPT_URL;
 }

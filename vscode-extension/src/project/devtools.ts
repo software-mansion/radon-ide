@@ -1,7 +1,7 @@
 import { Disposable } from "vscode";
 import { PreviewsPanel } from "../panels/PreviewsPanel";
 import http from "http";
-import { Server } from "ws";
+import { WebSocketServer } from "ws";
 import { Logger } from "../Logger";
 
 export class Devtools implements Disposable {
@@ -16,7 +16,7 @@ export class Devtools implements Disposable {
 
   public async start() {
     this.server = http.createServer(() => {});
-    const wss = new Server({ server: this.server });
+    const wss = new WebSocketServer({ server: this.server });
 
     wss.on("connection", (ws: any) => {
       Logger.log("Devtools client connected");

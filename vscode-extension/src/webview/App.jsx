@@ -38,7 +38,7 @@ function App() {
         <VSCodePanelTab disabled={previewDisabled} id="tab-1">
           EMULATOR
         </VSCodePanelTab>
-        <VSCodePanelTab id="tab-2">SETTINGZ</VSCodePanelTab>
+        <VSCodePanelTab id="tab-2">SETTINGS</VSCodePanelTab>
         <VSCodePanelTab disabled={previewDisabled} id="tab-3">
           ANDROID IMAGES
         </VSCodePanelTab>

@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# take configuration from first argument or default to Release
-configuration=${1:-Release}
+output_dir="${1:-out}"
+
+# take configuration from first argument or default to Debug
+configuration=${2:-Debug}
 
 # Get the directory where the script is located
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -9,7 +11,7 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # build
 xcodebuild -project "$script_dir/../../SimulatorStreamServer/SimulatorStreamServer.xcodeproj" -scheme SimulatorStreamServer -sdk macosx -configuration $configuration build
 
-target_dir="${script_dir}/../out/bin"
+target_dir="${script_dir}/../${output_dir}"
 target_location="${target_dir}/sim-controller"
 
 # Create the target directory if it doesn't exist

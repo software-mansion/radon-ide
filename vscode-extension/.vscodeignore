@@ -3,11 +3,7 @@
 */**
 
 # Whitelist needed files
-!out/*.js
-!out/*.css
-!out/*.png
-!out/bin/**
+!dist/**
 !lib/*
 !node_modules/@vscode/codicons/dist/*
-!node_modules/source-map/**
 !LICENSE.txt

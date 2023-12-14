@@ -9,8 +9,7 @@ import {
   debug,
   commands,
 } from "vscode";
-import { getUri } from "../utilities/getUri";
-import { getNonce } from "../utilities/getNonce";
+
 import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
@@ -18,11 +17,7 @@ import { Project } from "../project/project";
 import {
   ANDROID_FAIL_ERROR_MESSAGE,
   IOS_FAIL_ERROR_MESSAGE,
-  getDevServerScriptUrl,
-  getLogsDir,
   getWorkspacePath,
-  isDev,
-  isDeviceIOS,
 } from "../utilities/common";
 import {
   checkAdroidEmulatorExists,
@@ -42,10 +37,10 @@ import {
   installSystemImages,
   removeSystemImages,
 } from "../utilities/sdkmanager";
-import { ensureXcodeCommandLineToolsInstalledAsync } from "xdl/build/Simulator";
 import { GlobalStateManager } from "./GlobalStateManager";
 import { DeviceSettings } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
+import { generateWebviewContent } from "./webviewContentGenerator";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
@@ -64,7 +59,11 @@ export class PreviewsPanel {
     this._panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
     // Set the HTML content for the webview panel
-    this._panel.webview.html = this._getWebviewContent(this._panel.webview, context.extensionUri);
+    this._panel.webview.html = generateWebviewContent(
+      context,
+      this._panel.webview,
+      context.extensionUri
+    );
 
     // Set an event listener to listen for messages passed from the webview context
     this._setWebviewMessageListener(this._panel.webview);
@@ -91,7 +90,7 @@ export class PreviewsPanel {
         {
           enableScripts: true,
           localResourceRoots: [
-            Uri.joinPath(context.extensionUri, "out"),
+            Uri.joinPath(context.extensionUri, "dist"),
             Uri.joinPath(context.extensionUri, "node_modules"),
           ],
           retainContextWhenHidden: true,
@@ -119,51 +118,6 @@ export class PreviewsPanel {
         disposable.dispose();
       }
     }
-  }
-
-  private _getWebviewContent(webview: Webview, extensionUri: Uri) {
-    // The CSS file from the React build output
-    const stylesUri = getUri(webview, extensionUri, ["out", "main.css"]);
-    // The JS file from the React build output
-    const scriptUri = isDev()
-      ? getDevServerScriptUrl()
-      : getUri(webview, extensionUri, ["out", "bundle.js"]);
-    const baseUri = getUri(webview, extensionUri, ["out/"]);
-
-    const codiconsUri = getUri(webview, extensionUri, [
-      "node_modules",
-      "@vscode/codicons",
-      "dist",
-      "codicon.css",
-    ]);
-
-    const nonce = getNonce();
-
-    // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
-    return /*html*/ `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          ${
-            isDev()
-              ? ""
-              : `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: http: https: data:; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; font-src vscode-resource: https:;">`
-          }
-          ${isDev() ? "" : `<link rel="stylesheet" type="text/css" href="${stylesUri}">`}
-          <link rel="stylesheet" href="${codiconsUri}" >
-          <base href="${baseUri}">
-        </head>
-        <body>
-          <div id="root"></div>
-          <script nonce="${nonce}">
-            window.baseUri = "${baseUri}";
-          </script>
-          <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
-        </body>
-      </html>
-    `;
   }
 
   public notifyAppReady(deviceId: string, previewURL: string) {

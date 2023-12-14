@@ -1,15 +1,60 @@
-// See https://go.microsoft.com/fwlink/?LinkId=733558
-// for the documentation about the tasks.json format
 {
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "build-extension",
+      "label": "build and run everything",
+      "dependsOn": ["build extension", "start webview server"],
+      "dependsOrder": "sequence" // or "parallel" if you want to run them concurrently
+    },
+
+    {
+      "label": "build extension",
       "type": "npm",
       "script": "build:extension-debug",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never"
+      },
       "group": {
-        "kind": "build"
+        "kind": "build",
+        "isDefault": true
       }
+    },
+    {
+      "label": "start webview server",
+      "type": "npm",
+      "isBackground": true,
+      "script": "watch:extension",
+      "presentation": { "reveal": "silent" },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^Local:\\s+http://localhost:2137/$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*Local:\\s+http://localhost:2137/.*",
+          "endsPattern": "^.*$"
+        }
+      }
+    },
+    {
+      // this task terminates the webview server tasks. It implements a workaround
+      // that allows to execute vscode's command palette commands via input variables.
+      // the task just runs a simple echo command, but since it references an input
+      // vscode would need to evaluate that input first. In turn, the input is defined
+      // to be a vscode command that requests a task termination
+      "label": "stop webview server",
+      "command": "echo ${input:terminateWebviewServer}",
+      "type": "shell"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "terminateWebviewServer",
+      "type": "command",
+      "command": "workbench.action.tasks.terminate",
+      "args": "start webview server"
     }
   ]
 }
