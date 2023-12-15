@@ -1,0 +1,36 @@
+.button-group {
+  height: 50px;
+  width: 100%;
+}
+
+.phone-content-skeleton {
+  height: calc(100vh - 2 * 50px);
+  background-color: var(--background-dark-90);
+  aspect-ratio: var(--phone-content-aspect-ratio);
+  border-radius: var(--phone-content-border-radius);
+}
+
+.skeleton-animation {
+  background: linear-gradient(
+    90deg,
+    var(--background-dark-90),
+    var(--background-dark-90),
+    var(--background-dark-80),
+    var(--background-dark-90),
+    var(--background-dark-90)
+  );
+  background-size: 500% 500%;
+  animation: skeleton-loading 5s ease infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}

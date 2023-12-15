@@ -1,4 +1,5 @@
 .panel-view {
+  box-sizing: border-box;
   display: flex;
   padding: 0px 8px;
   flex-direction: column;

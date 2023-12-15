@@ -6,7 +6,9 @@
   --phone-content-aspect-ratio: 9/19.5;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   box-sizing: border-box;
   height: 100%;
   margin: 0;
@@ -22,7 +24,7 @@ main {
   height: 100%;
   width: 100%;
   max-height: 100vh;
-  background-color: rgba(255,255,255,0.05);
+  background-color: var(--background-dark-100);
 }
 
 .panels {
