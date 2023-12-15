@@ -57,6 +57,7 @@ function PreviewView({ initialDevice }) {
   const [inspectData, setInspectData] = useState(null);
   const [appURL, setAppURL] = useState("/");
   const [isError, setIsError] = useState(false);
+  const [buildCaching, setBuildCaching] = useState(true);
   const { state: globalState } = useGlobalStateContext();
 
   const device = useMemo(
@@ -142,6 +143,14 @@ function PreviewView({ initialDevice }) {
     });
   };
 
+  const handleSwitchBuildCache = () => {
+    setBuildCaching((current) => !current);
+    vscode.postMessage({
+      command: "switchBuildCaching",
+      enabled: !buildCaching,
+    });
+  };
+
   return (
     <div className="panel-view">
       <div className="button-group-top">
@@ -213,6 +222,13 @@ function PreviewView({ initialDevice }) {
         </IconButton>
 
         <span className="group-separator" />
+
+        <VSCodeButton
+          appearance={buildCaching ? "primary" : "secondary"}
+          onClick={handleSwitchBuildCache}>
+          Build Caching
+          <span className="codicon codicon-database" />
+        </VSCodeButton>
 
         <VSCodeDropdown
           onChange={(e) => {

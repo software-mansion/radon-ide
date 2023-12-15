@@ -7,6 +7,16 @@ import { getConfigurationScheme } from "@react-native-community/cli-platform-ios
 import { execFileSyncWithLog, execWithLog, execaWithLog } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 
+async function getBundleID(appPath: string) {
+  return (
+    await execaWithLog("/usr/libexec/PlistBuddy", [
+      "-c",
+      "Print:CFBundleIdentifier",
+      path.join(appPath, "Info.plist"),
+    ])
+  ).stdout.trim();
+}
+
 export async function buildIos(workspaceDir: string) {
   const ctx = loadConfig(workspaceDir);
 
@@ -17,8 +27,10 @@ export async function buildIos(workspaceDir: string) {
   }
 
   const scheme = path.basename(xcodeProject.name, path.extname(xcodeProject.name)) as string;
-  
-  Logger.log(`Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${xcodeProject.name}"`);
+
+  Logger.log(
+    `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${xcodeProject.name}"`
+  );
 
   const buildFlags: BuildFlags = {
     mode: getConfigurationScheme({ scheme, mode: "" }, sourceDir),
@@ -36,13 +48,7 @@ export async function buildIos(workspaceDir: string) {
     undefined
   );
 
-  const bundleID = (
-    await execaWithLog("/usr/libexec/PlistBuddy", [
-      "-c",
-      "Print:CFBundleIdentifier",
-      path.join(appPath, "Info.plist"),
-    ])
-  ).stdout.trim();
+  const bundleID = await getBundleID(appPath);
 
   return { appPath, bundleID };
 }

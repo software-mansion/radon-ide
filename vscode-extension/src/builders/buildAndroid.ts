@@ -3,10 +3,13 @@ import { ANDROID_FAIL_ERROR_MESSAGE, getCpuArchitecture } from "../utilities/com
 import { ANDROID_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { execaWithLog } from "../utilities/subprocess";
+import { workspace } from "vscode";
+import fs from "fs";
 
 const path = require("path");
 
 const AAPT_PATH = path.join(ANDROID_HOME, "build-tools", "33.0.0", "aapt");
+const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
 
 async function build(projectDir: string, gradleArgs: string[]) {
   try {
@@ -25,6 +28,23 @@ async function extractPackageName(artifactPath: string) {
   return packageName;
 }
 
+function getApkPath(workspaceDir: string) {
+  const ctx = loadConfig(workspaceDir);
+  const androidSourceDir = ctx.project.android!.sourceDir;
+  return path.join(androidSourceDir, RELATIVE_APK_PATH);
+}
+
+export function isAndroidBuilded(workspaceDir: string) {
+  const apkPath = getApkPath(workspaceDir);
+  return fs.existsSync(apkPath);
+}
+
+export async function getAndroidBuildPaths(workspaceDir: string) {
+  const apkPath = getApkPath(workspaceDir);
+  const packageName = await extractPackageName(apkPath);
+  return { apkPath, packageName };
+}
+
 export async function buildAndroid(workspaceDir: string) {
   const ctx = loadConfig(workspaceDir);
   const androidSourceDir = ctx.project.android!.sourceDir;
@@ -37,7 +57,5 @@ export async function buildAndroid(workspaceDir: string) {
   ];
   await build(androidSourceDir, gradleArgs);
   Logger.log("Android build sucessful");
-  const apkPath = path.join(androidSourceDir, "app/build/outputs/apk/debug/app-debug.apk");
-  const packageName = await extractPackageName(apkPath);
-  return { apkPath, packageName };
+  return getAndroidBuildPaths(workspaceDir);
 }

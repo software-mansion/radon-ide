@@ -7,6 +7,7 @@ import { buildAndroid } from "../builders/buildAndroid";
 import { DeviceSettings } from "../devices/DeviceBase";
 import { getWorkspacePath } from "../utilities/common";
 import { Logger } from "../Logger";
+import { BuildManager } from "../builders/BuildManager";
 
 export interface EventMonitor {
   onLogReceived: (message: { type: string }) => void;
@@ -20,9 +21,8 @@ export class Project implements Disposable {
 
   private metro: Metro | undefined;
   private devtools: Devtools | undefined;
-  private iOSBuild: Promise<{ appPath: string; bundleID: string }> | undefined;
-  private androidBuild: Promise<{ apkPath: string; packageName: string }> | undefined;
   private debugSessionListener: Disposable | undefined;
+  private buildManager: BuildManager | undefined;
 
   private session: DeviceSession | undefined;
   private eventMonitors: Array<EventMonitor> = [];
@@ -47,6 +47,10 @@ export class Project implements Disposable {
     this.metro?.reload();
   }
 
+  public switchBuildCaching(enabled: boolean) {
+    this.buildManager?.setCheckCache(enabled);
+  }
+
   public async start() {
     let workspaceDir = getWorkspacePath();
     if (!workspaceDir) {
@@ -54,13 +58,17 @@ export class Project implements Disposable {
       return;
     }
 
+    if (!this.buildManager) {
+      this.buildManager = new BuildManager(workspaceDir);
+    }
+
     this.devtools = new Devtools();
     await this.devtools.start();
     this.metro = new Metro(workspaceDir, this.context.extensionPath, this.devtools.port);
 
     Logger.log("Launching builds");
-    this.iOSBuild = buildIos(workspaceDir);
-    this.androidBuild = buildAndroid(workspaceDir);
+
+    await this.buildManager.startBuilding();
 
     this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
@@ -122,6 +130,11 @@ export class Project implements Disposable {
     Logger.log(`Device selected ${deviceId}, with system image Path: ${systemImagePath}`);
     this.session?.dispose();
     this.session = new DeviceSession(this.context, deviceId, this.devtools!, this.metro!);
-    await this.session.start(this.iOSBuild!, this.androidBuild!, settings, systemImagePath);
+    await this.session.start(
+      this.buildManager?.getIosBuild()!,
+      this.buildManager?.getAndroidBuild()!,
+      settings,
+      systemImagePath
+    );
   }
 }

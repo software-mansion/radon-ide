@@ -221,11 +221,18 @@ export class PreviewsPanel {
           case "processAndroidImageChanges":
             this._processAndroidImageChanges(message.toRemove, message.toInstall);
             return;
+          case "switchBuildCaching":
+            this._switchBuildCaching(message.enabled);  
+            return;
         }
       },
       undefined,
       this.disposables
     );
+  }
+
+  private _switchBuildCaching(enabled: boolean) {
+    this.project.switchBuildCaching(enabled);
   }
 
   private async _processAndroidImageChanges(
