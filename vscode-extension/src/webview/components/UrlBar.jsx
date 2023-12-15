@@ -1,6 +1,7 @@
-import { VSCodeButton, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
+import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
 import { useEffect, useState } from "react";
 import { vscode } from "../utilities/vscode";
+import IconButton from "./IconButton";
 
 function formatAppKey(url) {
   if (url.startsWith("preview://")) {
@@ -9,7 +10,7 @@ function formatAppKey(url) {
   return url;
 }
 
-function UrlBar() {
+function UrlBar({ onRestart }) {
   const [urlList, setUrlList] = useState(["/"]);
 
   useEffect(() => {
@@ -27,9 +28,11 @@ function UrlBar() {
 
   return (
     <>
-      <VSCodeButton
-        appearance={"secondary"}
-        title="Go back"
+      <IconButton
+        tooltip={{
+          label: "Go back",
+          side: "bottom",
+        }}
         disabled={urlList.length < 2}
         onClick={() => {
           vscode.postMessage({
@@ -38,7 +41,15 @@ function UrlBar() {
           });
         }}>
         <span className="codicon codicon-arrow-left" />
-      </VSCodeButton>
+      </IconButton>
+      <IconButton
+        onClick={onRestart}
+        tooltip={{
+          label: "Reload the preview",
+          side: "bottom",
+        }}>
+        <span className="codicon codicon-refresh" />
+      </IconButton>
       <VSCodeDropdown
         onChange={(e) => {
           vscode.postMessage({

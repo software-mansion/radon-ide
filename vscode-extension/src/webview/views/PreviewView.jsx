@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import { VSCodeButton, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
+import IconButton from "../components/IconButton";
 import UrlBar from "../components/UrlBar";
 import LogPanel from "../components/LogPanel";
 import LogCounter from "../components/LogCounter";
@@ -144,9 +145,12 @@ function PreviewView({ initialDevice }) {
   return (
     <div className="panel-view">
       <div className="button-group-top">
-        <VSCodeButton
-          appearance={isFollowing ? "primary" : "secondary"}
-          title="Follow active editor on the device"
+        <IconButton
+          tooltip={{
+            label: "Follow active editor on the device",
+            side: "bottom",
+          }}
+          active={isFollowing}
           onClick={() => {
             vscode.postMessage({
               command: isFollowing ? "stopFollowing" : "startFollowing",
@@ -154,11 +158,11 @@ function PreviewView({ initialDevice }) {
             setIsFollowing(!isFollowing);
           }}>
           <span className="codicon codicon-magnet" />
-        </VSCodeButton>
+        </IconButton>
 
         <span className="group-separator" />
 
-        <UrlBar url={appURL} />
+        <UrlBar url={appURL} onRestart={handleRestart} />
 
         <div className="spacer" />
 
@@ -172,6 +176,13 @@ function PreviewView({ initialDevice }) {
           Logs
           <LogCounter count={logCounter} />
         </VSCodeButton>
+        <IconButton
+          onClick={() => {
+            vscode.postMessage({ command: "openSettings" });
+          }}
+          tooltip={{ label: "Settings", side: "bottom" }}>
+          <span className="codicon codicon-settings-gear" />
+        </IconButton>
       </div>
       <Preview
         isInspecting={isInspecing}
@@ -187,8 +198,11 @@ function PreviewView({ initialDevice }) {
       />
 
       <div className="button-group-bottom">
-        <VSCodeButton
-          appearance={isInspecing ? "primary" : "secondary"}
+        <IconButton
+          active={isInspecing}
+          tooltip={{
+            label: "Select an element to inspect it",
+          }}
           onClick={() => {
             if (isInspecing) {
               setInspectData(null);
@@ -196,7 +210,7 @@ function PreviewView({ initialDevice }) {
             setIsInspecting(!isInspecing);
           }}>
           <span className="codicon codicon-inspect" />
-        </VSCodeButton>
+        </IconButton>
 
         <span className="group-separator" />
 
@@ -222,10 +236,6 @@ function PreviewView({ initialDevice }) {
             </VSCodeOption>
           ))}
         </VSCodeDropdown>
-
-        <VSCodeButton appearance="secondary" onClick={handleRestart}>
-          <span className="codicon codicon-refresh" />
-        </VSCodeButton>
 
         <div className="spacer" />
 

@@ -91,6 +91,7 @@
     "vscode-test": "^1.5.0"
   },
   "dependencies": {
+    "@radix-ui/react-tooltip": "^1.0.7",
     "@react-native-community/cli": "^11.3.7",
     "@vscode/codicons": "^0.0.35",
     "@vscode/debugadapter": "^1.51.0",
