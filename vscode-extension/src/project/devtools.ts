@@ -29,7 +29,7 @@ export class Devtools implements Disposable {
           Logger.log(`Devtools msg ${event}`);
           this.listeners.forEach((listener) => listener(event, payload));
         } catch (e) {
-          Logger.error(`Error ${e}`, "Devtools websocket");
+          Logger.error(["Error", e], "Devtools websocket");
         }
       });
     });

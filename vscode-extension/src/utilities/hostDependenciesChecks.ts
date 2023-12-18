@@ -37,7 +37,7 @@ export async function checkIosDependenciesInstalled() {
   const ctx = loadConfig(getWorkspacePath());
   const iosDirPath = ctx.project.ios?.sourceDir;
 
-  Logger.log(`Check pods in ${iosDirPath} ${getWorkspacePath()}, ${ctx}`);
+  Logger.log(`Check pods in ${iosDirPath} ${getWorkspacePath()}`);
   if (!iosDirPath) {
     return false;
   }

@@ -222,7 +222,7 @@ export class PreviewsPanel {
             this._processAndroidImageChanges(message.toRemove, message.toInstall);
             return;
           case "switchBuildCaching":
-            this._switchBuildCaching(message.enabled);  
+            this._switchBuildCaching(message.enabled);
             return;
         }
       },
@@ -345,7 +345,7 @@ export class PreviewsPanel {
 
     const dependenciesDiagnostic = await this._checkDependencies();
 
-    Logger.log(`Dependencies checked ${dependenciesDiagnostic}`);
+    Logger.log(["Dependencies checked", dependenciesDiagnostic]);
     this._panel.webview.postMessage({
       command: "checkedDependencies",
       dependencies: dependenciesDiagnostic,
@@ -377,7 +377,7 @@ export class PreviewsPanel {
         command: "installationComplete",
       });
     } catch (e) {
-      Logger.error(`${e}`);
+      Logger.error(e);
       this._panel.webview.postMessage({
         command: "installationComplete",
       });

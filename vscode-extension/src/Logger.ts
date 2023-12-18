@@ -6,10 +6,35 @@ type Stringifiable = {
   toString: () => string;
 };
 
+type ParsableMessage = Stringifiable | Object | unknown;
+
+type IncomingMessage = ParsableMessage[] | ParsableMessage;
 export class Logger {
   private static outputChannel = window.createOutputChannel("react-native-sztudio", "javascript");
   private static logLevel: LogLevel = "DEBUG";
   private static consoleLogEnabled: boolean = true;
+
+  private static _parseMessage(message: ParsableMessage) {
+    if (typeof message === "object" && !!message) {
+      return JSON.stringify(message);
+    }
+
+    if (message?.toString) {
+      return message.toString();
+    }
+
+    return message;
+  }
+
+  private static _parseArguments(messageParams: IncomingMessage) {
+    if (Array.isArray(messageParams)) {
+      const parsedParams = messageParams.map((message) => Logger._parseMessage(message));
+
+      return parsedParams.join(" ");
+    }
+
+    return Logger._parseMessage(messageParams);
+  }
 
   public static changeConsoleLogMode(enabled: boolean) {
     this.consoleLogEnabled = enabled;
@@ -23,32 +48,33 @@ export class Logger {
     Logger.logLevel = logLevel;
   }
 
-  public static error(message: Stringifiable, source?: string) {
-    Logger.logMessage(message.toString(), "ERROR", source);
+  public static error(messageParams: IncomingMessage, source?: string) {
+    Logger.logMessage(messageParams, "ERROR", source);
   }
 
-  public static warn(message: Stringifiable, source?: string) {
+  public static warn(messageParams: IncomingMessage, source?: string) {
     if (Logger.logLevel === "ERROR") {
       return;
     }
-    Logger.logMessage(message.toString(), "WARN", source);
+    Logger.logMessage(messageParams, "WARN", source);
   }
 
-  public static log(message: Stringifiable, source?: string) {
+  public static log(messageParams: IncomingMessage, source?: string) {
     if (Logger.logLevel === "ERROR" || Logger.logLevel === "WARN") {
       return;
     }
-    Logger.logMessage(message.toString(), "INFO", source);
+    Logger.logMessage(messageParams, "INFO", source);
   }
 
-  public static debug(message: Stringifiable, source?: string) {
+  public static debug(messageParams: IncomingMessage, source?: string) {
     if (Logger.logLevel === "ERROR" || Logger.logLevel === "WARN" || Logger.logLevel === "INFO") {
       return;
     }
-    Logger.logMessage(message.toString(), "DEBUG", source);
+    Logger.logMessage(messageParams, "DEBUG", source);
   }
 
-  private static logMessage(message: string, logLevel: LogLevel, source?: string) {
+  private static logMessage(messageParams: IncomingMessage, logLevel: LogLevel, source?: string) {
+    const message = Logger._parseArguments(messageParams);
     const logDate = new Date();
     const formattedDate = `${logDate.toLocaleDateString()} ${logDate.toLocaleTimeString()}`;
 

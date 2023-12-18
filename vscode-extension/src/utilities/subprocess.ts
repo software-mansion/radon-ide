@@ -21,7 +21,7 @@ export async function execWithLog(...args: Parameters<typeof promisifiedExec>) {
     }
     return { stdout, stderr };
   } catch (e) {
-    Logger.error(`${e}`, args[0]);
+    Logger.error(e, args[0]);
     throw e;
   }
 }
@@ -45,7 +45,7 @@ export function spawnWithLog(...args: Parameters<typeof child_process.spawn>) {
     }
     return subprocess;
   } catch (e) {
-    Logger.error(`${e}`, source);
+    Logger.error(e, source);
     throw e;
   }
 }
@@ -57,7 +57,7 @@ export function execFileSyncWithLog(...args: Parameters<typeof child_process.exe
     Logger.debug(result, source);
     return result;
   } catch (e) {
-    Logger.error(`${e}`, source);
+    Logger.error(e, source);
     throw e;
   }
 }
@@ -68,7 +68,7 @@ export function execSyncWithLog(...args: Parameters<typeof child_process.execSyn
     Logger.debug(result, args[0]);
     return result;
   } catch (e) {
-    Logger.error(`${e}`, args[0]);
+    Logger.error(e, args[0]);
     throw e;
   }
 }
@@ -85,7 +85,7 @@ export async function execaWithLog(...args: [string, string[]?, execa.Options?])
     }
     return result;
   } catch (e) {
-    Logger.error(`${e}`);
+    Logger.error(e);
     throw e;
   }
 }
@@ -102,7 +102,7 @@ export async function execaCommandWithLog(...args: [string, execa.Options?]) {
     }
     return result;
   } catch (e) {
-    Logger.error(`${e}`);
+    Logger.error(e);
     throw e;
   }
 }
