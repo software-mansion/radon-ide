@@ -149,12 +149,12 @@ export class DeviceSession implements Disposable {
     this.devtools.send("rnp_inspect", { x: xRatio, y: yRatio, id });
   }
 
-  public openUrl(url: string) {
-    this.devtools.send("rnp_runApplication", { appKey: url });
+  public openNavigation(id: string) {
+    this.devtools.send("rnp_openNavigation", { id });
   }
 
-  public startPreview(appKey: string) {
-    this.devtools.send("rnp_runApplication", { appKey });
+  public startPreview(previewId: string) {
+    this.devtools.send("rnp_openPreview", { previewId });
   }
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {

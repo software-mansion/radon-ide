@@ -110,8 +110,8 @@ export class Project implements Disposable {
     this.session?.inspectElementAt(xRatio, yRatio, callback);
   }
 
-  public openUrl(url: string) {
-    this.session?.openUrl(url);
+  public openNavigation(id: string) {
+    this.session?.openNavigation(id);
   }
 
   public startPreview(appKey: string) {

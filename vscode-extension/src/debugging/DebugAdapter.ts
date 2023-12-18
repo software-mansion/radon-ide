@@ -184,7 +184,7 @@ export class DebugAdapter extends DebugSession {
   private async handleDebuggerPaused(message: any) {
     if (
       message.params.reason === "other" &&
-      message.params.callFrames[0].functionName === "sztudioBreakOnError"
+      message.params.callFrames[0].functionName === "__rnpBreakOnError"
     ) {
       // this is a workaround for an issue with hermes which does not provide a full stack trace
       // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception

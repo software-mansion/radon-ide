@@ -1,7 +1,7 @@
 require("expo-router/entry");
 const { AppRegistry, View } = require("react-native");
 
-global.rnsz_previews ||= new Map();
+global.__rnp_previews ||= new Map();
 
 function stringifyProps(obj) {
   const keyValuePairs = [];
@@ -26,7 +26,7 @@ export function preview(component) {
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>{component}</View>
     );
   }
-  global.rnsz_previews.set(name, {
+  global.__rnp_previews.set(name, {
     appKey: name,
     name: component.type.name,
     props: stringifyProps(component.props),

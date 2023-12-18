@@ -39,10 +39,13 @@ export class Devtools implements Disposable {
         Logger.log("App ready");
         const { appKey } = payload;
         if (appKey !== "main") {
-          PreviewsPanel.currentPanel?.notifyAppUrlChanged(appKey);
+          // PreviewsPanel.currentPanel?.notifyAppUrlChanged(appKey);
         }
-      } else if (event === "rnp_appUrlChanged") {
-        PreviewsPanel.currentPanel?.notifyAppUrlChanged(payload.url);
+      } else if (event === "rnp_navigationChanged") {
+        PreviewsPanel.currentPanel?.notifyNavigationChanged({
+          displayName: payload.displayName,
+          id: payload.id,
+        });
       }
     });
 

@@ -3,23 +3,20 @@ import { useEffect, useState } from "react";
 import { vscode } from "../utilities/vscode";
 import IconButton from "./IconButton";
 
-function formatAppKey(url) {
-  if (url.startsWith("preview://")) {
-    return url.split("/").pop();
-  }
-  return url;
-}
 
 function UrlBar({ onRestart }) {
-  const [urlList, setUrlList] = useState(["/"]);
+  const [urlList, setUrlList] = useState([{ name: "/", id: null }]);
 
   useEffect(() => {
     const listener = (event) => {
       const message = event.data;
-      if (message.command === "appUrlChanged") {
+      if (message.command === "navigationChanged") {
         // put new url at the top of the list and remove duplicates
-        const newUrl = message.url;
-        setUrlList((urlList) => [newUrl, ...urlList.filter((url) => url !== newUrl)]);
+        const newRecord = { displayName: message.displayName, id: message.id };
+        setUrlList((urlList) => [
+          newRecord,
+          ...urlList.filter((record) => record.id !== newRecord.id),
+        ]);
       }
     };
     window.addEventListener("message", listener);
@@ -36,9 +33,11 @@ function UrlBar({ onRestart }) {
         disabled={urlList.length < 2}
         onClick={() => {
           vscode.postMessage({
-            command: "openUrl",
-            url: urlList[1],
+            command: "openNavigation",
+            id: urlList[1].id,
           });
+          // remove first item from the url list
+          setUrlList((urlList) => urlList.slice(1));
         }}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
@@ -53,13 +52,13 @@ function UrlBar({ onRestart }) {
       <VSCodeDropdown
         onChange={(e) => {
           vscode.postMessage({
-            command: "openUrl",
-            url: e.target.value,
+            command: "openNavigation",
+            id: e.target.value,
           });
         }}>
-        {urlList.map((url) => (
-          <VSCodeOption key={url} value={url}>
-            {formatAppKey(url)}
+        {urlList.map((entry) => (
+          <VSCodeOption key={entry.id} value={entry.id}>
+            {entry.displayName}
           </VSCodeOption>
         ))}
       </VSCodeDropdown>

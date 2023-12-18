@@ -48,6 +48,7 @@ export class PreviewsPanel {
   private readonly project: Project;
   private readonly globalStateManager: GlobalStateManager;
   private disposables: Disposable[] = [];
+  private projectStarted = false;
 
   private followEnabled = false;
 
@@ -128,10 +129,11 @@ export class PreviewsPanel {
     });
   }
 
-  public notifyAppUrlChanged(appKey: string) {
+  public notifyNavigationChanged({ displayName, id }: { displayName: string; id: string }) {
     this._panel.webview.postMessage({
-      command: "appUrlChanged",
-      url: appKey,
+      command: "navigationChanged",
+      displayName,
+      id,
     });
   }
 
@@ -185,8 +187,8 @@ export class PreviewsPanel {
               }
             });
             return;
-          case "openUrl":
-            this.project.openUrl(message.url);
+          case "openNavigation":
+            this.project.openNavigation(message.id);
             return;
           case "stopFollowing":
             this.followEnabled = false;
@@ -282,6 +284,12 @@ export class PreviewsPanel {
   }
 
   private async _startProject(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
+    // in dev mode, react may trigger this message twice as it comes from useEffect
+    // we need to make sure we don't start the project twice
+    if (this.projectStarted) {
+      return;
+    }
+    this.projectStarted = true;
     await this.project.start();
     this.project.addEventMonitor({
       onLogReceived: (message) => {

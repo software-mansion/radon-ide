@@ -56,7 +56,6 @@ function PreviewView({ initialDevice }) {
   const [logCounter, setLogCounter] = useState(0);
   const [expandedLogs, setExpandedLogs] = useState(false);
   const [inspectData, setInspectData] = useState(null);
-  const [appURL, setAppURL] = useState("/");
   const [isError, setIsError] = useState(false);
 
   const { state: globalState } = useGlobalStateContext();
@@ -106,9 +105,6 @@ function PreviewView({ initialDevice }) {
             },
             ...logs,
           ]);
-          break;
-        case "appUrlChanged":
-          setAppURL(message.url);
           break;
         case "projectError":
           if (
@@ -164,7 +160,7 @@ function PreviewView({ initialDevice }) {
 
         <span className="group-separator" />
 
-        <UrlBar url={appURL} onRestart={handleRestart} />
+        <UrlBar onRestart={handleRestart} />
 
         <div className="spacer" />
 

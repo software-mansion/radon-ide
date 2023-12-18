@@ -4,8 +4,8 @@ const appRoot = process.argv[2];
 const extensionLib = process.argv[3];
 
 const nodeModules = path.join(appRoot, "node_modules") + "/";
+// runtime file requires special handling as it is needed to be listed in modules to run before main module
 const runtimePath = path.join(extensionLib, "runtime.js");
-const previewPath = path.join(extensionLib, "preview.js");
 
 // Instead of using require in this code, we should use require_root, which will
 // resolve modules relative to the app root, not the extension lib root.
@@ -56,13 +56,17 @@ async function runServer(_argv, ctx, args) {
   // sztudio-real-entry-file module, which is resolved to the real entry file
   metroConfig.resolver.resolveRequest = (context, moduleName, platform) => {
     if (moduleName.match(/preview/)) {
+      const previewPath = path.join(extensionLib, "preview.js");
       return {
         filePath: previewPath,
         type: "sourceFile",
       };
-    } else if (moduleName.match(/sztudio-runtime/)) {
+    } else if (moduleName.match(/__rnp_lib__/)) {
+      // we strip __rnp_lib__/ from the path to get relative location to extenion's lib folder
+      const relativePath = moduleName.replace(/.*__rnp_lib__\//, "");
+      const libFilePath = path.join(extensionLib, relativePath);
       return {
-        filePath: runtimePath,
+        filePath: libFilePath,
         type: "sourceFile",
       };
     }
