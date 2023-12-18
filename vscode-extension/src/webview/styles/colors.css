@@ -64,4 +64,27 @@
   /* White */
   --off-white: #f8f9ff;
   --white: #fcfcff;
+
+  /* UI */
+  /* These colors change in runtime whenever vscode theme is changed  */
+  --preview-background: var(--background-dark-100);
+  --active-item: var(--blue-dark-100);
+
+  --default-text: var(--off-white);
+  --secondary-text: var(--background-dark-10);
+  --disabled-text: var(--background-dark-40);
+
+  --highlight-text: var(--white);
+  --highlight-active-text: var(--white);
+  --highlight-selected-text: var(--white);
+  --highlight-selected-hover-text: var(--off-white);
+
+  --highlight-hover-background: var(--background-dark-80);
+  --highlight-active-background: var(--background-dark-70);
+  --highlight-selected-background: var(--background-dark-60);
+  --highlight-selected-hover-background: var(--background-dark-50);
+
+  --popover-background: var(--background-dark-80);
+
+  --separator: var(--background-dark-40);
 }

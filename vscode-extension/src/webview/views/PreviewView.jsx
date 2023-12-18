@@ -6,6 +6,7 @@ import IconButton from "../components/IconButton";
 import UrlBar from "../components/UrlBar";
 import LogPanel from "../components/LogPanel";
 import LogCounter from "../components/LogCounter";
+import SettingsDropdown from "../components/SettingsDropdown";
 import { useGlobalStateContext } from "../components/GlobalStateContext";
 import "./View.css";
 import "./PreviewView.css";
@@ -57,7 +58,7 @@ function PreviewView({ initialDevice }) {
   const [inspectData, setInspectData] = useState(null);
   const [appURL, setAppURL] = useState("/");
   const [isError, setIsError] = useState(false);
-  const [buildCaching, setBuildCaching] = useState(true);
+
   const { state: globalState } = useGlobalStateContext();
 
   const device = useMemo(
@@ -143,14 +144,6 @@ function PreviewView({ initialDevice }) {
     });
   };
 
-  const handleSwitchBuildCache = () => {
-    setBuildCaching((current) => !current);
-    vscode.postMessage({
-      command: "switchBuildCaching",
-      enabled: !buildCaching,
-    });
-  };
-
   return (
     <div className="panel-view">
       <div className="button-group-top">
@@ -185,13 +178,15 @@ function PreviewView({ initialDevice }) {
           Logs
           <LogCounter count={logCounter} />
         </VSCodeButton>
-        <IconButton
-          onClick={() => {
-            vscode.postMessage({ command: "openSettings" });
-          }}
-          tooltip={{ label: "Settings", side: "bottom" }}>
-          <span className="codicon codicon-settings-gear" />
-        </IconButton>
+        <SettingsDropdown>
+          <IconButton
+            onClick={() => {
+              vscode.postMessage({ command: "openSettings" });
+            }}
+            tooltip={{ label: "Settings", side: "bottom" }}>
+            <span className="codicon codicon-settings-gear" />
+          </IconButton>
+        </SettingsDropdown>
       </div>
       <Preview
         isInspecting={isInspecing}
@@ -222,13 +217,6 @@ function PreviewView({ initialDevice }) {
         </IconButton>
 
         <span className="group-separator" />
-
-        <VSCodeButton
-          appearance={buildCaching ? "primary" : "secondary"}
-          onClick={handleSwitchBuildCache}>
-          Build Caching
-          <span className="codicon codicon-database" />
-        </VSCodeButton>
 
         <VSCodeDropdown
           onChange={(e) => {

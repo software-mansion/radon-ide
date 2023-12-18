@@ -9,33 +9,33 @@
   background: none;
   border: 0px solid transparent;
   border-radius: 36px;
-  color: var(--off-white);
+  color: var(--default-text);
   transition: all 200ms 0ms ease-in-out;
 }
 
 .icon-button:disabled {
   cursor: default;
   pointer-events: none;
-  color: var(--background-dark-40);
+  color: var(--disabled-text);
 }
 
 .icon-button:hover {
-  background-color: var(--background-dark-80);
+  background-color: var(--highlight-hover-background);
 }
 
 .icon-button:active {
-  color: var(--white);
-  background-color: var(--background-dark-70);
+  color: var(--highlight-text-active);
+  background-color: var(--highlight-active-background);
   transform: scale(0.9);
 }
 
-.icon-button-active {
-  color: var(--white);
-  background-color: var(--background-dark-60);
+.icon-button-selected {
+  color: var(--highlight-text-selected);
+  background-color: var(--highlight-active-background);
 }
 
-.icon-button-active:hover {
-  color: var(--off-white);
+.icon-button-selected:hover {
+  color: var(--highlight-selected-hover-text);
   background-color: var(--background-dark-50);
 }
 
@@ -44,8 +44,8 @@
   padding: 6px 8px;
   font-size: 12px;
   line-height: 1;
-  color: var(--off-white);
-  background-color: var(--background-dark-80);
+  color: var(--default-text);
+  background-color: var(--popover-background);
   user-select: none;
   animation-duration: 300ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
@@ -65,7 +65,7 @@
 }
 
 .tooltip-arrow {
-  fill: var(--background-dark-80);
+  fill: var(--popover-background);
 }
 
 @keyframes slideUpAndFade {

@@ -17,7 +17,7 @@ function IconButton({ children, onClick, tooltip, disabled, active }: IconButton
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`icon-button ${active ? "icon-button-active" : ""}`}>
+      className={`icon-button ${active ? "icon-button-selected" : ""}`}>
       {children}
     </button>
   );

@@ -24,7 +24,7 @@ main {
   height: 100%;
   width: 100%;
   max-height: 100vh;
-  background-color: var(--background-dark-100);
+  background-color: var(--preview-background);
 }
 
 .panels {
