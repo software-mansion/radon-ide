@@ -1,6 +1,4 @@
-import { createFingerprintAsync, createProjectHashAsync } from "@expo/fingerprint";
 import { getWorkspacePath } from "./common";
-import { Logger } from "../Logger";
 import { execWithLog } from "./subprocess";
 
 export async function createWorkspaceFingerprint() {
