@@ -14,7 +14,6 @@ interface ModalProps {
 export default function Modal({ title, component, open, setOpen }: ModalProps) {
   return (
     <Dialog.Root open={open}>
-      <Dialog.Trigger />
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" />
         <Dialog.Content className="modal-content">
