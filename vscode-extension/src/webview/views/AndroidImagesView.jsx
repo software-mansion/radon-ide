@@ -4,7 +4,7 @@ import { vscode } from "../utilities/vscode";
 import { VSCodeButton, VSCodeCheckbox, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./AndroidImagesView.css";
 import EditAndroidDevice from "../components/EditAndroidDevice";
-import { useGlobalStateContext } from "../components/GlobalStateContext";
+import { useGlobalStateContext } from "../providers/GlobalStateProvider";
 
 function AndroidImagesView() {
   const [availableImages, setAvailableImages] = useState([]);

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./EditAndroidDevice.css";
 import { VSCodeButton, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
-import { useGlobalStateContext } from "./GlobalStateContext";
+import { useGlobalStateContext } from "../providers/GlobalStateProvider";
 
 function EditAndroidDevice({ className, installedAndroidImages }) {
   const { androidDevices, updateDevice } = useGlobalStateContext();

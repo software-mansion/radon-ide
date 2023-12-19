@@ -10,6 +10,7 @@ import "./DependenciesList.css";
 import CheckIcon from "./icons/CheckIcon";
 import CloseIcon from "./icons/CloseIcon";
 import PlayIcon from "./icons/PlayIcon";
+import { useDependencies } from "../providers/DependenciesProvider";
 
 function ConditionalIcon({ condition }) {
   return condition ? (
@@ -38,10 +39,12 @@ function InstallIosDependenciesButton({ iosDepsInstalling, setIosDepsInstalling 
   );
 }
 
-function DependenciesList({ dependencies, iosDepsInstalling, setIosDepsInstalling }) {
+function DependenciesList() {
+  const { dependencies, iosDepsInstalling, setIosDepsInstalling } = useDependencies();
+
   return (
     <ul>
-      <li className="section-header">--- IOS ---</li>
+      <li className="section-header">iOS</li>
       <li>
         <ConditionalIcon condition={dependencies.xcodebuild} />
         {dependencies.xcodebuild ? (
@@ -114,7 +117,7 @@ function DependenciesList({ dependencies, iosDepsInstalling, setIosDepsInstallin
           </div>
         )}
       </li>
-      <li className="section-header">--- ANDROID ---</li>
+      <li className="section-header">Android</li>
       <li>
         <ConditionalIcon condition={dependencies.androidEmulator} />
         {dependencies.androidEmulator ? (

@@ -10,14 +10,22 @@ interface IconButtonProps {
     label?: string;
     side?: "top" | "right" | "bottom" | "left";
   };
+  className?: string;
 }
 
-function IconButton({ children, onClick, tooltip, disabled, active }: IconButtonProps) {
+function IconButton({
+  children,
+  onClick,
+  tooltip,
+  disabled,
+  active,
+  className = "",
+}: IconButtonProps) {
   const button = (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`icon-button ${active ? "icon-button-selected" : ""}`}>
+      className={`icon-button ${active ? "icon-button-selected" : ""} ${className}`}>
       {children}
     </button>
   );

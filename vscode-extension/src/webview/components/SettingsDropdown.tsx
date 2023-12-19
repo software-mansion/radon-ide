@@ -4,12 +4,18 @@ import * as Switch from "@radix-ui/react-switch";
 
 import { vscode } from "../utilities/vscode";
 import "./SettingsDropdown.css";
+import { useModal } from "../providers/ModalProvider";
+
+import DiagnosticView from "../views/DiagnosticView";
+import AndroidImagesView from "../views/AndroidImagesView";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
 }
 
 function SettingsDropdown({ children }: SettingsDropdownProps) {
+  const { openModal } = useModal();
+
   const handleBuildCachingSwitch = (enabled: boolean) => {
     vscode.postMessage({
       command: "switchBuildCaching",
@@ -25,7 +31,14 @@ function SettingsDropdown({ children }: SettingsDropdownProps) {
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content className="dropdown-menu-content">
-          <DropdownMenu.Item className="dropdown-menu-item">Run diagnostics...</DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => {
+              // @ts-ignore TODO fix this
+              openModal("Diagnostics", <DiagnosticView />);
+            }}>
+            Run diagnostics...
+          </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={(e) => {
@@ -42,7 +55,12 @@ function SettingsDropdown({ children }: SettingsDropdownProps) {
             </div>
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="dropdown-menu-separator" />
-          <DropdownMenu.Item className="dropdown-menu-item">
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => {
+              // @ts-ignore TODO fix this
+              openModal("Manage Android SDKs", <AndroidImagesView />);
+            }}>
             Manage Android SDKs...
           </DropdownMenu.Item>
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />

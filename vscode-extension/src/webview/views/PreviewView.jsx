@@ -7,7 +7,7 @@ import UrlBar from "../components/UrlBar";
 import LogPanel from "../components/LogPanel";
 import LogCounter from "../components/LogCounter";
 import SettingsDropdown from "../components/SettingsDropdown";
-import { useGlobalStateContext } from "../components/GlobalStateContext";
+import { useGlobalStateContext } from "../providers/GlobalStateProvider";
 import "./View.css";
 import "./PreviewView.css";
 

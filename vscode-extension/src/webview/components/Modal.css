@@ -1,0 +1,71 @@
+/* reset */
+button,
+fieldset,
+input {
+  all: unset;
+}
+
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(1.4px);
+  position: fixed;
+  inset: 0;
+  animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-content {
+  background-color: var(--popover-background);
+  border-radius: 6px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  max-width: 450px;
+  max-height: 85vh;
+  padding: 25px;
+  animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-content:focus {
+  outline: none;
+}
+
+.modal-title {
+  margin: 0;
+  font-weight: 500;
+  color: var(--default-text);
+  font-size: 17px;
+}
+
+.modal-content-container {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+@keyframes overlayShow {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(1.4px);
+  }
+}
+
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
