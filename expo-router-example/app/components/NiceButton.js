@@ -1,5 +1,5 @@
 import { Button } from 'react-native';
-import { preview } from '@preview';
+import { preview } from 'react-native-ide';
 
 export function NiceButton({ color, onPress }) {
   return <Button title="Write logs" color={color} onPress={onPress} />;

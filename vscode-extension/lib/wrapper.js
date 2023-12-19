@@ -160,7 +160,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
         }
         const isRunningPreview = isPreviewUrl(sceneName);
         if (isRunningPreview) {
-          const preview = global.__rnp_previews.get(sceneName);
+          const preview = (global.__rnp_previews || new Map()).get(sceneName);
           agent._bridge.send("rnp_navigationChanged", {
             displayName: `preview:${preview.name}`, // TODO: make names unique if there are multiple previews of the same component
             id: sceneName,

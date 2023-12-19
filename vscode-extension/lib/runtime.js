@@ -16,8 +16,6 @@ global.ErrorUtils.setGlobalHandler(__rnpBreakOnError);
 
 global.__fbDisableExceptionsManager = true;
 
-global.__rnp_previews ||= new Map();
-
 function wrapConsole(consoleFunc) {
   return function (...args) {
     const location = parseErrorStack(new Error().stack)[1];

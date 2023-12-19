@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from 'react-native';
-import { preview } from '@preview';
+import { preview } from 'react-native-ide';
 
 export function UglyButton() {
   const [a, setA] = useState(0);
