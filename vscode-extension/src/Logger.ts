@@ -10,7 +10,7 @@ type ParsableMessage = Stringifiable | Object | unknown;
 
 type IncomingMessage = ParsableMessage[] | ParsableMessage;
 export class Logger {
-  private static outputChannel = window.createOutputChannel("react-native-sztudio", "javascript");
+  private static outputChannel = window.createOutputChannel("react-native-sztudio", { log: true });
   private static logLevel: LogLevel = "DEBUG";
   private static consoleLogEnabled: boolean = true;
 
