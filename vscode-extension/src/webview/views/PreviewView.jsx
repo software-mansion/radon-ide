@@ -10,6 +10,9 @@ import SettingsDropdown from "../components/SettingsDropdown";
 import { useGlobalStateContext } from "../providers/GlobalStateProvider";
 import "./View.css";
 import "./PreviewView.css";
+import { useModal } from "../providers/ModalProvider";
+import ManageDevicesView from "./ManageDevicesView";
+import { MANAGE_DEVICE_OPTION_NAME } from "../utilities/consts";
 
 function setCssPropertiesForDevice(device) {
   // top right bottom left
@@ -58,6 +61,7 @@ function PreviewView({ initialDevice }) {
   const [inspectData, setInspectData] = useState(null);
   const [isError, setIsError] = useState(false);
 
+  const { openModal } = useModal();
   const { state: globalState } = useGlobalStateContext();
 
   const device = useMemo(
@@ -140,6 +144,25 @@ function PreviewView({ initialDevice }) {
     });
   };
 
+  const handleDeviceDropdownChange = (e) => {
+    if (e.target.value === MANAGE_DEVICE_OPTION_NAME) {
+      openModal(MANAGE_DEVICE_OPTION_NAME, <ManageDevicesView />);
+      return;
+    }
+    if (device.id !== e.target.value) {
+      const newDevice = globalState?.devices.find((d) => d.id === e.target.value);
+      setDeviceId(newDevice.id);
+      setPreviewURL(undefined);
+      setIsError(false);
+      vscode.postMessage({
+        command: "changeDevice",
+        settings: deviceSettings,
+        deviceId: newDevice.id,
+        systemImagePath: newDevice?.systemImage?.path,
+      });
+    }
+  };
+
   return (
     <div className="panel-view">
       <div className="button-group-top">
@@ -214,27 +237,20 @@ function PreviewView({ initialDevice }) {
 
         <span className="group-separator" />
 
-        <VSCodeDropdown
-          onChange={(e) => {
-            if (device.id !== e.target.value) {
-              const newDevice = globalState?.devices.find((d) => d.id === e.target.value);
-              setDeviceId(newDevice.id);
-              setPreviewURL(undefined);
-              setIsError(false);
-              vscode.postMessage({
-                command: "changeDevice",
-                settings: deviceSettings,
-                deviceId: newDevice.id,
-                systemImagePath: newDevice?.systemImage?.path,
-              });
-            }
-          }}>
+        <VSCodeDropdown value={deviceId} onChange={handleDeviceDropdownChange}>
           <span slot="start" className="codicon codicon-device-mobile" />
           {globalState?.devices.map((device) => (
             <VSCodeOption key={device.id} value={device.id}>
               {device.name}
             </VSCodeOption>
           ))}
+          <div className="dropdown-separator"></div>
+          <VSCodeOption
+            appearance="secondary"
+            key={MANAGE_DEVICE_OPTION_NAME}
+            value={MANAGE_DEVICE_OPTION_NAME}>
+            {MANAGE_DEVICE_OPTION_NAME}
+          </VSCodeOption>
         </VSCodeDropdown>
 
         <div className="spacer" />

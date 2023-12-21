@@ -1,6 +1,8 @@
 import iphone14 from "../../assets/iphone14.png";
 import pixel7 from "../../assets/pixel7.png";
 
+export const MANAGE_DEVICE_OPTION_NAME = "Manage Devices";
+
 export const DEVICES = [
     {
         id: "ios-17-iphone-15pro",

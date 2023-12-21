@@ -8,6 +8,9 @@ import { useModal } from "../providers/ModalProvider";
 
 import DiagnosticView from "../views/DiagnosticView";
 import AndroidImagesView from "../views/AndroidImagesView";
+import ManageDevicesView from "../views/ManageDevicesView";
+
+import { MANAGE_DEVICE_OPTION_NAME } from '../utilities/consts';
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -62,6 +65,13 @@ function SettingsDropdown({ children }: SettingsDropdownProps) {
               openModal("Manage Android SDKs", <AndroidImagesView />);
             }}>
             Manage Android SDKs...
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => {
+              openModal(MANAGE_DEVICE_OPTION_NAME, <ManageDevicesView />);
+            }}>
+            {MANAGE_DEVICE_OPTION_NAME}
           </DropdownMenu.Item>
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>

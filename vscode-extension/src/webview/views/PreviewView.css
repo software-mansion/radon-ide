@@ -32,3 +32,10 @@
 .spacer {
   flex: 1;
 }
+
+.dropdown-separator {
+  width: 100%;
+  margin: 4px 0px;
+  height: 1px;
+  background-color: var(--separator);
+}
