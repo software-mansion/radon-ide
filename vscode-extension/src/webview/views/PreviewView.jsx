@@ -13,6 +13,7 @@ import "./PreviewView.css";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "./ManageDevicesView";
 import { MANAGE_DEVICE_OPTION_NAME } from "../utilities/consts";
+import { useSystemImagesContext } from "../providers/SystemImagesProvider";
 
 function setCssPropertiesForDevice(device) {
   // top right bottom left
@@ -63,6 +64,7 @@ function PreviewView({ initialDevice }) {
 
   const { openModal } = useModal();
   const { state: globalState } = useGlobalStateContext();
+  const { isDeviceImageInstalled } = useSystemImagesContext();
 
   const device = useMemo(
     () => globalState.devices.find((device) => deviceId === device.id),
@@ -240,7 +242,14 @@ function PreviewView({ initialDevice }) {
         <VSCodeDropdown value={deviceId} onChange={handleDeviceDropdownChange}>
           <span slot="start" className="codicon codicon-device-mobile" />
           {globalState?.devices.map((device) => (
-            <VSCodeOption key={device.id} value={device.id}>
+            <VSCodeOption
+              key={device.id}
+              value={device.id}
+              /*
+               * TODO: Uncomment as soon as we got no image fallback for devices
+               * disabled={!isDeviceImageInstalled(device)}
+               */
+            >
               {device.name}
             </VSCodeOption>
           ))}

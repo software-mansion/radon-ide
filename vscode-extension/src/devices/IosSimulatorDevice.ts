@@ -21,7 +21,7 @@ interface DeviceInfo {
   lastBootedAt?: string;
 }
 
-interface RuntimeInfo {
+export interface RuntimeInfo {
   bundlePath: string;
   buildversion: string;
   platform: "iOS" | "tvOS" | "watchOS";
@@ -148,7 +148,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 }
 
-async function getNewestAvailableRuntime() {
+export async function getNewestAvailableIosRuntime() {
   const runtimesData: { runtimes: Array<RuntimeInfo> } = JSON.parse(
     (await execaCommandWithLog(`xcrun simctl list runtimes --json`)).stdout
   );
@@ -159,6 +159,13 @@ async function getNewestAvailableRuntime() {
 
   // pick the newest runtime
   return availableRuntimes[0];
+}
+
+export async function removeIosRuntimes(runtimes: RuntimeInfo[]) {
+  const removalPromises = runtimes.map((runtime) => {
+    return execaWithLog("xcrun", ["simctl", "runtime", "delete", runtime.buildversion], {});
+  });
+  return Promise.all(removalPromises);
 }
 
 async function getNewestNonProIPhone() {
@@ -211,7 +218,7 @@ async function findOrCreateSimulator(deviceSetLocation: string) {
     const deviceType = await getNewestNonProIPhone();
 
     // second, select the newest runtime
-    const runtime = await getNewestAvailableRuntime();
+    const runtime = await getNewestAvailableIosRuntime();
 
     Logger.log(`Create simulator ${deviceType.name} with runtime ${runtime.name}`);
     // create new simulator with selected runtime

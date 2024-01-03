@@ -1,1 +1,35 @@
+.dropdown {
+    width: 300px;
+    margin-right: 12px;;
+}
 
+.container {
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.top-bar {
+    display: flex;
+    align-items: center;
+}
+
+.delete-icon {
+    color: var(--red-dark-80)
+}
+
+.missing-system-image-option {
+    background-color: var(--vscode-debugIcon-stopForeground);
+    color: var(--vscode-textBlockQuote-background);
+}
+
+.gap-right {
+    margin-right: 12px;
+}
+
+.non-exsiting-system-image-warning {
+    display: flex;
+    align-items: center;
+    color: var(--vscode-debugIcon-stopForeground);
+}

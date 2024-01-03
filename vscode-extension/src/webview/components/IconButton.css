@@ -50,6 +50,7 @@
   animation-duration: 300ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 1px 30px;
 }
 .tooltip-content[data-state="delayed-open"][data-side="top"] {
   animation-name: slideDownAndFade;

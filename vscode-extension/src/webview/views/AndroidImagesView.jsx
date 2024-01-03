@@ -1,65 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./View.css";
-import { vscode } from "../utilities/vscode";
 import { VSCodeButton, VSCodeCheckbox, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./AndroidImagesView.css";
 import EditAndroidDevice from "../components/EditAndroidDevice";
-import { useGlobalStateContext } from "../providers/GlobalStateProvider";
+import { useSystemImagesContext } from "../providers/SystemImagesProvider";
 
 function AndroidImagesView() {
-  const [availableImages, setAvailableImages] = useState([]);
-  const [installedImages, setInstalledImages] = useState([]);
   const [selectedImages, setSelectedImages] = useState([]);
-  const [imagesProcessStream, setImagesProcessStream] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { updateDevices, state: globalState } = useGlobalStateContext();
+  const {
+    androidImages: availableAndroidImages,
+    installedAndroidImages,
+    androidInstallationOutputStream,
+    loading,
+    processAndroidImageChanges,
+  } = useSystemImagesContext();
 
   useEffect(() => {
-    const listener = (event) => {
-      const message = event.data;
-      switch (message.command) {
-        case "allAndroidImagesListed":
-          setAvailableImages(message.availableImages);
-          setInstalledImages(message.installedImages);
-          setSelectedImages(message.installedImages);
-          break;
-        case "installProcessFinished":
-          setLoading(false);
-          setAvailableImages(message.availableImages);
-          setInstalledImages(message.installedImages);
-          setSelectedImages(message.installedImages);
-          setImagesProcessStream("");
-          break;
-        case "streamAndroidInstallationProgress":
-          setImagesProcessStream(message.stream);
-          break;
-      }
-    };
-
-    window.addEventListener("message", listener);
-
-    vscode.postMessage({
-      command: "listAllAndroidImages",
-    });
-
-    return () => window.removeEventListener("message", listener);
-  }, []);
-
-  useEffect(() => {
-    const devices = globalState?.devices;
-    if (!devices) return;
-    const newDevices = devices.map((device) => {
-      const isImageInstalled = !!installedImages.find(
-        (installedImage) => installedImage.path === device?.systemImage?.path
-      );
-      return isImageInstalled ? device : { ...device, systemImage: null };
-    });
-    updateDevices(newDevices);
-  }, [installedImages]);
+    setSelectedImages(installedAndroidImages);
+  }, [installedAndroidImages]);
 
   const isImageInstalled = useCallback(
-    (image) => installedImages.find((installedImage) => installedImage.path === image.path),
-    [installedImages]
+    (image) => installedAndroidImages.find((installedImage) => installedImage.path === image.path),
+    [installedAndroidImages]
   );
 
   const isImageChecked = useCallback(
@@ -89,13 +51,13 @@ function AndroidImagesView() {
   );
 
   const imagesToRemove = useMemo(
-    () => installedImages.filter((installedImage) => !isImageChecked(installedImage)),
-    [installedImages, isImageChecked]
+    () => installedAndroidImages.filter((installedImage) => !isImageChecked(installedImage)),
+    [installedAndroidImages, isImageChecked]
   );
 
-  const allImages = useMemo(
+  const allImagesSorted = useMemo(
     () =>
-      [...availableImages].sort((a, b) => {
+      [...availableAndroidImages].sort((a, b) => {
         if (a.apiLevel > b.apiLevel) {
           return -1;
         }
@@ -104,17 +66,8 @@ function AndroidImagesView() {
         }
         return 0;
       }),
-    [availableImages, installedImages]
+    [availableAndroidImages]
   );
-
-  const handleInstall = useCallback(() => {
-    setLoading(true);
-    vscode.postMessage({
-      command: "processAndroidImageChanges",
-      toRemove: imagesToRemove,
-      toInstall: imagesToInstall,
-    });
-  }, [imagesToInstall, imagesToRemove]);
 
   const renderIconForImage = (image) => {
     if (isImageChecked(image) && !isImageInstalled(image)) {
@@ -131,21 +84,23 @@ function AndroidImagesView() {
 
   return (
     <div className="panel-view">
-      {!installedImages.length ? (
+      {!installedAndroidImages.length ? (
         <VSCodeProgressRing />
       ) : (
-        <EditAndroidDevice installedAndroidImages={installedImages} className="section" />
+        <EditAndroidDevice installedAndroidImages={installedAndroidImages} className="section" />
       )}
       <div className="section">
         <VSCodeButton
           appearance="secondary"
           disabled={isInstallingDisabled}
-          onClick={handleInstall}>
+          onClick={() =>
+            processAndroidImageChanges({ toInstall: imagesToInstall, toRemove: imagesToRemove })
+          }>
           {loading ? <VSCodeProgressRing /> : "Install/Uninstall"}
         </VSCodeButton>
       </div>
       <div className="section">
-        {loading && !!imagesProcessStream.length && imagesProcessStream}
+        {loading && !!androidInstallationOutputStream.length && androidInstallationOutputStream}
       </div>
       <table>
         <tr>
@@ -154,7 +109,7 @@ function AndroidImagesView() {
           <th>Api Level</th>
           <th>Description</th>
         </tr>
-        {allImages.map((image) => (
+        {allImagesSorted.map((image) => (
           <tr key={image.path}>
             <td>{renderIconForImage(image)}</td>
             <td>

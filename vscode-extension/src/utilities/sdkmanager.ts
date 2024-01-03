@@ -120,7 +120,7 @@ export async function removeSystemImages(sysImagePaths: string[]) {
   const removalPromises = sysImagePaths.map((sysImagePath) => {
     const pathToRemove = path.join(ANDROID_HOME, sysImagePath);
     Logger.log(`Removing directory ${pathToRemove}`);
-    return execaWithLog(`rm -rf ${pathToRemove}`);
+    return execaWithLog("rm", ["-rf", pathToRemove], {});
   });
   return Promise.all(removalPromises);
 }

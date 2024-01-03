@@ -41,6 +41,11 @@ import { GlobalStateManager } from "./GlobalStateManager";
 import { DeviceSettings } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { generateWebviewContent } from "./webviewContentGenerator";
+import {
+  RuntimeInfo,
+  getNewestAvailableIosRuntime,
+  removeIosRuntimes,
+} from "../devices/IosSimulatorDevice";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
@@ -223,6 +228,8 @@ export class PreviewsPanel {
           case "processAndroidImageChanges":
             this._processAndroidImageChanges(message.toRemove, message.toInstall);
             return;
+          case "processIosRuntimeChanges":
+            this._processIosRuntimeChanges(message.toRemove, message.toInstall);
           case "switchBuildCaching":
             this._switchBuildCaching(message.enabled);
             return;
@@ -260,9 +267,23 @@ export class PreviewsPanel {
 
     const [installedImages, availableImages] = await getAndroidSystemImages();
     this._panel.webview.postMessage({
-      command: "installProcessFinished",
+      command: "androidInstallProcessFinished",
       installedImages,
       availableImages,
+    });
+  }
+
+  private async _processIosRuntimeChanges(toRemove: RuntimeInfo[], toInstall: string[]) {
+    if (!!toInstall.length) {
+      // TODO: implement
+    }
+
+    if (!!toRemove.length) {
+      await removeIosRuntimes(toRemove);
+    }
+
+    this._panel.webview.postMessage({
+      command: "iOSInstallProcessFinished",
     });
   }
 

@@ -2,8 +2,6 @@ import { Disposable, workspace, ExtensionContext, debug } from "vscode";
 import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
-import { buildIos } from "../builders/buildIOS";
-import { buildAndroid } from "../builders/buildAndroid";
 import { DeviceSettings } from "../devices/DeviceBase";
 import { getWorkspacePath } from "../utilities/common";
 import { Logger } from "../Logger";

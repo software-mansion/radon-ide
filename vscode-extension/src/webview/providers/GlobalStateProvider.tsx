@@ -1,26 +1,41 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { vscode } from "../utilities/vscode";
 import { DEVICES } from "../utilities/consts";
+import { Device } from "../utilities/device";
+import { Event } from "vscode";
 
-const GlobalStateContext = createContext({
+type GlobalState = {
+  devices: Device[]
+} | undefined;
+
+interface GlobalStateContextProps {
+  state: GlobalState;
+  devices: Device[];
+  androidDevices: Device[];
+  updateDevice: (device: Device) => void;
+  updateDevices: (devices: Device[]) => void;
+}
+
+const GlobalStateContext = createContext<GlobalStateContextProps>({
   state: undefined,
+  devices: [],
   androidDevices: [],
-  updateDevice: (device) => null,
-  updateDevices: (devices) => null,
+  updateDevice: (device: Device) => undefined,
+  updateDevices: (devices: Device[]) => undefined,
 });
 
-export default function GlobalStateProvider({ children }) {
-  const [localState, setLocalState] = useState(undefined);
+export default function GlobalStateProvider({ children }: PropsWithChildren) {
+  const [localState, setLocalState] = useState<GlobalState>(undefined);
 
   // Load state to local useState from persisting vscode storage.
   useEffect(() => {
-    const listener = (event) => {
+    const listener = (event: any) => {
       const message = event.data;
       switch (message.command) {
         case "getState":
           const persistedState = null; //message.state;
           if (!persistedState) {
-            const newState = { devices: DEVICES };
+            const newState: GlobalState = { devices: DEVICES as Device[] };
             vscode.postMessage({
               command: "setState",
               state: newState,
@@ -51,16 +66,18 @@ export default function GlobalStateProvider({ children }) {
   }, [localState]);
 
   const androidDevices = useMemo(
-    () => localState?.devices?.filter((device) => device.platform === "Android") ?? [],
+    () => localState?.devices?.filter((device: Device) => device.platform === "Android") ?? [],
     [localState]
   );
 
+  const devices = useMemo(() => localState?.devices ?? [], [localState]);
+
   const updateDevice = useCallback(
-    (device) => {
-      const currentDevices = [...localState.devices];
-      if (!currentDevices) {
+    (device: Device) => {
+      if (!localState?.devices) {
         return;
       }
+      const currentDevices = [...localState.devices];
 
       const indexOfDevice = currentDevices.findIndex(
         (currentDevice) => currentDevice.id === device.id
@@ -70,13 +87,13 @@ export default function GlobalStateProvider({ children }) {
       }
 
       currentDevices[indexOfDevice] = device;
-      setLocalState((current) => ({ ...current, devices: currentDevices }));
+      setLocalState((current: any) => ({ ...current, devices: currentDevices }));
     },
     [localState]
   );
 
-  const updateDevices = useCallback((devices) => {
-    setLocalState((current) => ({ ...current, devices: devices }));
+  const updateDevices = useCallback((devices: Device[]) => {
+    setLocalState((current: any) => ({ ...current, devices: devices }));
   }, []);
 
   const value = useMemo(
@@ -85,13 +102,19 @@ export default function GlobalStateProvider({ children }) {
       androidDevices,
       updateDevice,
       updateDevices,
+      devices,
     }),
-    [localState, androidDevices, updateDevice, updateDevices]
+    [localState, androidDevices, updateDevice, updateDevices, devices]
   );
 
   return <GlobalStateContext.Provider value={value}>{children}</GlobalStateContext.Provider>;
 }
 
 export function useGlobalStateContext() {
-  return useContext(GlobalStateContext);
+  const context = useContext(GlobalStateContext);
+
+  if (context === undefined) {
+    throw new Error("useGlobalStateContext must be used within a GlobalStateProvider");
+  }
+  return context;
 }

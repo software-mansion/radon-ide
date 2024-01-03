@@ -1,0 +1,12 @@
+.button-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 40px;
+    margin-top: 12px;
+}
+
+.confirmation-button {
+    width: 100px;
+}
