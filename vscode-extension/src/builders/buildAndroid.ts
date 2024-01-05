@@ -34,11 +34,6 @@ function getApkPath(workspaceDir: string) {
   return path.join(androidSourceDir, RELATIVE_APK_PATH);
 }
 
-export function isAndroidBuilded(workspaceDir: string) {
-  const apkPath = getApkPath(workspaceDir);
-  return fs.existsSync(apkPath);
-}
-
 export async function getAndroidBuildPaths(workspaceDir: string) {
   const apkPath = getApkPath(workspaceDir);
   const packageName = await extractPackageName(apkPath);

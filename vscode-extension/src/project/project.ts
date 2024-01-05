@@ -6,6 +6,7 @@ import { DeviceSettings } from "../devices/DeviceBase";
 import { getWorkspacePath } from "../utilities/common";
 import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
+import { GlobalStateManager } from "../panels/GlobalStateManager";
 
 export interface EventMonitor {
   onLogReceived: (message: { type: string }) => void;
@@ -45,11 +46,7 @@ export class Project implements Disposable {
     this.metro?.reload();
   }
 
-  public switchBuildCaching(enabled: boolean) {
-    this.buildManager?.setCheckCache(enabled);
-  }
-
-  public async start() {
+  public async start(globalStateManager: GlobalStateManager, buildCaching?: boolean) {
     let workspaceDir = getWorkspacePath();
     if (!workspaceDir) {
       Logger.warn("No workspace directory found");
@@ -57,7 +54,7 @@ export class Project implements Disposable {
     }
 
     if (!this.buildManager) {
-      this.buildManager = new BuildManager(workspaceDir);
+      this.buildManager = new BuildManager(workspaceDir, globalStateManager);
     }
 
     this.devtools = new Devtools();
@@ -65,8 +62,7 @@ export class Project implements Disposable {
     this.metro = new Metro(workspaceDir, this.context.extensionPath, this.devtools.port);
 
     Logger.log("Launching builds");
-
-    await this.buildManager.startBuilding();
+    await this.buildManager.startBuilding(buildCaching);
 
     this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {

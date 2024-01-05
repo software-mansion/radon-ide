@@ -1,17 +1,43 @@
-import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  PropsWithChildren,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { vscode } from "../utilities/vscode";
 import { DEVICES } from "../utilities/consts";
 import { Device } from "../utilities/device";
-import { Event } from "vscode";
+import { IosBuild } from "../../utilities/ios";
+import { AndroidBuild } from "../../utilities/android";
 
-type GlobalState = {
-  devices: Device[]
-} | undefined;
+type GlobalState =
+  | {
+      devices: Device[];
+      buildCache?: {
+        enabled?: boolean;
+        iOS?: {
+          build?: IosBuild;
+          buildHash?: string;
+          fingerprintHash?: string;
+        };
+        android?: {
+          build?: AndroidBuild;
+          buildHash?: string;
+          fingerprintHash?: string;
+        };
+      };
+    }
+  | undefined;
 
 interface GlobalStateContextProps {
   state: GlobalState;
   devices: Device[];
   androidDevices: Device[];
+  buildCacheEnabled: boolean;
+  switchBuildCache: () => void;
   updateDevice: (device: Device) => void;
   updateDevices: (devices: Device[]) => void;
 }
@@ -20,6 +46,8 @@ const GlobalStateContext = createContext<GlobalStateContextProps>({
   state: undefined,
   devices: [],
   androidDevices: [],
+  buildCacheEnabled: false,
+  switchBuildCache: () => undefined,
   updateDevice: (device: Device) => undefined,
   updateDevices: (devices: Device[]) => undefined,
 });
@@ -35,7 +63,10 @@ export default function GlobalStateProvider({ children }: PropsWithChildren) {
         case "getState":
           const persistedState = null; //message.state;
           if (!persistedState) {
-            const newState: GlobalState = { devices: DEVICES as Device[] };
+            const newState: GlobalState = {
+              devices: DEVICES as Device[],
+              buildCache: { enabled: true },
+            };
             vscode.postMessage({
               command: "setState",
               state: newState,
@@ -59,10 +90,12 @@ export default function GlobalStateProvider({ children }: PropsWithChildren) {
 
   // Synchronize local state with the persistent one.
   useEffect(() => {
-    vscode.postMessage({
-      command: "setState",
-      state: localState,
-    });
+    if (localState) {
+      vscode.postMessage({
+        command: "setState",
+        state: localState,
+      });
+    }
   }, [localState]);
 
   const androidDevices = useMemo(
@@ -96,6 +129,17 @@ export default function GlobalStateProvider({ children }: PropsWithChildren) {
     setLocalState((current: any) => ({ ...current, devices: devices }));
   }, []);
 
+  const buildCacheEnabled = useMemo(() => {
+    return !!localState?.buildCache?.enabled;
+  }, [localState]);
+
+  const switchBuildCache = useCallback(() => {
+    setLocalState((current: any) => ({
+      ...current,
+      buildCache: { ...current.buildCache, enabled: !buildCacheEnabled },
+    }));
+  }, [buildCacheEnabled]);
+
   const value = useMemo(
     () => ({
       state: localState,
@@ -103,8 +147,18 @@ export default function GlobalStateProvider({ children }: PropsWithChildren) {
       updateDevice,
       updateDevices,
       devices,
+      buildCacheEnabled,
+      switchBuildCache,
     }),
-    [localState, androidDevices, updateDevice, updateDevices, devices]
+    [
+      localState,
+      androidDevices,
+      updateDevice,
+      updateDevices,
+      devices,
+      buildCacheEnabled,
+      switchBuildCache,
+    ]
   );
 
   return <GlobalStateContext.Provider value={value}>{children}</GlobalStateContext.Provider>;

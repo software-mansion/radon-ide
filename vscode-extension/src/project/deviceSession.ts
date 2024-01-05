@@ -13,6 +13,8 @@ import {
   IOS_FAIL_ERROR_MESSAGE,
   isDeviceIOS,
 } from "../utilities/common";
+import { IosBuild } from "../utilities/ios";
+import { AndroidBuild } from "../utilities/android";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
@@ -34,8 +36,8 @@ export class DeviceSession implements Disposable {
   }
 
   async start(
-    iosBuild: Promise<{ appPath: string; bundleID: string }>,
-    androidBuild: Promise<{ apkPath: string; packageName: string }>,
+    iosBuild: Promise<IosBuild>,
+    androidBuild: Promise<AndroidBuild>,
     settings: DeviceSettings,
     systemImagePath: string
   ) {

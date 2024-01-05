@@ -63,8 +63,7 @@ function PreviewView({ initialDevice }) {
   const [isError, setIsError] = useState(false);
 
   const { openModal } = useModal();
-  const { state: globalState } = useGlobalStateContext();
-  const { isDeviceImageInstalled } = useSystemImagesContext();
+  const { state: globalState, buildCacheEnabled } = useGlobalStateContext();
 
   const device = useMemo(
     () => globalState.devices.find((device) => deviceId === device.id),
@@ -130,6 +129,7 @@ function PreviewView({ initialDevice }) {
       settings: INITIAL_DEVICE_SETTINGS,
       deviceId: initialDevice.id,
       systemImagePath: initialDevice.systemImage,
+      buildCaching: buildCacheEnabled,
     });
 
     return () => window.removeEventListener("message", listener);

@@ -11,6 +11,7 @@ import AndroidImagesView from "../views/AndroidImagesView";
 import ManageDevicesView from "../views/ManageDevicesView";
 
 import { MANAGE_DEVICE_OPTION_NAME } from '../utilities/consts';
+import { useGlobalStateContext } from "../providers/GlobalStateProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -18,13 +19,7 @@ interface SettingsDropdownProps {
 
 function SettingsDropdown({ children }: SettingsDropdownProps) {
   const { openModal } = useModal();
-
-  const handleBuildCachingSwitch = (enabled: boolean) => {
-    vscode.postMessage({
-      command: "switchBuildCaching",
-      enabled,
-    });
-  };
+  const { switchBuildCache, buildCacheEnabled } = useGlobalStateContext();
 
   return (
     <DropdownMenu.Root>
@@ -51,8 +46,8 @@ function SettingsDropdown({ children }: SettingsDropdownProps) {
             <div className="right-slot">
               <Switch.Root
                 className="switch-root"
-                defaultChecked
-                onCheckedChange={handleBuildCachingSwitch}>
+                checked={buildCacheEnabled}
+                onCheckedChange={switchBuildCache}>
                 <Switch.Thumb className="switch-thumb" />
               </Switch.Root>
             </div>

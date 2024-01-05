@@ -41,17 +41,14 @@ import { GlobalStateManager } from "./GlobalStateManager";
 import { DeviceSettings } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { generateWebviewContent } from "./webviewContentGenerator";
-import {
-  RuntimeInfo,
-  getNewestAvailableIosRuntime,
-  removeIosRuntimes,
-} from "../devices/IosSimulatorDevice";
+import { RuntimeInfo, removeIosRuntimes } from "../devices/IosSimulatorDevice";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
-  private readonly project: Project;
   private readonly globalStateManager: GlobalStateManager;
+  private readonly context: ExtensionContext;
+  private project: Project;
   private disposables: Disposable[] = [];
   private projectStarted = false;
 
@@ -59,6 +56,7 @@ export class PreviewsPanel {
 
   private constructor(panel: WebviewPanel, context: ExtensionContext) {
     this._panel = panel;
+    this.context = context;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
@@ -153,7 +151,12 @@ export class PreviewsPanel {
           case "log":
             return;
           case "startProject":
-            this._startProject(message.deviceId, message.settings, message.systemImagePath);
+            this._startProject(
+              message.deviceId,
+              message.settings,
+              message.systemImagePath,
+              message.buildCaching
+            );
             return;
           case "debugResume":
             debug.activeDebugSession?.customRequest("continue");
@@ -230,18 +233,11 @@ export class PreviewsPanel {
             return;
           case "processIosRuntimeChanges":
             this._processIosRuntimeChanges(message.toRemove, message.toInstall);
-          case "switchBuildCaching":
-            this._switchBuildCaching(message.enabled);
-            return;
         }
       },
       undefined,
       this.disposables
     );
-  }
-
-  private _switchBuildCaching(enabled: boolean) {
-    this.project.switchBuildCaching(enabled);
   }
 
   private async _processAndroidImageChanges(
@@ -304,14 +300,19 @@ export class PreviewsPanel {
     });
   }
 
-  private async _startProject(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
+  private async _startProject(
+    deviceId: string,
+    settings: DeviceSettings,
+    systemImagePath: string,
+    buildCaching: boolean
+  ) {
     // in dev mode, react may trigger this message twice as it comes from useEffect
     // we need to make sure we don't start the project twice
     if (this.projectStarted) {
       return;
     }
     this.projectStarted = true;
-    await this.project.start();
+    await this.project.start(this.globalStateManager, buildCaching);
     this.project.addEventMonitor({
       onLogReceived: (message) => {
         this._panel.webview.postMessage({
@@ -361,8 +362,10 @@ export class PreviewsPanel {
 
   private async _resetProject(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
     this.project.dispose();
+    this.projectStarted = false;
+    this.project = new Project(this.context);
     await this._handlePrerequisites();
-    this._startProject(deviceId, settings, systemImagePath);
+    this._startProject(deviceId, settings, systemImagePath, false);
   }
 
   private async _handlePrerequisites() {
