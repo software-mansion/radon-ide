@@ -71,7 +71,7 @@ export class BuildManager {
     try {
       const buildResult = await buildPromise;
       const newHash = (await calculateMD5(buildResult.apkPath)).digest("hex");
-      Logger.log(["Android hash", newHash]);
+      Logger.log("Android hash", newHash);
       this.globalStateManager.updateState((state: any) => ({
         ...state,
         buildCache: {
@@ -108,7 +108,7 @@ export class BuildManager {
         const hash = (await calculateMD5(build.appPath)).digest("hex");
 
         if (hash === buildHash) {
-          Logger.log("Cache hit on ios build. Using existing build.");
+          Logger.debug("Cache hit on ios build. Using existing build.");
           this.handleFinishedIosBuild(build, newFingerprint);
           return build;
         }
@@ -127,7 +127,7 @@ export class BuildManager {
     try {
       const buildResult = await buildPromise;
       const newHash = (await calculateMD5(buildResult.appPath)).digest("hex");
-      Logger.log(["IOS hash", newHash]);
+      Logger.debug("IOS hash", newHash);
       this.globalStateManager.updateState((state: any) => ({
         ...state,
         buildCache: {
@@ -152,7 +152,7 @@ export class BuildManager {
   }
 
   public async startBuilding(buildCaching?: boolean) {
-    Logger.log(["Build caching enabled:", buildCaching]);
+    Logger.debug("Build caching enabled:", buildCaching);
     const newFingerprintHash = await this._generateFingerprint();
     if (!buildCaching) {
       this.iOSBuild = this._prepareIosBuild();

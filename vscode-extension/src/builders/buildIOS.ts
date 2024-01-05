@@ -4,17 +4,17 @@ import loadConfig from "@react-native-community/cli-config";
 
 import { BuildFlags, buildProject } from "./buildProject";
 import { getConfigurationScheme } from "@react-native-community/cli-platform-ios/build/tools/getConfigurationScheme";
-import { execFileSyncWithLog, execWithLog, execaWithLog } from "../utilities/subprocess";
+import { command, exec } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 
 async function getBundleID(appPath: string) {
   return (
-    await execaWithLog("/usr/libexec/PlistBuddy", [
+    await exec("/usr/libexec/PlistBuddy", [
       "-c",
       "Print:CFBundleIdentifier",
       path.join(appPath, "Info.plist"),
     ])
-  ).stdout.trim();
+  ).stdout;
 }
 
 export async function buildIos(workspaceDir: string) {
@@ -28,7 +28,7 @@ export async function buildIos(workspaceDir: string) {
 
   const scheme = path.basename(xcodeProject.name, path.extname(xcodeProject.name)) as string;
 
-  Logger.log(
+  Logger.debug(
     `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${xcodeProject.name}"`
   );
 
@@ -62,7 +62,7 @@ async function getTargetPaths(buildSettings: string, scheme: string, target: str
 
   if (target) {
     if (!targets.includes(target)) {
-      Logger.log(
+      Logger.debug(
         `Target ${target} not found for scheme ${scheme}, automatically selected target ${selectedTarget}`
       );
     } else {
@@ -95,7 +95,7 @@ async function getBuildPath(
   target: string | undefined,
   isCatalyst: boolean = false
 ) {
-  const buildSettings = execFileSyncWithLog(
+  const buildSettings = await exec(
     "xcodebuild",
     [
       xcodeProject.isWorkspace ? "-workspace" : "-project",
@@ -113,7 +113,7 @@ async function getBuildPath(
   );
 
   const { targetBuildDir, executableFolderPath } = await getTargetPaths(
-    buildSettings.toString(),
+    buildSettings.stdout,
     scheme,
     target
   );
@@ -148,7 +148,7 @@ export async function installIOSDependencies(workspaceDir: string) {
     throw new Error(`ios directory was not found inside the workspace.`);
   }
 
-  return execWithLog("pod install", {
+  return command("pod install", {
     cwd: iosDirPath,
     env: {
       ...process.env,

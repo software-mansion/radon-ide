@@ -1,6 +1,5 @@
 import { IOSProjectInfo } from "@react-native-community/cli-types";
-import type { ChildProcess } from "child_process";
-import { execSyncWithLog, spawnWithLog } from "../utilities/subprocess";
+import { exec } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { IOS_FAIL_ERROR_MESSAGE } from "../utilities/common";
 
@@ -44,16 +43,7 @@ export function buildProject(
       xcodebuildArgs.push(...args.extraParams);
     }
 
-    Logger.log(`Building using "xcodebuild ${xcodebuildArgs.join(" ")}`);
-    let xcodebuildOutputFormatter: ChildProcess | any;
-    if (!args.verbose) {
-      if (xcbeautifyAvailable()) {
-        xcodebuildOutputFormatter = spawnWithLog("xcbeautify", [], {});
-      } else if (xcprettyAvailable()) {
-        xcodebuildOutputFormatter = spawnWithLog("xcpretty", [], {});
-      }
-    }
-
+    Logger.debug(`Building using "xcodebuild ${xcodebuildArgs.join(" ")}`);
     const processOptions = {
       env: {
         ...process.env,
@@ -63,44 +53,20 @@ export function buildProject(
       cwd: args.buildCwd,
     };
 
-    const buildProcess = spawnWithLog("xcodebuild", xcodebuildArgs, processOptions);
+    const buildProcess = exec("xcodebuild", xcodebuildArgs, processOptions);
     let buildOutput = "";
     buildProcess.stdout?.on("data", (data: Buffer) => {
       const stringData = data.toString();
       buildOutput += stringData;
-      if (xcodebuildOutputFormatter) {
-        xcodebuildOutputFormatter.stdin.write(data);
-      }
     });
 
     buildProcess.on("close", (code: number) => {
-      if (xcodebuildOutputFormatter) {
-        xcodebuildOutputFormatter.stdin.end();
-      }
       if (code !== 0) {
         reject(new Error(`${IOS_FAIL_ERROR_MESSAGE} Failed to build iOS project.`));
         return;
       }
-      Logger.log("Successfully built the app");
+      Logger.debug("Successfully built the app");
       resolve(buildOutput);
     });
   });
-}
-
-function xcbeautifyAvailable() {
-  try {
-    execSyncWithLog("xcbeautify --version");
-  } catch (error) {
-    return false;
-  }
-  return true;
-}
-
-function xcprettyAvailable() {
-  try {
-    execSyncWithLog("xcpretty --version");
-  } catch (error) {
-    return false;
-  }
-  return true;
 }

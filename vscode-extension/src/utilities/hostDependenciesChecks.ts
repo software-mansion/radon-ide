@@ -4,13 +4,13 @@ import { getWorkspacePath } from "./common";
 import fs from "fs";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 
-import { execWithLog } from "./subprocess";
+import { command } from "./subprocess";
 import { Logger } from "../Logger";
 
-async function checkIfCLIInstalled(command: string) {
+async function checkIfCLIInstalled(cmd: string) {
   try {
     // We are not checking the stderr here, because some of the CLIs put the warnings there.
-    const { stdout } = await execWithLog(command, { encoding: "utf8" });
+    const { stdout } = await command(cmd, { encoding: "utf8" });
     return !!stdout.length;
   } catch (_) {
     return false;
@@ -37,7 +37,7 @@ export async function checkIosDependenciesInstalled() {
   const ctx = loadConfig(getWorkspacePath());
   const iosDirPath = ctx.project.ios?.sourceDir;
 
-  Logger.log(`Check pods in ${iosDirPath} ${getWorkspacePath()}`);
+  Logger.debug(`Check pods in ${iosDirPath} ${getWorkspacePath()}`);
   if (!iosDirPath) {
     return false;
   }

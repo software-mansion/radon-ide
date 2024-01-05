@@ -61,7 +61,7 @@ export class Project implements Disposable {
     await this.devtools.start();
     this.metro = new Metro(workspaceDir, this.context.extensionPath, this.devtools.port);
 
-    Logger.log("Launching builds");
+    Logger.debug("Launching builds");
     await this.buildManager.startBuilding(buildCaching);
 
     this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
@@ -84,9 +84,9 @@ export class Project implements Disposable {
       }
     });
 
-    Logger.log(`Launching metro`);
+    Logger.debug(`Launching metro`);
     await this.metro.start();
-    Logger.log(`Metro started on port ${this.metro.port} devtools on port ${this.devtools.port}`);
+    Logger.debug(`Metro started on port ${this.metro.port} devtools on port ${this.devtools.port}`);
   }
 
   public sendTouch(deviceId: string, xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
@@ -121,7 +121,7 @@ export class Project implements Disposable {
   }
 
   public async selectDevice(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
-    Logger.log(`Device selected ${deviceId}, with system image Path: ${systemImagePath}`);
+    Logger.debug(`Device selected ${deviceId}, with system image Path: ${systemImagePath}`);
     this.session?.dispose();
     this.session = new DeviceSession(this.context, deviceId, this.devtools!, this.metro!);
     await this.session.start(

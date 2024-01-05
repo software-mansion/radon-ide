@@ -10,11 +10,11 @@ import { Project } from "./project/project";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
-import { Logger } from "./Logger";
+import { Logger, enableDevModeLogging } from "./Logger";
 import vscode from "vscode";
 
 function handleError(error: Error | any) {
-  Logger.openOutputChannel();
+  Logger.openOutputPanel();
   vscode.window.showErrorMessage("Internal extension error.", "Dismiss");
 }
 
@@ -29,9 +29,10 @@ function handleUncaughtErrors() {
 }
 
 export function activate(context: ExtensionContext) {
-  Logger.setLogLevel("INFO");
-  Logger.changeConsoleLogMode(true);
   handleUncaughtErrors();
+  if (context.extensionMode === vscode.ExtensionMode.Development) {
+    enableDevModeLogging();
+  }
 
   const showPreviewsPanel = commands.registerCommand(
     "RNStudio.showPreviewsPanel",

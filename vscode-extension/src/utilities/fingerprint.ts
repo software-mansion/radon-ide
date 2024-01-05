@@ -1,6 +1,5 @@
 import path from "path";
 import { Logger } from "../Logger";
-import { execWithLog } from "./subprocess";
 import { getWorkspacePath } from "./common";
 import { createFingerprintAsync } from "@expo/fingerprint";
 
@@ -17,6 +16,6 @@ export async function generateWorkspaceFingerprint() {
   const fingerprint = await createFingerprintAsync(getWorkspacePath(), {
     ignorePaths: IGNORE_PATHS,
   });
-  Logger.log(["FINGERPRINT: ----------------", fingerprint.hash, "------------------"]);
+  Logger.log("FINGERPRINT: ----------------", fingerprint.hash, "------------------");
   return fingerprint.hash;
 }

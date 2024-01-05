@@ -1,8 +1,7 @@
-import { ChildProcess } from "child_process";
 import path from "path";
 import readline from "readline";
 import { Disposable } from "vscode";
-import { spawnWithLog } from "../utilities/subprocess";
+import { exec, ChildProcess } from "../utilities/subprocess";
 
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
@@ -23,7 +22,7 @@ export class Metro implements Disposable {
   }
 
   public async start() {
-    this.subprocess = spawnWithLog(
+    this.subprocess = exec(
       "node",
       [
         path.join(this.extensionRoot, "lib/metro.js"),

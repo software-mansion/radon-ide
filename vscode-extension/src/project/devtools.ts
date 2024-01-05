@@ -19,24 +19,24 @@ export class Devtools implements Disposable {
     const wss = new WebSocketServer({ server: this.server });
 
     wss.on("connection", (ws: any) => {
-      Logger.log("Devtools client connected");
+      Logger.debug("Devtools client connected");
       this.socket = ws;
 
       // When data is received from a client
       ws.on("message", (message: string) => {
         try {
           const { event, payload } = JSON.parse(message);
-          Logger.log(`Devtools msg ${event}`);
+          Logger.debug(`Devtools msg ${event}`);
           this.listeners.forEach((listener) => listener(event, payload));
         } catch (e) {
-          Logger.error(["Error", e], "Devtools websocket");
+          Logger.error( "Error while handling devtools websocket message", e);
         }
       });
     });
 
     this.addListener((event, payload) => {
       if (event === "rnp_appReady") {
-        Logger.log("App ready");
+        Logger.debug("App ready");
         const { appKey } = payload;
         if (appKey !== "main") {
           // PreviewsPanel.currentPanel?.notifyAppUrlChanged(appKey);

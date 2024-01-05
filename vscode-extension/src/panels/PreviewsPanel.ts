@@ -145,7 +145,7 @@ export class PreviewsPanel {
       (message: any) => {
         const command = message.command;
 
-        Logger.log(`Extension received a message with command ${command}.`);
+        Logger.debug(`Extension received a message with command ${command}.`);
 
         switch (command) {
           case "log":
@@ -377,7 +377,7 @@ export class PreviewsPanel {
 
     const dependenciesDiagnostic = await this._checkDependencies();
 
-    Logger.log(["Dependencies checked", dependenciesDiagnostic]);
+    Logger.debug("Dependencies checked", dependenciesDiagnostic);
     this._panel.webview.postMessage({
       command: "checkedDependencies",
       dependencies: dependenciesDiagnostic,
@@ -409,7 +409,7 @@ export class PreviewsPanel {
         command: "installationComplete",
       });
     } catch (e) {
-      Logger.error(e);
+      Logger.error("Error installing iOS dependencies", e);
       this._panel.webview.postMessage({
         command: "installationComplete",
       });
@@ -448,7 +448,7 @@ export class PreviewsPanel {
   }
 
   private _onActiveFileChange(filename: string) {
-    Logger.log(`LastEditor ${filename}`);
+    Logger.debug(`LastEditor ${filename}`);
     this.project.onActiveFileChange(filename, this.followEnabled);
   }
 

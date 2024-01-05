@@ -1,96 +1,78 @@
 import { window } from "vscode";
 
-export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
+const outputChannel = window.createOutputChannel("React Native IDE", { log: true });
 
-type Stringifiable = {
-  toString: () => string;
+const logger = {
+  log(message: string, ...args: any[]) {},
+
+  debug(message: string, ...args: any[]) {
+    // For the time being, we promote all 'debug' logs to 'info' level such that they show up by default
+    // without the user changing the log level setting.
+    outputChannel.info(message, ...args);
+  },
+
+  info(message: string, ...args: any[]) {
+    outputChannel.info(message, ...args);
+  },
+
+  warn(message: string, ...args: any[]) {
+    outputChannel.error(message, ...args);
+  },
+
+  error(message: string, ...args: any[]) {
+    outputChannel.error(message, ...args);
+  },
+
+  openOutputPanel() {
+    outputChannel.show();
+  },
 };
 
-type ParsableMessage = Stringifiable | Object | unknown;
+let devModeLoggingEnabled = false;
 
-type IncomingMessage = ParsableMessage[] | ParsableMessage;
+export function enableDevModeLogging() {
+  if (devModeLoggingEnabled) {
+    return;
+  }
+  devModeLoggingEnabled = true;
+
+  function wrapConsole(methodName: "log" | "debug" | "info" | "warn" | "error") {
+    const origMethod = logger[methodName];
+    const consoleMethod = console[methodName !== "debug" ? methodName : "log"];
+    logger[methodName] = (message: string, ...args: any[]) => {
+      origMethod(message, ...args);
+      consoleMethod(message, ...args);
+    };
+  }
+
+  ["log", "debug", "info", "warn", "error"].forEach(wrapConsole);
+}
+
 export class Logger {
-  private static outputChannel = window.createOutputChannel("react-native-sztudio", { log: true });
-  private static logLevel: LogLevel = "DEBUG";
-  private static consoleLogEnabled: boolean = true;
-
-  private static _parseMessage(message: ParsableMessage) {
-    if (typeof message === "object" && !!message) {
-      return JSON.stringify(message);
-    }
-
-    if (message?.toString) {
-      return message.toString();
-    }
-
-    return message;
+  public static openOutputPanel() {
+    logger.openOutputPanel();
   }
 
-  private static _parseArguments(messageParams: IncomingMessage) {
-    if (Array.isArray(messageParams)) {
-      const parsedParams = messageParams.map((message) => Logger._parseMessage(message));
-
-      return parsedParams.join(" ");
-    }
-
-    return Logger._parseMessage(messageParams);
+  // Logs will only appear in development output
+  public static log(message: string, ...args: any[]) {
+    logger.log(message, ...args);
   }
 
-  public static changeConsoleLogMode(enabled: boolean) {
-    this.consoleLogEnabled = enabled;
+  // Debug is for verbose messaging that can be seen by the extension user if they have DEBUG logging level specified
+  public static debug(message: string, ...args: any[]) {
+    logger.debug(message, ...args);
   }
 
-  public static openOutputChannel() {
-    this.outputChannel.show();
+  // Info and other type of messages will be visible by the extension user by default
+  public static info(message: string, ...args: any[]) {
+    logger.info(message, ...args);
   }
 
-  public static setLogLevel(logLevel: LogLevel) {
-    Logger.logLevel = logLevel;
+  public static warn(message: string, ...args: any[]) {
+    logger.warn(message, ...args);
   }
 
-  public static error(messageParams: IncomingMessage, source?: string) {
-    Logger.logMessage(messageParams, "ERROR", source);
-  }
-
-  public static warn(messageParams: IncomingMessage, source?: string) {
-    if (Logger.logLevel === "ERROR") {
-      return;
-    }
-    Logger.logMessage(messageParams, "WARN", source);
-  }
-
-  public static log(messageParams: IncomingMessage, source?: string) {
-    if (Logger.logLevel === "ERROR" || Logger.logLevel === "WARN") {
-      return;
-    }
-    Logger.logMessage(messageParams, "INFO", source);
-  }
-
-  public static debug(messageParams: IncomingMessage, source?: string) {
-    if (Logger.logLevel === "ERROR" || Logger.logLevel === "WARN" || Logger.logLevel === "INFO") {
-      return;
-    }
-    Logger.logMessage(messageParams, "DEBUG", source);
-  }
-
-  private static logMessage(messageParams: IncomingMessage, logLevel: LogLevel, source?: string) {
-    const message = Logger._parseArguments(messageParams);
-    const logDate = new Date();
-    const formattedDate = `${logDate.toLocaleDateString()} ${logDate.toLocaleTimeString()}`;
-
-    const outputString = `${formattedDate} [${logLevel}] ${
-      !!source?.length ? `(${source})` : ""
-    } ${message}`;
-
-    if (Logger.consoleLogEnabled) {
-      if (logLevel === "DEBUG" || logLevel === "INFO") {
-        console.log(outputString);
-      } else if (logLevel === "WARN") {
-        console.warn(outputString);
-      } else {
-        console.error(outputString);
-      }
-    }
-    Logger.outputChannel.appendLine(outputString);
+  public static error(message: string, ...args: any[]) {
+    logger.error(message, ...args);
   }
 }

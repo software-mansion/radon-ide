@@ -7,7 +7,7 @@ export async function openFileAtPosition(
   column0Based: number
 ) {
   const existingDocument = workspace.textDocuments.find((document) => {
-    Logger.log(`Existing document list ${document.uri.fsPath}`);
+    Logger.debug(`Existing document list ${document.uri.fsPath}`);
     return document.uri.fsPath === filePath;
   });
 

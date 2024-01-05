@@ -2,8 +2,7 @@ import loadConfig from "@react-native-community/cli-config";
 import { ANDROID_FAIL_ERROR_MESSAGE, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
-import { execaWithLog } from "../utilities/subprocess";
-import { workspace } from "vscode";
+import { exec } from "../utilities/subprocess";
 import fs from "fs";
 
 const path = require("path");
@@ -13,7 +12,7 @@ const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
 
 async function build(projectDir: string, gradleArgs: string[]) {
   try {
-    await execaWithLog("./gradlew", gradleArgs, {
+    await exec("./gradlew", gradleArgs, {
       cwd: projectDir,
     });
   } catch (error) {
@@ -22,7 +21,7 @@ async function build(projectDir: string, gradleArgs: string[]) {
 }
 
 async function extractPackageName(artifactPath: string) {
-  const { stdout } = await execaWithLog(AAPT_PATH, ["dump", "badging", artifactPath]);
+  const { stdout } = await exec(AAPT_PATH, ["dump", "badging", artifactPath]);
   const packageLine = stdout.split("\n").find((line: string) => line.startsWith("package: name="));
   const packageName = packageLine!.split("'")[1];
   return packageName;
@@ -51,6 +50,6 @@ export async function buildAndroid(workspaceDir: string) {
     `assembleDebug`,
   ];
   await build(androidSourceDir, gradleArgs);
-  Logger.log("Android build sucessful");
+  Logger.debug("Android build sucessful");
   return getAndroidBuildPaths(workspaceDir);
 }

@@ -498,6 +498,6 @@ export class DebugAdapter extends DebugSession {
     args: any,
     request?: DebugProtocol.Request | undefined
   ): void {
-    Logger.log(`Custom req ${command} ${args}`);
+    Logger.debug(`Custom req ${command} ${args}`);
   }
 }

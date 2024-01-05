@@ -3,7 +3,7 @@ import { ExtensionContext } from "vscode";
 import { DeviceBase, DeviceSettings } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
-import { execaCommandWithLog, execaWithLog } from "../utilities/subprocess";
+import { command, exec } from "../utilities/subprocess";
 
 const path = require("path");
 const fs = require("fs");
@@ -67,7 +67,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async changeSettings(settings: DeviceSettings) {
-    await execaWithLog("xcrun", [
+    await exec("xcrun", [
       "simctl",
       "--set",
       this.deviceSetPath,
@@ -76,7 +76,7 @@ export class IosSimulatorDevice extends DeviceBase {
       "appearance",
       settings.appearance,
     ]);
-    await execaWithLog("xcrun", [
+    await exec("xcrun", [
       "simctl",
       "--set",
       this.deviceSetPath,
@@ -88,7 +88,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async configureMetroPort(bundleID: string, metroPort: number) {
-    const { stdout: appDataLocation } = await execaWithLog("xcrun", [
+    const { stdout: appDataLocation } = await exec("xcrun", [
       "simctl",
       "--set",
       this.deviceSetPath,
@@ -103,15 +103,15 @@ export class IosSimulatorDevice extends DeviceBase {
       "Preferences",
       `${bundleID}.plist`
     );
-    Logger.log(`Defaults location ${userDefaultsLocation}`);
+    Logger.debug(`Defaults location ${userDefaultsLocation}`);
     try {
-      await execaWithLog("/usr/libexec/PlistBuddy", [
+      await exec("/usr/libexec/PlistBuddy", [
         "-c",
         `Add :RCT_jsLocation string localhost:${metroPort}`,
         userDefaultsLocation,
       ]);
     } catch (e) {
-      await execaWithLog("/usr/libexec/PlistBuddy", [
+      await exec("/usr/libexec/PlistBuddy", [
         "-c",
         `Set :RCT_jsLocation localhost:${metroPort}`,
         userDefaultsLocation,
@@ -121,7 +121,7 @@ export class IosSimulatorDevice extends DeviceBase {
 
   async launchApp(bundleID: string, metroPort: number) {
     await this.configureMetroPort(bundleID, metroPort);
-    await execaWithLog("xcrun", [
+    await exec("xcrun", [
       "simctl",
       "--set",
       this.deviceSetPath,
@@ -133,7 +133,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async installApp(appPath: string) {
-    await execaWithLog("xcrun", [
+    await exec("xcrun", [
       "simctl",
       "--set",
       this.deviceSetPath,
@@ -150,7 +150,7 @@ export class IosSimulatorDevice extends DeviceBase {
 
 export async function getNewestAvailableIosRuntime() {
   const runtimesData: { runtimes: Array<RuntimeInfo> } = JSON.parse(
-    (await execaCommandWithLog(`xcrun simctl list runtimes --json`)).stdout
+    (await command(`xcrun simctl list runtimes --json`)).stdout
   );
 
   // sort available runtimes by version
@@ -170,7 +170,7 @@ export async function removeIosRuntimes(runtimes: RuntimeInfo[]) {
 
 async function getNewestNonProIPhone() {
   const deviceTypesData: { devicetypes: Array<DeviceTypeInfo> } = JSON.parse(
-    (await execaCommandWithLog(`xcrun simctl list devicetypes --json`)).stdout
+    (await command(`xcrun simctl list devicetypes --json`)).stdout
   );
 
   // filter iPhones:
@@ -187,7 +187,7 @@ async function getNewestNonProIPhone() {
 async function getPreferredSimulator(deviceSetLocation: string) {
   let simulatorData: { devices: { [index: string]: Array<DeviceInfo> } };
 
-  const { stdout } = await execaWithLog("xcrun", [
+  const { stdout } = await exec("xcrun", [
     "simctl",
     "--set",
     deviceSetLocation,
@@ -220,9 +220,9 @@ async function findOrCreateSimulator(deviceSetLocation: string) {
     // second, select the newest runtime
     const runtime = await getNewestAvailableIosRuntime();
 
-    Logger.log(`Create simulator ${deviceType.name} with runtime ${runtime.name}`);
+    Logger.debug(`Create simulator ${deviceType.name} with runtime ${runtime.name}`);
     // create new simulator with selected runtime
-    await execaWithLog("xcrun", [
+    await exec("xcrun", [
       "simctl",
       "--set",
       deviceSetLocation,
@@ -236,7 +236,7 @@ async function findOrCreateSimulator(deviceSetLocation: string) {
   }
 
   // for new simulator or old one that's not booted, we try booting it
-  await execaWithLog("xcrun", ["simctl", "--set", deviceSetLocation, "boot", simulator!.udid]);
+  await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", simulator!.udid]);
   return simulator!.udid;
 }
 
