@@ -13,7 +13,6 @@ import "./PreviewView.css";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "./ManageDevicesView";
 import { MANAGE_DEVICE_OPTION_NAME } from "../utilities/consts";
-import { useSystemImagesContext } from "../providers/SystemImagesProvider";
 
 function setCssPropertiesForDevice(device) {
   // top right bottom left
@@ -53,8 +52,6 @@ function PreviewView({ initialDevice }) {
   const [deviceSettings, setDeviceSettings] = useState(INITIAL_DEVICE_SETTINGS);
   const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
-  const [debugPaused, setDebugPaused] = useState(false);
-  const [debugException, setDebugException] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [logs, setLogs] = useState([]);
   const [logCounter, setLogCounter] = useState(0);
@@ -83,16 +80,6 @@ function PreviewView({ initialDevice }) {
           break;
         case "inspectData":
           setInspectData(message.data);
-          break;
-        case "debuggerPaused":
-          setDebugPaused(true);
-          break;
-        case "debuggerContinued":
-          setDebugPaused(false);
-          setDebugException(null);
-          break;
-        case "uncaughtException":
-          setDebugException(message.isFatal ? "fatal" : "exception");
           break;
         case "logEvent":
           setLogCounter((logCounter) => logCounter + 1);
@@ -210,11 +197,10 @@ function PreviewView({ initialDevice }) {
         </SettingsDropdown>
       </div>
       <Preview
+        key={previewURL}
         isInspecting={isInspecing}
         previewURL={previewURL}
         device={device}
-        debugPaused={debugPaused}
-        debugException={debugException}
         inspectData={inspectData}
         setIsInspecting={setIsInspecting}
         setInspectData={setInspectData}

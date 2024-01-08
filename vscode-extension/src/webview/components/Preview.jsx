@@ -43,8 +43,6 @@ function Preview({
   previewURL,
   device,
   isInspecting,
-  debugPaused,
-  debugException,
   inspectData,
   setIsInspecting,
   setInspectData,
@@ -109,6 +107,31 @@ function Preview({
       document.removeEventListener("keydown", keyEventHandler);
       document.removeEventListener("keyup", keyEventHandler);
     };
+  }, []);
+
+  // TODO: we likely want to move inspect/inspectData to be the state of Preview component
+  const [debugPaused, setDebugPaused] = useState(false);
+  const [debugException, setDebugException] = useState(null);
+
+  useEffect(() => {
+    const listener = (event) => {
+      const message = event.data;
+      switch (message.command) {
+        case "debuggerPaused":
+          setDebugPaused(true);
+          break;
+        case "debuggerContinued":
+          setDebugPaused(false);
+          setDebugException(null);
+          break;
+        case "uncaughtException":
+          setDebugException(message.isFatal ? "fatal" : "exception");
+          break;
+      }
+    };
+    window.addEventListener("message", listener);
+
+    return () => window.removeEventListener("message", listener);
   }, []);
 
   const inspectFrame = inspectData?.frame;
@@ -183,7 +206,9 @@ function Preview({
       {isError && (
         <div className="phone-content">
           <div className="phone-sized phone-screen extension-error-screen">
-            <h2>An error occurred inside the extension. Click the button to restart the emulator.</h2>
+            <h2>
+              An error occurred inside the extension. Click the button to restart the emulator.
+            </h2>
             <VSCodeButton appearance="secondary" onClick={onRestartClick}>
               <span className="codicon codicon-refresh" />
             </VSCodeButton>
