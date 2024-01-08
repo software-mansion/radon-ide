@@ -1,22 +1,27 @@
 const ORIGINAL_TRANSFORMER_PATH = process.env.REACT_NATIVE_IDE_ORIG_BABEL_TRANSFORMER_PATH;
 
-// The below section overrides import of @babel/plugin-transform-react-jsx to load @babel/plugin-transform-react-jsx/lib/development
-// instead. We need this for because the default transformer doesn't attach source locations to JSX nodes, which is required for
-// the code inspector to work.
-// What we do here is resolve the original transfomer location and replace it in require cache with the development
-// version. As a result, when the preset loads the transformer, it will load the development version.
-const jsxTransformPluginPath = require.resolve("@babel/plugin-transform-react-jsx", {
-  paths: [ORIGINAL_TRANSFORMER_PATH],
-});
-require(jsxTransformPluginPath);
-const devJsxTransformPluginPath = require.resolve(
-  "@babel/plugin-transform-react-jsx/lib/development",
-  { paths: [ORIGINAL_TRANSFORMER_PATH] }
-);
-require(devJsxTransformPluginPath);
-require.cache[jsxTransformPluginPath] = require.cache[devJsxTransformPluginPath];
+// For JSX source file annotation to work correctly, we rely on plugin-transform-react-jsx/lib/development which is
+// a development version of plugin-transform-react-jsx. Apparently, React Native by default pulls in three different
+// plugins aiming to transform JSX. As they aren't needed, they also doesn't interfere with each other. However, when
+// jsx/lib/development version of the gets added to the mix, they start to throw error messages about the other
+// plugins being deprecated. To avoid this, we disable the two plugins in question: jsx-self and jsx-source.
+// The disabling works by overriding node's require cache with noop version of plugins as we couldn't find a better
+// way to handle this without modifying React Native's code.
+// In order to eventually load jsx-development plugin, we override plugins list in the transformer.
+function disablePlugin(moduleNameToOverride) {
+  const pluginToOverride = require.resolve(moduleNameToOverride, {
+    paths: [ORIGINAL_TRANSFORMER_PATH],
+  });
+  require.cache[pluginToOverride] = {
+    exports: function () {
+      return { visitor: {} };
+    },
+  };
+}
+disablePlugin("@babel/plugin-transform-react-jsx-self");
+disablePlugin("@babel/plugin-transform-react-jsx-source");
 
-function transformWrapper({ filename, src, ...rest }) {
+function transformWrapper({ filename, src, plugins, ...rest }) {
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
   if (filename === "node_modules/react-native/Libraries/Core/InitializeCore.js") {
     src = `global.__REACT_DEVTOOLS_PORT__=${process.env.RCT_DEVTOOLS_PORT};\n${src}\nrequire("__rnp_lib__/runtime.js");\n`;
@@ -26,7 +31,15 @@ function transformWrapper({ filename, src, ...rest }) {
   } else if (filename === "node_modules/react-native-ide/index.js") {
     src = `${src};preview = require("__rnp_lib__/preview.js").preview;`;
   }
-  return transform({ filename, src, ...rest });
+
+  const newPlugins = [
+    require(require.resolve("@babel/plugin-transform-react-jsx/lib/development", {
+      paths: [ORIGINAL_TRANSFORMER_PATH],
+    })),
+    ...(plugins || []),
+  ];
+
+  return transform({ filename, src, plugins: newPlugins, ...rest });
 }
 
 module.exports = { transform: transformWrapper };
