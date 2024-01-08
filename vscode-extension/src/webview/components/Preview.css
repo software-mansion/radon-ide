@@ -32,7 +32,6 @@
 .phone-screen {
   position: absolute;
   top: 0;
-  left: 2px;
 }
 
 .extension-error-screen {
@@ -107,5 +106,6 @@ vscode-dropdown > .codicon {
 
 .phone-content-loading-overlay {
   position: absolute;
+  left: 2px;
   background-color: rgba(255, 255, 255, 0.15);
 }
