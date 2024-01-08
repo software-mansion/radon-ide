@@ -197,7 +197,8 @@ function Preview({
       )}
       {!previewURL && !isError && (
         <div className="phone-content">
-          <div className="phone-sized phone-screen phone-content-loading">
+          <div className="phone-sized phone-screen phone-content-loading-overlay" />
+          <div className="phone-sized phone-screen phone-content-loading ">
             <VSCodeProgressRing />
           </div>
           <img src={device.backgroundImage} className="phone-frame" />

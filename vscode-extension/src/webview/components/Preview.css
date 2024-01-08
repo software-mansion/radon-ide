@@ -10,10 +10,10 @@
   user-select: none;
 }
 
-.phone-wrapper:hover, .phone-wrapper:focus-visible {
+.phone-wrapper:hover,
+.phone-wrapper:focus-visible {
   outline: none;
 }
-
 
 .phone-content {
   display: flex;
@@ -26,16 +26,17 @@
   height: var(--phone-content-height);
   width: var(--phone-content-width);
   margin: var(--phone-content-margins);
-  border-radius: var(--phone-content-border-radius);
+  border-radius: var(--phone-content-inner-border-radius);
 }
 
 .phone-screen {
   position: absolute;
   top: 0;
+  left: 2px;
 }
 
 .extension-error-screen {
-  background-color: rgba(255,106,89,0.85);
+  background-color: rgba(255, 106, 89, 0.85);
   box-sizing: border-box;
   display: flex;
   padding: 20px;
@@ -47,7 +48,7 @@
 .phone-inspect-overlay {
   position: absolute;
   top: 0;
-  background-color: rgba(0,0,0,0.2);
+  background-color: rgba(0, 0, 0, 0.2);
   display: flex;
   overflow: hidden;
   pointer-events: none;
@@ -55,23 +56,23 @@
 
 .inspect-area {
   position: absolute;
-  background-color: rgba(56, 172, 221,0.85);
+  background-color: rgba(56, 172, 221, 0.85);
 }
-
 
 .phone-debug-overlay {
   position: absolute;
   top: 0;
-  background-color: rgba(0,0,0,0.75);
+  background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.continue-button, .uncaught-button {
+.continue-button,
+.uncaught-button {
   background-color: #ff6259;
   border-radius: 10px;
-  border: 1px solid #E65F50;
+  border: 1px solid #e65f50;
   padding: 5px;
   color: #001a72;
 }
@@ -90,8 +91,8 @@ vscode-dropdown > .codicon {
 }
 
 .phone-exception-overlay {
-  background-color: rgba(255,106,89,0.85);
-  color: #001A72;
+  background-color: rgba(255, 106, 89, 0.85);
+  color: #001a72;
 }
 
 .phone-frame {
@@ -102,7 +103,9 @@ vscode-dropdown > .codicon {
   display: flex;
   justify-content: center;
   align-items: center;
+}
 
-  background-color: rgba(255,255,255,0.15);
-  z-index: -1;
+.phone-content-loading-overlay {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.15);
 }
