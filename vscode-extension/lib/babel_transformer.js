@@ -1,4 +1,4 @@
-const ORIGINAL_TRANSFORMER_PATH = process.env.RNSZTUDIO_ORIGINAL_BABEL_TRANSFORMER_PATH;
+const ORIGINAL_TRANSFORMER_PATH = process.env.REACT_NATIVE_IDE_ORIG_BABEL_TRANSFORMER_PATH;
 
 // The below section overrides import of @babel/plugin-transform-react-jsx to load @babel/plugin-transform-react-jsx/lib/development
 // instead. We need this for because the default transformer doesn't attach source locations to JSX nodes, which is required for
@@ -17,7 +17,7 @@ require(devJsxTransformPluginPath);
 require.cache[jsxTransformPluginPath] = require.cache[devJsxTransformPluginPath];
 
 function transformWrapper({ filename, src, ...rest }) {
-  const { transform } = require(process.env.RNSZTUDIO_ORIGINAL_BABEL_TRANSFORMER_PATH);
+  const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
   if (filename === "node_modules/react-native/Libraries/Core/InitializeCore.js") {
     src = `global.__REACT_DEVTOOLS_PORT__=${process.env.RCT_DEVTOOLS_PORT};\n${src}\nrequire("__rnp_lib__/runtime.js");\n`;
   } else if (filename === "node_modules/expo-router/entry.js") {
