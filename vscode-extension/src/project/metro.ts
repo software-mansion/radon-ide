@@ -22,11 +22,11 @@ export class Metro implements Disposable {
     this.subprocess?.kill();
   }
 
-  public async start() {
+  public async start(resetCache: boolean) {
     this.subprocess = exec(
       `${this.appRoot}/node_modules/react-native/scripts/packager.sh`,
       [
-        "--reset-cache",
+        ...(resetCache ? ["--reset-cache"] : []),
         "--no-interactive",
         "--port",
         "0",

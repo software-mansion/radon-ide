@@ -13,18 +13,11 @@ import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescripto
 import { Logger, enableDevModeLogging } from "./Logger";
 import vscode from "vscode";
 
-function handleError(error: Error | any) {
-  Logger.openOutputPanel();
-  vscode.window.showErrorMessage("Internal extension error.", "Dismiss");
-}
-
 function handleUncaughtErrors() {
-  process.on("unhandledRejection", (error) => {
-    handleError(error);
-  });
-
   process.on("uncaughtException", (error) => {
-    handleError(error);
+    Logger.error("Uncaught exception", error);
+    Logger.openOutputPanel();
+    vscode.window.showErrorMessage("Internal extension error.", "Dismiss");
   });
 }
 

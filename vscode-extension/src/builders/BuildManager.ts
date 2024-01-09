@@ -151,13 +151,14 @@ export class BuildManager {
     }
   }
 
-  public async startBuilding(buildCaching?: boolean) {
-    Logger.debug("Build caching enabled:", buildCaching);
-    const newFingerprintHash = await this._generateFingerprint();
-    if (!buildCaching) {
+  public async startBuilding(forceCleanBuild: boolean) {
+    if (forceCleanBuild) {
+      Logger.debug("Start build (force clean build)");
       this.iOSBuild = this._prepareIosBuild();
       this.androidBuild = this._prepareAndroidBuild();
     } else {
+      Logger.debug("Start build (using build cache)");
+      const newFingerprintHash = await this._generateFingerprint();
       this.iOSBuild = this._prepareIosBuild(newFingerprintHash);
       this.androidBuild = this._prepareAndroidBuild(newFingerprintHash);
     }

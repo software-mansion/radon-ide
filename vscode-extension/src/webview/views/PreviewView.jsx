@@ -116,7 +116,6 @@ function PreviewView({ initialDevice }) {
       settings: INITIAL_DEVICE_SETTINGS,
       deviceId: initialDevice.id,
       systemImagePath: initialDevice.systemImage,
-      buildCaching: buildCacheEnabled,
     });
 
     return () => window.removeEventListener("message", listener);

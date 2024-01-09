@@ -46,7 +46,7 @@ export class Project implements Disposable {
     this.metro?.reload();
   }
 
-  public async start(globalStateManager: GlobalStateManager, buildCaching?: boolean) {
+  public async start(globalStateManager: GlobalStateManager, forceCleanBuild: boolean) {
     let workspaceDir = getWorkspacePath();
     if (!workspaceDir) {
       Logger.warn("No workspace directory found");
@@ -62,7 +62,7 @@ export class Project implements Disposable {
     this.metro = new Metro(workspaceDir, this.context.extensionPath, this.devtools.port);
 
     Logger.debug("Launching builds");
-    await this.buildManager.startBuilding(buildCaching);
+    await this.buildManager.startBuilding(forceCleanBuild);
 
     this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
@@ -85,7 +85,7 @@ export class Project implements Disposable {
     });
 
     Logger.debug(`Launching metro`);
-    await this.metro.start();
+    await this.metro.start(forceCleanBuild);
     Logger.debug(`Metro started on port ${this.metro.port} devtools on port ${this.devtools.port}`);
   }
 

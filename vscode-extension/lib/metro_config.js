@@ -37,7 +37,24 @@ const extensionLib = process.env.REACT_NATIVE_IDE_LIB_PATH;
 
 module.exports = async function () {
   const config = await loadConfig({}, {});
-  console.log("Wf", config);
+
+  // We use processorModuleFilter to inject some code into the bundle prelude.
+  // This is needed, as we want to configre React DevTools port, which changes with every
+  // run of the metro server. React Native expects devtools port to available under
+  // global.__REACT_DEVTOOLS_PORT__, so by defining such var in the prelude, it is accessible
+  // via global object later on. The port number cannot be embedded in any other source file,
+  // as otherwise metro caching would cause the port number to be stale (unless we find a way
+  // to invalidate individual files in the cache).
+  const origProcessModuleFilter = config.serializer.processModuleFilter;
+  config.serializer.processModuleFilter = (module) => {
+    if (module.path === "__prelude__") {
+      const preludeCode = module.output[0].data.code;
+      if (!preludeCode.includes("__REACT_DEVTOOLS_PORT__")) {
+        module.output[0].data.code = `${preludeCode};var __REACT_DEVTOOLS_PORT__=${process.env.RCT_DEVTOOLS_PORT};`;
+      }
+    }
+    return origProcessModuleFilter(module);
+  };
 
   // We actually need to reset port number here again, because CLI overrides it
   // thinking that value 0 means "use default port".

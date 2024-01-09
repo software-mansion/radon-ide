@@ -155,7 +155,7 @@ export class PreviewsPanel {
               message.deviceId,
               message.settings,
               message.systemImagePath,
-              message.buildCaching
+              !!message.forceCleanBuild
             );
             return;
           case "debugResume":
@@ -304,7 +304,7 @@ export class PreviewsPanel {
     deviceId: string,
     settings: DeviceSettings,
     systemImagePath: string,
-    buildCaching: boolean
+    forceCleanBuild: boolean
   ) {
     // in dev mode, react may trigger this message twice as it comes from useEffect
     // we need to make sure we don't start the project twice
@@ -312,7 +312,7 @@ export class PreviewsPanel {
       return;
     }
     this.projectStarted = true;
-    await this.project.start(this.globalStateManager, buildCaching);
+    await this.project.start(this.globalStateManager, forceCleanBuild);
     this.project.addEventMonitor({
       onLogReceived: (message) => {
         this._panel.webview.postMessage({
@@ -365,7 +365,7 @@ export class PreviewsPanel {
     this.projectStarted = false;
     this.project = new Project(this.context);
     await this._handlePrerequisites();
-    this._startProject(deviceId, settings, systemImagePath, false);
+    this._startProject(deviceId, settings, systemImagePath, true);
   }
 
   private async _handlePrerequisites() {

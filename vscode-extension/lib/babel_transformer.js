@@ -24,7 +24,7 @@ disablePlugin("@babel/plugin-transform-react-jsx-source");
 function transformWrapper({ filename, src, plugins, ...rest }) {
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
   if (filename === "node_modules/react-native/Libraries/Core/InitializeCore.js") {
-    src = `global.__REACT_DEVTOOLS_PORT__=${process.env.RCT_DEVTOOLS_PORT};\n${src}\nrequire("__rnp_lib__/runtime.js");\n`;
+    src = `${src};require("__rnp_lib__/runtime.js");`;
   } else if (filename === "node_modules/expo-router/entry.js") {
     // expo-router v2 integration
     src = `${src};require("__rnp_lib__/expo_router_plugin.js");`;
