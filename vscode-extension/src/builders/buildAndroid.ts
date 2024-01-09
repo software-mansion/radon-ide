@@ -1,14 +1,15 @@
-import loadConfig from "@react-native-community/cli-config";
 import { ANDROID_FAIL_ERROR_MESSAGE, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
-import fs from "fs";
 
 const path = require("path");
 
 const AAPT_PATH = path.join(ANDROID_HOME, "build-tools", "33.0.0", "aapt");
 const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
+
+// Assuming users have android folder in their project's root
+export const getAndroidSourceDir = (workspace: string) => `${workspace}/android`;
 
 async function build(projectDir: string, gradleArgs: string[]) {
   try {
@@ -28,8 +29,7 @@ async function extractPackageName(artifactPath: string) {
 }
 
 function getApkPath(workspaceDir: string) {
-  const ctx = loadConfig(workspaceDir);
-  const androidSourceDir = ctx.project.android!.sourceDir;
+  const androidSourceDir = getAndroidSourceDir(workspaceDir);
   return path.join(androidSourceDir, RELATIVE_APK_PATH);
 }
 
@@ -40,8 +40,7 @@ export async function getAndroidBuildPaths(workspaceDir: string) {
 }
 
 export async function buildAndroid(workspaceDir: string) {
-  const ctx = loadConfig(workspaceDir);
-  const androidSourceDir = ctx.project.android!.sourceDir;
+  const androidSourceDir = getAndroidSourceDir(workspaceDir);
   const cpuArchitecture = getCpuArchitecture();
   const gradleArgs = [
     "-x",

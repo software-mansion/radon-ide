@@ -1,7 +1,7 @@
 import { workspace } from "vscode";
 import os from "os";
 import { createHash, Hash } from "crypto";
-import { join } from "path";
+import { join, extname } from "path";
 import fs from "fs";
 
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
@@ -76,4 +76,8 @@ export async function calculateMD5(path: string, hash: Hash = createHash("md5"))
     }
   }
   return hash;
+}
+
+export function findFileWithExtension(files: string[], extension: string) {
+  return files.find((file) => extname(file) === extension);
 }

@@ -1,7 +1,7 @@
-import { IOSProjectInfo } from "@react-native-community/cli-types";
 import { exec } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { IOS_FAIL_ERROR_MESSAGE } from "../utilities/common";
+import { IOSProjectInfo } from "../utilities/ios";
 
 export type BuildFlags = {
   mode: string;

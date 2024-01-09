@@ -1,6 +1,6 @@
-import loadConfig from "@react-native-community/cli-config";
 import path from "path";
 import { getWorkspacePath } from "./common";
+import { getIosSourceDir } from "../builders/buildIOS";
 import fs from "fs";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 
@@ -34,8 +34,8 @@ export async function checkPodInstalled() {
 }
 
 export async function checkIosDependenciesInstalled() {
-  const ctx = loadConfig(getWorkspacePath());
-  const iosDirPath = ctx.project.ios?.sourceDir;
+  const workspacePath = getWorkspacePath();
+  const iosDirPath = getIosSourceDir(workspacePath);
 
   Logger.debug(`Check pods in ${iosDirPath} ${getWorkspacePath()}`);
   if (!iosDirPath) {

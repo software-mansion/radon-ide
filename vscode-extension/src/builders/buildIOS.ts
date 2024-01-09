@@ -1,11 +1,13 @@
-const path = require("path");
-import { IOSProjectInfo } from "@react-native-community/cli-types";
-import loadConfig from "@react-native-community/cli-config";
-
 import { BuildFlags, buildProject } from "./buildProject";
-import { getConfigurationScheme } from "@react-native-community/cli-platform-ios/build/tools/getConfigurationScheme";
 import { command, exec } from "../utilities/subprocess";
 import { Logger } from "../Logger";
+import fs from "fs";
+import path from "path";
+import { findFileWithExtension } from "../utilities/common";
+import { IOSProjectInfo } from "../utilities/ios";
+
+// Assuming users have ios folder in their project's root
+export const getIosSourceDir = (workspace: string) => `${workspace}/ios`;
 
 async function getBundleID(appPath: string) {
   return (
@@ -17,10 +19,32 @@ async function getBundleID(appPath: string) {
   ).stdout;
 }
 
-export async function buildIos(workspaceDir: string) {
-  const ctx = loadConfig(workspaceDir);
+export async function findXcodeProject(workspace: string) {
+  const files = await fs.promises.readdir(getIosSourceDir(workspace));
 
-  const { xcodeProject, sourceDir } = ctx.project.ios!;
+  const xcworkspace = findFileWithExtension(files, ".xcworkspace");
+  const xcodeproj = findFileWithExtension(files, ".xcodeproj");
+
+  if (xcworkspace) {
+    return {
+      name: xcworkspace,
+      isWorkspace: true,
+    };
+  }
+
+  if (xcodeproj) {
+    return {
+      name: xcodeproj,
+      isWorkspace: false,
+    };
+  }
+
+  return null;
+}
+
+export async function buildIos(workspaceDir: string) {
+  const sourceDir = getIosSourceDir(workspaceDir);
+  const xcodeProject = await findXcodeProject(workspaceDir);
 
   if (!xcodeProject) {
     throw new Error(`Could not find Xcode project files in "${sourceDir}" folder`);
@@ -29,11 +53,11 @@ export async function buildIos(workspaceDir: string) {
   const scheme = path.basename(xcodeProject.name, path.extname(xcodeProject.name)) as string;
 
   Logger.debug(
-    `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${xcodeProject.name}"`
+    `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${xcodeProject.name}`
   );
 
   const buildFlags: BuildFlags = {
-    mode: getConfigurationScheme({ scheme, mode: "" }, sourceDir),
+    mode: "Debug", // Users may have custom modes (like "Staging") defined in their projects but just "Debug" is fine for now
     verbose: true,
     buildCwd: sourceDir,
   };
@@ -141,8 +165,7 @@ function getPlatformName(buildOutput: string) {
 }
 
 export async function installIOSDependencies(workspaceDir: string) {
-  const ctx = loadConfig(workspaceDir);
-  const iosDirPath = ctx.project.ios?.sourceDir;
+  const iosDirPath = getIosSourceDir(workspaceDir);
 
   if (!iosDirPath) {
     throw new Error(`ios directory was not found inside the workspace.`);
