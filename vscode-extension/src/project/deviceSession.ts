@@ -124,10 +124,19 @@ export class DeviceSession implements Disposable {
         const pageId = parseInt(matches[2]);
         if (deviceId > recentDeviceId && pageId === -1) {
           recentDeviceId = deviceId;
-          websocketAddress = page.webSocketDebuggerUrl;
+          // In RN 73 metro has a bug where websocket URL returns 0 as port number when starting with port number set as 0 (ephemeral port)
+          // we want to replace it with the actual port number from metro:
+          // parse websocket URL:
+          const websocketDebuggerUrl = new URL(page.webSocketDebuggerUrl);
+          // replace port number with metro port number:
+          if (websocketDebuggerUrl.port === "0") {
+            websocketDebuggerUrl.port = this.metro!.port.toString();
+          }
+          websocketAddress = websocketDebuggerUrl.toString();
         }
       }
     }
+
     return websocketAddress;
   }
 

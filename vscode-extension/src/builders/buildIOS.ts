@@ -5,6 +5,8 @@ import fs from "fs";
 import path from "path";
 import { findFileWithExtension } from "../utilities/common";
 import { IOSProjectInfo } from "../utilities/ios";
+import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
+import { installIOSDependencies } from "../dependency/DependencyInstaller";
 
 // Assuming users have ios folder in their project's root
 export const getIosSourceDir = (workspace: string) => `${workspace}/ios`;
@@ -44,6 +46,12 @@ export async function findXcodeProject(workspace: string) {
 
 export async function buildIos(workspaceDir: string) {
   const sourceDir = getIosSourceDir(workspaceDir);
+
+  const isPodsInstalled = await checkIosDependenciesInstalled();
+  if (!isPodsInstalled) {
+    await installIOSDependencies(workspaceDir);
+  }
+
   const xcodeProject = await findXcodeProject(workspaceDir);
 
   if (!xcodeProject) {

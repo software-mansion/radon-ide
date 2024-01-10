@@ -298,7 +298,6 @@ export class PreviewsPanel {
       return;
     }
     this.projectStarted = true;
-    await this._handlePrerequisites();
     await this.project.start(this.globalStateManager, forceCleanBuild);
     this.project.addEventMonitor({
       onLogReceived: (message) => {
@@ -352,13 +351,6 @@ export class PreviewsPanel {
     this.projectStarted = false;
     this.project = new Project(this.context);
     this._startProject(deviceId, settings, systemImagePath, true);
-  }
-
-  private async _handlePrerequisites() {
-    const isPodsInstalled = await this.dependencyChecker.checkPodsInstalled();
-    if (!isPodsInstalled) {
-      await this.dependencyInstaller.installPods();
-    }
   }
 
   private _onActiveFileChange(filename: string) {
