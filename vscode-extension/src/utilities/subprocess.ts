@@ -13,7 +13,6 @@ export function exec(...args: [string, string[]?, execa.Options?]) {
       }
     } catch (e) {
       Logger.error("Subprocess", args[0], "execution resulted in an error:", e);
-      throw e;
     }
   }
   printErrorsOnExit(); // don't want to await here not to block the outer method
@@ -38,7 +37,6 @@ export function command(...args: [string, execa.Options?]) {
       }
     } catch (e) {
       Logger.error("Command", args[0], "execution resulted in an error:", e);
-      throw e;
     }
   }
   printErrorsOnExit(); // don't want to await here not to block the outer method

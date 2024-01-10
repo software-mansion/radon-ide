@@ -14,7 +14,16 @@ import { Logger, enableDevModeLogging } from "./Logger";
 import vscode from "vscode";
 
 function handleUncaughtErrors() {
-  process.on("uncaughtException", (error) => {
+  process.on("unhandledRejection", (error) => {
+    Logger.error("Unhandled promise rejection", error);
+  });
+  process.on("uncaughtException", (error: Error) => {
+    if (error.errno === -49) {
+      // there is some weird EADDRNOTAVAIL uncaught error thrown in extension host
+      // that does not seem to affect anything yet it gets reported here while not being
+      // super valuable to the user – hence we ignore it.
+      return;
+    }
     Logger.error("Uncaught exception", error);
     Logger.openOutputPanel();
     vscode.window.showErrorMessage("Internal extension error.", "Dismiss");

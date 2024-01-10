@@ -140,7 +140,7 @@ export class PreviewsPanel {
       (message: any) => {
         const command = message.command;
 
-        Logger.debug(`Extension received a message with command ${command}.`);
+        Logger.log(`Extension received a message with command ${command}.`);
 
         switch (command) {
           case "log":

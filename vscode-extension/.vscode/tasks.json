@@ -37,24 +37,6 @@
           "endsPattern": "^.*$"
         }
       }
-    },
-    {
-      // this task terminates the webview server tasks. It implements a workaround
-      // that allows to execute vscode's command palette commands via input variables.
-      // the task just runs a simple echo command, but since it references an input
-      // vscode would need to evaluate that input first. In turn, the input is defined
-      // to be a vscode command that requests a task termination
-      "label": "stop webview server",
-      "command": "echo ${input:terminateWebviewServer}",
-      "type": "shell"
-    }
-  ],
-  "inputs": [
-    {
-      "id": "terminateWebviewServer",
-      "type": "command",
-      "command": "workbench.action.tasks.terminate",
-      "args": "start webview server"
     }
   ]
 }
