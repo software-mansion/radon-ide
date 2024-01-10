@@ -117,7 +117,7 @@ export class BuildManager {
 
     const build = buildIos(this.workspaceDir);
     this.handleFinishedIosBuild(build, newFingerprint);
-    return buildIos(this.workspaceDir);
+    return build;
   }
 
   private async handleFinishedIosBuild(

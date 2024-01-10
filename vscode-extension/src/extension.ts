@@ -13,12 +13,16 @@ import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescripto
 import { Logger, enableDevModeLogging } from "./Logger";
 import vscode from "vscode";
 
+function isErrorWithErrno(error: Error): error is { errno: number } {
+  return error && typeof error.errno === "number";
+}
+
 function handleUncaughtErrors() {
   process.on("unhandledRejection", (error) => {
     Logger.error("Unhandled promise rejection", error);
   });
   process.on("uncaughtException", (error: Error) => {
-    if (error.errno === -49) {
+    if (isErrorWithErrno(error) && error.errno === -49) {
       // there is some weird EADDRNOTAVAIL uncaught error thrown in extension host
       // that does not seem to affect anything yet it gets reported here while not being
       // super valuable to the user – hence we ignore it.
