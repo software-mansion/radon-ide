@@ -69,6 +69,7 @@
 
 .continue-button,
 .uncaught-button {
+  display: flex;
   background-color: #ff6259;
   border-radius: 10px;
   border: 1px solid #e65f50;
