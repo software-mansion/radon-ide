@@ -86,5 +86,8 @@
 
   --popover-background: var(--background-dark-80);
 
+  --select-background: var(--background-dark-100);
+  --select-active-background: var(--background-dark-80);
+
   --separator: var(--background-dark-40);
 }
