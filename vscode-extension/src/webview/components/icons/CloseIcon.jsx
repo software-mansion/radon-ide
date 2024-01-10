@@ -1,7 +1,7 @@
 import "./Icon.css";
 
-function CloseIcon({ className }) {
-  return <span className={`codicon codicon-close red-icon ${className}`} />;
+function CloseIcon() {
+  return <span className="codicon codicon-close red-icon" />;
 }
 
 export default CloseIcon;

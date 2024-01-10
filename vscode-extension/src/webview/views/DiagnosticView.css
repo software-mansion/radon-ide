@@ -1,8 +1,57 @@
-.loading-container {
-    justify-content: center;
+.diagnostic-item {
+  display: flex;
+  align-items: center;
+  margin: 6px 0;
 }
 
-.button-container {
-    width: 100%;
-    margin: 10px 0;
+.diagnostic-label {
+  font-weight: normal;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-top: 24px;
+}
+
+.diagnostic-item-text {
+  margin: 0;
+  margin-left: 8px;
+  width: 100%;
+  font-size: 13px;
+}
+
+.diagnostic-item-info-icon {
+  color: var(--default-text);
+  cursor: pointer;
+}
+
+.diagnostic-icon {
+  width: 16px;
+  height: 16px;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diagnostic-item-error {
+  color: var(--vscode-testing-iconErrored);
+  margin: 6px 0;
+  margin-right: 6px;
+  line-height: 1.2;
+}
+
+.diagnostic-item-error a {
+  color: var(--vscode-testing-iconErrored);
+}
+
+.diagnostic-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.diagnostic-error-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 16px;
 }

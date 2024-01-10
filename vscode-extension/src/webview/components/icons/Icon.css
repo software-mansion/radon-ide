@@ -1,7 +1,7 @@
 .green-icon {
-    color: var(--vscode-debugIcon-startForeground);
+  color: var(--vscode-testing-iconPassed);
 }
 
 .red-icon {
-    color: var(--vscode-debugIcon-stopForeground);
+  color: var(--vscode-testing-iconErrored);
 }

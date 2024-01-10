@@ -1,7 +1,7 @@
 import "./Icon.css";
 
-function CheckIcon({ className }) {
-  return <span className={`codicon codicon-check green-icon ${className}`} />;
+function CheckIcon() {
+  return <span className="codicon codicon-check green-icon" />;
 }
 
 export default CheckIcon;

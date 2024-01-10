@@ -14,25 +14,10 @@ import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
 import { Project } from "../project/project";
-import {
-  ANDROID_FAIL_ERROR_MESSAGE,
-  IOS_FAIL_ERROR_MESSAGE,
-  getWorkspacePath,
-} from "../utilities/common";
-import {
-  checkAdroidEmulatorExists,
-  checkIosDependenciesInstalled,
-  checkPodInstalled,
-  checkSimctlInstalled,
-  checkXCodeBuildInstalled,
-  checkXcrunInstalled,
-} from "../utilities/hostDependenciesChecks";
-import { installIOSDependencies } from "../builders/buildIOS";
+import { ANDROID_FAIL_ERROR_MESSAGE, IOS_FAIL_ERROR_MESSAGE } from "../utilities/common";
 import { openExternalUrl } from "../utilities/vsc";
-import vscode from "vscode";
 import {
   AndroidImageEntry,
-  checkSdkManagerInstalled,
   getAndroidSystemImages,
   installSystemImages,
   removeSystemImages,
@@ -42,11 +27,15 @@ import { DeviceSettings } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { generateWebviewContent } from "./webviewContentGenerator";
 import { RuntimeInfo, removeIosRuntimes } from "../devices/IosSimulatorDevice";
+import { DependencyChecker } from "../dependency/DependencyChecker";
+import { DependencyInstaller } from "../dependency/DependencyInstaller";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
   private readonly globalStateManager: GlobalStateManager;
+  private readonly dependencyChecker: DependencyChecker;
+  private readonly dependencyInstaller: DependencyInstaller;
   private readonly context: ExtensionContext;
   private project: Project;
   private disposables: Disposable[] = [];
@@ -75,6 +64,12 @@ export class PreviewsPanel {
     // Set the manager to listen and change the persisting storage for the extension.
     this.globalStateManager = new GlobalStateManager(context, this._panel.webview);
     this.globalStateManager.startListening();
+
+    this.dependencyChecker = new DependencyChecker(this._panel.webview);
+    this.dependencyChecker.setWebviewMessageListener();
+
+    this.dependencyInstaller = new DependencyInstaller(this._panel.webview);
+    this.dependencyInstaller.setWebviewMessageListener();
 
     this._setupEditorListeners(context);
 
@@ -207,17 +202,8 @@ export class PreviewsPanel {
           case "openLogs":
             commands.executeCommand("workbench.panel.repl.view.focus");
             return;
-          case "refreshDependencies":
-            this._refreshDependencies();
-            return;
           case "openExternalUrl":
             openExternalUrl(message.url);
-            return;
-          case "installIOSDependencies":
-            this._installIOSDependencies();
-            return;
-          case "handlePrerequisites":
-            this._handlePrerequisites();
             return;
           case "restartProject":
             this._resetProject(message.deviceId, message.settings, message.systemImagePath);
@@ -312,6 +298,7 @@ export class PreviewsPanel {
       return;
     }
     this.projectStarted = true;
+    await this._handlePrerequisites();
     await this.project.start(this.globalStateManager, forceCleanBuild);
     this.project.addEventMonitor({
       onLogReceived: (message) => {
@@ -364,87 +351,14 @@ export class PreviewsPanel {
     this.project.dispose();
     this.projectStarted = false;
     this.project = new Project(this.context);
-    await this._handlePrerequisites();
     this._startProject(deviceId, settings, systemImagePath, true);
   }
 
   private async _handlePrerequisites() {
-    const { iosDependencies, podCli } = await this._checkDependencies();
-
-    if (!iosDependencies && podCli) {
-      await this._installIOSDependencies();
+    const isPodsInstalled = await this.dependencyChecker.checkPodsInstalled();
+    if (!isPodsInstalled) {
+      await this.dependencyInstaller.installPods();
     }
-
-    const dependenciesDiagnostic = await this._checkDependencies();
-
-    Logger.debug("Dependencies checked", dependenciesDiagnostic);
-    this._panel.webview.postMessage({
-      command: "checkedDependencies",
-      dependencies: dependenciesDiagnostic,
-    });
-  }
-
-  private async _refreshDependencies() {
-    const dependenciesDiagnostic = await this._checkDependencies();
-    this._panel.webview.postMessage({
-      command: "checkedDependencies",
-      dependencies: dependenciesDiagnostic,
-    });
-  }
-
-  private async _installIOSDependencies() {
-    try {
-      const { stdout, stderr } = await installIOSDependencies(getWorkspacePath());
-      const isSuccess = !!stdout.length && !stderr.length;
-      if (!isSuccess) {
-        vscode.window.showErrorMessage(
-          `Error occured while installing ios dependencies: ${stderr}.`
-        );
-      } else {
-        vscode.window.showInformationMessage("Successfully installed ios dependencies.");
-        this._checkDependencies();
-      }
-
-      this._panel.webview.postMessage({
-        command: "installationComplete",
-      });
-    } catch (e) {
-      Logger.error("Error installing iOS dependencies", e);
-      this._panel.webview.postMessage({
-        command: "installationComplete",
-      });
-      throw e;
-    }
-  }
-
-  private async _checkDependencies() {
-    const xcodebuild = checkXCodeBuildInstalled();
-    const xcrun = checkXcrunInstalled();
-    const simctl = checkSimctlInstalled();
-    const podCli = checkPodInstalled();
-    const iosDependencies = checkIosDependenciesInstalled();
-    const androidEmulator = checkAdroidEmulatorExists();
-    const sdkManager = checkSdkManagerInstalled();
-
-    return Promise.all([
-      xcodebuild,
-      xcrun,
-      simctl,
-      podCli,
-      iosDependencies,
-      androidEmulator,
-      sdkManager,
-    ]).then(
-      ([xcodebuild, xcrun, simctl, podCli, iosDependencies, androidEmulator, sdkManager]) => ({
-        xcodebuild,
-        xcrun,
-        simctl,
-        podCli,
-        iosDependencies,
-        androidEmulator,
-        sdkManager,
-      })
-    );
   }
 
   private _onActiveFileChange(filename: string) {

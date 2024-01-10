@@ -4,7 +4,13 @@ import { ANDROID_HOME } from "./android";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
 
-const SDKMANAGER_BIN_PATH = path.join(ANDROID_HOME, "cmdline-tools", "latest", "bin", "sdkmanager");
+export const SDKMANAGER_BIN_PATH = path.join(
+  ANDROID_HOME,
+  "cmdline-tools",
+  "latest",
+  "bin",
+  "sdkmanager"
+);
 
 interface SdkRepositoryEntry {
   path: string;
@@ -123,13 +129,4 @@ export async function removeSystemImages(sysImagePaths: string[]) {
     return exec("rm", ["-rf", pathToRemove]);
   });
   return Promise.all(removalPromises);
-}
-
-export async function checkSdkManagerInstalled() {
-  try {
-    await exec(SDKMANAGER_BIN_PATH, ["--version"]);
-    return true;
-  } catch (_) {
-    return false;
-  }
 }

@@ -163,19 +163,3 @@ function getPlatformName(buildOutput: string) {
   }
   return platformNameMatch[1];
 }
-
-export async function installIOSDependencies(workspaceDir: string) {
-  const iosDirPath = getIosSourceDir(workspaceDir);
-
-  if (!iosDirPath) {
-    throw new Error(`ios directory was not found inside the workspace.`);
-  }
-
-  return command("pod install", {
-    cwd: iosDirPath,
-    env: {
-      ...process.env,
-      LANG: "en_US.UTF-8",
-    },
-  });
-}

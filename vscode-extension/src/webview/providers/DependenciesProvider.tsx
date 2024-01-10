@@ -1,65 +1,127 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { vscode } from "../utilities/vscode";
 
+export interface DependencyData {
+  installed?: boolean;
+  info?: string;
+  error?: string;
+}
+interface Dependencies {
+  Nodejs?: DependencyData;
+  AndroidStudio?: DependencyData;
+  Xcode?: DependencyData;
+  CocoaPods?: DependencyData;
+  NodeModules?: DependencyData;
+  Pods?: DependencyData;
+}
+
+const defaultDependencies: Dependencies = {
+  Nodejs: undefined,
+  AndroidStudio: undefined,
+  Xcode: undefined,
+  CocoaPods: undefined,
+  NodeModules: undefined,
+  Pods: undefined,
+};
+
+const prerequisites = Object.keys(defaultDependencies);
+
+function runDiagnostics() {
+  prerequisites.forEach((prerequisite) => {
+    vscode.postMessage({
+      command: `check${prerequisite}Installed`,
+    });
+  });
+}
+
 interface DependenciesContextProps {
-  dependencies: any;
-  isLoading: boolean;
+  dependencies: Dependencies;
   isReady: boolean;
-  // deprecated
-  iosDepsInstalling: boolean;
-  // deprecated
-  setIosDepsInstalling: React.Dispatch<boolean>;
+  runDiagnostics: () => void;
 }
 
 const DependenciesContext = createContext<DependenciesContextProps>({
-  dependencies: null,
-  isLoading: false,
+  dependencies: defaultDependencies,
   isReady: false,
-  iosDepsInstalling: false,
-  setIosDepsInstalling: () => {},
+  runDiagnostics,
 });
 
 interface DependenciesProviderProps {
   children: React.ReactNode;
 }
 
-function checkIfAllDependenciesInstalled(dependencies: any) {
-  return Object.values(dependencies).every((installed) => installed);
-}
-
 export default function DependenciesProvider({ children }: DependenciesProviderProps) {
-  const [dependencies, setDependencies] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [iosDepsInstalling, setIosDepsInstalling] = useState(false);
+  const [dependencies, setDependencies] = useState<Dependencies>({});
+
+  // `isReady` is true when all dependencies were checked
+  const isReady = Object.keys(dependencies).every(
+    (key) => dependencies[key as keyof Dependencies] !== undefined
+  );
+
+  const rerunDiagnostics = useCallback(() => {
+    // set `.installed` and .error to undefined, leave other data as is
+    setDependencies((prevState) => {
+      const newState: Dependencies = {};
+      Object.keys(prevState).forEach((key) => {
+        const typedKey = key as keyof Dependencies;
+        newState[typedKey] = {
+          ...prevState[typedKey],
+          installed: undefined,
+          error: undefined,
+        };
+      });
+      return newState;
+    });
+    runDiagnostics();
+  }, []);
 
   useEffect(() => {
     const listener = (event: MessageEvent<any>) => {
       const message = event.data;
       switch (message.command) {
-        case "checkedDependencies":
-          setDependencies(message.dependencies);
-          setIsLoading(false);
-          setIsReady(checkIfAllDependenciesInstalled(message.dependencies));
+        case "isNodejsInstalled":
+          setDependencies((prev) => ({ ...prev, Nodejs: message.data }));
           break;
-        case "installationComplete":
-          setIosDepsInstalling(false);
+        case "isAndroidStudioInstalled":
+          setDependencies((prev) => ({ ...prev, AndroidStudio: message.data }));
+          break;
+        case "isXcodeInstalled":
+          setDependencies((prev) => ({ ...prev, Xcode: message.data }));
+          break;
+        case "isCocoaPodsInstalled":
+          setDependencies((prev) => ({ ...prev, CocoaPods: message.data }));
+          break;
+        case "isNodeModulesInstalled":
+          setDependencies((prev) => ({ ...prev, NodeModules: message.data }));
+          break;
+        case "installingNodeModules":
+          setDependencies((prev) => ({
+            ...prev,
+            NodeModules: { ...prev.NodeModules, error: undefined, installed: undefined },
+          }));
+          break;
+        case "isPodsInstalled":
+          setDependencies((prev) => ({ ...prev, Pods: message.data }));
+          break;
+        case "installingPods":
+          setDependencies((prev) => ({
+            ...prev,
+            Pods: { ...prev.Pods, error: undefined, installed: undefined },
+          }));
           break;
       }
     };
 
-    window.addEventListener("message", listener);
+    runDiagnostics();
 
-    vscode.postMessage({
-      command: "handlePrerequisites",
-    });
+    window.addEventListener("message", listener);
 
     return () => window.removeEventListener("message", listener);
   }, []);
 
   return (
     <DependenciesContext.Provider
-      value={{ dependencies, isLoading, isReady, iosDepsInstalling, setIosDepsInstalling }}>
+      value={{ dependencies, isReady, runDiagnostics: rerunDiagnostics }}>
       {children}
     </DependenciesContext.Provider>
   );

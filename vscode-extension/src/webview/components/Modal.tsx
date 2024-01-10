@@ -12,19 +12,17 @@ interface ModalProps {
 }
 
 export default function Modal({ title, component, open, setOpen }: ModalProps) {
+  const close = () => setOpen(false);
   return (
     <Dialog.Root open={open}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" />
-        <Dialog.Content className="modal-content">
+        <Dialog.Content className="modal-content" onEscapeKeyDown={close}>
           <Dialog.Title className="modal-title">{title}</Dialog.Title>
 
           <div className="modal-content-container">{component}</div>
           <Dialog.Close asChild>
-            <IconButton
-              className="modal-close-button"
-              aria-label="Close"
-              onClick={() => setOpen(false)}>
+            <IconButton className="modal-close-button" aria-label="Close" onClick={close}>
               <span className="codicon codicon-close" />
             </IconButton>
           </Dialog.Close>

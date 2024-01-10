@@ -1,13 +1,16 @@
+import classnames from "classnames";
 import "./IconButton.css";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import Tooltip from "./Tooltip";
 
 interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   children: React.ReactNode;
   disabled?: boolean;
   active?: boolean;
+  type?: "primary" | "secondary";
+  size?: "default" | "small";
   tooltip?: {
-    label?: string;
+    label: string;
     side?: "top" | "right" | "bottom" | "left";
   };
   className?: string;
@@ -19,13 +22,21 @@ function IconButton({
   tooltip,
   disabled,
   active,
+  type = "primary",
+  size = "default",
   className = "",
 }: IconButtonProps) {
   const button = (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`icon-button ${active ? "icon-button-selected" : ""} ${className}`}>
+      className={classnames(
+        "icon-button",
+        type === "secondary" && "icon-button-secondary",
+        active && "icon-button-selected",
+        size === "small" && "icon-button-small",
+        className
+      )}>
       {children}
     </button>
   );
@@ -37,17 +48,9 @@ function IconButton({
   const { label, side } = tooltip;
 
   return (
-    <Tooltip.Provider>
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>{button}</Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content className="tooltip-content" side={side} sideOffset={5}>
-            {label}
-            <Tooltip.Arrow className="tooltip-arrow" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </Tooltip.Provider>
+    <Tooltip label={label} side={side} type={type}>
+      {button}
+    </Tooltip>
   );
 }
 
