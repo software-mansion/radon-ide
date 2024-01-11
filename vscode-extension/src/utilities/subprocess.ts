@@ -9,10 +9,16 @@ export function exec(...args: [string, string[]?, execa.Options?]) {
     try {
       const result = await subprocess;
       if (result.stderr) {
-        Logger.debug("Subprocess", args[0], "produced error output:", result.stderr);
+        Logger.debug(
+          "Subprocess",
+          args[0],
+          args[1]?.join(" "),
+          "produced error output:",
+          result.stderr
+        );
       }
     } catch (e) {
-      Logger.error("Subprocess", args[0], "execution resulted in an error:", e);
+      Logger.error("Subprocess", args[0], args[1]?.join(" "), "execution resulted in an error:", e);
     }
   }
   printErrorsOnExit(); // don't want to await here not to block the outer method
@@ -22,7 +28,13 @@ export function exec(...args: [string, string[]?, execa.Options?]) {
 export function execSync(...args: [string, string[]?, execa.SyncOptions?]) {
   const result = execa.sync(...args);
   if (result.stderr) {
-    Logger.debug("Subprocess", args[0], "produced error output:", result.stderr);
+    Logger.debug(
+      "Subprocess",
+      args[0],
+      args[1]?.join(" "),
+      "produced error output:",
+      result.stderr
+    );
   }
   return result;
 }
