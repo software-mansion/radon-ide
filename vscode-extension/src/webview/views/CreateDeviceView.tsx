@@ -98,7 +98,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         ) : (
           <div className="">
             No {isIosDevice ? "Runtimes" : "System Images"} found. You can install them using{" "}
-            {isIosDevice ? "xCode" : "Android Studio"}.
+            {isIosDevice ? "Xcode" : "Android Studio"}.
           </div>
         )}
       </div>
