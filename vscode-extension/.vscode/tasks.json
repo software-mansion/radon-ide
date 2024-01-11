@@ -11,10 +11,9 @@
       "label": "build extension",
       "type": "npm",
       "script": "build:extension-debug",
-      "problemMatcher": "$tsc-watch",
-      "isBackground": true,
+      "problemMatcher": [],
       "presentation": {
-        "reveal": "never"
+        "reveal": "silent"
       },
       "group": {
         "kind": "build",
