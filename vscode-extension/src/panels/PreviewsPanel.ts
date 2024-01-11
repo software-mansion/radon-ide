@@ -11,7 +11,7 @@ import {
 } from "vscode";
 
 import { openExternalUrl } from "../utilities/vsc";
-import { GlobalStateManager } from "./GlobalStateManager";
+import { WorkspaceStateManager } from "./WorkspaceStateManager";
 import { Logger } from "../Logger";
 import { generateWebviewContent } from "./webviewContentGenerator";
 import { DependencyChecker } from "../dependency/DependencyChecker";
@@ -31,7 +31,7 @@ const PREVIEW_PANEL_COMMANDS = [
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
-  private readonly globalStateManager: GlobalStateManager;
+  private readonly workspaceStateManager: WorkspaceStateManager;
   private readonly dependencyChecker: DependencyChecker;
   private readonly dependencyInstaller: DependencyInstaller;
   private readonly context: ExtensionContext;
@@ -61,8 +61,8 @@ export class PreviewsPanel {
     this._setWebviewMessageListener(this._panel.webview);
 
     // Set the manager to listen and change the persisting storage for the extension.
-    this.globalStateManager = new GlobalStateManager(context, this._panel.webview);
-    this.globalStateManager.startListening();
+    this.workspaceStateManager = new WorkspaceStateManager(context, this._panel.webview);
+    this.workspaceStateManager.startListening();
 
     this.dependencyChecker = new DependencyChecker(this._panel.webview);
     this.dependencyChecker.setWebviewMessageListener();
@@ -75,7 +75,7 @@ export class PreviewsPanel {
     this.deviceManager = new DeviceManager(this._panel.webview);
     this.deviceManager.startListening();
 
-    this.projectManager = new ProjectManager(this._panel.webview, this.globalStateManager, context);
+    this.projectManager = new ProjectManager(this._panel.webview, this.workspaceStateManager, context);
     this.projectManager.startListening();
   }
 

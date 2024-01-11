@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
-import GlobalStateProvider from "./providers/GlobalStateProvider";
+import WorkspaceStateProvider from "./providers/WorkspaceStateProvider";
 import DependenciesProvider from "./providers/DependenciesProvider";
 import ModalProvider from "./providers/ModalProvider";
 
@@ -13,7 +13,7 @@ const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    <GlobalStateProvider>
+    <WorkspaceStateProvider>
       <DependenciesProvider>
         <SystemImagesProvider>
           <ModalProvider>
@@ -21,6 +21,6 @@ root.render(
           </ModalProvider>
         </SystemImagesProvider>
       </DependenciesProvider>
-    </GlobalStateProvider>
+    </WorkspaceStateProvider>
   </React.StrictMode>
 );

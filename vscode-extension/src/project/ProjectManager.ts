@@ -5,7 +5,7 @@ import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { DeviceInfo } from "../utilities/device";
 import { DeviceSettings } from "../devices/DeviceBase";
-import { GlobalStateManager } from "../panels/GlobalStateManager";
+import { WorkspaceStateManager } from "../panels/WorkspaceStateManager";
 import { ANDROID_FAIL_ERROR_MESSAGE, IOS_FAIL_ERROR_MESSAGE } from "../utilities/common";
 
 const PROJECT_MANAGER_COMMANDS = [
@@ -26,7 +26,7 @@ export class ProjectManager {
 
   constructor(
     private readonly webview: Webview,
-    private readonly globalStateManager: GlobalStateManager,
+    private readonly workspaceStateManager: WorkspaceStateManager,
     private readonly context: ExtensionContext
   ) {
     this.project = new Project(context);
@@ -109,7 +109,7 @@ export class ProjectManager {
       return;
     }
     this.projectStarted = true;
-    await this.project.start(this.globalStateManager, forceCleanBuild);
+    await this.project.start(this.workspaceStateManager, forceCleanBuild);
     this.project.addEventMonitor({
       onLogReceived: (message) => {
         this.webview.postMessage({
@@ -141,7 +141,7 @@ export class ProjectManager {
 
   private async handleSelectDevice(device: DeviceInfo, settings: DeviceSettings) {
     try {
-      await this.project.selectDevice(device, settings, this.globalStateManager);
+      await this.project.selectDevice(device, settings, this.workspaceStateManager);
     } catch (error) {
       const isStringError = typeof error === "string";
       this.webview.postMessage({

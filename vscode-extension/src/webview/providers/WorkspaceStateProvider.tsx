@@ -8,14 +8,13 @@ import {
   useState,
 } from "react";
 import { vscode } from "../utilities/vscode";
-import { DEVICES } from "../utilities/consts";
 import { Device } from "../utilities/device";
 import { IosBuild } from "../../utilities/ios";
 import { AndroidBuild } from "../../utilities/android";
 
-type GlobalState =
+type WorkspaceState =
   | {
-      devices: Device[];
+      devices?: Device[];
       buildCache?: {
         enabled?: boolean;
         iOS?: {
@@ -32,8 +31,8 @@ type GlobalState =
     }
   | undefined;
 
-interface GlobalStateContextProps {
-  state: GlobalState;
+interface WorkspaceStateContextProps {
+  state: WorkspaceState;
   devices: Device[];
   androidDevices: Device[];
   buildCacheEnabled: boolean;
@@ -42,7 +41,7 @@ interface GlobalStateContextProps {
   updateDevices: (devices: Device[]) => void;
 }
 
-const GlobalStateContext = createContext<GlobalStateContextProps>({
+const WorkspaceStateContext = createContext<WorkspaceStateContextProps>({
   state: undefined,
   devices: [],
   androidDevices: [],
@@ -52,8 +51,8 @@ const GlobalStateContext = createContext<GlobalStateContextProps>({
   updateDevices: (devices: Device[]) => undefined,
 });
 
-export default function GlobalStateProvider({ children }: PropsWithChildren) {
-  const [localState, setLocalState] = useState<GlobalState>(undefined);
+export default function WorkspaceStateProvider({ children }: PropsWithChildren) {
+  const [localState, setLocalState] = useState<WorkspaceState>(undefined);
 
   // Load state to local useState from persisting vscode storage.
   useEffect(() => {
@@ -61,24 +60,14 @@ export default function GlobalStateProvider({ children }: PropsWithChildren) {
       const message = event.data;
       switch (message.command) {
         case "getState":
-          const persistedState = null; //message.state;
-          if (!persistedState) {
-            const newState: GlobalState = {
-              devices: [] as Device[],
-              buildCache: { enabled: true },
-            };
-            vscode.postMessage({
-              command: "setState",
-              state: newState,
-            });
-            setLocalState(newState);
-          } else {
-            setLocalState(persistedState);
-          }
+          const persistedState = message.state;
+          setLocalState({
+            ...persistedState,
+            buildCache: { ...persistedState.buildCache, enabled: true },
+          });
           break;
         case "stateUpdate":
-          const newState = message.state;
-          setLocalState(newState);
+          setLocalState(message.state);
           break;
       }
     };
@@ -165,14 +154,14 @@ export default function GlobalStateProvider({ children }: PropsWithChildren) {
     ]
   );
 
-  return <GlobalStateContext.Provider value={value}>{children}</GlobalStateContext.Provider>;
+  return <WorkspaceStateContext.Provider value={value}>{children}</WorkspaceStateContext.Provider>;
 }
 
-export function useGlobalStateContext() {
-  const context = useContext(GlobalStateContext);
+export function useWorkspaceStateContext() {
+  const context = useContext(WorkspaceStateContext);
 
   if (context === undefined) {
-    throw new Error("useGlobalStateContext must be used within a GlobalStateProvider");
+    throw new Error("useWorkspaceStateContext must be used within a WorkspaceStateProvider");
   }
   return context;
 }

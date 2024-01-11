@@ -1,6 +1,5 @@
-import IconButton from "../components/IconButton";
 import Select from "../components/Select";
-import { useGlobalStateContext } from "../providers/GlobalStateProvider";
+import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
 import {
   AndroidSystemImage,
   IosRuntime,
@@ -28,7 +27,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const isIosDevice = platform === PLATFORM.IOS;
 
   const { installedIosRuntimes, installedAndroidImages } = useSystemImagesContext();
-  const { devices } = useGlobalStateContext();
+  const { devices } = useWorkspaceStateContext();
 
   const selectedSystemImage = useMemo(() => {
     if (!systemImageName) {

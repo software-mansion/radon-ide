@@ -1,6 +1,6 @@
 import { ExtensionContext } from "vscode";
 import { Logger } from "../Logger";
-import { GlobalStateManager } from "../panels/GlobalStateManager";
+import { WorkspaceStateManager } from "../panels/WorkspaceStateManager";
 import { generateWorkspaceFingerprint } from "../utilities/fingerprint";
 import { buildAndroid } from "./buildAndroid";
 import { buildIos } from "./buildIOS";
@@ -13,14 +13,14 @@ export class BuildManager {
   private workspaceDir: string;
   private iOSBuild: Promise<IosBuild> | undefined;
   private androidBuild: Promise<AndroidBuild> | undefined;
-  private readonly globalStateManager: GlobalStateManager;
+  private readonly workspaceStateManager: WorkspaceStateManager;
 
-  constructor(workspaceDir: string, globalStateManager: GlobalStateManager) {
+  constructor(workspaceDir: string, workspaceStateManager: WorkspaceStateManager) {
     this.workspaceDir = workspaceDir;
-    this.globalStateManager = globalStateManager;
+    this.workspaceStateManager = workspaceStateManager;
 
     // Populate fields from the cache data.
-    const currentState = this.globalStateManager.getState();
+    const currentState = this.workspaceStateManager.getState();
 
     if (currentState.buildCache?.iOS?.build) {
       this.iOSBuild = Promise.resolve(currentState.buildCache?.iOS?.build);
@@ -39,9 +39,9 @@ export class BuildManager {
   }
 
   private async _prepareAndroidBuild(newFingerprint?: string | undefined) {
-    const buildHash = this.globalStateManager.getState().buildCache?.android?.buildHash;
+    const buildHash = this.workspaceStateManager.getState().buildCache?.android?.buildHash;
     const cachedFingerprint =
-      this.globalStateManager.getState().buildCache?.android?.fingerprintHash;
+      this.workspaceStateManager.getState().buildCache?.android?.fingerprintHash;
     const fingerprintMatching = newFingerprint === cachedFingerprint && !!cachedFingerprint;
 
     if (fingerprintMatching && this.androidBuild) {
@@ -72,7 +72,7 @@ export class BuildManager {
       const buildResult = await buildPromise;
       const newHash = (await calculateMD5(buildResult.apkPath)).digest("hex");
       Logger.log("Android hash", newHash);
-      this.globalStateManager.updateState((state: any) => ({
+      this.workspaceStateManager.updateState((state: any) => ({
         ...state,
         buildCache: {
           ...state.buildCache,
@@ -84,7 +84,7 @@ export class BuildManager {
         },
       }));
     } catch (e) {
-      this.globalStateManager.updateState((state: any) => ({
+      this.workspaceStateManager.updateState((state: any) => ({
         ...state,
         buildCache: {
           ...state.buildCache,
@@ -96,8 +96,8 @@ export class BuildManager {
   }
 
   private async _prepareIosBuild(newFingerprint?: string | undefined) {
-    const buildHash = this.globalStateManager.getState().buildCache?.iOS?.buildHash;
-    const cachedFingerprint = this.globalStateManager.getState().buildCache?.iOS?.fingerprintHash;
+    const buildHash = this.workspaceStateManager.getState().buildCache?.iOS?.buildHash;
+    const cachedFingerprint = this.workspaceStateManager.getState().buildCache?.iOS?.fingerprintHash;
     const fingerprintMatching = newFingerprint === cachedFingerprint && !!cachedFingerprint;
 
     if (fingerprintMatching && this.iOSBuild) {
@@ -128,7 +128,7 @@ export class BuildManager {
       const buildResult = await buildPromise;
       const newHash = (await calculateMD5(buildResult.appPath)).digest("hex");
       Logger.debug("IOS hash", newHash);
-      this.globalStateManager.updateState((state: any) => ({
+      this.workspaceStateManager.updateState((state: any) => ({
         ...state,
         buildCache: {
           ...state.buildCache,
@@ -140,7 +140,7 @@ export class BuildManager {
         },
       }));
     } catch (e) {
-      this.globalStateManager.updateState((state: any) => ({
+      this.workspaceStateManager.updateState((state: any) => ({
         ...state,
         buildCache: {
           ...state.buildCache,

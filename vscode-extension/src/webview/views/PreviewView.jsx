@@ -7,7 +7,7 @@ import UrlBar from "../components/UrlBar";
 import LogPanel from "../components/LogPanel";
 import LogCounter from "../components/LogCounter";
 import SettingsDropdown from "../components/SettingsDropdown";
-import { useGlobalStateContext } from "../providers/GlobalStateProvider";
+import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
 import "./View.css";
 import "./PreviewView.css";
 import { useModal } from "../providers/ModalProvider";
@@ -62,7 +62,7 @@ function PreviewView() {
   const [isError, setIsError] = useState(false);
 
   const { openModal } = useModal();
-  const { devices } = useGlobalStateContext();
+  const { devices } = useWorkspaceStateContext();
   const { isDeviceImageInstalled } = useSystemImagesContext();
 
   const selectedDevice = useMemo(

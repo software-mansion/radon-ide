@@ -1,5 +1,5 @@
 import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
-import { useGlobalStateContext } from "../providers/GlobalStateProvider";
+import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
 import "./ManageDevicesView.css";
 import { useEffect, useMemo, useState } from "react";
 import IconButton from "../components/IconButton";
@@ -66,7 +66,7 @@ function ManageDevicesView() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
   const { removeDeviceWithImage, isDeviceImageInstalled } = useSystemImagesContext();
-  const { updateDevices, devices } = useGlobalStateContext();
+  const { updateDevices, devices } = useWorkspaceStateContext();
 
   const handleConfirmation = (isConfirmed: boolean) => {
     setDeleteConfirmationOpen(false);

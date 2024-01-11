@@ -1,10 +1,11 @@
 import { ExtensionContext, Webview } from "vscode";
 import { DeviceInfo } from "../utilities/device";
-import { isFunction } from "lodash";
+import { isFunction, merge } from "lodash";
+import { Logger } from "../Logger";
 
 const STATE_NAME = "react-native-sztudio";
 
-export class GlobalStateManager {
+export class WorkspaceStateManager {
   private context: ExtensionContext;
   private webview: Webview;
 
@@ -14,7 +15,7 @@ export class GlobalStateManager {
   }
 
   public getState(): any {
-    return this.context.globalState.get(STATE_NAME);
+    return this.context.workspaceState.get(STATE_NAME);
   }
 
   private notifyWebviewAboutUpdate() {
@@ -39,7 +40,7 @@ export class GlobalStateManager {
       const command = message.command;
       switch (command) {
         case "setState":
-          this.context.globalState.update(STATE_NAME, message.state);
+          this.context.workspaceState.update(STATE_NAME, merge(this.getState(), message.state));
           break;
         case "getState":
           this.webview.postMessage({
@@ -65,7 +66,7 @@ export class GlobalStateManager {
     }
 
     newDevices[oldDeviceIndex] = device;
-    this.context.globalState.update(STATE_NAME, { ...currentState, devices: newDevices });
+    this.context.workspaceState.update(STATE_NAME, { ...currentState, devices: newDevices });
     this.notifyWebviewAboutUpdate();
   }
 }

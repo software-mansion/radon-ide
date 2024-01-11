@@ -13,7 +13,7 @@ import {
   isDeviceIOS,
 } from "../utilities/common";
 import { DeviceInfo, PLATFORM } from "../utilities/device";
-import { GlobalStateManager } from "../panels/GlobalStateManager";
+import { WorkspaceStateManager } from "../panels/WorkspaceStateManager";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
@@ -38,7 +38,7 @@ export class DeviceSession implements Disposable {
     iosBuild: Promise<{ appPath: string; bundleID: string }>,
     androidBuild: Promise<{ apkPath: string; packageName: string }>,
     settings: DeviceSettings,
-    globalStateManager: GlobalStateManager
+    workspaceStateManager: WorkspaceStateManager
   ) {
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {
@@ -58,7 +58,7 @@ export class DeviceSession implements Disposable {
         this.device.udid
       );
       if (!this.device.udid) {
-        globalStateManager.updateDevice({ ...this.device, udid: deviceUdid });
+        workspaceStateManager.updateDevice({ ...this.device, udid: deviceUdid });
       }
       await this.deviceSimulator.changeSettings(settings);
       await this.deviceSimulator.installApp(appPath);
@@ -71,7 +71,7 @@ export class DeviceSession implements Disposable {
         this.device.avdName
       );
       if (!this.device.avdName) {
-        globalStateManager.updateDevice({ ...this.device, avdName: newAvdName });
+        workspaceStateManager.updateDevice({ ...this.device, avdName: newAvdName });
       }
       await this.deviceSimulator.changeSettings(settings);
       await this.deviceSimulator.installApp(apkPath);

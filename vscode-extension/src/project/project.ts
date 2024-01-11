@@ -7,7 +7,7 @@ import { getWorkspacePath } from "../utilities/common";
 import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
 import { DeviceInfo } from "../utilities/device";
-import { GlobalStateManager } from "../panels/GlobalStateManager";
+import { WorkspaceStateManager } from "../panels/WorkspaceStateManager";
 
 export interface EventMonitor {
   onLogReceived: (message: { type: string }) => void;
@@ -47,7 +47,7 @@ export class Project implements Disposable {
     this.metro?.reload();
   }
 
-  public async start(globalStateManager: GlobalStateManager, forceCleanBuild: boolean) {
+  public async start(workspaceStateManager: WorkspaceStateManager, forceCleanBuild: boolean) {
     let workspaceDir = getWorkspacePath();
     if (!workspaceDir) {
       Logger.warn("No workspace directory found");
@@ -55,7 +55,7 @@ export class Project implements Disposable {
     }
 
     if (!this.buildManager) {
-      this.buildManager = new BuildManager(workspaceDir, globalStateManager);
+      this.buildManager = new BuildManager(workspaceDir, workspaceStateManager);
     }
 
     this.devtools = new Devtools();
@@ -124,7 +124,7 @@ export class Project implements Disposable {
   public async selectDevice(
     device: DeviceInfo,
     settings: DeviceSettings,
-    globalStateManager: GlobalStateManager
+    workspaceStateManager: WorkspaceStateManager
   ) {
     Logger.log("Device selected", device.name);
     this.session?.dispose();
@@ -133,7 +133,7 @@ export class Project implements Disposable {
       this.buildManager?.getIosBuild()!,
       this.buildManager?.getAndroidBuild()!,
       settings,
-      globalStateManager
+      workspaceStateManager
     );
   }
 }

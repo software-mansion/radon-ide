@@ -11,7 +11,7 @@ import AndroidImagesView from "../views/AndroidImagesView";
 import ManageDevicesView from "../views/ManageDevicesView";
 
 import { MANAGE_DEVICE_OPTION_NAME } from "../utilities/consts";
-import { useGlobalStateContext } from "../providers/GlobalStateProvider";
+import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ interface SettingsDropdownProps {
 
 function SettingsDropdown({ children }: SettingsDropdownProps) {
   const { openModal } = useModal();
-  const { switchBuildCache, buildCacheEnabled } = useGlobalStateContext();
+  const { switchBuildCache, buildCacheEnabled } = useWorkspaceStateContext();
 
   return (
     <DropdownMenu.Root>
