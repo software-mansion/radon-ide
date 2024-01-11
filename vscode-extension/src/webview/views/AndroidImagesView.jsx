@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "./View.css";
 import { VSCodeButton, VSCodeCheckbox, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./AndroidImagesView.css";
-import EditAndroidDevice from "../components/EditAndroidDevice";
 import { useSystemImagesContext } from "../providers/SystemImagesProvider";
 
 function AndroidImagesView() {
@@ -84,11 +83,6 @@ function AndroidImagesView() {
 
   return (
     <div className="panel-view">
-      {!installedAndroidImages.length ? (
-        <VSCodeProgressRing />
-      ) : (
-        <EditAndroidDevice installedAndroidImages={installedAndroidImages} className="section" />
-      )}
       <div className="section">
         <VSCodeButton
           appearance="secondary"

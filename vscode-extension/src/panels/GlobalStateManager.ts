@@ -1,6 +1,6 @@
 import { ExtensionContext, Webview } from "vscode";
-import { isFunction, merge } from "lodash";
-import { Logger } from "../Logger";
+import { DeviceInfo } from "../utilities/device";
+import { isFunction } from "lodash";
 
 const STATE_NAME = "react-native-sztudio";
 
@@ -13,6 +13,17 @@ export class GlobalStateManager {
     this.webview = webview;
   }
 
+  public getState(): any {
+    return this.context.globalState.get(STATE_NAME);
+  }
+
+  private notifyWebviewAboutUpdate() {
+    this.webview.postMessage({
+      command: "stateUpdate",
+      state: this.getState(),
+    });
+  }
+
   public updateState(stateUpdate: any) {
     const presentState = this.getState();
     let newState = stateUpdate;
@@ -20,10 +31,7 @@ export class GlobalStateManager {
       newState = stateUpdate(presentState);
     }
     this.context.workspaceState.update(STATE_NAME, newState);
-  }
-
-  public getState(): any {
-    return this.context.workspaceState.get(STATE_NAME);
+    this.notifyWebviewAboutUpdate();
   }
 
   startListening() {
@@ -31,7 +39,7 @@ export class GlobalStateManager {
       const command = message.command;
       switch (command) {
         case "setState":
-          this.updateState((currentState: any) => merge(currentState, message.state));
+          this.context.globalState.update(STATE_NAME, message.state);
           break;
         case "getState":
           this.webview.postMessage({
@@ -41,5 +49,23 @@ export class GlobalStateManager {
           break;
       }
     });
+  }
+
+  updateDevice(device: DeviceInfo) {
+    const currentState = this.getState();
+    if (!currentState?.devices) {
+      return;
+    }
+    const newDevices = [...currentState.devices];
+
+    const oldDeviceIndex = newDevices.findIndex((newDevice) => newDevice.id === device.id);
+
+    if (oldDeviceIndex < 0) {
+      return;
+    }
+
+    newDevices[oldDeviceIndex] = device;
+    this.context.globalState.update(STATE_NAME, { ...currentState, devices: newDevices });
+    this.notifyWebviewAboutUpdate();
   }
 }

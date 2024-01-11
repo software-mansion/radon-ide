@@ -4,11 +4,12 @@ import { DeviceBase, DeviceSettings } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { command, exec } from "../utilities/subprocess";
+import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 
 const path = require("path");
 const fs = require("fs");
 
-interface DeviceInfo {
+interface SimulatorInfo {
   availability?: string;
   state?: string;
   isAvailable?: boolean;
@@ -46,6 +47,10 @@ interface DeviceTypeInfo {
   name: string;
 }
 
+interface SimulatorData {
+  devices: { [index: string]: Array<SimulatorInfo> };
+}
+
 export class IosSimulatorDevice extends DeviceBase {
   private deviceUdid: string | undefined;
   private deviceSetPath = getOrCreateDeviceSet();
@@ -62,8 +67,9 @@ export class IosSimulatorDevice extends DeviceBase {
     return this.deviceSetPath;
   }
 
-  async bootDevice() {
-    this.deviceUdid = await findOrCreateSimulator(this.deviceSetPath);
+  async bootDevice(runtime: RuntimeInfo, udid?: string) {
+    this.deviceUdid = await findOrCreateSimulator(this.deviceSetPath, runtime, udid);
+    return this.deviceUdid;
   }
 
   async changeSettings(settings: DeviceSettings) {
@@ -149,23 +155,30 @@ export class IosSimulatorDevice extends DeviceBase {
 }
 
 export async function getNewestAvailableIosRuntime() {
-  const runtimesData: { runtimes: Array<RuntimeInfo> } = JSON.parse(
-    (await command(`xcrun simctl list runtimes --json`)).stdout
-  );
+  const runtimesData = await getAvailableIosRuntimes();
 
   // sort available runtimes by version
-  const availableRuntimes = runtimesData.runtimes.filter((runtime) => runtime.isAvailable);
-  availableRuntimes.sort((a, b) => (a.version.localeCompare(b.version) ? -1 : 1));
+  runtimesData.sort((a, b) => (a.version.localeCompare(b.version) ? -1 : 1));
 
   // pick the newest runtime
-  return availableRuntimes[0];
+  return runtimesData[0];
 }
 
 export async function removeIosRuntimes(runtimes: RuntimeInfo[]) {
   const removalPromises = runtimes.map((runtime) => {
-    return execaWithLog("xcrun", ["simctl", "runtime", "delete", runtime.buildversion], {});
+    return exec("xcrun", ["simctl", "runtime", "delete", runtime.buildversion], {});
   });
   return Promise.all(removalPromises);
+}
+
+export async function removeIosSimulator(udid?: string) {
+  if (!udid) {
+    return;
+  }
+
+  const setDirectory = getOrCreateDeviceSet();
+
+  return exec("xcrun", ["simctl", "--set", setDirectory, "delete", udid]);
 }
 
 async function getNewestNonProIPhone() {
@@ -184,9 +197,7 @@ async function getNewestNonProIPhone() {
   return iphones[0];
 }
 
-async function getPreferredSimulator(deviceSetLocation: string) {
-  let simulatorData: { devices: { [index: string]: Array<DeviceInfo> } };
-
+async function getSimulators(deviceSetLocation: string): Promise<Array<SimulatorInfo>> {
   const { stdout } = await exec("xcrun", [
     "simctl",
     "--set",
@@ -195,19 +206,35 @@ async function getPreferredSimulator(deviceSetLocation: string) {
     "devices",
     "--json",
   ]);
-  simulatorData = JSON.parse(stdout);
-
-  // get list of available simulators
-  const allDevices = Object.keys(simulatorData.devices)
-    .map((key) => simulatorData.devices[key])
+  const parsedData: SimulatorData = JSON.parse(stdout);
+  const allDevices = Object.keys(parsedData.devices)
+    .map((key) => parsedData.devices[key])
     .reduce((acc, val) => acc.concat(val), [])
     .filter((device) => device.isAvailable);
+
+  return allDevices;
+}
+
+async function getSimulatorWithUdid(deviceSetLocation: string, udid?: string) {
+  if (!udid) {
+    return undefined;
+  }
+  const allDevices = await getSimulators(deviceSetLocation);
+  return allDevices.find((device) => device.udid === udid);
+}
+
+async function getPreferredSimulator(deviceSetLocation: string) {
+  const allDevices = await getSimulators(deviceSetLocation);
 
   return allDevices.length ? allDevices[0] : undefined;
 }
 
-async function findOrCreateSimulator(deviceSetLocation: string) {
-  let simulator = await getPreferredSimulator(deviceSetLocation);
+async function findOrCreateSimulator(
+  deviceSetLocation: string,
+  runtime: RuntimeInfo,
+  udid?: string
+) {
+  let simulator = await getSimulatorWithUdid(deviceSetLocation, udid);
   if (simulator && simulator.state === "Booted") {
     // this simulator is ok to be used
     return simulator.udid;
@@ -217,12 +244,9 @@ async function findOrCreateSimulator(deviceSetLocation: string) {
     // we need to create a new simulator
     const deviceType = await getNewestNonProIPhone();
 
-    // second, select the newest runtime
-    const runtime = await getNewestAvailableIosRuntime();
-
     Logger.debug(`Create simulator ${deviceType.name} with runtime ${runtime.name}`);
     // create new simulator with selected runtime
-    await exec("xcrun", [
+    const { stdout: newUdid } = await exec("xcrun", [
       "simctl",
       "--set",
       deviceSetLocation,
@@ -232,7 +256,7 @@ async function findOrCreateSimulator(deviceSetLocation: string) {
       runtime.identifier,
     ]);
 
-    simulator = await getPreferredSimulator(deviceSetLocation)!;
+    simulator = await getSimulatorWithUdid(deviceSetLocation, newUdid)!;
   }
 
   // for new simulator or old one that's not booted, we try booting it

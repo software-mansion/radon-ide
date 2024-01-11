@@ -1,5 +1,7 @@
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
+import { AndroidSystemImage } from "../utilities/device";
+import { RuntimeInfo } from "./IosSimulatorDevice";
 
 export interface DeviceSettings {
   appearance: "light" | "dark";
@@ -10,7 +12,7 @@ export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
 
   abstract get name(): string | undefined;
-  abstract bootDevice(imagePath?: string): Promise<void>;
+  abstract bootDevice(systemImage: RuntimeInfo | AndroidSystemImage): Promise<string | undefined | void>;
   abstract changeSettings(settings: DeviceSettings): Promise<void>;
   abstract makePreview(): Preview;
 

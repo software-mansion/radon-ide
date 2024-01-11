@@ -2,7 +2,15 @@ import { workspace } from "vscode";
 import os from "os";
 import { createHash, Hash } from "crypto";
 import { join, extname } from "path";
+import { Readable } from "stream";
+import { finished } from "stream/promises";
 import fs from "fs";
+import { ReadableStream } from "stream/web";
+
+export enum CPU_ARCHITECTURE {
+  ARM64 = "arm64-v8a",
+  X64 = "x86_64",
+}
 
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
 export const IOS_FAIL_ERROR_MESSAGE = "IOS failed.";
@@ -20,9 +28,9 @@ export function getCpuArchitecture() {
   switch (arch) {
     case "x64":
     case "ia32":
-      return "x86_64";
+      return CPU_ARCHITECTURE.X64;
     default:
-      return "arm64-v8a";
+      return CPU_ARCHITECTURE.ARM64;
   }
 }
 
@@ -36,6 +44,15 @@ export function getLogsDir() {
 
 export function isDeviceIOS(deviceId: string) {
   return deviceId.startsWith("ios");
+}
+
+export async function downdloadFile(url: string, destination: string) {
+  const stream = fs.createWriteStream(destination);
+  const { body } = await fetch(url);
+  if (!body) {
+    throw new Error(`Unexpected error during the file download from ${url}.`);
+  }
+  await finished(Readable.fromWeb(body as ReadableStream).pipe(stream));
 }
 
 async function calculateFileMD5(filePath: string, hash: Hash) {

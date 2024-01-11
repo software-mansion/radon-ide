@@ -9,17 +9,13 @@ import {
 } from "react";
 import { vscode } from "../utilities/vscode";
 import { Device, PLATFORM } from "../utilities/device";
-import { useGlobalStateContext } from "./GlobalStateProvider";
 export interface AndroidSystemImage {
   path: string;
   version: string;
   description: string;
   location?: string;
-}
-
-export type InstalledAndroidSystemImage = {
   apiLevel: number;
-} & AndroidSystemImage;
+}
 
 export interface IosRuntime {
   bundlePath: string;
@@ -36,7 +32,8 @@ export interface IosRuntime {
 
 interface SystemImagesContextProps {
   androidImages: AndroidSystemImage[];
-  installedAndroidImages: InstalledAndroidSystemImage[];
+  installedAndroidImages: AndroidSystemImage[];
+  installedIosRuntimes: IosRuntime[];
   androidInstallationOutputStream: string;
   loading: boolean;
   isDeviceImageInstalled: (device?: Device) => boolean;
@@ -60,6 +57,7 @@ interface SystemImagesContextProps {
 const SystemImagesContext = createContext<SystemImagesContextProps>({
   androidImages: [],
   installedAndroidImages: [],
+  installedIosRuntimes: [],
   androidInstallationOutputStream: "",
   loading: false,
   isDeviceImageInstalled: (device?: Device) => false,
@@ -70,10 +68,9 @@ const SystemImagesContext = createContext<SystemImagesContextProps>({
 
 export default function SystemImagesProvider({ children }: PropsWithChildren) {
   const [androidImages, setAndroidImages] = useState<AndroidSystemImage[]>([]);
-  const [installedAndroidImages, setInstalledAndroidImages] = useState<
-    InstalledAndroidSystemImage[]
-  >([]);
+  const [installedAndroidImages, setInstalledAndroidImages] = useState<AndroidSystemImage[]>([]);
   const [androidInstallationOutputStream, setAndroidInstallationOutputStream] = useState("");
+  const [installedIosRuntimes, setInstalledIosRuntimes] = useState<IosRuntime[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -91,11 +88,18 @@ export default function SystemImagesProvider({ children }: PropsWithChildren) {
           setAndroidImages(message.availableImages);
           setInstalledAndroidImages(message.installedImages);
           break;
+        case "allInstalledIOSRuntimesListed":
+          setInstalledIosRuntimes(message.runtimes);
+          break;
       }
     };
 
     vscode.postMessage({
       command: "listAllAndroidImages",
+    });
+
+    vscode.postMessage({
+      command: "listAllInstalledIOSRuntimes",
     });
 
     window.addEventListener("message", listener);
@@ -147,7 +151,7 @@ export default function SystemImagesProvider({ children }: PropsWithChildren) {
         if (!device.runtime) {
           return false;
         }
-        // TODO: check if the present runtime is installed on host machine.
+        return !!installedIosRuntimes.find((runtime) => runtime.name === device.runtime?.name);
       }
       return true;
     },
@@ -184,6 +188,10 @@ export default function SystemImagesProvider({ children }: PropsWithChildren) {
       } else if (device?.platform === PLATFORM.IOS && device.runtime) {
         processIosRuntimeChanges({ toRemove: [device.runtime] });
       }
+      vscode.postMessage({
+        command: "removeSimulator",
+        device: device,
+      });
     },
     [processAndroidImageChanges, processIosRuntimeChanges]
   );
@@ -192,6 +200,7 @@ export default function SystemImagesProvider({ children }: PropsWithChildren) {
     () => ({
       androidImages,
       installedAndroidImages,
+      installedIosRuntimes,
       androidInstallationOutputStream,
       loading,
       processAndroidImageChanges,
@@ -202,6 +211,7 @@ export default function SystemImagesProvider({ children }: PropsWithChildren) {
     [
       androidImages,
       installedAndroidImages,
+      installedIosRuntimes,
       androidInstallationOutputStream,
       loading,
       processAndroidImageChanges,

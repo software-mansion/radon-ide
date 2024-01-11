@@ -16,7 +16,7 @@ const SelectItem = forwardRef<HTMLDivElement, PropsWithChildren<RadixSelect.Sele
   }
 );
 
-type SelectItemType = { value: string; label: string | ReactNode };
+type SelectItemType = { value: string; label: string | ReactNode; disabled?: boolean };
 
 type SelectGroupType = { options: SelectItemType[]; label: string | ReactNode };
 
@@ -49,16 +49,23 @@ function Select({ value, onChange, options, placeholder, className }: SelectProp
             <span className="codicon codicon-chevron-up" />
           </RadixSelect.ScrollUpButton>
           <RadixSelect.Viewport className="SelectViewport">
-            {options.map((option) =>
+            {options.map((option, idx) =>
               !isSingleSelectItem(option) ? (
-                <RadixSelect.Group>
+                <RadixSelect.Group key={idx}>
                   <RadixSelect.Label className="SelectLabel">{option.label}</RadixSelect.Label>
                   {option.options.map((selectItem) => (
-                    <SelectItem value={selectItem.value}>{selectItem.label}</SelectItem>
+                    <SelectItem
+                      key={selectItem.value}
+                      disabled={selectItem.disabled}
+                      value={selectItem.value}>
+                      {selectItem.label}
+                    </SelectItem>
                   ))}
                 </RadixSelect.Group>
               ) : (
-                <SelectItem value={option.value}>{option.label}</SelectItem>
+                <SelectItem key={option.value} disabled={option.disabled} value={option.value}>
+                  {option.label}
+                </SelectItem>
               )
             )}
           </RadixSelect.Viewport>

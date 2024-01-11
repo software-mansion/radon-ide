@@ -39,3 +39,11 @@
   height: 1px;
   background-color: var(--separator);
 }
+
+.missing-device-filler {
+  flex-grow: 1;
+}
+
+.device-select {
+  min-width: 150px;
+}

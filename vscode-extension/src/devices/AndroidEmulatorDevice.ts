@@ -8,10 +8,11 @@ import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
-import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { ExtensionContext } from "vscode";
 import { ChildProcess, exec } from "../utilities/subprocess";
+import { AndroidSystemImage } from "../utilities/device";
 import { Logger } from "../Logger";
+import { v4 as uuidv4 } from "uuid";
 
 const AVD_NAME = "ReactNativePreviewVSCode";
 
@@ -59,29 +60,19 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
-  async getSystemImage(androidImagePath: string) {
-    const [installedImages] = await getAndroidSystemImages();
-
-    const choosenAndroidImage = installedImages.find((image) => image.path === androidImagePath);
-    if (!choosenAndroidImage) {
-      throw new Error(`Android with given path: "${androidImagePath}", is not installed!`);
-    }
-
-    return choosenAndroidImage;
-  }
-
-  async bootDevice(androidImagePath: string) {
+  async bootDevice(systemImage: AndroidSystemImage, avdName?: string) {
     if (this.emulatorProcess) {
       this.emulatorProcess.kill();
     }
 
-    const systemImage = await this.getSystemImage(androidImagePath);
-    const { process, serial } = await findOrCreateEmulator(
+    const { process, serial, newAvdName } = await findOrCreateEmulator(
       this.avdDirectory,
-      path.join(ANDROID_HOME, systemImage.location!)
+      path.join(ANDROID_HOME, systemImage.location!),
+      avdName
     );
     this.emulatorProcess = process;
     this.serial = serial;
+    return newAvdName;
   }
 
   async configureMetroPort(packageName: string, metroPort: number) {
@@ -148,9 +139,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 }
 
-async function createEmulator(avdDirectory: string, systemImageLocation: string) {
-  const avdIni = path.join(avdDirectory, AVD_NAME + ".ini");
-  const avdLocation = path.join(avdDirectory, AVD_NAME + ".avd");
+async function createEmulator(avdDirectory: string, systemImageLocation: string, avdName: string) {
+  const avdIni = path.join(avdDirectory, avdName + ".ini");
+  const avdLocation = path.join(avdDirectory, avdName + ".avd");
   const configIni = path.join(avdLocation, "config.ini");
   const cpuArchitecture = getCpuArchitecture();
 
@@ -213,10 +204,10 @@ async function createEmulator(avdDirectory: string, systemImageLocation: string)
   await fs.promises.writeFile(configIni, configIniContent, "utf-8");
 }
 
-async function startEmulator(avdDirectory: string) {
+async function startEmulator(avdDirectory: string, avdName: string) {
   const subprocess = exec(
     EMULATOR_BINARY,
-    ["-avd", AVD_NAME, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
+    ["-avd", avdName, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
     { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
   );
 
@@ -241,15 +232,29 @@ async function startEmulator(avdDirectory: string) {
   return initPromise;
 }
 
-async function findOrCreateEmulator(avdDirectory: string, systemImageLocation: string) {
-  // first, we check if emulator already exists, so we can remove the old one and create new one
-  if (!fs.existsSync(path.join(avdDirectory, AVD_NAME + ".ini"))) {
-    Logger.debug(`Removing directory ${avdDirectory}`);
-    fs.existsSync(`rm -rf ${avdDirectory}`);
+export async function removeEmulator(avdName?: string) {
+  if (!avdName) {
+    return;
   }
-  await createEmulator(avdDirectory, systemImageLocation);
 
-  return await startEmulator(avdDirectory);
+  const avdDirectory = getOrCreateAvdDirectory();
+  const directoryRemoval = exec("rm", ["-rf", `${path.join(avdDirectory, avdName)}.avd`], {});
+  const iniFileRemoval = exec("rm", [`${path.join(avdDirectory, avdName)}.ini`], {});
+
+  return Promise.all([directoryRemoval, iniFileRemoval]);
+}
+
+async function findOrCreateEmulator(
+  avdDirectory: string,
+  systemImageLocation: string,
+  avdName?: string
+) {
+  const newAvdName = avdName ?? uuidv4();
+  if (!avdName || !fs.existsSync(path.join(avdDirectory, avdName + ".ini"))) {
+    await createEmulator(avdDirectory, systemImageLocation, newAvdName);
+  }
+
+  return { ...(await startEmulator(avdDirectory, avdName ?? newAvdName!)), newAvdName };
 }
 
 async function parseAvdIniFile(filePath: string) {

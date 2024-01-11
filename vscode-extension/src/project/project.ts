@@ -6,6 +6,7 @@ import { DeviceSettings } from "../devices/DeviceBase";
 import { getWorkspacePath } from "../utilities/common";
 import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
+import { DeviceInfo } from "../utilities/device";
 import { GlobalStateManager } from "../panels/GlobalStateManager";
 
 export interface EventMonitor {
@@ -116,19 +117,23 @@ export class Project implements Disposable {
     this.session?.onActiveFileChange(filename, followEnabled);
   }
 
-  public async changeDeviceSettings(deviceId: string, settings: DeviceSettings) {
-    await this.session?.changeDeviceSettings(deviceId, settings);
+  public async changeDeviceSettings(settings: DeviceSettings) {
+    await this.session?.changeDeviceSettings(settings);
   }
 
-  public async selectDevice(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
-    Logger.debug(`Device selected ${deviceId}, with system image Path: ${systemImagePath}`);
+  public async selectDevice(
+    device: DeviceInfo,
+    settings: DeviceSettings,
+    globalStateManager: GlobalStateManager
+  ) {
+    Logger.log("Device selected", device.name);
     this.session?.dispose();
-    this.session = new DeviceSession(this.context, deviceId, this.devtools!, this.metro!);
+    this.session = new DeviceSession(this.context, device, this.devtools!, this.metro!);
     await this.session.start(
       this.buildManager?.getIosBuild()!,
       this.buildManager?.getAndroidBuild()!,
       settings,
-      systemImagePath
+      globalStateManager
     );
   }
 }

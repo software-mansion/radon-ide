@@ -5,7 +5,6 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DeviceSettings } from "../devices/DeviceBase";
 import { PreviewsPanel } from "../panels/PreviewsPanel";
-import { checkXCodeBuildInstalled } from "../utilities/hostDependenciesChecks";
 import fetch from "node-fetch";
 import { Logger } from "../Logger";
 import {
@@ -13,33 +12,33 @@ import {
   IOS_FAIL_ERROR_MESSAGE,
   isDeviceIOS,
 } from "../utilities/common";
-import { IosBuild } from "../utilities/ios";
-import { AndroidBuild } from "../utilities/android";
+import { DeviceInfo, PLATFORM } from "../utilities/device";
+import { GlobalStateManager } from "../panels/GlobalStateManager";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
 export class DeviceSession implements Disposable {
-  private device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
+  private deviceSimulator: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
   private inspectCallID = 7621;
   private debugSession: DebugSession | undefined;
 
   constructor(
     private context: ExtensionContext,
-    public readonly deviceId: string,
+    public readonly device: DeviceInfo,
     public readonly devtools: Devtools,
     public readonly metro: Metro
   ) {}
 
   public dispose() {
     this.debugSession && debug.stopDebugging(this.debugSession);
-    this.device?.dispose();
+    this.deviceSimulator?.dispose();
   }
 
   async start(
-    iosBuild: Promise<IosBuild>,
-    androidBuild: Promise<AndroidBuild>,
+    iosBuild: Promise<{ appPath: string; bundleID: string }>,
+    androidBuild: Promise<{ apkPath: string; packageName: string }>,
     settings: DeviceSettings,
-    systemImagePath: string
+    globalStateManager: GlobalStateManager
   ) {
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {
@@ -51,24 +50,35 @@ export class DeviceSession implements Disposable {
       this.devtools?.addListener(listener);
     });
 
-    if (isDeviceIOS(this.deviceId)) {
-      this.device = new IosSimulatorDevice(this.context);
+    if (this.device.platform === PLATFORM.IOS) {
+      this.deviceSimulator = new IosSimulatorDevice(this.context);
       const { appPath, bundleID } = await iosBuild;
-      await this.device.bootDevice();
-      await this.device.changeSettings(settings);
-      await this.device.installApp(appPath);
-      await this.device.launchApp(bundleID, this.metro!.port);
+      const deviceUdid = await this.deviceSimulator.bootDevice(
+        this.device.runtime,
+        this.device.udid
+      );
+      if (!this.device.udid) {
+        globalStateManager.updateDevice({ ...this.device, udid: deviceUdid });
+      }
+      await this.deviceSimulator.changeSettings(settings);
+      await this.deviceSimulator.installApp(appPath);
+      await this.deviceSimulator.launchApp(bundleID, this.metro!.port);
     } else {
-      this.device = new AndroidEmulatorDevice(this.context);
+      this.deviceSimulator = new AndroidEmulatorDevice(this.context);
       const { apkPath, packageName } = await androidBuild;
-      await this.device.bootDevice(systemImagePath);
-      await this.device.changeSettings(settings);
-      await this.device.installApp(apkPath);
-      await this.device.launchApp(packageName, this.metro!.port);
+      const newAvdName = await this.deviceSimulator.bootDevice(
+        this.device.systemImage,
+        this.device.avdName
+      );
+      if (!this.device.avdName) {
+        globalStateManager.updateDevice({ ...this.device, avdName: newAvdName });
+      }
+      await this.deviceSimulator.changeSettings(settings);
+      await this.deviceSimulator.installApp(apkPath);
+      await this.deviceSimulator.launchApp(packageName, this.metro!.port);
     }
 
-    const waitForPreview = this.device.startPreview();
-
+    const waitForPreview = this.deviceSimulator.startPreview();
     await Promise.all([waitForAppReady, waitForPreview]);
 
     const websocketAddress = await this.waitForDebuggerURL(WAIT_FOR_DEBUGGER_TIMEOUT);
@@ -95,7 +105,7 @@ export class DeviceSession implements Disposable {
       Logger.error("Couldn't connect to debugger");
     }
 
-    PreviewsPanel.currentPanel?.notifyAppReady(this.deviceId, this.device.previewURL!);
+    PreviewsPanel.currentPanel?.notifyAppReady(this.device.id, this.deviceSimulator.previewURL!);
   }
 
   private async waitForDebuggerURL(timeoutMs: number) {
@@ -141,11 +151,11 @@ export class DeviceSession implements Disposable {
   }
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.device?.sendTouch(xRatio, yRatio, type);
+    this.deviceSimulator?.sendTouch(xRatio, yRatio, type);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
-    this.device?.sendKey(keyCode, direction);
+    this.deviceSimulator?.sendKey(keyCode, direction);
   }
 
   public inspectElementAt(xRatio: number, yRatio: number, callback: (inspecData: any) => void) {
@@ -172,7 +182,7 @@ export class DeviceSession implements Disposable {
     this.devtools.send("rnp_editorFileChanged", { filename, followEnabled });
   }
 
-  public async changeDeviceSettings(deviceId: string, settings: DeviceSettings) {
-    await this.device?.changeSettings(settings);
+  public async changeDeviceSettings(settings: DeviceSettings) {
+    await this.deviceSimulator?.changeSettings(settings);
   }
 }

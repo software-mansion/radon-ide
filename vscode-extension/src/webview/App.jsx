@@ -1,7 +1,6 @@
 import { vscode } from "./utilities/vscode";
 import "./App.css";
 import PreviewView from "./views/PreviewView";
-import { useGlobalStateContext } from "./providers/GlobalStateProvider";
 import { useDependencies } from "./providers/DependenciesProvider";
 import PreviewSkeletonView from "./views/PreviewSkeletonView";
 
@@ -13,12 +12,9 @@ console.log = function (...args) {
 };
 
 function App() {
-  const { state: globalState } = useGlobalStateContext();
-
   const { isReady: dependenciesReady } = useDependencies();
-  const devicesReady = Boolean(globalState?.devices?.length);
 
-  if (!(dependenciesReady && devicesReady)) {
+  if (!dependenciesReady) {
     return (
       <main>
         <PreviewSkeletonView />
@@ -28,7 +24,7 @@ function App() {
 
   return (
     <main>
-      <PreviewView initialDevice={globalState.devices[0]} />
+      <PreviewView />
     </main>
   );
 }

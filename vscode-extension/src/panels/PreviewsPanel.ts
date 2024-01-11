@@ -10,25 +10,23 @@ import {
   commands,
 } from "vscode";
 
-import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
-
-import { Project } from "../project/project";
-import { ANDROID_FAIL_ERROR_MESSAGE, IOS_FAIL_ERROR_MESSAGE } from "../utilities/common";
 import { openExternalUrl } from "../utilities/vsc";
-import {
-  AndroidImageEntry,
-  getAndroidSystemImages,
-  installSystemImages,
-  removeSystemImages,
-} from "../utilities/sdkmanager";
 import { GlobalStateManager } from "./GlobalStateManager";
-import { DeviceSettings } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { generateWebviewContent } from "./webviewContentGenerator";
-import { RuntimeInfo, removeIosRuntimes } from "../devices/IosSimulatorDevice";
 import { DependencyChecker } from "../dependency/DependencyChecker";
 import { DependencyInstaller } from "../dependency/DependencyInstaller";
+import { DeviceManager } from "../devices/DeviceManager";
+import { ProjectManager } from "../project/ProjectManager";
+
+const PREVIEW_PANEL_COMMANDS = [
+  "log",
+  "debugResume",
+  "openLogs",
+  "openExternalUrl",
+  "stopFollowing",
+  "startFollowing",
+];
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
@@ -37,7 +35,8 @@ export class PreviewsPanel {
   private readonly dependencyChecker: DependencyChecker;
   private readonly dependencyInstaller: DependencyInstaller;
   private readonly context: ExtensionContext;
-  private project: Project;
+  private readonly deviceManager: DeviceManager;
+  private readonly projectManager: ProjectManager;
   private disposables: Disposable[] = [];
   private projectStarted = false;
 
@@ -73,7 +72,11 @@ export class PreviewsPanel {
 
     this._setupEditorListeners(context);
 
-    this.project = new Project(context);
+    this.deviceManager = new DeviceManager(this._panel.webview);
+    this.deviceManager.startListening();
+
+    this.projectManager = new ProjectManager(this._panel.webview, this.globalStateManager, context);
+    this.projectManager.startListening();
   }
 
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
@@ -100,7 +103,7 @@ export class PreviewsPanel {
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
-      PreviewsPanel.currentPanel.project.startPreview(`preview:/${fileName}:${lineNumber}`);
+      PreviewsPanel.currentPanel.projectManager.startPreview(`preview:/${fileName}:${lineNumber}`);
     }
   }
 
@@ -140,64 +143,17 @@ export class PreviewsPanel {
       (message: any) => {
         const command = message.command;
 
+        if (!PREVIEW_PANEL_COMMANDS.includes(command)) {
+          return;
+        }
+
         Logger.log(`Extension received a message with command ${command}.`);
 
         switch (command) {
           case "log":
             return;
-          case "startProject":
-            this._startProject(
-              message.deviceId,
-              message.settings,
-              message.systemImagePath,
-              !!message.forceCleanBuild
-            );
-            return;
           case "debugResume":
             debug.activeDebugSession?.customRequest("continue");
-            return;
-          case "changeDevice":
-            this._handleSelectDevice(message.deviceId, message.settings, message.systemImagePath);
-            return;
-          case "changeDeviceSettings":
-            this.project.changeDeviceSettings(message.deviceId, message.settings);
-            return;
-          case "touch":
-            this.project.sendTouch(message.deviceId, message.xRatio, message.yRatio, message.type);
-            return;
-          case "key":
-            this.project.sendKey(message.deviceId, message.keyCode, message.type);
-            return;
-          case "inspect":
-            this.project.inspectElementAt(message.xRatio, message.yRatio, (inspectData) => {
-              this._panel.webview.postMessage({
-                command: "inspectData",
-                data: inspectData,
-              });
-              if (message.type === "Down") {
-                // find last element in inspectData.hierarchy with source that belongs to the workspace
-                for (let i = inspectData.hierarchy.length - 1; i >= 0; i--) {
-                  const element = inspectData.hierarchy[i];
-                  if (isFileInWorkspace(element.source.fileName)) {
-                    openFileAtPosition(
-                      element.source.fileName,
-                      element.source.lineNumber - 1,
-                      element.source.columnNumber - 1
-                    );
-                    break;
-                  }
-                }
-              }
-            });
-            return;
-          case "openNavigation":
-            this.project.openNavigation(message.id);
-            return;
-          case "stopFollowing":
-            this.followEnabled = false;
-            return;
-          case "startFollowing":
-            this.followEnabled = true;
             return;
           case "openLogs":
             commands.executeCommand("workbench.panel.repl.view.focus");
@@ -205,20 +161,12 @@ export class PreviewsPanel {
           case "openExternalUrl":
             openExternalUrl(message.url);
             return;
-          case "restartProject":
-            this._resetProject(message.deviceId, message.settings, message.systemImagePath);
+          case "stopFollowing":
+            this.followEnabled = false;
             return;
-          case "listAllAndroidImages":
-            this._listAllAndroidImages();
+          case "startFollowing":
+            this.followEnabled = true;
             return;
-          case "listInstalledAndroidImages":
-            this._listInstalledAndroidImages();
-            return;
-          case "processAndroidImageChanges":
-            this._processAndroidImageChanges(message.toRemove, message.toInstall);
-            return;
-          case "processIosRuntimeChanges":
-            this._processIosRuntimeChanges(message.toRemove, message.toInstall);
         }
       },
       undefined,
@@ -226,136 +174,9 @@ export class PreviewsPanel {
     );
   }
 
-  private async _processAndroidImageChanges(
-    toRemove: AndroidImageEntry[],
-    toInstall: AndroidImageEntry[]
-  ) {
-    const streamInstallStdoutProgress = (line: string) => {
-      this._panel.webview.postMessage({
-        command: "streamAndroidInstallationProgress",
-        stream: line,
-      });
-    };
-
-    if (!!toInstall.length) {
-      const toInstallImagePaths = toInstall.map((imageToInstall) => imageToInstall.path);
-      await installSystemImages(toInstallImagePaths, streamInstallStdoutProgress);
-    }
-
-    if (!!toRemove.length) {
-      const toRemoveImagePaths = toRemove.map((imageToRemove) => imageToRemove.location!);
-      await removeSystemImages(toRemoveImagePaths);
-    }
-
-    const [installedImages, availableImages] = await getAndroidSystemImages();
-    this._panel.webview.postMessage({
-      command: "androidInstallProcessFinished",
-      installedImages,
-      availableImages,
-    });
-  }
-
-  private async _processIosRuntimeChanges(toRemove: RuntimeInfo[], toInstall: string[]) {
-    if (!!toInstall.length) {
-      // TODO: implement
-    }
-
-    if (!!toRemove.length) {
-      await removeIosRuntimes(toRemove);
-    }
-
-    this._panel.webview.postMessage({
-      command: "iOSInstallProcessFinished",
-    });
-  }
-
-  private async _listAllAndroidImages() {
-    const [installedImages, availableImages] = await getAndroidSystemImages();
-    this._panel.webview.postMessage({
-      command: "allAndroidImagesListed",
-      installedImages,
-      availableImages,
-    });
-  }
-
-  private async _listInstalledAndroidImages() {
-    const [installedImages] = await getAndroidSystemImages();
-    this._panel.webview.postMessage({
-      command: "installedAndroidImagesListed",
-      images: installedImages,
-    });
-  }
-
-  private async _startProject(
-    deviceId: string,
-    settings: DeviceSettings,
-    systemImagePath: string,
-    forceCleanBuild: boolean
-  ) {
-    // in dev mode, react may trigger this message twice as it comes from useEffect
-    // we need to make sure we don't start the project twice
-    if (this.projectStarted) {
-      return;
-    }
-    this.projectStarted = true;
-    await this.project.start(this.globalStateManager, forceCleanBuild);
-    this.project.addEventMonitor({
-      onLogReceived: (message) => {
-        this._panel.webview.postMessage({
-          command: "logEvent",
-          type: message.type,
-        });
-      },
-      onDebuggerPaused: () => {
-        this._panel.webview.postMessage({
-          command: "debuggerPaused",
-        });
-      },
-      onDebuggerContinued: () => {
-        this._panel.webview.postMessage({
-          command: "debuggerContinued",
-        });
-      },
-      onUncaughtException: (isFatal) => {
-        this._panel.webview.postMessage({
-          command: "uncaughtException",
-          isFatal: isFatal,
-        });
-      },
-    });
-    this.disposables.push(this.project);
-    this._handleSelectDevice(deviceId, settings, systemImagePath);
-  }
-
-  private async _handleSelectDevice(
-    deviceId: string,
-    settings: DeviceSettings,
-    systemImagePath: string
-  ) {
-    try {
-      await this.project.selectDevice(deviceId, settings, systemImagePath);
-    } catch (error) {
-      const isStringError = typeof error === "string";
-      this._panel.webview.postMessage({
-        command: "projectError",
-        androidBuildFailed: isStringError && error.startsWith(ANDROID_FAIL_ERROR_MESSAGE),
-        iosBuildFailed: isStringError && error.startsWith(IOS_FAIL_ERROR_MESSAGE),
-        error,
-      });
-      throw error;
-    }
-  }
-
-  private async _resetProject(deviceId: string, settings: DeviceSettings, systemImagePath: string) {
-    this.project.dispose();
-    this.projectStarted = false;
-    this.project = new Project(this.context);
-    this._startProject(deviceId, settings, systemImagePath, true);
-  }
-
   private _onActiveFileChange(filename: string) {
     Logger.debug(`LastEditor ${filename}`);
-    this.project.onActiveFileChange(filename, this.followEnabled);
+    this.projectManager.onActiveFileChange(filename, this.followEnabled);
   }
 
   private _setupEditorListeners(context: ExtensionContext) {

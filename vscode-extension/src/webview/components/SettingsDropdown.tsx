@@ -10,7 +10,7 @@ import DiagnosticView from "../views/DiagnosticView";
 import AndroidImagesView from "../views/AndroidImagesView";
 import ManageDevicesView from "../views/ManageDevicesView";
 
-import { MANAGE_DEVICE_OPTION_NAME } from '../utilities/consts';
+import { MANAGE_DEVICE_OPTION_NAME } from "../utilities/consts";
 import { useGlobalStateContext } from "../providers/GlobalStateProvider";
 
 interface SettingsDropdownProps {

@@ -95,8 +95,8 @@ function Preview({
 
   useEffect(() => {
     function keyEventHandler(e) {
-      e.preventDefault();
       if (document.activeElement === wrapperDivRef.current) {
+        e.preventDefault();
         const hidCode = keyboardEventToHID(e);
         sendKey(hidCode, e.type === "keydown" ? "Down" : "Up");
       }

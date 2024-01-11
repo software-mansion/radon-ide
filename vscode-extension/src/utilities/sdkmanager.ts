@@ -3,6 +3,7 @@ import path from "path";
 import { ANDROID_HOME } from "./android";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
+import { CPU_ARCHITECTURE, getCpuArchitecture } from "./common";
 
 export const SDKMANAGER_BIN_PATH = path.join(
   ANDROID_HOME,
@@ -11,6 +12,7 @@ export const SDKMANAGER_BIN_PATH = path.join(
   "bin",
   "sdkmanager"
 );
+const ACCEPTED_SYSTEM_IMAGES_TYPES = ["default", "google_apis_playstore", "google_apis"];
 
 interface SdkRepositoryEntry {
   path: string;
@@ -33,8 +35,21 @@ async function runSdkManagerList() {
   return stdout;
 }
 
-function filterOtherEntries(entry: SdkRepositoryEntry) {
+function filterOtherEntriesTypes(entry: SdkRepositoryEntry) {
   return entry.path.startsWith("system-images");
+}
+
+function filterOtherOsVersions(cpuArchitecture: CPU_ARCHITECTURE) {
+  return (entry: SdkRepositoryEntry) => entry.path.split(";")[3] === cpuArchitecture;
+}
+
+function filterOlderApiLevels(entry: AndroidImageEntry) {
+  return entry.apiLevel >= 28;
+}
+
+function filterSystemImageTypes(entry: SdkRepositoryEntry) {
+  const systemImageType = entry.path.split(";")[2];
+  return ACCEPTED_SYSTEM_IMAGES_TYPES.includes(systemImageType);
 }
 
 function mapToImageEntry(imageEntry: SdkRepositoryEntry) {
@@ -74,15 +89,22 @@ export async function getAndroidSystemImages(): Promise<
   [AndroidImageEntry[], AndroidImageEntry[]]
 > {
   const [installedEntries, availableEntries] = await getInstalledAndroidSdkEntries();
+  const cpuArchitecture = getCpuArchitecture();
   const installedImages = installedEntries
-    .filter(filterOtherEntries)
+    .filter(filterOtherEntriesTypes)
+    .filter(filterOtherOsVersions(cpuArchitecture))
+    .filter(filterSystemImageTypes)
     .map(mapToImageEntry)
-    .filter((image) => !!image.apiLevel);
+    .filter((image) => !!image.apiLevel)
+    .filter(filterOlderApiLevels);
 
   const availableImages = availableEntries
-    .filter(filterOtherEntries)
+    .filter(filterOtherEntriesTypes)
+    .filter(filterOtherOsVersions(cpuArchitecture))
+    .filter(filterSystemImageTypes)
     .map(mapToImageEntry)
-    .filter((image) => !!image.apiLevel);
+    .filter((image) => !!image.apiLevel)
+    .filter(filterOlderApiLevels);
 
   return [installedImages, availableImages];
 }

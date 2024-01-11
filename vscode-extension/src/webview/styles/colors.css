@@ -67,8 +67,8 @@
 
   /* UI */
   /* These colors change in runtime whenever vscode theme is changed  */
-  --preview-background: var(--background-dark-100);
   --active-item: var(--blue-dark-100);
+  --preview-background: var(--background-dark-100);
 
   --default-text: var(--off-white);
   --secondary-text: var(--background-dark-10);

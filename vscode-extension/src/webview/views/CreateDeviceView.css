@@ -1,0 +1,43 @@
+.edit-device-form {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    align-items: center;
+    padding: 8px;
+}
+
+.form-row {
+    width: 80%;
+    margin-bottom: 16px;
+}
+
+.form-label {
+    width: 100%;   
+    margin-bottom: 4px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.form-field {
+    width: 100%;
+}
+
+.dropdown .listbox{
+    max-height: 300px !important;
+    overflow-y: scroll;
+}
+
+.dropdown-separator {
+    width: 100%;
+    margin: 4px 0px;
+    height: 1px;
+    background-color: var(--separator);
+}
+
+.button-panel {
+    margin-top: 12px;
+    display: flex;
+    gap: 32px;
+}

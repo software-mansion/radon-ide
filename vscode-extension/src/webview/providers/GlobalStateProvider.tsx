@@ -64,7 +64,7 @@ export default function GlobalStateProvider({ children }: PropsWithChildren) {
           const persistedState = null; //message.state;
           if (!persistedState) {
             const newState: GlobalState = {
-              devices: DEVICES as Device[],
+              devices: [] as Device[],
               buildCache: { enabled: true },
             };
             vscode.postMessage({
@@ -75,6 +75,10 @@ export default function GlobalStateProvider({ children }: PropsWithChildren) {
           } else {
             setLocalState(persistedState);
           }
+          break;
+        case "stateUpdate":
+          const newState = message.state;
+          setLocalState(newState);
           break;
       }
     };

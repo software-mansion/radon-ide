@@ -1,8 +1,4 @@
-import {
-  AndroidSystemImage,
-  IosRuntime,
-  InstalledAndroidSystemImage,
-} from "../providers/SystemImagesProvider";
+import { AndroidSystemImage, IosRuntime } from "../providers/SystemImagesProvider";
 
 export enum PLATFORM {
   IOS = "iOS",
@@ -17,6 +13,7 @@ export type Device =
       width: number;
       height: 2556;
       systemImage?: AndroidSystemImage;
+      avdName?: string;
       backgroundImage: string;
       backgroundMargins: [number, number, number, number];
       backgroundSize: [number, number];
@@ -25,10 +22,12 @@ export type Device =
   | {
       id: string;
       platform: PLATFORM.IOS;
+      uuid?: string;
       name: string;
       width: number;
       height: 2556;
       runtime?: IosRuntime;
+      udid?: string;
       backgroundImage: string;
       backgroundMargins: [number, number, number, number];
       backgroundSize: [number, number];
@@ -37,7 +36,7 @@ export type Device =
 
 export const isDeviceImageInstalled = (
   device: Device | undefined,
-  installedAndroidImages: InstalledAndroidSystemImage[]
+  installedAndroidImages: AndroidSystemImage[]
 ) => {
   if (!device) {
     return true;
