@@ -22,6 +22,15 @@ button {
     background-color: var(--select-active-background);
 }
 
+.SelectTrigger-disabled {
+    background-color: var(--background-dark-120);
+}
+
+.SelectTrigger-disabled:hover {
+    background-color: var(--background-dark-120);
+    cursor: auto;
+}
+
 .SelectContent {
     overflow: hidden;
     background-color: var(--background-dark-80);

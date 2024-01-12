@@ -1,8 +1,27 @@
-import { AndroidSystemImage, IosRuntime } from "../providers/SystemImagesProvider";
+import { AndroidSystemImage } from "./android";
+import { IosRuntime } from "./ios";
 
 export enum PLATFORM {
   IOS = "iOS",
   ANDROID = "Android",
+}
+
+export enum SupportedAndroidPhone {
+  PIXEL_7 = "Google Pixel 7",
+}
+
+export enum SupportedIOSPhone {
+  IPHONE_15_PRO = "IPhone 15 Pro",
+}
+
+export type SupportedPhoneType = SupportedAndroidPhone | SupportedIOSPhone;
+
+export function isAndroidDeviceType(phone: SupportedPhoneType): phone is SupportedAndroidPhone {
+  return Object.values(SupportedAndroidPhone).includes(phone as SupportedAndroidPhone);
+}
+
+export function isIosDeviceType(phone: SupportedPhoneType): phone is SupportedIOSPhone {
+  return Object.values(SupportedIOSPhone).includes(phone as SupportedIOSPhone);
 }
 
 export type Device =

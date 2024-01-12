@@ -32,12 +32,13 @@ interface SelectProps {
   options: SelectOption[];
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
-function Select({ value, onChange, options, placeholder, className }: SelectProps) {
+function Select({ value, onChange, options, placeholder, className, disabled }: SelectProps) {
   return (
-    <RadixSelect.Root value={value} onValueChange={onChange}>
-      <RadixSelect.Trigger className={classnames("SelectTrigger", className)}>
+    <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
+      <RadixSelect.Trigger className={classnames("SelectTrigger", className, disabled && "SelectTrigger-disabled")}>
         <RadixSelect.Value placeholder={placeholder} />
         <RadixSelect.Icon className="SelectIcon">
           <span className="codicon codicon-chevron-down" />

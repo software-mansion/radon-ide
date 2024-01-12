@@ -1,103 +1,96 @@
 import Select from "../components/Select";
 import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
+import { useSystemImagesContext } from "../providers/SystemImagesProvider";
 import {
-  AndroidSystemImage,
-  IosRuntime,
-  useSystemImagesContext,
-} from "../providers/SystemImagesProvider";
-import { PLATFORM } from "../utilities/device";
+  SupportedIOSPhone,
+  SupportedAndroidPhone,
+  SupportedPhoneType,
+  isIosDeviceType,
+} from "../utilities/device";
 import "./CreateDeviceView.css";
-import { VSCodeButton, VSCodeTextField } from "@vscode/webview-ui-toolkit/react";
+import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { useMemo, useState } from "react";
-import Tooltip from "../components/Tooltip";
+import { IosRuntime } from "../utilities/ios";
+import { AndroidSystemImage, getVerboseAndroidImageName } from "../utilities/android";
+
+const DEVICE_TYPE_OPTIONS = [
+  {
+    options: Object.values(SupportedIOSPhone).map((value) => ({ value, label: value })),
+    label: "iOS",
+  },
+  {
+    options: Object.values(SupportedAndroidPhone).map((value) => ({ value, label: value })),
+    label: "Android",
+  },
+];
 
 interface CreateDeviceViewProps {
-  onCreate: (
-    name: string,
-    platform: PLATFORM,
-    systemImage: IosRuntime | AndroidSystemImage
-  ) => void;
+  onCreate: (deviceType: SupportedPhoneType, systemImage: IosRuntime | AndroidSystemImage) => void;
   onCancel: () => void;
 }
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
-  const [name, setName] = useState("");
-  const [platform, setPlatform] = useState(PLATFORM.IOS);
+  const [deviceType, setDeviceType] = useState<SupportedPhoneType | undefined>(undefined);
   const [systemImageName, setSystemImageName] = useState<string | undefined>(undefined);
-  const isIosDevice = platform === PLATFORM.IOS;
 
   const { installedIosRuntimes, installedAndroidImages } = useSystemImagesContext();
-  const { devices } = useWorkspaceStateContext();
 
   const selectedSystemImage = useMemo(() => {
-    if (!systemImageName) {
+    if (!systemImageName || !deviceType) {
       return undefined;
     }
-    if (platform === PLATFORM.IOS) {
+    if (isIosDeviceType(deviceType)) {
       return installedIosRuntimes.find((iOSRuntime) => iOSRuntime.name === systemImageName);
     }
     return installedAndroidImages.find(
       (androidSystemImage) => androidSystemImage.path === systemImageName
     );
-  }, [systemImageName, installedAndroidImages, installedIosRuntimes]);
+  }, [systemImageName, installedAndroidImages, installedIosRuntimes, deviceType]);
 
-  const systemImagesOptions = isIosDevice
-    ? installedIosRuntimes.map((runtime) => ({
-        value: runtime.name,
-        label: runtime.name,
-      }))
-    : installedAndroidImages.map((systemImage) => ({
-        value: systemImage.path,
-        label: `${systemImage.apiLevel} - ${systemImage.description}`,
-      }));
+  const systemImagesOptions = useMemo(() => {
+    return !!deviceType && isIosDeviceType(deviceType)
+      ? installedIosRuntimes.map((runtime) => ({
+          value: runtime.name,
+          label: runtime.name,
+        }))
+      : installedAndroidImages.map((systemImage) => ({
+          value: systemImage.path,
+          label: getVerboseAndroidImageName(systemImage),
+        }));
+  }, [installedAndroidImages, installedIosRuntimes, deviceType]);
 
-  const uniqueDeviceName = !devices.find((device) => device.name === name);
-  const createDisabled = !name || !selectedSystemImage || !uniqueDeviceName;
+  const createDisabled = !deviceType || !selectedSystemImage;
 
   return (
     <div className="edit-device-form">
       <div className="form-row">
-        <div className="form-label">Name</div>
-        <VSCodeTextField
-          className="form-field"
-          type="text"
-          placeholder="Enter device name"
-          value={name}
-          onInput={(e: any) => {
-            setName(e.target.value);
-          }}
-        />
-      </div>
-      <div className="form-row">
-        <div className="form-label">Platform</div>
+        <div className="form-label">Device Type</div>
         <Select
           className="form-field"
-          value={platform}
-          onChange={(newValue: string) => setPlatform(newValue as PLATFORM)}
-          options={[
-            { value: PLATFORM.IOS, label: PLATFORM.IOS },
-            { value: PLATFORM.ANDROID, label: PLATFORM.ANDROID },
-          ]}
-          placeholder="Choose device platform..."
+          value={deviceType}
+          onChange={(newValue: string) => setDeviceType(newValue as SupportedPhoneType)}
+          options={DEVICE_TYPE_OPTIONS}
+          placeholder="Choose device type..."
         />
       </div>
       <div className="form-row">
         <div className="form-label">
-          <div>{isIosDevice ? "Runtime" : "System image"}</div>
+          <div>System image</div>
           {!systemImagesOptions.length && <span className="codicon codicon-warning warning" />}
         </div>
         {!!systemImagesOptions.length ? (
           <Select
+            disabled={!deviceType}
             className="form-field"
             value={systemImageName}
             onChange={(newValue) => setSystemImageName(newValue)}
             options={systemImagesOptions}
-            placeholder={`Select device ${isIosDevice ? "runtime" : "system image"}...`}
+            placeholder={`Select device system image...`}
           />
         ) : (
           <div className="">
-            No {isIosDevice ? "Runtimes" : "System Images"} found. You can install them using{" "}
-            {isIosDevice ? "Xcode" : "Android Studio"}.
+            No "System Images" found. You can install them using{" "}
+            {isIosDeviceType(deviceType!) ? "Xcode" : "Android Studio"}.
           </div>
         )}
       </div>
@@ -105,14 +98,11 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <VSCodeButton onClick={onCancel} appearance="secondary">
           Cancel
         </VSCodeButton>
-        <Tooltip
-          label={!uniqueDeviceName ? "Some device with this name already exists." : undefined}>
-          <VSCodeButton
-            disabled={createDisabled}
-            onClick={() => onCreate(name, platform, selectedSystemImage!)}>
-            Create
-          </VSCodeButton>
-        </Tooltip>
+        <VSCodeButton
+          disabled={createDisabled}
+          onClick={() => onCreate(deviceType!, selectedSystemImage!)}>
+          Create
+        </VSCodeButton>
       </div>
     </div>
   );

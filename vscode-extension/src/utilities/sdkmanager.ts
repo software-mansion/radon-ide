@@ -12,6 +12,7 @@ export const SDKMANAGER_BIN_PATH = path.join(
   "bin",
   "sdkmanager"
 );
+
 const ACCEPTED_SYSTEM_IMAGES_TYPES = ["default", "google_apis_playstore", "google_apis"];
 
 interface SdkRepositoryEntry {
@@ -23,6 +24,29 @@ interface SdkRepositoryEntry {
 
 export interface AndroidImageEntry extends SdkRepositoryEntry {
   apiLevel: number;
+  androidVersion: number | undefined;
+  imageType: string;
+}
+
+// Temporary solution due to sdkmanager not having information about android version.
+function mapApiLevelToAndroidVersion(apiLevel: number): number | undefined {
+  switch (apiLevel) {
+    case 34:
+      return 14;
+    case 33:
+      return 13;
+    case 32:
+    case 31:
+      return 12;
+    case 30:
+      return 11;
+    case 29:
+      return 10;
+    case 28:
+      return 9;
+    default:
+      undefined;
+  }
 }
 
 // Example image path: "system-images;android-31;default;x86_64"
@@ -53,7 +77,13 @@ function filterSystemImageTypes(entry: SdkRepositoryEntry) {
 }
 
 function mapToImageEntry(imageEntry: SdkRepositoryEntry) {
-  return { ...imageEntry, apiLevel: getApiLevelFromImagePath(imageEntry.path) };
+  const apiLevel = getApiLevelFromImagePath(imageEntry.path);
+  return {
+    ...imageEntry,
+    apiLevel: apiLevel,
+    androidVersion: mapApiLevelToAndroidVersion(apiLevel),
+    imageType: imageEntry.path.split(";")[2],
+  };
 }
 
 async function getInstalledAndroidSdkEntries(): Promise<

@@ -9,26 +9,8 @@ import {
 } from "react";
 import { vscode } from "../utilities/vscode";
 import { Device, PLATFORM } from "../utilities/device";
-export interface AndroidSystemImage {
-  path: string;
-  version: string;
-  description: string;
-  location?: string;
-  apiLevel: number;
-}
-
-export interface IosRuntime {
-  bundlePath: string;
-  buildversion: string;
-  platform: "iOS" | "tvOS" | "watchOS";
-  runtimeRoot: string;
-  identifier: string;
-  version: string;
-  isInternal: boolean;
-  isAvailable: boolean;
-  name: string;
-  supportedDeviceTypes: Array<{ name: string; identifier: string }>;
-}
+import { AndroidSystemImage } from "../utilities/android";
+import { IosRuntime } from "../utilities/ios";
 
 interface SystemImagesContextProps {
   androidImages: AndroidSystemImage[];

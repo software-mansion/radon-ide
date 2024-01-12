@@ -4,18 +4,16 @@ import "./ManageDevicesView.css";
 import { useEffect, useMemo, useState } from "react";
 import IconButton from "../components/IconButton";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
-import {
-  AndroidSystemImage,
-  IosRuntime,
-  useSystemImagesContext,
-} from "../providers/SystemImagesProvider";
-import { Device, PLATFORM } from "../utilities/device";
+import { useSystemImagesContext } from "../providers/SystemImagesProvider";
+import { Device, PLATFORM, SupportedPhoneType, isIosDeviceType } from "../utilities/device";
 import CreateDeviceView from "./CreateDeviceView";
 import Tooltip from "../components/Tooltip";
 import {
   ANDROID_DEVICE_GRAPHICAL_PROPERTIES,
   IOS_DEVICE_GRAPHICAL_PROPERTIES,
 } from "../utilities/consts";
+import { IosRuntime } from "../utilities/ios";
+import { AndroidSystemImage, getVerboseAndroidImageName } from "../utilities/android";
 
 interface DeviceRowProps {
   device: Device;
@@ -95,25 +93,28 @@ function ManageDevicesView() {
   };
 
   const handleCreateFinished = (
-    name: string,
-    platform: PLATFORM,
+    deviceType: SupportedPhoneType,
     systemImage: IosRuntime | AndroidSystemImage
   ) => {
-    if (platform === PLATFORM.IOS) {
+    if (isIosDeviceType(deviceType) && systemImage) {
+      const iOSRuntime = systemImage as IosRuntime;
+      const name = `${deviceType} (${iOSRuntime.name})`;
       const newDevice = {
         ...IOS_DEVICE_GRAPHICAL_PROPERTIES,
         id: name,
         name,
-        platform,
+        platform: PLATFORM.IOS,
         runtime: systemImage,
       } as Device;
       updateDevices([...devices, newDevice]);
     } else {
+      const androidSystemImage = systemImage as AndroidSystemImage;
+      const name = getVerboseAndroidImageName(androidSystemImage);
       const newDevice = {
         ...ANDROID_DEVICE_GRAPHICAL_PROPERTIES,
         id: name,
         name,
-        platform,
+        platform: PLATFORM.ANDROID,
         systemImage,
       } as Device;
       updateDevices([...devices, newDevice]);
