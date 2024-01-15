@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import { VSCodeButton, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
-import IconButton from "../components/IconButton";
+import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
 import LogPanel from "../components/LogPanel";
 import LogCounter from "../components/LogCounter";

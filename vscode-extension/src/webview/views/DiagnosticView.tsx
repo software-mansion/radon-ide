@@ -2,14 +2,14 @@ import "./View.css";
 import "./DiagnosticView.css";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { vscode } from "../utilities/vscode";
-import Anchor from "../components/Anchor";
+import Anchor from "../components/shared/Anchor";
 import CheckIcon from "../components/icons/CheckIcon";
 import CloseIcon from "../components/icons/CloseIcon";
 import { DependencyData, useDependencies } from "../providers/DependenciesProvider";
-import ProgressRing from "../components/ProgressRing";
-import Tooltip from "../components/Tooltip";
-import IconButton from "../components/IconButton";
-import Label from "../components/ui/Label";
+import ProgressRing from "../components/shared/ProgressRing";
+import Tooltip from "../components/shared/Tooltip";
+import IconButton from "../components/shared/IconButton";
+import Label from "../components/shared/Label";
 
 function DiagnosticView() {
   const { dependencies, runDiagnostics } = useDependencies();

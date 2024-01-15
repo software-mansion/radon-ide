@@ -2,12 +2,12 @@ import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
 import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
 import "./ManageDevicesView.css";
 import { useEffect, useMemo, useState } from "react";
-import IconButton from "../components/IconButton";
+import IconButton from "../components/shared/IconButton";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
 import { useSystemImagesContext } from "../providers/SystemImagesProvider";
 import { Device, PLATFORM, SupportedPhoneType, isIosDeviceType } from "../utilities/device";
 import CreateDeviceView from "./CreateDeviceView";
-import Tooltip from "../components/Tooltip";
+import Tooltip from "../components/shared/Tooltip";
 import {
   ANDROID_DEVICE_GRAPHICAL_PROPERTIES,
   IOS_DEVICE_GRAPHICAL_PROPERTIES,

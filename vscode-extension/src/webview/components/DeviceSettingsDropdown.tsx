@@ -3,13 +3,13 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
 
-import "./Dropdown.css";
-import "./RadioGroup.css";
-import "./Slider.css";
+import "./shared/Dropdown.css";
+import "./shared/RadioGroup.css";
+import "./shared/Slider.css";
 import "./DeviceSettingsDropdown.css";
 
 import { vscode } from "../utilities/vscode";
-import Label from "./ui/Label";
+import Label from "./shared/Label";
 
 const textSize = ["xsmall", "small", "normal", "large", "xlarge", "xxlarge", "xxxlarge"] as const;
 

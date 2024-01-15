@@ -1,8 +1,7 @@
 import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
 import { useEffect, useState } from "react";
 import { vscode } from "../utilities/vscode";
-import IconButton from "./IconButton";
-
+import IconButton from "./shared/IconButton";
 
 function UrlBar({ onRestart }) {
   const [urlList, setUrlList] = useState([{ name: "/", id: null }]);

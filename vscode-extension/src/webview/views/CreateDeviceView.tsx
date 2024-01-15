@@ -1,4 +1,4 @@
-import Select from "../components/Select";
+import Select from "../components/shared/Select";
 import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
 import { useSystemImagesContext } from "../providers/SystemImagesProvider";
 import {
