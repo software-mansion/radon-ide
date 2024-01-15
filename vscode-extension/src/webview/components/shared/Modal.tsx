@@ -16,7 +16,7 @@ export default function Modal({ title, component, open, setOpen }: ModalProps) {
   return (
     <Dialog.Root open={open}>
       <Dialog.Portal>
-        <Dialog.Overlay className="modal-overlay" />
+        <Dialog.Overlay className="modal-overlay" onClick={close} />
         <Dialog.Content className="modal-content" onEscapeKeyDown={close}>
           <Dialog.Title className="modal-title">{title}</Dialog.Title>
 
