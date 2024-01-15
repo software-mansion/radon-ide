@@ -4,13 +4,6 @@
   margin: 6px 0;
 }
 
-.diagnostic-label {
-  font-weight: normal;
-  font-size: 12px;
-  text-transform: uppercase;
-  margin-top: 24px;
-}
-
 .diagnostic-item-text {
   margin: 0;
   margin-left: 8px;
@@ -54,4 +47,8 @@
   flex-direction: row;
   align-items: center;
   margin-bottom: 16px;
+}
+
+.diagnostic-section-margin {
+  margin-bottom: 24px;
 }

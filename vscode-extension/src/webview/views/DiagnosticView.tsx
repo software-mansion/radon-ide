@@ -9,23 +9,27 @@ import { DependencyData, useDependencies } from "../providers/DependenciesProvid
 import ProgressRing from "../components/ProgressRing";
 import Tooltip from "../components/Tooltip";
 import IconButton from "../components/IconButton";
+import Label from "../components/ui/Label";
 
 function DiagnosticView() {
   const { dependencies, runDiagnostics } = useDependencies();
 
   return (
     <>
-      <h3 className="diagnostic-label">Common</h3>
+      <Label>Common</Label>
       <DiagnosticItem label="Node.js" item={dependencies.Nodejs} />
+      <div className="diagnostic-section-margin" />
 
-      <h3 className="diagnostic-label">Android</h3>
+      <Label>Android</Label>
       <DiagnosticItem label="Android Studio" item={dependencies.AndroidStudio} />
+      <div className="diagnostic-section-margin" />
 
-      <h3 className="diagnostic-label">iOS</h3>
+      <Label>iOS</Label>
       <DiagnosticItem label="Xcode" item={dependencies.Xcode} />
       <DiagnosticItem label="CocoaPods" item={dependencies.CocoaPods} />
+      <div className="diagnostic-section-margin" />
 
-      <h3 className="diagnostic-label">Project related</h3>
+      <Label>Project related</Label>
       <DiagnosticItem
         label="Node modules installed"
         item={dependencies.NodeModules}
@@ -60,6 +64,7 @@ function DiagnosticView() {
           </IconButton>
         }
       />
+      <div className="diagnostic-section-margin" />
 
       <div className="diagnostic-button-container">
         <VSCodeButton appearance="secondary" onClick={runDiagnostics}>

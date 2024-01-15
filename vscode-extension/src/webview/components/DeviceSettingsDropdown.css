@@ -1,0 +1,37 @@
+.device-settings-content {
+  padding: 10px;
+}
+
+.device-settings-heading {
+  text-align: center;
+  margin-top: 0px;
+}
+
+.device-settings-center {
+  display: flex;
+  align-items: center;
+}
+
+.device-settings-small-text-indicator {
+  font-size: 8px;
+  line-height: 1;
+  padding-right: 4px;
+}
+
+.device-settings-large-text-indicator {
+  font-size: 13px;
+  line-height: 0.7;
+  padding-left: 6px;
+}
+
+.device-settings-small-text-indicator::after,
+.device-settings-large-text-indicator::after {
+  content: "A";
+  display: block;
+  width: 8px;
+  height: 8px;
+}
+
+.device-settings-margin {
+  margin-bottom: 24px;
+}

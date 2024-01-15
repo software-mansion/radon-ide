@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Button, TextInput, View } from 'react-native';
+import { Button, TextInput, View, Text, useColorScheme } from 'react-native';
 import { Link } from 'expo-router';
 import { NiceButton } from './components/NiceButton';
 import { UglyButton } from './components/UglyButton';
@@ -8,6 +8,7 @@ const obj = { a: 7678 };
 
 export default function Home() {
   const ref = useRef(null);
+  const appearance = useColorScheme();
 
   return (
     <View
@@ -40,6 +41,7 @@ export default function Home() {
         }}
       />
       <UglyButton />
+      <Text>Appearance: {appearance}</Text>
     </View>
   );
 }

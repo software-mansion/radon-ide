@@ -15,6 +15,8 @@ import ManageDevicesView from "./ManageDevicesView";
 import { MANAGE_DEVICE_OPTION_NAME } from "../utilities/consts";
 import { useSystemImagesContext } from "../providers/SystemImagesProvider";
 import { PLATFORM } from "../utilities/device";
+import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
+import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
 
 function setCssPropertiesForDevice(device) {
   // top right bottom left
@@ -270,43 +272,13 @@ function PreviewView() {
         </VSCodeDropdown>
 
         <div className="spacer" />
-
-        <VSCodeDropdown
-          value={deviceSettings.appearance}
-          onChange={(e) => {
-            const newSettings = { ...deviceSettings, appearance: e.target.value };
-            setDeviceSettings(newSettings);
-            vscode.postMessage({
-              command: "changeDeviceSettings",
-              settings: newSettings,
-              deviceId: e.target.value,
-            });
-          }}>
-          <span slot="start" className="codicon codicon-color-mode" />
-          <VSCodeOption value={"light"}>Light</VSCodeOption>
-          <VSCodeOption value={"dark"}>Dark</VSCodeOption>
-        </VSCodeDropdown>
-
-        <VSCodeDropdown
-          value={deviceSettings.contentSize}
-          onChange={(e) => {
-            const newSettings = { ...deviceSettings, contentSize: e.target.value };
-            setDeviceSettings(newSettings);
-            vscode.postMessage({
-              command: "changeDeviceSettings",
-              settings: newSettings,
-              deviceId: e.target.value,
-            });
-          }}>
-          <span slot="start" className="codicon codicon-text-size" />
-          <VSCodeOption value="xsmall">Extra small</VSCodeOption>
-          <VSCodeOption value="small">Small</VSCodeOption>
-          <VSCodeOption value="normal">Normal</VSCodeOption>
-          <VSCodeOption value="large">Large</VSCodeOption>
-          <VSCodeOption value="xlarge">Extra large</VSCodeOption>
-          <VSCodeOption value="xxlarge">XX large</VSCodeOption>
-          <VSCodeOption value="xxxlarge">XXX large</VSCodeOption>
-        </VSCodeDropdown>
+        <DeviceSettingsDropdown
+          deviceSettings={deviceSettings}
+          setDeviceSettings={setDeviceSettings}>
+          <IconButton tooltip={{ label: "Device settings", side: "top" }}>
+            <DeviceSettingsIcon />
+          </IconButton>
+        </DeviceSettingsDropdown>
       </div>
       <LogPanel expandedLogs={expandedLogs} logs={logs} />
     </div>

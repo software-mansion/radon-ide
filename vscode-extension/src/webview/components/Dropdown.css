@@ -7,14 +7,17 @@ button {
   min-width: 220px;
   background-color: var(--popover-background);
   border-radius: 6px;
-  padding: 5px;
-  animation-duration: 300ms;
+  padding: 4px;
+  animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
 }
 
 .dropdown-menu-content[data-side="bottom"] {
   animation-name: slideUpAndFade;
+}
+.dropdown-menu-content[data-side="top"] {
+  animation-name: slideDownAndFade;
 }
 
 .dropdown-menu-item {
@@ -70,7 +73,18 @@ button {
 @keyframes slideUpAndFade {
   from {
     opacity: 0;
-    transform: translateY(2px);
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
   }
   to {
     opacity: 1;

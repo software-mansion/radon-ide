@@ -2,8 +2,7 @@ import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Switch from "@radix-ui/react-switch";
 
-import { vscode } from "../utilities/vscode";
-import "./SettingsDropdown.css";
+import "./Dropdown.css";
 import { useModal } from "../providers/ModalProvider";
 
 import DiagnosticView from "../views/DiagnosticView";
