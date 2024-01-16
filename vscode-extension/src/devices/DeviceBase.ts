@@ -1,19 +1,17 @@
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
-import { AndroidSystemImage } from "../utilities/device";
-import { RuntimeInfo } from "./IosSimulatorDevice";
-
-export interface DeviceSettings {
-  appearance: "light" | "dark";
-  contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
-}
+import { BuildResult } from "../builders/BuildManager";
+import { DeviceInfo } from "../common/DeviceManager";
+import { DeviceSettings } from "../common/Project";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
 
-  abstract get name(): string | undefined;
-  abstract bootDevice(systemImage: RuntimeInfo | AndroidSystemImage): Promise<string | undefined | void>;
+  abstract get deviceInfo(): DeviceInfo;
+  abstract bootDevice(): Promise<void>;
   abstract changeSettings(settings: DeviceSettings): Promise<void>;
+  abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
+  abstract launchApp(build: BuildResult, metroPort: number): Promise<void>;
   abstract makePreview(): Preview;
 
   dispose() {
@@ -33,7 +31,6 @@ export abstract class DeviceBase implements Disposable {
   }
 
   async startPreview() {
-    // await this.bootDevice();
     this.preview = this.makePreview();
     return this.preview.start();
   }

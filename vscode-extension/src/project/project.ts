@@ -1,66 +1,87 @@
-import { Disposable, workspace, ExtensionContext, debug } from "vscode";
+import { Disposable, debug } from "vscode";
 import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
-import { DeviceSettings } from "../devices/DeviceBase";
 import { getWorkspacePath } from "../utilities/common";
 import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
-import { DeviceInfo } from "../utilities/device";
-import { WorkspaceStateManager } from "../panels/WorkspaceStateManager";
+import { DeviceManager } from "../devices/DeviceManager";
+import { DeviceInfo } from "../common/DeviceManager";
+import {
+  DeviceSettings,
+  ProjectEventListener,
+  ProjectEventMap,
+  ProjectInterface,
+  ProjectState,
+} from "../common/Project";
+import { EventEmitter } from "stream";
+import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
+import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
-export interface EventMonitor {
-  onLogReceived: (message: { type: string }) => void;
-  onDebuggerPaused: () => void;
-  onDebuggerContinued: () => void;
-  onUncaughtException: (isFatal: boolean) => void;
-}
-
-export class Project implements Disposable {
+export class Project implements Disposable, ProjectInterface {
   public static currentProject: Project | undefined;
 
   private metro: Metro | undefined;
   private devtools: Devtools | undefined;
   private debugSessionListener: Disposable | undefined;
-  private buildManager: BuildManager | undefined;
+  private buildManager = new BuildManager();
+  private eventEmitter = new EventEmitter();
 
-  private session: DeviceSession | undefined;
-  private eventMonitors: Array<EventMonitor> = [];
+  private deviceSession: DeviceSession | undefined;
 
-  constructor(private readonly context: ExtensionContext) {
+  private projectState: ProjectState = {
+    status: "starting",
+    previewURL: undefined,
+    selectedDevice: undefined,
+  };
+
+  private deviceSettings: DeviceSettings = {
+    appearance: "dark",
+    contentSize: "normal",
+  };
+
+  constructor(private readonly deviceManager: DeviceManager) {
     Project.currentProject = this;
   }
 
-  public addEventMonitor(monitor: EventMonitor) {
-    this.eventMonitors.push(monitor);
+  async getProjectState(): Promise<ProjectState> {
+    return this.projectState;
+  }
+
+  async addListener<K extends keyof ProjectEventMap>(
+    eventType: K,
+    listener: ProjectEventListener<ProjectEventMap[K]>
+  ) {
+    this.eventEmitter.addListener(eventType, listener);
+  }
+  async removeListener<K extends keyof ProjectEventMap>(
+    eventType: K,
+    listener: ProjectEventListener<ProjectEventMap[K]>
+  ) {
+    this.eventEmitter.removeListener(eventType, listener);
   }
 
   public dispose() {
-    this.session?.dispose();
+    this.deviceSession?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
     this.debugSessionListener?.dispose();
-    this.eventMonitors = [];
   }
 
   public reloadMetro() {
     this.metro?.reload();
   }
 
-  public async start(workspaceStateManager: WorkspaceStateManager, forceCleanBuild: boolean) {
+  public async start(forceCleanBuild: boolean) {
     let workspaceDir = getWorkspacePath();
     if (!workspaceDir) {
       Logger.warn("No workspace directory found");
       return;
     }
 
-    if (!this.buildManager) {
-      this.buildManager = new BuildManager(workspaceDir, workspaceStateManager);
-    }
-
     this.devtools = new Devtools();
     await this.devtools.start();
-    this.metro = new Metro(workspaceDir, this.context.extensionPath, this.devtools.port);
+    this.metro = new Metro(workspaceDir, this.devtools.port);
 
     Logger.debug("Launching builds");
     await this.buildManager.startBuilding(forceCleanBuild);
@@ -68,19 +89,17 @@ export class Project implements Disposable {
     this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
         case "rnp_consoleLog":
-          this.eventMonitors.forEach((monitor) => monitor.onLogReceived(event.body));
+          this.eventEmitter.emit("log", event.body);
           break;
         case "rnp_paused":
-          this.eventMonitors.forEach((monitor) => {
-            if (event.body?.reason === "exception") {
-              monitor.onUncaughtException(event.body.isFatal);
-            } else {
-              monitor.onDebuggerPaused();
-            }
-          });
+          if (event.body?.reason === "exception") {
+            this.updateProjectState({ status: "runtimeError" });
+          } else {
+            this.updateProjectState({ status: "debuggerPaused" });
+          }
           break;
         case "rnp_continued":
-          this.eventMonitors.forEach((monitor) => monitor.onDebuggerContinued());
+          this.updateProjectState({ status: "running" });
           break;
       }
     });
@@ -90,50 +109,110 @@ export class Project implements Disposable {
     Logger.debug(`Metro started on port ${this.metro.port} devtools on port ${this.devtools.port}`);
   }
 
-  public sendTouch(deviceId: string, xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    // TODO: verify deviceID with activeDevice
-    // if (this.session?.deviceId === deviceId) {
-    this.session?.sendTouch(xRatio, yRatio, type);
-    // }
+  public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
+    this.deviceSession?.sendTouch(xRatio, yRatio, type);
   }
 
-  public sendKey(deviceId: string, keyCode: number, direction: "Up" | "Down") {
-    this.session?.sendKey(keyCode, direction);
+  public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
+    this.deviceSession?.sendKey(keyCode, direction);
   }
 
-  public inspectElementAt(xRatio: number, yRatio: number, callback: (inspectData: any) => void) {
-    this.session?.inspectElementAt(xRatio, yRatio, callback);
+  public async inspectElementAt(
+    xRatio: number,
+    yRatio: number,
+    openComponentSource: boolean,
+    callback: (inspectData: any) => void
+  ) {
+    this.deviceSession?.inspectElementAt(xRatio, yRatio, (inspectData) => {
+      callback({ frame: inspectData.frame });
+      if (openComponentSource) {
+        // find last element in inspectData.hierarchy with source that belongs to the workspace
+        for (let i = inspectData.hierarchy.length - 1; i >= 0; i--) {
+          const element = inspectData.hierarchy[i];
+          if (isFileInWorkspace(element.source.fileName)) {
+            openFileAtPosition(
+              element.source.fileName,
+              element.source.lineNumber - 1,
+              element.source.columnNumber - 1
+            );
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  public async resumeDebugger() {
+    this.deviceSession?.resumeDebugger();
   }
 
   public openNavigation(id: string) {
-    this.session?.openNavigation(id);
+    this.deviceSession?.openNavigation(id);
   }
 
   public startPreview(appKey: string) {
-    this.session?.startPreview(appKey);
+    this.deviceSession?.startPreview(appKey);
   }
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {
-    this.session?.onActiveFileChange(filename, followEnabled);
+    this.deviceSession?.onActiveFileChange(filename, followEnabled);
   }
 
-  public async changeDeviceSettings(settings: DeviceSettings) {
-    await this.session?.changeDeviceSettings(settings);
+  public async getDeviceSettings() {
+    return this.deviceSettings;
   }
 
-  public async selectDevice(
-    device: DeviceInfo,
-    settings: DeviceSettings,
-    workspaceStateManager: WorkspaceStateManager
-  ) {
-    Logger.log("Device selected", device.name);
-    this.session?.dispose();
-    this.session = new DeviceSession(this.context, device, this.devtools!, this.metro!);
-    await this.session.start(
-      this.buildManager?.getIosBuild()!,
-      this.buildManager?.getAndroidBuild()!,
-      settings,
-      workspaceStateManager
-    );
+  public async updateDeviceSettings(settings: DeviceSettings) {
+    this.deviceSettings = settings;
+    await this.deviceSession?.changeDeviceSettings(settings);
+    this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
+  }
+
+  private updateProjectState(newState: Partial<ProjectState>) {
+    this.projectState = { ...this.projectState, ...newState };
+    this.eventEmitter.emit("projectStateChanged", this.projectState);
+  }
+
+  public async selectDevice(deviceInfo: DeviceInfo) {
+    Logger.log("Device selected", deviceInfo.name);
+    this.deviceSession?.dispose();
+    this.deviceSession = undefined;
+
+    this.updateProjectState({
+      selectedDevice: deviceInfo,
+      status: "starting",
+      previewURL: undefined,
+    });
+
+    try {
+      const device = await this.deviceManager.getDevice(deviceInfo);
+      const newDeviceSession = new DeviceSession(
+        device,
+        this.devtools!,
+        this.metro!,
+        this.buildManager.getBuild(deviceInfo.platform)
+      );
+      this.deviceSession = newDeviceSession;
+
+      await newDeviceSession.start(this.deviceSettings);
+
+      const previewURL = newDeviceSession.previewURL;
+      if (!previewURL) {
+        throw new Error("No preview URL");
+      }
+
+      if (this.projectState.selectedDevice === deviceInfo) {
+        this.updateProjectState({
+          status: "running",
+          previewURL,
+        });
+      }
+    } catch (e) {
+      if (this.projectState.selectedDevice === deviceInfo) {
+        this.updateProjectState({
+          status: "runtimeError",
+        });
+      }
+    }
   }
 }

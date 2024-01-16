@@ -1,5 +1,5 @@
 import { Preview } from "./preview";
-import { DeviceBase, DeviceSettings } from "./DeviceBase";
+import { DeviceBase } from "./DeviceBase";
 import readline from "readline";
 import os from "os";
 import path from "path";
@@ -8,13 +8,12 @@ import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
-import { ExtensionContext } from "vscode";
 import { ChildProcess, exec } from "../utilities/subprocess";
-import { AndroidSystemImage } from "../utilities/device";
-import { Logger } from "../Logger";
 import { v4 as uuidv4 } from "uuid";
-
-const AVD_NAME = "ReactNativePreviewVSCode";
+import { BuildResult } from "../builders/BuildManager";
+import { DeviceInfo, Platform } from "../common/DeviceManager";
+import { Logger } from "../Logger";
+import { DeviceSettings } from "../common/Project";
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
@@ -30,16 +29,23 @@ interface EmulatorProcessInfo {
 }
 
 export class AndroidEmulatorDevice extends DeviceBase {
-  private avdDirectory = getOrCreateAvdDirectory();
+  private readonly _deviceInfo: DeviceInfo;
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
 
-  constructor(private context: ExtensionContext) {
+  constructor(private readonly avdId: string, displayName: string) {
     super();
+    this._deviceInfo = {
+      id: `android-${avdId}`,
+      platform: Platform.Android,
+      name: displayName,
+      avdId: avdId,
+      available: true,
+    };
   }
 
-  get name() {
-    return this.serial ?? "emulator-unknown";
+  get deviceInfo() {
+    return this._deviceInfo;
   }
 
   public dispose(): void {
@@ -50,7 +56,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   async changeSettings(settings: DeviceSettings) {
     await exec(ADB_PATH, [
       "-s",
-      this.name,
+      this.serial!,
       "shell",
       "settings",
       "put",
@@ -60,19 +66,14 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
-  async bootDevice(systemImage: AndroidSystemImage, avdName?: string) {
+  async bootDevice() {
     if (this.emulatorProcess) {
       this.emulatorProcess.kill();
     }
 
-    const { process, serial, newAvdName } = await findOrCreateEmulator(
-      this.avdDirectory,
-      path.join(ANDROID_HOME, systemImage.location!),
-      avdName
-    );
-    this.emulatorProcess = process;
+    const { process, serial } = await startEmulator(this.avdId);
     this.serial = serial;
-    return newAvdName;
+    this.emulatorProcess = process;
   }
 
   async configureMetroPort(packageName: string, metroPort: number) {
@@ -80,6 +81,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
     let prefs: any;
     try {
       const { stdout } = await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
         "shell",
         "run-as",
         packageName,
@@ -112,36 +115,60 @@ export class AndroidEmulatorDevice extends DeviceBase {
     );
   }
 
-  async launchApp(packageName: string, metroPort: number) {
-    await this.configureMetroPort(packageName, metroPort);
+  async launchApp(build: BuildResult, metroPort: number) {
+    if (build.platform !== Platform.Android) {
+      throw new Error("Invalid platform");
+    }
+    await this.configureMetroPort(build.packageName, metroPort);
     await exec(ADB_PATH, [
       "-s",
-      this.name,
+      this.serial!,
       "shell",
       "monkey",
       "-p",
-      packageName,
+      build.packageName,
       "-c",
       "android.intent.category.LAUNCHER",
       "1",
     ]);
   }
 
-  async installApp(apkPath: string) {
+  async installApp(build: BuildResult, forceReinstall: boolean) {
+    if (build.platform !== Platform.Android) {
+      throw new Error("Invalid platform");
+    }
     // adb install sometimes fails because we call it too early after the device is initialized.
     // we haven't found a better way to test if device is ready and already wait for boot_completed
-    // flag in waitForEmulatorOnline. The workaround therefore is to retry install command.
-    await retry(() => exec(ADB_PATH, ["-s", this.name, "install", "-r", apkPath]), 2, 1000);
+    // flag in waitForEmulatorOnline. But even after that even is delivered, adb install also sometimes
+    // fails claiming it is too early. The workaround therefore is to retry install command.
+    if (forceReinstall) {
+      try {
+        await retry(
+          () => exec(ADB_PATH, ["-s", this.serial!, "uninstall", build.packageName]),
+          2,
+          1000
+        );
+      } catch (e) {
+        Logger.error("Error while uninstalling will be ignored", e);
+      }
+    }
+    await retry(
+      () => exec(ADB_PATH, ["-s", this.serial!, "install", "-r", build.apkPath]),
+      2,
+      1000
+    );
   }
 
   makePreview(): Preview {
-    return new Preview(this.context, ["android", this.name!]);
+    return new Preview(["android", this.serial!]);
   }
 }
 
-async function createEmulator(avdDirectory: string, systemImageLocation: string, avdName: string) {
-  const avdIni = path.join(avdDirectory, avdName + ".ini");
-  const avdLocation = path.join(avdDirectory, avdName + ".avd");
+export async function createEmulator(systemImageLocation: string, displayName: string) {
+  const avdDirectory = getOrCreateAvdDirectory();
+  const avdId = uuidv4();
+  const avdIni = path.join(avdDirectory, `${avdId}.ini`);
+  const avdLocation = path.join(avdDirectory, `${avdId}.avd`);
   const configIni = path.join(avdLocation, "config.ini");
   const cpuArchitecture = getCpuArchitecture();
 
@@ -155,10 +182,10 @@ async function createEmulator(avdDirectory: string, systemImageLocation: string,
   await fs.promises.writeFile(avdIni, avdIniContent, "utf-8");
 
   const configIniData = [
-    ["AvdId", "ReactNativePreviewVSCode"],
+    ["AvdId", avdId],
     ["PlayStore.enabled", "true"],
     ["abi.type", cpuArchitecture],
-    ["avd.ini.displayname", "ReactNativePreviewVSCode"],
+    ["avd.ini.displayname", displayName],
     ["avd.ini.encoding", "UTF-8"],
     ["disk.dataPartition.size", "6442450944"],
     ["fastboot.chosenSnapshotFile", ""],
@@ -202,12 +229,20 @@ async function createEmulator(avdDirectory: string, systemImageLocation: string,
   ];
   const configIniContent = configIniData.map(([key, value]) => `${key}=${value}`).join("\n");
   await fs.promises.writeFile(configIni, configIniContent, "utf-8");
+  return {
+    id: `android-${avdId}`,
+    platform: Platform.Android,
+    avdId,
+    name: displayName,
+    available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
+  } as DeviceInfo;
 }
 
-async function startEmulator(avdDirectory: string, avdName: string) {
+async function startEmulator(avdId: string) {
+  const avdDirectory = getOrCreateAvdDirectory();
   const subprocess = exec(
     EMULATOR_BINARY,
-    ["-avd", avdName, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
+    ["-avd", avdId, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
     { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
   );
 
@@ -232,29 +267,52 @@ async function startEmulator(avdDirectory: string, avdName: string) {
   return initPromise;
 }
 
-export async function removeEmulator(avdName?: string) {
-  if (!avdName) {
-    return;
-  }
-
+export async function listEmulators() {
   const avdDirectory = getOrCreateAvdDirectory();
-  const directoryRemoval = exec("rm", ["-rf", `${path.join(avdDirectory, avdName)}.avd`], {});
-  const iniFileRemoval = exec("rm", [`${path.join(avdDirectory, avdName)}.ini`], {});
-
-  return Promise.all([directoryRemoval, iniFileRemoval]);
+  const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
+    env: { ...process.env, ANDROID_AVD_HOME: avdDirectory },
+  });
+  const avdIds = stdout.split("\n").filter((avdId) => !!avdId);
+  return Promise.all(
+    avdIds.map(async (avdId) => {
+      const avdConfigPath = path.join(avdDirectory, `${avdId}.avd`, "config.ini");
+      const { displayName } = await parseAvdConfigIniFile(avdConfigPath);
+      return new AndroidEmulatorDevice(avdId, displayName);
+    })
+  );
 }
 
-async function findOrCreateEmulator(
-  avdDirectory: string,
-  systemImageLocation: string,
-  avdName?: string
-) {
-  const newAvdName = avdName ?? uuidv4();
-  if (!avdName || !fs.existsSync(path.join(avdDirectory, avdName + ".ini"))) {
-    await createEmulator(avdDirectory, systemImageLocation, newAvdName);
+export function removeEmulator(avdId: string) {
+  const avdDirectory = getOrCreateAvdDirectory();
+  const removeAvd = fs.promises.rmdir(path.join(avdDirectory, `${avdId}.avd`), {
+    recursive: true,
+  });
+  const removeIni = fs.promises.rm(path.join(avdDirectory, `${avdId}.ini`));
+  return Promise.all([removeAvd, removeIni])
+    .catch(() => {
+      /* ignore errors when removing */
+    })
+    .then(() => {});
+}
+
+async function parseAvdConfigIniFile(filePath: string) {
+  const content = await fs.promises.readFile(filePath, "utf-8");
+
+  let displayName: string | undefined;
+  content.split("\n").forEach((line: string) => {
+    const [key, value] = line.split("=");
+    switch (key) {
+      case "avd.ini.displayname":
+        displayName = value;
+        break;
+    }
+  });
+
+  if (!displayName) {
+    throw new Error(`Couldn't parse AVD ${filePath}`);
   }
 
-  return { ...(await startEmulator(avdDirectory, avdName ?? newAvdName!)), newAvdName };
+  return { displayName };
 }
 
 async function parseAvdIniFile(filePath: string) {
@@ -263,6 +321,7 @@ async function parseAvdIniFile(filePath: string) {
   const info: Partial<EmulatorProcessInfo> = {
     pid: parseInt(filePath.match(/^pid_(\d+)\.ini$/)?.[1] ?? "0"),
   };
+  Logger.debug("Parsing ini file", filePath);
 
   content.split("\n").forEach((line: string) => {
     const [key, value] = line.split("=");
@@ -291,43 +350,14 @@ async function parseAvdIniFile(filePath: string) {
   return info as EmulatorProcessInfo;
 }
 
-async function sleep(timeoutMs: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, timeoutMs);
-  });
-}
-
-async function waitForEmulatorOnline(serial: string, timeoutMs: number): Promise<boolean> {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    const isOnline = await checkEmulatorOnline(serial);
-    if (isOnline) {
-      return true;
-    }
-    await sleep(500);
-  }
-  return false;
-}
-
-async function checkEmulatorOnline(serial: string): Promise<boolean> {
-  try {
-    const { stdout } = await exec(ADB_PATH, ["-s", serial, "get-state"]);
-    if (stdout.trim() === "device") {
-      const { stdout } = await exec(ADB_PATH, [
-        "-s",
-        serial,
-        "shell",
-        "getprop",
-        "sys.boot_completed",
-      ]);
-      if (stdout.trim() === "1") {
-        return true;
-      }
-    }
-  } catch (error) {
-    // do nothing
-  }
-  return false;
+async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
+  await exec(ADB_PATH, [
+    "-s",
+    serial,
+    "wait-for-device",
+    "shell",
+    "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
+  ]);
 }
 
 function getOrCreateAvdDirectory() {

@@ -3,16 +3,13 @@ import readline from "readline";
 import { Disposable } from "vscode";
 import { exec, ChildProcess } from "../utilities/subprocess";
 import { Logger } from "../Logger";
+import { extensionContext } from "../utilities/extensionContext";
 
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
 
-  constructor(
-    private readonly appRoot: string,
-    private readonly extensionRoot: string,
-    private readonly devtoolsPort: number
-  ) {}
+  constructor(private readonly appRoot: string, private readonly devtoolsPort: number) {}
 
   public get port() {
     return this._port;
@@ -23,6 +20,7 @@ export class Metro implements Disposable {
   }
 
   public async start(resetCache: boolean) {
+    const libPath = path.join(extensionContext.extensionPath, "lib");
     this.subprocess = exec(
       `${this.appRoot}/node_modules/react-native/scripts/packager.sh`,
       [
@@ -31,7 +29,7 @@ export class Metro implements Disposable {
         "--port",
         "0",
         "--config",
-        path.join(this.extensionRoot, "lib/metro_config.js"),
+        path.join(libPath, "metro_config.js"),
       ],
       {
         cwd: this.appRoot,
@@ -40,7 +38,7 @@ export class Metro implements Disposable {
           NODE_PATH: path.join(this.appRoot, "node_modules"),
           RCT_METRO_PORT: "0",
           RCT_DEVTOOLS_PORT: this.devtoolsPort.toString(),
-          REACT_NATIVE_IDE_LIB_PATH: path.join(this.extensionRoot, "lib"),
+          REACT_NATIVE_IDE_LIB_PATH: libPath,
           // we disable env plugins as they add additional lines at the top of the bundle that are not
           // taken into acount by source maps. As a result, this messes up line numbers reported by hermes
           // and makes it hard to translate them back to original locations. Once this is fixed, we
@@ -71,5 +69,47 @@ export class Metro implements Disposable {
 
   public async reload() {
     await fetch(`http://localhost:${this._port}/reload`);
+  }
+
+  public async getDebuggerURL(timeoutMs: number) {
+    const startTime = Date.now();
+    let websocketAddress: string | undefined;
+    while (!websocketAddress && Date.now() - startTime < timeoutMs) {
+      websocketAddress = await this.fetchDebuggerURL();
+      await new Promise((res) => setTimeout(res, 1000));
+    }
+    return websocketAddress;
+  }
+
+  private async fetchDebuggerURL() {
+    // query list from http://localhost:${metroPort}/json/list
+    const list = await fetch(`http://localhost:${this._port}/json/list`);
+    const listJson = await list.json();
+    // with metro, pages are identified as "deviceId-pageId", we search for the most
+    // recent device id and want want to use special -1 page identifier (reloadable page)
+    let recentDeviceId = -1;
+    let websocketAddress: string | undefined;
+    for (const page of listJson) {
+      // pageId can sometimes be negative so we can't just use .split('-') here
+      const matches = page.id.match(/(\d+)-(-?\d+)/);
+      if (matches) {
+        const deviceId = parseInt(matches[1]);
+        const pageId = parseInt(matches[2]);
+        if (deviceId > recentDeviceId && pageId === -1) {
+          recentDeviceId = deviceId;
+          // In RN 73 metro has a bug where websocket URL returns 0 as port number when starting with port number set as 0 (ephemeral port)
+          // we want to replace it with the actual port number from metro:
+          // parse websocket URL:
+          const websocketDebuggerUrl = new URL(page.webSocketDebuggerUrl);
+          // replace port number with metro port number:
+          if (websocketDebuggerUrl.port === "0") {
+            websocketDebuggerUrl.port = this._port.toString();
+          }
+          websocketAddress = websocketDebuggerUrl.toString();
+        }
+      }
+    }
+
+    return websocketAddress;
   }
 }

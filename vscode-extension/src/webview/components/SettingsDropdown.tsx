@@ -9,17 +9,12 @@ import DiagnosticView from "../views/DiagnosticView";
 import AndroidImagesView from "../views/AndroidImagesView";
 import ManageDevicesView from "../views/ManageDevicesView";
 
-import { MANAGE_DEVICE_OPTION_NAME } from "../utilities/consts";
-import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
-
 interface SettingsDropdownProps {
   children: React.ReactNode;
 }
 
 function SettingsDropdown({ children }: SettingsDropdownProps) {
   const { openModal } = useModal();
-  const { switchBuildCache, buildCacheEnabled } = useWorkspaceStateContext();
-
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -38,18 +33,10 @@ function SettingsDropdown({ children }: SettingsDropdownProps) {
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            onSelect={(e) => {
-              e.preventDefault();
+            onSelect={() => {
+              // TODO: handle this one
             }}>
-            Enable build caching
-            <div className="right-slot">
-              <Switch.Root
-                className="switch-root"
-                checked={buildCacheEnabled}
-                onCheckedChange={switchBuildCache}>
-                <Switch.Thumb className="switch-thumb" />
-              </Switch.Root>
-            </div>
+            Clean rebuild (purge build cache)
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="dropdown-menu-separator" />
           <DropdownMenu.Item
@@ -63,9 +50,9 @@ function SettingsDropdown({ children }: SettingsDropdownProps) {
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              openModal(MANAGE_DEVICE_OPTION_NAME, <ManageDevicesView />);
+              openModal("Manage Devices", <ManageDevicesView />);
             }}>
-            {MANAGE_DEVICE_OPTION_NAME}
+            Manage devices...
           </DropdownMenu.Item>
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>

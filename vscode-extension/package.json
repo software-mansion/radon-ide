@@ -40,7 +40,7 @@
     ],
     "debuggers": [
       {
-        "type": "com.swmansion.react-native-preview",
+        "type": "com.swmansion.react-native-ide",
         "label": "React Native Preview",
         "languages": [
           "javascript",

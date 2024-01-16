@@ -1,9 +1,8 @@
 import fetch from "node-fetch";
 import plist from "plist";
-import { RuntimeInfo } from "../devices/IosSimulatorDevice";
 import { exec } from "./subprocess";
 
-interface SimulatorPackage {
+type SimulatorPackage = {
   name: string;
   contentType: string;
   category: string;
@@ -14,7 +13,20 @@ interface SimulatorPackage {
   };
   fileSize: number;
   platform: string;
-}
+};
+
+type RuntimeInfo = {
+  bundlePath: string;
+  buildversion: string;
+  platform: "iOS" | "tvOS" | "watchOS";
+  runtimeRoot: string;
+  identifier: string;
+  version: string;
+  isInternal: boolean;
+  isAvailable: boolean;
+  name: string;
+  supportedDeviceTypes: Array<{ name: string; identifier: string }>;
+};
 
 const DOWNLOADABLE_IOS_RUNTIMES_URL =
   "https://devimages-cdn.apple.com/downloads/xcode/simulators/index2.dvtdownloadableindex";
@@ -32,8 +44,8 @@ export async function getAllAvailableIosRuntimes() {
   return filteredRuntimes;
 }
 
-export async function getAvailableIosRuntimes(): Promise<Array<RuntimeInfo>> {
-  const result: { runtimes: Array<RuntimeInfo> } = JSON.parse(
+export async function getAvailableIosRuntimes() {
+  const result: { runtimes: RuntimeInfo[] } = JSON.parse(
     (await exec("xcrun", ["simctl", "list", "runtimes", "--json"])).stdout
   );
   return result.runtimes.filter((runtime) => runtime.platform === "iOS" && runtime.isAvailable);

@@ -12,17 +12,15 @@ import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger, enableDevModeLogging } from "./Logger";
 import vscode from "vscode";
-
-function isErrorWithErrno(error: Error): error is { errno: number } {
-  return error && typeof error.errno === "number";
-}
+import { setExtensionContext } from "./utilities/extensionContext";
 
 function handleUncaughtErrors() {
   process.on("unhandledRejection", (error) => {
     Logger.error("Unhandled promise rejection", error);
   });
   process.on("uncaughtException", (error: Error) => {
-    if (isErrorWithErrno(error) && error.errno === -49) {
+    // @ts-ignore
+    if (error.errno === -49) {
       // there is some weird EADDRNOTAVAIL uncaught error thrown in extension host
       // that does not seem to affect anything yet it gets reported here while not being
       // super valuable to the user – hence we ignore it.
@@ -36,6 +34,7 @@ function handleUncaughtErrors() {
 
 export function activate(context: ExtensionContext) {
   handleUncaughtErrors();
+  setExtensionContext(context);
   if (context.extensionMode === vscode.ExtensionMode.Development) {
     enableDevModeLogging();
   }
@@ -56,15 +55,7 @@ export function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     debug.registerDebugConfigurationProvider(
-      "com.swmansion.react-native-preview",
-      new DebugConfigProvider(),
-      DebugConfigurationProviderTriggerKind.Dynamic
-    )
-  );
-
-  context.subscriptions.push(
-    debug.registerDebugConfigurationProvider(
-      "pwa-node",
+      "com.swmansion.react-native-ide",
       new DebugConfigProvider(),
       DebugConfigurationProviderTriggerKind.Dynamic
     )
@@ -72,7 +63,7 @@ export function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     debug.registerDebugAdapterDescriptorFactory(
-      "com.swmansion.react-native-preview",
+      "com.swmansion.react-native-ide",
       new DebugAdapterDescriptorFactory()
     )
   );

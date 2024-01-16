@@ -6,9 +6,7 @@ const logger = {
   log(message: string, ...args: any[]) {},
 
   debug(message: string, ...args: any[]) {
-    // For the time being, we promote all 'debug' logs to 'info' level such that they show up by default
-    // without the user changing the log level setting.
-    outputChannel.info(message, ...args);
+    outputChannel.debug(message, ...args);
   },
 
   info(message: string, ...args: any[]) {

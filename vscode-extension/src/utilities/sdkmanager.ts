@@ -4,6 +4,7 @@ import { ANDROID_HOME } from "./android";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
 import { CPU_ARCHITECTURE, getCpuArchitecture } from "./common";
+import { AndroidSystemImageInfo } from "../common/DeviceManager";
 
 export const SDKMANAGER_BIN_PATH = path.join(
   ANDROID_HOME,
@@ -15,18 +16,12 @@ export const SDKMANAGER_BIN_PATH = path.join(
 
 const ACCEPTED_SYSTEM_IMAGES_TYPES = ["default", "google_apis_playstore", "google_apis"];
 
-interface SdkRepositoryEntry {
+type SdkManagerListEntry = {
   path: string;
   version: string;
   description: string;
   location?: string;
-}
-
-export interface AndroidImageEntry extends SdkRepositoryEntry {
-  apiLevel: number;
-  androidVersion: number | undefined;
-  imageType: string;
-}
+};
 
 // Temporary solution due to sdkmanager not having information about android version.
 function mapApiLevelToAndroidVersion(apiLevel: number): number | undefined {
@@ -59,36 +54,45 @@ async function runSdkManagerList() {
   return stdout;
 }
 
-function filterOtherEntriesTypes(entry: SdkRepositoryEntry) {
+function filterOtherEntriesTypes(entry: SdkManagerListEntry) {
   return entry.path.startsWith("system-images");
 }
 
 function filterOtherOsVersions(cpuArchitecture: CPU_ARCHITECTURE) {
-  return (entry: SdkRepositoryEntry) => entry.path.split(";")[3] === cpuArchitecture;
+  return (entry: SdkManagerListEntry) => entry.path.split(";")[3] === cpuArchitecture;
 }
 
-function filterOlderApiLevels(entry: AndroidImageEntry) {
+function filterOlderApiLevels(entry: AndroidSystemImageInfo) {
   return entry.apiLevel >= 28;
 }
 
-function filterSystemImageTypes(entry: SdkRepositoryEntry) {
+function filterSystemImageTypes(entry: SdkManagerListEntry) {
   const systemImageType = entry.path.split(";")[2];
   return ACCEPTED_SYSTEM_IMAGES_TYPES.includes(systemImageType);
 }
 
-function mapToImageEntry(imageEntry: SdkRepositoryEntry) {
+function mapToImageEntry(imageEntry: SdkManagerListEntry) {
   const apiLevel = getApiLevelFromImagePath(imageEntry.path);
+  const androidVersion = mapApiLevelToAndroidVersion(getApiLevelFromImagePath(imageEntry.path));
+
+  const systemImageType = imageEntry.path.split(";")[2];
+  let apisSuffix = "";
+  if (systemImageType === "google_apis_playstore") {
+    apisSuffix = " with Google Play";
+  } else if (systemImageType === "google_apis") {
+    apisSuffix = " with Google APIs";
+  }
+
+  const name = `Android ${androidVersion} (API Level ${apiLevel}${apisSuffix})`;
+
   return {
-    ...imageEntry,
-    apiLevel: apiLevel,
-    androidVersion: mapApiLevelToAndroidVersion(apiLevel),
-    imageType: imageEntry.path.split(";")[2],
-  };
+    name,
+    location: imageEntry.location,
+    apiLevel,
+  } as AndroidSystemImageInfo;
 }
 
-async function getInstalledAndroidSdkEntries(): Promise<
-  [SdkRepositoryEntry[], SdkRepositoryEntry[]]
-> {
+async function getInstalledAndroidSdkEntries() {
   const stdout = await runSdkManagerList();
   const rawTable = stdout.split("Installed packages:")[1];
   const [parsedInstalled, parsedAvailable] = rawTable.split("Available Packages:").map((rawText) =>
@@ -112,12 +116,10 @@ async function getInstalledAndroidSdkEntries(): Promise<
     description: available[2],
   }));
 
-  return [installedEntries, availableEntries];
+  return [installedEntries, availableEntries] as [SdkManagerListEntry[], SdkManagerListEntry[]];
 }
 
-export async function getAndroidSystemImages(): Promise<
-  [AndroidImageEntry[], AndroidImageEntry[]]
-> {
+export async function getAndroidSystemImages() {
   const [installedEntries, availableEntries] = await getInstalledAndroidSdkEntries();
   const cpuArchitecture = getCpuArchitecture();
   const installedImages = installedEntries

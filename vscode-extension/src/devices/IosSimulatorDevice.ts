@@ -1,13 +1,14 @@
 import { getAppCachesDir } from "../utilities/common";
-import { ExtensionContext } from "vscode";
-import { DeviceBase, DeviceSettings } from "./DeviceBase";
+import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
-import { command, exec } from "../utilities/subprocess";
+import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-
-const path = require("path");
-const fs = require("fs");
+import { DeviceInfo, Platform } from "../common/DeviceManager";
+import { BuildResult } from "../builders/BuildManager";
+import path from "path";
+import fs from "fs";
+import { DeviceSettings } from "../common/Project";
 
 interface SimulatorInfo {
   availability?: string;
@@ -22,84 +23,72 @@ interface SimulatorInfo {
   lastBootedAt?: string;
 }
 
-export interface RuntimeInfo {
-  bundlePath: string;
-  buildversion: string;
-  platform: "iOS" | "tvOS" | "watchOS";
-  runtimeRoot: string;
-  identifier: string;
-  version: string;
-  isInternal: boolean;
-  isAvailable: boolean;
-  name: string;
-  supportedDeviceTypes: Array<{ name: string; identifier: string }>;
-}
-
-interface DeviceTypeInfo {
-  productFamily: "iPhone" | "iPad" | "Apple Watch" | "Apple TV";
-  bundlePath: string;
-  maxRuntimeVersion: number;
-  maxRuntimeVersionString: string;
-  identifier: string;
-  modelIdentifier: string;
-  minRuntimeVersion: number;
-  minRuntimeVersionString: string;
-  name: string;
-}
-
 interface SimulatorData {
   devices: { [index: string]: Array<SimulatorInfo> };
 }
 
 export class IosSimulatorDevice extends DeviceBase {
-  private deviceUdid: string | undefined;
-  private deviceSetPath = getOrCreateDeviceSet();
+  private readonly _deviceInfo: DeviceInfo;
 
-  constructor(private context: ExtensionContext) {
+  constructor(private readonly deviceUDID: string, readableName: string, available: boolean) {
     super();
+    this._deviceInfo = {
+      id: `ios-${deviceUDID}`,
+      platform: Platform.IOS,
+      UDID: deviceUDID,
+      name: readableName,
+      available,
+    };
   }
 
-  get name(): string | undefined {
-    return this.deviceUdid;
+  get deviceInfo() {
+    return this._deviceInfo;
   }
 
-  get deviceSet(): string {
-    return this.deviceSetPath;
-  }
-
-  async bootDevice(runtime: RuntimeInfo, udid?: string) {
-    this.deviceUdid = await findOrCreateSimulator(this.deviceSetPath, runtime, udid);
-    return this.deviceUdid;
+  async bootDevice() {
+    const deviceSetLocation = getOrCreateDeviceSet();
+    try {
+      await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", this.deviceUDID]);
+    } catch (e) {
+      // @ts-ignore
+      if (e.stderr?.includes("current state: Booted")) {
+        Logger.debug("Device already booted");
+      } else {
+        throw e;
+      }
+    }
   }
 
   async changeSettings(settings: DeviceSettings) {
+    const deviceSetLocation = getOrCreateDeviceSet();
     await exec("xcrun", [
       "simctl",
       "--set",
-      this.deviceSetPath,
+      deviceSetLocation,
       "ui",
-      this.deviceUdid!,
+      this.deviceUDID,
       "appearance",
       settings.appearance,
     ]);
     await exec("xcrun", [
       "simctl",
       "--set",
-      this.deviceSetPath,
+      deviceSetLocation,
       "ui",
-      this.deviceUdid!,
+      this.deviceUDID,
       "content_size",
       convertToSimctlSize(settings.contentSize),
     ]);
   }
 
   async configureMetroPort(bundleID: string, metroPort: number) {
+    const deviceSetLocation = getOrCreateDeviceSet();
     const { stdout: appDataLocation } = await exec("xcrun", [
       "simctl",
       "--set",
-      this.deviceSetPath,
+      deviceSetLocation,
       "get_app_container",
-      this.deviceUdid!,
+      this.deviceUDID,
       bundleID,
       "data",
     ]);
@@ -125,32 +114,54 @@ export class IosSimulatorDevice extends DeviceBase {
     }
   }
 
-  async launchApp(bundleID: string, metroPort: number) {
-    await this.configureMetroPort(bundleID, metroPort);
+  async launchApp(build: BuildResult, metroPort: number) {
+    if (build.platform !== Platform.IOS) {
+      throw new Error("Invalid platform");
+    }
+    const deviceSetLocation = getOrCreateDeviceSet();
+    await this.configureMetroPort(build.bundleID, metroPort);
     await exec("xcrun", [
       "simctl",
       "--set",
-      this.deviceSetPath,
+      deviceSetLocation,
       "launch",
       "--terminate-running-process",
-      this.deviceUdid!,
-      bundleID,
+      this.deviceUDID,
+      build.bundleID,
     ]);
   }
 
-  async installApp(appPath: string) {
+  async installApp(build: BuildResult, forceReinstall: boolean) {
+    if (build.platform !== Platform.IOS) {
+      throw new Error("Invalid platform");
+    }
+    const deviceSetLocation = getOrCreateDeviceSet();
+    if (forceReinstall) {
+      try {
+        await exec("xcrun", [
+          "simctl",
+          "--set",
+          deviceSetLocation,
+          "uninstall",
+          this.deviceUDID,
+          build.bundleID,
+        ]);
+      } catch (e) {
+        Logger.error("Error while uninstalling will be ignored", e);
+      }
+    }
     await exec("xcrun", [
       "simctl",
       "--set",
-      this.deviceSetPath,
+      deviceSetLocation,
       "install",
-      this.deviceUdid!,
-      appPath,
+      this.deviceUDID,
+      build.appPath,
     ]);
   }
 
   makePreview(): Preview {
-    return new Preview(this.context, ["ios", this.deviceUdid!, this.deviceSetPath]);
+    return new Preview(["ios", this.deviceUDID, getOrCreateDeviceSet()]);
   }
 }
 
@@ -164,9 +175,9 @@ export async function getNewestAvailableIosRuntime() {
   return runtimesData[0];
 }
 
-export async function removeIosRuntimes(runtimes: RuntimeInfo[]) {
-  const removalPromises = runtimes.map((runtime) => {
-    return exec("xcrun", ["simctl", "runtime", "delete", runtime.buildversion], {});
+export async function removeIosRuntimes(runtimeIDs: string[]) {
+  const removalPromises = runtimeIDs.map((runtimeID) => {
+    return exec("xcrun", ["simctl", "runtime", "delete", runtimeID], {});
   });
   return Promise.all(removalPromises);
 }
@@ -181,23 +192,8 @@ export async function removeIosSimulator(udid?: string) {
   return exec("xcrun", ["simctl", "--set", setDirectory, "delete", udid]);
 }
 
-async function getNewestNonProIPhone() {
-  const deviceTypesData: { devicetypes: Array<DeviceTypeInfo> } = JSON.parse(
-    (await command(`xcrun simctl list devicetypes --json`)).stdout
-  );
-
-  // filter iPhones:
-  const iphones = deviceTypesData.devicetypes.filter((deviceType) => {
-    // exclude phones with names that contains Pro/SE/Plus
-    return deviceType.productFamily === "iPhone" && deviceType.name.match(/Pro/);
-  });
-
-  // select iPhone with highest minRuntimeVersion
-  iphones.sort((a, b) => (a.minRuntimeVersion > b.minRuntimeVersion ? -1 : 1));
-  return iphones[0];
-}
-
-async function getSimulators(deviceSetLocation: string): Promise<Array<SimulatorInfo>> {
+export async function listSimulators() {
+  const deviceSetLocation = getOrCreateDeviceSet();
   const { stdout } = await exec("xcrun", [
     "simctl",
     "--set",
@@ -207,61 +203,37 @@ async function getSimulators(deviceSetLocation: string): Promise<Array<Simulator
     "--json",
   ]);
   const parsedData: SimulatorData = JSON.parse(stdout);
-  const allDevices = Object.keys(parsedData.devices)
+  return Object.keys(parsedData.devices)
     .map((key) => parsedData.devices[key])
     .reduce((acc, val) => acc.concat(val), [])
-    .filter((device) => device.isAvailable);
-
-  return allDevices;
+    .map((device) => new IosSimulatorDevice(device.udid, device.name, device.isAvailable ?? false));
 }
 
-async function getSimulatorWithUdid(deviceSetLocation: string, udid?: string) {
-  if (!udid) {
-    return undefined;
-  }
-  const allDevices = await getSimulators(deviceSetLocation);
-  return allDevices.find((device) => device.udid === udid);
-}
-
-async function getPreferredSimulator(deviceSetLocation: string) {
-  const allDevices = await getSimulators(deviceSetLocation);
-
-  return allDevices.length ? allDevices[0] : undefined;
-}
-
-async function findOrCreateSimulator(
-  deviceSetLocation: string,
-  runtime: RuntimeInfo,
-  udid?: string
+export async function createSimulator(
+  deviceTypeID: string,
+  runtimeID: string,
+  displayName: string
 ) {
-  let simulator = await getSimulatorWithUdid(deviceSetLocation, udid);
-  if (simulator && simulator.state === "Booted") {
-    // this simulator is ok to be used
-    return simulator.udid;
-  }
+  Logger.debug(`Create simulator ${deviceTypeID} with runtime ${runtimeID}`);
+  const deviceSetLocation = getOrCreateDeviceSet();
+  // create new simulator with selected runtime
+  const { stdout: UDID } = await exec("xcrun", [
+    "simctl",
+    "--set",
+    deviceSetLocation,
+    "create",
+    displayName,
+    deviceTypeID,
+    runtimeID,
+  ]);
 
-  if (!simulator) {
-    // we need to create a new simulator
-    const deviceType = await getNewestNonProIPhone();
-
-    Logger.debug(`Create simulator ${deviceType.name} with runtime ${runtime.name}`);
-    // create new simulator with selected runtime
-    const { stdout: newUdid } = await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "create",
-      "ReactNativePreviewVSCode",
-      deviceType.identifier,
-      runtime.identifier,
-    ]);
-
-    simulator = await getSimulatorWithUdid(deviceSetLocation, newUdid)!;
-  }
-
-  // for new simulator or old one that's not booted, we try booting it
-  await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", simulator!.udid]);
-  return simulator!.udid;
+  return {
+    id: `ios-${UDID}`,
+    platform: Platform.IOS,
+    UDID,
+    name: displayName,
+    available: true, // assuming if create command went through, it's available
+  } as DeviceInfo;
 }
 
 function getOrCreateDeviceSet() {

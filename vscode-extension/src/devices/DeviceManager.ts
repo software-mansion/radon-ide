@@ -1,135 +1,102 @@
-import { Webview } from "vscode";
-import { Logger } from "../Logger";
-import {
-  AndroidImageEntry,
-  getAndroidSystemImages,
-  installSystemImages,
-  removeSystemImages,
-} from "../utilities/sdkmanager";
-import { RuntimeInfo, removeIosRuntimes, removeIosSimulator } from "./IosSimulatorDevice";
+import { getAndroidSystemImages } from "../utilities/sdkmanager";
+import { createSimulator, listSimulators, removeIosSimulator } from "./IosSimulatorDevice";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import { DeviceInfo, PLATFORM } from "../utilities/device";
-import { removeEmulator } from "./AndroidEmulatorDevice";
+import { createEmulator, listEmulators, removeEmulator } from "./AndroidEmulatorDevice";
+import {
+  DeviceInfo,
+  Platform,
+  DeviceManagerInterface,
+  IOSRuntimeInfo,
+  DeviceManagerEventMap,
+  DeviceManagerEventListener,
+} from "../common/DeviceManager";
+import { EventEmitter } from "stream";
 
-const DEVICE_MANAGER_COMMANDS = [
-  "listAllAndroidImages",
-  "listInstalledAndroidImages",
-  "processAndroidImageChanges",
-  "processIosRuntimeChanges",
-  "listAllInstalledIOSRuntimes",
-  "removeSimulator",
-];
+export class DeviceManager implements DeviceManagerInterface {
+  private eventEmitter = new EventEmitter();
 
-export class DeviceManager {
-  constructor(private webview: Webview) {}
-
-  startListening() {
-    this.webview.onDidReceiveMessage((message: any) => {
-      const command = message.command;
-
-      if (!DEVICE_MANAGER_COMMANDS.includes(command)) {
-        return;
-      }
-
-      Logger.log(`Device Manager received a message with command ${command}.`);
-
-      switch (command) {
-        case "listAllAndroidImages":
-          this.listAllAndroidImages();
-          return;
-        case "listInstalledAndroidImages":
-          this.listInstalledAndroidImages();
-          return;
-        case "processAndroidImageChanges":
-          this.processAndroidImageChanges(message.toRemove, message.toInstall);
-          return;
-        case "processIosRuntimeChanges":
-          this.processIosRuntimeChanges(message.toRemove, message.toInstall);
-          return;
-        case "listAllInstalledIOSRuntimes":
-          this.listInstalledIosRuntimes();
-          return;
-        case "removeSimulator":
-          this.removeSimulator(message.device);
-          return;
-      }
-    });
-  }
-
-  private async processIosRuntimeChanges(toRemove: RuntimeInfo[], toInstall: RuntimeInfo[]) {
-    if (!!toInstall.length) {
-      // TODO: implement
-    }
-
-    if (!!toRemove.length) {
-      await removeIosRuntimes(toRemove);
-    }
-
-    this.webview.postMessage({
-      command: "iOSInstallProcessFinished",
-    });
-  }
-
-  private async processAndroidImageChanges(
-    toRemove: AndroidImageEntry[],
-    toInstall: AndroidImageEntry[]
+  public async addListener<K extends keyof DeviceManagerEventMap>(
+    eventType: K,
+    listener: DeviceManagerEventListener<K>
   ) {
-    const streamInstallStdoutProgress = (line: string) => {
-      this.webview.postMessage({
-        command: "streamAndroidInstallationProgress",
-        stream: line,
-      });
-    };
-
-    if (!!toInstall.length) {
-      const toInstallImagePaths = toInstall.map((imageToInstall) => imageToInstall.path);
-      await installSystemImages(toInstallImagePaths, streamInstallStdoutProgress);
-    }
-
-    if (!!toRemove.length) {
-      const toRemoveImagePaths = toRemove.map((imageToRemove) => imageToRemove.location!);
-      await removeSystemImages(toRemoveImagePaths);
-    }
-
-    const [installedImages, availableImages] = await getAndroidSystemImages();
-    this.webview.postMessage({
-      command: "androidInstallProcessFinished",
-      installedImages,
-      availableImages,
-    });
+    this.eventEmitter.addListener(eventType, listener);
   }
 
-  private async listInstalledAndroidImages() {
+  public async removeListener<K extends keyof DeviceManagerEventMap>(
+    eventType: K,
+    listener: DeviceManagerEventListener<K>
+  ) {
+    this.eventEmitter.removeListener(eventType, listener);
+  }
+
+  public async getDevice(deviceInfo: DeviceInfo) {
+    if (deviceInfo.platform === Platform.IOS) {
+      const simulators = await listSimulators();
+      const simulator = simulators.find((simulator) => simulator.deviceInfo.id === deviceInfo.id);
+      if (!simulator) {
+        throw new Error(`Simulator ${deviceInfo.id} not found`);
+      }
+      return simulator;
+    } else {
+      const emulators = await listEmulators();
+      const emulator = emulators.find((emulator) => emulator.deviceInfo.id === deviceInfo.id);
+      if (!emulator) {
+        throw new Error(`Emulator ${deviceInfo.id} not found`);
+      }
+      return emulator;
+    }
+  }
+
+  private async loadDevices() {
+    const [androidDevices, iosDevices] = await Promise.all([listEmulators(), listSimulators()]);
+    const devices = [...androidDevices, ...iosDevices];
+    this.eventEmitter.emit(
+      "devicesChanged",
+      devices.map((device) => device.deviceInfo)
+    );
+    return devices;
+  }
+
+  public async listInstalledAndroidImages() {
     const [installedImages] = await getAndroidSystemImages();
-    this.webview.postMessage({
-      command: "installedAndroidImagesListed",
-      images: installedImages,
-    });
+    return installedImages;
   }
 
-  private async listAllAndroidImages() {
+  public async listAllAndroidImages() {
     const [installedImages, availableImages] = await getAndroidSystemImages();
-    this.webview.postMessage({
-      command: "allAndroidImagesListed",
-      installedImages,
-      availableImages,
-    });
+    return {
+      installed: installedImages,
+      available: availableImages,
+    };
   }
 
-  private async listInstalledIosRuntimes() {
-    const runtimes = await getAvailableIosRuntimes();
-    this.webview.postMessage({
-      command: "allInstalledIOSRuntimesListed",
-      runtimes,
-    });
+  public listInstalledIOSRuntimes() {
+    return getAvailableIosRuntimes() as Promise<IOSRuntimeInfo[]>;
   }
 
-  private async removeSimulator(device: DeviceInfo) {
-    if (device.platform === PLATFORM.IOS) {
-      removeIosSimulator(device.udid);
+  public async listAllDevices() {
+    return (await this.loadDevices()).map((device) => device.deviceInfo);
+  }
+
+  public async createAndroidDevice(systemImageLocation: string, displayName: string) {
+    const emulator = await createEmulator(systemImageLocation, displayName);
+    await this.loadDevices();
+    return emulator;
+  }
+
+  public async createIOSDevice(iOSDeviceTypeID: string, iOSRuntimeID: string, displayName: string) {
+    const simulator = await createSimulator(iOSDeviceTypeID, iOSRuntimeID, displayName);
+    await this.loadDevices();
+    return simulator;
+  }
+
+  public async removeDevice(device: DeviceInfo) {
+    if (device.platform === Platform.IOS) {
+      await removeIosSimulator(device.UDID);
     }
-    if (device.platform === PLATFORM.ANDROID) {
-      removeEmulator(device.avdName);
+    if (device.platform === Platform.Android) {
+      await removeEmulator(device.avdId);
     }
+    await this.loadDevices();
   }
 }

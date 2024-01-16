@@ -1,175 +1,165 @@
-import { ExtensionContext } from "vscode";
 import { Logger } from "../Logger";
-import { WorkspaceStateManager } from "../panels/WorkspaceStateManager";
 import { generateWorkspaceFingerprint } from "../utilities/fingerprint";
 import { buildAndroid } from "./buildAndroid";
 import { buildIos } from "./buildIOS";
 import fs from "fs";
-import { calculateMD5 } from "../utilities/common";
-import { IosBuild } from "../utilities/ios";
-import { AndroidBuild } from "../utilities/android";
+import { calculateMD5, getWorkspacePath } from "../utilities/common";
+import { Platform } from "../common/DeviceManager";
+import { extensionContext } from "../utilities/extensionContext";
+
+const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
+const IOS_BUILD_CACHE_KEY = "ios_build_cache";
+
+export type IOSBuildResult = {
+  platform: Platform.IOS;
+  appPath: string;
+  bundleID: string;
+};
+
+export type AndroidBuildResult = {
+  platform: Platform.Android;
+  apkPath: string;
+  packageName: string;
+};
+
+export type BuildResult = IOSBuildResult | AndroidBuildResult;
+
+type AndroidBuildCacheInfo = {
+  fingerprint: string;
+  buildHash: string;
+  buildResult: AndroidBuildResult;
+};
+
+type IOSBuildCacheInfo = {
+  fingerprint: string;
+  buildHash: string;
+  buildResult: IOSBuildResult;
+};
 
 export class BuildManager {
-  private workspaceDir: string;
-  private iOSBuild: Promise<IosBuild> | undefined;
-  private androidBuild: Promise<AndroidBuild> | undefined;
-  private readonly workspaceStateManager: WorkspaceStateManager;
+  private iOSBuild: Promise<IOSBuildResult> | undefined;
+  private androidBuild: Promise<AndroidBuildResult> | undefined;
 
-  constructor(workspaceDir: string, workspaceStateManager: WorkspaceStateManager) {
-    this.workspaceDir = workspaceDir;
-    this.workspaceStateManager = workspaceStateManager;
-
-    // Populate fields from the cache data.
-    const currentState = this.workspaceStateManager.getState();
-
-    if (currentState.buildCache?.iOS?.build) {
-      this.iOSBuild = Promise.resolve(currentState.buildCache?.iOS?.build);
-    }
-    if (currentState.buildCache?.android?.build) {
-      this.androidBuild = Promise.resolve(currentState.buildCache?.android?.build);
-    }
-  }
+  constructor() {}
 
   public getAndroidBuild() {
     return this.androidBuild;
+  }
+
+  public getBuild(platform: Platform) {
+    if (platform === Platform.Android) {
+      const build = this.getAndroidBuild();
+      if (!build) {
+        throw new Error("Android build not started");
+      }
+      return build;
+    } else {
+      const build = this.getIosBuild();
+      if (!build) {
+        throw new Error("iOS build not started");
+      }
+      return build;
+    }
   }
 
   public getIosBuild() {
     return this.iOSBuild;
   }
 
-  private async _prepareAndroidBuild(newFingerprint?: string | undefined) {
-    const buildHash = this.workspaceStateManager.getState().buildCache?.android?.buildHash;
-    const cachedFingerprint =
-      this.workspaceStateManager.getState().buildCache?.android?.fingerprintHash;
-    const fingerprintMatching = newFingerprint === cachedFingerprint && !!cachedFingerprint;
+  private async loadAndroidCachedBuild(newFingerprint: string) {
+    try {
+      const cacheInfo = extensionContext.workspaceState.get(
+        ANDROID_BUILD_CACHE_KEY
+      ) as AndroidBuildCacheInfo;
 
-    if (fingerprintMatching && this.androidBuild) {
-      const build = await this.androidBuild;
+      if (cacheInfo && cacheInfo.fingerprint == newFingerprint) {
+        const build = cacheInfo.buildResult;
 
-      // We have to check if the user removed the build that was cached.
-      if (fs.existsSync(build.apkPath)) {
-        const hash = (await calculateMD5(build.apkPath)).digest("hex");
+        // We have to check if the user removed the build that was cached.
+        if (fs.existsSync(build.apkPath)) {
+          const hash = (await calculateMD5(build.apkPath)).digest("hex");
 
-        if (hash === buildHash) {
-          Logger.log("Cache hit on android build. Using existing build.");
-          this.handleFinishedAndroidBuild(build, newFingerprint);
-          return build;
+          if (hash === cacheInfo.buildHash) {
+            Logger.log("Cache hit on android build. Using existing build.");
+            return build;
+          }
         }
+      }
+    } catch (e) {
+      // we only log the error and ignore it to allow new build to start
+      Logger.error("Error while attempting to load cached build", e);
+    }
+    return undefined;
+  }
+
+  private async startAndroidBuild(newFingerprint: string, forceCleanBuild: boolean) {
+    if (!forceCleanBuild) {
+      const buildResult = await this.loadAndroidCachedBuild(newFingerprint);
+      if (buildResult) {
+        return buildResult;
       }
     }
 
-    const build = buildAndroid(this.workspaceDir);
-    this.handleFinishedAndroidBuild(build, newFingerprint);
-    return build;
+    const build = await buildAndroid(getWorkspacePath());
+    const buildResult: AndroidBuildResult = { ...build, platform: Platform.Android };
+
+    // store build info in the cache
+    const newBuildHash = (await calculateMD5(build.apkPath)).digest("hex");
+    const buildInfo = { fingerprint: newFingerprint, buildHash: newBuildHash, buildResult };
+    extensionContext.workspaceState.update(ANDROID_BUILD_CACHE_KEY, buildInfo);
+
+    return buildResult;
   }
 
-  private async handleFinishedAndroidBuild(
-    buildPromise: Promise<AndroidBuild> | AndroidBuild,
-    newFingerprint: string | undefined
-  ) {
+  private async loadIOSCachedBuild(newFingerprint: string) {
     try {
-      const buildResult = await buildPromise;
-      const newHash = (await calculateMD5(buildResult.apkPath)).digest("hex");
-      Logger.log("Android hash", newHash);
-      this.workspaceStateManager.updateState((state: any) => ({
-        ...state,
-        buildCache: {
-          ...state.buildCache,
-          android: {
-            build: buildResult,
-            buildHash: newHash,
-            fingerprintHash: newFingerprint,
-          },
-        },
-      }));
+      const cacheInfo = extensionContext.workspaceState.get(
+        IOS_BUILD_CACHE_KEY
+      ) as IOSBuildCacheInfo;
+
+      if (cacheInfo && cacheInfo.fingerprint == newFingerprint) {
+        const build = cacheInfo.buildResult;
+
+        // We have to check if the user removed the build that was cached.
+        if (fs.existsSync(build.appPath)) {
+          const hash = (await calculateMD5(build.appPath)).digest("hex");
+
+          if (hash === cacheInfo.buildHash) {
+            Logger.log("Cache hit on iOS build. Using existing build.");
+            return build;
+          }
+        }
+      }
     } catch (e) {
-      this.workspaceStateManager.updateState((state: any) => ({
-        ...state,
-        buildCache: {
-          ...state.buildCache,
-          android: {},
-        },
-      }));
-      throw e;
+      // we only log the error and ignore it to allow new build to start
+      Logger.error("Error while attempting to load cached build", e);
     }
+    return undefined;
   }
 
-  private async _prepareIosBuild(newFingerprint?: string | undefined) {
-    const buildHash = this.workspaceStateManager.getState().buildCache?.iOS?.buildHash;
-    const cachedFingerprint = this.workspaceStateManager.getState().buildCache?.iOS?.fingerprintHash;
-    const fingerprintMatching = newFingerprint === cachedFingerprint && !!cachedFingerprint;
-
-    if (fingerprintMatching && this.iOSBuild) {
-      const build = await this.iOSBuild;
-
-      // We have to check if the user removed the build that was cached.
-      if (fs.existsSync(build.appPath)) {
-        const hash = (await calculateMD5(build.appPath)).digest("hex");
-
-        if (hash === buildHash) {
-          Logger.debug("Cache hit on ios build. Using existing build.");
-          this.handleFinishedIosBuild(build, newFingerprint);
-          return build;
-        }
+  private async startIOSBuild(newFingerprint: string, forceCleanBuild: boolean) {
+    if (!forceCleanBuild) {
+      const buildResult = await this.loadIOSCachedBuild(newFingerprint);
+      if (buildResult) {
+        return buildResult;
       }
     }
 
-    const build = buildIos(this.workspaceDir);
-    this.handleFinishedIosBuild(build, newFingerprint);
-    return build;
-  }
+    const build = await buildIos(getWorkspacePath());
+    const buildResult: IOSBuildResult = { ...build, platform: Platform.IOS };
 
-  private async handleFinishedIosBuild(
-    buildPromise: Promise<IosBuild> | IosBuild,
-    newFingerprint: string | undefined
-  ) {
-    try {
-      const buildResult = await buildPromise;
-      const newHash = (await calculateMD5(buildResult.appPath)).digest("hex");
-      Logger.debug("IOS hash", newHash);
-      this.workspaceStateManager.updateState((state: any) => ({
-        ...state,
-        buildCache: {
-          ...state.buildCache,
-          iOS: {
-            build: buildResult,
-            buildHash: newHash,
-            fingerprintHash: newFingerprint,
-          },
-        },
-      }));
-    } catch (e) {
-      this.workspaceStateManager.updateState((state: any) => ({
-        ...state,
-        buildCache: {
-          ...state.buildCache,
-          iOS: {},
-        },
-      }));
-      throw e;
-    }
+    // store build info in the cache
+    const newBuildHash = (await calculateMD5(build.appPath)).digest("hex");
+    const buildInfo = { fingerprint: newFingerprint, buildHash: newBuildHash, buildResult };
+    extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, buildInfo);
+
+    return { ...build, platform: Platform.IOS } as IOSBuildResult;
   }
 
   public async startBuilding(forceCleanBuild: boolean) {
-    if (forceCleanBuild) {
-      Logger.debug("Start build (force clean build)");
-      this.iOSBuild = this._prepareIosBuild();
-      this.androidBuild = this._prepareAndroidBuild();
-    } else {
-      Logger.debug("Start build (using build cache)");
-      const newFingerprintHash = await this._generateFingerprint();
-      this.iOSBuild = this._prepareIosBuild(newFingerprintHash);
-      this.androidBuild = this._prepareAndroidBuild(newFingerprintHash);
-    }
-  }
-
-  private async _generateFingerprint() {
-    try {
-      return await generateWorkspaceFingerprint();
-    } catch (e) {
-      Logger.warn("Couldn't get the fingerprint of the app.");
-      return undefined;
-    }
+    const newFingerprintHash = await generateWorkspaceFingerprint();
+    Logger.debug("Start build", forceCleanBuild ? "(force clean build)" : "(using build cache)");
+    this.iOSBuild = this.startIOSBuild(newFingerprintHash, forceCleanBuild);
+    this.androidBuild = this.startAndroidBuild(newFingerprintHash, forceCleanBuild);
   }
 }

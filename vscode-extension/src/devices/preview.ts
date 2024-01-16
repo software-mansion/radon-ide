@@ -1,21 +1,22 @@
-import { Disposable, ExtensionContext } from "vscode";
+import { Disposable } from "vscode";
 import path from "path";
 import readline from "readline";
 import { exec, ChildProcess } from "../utilities/subprocess";
+import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
   public streamURL?: string;
 
-  constructor(private context: ExtensionContext, private args: string[]) {}
+  constructor(private args: string[]) {}
 
   dispose() {
     this.subprocess?.kill();
   }
 
   async start() {
-    const simControllerBinary = path.join(this.context.extensionPath, "dist", "sim-controller");
+    const simControllerBinary = path.join(extensionContext.extensionPath, "dist", "sim-controller");
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
     const subprocess = exec(simControllerBinary, this.args, {});

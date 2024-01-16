@@ -6,45 +6,33 @@ import {
   Uri,
   ViewColumn,
   ExtensionContext,
-  debug,
   commands,
 } from "vscode";
 
 import { openExternalUrl } from "../utilities/vsc";
-import { WorkspaceStateManager } from "./WorkspaceStateManager";
+import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { generateWebviewContent } from "./webviewContentGenerator";
 import { DependencyChecker } from "../dependency/DependencyChecker";
 import { DependencyInstaller } from "../dependency/DependencyInstaller";
 import { DeviceManager } from "../devices/DeviceManager";
-import { ProjectManager } from "../project/ProjectManager";
-
-const PREVIEW_PANEL_COMMANDS = [
-  "log",
-  "debugResume",
-  "openLogs",
-  "openExternalUrl",
-  "stopFollowing",
-  "startFollowing",
-];
+import { Project } from "../project/project";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
-  private readonly workspaceStateManager: WorkspaceStateManager;
   private readonly dependencyChecker: DependencyChecker;
   private readonly dependencyInstaller: DependencyInstaller;
-  private readonly context: ExtensionContext;
   private readonly deviceManager: DeviceManager;
-  private readonly projectManager: ProjectManager;
+  private readonly project: Project;
   private disposables: Disposable[] = [];
-  private projectStarted = false;
+
+  private readonly callableObjects: Map<string, object>;
 
   private followEnabled = false;
 
-  private constructor(panel: WebviewPanel, context: ExtensionContext) {
+  private constructor(panel: WebviewPanel) {
     this._panel = panel;
-    this.context = context;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
@@ -52,31 +40,31 @@ export class PreviewsPanel {
 
     // Set the HTML content for the webview panel
     this._panel.webview.html = generateWebviewContent(
-      context,
+      extensionContext,
       this._panel.webview,
-      context.extensionUri
+      extensionContext.extensionUri
     );
 
     // Set an event listener to listen for messages passed from the webview context
     this._setWebviewMessageListener(this._panel.webview);
 
     // Set the manager to listen and change the persisting storage for the extension.
-    this.workspaceStateManager = new WorkspaceStateManager(context, this._panel.webview);
-    this.workspaceStateManager.startListening();
-
     this.dependencyChecker = new DependencyChecker(this._panel.webview);
     this.dependencyChecker.setWebviewMessageListener();
 
     this.dependencyInstaller = new DependencyInstaller(this._panel.webview);
     this.dependencyInstaller.setWebviewMessageListener();
 
-    this._setupEditorListeners(context);
+    this._setupEditorListeners();
 
-    this.deviceManager = new DeviceManager(this._panel.webview);
-    this.deviceManager.startListening();
+    this.deviceManager = new DeviceManager();
+    this.project = new Project(this.deviceManager);
+    this.project.start(false);
 
-    this.projectManager = new ProjectManager(this._panel.webview, this.workspaceStateManager, context);
-    this.projectManager.startListening();
+    this.callableObjects = new Map([
+      ["DeviceManager", this.deviceManager as object],
+      ["Project", this.project as object],
+    ]);
   }
 
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
@@ -98,12 +86,12 @@ export class PreviewsPanel {
           retainContextWhenHidden: true,
         }
       );
-      PreviewsPanel.currentPanel = new PreviewsPanel(panel, context);
+      PreviewsPanel.currentPanel = new PreviewsPanel(panel);
       commands.executeCommand("workbench.action.lockEditorGroup");
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
-      PreviewsPanel.currentPanel.projectManager.startPreview(`preview:/${fileName}:${lineNumber}`);
+      PreviewsPanel.currentPanel.project.startPreview(`preview:/${fileName}:${lineNumber}`);
     }
   }
 
@@ -122,14 +110,6 @@ export class PreviewsPanel {
     }
   }
 
-  public notifyAppReady(deviceId: string, previewURL: string) {
-    this._panel.webview.postMessage({
-      command: "appReady",
-      deviceId: deviceId,
-      previewURL: previewURL,
-    });
-  }
-
   public notifyNavigationChanged({ displayName, id }: { displayName: string; id: string }) {
     this._panel.webview.postMessage({
       command: "navigationChanged",
@@ -138,22 +118,62 @@ export class PreviewsPanel {
     });
   }
 
+  private handleRemoteCall(message: any) {
+    const { object, method, args, callId } = message;
+    const callableObject = this.callableObjects.get(object);
+    if (callableObject && method in callableObject) {
+      const argsWithCallbacks = args.map((arg: any) => {
+        if (typeof arg === "object" && "__callbackId" in arg) {
+          const callbackId = arg.__callbackId;
+          return (...args: any[]) => {
+            this._panel.webview.postMessage({
+              command: "callback",
+              callbackId,
+              args,
+            });
+          };
+        } else {
+          return arg;
+        }
+      });
+      // @ts-ignore
+      const result = callableObject[method](...argsWithCallbacks);
+      if (result instanceof Promise) {
+        result
+          .then((result) => {
+            this._panel.webview.postMessage({
+              command: "callResult",
+              callId,
+              result,
+            });
+          })
+          .catch((error) => {
+            this._panel.webview.postMessage({
+              command: "callResult",
+              callId,
+              error,
+            });
+          });
+      } else {
+        this._panel.webview.postMessage({
+          command: "callResult",
+          callId,
+          result,
+        });
+      }
+    }
+  }
+
   private _setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
       (message: any) => {
         const command = message.command;
 
-        if (!PREVIEW_PANEL_COMMANDS.includes(command)) {
-          return;
-        }
-
-        Logger.log(`Extension received a message with command ${command}.`);
+        Logger.log("Message from webview", message);
 
         switch (command) {
-          case "log":
-            return;
-          case "debugResume":
-            debug.activeDebugSession?.customRequest("continue");
+          case "call":
+            this.handleRemoteCall(message);
             return;
           case "openLogs":
             commands.executeCommand("workbench.panel.repl.view.focus");
@@ -174,16 +194,11 @@ export class PreviewsPanel {
     );
   }
 
-  private _onActiveFileChange(filename: string) {
-    Logger.debug(`LastEditor ${filename}`);
-    this.projectManager.onActiveFileChange(filename, this.followEnabled);
-  }
-
-  private _setupEditorListeners(context: ExtensionContext) {
-    context.subscriptions.push(
+  private _setupEditorListeners() {
+    extensionContext.subscriptions.push(
       window.onDidChangeActiveTextEditor((editor) => {
         if (editor) {
-          this._onActiveFileChange(editor.document.fileName);
+          this.project.onActiveFileChange(editor.document.fileName, this.followEnabled);
         }
       })
     );

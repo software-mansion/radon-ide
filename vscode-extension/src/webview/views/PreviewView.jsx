@@ -1,174 +1,59 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import { VSCodeButton, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
-import LogPanel from "../components/LogPanel";
 import LogCounter from "../components/LogCounter";
 import SettingsDropdown from "../components/SettingsDropdown";
-import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
 import "./View.css";
 import "./PreviewView.css";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "./ManageDevicesView";
-import { MANAGE_DEVICE_OPTION_NAME } from "../utilities/consts";
-import { useSystemImagesContext } from "../providers/SystemImagesProvider";
-import { PLATFORM } from "../utilities/device";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
-
-function setCssPropertiesForDevice(device) {
-  // top right bottom left
-  const m = device.backgroundMargins;
-  const size = device.backgroundSize;
-  document.documentElement.style.setProperty(
-    "--phone-content-margins",
-    `${((m[0] + m[2]) / size[0]) * 100}% 0% 0% ${(m[1] / size[1]) * 100}%`
-  );
-
-  document.documentElement.style.setProperty(
-    "--phone-content-height",
-    `${((size[0] - m[0] - m[2]) / size[0]) * 100}%`
-  );
-  document.documentElement.style.setProperty(
-    "--phone-content-width",
-    `${((size[1] - m[1] - m[3]) / size[1]) * 100}%`
-  );
-  document.documentElement.style.setProperty(
-    "--phone-content-border-radius",
-    device.backgroundBorderRadius
-  );
-
-  document.documentElement.style.setProperty(
-    "--phone-content-aspect-ratio",
-    `${device.width} / ${device.height}`
-  );
-}
-
-const INITIAL_DEVICE_SETTINGS = {
-  appearance: "dark",
-  contentSize: "normal",
-};
+import { useDevices } from "../providers/DevicesProvider";
+import { useProject } from "../providers/ProjectProvider";
 
 function PreviewView() {
-  const [deviceId, setDeviceId] = useState(undefined);
-  const [deviceSettings, setDeviceSettings] = useState(INITIAL_DEVICE_SETTINGS);
-  const [previewURL, setPreviewURL] = useState();
   const [isInspecing, setIsInspecting] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [logs, setLogs] = useState([]);
   const [logCounter, setLogCounter] = useState(0);
-  const [expandedLogs, setExpandedLogs] = useState(false);
-  const [inspectData, setInspectData] = useState(null);
-  const [isError, setIsError] = useState(false);
 
   const { openModal } = useModal();
-  const { devices } = useWorkspaceStateContext();
-  const { isDeviceImageInstalled } = useSystemImagesContext();
 
-  const selectedDevice = useMemo(
-    () => devices.find((device) => deviceId === device.id),
-    [deviceId, devices]
-  );
+  const { devices } = useDevices();
+  const { projectState, project } = useProject();
+
+  const selectedDevice = projectState?.selectedDevice;
 
   useEffect(() => {
-    if (selectedDevice) {
-      setCssPropertiesForDevice(selectedDevice);
+    function incrementLogCounter() {
+      setLogCounter((c) => c + 1);
     }
-  }, [selectedDevice]);
+    project.addListener("log", incrementLogCounter);
 
-  useEffect(() => {
-    const listener = (event) => {
-      const message = event.data;
-      switch (message.command) {
-        case "appReady":
-          setPreviewURL(message.previewURL);
-          break;
-        case "inspectData":
-          setInspectData(message.data);
-          break;
-        case "logEvent":
-          setLogCounter((logCounter) => logCounter + 1);
-          break;
-        case "consoleLog":
-          setLogs((logs) => [{ type: "log", text: message.text }, ...logs]);
-          break;
-        case "consoleStack":
-          setLogs((logs) => [
-            {
-              type: "stack",
-              text: message.text,
-              stack: message.stack,
-              isFatal: message.isFatal,
-            },
-            ...logs,
-          ]);
-          break;
-        case "projectError":
-          if (
-            (!message.androidBuildFailed && selectedDevice.platform === "Android") ||
-            (!message.iosBuildFailed && selectedDevice.platorm === "iOS")
-          ) {
-            setIsError(false);
-          }
-          setIsError(true);
-          break;
-      }
+    return () => {
+      project.removeListener("log", incrementLogCounter);
     };
-    window.addEventListener("message", listener);
-
-    return () => window.removeEventListener("message", listener);
   }, []);
 
-  useEffect(() => {
-    if (deviceId || !devices.length) {
-      return;
-    }
-
-    const initialDevice = devices.find(
-      (device) =>
-        (device.platform === PLATFORM.IOS && device.runtime) ||
-        (device.platform === PLATFORM.ANDROID && device.systemImage)
-    );
-
-    if (!initialDevice) {
-      return;
-    }
-
-    setDeviceId(initialDevice.id);
+  const handleReset = () => {
     vscode.postMessage({
-      command: "startProject",
-      settings: deviceSettings,
-      device: initialDevice,
-    });
-  }, [devices]);
-
-  const handleRestart = () => {
-    setPreviewURL(undefined);
-    setIsError(false);
-    vscode.postMessage({
-      command: "restartProject",
-      settings: deviceSettings,
-      device: selectedDevice,
+      command: "resetProject",
     });
   };
 
-  const handleDeviceDropdownChange = (e) => {
-    if (e.target.value === MANAGE_DEVICE_OPTION_NAME) {
-      openModal(MANAGE_DEVICE_OPTION_NAME, <ManageDevicesView />);
+  const handleDeviceDropdownChange = async (e) => {
+    if (e.target.value === "manage") {
+      openModal("Manage Devices", <ManageDevicesView />);
       return;
     }
-    if (selectedDevice.id !== e.target.value) {
-      const newDevice = devices.find((d) => d.id === e.target.value);
-      setDeviceId(newDevice.id);
-      setPreviewURL(undefined);
-      setIsError(false);
-      vscode.postMessage({
-        command: "changeDevice",
-        settings: deviceSettings,
-        device: newDevice,
-      });
+    if (selectedDevice?.id !== e.target.value) {
+      const deviceInfo = devices.find((d) => d.id === e.target.value);
+      if (deviceInfo) {
+        project.selectDevice(deviceInfo);
+      }
     }
   };
 
@@ -192,7 +77,7 @@ function PreviewView() {
 
         <span className="group-separator" />
 
-        <UrlBar onRestart={handleRestart} />
+        <UrlBar onReset={handleReset} />
 
         <div className="spacer" />
 
@@ -218,15 +103,9 @@ function PreviewView() {
       </div>
       {selectedDevice ? (
         <Preview
-          key={previewURL}
+          key={selectedDevice.id}
           isInspecting={isInspecing}
-          previewURL={previewURL}
-          device={selectedDevice}
-          inspectData={inspectData}
           setIsInspecting={setIsInspecting}
-          setInspectData={setInspectData}
-          isError={isError}
-          onRestartClick={handleRestart}
         />
       ) : (
         <div className="missing-device-filler" />
@@ -238,12 +117,7 @@ function PreviewView() {
           tooltip={{
             label: "Select an element to inspect it",
           }}
-          onClick={() => {
-            if (isInspecing) {
-              setInspectData(null);
-            }
-            setIsInspecting(!isInspecing);
-          }}>
+          onClick={() => setIsInspecting(!isInspecing)}>
           <span className="codicon codicon-inspect" />
         </IconButton>
 
@@ -251,36 +125,27 @@ function PreviewView() {
 
         <VSCodeDropdown
           className="device-select"
-          value={deviceId}
+          value={selectedDevice?.id}
           onChange={handleDeviceDropdownChange}>
           <span slot="start" className="codicon codicon-device-mobile" />
-          {devices.map((device) => (
-            <VSCodeOption
-              key={device.id}
-              value={device.id}
-              disabled={!isDeviceImageInstalled(device)}>
+          {devices?.map((device) => (
+            <VSCodeOption key={device.id} value={device.id} disabled={!device.available}>
               {device.name}
             </VSCodeOption>
           ))}
-          {!!devices.length && <div className="dropdown-separator" />}
-          <VSCodeOption
-            appearance="secondary"
-            key={MANAGE_DEVICE_OPTION_NAME}
-            value={MANAGE_DEVICE_OPTION_NAME}>
-            {MANAGE_DEVICE_OPTION_NAME}
+          {devices?.length > 0 && <div className="dropdown-separator" />}
+          <VSCodeOption appearance="secondary" value="manage">
+            Manage devices...
           </VSCodeOption>
         </VSCodeDropdown>
 
         <div className="spacer" />
-        <DeviceSettingsDropdown
-          deviceSettings={deviceSettings}
-          setDeviceSettings={setDeviceSettings}>
+        <DeviceSettingsDropdown>
           <IconButton tooltip={{ label: "Device settings", side: "top" }}>
             <DeviceSettingsIcon />
           </IconButton>
         </DeviceSettingsDropdown>
       </div>
-      <LogPanel expandedLogs={expandedLogs} logs={logs} />
     </div>
   );
 }

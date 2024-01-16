@@ -2,17 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "./View.css";
 import { VSCodeButton, VSCodeCheckbox, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./AndroidImagesView.css";
-import { useSystemImagesContext } from "../providers/SystemImagesProvider";
 
 function AndroidImagesView() {
   const [selectedImages, setSelectedImages] = useState([]);
-  const {
-    androidImages: availableAndroidImages,
-    installedAndroidImages,
-    androidInstallationOutputStream,
-    loading,
-    processAndroidImageChanges,
-  } = useSystemImagesContext();
 
   useEffect(() => {
     setSelectedImages(installedAndroidImages);

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { vscode } from "../utilities/vscode";
 import IconButton from "./shared/IconButton";
 
-function UrlBar({ onRestart }) {
+function UrlBar({ onReset }) {
   const [urlList, setUrlList] = useState([{ name: "/", id: null }]);
 
   useEffect(() => {
@@ -41,9 +41,9 @@ function UrlBar({ onRestart }) {
         <span className="codicon codicon-arrow-left" />
       </IconButton>
       <IconButton
-        onClick={onRestart}
+        onClick={onReset}
         tooltip={{
-          label: "Reload the preview",
+          label: "Reset the app",
           side: "bottom",
         }}>
         <span className="codicon codicon-refresh" />

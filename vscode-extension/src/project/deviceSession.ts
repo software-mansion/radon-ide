@@ -1,45 +1,30 @@
-import { Disposable, debug, DebugSession, ExtensionContext } from "vscode";
+import { Disposable, debug, DebugSession } from "vscode";
 import { Metro } from "./metro";
 import { Devtools } from "./devtools";
-import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
-import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { DeviceSettings } from "../devices/DeviceBase";
-import { PreviewsPanel } from "../panels/PreviewsPanel";
-import fetch from "node-fetch";
+import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import {
-  ANDROID_FAIL_ERROR_MESSAGE,
-  IOS_FAIL_ERROR_MESSAGE,
-  isDeviceIOS,
-} from "../utilities/common";
-import { DeviceInfo, PLATFORM } from "../utilities/device";
-import { WorkspaceStateManager } from "../panels/WorkspaceStateManager";
+import { BuildResult } from "../builders/BuildManager";
+import { DeviceSettings } from "../common/Project";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
 export class DeviceSession implements Disposable {
-  private deviceSimulator: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
   private inspectCallID = 7621;
   private debugSession: DebugSession | undefined;
 
   constructor(
-    private context: ExtensionContext,
-    public readonly device: DeviceInfo,
-    public readonly devtools: Devtools,
-    public readonly metro: Metro
+    private readonly device: DeviceBase,
+    private readonly devtools: Devtools,
+    private readonly metro: Metro,
+    private readonly build: Promise<BuildResult>
   ) {}
 
   public dispose() {
     this.debugSession && debug.stopDebugging(this.debugSession);
-    this.deviceSimulator?.dispose();
+    this.device?.dispose();
   }
 
-  async start(
-    iosBuild: Promise<{ appPath: string; bundleID: string }>,
-    androidBuild: Promise<{ apkPath: string; packageName: string }>,
-    settings: DeviceSettings,
-    workspaceStateManager: WorkspaceStateManager
-  ) {
+  async start(deviceSettings: DeviceSettings) {
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {
         if (event === "rnp_appReady") {
@@ -50,44 +35,24 @@ export class DeviceSession implements Disposable {
       this.devtools?.addListener(listener);
     });
 
-    if (this.device.platform === PLATFORM.IOS) {
-      this.deviceSimulator = new IosSimulatorDevice(this.context);
-      const { appPath, bundleID } = await iosBuild;
-      const deviceUdid = await this.deviceSimulator.bootDevice(
-        this.device.runtime,
-        this.device.udid
-      );
-      if (!this.device.udid) {
-        workspaceStateManager.updateDevice({ ...this.device, udid: deviceUdid });
-      }
-      await this.deviceSimulator.changeSettings(settings);
-      await this.deviceSimulator.installApp(appPath);
-      await this.deviceSimulator.launchApp(bundleID, this.metro!.port);
-    } else {
-      this.deviceSimulator = new AndroidEmulatorDevice(this.context);
-      const { apkPath, packageName } = await androidBuild;
-      const newAvdName = await this.deviceSimulator.bootDevice(
-        this.device.systemImage,
-        this.device.avdName
-      );
-      if (!this.device.avdName) {
-        workspaceStateManager.updateDevice({ ...this.device, avdName: newAvdName });
-      }
-      await this.deviceSimulator.changeSettings(settings);
-      await this.deviceSimulator.installApp(apkPath);
-      await this.deviceSimulator.launchApp(packageName, this.metro!.port);
-    }
+    await this.device.bootDevice();
+    await this.device.changeSettings(deviceSettings);
+    const build = await this.build;
+    await this.device.installApp(build, false);
+    await this.device.launchApp(build, this.metro.port);
 
-    const waitForPreview = this.deviceSimulator.startPreview();
+    const waitForPreview = this.device.startPreview();
+    Logger.debug("Will wait for app ready and for preview");
     await Promise.all([waitForAppReady, waitForPreview]);
+    Logger.debug("App and preview ready, moving on...");
 
-    const websocketAddress = await this.waitForDebuggerURL(WAIT_FOR_DEBUGGER_TIMEOUT);
+    const websocketAddress = await this.metro.getDebuggerURL(WAIT_FOR_DEBUGGER_TIMEOUT);
     if (websocketAddress) {
       const debugStarted = await debug.startDebugging(
         undefined,
         {
-          type: "com.swmansion.react-native-preview",
-          name: "React Native Preview Debugger",
+          type: "com.swmansion.react-native-ide",
+          name: "React Native IDE Debugger",
           request: "attach",
           websocketAddress,
         },
@@ -104,58 +69,22 @@ export class DeviceSession implements Disposable {
     } else {
       Logger.error("Couldn't connect to debugger");
     }
-
-    PreviewsPanel.currentPanel?.notifyAppReady(this.device.id, this.deviceSimulator.previewURL!);
   }
 
-  private async waitForDebuggerURL(timeoutMs: number) {
-    const startTime = Date.now();
-    let websocketAddress: string | undefined;
-    while (!websocketAddress && Date.now() - startTime < timeoutMs) {
-      websocketAddress = await this.getDebuggerURL();
-      await new Promise((res) => setTimeout(res, 1000));
-    }
-    return websocketAddress;
+  public get previewURL(): string | undefined {
+    return this.device.previewURL;
   }
 
-  private async getDebuggerURL() {
-    // query list from http://localhost:${metroPort}/json/list
-    const list = await fetch(`http://localhost:${this.metro!.port}/json/list`);
-    const listJson = await list.json();
-    // with metro, pages are identified as "deviceId-pageId", we search for the most
-    // recent device id and want want to use special -1 page identifier (reloadable page)
-    let recentDeviceId = -1;
-    let websocketAddress: string | undefined;
-    for (const page of listJson) {
-      // pageId can sometimes be negative so we can't just use .split('-') here
-      const matches = page.id.match(/(\d+)-(-?\d+)/);
-      if (matches) {
-        const deviceId = parseInt(matches[1]);
-        const pageId = parseInt(matches[2]);
-        if (deviceId > recentDeviceId && pageId === -1) {
-          recentDeviceId = deviceId;
-          // In RN 73 metro has a bug where websocket URL returns 0 as port number when starting with port number set as 0 (ephemeral port)
-          // we want to replace it with the actual port number from metro:
-          // parse websocket URL:
-          const websocketDebuggerUrl = new URL(page.webSocketDebuggerUrl);
-          // replace port number with metro port number:
-          if (websocketDebuggerUrl.port === "0") {
-            websocketDebuggerUrl.port = this.metro!.port.toString();
-          }
-          websocketAddress = websocketDebuggerUrl.toString();
-        }
-      }
-    }
-
-    return websocketAddress;
+  public resumeDebugger() {
+    this.debugSession?.customRequest("continue");
   }
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.deviceSimulator?.sendTouch(xRatio, yRatio, type);
+    this.device.sendTouch(xRatio, yRatio, type);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
-    this.deviceSimulator?.sendKey(keyCode, direction);
+    this.device.sendKey(keyCode, direction);
   }
 
   public inspectElementAt(xRatio: number, yRatio: number, callback: (inspecData: any) => void) {
@@ -183,6 +112,6 @@ export class DeviceSession implements Disposable {
   }
 
   public async changeDeviceSettings(settings: DeviceSettings) {
-    await this.deviceSimulator?.changeSettings(settings);
+    await this.device.changeSettings(settings);
   }
 }

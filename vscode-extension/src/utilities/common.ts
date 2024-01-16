@@ -35,7 +35,7 @@ export function getCpuArchitecture() {
 }
 
 export function getAppCachesDir() {
-  return join(os.homedir(), "Library", "Caches", "com.swmansion.react-native-preview-vscode");
+  return join(os.homedir(), "Library", "Caches", "com.swmansion.react-native-ide");
 }
 
 export function getLogsDir() {

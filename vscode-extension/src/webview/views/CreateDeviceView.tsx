@@ -1,17 +1,26 @@
 import Select from "../components/shared/Select";
-import { useWorkspaceStateContext } from "../providers/WorkspaceStateProvider";
-import { useSystemImagesContext } from "../providers/SystemImagesProvider";
-import {
-  SupportedIOSPhone,
-  SupportedAndroidPhone,
-  SupportedPhoneType,
-  isIosDeviceType,
-} from "../utilities/device";
 import "./CreateDeviceView.css";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
-import { useMemo, useState } from "react";
-import { IosRuntime } from "../utilities/ios";
-import { AndroidSystemImage, getVerboseAndroidImageName } from "../utilities/android";
+import { useState } from "react";
+import { useDevices } from "../providers/DevicesProvider";
+
+enum SupportedAndroidPhone {
+  PIXEL_7 = "Google Pixel 7",
+}
+
+enum SupportedIOSPhone {
+  IPHONE_15_PRO = "iPhone 15 Pro",
+}
+
+type SupportedPhoneType = SupportedAndroidPhone | SupportedIOSPhone;
+
+function isAndroidDeviceType(phone: SupportedPhoneType): phone is SupportedAndroidPhone {
+  return Object.values(SupportedAndroidPhone).includes(phone as SupportedAndroidPhone);
+}
+
+function isIosDeviceType(phone: SupportedPhoneType): phone is SupportedIOSPhone {
+  return Object.values(SupportedIOSPhone).includes(phone as SupportedIOSPhone);
+}
 
 const DEVICE_TYPE_OPTIONS = [
   {
@@ -25,41 +34,59 @@ const DEVICE_TYPE_OPTIONS = [
 ];
 
 interface CreateDeviceViewProps {
-  onCreate: (deviceType: SupportedPhoneType, systemImage: IosRuntime | AndroidSystemImage) => void;
+  onCreate: () => void;
   onCancel: () => void;
 }
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [deviceType, setDeviceType] = useState<SupportedPhoneType | undefined>(undefined);
-  const [systemImageName, setSystemImageName] = useState<string | undefined>(undefined);
+  const [selectedSystemValue, selectSystemValue] = useState<string | undefined>(undefined);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const { installedIosRuntimes, installedAndroidImages } = useSystemImagesContext();
+  const { iOSRuntimes, androidImages, deviceManager } = useDevices();
 
-  const selectedSystemImage = useMemo(() => {
-    if (!systemImageName || !deviceType) {
-      return undefined;
-    }
-    if (isIosDeviceType(deviceType)) {
-      return installedIosRuntimes.find((iOSRuntime) => iOSRuntime.name === systemImageName);
-    }
-    return installedAndroidImages.find(
-      (androidSystemImage) => androidSystemImage.path === systemImageName
-    );
-  }, [systemImageName, installedAndroidImages, installedIosRuntimes, deviceType]);
-
-  const systemImagesOptions = useMemo(() => {
-    return !!deviceType && isIosDeviceType(deviceType)
-      ? installedIosRuntimes.map((runtime) => ({
-          value: runtime.name,
+  const systemImagesOptions =
+    !!deviceType && isIosDeviceType(deviceType)
+      ? iOSRuntimes.map((runtime) => ({
+          value: runtime.identifier,
           label: runtime.name,
         }))
-      : installedAndroidImages.map((systemImage) => ({
-          value: systemImage.path,
-          label: getVerboseAndroidImageName(systemImage),
+      : androidImages.map((systemImage) => ({
+          value: systemImage.location,
+          label: systemImage.name,
         }));
-  }, [installedAndroidImages, installedIosRuntimes, deviceType]);
 
-  const createDisabled = !deviceType || !selectedSystemImage;
+  const createDisabled = loading || !deviceType || !selectedSystemValue;
+
+  async function createDevice() {
+    if (!selectedSystemValue) {
+      return;
+    }
+    try {
+      setLoading(true);
+      if (isIosDeviceType(deviceType!)) {
+        const runtime = iOSRuntimes.find((runtime) => runtime.identifier === selectedSystemValue);
+        if (!runtime) {
+          return;
+        }
+        const iOSDeviceType = runtime.supportedDeviceTypes.find((dt) => dt.name === deviceType);
+        if (!iOSDeviceType) {
+          return;
+        }
+        const name = `${iOSDeviceType.name} – ${runtime.name}`;
+        await deviceManager.createIOSDevice(iOSDeviceType.identifier, runtime.identifier, name);
+      } else {
+        const systemImage = androidImages.find((image) => image.location === selectedSystemValue);
+        if (!systemImage) {
+          return;
+        }
+        const name = `${deviceType} – ${systemImage.name}`;
+        await deviceManager.createAndroidDevice(selectedSystemValue, name);
+      }
+    } finally {
+      onCreate();
+    }
+  }
 
   return (
     <div className="edit-device-form">
@@ -68,7 +95,10 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Select
           className="form-field"
           value={deviceType}
-          onChange={(newValue: string) => setDeviceType(newValue as SupportedPhoneType)}
+          onChange={(newValue: string) => {
+            setDeviceType(newValue as SupportedPhoneType);
+            selectSystemValue(undefined);
+          }}
           options={DEVICE_TYPE_OPTIONS}
           placeholder="Choose device type..."
         />
@@ -82,14 +112,14 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           <Select
             disabled={!deviceType}
             className="form-field"
-            value={systemImageName}
-            onChange={(newValue) => setSystemImageName(newValue)}
+            value={selectedSystemValue}
+            onChange={(newValue) => selectSystemValue(newValue)}
             options={systemImagesOptions}
             placeholder={`Select device system image...`}
           />
         ) : (
           <div className="">
-            No "System Images" found. You can install them using{" "}
+            No system images found. You can install them using{" "}
             {isIosDeviceType(deviceType!) ? "Xcode" : "Android Studio"}.
           </div>
         )}
@@ -98,9 +128,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <VSCodeButton onClick={onCancel} appearance="secondary">
           Cancel
         </VSCodeButton>
-        <VSCodeButton
-          disabled={createDisabled}
-          onClick={() => onCreate(deviceType!, selectedSystemImage!)}>
+        <VSCodeButton disabled={createDisabled} onClick={createDevice}>
           Create
         </VSCodeButton>
       </div>
