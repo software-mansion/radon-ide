@@ -123,6 +123,9 @@ function Preview({ isInspecting, setIsInspecting }) {
 
   const debugPaused = projectState?.status === "debuggerPaused";
   const debugException = projectState?.status === "runtimeError";
+
+  const isStarting =
+    !projectState || projectState.previewURL === undefined || projectState.status === "starting";
   const previewURL = projectState?.previewURL;
 
   const device =
@@ -137,7 +140,7 @@ function Preview({ isInspecting, setIsInspecting }) {
       style={cssPropertiesForDevice(device)}
       tabIndex={0}
       ref={wrapperDivRef}>
-      {previewURL && !hasBuildError && (
+      {!isStarting && !hasBuildError && (
         <div className="phone-content">
           <img
             src={previewURL}
@@ -183,7 +186,7 @@ function Preview({ isInspecting, setIsInspecting }) {
           <img src={device.backgroundImage} className="phone-frame" />
         </div>
       )}
-      {!previewURL && !hasBuildError && (
+      {isStarting && !hasBuildError && (
         <div className="phone-content">
           <div className="phone-sized phone-screen phone-content-loading-overlay" />
           <div className="phone-sized phone-screen phone-content-loading ">
@@ -198,7 +201,11 @@ function Preview({ isInspecting, setIsInspecting }) {
             <h2>
               An error occurred inside the extension. Click the button to restart the emulator.
             </h2>
-            <VSCodeButton appearance="secondary" onClick={onRestartClick}>
+            <VSCodeButton
+              appearance="secondary"
+              onClick={() => {
+                project.restart(false);
+              }}>
               <span className="codicon codicon-refresh" />
             </VSCodeButton>
           </div>

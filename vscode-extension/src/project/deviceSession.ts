@@ -24,6 +24,10 @@ export class DeviceSession implements Disposable {
     this.device?.dispose();
   }
 
+  get isActive() {
+    return this.devtools.hasConnectedClient;
+  }
+
   async start(deviceSettings: DeviceSettings) {
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {

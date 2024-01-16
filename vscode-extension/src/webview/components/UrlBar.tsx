@@ -1,25 +1,23 @@
 import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
 import { useEffect, useState } from "react";
-import { vscode } from "../utilities/vscode";
 import IconButton from "./shared/IconButton";
+import { ProjectInterface } from "../../common/Project";
 
-function UrlBar({ onReset }) {
-  const [urlList, setUrlList] = useState([{ name: "/", id: null }]);
+function UrlBar({ project }: { project: ProjectInterface }) {
+  const [urlList, setUrlList] = useState<{ name: string; id: string }[]>([]);
 
   useEffect(() => {
-    const listener = (event) => {
-      const message = event.data;
-      if (message.command === "navigationChanged") {
-        // put new url at the top of the list and remove duplicates
-        const newRecord = { displayName: message.displayName, id: message.id };
-        setUrlList((urlList) => [
-          newRecord,
-          ...urlList.filter((record) => record.id !== newRecord.id),
-        ]);
-      }
+    function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
+      const newRecord = { name: navigationData.displayName, id: navigationData.id };
+      setUrlList((urlList) => [
+        newRecord,
+        ...urlList.filter((record) => record.id !== newRecord.id),
+      ]);
+    }
+    project.addListener("navigationChanged", handleNavigationChanged);
+    return () => {
+      project.removeListener("navigationChanged", handleNavigationChanged);
     };
-    window.addEventListener("message", listener);
-    return () => window.removeEventListener("message", listener);
   }, []);
 
   return (
@@ -31,17 +29,14 @@ function UrlBar({ onReset }) {
         }}
         disabled={urlList.length < 2}
         onClick={() => {
-          vscode.postMessage({
-            command: "openNavigation",
-            id: urlList[1].id,
-          });
+          project.openNavigation(urlList[1].id);
           // remove first item from the url list
           setUrlList((urlList) => urlList.slice(1));
         }}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
       <IconButton
-        onClick={onReset}
+        onClick={() => project.restart(false)}
         tooltip={{
           label: "Reset the app",
           side: "bottom",
@@ -50,14 +45,12 @@ function UrlBar({ onReset }) {
       </IconButton>
       <VSCodeDropdown
         onChange={(e) => {
-          vscode.postMessage({
-            command: "openNavigation",
-            id: e.target.value,
-          });
+          const target = e.target as HTMLInputElement;
+          project.openNavigation(target.value);
         }}>
         {urlList.map((entry) => (
           <VSCodeOption key={entry.id} value={entry.id}>
-            {entry.displayName}
+            {entry.name}
           </VSCodeOption>
         ))}
       </VSCodeDropdown>

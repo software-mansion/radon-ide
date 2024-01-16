@@ -59,7 +59,6 @@ export class PreviewsPanel {
 
     this.deviceManager = new DeviceManager();
     this.project = new Project(this.deviceManager);
-    this.project.start(false);
 
     this.callableObjects = new Map([
       ["DeviceManager", this.deviceManager as object],
@@ -108,14 +107,6 @@ export class PreviewsPanel {
         disposable.dispose();
       }
     }
-  }
-
-  public notifyNavigationChanged({ displayName, id }: { displayName: string; id: string }) {
-    this._panel.webview.postMessage({
-      command: "navigationChanged",
-      displayName,
-      id,
-    });
   }
 
   private handleRemoteCall(message: any) {

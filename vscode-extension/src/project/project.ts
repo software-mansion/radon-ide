@@ -2,7 +2,6 @@ import { Disposable, debug } from "vscode";
 import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
-import { getWorkspacePath } from "../utilities/common";
 import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
 import { DeviceManager } from "../devices/DeviceManager";
@@ -21,8 +20,8 @@ import { openFileAtPosition } from "../utilities/openFileAtPosition";
 export class Project implements Disposable, ProjectInterface {
   public static currentProject: Project | undefined;
 
-  private metro: Metro | undefined;
-  private devtools: Devtools | undefined;
+  private metro: Metro;
+  private devtools: Devtools;
   private debugSessionListener: Disposable | undefined;
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
@@ -42,6 +41,9 @@ export class Project implements Disposable, ProjectInterface {
 
   constructor(private readonly deviceManager: DeviceManager) {
     Project.currentProject = this;
+    this.devtools = new Devtools();
+    this.metro = new Metro(this.devtools);
+    this.start(false, false);
   }
 
   async getProjectState(): Promise<ProjectState> {
@@ -68,24 +70,65 @@ export class Project implements Disposable, ProjectInterface {
     this.debugSessionListener?.dispose();
   }
 
+  private reloadingMetro = false;
+
   public reloadMetro() {
+    this.reloadingMetro = true;
     this.metro?.reload();
   }
 
-  public async start(forceCleanBuild: boolean) {
-    let workspaceDir = getWorkspacePath();
-    if (!workspaceDir) {
-      Logger.warn("No workspace directory found");
+  public async restart(forceCleanBuild: boolean) {
+    this.updateProjectState({ status: "starting" });
+    if (forceCleanBuild) {
+      await this.start(true, forceCleanBuild);
+      await this.selectDevice(this.projectState.selectedDevice!);
       return;
     }
 
-    this.devtools = new Devtools();
-    await this.devtools.start();
-    this.metro = new Metro(workspaceDir, this.devtools.port);
+    // if we have an active device session, we try reloading metro
+    if (this.deviceSession?.isActive) {
+      this.reloadMetro();
+      return;
+    }
 
+    // otherwise we trigger selectDevice which should handle restarting the device, installing
+    // app and launching it
+    await this.selectDevice(this.projectState.selectedDevice!);
+  }
+
+  private async start(restart: boolean, forceCleanBuild: boolean) {
+    if (restart) {
+      const oldDevtools = this.devtools;
+      const oldMetro = this.metro;
+      this.devtools = new Devtools();
+      this.metro = new Metro(this.devtools);
+      oldDevtools.dispose();
+      oldMetro.dispose();
+    }
     Logger.debug("Launching builds");
-    await this.buildManager.startBuilding(forceCleanBuild);
+    this.buildManager.startBuilding(forceCleanBuild);
 
+    this.devtools.addListener((event, payload) => {
+      switch (event) {
+        case "rnp_appReady":
+          Logger.debug("App ready");
+          if (this.reloadingMetro) {
+            this.reloadingMetro = false;
+            this.updateProjectState({ status: "running" });
+          }
+          break;
+        case "rnp_navigationChanged":
+          this.eventEmitter.emit("navigationChanged", {
+            displayName: payload.displayName,
+            id: payload.id,
+          });
+          break;
+      }
+    });
+    Logger.debug(`Launching devtools`);
+    const waitForDevtools = this.devtools.start();
+
+    this.debugSessionListener?.dispose();
     this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
         case "rnp_consoleLog":
@@ -105,7 +148,8 @@ export class Project implements Disposable, ProjectInterface {
     });
 
     Logger.debug(`Launching metro`);
-    await this.metro.start(forceCleanBuild);
+    const waitForMetro = this.metro.start(forceCleanBuild);
+    await Promise.all([waitForDevtools, waitForMetro]);
     Logger.debug(`Metro started on port ${this.metro.port} devtools on port ${this.devtools.port}`);
   }
 
@@ -146,8 +190,8 @@ export class Project implements Disposable, ProjectInterface {
     this.deviceSession?.resumeDebugger();
   }
 
-  public openNavigation(id: string) {
-    this.deviceSession?.openNavigation(id);
+  public async openNavigation(navigationItemID: string) {
+    this.deviceSession?.openNavigation(navigationItemID);
   }
 
   public startPreview(appKey: string) {
@@ -175,6 +219,7 @@ export class Project implements Disposable, ProjectInterface {
 
   public async selectDevice(deviceInfo: DeviceInfo) {
     Logger.log("Device selected", deviceInfo.name);
+    this.reloadingMetro = false;
     this.deviceSession?.dispose();
     this.deviceSession = undefined;
 
@@ -186,10 +231,12 @@ export class Project implements Disposable, ProjectInterface {
 
     try {
       const device = await this.deviceManager.getDevice(deviceInfo);
+      // wait for metro/devtools to start before we continue
+      await Promise.all([this.metro.start(false), this.devtools.start()]);
       const newDeviceSession = new DeviceSession(
         device,
-        this.devtools!,
-        this.metro!,
+        this.devtools,
+        this.metro,
         this.buildManager.getBuild(deviceInfo.platform)
       );
       this.deviceSession = newDeviceSession;
@@ -208,9 +255,10 @@ export class Project implements Disposable, ProjectInterface {
         });
       }
     } catch (e) {
+      Logger.error("Couldn't start device session", e);
       if (this.projectState.selectedDevice === deviceInfo) {
         this.updateProjectState({
-          status: "runtimeError",
+          status: "buildError",
         });
       }
     }

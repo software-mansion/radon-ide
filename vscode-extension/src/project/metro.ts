@@ -4,12 +4,15 @@ import { Disposable } from "vscode";
 import { exec, ChildProcess } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
+import { Devtools } from "./devtools";
+import { getWorkspacePath } from "../utilities/common";
 
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
+  private startPromise: Promise<void> | undefined;
 
-  constructor(private readonly appRoot: string, private readonly devtoolsPort: number) {}
+  constructor(private readonly devtools: Devtools) {}
 
   public get port() {
     return this._port;
@@ -20,9 +23,22 @@ export class Metro implements Disposable {
   }
 
   public async start(resetCache: boolean) {
+    if (!this.startPromise) {
+      this.startPromise = this.startInternal(resetCache);
+    }
+    return this.startPromise;
+  }
+
+  public async startInternal(resetCache: boolean) {
+    let workspaceDir = getWorkspacePath();
+    if (!workspaceDir) {
+      Logger.warn("No workspace directory found");
+      return;
+    }
+    await this.devtools.start();
     const libPath = path.join(extensionContext.extensionPath, "lib");
     this.subprocess = exec(
-      `${this.appRoot}/node_modules/react-native/scripts/packager.sh`,
+      `${workspaceDir}/node_modules/react-native/scripts/packager.sh`,
       [
         ...(resetCache ? ["--reset-cache"] : []),
         "--no-interactive",
@@ -32,12 +48,12 @@ export class Metro implements Disposable {
         path.join(libPath, "metro_config.js"),
       ],
       {
-        cwd: this.appRoot,
+        cwd: workspaceDir,
         env: {
           ...process.env,
-          NODE_PATH: path.join(this.appRoot, "node_modules"),
+          NODE_PATH: path.join(workspaceDir, "node_modules"),
           RCT_METRO_PORT: "0",
-          RCT_DEVTOOLS_PORT: this.devtoolsPort.toString(),
+          RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
           REACT_NATIVE_IDE_LIB_PATH: libPath,
           // we disable env plugins as they add additional lines at the top of the bundle that are not
           // taken into acount by source maps. As a result, this messes up line numbers reported by hermes

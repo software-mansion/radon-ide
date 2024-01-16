@@ -92,7 +92,11 @@ export class BuildManager {
     return undefined;
   }
 
-  private async startAndroidBuild(newFingerprint: string, forceCleanBuild: boolean) {
+  private async startAndroidBuild(
+    newFingerprintPromise: Promise<string>,
+    forceCleanBuild: boolean
+  ) {
+    const newFingerprint = await newFingerprintPromise;
     if (!forceCleanBuild) {
       const buildResult = await this.loadAndroidCachedBuild(newFingerprint);
       if (buildResult) {
@@ -137,7 +141,8 @@ export class BuildManager {
     return undefined;
   }
 
-  private async startIOSBuild(newFingerprint: string, forceCleanBuild: boolean) {
+  private async startIOSBuild(newFingerprintPromise: Promise<string>, forceCleanBuild: boolean) {
+    const newFingerprint = await newFingerprintPromise;
     if (!forceCleanBuild) {
       const buildResult = await this.loadIOSCachedBuild(newFingerprint);
       if (buildResult) {
@@ -156,8 +161,8 @@ export class BuildManager {
     return { ...build, platform: Platform.IOS } as IOSBuildResult;
   }
 
-  public async startBuilding(forceCleanBuild: boolean) {
-    const newFingerprintHash = await generateWorkspaceFingerprint();
+  public startBuilding(forceCleanBuild: boolean) {
+    const newFingerprintHash = generateWorkspaceFingerprint();
     Logger.debug("Start build", forceCleanBuild ? "(force clean build)" : "(using build cache)");
     this.iOSBuild = this.startIOSBuild(newFingerprintHash, forceCleanBuild);
     this.androidBuild = this.startAndroidBuild(newFingerprintHash, forceCleanBuild);

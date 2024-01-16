@@ -38,12 +38,6 @@ function PreviewView() {
     };
   }, []);
 
-  const handleReset = () => {
-    vscode.postMessage({
-      command: "resetProject",
-    });
-  };
-
   const handleDeviceDropdownChange = async (e) => {
     if (e.target.value === "manage") {
       openModal("Manage Devices", <ManageDevicesView />);
@@ -77,7 +71,7 @@ function PreviewView() {
 
         <span className="group-separator" />
 
-        <UrlBar onReset={handleReset} />
+        <UrlBar project={project} />
 
         <div className="spacer" />
 
@@ -91,7 +85,7 @@ function PreviewView() {
           Logs
           <LogCounter count={logCounter} />
         </VSCodeButton>
-        <SettingsDropdown>
+        <SettingsDropdown project={project}>
           <IconButton
             onClick={() => {
               vscode.postMessage({ command: "openSettings" });

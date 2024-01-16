@@ -1,5 +1,4 @@
 import { Disposable } from "vscode";
-import { PreviewsPanel } from "../panels/PreviewsPanel";
 import http from "http";
 import { WebSocketServer } from "ws";
 import { Logger } from "../Logger";
@@ -9,16 +8,32 @@ export class Devtools implements Disposable {
   private server: any;
   private socket: any;
   private listeners: Set<(event: string, payload: any) => void> = new Set();
+  private startPromise: Promise<void> | undefined;
 
   public get port() {
     return this._port;
   }
 
+  public get hasConnectedClient() {
+    return this.socket !== undefined;
+  }
+
   public async start() {
+    if (!this.startPromise) {
+      this.startPromise = this.startInternal();
+    }
+    return this.startPromise;
+  }
+
+  private async startInternal() {
     this.server = http.createServer(() => {});
     const wss = new WebSocketServer({ server: this.server });
 
     wss.on("connection", (ws: any) => {
+      if (this.socket !== undefined) {
+        Logger.error("Devtools client already connected");
+        this.socket.close();
+      }
       Logger.debug("Devtools client connected");
       this.socket = ws;
 
@@ -32,21 +47,10 @@ export class Devtools implements Disposable {
           Logger.error("Error while handling devtools websocket message", e);
         }
       });
-    });
 
-    this.addListener((event, payload) => {
-      if (event === "rnp_appReady") {
-        Logger.debug("App ready");
-        const { appKey } = payload;
-        if (appKey !== "main") {
-          // PreviewsPanel.currentPanel?.notifyAppUrlChanged(appKey);
-        }
-      } else if (event === "rnp_navigationChanged") {
-        PreviewsPanel.currentPanel?.notifyNavigationChanged({
-          displayName: payload.displayName,
-          id: payload.id,
-        });
-      }
+      ws.on("close", () => {
+        this.socket = undefined;
+      });
     });
 
     return new Promise<void>((resolve) => {

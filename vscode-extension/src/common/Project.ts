@@ -24,6 +24,7 @@ export interface ProjectEventMap {
   log: { type: string };
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
+  navigationChanged: { displayName: string; id: string };
 }
 
 export interface ProjectEventListener<T> {
@@ -32,13 +33,15 @@ export interface ProjectEventListener<T> {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  start(forceCleanBuild: boolean): Promise<void>;
+  restart(forceCleanBuild: boolean): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
 
   resumeDebugger(): Promise<void>;
+
+  openNavigation(navigationItemID: string): Promise<void>;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
