@@ -97,7 +97,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
     // filter out existing debug_http_host record
     prefs.map.string = prefs.map.string?.filter((s: any) => s.$.name !== "debug_http_host") || [];
-    // add new debug_http_host record poiting to 10.0.2.2:metroPort (localhost from emulator)
+    // add new debug_http_host record pointing to 10.0.2.2:metroPort (localhost from emulator)
     prefs.map.string.push({ $: { name: "debug_http_host" }, _: `10.0.2.2:${metroPort}` });
     const prefsXML = new xml2js.Builder().buildObject(prefs);
 
@@ -105,6 +105,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
     await exec(
       ADB_PATH,
       [
+        "-s",
+        this.serial!,
         "shell",
         `run-as ${packageName} sh -c 'mkdir -p /data/data/${packageName}/shared_prefs && cat > /data/data/${packageName}/shared_prefs/${packageName}_preferences.xml'`,
       ],

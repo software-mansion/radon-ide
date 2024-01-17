@@ -16,6 +16,9 @@ import {
 import { EventEmitter } from "stream";
 import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
+import { extensionContext } from "../utilities/extensionContext";
+
+const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 
 export class Project implements Disposable, ProjectInterface {
   public static currentProject: Project | undefined;
@@ -44,6 +47,38 @@ export class Project implements Disposable, ProjectInterface {
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools);
     this.start(false, false);
+    this.trySelectingInitialDevice();
+  }
+
+  /**
+   * This method tried to select the last selected device from devices list.
+   * If the device list is empty, we wait until we can select a device.
+   */
+  private async trySelectingInitialDevice() {
+    const selectInitialDevice = (devices: DeviceInfo[]) => {
+      const lastDeviceId = extensionContext.workspaceState.get(LAST_SELECTED_DEVICE_KEY) as
+        | string
+        | undefined;
+      let device = devices.find((device) => device.id === lastDeviceId);
+      if (!device && devices.length > 0) {
+        device = devices[0];
+      }
+      if (device) {
+        this.selectDevice(device);
+        return true;
+      }
+      return false;
+    };
+
+    const devices = await this.deviceManager.listAllDevices();
+    if (!selectInitialDevice(devices)) {
+      const listener = (devices: DeviceInfo[]) => {
+        if (selectInitialDevice(devices)) {
+          this.deviceManager.removeListener("devicesChanged", listener);
+        }
+      };
+      this.deviceManager.addListener("devicesChanged", listener);
+    }
   }
 
   async getProjectState(): Promise<ProjectState> {
@@ -219,6 +254,8 @@ export class Project implements Disposable, ProjectInterface {
 
   public async selectDevice(deviceInfo: DeviceInfo) {
     Logger.log("Device selected", deviceInfo.name);
+    extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
+
     this.reloadingMetro = false;
     this.deviceSession?.dispose();
     this.deviceSession = undefined;

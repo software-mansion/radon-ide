@@ -1,7 +1,17 @@
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
-import { createSimulator, listSimulators, removeIosSimulator } from "./IosSimulatorDevice";
+import {
+  IosSimulatorDevice,
+  createSimulator,
+  listSimulators,
+  removeIosSimulator,
+} from "./IosSimulatorDevice";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import { createEmulator, listEmulators, removeEmulator } from "./AndroidEmulatorDevice";
+import {
+  AndroidEmulatorDevice,
+  createEmulator,
+  listEmulators,
+  removeEmulator,
+} from "./AndroidEmulatorDevice";
 import {
   DeviceInfo,
   Platform,
@@ -47,7 +57,22 @@ export class DeviceManager implements DeviceManagerInterface {
     }
   }
 
-  private async loadDevices() {
+  private loadDevicesPromise: Promise<(IosSimulatorDevice | AndroidEmulatorDevice)[]> | undefined;
+
+  private async loadDevices(forceReload = false) {
+    if (!this.loadDevicesPromise || forceReload) {
+      this.loadDevicesPromise = this.loadDevicesInternal().then((devices) => {
+        this.loadDevicesPromise = undefined;
+        return devices;
+      });
+    }
+    return this.loadDevicesPromise;
+  }
+
+  /**
+   * TODO: loadDevices should actually return DeviceInfo[]
+   */
+  private async loadDevicesInternal() {
     const [androidDevices, iosDevices] = await Promise.all([listEmulators(), listSimulators()]);
     const devices = [...androidDevices, ...iosDevices];
     this.eventEmitter.emit(
@@ -80,13 +105,13 @@ export class DeviceManager implements DeviceManagerInterface {
 
   public async createAndroidDevice(systemImageLocation: string, displayName: string) {
     const emulator = await createEmulator(systemImageLocation, displayName);
-    await this.loadDevices();
+    await this.loadDevices(true);
     return emulator;
   }
 
   public async createIOSDevice(iOSDeviceTypeID: string, iOSRuntimeID: string, displayName: string) {
     const simulator = await createSimulator(iOSDeviceTypeID, iOSRuntimeID, displayName);
-    await this.loadDevices();
+    await this.loadDevices(true);
     return simulator;
   }
 
