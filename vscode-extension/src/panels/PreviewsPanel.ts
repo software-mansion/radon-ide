@@ -60,6 +60,13 @@ export class PreviewsPanel {
     this.deviceManager = new DeviceManager();
     this.project = new Project(this.deviceManager);
 
+    this.disposables.push(
+      this.dependencyChecker,
+      this.dependencyInstaller,
+      this.deviceManager,
+      this.project
+    );
+
     this.callableObjects = new Map([
       ["DeviceManager", this.deviceManager as object],
       ["Project", this.project as object],

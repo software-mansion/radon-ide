@@ -18,7 +18,9 @@ global.__fbDisableExceptionsManager = true;
 
 function wrapConsole(consoleFunc) {
   return function (...args) {
-    const location = parseErrorStack(new Error().stack)[1];
+    const stack = parseErrorStack(new Error().stack);
+    const expoLogIndex = stack.findIndex((frame) => frame.methodName === "__expoConsoleLog");
+    const location = expoLogIndex > 0 ? stack[expoLogIndex + 1] : stack[1];
     args.push(location.file, location.lineNumber, location.column);
     return consoleFunc.apply(console, args);
   };

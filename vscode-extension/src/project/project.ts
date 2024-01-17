@@ -268,8 +268,10 @@ export class Project implements Disposable, ProjectInterface {
 
     try {
       const device = await this.deviceManager.getDevice(deviceInfo);
+      Logger.debug("Selected device is ready");
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.start(false), this.devtools.start()]);
+      Logger.debug("Metro & devtools ready");
       const newDeviceSession = new DeviceSession(
         device,
         this.devtools,
@@ -279,6 +281,7 @@ export class Project implements Disposable, ProjectInterface {
       this.deviceSession = newDeviceSession;
 
       await newDeviceSession.start(this.deviceSettings);
+      Logger.debug("Device session started");
 
       const previewURL = newDeviceSession.previewURL;
       if (!previewURL) {

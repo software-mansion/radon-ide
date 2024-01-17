@@ -122,26 +122,37 @@ export class DebugAdapter extends DebugSession {
   }
 
   private async handleConsoleAPICall(message: any) {
-    // Since console.log stack is extracted from Error, unlike other messages sent over CDP
-    // the line and column numbers are 1-based
-    const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args
-      .slice(-3)
-      .map((v: any) => v.value);
+    // We wrap console calls and add stack information as last three arguments, however
+    // some logs may baypass that, especially when printed in initialization phase, so we
+    // need to detect whether the wrapper has added the stack info or not
+    // We check if there are more than 3 arguments, and if the last one is a number
+    const argsLen = message.params.args.length;
+    let outputEvent: OutputEvent;
+    if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
+      // Since console.log stack is extracted from Error, unlike other messages sent over CDP
+      // the line and column numbers are 1-based
+      const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args
+        .slice(-3)
+        .map((v: any) => v.value);
 
-    const output = await formatMessage(message.params.args.slice(0, -3), this);
+      const output = await formatMessage(message.params.args.slice(0, -3), this);
 
-    const outputEvent = new OutputEvent(output + "\n", typeToCategory(message.params.type));
-    const { lineNumber1Based, columnNumber0Based, sourceURL } = this.findOriginalPosition(
-      scriptURL,
-      generatedLineNumber1Based,
-      generatedColumn1Based - 1
-    );
-    // @ts-ignore source is a valid field
-    outputEvent.body.source = new Source(sourceURL, sourceURL);
-    // @ts-ignore line is a valid field
-    outputEvent.body.line = this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1;
-    // @ts-ignore column is a valid field
-    outputEvent.body.column = this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based;
+      outputEvent = new OutputEvent(output + "\n", typeToCategory(message.params.type));
+      const { lineNumber1Based, columnNumber0Based, sourceURL } = this.findOriginalPosition(
+        scriptURL,
+        generatedLineNumber1Based,
+        generatedColumn1Based - 1
+      );
+      // @ts-ignore source is a valid field
+      outputEvent.body.source = new Source(sourceURL, sourceURL);
+      // @ts-ignore line is a valid field
+      outputEvent.body.line = this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1;
+      // @ts-ignore column is a valid field
+      outputEvent.body.column = this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based;
+    } else {
+      const output = await formatMessage(message.params.args, this);
+      outputEvent = new OutputEvent(output + "\n", typeToCategory(message.params.type));
+    }
     this.sendEvent(outputEvent);
     this.sendEvent(new Event("rnp_consoleLog", { category: outputEvent.body.category }));
   }

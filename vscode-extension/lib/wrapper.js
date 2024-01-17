@@ -1,6 +1,5 @@
 const { useContext, useEffect, useRef, useCallback } = require("react");
 const { LogBox, AppRegistry, RootTagContext, View, Dimensions, Linking } = require("react-native");
-const parseErrorStack = require("react-native/Libraries/Core/Devtools/parseErrorStack");
 const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
 const getInspectorDataForViewAtPoint = require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
 

@@ -22,8 +22,10 @@ import {
 } from "../common/DeviceManager";
 import { EventEmitter } from "stream";
 
-export class DeviceManager implements DeviceManagerInterface {
+export class DeviceManager implements DeviceManagerInterface, Disposable {
   private eventEmitter = new EventEmitter();
+
+  public dispose() {}
 
   public async addListener<K extends keyof DeviceManagerEventMap>(
     eventType: K,
