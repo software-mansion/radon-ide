@@ -8,12 +8,14 @@ import { useModal } from "../providers/ModalProvider";
 import DiagnosticView from "../views/DiagnosticView";
 import AndroidImagesView from "../views/AndroidImagesView";
 import ManageDevicesView from "../views/ManageDevicesView";
+import { ProjectInterface } from "../../common/Project";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
+  project: ProjectInterface;
 }
 
-function SettingsDropdown({ children }: SettingsDropdownProps) {
+function SettingsDropdown({ project, children }: SettingsDropdownProps) {
   const { openModal } = useModal();
   return (
     <DropdownMenu.Root>
@@ -34,7 +36,7 @@ function SettingsDropdown({ children }: SettingsDropdownProps) {
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              // TODO: handle this one
+              project.restart(true);
             }}>
             Clean rebuild (purge build cache)
           </DropdownMenu.Item>
