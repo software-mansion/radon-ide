@@ -41,6 +41,7 @@ function SettingsDropdown({ project, children }: SettingsDropdownProps) {
             Clean rebuild (purge build cache)
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="dropdown-menu-separator" />
+          {/* TODO: add this option back when its fully working
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
@@ -48,7 +49,7 @@ function SettingsDropdown({ project, children }: SettingsDropdownProps) {
               openModal("Manage Android SDKs", <AndroidImagesView />);
             }}>
             Manage Android SDKs...
-          </DropdownMenu.Item>
+          </DropdownMenu.Item> */}
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
