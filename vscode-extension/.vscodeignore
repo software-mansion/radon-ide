@@ -5,5 +5,4 @@
 # Whitelist needed files
 !dist/**
 !lib/*
-!node_modules/@vscode/codicons/dist/*
 !LICENSE.txt

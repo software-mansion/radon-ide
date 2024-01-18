@@ -28,10 +28,9 @@ export function generateWebviewContent(
 
   const baseUri = IS_DEV ? `http://${VITE_DEV_HOST}` : getUri(webview, extensionUri, ["dist/"]);
 
-  const codiconsRelativeLocation = "node_modules/@vscode/codicons/dist/codicon.css";
   const codiconsCssUri = IS_DEV
-    ? getUri(webview, extensionUri, [codiconsRelativeLocation])
-    : codiconsRelativeLocation;
+    ? getUri(webview, extensionUri, ["node_modules/@vscode/codicons/dist/codicon.css"])
+    : "codicon.css";
 
   const nonce = getNonce();
 
