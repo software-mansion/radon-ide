@@ -57,7 +57,7 @@
     "build:extension-code-debug": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap && cp ./node_modules/source-map/lib/mappings.wasm dist/.",
     "build:extension-code": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --minify && cp ./node_modules/source-map/lib/mappings.wasm dist/.",
     "build:expo-fingerprint": "esbuild ./node_modules/@expo/fingerprint/build/sourcer/ExpoConfigLoader.js --bundle --format=cjs --outfile=dist/ExpoConfigLoader.js --platform=node --minify",
-    "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.css dist/.",
+    "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-controller-debug": "./scripts/build-sim-controller.sh dist Debug",
     "build:sim-controller": "./scripts/build-sim-controller.sh dist Release",
     "build:debug": "npm run build:extension-debug && npm run build:sim-controller-debug",
