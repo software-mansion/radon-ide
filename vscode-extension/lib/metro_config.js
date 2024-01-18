@@ -23,7 +23,10 @@ Metro.runServer = function (config, options) {
     ...options,
     onReady: (server, ...args) => {
       options.onReady && options.onReady(server, ...args);
-      console.log("METRO_READY", server.address().port);
+      process.stdout.write(
+        JSON.stringify({ type: "rnp_initialize_done", port: server.address().port })
+      );
+      process.stdout.write("\n");
     },
   });
 };

@@ -21,8 +21,9 @@ import {
   DeviceManagerEventListener,
 } from "../common/DeviceManager";
 import { EventEmitter } from "stream";
+import { Disposable } from "vscode";
 
-export class DeviceManager implements DeviceManagerInterface, Disposable {
+export class DeviceManager implements Disposable, DeviceManagerInterface {
   private eventEmitter = new EventEmitter();
 
   public dispose() {}

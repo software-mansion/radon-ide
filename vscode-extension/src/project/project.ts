@@ -1,5 +1,5 @@
 import { Disposable, debug } from "vscode";
-import { Metro } from "./metro";
+import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
 import { Logger } from "../Logger";
@@ -20,7 +20,7 @@ import { extensionContext } from "../utilities/extensionContext";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 
-export class Project implements Disposable, ProjectInterface {
+export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
 
   private metro: Metro;
@@ -45,9 +45,12 @@ export class Project implements Disposable, ProjectInterface {
   constructor(private readonly deviceManager: DeviceManager) {
     Project.currentProject = this;
     this.devtools = new Devtools();
-    this.metro = new Metro(this.devtools);
+    this.metro = new Metro(this.devtools, this);
     this.start(false, false);
     this.trySelectingInitialDevice();
+  }
+  onBundleError(message: string): void {
+    this.updateProjectState({ status: "buildError" });
   }
 
   /**
@@ -136,7 +139,7 @@ export class Project implements Disposable, ProjectInterface {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
       this.devtools = new Devtools();
-      this.metro = new Metro(this.devtools);
+      this.metro = new Metro(this.devtools, this);
       oldDevtools.dispose();
       oldMetro.dispose();
     }

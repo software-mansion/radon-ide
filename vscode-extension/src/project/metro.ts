@@ -1,5 +1,6 @@
 import path from "path";
 import readline from "readline";
+import vscode from "vscode";
 import { Disposable } from "vscode";
 import { exec, ChildProcess } from "../utilities/subprocess";
 import { Logger } from "../Logger";
@@ -7,12 +8,37 @@ import { extensionContext } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
 import { getWorkspacePath } from "../utilities/common";
 
+export interface MetroDelegate {
+  onBundleError(message: string): void;
+}
+
+type MetroEvent =
+  | {
+      type: "bundling_error";
+      message: string;
+      stack: string;
+      error?: {
+        filename?: string;
+        lineNumber?: number;
+        column?: number;
+      };
+    }
+  | {
+      type: "bundle_transform_progressed";
+      transformedFileCount: number;
+      totalFileCount: number;
+    }
+  | {
+      type: "rnp_initialize_done";
+      port: number;
+    };
+
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
   private startPromise: Promise<void> | undefined;
 
-  constructor(private readonly devtools: Devtools) {}
+  constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
 
   public get port() {
     return this._port;
@@ -46,6 +72,8 @@ export class Metro implements Disposable {
         "0",
         "--config",
         path.join(libPath, "metro_config.js"),
+        "--customLogReporterPath",
+        path.join(libPath, "metro_reporter.js"),
       ],
       {
         cwd: workspaceDir,
@@ -72,12 +100,24 @@ export class Metro implements Disposable {
 
     const initPromise = new Promise<void>((resolve, reject) => {
       rl.on("line", (line: string) => {
-        if (line.startsWith("METRO_READY")) {
-          // parse metro port from the message, message is in format: METRO_READY <port_number>
-          this._port = parseInt(line.split(" ")[1]);
-          resolve();
+        try {
+          const event = JSON.parse(line) as MetroEvent;
+          if (event.type !== "bundle_transform_progressed") {
+            Logger.debug("Metro", line);
+          }
+          switch (event.type) {
+            case "rnp_initialize_done":
+              this._port = event.port;
+              resolve();
+              break;
+            case "bundling_error":
+              Logger.error("Bundling error", event.message);
+              this.delegate.onBundleError(event.message);
+              break;
+          }
+        } catch (error) {
+          // ignore parsing errors
         }
-        Logger.debug("Metro", line);
       });
     });
     return initPromise;

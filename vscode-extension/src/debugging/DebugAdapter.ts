@@ -488,7 +488,6 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.ContinueResponse,
     args: DebugProtocol.ContinueArguments
   ): Promise<void> {
-    // Implement continuing execution
     await this.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
     this.sendResponse(response);
     this.sendEvent(new Event("rnp_continued"));
@@ -498,7 +497,6 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.DisconnectResponse,
     args: DebugProtocol.DisconnectArguments
   ): void {
-    // Implement disconnecting from the debugger
     this.connection.close();
     this.sendResponse(response);
   }
