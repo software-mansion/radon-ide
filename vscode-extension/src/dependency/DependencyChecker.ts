@@ -100,11 +100,12 @@ export class DependencyChecker implements Disposable {
   /* Android-related */
   public async checkAndroidStudioInstalled() {
     const isAndroidEmulatorInstalled = await checkAndroidEmulatorExists();
-    const isAndroidSdkInstalled = await checkSdkManagerInstalled();
+    // TODO: disabling sdk manager check for now, as we hide UI for managing SDKs entirely and it requires additional packages to be installed
+    const isAndroidSdkInstalled = true; // await checkSdkManagerInstalled();
     const installed = isAndroidEmulatorInstalled && isAndroidSdkInstalled;
 
     const errorMessage =
-      "Android Studio was not found. Make sure to [install Android Studio](https://developer.android.com/studio) and setup ANDROID_HOME environmental variable.";
+      "Android Studio was not found. Make sure to [install Android Studio](https://developer.android.com/studio).";
     this.webview.postMessage({
       command: "isAndroidStudioInstalled",
       data: {
