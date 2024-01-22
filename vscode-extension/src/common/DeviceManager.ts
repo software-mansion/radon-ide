@@ -9,6 +9,7 @@ export type DeviceInfo =
       platform: Platform.Android;
       avdId: string;
       name: string;
+      systemName: string;
       available: boolean;
     }
   | {
@@ -16,6 +17,7 @@ export type DeviceInfo =
       platform: Platform.IOS;
       UDID: string;
       name: string;
+      systemName: string;
       available: boolean;
     };
 
@@ -48,12 +50,11 @@ export type DeviceManagerEventListener<K extends keyof DeviceManagerEventMap> = 
 export interface DeviceManagerInterface {
   listAllDevices(): Promise<DeviceInfo[]>;
 
-  createAndroidDevice(systemImageLocation: string, displayName: string): Promise<DeviceInfo>;
-  createIOSDevice(
-    iOSDeviceTypeID: string,
-    iOSRuntimeID: string,
-    displayName: string
+  createAndroidDevice(
+    displayName: string,
+    systemImage: AndroidSystemImageInfo
   ): Promise<DeviceInfo>;
+  createIOSDevice(deviceType: IOSDeviceTypeInfo, runtime: IOSRuntimeInfo): Promise<DeviceInfo>;
 
   removeDevice(device: DeviceInfo): Promise<void>;
 

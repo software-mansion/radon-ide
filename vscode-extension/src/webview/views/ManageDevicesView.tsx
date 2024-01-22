@@ -6,6 +6,7 @@ import CreateDeviceView from "./CreateDeviceView";
 import { DeviceInfo, Platform } from "../../common/DeviceManager";
 import { useDevices } from "../providers/DevicesProvider";
 import Tooltip from "../components/shared/Tooltip";
+import Label from "../components/shared/Label";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -15,18 +16,21 @@ interface DeviceRowProps {
 function DeviceRow({ deviceInfo, onDeviceDelete }: DeviceRowProps) {
   return (
     <div className="device-row">
-      <div className="device-label-row">
-        <div className="device-label">
+      <div className="device-icon">
+        {!deviceInfo.available ? (
+          <Tooltip
+            label={`This device cannot be used. Perhaps the system image or runtime is missing. Try deleting and creating a new device instead.`}
+            instant
+            side="bottom">
+            <span className="codicon codicon-warning warning" />
+          </Tooltip>
+        ) : (
           <span className="codicon codicon-device-mobile" />
-          {!deviceInfo.available && (
-            <Tooltip
-              label={`This device cannot be used. Perhaps the system image or runtime is missing. Try deleting and creating a new device instead.`}
-              side={"bottom"}>
-              <span className="codicon codicon-warning warning" />
-            </Tooltip>
-          )}
-          {deviceInfo.name}
-        </div>
+        )}
+      </div>
+      <div className="device-label">
+        <div className="device-title">{deviceInfo.name}</div>
+        <div className="device-subtitle">{deviceInfo.systemName}</div>
       </div>
       <IconButton
         tooltip={{
@@ -34,6 +38,7 @@ function DeviceRow({ deviceInfo, onDeviceDelete }: DeviceRowProps) {
             deviceInfo.platform === Platform.IOS ? "runtime." : "system image."
           }`,
           side: "bottom",
+          type: "secondary",
         }}
         onClick={() => onDeviceDelete(deviceInfo)}>
         <span className="codicon codicon-trash delete-icon" />
@@ -77,13 +82,9 @@ function ManageDevicesView() {
 
   return (
     <div className="container">
-      <IconButton className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
-        <span className="codicon codicon-add" />
-        <div className="create-button-text">Create new device</div>
-      </IconButton>
       {!!iosDevices.length && (
         <>
-          <div className="platform-header">iOS Devices</div>
+          <Label>iOS Devices</Label>
           {iosDevices.map((deviceInfo) => (
             <DeviceRow
               key={deviceInfo.id}
@@ -93,12 +94,9 @@ function ManageDevicesView() {
           ))}
         </>
       )}
-      {!!iosDevices.length && !!androidDevices.length && (
-        <div className="platform-section-separator" />
-      )}
       {!!androidDevices.length && (
         <>
-          <div className="platform-header">Android Devices</div>
+          <Label>Android Devices</Label>
           {androidDevices.map((deviceInfo) => (
             <DeviceRow
               key={deviceInfo.id}
@@ -108,6 +106,10 @@ function ManageDevicesView() {
           ))}
         </>
       )}
+      <IconButton className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
+        <span className="codicon codicon-add" />
+        <div className="create-button-text">Create new device</div>
+      </IconButton>
     </div>
   );
 }

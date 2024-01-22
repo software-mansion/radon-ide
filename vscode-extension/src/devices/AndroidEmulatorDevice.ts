@@ -11,9 +11,10 @@ import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
 import { BuildResult } from "../builders/BuildManager";
-import { DeviceInfo, Platform } from "../common/DeviceManager";
+import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { DeviceSettings } from "../common/Project";
+import { getAndroidSystemImages } from "../utilities/sdkmanager";
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
@@ -33,12 +34,13 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
 
-  constructor(private readonly avdId: string, displayName: string) {
+  constructor(private readonly avdId: string, displayName: string, systemName: string) {
     super();
     this._deviceInfo = {
       id: `android-${avdId}`,
       platform: Platform.Android,
       name: displayName,
+      systemName,
       avdId: avdId,
       available: true,
     };
@@ -166,7 +168,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 }
 
-export async function createEmulator(systemImageLocation: string, displayName: string) {
+export async function createEmulator(displayName: string, systemImage: AndroidSystemImageInfo) {
   const avdDirectory = getOrCreateAvdDirectory();
   const avdId = uuidv4();
   const avdIni = path.join(avdDirectory, `${avdId}.ini`);
@@ -220,7 +222,7 @@ export async function createEmulator(systemImageLocation: string, displayName: s
     ["hw.sensors.orientation", "yes"],
     ["hw.sensors.proximity", "yes"],
     ["hw.trackBall", "no"],
-    ["image.sysdir.1", systemImageLocation],
+    ["image.sysdir.1", systemImage.location],
     ["runtime.network.latency", "none"],
     ["runtime.network.speed", "full"],
     ["sdcard.size", "512M"],
@@ -236,6 +238,7 @@ export async function createEmulator(systemImageLocation: string, displayName: s
     platform: Platform.Android,
     avdId,
     name: displayName,
+    systemName: systemImage.name,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
   } as DeviceInfo;
 }
@@ -275,11 +278,13 @@ export async function listEmulators() {
     env: { ...process.env, ANDROID_AVD_HOME: avdDirectory },
   });
   const avdIds = stdout.split("\n").filter((avdId) => !!avdId);
+  const [systemImages] = await getAndroidSystemImages();
   return Promise.all(
     avdIds.map(async (avdId) => {
       const avdConfigPath = path.join(avdDirectory, `${avdId}.avd`, "config.ini");
-      const { displayName } = await parseAvdConfigIniFile(avdConfigPath);
-      return new AndroidEmulatorDevice(avdId, displayName);
+      const { displayName, systemImageDir } = await parseAvdConfigIniFile(avdConfigPath);
+      const systemImageName = systemImages.find((image) => image.location === systemImageDir)?.name;
+      return new AndroidEmulatorDevice(avdId, displayName, systemImageName ?? "Unknown");
     })
   );
 }
@@ -301,20 +306,24 @@ async function parseAvdConfigIniFile(filePath: string) {
   const content = await fs.promises.readFile(filePath, "utf-8");
 
   let displayName: string | undefined;
+  let systemImageDir: string | undefined;
   content.split("\n").forEach((line: string) => {
     const [key, value] = line.split("=");
     switch (key) {
       case "avd.ini.displayname":
         displayName = value;
         break;
+      case "image.sysdir.1":
+        systemImageDir = value;
+        break;
     }
   });
 
-  if (!displayName) {
+  if (!displayName || !systemImageDir) {
     throw new Error(`Couldn't parse AVD ${filePath}`);
   }
 
-  return { displayName };
+  return { displayName, systemImageDir };
 }
 
 async function parseAvdIniFile(filePath: string) {

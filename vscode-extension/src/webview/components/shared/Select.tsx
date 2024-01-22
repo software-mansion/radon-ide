@@ -6,10 +6,10 @@ import "./Select.css";
 const SelectItem = forwardRef<HTMLDivElement, PropsWithChildren<RadixSelect.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => {
     return (
-      <RadixSelect.Item className="SelectItem" {...props} ref={forwardedRef}>
+      <RadixSelect.Item className="select-item" {...props} ref={forwardedRef}>
         <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
-        <RadixSelect.ItemIndicator className="SelectItemIndicator">
-          <span className="codicon codicon-chevron-down" />
+        <RadixSelect.ItemIndicator className="select-item-indicator">
+          <span className="codicon codicon-check" />
         </RadixSelect.ItemIndicator>
       </RadixSelect.Item>
     );
@@ -18,43 +18,44 @@ const SelectItem = forwardRef<HTMLDivElement, PropsWithChildren<RadixSelect.Sele
 
 type SelectItemType = { value: string; label: string | ReactNode; disabled?: boolean };
 
-type SelectGroupType = { options: SelectItemType[]; label: string | ReactNode };
+type SelectGroupType = { items: SelectItemType[]; label: string | ReactNode };
 
-type SelectOption = SelectItemType | SelectGroupType;
+type SelectItemOrGroup = SelectItemType | SelectGroupType;
 
-const isSingleSelectItem = (option: SelectOption): option is SelectItemType => {
+const isSingleSelectItem = (option: SelectItemOrGroup): option is SelectItemType => {
   return "value" in option;
 };
 
 interface SelectProps {
   value?: string;
   onChange?: (newValue: string) => void;
-  options: SelectOption[];
+  items: SelectItemOrGroup[];
   placeholder?: string;
   className?: string;
   disabled?: boolean;
 }
 
-function Select({ value, onChange, options, placeholder, className, disabled }: SelectProps) {
+function Select({ value, onChange, items, placeholder, className, disabled }: SelectProps) {
   return (
     <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
-      <RadixSelect.Trigger className={classnames("SelectTrigger", className, disabled && "SelectTrigger-disabled")}>
+      <RadixSelect.Trigger
+        className={classnames("select-trigger", className, disabled && "select-trigger-disabled")}>
         <RadixSelect.Value placeholder={placeholder} />
-        <RadixSelect.Icon className="SelectIcon">
+        <RadixSelect.Icon className="select-icon">
           <span className="codicon codicon-chevron-down" />
         </RadixSelect.Icon>
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
-        <RadixSelect.Content className="SelectContent">
-          <RadixSelect.ScrollUpButton className="SelectScrollButton">
+        <RadixSelect.Content className="select-content">
+          <RadixSelect.ScrollUpButton className="select-scroll-button">
             <span className="codicon codicon-chevron-up" />
           </RadixSelect.ScrollUpButton>
-          <RadixSelect.Viewport className="SelectViewport">
-            {options.map((option, idx) =>
-              !isSingleSelectItem(option) ? (
+          <RadixSelect.Viewport className="select-viewport">
+            {items.map((item, idx) =>
+              !isSingleSelectItem(item) ? (
                 <RadixSelect.Group key={idx}>
-                  <RadixSelect.Label className="SelectLabel">{option.label}</RadixSelect.Label>
-                  {option.options.map((selectItem) => (
+                  <RadixSelect.Label className="select-label">{item.label}</RadixSelect.Label>
+                  {item.items.map((selectItem) => (
                     <SelectItem
                       key={selectItem.value}
                       disabled={selectItem.disabled}
@@ -64,13 +65,13 @@ function Select({ value, onChange, options, placeholder, className, disabled }: 
                   ))}
                 </RadixSelect.Group>
               ) : (
-                <SelectItem key={option.value} disabled={option.disabled} value={option.value}>
-                  {option.label}
+                <SelectItem key={item.value} disabled={item.disabled} value={item.value}>
+                  {item.label}
                 </SelectItem>
               )
             )}
           </RadixSelect.Viewport>
-          <RadixSelect.ScrollDownButton className="SelectScrollButton">
+          <RadixSelect.ScrollDownButton className="select-scroll-button">
             <span className="codicon codicon-chevron-down" />
           </RadixSelect.ScrollDownButton>
         </RadixSelect.Content>

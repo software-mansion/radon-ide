@@ -1,73 +1,94 @@
 .dropdown {
-    width: 300px;
-    margin-right: 12px;;
+  width: 300px;
+  margin-right: 12px;
 }
 
 .container {
-    margin: 12px 4px;
-    display: flex;
-    flex-direction: column;
+  margin: 12px 4px;
+  display: flex;
+  flex-direction: column;
 }
 
 .top-bar {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .delete-icon {
-    color: var(--red-dark-80)
+  color: var(--red-dark-80);
 }
 
 .gap-right {
-    margin-right: 12px;
+  margin-right: 12px;
 }
 
 .non-exsiting-system-image-warning {
-    display: flex;
-    align-items: center;
-    color: var(--vscode-debugIcon-stopForeground);
+  display: flex;
+  align-items: center;
+  color: var(--vscode-debugIcon-stopForeground);
 }
 
 .platform-header {
-    color: var(--secondary-text);
-    margin: 8px 0;
+  color: var(--secondary-text);
+  margin: 8px 0;
 }
 
 .platform-section-separator {
-    height: 1px;
-    background-color: var(--separator);
+  height: 1px;
+  background-color: var(--separator);
 }
 
 .device-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 4px;
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  margin-bottom: 4px;
+  gap: 10px;
+  line-height: 1;
+  height: 48px;
 }
-
 .device-label-row {
-    display: flex;
-    flex-grow: 1;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 4px;
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 4px;
 }
-
 .device-label {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-weight: 700;
+  display: flex;
+  flex-direction: column;
+}
+.device-title {
+  font-size: 14px;
+  color: var(--off-white);
+  margin-bottom: 4px;
+}
+.device-subtitle {
+  font-size: 12px;
+  color: var(--background-dark-10);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.device-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background-color: var(--background-dark-70);
 }
 
 .warning {
-    color: var(--yellow-dark-100) !important;
+  color: var(--yellow-dark-100) !important;
 }
 
 .create-button {
-    margin: 0 auto;
+  margin: 0 auto;
 }
 
 .create-button-text {
-    margin-left: 4px;
-    text-wrap: nowrap;
+  margin-left: 4px;
+  text-wrap: nowrap;
 }

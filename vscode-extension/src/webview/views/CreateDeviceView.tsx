@@ -4,31 +4,31 @@ import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { useState } from "react";
 import { useDevices } from "../providers/DevicesProvider";
 
-enum SupportedAndroidPhone {
+enum SupportedAndroidDevice {
   PIXEL_7 = "Google Pixel 7",
 }
 
-enum SupportedIOSPhone {
+enum SupportedIOSDevice {
   IPHONE_15_PRO = "iPhone 15 Pro",
 }
 
-type SupportedPhoneType = SupportedAndroidPhone | SupportedIOSPhone;
+type SupportedDevice = SupportedAndroidDevice | SupportedIOSDevice;
 
-function isAndroidDeviceType(phone: SupportedPhoneType): phone is SupportedAndroidPhone {
-  return Object.values(SupportedAndroidPhone).includes(phone as SupportedAndroidPhone);
+function isSupportedAndroidDevice(device: SupportedDevice): device is SupportedAndroidDevice {
+  return Object.values(SupportedAndroidDevice).includes(device as SupportedAndroidDevice);
 }
 
-function isIosDeviceType(phone: SupportedPhoneType): phone is SupportedIOSPhone {
-  return Object.values(SupportedIOSPhone).includes(phone as SupportedIOSPhone);
+function isSupportedIOSDevice(device: SupportedDevice): device is SupportedIOSDevice {
+  return Object.values(SupportedIOSDevice).includes(device as SupportedIOSDevice);
 }
 
-const DEVICE_TYPE_OPTIONS = [
+const SUPPORTED_DEVICES = [
   {
-    options: Object.values(SupportedIOSPhone).map((value) => ({ value, label: value })),
+    items: Object.values(SupportedIOSDevice).map((value) => ({ value, label: value })),
     label: "iOS",
   },
   {
-    options: Object.values(SupportedAndroidPhone).map((value) => ({ value, label: value })),
+    items: Object.values(SupportedAndroidDevice).map((value) => ({ value, label: value })),
     label: "Android",
   },
 ];
@@ -39,14 +39,14 @@ interface CreateDeviceViewProps {
 }
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
-  const [deviceType, setDeviceType] = useState<SupportedPhoneType | undefined>(undefined);
-  const [selectedSystemValue, selectSystemValue] = useState<string | undefined>(undefined);
+  const [deviceName, setDeviceName] = useState<SupportedDevice | undefined>(undefined);
+  const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
 
   const { iOSRuntimes, androidImages, deviceManager } = useDevices();
 
   const systemImagesOptions =
-    !!deviceType && isIosDeviceType(deviceType)
+    !!deviceName && isSupportedIOSDevice(deviceName)
       ? iOSRuntimes.map((runtime) => ({
           value: runtime.identifier,
           label: runtime.name,
@@ -56,32 +56,30 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           label: systemImage.name,
         }));
 
-  const createDisabled = loading || !deviceType || !selectedSystemValue;
+  const createDisabled = loading || !deviceName || !selectedSystemName;
 
   async function createDevice() {
-    if (!selectedSystemValue) {
+    if (!selectedSystemName) {
       return;
     }
     try {
       setLoading(true);
-      if (isIosDeviceType(deviceType!)) {
-        const runtime = iOSRuntimes.find((runtime) => runtime.identifier === selectedSystemValue);
+      if (isSupportedIOSDevice(deviceName!)) {
+        const runtime = iOSRuntimes.find((runtime) => runtime.identifier === selectedSystemName);
         if (!runtime) {
           return;
         }
-        const iOSDeviceType = runtime.supportedDeviceTypes.find((dt) => dt.name === deviceType);
+        const iOSDeviceType = runtime.supportedDeviceTypes.find((dt) => dt.name === deviceName);
         if (!iOSDeviceType) {
           return;
         }
-        const name = `${iOSDeviceType.name} – ${runtime.name}`;
-        await deviceManager.createIOSDevice(iOSDeviceType.identifier, runtime.identifier, name);
+        await deviceManager.createIOSDevice(iOSDeviceType, runtime);
       } else {
-        const systemImage = androidImages.find((image) => image.location === selectedSystemValue);
-        if (!systemImage) {
+        const systemImage = androidImages.find((image) => image.location === selectedSystemName);
+        if (!systemImage || !deviceName) {
           return;
         }
-        const name = `${deviceType} – ${systemImage.name}`;
-        await deviceManager.createAndroidDevice(selectedSystemValue, name);
+        await deviceManager.createAndroidDevice(deviceName, systemImage);
       }
     } finally {
       onCreate();
@@ -94,12 +92,12 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <div className="form-label">Device Type</div>
         <Select
           className="form-field"
-          value={deviceType}
+          value={deviceName}
           onChange={(newValue: string) => {
-            setDeviceType(newValue as SupportedPhoneType);
-            selectSystemValue(undefined);
+            setDeviceName(newValue as SupportedDevice);
+            selectSystemName(undefined);
           }}
-          options={DEVICE_TYPE_OPTIONS}
+          items={SUPPORTED_DEVICES}
           placeholder="Choose device type..."
         />
       </div>
@@ -110,17 +108,17 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         </div>
         {!!systemImagesOptions.length ? (
           <Select
-            disabled={!deviceType}
+            disabled={!deviceName}
             className="form-field"
-            value={selectedSystemValue}
-            onChange={(newValue) => selectSystemValue(newValue)}
-            options={systemImagesOptions}
+            value={selectedSystemName}
+            onChange={(newValue) => selectSystemName(newValue)}
+            items={systemImagesOptions}
             placeholder={`Select device system image...`}
           />
         ) : (
           <div className="">
             No system images found. You can install them using{" "}
-            {isIosDeviceType(deviceType!) ? "Xcode" : "Android Studio"}.
+            {isSupportedIOSDevice(deviceName!) ? "Xcode" : "Android Studio"}.
           </div>
         )}
       </div>

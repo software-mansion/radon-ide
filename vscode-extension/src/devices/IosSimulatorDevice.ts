@@ -4,7 +4,7 @@ import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import { DeviceInfo, Platform } from "../common/DeviceManager";
+import { DeviceInfo, IOSDeviceTypeInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
@@ -24,19 +24,25 @@ interface SimulatorInfo {
 }
 
 interface SimulatorData {
-  devices: { [index: string]: Array<SimulatorInfo> };
+  devices: { [runtimeID: string]: SimulatorInfo[] };
 }
 
 export class IosSimulatorDevice extends DeviceBase {
   private readonly _deviceInfo: DeviceInfo;
 
-  constructor(private readonly deviceUDID: string, readableName: string, available: boolean) {
+  constructor(
+    private readonly deviceUDID: string,
+    displayName: string,
+    systemName: string,
+    available: boolean
+  ) {
     super();
     this._deviceInfo = {
       id: `ios-${deviceUDID}`,
       platform: Platform.IOS,
       UDID: deviceUDID,
-      name: readableName,
+      name: displayName,
+      systemName,
       available,
     };
   }
@@ -203,18 +209,30 @@ export async function listSimulators() {
     "--json",
   ]);
   const parsedData: SimulatorData = JSON.parse(stdout);
-  return Object.keys(parsedData.devices)
-    .map((key) => parsedData.devices[key])
-    .reduce((acc, val) => acc.concat(val), [])
-    .map((device) => new IosSimulatorDevice(device.udid, device.name, device.isAvailable ?? false));
+
+  const { devices: devicesPerRuntime } = parsedData;
+  const runtimes = await getAvailableIosRuntimes();
+
+  const simulators: IosSimulatorDevice[] = Object.entries(devicesPerRuntime)
+    .map(([runtimeID, devices]) => {
+      const runtime = runtimes.find((runtime) => runtime.identifier === runtimeID);
+
+      return devices.map((device) => {
+        return new IosSimulatorDevice(
+          device.udid,
+          device.name,
+          runtime?.name ?? "Unknown",
+          device.isAvailable ?? false
+        );
+      });
+    })
+    .flat();
+
+  return simulators;
 }
 
-export async function createSimulator(
-  deviceTypeID: string,
-  runtimeID: string,
-  displayName: string
-) {
-  Logger.debug(`Create simulator ${deviceTypeID} with runtime ${runtimeID}`);
+export async function createSimulator(deviceType: IOSDeviceTypeInfo, runtime: IOSRuntimeInfo) {
+  Logger.debug(`Create simulator ${deviceType.identifier} with runtime ${runtime.identifier}`);
   const deviceSetLocation = getOrCreateDeviceSet();
   // create new simulator with selected runtime
   const { stdout: UDID } = await exec("xcrun", [
@@ -222,16 +240,17 @@ export async function createSimulator(
     "--set",
     deviceSetLocation,
     "create",
-    displayName,
-    deviceTypeID,
-    runtimeID,
+    deviceType.name,
+    deviceType.identifier,
+    runtime.identifier,
   ]);
 
   return {
     id: `ios-${UDID}`,
     platform: Platform.IOS,
     UDID,
-    name: displayName,
+    name: deviceType.name,
+    systemName: runtime.name,
     available: true, // assuming if create command went through, it's available
   } as DeviceInfo;
 }

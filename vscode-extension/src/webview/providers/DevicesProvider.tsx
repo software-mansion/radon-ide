@@ -50,7 +50,7 @@ export function useDevices() {
   const context = useContext(DevicesContext);
 
   if (context === undefined) {
-    throw new Error("useWorkspaceStateContext must be used within a WorkspaceStateProvider");
+    throw new Error("useDevices must be used within a DevicesProvider");
   }
   return context;
 }

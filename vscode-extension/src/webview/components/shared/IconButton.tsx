@@ -12,6 +12,7 @@ interface IconButtonProps {
   tooltip?: {
     label: string;
     side?: "top" | "right" | "bottom" | "left";
+    type?: "primary" | "secondary";
   };
   className?: string;
 }
@@ -45,10 +46,10 @@ function IconButton({
     return button;
   }
 
-  const { label, side } = tooltip;
+  const { label, side, type: tooltipType } = tooltip;
 
   return (
-    <Tooltip label={label} side={side} type={type}>
+    <Tooltip label={label} side={side} type={tooltipType ?? type}>
       {button}
     </Tooltip>
   );

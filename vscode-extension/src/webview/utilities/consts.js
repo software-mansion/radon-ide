@@ -19,22 +19,6 @@ export const IOS_DEVICE_GRAPHICAL_PROPERTIES = {
   backgroundBorderRadius: "12% / 6%",
 };
 
-export const DEVICES = [
-  {
-    id: "ios-17-iphone-15pro",
-    platform: "iOS",
-    name: "iPhone 15 Pro – iOS 17",
-    ...IOS_DEVICE_GRAPHICAL_PROPERTIES,
-  },
-  {
-    id: "android-33-pixel-7",
-    platform: "Android",
-    name: "Pixel 7 – Android 13",
-    systemImage: null,
-    ...ANDROID_DEVICE_GRAPHICAL_PROPERTIES,
-  },
-];
-
 export const XCODE_DOWNLOAD_URL = "https://developer.apple.com/xcode/resources";
 export const ANDROID_STUDIO_DOWNLOAD_URL = "https://developer.android.com/studio";
 export const ANDROID_CMDLINE_TOOLS_DOWNLOAD_URL =

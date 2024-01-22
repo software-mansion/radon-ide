@@ -19,6 +19,8 @@ import {
   IOSRuntimeInfo,
   DeviceManagerEventMap,
   DeviceManagerEventListener,
+  IOSDeviceTypeInfo,
+  AndroidSystemImageInfo,
 } from "../common/DeviceManager";
 import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
@@ -106,14 +108,14 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
     return (await this.loadDevices()).map((device) => device.deviceInfo);
   }
 
-  public async createAndroidDevice(systemImageLocation: string, displayName: string) {
-    const emulator = await createEmulator(systemImageLocation, displayName);
+  public async createAndroidDevice(displayName: string, systemImage: AndroidSystemImageInfo) {
+    const emulator = await createEmulator(displayName, systemImage);
     await this.loadDevices(true);
     return emulator;
   }
 
-  public async createIOSDevice(iOSDeviceTypeID: string, iOSRuntimeID: string, displayName: string) {
-    const simulator = await createSimulator(iOSDeviceTypeID, iOSRuntimeID, displayName);
+  public async createIOSDevice(deviceType: IOSDeviceTypeInfo, runtime: IOSRuntimeInfo) {
+    const simulator = await createSimulator(deviceType, runtime);
     await this.loadDevices(true);
     return simulator;
   }

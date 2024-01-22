@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
-import { VSCodeButton, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
+import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
 import LogCounter from "../components/LogCounter";
@@ -14,6 +14,7 @@ import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
 import { useDevices } from "../providers/DevicesProvider";
 import { useProject } from "../providers/ProjectProvider";
+import DeviceSelect from "../components/DeviceSelect";
 
 function PreviewView() {
   const [isInspecing, setIsInspecting] = useState(false);
@@ -38,13 +39,13 @@ function PreviewView() {
     };
   }, []);
 
-  const handleDeviceDropdownChange = async (e) => {
-    if (e.target.value === "manage") {
+  const handleDeviceDropdownChange = async (value) => {
+    if (value === "manage") {
       openModal("Manage Devices", <ManageDevicesView />);
       return;
     }
-    if (selectedDevice?.id !== e.target.value) {
-      const deviceInfo = devices.find((d) => d.id === e.target.value);
+    if (selectedDevice?.id !== value) {
+      const deviceInfo = devices.find((d) => d.id === value);
       if (deviceInfo) {
         project.selectDevice(deviceInfo);
       }
@@ -117,21 +118,12 @@ function PreviewView() {
 
         <span className="group-separator" />
 
-        <VSCodeDropdown
-          className="device-select"
+        <DeviceSelect
+          devices={devices}
           value={selectedDevice?.id}
-          onChange={handleDeviceDropdownChange}>
-          <span slot="start" className="codicon codicon-device-mobile" />
-          {devices?.map((device) => (
-            <VSCodeOption key={device.id} value={device.id} disabled={!device.available}>
-              {device.name}
-            </VSCodeOption>
-          ))}
-          {devices?.length > 0 && <div className="dropdown-separator" />}
-          <VSCodeOption appearance="secondary" value="manage">
-            Manage devices...
-          </VSCodeOption>
-        </VSCodeDropdown>
+          label={selectedDevice?.name}
+          onValueChange={handleDeviceDropdownChange}
+        />
 
         <div className="spacer" />
         <DeviceSettingsDropdown>

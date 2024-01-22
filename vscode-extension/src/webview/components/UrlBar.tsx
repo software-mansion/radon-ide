@@ -1,7 +1,7 @@
-import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
 import { useEffect, useState } from "react";
 import IconButton from "./shared/IconButton";
 import { ProjectInterface } from "../../common/Project";
+import UrlSelect from "./UrlSelect";
 
 function UrlBar({ project }: { project: ProjectInterface }) {
   const [urlList, setUrlList] = useState<{ name: string; id: string }[]>([]);
@@ -43,17 +43,14 @@ function UrlBar({ project }: { project: ProjectInterface }) {
         }}>
         <span className="codicon codicon-refresh" />
       </IconButton>
-      <VSCodeDropdown
-        onChange={(e) => {
-          const target = e.target as HTMLInputElement;
-          project.openNavigation(target.value);
-        }}>
-        {urlList.map((entry) => (
-          <VSCodeOption key={entry.id} value={entry.id}>
-            {entry.name}
-          </VSCodeOption>
-        ))}
-      </VSCodeDropdown>
+      <UrlSelect
+        onValueChange={(value: string) => {
+          project.openNavigation(value);
+        }}
+        items={urlList}
+        value={urlList[0]?.id}
+        disabled={urlList.length < 1}
+      />
     </>
   );
 }

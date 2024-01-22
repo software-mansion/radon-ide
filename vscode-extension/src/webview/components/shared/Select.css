@@ -1,102 +1,102 @@
 button {
-    all: unset;
-}
-  
-.SelectTrigger {
-    display: inline-flex;
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: space-between;
-    border-radius: 4px;
-    padding: 0 8px;
-    font-size: 13px;
-    line-height: 1;
-    height: 26px;
-    gap: 5px;
-    background-color: var(--select-background);
-    cursor: pointer;
-    box-shadow: 0 1px 10px var(--background-dark-100);
+  all: unset;
 }
 
-.SelectTrigger:hover {
-    background-color: var(--select-active-background);
+.select-trigger {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 4px;
+  padding: 0 8px;
+  font-size: 13px;
+  line-height: 1;
+  height: 26px;
+  gap: 5px;
+  background-color: var(--select-background);
+  cursor: pointer;
+  box-shadow: 0 1px 10px var(--background-dark-100);
 }
 
-.SelectTrigger-disabled {
-    background-color: var(--background-dark-120);
+.select-trigger:hover {
+  background-color: var(--select-active-background);
 }
 
-.SelectTrigger-disabled:hover {
-    background-color: var(--background-dark-120);
-    cursor: auto;
+.select-trigger-disabled {
+  background-color: var(--background-dark-120);
 }
 
-.SelectContent {
-    overflow: hidden;
-    background-color: var(--background-dark-80);
-    border-radius: 6px;
-    box-shadow: 0 1px 10px var(--background-dark-100);
+.select-trigger-disabled:hover {
+  background-color: var(--background-dark-120);
+  cursor: auto;
 }
 
-.SelectViewport {
-    padding: 5px;
-    background-color: var(--background-dark-80);
+.select-content {
+  overflow: hidden;
+  background-color: var(--background-dark-80);
+  border-radius: 6px;
+  box-shadow: 0 1px 10px var(--background-dark-100);
 }
 
-.SelectItem {
-    font-size: 13px;
-    line-height: 1;
-    background-color: var(--background-dark-80);
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    height: 25px;
-    padding: 0 35px 0 25px;
-    position: relative;
-    user-select: none;
+.select-viewport {
+  padding: 5px;
+  background-color: var(--background-dark-80);
 }
 
-.SelectItem[data-disabled] {
-    background-color: var(--background-dark-100);
-    color: var(--secondary-text);
-    pointer-events: none;
-}
-.SelectItem[data-highlighted] {
-    outline: none;
-    background-color: var(--background-dark-60);
-    color: var(--violet-1);
-    cursor: pointer;
-}
-
-.SelectLabel {
-    padding: 0 25px;
-    font-size: 12px;
-    line-height: 25px;
-    color: var(--secondary-text);
-    user-select: none;
+.select-item {
+  font-size: 13px;
+  line-height: 1;
+  background-color: var(--background-dark-80);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  height: 25px;
+  padding: 0 35px 0 25px;
+  position: relative;
+  user-select: none;
 }
 
-.SelectSeparator {
-    height: 1px;
-    background-color: var(--separator);
-    margin: 5px;
+.select-item[data-disabled] {
+  background-color: var(--background-dark-100);
+  color: var(--secondary-text);
+  pointer-events: none;
+}
+.select-item[data-highlighted] {
+  outline: none;
+  background-color: var(--background-dark-60);
+  color: var(--violet-1);
+  cursor: pointer;
 }
 
-.SelectItemIndicator {
-    position: absolute;
-    left: 0;
-    width: 25px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+.select-label {
+  padding: 0 25px;
+  font-size: 12px;
+  line-height: 25px;
+  color: var(--secondary-text);
+  user-select: none;
 }
 
-.SelectScrollButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 25px;
-    background-color: var(--background-dark-80);
-    color: white;
-    cursor: default;
+.select-separator {
+  height: 1px;
+  background-color: var(--separator);
+  margin: 5px;
+}
+
+.select-item-indicator {
+  position: absolute;
+  left: 0;
+  width: 25px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.select-scroll-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 25px;
+  background-color: var(--background-dark-80);
+  color: white;
+  cursor: default;
 }
