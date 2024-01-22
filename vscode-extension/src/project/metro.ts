@@ -45,7 +45,7 @@ export class Metro implements Disposable {
   }
 
   public dispose() {
-    this.subprocess?.kill();
+    this.subprocess?.kill(9);
   }
 
   public async start(resetCache: boolean) {
@@ -55,15 +55,28 @@ export class Metro implements Disposable {
     return this.startPromise;
   }
 
-  public async startInternal(resetCache: boolean) {
-    let workspaceDir = getWorkspacePath();
-    if (!workspaceDir) {
-      Logger.warn("No workspace directory found");
-      return;
-    }
-    await this.devtools.start();
-    const libPath = path.join(extensionContext.extensionPath, "lib");
-    this.subprocess = exec(
+  private launchExpoMetro(
+    workspaceDir: string,
+    libPath: string,
+    resetCache: boolean,
+    metroEnv: typeof process.env
+  ) {
+    return exec(`node`, [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
+      cwd: workspaceDir,
+      env: {
+        ...metroEnv,
+        CI: "1", // expo doesn't have no-interactive flag, but this env variable plays similar role makig it less verbose
+      },
+    });
+  }
+
+  private launchPackager(
+    workspaceDir: string,
+    libPath: string,
+    resetCache: boolean,
+    metroEnv: typeof process.env
+  ) {
+    return exec(
       `${workspaceDir}/node_modules/react-native/scripts/packager.sh`,
       [
         ...(resetCache ? ["--reset-cache"] : []),
@@ -77,20 +90,45 @@ export class Metro implements Disposable {
       ],
       {
         cwd: workspaceDir,
-        env: {
-          ...process.env,
-          NODE_PATH: path.join(workspaceDir, "node_modules"),
-          RCT_METRO_PORT: "0",
-          RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
-          REACT_NATIVE_IDE_LIB_PATH: libPath,
-          // we disable env plugins as they add additional lines at the top of the bundle that are not
-          // taken into acount by source maps. As a result, this messes up line numbers reported by hermes
-          // and makes it hard to translate them back to original locations. Once this is fixed, we
-          // can restore this plugin.
-          EXPO_NO_CLIENT_ENV_VARS: "true",
-        },
+        env: metroEnv,
       }
     );
+  }
+
+  public async startInternal(resetCache: boolean) {
+    let workspaceDir = getWorkspacePath();
+    if (!workspaceDir) {
+      Logger.warn("No workspace directory found");
+      return;
+    }
+    await this.devtools.start();
+
+    const libPath = path.join(extensionContext.extensionPath, "lib");
+
+    // if app.json exists in workspace directory, we use expo start script, otherwise we use packager script
+    const appJsonPath = path.join(workspaceDir, "app.json");
+    const appJsonExists = await vscode.workspace.fs.stat(vscode.Uri.file(appJsonPath)).then(
+      (stat) => stat.type === vscode.FileType.File,
+      () => false
+    );
+    const metroEnv = {
+      ...process.env,
+      NODE_PATH: path.join(workspaceDir, "node_modules"),
+      RCT_METRO_PORT: "0",
+      RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
+      REACT_NATIVE_IDE_LIB_PATH: libPath,
+      // we disable env plugins as they add additional lines at the top of the bundle that are not
+      // taken into acount by source maps. As a result, this messes up line numbers reported by hermes
+      // and makes it hard to translate them back to original locations. Once this is fixed, we
+      // can restore this plugin.
+      EXPO_NO_CLIENT_ENV_VARS: "true",
+    };
+    if (appJsonExists) {
+      // should be able to use expo metro here
+      this.subprocess = this.launchExpoMetro(workspaceDir, libPath, resetCache, metroEnv);
+    } else {
+      this.subprocess = this.launchPackager(workspaceDir, libPath, resetCache, metroEnv);
+    }
 
     const rl = readline.createInterface({
       input: this.subprocess!.stdout!,
@@ -99,6 +137,10 @@ export class Metro implements Disposable {
     });
 
     const initPromise = new Promise<void>((resolve, reject) => {
+      // reject if process exits
+      this.subprocess!.on("exit", (code) => {
+        reject(new Error(`Metro exited with code ${code}`));
+      });
       rl.on("line", (line: string) => {
         try {
           const event = JSON.parse(line) as MetroEvent;
@@ -116,10 +158,12 @@ export class Metro implements Disposable {
               break;
           }
         } catch (error) {
-          // ignore parsing errors
+          // ignore parsing errors, just print out the line
+          Logger.debug("Metro", line);
         }
       });
     });
+
     return initPromise;
   }
 

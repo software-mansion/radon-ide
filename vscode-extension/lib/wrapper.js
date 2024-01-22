@@ -1,7 +1,5 @@
 const { useContext, useEffect, useRef, useCallback } = require("react");
 const { LogBox, AppRegistry, RootTagContext, View, Dimensions, Linking } = require("react-native");
-const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
-const getInspectorDataForViewAtPoint = require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -64,6 +62,11 @@ export function PreviewAppWrapper({ children, ...rest }) {
   useEffect(() => {
     function _attachToDevtools(agent_) {
       agent = agent_;
+
+      // we load internal bits of runtime lazily as they require some particular order of initialization
+      // and may not be ready when loaded via runtime.js
+      const getInspectorDataForViewAtPoint = require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
+      const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
 
       function openPreview(previewKey) {
         AppRegistry.runApplication(previewKey, {
@@ -149,21 +152,26 @@ export function PreviewAppWrapper({ children, ...rest }) {
       ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={() => {
-        const sceneName = SceneTracker.getActiveScene().name;
-        if (!appReadyEventSent.current && agent) {
-          appReadyEventSent.current = true;
-          agent._bridge.send("rnp_appReady", {
-            appKey: sceneName,
-            navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
-          });
-        }
-        const isRunningPreview = isPreviewUrl(sceneName);
-        if (isRunningPreview) {
-          const preview = (global.__rnp_previews || new Map()).get(sceneName);
-          agent._bridge.send("rnp_navigationChanged", {
-            displayName: `preview:${preview.name}`, // TODO: make names unique if there are multiple previews of the same component
-            id: sceneName,
-          });
+        if (agent) {
+          // we require this here again as putting it in the top-level scope causes issues with the order of loading
+          const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
+
+          const sceneName = SceneTracker.getActiveScene().name;
+          if (!appReadyEventSent.current) {
+            appReadyEventSent.current = true;
+            agent._bridge.send("rnp_appReady", {
+              appKey: sceneName,
+              navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
+            });
+          }
+          const isRunningPreview = isPreviewUrl(sceneName);
+          if (isRunningPreview) {
+            const preview = (global.__rnp_previews || new Map()).get(sceneName);
+            agent._bridge.send("rnp_navigationChanged", {
+              displayName: `preview:${preview.name}`, // TODO: make names unique if there are multiple previews of the same component
+              id: sceneName,
+            });
+          }
         }
       }}>
       {children}
