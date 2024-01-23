@@ -63,10 +63,7 @@ export class Metro implements Disposable {
   ) {
     return exec(`node`, [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
       cwd: workspaceDir,
-      env: {
-        ...metroEnv,
-        CI: "1", // expo doesn't have no-interactive flag, but this env variable plays similar role makig it less verbose
-      },
+      env: metroEnv,
     });
   }
 
