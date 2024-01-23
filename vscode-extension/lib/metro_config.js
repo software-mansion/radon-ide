@@ -18,7 +18,7 @@ Metro.runServer = function (config, options) {
 
 // Part 2
 // Below is the main code of the config overrider.
-const { loadConfig } = require_app("metro-config");
+const { loadConfig } = requireFromAppDir("metro-config");
 
 module.exports = async function () {
   const config = await loadConfig({}, {});
