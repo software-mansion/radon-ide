@@ -8,7 +8,7 @@ export function registerNavigationPlugin(name, plugin) {
 
 /*
  * We assume the Bridge protocol version is 2,
- * as it's being used since React 18 (React-native 0.69). 
+ * as it's being used since React 18 (React-native 0.69).
  */
 const BRIDGE_PROTOCOL_VERSION = 2;
 
@@ -159,27 +159,37 @@ export function PreviewAppWrapper({ children, ...rest }) {
       hook.on("react-devtools", _attachToDevtools);
     }
     attachHookListeners(hook);
-    
   }, []);
 
   const attachHookListeners = (hook) => {
-    hook.sub('operations', (operations) => {
-      const {changedElements, rendererId} = getAllChangedElementIdsFromOperations(operations);
+    hook.sub("operations", (operations) => {
+      const { changedElements, rendererId } = getAllChangedElementIdsFromOperations(operations);
       const rendererInterfaces = hook.rendererInterfaces.get(rendererId);
       const currentNavigationDescriptior = getCurrentNavigationDescriptor();
       changedElements.forEach((elementId) => {
-        try
-        {
-          const element = rendererInterfaces.inspectElement(operationRequestId, elementId, null, true);
-          if (element){
+        try {
+          const element = rendererInterfaces.inspectElement(
+            operationRequestId,
+            elementId,
+            null,
+            true
+          );
+          if (element) {
             const fileName = element?.value?.source?.fileName;
             if (fileName) {
               fileRouteMap.set(fileName, currentNavigationDescriptior);
             }
           }
-         } catch (e) {
-          console.error("Error occured while trying to inspect element with renderer id:", rendererId, "requestId:", operationRequestId, "elementId:", elementId);
-         }
+        } catch (e) {
+          console.error(
+            "Error occured while trying to inspect element with renderer id:",
+            rendererId,
+            "requestId:",
+            operationRequestId,
+            "elementId:",
+            elementId
+          );
+        }
       });
       operationRequestId++;
     });
@@ -218,9 +228,9 @@ export function PreviewAppWrapper({ children, ...rest }) {
 }
 
 /*
-  * Before chaning anything in this function, please refer to:
-  * https://github.com/facebook/react/blob/6c7b41da3de12be2d95c60181b3fe896f824f13a/packages/react-devtools-shared/src/devtools/store.js#L921
-*/
+ * Before chaning anything in this function, please refer to:
+ * https://github.com/facebook/react/blob/6c7b41da3de12be2d95c60181b3fe896f824f13a/packages/react-devtools-shared/src/devtools/store.js#L921
+ */
 function getAllChangedElementIdsFromOperations(operations) {
   const rendererID = operations[0];
 
@@ -294,5 +304,5 @@ function getAllChangedElementIdsFromOperations(operations) {
     }
   }
 
-  return {changedElements: changedElementIds, rendererId: rendererID};
+  return { changedElements: changedElementIds, rendererId: rendererID };
 }
