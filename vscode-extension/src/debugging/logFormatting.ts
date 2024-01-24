@@ -1,28 +1,10 @@
 import util, { InspectOptions } from "util";
 import { DebugAdapter } from "./DebugAdapter";
+import { CDPSubType, CDPValueType } from "./cdp";
 
 export interface CDPRemoteObject {
-  type: "object" | "function" | "undefined" | "string" | "number" | "boolean" | "symbol" | "bigint";
-  subtype?:
-    | "array"
-    | "null"
-    | "node"
-    | "regexp"
-    | "date"
-    | "map"
-    | "set"
-    | "weakmap"
-    | "weakset"
-    | "iterator"
-    | "generator"
-    | "error"
-    | "proxy"
-    | "promise"
-    | "typedarray"
-    | "arraybuffer"
-    | "dataview"
-    | "webassemblymemory"
-    | "wasmvalue";
+  type: CDPValueType;
+  subtype?: CDPSubType;
   className?: string;
   value?: any;
   objectId?: number;

@@ -1,4 +1,4 @@
-import { Disposable, debug } from "vscode";
+import { Disposable, debug, commands } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -178,6 +178,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           } else {
             this.updateProjectState({ status: "debuggerPaused" });
           }
+          commands.executeCommand("workbench.view.debug");
           break;
         case "rnp_continued":
           this.updateProjectState({ status: "running" });

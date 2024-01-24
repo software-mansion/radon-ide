@@ -12,12 +12,19 @@ import {
   Breakpoint,
   Source,
   StackFrame,
+  Variable,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
 import { formatMessage } from "./logFormatting";
 import { Logger } from "../Logger";
+import {
+  inferDAPScopePresentationHintFromCDPType,
+  inferDAPVariableValueForCDPRemoteObject,
+  CDPDebuggerScope,
+  CDPPropertyDescriptor,
+} from "./cdp";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -54,9 +61,14 @@ export class DebugAdapter extends DebugSession {
   private configuration: DebugConfiguration;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, number, SourceMapConsumer]> = [];
-  private stoppedStackFrames: StackFrame[] = [];
+
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
+
+  private pausedStackFrames: StackFrame[] = [];
+  private pausedScopeChains: CDPDebuggerScope[][] = [];
+  private pausedCDPtoDAPObjectIdMap: Map<string, number> = new Map();
+  private pausedDAPtoCDPObjectIdMap: Map<number, string> = new Map();
 
   constructor(configuration: DebugConfiguration) {
     super();
@@ -192,7 +204,47 @@ export class DebugAdapter extends DebugSession {
     };
   }
 
+  private async fetchObjectProperties(dapObjectID: number) {
+    const cdpObjectId = this.convertDAPObjectIdToCDP(dapObjectID);
+    if (cdpObjectId === undefined) {
+      return [];
+    }
+    const properties = (
+      await this.sendCDPMessage("Runtime.getProperties", {
+        objectId: cdpObjectId,
+        ownProperties: true,
+      })
+    ).result as CDPPropertyDescriptor[];
+
+    const variables: Variable[] = properties.map((prop) => {
+      if (prop.value === undefined) {
+        return { name: prop.name, value: "undefined", variablesReference: 0 };
+      }
+      const value = inferDAPVariableValueForCDPRemoteObject(prop.value);
+      if (prop.value.type === "object") {
+        return {
+          name: prop.name,
+          value,
+          variablesReference: this.adaptCDPObjectId(prop.value.objectId),
+        };
+      }
+      return {
+        name: prop.name,
+        value,
+        variablesReference: 0,
+      };
+    });
+
+    return variables;
+  }
+
   private async handleDebuggerPaused(message: any) {
+    // We reset the paused* variables to lifecycle of objects references in DAP. https://microsoft.github.io/debug-adapter-protocol//overview.html#lifetime-of-objects-references
+    this.pausedStackFrames = [];
+    this.pausedScopeChains = [];
+    this.pausedCDPtoDAPObjectIdMap = new Map();
+    this.pausedDAPtoCDPObjectIdMap = new Map();
+
     if (
       message.params.reason === "other" &&
       message.params.callFrames[0].functionName === "__rnpBreakOnError"
@@ -200,50 +252,35 @@ export class DebugAdapter extends DebugSession {
       // this is a workaround for an issue with hermes which does not provide a full stack trace
       // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception
       // reporting handler, and access the actual error's stack trace from local variable
-      const localScropeObjectId = message.params.callFrames[0].scopeChain?.find(
+      const localScropeCDPObjectId = message.params.callFrames[0].scopeChain?.find(
         (scope: any) => scope.type === "local"
       )?.object?.objectId;
-      const res = await this.sendCDPMessage("Runtime.getProperties", {
-        objectId: localScropeObjectId,
-        ownProperties: true,
-      });
-      const errorMessage = res.result.find((prop: any) => prop.name === "message")?.value?.value;
-      const isFatal = res.result.find((prop: any) => prop.name === "isFatal")?.value?.value;
-      const stackObject = res.result.find((prop: any) => prop.name === "stack");
-      const stackResponse = await this.sendCDPMessage("Runtime.getProperties", {
-        objectId: stackObject.value.objectId,
-        ownProperties: true,
-      });
+      const localScopeObjectId = this.adaptCDPObjectId(localScropeCDPObjectId);
+      const localScopeVariables = await this.fetchObjectProperties(localScopeObjectId);
+      const errorMessage = localScopeVariables.find((v) => v.name === "message")?.value;
+      const isFatal = localScopeVariables.find((v) => v.name === "isFatal")?.value;
+      const stackObjectId = localScopeVariables.find((v) => v.name === "stack")?.variablesReference;
+
+      const stackObjectProperties = await this.fetchObjectProperties(stackObjectId!);
+
       const stackFrames: Array<StackFrame> = [];
+      // Unfortunately we can't get proper scope chanins here, because the debugger doesn't really stop at the frame where exception is thrown
       await Promise.all(
-        stackResponse.result.map(async (stackObjEntry: any) => {
+        stackObjectProperties.map(async (stackObjEntry) => {
           // we process entry with numerical names
           if (stackObjEntry.name.match(/^\d+$/)) {
             const index = parseInt(stackObjEntry.name, 10);
-            const res = await this.sendCDPMessage("Runtime.getProperties", {
-              objectId: stackObjEntry.value.objectId,
-              ownProperties: true,
-            });
-            let genUrl = "",
-              methodName = "",
-              genLine1Based = 0,
-              genColumn1Based = 0;
-            res.result.forEach((prop: any) => {
-              switch (prop.name) {
-                case "methodName":
-                  methodName = prop.value.value;
-                  break;
-                case "file":
-                  genUrl = prop.value.value;
-                  break;
-                case "lineNumber":
-                  genLine1Based = prop.value.value;
-                  break;
-                case "column":
-                  genColumn1Based = prop.value.value;
-                  break;
-              }
-            });
+            const stackObjProperties = await this.fetchObjectProperties(
+              stackObjEntry.variablesReference
+            );
+            const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
+            const genUrl = stackObjProperties.find((v) => v.name === "file")?.value || "";
+            const genLine1Based = parseInt(
+              stackObjProperties.find((v) => v.name === "lineNumber")?.value || "0"
+            );
+            const genColumn1Based = parseInt(
+              stackObjProperties.find((v) => v.name === "column")?.value || "0"
+            );
             const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
               this.findOriginalPosition(genUrl, genLine1Based, genColumn1Based - 1);
             stackFrames[index] = new StackFrame(
@@ -256,11 +293,11 @@ export class DebugAdapter extends DebugSession {
           }
         })
       );
-      this.stoppedStackFrames = stackFrames;
+      this.pausedStackFrames = stackFrames;
       this.sendEvent(new StoppedEvent("exception", this.threads[0].id, errorMessage));
       this.sendEvent(new Event("rnp_paused", { reason: "exception", isFatal: isFatal }));
     } else {
-      this.stoppedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
+      this.pausedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
         const cdpLocation = cdpFrame.location;
         const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
           this.findOriginalPosition(
@@ -276,6 +313,9 @@ export class DebugAdapter extends DebugSession {
           this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
         );
       });
+      this.pausedScopeChains = message.params.callFrames.map(
+        (cdpFrame: any) => cdpFrame.scopeChain
+      );
       this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id, "Yollo"));
       this.sendEvent(new Event("rnp_paused"));
     }
@@ -464,23 +504,40 @@ export class DebugAdapter extends DebugSession {
     args: DebugProtocol.StackTraceArguments
   ): void {
     response.body = response.body || {};
-    response.body.stackFrames = this.stoppedStackFrames;
+    response.body.stackFrames = this.pausedStackFrames;
     this.sendResponse(response);
   }
 
-  protected scopesRequest(
+  protected async scopesRequest(
     response: DebugProtocol.ScopesResponse,
     args: DebugProtocol.ScopesArguments
-  ): void {
-    // Implement getting the scopes
+  ): Promise<void> {
+    response.body = response.body || {};
+
+    response.body.scopes =
+      this.pausedScopeChains[args.frameId]?.map((scope) => ({
+        name: scope.type === "closure" ? "CLOSURE" : scope.name || scope.type.toUpperCase(), // for closure type, names are just numbers, so they don't look good, instead we just use name "CLOSURE"
+        variablesReference: this.adaptCDPObjectId(scope.object.objectId),
+        presentationHint: inferDAPScopePresentationHintFromCDPType(scope.type),
+        expensive: scope.type !== "local", // we only mark local scope as non-expensive as it is the one typically people want to look at and shouldn't have too many objects
+      })) || [];
     this.sendResponse(response);
   }
 
-  protected variablesRequest(
+  protected async variablesRequest(
     response: DebugProtocol.VariablesResponse,
     args: DebugProtocol.VariablesArguments
-  ): void {
-    // Implement getting the variables
+  ): Promise<void> {
+    response.body = response.body || {};
+
+    const cdpObjectId = this.convertDAPObjectIdToCDP(args.variablesReference);
+    if (cdpObjectId === undefined) {
+      response.body.variables = [];
+      this.sendResponse(response);
+      return;
+    }
+
+    response.body.variables = await this.fetchObjectProperties(args.variablesReference);
     this.sendResponse(response);
   }
 
@@ -508,5 +565,19 @@ export class DebugAdapter extends DebugSession {
     request?: DebugProtocol.Request | undefined
   ): void {
     Logger.debug(`Custom req ${command} ${args}`);
+  }
+
+  private adaptCDPObjectId(objectId: string) {
+    let dapObjectID = this.pausedCDPtoDAPObjectIdMap.get(objectId);
+    if (dapObjectID === undefined) {
+      dapObjectID = this.pausedCDPtoDAPObjectIdMap.size + 1;
+      this.pausedCDPtoDAPObjectIdMap.set(objectId, dapObjectID);
+      this.pausedDAPtoCDPObjectIdMap.set(dapObjectID, objectId);
+    }
+    return dapObjectID;
+  }
+
+  private convertDAPObjectIdToCDP(dapObjectID: number) {
+    return this.pausedDAPtoCDPObjectIdMap.get(dapObjectID);
   }
 }

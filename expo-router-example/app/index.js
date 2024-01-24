@@ -6,6 +6,23 @@ import { UglyButton } from './components/UglyButton';
 
 const obj = { a: 7678 };
 
+function two(uu) {
+  let b = 2;
+  for (let i = 0; i < 10; i++) {
+    b += i;
+  }
+  console.log('P', uu.a + b);
+}
+
+function one() {
+  let g = 7;
+  for (let i = 0; i < 10; i++) {
+    g += i;
+  }
+  const uu = Object.assign({ g }, obj);
+  two(uu);
+}
+
 export default function Home() {
   const ref = useRef(null);
   const appearance = useColorScheme();
@@ -19,7 +36,10 @@ export default function Home() {
       <Link href="/another?id=100">/another?id=100</Link>
       <NiceButton
         onPress={() => {
+          let a = 2;
           console.log('Nice button pressed', obj);
+          one();
+          a++;
           console.warn('Yollo');
           console.warn('Yollo3');
           // console.warn('Nice button pressed again');
