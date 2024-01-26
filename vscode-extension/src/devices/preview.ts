@@ -28,19 +28,22 @@ export class Preview implements Disposable {
       terminal: false,
     });
 
-    let resolve: (previewURL: string) => void = () => {};
-    const result = new Promise<string>((res) => {
-      resolve = res;
-    });
+    return new Promise<string>((resolve, reject) => {
+      rl.on("exit", (code) => {
+        if (code !== 0) {
+          Logger.error(`Preview server exited with code ${code}`);
+          reject(new Error(`Preview server exited with code ${code}`));
+        }
+      });
 
-    rl.on("line", (line: string) => {
-      if (line.includes("http://")) {
-        Logger.debug(`Preview server ready ${line}`);
-        this.streamURL = line;
-        resolve(this.streamURL);
-      }
+      rl.on("line", (line: string) => {
+        if (line.includes("http://")) {
+          Logger.debug(`Preview server ready ${line}`);
+          this.streamURL = line;
+          resolve(this.streamURL);
+        }
+      });
     });
-    return result;
   }
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
