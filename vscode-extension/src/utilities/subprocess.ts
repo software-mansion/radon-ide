@@ -18,7 +18,18 @@ export function exec(...args: [string, string[]?, execa.Options?]) {
         );
       }
     } catch (e) {
-      Logger.error("Subprocess", args[0], args[1]?.join(" "), "execution resulted in an error:", e);
+      // @ts-ignore idk how to deal with error objects in ts
+      if (e.signal === "SIGTERM" && e.exitCode === undefined) {
+        Logger.info("Subprocess", args[0], "was terminated.");
+      } else {
+        Logger.error(
+          "Subprocess",
+          args[0],
+          args[1]?.join(" "),
+          "execution resulted in an error:",
+          e
+        );
+      }
     }
   }
   printErrorsOnExit(); // don't want to await here not to block the outer method
