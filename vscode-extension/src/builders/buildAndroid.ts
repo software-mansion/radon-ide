@@ -3,9 +3,10 @@ import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 
-const path = require("path");
+import path from "path";
+import fs from "fs";
 
-const AAPT_PATH = path.join(ANDROID_HOME, "build-tools", "33.0.0", "aapt");
+const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
 
 // Assuming users have android folder in their project's root
@@ -22,8 +23,18 @@ async function build(projectDir: string, gradleArgs: string[]) {
   }
 }
 
+function locateAapt() {
+  // search for aapt binary under BUILD_TOOLS_PATH/<version>/aapt
+  // since we only need aapt to extract package name, we can use any version
+  const buildToolsDirs = fs.readdirSync(BUILD_TOOLS_PATH);
+  const buildToolsDir = buildToolsDirs[0];
+  const aaptPath = path.join(BUILD_TOOLS_PATH, buildToolsDir, "aapt");
+  return aaptPath;
+}
+
 async function extractPackageName(artifactPath: string) {
-  const { stdout } = await exec(AAPT_PATH, ["dump", "badging", artifactPath]);
+  const aaptPath = locateAapt();
+  const { stdout } = await exec(aaptPath, ["dump", "badging", artifactPath]);
   const packageLine = stdout.split("\n").find((line: string) => line.startsWith("package: name="));
   const packageName = packageLine!.split("'")[1];
   return packageName;
