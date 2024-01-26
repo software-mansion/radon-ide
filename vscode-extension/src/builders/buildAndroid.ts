@@ -15,7 +15,7 @@ async function build(projectDir: string, gradleArgs: string[]) {
   try {
     await exec("./gradlew", gradleArgs, {
       cwd: projectDir,
-      env: { ...process.env, JAVA_HOME },
+      env: { ...process.env, JAVA_HOME, ANDROID_HOME },
     });
   } catch (error) {
     throw new Error(`${ANDROID_FAIL_ERROR_MESSAGE}, ${error}`);
