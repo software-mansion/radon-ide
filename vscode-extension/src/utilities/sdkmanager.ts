@@ -1,6 +1,6 @@
 import readline from "readline";
 import path from "path";
-import { ANDROID_HOME } from "./android";
+import { ANDROID_HOME, JAVA_HOME } from "./android";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
 import { CPU_ARCHITECTURE, getCpuArchitecture } from "./common";
@@ -50,7 +50,9 @@ function getApiLevelFromImagePath(imagePath: string): number {
 }
 
 async function runSdkManagerList() {
-  const { stdout } = await exec(SDKMANAGER_BIN_PATH, ["--list"]);
+  const { stdout } = await exec(SDKMANAGER_BIN_PATH, ["--list"], {
+    env: { ...process.env, JAVA_HOME },
+  });
   return stdout;
 }
 

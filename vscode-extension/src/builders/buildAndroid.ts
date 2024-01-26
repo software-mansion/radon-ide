@@ -1,5 +1,5 @@
 import { ANDROID_FAIL_ERROR_MESSAGE, getCpuArchitecture } from "../utilities/common";
-import { ANDROID_HOME } from "../utilities/android";
+import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 
@@ -15,6 +15,7 @@ async function build(projectDir: string, gradleArgs: string[]) {
   try {
     await exec("./gradlew", gradleArgs, {
       cwd: projectDir,
+      env: { ...process.env, JAVA_HOME },
     });
   } catch (error) {
     throw new Error(`${ANDROID_FAIL_ERROR_MESSAGE}, ${error}`);

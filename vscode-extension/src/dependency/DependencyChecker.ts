@@ -5,6 +5,7 @@ import { getWorkspacePath } from "../utilities/common";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command, exec } from "../utilities/subprocess";
 import { SDKMANAGER_BIN_PATH } from "../utilities/sdkmanager";
+import { JAVA_HOME } from "../utilities/android";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 
@@ -203,7 +204,7 @@ export async function checkAndroidEmulatorExists() {
 
 export async function checkSdkManagerInstalled() {
   try {
-    await exec(SDKMANAGER_BIN_PATH, ["--version"]);
+    await exec(SDKMANAGER_BIN_PATH, ["--version"], { env: { ...process.env, JAVA_HOME } });
     return true;
   } catch (_) {
     return false;
