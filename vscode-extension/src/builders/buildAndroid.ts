@@ -25,11 +25,12 @@ async function build(projectDir: string, gradleArgs: string[]) {
 
 function locateAapt() {
   // search for aapt binary under BUILD_TOOLS_PATH/<version>/aapt
-  // since we only need aapt to extract package name, we can use any version
-  const buildToolsDirs = fs.readdirSync(BUILD_TOOLS_PATH);
-  const buildToolsDir = buildToolsDirs[0];
-  const aaptPath = path.join(BUILD_TOOLS_PATH, buildToolsDir, "aapt");
-  return aaptPath;
+  // since we only need aapt to extract package name, we can use any version.
+  // However, on M1 macs, aapt we noticed that older aapt versions may not work
+  // as they may require rosetta, so we try to find the latest version.
+  const versions = fs.readdirSync(BUILD_TOOLS_PATH);
+  const latestVersion = versions.sort().reverse()[0];
+  return path.join(BUILD_TOOLS_PATH, latestVersion, "aapt");
 }
 
 async function extractPackageName(artifactPath: string) {
