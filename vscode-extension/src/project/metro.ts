@@ -102,9 +102,9 @@ export class Metro implements Disposable {
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
 
-    // if app.json exists in workspace directory, we use expo start script, otherwise we use packager script
-    const appJsonPath = path.join(workspaceDir, "app.json");
-    const appJsonExists = await vscode.workspace.fs.stat(vscode.Uri.file(appJsonPath)).then(
+    // if @expo/cli exists in workspace directory, we assume its an expo project and use expo start command, otherwise we use packager script
+    const expoCliPath = path.join(workspaceDir, "node_modules/@expo/cli");
+    const expoCliExists = await vscode.workspace.fs.stat(vscode.Uri.file(expoCliPath)).then(
       (stat) => stat.type === vscode.FileType.File,
       () => false
     );
@@ -120,7 +120,7 @@ export class Metro implements Disposable {
       // can restore this plugin.
       EXPO_NO_CLIENT_ENV_VARS: "true",
     };
-    if (appJsonExists) {
+    if (expoCliExists) {
       // should be able to use expo metro here
       this.subprocess = this.launchExpoMetro(workspaceDir, libPath, resetCache, metroEnv);
     } else {

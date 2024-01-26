@@ -24,6 +24,7 @@ import {
 } from "../common/DeviceManager";
 import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
+import { Logger } from "../Logger";
 
 export class DeviceManager implements Disposable, DeviceManagerInterface {
   private eventEmitter = new EventEmitter();
@@ -78,7 +79,9 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
    * TODO: loadDevices should actually return DeviceInfo[]
    */
   private async loadDevicesInternal() {
-    const [androidDevices, iosDevices] = await Promise.all([listEmulators(), listSimulators()]);
+    const emulators = listEmulators().catch((e) => { Logger.error("Error fetching emulatos", e); return []; } )
+    const simulators = listSimulators().catch((e) => { Logger.error("Error fetching simulators", e); return []; } )
+    const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
     const devices = [...androidDevices, ...iosDevices];
     this.eventEmitter.emit(
       "devicesChanged",
