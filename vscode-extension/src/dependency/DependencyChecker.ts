@@ -139,7 +139,9 @@ export class DependencyChecker implements Disposable {
   }
 
   public async checkCocoaPodsInstalled() {
-    const installed = await checkIfCLIInstalled("pod --version", { env: {  ...process.env, LANG: "en_US.UTF-8" } });
+    const installed = await checkIfCLIInstalled("pod --version", {
+      env: { ...process.env, LANG: "en_US.UTF-8" },
+    });
     const errorMessage =
       "CocoaPods was not found. Make sure to [install CocoaPods](https://guides.cocoapods.org/using/getting-started.html).";
     this.webview.postMessage({

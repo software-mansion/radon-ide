@@ -79,8 +79,14 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
    * TODO: loadDevices should actually return DeviceInfo[]
    */
   private async loadDevicesInternal() {
-    const emulators = listEmulators().catch((e) => { Logger.error("Error fetching emulatos", e); return []; } )
-    const simulators = listSimulators().catch((e) => { Logger.error("Error fetching simulators", e); return []; } )
+    const emulators = listEmulators().catch((e) => {
+      Logger.error("Error fetching emulatos", e);
+      return [];
+    });
+    const simulators = listSimulators().catch((e) => {
+      Logger.error("Error fetching simulators", e);
+      return [];
+    });
     const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
     const devices = [...androidDevices, ...iosDevices];
     this.eventEmitter.emit(
