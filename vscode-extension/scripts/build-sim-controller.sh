@@ -8,8 +8,10 @@ configuration=${2:-Debug}
 # Get the directory where the script is located
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+# clean
+xcodebuild -project "$script_dir/../../SimulatorStreamServer/SimulatorStreamServer.xcodeproj" -scheme SimulatorStreamServer clean
 # build
-xcodebuild -project "$script_dir/../../SimulatorStreamServer/SimulatorStreamServer.xcodeproj" -scheme SimulatorStreamServer -sdk macosx -configuration $configuration build
+xcodebuild -project "$script_dir/../../SimulatorStreamServer/SimulatorStreamServer.xcodeproj" -scheme SimulatorStreamServer -sdk macosx -configuration $configuration OTHER_CODE_SIGN_FLAGS="--timestamp" build
 
 target_dir="${script_dir}/../${output_dir}"
 target_location="${target_dir}/sim-controller"
