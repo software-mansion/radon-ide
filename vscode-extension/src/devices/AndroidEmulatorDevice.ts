@@ -70,12 +70,36 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async bootDevice() {
     if (this.emulatorProcess) {
-      this.emulatorProcess.kill();
+      this.emulatorProcess.kill(9);
     }
 
-    const { process, serial } = await startEmulator(this.avdId);
-    this.serial = serial;
-    this.emulatorProcess = process;
+    const avdDirectory = getOrCreateAvdDirectory();
+    this.emulatorProcess = exec(
+      EMULATOR_BINARY,
+      ["-avd", this.avdId, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
+      { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
+    );
+
+    const rl = readline.createInterface({
+      input: this.emulatorProcess.stdout!,
+      output: process.stdout,
+      terminal: false,
+    });
+
+    const initPromise = new Promise<string>((resolve, reject) => {
+      rl.on("line", async (line: string) => {
+        if (line.includes("Advertising in:")) {
+          const match = line.match(/Advertising in: (\S+)/);
+          const iniFile = match![1];
+          const emulatorInfo = await parseAvdIniFile(iniFile);
+          const emulatorSerial = `emulator-${emulatorInfo.serialPort}`;
+          await waitForEmulatorOnline(emulatorSerial, 60000);
+          resolve(emulatorSerial);
+        }
+      });
+    });
+
+    this.serial = await initPromise;
   }
 
   async configureMetroPort(packageName: string, metroPort: number) {
@@ -241,35 +265,6 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
     systemName: systemImage.name,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
   } as DeviceInfo;
-}
-
-async function startEmulator(avdId: string) {
-  const avdDirectory = getOrCreateAvdDirectory();
-  const subprocess = exec(
-    EMULATOR_BINARY,
-    ["-avd", avdId, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
-    { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
-  );
-
-  const rl = readline.createInterface({
-    input: subprocess!.stdout!,
-    output: process.stdout,
-    terminal: false,
-  });
-
-  const initPromise = new Promise<{ process: ChildProcess; serial: string }>((resolve, reject) => {
-    rl.on("line", async (line: string) => {
-      if (line.includes("Advertising in:")) {
-        const match = line.match(/Advertising in: (\S+)/);
-        const iniFile = match![1];
-        const emulatorInfo = await parseAvdIniFile(iniFile);
-        const emulatorSerial = `emulator-${emulatorInfo.serialPort}`;
-        await waitForEmulatorOnline(emulatorSerial, 60000);
-        resolve({ process: subprocess, serial: emulatorSerial });
-      }
-    });
-  });
-  return initPromise;
 }
 
 export async function listEmulators() {
