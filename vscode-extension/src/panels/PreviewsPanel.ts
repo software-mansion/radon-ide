@@ -18,6 +18,8 @@ import { DependencyInstaller } from "../dependency/DependencyInstaller";
 import { DeviceManager } from "../devices/DeviceManager";
 import { Project } from "../project/project";
 
+const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
+
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
@@ -73,16 +75,26 @@ export class PreviewsPanel {
     ]);
   }
 
+  public static extensionActivated(context: ExtensionContext) {
+    if (context.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
+      PreviewsPanel.render(context);
+    }
+  }
+
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
     if (PreviewsPanel.currentPanel) {
       // If the webview panel already exists reveal it
       PreviewsPanel.currentPanel._panel.reveal(ViewColumn.Beside);
     } else {
       // If a webview panel does not already exist create and show a new one
+
+      // If there is an empty group in the editor, we will open the panel there:
+      const emptyGroup = window.tabGroups.all.find((group) => group.tabs.length === 0);
+
       const panel = window.createWebviewPanel(
         "RNPreview",
         "React Native Preview",
-        ViewColumn.Beside,
+        { viewColumn: emptyGroup?.viewColumn || ViewColumn.Beside },
         {
           enableScripts: true,
           localResourceRoots: [
@@ -93,7 +105,15 @@ export class PreviewsPanel {
         }
       );
       PreviewsPanel.currentPanel = new PreviewsPanel(panel);
+      context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
+
       commands.executeCommand("workbench.action.lockEditorGroup");
+
+      window.onDidChangeWindowState((e) => {
+        if (!e.focused) {
+          console.log("Editor/workspace closed completely.");
+        }
+      });
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
@@ -102,6 +122,10 @@ export class PreviewsPanel {
   }
 
   public dispose() {
+    // this is triggered when the user closes the webview panel by hand, we want to reset open_panel_on_activation
+    // key in this case to prevent extension from automatically opening the panel next time they open the editor
+    extensionContext.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, undefined);
+
     PreviewsPanel.currentPanel = undefined;
 
     // Dispose of the current webview panel

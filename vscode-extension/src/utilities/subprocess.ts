@@ -19,8 +19,9 @@ export function exec(...args: [string, string[]?, execa.Options?]) {
       }
     } catch (e) {
       // @ts-ignore idk how to deal with error objects in ts
-      if (e.signal === "SIGTERM" && e.exitCode === undefined) {
-        Logger.info("Subprocess", args[0], "was terminated.");
+      if (e.exitCode === undefined) {
+        // @ts-ignore idk how to deal with error objects in ts
+        Logger.info("Subprocess", args[0], "was terminated with", e.signal);
       } else {
         Logger.error(
           "Subprocess",

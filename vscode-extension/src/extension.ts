@@ -6,7 +6,6 @@ import {
   DebugConfigurationProviderTriggerKind,
 } from "vscode";
 import { PreviewsPanel } from "./panels/PreviewsPanel";
-import { Project } from "./project/project";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
@@ -46,13 +45,6 @@ export function activate(context: ExtensionContext) {
     }
   );
 
-  const reloadMetro = commands.registerCommand(
-    "RNStudio.reloadMetro",
-    (fileName?: string, lineNumber?: number) => {
-      Project.currentProject?.reloadMetro();
-    }
-  );
-
   context.subscriptions.push(
     debug.registerDebugConfigurationProvider(
       "com.swmansion.react-native-ide",
@@ -81,11 +73,5 @@ export function activate(context: ExtensionContext) {
   // Add command to the extension context
   context.subscriptions.push(showPreviewsPanel);
 
-  context.subscriptions.push(reloadMetro);
-
-  if (process.env.RNSZ_DEV === "true") {
-    commands.executeCommand("RNStudio.showPreviewsPanel", (e: any) => {
-      Logger.error(e);
-    });
-  }
+  PreviewsPanel.extensionActivated(context);
 }
