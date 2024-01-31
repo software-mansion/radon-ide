@@ -11,17 +11,13 @@ import {
 } from "../utilities/consts";
 
 function cssPropertiesForDevice(device) {
-  // top right bottom left
-  const m = device.backgroundMargins;
-  const size = device.backgroundSize;
   return {
-    "--phone-content-margins": `${((m[0] + m[2]) / size[0]) * 100}% 0% 0% ${
-      (m[1] / size[1]) * 100
-    }%`,
-    "--phone-content-height": `${((size[0] - m[0] - m[2]) / size[0]) * 100}%`,
-    "--phone-content-width": `${((size[1] - m[1] - m[3]) / size[1]) * 100}%`,
-    "--phone-content-border-radius": device.backgroundBorderRadius,
-    "--phone-content-aspect-ratio": `${device.width} / ${device.height}`,
+    "--phone-screen-height": `${(device.screenHeight / device.frameHeight) * 100}%`,
+    // "--phone-screen-width": `${(device.screenWidth / device.frameWidth) * 100}%`,
+    "--phone-screen-aspect-ratio": `${device.screenWidth} / ${device.screenHeight}`,
+    "--phone-mask-image": `url(${device.maskImage})`,
+    "--phone-top": `${(device.offsetY / device.frameHeight) * 100}%`,
+    "--phone-left": `${(device.offsetX / device.frameWidth) * 100}%`,
   };
 }
 
@@ -135,11 +131,7 @@ function Preview({ isInspecting, setIsInspecting }) {
 
   const inspectFrame = inspectData?.frame;
   return (
-    <div
-      className="phone-wrapper"
-      style={cssPropertiesForDevice(device)}
-      tabIndex={0}
-      ref={wrapperDivRef}>
+    <div className="phone-wrapper" style={cssPropertiesForDevice(device)} ref={wrapperDivRef}>
       {!isStarting && !hasBuildError && (
         <div className="phone-content">
           <img
@@ -147,14 +139,14 @@ function Preview({ isInspecting, setIsInspecting }) {
             style={{
               cursor: isInspecting ? "crosshair" : "default",
             }}
-            className={`phone-sized phone-screen`}
+            className="phone-screen"
             onMouseMove={onMouseMove}
             onMouseLeave={onMouseLeave}
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
           />
           {inspectFrame && (
-            <div className="phone-sized phone-inspect-overlay">
+            <div className="phone-screen phone-inspect-overlay">
               <div
                 className="inspect-area"
                 style={{
@@ -167,7 +159,7 @@ function Preview({ isInspecting, setIsInspecting }) {
             </div>
           )}
           {debugPaused && (
-            <div className="phone-sized phone-debug-overlay">
+            <div className="phone-screen phone-debug-overlay">
               <button className="continue-button" onClick={() => project.resumeDebugger()}>
                 Paused in debugger&nbsp;
                 <span className="codicon codicon-debug-continue" />
@@ -175,7 +167,7 @@ function Preview({ isInspecting, setIsInspecting }) {
             </div>
           )}
           {debugException && (
-            <div className="phone-sized phone-debug-overlay phone-exception-overlay">
+            <div className="phone-screen phone-debug-overlay phone-exception-overlay">
               <button className="uncaught-button" onClick={() => project.resumeDebugger()}>
                 Uncaught exception&nbsp;
                 <span className="codicon codicon-debug-continue" />
@@ -183,7 +175,7 @@ function Preview({ isInspecting, setIsInspecting }) {
             </div>
           )}
 
-          <img src={device.backgroundImage} className="phone-frame" />
+          <img src={device.frameImage} className="phone-frame" />
         </div>
       )}
       {isStarting && !hasBuildError && (
@@ -192,7 +184,7 @@ function Preview({ isInspecting, setIsInspecting }) {
           <div className="phone-sized phone-screen phone-content-loading ">
             <VSCodeProgressRing />
           </div>
-          <img src={device.backgroundImage} className="phone-frame" />
+          <img src={device.frameImage} className="phone-frame" />
         </div>
       )}
       {hasBuildError && (
@@ -209,7 +201,7 @@ function Preview({ isInspecting, setIsInspecting }) {
               <span className="codicon codicon-refresh" />
             </VSCodeButton>
           </div>
-          <img src={device.backgroundImage} className="phone-frame" />
+          <img src={device.frameImage} className="phone-frame" />
         </div>
       )}
     </div>

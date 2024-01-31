@@ -22,16 +22,20 @@
   position: relative;
 }
 
-.phone-sized {
-  height: var(--phone-content-height);
-  width: var(--phone-content-width);
-  margin: var(--phone-content-margins);
-  border-radius: var(--phone-content-inner-border-radius);
-}
-
 .phone-screen {
   position: absolute;
-  top: 0;
+  aspect-ratio: var(--phone-screen-aspect-ratio);
+  height: var(--phone-screen-height);
+  top: var(--phone-top);
+  left: var(--phone-left);
+  -webkit-mask-image: var(--phone-mask-image);
+  mask-image: var(--phone-mask-image);
+  -webkit-mask-size: cover;
+  mask-size: cover;
+}
+
+.phone-frame {
+  pointer-events: none;
 }
 
 .extension-error-screen {
@@ -45,8 +49,6 @@
 }
 
 .phone-inspect-overlay {
-  position: absolute;
-  top: 0;
   background-color: rgba(0, 0, 0, 0.2);
   display: flex;
   overflow: hidden;
@@ -59,8 +61,6 @@
 }
 
 .phone-debug-overlay {
-  position: absolute;
-  top: 0;
   background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
@@ -95,10 +95,6 @@ vscode-dropdown > .codicon {
   color: #001a72;
 }
 
-.phone-frame {
-  pointer-events: none;
-}
-
 .phone-content-loading {
   display: flex;
   justify-content: center;
@@ -106,7 +102,5 @@ vscode-dropdown > .codicon {
 }
 
 .phone-content-loading-overlay {
-  position: absolute;
-  left: 2px;
   background-color: rgba(255, 255, 255, 0.15);
 }
