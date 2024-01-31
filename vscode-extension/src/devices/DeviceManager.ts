@@ -25,6 +25,9 @@ import {
 import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
 import { Logger } from "../Logger";
+import { extensionContext } from "../utilities/extensionContext";
+
+const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
 export class DeviceManager implements Disposable, DeviceManagerInterface {
   private eventEmitter = new EventEmitter();
@@ -48,36 +51,38 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   public async getDevice(deviceInfo: DeviceInfo) {
     if (deviceInfo.platform === Platform.IOS) {
       const simulators = await listSimulators();
-      const simulator = simulators.find((simulator) => simulator.deviceInfo.id === deviceInfo.id);
-      if (!simulator) {
+      const simulatorInfo = simulators.find((deviceInfo) => deviceInfo.id === deviceInfo.id);
+      if (!simulatorInfo || simulatorInfo.platform !== Platform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
-      return simulator;
+      return new IosSimulatorDevice(simulatorInfo.UDID);
     } else {
       const emulators = await listEmulators();
-      const emulator = emulators.find((emulator) => emulator.deviceInfo.id === deviceInfo.id);
-      if (!emulator) {
+      const emulatorInfo = emulators.find((deviceInfo) => deviceInfo.id === deviceInfo.id);
+      if (!emulatorInfo || emulatorInfo.platform !== Platform.Android) {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
-      return emulator;
+      return new AndroidEmulatorDevice(emulatorInfo.avdId);
     }
   }
 
-  private loadDevicesPromise: Promise<(IosSimulatorDevice | AndroidEmulatorDevice)[]> | undefined;
+  private loadDevicesPromise: Promise<DeviceInfo[]> | undefined;
 
   private async loadDevices(forceReload = false) {
+    if (forceReload) {
+      // Clear the cache when force reload is requested
+      extensionContext.workspaceState.update(DEVICE_LIST_CACHE_KEY, undefined);
+    }
     if (!this.loadDevicesPromise || forceReload) {
       this.loadDevicesPromise = this.loadDevicesInternal().then((devices) => {
         this.loadDevicesPromise = undefined;
+        extensionContext.workspaceState.update(DEVICE_LIST_CACHE_KEY, devices);
         return devices;
       });
     }
     return this.loadDevicesPromise;
   }
 
-  /**
-   * TODO: loadDevices should actually return DeviceInfo[]
-   */
   private async loadDevicesInternal() {
     const emulators = listEmulators().catch((e) => {
       Logger.error("Error fetching emulatos", e);
@@ -89,10 +94,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
     });
     const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
     const devices = [...androidDevices, ...iosDevices];
-    this.eventEmitter.emit(
-      "devicesChanged",
-      devices.map((device) => device.deviceInfo)
-    );
+    this.eventEmitter.emit("devicesChanged", devices);
     return devices;
   }
 
@@ -114,7 +116,16 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   }
 
   public async listAllDevices() {
-    return (await this.loadDevices()).map((device) => device.deviceInfo);
+    const devices = extensionContext.workspaceState.get(DEVICE_LIST_CACHE_KEY) as
+      | DeviceInfo[]
+      | undefined;
+    if (devices) {
+      // we still want to perform load here in case anything changes, just won't wait for it
+      this.loadDevices();
+      return devices;
+    } else {
+      return await this.loadDevices();
+    }
   }
 
   public async createAndroidDevice(displayName: string, systemImage: AndroidSystemImageInfo) {

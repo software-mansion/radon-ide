@@ -7,7 +7,6 @@ import { DeviceSettings } from "../common/Project";
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
 
-  abstract get deviceInfo(): DeviceInfo;
   abstract bootDevice(): Promise<void>;
   abstract changeSettings(settings: DeviceSettings): Promise<void>;
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;

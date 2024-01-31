@@ -28,27 +28,8 @@ interface SimulatorData {
 }
 
 export class IosSimulatorDevice extends DeviceBase {
-  private readonly _deviceInfo: DeviceInfo;
-
-  constructor(
-    private readonly deviceUDID: string,
-    displayName: string,
-    systemName: string,
-    available: boolean
-  ) {
+  constructor(private readonly deviceUDID: string) {
     super();
-    this._deviceInfo = {
-      id: `ios-${deviceUDID}`,
-      platform: Platform.IOS,
-      UDID: deviceUDID,
-      name: displayName,
-      systemName,
-      available,
-    };
-  }
-
-  get deviceInfo() {
-    return this._deviceInfo;
   }
 
   async bootDevice() {
@@ -198,7 +179,7 @@ export async function removeIosSimulator(udid?: string) {
   return exec("xcrun", ["simctl", "--set", setDirectory, "delete", udid]);
 }
 
-export async function listSimulators() {
+export async function listSimulators(): Promise<DeviceInfo[]> {
   const deviceSetLocation = getOrCreateDeviceSet();
   const { stdout } = await exec("xcrun", [
     "simctl",
@@ -213,17 +194,19 @@ export async function listSimulators() {
   const { devices: devicesPerRuntime } = parsedData;
   const runtimes = await getAvailableIosRuntimes();
 
-  const simulators: IosSimulatorDevice[] = Object.entries(devicesPerRuntime)
+  const simulators: DeviceInfo[] = Object.entries(devicesPerRuntime)
     .map(([runtimeID, devices]) => {
       const runtime = runtimes.find((runtime) => runtime.identifier === runtimeID);
 
       return devices.map((device) => {
-        return new IosSimulatorDevice(
-          device.udid,
-          device.name,
-          runtime?.name ?? "Unknown",
-          device.isAvailable ?? false
-        );
+        return {
+          id: `ios-${device.udid}`,
+          platform: Platform.IOS,
+          UDID: device.udid,
+          name: device.name,
+          systemName: runtime?.name ?? "Unknown",
+          available: device.isAvailable ?? false,
+        } as DeviceInfo;
       });
     })
     .flat();

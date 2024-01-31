@@ -30,24 +30,11 @@ interface EmulatorProcessInfo {
 }
 
 export class AndroidEmulatorDevice extends DeviceBase {
-  private readonly _deviceInfo: DeviceInfo;
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
 
-  constructor(private readonly avdId: string, displayName: string, systemName: string) {
+  constructor(private readonly avdId: string) {
     super();
-    this._deviceInfo = {
-      id: `android-${avdId}`,
-      platform: Platform.Android,
-      name: displayName,
-      systemName,
-      avdId: avdId,
-      available: true,
-    };
-  }
-
-  get deviceInfo() {
-    return this._deviceInfo;
   }
 
   public dispose(): void {
@@ -74,20 +61,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
 
     const avdDirectory = getOrCreateAvdDirectory();
-    this.emulatorProcess = exec(
+    const subprocess = exec(
       EMULATOR_BINARY,
       ["-avd", this.avdId, "-no-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
       { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
     );
-
-    const rl = readline.createInterface({
-      input: this.emulatorProcess.stdout!,
-      output: process.stdout,
-      terminal: false,
-    });
+    this.emulatorProcess = subprocess;
 
     const initPromise = new Promise<string>((resolve, reject) => {
+      subprocess.on("exit", (code) => {
+        reject();
+      });
+
+      const rl = readline.createInterface({
+        input: subprocess.stdout!,
+        output: process.stdout,
+        terminal: false,
+      });
+
       rl.on("line", async (line: string) => {
+        Logger.debug("Emulator output", line);
         if (line.includes("Advertising in:")) {
           const match = line.match(/Advertising in: (\S+)/);
           const iniFile = match![1];
@@ -279,7 +272,14 @@ export async function listEmulators() {
       const avdConfigPath = path.join(avdDirectory, `${avdId}.avd`, "config.ini");
       const { displayName, systemImageDir } = await parseAvdConfigIniFile(avdConfigPath);
       const systemImageName = systemImages.find((image) => image.location === systemImageDir)?.name;
-      return new AndroidEmulatorDevice(avdId, displayName, systemImageName ?? "Unknown");
+      return {
+        id: `android-${avdId}`,
+        platform: Platform.Android,
+        avdId,
+        name: displayName,
+        systemName: systemImageName ?? "Unknown",
+        available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
+      } as DeviceInfo;
     })
   );
 }
