@@ -46,6 +46,7 @@ button {
 .select-item {
   font-size: 13px;
   line-height: 1;
+  color: var(--default-text);
   background-color: var(--background-dark-80);
   border-radius: 3px;
   display: flex;

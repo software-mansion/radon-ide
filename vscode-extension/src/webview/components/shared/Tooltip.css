@@ -16,7 +16,7 @@
 
 .tooltip-secondary {
   color: var(--default-text);
-  background-color: var(--vscode-button-secondaryBackground);
+  background-color: var(--background-dark-120);
 }
 
 .tooltip-content[data-state="delayed-open"][data-side="top"] {
@@ -36,7 +36,7 @@
   fill: var(--popover-background);
 }
 .tooltip-arrow-secondary {
-  fill: var(--vscode-button-secondaryBackground);
+  fill: var(--background-dark-120);
 }
 
 @keyframes slideUpAndFade {

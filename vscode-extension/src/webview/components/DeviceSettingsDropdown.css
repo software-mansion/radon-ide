@@ -1,10 +1,11 @@
 .device-settings-content {
-  padding: 10px;
+  padding: 14px;
 }
 
 .device-settings-heading {
   text-align: center;
   margin-top: 0px;
+  color: var(--default-text);
 }
 
 .device-settings-center {
@@ -30,6 +31,7 @@
   display: block;
   width: 8px;
   height: 8px;
+  color: var(--default-text);
 }
 
 .device-settings-margin {

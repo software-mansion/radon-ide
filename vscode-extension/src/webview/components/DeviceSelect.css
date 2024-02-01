@@ -64,6 +64,7 @@
   height: 32px;
   padding: 0 10px;
   border-radius: 4px;
+  color: var(--default-text);
 }
 .device-select-item[data-highlighted] {
   outline: none;
@@ -115,6 +116,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 16px;
+  color: var(--default-text);
   background-color: var(--background-dark-70);
 }
 

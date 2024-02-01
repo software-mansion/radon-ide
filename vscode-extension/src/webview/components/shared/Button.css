@@ -44,7 +44,7 @@
 }
 
 .button-secondary {
-  color: var(--vscode-button-secondaryForeground);
+  color: var(--default-text);
   background-color: var(--background-dark-100);
 }
 

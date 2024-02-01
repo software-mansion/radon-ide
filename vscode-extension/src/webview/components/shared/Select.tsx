@@ -37,7 +37,7 @@ interface SelectProps {
 
 function Select({ value, onChange, items, placeholder, className, disabled }: SelectProps) {
   return (
-    <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
+    <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled} open>
       <RadixSelect.Trigger
         className={classnames("select-trigger", className, disabled && "select-trigger-disabled")}>
         <RadixSelect.Value placeholder={placeholder} />
