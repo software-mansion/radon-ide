@@ -1,6 +1,5 @@
 import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import * as Switch from "@radix-ui/react-switch";
 
 import "./shared/Dropdown.css";
 import { useModal } from "../providers/ModalProvider";

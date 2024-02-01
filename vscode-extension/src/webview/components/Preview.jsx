@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { throttle } from "../utilities/common";
-import { VSCodeProgressRing, VSCodeButton } from "@vscode/webview-ui-toolkit/react";
+import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
 import { useProject } from "../providers/ProjectProvider";
@@ -9,6 +9,7 @@ import {
   ANDROID_DEVICE_GRAPHICAL_PROPERTIES,
   IOS_DEVICE_GRAPHICAL_PROPERTIES,
 } from "../utilities/consts";
+import Button from "./shared/Button";
 
 function cssPropertiesForDevice(device) {
   return {
@@ -193,13 +194,13 @@ function Preview({ isInspecting, setIsInspecting }) {
             <h2>
               An error occurred inside the extension. Click the button to restart the emulator.
             </h2>
-            <VSCodeButton
-              appearance="secondary"
+            <Button
+              type="secondary"
               onClick={() => {
                 project.restart(false);
               }}>
               <span className="codicon codicon-refresh" />
-            </VSCodeButton>
+            </Button>
           </div>
           <img src={device.frameImage} className="phone-frame" />
         </div>

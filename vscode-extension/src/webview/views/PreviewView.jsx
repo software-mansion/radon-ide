@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
-import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
-import LogCounter from "../components/LogCounter";
 import SettingsDropdown from "../components/SettingsDropdown";
 import "./View.css";
 import "./PreviewView.css";
@@ -15,6 +13,7 @@ import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
 import { useDevices } from "../providers/DevicesProvider";
 import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
+import Button from "../components/shared/Button";
 
 function PreviewView() {
   const [isInspecing, setIsInspecting] = useState(false);
@@ -76,16 +75,18 @@ function PreviewView() {
 
         <div className="spacer" />
 
-        <VSCodeButton
-          appearance={"secondary"}
+        <Button
+          counter={logCounter}
           onClick={() => {
             setLogCounter(0);
             vscode.postMessage({ command: "openLogs" });
+          }}
+          tooltip={{
+            label: "Open logs panel",
           }}>
           <span slot="start" className="codicon codicon-debug-console" />
           Logs
-          <LogCounter count={logCounter} />
-        </VSCodeButton>
+        </Button>
         <SettingsDropdown project={project}>
           <IconButton
             onClick={() => {

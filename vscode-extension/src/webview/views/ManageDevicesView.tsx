@@ -7,6 +7,7 @@ import { DeviceInfo, Platform } from "../../common/DeviceManager";
 import { useDevices } from "../providers/DevicesProvider";
 import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
+import Button from "../components/shared/Button";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -106,10 +107,10 @@ function ManageDevicesView() {
           ))}
         </>
       )}
-      <IconButton className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
+      <Button className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
         <span className="codicon codicon-add" />
         <div className="create-button-text">Create new device</div>
-      </IconButton>
+      </Button>
     </div>
   );
 }

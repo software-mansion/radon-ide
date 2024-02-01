@@ -1,6 +1,5 @@
 import "./View.css";
 import "./DiagnosticView.css";
-import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { vscode } from "../utilities/vscode";
 import Anchor from "../components/shared/Anchor";
 import CheckIcon from "../components/icons/CheckIcon";
@@ -10,6 +9,7 @@ import ProgressRing from "../components/shared/ProgressRing";
 import Tooltip from "../components/shared/Tooltip";
 import IconButton from "../components/shared/IconButton";
 import Label from "../components/shared/Label";
+import Button from "../components/shared/Button";
 
 function DiagnosticView() {
   const { dependencies, runDiagnostics } = useDependencies();
@@ -67,10 +67,16 @@ function DiagnosticView() {
       <div className="diagnostic-section-margin" />
 
       <div className="diagnostic-button-container">
-        <VSCodeButton appearance="secondary" onClick={runDiagnostics}>
+        <Button
+          onClick={runDiagnostics}
+          type="secondary"
+          tooltip={{
+            label: "Re-run diagnostics",
+            side: "bottom",
+          }}>
           <span slot="start" className="codicon codicon-refresh" />
           Re-run
-        </VSCodeButton>
+        </Button>
       </div>
     </>
   );

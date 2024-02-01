@@ -1,8 +1,9 @@
 import Select from "../components/shared/Select";
 import "./CreateDeviceView.css";
-import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { useState } from "react";
 import { useDevices } from "../providers/DevicesProvider";
+import Button from "../components/shared/Button";
+import Label from "../components/shared/Label";
 
 enum SupportedAndroidDevice {
   PIXEL_7 = "Google Pixel 7",
@@ -89,7 +90,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   return (
     <div className="edit-device-form">
       <div className="form-row">
-        <div className="form-label">Device Type</div>
+        <Label>Device Type</Label>
         <Select
           className="form-field"
           value={deviceName}
@@ -102,10 +103,11 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         />
       </div>
       <div className="form-row">
-        <div className="form-label">
-          <div>System image</div>
+        <Label>
+          <span>System image</span>
           {!systemImagesOptions.length && <span className="codicon codicon-warning warning" />}
-        </div>
+        </Label>
+        <div className="form-label"></div>
         {!!systemImagesOptions.length ? (
           <Select
             disabled={!deviceName}
@@ -123,12 +125,12 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         )}
       </div>
       <div className="button-panel">
-        <VSCodeButton onClick={onCancel} appearance="secondary">
+        <Button onClick={onCancel} type="secondary">
           Cancel
-        </VSCodeButton>
-        <VSCodeButton disabled={createDisabled} onClick={createDevice}>
+        </Button>
+        <Button disabled={createDisabled} onClick={createDevice} type="ternary">
           Create
-        </VSCodeButton>
+        </Button>
       </div>
     </div>
   );

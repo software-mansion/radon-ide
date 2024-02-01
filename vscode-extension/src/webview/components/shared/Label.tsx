@@ -1,7 +1,7 @@
 import "./Label.css";
 
 interface LabelProps {
-  children: string;
+  children: React.ReactNode;
 }
 
 function Label({ children }: LabelProps) {

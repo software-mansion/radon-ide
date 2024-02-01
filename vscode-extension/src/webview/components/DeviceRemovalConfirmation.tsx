@@ -1,8 +1,8 @@
-import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import "./DeviceRemovalConfirmation.css";
 import { DeviceInfo } from "../../common/DeviceManager";
 import { useState } from "react";
 import { useDevices } from "../providers/DevicesProvider";
+import Button from "./shared/Button";
 
 function DeviceRemovalConfirmation({
   deviceInfo,
@@ -21,8 +21,9 @@ function DeviceRemovalConfirmation({
         Are you sure you want to remove the <i>{deviceInfo.name}</i> device?
       </h2>
       <div className="button-group">
-        <VSCodeButton
+        <Button
           className="confirmation-button"
+          type="secondary"
           disabled={loading}
           onClick={async () => {
             setLoading(true);
@@ -33,14 +34,10 @@ function DeviceRemovalConfirmation({
             }
           }}>
           Yes
-        </VSCodeButton>
-        <VSCodeButton
-          appearance="secondary"
-          className="confirmation-button"
-          disabled={loading}
-          onClick={onClose}>
+        </Button>
+        <Button type="ternary" className="confirmation-button" disabled={loading} onClick={onClose}>
           No
-        </VSCodeButton>
+        </Button>
       </div>
     </div>
   );

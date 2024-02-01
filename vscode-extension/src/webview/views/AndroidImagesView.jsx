@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./View.css";
-import { VSCodeButton, VSCodeCheckbox, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { VSCodeCheckbox, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./AndroidImagesView.css";
 
 function AndroidImagesView() {
@@ -76,14 +76,14 @@ function AndroidImagesView() {
   return (
     <div className="panel-view">
       <div className="section">
-        <VSCodeButton
-          appearance="secondary"
+        <Button
+          type="secondary"
           disabled={isInstallingDisabled}
           onClick={() =>
             processAndroidImageChanges({ toInstall: imagesToInstall, toRemove: imagesToRemove })
           }>
           {loading ? <VSCodeProgressRing /> : "Install/Uninstall"}
-        </VSCodeButton>
+        </Button>
       </div>
       <div className="section">
         {loading && !!androidInstallationOutputStream.length && androidInstallationOutputStream}

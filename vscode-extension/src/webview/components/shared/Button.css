@@ -1,0 +1,73 @@
+.button {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  height: 36px;
+  padding: 0 12px;
+  background: none;
+  border: 0px solid transparent;
+  border-radius: 10px;
+  color: var(--default-text);
+  transition: all 200ms 0ms ease-in-out;
+  user-select: none;
+  gap: 8px;
+  position: relative;
+}
+
+.button:disabled {
+  cursor: default;
+  pointer-events: none;
+  color: var(--disabled-text);
+  background-color: transparent;
+}
+
+.button:hover {
+  background-color: var(--highlight-hover-background);
+}
+
+.button:active {
+  color: var(--highlight-text-active);
+  background-color: var(--highlight-active-background);
+  transform: scale(0.9);
+}
+
+.button-selected {
+  color: var(--highlight-text-selected);
+  background-color: var(--highlight-active-background);
+}
+
+.button-selected:hover {
+  color: var(--highlight-selected-hover-text);
+  background-color: var(--background-dark-50);
+}
+
+.button-secondary {
+  color: var(--vscode-button-secondaryForeground);
+  background-color: var(--background-dark-100);
+}
+
+.button-secondary:hover {
+  background-color: var(--background-dark-50);
+}
+
+.button-ternary {
+  color: var(--navy-dark-10);
+  background-color: var(--background-dark-30);
+}
+
+.button-ternary:hover {
+  background-color: var(--background-dark-10);
+}
+
+.button-counter {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  border: 0px solid transparent;
+  border-radius: 4px;
+  background-color: var(--background-dark-40);
+  padding: 2px 4px;
+  font-size: 11px;
+}
