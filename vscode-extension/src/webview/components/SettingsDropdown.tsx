@@ -8,6 +8,7 @@ import DiagnosticView from "../views/DiagnosticView";
 import AndroidImagesView from "../views/AndroidImagesView";
 import ManageDevicesView from "../views/ManageDevicesView";
 import { ProjectInterface } from "../../common/Project";
+import DoctorIcon from "./icons/DoctorIcon";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -30,15 +31,18 @@ function SettingsDropdown({ project, children }: SettingsDropdownProps) {
               // @ts-ignore TODO fix this
               openModal("Diagnostics", <DiagnosticView />);
             }}>
+            <DoctorIcon />
             Run diagnostics...
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              project.restart(true);
+              openModal("Manage Devices", <ManageDevicesView />);
             }}>
-            Clean rebuild (purge build cache)
+            <span className="codicon codicon-device-mobile" />
+            Manage devices...
           </DropdownMenu.Item>
+
           <DropdownMenu.Separator className="dropdown-menu-separator" />
           {/* TODO: add this option back when its fully working
           <DropdownMenu.Item
@@ -49,12 +53,14 @@ function SettingsDropdown({ project, children }: SettingsDropdownProps) {
             }}>
             Manage Android SDKs...
           </DropdownMenu.Item> */}
+
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              openModal("Manage Devices", <ManageDevicesView />);
+              project.restart(true);
             }}>
-            Manage devices...
+            <span className="codicon codicon-trash" />
+            Clean build cache
           </DropdownMenu.Item>
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>

@@ -32,6 +32,7 @@ button {
   position: relative;
   user-select: none;
   outline: none;
+  gap: 4px;
 }
 .dropdown-menu-item[data-disabled] {
   color: var(--disabled-text);
