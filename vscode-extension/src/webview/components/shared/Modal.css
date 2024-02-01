@@ -6,11 +6,11 @@ input {
 }
 
 .modal-overlay {
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(1.4px);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(1px);
   position: fixed;
   inset: 0;
-  animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: overlayShow 175ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-content {
@@ -24,7 +24,7 @@ input {
   max-width: 450px;
   max-height: 85vh;
   padding: 25px;
-  animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: contentShow 175ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .modal-content:focus {
   outline: none;
@@ -55,7 +55,7 @@ input {
   }
   to {
     opacity: 1;
-    backdrop-filter: blur(1.4px);
+    backdrop-filter: blur(1px);
   }
 }
 
