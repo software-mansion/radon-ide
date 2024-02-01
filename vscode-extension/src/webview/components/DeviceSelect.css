@@ -30,6 +30,9 @@
   background-color: var(--background-dark-80);
   pointer-events: none;
 }
+.device-select-trigger:focus {
+  box-shadow: 0 0 0 2px var(--background-dark-50);
+}
 
 .device-select-value {
   display: flex;

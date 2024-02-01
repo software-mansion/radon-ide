@@ -33,6 +33,10 @@
   transform: scale(0.9);
 }
 
+.button:focus {
+  box-shadow: 0 0 0 2px var(--background-dark-50);
+}
+
 .button-selected {
   color: var(--highlight-text-selected);
   background-color: var(--highlight-active-background);

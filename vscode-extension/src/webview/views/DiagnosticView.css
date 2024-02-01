@@ -1,7 +1,7 @@
 .diagnostic-item {
   display: flex;
   align-items: center;
-  margin: 6px 0;
+  margin: 6px 2px;
 }
 
 .diagnostic-item-text {
@@ -40,7 +40,7 @@
 .diagnostic-button-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin: 24px 2px 2px 2px;
 }
 
 .diagnostic-error-wrapper {

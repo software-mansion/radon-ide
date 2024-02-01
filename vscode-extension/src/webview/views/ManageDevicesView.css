@@ -4,9 +4,10 @@
 }
 
 .container {
-  margin: 12px 4px;
+  margin: 12px 0;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .top-bar {
@@ -42,7 +43,7 @@
   display: grid;
   grid-template-columns: 32px 1fr 32px;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 0 2px 4px 2px;
   gap: 10px;
   line-height: 1;
   height: 48px;
