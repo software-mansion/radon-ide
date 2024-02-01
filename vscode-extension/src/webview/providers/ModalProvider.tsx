@@ -3,16 +3,19 @@ import Modal from "../components/shared/Modal";
 
 interface ModalContextProps {
   openModal: (title: string, component: React.ReactNode) => void;
+  showHeader: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ModalContext = createContext<ModalContextProps>({
   openModal: () => {},
+  showHeader: () => {},
 });
 
 export default function ModalProvider({ children }: { children: React.ReactNode }) {
   const [title, setTitle] = useState("");
   const [component, setComponent] = useState(<></>);
   const [open, setOpen] = useState(false);
+  const [headerShown, showHeader] = useState(true);
 
   const openModal = (title: string, component: React.ReactNode) => {
     setTitle(title);
@@ -22,8 +25,15 @@ export default function ModalProvider({ children }: { children: React.ReactNode 
   };
 
   return (
-    <ModalContext.Provider value={{ openModal }}>
-      {children} <Modal title={title} component={component} open={open} setOpen={setOpen} />
+    <ModalContext.Provider value={{ openModal, showHeader }}>
+      {children}
+      <Modal
+        title={title}
+        component={component}
+        open={open}
+        setOpen={setOpen}
+        headerShown={headerShown}
+      />
     </ModalContext.Provider>
   );
 }

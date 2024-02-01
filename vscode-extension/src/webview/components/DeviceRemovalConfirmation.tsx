@@ -1,8 +1,9 @@
 import "./DeviceRemovalConfirmation.css";
 import { DeviceInfo } from "../../common/DeviceManager";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDevices } from "../providers/DevicesProvider";
 import Button from "./shared/Button";
+import { useModal } from "../providers/ModalProvider";
 
 function DeviceRemovalConfirmation({
   deviceInfo,
@@ -15,14 +16,30 @@ function DeviceRemovalConfirmation({
 
   const { deviceManager } = useDevices();
 
+  const { showHeader } = useModal();
+  useEffect(() => {
+    showHeader(false);
+    return () => {
+      showHeader(true);
+    };
+  });
+
   return (
-    <div>
-      <h2>
+    <div className="device-removal-wrapper">
+      <h2 className="device-removal-title">
         Are you sure you want to remove the <i>{deviceInfo.name}</i> device?
       </h2>
-      <div className="button-group">
+      <p className="device-removal-subtitle">This action cannot be undone.</p>
+      <div className="device-removal-button-group">
         <Button
-          className="confirmation-button"
+          type="ternary"
+          className="device-removal-button"
+          disabled={loading}
+          onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          className="device-removal-button"
           type="secondary"
           disabled={loading}
           onClick={async () => {
@@ -33,10 +50,7 @@ function DeviceRemovalConfirmation({
               onClose();
             }
           }}>
-          Yes
-        </Button>
-        <Button type="ternary" className="confirmation-button" disabled={loading} onClick={onClose}>
-          No
+          Confirm
         </Button>
       </div>
     </div>

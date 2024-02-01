@@ -9,16 +9,17 @@ interface ModalProps {
   component: React.ReactNode;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  headerShown?: boolean;
 }
 
-export default function Modal({ title, component, open, setOpen }: ModalProps) {
+export default function Modal({ title, component, open, setOpen, headerShown }: ModalProps) {
   const close = () => setOpen(false);
   return (
     <Dialog.Root open={open}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" onClick={close} />
         <Dialog.Content className="modal-content" onEscapeKeyDown={close}>
-          <Dialog.Title className="modal-title">{title}</Dialog.Title>
+          {headerShown && <Dialog.Title className="modal-title">{title}</Dialog.Title>}
 
           <div className="modal-content-container">{component}</div>
           <Dialog.Close asChild>

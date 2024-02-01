@@ -1,12 +1,27 @@
-.button-group {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 40px;
-    margin-top: 12px;
+.device-removal-wrapper {
+  text-align: center;
+  text-wrap: balance;
 }
 
-.confirmation-button {
-    width: 100px;
+.device-removal-title {
+  color: var(--default-text);
+  margin-top: 0;
+}
+
+.device-removal-subtitle {
+  color: var(--secondary-text);
+  margin: 16px 0;
+}
+
+.device-removal-button-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.device-removal-button {
+  width: 100px;
 }
