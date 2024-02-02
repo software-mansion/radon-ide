@@ -135,7 +135,7 @@ function Preview({ isInspecting, setIsInspecting }) {
     <div
       className="phone-wrapper"
       style={cssPropertiesForDevice(device)}
-      tabIndex={0}
+      tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
       {!isStarting && !hasBuildError && (
         <div className="phone-content">
