@@ -93,7 +93,8 @@ function Preview({ isInspecting, setIsInspecting }) {
   function onMouseLeave(e) {
     e.preventDefault();
     if (isPressing) {
-      handleMouseUp(e);
+      sendTouch(e, "Up");
+      setIsPressing(false);
     }
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
