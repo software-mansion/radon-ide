@@ -42,6 +42,7 @@ export class Preview implements Disposable {
           this.streamURL = line;
           resolve(this.streamURL);
         }
+        Logger.debug("Preview server:", line);
       });
     });
   }
