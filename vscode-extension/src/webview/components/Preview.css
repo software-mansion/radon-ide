@@ -3,9 +3,7 @@
   display: flex;
   justify-content: center;
   overflow: auto;
-
   width: 100%;
-  min-height: 650px;
   position: relative;
   user-select: none;
 }
@@ -20,6 +18,7 @@
   overflow: auto;
 
   position: relative;
+  min-height: 650px;
 }
 
 .phone-screen {
