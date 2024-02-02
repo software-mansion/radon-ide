@@ -132,7 +132,11 @@ function Preview({ isInspecting, setIsInspecting }) {
 
   const inspectFrame = inspectData?.frame;
   return (
-    <div className="phone-wrapper" style={cssPropertiesForDevice(device)} ref={wrapperDivRef}>
+    <div
+      className="phone-wrapper"
+      style={cssPropertiesForDevice(device)}
+      tabIndex={0}
+      ref={wrapperDivRef}>
       {!isStarting && !hasBuildError && (
         <div className="phone-content">
           <img
