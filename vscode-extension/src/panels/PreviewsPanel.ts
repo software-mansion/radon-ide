@@ -108,12 +108,6 @@ export class PreviewsPanel {
       context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
 
       commands.executeCommand("workbench.action.lockEditorGroup");
-
-      window.onDidChangeWindowState((e) => {
-        if (!e.focused) {
-          console.log("Editor/workspace closed completely.");
-        }
-      });
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
