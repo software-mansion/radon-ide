@@ -56,7 +56,8 @@
     "build:dist": "npm run build:extension && npm run build:sim-controller && npm run build:webview",
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src --ext ts",
+    "format:webview": "prettier --write --list-different src/webview"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",

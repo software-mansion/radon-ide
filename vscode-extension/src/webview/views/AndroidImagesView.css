@@ -12,18 +12,18 @@ ul {
 }
 
 th {
-    white-space: "no-wrap";
+  white-space: "no-wrap";
 }
 
 td {
-    text-align: center;
-    min-width: 25px;
+  text-align: center;
+  min-width: 25px;
 }
 
 .description {
-    text-align: left;
+  text-align: left;
 }
 
 .section {
-    margin-top: 12px;
+  margin-top: 12px;
 }

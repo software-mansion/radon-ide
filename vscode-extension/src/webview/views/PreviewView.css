@@ -1,4 +1,5 @@
-.button-group-top, .button-group-bottom {
+.button-group-top,
+.button-group-bottom {
   display: flex;
   flex-flow: row wrap;
   align-items: center;
@@ -9,11 +10,11 @@
 }
 
 .button-group-top {
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 .button-group-bottom {
-    margin-top: 8px;
+  margin-top: 8px;
 }
 
 .bar-spacer {
