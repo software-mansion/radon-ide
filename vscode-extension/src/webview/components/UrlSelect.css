@@ -28,7 +28,8 @@
   border-radius: 18px 18px 0 0;
 }
 .url-select-trigger[data-disabled] {
-  background-color: var(--background-dark-80);
+  background-color: var(--background-dark-90);
+  color: var(--secondary-text);
   pointer-events: none;
 }
 .url-select-trigger:focus {

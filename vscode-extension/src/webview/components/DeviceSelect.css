@@ -27,7 +27,8 @@
   border-radius: 0 0 18px 18px;
 }
 .device-select-trigger[data-disabled] {
-  background-color: var(--background-dark-80);
+  background-color: var(--background-dark-90);
+  color: var(--secondary-text);
   pointer-events: none;
 }
 .device-select-trigger:focus {

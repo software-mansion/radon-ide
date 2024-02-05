@@ -22,13 +22,18 @@ const contentSizes = [
   "xxxlarge",
 ] as const;
 
-function DeviceSettingsDropdown({ children }: { children: React.ReactNode }) {
+interface DeviceSettingsDropdownProps {
+  children: React.ReactNode;
+  disabled?: boolean;
+}
+
+function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const { project, deviceSettings } = useProject();
 
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <div>{children}</div>
+      <DropdownMenu.Trigger asChild disabled={disabled}>
+        {children}
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>

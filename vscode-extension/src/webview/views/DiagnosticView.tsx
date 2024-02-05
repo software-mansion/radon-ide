@@ -67,13 +67,7 @@ function DiagnosticView() {
       <div className="diagnostic-section-margin" />
 
       <div className="diagnostic-button-container">
-        <Button
-          onClick={runDiagnostics}
-          type="secondary"
-          tooltip={{
-            label: "Re-run diagnostics",
-            side: "bottom",
-          }}>
+        <Button onClick={runDiagnostics} type="secondary">
           <span slot="start" className="codicon codicon-refresh" />
           Re-run
         </Button>

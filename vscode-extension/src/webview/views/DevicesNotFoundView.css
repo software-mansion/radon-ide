@@ -1,0 +1,42 @@
+.devices-not-found-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.devices-not-found-button-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 20px;
+}
+
+.devices-not-found-subtitle {
+  color: var(--default-text);
+  margin-bottom: 32px;
+}
+
+.devices-not-found-quick-action {
+  width: 150px;
+}
+
+.devices-not-found-icon {
+  padding: 24px;
+  background-color: var(--background-dark-80);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.devices-not-found-icon > svg {
+  width: 120px;
+  height: 120px;
+}
+
+.devices-not-found-button-spinner {
+  width: 16px;
+  height: 16px;
+}

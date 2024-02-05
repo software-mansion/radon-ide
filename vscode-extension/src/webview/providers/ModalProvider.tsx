@@ -3,11 +3,13 @@ import Modal from "../components/shared/Modal";
 
 interface ModalContextProps {
   openModal: (title: string, component: React.ReactNode) => void;
+  closeModal: () => void;
   showHeader: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ModalContext = createContext<ModalContextProps>({
   openModal: () => {},
+  closeModal: () => {},
   showHeader: () => {},
 });
 
@@ -24,8 +26,12 @@ export default function ModalProvider({ children }: { children: React.ReactNode 
     setOpen(true);
   };
 
+  const closeModal = () => {
+    setOpen(false);
+  };
+
   return (
-    <ModalContext.Provider value={{ openModal, showHeader }}>
+    <ModalContext.Provider value={{ openModal, closeModal, showHeader }}>
       {children}
       <Modal
         title={title}

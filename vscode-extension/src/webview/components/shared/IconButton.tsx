@@ -1,3 +1,4 @@
+import React from "react";
 import classnames from "classnames";
 import "./IconButton.css";
 import Tooltip from "./Tooltip";
@@ -17,16 +18,18 @@ interface IconButtonProps {
   className?: string;
 }
 
-function IconButton({
-  children,
-  onClick,
-  tooltip,
-  disabled,
-  active,
-  type = "primary",
-  size = "default",
-  className = "",
-}: IconButtonProps) {
+const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, ref) => {
+  const {
+    children,
+    onClick,
+    tooltip,
+    disabled,
+    active,
+    type = "primary",
+    size = "default",
+    className = "",
+    ...rest
+  } = props;
   const button = (
     <button
       onClick={onClick}
@@ -37,7 +40,9 @@ function IconButton({
         active && "icon-button-selected",
         size === "small" && "icon-button-small",
         className
-      )}>
+      )}
+      {...rest}
+      ref={ref}>
       {children}
     </button>
   );
@@ -53,6 +58,6 @@ function IconButton({
       {button}
     </Tooltip>
   );
-}
+});
 
 export default IconButton;

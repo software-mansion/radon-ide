@@ -32,7 +32,7 @@ function DeviceRemovalConfirmation({
       <p className="device-removal-subtitle">This action cannot be undone.</p>
       <div className="device-removal-button-group">
         <Button
-          type="ternary"
+          type="secondary"
           className="device-removal-button"
           disabled={loading}
           onClick={onClose}>
@@ -40,7 +40,7 @@ function DeviceRemovalConfirmation({
         </Button>
         <Button
           className="device-removal-button"
-          type="secondary"
+          type="ternary"
           disabled={loading}
           onClick={async () => {
             setLoading(true);

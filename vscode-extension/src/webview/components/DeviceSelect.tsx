@@ -11,10 +11,7 @@ interface RichSelectItemProps extends Select.SelectItemProps {
 }
 
 const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSelectItemProps>>(
-  (
-    { children, icon, title, subtitle, ...props }: PropsWithChildren<RichSelectItemProps>,
-    forwardedRef
-  ) => {
+  ({ children, icon, title, subtitle, ...props }, forwardedRef) => {
     const isLongText = subtitle?.length > 20;
 
     const subtitleComponent = <div className="device-select-rich-item-subtitle">{subtitle}</div>;
@@ -52,13 +49,13 @@ interface DeviceSelectProps {
   disabled?: boolean;
 }
 
-function DeviceSelect({ onValueChange, devices, value, label }: DeviceSelectProps) {
+function DeviceSelect({ onValueChange, devices, value, label, disabled }: DeviceSelectProps) {
   const iOSDevices = devices.filter((device) => device.platform === Platform.IOS);
   const androidDevices = devices.filter((device) => device.platform === Platform.Android);
 
   return (
     <Select.Root onValueChange={onValueChange} value={value}>
-      <Select.Trigger className="device-select-trigger">
+      <Select.Trigger className="device-select-trigger" disabled={disabled}>
         <Select.Value placeholder="No devices found">
           <div className="device-select-value">
             <span className="codicon codicon-device-mobile" />
@@ -66,6 +63,7 @@ function DeviceSelect({ onValueChange, devices, value, label }: DeviceSelectProp
           </div>
         </Select.Value>
       </Select.Trigger>
+
       <Select.Portal>
         <Select.Content className="device-select-content" position="popper">
           <Select.Viewport className="device-select-viewport">

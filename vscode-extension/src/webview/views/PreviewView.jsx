@@ -8,12 +8,14 @@ import "./View.css";
 import "./PreviewView.css";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "./ManageDevicesView";
+import DevicesNotFoundView from "./DevicesNotFoundView";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
 import { useDevices } from "../providers/DevicesProvider";
 import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import Button from "../components/shared/Button";
+import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 
 function PreviewView() {
   const [isInspecing, setIsInspecting] = useState(false);
@@ -26,6 +28,7 @@ function PreviewView() {
   const { projectState, project } = useProject();
 
   const selectedDevice = projectState?.selectedDevice;
+  const devicesNotFound = projectState !== undefined && devices.length === 0;
 
   useEffect(() => {
     function incrementLogCounter() {
@@ -65,13 +68,14 @@ function PreviewView() {
               command: isFollowing ? "stopFollowing" : "startFollowing",
             });
             setIsFollowing(!isFollowing);
-          }}>
+          }}
+          disabled={devicesNotFound}>
           <span className="codicon codicon-magnet" />
         </IconButton>
 
         <span className="group-separator" />
 
-        <UrlBar project={project} />
+        <UrlBar project={project} disabled={devicesNotFound} />
 
         <div className="spacer" />
 
@@ -83,11 +87,12 @@ function PreviewView() {
           }}
           tooltip={{
             label: "Open logs panel",
-          }}>
+          }}
+          disabled={devicesNotFound}>
           <span slot="start" className="codicon codicon-debug-console" />
           Logs
         </Button>
-        <SettingsDropdown project={project}>
+        <SettingsDropdown project={project} disabled={devicesNotFound}>
           <IconButton
             onClick={() => {
               vscode.postMessage({ command: "openSettings" });
@@ -104,7 +109,9 @@ function PreviewView() {
           setIsInspecting={setIsInspecting}
         />
       ) : (
-        <div className="missing-device-filler" />
+        <div className="missing-device-filler">
+          {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
+        </div>
       )}
 
       <div className="button-group-bottom">
@@ -113,7 +120,8 @@ function PreviewView() {
           tooltip={{
             label: "Select an element to inspect it",
           }}
-          onClick={() => setIsInspecting(!isInspecing)}>
+          onClick={() => setIsInspecting(!isInspecing)}
+          disabled={devicesNotFound}>
           <span className="codicon codicon-inspect" />
         </IconButton>
 
@@ -124,12 +132,15 @@ function PreviewView() {
           value={selectedDevice?.id}
           label={selectedDevice?.name}
           onValueChange={handleDeviceDropdownChange}
+          disabled={devicesNotFound}
         />
 
         <div className="spacer" />
-        <DeviceSettingsDropdown>
+        <DeviceSettingsDropdown disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Device settings", side: "top" }}>
-            <DeviceSettingsIcon />
+            <DeviceSettingsIcon
+              color={devicesNotFound ? "var(--disabled-text)" : "var(--default-text)"}
+            />
           </IconButton>
         </DeviceSettingsDropdown>
       </div>

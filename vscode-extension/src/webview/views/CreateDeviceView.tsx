@@ -5,11 +5,11 @@ import { useDevices } from "../providers/DevicesProvider";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
 
-enum SupportedAndroidDevice {
+export enum SupportedAndroidDevice {
   PIXEL_7 = "Google Pixel 7",
 }
 
-enum SupportedIOSDevice {
+export enum SupportedIOSDevice {
   IPHONE_15_PRO = "iPhone 15 Pro",
 }
 

@@ -3,7 +3,12 @@ import IconButton from "./shared/IconButton";
 import { ProjectInterface } from "../../common/Project";
 import UrlSelect from "./UrlSelect";
 
-function UrlBar({ project }: { project: ProjectInterface }) {
+interface UrlBarProps {
+  project: ProjectInterface;
+  disabled?: boolean;
+}
+
+function UrlBar({ project, disabled }: UrlBarProps) {
   const [urlList, setUrlList] = useState<{ name: string; id: string }[]>([]);
 
   useEffect(() => {
@@ -27,7 +32,7 @@ function UrlBar({ project }: { project: ProjectInterface }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={urlList.length < 2}
+        disabled={disabled || urlList.length < 2}
         onClick={() => {
           project.openNavigation(urlList[1].id);
           // remove first item from the url list
@@ -40,7 +45,8 @@ function UrlBar({ project }: { project: ProjectInterface }) {
         tooltip={{
           label: "Reset the app",
           side: "bottom",
-        }}>
+        }}
+        disabled={disabled}>
         <span className="codicon codicon-refresh" />
       </IconButton>
       <UrlSelect
@@ -49,7 +55,7 @@ function UrlBar({ project }: { project: ProjectInterface }) {
         }}
         items={urlList}
         value={urlList[0]?.id}
-        disabled={urlList.length < 1}
+        disabled={disabled || urlList.length < 1}
       />
     </>
   );

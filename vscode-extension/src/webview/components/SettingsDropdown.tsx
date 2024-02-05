@@ -13,14 +13,15 @@ import DoctorIcon from "./icons/DoctorIcon";
 interface SettingsDropdownProps {
   children: React.ReactNode;
   project: ProjectInterface;
+  disabled?: boolean;
 }
 
-function SettingsDropdown({ project, children }: SettingsDropdownProps) {
+function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps) {
   const { openModal } = useModal();
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <div>{children}</div>
+      <DropdownMenu.Trigger asChild disabled={disabled}>
+        {children}
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
