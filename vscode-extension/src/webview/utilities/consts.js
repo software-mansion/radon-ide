@@ -24,8 +24,3 @@ export const IOS_DEVICE_GRAPHICAL_PROPERTIES = {
   frameImage: iphone15pro,
   maskImage: iphone15promask,
 };
-
-export const XCODE_DOWNLOAD_URL = "https://developer.apple.com/xcode/resources";
-export const ANDROID_STUDIO_DOWNLOAD_URL = "https://developer.android.com/studio";
-export const ANDROID_CMDLINE_TOOLS_DOWNLOAD_URL =
-  "https://developer.android.com/studio#command-line-tools-only";
