@@ -2,7 +2,11 @@ import {
   commands,
   languages,
   debug,
+  window,
+  workspace,
+  Uri,
   ExtensionContext,
+  ExtensionMode,
   DebugConfigurationProviderTriggerKind,
 } from "vscode";
 import { PreviewsPanel } from "./panels/PreviewsPanel";
@@ -10,7 +14,6 @@ import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger, enableDevModeLogging } from "./Logger";
-import vscode from "vscode";
 import { setExtensionContext } from "./utilities/extensionContext";
 import { command } from "./utilities/subprocess";
 import path from "path";
@@ -33,7 +36,7 @@ function handleUncaughtErrors() {
     }
     Logger.error("Uncaught exception", error);
     Logger.openOutputPanel();
-    vscode.window.showErrorMessage("Internal extension error.", "Dismiss");
+    window.showErrorMessage("Internal extension error.", "Dismiss");
   });
 }
 
@@ -41,20 +44,29 @@ export function activate(context: ExtensionContext) {
   activateAsync(context);
 }
 
+export function deactivate(context: ExtensionContext): undefined {
+  commands.executeCommand("setContext", "RNIDE.extensionIsActive", false);
+  return undefined;
+}
+
 async function activateAsync(context: ExtensionContext) {
   handleUncaughtErrors();
   setExtensionContext(context);
-  if (context.extensionMode === vscode.ExtensionMode.Development) {
+  if (context.extensionMode === ExtensionMode.Development) {
     enableDevModeLogging();
   }
 
   await fixBinaries(context);
 
-  const showPreviewsPanel = commands.registerCommand(
-    "RNStudio.showPreviewsPanel",
-    (fileName?: string, lineNumber?: number) => {
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.openPanel", (fileName?: string, lineNumber?: number) => {
       PreviewsPanel.render(context, fileName, lineNumber);
-    }
+    })
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.showPanel", (fileName?: string, lineNumber?: number) => {
+      PreviewsPanel.render(context, fileName, lineNumber);
+    })
   );
 
   context.subscriptions.push(
@@ -82,8 +94,8 @@ async function activateAsync(context: ExtensionContext) {
     )
   );
 
-  // Add command to the extension context
-  context.subscriptions.push(showPreviewsPanel);
+  commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
+  PreviewsPanel.extensionActivated(context);
 }
 
 async function fixBinaries(context: ExtensionContext) {
@@ -95,11 +107,11 @@ async function fixBinaries(context: ExtensionContext) {
   // We try to do it only when the binary has been modified or for new installation, we detect it based
   // on the modification date of the binary file.
   const binModiticationDate = context.globalState.get(BIN_MODIFICATION_DATE_KEY);
-  const binPath = vscode.Uri.file(context.asAbsolutePath("dist/sim-controller"));
-  const tmpFile = vscode.Uri.file(path.join(os.tmpdir(), "sim-controller"));
+  const binPath = Uri.file(context.asAbsolutePath("dist/sim-controller"));
+  const tmpFile = Uri.file(path.join(os.tmpdir(), "sim-controller"));
 
   if (binModiticationDate !== undefined) {
-    const binStats = await vscode.workspace.fs.stat(binPath);
+    const binStats = await workspace.fs.stat(binPath);
     if (binStats?.mtime === binModiticationDate) {
       return;
     }
@@ -108,10 +120,10 @@ async function fixBinaries(context: ExtensionContext) {
   // if the modification date is not set or the binary has been modified since copied, we clone the binary
   // using `dd` command to remove the quarantine attribute
   await command(`dd if=${binPath.fsPath} of=${tmpFile.fsPath}`);
-  await vscode.workspace.fs.delete(binPath);
-  await vscode.workspace.fs.rename(tmpFile, binPath);
+  await workspace.fs.delete(binPath);
+  await workspace.fs.rename(tmpFile, binPath);
   await fs.promises.chmod(binPath.fsPath, 0o755);
 
-  const binStats = await vscode.workspace.fs.stat(binPath);
+  const binStats = await workspace.fs.stat(binPath);
   context.globalState.update(BIN_MODIFICATION_DATE_KEY, binStats?.mtime);
 }

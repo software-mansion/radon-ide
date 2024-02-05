@@ -1,6 +1,6 @@
 License
 
-Copyright (c) 2023 Software Mansion <swmansion.com>
+Copyright (c) 2024 Software Mansion <swmansion.com>
 
 At this time, the software and its source code are not licensed for use, modification, or distribution. The authors retains all rights to the software.
 

@@ -92,8 +92,8 @@ export class PreviewsPanel {
       const emptyGroup = window.tabGroups.all.find((group) => group.tabs.length === 0);
 
       const panel = window.createWebviewPanel(
-        "RNPreview",
-        "React Native Preview",
+        "react-native-ide-panel",
+        "React Native IDE",
         { viewColumn: emptyGroup?.viewColumn || ViewColumn.Beside },
         {
           enableScripts: true,
@@ -108,6 +108,7 @@ export class PreviewsPanel {
       context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
 
       commands.executeCommand("workbench.action.lockEditorGroup");
+      commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
@@ -116,6 +117,7 @@ export class PreviewsPanel {
   }
 
   public dispose() {
+    commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
     // this is triggered when the user closes the webview panel by hand, we want to reset open_panel_on_activation
     // key in this case to prevent extension from automatically opening the panel next time they open the editor
     extensionContext.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, undefined);
@@ -185,7 +187,9 @@ export class PreviewsPanel {
       (message: any) => {
         const command = message.command;
 
-        Logger.log("Message from webview", message);
+        if (message.method !== "dispatchTouch") {
+          Logger.log("Message from webview", message);
+        }
 
         switch (command) {
           case "call":

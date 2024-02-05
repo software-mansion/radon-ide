@@ -7,6 +7,8 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: false, // prevent out dir from being deleted when build starts – we keep additional build artifacts there
+    assetsInlineLimit: 0, // disable assets inlining
+    reportCompressedSize: false, // disable reporting compressed size
     rollupOptions: {
       input: "src/webview/index.jsx",
       output: {
@@ -17,7 +19,7 @@ export default defineConfig({
           if (assetInfo.name.endsWith(".css")) {
             return "webview.css";
           }
-          return `assets/${assetInfo.name}`;
+          return "assets/[name]-[hash][extname]";
         },
       },
     },

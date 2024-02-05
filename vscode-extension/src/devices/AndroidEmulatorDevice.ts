@@ -63,7 +63,15 @@ export class AndroidEmulatorDevice extends DeviceBase {
     const avdDirectory = getOrCreateAvdDirectory();
     const subprocess = exec(
       EMULATOR_BINARY,
-      ["-avd", this.avdId, "-qt-hide-window", "-no-audio", "-no-boot-anim", "-grpc-use-token"],
+      [
+        "-avd",
+        this.avdId,
+        "-qt-hide-window",
+        "-no-audio",
+        "-no-boot-anim",
+        "-grpc-use-token",
+        "-no-snapshot-save",
+      ],
       { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
     );
     this.emulatorProcess = subprocess;

@@ -1,7 +1,8 @@
 {
-  "name": "react-native-sztudio",
-  "displayName": "react-native-sztudio",
-  "description": "A sztudio.",
+  "name": "react-native-ide",
+  "displayName": "React Native IDE",
+  "description": "Extension turning VSCode into a full-featured IDE for React Native and Expo",
+  "publisher": "software-mansion",
   "activationEvents": [
     "workspaceContains:node_modules/react-native"
   ],
@@ -9,6 +10,9 @@
   "engines": {
     "vscode": "^1.75.0"
   },
+  "extensionKind": [
+    "ui"
+  ],
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
     "type": "git",
@@ -18,10 +22,27 @@
   "contributes": {
     "commands": [
       {
-        "command": "RNStudio.showPreviewsPanel",
-        "title": "RNStudio: Open Previews"
+        "command": "RNIDE.openPanel",
+        "title": "Open IDE Panel",
+        "category": "React Native IDE",
+        "enablement": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.showPanel",
+        "title": "Show IDE Panel",
+        "category": "React Native IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "RNIDE.openPanel",
+          "group": "navigation",
+          "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+        }
+      ]
+    },
     "breakpoints": [
       {
         "language": "typescript"

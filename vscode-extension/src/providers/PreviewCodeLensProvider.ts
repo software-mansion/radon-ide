@@ -21,7 +21,7 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
       const range = new Range(line.lineNumber, 0, line.lineNumber, line.text.length);
       const command: Command = {
         title: "Open preview",
-        command: "RNStudio.showPreviewsPanel",
+        command: "RNIDE.showPanel",
         arguments: [document.fileName, line.lineNumber + 1],
       };
       codeLenses.push(new CodeLens(range, command));
