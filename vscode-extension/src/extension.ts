@@ -12,6 +12,12 @@ import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescripto
 import { Logger, enableDevModeLogging } from "./Logger";
 import vscode from "vscode";
 import { setExtensionContext } from "./utilities/extensionContext";
+import { command } from "./utilities/subprocess";
+import path from "path";
+import os from "os";
+import fs from "fs";
+
+const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 
 function handleUncaughtErrors() {
   process.on("unhandledRejection", (error) => {
@@ -32,11 +38,17 @@ function handleUncaughtErrors() {
 }
 
 export function activate(context: ExtensionContext) {
+  activateAsync(context);
+}
+
+async function activateAsync(context: ExtensionContext) {
   handleUncaughtErrors();
   setExtensionContext(context);
   if (context.extensionMode === vscode.ExtensionMode.Development) {
     enableDevModeLogging();
   }
+
+  await fixBinaries(context);
 
   const showPreviewsPanel = commands.registerCommand(
     "RNStudio.showPreviewsPanel",
@@ -72,6 +84,34 @@ export function activate(context: ExtensionContext) {
 
   // Add command to the extension context
   context.subscriptions.push(showPreviewsPanel);
+}
 
-  PreviewsPanel.extensionActivated(context);
+async function fixBinaries(context: ExtensionContext) {
+  // MacOS prevents binary files from being executed when downloaded from the internet.
+  // It requires notarization ticket to be available in the package where the binary was distributed
+  // with. Apparently Apple does not allow for individual binary files to be notarized and only .app/.pkg and .dmg
+  // files are allows. To prevent the binary from being quarantined, we clone it to a temporary file and then
+  // move it back to the original location. This way the quarantine attribute is removed.
+  // We try to do it only when the binary has been modified or for new installation, we detect it based
+  // on the modification date of the binary file.
+  const binModiticationDate = context.globalState.get(BIN_MODIFICATION_DATE_KEY);
+  const binPath = vscode.Uri.file(context.asAbsolutePath("dist/sim-controller"));
+  const tmpFile = vscode.Uri.file(path.join(os.tmpdir(), "sim-controller"));
+
+  if (binModiticationDate !== undefined) {
+    const binStats = await vscode.workspace.fs.stat(binPath);
+    if (binStats?.mtime === binModiticationDate) {
+      return;
+    }
+  }
+
+  // if the modification date is not set or the binary has been modified since copied, we clone the binary
+  // using `dd` command to remove the quarantine attribute
+  await command(`dd if=${binPath.fsPath} of=${tmpFile.fsPath}`);
+  await vscode.workspace.fs.delete(binPath);
+  await vscode.workspace.fs.rename(tmpFile, binPath);
+  await fs.promises.chmod(binPath.fsPath, 0o755);
+
+  const binStats = await vscode.workspace.fs.stat(binPath);
+  context.globalState.update(BIN_MODIFICATION_DATE_KEY, binStats?.mtime);
 }
