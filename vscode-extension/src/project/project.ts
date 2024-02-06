@@ -307,4 +307,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       }
     }
   }
+
+  public async reloadWebview() {
+    Logger.debug("Reloading webview");
+    commands.executeCommand("workbench.action.webview.reloadWebviewAction");
+  }
 }

@@ -29,7 +29,6 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              // @ts-ignore TODO fix this
               openModal("Diagnostics", <DiagnosticView />);
             }}>
             <DoctorIcon />

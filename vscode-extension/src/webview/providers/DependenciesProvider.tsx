@@ -37,12 +37,14 @@ function runDiagnostics() {
 interface DependenciesContextProps {
   dependencies: Dependencies;
   isReady: boolean;
+  isError: boolean;
   runDiagnostics: () => void;
 }
 
 const DependenciesContext = createContext<DependenciesContextProps>({
   dependencies: defaultDependencies,
   isReady: false,
+  isError: false,
   runDiagnostics,
 });
 
@@ -56,6 +58,9 @@ export default function DependenciesProvider({ children }: DependenciesProviderP
   // `isReady` is true when all dependencies were checked
   const isReady = Object.keys(dependencies).every(
     (key) => dependencies[key as keyof Dependencies] !== undefined
+  );
+  const isError = Object.keys(dependencies).some(
+    (key) => dependencies[key as keyof Dependencies]?.error !== undefined
   );
 
   const rerunDiagnostics = useCallback(() => {
@@ -121,7 +126,7 @@ export default function DependenciesProvider({ children }: DependenciesProviderP
 
   return (
     <DependenciesContext.Provider
-      value={{ dependencies, isReady, runDiagnostics: rerunDiagnostics }}>
+      value={{ dependencies, isReady, isError, runDiagnostics: rerunDiagnostics }}>
       {children}
     </DependenciesContext.Provider>
   );
