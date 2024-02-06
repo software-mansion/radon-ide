@@ -3,7 +3,7 @@ import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { BuildResult } from "../builders/BuildManager";
+import { BuildResult, DisposableBuild } from "../builders/BuildManager";
 import { DeviceSettings } from "../common/Project";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
@@ -16,11 +16,12 @@ export class DeviceSession implements Disposable {
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
-    private readonly build: Promise<BuildResult>
+    private readonly disposableBuild: DisposableBuild<BuildResult>
   ) {}
 
   public dispose() {
     this.debugSession && debug.stopDebugging(this.debugSession);
+    this.disposableBuild.dispose();
     this.device?.dispose();
   }
 
@@ -41,7 +42,7 @@ export class DeviceSession implements Disposable {
 
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
-    const build = await this.build;
+    const build = await this.disposableBuild.build;
     await this.device.installApp(build, false);
     await this.device.launchApp(build, this.metro.port);
 

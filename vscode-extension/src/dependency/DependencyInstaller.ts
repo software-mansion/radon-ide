@@ -66,19 +66,20 @@ export class DependencyInstaller implements Disposable {
       command: "installingPods",
     });
 
-    await installIOSDependencies(getWorkspacePath());
+    await installIOSDependencies(getWorkspacePath(), false);
     Logger.debug("Finished installing pods!");
     await this.dependencyChecker.checkPodsInstalled();
   }
 }
 
-export async function installIOSDependencies(workspaceDir: string) {
+export function installIOSDependencies(workspaceDir: string, forceCleanBuild: boolean) {
   const iosDirPath = getIosSourceDir(workspaceDir);
 
   if (!iosDirPath) {
     throw new Error(`ios directory was not found inside the workspace.`);
   }
 
+  // TODO: support forceCleanBuild option and wipe pods prior to installing
   return command("pod install", {
     cwd: iosDirPath,
     env: {

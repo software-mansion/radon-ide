@@ -6,6 +6,8 @@ import fs from "fs";
 import { calculateMD5, getWorkspacePath } from "../utilities/common";
 import { Platform } from "../common/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
+import { exec } from "../utilities/subprocess";
+import { Disposable } from "vscode";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
@@ -36,34 +38,54 @@ type IOSBuildCacheInfo = {
   buildResult: IOSBuildResult;
 };
 
-export class BuildManager {
-  private iOSBuild: Promise<IOSBuildResult> | undefined;
-  private androidBuild: Promise<AndroidBuildResult> | undefined;
+export class CancelToken {
+  private _cancelled = false;
+  private cancellListeners: (() => void)[] = [];
 
-  constructor() {}
-
-  public getAndroidBuild() {
-    return this.androidBuild;
+  public onCancel(cb: () => void) {
+    this.cancellListeners.push(cb);
   }
 
-  public getBuild(platform: Platform) {
-    if (platform === Platform.Android) {
-      const build = this.getAndroidBuild();
-      if (!build) {
-        throw new Error("Android build not started");
-      }
-      return build;
-    } else {
-      const build = this.getIosBuild();
-      if (!build) {
-        throw new Error("iOS build not started");
-      }
-      return build;
+  public adapt(execResult: ReturnType<typeof exec>) {
+    this.onCancel(() => execResult.kill(9));
+    return execResult;
+  }
+
+  public cancel() {
+    this._cancelled = true;
+    for (const listener of this.cancellListeners) {
+      listener();
     }
   }
 
-  public getIosBuild() {
-    return this.iOSBuild;
+  get cancelled() {
+    return this._cancelled;
+  }
+}
+
+export interface DisposableBuild<R> extends Disposable {
+  readonly build: Promise<R>;
+}
+
+class DisposableBuildImpl<R> implements DisposableBuild<R> {
+  constructor(public readonly build: Promise<R>, private readonly cancelToken: CancelToken) {}
+  dispose() {
+    this.cancelToken.cancel();
+  }
+}
+
+export class BuildManager {
+  public startBuild(platform: Platform, forceCleanBuild: boolean) {
+    if (platform === Platform.Android) {
+      const cancelToken = new CancelToken();
+      return new DisposableBuildImpl(
+        this.startAndroidBuild(forceCleanBuild, cancelToken),
+        cancelToken
+      );
+    } else {
+      const cancelToken = new CancelToken();
+      return new DisposableBuildImpl(this.startIOSBuild(forceCleanBuild, cancelToken), cancelToken);
+    }
   }
 
   private async loadAndroidCachedBuild(newFingerprint: string) {
@@ -92,19 +114,19 @@ export class BuildManager {
     return undefined;
   }
 
-  private async startAndroidBuild(
-    newFingerprintPromise: Promise<string>,
-    forceCleanBuild: boolean
-  ) {
-    const newFingerprint = await newFingerprintPromise;
+  private async startAndroidBuild(forceCleanBuild: boolean, cancelToken: CancelToken) {
+    const newFingerprint = await generateWorkspaceFingerprint();
     if (!forceCleanBuild) {
       const buildResult = await this.loadAndroidCachedBuild(newFingerprint);
       if (buildResult) {
         return buildResult;
       }
+    } else {
+      // we reset the cache when force clean build is requested as the newly started build may end up being cancelled
+      extensionContext.workspaceState.update(ANDROID_BUILD_CACHE_KEY, undefined);
     }
 
-    const build = await buildAndroid(getWorkspacePath());
+    const build = await buildAndroid(getWorkspacePath(), forceCleanBuild, cancelToken);
     const buildResult: AndroidBuildResult = { ...build, platform: Platform.Android };
 
     // store build info in the cache
@@ -141,16 +163,19 @@ export class BuildManager {
     return undefined;
   }
 
-  private async startIOSBuild(newFingerprintPromise: Promise<string>, forceCleanBuild: boolean) {
-    const newFingerprint = await newFingerprintPromise;
+  private async startIOSBuild(forceCleanBuild: boolean, cancelToken: CancelToken) {
+    const newFingerprint = await generateWorkspaceFingerprint();
     if (!forceCleanBuild) {
       const buildResult = await this.loadIOSCachedBuild(newFingerprint);
       if (buildResult) {
         return buildResult;
       }
+    } else {
+      // we reset the cache when force clean build is requested as the newly started build may end up being cancelled
+      extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, undefined);
     }
 
-    const build = await buildIos(getWorkspacePath());
+    const build = await buildIos(getWorkspacePath(), forceCleanBuild, cancelToken);
     const buildResult: IOSBuildResult = { ...build, platform: Platform.IOS };
 
     // store build info in the cache
@@ -159,12 +184,5 @@ export class BuildManager {
     extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, buildInfo);
 
     return { ...build, platform: Platform.IOS } as IOSBuildResult;
-  }
-
-  public startBuilding(forceCleanBuild: boolean) {
-    const newFingerprintHash = generateWorkspaceFingerprint();
-    Logger.debug("Start build", forceCleanBuild ? "(force clean build)" : "(using build cache)");
-    this.iOSBuild = this.startIOSBuild(newFingerprintHash, forceCleanBuild);
-    this.androidBuild = this.startAndroidBuild(newFingerprintHash, forceCleanBuild);
   }
 }

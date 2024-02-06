@@ -53,7 +53,7 @@ function ManageDevicesView() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
 
-  const { devices } = useDevices();
+  const { devices } = useDevices(true);
 
   const androidDevices = devices.filter((device) => device.platform === Platform.Android);
   const iosDevices = devices.filter((device) => device.platform === Platform.IOS);

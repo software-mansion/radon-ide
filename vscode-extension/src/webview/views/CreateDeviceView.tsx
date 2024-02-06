@@ -44,7 +44,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const { iOSRuntimes, androidImages, deviceManager } = useDevices();
+  const { iOSRuntimes, androidImages, deviceManager } = useDevices(true);
 
   const systemImagesOptions =
     !!deviceName && isSupportedIOSDevice(deviceName)

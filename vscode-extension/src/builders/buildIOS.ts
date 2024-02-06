@@ -1,5 +1,5 @@
 import { BuildFlags, buildProject } from "./buildProject";
-import { command, exec } from "../utilities/subprocess";
+import { exec } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import fs from "fs";
 import path from "path";
@@ -7,6 +7,7 @@ import { findFileWithExtension } from "../utilities/common";
 import { IOSProjectInfo } from "../utilities/ios";
 import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
+import { CancelToken } from "./BuildManager";
 
 // Assuming users have ios folder in their project's root
 export const getIosSourceDir = (workspace: string) => `${workspace}/ios`;
@@ -44,12 +45,16 @@ export async function findXcodeProject(workspace: string) {
   return null;
 }
 
-export async function buildIos(workspaceDir: string) {
+export async function buildIos(
+  workspaceDir: string,
+  forceCleanBuild: boolean,
+  cancelToken: CancelToken
+) {
   const sourceDir = getIosSourceDir(workspaceDir);
 
   const isPodsInstalled = await checkIosDependenciesInstalled();
   if (!isPodsInstalled) {
-    await installIOSDependencies(workspaceDir);
+    await cancelToken.adapt(installIOSDependencies(workspaceDir, forceCleanBuild));
   }
 
   const xcodeProject = await findXcodeProject(workspaceDir);
@@ -68,16 +73,21 @@ export async function buildIos(workspaceDir: string) {
     mode: "Debug", // Users may have custom modes (like "Staging") defined in their projects but just "Debug" is fine for now
     verbose: true,
     buildCwd: sourceDir,
+    cleanBuild: forceCleanBuild,
   };
 
-  const buildOutput = await buildProject(xcodeProject, undefined, scheme, buildFlags);
+  const { stdout } = await cancelToken.adapt(
+    buildProject(xcodeProject, undefined, scheme, buildFlags)
+  );
   const appPath = await getBuildPath(
     xcodeProject,
     buildFlags.buildCwd,
     "Debug",
-    buildOutput,
+    stdout,
     scheme,
-    undefined
+    undefined,
+    false,
+    cancelToken
   );
 
   const bundleID = await getBundleID(appPath);
@@ -125,23 +135,26 @@ async function getBuildPath(
   buildOutput: string,
   scheme: string,
   target: string | undefined,
-  isCatalyst: boolean = false
+  isCatalyst: boolean = false,
+  cancelToken: CancelToken
 ) {
-  const buildSettings = await exec(
-    "xcodebuild",
-    [
-      xcodeProject.isWorkspace ? "-workspace" : "-project",
-      xcodeProject.name,
-      "-scheme",
-      scheme,
-      "-sdk",
-      getPlatformName(buildOutput),
-      "-configuration",
-      mode,
-      "-showBuildSettings",
-      "-json",
-    ],
-    { encoding: "utf8", cwd: projectDir }
+  const buildSettings = await cancelToken.adapt(
+    exec(
+      "xcodebuild",
+      [
+        xcodeProject.isWorkspace ? "-workspace" : "-project",
+        xcodeProject.name,
+        "-scheme",
+        scheme,
+        "-sdk",
+        getPlatformName(buildOutput),
+        "-configuration",
+        mode,
+        "-showBuildSettings",
+        "-json",
+      ],
+      { encoding: "utf8", cwd: projectDir }
+    )
   );
 
   const { targetBuildDir, executableFolderPath } = await getTargetPaths(

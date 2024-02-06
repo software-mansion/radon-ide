@@ -119,7 +119,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.updateProjectState({ status: "starting" });
     if (forceCleanBuild) {
       await this.start(true, forceCleanBuild);
-      await this.selectDevice(this.projectState.selectedDevice!);
+      await this.selectDevice(this.projectState.selectedDevice!, forceCleanBuild);
       return;
     }
 
@@ -131,7 +131,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     // otherwise we trigger selectDevice which should handle restarting the device, installing
     // app and launching it
-    await this.selectDevice(this.projectState.selectedDevice!);
+    await this.selectDevice(this.projectState.selectedDevice!, forceCleanBuild);
   }
 
   private async start(restart: boolean, forceCleanBuild: boolean) {
@@ -143,9 +143,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       oldDevtools.dispose();
       oldMetro.dispose();
     }
-    Logger.debug("Launching builds");
-    this.buildManager.startBuilding(forceCleanBuild);
-
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "rnp_appReady":
@@ -256,7 +253,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.eventEmitter.emit("projectStateChanged", this.projectState);
   }
 
-  public async selectDevice(deviceInfo: DeviceInfo) {
+  public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
     Logger.log("Device selected", deviceInfo.name);
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
 
@@ -280,7 +277,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         device,
         this.devtools,
         this.metro,
-        this.buildManager.getBuild(deviceInfo.platform)
+        this.buildManager.startBuild(deviceInfo.platform, forceCleanBuild)
       );
       this.deviceSession = newDeviceSession;
 
