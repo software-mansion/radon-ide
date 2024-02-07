@@ -1,21 +1,19 @@
 import { Webview, Disposable } from "vscode";
 import { Logger } from "../Logger";
 import fs from "fs";
-import { getWorkspacePath } from "../utilities/common";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command, exec } from "../utilities/subprocess";
 import { SDKMANAGER_BIN_PATH } from "../utilities/sdkmanager";
 import { JAVA_HOME } from "../utilities/android";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
+import { getAndroidSourceDir } from "../builders/buildAndroid";
+import { getAppRootFolder } from "../utilities/extensionContext";
 
 export class DependencyChecker implements Disposable {
-  private webview: Webview;
   private disposables: Disposable[] = [];
 
-  constructor(webview: Webview) {
-    this.webview = webview;
-  }
+  constructor(private readonly webview: Webview) {}
 
   public dispose() {
     // Dispose of all disposables (i.e. commands) for the current webview panel
@@ -83,7 +81,7 @@ export class DependencyChecker implements Disposable {
 
   public async checkNodeModulesInstalled() {
     const installed = await checkIfCLIInstalled(`npm list --json`, {
-      cwd: getWorkspacePath(),
+      cwd: getAppRootFolder(),
     });
     const errorMessage = "Node modules are not installed.";
     this.webview.postMessage({
@@ -184,10 +182,9 @@ export async function checkIfCLIInstalled(cmd: string, options: Record<string, u
 }
 
 export async function checkIosDependenciesInstalled() {
-  const workspacePath = getWorkspacePath();
-  const iosDirPath = getIosSourceDir(workspacePath);
+  const iosDirPath = getIosSourceDir(getAppRootFolder());
 
-  Logger.debug(`Check pods in ${iosDirPath} ${getWorkspacePath()}`);
+  Logger.debug(`Check pods in ${iosDirPath} ${getAppRootFolder()}`);
   if (!iosDirPath) {
     return false;
   }

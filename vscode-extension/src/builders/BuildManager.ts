@@ -3,9 +3,9 @@ import { generateWorkspaceFingerprint } from "../utilities/fingerprint";
 import { buildAndroid } from "./buildAndroid";
 import { buildIos } from "./buildIOS";
 import fs from "fs";
-import { calculateMD5, getWorkspacePath } from "../utilities/common";
+import { calculateMD5 } from "../utilities/common";
 import { Platform } from "../common/DeviceManager";
-import { extensionContext } from "../utilities/extensionContext";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { Disposable } from "vscode";
 
@@ -126,7 +126,7 @@ export class BuildManager {
       extensionContext.workspaceState.update(ANDROID_BUILD_CACHE_KEY, undefined);
     }
 
-    const build = await buildAndroid(getWorkspacePath(), forceCleanBuild, cancelToken);
+    const build = await buildAndroid(getAppRootFolder(), forceCleanBuild, cancelToken);
     const buildResult: AndroidBuildResult = { ...build, platform: Platform.Android };
 
     // store build info in the cache
@@ -175,7 +175,7 @@ export class BuildManager {
       extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, undefined);
     }
 
-    const build = await buildIos(getWorkspacePath(), forceCleanBuild, cancelToken);
+    const build = await buildIos(getAppRootFolder(), forceCleanBuild, cancelToken);
     const buildResult: IOSBuildResult = { ...build, platform: Platform.IOS };
 
     // store build info in the cache

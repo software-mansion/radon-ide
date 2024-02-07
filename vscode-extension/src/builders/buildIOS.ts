@@ -1,16 +1,15 @@
+import { RelativePattern, workspace, Uri } from "vscode";
 import { BuildFlags, buildProject } from "./buildProject";
 import { exec } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import fs from "fs";
 import path from "path";
-import { findFileWithExtension } from "../utilities/common";
 import { IOSProjectInfo } from "../utilities/ios";
 import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
 import { CancelToken } from "./BuildManager";
 
 // Assuming users have ios folder in their project's root
-export const getIosSourceDir = (workspace: string) => `${workspace}/ios`;
+export const getIosSourceDir = (appRootFolder: string) => path.join(appRootFolder, "ios");
 
 async function getBundleID(appPath: string) {
   return (
@@ -22,22 +21,30 @@ async function getBundleID(appPath: string) {
   ).stdout;
 }
 
-export async function findXcodeProject(workspace: string) {
-  const files = await fs.promises.readdir(getIosSourceDir(workspace));
+export async function findXcodeProject(appRootFolder: string) {
+  const iosSourceDir = getIosSourceDir(appRootFolder);
+  const xcworkspaceFiles = await workspace.findFiles(
+    new RelativePattern(iosSourceDir, "**/*.xcworkspace/*"),
+    "**/{node_modules,build,Pods}/**",
+    1
+  );
 
-  const xcworkspace = findFileWithExtension(files, ".xcworkspace");
-  const xcodeproj = findFileWithExtension(files, ".xcodeproj");
-
-  if (xcworkspace) {
+  if (xcworkspaceFiles.length === 1) {
     return {
-      name: xcworkspace,
+      name: Uri.joinPath(xcworkspaceFiles[0], "..").fsPath,
       isWorkspace: true,
     };
   }
 
-  if (xcodeproj) {
+  const xcodeprojFiles = await workspace.findFiles(
+    new RelativePattern(iosSourceDir, "**/*.xcodeproj/*"),
+    "**/{node_modules,build,Pods}/**",
+    1
+  );
+
+  if (xcodeprojFiles.length === 1) {
     return {
-      name: xcodeproj,
+      name: Uri.joinPath(xcodeprojFiles[0], "..").fsPath,
       isWorkspace: false,
     };
   }
@@ -46,18 +53,18 @@ export async function findXcodeProject(workspace: string) {
 }
 
 export async function buildIos(
-  workspaceDir: string,
+  appRootFolder: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken
 ) {
-  const sourceDir = getIosSourceDir(workspaceDir);
+  const sourceDir = getIosSourceDir(appRootFolder);
 
   const isPodsInstalled = await checkIosDependenciesInstalled();
   if (!isPodsInstalled) {
-    await cancelToken.adapt(installIOSDependencies(workspaceDir, forceCleanBuild));
+    await cancelToken.adapt(installIOSDependencies(appRootFolder, forceCleanBuild));
   }
 
-  const xcodeProject = await findXcodeProject(workspaceDir);
+  const xcodeProject = await findXcodeProject(appRootFolder);
 
   if (!xcodeProject) {
     throw new Error(`Could not find Xcode project files in "${sourceDir}" folder`);

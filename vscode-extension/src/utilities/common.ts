@@ -19,10 +19,6 @@ export function getDevServerScriptUrl() {
   return process.env.DEV_SCRIPT_URL;
 }
 
-export function getWorkspacePath() {
-  return workspace.workspaceFolders?.[0]?.uri?.fsPath ?? "";
-}
-
 export function getCpuArchitecture() {
   const arch = os.arch();
   switch (arch) {
@@ -93,8 +89,4 @@ export async function calculateMD5(path: string, hash: Hash = createHash("md5"))
     }
   }
   return hash;
-}
-
-export function findFileWithExtension(files: string[], extension: string) {
-  return files.find((file) => extname(file) === extension);
 }

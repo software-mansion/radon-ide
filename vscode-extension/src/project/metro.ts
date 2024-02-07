@@ -4,9 +4,8 @@ import vscode from "vscode";
 import { Disposable } from "vscode";
 import { exec, ChildProcess } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { extensionContext } from "../utilities/extensionContext";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
-import { getWorkspacePath } from "../utilities/common";
 
 export interface MetroDelegate {
   onBundleError(message: string): void;
@@ -56,25 +55,25 @@ export class Metro implements Disposable {
   }
 
   private launchExpoMetro(
-    workspaceDir: string,
+    appRootFolder: string,
     libPath: string,
     resetCache: boolean,
     metroEnv: typeof process.env
   ) {
     return exec(`node`, [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
-      cwd: workspaceDir,
+      cwd: appRootFolder,
       env: metroEnv,
     });
   }
 
   private launchPackager(
-    workspaceDir: string,
+    appRootFolder: string,
     libPath: string,
     resetCache: boolean,
     metroEnv: typeof process.env
   ) {
     return exec(
-      `${workspaceDir}/node_modules/react-native/scripts/packager.sh`,
+      `${appRootFolder}/node_modules/react-native/scripts/packager.sh`,
       [
         ...(resetCache ? ["--reset-cache"] : []),
         "--no-interactive",
@@ -86,31 +85,27 @@ export class Metro implements Disposable {
         path.join(libPath, "metro_reporter.js"),
       ],
       {
-        cwd: workspaceDir,
+        cwd: appRootFolder,
         env: metroEnv,
       }
     );
   }
 
   public async startInternal(resetCache: boolean) {
-    let workspaceDir = getWorkspacePath();
-    if (!workspaceDir) {
-      Logger.warn("No workspace directory found");
-      return;
-    }
+    let appRootFolder = getAppRootFolder();
     await this.devtools.start();
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
 
     // if @expo/cli exists in workspace directory, we assume its an expo project and use expo start command, otherwise we use packager script
-    const expoCliPath = path.join(workspaceDir, "node_modules/@expo/cli");
+    const expoCliPath = path.join(appRootFolder, "node_modules/@expo/cli");
     const expoCliExists = await vscode.workspace.fs.stat(vscode.Uri.file(expoCliPath)).then(
       (stat) => stat.type === vscode.FileType.File,
       () => false
     );
     const metroEnv = {
       ...process.env,
-      NODE_PATH: path.join(workspaceDir, "node_modules"),
+      NODE_PATH: path.join(appRootFolder, "node_modules"),
       RCT_METRO_PORT: "0",
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       REACT_NATIVE_IDE_LIB_PATH: libPath,
@@ -122,9 +117,9 @@ export class Metro implements Disposable {
     };
     if (expoCliExists) {
       // should be able to use expo metro here
-      this.subprocess = this.launchExpoMetro(workspaceDir, libPath, resetCache, metroEnv);
+      this.subprocess = this.launchExpoMetro(appRootFolder, libPath, resetCache, metroEnv);
     } else {
-      this.subprocess = this.launchPackager(workspaceDir, libPath, resetCache, metroEnv);
+      this.subprocess = this.launchPackager(appRootFolder, libPath, resetCache, metroEnv);
     }
 
     const rl = readline.createInterface({

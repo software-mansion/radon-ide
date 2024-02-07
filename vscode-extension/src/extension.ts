@@ -14,7 +14,7 @@ import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger, enableDevModeLogging } from "./Logger";
-import { setExtensionContext } from "./utilities/extensionContext";
+import { setAppRootFolder, setExtensionContext } from "./utilities/extensionContext";
 import { command } from "./utilities/subprocess";
 import path from "path";
 import os from "os";
@@ -40,16 +40,12 @@ function handleUncaughtErrors() {
   });
 }
 
-export function activate(context: ExtensionContext) {
-  activateAsync(context);
-}
-
 export function deactivate(context: ExtensionContext): undefined {
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", false);
   return undefined;
 }
 
-async function activateAsync(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
   setExtensionContext(context);
   if (context.extensionMode === ExtensionMode.Development) {
@@ -57,6 +53,11 @@ async function activateAsync(context: ExtensionContext) {
   }
 
   await fixBinaries(context);
+  const appRootFolder = await findAppRootFolder(context);
+  if (appRootFolder) {
+    Logger.info(`Found app root folder: ${appRootFolder}`);
+    setAppRootFolder(appRootFolder);
+  }
 
   context.subscriptions.push(
     commands.registerCommand("RNIDE.openPanel", (fileName?: string, lineNumber?: number) => {
@@ -66,6 +67,11 @@ async function activateAsync(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showPanel", (fileName?: string, lineNumber?: number) => {
       PreviewsPanel.render(context, fileName, lineNumber);
+    })
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.diagnose", async () => {
+      await diagnoseWorkspaceStructure(appRootFolder);
     })
   );
 
@@ -94,8 +100,77 @@ async function activateAsync(context: ExtensionContext) {
     )
   );
 
-  commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
-  PreviewsPanel.extensionActivated(context);
+  if (appRootFolder) {
+    commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
+    PreviewsPanel.extensionActivated(context);
+  }
+}
+
+async function findAppRootFolder(context: ExtensionContext) {
+  const rnPackageLocations = await workspace.findFiles(
+    "**/node_modules/react-native/package.json",
+    null,
+    2
+  );
+  if (rnPackageLocations.length === 1) {
+    return Uri.joinPath(rnPackageLocations[0], "../../..").fsPath;
+  } else if (rnPackageLocations.length > 1) {
+    Logger.error("Found multiple react-native instances in the workspace");
+    return undefined;
+  }
+  Logger.info("Could not find react-native package.json in the workspace, looking for app.json");
+
+  const appJsonLocations = await workspace.findFiles("**/app.json", "**/node_modules", 2);
+  if (appJsonLocations.length === 1) {
+    return Uri.joinPath(appJsonLocations[0], "..").fsPath;
+  } else if (appJsonLocations.length > 1) {
+    Logger.error("Found multiple app.json files in the workspace");
+    return undefined;
+  }
+  Logger.info(
+    "Could not find react-native package.json in the workspace, looking for metro.config.js"
+  );
+
+  const metroConfigLocations = await workspace.findFiles(
+    "**/metro.config.js",
+    "**/node_modules",
+    2
+  );
+  if (metroConfigLocations.length === 1) {
+    return Uri.joinPath(metroConfigLocations[0], "..").fsPath;
+  } else if (metroConfigLocations.length > 1) {
+    Logger.error("Found multiple metro.config.js files in the workspace");
+    return undefined;
+  }
+
+  return undefined;
+}
+
+async function diagnoseWorkspaceStructure(appRootFolder: string | undefined) {
+  if (!appRootFolder) {
+    window.showErrorMessage(
+      `
+      React Native IDE couldn't find root application folder in this workspace.\n
+      Please make sure that the opened workspace contains a valid React Native or Expo project.\n
+      The way extension verifies the project is by looking for either: app.json, metro.config.js,
+      or node_modules/react-native folder`,
+      "Dismiss"
+    );
+    return;
+  }
+  window
+    .showInformationMessage(
+      `
+        Workspace structure seems to be ok.\n
+        You can open the IDE Panel using the button below or from the command palette.`,
+      "Open IDE Panel",
+      "Cancel"
+    )
+    .then((item) => {
+      if (item === "Open IDE Panel") {
+        commands.executeCommand("RNIDE.openPanel");
+      }
+    });
 }
 
 async function fixBinaries(context: ExtensionContext) {

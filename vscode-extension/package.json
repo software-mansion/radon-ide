@@ -4,7 +4,9 @@
   "description": "Extension turning VSCode into a full-featured IDE for React Native and Expo",
   "publisher": "software-mansion",
   "activationEvents": [
-    "workspaceContains:node_modules/react-native"
+    "workspaceContains:node_modules/react-native",
+    "workspaceContains:app.json",
+    "workspaceContains:metro.config.js"
   ],
   "version": "0.0.1",
   "engines": {
@@ -32,6 +34,12 @@
         "title": "Show IDE Panel",
         "category": "React Native IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.diagnose",
+        "title": "Diagnostics",
+        "category": "React Native IDE",
+        "enablement": "!RNIDE.extensionIsActive"
       }
     ],
     "menus": {

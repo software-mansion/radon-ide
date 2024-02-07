@@ -1,8 +1,8 @@
 import * as PackageManager from "@expo/package-manager";
 import { exec } from "./subprocess";
-import { getWorkspacePath } from "./common";
 import { promises as fs } from "fs";
 import { resolve } from "path";
+import { getAppRootFolder } from "./extensionContext";
 
 export type PackageManagerName = "npm" | "pnpm" | "yarn" | "bun";
 
@@ -16,7 +16,7 @@ async function pathExists(p: string) {
 }
 
 export async function resolvePackageManager(): Promise<PackageManagerName> {
-  const workspacePath = getWorkspacePath();
+  const workspacePath = getAppRootFolder();
   return await Promise.all([
     pathExists(resolve(workspacePath, "yarn.lock")),
     pathExists(resolve(workspacePath, "package-lock.json")),
@@ -46,7 +46,7 @@ export function isPackageManagerAvailable(manager: PackageManagerName): boolean 
 }
 
 export async function installNodeModulesAsync(packageManager: PackageManagerName) {
-  const options = { cwd: getWorkspacePath() };
+  const options = { cwd: getAppRootFolder() };
   if (packageManager === "yarn") {
     await new PackageManager.YarnPackageManager(options).installAsync();
   } else if (packageManager === "pnpm") {

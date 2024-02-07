@@ -2,9 +2,9 @@ import { Webview, Disposable } from "vscode";
 import { Logger } from "../Logger";
 import { installNodeModulesAsync, resolvePackageManager } from "../utilities/packageManager";
 import { DependencyChecker } from "./DependencyChecker";
-import { getWorkspacePath } from "../utilities/common";
 import { command } from "../utilities/subprocess";
 import { getIosSourceDir } from "../builders/buildIOS";
+import { getAppRootFolder } from "../utilities/extensionContext";
 
 export class DependencyInstaller implements Disposable {
   private webview: Webview;
@@ -66,14 +66,14 @@ export class DependencyInstaller implements Disposable {
       command: "installingPods",
     });
 
-    await installIOSDependencies(getWorkspacePath(), false);
+    await installIOSDependencies(getAppRootFolder(), false);
     Logger.debug("Finished installing pods!");
     await this.dependencyChecker.checkPodsInstalled();
   }
 }
 
-export function installIOSDependencies(workspaceDir: string, forceCleanBuild: boolean) {
-  const iosDirPath = getIosSourceDir(workspaceDir);
+export function installIOSDependencies(appRootFolder: string, forceCleanBuild: boolean) {
+  const iosDirPath = getIosSourceDir(appRootFolder);
 
   if (!iosDirPath) {
     throw new Error(`ios directory was not found inside the workspace.`);

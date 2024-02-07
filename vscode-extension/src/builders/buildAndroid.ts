@@ -11,7 +11,7 @@ const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
 
 // Assuming users have android folder in their project's root
-export const getAndroidSourceDir = (workspace: string) => `${workspace}/android`;
+export const getAndroidSourceDir = (appRootFolder: string) => path.join(appRootFolder, "android");
 
 async function build(projectDir: string, gradleArgs: string[], cancelToken: CancelToken) {
   try {
@@ -44,23 +44,23 @@ async function extractPackageName(artifactPath: string, cancelToken: CancelToken
   return packageName;
 }
 
-function getApkPath(workspaceDir: string) {
-  const androidSourceDir = getAndroidSourceDir(workspaceDir);
+function getApkPath(appRootFolder: string) {
+  const androidSourceDir = getAndroidSourceDir(appRootFolder);
   return path.join(androidSourceDir, RELATIVE_APK_PATH);
 }
 
-export async function getAndroidBuildPaths(workspaceDir: string, cancelToken: CancelToken) {
-  const apkPath = getApkPath(workspaceDir);
+export async function getAndroidBuildPaths(appRootFolder: string, cancelToken: CancelToken) {
+  const apkPath = getApkPath(appRootFolder);
   const packageName = await extractPackageName(apkPath, cancelToken);
   return { apkPath, packageName };
 }
 
 export async function buildAndroid(
-  workspaceDir: string,
+  appRootFolder: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken
 ) {
-  const androidSourceDir = getAndroidSourceDir(workspaceDir);
+  const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const cpuArchitecture = getCpuArchitecture();
   const gradleArgs = [
     "-x",
@@ -71,5 +71,5 @@ export async function buildAndroid(
   ];
   await build(androidSourceDir, gradleArgs, cancelToken);
   Logger.debug("Android build sucessful");
-  return getAndroidBuildPaths(workspaceDir, cancelToken);
+  return getAndroidBuildPaths(appRootFolder, cancelToken);
 }
