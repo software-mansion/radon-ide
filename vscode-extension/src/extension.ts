@@ -107,6 +107,20 @@ export async function activate(context: ExtensionContext) {
 }
 
 async function findAppRootFolder(context: ExtensionContext) {
+  const rnConfigFilesLocation = await workspace.findFiles(
+    "**/{metro.config.js,app.config.js,app.json}",
+    "**/node_modules",
+    1
+  );
+  if (rnConfigFilesLocation.length) {
+    // we expect the config files to be in the root folder of the app
+    return Uri.joinPath(rnConfigFilesLocation[0], "..").fsPath;
+  }
+
+  Logger.info(
+    "Could not find react-native/expo config files in the workspace, looking for react-native installation"
+  );
+
   const rnPackageLocations = await workspace.findFiles(
     "**/node_modules/react-native/package.json",
     null,
@@ -116,30 +130,6 @@ async function findAppRootFolder(context: ExtensionContext) {
     return Uri.joinPath(rnPackageLocations[0], "../../..").fsPath;
   } else if (rnPackageLocations.length > 1) {
     Logger.error("Found multiple react-native instances in the workspace");
-    return undefined;
-  }
-  Logger.info("Could not find react-native package.json in the workspace, looking for app.json");
-
-  const appJsonLocations = await workspace.findFiles("**/app.json", "**/node_modules", 2);
-  if (appJsonLocations.length === 1) {
-    return Uri.joinPath(appJsonLocations[0], "..").fsPath;
-  } else if (appJsonLocations.length > 1) {
-    Logger.error("Found multiple app.json files in the workspace");
-    return undefined;
-  }
-  Logger.info(
-    "Could not find react-native package.json in the workspace, looking for metro.config.js"
-  );
-
-  const metroConfigLocations = await workspace.findFiles(
-    "**/metro.config.js",
-    "**/node_modules",
-    2
-  );
-  if (metroConfigLocations.length === 1) {
-    return Uri.joinPath(metroConfigLocations[0], "..").fsPath;
-  } else if (metroConfigLocations.length > 1) {
-    Logger.error("Found multiple metro.config.js files in the workspace");
     return undefined;
   }
 

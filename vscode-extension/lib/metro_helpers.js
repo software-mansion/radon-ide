@@ -93,10 +93,11 @@ function adaptMetroConfig(config) {
 
 function metroServerReadyHandler(originalOnReadyHandler) {
   return (server, ...args) => {
+    const port = server.address().port;
+    process.env.EXPO_PACKAGER_PROXY_URL =
+      process.env.EXPO_MANIFEST_PROXY_URL = `http://localhost:${port}`;
     originalOnReadyHandler && originalOnReadyHandler(server, ...args);
-    process.stdout.write(
-      JSON.stringify({ type: "rnp_initialize_done", port: server.address().port })
-    );
+    process.stdout.write(JSON.stringify({ type: "rnp_initialize_done", port }));
     process.stdout.write("\n");
   };
 }

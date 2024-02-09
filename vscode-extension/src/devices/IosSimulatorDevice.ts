@@ -5,9 +5,10 @@ import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { DeviceInfo, IOSDeviceTypeInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
-import { BuildResult } from "../builders/BuildManager";
+import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
+import http from "http";
 import { DeviceSettings } from "../common/Project";
 
 interface SimulatorInfo {
@@ -89,33 +90,91 @@ export class IosSimulatorDevice extends DeviceBase {
     try {
       await exec("/usr/libexec/PlistBuddy", [
         "-c",
+        "Delete :RCT_jsLocation",
+        "-c",
         `Add :RCT_jsLocation string localhost:${metroPort}`,
         userDefaultsLocation,
       ]);
     } catch (e) {
-      await exec("/usr/libexec/PlistBuddy", [
-        "-c",
-        `Set :RCT_jsLocation localhost:${metroPort}`,
-        userDefaultsLocation,
-      ]);
+      // Delete command fails if the key doesn't exists, but later commands run regardless,
+      // despite that process exits with non-zero code. We can ignore this error.
     }
+  }
+
+  async launchWithExpoDevClientDeeplink(build: IOSBuildResult, expoDevClientDeeplink: string) {
+    // For Expo dev-client setup, we use deeplink to launch the app. For this approach to work we do the following:
+    // 1. Add the deeplink to the scheme approval list
+    // 2. Terminate the app if it's running
+    // 3. Open the deeplink
+    const deviceSetLocation = getOrCreateDeviceSet();
+
+    // Add the deeplink to the scheme approval list:
+    const schema = new URL(expoDevClientDeeplink).protocol.slice(0, -1);
+    Logger.error(
+      "COMMAND",
+      `Add :com.apple.CoreSimulator.CoreSimulatorBridge-->${schema} string ${build.bundleID}`
+    );
+    await exec("/usr/libexec/PlistBuddy", [
+      "-c",
+      "Clear dict",
+      "-c",
+      `Add :com.apple.CoreSimulator.CoreSimulatorBridge-->${schema} string ${build.bundleID}`,
+      path.join(
+        deviceSetLocation,
+        this.deviceUDID,
+        "data",
+        "Library",
+        "Preferences",
+        "com.apple.launchservices.schemeapproval.plist"
+      ),
+    ]);
+
+    // Terminate the app if it's running:
+    try {
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "terminate",
+        this.deviceUDID,
+        build.bundleID,
+      ]);
+    } catch (e) {
+      // terminate will exit with non-zero code when the app wasn't running. we ignore this error
+    }
+
+    // Use openurl to open the deeplink:
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "openurl",
+      this.deviceUDID,
+      expoDevClientDeeplink + "&disableOnboarding=1", // disable onboarding dialog via deeplink query param
+    ]);
   }
 
   async launchApp(build: BuildResult, metroPort: number) {
     if (build.platform !== Platform.IOS) {
       throw new Error("Invalid platform");
     }
-    const deviceSetLocation = getOrCreateDeviceSet();
-    await this.configureMetroPort(build.bundleID, metroPort);
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "launch",
-      "--terminate-running-process",
-      this.deviceUDID,
-      build.bundleID,
-    ]);
+    Logger.error("Bundle ID", build.bundleID);
+    const expoDevClientDeeplink = await fetchExpoDevClientLaunchDeeplink(metroPort);
+    if (expoDevClientDeeplink) {
+      this.launchWithExpoDevClientDeeplink(build, expoDevClientDeeplink);
+    } else {
+      const deviceSetLocation = getOrCreateDeviceSet();
+      await this.configureMetroPort(build.bundleID, metroPort);
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "launch",
+        "--terminate-running-process",
+        this.deviceUDID,
+        build.bundleID,
+      ]);
+    }
   }
 
   async installApp(build: BuildResult, forceReinstall: boolean) {
@@ -265,4 +324,27 @@ function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
     case "xxxlarge":
       return "extra-extra-extra-large";
   }
+}
+
+function fetchExpoDevClientLaunchDeeplink(metroPort: number) {
+  return new Promise<string | void>((resolve, reject) => {
+    const req = http.request(
+      new URL(`http://localhost:${metroPort}/_expo/link?platform=ios&choice=expo-dev-client`),
+      (res) => {
+        if (res.statusCode === 307) {
+          // we want to retrieve redirect location
+          resolve(res.headers.location);
+        } else {
+          resolve();
+        }
+        res.resume();
+      }
+    );
+    req.on("error", (e) => {
+      // we still want to resolve on error, because the URL may not exists, in which
+      // case it serves as a mechanism for detecting non expo-dev-client setups
+      resolve();
+    });
+    req.end();
+  });
 }
