@@ -29,9 +29,10 @@ export class Preview implements Disposable {
     });
 
     return new Promise<string>((resolve, reject) => {
-      subprocess.catch((reason) =>
-        reject(new Error(`Preview server exited with code ${reason.exitCode}`))
-      );
+      subprocess.catch((reason) => {
+        Logger.error("Preview server exited unexpectedly", reason);
+        reject(new Error(`Preview server exited with code ${reason.exitCode}`));
+      });
       subprocess.then(() => {
         // we expect the preview server to produce a line with the URL
         // if it doesn't do that and exists w/o error, we still want to reject
