@@ -18,10 +18,18 @@ export class Devtools implements Disposable {
     return this.socket !== undefined;
   }
 
-  public async start() {
+  public async ready() {
     if (!this.startPromise) {
-      this.startPromise = this.startInternal();
+      throw new Error("Devtools not started");
     }
+    await this.startPromise;
+  }
+
+  public async start() {
+    if (this.startPromise) {
+      throw new Error("Devtools already started");
+    }
+    this.startPromise = this.startInternal();
     return this.startPromise;
   }
 
@@ -56,6 +64,7 @@ export class Devtools implements Disposable {
     return new Promise<void>((resolve) => {
       this.server.listen(0, () => {
         this._port = this.server.address().port;
+        Logger.info(`Devtools started on port ${this._port}`);
         resolve();
       });
     });

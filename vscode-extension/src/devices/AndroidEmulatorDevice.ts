@@ -77,8 +77,13 @@ export class AndroidEmulatorDevice extends DeviceBase {
     this.emulatorProcess = subprocess;
 
     const initPromise = new Promise<string>((resolve, reject) => {
-      subprocess.on("exit", (code) => {
-        reject();
+      subprocess.catch((reason) => reject(reason));
+      subprocess.then(() => {
+        // we expect the process to produce an expected output that we listed for
+        // below and resolve the promise earlier. However, if the process exists
+        // and the promise is still not resolved we should reject it such that we
+        // don't hold other code waiting for it indefinitely.
+        reject(new Error("Emulator process exited without producing expected output"));
       });
 
       const rl = readline.createInterface({

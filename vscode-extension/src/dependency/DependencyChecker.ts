@@ -7,7 +7,6 @@ import { SDKMANAGER_BIN_PATH } from "../utilities/sdkmanager";
 import { JAVA_HOME } from "../utilities/android";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
-import { getAndroidSourceDir } from "../builders/buildAndroid";
 import { getAppRootFolder } from "../utilities/extensionContext";
 
 export class DependencyChecker implements Disposable {

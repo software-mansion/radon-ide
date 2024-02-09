@@ -146,36 +146,8 @@ export async function getAndroidSystemImages() {
 export async function installSystemImages(
   sysImagePaths: string[],
   onLine?: (line: string) => void
-): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const downloadProcess = exec(
-      `sdkmanager ${sysImagePaths.map((imgPath) => `"${imgPath}"`).join(" ")}`,
-      [],
-      {
-        shell: true,
-      }
-    );
-
-    if (onLine && downloadProcess.stdout) {
-      const rl = readline.createInterface({
-        input: downloadProcess.stdout,
-      });
-
-      rl.on("line", onLine);
-    }
-
-    downloadProcess.on("exit", (code) => {
-      if (code !== 0) {
-        reject(new Error(`Command exited with code ${code}`));
-      } else {
-        resolve();
-      }
-    });
-
-    downloadProcess.on("error", (err) => {
-      reject(err);
-    });
-  });
+) {
+  return exec(`sdkmanager ${sysImagePaths.map((imgPath) => `"${imgPath}"`).join(" ")}`, []);
 }
 
 export async function removeSystemImages(sysImagePaths: string[]) {

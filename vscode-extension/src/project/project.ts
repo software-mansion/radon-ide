@@ -49,6 +49,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.start(false, false);
     this.trySelectingInitialDevice();
   }
+
   onBundleError(message: string): void {
     this.updateProjectState({ status: "buildError" });
   }
@@ -185,8 +186,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     Logger.debug(`Launching metro`);
     const waitForMetro = this.metro.start(forceCleanBuild);
-    await Promise.all([waitForDevtools, waitForMetro]);
-    Logger.debug(`Metro started on port ${this.metro.port} devtools on port ${this.devtools.port}`);
   }
 
   public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
@@ -271,7 +270,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       const device = await this.deviceManager.getDevice(deviceInfo);
       Logger.debug("Selected device is ready");
       // wait for metro/devtools to start before we continue
-      await Promise.all([this.metro.start(false), this.devtools.start()]);
+      await Promise.all([this.metro.ready(), this.devtools.ready()]);
       Logger.debug("Metro & devtools ready");
       const newDeviceSession = new DeviceSession(
         device,

@@ -29,11 +29,14 @@ export class Preview implements Disposable {
     });
 
     return new Promise<string>((resolve, reject) => {
-      rl.on("exit", (code) => {
-        if (code !== 0) {
-          Logger.error(`Preview server exited with code ${code}`);
-          reject(new Error(`Preview server exited with code ${code}`));
-        }
+      subprocess.catch((reason) =>
+        reject(new Error(`Preview server exited with code ${reason.exitCode}`))
+      );
+      subprocess.then(() => {
+        // we expect the preview server to produce a line with the URL
+        // if it doesn't do that and exists w/o error, we still want to reject
+        // the promise to prevent the caller from waiting indefinitely
+        reject(new Error("Preview server exited without URL"));
       });
 
       rl.on("line", (line: string) => {

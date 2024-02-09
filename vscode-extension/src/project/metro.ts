@@ -47,10 +47,18 @@ export class Metro implements Disposable {
     this.subprocess?.kill(9);
   }
 
-  public async start(resetCache: boolean) {
+  public async ready() {
     if (!this.startPromise) {
-      this.startPromise = this.startInternal(resetCache);
+      throw new Error("metro not started");
     }
+    await this.startPromise;
+  }
+
+  public async start(resetCache: boolean) {
+    if (this.startPromise) {
+      throw new Error("metro already started");
+    }
+    this.startPromise = this.startInternal(resetCache);
     return this.startPromise;
   }
 
@@ -93,7 +101,7 @@ export class Metro implements Disposable {
 
   public async startInternal(resetCache: boolean) {
     let appRootFolder = getAppRootFolder();
-    await this.devtools.start();
+    await this.devtools.ready();
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
 
@@ -130,8 +138,14 @@ export class Metro implements Disposable {
 
     const initPromise = new Promise<void>((resolve, reject) => {
       // reject if process exits
-      this.subprocess!.on("exit", (code) => {
-        reject(new Error(`Metro exited with code ${code}`));
+      this.subprocess?.catch((reason) => {
+        reject(new Error(`Metro exited with code ${reason.exitCode}`));
+      });
+      this.subprocess?.then(() => {
+        // we expect metro to produce a line with the port number indicating it started
+        // sucessfully. However, if it doesn't produce that line and exists, the promise
+        // would be waiting indefinitely, so we reject it in that case as well.
+        reject(new Error("Metro exited but did not start successfully."));
       });
       rl.on("line", (line: string) => {
         try {
@@ -142,6 +156,7 @@ export class Metro implements Disposable {
           switch (event.type) {
             case "rnp_initialize_done":
               this._port = event.port;
+              Logger.info(`Metro started on port ${this._port}`);
               resolve();
               break;
             case "bundling_error":
