@@ -140,7 +140,7 @@ export class Metro implements Disposable {
       // reject if process exits
       this.subprocess?.catch((reason) => {
         Logger.error("Metro exited unexpectedly", reason);
-        reject(new Error(`Metro exited with code ${reason.exitCode}`));
+        reject(new Error(`Metro exited with code ${reason.exitCode}: ${reason.message}`));
       });
       this.subprocess?.then(() => {
         // we expect metro to produce a line with the port number indicating it started
