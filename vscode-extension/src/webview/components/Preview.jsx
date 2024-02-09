@@ -196,9 +196,7 @@ function Preview({ isInspecting, setIsInspecting }) {
       {hasBuildError && (
         <div className="phone-content">
           <div className="phone-sized phone-screen extension-error-screen">
-            <h2>
-              An error occurred inside the extension. Click the button to restart the emulator.
-            </h2>
+            <h2>An error occurred. Click the button to restart the process.</h2>
             <Button
               type="secondary"
               onClick={() => {
