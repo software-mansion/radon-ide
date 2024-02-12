@@ -70,7 +70,6 @@ function Preview({ isInspecting, setIsInspecting }) {
     e.preventDefault();
     wrapperDivRef.current.focus();
     if (isInspecting) {
-      project.inspectElementAt();
       sendInspect(e, "Down", true);
       setIsInspecting(false);
     } else if (inspectData) {
