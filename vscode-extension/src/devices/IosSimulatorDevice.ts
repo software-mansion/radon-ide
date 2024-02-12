@@ -110,10 +110,6 @@ export class IosSimulatorDevice extends DeviceBase {
 
     // Add the deeplink to the scheme approval list:
     const schema = new URL(expoDevClientDeeplink).protocol.slice(0, -1);
-    Logger.error(
-      "COMMAND",
-      `Add :com.apple.CoreSimulator.CoreSimulatorBridge-->${schema} string ${build.bundleID}`
-    );
     await exec("/usr/libexec/PlistBuddy", [
       "-c",
       "Clear dict",
@@ -158,7 +154,6 @@ export class IosSimulatorDevice extends DeviceBase {
     if (build.platform !== Platform.IOS) {
       throw new Error("Invalid platform");
     }
-    Logger.error("Bundle ID", build.bundleID);
     const expoDevClientDeeplink = await fetchExpoDevClientLaunchDeeplink(metroPort);
     if (expoDevClientDeeplink) {
       this.launchWithExpoDevClientDeeplink(build, expoDevClientDeeplink);
