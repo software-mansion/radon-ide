@@ -48,7 +48,7 @@ export class DeviceSession implements Disposable {
 
     const waitForPreview = this.device.startPreview();
     Logger.debug("Will wait for app ready and for preview");
-    await Promise.all([/*waitForAppReady,*/ waitForPreview]);
+    await Promise.all([waitForAppReady, waitForPreview]);
     Logger.debug("App and preview ready, moving on...");
 
     const websocketAddress = await this.metro.getDebuggerURL(WAIT_FOR_DEBUGGER_TIMEOUT);
