@@ -69,6 +69,7 @@ export async function buildAndroid(
     ...(forceCleanBuild ? ["clean"] : []),
     "assembleDebug",
   ];
+  Logger.debug("Starting Android build");
   await build(androidSourceDir, gradleArgs, cancelToken);
   Logger.debug("Android build sucessful");
   return getAndroidBuildPaths(appRootFolder, cancelToken);

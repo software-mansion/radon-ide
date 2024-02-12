@@ -10,11 +10,12 @@ import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
-import { BuildResult } from "../builders/BuildManager";
+import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
+import { fetchExpoDevClientLaunchDeeplink } from "./IosSimulatorDevice";
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
@@ -149,22 +150,45 @@ export class AndroidEmulatorDevice extends DeviceBase {
     );
   }
 
-  async launchApp(build: BuildResult, metroPort: number) {
-    if (build.platform !== Platform.Android) {
-      throw new Error("Invalid platform");
-    }
-    await this.configureMetroPort(build.packageName, metroPort);
+  async launchWithExpoDevClientDeeplink(metroPort: number, expoDevClientDeeplink: string) {
+    // For Expo dev-client setup, we use deeplink to launch the app. Since Expo's manifest is configured to
+    // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
+    await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
+    // next, we open the link
     await exec(ADB_PATH, [
       "-s",
       this.serial!,
       "shell",
-      "monkey",
-      "-p",
-      build.packageName,
-      "-c",
-      "android.intent.category.LAUNCHER",
-      "1",
+      "am",
+      "start",
+      "-a",
+      "android.intent.action.VIEW",
+      "-d",
+      expoDevClientDeeplink + "&disableOnboarding=1", // disable onboarding dialog via deeplink query param,
     ]);
+  }
+
+  async launchApp(build: BuildResult, metroPort: number) {
+    if (build.platform !== Platform.Android) {
+      throw new Error("Invalid platform");
+    }
+    const expoDevClientDeeplink = await fetchExpoDevClientLaunchDeeplink(metroPort, "android");
+    if (expoDevClientDeeplink) {
+      this.launchWithExpoDevClientDeeplink(metroPort, expoDevClientDeeplink);
+    } else {
+      await this.configureMetroPort(build.packageName, metroPort);
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "shell",
+        "monkey",
+        "-p",
+        build.packageName,
+        "-c",
+        "android.intent.category.LAUNCHER",
+        "1",
+      ]);
+    }
   }
 
   async installApp(build: BuildResult, forceReinstall: boolean) {

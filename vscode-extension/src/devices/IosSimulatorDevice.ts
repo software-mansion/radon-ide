@@ -154,7 +154,7 @@ export class IosSimulatorDevice extends DeviceBase {
     if (build.platform !== Platform.IOS) {
       throw new Error("Invalid platform");
     }
-    const expoDevClientDeeplink = await fetchExpoDevClientLaunchDeeplink(metroPort);
+    const expoDevClientDeeplink = await fetchExpoDevClientLaunchDeeplink(metroPort, "ios");
     if (expoDevClientDeeplink) {
       this.launchWithExpoDevClientDeeplink(build, expoDevClientDeeplink);
     } else {
@@ -321,10 +321,12 @@ function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
   }
 }
 
-function fetchExpoDevClientLaunchDeeplink(metroPort: number) {
+export function fetchExpoDevClientLaunchDeeplink(metroPort: number, platformString: string) {
   return new Promise<string | void>((resolve, reject) => {
     const req = http.request(
-      new URL(`http://localhost:${metroPort}/_expo/link?platform=ios&choice=expo-dev-client`),
+      new URL(
+        `http://localhost:${metroPort}/_expo/link?platform=${platformString}&choice=expo-dev-client`
+      ),
       (res) => {
         if (res.statusCode === 307) {
           // we want to retrieve redirect location
