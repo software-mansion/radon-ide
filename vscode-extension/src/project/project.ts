@@ -225,6 +225,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.resumeDebugger();
   }
 
+  public async stepOverDebugger() {
+    this.deviceSession?.stepOverDebugger();
+  }
+
   public async openNavigation(navigationItemID: string) {
     this.deviceSession?.openNavigation(navigationItemID);
   }

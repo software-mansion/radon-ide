@@ -550,6 +550,14 @@ export class DebugAdapter extends DebugSession {
     this.sendEvent(new Event("rnp_continued"));
   }
 
+  protected async nextRequest(
+    response: DebugProtocol.NextResponse,
+    args: DebugProtocol.NextArguments
+  ): Promise<void> {
+    await this.sendCDPMessage("Debugger.stepOver", {});
+    this.sendResponse(response);
+  }
+
   protected disconnectRequest(
     response: DebugProtocol.DisconnectResponse,
     args: DebugProtocol.DisconnectArguments

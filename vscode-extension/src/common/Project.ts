@@ -42,6 +42,7 @@ export interface ProjectInterface {
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
 
   resumeDebugger(): Promise<void>;
+  stepOverDebugger(): Promise<void>;
 
   openNavigation(navigationItemID: string): Promise<void>;
 

@@ -165,10 +165,17 @@ function Preview({ isInspecting, setIsInspecting }) {
           )}
           {debugPaused && (
             <div className="phone-screen phone-debug-overlay">
-              <button className="continue-button" onClick={() => project.resumeDebugger()}>
+              <div className="continue-button">
                 Paused in debugger&nbsp;
-                <span className="codicon codicon-debug-continue" />
-              </button>
+                <button
+                  className="codicon codicon-debug-continue"
+                  onClick={() => project.resumeDebugger()}
+                />
+                <button
+                  className="codicon codicon-debug-step-over"
+                  onClick={() => project.stepOverDebugger()}
+                />
+              </div>
             </div>
           )}
           {debugException && (

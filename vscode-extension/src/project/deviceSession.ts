@@ -92,6 +92,10 @@ export class DeviceSession implements Disposable {
     this.debugSession?.customRequest("continue");
   }
 
+  public stepOverDebugger() {
+    this.debugSession?.customRequest("next");
+  }
+
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
     this.device.sendTouch(xRatio, yRatio, type);
   }
