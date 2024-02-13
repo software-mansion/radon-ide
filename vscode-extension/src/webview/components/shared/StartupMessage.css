@@ -1,0 +1,10 @@
+.startup-message-wrapper {
+  display: flex;
+  margin-left: 16px;
+}
+
+.startup-message-dots {
+  width: 16px;
+  display: inline-grid;
+  position: relative;
+}
