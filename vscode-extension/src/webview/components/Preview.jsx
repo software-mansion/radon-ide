@@ -188,6 +188,7 @@ function Preview({ isInspecting, setIsInspecting }) {
           <div className="phone-sized phone-screen phone-content-loading-overlay" />
           <div className="phone-sized phone-screen phone-content-loading ">
             <VSCodeProgressRing />
+            <div>{projectState?.startupMessage}</div>
           </div>
           <img src={device.frameImage} className="phone-frame" />
         </div>

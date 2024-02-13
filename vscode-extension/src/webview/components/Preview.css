@@ -98,6 +98,7 @@ vscode-dropdown > .codicon {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
 }
 
 .phone-content-loading-overlay {

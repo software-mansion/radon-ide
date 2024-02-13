@@ -252,6 +252,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.eventEmitter.emit("projectStateChanged", this.projectState);
   }
 
+  private updateProjectStateForDevice(deviceInfo: DeviceInfo, newState: Partial<ProjectState>) {
+    if (deviceInfo === this.projectState.selectedDevice) {
+      this.updateProjectState(newState);
+    }
+  }
+
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
     Logger.log("Device selected", deviceInfo.name);
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
@@ -263,12 +269,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.updateProjectState({
       selectedDevice: deviceInfo,
       status: "starting",
+      startupMessage: "Initializing device",
       previewURL: undefined,
     });
 
     try {
       const device = await this.deviceManager.getDevice(deviceInfo);
       Logger.debug("Selected device is ready");
+      this.updateProjectStateForDevice(deviceInfo, { startupMessage: "Starting packager" });
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
       Logger.debug("Metro & devtools ready");
@@ -280,7 +288,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       );
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(this.deviceSettings);
+      await newDeviceSession.start(this.deviceSettings, (startupMessage) =>
+        this.updateProjectStateForDevice(deviceInfo, { startupMessage })
+      );
       Logger.debug("Device session started");
 
       const previewURL = newDeviceSession.previewURL;
@@ -288,12 +298,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         throw new Error("No preview URL");
       }
 
-      if (this.projectState.selectedDevice === deviceInfo) {
-        this.updateProjectState({
-          status: "running",
-          previewURL,
-        });
-      }
+      this.updateProjectStateForDevice(deviceInfo, {
+        status: "running",
+        previewURL,
+      });
     } catch (e) {
       Logger.error("Couldn't start device session", e);
       if (this.projectState.selectedDevice === deviceInfo) {
