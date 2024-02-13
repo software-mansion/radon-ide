@@ -117,7 +117,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   }
 
   public async restart(forceCleanBuild: boolean) {
-    this.updateProjectState({ status: "starting" });
+    this.updateProjectState({ status: "starting", startupMessage: "Restarting" });
     if (forceCleanBuild) {
       await this.start(true, forceCleanBuild);
       await this.selectDevice(this.projectState.selectedDevice!, forceCleanBuild);
@@ -158,6 +158,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
             displayName: payload.displayName,
             id: payload.id,
           });
+          break;
+        case "rnp_fastRefreshStarted":
+          this.updateProjectState({ status: "refreshing" });
+          break;
+        case "rnp_fastRefreshComplete":
+          this.updateProjectState({ status: "running" });
           break;
       }
     });

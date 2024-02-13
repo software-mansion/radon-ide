@@ -163,6 +163,12 @@ function Preview({ isInspecting, setIsInspecting }) {
               />
             </div>
           )}
+          {projectState.status == "refreshing" && (
+            <div className="phone-screen phone-refreshing-overlay">
+              <VSCodeProgressRing />
+              <div>Refreshing...</div>
+            </div>
+          )}
           {debugPaused && (
             <div className="phone-screen phone-debug-overlay">
               <div className="continue-button">

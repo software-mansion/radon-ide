@@ -6,7 +6,7 @@ export type DeviceSettings = {
 };
 
 export type ProjectState = {
-  status: "starting" | "running" | "buildError" | "runtimeError" | "debuggerPaused";
+  status: "starting" | "running" | "buildError" | "runtimeError" | "debuggerPaused" | "refreshing";
   startupMessage?: string; // Only used when status is "starting"
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;

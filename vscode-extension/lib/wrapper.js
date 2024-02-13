@@ -149,6 +149,14 @@ export function PreviewAppWrapper({ children, ...rest }) {
       });
 
       LogBox.uninstall();
+      const LoadingView = require("react-native/Libraries/Utilities/LoadingView");
+      LoadingView.showMessage = (message) => {
+        agent._bridge.send("rnp_fastRefreshStarted");
+      };
+      LoadingView.hide = () => {
+        agent._bridge.send("rnp_fastRefreshComplete");
+      };
+
       // console.reportErrorsAsExceptions = false;
     }
 
