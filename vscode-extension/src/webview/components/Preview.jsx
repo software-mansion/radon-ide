@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import clamp from "lodash/clamp";
 import { throttle } from "../utilities/common";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
@@ -25,6 +26,7 @@ function cssPropertiesForDevice(device) {
 function Preview({ isInspecting, setIsInspecting }) {
   const wrapperDivRef = useRef(null);
   const [isPressing, setIsPressing] = useState(false);
+  const previewRef = useRef(null);
 
   const { projectState, project } = useProject();
 
@@ -38,10 +40,12 @@ function Preview({ isInspecting, setIsInspecting }) {
   }, [isInspecting]);
 
   function sendTouch(event, type) {
-    const imgRect = event.currentTarget.getBoundingClientRect();
+    const imgRect = previewRef.current.getBoundingClientRect();
     const x = (event.clientX - imgRect.left) / imgRect.width;
     const y = (event.clientY - imgRect.top) / imgRect.height;
-    project.dispatchTouch(x, y, type);
+    const clampedX = clamp(x, 0, 1);
+    const clampedY = clamp(y, 0, 1);
+    project.dispatchTouch(clampedX, clampedY, type);
   }
 
   function sendInspectUnthrottled(event, type) {
@@ -49,10 +53,12 @@ function Preview({ isInspecting, setIsInspecting }) {
       setInspectData(null);
       return;
     }
-    const imgRect = event.target.getBoundingClientRect();
+    const imgRect = previewRef.current.getBoundingClientRect();
     const x = (event.clientX - imgRect.left) / imgRect.width;
     const y = (event.clientY - imgRect.top) / imgRect.height;
-    project.inspectElementAt(x, y, type === "Down", setInspectData);
+    const clampedX = clamp(x, 0, 1);
+    const clampedY = clamp(y, 0, 1);
+    project.inspectElementAt(clampedX, clampedY, type === "Down", setInspectData);
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
@@ -77,7 +83,7 @@ function Preview({ isInspecting, setIsInspecting }) {
       setInspectData(null);
     } else {
       setIsPressing(true);
-      sendTouch(e, "Move");
+      sendTouch(e, "Down");
     }
   }
 
@@ -138,17 +144,19 @@ function Preview({ isInspecting, setIsInspecting }) {
       tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
       {!isStarting && !hasBuildError && (
-        <div className="phone-content">
+        <div
+          className="phone-content"
+          onMouseMove={onMouseMove}
+          onMouseLeave={onMouseLeave}
+          onMouseDown={onMouseDown}
+          onMouseUp={onMouseUp}>
           <img
             src={previewURL}
+            ref={previewRef}
             style={{
               cursor: isInspecting ? "crosshair" : "default",
             }}
             className="phone-screen"
-            onMouseMove={onMouseMove}
-            onMouseLeave={onMouseLeave}
-            onMouseDown={onMouseDown}
-            onMouseUp={onMouseUp}
           />
           {inspectFrame && (
             <div className="phone-screen phone-inspect-overlay">
