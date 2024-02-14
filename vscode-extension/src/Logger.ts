@@ -6,7 +6,13 @@ const logger = {
   log(message: string, ...args: any[]) {},
 
   debug(message: string, ...args: any[]) {
-    outputChannel.debug(message, ...args);
+    // in the initial phase od development, we want to surface debug messages such that
+    // they can be seen by the extension user. This is useful for collecting feedback and
+    // being able to better troubleshoot issues. In vscode, the default logging level is set
+    // to INFO. We don't want to ask users to change their logging level as it impacts all
+    // the logs vscode generates. Also, when changing log level, one need to reload vscode
+    // window for the extension to pick up the change.
+    outputChannel.info(message, ...args);
   },
 
   info(message: string, ...args: any[]) {
