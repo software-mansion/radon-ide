@@ -1,7 +1,6 @@
 import { Disposable } from "vscode";
 import path from "path";
-import readline from "readline";
-import { exec, ChildProcess } from "../utilities/subprocess";
+import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 
@@ -22,12 +21,6 @@ export class Preview implements Disposable {
     const subprocess = exec(simControllerBinary, this.args, {});
     this.subprocess = subprocess;
 
-    const rl = readline.createInterface({
-      input: subprocess.stdout!,
-      output: process.stdout,
-      terminal: false,
-    });
-
     return new Promise<string>((resolve, reject) => {
       subprocess.catch((reason) => {
         reject(new Error(`Preview server exited with code ${reason.exitCode}: ${reason.message}`));
@@ -39,7 +32,7 @@ export class Preview implements Disposable {
         reject(new Error("Preview server exited without URL"));
       });
 
-      rl.on("line", (line: string) => {
+      lineReader(subprocess).onLineRead((line) => {
         if (line.includes("http://")) {
           Logger.debug(`Preview server ready ${line}`);
           this.streamURL = line;

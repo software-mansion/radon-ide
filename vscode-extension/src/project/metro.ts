@@ -1,7 +1,6 @@
 import path from "path";
-import readline from "readline";
 import { Disposable } from "vscode";
-import { exec, ChildProcess } from "../utilities/subprocess";
+import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
@@ -116,31 +115,28 @@ export class Metro implements Disposable {
       // can restore this plugin.
       EXPO_NO_CLIENT_ENV_VARS: "true",
     };
+    let bundlerProcess: ChildProcess;
     if (shouldUseExpoCLI()) {
-      this.subprocess = this.launchExpoMetro(appRootFolder, libPath, resetCache, metroEnv);
+      bundlerProcess = this.launchExpoMetro(appRootFolder, libPath, resetCache, metroEnv);
     } else {
-      this.subprocess = this.launchPackager(appRootFolder, libPath, resetCache, metroEnv);
+      bundlerProcess = this.launchPackager(appRootFolder, libPath, resetCache, metroEnv);
     }
-
-    const rl = readline.createInterface({
-      input: this.subprocess!.stdout!,
-      output: process.stdout,
-      terminal: false,
-    });
+    this.subprocess = bundlerProcess;
 
     const initPromise = new Promise<void>((resolve, reject) => {
       // reject if process exits
-      this.subprocess?.catch((reason) => {
+      bundlerProcess.catch((reason) => {
         Logger.error("Metro exited unexpectedly", reason);
         reject(new Error(`Metro exited with code ${reason.exitCode}: ${reason.message}`));
       });
-      this.subprocess?.then(() => {
+      bundlerProcess.then(() => {
         // we expect metro to produce a line with the port number indicating it started
         // sucessfully. However, if it doesn't produce that line and exists, the promise
         // would be waiting indefinitely, so we reject it in that case as well.
         reject(new Error("Metro exited but did not start server successfully."));
       });
-      rl.on("line", (line: string) => {
+
+      lineReader(bundlerProcess).onLineRead((line) => {
         try {
           const event = JSON.parse(line) as MetroEvent;
           if (event.type !== "bundle_transform_progressed") {

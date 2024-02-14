@@ -1,6 +1,5 @@
 import { Preview } from "./preview";
 import { DeviceBase } from "./DeviceBase";
-import readline from "readline";
 import os from "os";
 import path from "path";
 import fs from "fs";
@@ -8,9 +7,9 @@ import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
-import { ChildProcess, exec } from "../utilities/subprocess";
+import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
-import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
+import { BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { DeviceSettings } from "../common/Project";
@@ -87,13 +86,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
         reject(new Error("Emulator process exited without producing expected output"));
       });
 
-      const rl = readline.createInterface({
-        input: subprocess.stdout!,
-        output: process.stdout,
-        terminal: false,
-      });
-
-      rl.on("line", async (line: string) => {
+      lineReader(subprocess).onLineRead(async (line) => {
         Logger.debug("Emulator output", line);
         if (line.includes("Advertising in:")) {
           const match = line.match(/Advertising in: (\S+)/);

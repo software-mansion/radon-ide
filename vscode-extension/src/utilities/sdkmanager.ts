@@ -1,4 +1,3 @@
-import readline from "readline";
 import path from "path";
 import { ANDROID_HOME, JAVA_HOME } from "./android";
 import { exec } from "./subprocess";

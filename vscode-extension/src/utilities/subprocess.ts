@@ -1,7 +1,24 @@
 import { Logger } from "../Logger";
 import execa, { ExecaChildProcess } from "execa";
+import readline from "readline";
 
 export type ChildProcess = ExecaChildProcess<string>;
+
+export function lineReader(childProcess: ExecaChildProcess<string>) {
+  const input = childProcess.stdout;
+  if (!input) {
+    throw new Error("Child process has no stdout");
+  }
+  const reader = readline.createInterface({
+    input,
+    terminal: false,
+  });
+  return {
+    onLineRead: (callback: (line: string) => void) => {
+      reader.on("line", callback);
+    },
+  };
+}
 
 export function exec(...args: [string, string[]?, execa.Options?]) {
   const subprocess = execa(...args);

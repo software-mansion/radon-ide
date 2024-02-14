@@ -1,30 +1,18 @@
 import { ANDROID_FAIL_ERROR_MESSAGE, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
-import { exec } from "../utilities/subprocess";
+import { exec, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./BuildManager";
 
 import path from "path";
 import fs from "fs";
+import { window } from "vscode";
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
 
 // Assuming users have android folder in their project's root
 export const getAndroidSourceDir = (appRootFolder: string) => path.join(appRootFolder, "android");
-
-async function build(projectDir: string, gradleArgs: string[], cancelToken: CancelToken) {
-  try {
-    await cancelToken.adapt(
-      exec("./gradlew", gradleArgs, {
-        cwd: projectDir,
-        env: { ...process.env, JAVA_HOME, ANDROID_HOME },
-      })
-    );
-  } catch (error) {
-    throw new Error(`${ANDROID_FAIL_ERROR_MESSAGE}, ${error}`);
-  }
-}
 
 function locateAapt() {
   // search for aapt binary under BUILD_TOOLS_PATH/<version>/aapt
@@ -70,7 +58,18 @@ export async function buildAndroid(
     "assembleDebug",
   ];
   Logger.debug("Starting Android build");
-  await build(androidSourceDir, gradleArgs, cancelToken);
+  const buildProcess = cancelToken.adapt(
+    exec("./gradlew", gradleArgs, {
+      cwd: androidSourceDir,
+      env: { ...process.env, JAVA_HOME, ANDROID_HOME },
+    })
+  );
+  const outputChannel = window.createOutputChannel("React Native IDE (Android build)", {
+    log: true,
+  });
+  lineReader(buildProcess).onLineRead(outputChannel.appendLine);
+
+  await buildProcess;
   Logger.debug("Android build sucessful");
   return getAndroidBuildPaths(appRootFolder, cancelToken);
 }

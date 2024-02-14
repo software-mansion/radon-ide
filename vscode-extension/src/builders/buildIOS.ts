@@ -1,12 +1,15 @@
-import { RelativePattern, workspace, Uri } from "vscode";
-import { BuildFlags, buildProject } from "./buildProject";
-import { exec } from "../utilities/subprocess";
+import { RelativePattern, workspace, Uri, window } from "vscode";
+import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import path from "path";
-import { IOSProjectInfo } from "../utilities/ios";
 import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
 import { CancelToken } from "./BuildManager";
+
+type IOSProjectInfo = {
+  name: string;
+  isWorkspace: boolean;
+};
 
 // Assuming users have ios folder in their project's root
 export const getIosSourceDir = (appRootFolder: string) => path.join(appRootFolder, "ios");
@@ -52,6 +55,36 @@ export async function findXcodeProject(appRootFolder: string) {
   return null;
 }
 
+function buildProject(
+  xcodeProject: IOSProjectInfo,
+  buildDir: string,
+  scheme: string,
+  cleanBuild: boolean
+) {
+  const xcodebuildArgs = [
+    xcodeProject.isWorkspace ? "-workspace" : "-project",
+    xcodeProject.name,
+    "-configuration",
+    "Debug",
+    "-scheme",
+    scheme,
+    "-destination",
+    "generic/platform=iOS Simulator",
+    ...(cleanBuild ? ["clean"] : []),
+    "build",
+  ];
+
+  Logger.debug(`Building using "xcodebuild ${xcodebuildArgs.join(" ")}`);
+
+  return exec("xcodebuild", xcodebuildArgs, {
+    env: {
+      ...process.env,
+      RCT_NO_LAUNCH_PACKAGER: "true",
+    },
+    cwd: buildDir,
+  });
+}
+
 export async function buildIos(
   appRootFolder: string,
   forceCleanBuild: boolean,
@@ -76,48 +109,40 @@ export async function buildIos(
     `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${xcodeProject.name}`
   );
 
-  const buildFlags: BuildFlags = {
-    mode: "Debug", // Users may have custom modes (like "Staging") defined in their projects but just "Debug" is fine for now
-    verbose: true,
-    buildCwd: sourceDir,
-    cleanBuild: forceCleanBuild,
-  };
+  const buildProcess = cancelToken.adapt(
+    buildProject(xcodeProject, sourceDir, scheme, forceCleanBuild)
+  );
 
-  const { stdout } = await cancelToken.adapt(
-    buildProject(xcodeProject, undefined, scheme, buildFlags)
-  );
-  const appPath = await getBuildPath(
-    xcodeProject,
-    buildFlags.buildCwd,
-    "Debug",
-    stdout,
-    scheme,
-    undefined,
-    false,
-    cancelToken
-  );
+  let platformName: string | undefined;
+  const outputChannel = window.createOutputChannel("React Native IDE (iOS build)", { log: true });
+  lineReader(buildProcess).onLineRead((line) => {
+    outputChannel.appendLine(line);
+    // Xcode can sometimes escape `=` with a backslash or put the value in quotes
+    const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
+    if (platformNameMatch) {
+      platformName = platformNameMatch[1];
+    }
+  });
+
+  await buildProcess;
+
+  if (!platformName) {
+    throw new Error(`Couldn't find "PLATFORM_NAME" in xcodebuild output`);
+  }
+
+  const appPath = await getBuildPath(xcodeProject, sourceDir, platformName, scheme, cancelToken);
 
   const bundleID = await getBundleID(appPath);
 
   return { appPath, bundleID };
 }
 
-async function getTargetPaths(buildSettings: string, scheme: string, target: string | undefined) {
+async function getTargetPaths(buildSettings: string) {
   const settings = JSON.parse(buildSettings);
 
   const targets = settings.map(({ target: settingsTarget }: any) => settingsTarget);
 
   let selectedTarget = targets[0];
-
-  if (target) {
-    if (!targets.includes(target)) {
-      Logger.debug(
-        `Target ${target} not found for scheme ${scheme}, automatically selected target ${selectedTarget}`
-      );
-    } else {
-      selectedTarget = target;
-    }
-  }
 
   // Find app in all building settings - look for WRAPPER_EXTENSION: 'app',
 
@@ -138,11 +163,8 @@ async function getTargetPaths(buildSettings: string, scheme: string, target: str
 async function getBuildPath(
   xcodeProject: IOSProjectInfo,
   projectDir: string,
-  mode: BuildFlags["mode"],
-  buildOutput: string,
+  platformName: string,
   scheme: string,
-  target: string | undefined,
-  isCatalyst: boolean = false,
   cancelToken: CancelToken
 ) {
   const buildSettings = await cancelToken.adapt(
@@ -154,9 +176,9 @@ async function getBuildPath(
         "-scheme",
         scheme,
         "-sdk",
-        getPlatformName(buildOutput),
+        platformName,
         "-configuration",
-        mode,
+        "Debug",
         "-showBuildSettings",
         "-json",
       ],
@@ -164,11 +186,7 @@ async function getBuildPath(
     )
   );
 
-  const { targetBuildDir, executableFolderPath } = await getTargetPaths(
-    buildSettings.stdout,
-    scheme,
-    target
-  );
+  const { targetBuildDir, executableFolderPath } = await getTargetPaths(buildSettings.stdout);
 
   if (!targetBuildDir) {
     throw new Error("Failed to get the target build directory.");
@@ -178,16 +196,5 @@ async function getBuildPath(
     throw new Error("Failed to get the app name.");
   }
 
-  return `${targetBuildDir}${isCatalyst ? "-maccatalyst" : ""}/${executableFolderPath}`;
-}
-
-function getPlatformName(buildOutput: string) {
-  // Xcode can sometimes escape `=` with a backslash or put the value in quotes
-  const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(buildOutput);
-  if (!platformNameMatch) {
-    throw new Error(
-      'Couldn\'t find "PLATFORM_NAME" variable in xcodebuild output. Please report this issue and run your project with Xcode instead.'
-    );
-  }
-  return platformNameMatch[1];
+  return `${targetBuildDir}/${executableFolderPath}`;
 }
