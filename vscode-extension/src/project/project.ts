@@ -332,7 +332,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
 export function isAppSourceFile(filePath: string) {
   const relativeToWorkspace = workspace.asRelativePath(filePath, false);
-  const another = workspace.asRelativePath("/tmp/bun/bundle.js", false);
 
   if (relativeToWorkspace === filePath) {
     // when path is outside of any workspace folder, workspace.asRelativePath returns the original path
