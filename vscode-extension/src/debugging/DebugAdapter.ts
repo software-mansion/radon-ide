@@ -566,6 +566,27 @@ export class DebugAdapter extends DebugSession {
     this.sendResponse(response);
   }
 
+  protected async evaluateRequest(
+    response: DebugProtocol.EvaluateResponse,
+    args: DebugProtocol.EvaluateArguments
+  ): Promise<void> {
+    const cdpResponse = await this.sendCDPMessage("Runtime.evaluate", {
+      expression: args.expression,
+    });
+    const remoteObject = cdpResponse.result;
+    const stringValue = inferDAPVariableValueForCDPRemoteObject(remoteObject);
+
+    response.body = response.body || {};
+    response.body.result = stringValue;
+    response.body.variablesReference = 0;
+    if (remoteObject.type === "object") {
+      const dapID = this.adaptCDPObjectId(remoteObject.objectId);
+      response.body.type = "object";
+      response.body.variablesReference = dapID;
+    }
+    this.sendResponse(response);
+  }
+
   protected customRequest(
     command: string,
     response: DebugProtocol.Response,

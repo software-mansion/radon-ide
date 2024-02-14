@@ -235,6 +235,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.stepOverDebugger();
   }
 
+  public async focusDebugConsole() {
+    commands.executeCommand("workbench.panel.repl.view.focus");
+  }
+
   public async openNavigation(navigationItemID: string) {
     this.deviceSession?.openNavigation(navigationItemID);
   }

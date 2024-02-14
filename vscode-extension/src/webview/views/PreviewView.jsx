@@ -83,7 +83,7 @@ function PreviewView() {
           counter={logCounter}
           onClick={() => {
             setLogCounter(0);
-            vscode.postMessage({ command: "openLogs" });
+            project.focusDebugConsole();
           }}
           tooltip={{
             label: "Open logs panel",

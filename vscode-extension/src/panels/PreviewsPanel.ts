@@ -195,9 +195,6 @@ export class PreviewsPanel {
           case "call":
             this.handleRemoteCall(message);
             return;
-          case "openLogs":
-            commands.executeCommand("workbench.panel.repl.view.focus");
-            return;
           case "openExternalUrl":
             openExternalUrl(message.url);
             return;

@@ -56,6 +56,7 @@ export interface ProjectInterface {
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
+  focusDebugConsole(): Promise<void>;
 
   openNavigation(navigationItemID: string): Promise<void>;
 

@@ -190,6 +190,10 @@ function Preview({ isInspecting, setIsInspecting }) {
                   className="codicon codicon-debug-step-over"
                   onClick={() => project.stepOverDebugger()}
                 />
+                <button
+                  className="codicon codicon-debug-console"
+                  onClick={() => project.focusDebugConsole()}
+                />
               </div>
             </div>
           )}
