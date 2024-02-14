@@ -1,4 +1,4 @@
-import { Disposable, debug, commands } from "vscode";
+import { Disposable, debug, commands, workspace, Uri } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -15,7 +15,6 @@ import {
   StartupMessage,
 } from "../common/Project";
 import { EventEmitter } from "stream";
-import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 
@@ -215,7 +214,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         // find last element in inspectData.hierarchy with source that belongs to the workspace
         for (let i = inspectData.hierarchy.length - 1; i >= 0; i--) {
           const element = inspectData.hierarchy[i];
-          if (isFileInWorkspace(element.source.fileName)) {
+          if (element?.source?.fileName && isAppSourceFile(element.source.fileName)) {
             openFileAtPosition(
               element.source.fileName,
               element.source.lineNumber - 1,
@@ -329,4 +328,17 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     Logger.debug("Reloading webview");
     commands.executeCommand("workbench.action.webview.reloadWebviewAction");
   }
+}
+
+export function isAppSourceFile(filePath: string) {
+  const relativeToWorkspace = workspace.asRelativePath(filePath, false);
+  const another = workspace.asRelativePath("/tmp/bun/bundle.js", false);
+
+  if (relativeToWorkspace === filePath) {
+    // when path is outside of any workspace folder, workspace.asRelativePath returns the original path
+    return false;
+  }
+
+  // if the relative path contain node_modules, we assume it's not user's app source file:
+  return !relativeToWorkspace.includes("node_modules");
 }

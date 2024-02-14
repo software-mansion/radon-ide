@@ -1,12 +1,10 @@
 import path from "path";
 import readline from "readline";
-import vscode from "vscode";
 import { Disposable } from "vscode";
 import { exec, ChildProcess } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
-import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
 
 export interface MetroDelegate {
   onBundleError(message: string): void;
