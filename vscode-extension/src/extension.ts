@@ -106,33 +106,40 @@ export async function activate(context: ExtensionContext) {
   }
 }
 
+async function findSingleFileInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
+  const files = await workspace.findFiles(fileGlobPattern, excludePattern, 2);
+  if (files.length === 1) {
+    return files[0];
+  } else if (files.length > 1) {
+    Logger.error(`Found multiple ${fileGlobPattern} files in the workspace`);
+  }
+  return undefined;
+}
+
 async function findAppRootFolder(context: ExtensionContext) {
-  const rnConfigFilesLocation = await workspace.findFiles(
-    "**/{metro.config.js,app.config.js,app.json}",
-    "**/node_modules",
-    1
-  );
-  if (rnConfigFilesLocation.length) {
-    // we expect the config files to be in the root folder of the app
-    return Uri.joinPath(rnConfigFilesLocation[0], "..").fsPath;
+  const metroConfigUri = await findSingleFileInWorkspace("**/metro.config.js", "**/node_modules");
+  if (metroConfigUri) {
+    return Uri.joinPath(metroConfigUri, "..").fsPath;
   }
 
-  Logger.info(
-    "Could not find react-native/expo config files in the workspace, looking for react-native installation"
-  );
+  const appConfigUri = await findSingleFileInWorkspace("**/app.config.js", "**/node_modules");
+  if (appConfigUri) {
+    return Uri.joinPath(appConfigUri, "..").fsPath;
+  }
 
-  const rnPackageLocations = await workspace.findFiles(
+  const rnPackageLocation = await findSingleFileInWorkspace(
     "**/node_modules/react-native/package.json",
-    null,
-    2
+    null
   );
-  if (rnPackageLocations.length === 1) {
-    return Uri.joinPath(rnPackageLocations[0], "../../..").fsPath;
-  } else if (rnPackageLocations.length > 1) {
-    Logger.error("Found multiple react-native instances in the workspace");
-    return undefined;
+  if (rnPackageLocation) {
+    return Uri.joinPath(rnPackageLocation, "../../..").fsPath;
   }
 
+  // app json is often use in non react-native projects, but in worst case scenario we can use it as a fallback
+  const appJsonUri = await findSingleFileInWorkspace("**/app.json", "**/node_modules");
+  if (appJsonUri) {
+    return Uri.joinPath(appJsonUri, "..").fsPath;
+  }
   return undefined;
 }
 

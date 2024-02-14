@@ -6,7 +6,8 @@
   "activationEvents": [
     "workspaceContains:node_modules/react-native",
     "workspaceContains:app.json",
-    "workspaceContains:metro.config.js"
+    "workspaceContains:metro.config.js",
+    "workspaceContains:app.config.js"
   ],
   "version": "0.0.1",
   "engines": {
