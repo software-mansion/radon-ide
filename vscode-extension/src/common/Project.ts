@@ -12,6 +12,19 @@ export type ProjectState = {
   selectedDevice: DeviceInfo | undefined;
 };
 
+// important: order of values in this enum matters
+export enum StartupMessage {
+  StartingPackager = "Starting packager",
+  InitializingDevice = "Initializing device",
+  BootingDevice = "Booting device",
+  Building = "Building",
+  Installing = "Installing",
+  Launching = "Launching",
+  WaitingForAppToLoad = "Waiting for app to load",
+  AttachingDebugger = "Attaching debugger",
+  Restarting = "Restarting",
+}
+
 export type InspectData = {
   frame: {
     x: number;

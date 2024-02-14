@@ -4,7 +4,7 @@ import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { BuildResult, DisposableBuild } from "../builders/BuildManager";
-import { DeviceSettings } from "../common/Project";
+import { DeviceSettings, StartupMessage } from "../common/Project";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
@@ -42,23 +42,23 @@ export class DeviceSession implements Disposable {
       this.devtools?.addListener(listener);
     });
 
-    progressCallback("Booting device");
+    progressCallback(StartupMessage.BootingDevice);
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
-    progressCallback("Building");
+    progressCallback(StartupMessage.Building);
     const build = await this.disposableBuild.build;
-    progressCallback("Installing");
+    progressCallback(StartupMessage.Installing);
     await this.device.installApp(build, false);
-    progressCallback("Launching");
+    progressCallback(StartupMessage.Launching);
     await this.device.launchApp(build, this.metro.port);
 
     const waitForPreview = this.device.startPreview();
     Logger.debug("Will wait for app ready and for preview");
-    progressCallback("Waiting for app to load");
+    progressCallback(StartupMessage.WaitingForAppToLoad);
     await Promise.all([waitForAppReady, waitForPreview]);
     Logger.debug("App and preview ready, moving on...");
 
-    progressCallback("Waiting for debugger");
+    progressCallback(StartupMessage.AttachingDebugger);
     const websocketAddress = await this.metro.getDebuggerURL(WAIT_FOR_DEBUGGER_TIMEOUT);
     if (websocketAddress) {
       const debugStarted = await debug.startDebugging(

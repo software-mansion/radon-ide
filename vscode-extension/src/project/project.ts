@@ -12,6 +12,7 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
+  StartupMessage,
 } from "../common/Project";
 import { EventEmitter } from "stream";
 import { isFileInWorkspace } from "../utilities/isFileInWorkspace";
@@ -117,7 +118,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   }
 
   public async restart(forceCleanBuild: boolean) {
-    this.updateProjectState({ status: "starting", startupMessage: "Restarting" });
+    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
     if (forceCleanBuild) {
       await this.start(true, forceCleanBuild);
       await this.selectDevice(this.projectState.selectedDevice!, forceCleanBuild);
@@ -279,14 +280,16 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.updateProjectState({
       selectedDevice: deviceInfo,
       status: "starting",
-      startupMessage: "Initializing device",
+      startupMessage: StartupMessage.InitializingDevice,
       previewURL: undefined,
     });
 
     try {
       const device = await this.deviceManager.getDevice(deviceInfo);
       Logger.debug("Selected device is ready");
-      this.updateProjectStateForDevice(deviceInfo, { startupMessage: "Starting packager" });
+      this.updateProjectStateForDevice(deviceInfo, {
+        startupMessage: StartupMessage.StartingPackager,
+      });
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
       Logger.debug("Metro & devtools ready");

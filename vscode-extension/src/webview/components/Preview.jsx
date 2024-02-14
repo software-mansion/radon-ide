@@ -11,7 +11,7 @@ import {
   IOS_DEVICE_GRAPHICAL_PROPERTIES,
 } from "../utilities/consts";
 import Button from "./shared/Button";
-import StartupMessage from "./shared/StartupMessage";
+import PreviewLoader from "./PreviewLoader";
 
 function cssPropertiesForDevice(device) {
   return {
@@ -209,8 +209,7 @@ function Preview({ isInspecting, setIsInspecting }) {
         <div className="phone-content">
           <div className="phone-sized phone-screen phone-content-loading-overlay" />
           <div className="phone-sized phone-screen phone-content-loading ">
-            <VSCodeProgressRing />
-            <StartupMessage>{projectState?.startupMessage}</StartupMessage>
+            <PreviewLoader startupMessage={projectState?.startupMessage} />
           </div>
           <img src={device.frameImage} className="phone-frame" />
         </div>
