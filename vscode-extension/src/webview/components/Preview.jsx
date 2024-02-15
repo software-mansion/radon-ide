@@ -10,8 +10,8 @@ import {
   ANDROID_DEVICE_GRAPHICAL_PROPERTIES,
   IOS_DEVICE_GRAPHICAL_PROPERTIES,
 } from "../utilities/consts";
-import Button from "./shared/Button";
 import PreviewLoader from "./PreviewLoader";
+import { useBuildErrorAlert } from "../hooks/useBuildErrorAlert";
 
 function cssPropertiesForDevice(device) {
   return {
@@ -32,6 +32,7 @@ function Preview({ isInspecting, setIsInspecting }) {
   const { projectState, project } = useProject();
 
   const hasBuildError = projectState?.status === "buildError";
+  useBuildErrorAlert(hasBuildError);
 
   const [inspectData, setInspectData] = useState(null);
   useEffect(() => {
@@ -220,16 +221,7 @@ function Preview({ isInspecting, setIsInspecting }) {
       )}
       {hasBuildError && (
         <div className="phone-content">
-          <div className="phone-sized phone-screen extension-error-screen">
-            <h2>An error occurred. Click the button to restart the process.</h2>
-            <Button
-              type="secondary"
-              onClick={() => {
-                project.restart(false);
-              }}>
-              <span className="codicon codicon-refresh" />
-            </Button>
-          </div>
+          <div className="phone-sized phone-screen extension-error-screen" />
           <img src={device.frameImage} className="phone-frame" />
         </div>
       )}

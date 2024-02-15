@@ -1,26 +1,21 @@
 import { useEffect } from "react";
 
 import { useAlert } from "../providers/AlertProvider";
-import { useModal } from "../providers/ModalProvider";
-import { useDependencies } from "../providers/DependenciesProvider";
 import { useProject } from "../providers/ProjectProvider";
 
 import IconButton from "../components/shared/IconButton";
-import DiagnosticView from "../views/DiagnosticView";
-import DoctorIcon from "../components/icons/DoctorIcon";
 
 function Actions() {
   const { project } = useProject();
-  const { openModal } = useModal();
   return (
     <>
       <IconButton
         type="secondary"
         onClick={() => {
-          openModal("Diagnostics", <DiagnosticView />);
+          project.focusDebugConsole();
         }}
-        tooltip={{ label: "Run diagnostics", side: "bottom" }}>
-        <DoctorIcon />
+        tooltip={{ label: "Open logs panel", side: "bottom" }}>
+        <span className="codicon codicon-debug-console" />
       </IconButton>
       <IconButton
         type="secondary"
@@ -34,22 +29,21 @@ function Actions() {
   );
 }
 
-const id = "diagnostic-alert";
+const id = "build-error-alert";
 
-export function useDiagnosticAlert() {
+export function useBuildErrorAlert(hasBuildError: boolean) {
   const { openAlert, isOpen, closeAlert } = useAlert();
-  const { isError } = useDependencies();
 
   useEffect(() => {
-    if (isError && !isOpen(id)) {
+    if (hasBuildError && !isOpen(id)) {
       openAlert({
         id,
         title: "Cannot run project",
-        description: "Run diagnostics to find out what went wrong.",
+        description: "Open logs panel to find out what went wrong.",
         actions: <Actions />,
       });
-    } else if (!isError && isOpen(id)) {
+    } else if (!hasBuildError && isOpen(id)) {
       closeAlert(id);
     }
-  }, [isError, isOpen, openAlert, closeAlert, id]);
+  }, [hasBuildError, isOpen, openAlert, closeAlert]);
 }
