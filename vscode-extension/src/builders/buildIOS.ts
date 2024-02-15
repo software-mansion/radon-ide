@@ -82,6 +82,7 @@ function buildProject(
       RCT_NO_LAUNCH_PACKAGER: "true",
     },
     cwd: buildDir,
+    buffer: false,
   });
 }
 

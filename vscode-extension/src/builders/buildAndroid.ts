@@ -1,4 +1,4 @@
-import { ANDROID_FAIL_ERROR_MESSAGE, getCpuArchitecture } from "../utilities/common";
+import { getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
@@ -62,6 +62,7 @@ export async function buildAndroid(
     exec("./gradlew", gradleArgs, {
       cwd: androidSourceDir,
       env: { ...process.env, JAVA_HOME, ANDROID_HOME },
+      buffer: false,
     })
   );
   const outputChannel = window.createOutputChannel("React Native IDE (Android build)", {

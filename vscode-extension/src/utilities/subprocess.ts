@@ -4,6 +4,10 @@ import readline from "readline";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
+/**
+ * When using this methid, the subprocess should be started with buffer: false option
+ * as there's no need for allocating memory for the output that's going to be very long.
+ */
 export function lineReader(childProcess: ExecaChildProcess<string>) {
   const input = childProcess.stdout;
   if (!input) {

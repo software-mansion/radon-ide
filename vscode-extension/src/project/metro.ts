@@ -69,6 +69,7 @@ export class Metro implements Disposable {
     return exec(`node`, [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
       cwd: appRootFolder,
       env: metroEnv,
+      buffer: false,
     });
   }
 
@@ -93,6 +94,7 @@ export class Metro implements Disposable {
       {
         cwd: appRootFolder,
         env: metroEnv,
+        buffer: false,
       }
     );
   }
