@@ -12,6 +12,7 @@ import {
 } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert } from "../hooks/useBuildErrorAlert";
+import Debugger from "./Debugger";
 
 function cssPropertiesForDevice(device) {
   return {
@@ -181,21 +182,7 @@ function Preview({ isInspecting, setIsInspecting }) {
           )}
           {debugPaused && (
             <div className="phone-screen phone-debug-overlay">
-              <div className="continue-button">
-                Paused in debugger&nbsp;
-                <button
-                  className="codicon codicon-debug-continue"
-                  onClick={() => project.resumeDebugger()}
-                />
-                <button
-                  className="codicon codicon-debug-step-over"
-                  onClick={() => project.stepOverDebugger()}
-                />
-                <button
-                  className="codicon codicon-debug-console"
-                  onClick={() => project.focusDebugConsole()}
-                />
-              </div>
+              <Debugger />
             </div>
           )}
           {debugException && (

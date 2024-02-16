@@ -1,0 +1,23 @@
+.debugger-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.debugger-label {
+  margin: 8px;
+  text-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  user-select: none;
+}
+
+.debugger-button-group {
+  color: var(--white);
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+  background-color: var(--background-dark-100);
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--background-dark-40);
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}

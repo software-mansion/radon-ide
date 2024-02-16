@@ -19,6 +19,11 @@
   background-color: var(--background-dark-120);
 }
 
+.tooltip-ternary {
+  color: var(--navy-dark-100);
+  background-color: var(--off-white);
+}
+
 .tooltip-content[data-state="delayed-open"][data-side="top"] {
   animation-name: slideDownAndFade;
 }
@@ -37,6 +42,10 @@
 }
 .tooltip-arrow-secondary {
   fill: var(--background-dark-120);
+}
+
+.tooltip-arrow-ternary {
+  fill: var(--off-white);
 }
 
 @keyframes slideUpAndFade {

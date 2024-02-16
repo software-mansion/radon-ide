@@ -6,7 +6,7 @@ interface TooltipProps {
   children: React.ReactNode;
   label: string;
   side?: "top" | "right" | "bottom" | "left";
-  type?: "primary" | "secondary";
+  type?: "primary" | "secondary" | "ternary";
   instant?: boolean;
 }
 
@@ -25,7 +25,9 @@ export default function Tooltip({
           <RadixTooltip.Content
             className={classnames(
               "tooltip-content",
-              type === "primary" ? "tooltip-primary" : "tooltip-secondary"
+              type === "primary" && "tooltip-primary",
+              type === "secondary" && "tooltip-secondary",
+              type === "ternary" && "tooltip-ternary"
             )}
             side={side}
             sideOffset={5}>
@@ -33,7 +35,8 @@ export default function Tooltip({
             <RadixTooltip.Arrow
               className={classnames(
                 "tooltip-arrow",
-                type === "secondary" && "tooltip-arrow-secondary"
+                type === "secondary" && "tooltip-arrow-secondary",
+                type === "ternary" && "tooltip-arrow-ternary"
               )}
             />
           </RadixTooltip.Content>
