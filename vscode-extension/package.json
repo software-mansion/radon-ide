@@ -43,6 +43,17 @@
         "enablement": "!RNIDE.extensionIsActive"
       }
     ],
+    "configuration": {
+      "title": "React Native IDE",
+      "properties": {
+        "ReactNativeIDE.relativeAppLocation": {
+          "type": "string",
+          "scope": "window",
+          "default": null,
+          "description": "Location of the React Native application root folder relative to the workspace workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
+        }
+      }
+    },
     "menus": {
       "editor/title": [
         {

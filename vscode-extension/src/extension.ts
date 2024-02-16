@@ -53,11 +53,6 @@ export async function activate(context: ExtensionContext) {
   }
 
   await fixBinaries(context);
-  const appRootFolder = await findAppRootFolder(context);
-  if (appRootFolder) {
-    Logger.info(`Found app root folder: ${appRootFolder}`);
-    setAppRootFolder(appRootFolder);
-  }
 
   context.subscriptions.push(
     commands.registerCommand("RNIDE.openPanel", (fileName?: string, lineNumber?: number) => {
@@ -70,9 +65,7 @@ export async function activate(context: ExtensionContext) {
     })
   );
   context.subscriptions.push(
-    commands.registerCommand("RNIDE.diagnose", async () => {
-      await diagnoseWorkspaceStructure(appRootFolder);
-    })
+    commands.registerCommand("RNIDE.diagnose", diagnoseWorkspaceStructure)
   );
 
   context.subscriptions.push(
@@ -100,10 +93,7 @@ export async function activate(context: ExtensionContext) {
     )
   );
 
-  if (appRootFolder) {
-    commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
-    PreviewsPanel.extensionActivated(context);
-  }
+  await configureAppRootFolder();
 }
 
 async function findSingleFileInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
@@ -116,7 +106,52 @@ async function findSingleFileInWorkspace(fileGlobPattern: string, excludePattern
   return undefined;
 }
 
-async function findAppRootFolder(context: ExtensionContext) {
+function openWorkspaceSettings() {
+  commands.executeCommand("workbench.action.openWorkspaceSettings", {
+    query: "React Native IDE",
+  });
+}
+
+async function configureAppRootFolder() {
+  const appRootFolder = await findAppRootFolder();
+  if (appRootFolder) {
+    Logger.info(`Found app root folder: ${appRootFolder}`);
+    setAppRootFolder(appRootFolder);
+    commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
+    PreviewsPanel.extensionActivated();
+  }
+  return appRootFolder;
+}
+
+async function findAppRootFolder() {
+  const config = workspace.getConfiguration("ReactNativeIDE");
+  const relativeLocation = config.get<string>("relativeAppLocation");
+  if (relativeLocation) {
+    // workspace root
+    let appRoot: string | undefined;
+    workspace.workspaceFolders?.forEach((folder) => {
+      const possibleAppRoot = Uri.joinPath(folder.uri, relativeLocation).fsPath;
+      if (fs.existsSync(possibleAppRoot)) {
+        appRoot = possibleAppRoot;
+      }
+    });
+    if (!appRoot) {
+      // when relative app location setting is set, we expect app root exists
+      window
+        .showErrorMessage(
+          `The app root folder does not exist in the workspace at ${relativeLocation}.`,
+          "Open Workspace Settings"
+        )
+        .then((item) => {
+          if (item === "Open Workspace Settings") {
+            openWorkspaceSettings();
+          }
+        });
+      return undefined;
+    }
+    return appRoot;
+  }
+
   const metroConfigUri = await findSingleFileInWorkspace("**/metro.config.js", "**/node_modules");
   if (metroConfigUri) {
     return Uri.joinPath(metroConfigUri, "..").fsPath;
@@ -140,34 +175,43 @@ async function findAppRootFolder(context: ExtensionContext) {
   if (appJsonUri) {
     return Uri.joinPath(appJsonUri, "..").fsPath;
   }
+
+  window
+    .showErrorMessage(
+      `
+    React Native IDE couldn't find root application folder in this workspace.\n
+    Please make sure that the opened workspace contains a valid React Native or Expo project.\n
+    The way extension verifies the project is by looking for either: app.json, metro.config.js,
+    or node_modules/react-native folder. If your project structure is different, you can set the
+    relative path to the application root folder in the workspace settings.`,
+      "Open Workspace Settings",
+      "Dismiss"
+    )
+    .then((item) => {
+      if (item === "Open Workspace Settings") {
+        openWorkspaceSettings();
+      }
+    });
   return undefined;
 }
 
-async function diagnoseWorkspaceStructure(appRootFolder: string | undefined) {
-  if (!appRootFolder) {
-    window.showErrorMessage(
-      `
-      React Native IDE couldn't find root application folder in this workspace.\n
-      Please make sure that the opened workspace contains a valid React Native or Expo project.\n
-      The way extension verifies the project is by looking for either: app.json, metro.config.js,
-      or node_modules/react-native folder`,
-      "Dismiss"
-    );
-    return;
+async function diagnoseWorkspaceStructure() {
+  const appRootFolder = await configureAppRootFolder();
+  if (appRootFolder) {
+    window
+      .showInformationMessage(
+        `
+          Workspace structure seems to be ok.\n
+          You can open the IDE Panel using the button below or from the command palette.`,
+        "Open IDE Panel",
+        "Cancel"
+      )
+      .then((item) => {
+        if (item === "Open IDE Panel") {
+          commands.executeCommand("RNIDE.openPanel");
+        }
+      });
   }
-  window
-    .showInformationMessage(
-      `
-        Workspace structure seems to be ok.\n
-        You can open the IDE Panel using the button below or from the command palette.`,
-      "Open IDE Panel",
-      "Cancel"
-    )
-    .then((item) => {
-      if (item === "Open IDE Panel") {
-        commands.executeCommand("RNIDE.openPanel");
-      }
-    });
 }
 
 async function fixBinaries(context: ExtensionContext) {

@@ -75,9 +75,9 @@ export class PreviewsPanel {
     ]);
   }
 
-  public static extensionActivated(context: ExtensionContext) {
-    if (context.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
-      PreviewsPanel.render(context);
+  public static extensionActivated() {
+    if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
+      PreviewsPanel.render(extensionContext);
     }
   }
 
