@@ -33,6 +33,11 @@ export class IosSimulatorDevice extends DeviceBase {
     super();
   }
 
+  public dispose() {
+    super.dispose();
+    return exec("xcrun", ["simctl", "--set", getOrCreateDeviceSet(), "shutdown", this.deviceUDID]);
+  }
+
   async bootDevice() {
     const deviceSetLocation = getOrCreateDeviceSet();
     try {
