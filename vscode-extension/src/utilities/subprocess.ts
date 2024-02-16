@@ -28,7 +28,7 @@ export function exec(
   ...args: [string, string[]?, (execa.Options & { allowNonZeroExit?: boolean })?]
 ) {
   const subprocess = execa(...args);
-  const allowNonZeroExit = !args[2]?.allowNonZeroExit;
+  const allowNonZeroExit = args[2]?.allowNonZeroExit;
   async function printErrorsOnExit() {
     try {
       const result = await subprocess;
