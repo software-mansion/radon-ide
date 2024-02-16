@@ -171,10 +171,10 @@ export function PreviewAppWrapper({ children, ...rest }) {
 
   const attachHookListeners = (hook) => {
     hook.sub("operations", (operations) => {
-      const { changedElements, rendererId } = getAllChangedElementIdsFromOperations(operations);
+      const { addedElementIds, rendererId } = getAllAddedElementIdsFromOperations(operations);
       const rendererInterfaces = hook.rendererInterfaces.get(rendererId);
       const currentNavigationDescriptior = getCurrentNavigationDescriptor();
-      changedElements.forEach((elementId) => {
+      addedElementIds.forEach((elementId) => {
         try {
           const element = rendererInterfaces.inspectElement(
             operationRequestId,
@@ -189,14 +189,8 @@ export function PreviewAppWrapper({ children, ...rest }) {
             }
           }
         } catch (e) {
-          console.error(
-            "Error occured while trying to inspect element with renderer id:",
-            rendererId,
-            "requestId:",
-            operationRequestId,
-            "elementId:",
-            elementId
-          );
+          // we ignore errors here as they would surface as if they were app's errors which we don't want the user to bother with
+          // in worst case scenario an error here would result in a file not being properly tracket for the jump-to-route feature
         }
       });
       operationRequestId++;
@@ -239,10 +233,10 @@ export function PreviewAppWrapper({ children, ...rest }) {
  * Before chaning anything in this function, please refer to:
  * https://github.com/facebook/react/blob/6c7b41da3de12be2d95c60181b3fe896f824f13a/packages/react-devtools-shared/src/devtools/store.js#L921
  */
-function getAllChangedElementIdsFromOperations(operations) {
+function getAllAddedElementIdsFromOperations(operations) {
   const rendererID = operations[0];
 
-  const changedElementIds = [];
+  const addedElementIds = [];
 
   let i = 2;
 
@@ -263,16 +257,16 @@ function getAllChangedElementIdsFromOperations(operations) {
         const id = operations[i + 1];
         const type = operations[i + 2];
 
-        changedElementIds.push(id);
-
         i += 3;
         if (type === 11) {
+          // ElementTypeRoot
           i += 2;
 
           if (BRIDGE_PROTOCOL_VERSION === null || BRIDGE_PROTOCOL_VERSION >= 2) {
             i += 2;
           }
         } else {
+          addedElementIds.push(id);
           i += 4;
         }
         break;
@@ -289,13 +283,11 @@ function getAllChangedElementIdsFromOperations(operations) {
       }
       case DevtoolsOperationType.TREE_OPERATION_REORDER_CHILDREN: {
         const id = operations[i + 1];
-        changedElementIds.push(id);
         i += 3 + operations[i + 2];
         break;
       }
       case DevtoolsOperationType.TREE_OPERATION_SET_SUBTREE_MODE: {
         const id = operations[i + 1];
-        changedElementIds.push(id);
         i += 3;
         break;
       }
@@ -304,7 +296,6 @@ function getAllChangedElementIdsFromOperations(operations) {
         break;
       case DevtoolsOperationType.TREE_OPERATION_UPDATE_ERRORS_OR_WARNINGS:
         const id = operations[i + 1];
-        changedElementIds.push(id);
         i += 4;
         break;
       default:
@@ -312,5 +303,5 @@ function getAllChangedElementIdsFromOperations(operations) {
     }
   }
 
-  return { changedElements: changedElementIds, rendererId: rendererID };
+  return { addedElementIds, rendererId: rendererID };
 }
