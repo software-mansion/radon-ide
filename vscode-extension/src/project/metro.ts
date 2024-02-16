@@ -127,16 +127,17 @@ export class Metro implements Disposable {
 
     const initPromise = new Promise<void>((resolve, reject) => {
       // reject if process exits
-      bundlerProcess.catch((reason) => {
-        Logger.error("Metro exited unexpectedly", reason);
-        reject(new Error(`Metro exited with code ${reason.exitCode}: ${reason.message}`));
-      });
-      bundlerProcess.then(() => {
-        // we expect metro to produce a line with the port number indicating it started
-        // sucessfully. However, if it doesn't produce that line and exists, the promise
-        // would be waiting indefinitely, so we reject it in that case as well.
-        reject(new Error("Metro exited but did not start server successfully."));
-      });
+      bundlerProcess
+        .catch((reason) => {
+          Logger.error("Metro exited unexpectedly", reason);
+          reject(new Error(`Metro exited with code ${reason.exitCode}: ${reason.message}`));
+        })
+        .then(() => {
+          // we expect metro to produce a line with the port number indicating it started
+          // sucessfully. However, if it doesn't produce that line and exists, the promise
+          // would be waiting indefinitely, so we reject it in that case as well.
+          reject(new Error("Metro exited but did not start server successfully."));
+        });
 
       lineReader(bundlerProcess).onLineRead((line) => {
         try {

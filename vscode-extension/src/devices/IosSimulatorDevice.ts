@@ -36,7 +36,9 @@ export class IosSimulatorDevice extends DeviceBase {
   async bootDevice() {
     const deviceSetLocation = getOrCreateDeviceSet();
     try {
-      await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", this.deviceUDID]);
+      await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", this.deviceUDID], {
+        allowNonZeroExit: true,
+      });
     } catch (e) {
       // @ts-ignore
       if (e.stderr?.includes("current state: Booted")) {
@@ -88,13 +90,17 @@ export class IosSimulatorDevice extends DeviceBase {
     );
     Logger.debug(`Defaults location ${userDefaultsLocation}`);
     try {
-      await exec("/usr/libexec/PlistBuddy", [
-        "-c",
-        "Delete :RCT_jsLocation",
-        "-c",
-        `Add :RCT_jsLocation string localhost:${metroPort}`,
-        userDefaultsLocation,
-      ]);
+      await exec(
+        "/usr/libexec/PlistBuddy",
+        [
+          "-c",
+          "Delete :RCT_jsLocation",
+          "-c",
+          `Add :RCT_jsLocation string localhost:${metroPort}`,
+          userDefaultsLocation,
+        ],
+        { allowNonZeroExit: true }
+      );
     } catch (e) {
       // Delete command fails if the key doesn't exists, but later commands run regardless,
       // despite that process exits with non-zero code. We can ignore this error.
@@ -127,14 +133,11 @@ export class IosSimulatorDevice extends DeviceBase {
 
     // Terminate the app if it's running:
     try {
-      await exec("xcrun", [
-        "simctl",
-        "--set",
-        deviceSetLocation,
-        "terminate",
-        this.deviceUDID,
-        build.bundleID,
-      ]);
+      await exec(
+        "xcrun",
+        ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, build.bundleID],
+        { allowNonZeroExit: true }
+      );
     } catch (e) {
       // terminate will exit with non-zero code when the app wasn't running. we ignore this error
     }
@@ -179,14 +182,11 @@ export class IosSimulatorDevice extends DeviceBase {
     const deviceSetLocation = getOrCreateDeviceSet();
     if (forceReinstall) {
       try {
-        await exec("xcrun", [
-          "simctl",
-          "--set",
-          deviceSetLocation,
-          "uninstall",
-          this.deviceUDID,
-          build.bundleID,
-        ]);
+        await exec(
+          "xcrun",
+          ["simctl", "--set", deviceSetLocation, "uninstall", this.deviceUDID, build.bundleID],
+          { allowNonZeroExit: true }
+        );
       } catch (e) {
         Logger.error("Error while uninstalling will be ignored", e);
       }

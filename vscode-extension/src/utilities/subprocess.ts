@@ -24,8 +24,11 @@ export function lineReader(childProcess: ExecaChildProcess<string>) {
   };
 }
 
-export function exec(...args: [string, string[]?, execa.Options?]) {
+export function exec(
+  ...args: [string, string[]?, (execa.Options & { allowNonZeroExit?: boolean })?]
+) {
   const subprocess = execa(...args);
+  const allowNonZeroExit = !args[2]?.allowNonZeroExit;
   async function printErrorsOnExit() {
     try {
       const result = await subprocess;
@@ -40,17 +43,19 @@ export function exec(...args: [string, string[]?, execa.Options?]) {
       }
     } catch (e) {
       // @ts-ignore idk how to deal with error objects in ts
-      if (e.exitCode === undefined && e.signal !== undefined) {
-        // @ts-ignore idk how to deal with error objects in ts
-        Logger.info("Subprocess", args[0], "was terminated with", e.signal);
+      const { exitCode, signal } = e;
+      if (exitCode === undefined && signal !== undefined) {
+        Logger.info("Subprocess", args[0], "was terminated with", signal);
       } else {
-        Logger.error(
-          "Subprocess",
-          args[0],
-          args[1]?.join(" "),
-          "execution resulted in an error:",
-          e
-        );
+        if (!allowNonZeroExit || !exitCode) {
+          Logger.error(
+            "Subprocess",
+            args[0],
+            args[1]?.join(" "),
+            "execution resulted in an error:",
+            e
+          );
+        }
       }
     }
   }

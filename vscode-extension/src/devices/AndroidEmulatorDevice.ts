@@ -77,8 +77,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     this.emulatorProcess = subprocess;
 
     const initPromise = new Promise<string>((resolve, reject) => {
-      subprocess.catch((reason) => reject(reason));
-      subprocess.then(() => {
+      subprocess.catch(reject).then(() => {
         // we expect the process to produce an expected output that we listed for
         // below and resolve the promise earlier. However, if the process exists
         // and the promise is still not resolved we should reject it such that we
@@ -106,15 +105,19 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // read preferences
     let prefs: any;
     try {
-      const { stdout } = await exec(ADB_PATH, [
-        "-s",
-        this.serial!,
-        "shell",
-        "run-as",
-        packageName,
-        "cat",
-        `/data/data/${packageName}/shared_prefs/${packageName}_preferences.xml`,
-      ]);
+      const { stdout } = await exec(
+        ADB_PATH,
+        [
+          "-s",
+          this.serial!,
+          "shell",
+          "run-as",
+          packageName,
+          "cat",
+          `/data/data/${packageName}/shared_prefs/${packageName}_preferences.xml`,
+        ],
+        { allowNonZeroExit: true }
+      );
       prefs = await xml2js.parseStringPromise(stdout, { explicitArray: true });
     } catch (e) {
       // preferences file does not exists
@@ -195,7 +198,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (forceReinstall) {
       try {
         await retry(
-          () => exec(ADB_PATH, ["-s", this.serial!, "uninstall", build.packageName]),
+          () =>
+            exec(ADB_PATH, ["-s", this.serial!, "uninstall", build.packageName], {
+              allowNonZeroExit: true,
+            }),
           2,
           1000
         );
