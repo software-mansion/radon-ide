@@ -10,7 +10,10 @@ const ProgressBar = ({ progress }: ProgressBarProps) => {
     <Progress.Root className="progress-bar-root" value={progress}>
       <Progress.Indicator
         className="progress-bar-indicator"
-        style={{ transform: `translateX(-${100 - progress}%)` }}
+        style={{
+          transform: `translateX(-${100 - progress}%)`,
+          transition: progress > 0 ? "transform 660ms cubic-bezier(0.65, 0, 0.35, 1)" : "none",
+        }}
       />
     </Progress.Root>
   );

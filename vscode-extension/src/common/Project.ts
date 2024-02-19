@@ -14,8 +14,8 @@ export type ProjectState = {
 
 // important: order of values in this enum matters
 export enum StartupMessage {
-  StartingPackager = "Starting packager",
   InitializingDevice = "Initializing device",
+  StartingPackager = "Starting packager",
   BootingDevice = "Booting device",
   Building = "Building",
   Installing = "Installing",
