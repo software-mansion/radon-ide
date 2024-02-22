@@ -8,6 +8,7 @@ import { JAVA_HOME } from "../utilities/android";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { getAppRootFolder } from "../utilities/extensionContext";
+import { resolvePackageManager } from "../utilities/packageManager";
 
 export class DependencyChecker implements Disposable {
   private disposables: Disposable[] = [];
@@ -79,9 +80,28 @@ export class DependencyChecker implements Disposable {
   }
 
   public async checkNodeModulesInstalled() {
-    const installed = await checkIfCLIInstalled(`npm list --json`, {
-      cwd: getAppRootFolder(),
-    });
+    let installed = false;
+    const packageManager = await resolvePackageManager();
+    if (packageManager === "yarn") {
+      installed = await checkIfCLIInstalled(`yarn list --json`, {
+        cwd: getAppRootFolder(),
+      });
+    } 
+    else if (packageManager === "pnpm") {
+      installed = await checkIfCLIInstalled(`pnpm list --json`, {
+        cwd: getAppRootFolder(),
+      });
+    } 
+    else if (packageManager === "bun") {
+      installed = await checkIfCLIInstalled(`bun pm ls --json`, {
+        cwd: getAppRootFolder(),
+      });
+    } 
+    else {
+      installed = await checkIfCLIInstalled(`npm list --json`, {
+        cwd: getAppRootFolder(),
+      });
+    }
     const errorMessage = "Node modules are not installed.";
     this.webview.postMessage({
       command: "isNodeModulesInstalled",
