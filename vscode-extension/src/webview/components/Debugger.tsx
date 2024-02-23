@@ -28,7 +28,7 @@ function Debugger() {
         <IconButton
           onClick={() => project.focusDebugConsole()}
           tooltip={{
-            label: "Open logs console",
+            label: "Open debugger console",
             side: "bottom",
           }}>
           <span className="codicon codicon-debug-console" />
