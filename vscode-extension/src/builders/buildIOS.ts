@@ -28,10 +28,11 @@ export async function findXcodeProject(appRootFolder: string) {
   const iosSourceDir = getIosSourceDir(appRootFolder);
   const xcworkspaceFiles = await workspace.findFiles(
     new RelativePattern(iosSourceDir, "**/*.xcworkspace/*"),
-    "**/{node_modules,build,Pods}/**",
-    1
+    "**/{node_modules,build,Pods,*.xcodeproj}/**",
+    2
   );
-
+  Logger.debug(`${xcworkspaceFiles.length} hejhejhej...`);
+  console.log(xcworkspaceFiles);
   if (xcworkspaceFiles.length === 1) {
     return {
       name: Uri.joinPath(xcworkspaceFiles[0], "..").fsPath,
