@@ -1,0 +1,122 @@
+// The following script is injected into the main React Native build process
+// its role is to provide patches for some files that exists in the react-native
+// package.
+// The way we replace the implementation of classes is by providing a separate source
+// set that includes the implementation of the classes to be replaced. On top of that
+// we also need to remove the original classes from the AAR dependency that is added
+// there by default.
+// The latter is done by using a custom transform that operates on classes extracted from
+// the react-android AAR file. The transform reads the JAR classes file and skips the
+// classes we want to remove.
+// In order for the transform to only run on the react-android AAR file, we scan
+// the dependencies and add shouldTransform attribute to it.
+
+// For now, the only class that we patch is PackagerConnectionSettings class.
+// The patch makes the method getInspectorServerHost call directly to getDebugServerHost
+// such that debugger can use the same connection configuration as metro. Otherwise
+// the debugger can only connect over port with number that is compiled into the APK.
+// The fix has been merged upstream: https://github.com/facebook/react-native/pull/42617
+// and will be available in React Native 0.74
+
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
+
+interface EmptyParameters extends TransformParameters {}
+
+@CacheableTransform
+abstract class ClassRemovalTransform implements TransformAction<EmptyParameters> {
+    @Classpath
+    @InputArtifact
+    abstract Provider<FileSystemLocation> getInputArtifact()
+
+    void transform(TransformOutputs outputs) {
+        File inputJar = getInputArtifact().get().getAsFile()
+        File outputJar = outputs.file('transformed-' + inputJar.name)
+
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(inputJar));
+             ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(outputJar))) {
+
+            ZipEntry zipEntry;
+            while ((zipEntry = zis.getNextEntry()) != null) {
+                // Check if the entry is the class to be removed
+                if ("com/facebook/react/packagerconnection/PackagerConnectionSettings.class".equals(zipEntry.getName())) {
+                    // Skip this entry
+                    continue;
+                }
+
+                // Otherwise, copy the entry to the output JAR
+                zos.putNextEntry(new ZipEntry(zipEntry.getName()))
+                zis.transferTo(zos)
+                zos.closeEntry()
+                zis.closeEntry()
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to process JAR file", e)
+        }
+    }
+}
+
+abstract class IdentityTransform implements TransformAction<EmptyParameters> {
+    @InputArtifact
+    abstract Provider<FileSystemLocation> getInputArtifact()
+
+    void transform(TransformOutputs outputs) {
+        def input = getInputArtifact().get().getAsFile()
+        if (input.isDirectory()) {
+            outputs.dir(input)
+        } else if (input.isFile()) {
+            outputs.file(input)
+        } else {
+            throw new IllegalArgumentException("File/directory does not exist: ${input.absolutePath}")
+        }
+    }
+}
+
+def artifactType = Attribute.of('artifactType', String)
+def shouldTransform = Attribute.of('shouldTransform', Boolean)
+
+dependencies.artifactTypes.maybeCreate("aar")
+dependencies { dep ->
+    attributesSchema {
+        attribute(shouldTransform)
+    }
+    artifactTypes.getByName("aar") {
+        attributes.attribute(shouldTransform, false)
+    }
+}
+
+dependencies {
+    registerTransform(ClassRemovalTransform) {
+        from.attribute(artifactType, "android-classes-jar").attribute(shouldTransform, false)
+        to.attribute(artifactType, "android-classes-jar").attribute(shouldTransform, true)
+    }
+    // AGP produces two types of artifacts for AARs: classes.jar and exploded-aar
+    // since exploded-aar extracted from aar would kept the attribute shouldTranform, this
+    // prevents its output from being consumed by other tasks that eventually collect all
+    // jni libraries. As a result, this would prevent jni libraries from being packaged into
+    // the app, hence we need to remove the attribute from exploded-aar such that it can be
+    // consumed by other tasks.
+    registerTransform(IdentityTransform) {
+        from.attribute(artifactType, "android-exploded-aar").attribute(shouldTransform, false)
+        to.attribute(artifactType, "android-exploded-aar").attribute(shouldTransform, true)
+    }
+}
+
+android {
+    sourceSets {
+        main {
+            java.srcDirs += "${project.ext.initScriptDir}/src/main/java"
+        }
+    }
+}
+
+configurations.all { config ->
+    config.dependencies.all { dependency ->
+        if (dependency.name.contains('react-android')) {
+            dependency.attributes { attrs ->
+                attrs.attribute(shouldTransform, true)
+            }
+        }
+    }
+}

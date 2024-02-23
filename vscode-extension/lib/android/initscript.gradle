@@ -1,0 +1,8 @@
+gradle.allprojects { project ->
+    project.afterEvaluate {
+        if (project.plugins.hasPlugin('com.android.application')) {
+            ext.initScriptDir = initscript.sourceFile.parentFile
+            project.apply from: "${ext.initScriptDir}/configureReactNativeOverrides.gradle"
+        }
+    }
+}

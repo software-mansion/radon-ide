@@ -7,6 +7,7 @@ import { CancelToken } from "./BuildManager";
 import path from "path";
 import fs from "fs";
 import { window } from "vscode";
+import { extensionContext } from "../utilities/extensionContext";
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
@@ -56,6 +57,8 @@ export async function buildAndroid(
     `-PreactNativeArchitectures=${cpuArchitecture}`,
     ...(forceCleanBuild ? ["clean"] : []),
     "assembleDebug",
+    "--init-script", // init script is used to patch React Android project, see comments in configureReactNativeOverrides.gradle for more details
+    path.join(extensionContext.extensionPath, "lib", "android", "initscript.gradle"),
   ];
   Logger.debug("Starting Android build");
   const buildProcess = cancelToken.adapt(
