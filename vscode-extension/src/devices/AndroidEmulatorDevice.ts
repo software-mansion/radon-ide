@@ -322,7 +322,7 @@ export async function listEmulators() {
 
 export function removeEmulator(avdId: string) {
   const avdDirectory = getOrCreateAvdDirectory();
-  const removeAvd = fs.promises.rmdir(path.join(avdDirectory, `${avdId}.avd`), {
+  const removeAvd = fs.promises.rm(path.join(avdDirectory, `${avdId}.avd`), {
     recursive: true,
   });
   const removeIni = fs.promises.rm(path.join(avdDirectory, `${avdId}.ini`));
