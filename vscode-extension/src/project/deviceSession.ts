@@ -50,7 +50,7 @@ export class DeviceSession implements Disposable {
     progressCallback(StartupMessage.Installing);
     await this.device.installApp(build, false);
     progressCallback(StartupMessage.Launching);
-    await this.device.launchApp(build, this.metro.port);
+    await this.device.launchApp(build, this.metro.port, this.devtools.port);
 
     const waitForPreview = this.device.startPreview();
     Logger.debug("Will wait for app ready and for preview");
