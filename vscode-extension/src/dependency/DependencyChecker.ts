@@ -86,18 +86,15 @@ export class DependencyChecker implements Disposable {
       installed = await checkIfCLIInstalled(`yarn list --json`, {
         cwd: getAppRootFolder(),
       });
-    } 
-    else if (packageManager === "pnpm") {
+    } else if (packageManager === "pnpm") {
       installed = await checkIfCLIInstalled(`pnpm list --json`, {
         cwd: getAppRootFolder(),
       });
-    } 
-    else if (packageManager === "bun") {
+    } else if (packageManager === "bun") {
       installed = await checkIfCLIInstalled(`bun pm ls --json`, {
         cwd: getAppRootFolder(),
       });
-    } 
-    else {
+    } else {
       installed = await checkIfCLIInstalled(`npm list --json`, {
         cwd: getAppRootFolder(),
       });

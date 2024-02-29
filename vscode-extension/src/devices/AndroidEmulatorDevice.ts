@@ -146,11 +146,21 @@ export class AndroidEmulatorDevice extends DeviceBase {
     );
   }
 
-  async launchWithExpoDevClientDeeplink(metroPort: number, devtoolsPort:number, expoDevClientDeeplink: string) {
+  async launchWithExpoDevClientDeeplink(
+    metroPort: number,
+    devtoolsPort: number,
+    expoDevClientDeeplink: string
+  ) {
     // For Expo dev-client setup, we use deeplink to launch the app. Since Expo's manifest is configured to
     // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
     await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
-    await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${devtoolsPort}`, `tcp:${devtoolsPort}`]);
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "reverse",
+      `tcp:${devtoolsPort}`,
+      `tcp:${devtoolsPort}`,
+    ]);
     // next, we open the link
     await exec(ADB_PATH, [
       "-s",

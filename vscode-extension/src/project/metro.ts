@@ -11,31 +11,31 @@ export interface MetroDelegate {
 
 type MetroEvent =
   | {
-      type: "bundling_error";
-      message: string;
-      stack: string;
-      error?: {
-        filename?: string;
-        lineNumber?: number;
-        column?: number;
-      };
-    }
-  | {
-      type: "bundle_transform_progressed";
-      transformedFileCount: number;
-      totalFileCount: number;
-    }
-  | {
-      type: "rnp_initialize_done";
-      port: number;
+    type: "bundling_error";
+    message: string;
+    stack: string;
+    error?: {
+      filename?: string;
+      lineNumber?: number;
+      column?: number;
     };
+  }
+  | {
+    type: "bundle_transform_progressed";
+    transformedFileCount: number;
+    totalFileCount: number;
+  }
+  | {
+    type: "rnp_initialize_done";
+    port: number;
+  };
 
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
   private startPromise: Promise<void> | undefined;
 
-  constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
+  constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) { }
 
   public get port() {
     return this._port;
@@ -190,23 +190,27 @@ export class Metro implements Disposable {
     let websocketAddress: string | undefined;
     for (const page of listJson) {
       // pageId can sometimes be negative so we can't just use .split('-') here
-      const matches = page.id.match(/(\d+)-(-?\d+)/);
-      if (matches) {
+      const matches = page.id.match(/([^-]+)-(-?\d+)/);
+
+      if (!matches) continue;
+      const pageId = parseInt(matches[2]);
+      if (pageId !== -1) continue;
+      //If deviceId is a number we want to pick the highest one, with expo it's never a number and we pick the latest record
+      if (Number.isInteger(matches[1])) {
         const deviceId = parseInt(matches[1]);
-        const pageId = parseInt(matches[2]);
-        if (deviceId > recentDeviceId && pageId === -1) {
-          recentDeviceId = deviceId;
-          // In RN 73 metro has a bug where websocket URL returns 0 as port number when starting with port number set as 0 (ephemeral port)
-          // we want to replace it with the actual port number from metro:
-          // parse websocket URL:
-          const websocketDebuggerUrl = new URL(page.webSocketDebuggerUrl);
-          // replace port number with metro port number:
-          if (websocketDebuggerUrl.port === "0") {
-            websocketDebuggerUrl.port = this._port.toString();
-          }
-          websocketAddress = websocketDebuggerUrl.toString();
+        if ((deviceId < recentDeviceId)) {
+          continue;
         }
+        recentDeviceId = deviceId;
       }
+      // Port and host in webSocketDebuggerUrl are set manually to match current metro address,
+      // because we always know what the correct one is and some versions of RN are sending out wrong port (0 or 8081)
+      const websocketDebuggerUrl = new URL(page.webSocketDebuggerUrl);
+      // replace port number with metro port number:
+      websocketDebuggerUrl.port = this._port.toString();
+      // replace host with localhost:
+      websocketDebuggerUrl.host = "localhost";
+      websocketAddress = websocketDebuggerUrl.toString();
     }
 
     return websocketAddress;
