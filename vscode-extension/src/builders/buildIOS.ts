@@ -5,6 +5,7 @@ import path from "path";
 import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
 import { CancelToken } from "./BuildManager";
+import { Project } from "../project/project";
 
 type IOSProjectInfo = {
   name: string;
@@ -115,7 +116,8 @@ export async function buildIos(
   );
 
   let platformName: string | undefined;
-  const outputChannel = window.createOutputChannel("React Native IDE (iOS build)", { log: true });
+  const outputChannel = await Project.currentProject!.getIosBuildOutputChannel();
+  outputChannel.clear();
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
     // Xcode can sometimes escape `=` with a backslash or put the value in quotes

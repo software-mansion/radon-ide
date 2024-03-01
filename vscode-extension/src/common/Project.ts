@@ -1,3 +1,4 @@
+import { LogOutputChannel } from "vscode";
 import { DeviceInfo } from "./DeviceManager";
 
 export type DeviceSettings = {
@@ -11,6 +12,10 @@ export type ProjectState = {
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
 };
+export type BuildOutputChannels = {
+  android: LogOutputChannel;
+  ios: LogOutputChannel;
+}
 
 // important: order of values in this enum matters
 export enum StartupMessage {
@@ -56,6 +61,7 @@ export interface ProjectInterface {
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
+  focusBuildOutput(): Promise<void>;
   focusDebugConsole(): Promise<void>;
 
   openNavigation(navigationItemID: string): Promise<void>;

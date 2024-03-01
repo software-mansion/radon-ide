@@ -8,6 +8,7 @@ import path from "path";
 import fs from "fs";
 import { window } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
+import { Project } from "../project/project";
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
@@ -68,9 +69,8 @@ export async function buildAndroid(
       buffer: false,
     })
   );
-  const outputChannel = window.createOutputChannel("React Native IDE (Android build)", {
-    log: true,
-  });
+  const outputChannel = await Project.currentProject!.getAndroidBuildOutputChannel();
+  outputChannel.clear();
   lineReader(buildProcess).onLineRead(outputChannel.appendLine);
 
   await buildProcess;

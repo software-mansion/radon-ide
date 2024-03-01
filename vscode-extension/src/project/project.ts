@@ -1,12 +1,13 @@
-import { Disposable, debug, commands, workspace, Uri } from "vscode";
+import { Disposable, debug, commands, workspace, window, Uri, OutputChannel, LogOutputChannel } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
 import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
 import { DeviceManager } from "../devices/DeviceManager";
-import { DeviceInfo } from "../common/DeviceManager";
+import { DeviceInfo, Platform } from "../common/DeviceManager";
 import {
+  BuildOutputChannels,
   DeviceSettings,
   ProjectEventListener,
   ProjectEventMap,
@@ -28,6 +29,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private debugSessionListener: Disposable | undefined;
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
+  private buildOutputChannels: BuildOutputChannels;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -46,6 +48,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     Project.currentProject = this;
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
+    const androidLogOutputChannel = window.createOutputChannel("React Native IDE (Android build)", {
+      log: true,
+    });
+    const iosLogOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", { log: true });
+    this.buildOutputChannels = {
+      android: androidLogOutputChannel,
+      ios: iosLogOutputChannel,
+    }
     this.start(false, false);
     this.trySelectingInitialDevice();
   }
@@ -87,6 +97,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   async getProjectState(): Promise<ProjectState> {
     return this.projectState;
+  }
+
+  async getAndroidBuildOutputChannel(): Promise<LogOutputChannel> {
+    return this.buildOutputChannels.android;
+  }
+
+  async getIosBuildOutputChannel(): Promise<LogOutputChannel> {
+    return this.buildOutputChannels.ios;
   }
 
   async addListener<K extends keyof ProjectEventMap>(
@@ -234,7 +252,17 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public async stepOverDebugger() {
     this.deviceSession?.stepOverDebugger();
   }
-
+  public async focusBuildOutput() {
+    if (!this.projectState.selectedDevice) {
+      return;
+    }
+    if (this.projectState.selectedDevice.platform === Platform.Android) {
+      this.buildOutputChannels.android.show();
+    }
+    else {
+      this.buildOutputChannels.ios.show();
+    }
+  }
   public async focusDebugConsole() {
     commands.executeCommand("workbench.panel.repl.view.focus");
   }

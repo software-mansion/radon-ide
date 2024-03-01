@@ -13,6 +13,9 @@ import {
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
+import IconButton from "./shared/IconButton";
+import { StartupMessage } from "../../common/Project";
+
 
 function cssPropertiesForDevice(device) {
   return {
@@ -201,7 +204,7 @@ function Preview({ isInspecting, setIsInspecting }) {
         <div className="phone-content">
           <div className="phone-sized phone-screen phone-content-loading-overlay" />
           <div className="phone-sized phone-screen phone-content-loading ">
-            <PreviewLoader startupMessage={projectState?.startupMessage} />
+            <PreviewLoader />
           </div>
           <img src={device.frameImage} className="phone-frame" />
         </div>
