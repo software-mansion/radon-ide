@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Helper functions for React Native IDE project",
   "main": "index.js",
+  "types": "index.d.ts",
   "author": "Software Mansion <contact@swmansion.com>",
   "license": "MIT"
 }
