@@ -1,6 +1,6 @@
 {
   "name": "react-native-ide",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Helper functions for React Native IDE project",
   "main": "index.js",
   "types": "index.d.ts",
