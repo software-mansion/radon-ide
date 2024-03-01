@@ -1,0 +1,19 @@
+.itemColumn {
+  flex-direction: column;
+}
+
+.itemRow {
+  flex-direction: row;
+}
+
+.itemRowReversed {
+  flex-direction: row-reverse;
+}
+
+.itemRowBorder {
+  border-width: 1.5rem;
+}
+
+.itemColumnBorder {
+  border-width: 2.75rem 2.5rem;
+}

@@ -1,0 +1,13 @@
+.header-swm:before {
+  display: flex;
+  height: 42px;
+  width: 83px;
+
+  cursor: pointer;
+
+  mask: url(/static/img/swm-logo.svg) no-repeat 100% 100%;
+  mask-size: cover;
+  content: '';
+
+  background-color: var(--ifm-navbar-link-color);
+}

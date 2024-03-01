@@ -1,0 +1,76 @@
+.learnMoreSectionHero {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.learnMoreSectionHero > div {
+  display: flex;
+  align-items: center;
+}
+
+.learnMoreSectionHero p {
+  font-weight: 700;
+  font-size: 24px;
+  margin-bottom: 0;
+}
+
+.elipseContainer {
+  position: relative;
+}
+
+/* smaller elipse */
+.elipse:nth-of-type(1) {
+  left: -2.5%;
+  bottom: -9rem;
+}
+
+/* bigger elipse */
+.elipse:nth-of-type(2) {
+  top: -3.5rem;
+  width: 100%;
+  left: -90%;
+}
+
+@media (max-width: 1440px) {
+  /* smaller elipse */
+  .elipse:nth-of-type(1) {
+    left: 10%;
+    bottom: -9rem;
+  }
+  /* bigger elipse */
+  .elipse:nth-of-type(2) {
+    left: -75%;
+    top: -3.5rem;
+  }
+}
+
+@media (max-width: 996px) {
+  /* smaller elipse */
+  .elipse:nth-of-type(1) {
+    left: 15%;
+    bottom: -8rem;
+  }
+  /* bigger elipse */
+  .elipse:nth-of-type(2) {
+    width: 200%;
+    left: -125%;
+  }
+}
+
+@media (max-width: 768px) {
+  .learnMoreSectionHero {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  /* smaller elipse */
+  .elipse:nth-of-type(1) {
+    left: 85%;
+    bottom: -15rem;
+  }
+  /* bigger elipse */
+  .elipse:nth-of-type(2) {
+    scale: 0.75;
+  }
+}
