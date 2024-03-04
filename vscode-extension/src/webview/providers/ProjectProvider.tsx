@@ -5,19 +5,29 @@ import { DeviceSettings, ProjectInterface, ProjectState } from "../../common/Pro
 const project = makeProxy<ProjectInterface>("Project");
 
 interface ProjectContextProps {
-  projectState: ProjectState | undefined;
+  projectState: ProjectState;
   deviceSettings: DeviceSettings;
   project: ProjectInterface;
 }
 
 const ProjectContext = createContext<ProjectContextProps>({
-  projectState: undefined,
+  projectState: {
+    status: "starting",
+    stageProgress: 0,
+    previewURL: undefined,
+    selectedDevice: undefined,
+  },
   deviceSettings: { appearance: "dark", contentSize: "normal" },
   project,
 });
 
 export default function ProjectProvider({ children }: PropsWithChildren) {
-  const [projectState, setProjectState] = useState<ProjectState | undefined>(undefined);
+  const [projectState, setProjectState] = useState<ProjectState>({
+    status: "starting",
+    stageProgress: 0,
+    previewURL: undefined,
+    selectedDevice: undefined,
+  });
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>({
     appearance: "dark",
     contentSize: "normal",

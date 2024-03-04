@@ -13,6 +13,7 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
+  STAGE_PROGRES_UPDATE_TIMEOUT,
   StartupMessage,
 } from "../common/Project";
 import { EventEmitter } from "stream";
@@ -20,7 +21,6 @@ import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
-
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
 
@@ -35,9 +35,11 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   private projectState: ProjectState = {
     status: "starting",
+    stageProgress: 0,
     previewURL: undefined,
     selectedDevice: undefined,
   };
+  private lastStageProgressUpdate: number = 0;
 
   private deviceSettings: DeviceSettings = {
     appearance: "dark",
@@ -288,6 +290,17 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
   }
+  public async updateStageProgress(newStageProgress: number) {
+    if (newStageProgress < this.projectState.stageProgress) {
+      return;
+    }
+    if (performance.now() - this.lastStageProgressUpdate < STAGE_PROGRES_UPDATE_TIMEOUT) {
+      return;
+    }
+    this.projectState = { ...this.projectState, ...{ stageProgress: newStageProgress } };
+    this.eventEmitter.emit("projectStateChanged", this.projectState);
+    this.lastStageProgressUpdate = performance.now();
+  }
 
   private updateProjectState(newState: Partial<ProjectState>) {
     this.projectState = { ...this.projectState, ...newState };
@@ -299,6 +312,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       this.updateProjectState(newState);
     }
   }
+
 
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
     Logger.log("Device selected", deviceInfo.name);
@@ -333,7 +347,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       this.deviceSession = newDeviceSession;
 
       await newDeviceSession.start(this.deviceSettings, (startupMessage) =>
-        this.updateProjectStateForDevice(deviceInfo, { startupMessage })
+        this.updateProjectStateForDevice(deviceInfo, { startupMessage, stageProgress: 0 })
       );
       Logger.debug("Device session started");
 

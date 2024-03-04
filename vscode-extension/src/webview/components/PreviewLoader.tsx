@@ -3,34 +3,43 @@ import { useEffect, useState } from "react";
 import StartupMessageComponent from "./shared/StartupMessage";
 import ProgressBar from "./shared/ProgressBar";
 
-import { StartupMessage } from "../../common/Project";
+
+import { StartupMessage, StartupStageWeight } from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
 import IconButton from "./shared/IconButton";
 
+const startupStageWeightSum = StartupStageWeight
+  .map((item) => item.weight)
+  .reduce((acc, cur) => acc += cur, 0);
 
-const startupMessageArr = Object.values(StartupMessage).filter(
-  (message) => message !== StartupMessage.Restarting
-);
 
 function PreviewLoader() {
   const { projectState, project } = useProject();
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (projectState?.startupMessage === StartupMessage.Restarting) {
+    if (projectState.startupMessage === StartupMessage.Restarting) {
       setProgress(100);
     } else {
+      const currentIndex = StartupStageWeight.findIndex(item => item.StartupMessage === projectState.startupMessage);
+      const currentWeight = StartupStageWeight[currentIndex].weight;
+      const startupStageWeightSumUntillNow = StartupStageWeight
+        .slice(0, currentIndex)
+        .map((item) => item.weight)
+        .reduce((acc, cur) => acc += cur, 0);
+
       setProgress(
-        (startupMessageArr.indexOf(projectState?.startupMessage as StartupMessage) /
-          (startupMessageArr.length - 1)) *
+        ((startupStageWeightSumUntillNow + projectState.stageProgress * currentWeight) /
+          startupStageWeightSum) *
         100
       );
     }
-  }, [projectState?.startupMessage]);
+  }, [projectState]);
 
   return (
     <>
-      <StartupMessageComponent>{projectState?.startupMessage}</StartupMessageComponent>
+      <StartupMessageComponent>{projectState.startupMessage}</StartupMessageComponent>
+
       <ProgressBar progress={progress} />
       {projectState?.startupMessage === StartupMessage.Building &&
         <IconButton

@@ -9,6 +9,7 @@ export type DeviceSettings = {
 export type ProjectState = {
   status: "starting" | "running" | "buildError" | "runtimeError" | "debuggerPaused" | "refreshing";
   startupMessage?: string; // Only used when status is "starting"
+  stageProgress: number;
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
 };
@@ -29,6 +30,19 @@ export enum StartupMessage {
   AttachingDebugger = "Attaching debugger",
   Restarting = "Restarting",
 }
+
+export const StartupStageWeight = [
+  { StartupMessage: StartupMessage.InitializingDevice, weight: 1 },
+  { StartupMessage: StartupMessage.StartingPackager, weight: 1 },
+  { StartupMessage: StartupMessage.BootingDevice, weight: 2 },
+  { StartupMessage: StartupMessage.Building, weight: 7 },
+  { StartupMessage: StartupMessage.Installing, weight: 1 },
+  { StartupMessage: StartupMessage.Launching, weight: 1 },
+  { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
+  { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
+];
+
+export const STAGE_PROGRES_UPDATE_TIMEOUT = 100;
 
 export type InspectData = {
   frame: {
@@ -58,6 +72,7 @@ export interface ProjectInterface {
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
+  updateStageProgress(newStageProgress: number): Promise<void>;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;

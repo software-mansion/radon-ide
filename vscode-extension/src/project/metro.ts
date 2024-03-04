@@ -4,6 +4,7 @@ import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
+import { Project } from "./project";
 
 export interface MetroDelegate {
   onBundleError(message: string): void;
@@ -142,7 +143,13 @@ export class Metro implements Disposable {
       lineReader(bundlerProcess).onLineRead((line) => {
         try {
           const event = JSON.parse(line) as MetroEvent;
-          if (event.type !== "bundle_transform_progressed") {
+          if (event.type === "bundle_transform_progressed") {
+            // Because totalFileCount grows as bundle_transform progresses at the begining there are a few logs that indicate 100% progress thats why we ignore them
+            if (event.totalFileCount > 10) {
+              Project.currentProject!.updateStageProgress(event.transformedFileCount / event.totalFileCount);
+            }
+          }
+          else {
             Logger.debug("Metro", line);
           }
           switch (event.type) {
