@@ -4,10 +4,12 @@ on:
     branches:
       - main
     paths:
-      - vscode-extension/src/**
+      - '.github/workflows/lint-extension.yml'
+      - 'vscode-extension/src/**'
   pull_request:
     paths:
-      - vscode-extension/src/**
+      - '.github/workflows/lint-extension.yml'
+      - 'vscode-extension/src/**'
 
 jobs:
   check:
@@ -16,16 +18,20 @@ jobs:
     env:
       WORKING_DIRECTORY: vscode-extension
     steps:
-      - name: Check out
+      - name: Checkout
         uses: actions/checkout@v4
-      - name: Use Node.js
-        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+      - name: Setup node
         uses: actions/setup-node@v4
         with:
+          node-version: 20
           cache: 'npm'
+          cache-dependency-path: vscode-extension/package-lock.json
+
       - name: Install node dependencies
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npm i
+
       - name: Lint extension
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npm run lint
