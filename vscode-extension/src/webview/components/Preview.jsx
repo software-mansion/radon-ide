@@ -16,7 +16,6 @@ import Debugger from "./Debugger";
 import IconButton from "./shared/IconButton";
 import { StartupMessage } from "../../common/Project";
 
-
 function cssPropertiesForDevice(device) {
   return {
     "--phone-screen-height": `${(device.screenHeight / device.frameHeight) * 100}%`,

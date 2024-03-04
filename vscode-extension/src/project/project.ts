@@ -1,4 +1,13 @@
-import { Disposable, debug, commands, workspace, window, Uri, OutputChannel, LogOutputChannel } from "vscode";
+import {
+  Disposable,
+  debug,
+  commands,
+  workspace,
+  window,
+  Uri,
+  OutputChannel,
+  LogOutputChannel,
+} from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -53,11 +62,13 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     const androidLogOutputChannel = window.createOutputChannel("React Native IDE (Android build)", {
       log: true,
     });
-    const iosLogOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", { log: true });
+    const iosLogOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", {
+      log: true,
+    });
     this.buildOutputChannels = {
       android: androidLogOutputChannel,
       ios: iosLogOutputChannel,
-    }
+    };
     this.start(false, false);
     this.trySelectingInitialDevice();
   }
@@ -260,8 +271,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     }
     if (this.projectState.selectedDevice.platform === Platform.Android) {
       this.buildOutputChannels.android.show();
-    }
-    else {
+    } else {
       this.buildOutputChannels.ios.show();
     }
   }
@@ -312,7 +322,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       this.updateProjectState(newState);
     }
   }
-
 
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
     Logger.log("Device selected", deviceInfo.name);

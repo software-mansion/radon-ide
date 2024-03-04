@@ -3,15 +3,14 @@ import { useEffect, useState } from "react";
 import StartupMessageComponent from "./shared/StartupMessage";
 import ProgressBar from "./shared/ProgressBar";
 
-
 import { StartupMessage, StartupStageWeight } from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
 import IconButton from "./shared/IconButton";
 
-const startupStageWeightSum = StartupStageWeight
-  .map((item) => item.weight)
-  .reduce((acc, cur) => acc += cur, 0);
-
+const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
+  (acc, cur) => (acc += cur),
+  0
+);
 
 function PreviewLoader() {
   const { projectState, project } = useProject();
@@ -21,17 +20,18 @@ function PreviewLoader() {
     if (projectState.startupMessage === StartupMessage.Restarting) {
       setProgress(100);
     } else {
-      const currentIndex = StartupStageWeight.findIndex(item => item.StartupMessage === projectState.startupMessage);
+      const currentIndex = StartupStageWeight.findIndex(
+        (item) => item.StartupMessage === projectState.startupMessage
+      );
       const currentWeight = StartupStageWeight[currentIndex].weight;
-      const startupStageWeightSumUntillNow = StartupStageWeight
-        .slice(0, currentIndex)
+      const startupStageWeightSumUntillNow = StartupStageWeight.slice(0, currentIndex)
         .map((item) => item.weight)
-        .reduce((acc, cur) => acc += cur, 0);
+        .reduce((acc, cur) => (acc += cur), 0);
 
       setProgress(
         ((startupStageWeightSumUntillNow + projectState.stageProgress * currentWeight) /
           startupStageWeightSum) *
-        100
+          100
       );
     }
   }, [projectState]);
@@ -41,7 +41,7 @@ function PreviewLoader() {
       <StartupMessageComponent>{projectState.startupMessage}</StartupMessageComponent>
 
       <ProgressBar progress={progress} />
-      {projectState?.startupMessage === StartupMessage.Building &&
+      {projectState?.startupMessage === StartupMessage.Building && (
         <IconButton
           onClick={() => project.focusBuildOutput()}
           tooltip={{
@@ -50,8 +50,7 @@ function PreviewLoader() {
           }}>
           <span className="codicon codicon-symbol-keyword" />
         </IconButton>
-      }
-
+      )}
     </>
   );
 }

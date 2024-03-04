@@ -16,7 +16,7 @@ export type ProjectState = {
 export type BuildOutputChannels = {
   android: LogOutputChannel;
   ios: LogOutputChannel;
-}
+};
 
 // important: order of values in this enum matters
 export enum StartupMessage {

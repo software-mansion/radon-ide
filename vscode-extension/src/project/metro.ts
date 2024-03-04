@@ -12,31 +12,31 @@ export interface MetroDelegate {
 
 type MetroEvent =
   | {
-    type: "bundling_error";
-    message: string;
-    stack: string;
-    error?: {
-      filename?: string;
-      lineNumber?: number;
-      column?: number;
+      type: "bundling_error";
+      message: string;
+      stack: string;
+      error?: {
+        filename?: string;
+        lineNumber?: number;
+        column?: number;
+      };
+    }
+  | {
+      type: "bundle_transform_progressed";
+      transformedFileCount: number;
+      totalFileCount: number;
+    }
+  | {
+      type: "rnp_initialize_done";
+      port: number;
     };
-  }
-  | {
-    type: "bundle_transform_progressed";
-    transformedFileCount: number;
-    totalFileCount: number;
-  }
-  | {
-    type: "rnp_initialize_done";
-    port: number;
-  };
 
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
   private startPromise: Promise<void> | undefined;
 
-  constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) { }
+  constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
 
   public get port() {
     return this._port;
@@ -146,10 +146,11 @@ export class Metro implements Disposable {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the begining there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
-              Project.currentProject!.updateStageProgress(event.transformedFileCount / event.totalFileCount);
+              Project.currentProject!.updateStageProgress(
+                event.transformedFileCount / event.totalFileCount
+              );
             }
-          }
-          else {
+          } else {
             Logger.debug("Metro", line);
           }
           switch (event.type) {
@@ -205,7 +206,7 @@ export class Metro implements Disposable {
       //If deviceId is a number we want to pick the highest one, with expo it's never a number and we pick the latest record
       if (Number.isInteger(matches[1])) {
         const deviceId = parseInt(matches[1]);
-        if ((deviceId < recentDeviceId)) {
+        if (deviceId < recentDeviceId) {
           continue;
         }
         recentDeviceId = deviceId;
