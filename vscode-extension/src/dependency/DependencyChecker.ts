@@ -2,9 +2,7 @@ import { Webview, Disposable } from "vscode";
 import { Logger } from "../Logger";
 import fs from "fs";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
-import { command, exec } from "../utilities/subprocess";
-import { SDKMANAGER_BIN_PATH } from "../utilities/sdkmanager";
-import { JAVA_HOME } from "../utilities/android";
+import { command } from "../utilities/subprocess";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { getAppRootFolder } from "../utilities/extensionContext";
@@ -35,9 +33,9 @@ export class DependencyChecker implements Disposable {
             Logger.debug("Received checkNodejsInstalled command.");
             this.checkNodejsInstalled();
             return;
-          case "checkAndroidStudioInstalled":
-            Logger.debug("Received checkAndroidStudioInstalled command.");
-            this.checkAndroidStudioInstalled();
+          case "checkAndroidEmulatorInstalled":
+            Logger.debug("Received checkAndroidEmulatorInstalled command.");
+            this.checkAndroidEmulatorInstalled();
             return;
           case "checkXcodeInstalled":
             Logger.debug("Received checkXcodeInstalled command.");
@@ -113,23 +111,19 @@ export class DependencyChecker implements Disposable {
   }
 
   /* Android-related */
-  public async checkAndroidStudioInstalled() {
-    const isAndroidEmulatorInstalled = await checkAndroidEmulatorExists();
-    // TODO: disabling sdk manager check for now, as we hide UI for managing SDKs entirely and it requires additional packages to be installed
-    const isAndroidSdkInstalled = true; // await checkSdkManagerInstalled();
-    const installed = isAndroidEmulatorInstalled && isAndroidSdkInstalled;
-
+  public async checkAndroidEmulatorInstalled() {
+    const installed = await checkAndroidEmulatorExists();
     const errorMessage =
-      "Android Studio was not found. Make sure to [install Android Studio](https://developer.android.com/studio).";
+      "Android Emulator was not found. Make sure to [install Android Emulator](https://developer.android.com/studio/run/managing-avds).";
     this.webview.postMessage({
-      command: "isAndroidStudioInstalled",
+      command: "isAndroidEmulatorInstalled",
       data: {
         installed,
-        info: "Used for building and running Android apps.",
+        info: "Used for running Android apps.",
         error: installed ? undefined : errorMessage,
       },
     });
-    Logger.debug("Android Emulator & Android SDK installed: ", installed);
+    Logger.debug("Android Emulator installed: ", installed);
     return installed;
   }
 
@@ -213,13 +207,4 @@ export async function checkIosDependenciesInstalled() {
 
 export async function checkAndroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
-}
-
-export async function checkSdkManagerInstalled() {
-  try {
-    await exec(SDKMANAGER_BIN_PATH, ["--version"], { env: { ...process.env, JAVA_HOME } });
-    return true;
-  } catch (_) {
-    return false;
-  }
 }

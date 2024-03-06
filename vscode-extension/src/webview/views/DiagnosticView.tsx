@@ -21,7 +21,7 @@ function DiagnosticView() {
       <div className="diagnostic-section-margin" />
 
       <Label>Android</Label>
-      <DiagnosticItem label="Android Studio" item={dependencies.AndroidStudio} />
+      <DiagnosticItem label="Android Emulator" item={dependencies.AndroidEmulator} />
       <div className="diagnostic-section-margin" />
 
       <Label>iOS</Label>

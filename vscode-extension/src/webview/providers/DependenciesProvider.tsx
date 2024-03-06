@@ -8,7 +8,7 @@ export interface DependencyData {
 }
 interface Dependencies {
   Nodejs?: DependencyData;
-  AndroidStudio?: DependencyData;
+  AndroidEmulator?: DependencyData;
   Xcode?: DependencyData;
   CocoaPods?: DependencyData;
   NodeModules?: DependencyData;
@@ -17,7 +17,7 @@ interface Dependencies {
 
 const defaultDependencies: Dependencies = {
   Nodejs: undefined,
-  AndroidStudio: undefined,
+  AndroidEmulator: undefined,
   Xcode: undefined,
   CocoaPods: undefined,
   NodeModules: undefined,
@@ -87,8 +87,8 @@ export default function DependenciesProvider({ children }: DependenciesProviderP
         case "isNodejsInstalled":
           setDependencies((prev) => ({ ...prev, Nodejs: message.data }));
           break;
-        case "isAndroidStudioInstalled":
-          setDependencies((prev) => ({ ...prev, AndroidStudio: message.data }));
+        case "isAndroidEmulatorInstalled":
+          setDependencies((prev) => ({ ...prev, AndroidEmulator: message.data }));
           break;
         case "isXcodeInstalled":
           setDependencies((prev) => ({ ...prev, Xcode: message.data }));

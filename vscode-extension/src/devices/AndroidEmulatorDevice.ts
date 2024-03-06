@@ -313,12 +313,15 @@ export async function listEmulators() {
     env: { ...process.env, ANDROID_AVD_HOME: avdDirectory },
   });
   const avdIds = stdout.split("\n").filter((avdId) => !!avdId);
-  const [systemImages] = await getAndroidSystemImages();
+  const systemImages = await getAndroidSystemImages();
   return Promise.all(
     avdIds.map(async (avdId) => {
       const avdConfigPath = path.join(avdDirectory, `${avdId}.avd`, "config.ini");
       const { displayName, systemImageDir } = await parseAvdConfigIniFile(avdConfigPath);
-      const systemImageName = systemImages.find((image) => image.location === systemImageDir)?.name;
+
+      const systemImageName = systemImages.find(
+        (image: AndroidSystemImageInfo) => image.location === systemImageDir
+      )?.name;
       return {
         id: `android-${avdId}`,
         platform: Platform.Android,
@@ -356,11 +359,10 @@ async function parseAvdConfigIniFile(filePath: string) {
         displayName = value;
         break;
       case "image.sysdir.1":
-        systemImageDir = value;
+        systemImageDir = value.includes(ANDROID_HOME) ? value : path.join(ANDROID_HOME, value);
         break;
     }
   });
-
   if (!displayName || !systemImageDir) {
     throw new Error(`Couldn't parse AVD ${filePath}`);
   }

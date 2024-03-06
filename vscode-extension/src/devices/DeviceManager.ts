@@ -99,20 +99,11 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   }
 
   public async listInstalledAndroidImages() {
-    const [installedImages] = await getAndroidSystemImages();
-    return installedImages;
-  }
-
-  public async listAllAndroidImages() {
-    const [installedImages, availableImages] = await getAndroidSystemImages();
-    return {
-      installed: installedImages,
-      available: availableImages,
-    };
+    return getAndroidSystemImages();
   }
 
   public listInstalledIOSRuntimes() {
-    return getAvailableIosRuntimes() as Promise<IOSRuntimeInfo[]>;
+    return getAvailableIosRuntimes();
   }
 
   public async listAllDevices() {
