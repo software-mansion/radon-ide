@@ -1,0 +1,26 @@
+.preview-loader-container {
+  position: relative;
+  width: 75%;
+}
+
+.preview-loader-button-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.preview-loader-spacer {
+  display: flex;
+}
+
+.preview-loader-message {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 0);
+  bottom: 10px;
+  text-wrap: nowrap;
+}
+
+.preview-loader-stage-progress {
+  margin-right: 8px;
+}

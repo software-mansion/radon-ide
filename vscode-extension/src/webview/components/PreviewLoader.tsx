@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import "./PreviewLoader.css";
+
 import StartupMessageComponent from "./shared/StartupMessage";
 import ProgressBar from "./shared/ProgressBar";
 
@@ -38,23 +40,27 @@ function PreviewLoader() {
 
   return (
     <>
-      <StartupMessageComponent>
-        {projectState.startupMessage !== StartupMessage.Building
-          ? projectState.startupMessage
-          : `${projectState.startupMessage} (${(projectState.stageProgress * 100).toFixed(2)}%)`}
-      </StartupMessageComponent>
-
+      <div className="preview-loader-container">
+        <div className="preview-loader-button-group">
+          <IconButton
+            onClick={() => project.focusBuildOutput()}
+            tooltip={{
+              label: "Open build logs",
+              side: "top",
+            }}>
+            <span className="codicon codicon-symbol-keyword" />
+          </IconButton>
+          <div className="preview-loader-spacer" />
+          <div className="preview-loader-stage-progress">
+            {Boolean(projectState.stageProgress) &&
+              `${(projectState.stageProgress * 100).toFixed(1)}%`}
+          </div>
+        </div>
+        <StartupMessageComponent className="preview-loader-message">
+          {projectState.startupMessage}
+        </StartupMessageComponent>
+      </div>
       <ProgressBar progress={progress} />
-      {projectState?.startupMessage === StartupMessage.Building && (
-        <IconButton
-          onClick={() => project.focusBuildOutput()}
-          tooltip={{
-            label: "Show build logs",
-            side: "bottom",
-          }}>
-          <span className="codicon codicon-symbol-keyword" />
-        </IconButton>
-      )}
     </>
   );
 }

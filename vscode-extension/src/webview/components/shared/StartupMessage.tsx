@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
+import classNames from "classnames";
 import "./StartupMessage.css";
+import { StartupMessage } from "../../../common/Project";
+
+interface StartupMessageProps {
+  children: React.ReactNode;
+  className?: string;
+}
 
 const dots = ["", ".", "..", "..."];
 
-function StartupMessage({ children }: { children: React.ReactNode }) {
+function StartupMessageComponent({ children, className }: StartupMessageProps) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -15,11 +22,15 @@ function StartupMessage({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <div className="startup-message-wrapper">
+    <div className={classNames("startup-message-wrapper", className)}>
       {children}
-      <div className="startup-message-dots">{dots[index]}</div>
+      <div className="startup-message-dots">
+        {children !== StartupMessage.Building && children !== StartupMessage.WaitingForAppToLoad
+          ? dots[index]
+          : ""}
+      </div>
     </div>
   );
 }
 
-export default StartupMessage;
+export default StartupMessageComponent;
