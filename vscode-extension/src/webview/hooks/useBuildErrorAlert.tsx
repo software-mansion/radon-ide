@@ -12,14 +12,15 @@ function Actions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusDebugConsole();
+          project.focusBuildOutput();
         }}
-        tooltip={{ label: "Open logs panel", side: "bottom" }}>
-        <span className="codicon codicon-debug-console" />
+        tooltip={{ label: "Open build logs", side: "bottom" }}>
+        <span className="codicon codicon-symbol-keyword" />
       </IconButton>
       <IconButton
         type="secondary"
         onClick={() => {
+          // FIXME: this should also clean-up the backend of the extension and not only reload the webview
           project.reloadWebview();
         }}
         tooltip={{ label: "Reload IDE", side: "bottom" }}>
@@ -39,7 +40,7 @@ export function useBuildErrorAlert(hasBuildError: boolean) {
       openAlert({
         id,
         title: "Cannot run project",
-        description: "Open logs panel to find out what went wrong.",
+        description: "Open build logs to find out what went wrong.",
         actions: <Actions />,
       });
     } else if (!hasBuildError && isOpen(id)) {
