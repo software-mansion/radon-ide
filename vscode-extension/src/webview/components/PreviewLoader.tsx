@@ -38,7 +38,11 @@ function PreviewLoader() {
 
   return (
     <>
-      <StartupMessageComponent>{projectState.startupMessage}</StartupMessageComponent>
+      <StartupMessageComponent>
+        {projectState.startupMessage !== StartupMessage.Building
+          ? projectState.startupMessage
+          : `${projectState.startupMessage} (${(projectState.stageProgress * 100).toFixed(2)}%)`}
+      </StartupMessageComponent>
 
       <ProgressBar progress={progress} />
       {projectState?.startupMessage === StartupMessage.Building && (

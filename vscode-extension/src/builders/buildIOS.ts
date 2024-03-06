@@ -6,6 +6,7 @@ import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
 import { CancelToken } from "./BuildManager";
 import { Project } from "../project/project";
+import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 
 type IOSProjectInfo = {
   name: string;
@@ -116,10 +117,12 @@ export async function buildIos(
   );
 
   let platformName: string | undefined;
+  const buildIOSProgressProcessor = new BuildIOSProgressProcessor();
   const outputChannel = await Project.currentProject!.getIosBuildOutputChannel();
   outputChannel.clear();
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
+    buildIOSProgressProcessor.processLine(line);
     // Xcode can sometimes escape `=` with a backslash or put the value in quotes
     const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
     if (platformNameMatch) {
