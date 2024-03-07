@@ -1,9 +1,15 @@
 .preview-loader-container {
-  position: relative;
   width: 75%;
 }
 
 .preview-loader-button-group {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.preview-loader-message-wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -14,13 +20,9 @@
 }
 
 .preview-loader-message {
-  position: absolute;
-  left: 50%;
-  transform: translate(-50%, 0);
-  bottom: 10px;
   text-wrap: nowrap;
+  width: 100%;
 }
 
 .preview-loader-stage-progress {
-  margin-right: 8px;
 }

@@ -50,15 +50,17 @@ function PreviewLoader() {
             }}>
             <span className="codicon codicon-symbol-keyword" />
           </IconButton>
-          <div className="preview-loader-spacer" />
+        </div>
+
+        <div className="preview-loader-button-group">
+          <StartupMessageComponent className="preview-loader-message">
+            {projectState.startupMessage}
+          </StartupMessageComponent>
           <div className="preview-loader-stage-progress">
             {Boolean(projectState.stageProgress) &&
               `${(projectState.stageProgress * 100).toFixed(1)}%`}
           </div>
         </div>
-        <StartupMessageComponent className="preview-loader-message">
-          {projectState.startupMessage}
-        </StartupMessageComponent>
       </div>
       <ProgressBar progress={progress} />
     </>
