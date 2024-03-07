@@ -71,6 +71,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     };
     this.start(false, false);
     this.trySelectingInitialDevice();
+    this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
   }
 
   onBundleError(message: string): void {
@@ -94,6 +95,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         this.selectDevice(device);
         return true;
       }
+      this.updateProjectState({
+        selectedDevice: undefined,
+      });
       return false;
     };
 
@@ -138,6 +142,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.metro?.dispose();
     this.devtools?.dispose();
     this.debugSessionListener?.dispose();
+    this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
   }
 
   private reloadingMetro = false;
@@ -383,6 +388,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     Logger.debug("Reloading webview");
     commands.executeCommand("workbench.action.webview.reloadWebviewAction");
   }
+
+  private removeDeviceListener = async (devices: DeviceInfo) => {
+    await this.trySelectingInitialDevice();
+  };
 }
 
 export function isAppSourceFile(filePath: string) {

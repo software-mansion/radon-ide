@@ -139,5 +139,6 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
       await removeEmulator(device.avdId);
     }
     await this.loadDevices();
+    this.eventEmitter.emit("deviceRemoved", device);
   }
 }

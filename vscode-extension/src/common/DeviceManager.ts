@@ -41,6 +41,7 @@ export type IOSRuntimeInfo = {
 
 export interface DeviceManagerEventMap {
   devicesChanged: DeviceInfo[];
+  deviceRemoved: DeviceInfo;
 }
 
 export type DeviceManagerEventListener<K extends keyof DeviceManagerEventMap> = (

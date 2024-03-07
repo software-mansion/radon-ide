@@ -63,12 +63,14 @@ function ManageDevicesView() {
     setDeleteConfirmationOpen(true);
   };
 
+  const handleConfirmationClose = () => {
+    setDeleteConfirmationOpen(false);
+    setSelectedDevice(undefined);
+  };
+
   if (deleteConfirmationOpen && selectedDevice) {
     return (
-      <DeviceRemovalConfirmation
-        deviceInfo={selectedDevice}
-        onClose={() => setDeleteConfirmationOpen(false)}
-      />
+      <DeviceRemovalConfirmation deviceInfo={selectedDevice} onClose={handleConfirmationClose} />
     );
   }
 
