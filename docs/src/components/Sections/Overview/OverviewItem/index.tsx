@@ -1,26 +1,26 @@
-import React from 'react'
-import styles from './styles.module.css'
+import React from "react";
+import styles from "./styles.module.css";
 
 interface Props {
-  title: string
-  body: string
-  mediaSrc?: string
+  title: string;
+  body: string;
+  mediaSrc?: string;
 }
 
 const OverviewItem = ({ title, body, mediaSrc }: Props) => {
   return (
     <>
-      <div className={styles.description}>
+      <section className={styles.description}>
         <h2 className={styles.itemTitle}>{title}</h2>
         <p className={styles.itemBody}>{body}</p>
-      </div>
+      </section>
       <div className={styles.media}>
-        <video controls>
-          <source src={mediaSrc} type='video/mp4' />
+        <video autoPlay loop muted>
+          <source src={mediaSrc} type="video/mp4" />
         </video>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default OverviewItem
+export default OverviewItem;

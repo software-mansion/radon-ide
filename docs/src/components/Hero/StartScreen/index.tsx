@@ -1,6 +1,6 @@
-import React from 'react'
-import styles from './styles.module.css'
-import HomepageButton from '@site/src/components/HomepageButton'
+import React from "react";
+import styles from "./styles.module.css";
+import HomepageButton from "@site/src/components/HomepageButton";
 
 const StartScreen = () => {
   return (
@@ -12,23 +12,21 @@ const StartScreen = () => {
             <span>IDE</span>
           </h1>
           <h2 className={styles.subheadingLabel}>
-            Integrated Development Environment (IDE) is a tool that helps in
-            integrating all the functionalities for individuals programming in
-            React Native.
+            A better developer experience for React Native developers.
           </h2>
         </div>
         <div>
           <HomepageButton
-            href='/change-this'
-            title='Download from VS Marketplace'
+            href="https://marketplace.visualstudio.com/vscode"
+            title="Download from VS Marketplace"
           />
         </div>
         <div className={styles.headingDisclaimer}>
-          IDE is available only for macOS
+          React Native IDE is only available for macOS.
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default StartScreen
+export default StartScreen;

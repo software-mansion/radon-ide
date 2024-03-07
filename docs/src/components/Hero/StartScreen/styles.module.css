@@ -11,10 +11,11 @@
 
 .headingLabel {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   font-family: var(--swm-title-landing-font);
   font-size: 64px;
   font-weight: 700;
+  gap: 10px;
 
   line-height: 1.1;
   letter-spacing: 0;

@@ -11,7 +11,7 @@ const LearnMoreFooter = () => {
         </div>
         <HomepageButton
           target='_blank'
-          href='https://swmansion.com/'
+          href='https://www.youtube.com/watch?v=YA0PMPm12SU'
           title='See the video'
         />
       </div>

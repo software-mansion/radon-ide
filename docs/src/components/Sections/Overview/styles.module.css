@@ -18,7 +18,7 @@
 
 .item {
   display: flex;
-  gap: 5rem;
+  gap: 2.5rem;
 }
 
 .item:nth-of-type(2n) {
@@ -43,8 +43,12 @@
   border-width: 2.75rem 2.5rem;
 }
 
+.item section {
+  flex: 2;
+}
+
 .item div {
-  flex: 1;
+  flex: 3;
 }
 
 .elipseContainer {
