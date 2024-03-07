@@ -1,35 +1,35 @@
-import { themes as prismThemes } from 'prism-react-renderer'
-import type { Config } from '@docusaurus/types'
-import type * as Preset from '@docusaurus/preset-classic'
+import { themes as prismThemes } from "prism-react-renderer";
+import type { Config } from "@docusaurus/types";
+import type * as Preset from "@docusaurus/preset-classic";
 
 const config: Config = {
-  title: 'React Native IDE',
-  favicon: 'img/favicon.ico',
+  title: "React Native IDE",
+  favicon: "img/favicon.ico",
 
-  url: 'https://docs.swmansion.com',
+  url: "https://docs.swmansion.com",
 
-  baseUrl: '/react-native-ide',
+  baseUrl: "/", //TODO: when deploying to GitHub Pages change to /react-native-ide
 
-  organizationName: 'software-mansion',
-  projectName: 'react-native-sztudio',
+  organizationName: "software-mansion",
+  projectName: "react-native-sztudio",
 
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: "throw",
+  onBrokenMarkdownLinks: "warn",
 
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: "en",
+    locales: ["en"],
   },
 
   presets: [
     [
-      'classic',
+      "classic",
       {
         docs: {
-          sidebarPath: './sidebars.ts',
+          sidebarPath: "./sidebars.ts",
         },
         theme: {
-          customCss: './src/css/custom.css',
+          customCss: "./src/css/custom.css",
         },
       } satisfies Preset.Options,
     ],
@@ -37,31 +37,30 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: "img/docusaurus-social-card.jpg",
     navbar: {
       logo: {
-        alt: 'IDE logo',
-        src: 'img/logo.svg',
+        alt: "IDE logo",
+        src: "img/logo.svg",
       },
       items: [
         {
-          href: 'https://swmansion.com',
-          className: 'header-swm',
-          position: 'right',
+          href: "https://swmansion.com",
+          className: "header-swm",
+          position: "right",
         },
       ],
     },
     footer: {
-      style: 'light',
+      style: "light",
       links: [],
-      copyright:
-        'All trademarks and copyrights belong to their respective owners.',
+      copyright: "All trademarks and copyrights belong to their respective owners.",
     },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
     },
   } satisfies Preset.ThemeConfig,
-}
+};
 
-export default config
+export default config;
