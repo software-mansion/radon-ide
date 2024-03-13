@@ -118,7 +118,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
       });
 
       agent._bridge.addListener("rnp_inspect", (payload) => {
-        const { width, height } = Dimensions.get("window");
+        const { width, height } = Dimensions.get("screen");
         getInspectorDataForViewAtPoint(
           mainContainerRef.current,
           payload.x * width,
