@@ -18,6 +18,7 @@ const DeviceManager = makeProxy<DeviceManagerInterface>("DeviceManager");
 
 interface DevicesContextProps {
   devices: DeviceInfo[];
+  isLoading: boolean;
   androidImages: AndroidSystemImageInfo[];
   iOSRuntimes: IOSRuntimeInfo[];
   deviceManager: DeviceManagerInterface;
@@ -26,6 +27,7 @@ interface DevicesContextProps {
 
 const DevicesContext = createContext<DevicesContextProps>({
   devices: [],
+  isLoading: true,
   androidImages: [],
   iOSRuntimes: [],
   deviceManager: DeviceManager,
@@ -36,11 +38,16 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [androidImages, setAndroidImages] = useState<AndroidSystemImageInfo[]>([]);
   const [iOSRuntimes, setIOSRuntimes] = useState<IOSRuntimeInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const reload = useCallback(() => {
-    DeviceManager.listAllDevices().then(setDevices);
-    DeviceManager.listInstalledAndroidImages().then(setAndroidImages);
-    DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes);
+  const reload = useCallback(async () => {
+    setIsLoading(true);
+    await Promise.all([
+      DeviceManager.listAllDevices().then(setDevices),
+      DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
+      DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes),
+    ]);
+    setIsLoading(false);
   }, [setDevices, setAndroidImages, setIOSRuntimes]);
 
   useEffect(() => {
@@ -53,7 +60,14 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
 
   return (
     <DevicesContext.Provider
-      value={{ devices, androidImages, iOSRuntimes, reload, deviceManager: DeviceManager }}>
+      value={{
+        devices,
+        isLoading,
+        androidImages,
+        iOSRuntimes,
+        reload,
+        deviceManager: DeviceManager,
+      }}>
       {children}
     </DevicesContext.Provider>
   );
