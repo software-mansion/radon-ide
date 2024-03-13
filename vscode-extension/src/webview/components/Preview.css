@@ -14,16 +14,14 @@
 }
 
 .phone-content {
-  display: flex;
-  overflow: auto;
-
   position: relative;
-  min-height: 650px;
+  min-height: var(--min-hight);
+  min-width: var(--min-width);
 }
 
 .phone-screen {
   position: absolute;
-  aspect-ratio: var(--phone-screen-aspect-ratio);
+  width: var(--phone-screen-width);
   height: var(--phone-screen-height);
   top: var(--phone-top);
   left: var(--phone-left);

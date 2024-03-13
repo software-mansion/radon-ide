@@ -19,8 +19,9 @@ import { StartupMessage } from "../../common/Project";
 function cssPropertiesForDevice(device) {
   return {
     "--phone-screen-height": `${(device.screenHeight / device.frameHeight) * 100}%`,
-    // "--phone-screen-width": `${(device.screenWidth / device.frameWidth) * 100}%`,
-    "--phone-screen-aspect-ratio": `${device.screenWidth} / ${device.screenHeight}`,
+    "--phone-screen-width": `${(device.screenWidth / device.frameWidth) * 100}%`,
+    "--min-hight": `${650}px`,
+    "--min-width": `${650 * (device.screenWidth / device.screenHeight)}px`,
     "--phone-mask-image": `url(${device.maskImage})`,
     "--phone-top": `${(device.offsetY / device.frameHeight) * 100}%`,
     "--phone-left": `${(device.offsetX / device.frameWidth) * 100}%`,
