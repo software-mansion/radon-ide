@@ -41,16 +41,18 @@ function PreviewLoader() {
   return (
     <>
       <div className="preview-loader-container">
-        <div className="preview-loader-button-group">
-          <IconButton
-            onClick={() => project.focusBuildOutput()}
-            tooltip={{
-              label: "Open build logs",
-              side: "top",
-            }}>
-            <span className="codicon codicon-symbol-keyword" />
-          </IconButton>
-        </div>
+        {projectState.startupMessage === StartupMessage.Building && (
+          <div className="preview-loader-button-group">
+            <IconButton
+              onClick={() => project.focusBuildOutput()}
+              tooltip={{
+                label: "Open build logs",
+                side: "top",
+              }}>
+              <span className="codicon codicon-symbol-keyword" />
+            </IconButton>
+          </div>
+        )}
 
         <div className="preview-loader-button-group">
           <StartupMessageComponent className="preview-loader-message">

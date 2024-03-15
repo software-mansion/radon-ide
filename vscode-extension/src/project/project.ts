@@ -7,7 +7,6 @@ import { BuildManager } from "../builders/BuildManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo, Platform } from "../common/DeviceManager";
 import {
-  BuildOutputChannels,
   DeviceSettings,
   ProjectEventListener,
   ProjectEventMap,
@@ -30,7 +29,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private debugSessionListener: Disposable | undefined;
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
-  private buildOutputChannels: BuildOutputChannels;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -51,16 +49,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     Project.currentProject = this;
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
-    const androidLogOutputChannel = window.createOutputChannel("React Native IDE (Android build)", {
-      log: true,
-    });
-    const iosLogOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", {
-      log: true,
-    });
-    this.buildOutputChannels = {
-      android: androidLogOutputChannel,
-      ios: iosLogOutputChannel,
-    };
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -116,14 +104,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   async getProjectState(): Promise<ProjectState> {
     return this.projectState;
-  }
-
-  async getAndroidBuildOutputChannel(): Promise<LogOutputChannel> {
-    return this.buildOutputChannels.android;
-  }
-
-  async getIosBuildOutputChannel(): Promise<LogOutputChannel> {
-    return this.buildOutputChannels.ios;
   }
 
   async addListener<K extends keyof ProjectEventMap>(
@@ -281,11 +261,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     if (!this.projectState.selectedDevice) {
       return;
     }
-    if (this.projectState.selectedDevice.platform === Platform.Android) {
-      this.buildOutputChannels.android.show();
-    } else {
-      this.buildOutputChannels.ios.show();
-    }
+    this.buildManager.focusBuildOutput();
   }
   public async focusDebugConsole() {
     commands.executeCommand("workbench.panel.repl.view.focus");
@@ -312,7 +288,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
   }
-  public async updateStageProgress(newStageProgress: number) {
+  public async stageProgressListener(newStageProgress: number) {
     if (newStageProgress < this.projectState.stageProgress) {
       return;
     }
@@ -363,7 +339,11 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         device,
         this.devtools,
         this.metro,
-        this.buildManager.startBuild(deviceInfo.platform, forceCleanBuild)
+        this.buildManager.startBuild(
+          deviceInfo.platform,
+          forceCleanBuild,
+          this.stageProgressListener.bind(this)
+        )
       );
       this.deviceSession = newDeviceSession;
 

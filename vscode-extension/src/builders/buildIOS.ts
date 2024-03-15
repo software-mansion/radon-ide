@@ -1,11 +1,10 @@
-import { RelativePattern, workspace, Uri, window } from "vscode";
+import { RelativePattern, workspace, Uri, window, OutputChannel } from "vscode";
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import path from "path";
 import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
 import { CancelToken } from "./BuildManager";
-import { Project } from "../project/project";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 
 type IOSProjectInfo = {
@@ -91,7 +90,9 @@ function buildProject(
 export async function buildIos(
   appRootFolder: string,
   forceCleanBuild: boolean,
-  cancelToken: CancelToken
+  cancelToken: CancelToken,
+  outputChannel: OutputChannel,
+  progressListener: (newProgress: number) => void
 ) {
   const sourceDir = getIosSourceDir(appRootFolder);
 
@@ -117,8 +118,7 @@ export async function buildIos(
   );
 
   let platformName: string | undefined;
-  const buildIOSProgressProcessor = new BuildIOSProgressProcessor();
-  const outputChannel = await Project.currentProject!.getIosBuildOutputChannel();
+  const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
   outputChannel.clear();
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);

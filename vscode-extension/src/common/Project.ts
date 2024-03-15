@@ -21,10 +21,6 @@ export type ProjectState = {
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
 };
-export type BuildOutputChannels = {
-  android: LogOutputChannel;
-  ios: LogOutputChannel;
-};
 
 // important: order of values in this enum matters
 export enum StartupMessage {
@@ -80,7 +76,7 @@ export interface ProjectInterface {
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  updateStageProgress(newStageProgress: number): Promise<void>;
+  stageProgressListener(newStageProgress: number): void;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;

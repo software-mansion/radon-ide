@@ -4,29 +4,35 @@ import { BuildProgressProcessor } from "./BuildProgressProcessor";
 import { isArray } from "lodash";
 import path from "path";
 import { Logger } from "../Logger";
-import { Project } from "../project/project";
 
 //all constants in ms
-const CREATE_READ_STREAM_TIMEOUT = 2000;
-const FAKE_UPDATE_PROGRESS_DURATION = 100000;
-const FAKE_UPDATE_PROGRESS_INTERVAL = 201;
+const CREATE_READ_STREAM_TIMEOUT = 3000;
 
 export class BuildIOSProgressProcessor implements BuildProgressProcessor {
   private buildDescriptionPath: string = "";
-  private buildDescriptionPathReadStream: fs.ReadStream | undefined;
   private completedTasks: number = 0;
   private tasksToComplete: number = 0;
-  private shouldUseFakeProgress: boolean = false;
 
-  private async createReadStream() {
+  constructor(private progressListener: (newProgress: number) => void) {}
+
+  private async openTasksStoreIfExists(): Promise<fs.ReadStream> {
     const taskStorePath = path.join(this.buildDescriptionPath, "task-store.msgpack");
     if (fs.existsSync(taskStorePath)) {
-      this.buildDescriptionPathReadStream = fs.createReadStream(taskStorePath);
-      return;
+      return fs.createReadStream(taskStorePath);
     }
 
-    const timer = new Promise((_res, rej) => {
+    return new Promise<fs.ReadStream>((res, rej) => {
+      const watcher = fs.watch(this.buildDescriptionPath, (eventType, filename) => {
+        // eventType is either 'rename' or 'change'.
+        // On most platforms (includeing macOS), 'rename' is emitted whenever a filename appears or disappears in the directory.
+        // for more information refer to https://nodejs.org/docs/latest/api/fs.html#fswatchfilename-options-listener
+        if (eventType === "rename" && filename === "task-store.msgpack") {
+          watcher.close();
+          res(fs.createReadStream(taskStorePath));
+        }
+      });
       setTimeout(() => {
+        watcher.close();
         rej(
           new Error(
             `File did not exists and was not created for ${CREATE_READ_STREAM_TIMEOUT / 1000}s.`
@@ -34,30 +40,12 @@ export class BuildIOSProgressProcessor implements BuildProgressProcessor {
         );
       }, CREATE_READ_STREAM_TIMEOUT);
     });
-    let watcher;
-    const createReadStreamPromise = new Promise<void>((res, _) => {
-      watcher = fs.watch(this.buildDescriptionPath, (eventType, filename) => {
-        if (eventType === "rename" && filename === "task-store.msgpack") {
-          this.buildDescriptionPathReadStream = fs.createReadStream(taskStorePath);
-          res();
-        }
-      });
-    });
-
-    const result = Promise.race([timer, createReadStreamPromise]);
-    result.finally(() => {
-      watcher!.close();
-    });
-    return result;
   }
 
   private async countTasksToComplete() {
     try {
-      await this.createReadStream();
-      if (!this.buildDescriptionPathReadStream) {
-        return;
-      }
-      const tasksStream = decodeArrayStream(this.buildDescriptionPathReadStream);
+      let buildDescriptionPathReadStream = await this.openTasksStoreIfExists();
+      const tasksStream = decodeArrayStream(buildDescriptionPathReadStream);
       let tasksToComplete = 0;
       for await (const task of tasksStream) {
         // task-store stores information about actual tasks and "virtual nodes" of the build graph,
@@ -70,9 +58,6 @@ export class BuildIOSProgressProcessor implements BuildProgressProcessor {
       this.tasksToComplete = tasksToComplete;
     } catch (err: any) {
       Logger.warn(err);
-      Logger.debug("Swiching to fake stage Progress...");
-      this.shouldUseFakeProgress = true;
-      this.fakeUpdateProgress();
     }
   }
 
@@ -80,28 +65,12 @@ export class BuildIOSProgressProcessor implements BuildProgressProcessor {
     if (!this.tasksToComplete) {
       return;
     }
-    Project.currentProject!.updateStageProgress(this.completedTasks / this.tasksToComplete);
-  }
-
-  private async fakeUpdateProgress() {
-    let i = 0;
-    const noOfIterations = Math.floor(
-      FAKE_UPDATE_PROGRESS_DURATION / FAKE_UPDATE_PROGRESS_INTERVAL
-    );
-    const interval = setInterval(() => {
-      Project.currentProject!.updateStageProgress((1 / noOfIterations) * i);
-      i++;
-      if (i > noOfIterations) {
-        clearInterval(interval);
-      }
-    }, FAKE_UPDATE_PROGRESS_INTERVAL);
+    this.progressListener(this.completedTasks / this.tasksToComplete);
   }
 
   async processLine(line: string) {
-    if (this.shouldUseFakeProgress) {
-      return;
-    }
     const buildDescriptionPathMatch = /Build description path: ([^]+)/m.exec(line);
+
     if (buildDescriptionPathMatch) {
       this.buildDescriptionPath = buildDescriptionPathMatch[1];
       this.countTasksToComplete();

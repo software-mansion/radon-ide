@@ -7,7 +7,7 @@ import { calculateMD5 } from "../utilities/common";
 import { Platform } from "../common/DeviceManager";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
-import { Disposable } from "vscode";
+import { Disposable, LogOutputChannel, OutputChannel, window } from "vscode";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
@@ -75,7 +75,17 @@ class DisposableBuildImpl<R> implements DisposableBuild<R> {
 }
 
 export class BuildManager {
-  public startBuild(platform: Platform, forceCleanBuild: boolean) {
+  private buildOutputChannel: OutputChannel | undefined;
+
+  public focusBuildOutput() {
+    this.buildOutputChannel?.show();
+  }
+
+  public startBuild(
+    platform: Platform,
+    forceCleanBuild: boolean,
+    progressListener: (newProgress: number) => void
+  ) {
     if (platform === Platform.Android) {
       const cancelToken = new CancelToken();
       return new DisposableBuildImpl(
@@ -84,7 +94,10 @@ export class BuildManager {
       );
     } else {
       const cancelToken = new CancelToken();
-      return new DisposableBuildImpl(this.startIOSBuild(forceCleanBuild, cancelToken), cancelToken);
+      return new DisposableBuildImpl(
+        this.startIOSBuild(forceCleanBuild, cancelToken, progressListener),
+        cancelToken
+      );
     }
   }
 
@@ -126,7 +139,16 @@ export class BuildManager {
       extensionContext.workspaceState.update(ANDROID_BUILD_CACHE_KEY, undefined);
     }
 
-    const build = await buildAndroid(getAppRootFolder(), forceCleanBuild, cancelToken);
+    this.buildOutputChannel = window.createOutputChannel(`React Native IDE (Android build)`, {
+      log: true,
+    });
+
+    const build = await buildAndroid(
+      getAppRootFolder(),
+      forceCleanBuild,
+      cancelToken,
+      this.buildOutputChannel!
+    );
     const buildResult: AndroidBuildResult = { ...build, platform: Platform.Android };
 
     // store build info in the cache
@@ -163,7 +185,11 @@ export class BuildManager {
     return undefined;
   }
 
-  private async startIOSBuild(forceCleanBuild: boolean, cancelToken: CancelToken) {
+  private async startIOSBuild(
+    forceCleanBuild: boolean,
+    cancelToken: CancelToken,
+    progressListener: (newProgress: number) => void
+  ) {
     const newFingerprint = await generateWorkspaceFingerprint();
     if (!forceCleanBuild) {
       const buildResult = await this.loadIOSCachedBuild(newFingerprint);
@@ -175,7 +201,17 @@ export class BuildManager {
       extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, undefined);
     }
 
-    const build = await buildIos(getAppRootFolder(), forceCleanBuild, cancelToken);
+    this.buildOutputChannel = window.createOutputChannel(`React Native IDE (iOS build)`, {
+      log: true,
+    });
+
+    const build = await buildIos(
+      getAppRootFolder(),
+      forceCleanBuild,
+      cancelToken,
+      this.buildOutputChannel!,
+      progressListener
+    );
     const buildResult: IOSBuildResult = { ...build, platform: Platform.IOS };
 
     // store build info in the cache

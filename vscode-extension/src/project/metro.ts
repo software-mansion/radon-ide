@@ -164,7 +164,7 @@ export class Metro implements Disposable {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the begining there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
-              Project.currentProject!.updateStageProgress(
+              Project.currentProject!.stageProgressListener(
                 event.transformedFileCount / event.totalFileCount
               );
             }

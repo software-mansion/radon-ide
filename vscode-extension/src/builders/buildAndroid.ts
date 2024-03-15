@@ -6,7 +6,7 @@ import { CancelToken } from "./BuildManager";
 
 import path from "path";
 import fs from "fs";
-import { window } from "vscode";
+import { OutputChannel, window } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
 import { Project } from "../project/project";
 
@@ -48,7 +48,8 @@ export async function getAndroidBuildPaths(appRootFolder: string, cancelToken: C
 export async function buildAndroid(
   appRootFolder: string,
   forceCleanBuild: boolean,
-  cancelToken: CancelToken
+  cancelToken: CancelToken,
+  outputChannel: OutputChannel
 ) {
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const cpuArchitecture = getCpuArchitecture();
@@ -69,7 +70,6 @@ export async function buildAndroid(
       buffer: false,
     })
   );
-  const outputChannel = await Project.currentProject!.getAndroidBuildOutputChannel();
   outputChannel.clear();
   lineReader(buildProcess).onLineRead(outputChannel.appendLine);
 

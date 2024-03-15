@@ -1,3 +1,3 @@
 export interface BuildProgressProcessor {
-  processLine(line: string): Promise<void>;
+  processLine(line: string): void;
 }
