@@ -77,7 +77,10 @@ function PreviewView() {
             });
             setIsFollowing(!isFollowing);
           }}
-          disabled={devicesNotFound}>
+          disabled={
+            devicesNotFound ||
+            true /* for the time being we are disabling this functionality as it incurs some performance overhead we didn't yet have time to investigate */
+          }>
           <span className="codicon codicon-magnet" />
         </IconButton>
 
