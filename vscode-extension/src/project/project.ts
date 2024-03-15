@@ -1,13 +1,4 @@
-import {
-  Disposable,
-  debug,
-  commands,
-  workspace,
-  window,
-  Uri,
-  OutputChannel,
-  LogOutputChannel,
-} from "vscode";
+import { Disposable, debug, commands, workspace, window, LogOutputChannel } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -28,6 +19,7 @@ import {
 import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
+import stripAnsi from "strip-ansi";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
@@ -74,8 +66,18 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
   }
 
-  onBundleError(message: string): void {
-    this.updateProjectState({ status: "buildError" });
+  onBundleError(): void {
+    this.updateProjectState({ status: "bundleError" });
+  }
+
+  onIncrementalBundleError(message: string, errorModulePath: string): void {
+    Logger.error(stripAnsi(message));
+    // if bundle build failed, we don't want to change the status
+    // incrementalBundleError status should be set only when bundleError status is not set
+    if (this.projectState.status === "bundleError") {
+      return;
+    }
+    this.updateProjectState({ status: "incrementalBundleError" });
   }
 
   /**
@@ -199,6 +201,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           this.updateProjectState({ status: "refreshing" });
           break;
         case "rnp_fastRefreshComplete":
+          if (this.projectState.status === "starting") return;
+          if (this.projectState.status === "incrementalBundleError") return;
+          if (this.projectState.status === "runtimeError") return;
           this.updateProjectState({ status: "running" });
           break;
       }
@@ -214,6 +219,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           break;
         case "rnp_paused":
           if (event.body?.reason === "exception") {
+            // if we know that incrmental bundle error happened, we don't want to change the status
+            if (this.projectState.status === "incrementalBundleError") return;
             this.updateProjectState({ status: "runtimeError" });
           } else {
             this.updateProjectState({ status: "debuggerPaused" });

@@ -5,20 +5,28 @@ import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
 import { Project } from "./project";
+import stripAnsi from "strip-ansi";
 
 export interface MetroDelegate {
-  onBundleError(message: string): void;
+  onBundleError(): void;
+  onIncrementalBundleError(message: string, errorModulePath: string): void;
 }
 
 type MetroEvent =
   | {
-      type: "bundling_error";
+      type: "bundle_build_failed"; // related to bundleError status
+    }
+  | {
+      type: "bundling_error"; // related to incrementalBundleError status
       message: string;
       stack: string;
-      error?: {
-        filename?: string;
-        lineNumber?: number;
-        column?: number;
+      error: {
+        message: string;
+        originModulePath: string;
+        targetModuleName: string;
+        errors: {
+          description: string;
+        }[];
       };
     }
   | {
@@ -29,6 +37,16 @@ type MetroEvent =
   | {
       type: "rnp_initialize_done";
       port: number;
+    }
+  | {
+      type: "client_log";
+      level: "error";
+      data: [
+        string, // message
+        string, // bundle
+        string, // todo: ensure what this field means
+        string // todo: ensure what this field means
+      ];
     };
 
 export class Metro implements Disposable {
@@ -150,18 +168,23 @@ export class Metro implements Disposable {
                 event.transformedFileCount / event.totalFileCount
               );
             }
+          } else if (event.type === "client_log" && event.level === "error") {
+            Logger.error(stripAnsi(event.data[0]));
           } else {
             Logger.debug("Metro", line);
           }
+
           switch (event.type) {
             case "rnp_initialize_done":
               this._port = event.port;
               Logger.info(`Metro started on port ${this._port}`);
               resolve();
               break;
+            case "bundle_build_failed":
+              this.delegate.onBundleError();
+              break;
             case "bundling_error":
-              Logger.error("Bundling error", event.message);
-              this.delegate.onBundleError(event.message);
+              this.delegate.onIncrementalBundleError(event.message, event.error.originModulePath);
               break;
           }
         } catch (error) {

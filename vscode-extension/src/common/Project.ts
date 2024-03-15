@@ -7,7 +7,15 @@ export type DeviceSettings = {
 };
 
 export type ProjectState = {
-  status: "starting" | "running" | "buildError" | "runtimeError" | "debuggerPaused" | "refreshing";
+  status:
+    | "starting"
+    | "running"
+    | "buildError"
+    | "runtimeError"
+    | "bundleError"
+    | "incrementalBundleError"
+    | "debuggerPaused"
+    | "refreshing";
   startupMessage?: string; // Only used when status is "starting"
   stageProgress: number;
   previewURL: string | undefined;

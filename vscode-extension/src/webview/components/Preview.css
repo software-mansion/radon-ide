@@ -69,6 +69,7 @@
 
 .uncaught-button {
   display: flex;
+  align-items: center;
   background-color: #ff6259;
   border-radius: 10px;
   border: 1px solid #e65f50;

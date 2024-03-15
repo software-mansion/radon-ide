@@ -30,21 +30,39 @@ function Actions() {
   );
 }
 
-const id = "build-error-alert";
+const buildErrorAlertId = "build-error-alert";
 
-export function useBuildErrorAlert(hasBuildError: boolean) {
+export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   const { openAlert, isOpen, closeAlert } = useAlert();
 
   useEffect(() => {
-    if (hasBuildError && !isOpen(id)) {
+    if (shouldDisplayAlert && !isOpen(buildErrorAlertId)) {
       openAlert({
-        id,
+        id: buildErrorAlertId,
         title: "Cannot run project",
         description: "Open build logs to find out what went wrong.",
         actions: <Actions />,
       });
-    } else if (!hasBuildError && isOpen(id)) {
-      closeAlert(id);
+    } else if (!shouldDisplayAlert && isOpen(buildErrorAlertId)) {
+      closeAlert(buildErrorAlertId);
     }
-  }, [hasBuildError, isOpen, openAlert, closeAlert]);
+  }, [shouldDisplayAlert, isOpen, openAlert, closeAlert]);
+}
+
+const bundleErrorAlertId = "bundle-error-alert";
+
+export function useBundleErrorAlert(shouldDisplayAlert: boolean) {
+  const { openAlert, isOpen, closeAlert } = useAlert();
+  useEffect(() => {
+    if (shouldDisplayAlert && !isOpen(bundleErrorAlertId)) {
+      openAlert({
+        id: bundleErrorAlertId,
+        title: "Bundle error",
+        description: "Open build logs to find out what went wrong.",
+        actions: <Actions />,
+      });
+    } else if (!shouldDisplayAlert && isOpen(bundleErrorAlertId)) {
+      closeAlert(bundleErrorAlertId);
+    }
+  }, [shouldDisplayAlert, isOpen, openAlert, closeAlert]);
 }

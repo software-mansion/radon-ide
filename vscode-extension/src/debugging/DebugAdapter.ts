@@ -242,9 +242,9 @@ export class DebugAdapter extends DebugSession {
     // We reset the paused* variables to lifecycle of objects references in DAP. https://microsoft.github.io/debug-adapter-protocol//overview.html#lifetime-of-objects-references
     this.pausedStackFrames = [];
     this.pausedScopeChains = [];
+
     this.pausedCDPtoDAPObjectIdMap = new Map();
     this.pausedDAPtoCDPObjectIdMap = new Map();
-
     if (
       message.params.reason === "other" &&
       message.params.callFrames[0].functionName === "__rnpBreakOnError"

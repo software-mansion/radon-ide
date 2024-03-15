@@ -11,10 +11,8 @@ import {
   IOS_DEVICE_GRAPHICAL_PROPERTIES,
 } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
-import { useBuildErrorAlert } from "../hooks/useBuildErrorAlert";
+import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
-import IconButton from "./shared/IconButton";
-import { StartupMessage } from "../../common/Project";
 
 function cssPropertiesForDevice(device) {
   return {
@@ -36,8 +34,23 @@ function Preview({ isInspecting, setIsInspecting }) {
   const { projectState, project } = useProject();
 
   const hasBuildError = projectState?.status === "buildError";
-  useBuildErrorAlert(hasBuildError);
+  const hasIncrementalBundleError = projectState?.status === "incrementalBundleError";
+  const hasBundleError = projectState?.status === "bundleError";
 
+  const debugPaused = projectState?.status === "debuggerPaused";
+  const debugException = projectState?.status === "runtimeError";
+
+  const previewURL = projectState?.previewURL;
+
+  const isStarting =
+    hasBundleError || hasIncrementalBundleError || debugException
+      ? false
+      : !projectState ||
+        projectState.previewURL === undefined ||
+        projectState.status === "starting";
+
+  useBuildErrorAlert(hasBuildError);
+  useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
   const [inspectData, setInspectData] = useState(null);
   useEffect(() => {
     if (!isInspecting) {
@@ -130,19 +143,13 @@ function Preview({ isInspecting, setIsInspecting }) {
     };
   }, [project]);
 
-  const debugPaused = projectState?.status === "debuggerPaused";
-  const debugException = projectState?.status === "runtimeError";
-
-  const isStarting =
-    !projectState || projectState.previewURL === undefined || projectState.status === "starting";
-  const previewURL = projectState?.previewURL;
-
   const device =
     projectState?.selectedDevice?.platform === Platform.Android
       ? ANDROID_DEVICE_GRAPHICAL_PROPERTIES
       : IOS_DEVICE_GRAPHICAL_PROPERTIES;
 
   const inspectFrame = inspectData?.frame;
+
   return (
     <div
       className="phone-wrapper"
@@ -196,7 +203,27 @@ function Preview({ isInspecting, setIsInspecting }) {
               </button>
             </div>
           )}
-
+          {/* TODO: Add different label in case of bundle/incremental bundle error */}
+          {hasBundleError && (
+            <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+              <button
+                className="uncaught-button"
+                onClick={() => {
+                  project.restart(false);
+                }}>
+                Bundle error&nbsp;
+                <span className="codicon codicon-refresh" />
+              </button>
+            </div>
+          )}
+          {hasIncrementalBundleError && (
+            <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+              <button className="uncaught-button" onClick={() => project.restart(false)}>
+                Bundle error&nbsp;
+                <span className="codicon codicon-refresh" />
+              </button>
+            </div>
+          )}
           <img src={device.frameImage} className="phone-frame" />
         </div>
       )}

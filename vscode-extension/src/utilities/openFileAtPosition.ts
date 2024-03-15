@@ -12,7 +12,6 @@ export async function openFileAtPosition(
   });
 
   const selection = new Range(line0Based, column0Based, line0Based, column0Based);
-
   if (existingDocument) {
     // If the file is already open, show (focus on) its editor
     await window.showTextDocument(existingDocument, {

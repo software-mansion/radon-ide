@@ -59,6 +59,10 @@ export class DeviceSession implements Disposable {
     Logger.debug("App and preview ready, moving on...");
 
     progressCallback(StartupMessage.AttachingDebugger);
+    await this.startDebugger();
+  }
+
+  public async startDebugger() {
     const websocketAddress = await this.metro.getDebuggerURL(WAIT_FOR_DEBUGGER_TIMEOUT);
     if (websocketAddress) {
       const debugStarted = await debug.startDebugging(
