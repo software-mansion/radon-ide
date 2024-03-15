@@ -26,6 +26,13 @@ import {
   CDPPropertyDescriptor,
 } from "./cdp";
 
+function modifyURL(url: string, hostname: string, port: string): string {
+  const parsedURL = new URL(url);
+  parsedURL.hostname = hostname;
+  parsedURL.port = port;
+  return parsedURL.toString();
+}
+
 function typeToCategory(type: string) {
   switch (type) {
     case "warning":
@@ -108,14 +115,19 @@ export class DebugAdapter extends DebugSession {
           break;
         case "Debugger.scriptParsed":
           const sourceMapURL = message.params.sourceMapURL;
+
           if (sourceMapURL.startsWith("data:")) {
             const base64Data = sourceMapURL.split(",")[1];
             const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
             this.sourceMaps.push([message.params.url, message.params.scriptId, consumer]);
+            this.sourceMaps.forEach(([url, id, consumer]) => {
+              console.log("PORT URL", url, id, consumer);
+            });
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
+
           this.sendEvent(new InitializedEvent());
           break;
         case "Debugger.paused":
@@ -179,6 +191,11 @@ export class DebugAdapter extends DebugSession {
     let sourceLine1Based = lineNumber1Based;
     let sourceColumn0Based = columnNumber0Based;
     this.sourceMaps.forEach(([url, id, consumer]) => {
+      if (typeof scriptIdOrURL === "string") {
+        const { port, hostname } = new URL(url);
+        scriptIdOrURL = modifyURL(scriptIdOrURL, hostname, port);
+      }
+
       if (id === scriptIdOrURL || url === scriptIdOrURL) {
         scriptURL = url;
         const pos = consumer.originalPositionFor({
@@ -274,7 +291,9 @@ export class DebugAdapter extends DebugSession {
               stackObjEntry.variablesReference
             );
             const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
-            const genUrl = stackObjProperties.find((v) => v.name === "file")?.value || "";
+            let genUrl = stackObjProperties.find((v) => v.name === "file")?.value || "";
+            // genUrl = changeURLHostname(genUrl, "localhost", "");
+            Logger.debug("GENURL", genUrl);
             const genLine1Based = parseInt(
               stackObjProperties.find((v) => v.name === "lineNumber")?.value || "0"
             );
