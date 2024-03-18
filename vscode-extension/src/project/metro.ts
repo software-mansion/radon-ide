@@ -6,6 +6,7 @@ import { extensionContext, getAppRootFolder } from "../utilities/extensionContex
 import { Devtools } from "./devtools";
 import { Project } from "./project";
 import stripAnsi from "strip-ansi";
+
 export interface MetroDelegate {
   onBundleError(): void;
   onIncrementalBundleError(message: string, errorModulePath: string): void;
@@ -136,6 +137,7 @@ export class Metro implements Disposable {
       EXPO_NO_CLIENT_ENV_VARS: "true",
     };
     let bundlerProcess: ChildProcess;
+
     if (shouldUseExpoCLI()) {
       bundlerProcess = this.launchExpoMetro(appRootFolder, libPath, resetCache, metroEnv);
     } else {
