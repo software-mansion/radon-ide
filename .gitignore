@@ -167,3 +167,5 @@ yarn-error.log
 
 # testing
 /coverage
+
+.vscode
