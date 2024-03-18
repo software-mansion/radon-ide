@@ -58,6 +58,8 @@ export class DependencyInstaller implements Disposable {
     await installNodeModulesAsync(packageManager);
     Logger.debug("Finished installing node modules!");
     await this.dependencyChecker.checkNodeModulesInstalled();
+    // after installing node modules, we need to run checkPodsInstalled function to determine if pods can be installed (they can't be installed if node modules are not present)
+    await this.dependencyChecker.checkPodsInstalled();
   }
 
   public async installPods() {

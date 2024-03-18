@@ -167,12 +167,15 @@ export class DependencyChecker implements Disposable {
 
   public async checkPodsInstalled() {
     const installed = await checkIosDependenciesInstalled();
+    const nodeModulesInstalled = await this.checkNodeModulesInstalled();
     const errorMessage = "iOS dependencies are not installed.";
+    const extraInfoMessage = nodeModulesInstalled ? "" : "  Node modules need to be installed first.";
+
     this.webview.postMessage({
       command: "isPodsInstalled",
       data: {
         installed,
-        info: "Whether iOS dependencies are installed.",
+        info: `Whether iOS dependencies are installed.${extraInfoMessage}`,
         error: installed ? undefined : errorMessage,
       },
     });
