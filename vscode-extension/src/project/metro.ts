@@ -6,7 +6,6 @@ import { extensionContext, getAppRootFolder } from "../utilities/extensionContex
 import { Devtools } from "./devtools";
 import { Project } from "./project";
 import stripAnsi from "strip-ansi";
-
 export interface MetroDelegate {
   onBundleError(): void;
   onIncrementalBundleError(message: string, errorModulePath: string): void;
@@ -256,12 +255,16 @@ function shouldUseExpoCLI() {
   // is either using expo CLI, or it doesn't make a different for the development bundle whether we use expo bundler or not.
 
   // Since the location of expo package can be different depending on the project configuration, we use the technique here
-  // that relies on node's resolve mechanism. We try to resolve expo package in the app root folder, and it it resolves, we
+  // that relies on node's resolve mechanism. We try to resolve expo package in the app root folder, and if it resolves, we
   // assume we can launch expo CLI bundler.
   const appRootFolder = getAppRootFolder();
-  return (
-    require.resolve("@expo/cli/build/src/start/index", {
-      paths: [appRootFolder],
-    }) !== undefined
-  );
+  try {
+    return (
+      require.resolve("@expo/cli/build/src/start/index", {
+        paths: [appRootFolder],
+      }) !== undefined
+    );
+  } catch (e) {
+    return false;
+  }
 }
