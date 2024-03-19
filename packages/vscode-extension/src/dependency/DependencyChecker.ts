@@ -9,6 +9,9 @@ import { getAppRootFolder } from "../utilities/extensionContext";
 import { resolvePackageManager } from "../utilities/packageManager";
 
 export class DependencyChecker implements Disposable {
+
+
+  
   private disposables: Disposable[] = [];
 
   constructor(private readonly webview: Webview) {}
