@@ -4,7 +4,7 @@ import type * as Preset from "@docusaurus/preset-classic";
 
 const config: Config = {
   title: "React Native IDE",
-  favicon: "img/favicon.ico",
+  favicon: "img/favicon.png",
 
   url: "https://docs.swmansion.com",
 
