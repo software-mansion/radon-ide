@@ -223,8 +223,8 @@ async function fixBinaries(context: ExtensionContext) {
   // We try to do it only when the binary has been modified or for new installation, we detect it based
   // on the modification date of the binary file.
   const binModiticationDate = context.globalState.get(BIN_MODIFICATION_DATE_KEY);
-  const binPath = Uri.file(context.asAbsolutePath("dist/sim-controller"));
-  const tmpFile = Uri.file(path.join(os.tmpdir(), "sim-controller"));
+  const binPath = Uri.file(context.asAbsolutePath("dist/sim-server"));
+  const tmpFile = Uri.file(path.join(os.tmpdir(), "sim-server"));
 
   if (binModiticationDate !== undefined) {
     const binStats = await workspace.fs.stat(binPath);

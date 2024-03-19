@@ -15,7 +15,7 @@ export class Preview implements Disposable {
   }
 
   async start() {
-    const simControllerBinary = path.join(extensionContext.extensionPath, "dist", "sim-controller");
+    const simControllerBinary = path.join(extensionContext.extensionPath, "dist", "sim-server");
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
     const subprocess = exec(simControllerBinary, this.args, { buffer: false });

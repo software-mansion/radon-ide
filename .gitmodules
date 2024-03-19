@@ -1,0 +1,3 @@
+[submodule "packages/simulator-server"]
+	path = packages/simulator-server
+	url = git@github.com:software-mansion-labs/simulator-server.git
