@@ -71,11 +71,11 @@ export class Metro implements Disposable {
     await this.startPromise;
   }
 
-  public async start(resetCache: boolean) {
+  public async start(resetCache: boolean, progressListener: (newStageProgress: number) => void) {
     if (this.startPromise) {
       throw new Error("metro already started");
     }
-    this.startPromise = this.startInternal(resetCache);
+    this.startPromise = this.startInternal(resetCache, progressListener);
     return this.startPromise;
   }
 
@@ -118,7 +118,10 @@ export class Metro implements Disposable {
     );
   }
 
-  public async startInternal(resetCache: boolean) {
+  public async startInternal(
+    resetCache: boolean,
+    progressListener: (newStageProgress: number) => void
+  ) {
     let appRootFolder = getAppRootFolder();
     await this.devtools.ready();
 
@@ -165,9 +168,7 @@ export class Metro implements Disposable {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the begining there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
-              Project.currentProject!.stageProgressListener(
-                event.transformedFileCount / event.totalFileCount
-              );
+              progressListener(event.transformedFileCount / event.totalFileCount);
             }
           } else if (event.type === "client_log" && event.level === "error") {
             Logger.error(stripAnsi(event.data[0]));

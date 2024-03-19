@@ -214,7 +214,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     });
 
     Logger.debug(`Launching metro`);
-    const waitForMetro = this.metro.start(forceCleanBuild);
+    const waitForMetro = this.metro.start(forceCleanBuild, (newStageProgress: number) => {
+      this.stageProgressListener(newStageProgress);
+    });
   }
 
   public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
@@ -342,7 +344,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         this.buildManager.startBuild(
           deviceInfo.platform,
           forceCleanBuild,
-          this.stageProgressListener.bind(this)
+          (newStageProgress: number) => {
+            this.stageProgressListener(newStageProgress);
+          }
         )
       );
       this.deviceSession = newDeviceSession;
