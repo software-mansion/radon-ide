@@ -6,12 +6,12 @@ const config: Config = {
   title: "React Native IDE",
   favicon: "img/favicon.png",
 
-  url: "https://docs.swmansion.com",
+  url: "https://ide.swmansion.com",
 
-  baseUrl: "/", //TODO: when deploying to GitHub Pages change to /react-native-ide
+  baseUrl: "/",
 
-  organizationName: "software-mansion",
-  projectName: "react-native-sztudio",
+  organizationName: "software-mansion-labs",
+  projectName: "react-native-ide",
 
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
