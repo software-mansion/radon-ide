@@ -7,7 +7,7 @@
 
   mask: url(/static/img/swm-logo.svg) no-repeat 100% 100%;
   mask-size: cover;
-  content: '';
+  content: "";
 
   background-color: var(--ifm-navbar-link-color);
 }
