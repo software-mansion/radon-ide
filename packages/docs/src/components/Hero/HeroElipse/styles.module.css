@@ -1,0 +1,13 @@
+.elipseHero {
+  position: absolute;
+  z-index: 5;
+  right: -8%;
+  top: -2%;
+}
+
+@media (max-width: 996px) {
+  .elipseHero {
+    right: 0%;
+    top: -5%;
+  }
+}

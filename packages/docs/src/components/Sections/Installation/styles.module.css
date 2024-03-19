@@ -1,0 +1,92 @@
+.installationStepsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+}
+
+.installation {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+}
+
+.installationHeading {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 62.4px;
+  margin: 0;
+}
+
+.installationSubheading {
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.step {
+  display: flex;
+  gap: 5rem;
+}
+
+.elipseContainer {
+  position: relative;
+}
+
+/* smaller elipse */
+.elipse:nth-of-type(1) {
+  top: -46rem;
+  left: -28%;
+}
+
+/* bigger elipse */
+.elipse:nth-of-type(2) {
+  bottom: 8rem;
+  right: -38%;
+}
+
+@media (max-width: 1440px) {
+  /* smaller elipse */
+  .elipse:nth-of-type(1) {
+    left: -10%;
+  }
+  /* bigger elipse */
+  .elipse:nth-of-type(2) {
+    right: -25%;
+    bottom: 5rem;
+  }
+}
+
+@media (max-width: 996px) {
+  .step {
+    flex-direction: column !important;
+    gap: 3rem;
+  }
+  .installationHeading {
+    font-size: 42px;
+    line-height: 54px;
+  }
+  .installationSubheading {
+    font-size: 20px;
+  }
+  .installation {
+    gap: 3rem;
+  }
+  /* smaller elipse */
+  .elipse:nth-of-type(1) {
+    top: -50rem;
+  }
+  /* bigger elipse */
+  .elipse:nth-of-type(2) {
+    right: -20%;
+  }
+}
+
+@media (max-width: 390px) {
+  .installationHeading {
+    font-size: 36px;
+  }
+  /* smaller elipse */
+  .elipse:nth-of-type(1) {
+    top: -35rem;
+    left: 65%;
+  }
+}

@@ -1,0 +1,112 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+}
+
+.heading {
+  margin-top: 12.25rem;
+}
+
+.headingLabel {
+  display: flex;
+  flex-direction: row;
+  font-family: var(--swm-title-landing-font);
+  font-size: 64px;
+  font-weight: 700;
+  gap: 10px;
+
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: var(--swm-landing-heading);
+}
+
+.headingLabel :nth-child(2) {
+  color: var(--swm-green-light-100);
+}
+
+.heroImageWrapper {
+  border-radius: 2rem;
+  border-color: var(--swm-green-light-100);
+  border-width: 1rem;
+  border-style: solid;
+  position: absolute;
+  transform: translateX(70%) translateY(30px);
+}
+.heroImage {
+  border-color: #000;
+  border-width: 0.5rem;
+  border-style: solid;
+  border-radius: 1rem;
+  max-height: 700px;
+  margin-bottom: -10px;
+}
+
+.headingDisclaimer {
+  margin-top: 1.5rem;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.subheadingLabel {
+  font-family: var(--swm-h2-font-size);
+  font-size: var(--swm-h2-font-size);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: var(--swm-heading-letter-spacing-bigger);
+
+  margin-top: 3rem;
+  margin-bottom: 5.5rem;
+  width: 50%;
+  color: var(--swm-landing-heading);
+}
+
+@media (max-width: 1900px) {
+  .heroImageWrapper {
+    transform: translateX(55%);
+  }
+}
+
+@media (max-width: 996px) {
+  .heading {
+    margin-top: 4rem;
+  }
+  .headingLabel {
+    font-size: 48px;
+  }
+  .subheadingLabel {
+    margin: 2rem 0 3.5rem 0;
+    font-size: 26px;
+    width: 100%;
+  }
+
+  .heroImageWrapper {
+    position: static;
+    margin-top: 4rem;
+    border-width: 1rem;
+    border-radius: 2.5rem;
+    transform: none;
+  }
+  .heroImage {
+    border-width: 0.5rem;
+    border-radius: 1.5rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .headingLabel {
+    font-size: 26px;
+  }
+  .subheadingLabel {
+    margin: 1rem 0 2rem 0;
+    font-size: 20px;
+  }
+
+  .heroImageWrapper {
+    border-width: 1rem;
+    border-radius: 2rem;
+  }
+  .heroImage {
+    border-width: 0.5rem;
+    border-radius: 1rem;
+  }
+}

@@ -1,0 +1,119 @@
+.homepageButton {
+  width: max-content;
+  height: 60px;
+  padding: 1em 1.5em 1em 1em;
+
+  font-weight: 500;
+  font-size: 20px;
+
+  color: var(--swm-off-white);
+  background-color: var(--swm-landing-button-purple);
+
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+a.homepageButtonLink:hover {
+  text-decoration: none !important;
+}
+
+@media (max-width: 768px) {
+  .homepageButton,
+  .homepageButtonLink {
+    width: 100%;
+  }
+  .homepageButton {
+    height: auto;
+    font-size: 18px;
+  }
+}
+
+.homepageButton p {
+  margin: 0 0 2px 0;
+}
+
+.homepageButton svg {
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arrow {
+  transition: left 0.3s;
+}
+
+.arrow {
+  left: 8px;
+}
+
+.homepageButton svg {
+  transition: stroke 0.3s;
+}
+
+.homepageButton:hover .arrow {
+  left: 16px;
+}
+
+/* Button - transparent styling */
+
+.buttonTransparentStyling {
+  background-color: transparent;
+  color: var(--swm-landing-button-navy);
+}
+
+.buttonTransparentStyling svg {
+  stroke: var(--swm-landing-button-navy);
+}
+
+.buttonTransparentStyling:hover {
+  background-color: var(--swm-landing-button-navy);
+  color: var(--swm-off-white);
+}
+
+.buttonTransparentStyling:hover svg {
+  stroke: var(--swm-off-white);
+}
+
+/* Button - purple styling */
+
+.buttonGreenStyling {
+  background-color: var(--swm-landing-button-green);
+  color: var(--swm-off-white);
+}
+
+.buttonGreenStyling svg {
+  stroke: var(--swm-off-white);
+}
+
+.buttonGreenStyling:hover {
+  background-color: transparent;
+  color: var(--swm-landing-button-green);
+  border: 1px solid var(--swm-landing-button-green);
+}
+
+.buttonGreenStyling:hover svg {
+  stroke: var(--swm-landing-button-green);
+}
+
+.buttonGreenBorderStyling {
+  border: 1px solid var(--swm-landing-button-green);
+}
+
+.buttonNavyBorderStyling {
+  border: 1px solid var(--swm-landing-button-navy);
+}
+
+.arrow {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 24px;
+  height: 24px;
+}

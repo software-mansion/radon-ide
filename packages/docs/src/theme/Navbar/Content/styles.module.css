@@ -1,0 +1,19 @@
+nav {
+  --ifm-navbar-padding-vertical: 0 1.25rem;
+  --ifm-navbar-padding-horizontal: 0 0;
+  --ifm-navbar-height: 60px;
+
+  --ifm-navbar-shadow: none;
+}
+
+[class*='logoWrapperLanding'] img {
+  height: 50px;
+}
+
+[class*='logoWrapperLanding'] a {
+  display: flex;
+}
+
+[class*='navbar__item'] {
+  display: flex;
+}

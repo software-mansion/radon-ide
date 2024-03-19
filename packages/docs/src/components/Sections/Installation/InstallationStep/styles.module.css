@@ -1,0 +1,51 @@
+.image {
+  display: flex;
+  justify-content: center;
+}
+
+.image img {
+  width: 100%;
+}
+
+.instruction {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-bottom: 1.875rem;
+}
+
+.stepName {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  line-height: 36px;
+}
+
+.stepBody {
+  font-size: 20px;
+  margin: 0;
+}
+
+.stepNumber {
+  font-size: 16px;
+  font-weight: 400;
+  margin-bottom: 0;
+}
+
+@media (max-width: 996px) {
+  .instruction {
+    margin-bottom: 0.5rem;
+  }
+  .image img {
+    border-width: 1.5rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .image img {
+    border-width: 1rem;
+  }
+  .stepBody {
+    font-size: 18px;
+  }
+}
