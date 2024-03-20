@@ -52,6 +52,7 @@ function adaptMetroConfig(config) {
 
   // This code overrides resolver allowing us to host some files from the extension's lib folder
   // Currently used for runtime and wrapper functionalities
+  const origResolveRequest = config.resolver.resolveRequest;
   config.resolver.resolveRequest = (context, moduleName, platform) => {
     if (moduleName.match(/__rnp_lib__/)) {
       // we strip __rnp_lib__/ from the path to get relative location to extenion's lib folder
@@ -62,9 +63,7 @@ function adaptMetroConfig(config) {
         type: "sourceFile",
       };
     }
-
-    // Invoke the standard Metro resolver.
-    return context.resolveRequest(context, moduleName, platform);
+    return origResolveRequest(context, moduleName, platform);
   };
   // Specifying resolveRequest requires that also nodeModulesPaths are set.
   // Both these settings are not set by default.
