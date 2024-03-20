@@ -64,6 +64,7 @@
   margin-bottom: 5.5rem;
   width: 50%;
   color: var(--swm-landing-heading);
+  text-wrap: balance;
 }
 
 @media (max-width: 1900px) {
