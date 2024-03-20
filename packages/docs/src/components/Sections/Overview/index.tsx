@@ -5,7 +5,7 @@ import OverviewItem from "@site/src/components/Sections/Overview/OverviewItem";
 const items = [
   {
     title: "Integrated experience",
-    body: "See the preview of your application right where you need it the most – close to your codebase. \nReact Native IDE runs IOS Simulator and Android emulator directly in your Visual Studio Code project.",
+    body: "See the preview of your application right where you need it the most – close to your codebase. \n\nReact Native IDE runs IOS Simulator and Android emulator directly in your Visual Studio Code project.",
     mediaSrc: "video/1_sztudio_integrated.mp4",
   },
   {
@@ -15,7 +15,7 @@ const items = [
   },
   {
     title: "Use breakpoints right in VSCode",
-    body: "Without any additional setup the extension allows to add a breakpoints in Visual Studio Code to debug your React Native application. It. Just. Works.\nIDE also automatically stops at runtime exceptions showing you the exact line of code where they happened.",
+    body: "Without any additional setup the extension allows to add a breakpoints in Visual Studio Code to debug your React Native application. It. Just. Works.\n\nIDE also automatically stops at runtime exceptions showing you the exact line of code where they happened.",
     mediaSrc: "video/3_sztudio_debugger.mp4",
   },
   {
@@ -25,17 +25,17 @@ const items = [
   },
   {
     title: "Search through the logs easily",
-    body: "React Native IDE uses the built-in VSCode console allowing you to filter through the logs.\nThe links displayed in the console are automatically linking back to your source code.",
+    body: "React Native IDE uses the built-in VSCode console allowing you to filter through the logs.\n\nThe links displayed in the console are automatically linking back to your source code.",
     mediaSrc: "video/5_sztudio_logs_panel.mp4",
   },
   {
     title: "Develop components in isolation",
-    body: "React Native IDE comes with a package allowing to preview components in full isolation.\nDevelop your components individually without distractions.",
+    body: "React Native IDE comes with a package allowing to preview components in full isolation.\n\nDevelop your components individually without distractions.",
     mediaSrc: "video/6_sztudio_preview.mp4",
   },
   {
     title: "Adjust device settings on the fly",
-    body: "You can adjust text size and light/dark mode right from the React Native IDE.\nFocus just on your app without switching between windows.",
+    body: "You can adjust text size and light/dark mode right from the React Native IDE.\n\nFocus just on your app without switching between windows.",
     mediaSrc: "video/7_sztudio_device_settings.mp4",
   },
 ];
