@@ -21,7 +21,7 @@ const StartScreen = () => {
               A better developer experience for React Native developers.
             </h2>
           </div>
-          <div>
+          <div className={styles.buttonContainer}>
             <HomepageButton
               href="https://marketplace.visualstudio.com/vscode"
               title="Download from VS Marketplace"
