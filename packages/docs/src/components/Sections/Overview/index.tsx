@@ -1,3 +1,4 @@
+import React from 'react';
 import styles from "./styles.module.css";
 import Elipse from "@site/src/components/Elipse";
 import OverviewItem from "@site/src/components/Sections/Overview/OverviewItem";
