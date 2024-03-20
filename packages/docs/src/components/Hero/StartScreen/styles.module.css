@@ -24,6 +24,16 @@
   color: var(--swm-green-light-100);
 }
 
+.poweredBy {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin: 1rem 0;
+}
+.poweredBy p {
+  margin: 0;
+}
+
 .heroImageWrapper {
   border-radius: 2rem;
   border-color: var(--swm-green-light-100);

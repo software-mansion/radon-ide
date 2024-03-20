@@ -17,6 +17,14 @@ const StartScreen = () => {
               <span>React Native</span>
               <span>IDE</span>
             </h1>
+            <div className={styles.poweredBy}>
+              <p>by</p>
+              <img
+                src={useBaseUrl("/img/swm-logo.svg")}
+                alt="Software Mansion"
+                className={styles.swmLogo}
+              />
+            </div>
             <h2 className={styles.subheadingLabel}>
               A better developer experience for React Native developers.
             </h2>
@@ -29,7 +37,7 @@ const StartScreen = () => {
           </div>
           <div className={styles.headingDisclaimer}>
             <InfoIcon className={styles.headingDisclaimerIcon} />
-            React Native IDE is only available for macOS.
+            IDE is only available for macOS.
           </div>
         </div>
       </section>
