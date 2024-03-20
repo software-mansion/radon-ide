@@ -2,6 +2,7 @@ import React from "react";
 import styles from "./styles.module.css";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import HomepageButton from "@site/src/components/HomepageButton";
+import InfoIcon from "@site/static/img/info-circle.svg";
 
 const StartScreen = () => {
   return (
@@ -27,6 +28,7 @@ const StartScreen = () => {
             />
           </div>
           <div className={styles.headingDisclaimer}>
+            <InfoIcon className={styles.headingDisclaimerIcon} />
             React Native IDE is only available for macOS.
           </div>
         </div>
