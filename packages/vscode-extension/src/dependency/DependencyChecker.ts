@@ -81,9 +81,13 @@ export class DependencyChecker implements Disposable {
     let installed = false;
     const packageManager = await resolvePackageManager();
     if (packageManager === "yarn") {
-      installed = await checkIfCLIInstalled(`yarn list --json`, {
-        cwd: getAppRootFolder(),
-      });
+      const isTreeVerified = await checkIfCLIInstalled(
+        `yarn check --verify-tree --cwd ${getAppRootFolder()}`
+      );
+      const isIntegrityChecked = await checkIfCLIInstalled(
+        `yarn check --integrity --cwd ${getAppRootFolder()}`
+      );
+      installed = isTreeVerified && isIntegrityChecked;
     } else if (packageManager === "pnpm") {
       installed = await checkIfCLIInstalled(`pnpm list --json`, {
         cwd: getAppRootFolder(),
@@ -169,7 +173,9 @@ export class DependencyChecker implements Disposable {
     const installed = await checkIosDependenciesInstalled();
     const nodeModulesInstalled = await this.checkNodeModulesInstalled();
     const errorMessage = "iOS dependencies are not installed.";
-    const extraInfoMessage = nodeModulesInstalled ? "" : "  Node modules need to be installed first.";
+    const extraInfoMessage = nodeModulesInstalled
+      ? ""
+      : "  Node modules need to be installed first.";
 
     this.webview.postMessage({
       command: "isPodsInstalled",
