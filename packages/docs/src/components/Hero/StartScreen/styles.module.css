@@ -1,6 +1,7 @@
 .hero {
   display: flex;
   flex-direction: column;
+  margin-bottom: 2rem;
 }
 
 .heading {
@@ -24,6 +25,16 @@
   color: var(--swm-green-light-100);
 }
 
+.poweredBy {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin: 1rem 0;
+}
+.poweredBy p {
+  margin: 0;
+}
+
 .heroImageWrapper {
   border-radius: 2rem;
   border-color: var(--swm-green-light-100);
@@ -45,6 +56,12 @@
   margin-top: 1.5rem;
   font-size: 16px;
   font-weight: 400;
+  display: flex;
+  align-items: center;
+}
+
+.headingDisclaimerIcon {
+  margin-right: 5px;
 }
 
 .subheadingLabel {
@@ -58,6 +75,12 @@
   margin-bottom: 5.5rem;
   width: 50%;
   color: var(--swm-landing-heading);
+  text-wrap: balance;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: flex-start;
 }
 
 @media (max-width: 1900px) {
@@ -67,6 +90,9 @@
 }
 
 @media (max-width: 996px) {
+  .hero {
+    margin-bottom: 1rem;
+  }
   .heading {
     margin-top: 4rem;
   }
@@ -93,6 +119,9 @@
 }
 
 @media (max-width: 420px) {
+  .hero {
+    margin-bottom: 0;
+  }
   .headingLabel {
     font-size: 26px;
   }

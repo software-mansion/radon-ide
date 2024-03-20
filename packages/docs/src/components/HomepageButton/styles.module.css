@@ -10,7 +10,9 @@
   background-color: var(--swm-landing-button-purple);
 
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
 
   display: flex;
   gap: 1rem;
@@ -79,11 +81,12 @@ a.homepageButtonLink:hover {
   stroke: var(--swm-off-white);
 }
 
-/* Button - purple styling */
+/* Button - green styling */
 
 .buttonGreenStyling {
   background-color: var(--swm-landing-button-green);
   color: var(--swm-off-white);
+  border: 1px solid var(--swm-landing-button-green);
 }
 
 .buttonGreenStyling svg {
@@ -93,7 +96,6 @@ a.homepageButtonLink:hover {
 .buttonGreenStyling:hover {
   background-color: transparent;
   color: var(--swm-landing-button-green);
-  border: 1px solid var(--swm-landing-button-green);
 }
 
 .buttonGreenStyling:hover svg {
