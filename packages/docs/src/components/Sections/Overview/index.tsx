@@ -15,7 +15,7 @@ const items = [
   },
   {
     title: "Use breakpoints right in VSCode",
-    body: "Without any additional setup the extension allows to add a breakpoints in Visual Studio Code to debug your React Native application. It. Just. Works.\nIDE also automatically stops at runtime exceptions showing you the exact line of code where they happened",
+    body: "Without any additional setup the extension allows to add a breakpoints in Visual Studio Code to debug your React Native application. It. Just. Works.\nIDE also automatically stops at runtime exceptions showing you the exact line of code where they happened.",
     mediaSrc: "video/3_sztudio_debugger.mp4",
   },
   {
