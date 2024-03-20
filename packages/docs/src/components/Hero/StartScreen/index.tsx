@@ -31,13 +31,13 @@ const StartScreen = () => {
           </div>
           <div className={styles.buttonContainer}>
             <HomepageButton
-              href="https://marketplace.visualstudio.com/vscode"
-              title="Download from VS Marketplace"
+              href="mailto:ide@swmansion.com"
+              title="Contact us to get invited to private beta"
             />
           </div>
           <div className={styles.headingDisclaimer}>
             <InfoIcon className={styles.headingDisclaimerIcon} />
-            IDE is only available for macOS.
+            We are currently testing the IDE with a limited number of users.
           </div>
         </div>
       </section>
