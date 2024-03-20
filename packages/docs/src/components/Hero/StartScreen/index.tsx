@@ -2,6 +2,7 @@ import React from "react";
 import styles from "./styles.module.css";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import HomepageButton from "@site/src/components/HomepageButton";
+import InfoIcon from "@site/static/img/info-circle.svg";
 
 const StartScreen = () => {
   return (
@@ -16,18 +17,27 @@ const StartScreen = () => {
               <span>React Native</span>
               <span>IDE</span>
             </h1>
+            <div className={styles.poweredBy}>
+              <p>by</p>
+              <img
+                src={useBaseUrl("/img/swm-logo.svg")}
+                alt="Software Mansion"
+                className={styles.swmLogo}
+              />
+            </div>
             <h2 className={styles.subheadingLabel}>
               A better developer experience for React Native developers.
             </h2>
           </div>
-          <div>
+          <div className={styles.buttonContainer}>
             <HomepageButton
               href="https://marketplace.visualstudio.com/vscode"
               title="Download from VS Marketplace"
             />
           </div>
           <div className={styles.headingDisclaimer}>
-            React Native IDE is only available for macOS.
+            <InfoIcon className={styles.headingDisclaimerIcon} />
+            IDE is only available for macOS.
           </div>
         </div>
       </section>

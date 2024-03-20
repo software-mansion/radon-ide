@@ -1,4 +1,3 @@
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Elipse from "@site/src/components/Elipse";
 import Layout from "@theme/Layout";
 import Hero from "@site/src/components/Hero/StartScreen";
@@ -11,13 +10,12 @@ import Troubleshooting from "@site/src/components/Sections/Troubleshooting";
 import styles from "./index.module.css";
 
 export default function Home(): JSX.Element {
-  const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout title={siteConfig.title} description="Description will go into a meta tag in <head />">
+    <Layout description="A better developer experience for React Native developers.">
       <div className={styles.preventfulContainer}>
         <div className={styles.container}>
           <Hero />
-          {/* <LearnMoreHero /> */}
+          <LearnMoreHero />
           {/* <Installation /> */}
           <Overview />
           <Troubleshooting />

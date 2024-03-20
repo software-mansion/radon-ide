@@ -34,12 +34,14 @@
 }
 
 .answer {
+  font-family: var(--swm-body-font);
   padding: 0.5rem 1.5rem;
   margin-top: 0.5rem;
   font-size: var(--swm-heading-font-size-smaller);
 }
 
 .question {
+  font-family: var(--swm-body-font);
   font-size: var(--swm-heading-font-size-smaller);
   color: var(--swm-navy-light-100);
   text-align: left;
