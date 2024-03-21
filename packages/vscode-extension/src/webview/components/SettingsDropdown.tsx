@@ -60,7 +60,7 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
               project.restart(true);
             }}>
             <span className="codicon codicon-trash" />
-            Clean build cache
+            Clean rebuild
           </DropdownMenu.Item>
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>

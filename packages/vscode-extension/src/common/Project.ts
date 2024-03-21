@@ -17,7 +17,7 @@ export type ProjectState = {
     | "debuggerPaused"
     | "refreshing";
   startupMessage?: string; // Only used when status is "starting"
-  stageProgress: number;
+  stageProgress?: number;
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
 };
@@ -45,8 +45,6 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
-
-export const STAGE_PROGRES_UPDATE_TIMEOUT = 100;
 
 export type InspectData = {
   frame: {
@@ -76,7 +74,6 @@ export interface ProjectInterface {
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  stageProgressListener(newStageProgress: number, stage: string): void;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;

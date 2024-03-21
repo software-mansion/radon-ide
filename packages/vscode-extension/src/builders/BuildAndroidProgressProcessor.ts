@@ -10,7 +10,7 @@ export class BuildAndroidProgressProcessor implements BuildProgressProcessor {
     if (!this.tasksToComplete) {
       return;
     }
-    this.progressListener(this.completedTasks / this.tasksToComplete);
+    this.progressListener(Math.min(1, this.completedTasks / this.tasksToComplete));
   }
 
   processLine(line: string): void {

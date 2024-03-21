@@ -13,7 +13,6 @@ interface ProjectContextProps {
 const ProjectContext = createContext<ProjectContextProps>({
   projectState: {
     status: "starting",
-    stageProgress: 0,
     previewURL: undefined,
     selectedDevice: undefined,
   },
@@ -24,7 +23,6 @@ const ProjectContext = createContext<ProjectContextProps>({
 export default function ProjectProvider({ children }: PropsWithChildren) {
   const [projectState, setProjectState] = useState<ProjectState>({
     status: "starting",
-    stageProgress: 0,
     previewURL: undefined,
     selectedDevice: undefined,
   });

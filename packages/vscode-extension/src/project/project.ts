@@ -5,14 +5,14 @@ import { DeviceSession } from "./deviceSession";
 import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
 import { DeviceManager } from "../devices/DeviceManager";
-import { DeviceInfo, Platform } from "../common/DeviceManager";
+import { DeviceInfo } from "../common/DeviceManager";
+import { throttle } from "../common/utils";
 import {
   DeviceSettings,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
-  STAGE_PROGRES_UPDATE_TIMEOUT,
   StartupMessage,
 } from "../common/Project";
 import { EventEmitter } from "stream";
@@ -21,6 +21,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
+
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
 
@@ -34,11 +35,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   private projectState: ProjectState = {
     status: "starting",
-    stageProgress: 0,
     previewURL: undefined,
     selectedDevice: undefined,
   };
-  private lastStageProgressUpdate: number = 0;
 
   private deviceSettings: DeviceSettings = {
     appearance: "dark",
@@ -214,9 +213,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     });
 
     Logger.debug(`Launching metro`);
-    const waitForMetro = this.metro.start(forceCleanBuild, (newStageProgress: number) => {
-      this.stageProgressListener(newStageProgress, StartupMessage.WaitingForAppToLoad);
-    });
+    const waitForMetro = this.metro.start(
+      forceCleanBuild,
+      throttle((stageProgress: number) => {
+        this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
+      }, 100)
+    );
   }
 
   public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
@@ -290,22 +292,20 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
   }
-  public async stageProgressListener(newStageProgress: number, stage: string) {
+
+  private reportStageProgress(stageProgress: number, stage: string) {
     if (stage !== this.projectState.startupMessage) {
       return;
     }
-    if (newStageProgress < this.projectState.stageProgress) {
-      return;
-    }
-    if (performance.now() - this.lastStageProgressUpdate < STAGE_PROGRES_UPDATE_TIMEOUT) {
-      return;
-    }
-    this.projectState = { ...this.projectState, ...{ stageProgress: newStageProgress } };
-    this.eventEmitter.emit("projectStateChanged", this.projectState);
-    this.lastStageProgressUpdate = performance.now();
+    this.updateProjectState({ stageProgress });
   }
 
   private updateProjectState(newState: Partial<ProjectState>) {
+    // stageProgress is tied to a startup stage, so when there is a change of status or startupMessage,
+    // we always want to reset the progress.
+    if (newState.status !== undefined || newState.startupMessage !== undefined) {
+      delete this.projectState.stageProgress;
+    }
     this.projectState = { ...this.projectState, ...newState };
     this.eventEmitter.emit("projectStateChanged", this.projectState);
   }
@@ -347,15 +347,15 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         this.buildManager.startBuild(
           deviceInfo.platform,
           forceCleanBuild,
-          (newStageProgress: number) => {
-            this.stageProgressListener(newStageProgress, StartupMessage.Building);
-          }
+          throttle((stageProgress: number) => {
+            this.reportStageProgress(stageProgress, StartupMessage.Building);
+          }, 100)
         )
       );
       this.deviceSession = newDeviceSession;
 
       await newDeviceSession.start(this.deviceSettings, (startupMessage) =>
-        this.updateProjectStateForDevice(deviceInfo, { startupMessage, stageProgress: 0 })
+        this.updateProjectStateForDevice(deviceInfo, { startupMessage })
       );
       Logger.debug("Device session started");
 
