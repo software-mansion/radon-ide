@@ -122,9 +122,6 @@ export class DebugAdapter extends DebugSession {
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
             this.sourceMaps.push([message.params.url, message.params.scriptId, consumer]);
-            this.sourceMaps.forEach(([url, id, consumer]) => {
-              console.log("PORT URL", url, id, consumer);
-            });
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
 
