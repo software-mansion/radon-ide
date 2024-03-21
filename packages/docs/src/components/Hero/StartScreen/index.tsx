@@ -22,29 +22,24 @@ const StartScreen = () => {
             </h1>
             <div className={styles.poweredBy}>
               <p>by</p>
-              <img
-                src={useBaseUrl("/img/swm-logo.svg")}
-                alt="Software Mansion"
-                className={styles.swmLogo}
-              />
+              <a href="https://swmansion.com" target="_blank">
+                <img
+                  src={useBaseUrl("/img/swm-logo.svg")}
+                  alt="Software Mansion"
+                  className={styles.swmLogo}
+                />
+              </a>
             </div>
             <h2 className={styles.subheadingLabel}>
               A better developer experience for React Native developers.
             </h2>
           </div>
           <div className={styles.buttonContainer}>
-            {windowSize === "desktop" ? (
-              <HomepageButton
-                href="mailto:ide@swmansion.com"
-                title="Contact us to get invited to the private beta"
-              />
-            ) : (
-              <HomepageButton
-                href="mailto:ide@swmansion.com"
-                title="Contact us"
-                subtitle="Get invited to the private beta"
-              />
-            )}
+            <HomepageButton
+              target="_blank"
+              href="https://forms.gle/URs4bsbkcvNJagzeA"
+              title="Request Beta Access"
+            />
           </div>
           <div className={styles.headingDisclaimer}>
             <InfoIcon className={styles.headingDisclaimerIcon} />
