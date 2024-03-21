@@ -55,11 +55,14 @@ function adaptMetroConfig(config) {
   config.resolver = {
     ...config.resolver,
     extraNodeModules: {
-      ...config.resolver.extraNodeModules,
+      ...config.resolver?.extraNodeModules,
       __rnp_lib__: extensionLib,
     },
   };
 
+  // By default nodeModulesPaths are not set.
+  // This may potentially break with non-standard settings like yarn workspaces etc.
+  // TODO: figure out why setting nodeModulesPaths is needed
   config.resolver.nodeModulesPaths = [
     ...(config.resolver.nodeModulesPaths || []),
     path.join(appRoot, "node_modules"),
