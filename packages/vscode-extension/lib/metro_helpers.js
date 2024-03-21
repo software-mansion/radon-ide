@@ -50,8 +50,8 @@ function adaptMetroConfig(config) {
 
   config.watchFolders = [...(config.watchFolders || []), extensionLib];
 
-  // We need to add the extension's lib folder to the list of extraNodeModules
-  // It lets us host some files from the extension's lib folder
+  // This code allows us to host some files from the extension's lib folder
+  // Currently used for runtime and wrapper functionalities
   config.resolver = {
     ...config.resolver,
     extraNodeModules: {
