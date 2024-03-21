@@ -5,7 +5,8 @@ import { DeviceSession } from "./deviceSession";
 import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
 import { DeviceManager } from "../devices/DeviceManager";
-import { DeviceInfo, Platform } from "../common/DeviceManager";
+import { DeviceInfo } from "../common/DeviceManager";
+import { throttle } from "../common/utils";
 import {
   DeviceSettings,
   ProjectEventListener,
@@ -18,7 +19,6 @@ import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
-import { throttle } from "lodash";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 
