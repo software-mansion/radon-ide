@@ -3,8 +3,11 @@ import styles from "./styles.module.css";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import HomepageButton from "@site/src/components/HomepageButton";
 import InfoIcon from "@site/static/img/info-circle.svg";
+import { useWindowSize } from "@docusaurus/theme-common";
 
 const StartScreen = () => {
+  const windowSize = useWindowSize();
+
   return (
     <>
       <section className={styles.hero}>
@@ -30,10 +33,18 @@ const StartScreen = () => {
             </h2>
           </div>
           <div className={styles.buttonContainer}>
-            <HomepageButton
-              href="mailto:ide@swmansion.com"
-              title="Contact us to get invited to private beta"
-            />
+            {windowSize === "desktop" ? (
+              <HomepageButton
+                href="mailto:ide@swmansion.com"
+                title="Contact us to get invited to the private beta"
+              />
+            ) : (
+              <HomepageButton
+                href="mailto:ide@swmansion.com"
+                title="Contact us"
+                subtitle="Get invited to the private beta"
+              />
+            )}
           </div>
           <div className={styles.headingDisclaimer}>
             <InfoIcon className={styles.headingDisclaimerIcon} />
