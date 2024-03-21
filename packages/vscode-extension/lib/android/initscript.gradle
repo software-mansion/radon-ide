@@ -6,3 +6,8 @@ gradle.allprojects { project ->
         }
     }
 }
+
+// This is a functionality that is used by BuildAndroidProgressProcessor 
+gradle.taskGraph.whenReady { graph ->
+    println "React-Native-IDE:TaskGraphSize: ${graph.allTasks.size()}"
+}

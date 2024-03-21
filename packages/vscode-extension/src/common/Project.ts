@@ -76,7 +76,7 @@ export interface ProjectInterface {
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  stageProgressListener(newStageProgress: number): void;
+  stageProgressListener(newStageProgress: number, stage: string): void;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;

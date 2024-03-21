@@ -3,12 +3,11 @@ import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./BuildManager";
-
 import path from "path";
 import fs from "fs";
 import { OutputChannel, window } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
-import { Project } from "../project/project";
+import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
@@ -49,7 +48,8 @@ export async function buildAndroid(
   appRootFolder: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
-  outputChannel: OutputChannel
+  outputChannel: OutputChannel,
+  progressListener: (newProgress: number) => void
 ) {
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const cpuArchitecture = getCpuArchitecture();
@@ -70,8 +70,12 @@ export async function buildAndroid(
       buffer: false,
     })
   );
+  const buildAndroidProgressProcessor = new BuildAndroidProgressProcessor(progressListener);
   outputChannel.clear();
-  lineReader(buildProcess).onLineRead(outputChannel.appendLine);
+  lineReader(buildProcess).onLineRead((line) => {
+    outputChannel.appendLine(line);
+    buildAndroidProgressProcessor.processLine(line);
+  });
 
   await buildProcess;
   Logger.debug("Android build sucessful");

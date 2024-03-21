@@ -215,7 +215,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     Logger.debug(`Launching metro`);
     const waitForMetro = this.metro.start(forceCleanBuild, (newStageProgress: number) => {
-      this.stageProgressListener(newStageProgress);
+      this.stageProgressListener(newStageProgress, StartupMessage.WaitingForAppToLoad);
     });
   }
 
@@ -290,7 +290,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
   }
-  public async stageProgressListener(newStageProgress: number) {
+  public async stageProgressListener(newStageProgress: number, stage: string) {
+    if (stage !== this.projectState.startupMessage) {
+      return;
+    }
     if (newStageProgress < this.projectState.stageProgress) {
       return;
     }
@@ -345,7 +348,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           deviceInfo.platform,
           forceCleanBuild,
           (newStageProgress: number) => {
-            this.stageProgressListener(newStageProgress);
+            this.stageProgressListener(newStageProgress, StartupMessage.Building);
           }
         )
       );
