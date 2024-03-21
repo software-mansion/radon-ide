@@ -11,3 +11,7 @@
 
   background-color: var(--ifm-navbar-link-color);
 }
+
+body {
+  overflow-x: hidden !important;
+}
