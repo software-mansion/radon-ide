@@ -1,44 +1,22 @@
-import {
-  Disposable,
-  Webview,
-  WebviewPanel,
-  window,
-  Uri,
-  ViewColumn,
-  ExtensionContext,
-  commands,
-} from "vscode";
+import { WebviewPanel, window, Uri, ViewColumn, ExtensionContext, commands } from "vscode";
 
-import { openExternalUrl } from "../utilities/vsc";
 import { extensionContext } from "../utilities/extensionContext";
-import { Logger } from "../Logger";
 import { generateWebviewContent } from "./webviewContentGenerator";
-import { DependencyChecker } from "../dependency/DependencyChecker";
-import { DependencyInstaller } from "../dependency/DependencyInstaller";
-import { DeviceManager } from "../devices/DeviceManager";
-import { Project } from "../project/project";
+import { PreviewWebviewController } from "./PreviewWebviewController";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
 export class PreviewsPanel {
   public static currentPanel: PreviewsPanel | undefined;
   private readonly _panel: WebviewPanel;
-  private readonly dependencyChecker: DependencyChecker;
-  private readonly dependencyInstaller: DependencyInstaller;
-  private readonly deviceManager: DeviceManager;
-  private readonly project: Project;
-  private disposables: Disposable[] = [];
-
-  private readonly callableObjects: Map<string, object>;
-
-  private followEnabled = false;
+  private previewWebviewController: PreviewWebviewController;
 
   private constructor(panel: WebviewPanel) {
     this._panel = panel;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
-    this._panel.onDidDispose(() => this.dispose(), null, this.disposables);
+    this._panel.onDidDispose(() => this.dispose());
 
     // Set the HTML content for the webview panel
     this._panel.webview.html = generateWebviewContent(
@@ -47,32 +25,7 @@ export class PreviewsPanel {
       extensionContext.extensionUri
     );
 
-    // Set an event listener to listen for messages passed from the webview context
-    this._setWebviewMessageListener(this._panel.webview);
-
-    // Set the manager to listen and change the persisting storage for the extension.
-    this.dependencyChecker = new DependencyChecker(this._panel.webview);
-    this.dependencyChecker.setWebviewMessageListener();
-
-    this.dependencyInstaller = new DependencyInstaller(this._panel.webview);
-    this.dependencyInstaller.setWebviewMessageListener();
-
-    this._setupEditorListeners();
-
-    this.deviceManager = new DeviceManager();
-    this.project = new Project(this.deviceManager);
-
-    this.disposables.push(
-      this.dependencyChecker,
-      this.dependencyInstaller,
-      this.deviceManager,
-      this.project
-    );
-
-    this.callableObjects = new Map([
-      ["DeviceManager", this.deviceManager as object],
-      ["Project", this.project as object],
-    ]);
+    this.previewWebviewController = new PreviewWebviewController(this._panel.webview);
   }
 
   public static extensionActivated() {
@@ -112,7 +65,9 @@ export class PreviewsPanel {
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
-      PreviewsPanel.currentPanel.project.startPreview(`preview:/${fileName}:${lineNumber}`);
+      PreviewsPanel.currentPanel.previewWebviewController.project.startPreview(
+        `preview:/${fileName}:${lineNumber}`
+      );
     }
   }
 
@@ -127,97 +82,7 @@ export class PreviewsPanel {
     // Dispose of the current webview panel
     this._panel.dispose();
 
-    // Dispose of all disposables (i.e. commands) for the current webview panel
-    while (this.disposables.length) {
-      const disposable = this.disposables.pop();
-      if (disposable) {
-        disposable.dispose();
-      }
-    }
-  }
-
-  private handleRemoteCall(message: any) {
-    const { object, method, args, callId } = message;
-    const callableObject = this.callableObjects.get(object);
-    if (callableObject && method in callableObject) {
-      const argsWithCallbacks = args.map((arg: any) => {
-        if (typeof arg === "object" && "__callbackId" in arg) {
-          const callbackId = arg.__callbackId;
-          return (...args: any[]) => {
-            this._panel.webview.postMessage({
-              command: "callback",
-              callbackId,
-              args,
-            });
-          };
-        } else {
-          return arg;
-        }
-      });
-      // @ts-ignore
-      const result = callableObject[method](...argsWithCallbacks);
-      if (result instanceof Promise) {
-        result
-          .then((result) => {
-            this._panel.webview.postMessage({
-              command: "callResult",
-              callId,
-              result,
-            });
-          })
-          .catch((error) => {
-            this._panel.webview.postMessage({
-              command: "callResult",
-              callId,
-              error,
-            });
-          });
-      } else {
-        this._panel.webview.postMessage({
-          command: "callResult",
-          callId,
-          result,
-        });
-      }
-    }
-  }
-
-  private _setWebviewMessageListener(webview: Webview) {
-    webview.onDidReceiveMessage(
-      (message: any) => {
-        const command = message.command;
-
-        if (message.method !== "dispatchTouch") {
-          Logger.log("Message from webview", message);
-        }
-
-        switch (command) {
-          case "call":
-            this.handleRemoteCall(message);
-            return;
-          case "openExternalUrl":
-            openExternalUrl(message.url);
-            return;
-          case "stopFollowing":
-            this.followEnabled = false;
-            return;
-          case "startFollowing":
-            this.followEnabled = true;
-            return;
-        }
-      },
-      undefined,
-      this.disposables
-    );
-  }
-
-  private _setupEditorListeners() {
-    extensionContext.subscriptions.push(
-      window.onDidChangeActiveTextEditor((editor) => {
-        if (editor) {
-          this.project.onActiveFileChange(editor.document.fileName, this.followEnabled);
-        }
-      })
-    );
+    //dispose of current webwiew dependencies
+    this.previewWebviewController.dispose();
   }
 }

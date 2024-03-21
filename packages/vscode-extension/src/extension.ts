@@ -8,17 +8,23 @@ import {
   ExtensionContext,
   ExtensionMode,
   DebugConfigurationProviderTriggerKind,
+  ConfigurationChangeEvent,
 } from "vscode";
 import { PreviewsPanel } from "./panels/PreviewsPanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger, enableDevModeLogging } from "./Logger";
-import { setAppRootFolder, setExtensionContext } from "./utilities/extensionContext";
+import {
+  extensionContext,
+  setAppRootFolder,
+  setExtensionContext,
+} from "./utilities/extensionContext";
 import { command } from "./utilities/subprocess";
 import path from "path";
 import os from "os";
 import fs from "fs";
+import { PreviewsViewProvider } from "./panels/PreviewsViewProvider";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 
@@ -47,6 +53,7 @@ export function deactivate(context: ExtensionContext): undefined {
 
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
+  IDEPanelLocationListener();
   setExtensionContext(context);
   if (context.extensionMode === ExtensionMode.Development) {
     enableDevModeLogging();
@@ -55,13 +62,27 @@ export async function activate(context: ExtensionContext) {
   await fixBinaries(context);
 
   context.subscriptions.push(
+    window.registerWebviewViewProvider(
+      PreviewsViewProvider.viewType,
+      new PreviewsViewProvider(context)
+    )
+  );
+  context.subscriptions.push(
     commands.registerCommand("RNIDE.openPanel", (fileName?: string, lineNumber?: number) => {
-      PreviewsPanel.render(context, fileName, lineNumber);
+      if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInActivityBar")) {
+        commands.executeCommand("IDE-view.focus");
+      } else {
+        PreviewsPanel.render(context, fileName, lineNumber);
+      }
     })
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showPanel", (fileName?: string, lineNumber?: number) => {
-      PreviewsPanel.render(context, fileName, lineNumber);
+      if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInActivityBar")) {
+        commands.executeCommand("IDE-view.focus");
+      } else {
+        PreviewsPanel.render(context, fileName, lineNumber);
+      }
     })
   );
   context.subscriptions.push(
@@ -94,6 +115,17 @@ export async function activate(context: ExtensionContext) {
   );
 
   await configureAppRootFolder();
+}
+
+function IDEPanelLocationListener() {
+  workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+    if (!event.affectsConfiguration("ReactNativeIDE")) {
+      return;
+    }
+    if (workspace.getConfiguration("ReactNativeIDE").get("showPanelInActivityBar")) {
+      PreviewsPanel.currentPanel?.dispose();
+    }
+  });
 }
 
 async function findSingleFileInWorkspace(fileGlobPattern: string, excludePattern: string | null) {

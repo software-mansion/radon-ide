@@ -51,15 +51,40 @@
           "scope": "window",
           "default": null,
           "description": "Location of the React Native application root folder relative to the workspace workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
+        },
+        "ReactNativeIDE.showPanelInActivityBar":{
+          "type": "boolean",
+          "scope": "window",
+          "default": false,
+          "description": "This option alows you to move IDE Panel to Activity Bar. (warning: You will need to reset your workspace for this setting to take effect)"
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ReactNativeIDE",
+          "title": "React Native IDE",
+          "icon": "assets/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "ReactNativeIDE": [
+        {
+          "type": "webview",
+          "id": "IDE-view",
+          "name": "IDE Panel",
+          "when": "config.ReactNativeIDE.showPanelInActivityBar"
+        }
+      ]
     },
     "menus": {
       "editor/title": [
         {
           "command": "RNIDE.openPanel",
           "group": "navigation",
-          "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+          "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen && !config.ReactNativeIDE.showPanelInActivityBar"
         }
       ]
     },
