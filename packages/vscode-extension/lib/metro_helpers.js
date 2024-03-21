@@ -52,19 +52,24 @@ function adaptMetroConfig(config) {
 
   // This code overrides resolver allowing us to host some files from the extension's lib folder
   // Currently used for runtime and wrapper functionalities
-  const origResolveRequest = config.resolver.resolveRequest;
-  config.resolver.resolveRequest = (context, moduleName, platform) => {
-    if (moduleName.match(/__rnp_lib__/)) {
-      // we strip __rnp_lib__/ from the path to get relative location to extenion's lib folder
-      const relativePath = moduleName.replace(/.*__rnp_lib__\//, "");
-      const libFilePath = path.join(extensionLib, relativePath);
-      return {
-        filePath: libFilePath,
-        type: "sourceFile",
-      };
-    }
-    return origResolveRequest(context, moduleName, platform);
+  const origResolveRequest = config.resolver?.resolveRequest;
+  config.resolver = {
+    ...config.resolver,
+    resolveRequest: (context, moduleName, platform) => {
+      if (moduleName.match(/__rnp_lib__/)) {
+        // we strip __rnp_lib__/ from the path to get relative location to extenion's lib folder
+        const relativePath = moduleName.replace(/.*__rnp_lib__\//, "");
+        const libFilePath = path.join(extensionLib, relativePath);
+        return {
+          filePath: libFilePath,
+          type: "sourceFile",
+        };
+      }
+      const resolveRequest = origResolveRequest ?? context.resolveRequest;
+      return resolveRequest(context, moduleName, platform);
+    },
   };
+
   // Specifying resolveRequest requires that also nodeModulesPaths are set.
   // Both these settings are not set by default.
   // This may potentially break with non-standard settings like yarn workspaces etc.
