@@ -56,7 +56,7 @@
           "type": "boolean",
           "scope": "window",
           "default": false,
-          "description": "This option alows you to move IDE Panel to Activity Bar. (warning: You will need to reset your workspace for this setting to take effect)"
+          "description": "This option alows you to move IDE Panel to Activity Bar. (warning: if you currently have it open it is going to be close after ajusting that setting.)"
         }
       }
     },
