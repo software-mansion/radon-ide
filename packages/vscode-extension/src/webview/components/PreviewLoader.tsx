@@ -30,8 +30,13 @@ function PreviewLoader() {
         .map((item) => item.weight)
         .reduce((acc, cur) => (acc += cur), 0);
 
+      let progressComponent = 0;
+
+      if (projectState.stageProgress !== undefined) {
+        let progressComponent = projectState.stageProgress;
+      }
       setProgress(
-        ((startupStageWeightSumUntillNow + projectState.stageProgress * currentWeight) /
+        ((startupStageWeightSumUntillNow + progressComponent * currentWeight) /
           startupStageWeightSum) *
           100
       );
@@ -58,10 +63,11 @@ function PreviewLoader() {
           <StartupMessageComponent className="preview-loader-message">
             {projectState.startupMessage}
           </StartupMessageComponent>
-          <div className="preview-loader-stage-progress">
-            {Boolean(projectState.stageProgress) &&
-              `${(projectState.stageProgress * 100).toFixed(1)}%`}
-          </div>
+          {projectState.stageProgress !== undefined && (
+            <div className="preview-loader-stage-progress">
+              {(projectState.stageProgress * 100).toFixed(1)}%
+            </div>
+          )}
         </div>
       </div>
       <ProgressBar progress={progress} />

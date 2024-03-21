@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import clamp from "lodash/clamp";
-import { throttle } from "../utilities/common";
+import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
