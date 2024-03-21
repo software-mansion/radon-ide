@@ -138,4 +138,10 @@
     border-width: 0.5rem;
     border-radius: 1rem;
   }
+  .headingDisclaimer {
+    align-items: flex-start;
+  }
+  .headingDisclaimer svg {
+    margin-top: 2px;
+  }
 }
