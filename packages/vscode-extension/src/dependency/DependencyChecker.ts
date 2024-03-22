@@ -6,7 +6,6 @@ import { command } from "../utilities/subprocess";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { getAppRootFolder } from "../utilities/extensionContext";
-import { resolvePackageManager } from "../utilities/packageManager";
 
 export class DependencyChecker implements Disposable {
   private disposables: Disposable[] = [];
@@ -78,29 +77,10 @@ export class DependencyChecker implements Disposable {
   }
 
   public async checkNodeModulesInstalled() {
-    let installed = false;
-    const packageManager = await resolvePackageManager();
-    if (packageManager === "yarn") {
-      const isTreeVerified = await checkIfCLIInstalled(
-        `yarn check --verify-tree --cwd ${getAppRootFolder()}`
-      );
-      const isIntegrityChecked = await checkIfCLIInstalled(
-        `yarn check --integrity --cwd ${getAppRootFolder()}`
-      );
-      installed = isTreeVerified && isIntegrityChecked;
-    } else if (packageManager === "pnpm") {
-      installed = await checkIfCLIInstalled(`pnpm list --json`, {
-        cwd: getAppRootFolder(),
-      });
-    } else if (packageManager === "bun") {
-      installed = await checkIfCLIInstalled(`bun pm ls --json`, {
-        cwd: getAppRootFolder(),
-      });
-    } else {
-      installed = await checkIfCLIInstalled(`npm list --json`, {
-        cwd: getAppRootFolder(),
-      });
-    }
+    const installed = await checkIfCLIInstalled(`npm list --json`, {
+      cwd: getAppRootFolder(),
+    });
+
     const errorMessage = "Node modules are not installed.";
     this.webview.postMessage({
       command: "isNodeModulesInstalled",
