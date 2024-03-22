@@ -50,26 +50,21 @@ function adaptMetroConfig(config) {
 
   config.watchFolders = [...(config.watchFolders || []), extensionLib];
 
-  // This code overrides resolver allowing us to host some files from the extension's lib folder
-  // Currently used for runtime and wrapper functionalities
-  config.resolver.resolveRequest = (context, moduleName, platform) => {
-    if (moduleName.match(/__rnp_lib__/)) {
-      // we strip __rnp_lib__/ from the path to get relative location to extenion's lib folder
-      const relativePath = moduleName.replace(/.*__rnp_lib__\//, "");
-      const libFilePath = path.join(extensionLib, relativePath);
-      return {
-        filePath: libFilePath,
-        type: "sourceFile",
-      };
-    }
+  // Handle the case when resolver is not defined in the config
+  if (!config.resolver) {
+    config.resolver = {};
+  }
 
-    // Invoke the standard Metro resolver.
-    return context.resolveRequest(context, moduleName, platform);
+  // This code allows us to host some files from the extension's lib folder
+  // Currently used for runtime and wrapper functionalities
+  config.resolver.extraNodeModules = {
+    ...config.resolver.extraNodeModules,
+    __rnp_lib__: extensionLib,
   };
-  // Specifying resolveRequest requires that also nodeModulesPaths are set.
-  // Both these settings are not set by default.
-  // This may potentially break with non-standard settings like yarn workspaces etc.
-  // TODO: figure out why these settings aren't needed when not overriding resolveRequest
+
+  // This code is needed to properly resolve modules
+  // It may potentially break with non-standard settings like yarn workspaces etc.
+  // TODO: figure out why setting nodeModulesPaths is needed
   config.resolver.nodeModulesPaths = [
     ...(config.resolver.nodeModulesPaths || []),
     path.join(appRoot, "node_modules"),
