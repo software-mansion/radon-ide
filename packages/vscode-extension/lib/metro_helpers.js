@@ -50,18 +50,20 @@ function adaptMetroConfig(config) {
 
   config.watchFolders = [...(config.watchFolders || []), extensionLib];
 
+  // Handle the case when resolver is not defined in the config
+  if (!config.resolver) {
+    config.resolver = {};
+  }
+
   // This code allows us to host some files from the extension's lib folder
   // Currently used for runtime and wrapper functionalities
-  config.resolver = {
-    ...config.resolver,
-    extraNodeModules: {
-      ...config.resolver?.extraNodeModules,
-      __rnp_lib__: extensionLib,
-    },
+  config.resolver.extraNodeModules = {
+    ...config.resolver.extraNodeModules,
+    __rnp_lib__: extensionLib,
   };
 
-  // By default nodeModulesPaths are not set.
-  // This may potentially break with non-standard settings like yarn workspaces etc.
+  // This code is needed to properly resolve modules
+  // It may potentially break with non-standard settings like yarn workspaces etc.
   // TODO: figure out why setting nodeModulesPaths is needed
   config.resolver.nodeModulesPaths = [
     ...(config.resolver.nodeModulesPaths || []),
