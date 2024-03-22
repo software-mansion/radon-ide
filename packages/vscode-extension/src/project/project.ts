@@ -368,7 +368,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         status: "running",
         previewURL,
       });
-    } catch (e) {
+    } catch (e: any) {
+      //TODO: find where can we catch this error to prevent it from leaking here (if statment below is a hotfix of issue #8)
+      if (/Command was killed with SIGKILL \(Forced termination\): xcodebuild/.exec(e.message)) {
+        Logger.debug(e);
+        return;
+      }
       Logger.error("Couldn't start device session", e);
       if (this.projectState.selectedDevice === deviceInfo) {
         this.updateProjectState({
