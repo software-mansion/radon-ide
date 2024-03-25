@@ -371,7 +371,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         status: "running",
         previewURL,
       });
-    } catch (e: any) {
+    } catch (e) {
       Logger.error("Couldn't start device session", e);
       if (
         this.projectState.selectedDevice === deviceInfo &&
