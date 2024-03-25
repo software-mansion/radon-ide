@@ -321,8 +321,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
 
     this.reloadingMetro = false;
-    this.deviceSession?.dispose();
+    const prevSession = this.deviceSession;
     this.deviceSession = undefined;
+    prevSession?.dispose();
 
     this.updateProjectState({
       selectedDevice: deviceInfo,
@@ -330,6 +331,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       startupMessage: StartupMessage.InitializingDevice,
       previewURL: undefined,
     });
+
+    let newDeviceSession;
 
     try {
       const device = await this.deviceManager.getDevice(deviceInfo);
@@ -340,7 +343,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
       Logger.debug("Metro & devtools ready");
-      const newDeviceSession = new DeviceSession(
+      newDeviceSession = new DeviceSession(
         device,
         this.devtools,
         this.metro,
@@ -369,13 +372,11 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         previewURL,
       });
     } catch (e: any) {
-      //TODO: find where can we catch this error to prevent it from leaking here (if statment below is a hotfix of issue #8)
-      if (/Command was killed with SIGKILL \(Forced termination\): xcodebuild/.exec(e.message)) {
-        Logger.debug(e);
-        return;
-      }
       Logger.error("Couldn't start device session", e);
-      if (this.projectState.selectedDevice === deviceInfo) {
+      if (
+        this.projectState.selectedDevice === deviceInfo &&
+        this.deviceSession === newDeviceSession
+      ) {
         this.updateProjectState({
           status: "buildError",
         });
