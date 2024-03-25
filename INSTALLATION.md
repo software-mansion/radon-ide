@@ -8,12 +8,18 @@ If you wish to build the extension from source in order to make modifications, h
 ## 1. Download VSIX file from releases page
 
 Navigate to the [releases page on GitHub](/software-mansion-labs/react-native-ide/releases) and select the most recent release.
-From the "Assets" section, download the `.vsix` file.
+From the "Assets" section, download the `.vsix` file:
+
+<img width="825" alt="download-vsix" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/05f41079-9d1d-430b-a178-5c0661890687">
+
 
 ## 2. Install VSIX in vscode
 
 Open Visual Studio Code to install the downloaded extension package.
-You can [follow this official vscode guide on installing VSIX extension] to see all the possible ways how this can be handled, or navigate to extension panel and click "Install from VSIX" option that's placed under "···" button in the top right corner.
+You can [follow this official vscode guide on installing VSIX extension] to see all the possible ways how this can be handled, or navigate to extension panel and click "Install from VSIX" option that's placed under "···" button in the top right corner, then select the downloaded file.
+
+<img width="609" alt="install-from-vsix" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/1d648637-e87a-4387-ba64-8fe7ab5b6148">
+
 
 ## Updating
 
