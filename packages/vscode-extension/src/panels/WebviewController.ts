@@ -7,7 +7,7 @@ import { openExternalUrl } from "../utilities/vsc";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 
-export class PreviewWebviewController implements Disposable {
+export class WebviewController implements Disposable {
   private readonly dependencyChecker: DependencyChecker;
   private readonly dependencyInstaller: DependencyInstaller;
   private readonly deviceManager: DeviceManager;

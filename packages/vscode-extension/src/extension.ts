@@ -10,7 +10,7 @@ import {
   DebugConfigurationProviderTriggerKind,
   ConfigurationChangeEvent,
 } from "vscode";
-import { PreviewsPanel } from "./panels/PreviewsPanel";
+import { Tabpanel } from "./panels/Tabpanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
@@ -24,9 +24,10 @@ import { command } from "./utilities/subprocess";
 import path from "path";
 import os from "os";
 import fs from "fs";
-import { PreviewsViewProvider } from "./panels/PreviewsViewProvider";
+import { SidepanelViewProvider } from "./panels/SidepanelViewProvider";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
+const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
 function handleUncaughtErrors() {
   process.on("unhandledRejection", (error) => {
@@ -63,25 +64,25 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     window.registerWebviewViewProvider(
-      PreviewsViewProvider.viewType,
-      new PreviewsViewProvider(context)
+      SidepanelViewProvider.viewType,
+      new SidepanelViewProvider(context)
     )
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.openPanel", (fileName?: string, lineNumber?: number) => {
       if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInActivityBar")) {
-        commands.executeCommand("IDE-view.focus");
+        SidepanelViewProvider.showView(context, fileName, lineNumber);
       } else {
-        PreviewsPanel.render(context, fileName, lineNumber);
+        Tabpanel.render(context, fileName, lineNumber);
       }
     })
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showPanel", (fileName?: string, lineNumber?: number) => {
       if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInActivityBar")) {
-        commands.executeCommand("IDE-view.focus");
+        SidepanelViewProvider.showView(context, fileName, lineNumber);
       } else {
-        PreviewsPanel.render(context, fileName, lineNumber);
+        Tabpanel.render(context, fileName, lineNumber);
       }
     })
   );
@@ -123,7 +124,7 @@ function IDEPanelLocationListener() {
       return;
     }
     if (workspace.getConfiguration("ReactNativeIDE").get("showPanelInActivityBar")) {
-      PreviewsPanel.currentPanel?.dispose();
+      Tabpanel.currentPanel?.dispose();
     }
   });
 }
@@ -144,13 +145,19 @@ function openWorkspaceSettings() {
   });
 }
 
+function extensionActivated() {
+  if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
+    commands.executeCommand("RNIDE.openPanel");
+  }
+}
+
 async function configureAppRootFolder() {
   const appRootFolder = await findAppRootFolder();
   if (appRootFolder) {
     Logger.info(`Found app root folder: ${appRootFolder}`);
     setAppRootFolder(appRootFolder);
     commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
-    PreviewsPanel.extensionActivated();
+    extensionActivated();
   }
   return appRootFolder;
 }

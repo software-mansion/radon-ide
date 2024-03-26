@@ -2,14 +2,14 @@ import { WebviewPanel, window, Uri, ViewColumn, ExtensionContext, commands } fro
 
 import { extensionContext } from "../utilities/extensionContext";
 import { generateWebviewContent } from "./webviewContentGenerator";
-import { PreviewWebviewController } from "./PreviewWebviewController";
+import { WebviewController } from "./WebviewController";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
-export class PreviewsPanel {
-  public static currentPanel: PreviewsPanel | undefined;
+export class Tabpanel {
+  public static currentPanel: Tabpanel | undefined;
   private readonly _panel: WebviewPanel;
-  private previewWebviewController: PreviewWebviewController;
+  private webviewController: WebviewController;
 
   private constructor(panel: WebviewPanel) {
     this._panel = panel;
@@ -25,19 +25,13 @@ export class PreviewsPanel {
       extensionContext.extensionUri
     );
 
-    this.previewWebviewController = new PreviewWebviewController(this._panel.webview);
-  }
-
-  public static extensionActivated() {
-    if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
-      PreviewsPanel.render(extensionContext);
-    }
+    this.webviewController = new WebviewController(this._panel.webview);
   }
 
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
-    if (PreviewsPanel.currentPanel) {
+    if (Tabpanel.currentPanel) {
       // If the webview panel already exists reveal it
-      PreviewsPanel.currentPanel._panel.reveal(ViewColumn.Beside);
+      Tabpanel.currentPanel._panel.reveal(ViewColumn.Beside);
     } else {
       // If a webview panel does not already exist create and show a new one
 
@@ -57,7 +51,7 @@ export class PreviewsPanel {
           retainContextWhenHidden: true,
         }
       );
-      PreviewsPanel.currentPanel = new PreviewsPanel(panel);
+      Tabpanel.currentPanel = new Tabpanel(panel);
       context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
 
       commands.executeCommand("workbench.action.lockEditorGroup");
@@ -65,7 +59,7 @@ export class PreviewsPanel {
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
-      PreviewsPanel.currentPanel.previewWebviewController.project.startPreview(
+      Tabpanel.currentPanel.webviewController.project.startPreview(
         `preview:/${fileName}:${lineNumber}`
       );
     }
@@ -77,12 +71,12 @@ export class PreviewsPanel {
     // key in this case to prevent extension from automatically opening the panel next time they open the editor
     extensionContext.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, undefined);
 
-    PreviewsPanel.currentPanel = undefined;
+    Tabpanel.currentPanel = undefined;
 
     // Dispose of the current webview panel
     this._panel.dispose();
 
     //dispose of current webwiew dependencies
-    this.previewWebviewController.dispose();
+    this.webviewController.dispose();
   }
 }
