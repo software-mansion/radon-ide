@@ -29,11 +29,21 @@ npm install
 
 ### 3. Prepare simulator server build
 
-Inside `packages/vscode-extension` run:
+Simulator server repository is not open sourced but we have a pre-build binaries published on the GitHub releases page.
+First, you need to navigate to the [releases page on GitHub](https://github.com/software-mansion-labs/react-native-ide/releases), open the recent release, and download the sim-server file from "Assets" section (the filename contains a git hash for build consistency):
+
+<img width="825" alt="download-sim-server" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/1b85280f-af22-49f2-9831-cf9d6321c9fc">
+
+
+Next, place the downloaded file under `packages/vscode-extension/dist`.
+
+Finally, run the following script inside `packages/vscode-extension` directory:
 
 ```sh
 npm run build:sim-server-debug
 ```
+
+In case of any errors, please read the output of this command before proceeding.
 
 ### 4. Open extension project in Visual Studio Code
 
@@ -55,7 +65,6 @@ Running this configration will result in the new vscode window being opened.
 This new window is titled "[Extension Development Host]" and is the only window that has the development version of the extension loaded – you should use it to open you React Native project, or try some of the test apps from `test-app` folder.
 
 <img width="896" alt="extension-host-title" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/f64efd0e-4611-4742-8012-9f6dfbf484ca">
-
 
 ### 6. Develop the extension!
 
