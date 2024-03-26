@@ -306,22 +306,15 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
   } as DeviceInfo;
 }
-
+const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 async function getAvdIds(avdDirectory: string) {
   const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
     env: { ...process.env, ANDROID_AVD_HOME: avdDirectory },
   });
 
-  function isAvdId(avdId: string) {
-    return avdId.length > 0 && !isErrorMessage(avdId);
-  }
-
-  function isErrorMessage(text: string) {
-    // https://github.com/react-native-community/cli/issues/1801#issuecomment-1980580355
-    return text.startsWith("INFO    | Storing crashdata");
-  }
-
-  return stdout.split("\n").filter(isAvdId);
+  // filters out error messages and empty lines
+  // https://github.com/react-native-community/cli/issues/1801#issuecomment-1980580355
+  return stdout.split("\n").filter((id) => UUID_REGEX.test(id));
 }
 
 export async function listEmulators() {
