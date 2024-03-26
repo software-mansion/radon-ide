@@ -27,12 +27,18 @@ You will be able to add or remove simulators later using the device menu in the 
 In case the IDE cannot locate system images to use for the device, you will see an empty list when creating new emulator or simulator.
 Please follow the [SIMULATORS](SIMULATORS.md) section to learn how to manage system versions of Android emulators or iOS simulators that the IDE can use.
 
-## 3. Wait for the project to build and run
+## 3. Decide on the location of the IDE panel
+
+The main extension window can be either presented as one of the editor tabs, which is the default behavior, or as a side panel.
+To change between these two modes, open VSCode settings and search for "React Native IDE: Show Panel in Activity Bar" option.
+Note that when the extension is used as side panel it can be dragged to the secondary side panel that's on the opposite side to where your file explorer is placed:
+
+## 4. Wait for the project to build and run
 
 After all the above steps, you should be able to see your app building and launching in the extension device preview.
 From there, you can use the simulator normally to navigate in your app and try out some of the developer experience enhancements that the IDE provides.
 
-## 4. IDE featuers highlights
+## 5. IDE featuers highlights
 
 Visit [React Native IDE](https://ide.swmansion.com/) webside, for a nicely presented list of the feature highlights.
 
