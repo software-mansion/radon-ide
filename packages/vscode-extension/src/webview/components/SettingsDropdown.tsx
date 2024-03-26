@@ -15,7 +15,7 @@ interface SettingsDropdownProps {
 }
 
 function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps) {
-  const { showPanelInActivityBar } = useWorkspaceConfig();
+  const { showPanelInSideBar } = useWorkspaceConfig();
   const { openModal } = useModal();
   return (
     <DropdownMenu.Root>
@@ -62,7 +62,7 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
             Clean rebuild
           </DropdownMenu.Item>
 
-          {showPanelInActivityBar && (
+          {showPanelInSideBar && (
             <>
               <DropdownMenu.Separator className="dropdown-menu-separator" />
               <DropdownMenu.Item

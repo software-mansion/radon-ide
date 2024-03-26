@@ -5,13 +5,13 @@ import { WorkspaceConfigInterface, WorkspaceConfigProps } from "../../common/Wor
 const config = makeProxy<WorkspaceConfigInterface>("WorkspaceConfig");
 
 const WorkspaceConfigContext = createContext<WorkspaceConfigProps>({
-  showPanelInActivityBar: false,
+  showPanelInSideBar: false,
   relativeAppLocation: "",
 });
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
   const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfigProps>({
-    showPanelInActivityBar: false,
+    showPanelInSideBar: false,
     relativeAppLocation: "",
   });
 

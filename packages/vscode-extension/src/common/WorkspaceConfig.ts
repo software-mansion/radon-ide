@@ -4,7 +4,7 @@ import { EventEmitter } from "stream";
 import { Logger } from "../Logger";
 
 export type WorkspaceConfigProps = {
-  showPanelInActivityBar: boolean;
+  showPanelInSideBar: boolean;
   relativeAppLocation: string;
 };
 
@@ -37,9 +37,9 @@ export class WorkspaceConfig implements Disposable, WorkspaceConfigInterface {
   constructor() {
     WorkspaceConfig.currentWorkspaceConfig = this;
     this.workspaceConfigProps = {
-      showPanelInActivityBar: workspace
+      showPanelInSideBar: workspace
         .getConfiguration("ReactNativeIDE")
-        .get<boolean>("showPanelInActivityBar")!,
+        .get<boolean>("showPanelInSideBar")!,
       relativeAppLocation: workspace
         .getConfiguration("ReactNativeIDE")
         .get<string>("relativeAppLocation")!,
@@ -53,11 +53,11 @@ export class WorkspaceConfig implements Disposable, WorkspaceConfigInterface {
         if (!event.affectsConfiguration("ReactNativeIDE")) {
           return;
         }
-        if (event.affectsConfiguration("ReactNativeIDE.showPanelInActivityBar")) {
-          this.workspaceConfigProps.showPanelInActivityBar = workspace
+        if (event.affectsConfiguration("ReactNativeIDE.showPanelInSideBar")) {
+          this.workspaceConfigProps.showPanelInSideBar = workspace
             .getConfiguration("ReactNativeIDE")
-            .get<boolean>("showPanelInActivityBar")!;
-          if (workspace.getConfiguration("ReactNativeIDE").get("showPanelInActivityBar")) {
+            .get<boolean>("showPanelInSideBar")!;
+          if (workspace.getConfiguration("ReactNativeIDE").get("showPanelInSideBar")) {
             Tabpanel.currentPanel?.dispose();
           }
         } else if (event.affectsConfiguration("ReactNativeIDE.relativeAppLocation")) {

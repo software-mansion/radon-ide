@@ -70,7 +70,7 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.openPanel", (fileName?: string, lineNumber?: number) => {
-      if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInActivityBar")) {
+      if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInSideBar")) {
         SidepanelViewProvider.showView(context, fileName, lineNumber);
       } else {
         Tabpanel.render(context, fileName, lineNumber);
@@ -79,7 +79,7 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showPanel", (fileName?: string, lineNumber?: number) => {
-      if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInActivityBar")) {
+      if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInSideBar")) {
         SidepanelViewProvider.showView(context, fileName, lineNumber);
       } else {
         Tabpanel.render(context, fileName, lineNumber);
@@ -123,7 +123,7 @@ function IDEPanelLocationListener() {
     if (!event.affectsConfiguration("ReactNativeIDE")) {
       return;
     }
-    if (workspace.getConfiguration("ReactNativeIDE").get("showPanelInActivityBar")) {
+    if (workspace.getConfiguration("ReactNativeIDE").get("showPanelInSideBar")) {
       Tabpanel.currentPanel?.dispose();
     }
   });
