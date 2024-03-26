@@ -11,8 +11,10 @@ const StartScreen = () => {
   return (
     <>
       <section className={styles.hero}>
-        <div className={styles.heroImageWrapper}>
-          <img className={styles.heroImage} src={useBaseUrl("/img/hero.png")} draggable={false} />
+        <div className={styles.heroImageContainer}>
+          <div className={styles.heroImageWrapper}>
+            <img className={styles.heroImage} src={useBaseUrl("/img/hero.png")} draggable={false} />
+          </div>
         </div>
         <div className={styles.heading}>
           <div>

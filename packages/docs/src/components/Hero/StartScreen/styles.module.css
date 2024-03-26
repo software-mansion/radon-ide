@@ -35,6 +35,10 @@
   margin: 0;
 }
 
+.heroImageContainer {
+  position: relative;
+}
+
 .heroImageWrapper {
   border-radius: 2rem;
   border-color: var(--swm-green-light-100);
@@ -42,13 +46,15 @@
   border-style: solid;
   position: absolute;
   transform: translateX(70%) translateY(30px);
+  width: 1088px;
 }
 .heroImage {
   border-color: #000;
   border-width: 0.5rem;
   border-style: solid;
   border-radius: 1rem;
-  max-height: 700px;
+  width: 100%;
+  height: auto;
   margin-bottom: -10px;
 }
 
@@ -85,7 +91,7 @@
 
 @media (max-width: 1900px) {
   .heroImageWrapper {
-    transform: translateX(55%);
+    transform: translateX(55%) translateY(5%);
   }
 }
 
@@ -106,6 +112,7 @@
   }
 
   .heroImageWrapper {
+    width: auto;
     position: static;
     margin-top: 4rem;
     border-width: 1rem;
