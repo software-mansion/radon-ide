@@ -20,7 +20,7 @@ const items = [
   },
   {
     title: "Navigation made easier",
-    body: "The React Native IDE integrates tightly with your deep-linked application allowing you to jump around the navigation structure. Supports both Expo Router and React Navigation projects.",
+    body: "The React Native IDE integrates tightly with your deep-linked application allowing you to jump around the navigation structure (supports Expo Router projects).",
     mediaSrc: "video/4_sztudio_url_bar.mp4",
   },
   {
