@@ -307,12 +307,26 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
   } as DeviceInfo;
 }
 
-export async function listEmulators() {
-  const avdDirectory = getOrCreateAvdDirectory();
+async function getAvdIds(avdDirectory: string) {
   const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
     env: { ...process.env, ANDROID_AVD_HOME: avdDirectory },
   });
-  const avdIds = stdout.split("\n").filter((avdId) => !!avdId);
+
+  function isAvdId(avdId: string) {
+    return avdId.length > 0 && !isErrorMessage(avdId);
+  }
+
+  function isErrorMessage(text: string) {
+    // https://github.com/react-native-community/cli/issues/1801#issuecomment-1980580355
+    return text.startsWith("INFO    | Storing crashdata");
+  }
+
+  return stdout.split("\n").filter(isAvdId);
+}
+
+export async function listEmulators() {
+  const avdDirectory = getOrCreateAvdDirectory();
+  const avdIds = await getAvdIds(avdDirectory);
   const systemImages = await getAndroidSystemImages();
   return Promise.all(
     avdIds.map(async (avdId) => {
