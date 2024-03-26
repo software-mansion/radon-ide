@@ -1,5 +1,3 @@
-# React Native IDE User's guide
-
 After [INSTALLING](INSTALLATION.md) the extension, you should be able to start using the extension by opening your React Native or Expo project as a workspace in Visual Studio Code.
 If that's not the case and you have problems getting the extension to run, please check [TROUBLESHOOTING](TROUBLESHOOTING.md) guide.
 
@@ -11,16 +9,17 @@ If your project setup is supported, there is no extra configuration that's neces
 The only thing you need to do is open your React Native of Expo project as workspace in vscode (File > Open Folder... option or using `code` command with the folder name from terminal).
 Once you have it open, you can start the extension panel in one of a few ways:
 
-1. When you open any file of your project to edit it, you can launch the extension from "Opne IDE Panel" button in the editor toolbar:
-
+1. When you open any file of your project to edit it, you can launch the extension from "Open IDE Panel" button in the editor toolbar:
+<img width="800" alt="sztudio_editor_button" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/18983660-0a06-4b56-ba3f-2eda2bf50f12">
 2. You can use "React Native IDE: Open IDE Panel" available in vscode's command palette:
-
+<img width="800" alt="sztudio_command_palette" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/ea7579b1-fc40-47c2-9d1c-50907ec9d665">
 3. If you already had the panel open in this project before restarting the editor, it will automatically reopen in the same place.
 
 ## 2. Create simulator and emulator instances on the first run
 
 When you open the IDE panel for the first time, it'll ask you to configure Android emulator of iOS simulator.
 Depending on which platform you want to run your app on first, click one of the options available at the initial screen:
+<img width="650" alt="sztudio-init-screen" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/d2c6a55a-2f22-46fe-917b-686766ad1f8e">
 
 You will be able to add or remove simulators later using the device menu in the left bottom corner of the panel.
 
