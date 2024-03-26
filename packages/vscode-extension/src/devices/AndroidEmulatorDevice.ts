@@ -52,6 +52,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "system",
       "font_scale",
       convertToAdbFontSize(settings.contentSize).toString(),
+      "&&",
+      `cmd uimode night ${settings.appearance === "light" ? "no" : "yes"}`,
     ]);
   }
 
