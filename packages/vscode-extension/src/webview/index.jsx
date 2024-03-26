@@ -7,6 +7,7 @@ import DependenciesProvider from "./providers/DependenciesProvider";
 import ModalProvider from "./providers/ModalProvider";
 import ProjectProvider from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
+import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
 
 import "./styles/colors.css";
 
@@ -16,15 +17,17 @@ const root = createRoot(container);
 root.render(
   <React.StrictMode>
     <ProjectProvider>
-      <DevicesProvider>
-        <DependenciesProvider>
-          <ModalProvider>
-            <AlertProvider>
-              <App />
-            </AlertProvider>
-          </ModalProvider>
-        </DependenciesProvider>
-      </DevicesProvider>
+      <WorkspaceConfigProvider>
+        <DevicesProvider>
+          <DependenciesProvider>
+            <ModalProvider>
+              <AlertProvider>
+                <App />
+              </AlertProvider>
+            </ModalProvider>
+          </DependenciesProvider>
+        </DevicesProvider>
+      </WorkspaceConfigProvider>
     </ProjectProvider>
   </React.StrictMode>
 );

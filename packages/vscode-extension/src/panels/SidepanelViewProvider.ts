@@ -1,6 +1,6 @@
 import { ExtensionContext, Uri, WebviewView, WebviewViewProvider, commands } from "vscode";
 import { generateWebviewContent } from "./webviewContentGenerator";
-import { extensionContext } from "../utilities/extensionContext";
+
 import { WebviewController } from "./WebviewController";
 import { Logger } from "../Logger";
 

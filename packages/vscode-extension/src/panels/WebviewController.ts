@@ -6,12 +6,14 @@ import { Project } from "../project/project";
 import { openExternalUrl } from "../utilities/vsc";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
+import { WorkspaceConfig } from "../common/WorkspaceConfig";
 
 export class WebviewController implements Disposable {
   private readonly dependencyChecker: DependencyChecker;
   private readonly dependencyInstaller: DependencyInstaller;
   private readonly deviceManager: DeviceManager;
   public readonly project: Project;
+  public readonly workspaceConfig: WorkspaceConfig;
   private disposables: Disposable[] = [];
 
   private followEnabled = false;
@@ -34,16 +36,20 @@ export class WebviewController implements Disposable {
     this.deviceManager = new DeviceManager();
     this.project = new Project(this.deviceManager);
 
+    this.workspaceConfig = new WorkspaceConfig();
+
     this.disposables.push(
       this.dependencyChecker,
       this.dependencyInstaller,
       this.deviceManager,
-      this.project
+      this.project,
+      this.workspaceConfig
     );
 
     this.callableObjects = new Map([
       ["DeviceManager", this.deviceManager as object],
       ["Project", this.project as object],
+      ["WorkspaceConfig", this.workspaceConfig as object],
     ]);
   }
 
