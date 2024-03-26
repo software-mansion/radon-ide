@@ -12,7 +12,6 @@ From the "Assets" section, download the `.vsix` file:
 
 <img width="825" alt="download-vsix" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/05f41079-9d1d-430b-a178-5c0661890687">
 
-
 ## 2. Install VSIX in vscode
 
 Open Visual Studio Code to install the downloaded extension package.
@@ -20,8 +19,7 @@ You can [follow this official vscode guide on installing VSIX extension] to see 
 
 <img width="609" alt="install-from-vsix" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/1d648637-e87a-4387-ba64-8fe7ab5b6148">
 
-
-## Updating
+## Updates
 
 When installing updates, you should follow the same exact procedure and the new version will be installed over the previous one (you can also downgrade to some older version this way).
 When overinstalling new VSIX file, you'll be prompted with a dialog to reload vscode window, which you need to accept before the new version is loaded.
