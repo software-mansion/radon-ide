@@ -175,7 +175,7 @@ export class DebugAdapter extends DebugSession {
       outputEvent = new OutputEvent(output + "\n", typeToCategory(message.params.type));
     }
     this.sendEvent(outputEvent);
-    this.sendEvent(new Event("rnp_consoleLog", { category: outputEvent.body.category }));
+    this.sendEvent(new Event("RNIDE_consoleLog", { category: outputEvent.body.category }));
   }
 
   private findOriginalPosition(
@@ -261,7 +261,7 @@ export class DebugAdapter extends DebugSession {
     this.pausedDAPtoCDPObjectIdMap = new Map();
     if (
       message.params.reason === "other" &&
-      message.params.callFrames[0].functionName === "__rnpBreakOnError"
+      message.params.callFrames[0].functionName === "__RNIDE_breakOnError"
     ) {
       // this is a workaround for an issue with hermes which does not provide a full stack trace
       // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception
@@ -311,7 +311,7 @@ export class DebugAdapter extends DebugSession {
       );
       this.pausedStackFrames = stackFrames;
       this.sendEvent(new StoppedEvent("exception", this.threads[0].id, errorMessage));
-      this.sendEvent(new Event("rnp_paused", { reason: "exception", isFatal: isFatal }));
+      this.sendEvent(new Event("RNIDE_paused", { reason: "exception", isFatal: isFatal }));
     } else {
       this.pausedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
         const cdpLocation = cdpFrame.location;
@@ -333,7 +333,7 @@ export class DebugAdapter extends DebugSession {
         (cdpFrame: any) => cdpFrame.scopeChain
       );
       this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id, "Yollo"));
-      this.sendEvent(new Event("rnp_paused"));
+      this.sendEvent(new Event("RNIDE_paused"));
     }
   }
 
@@ -563,7 +563,7 @@ export class DebugAdapter extends DebugSession {
   ): Promise<void> {
     await this.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
     this.sendResponse(response);
-    this.sendEvent(new Event("rnp_continued"));
+    this.sendEvent(new Event("RNIDE_continued"));
   }
 
   protected async nextRequest(

@@ -40,5 +40,5 @@ function useRouterPluginMainHook({ onNavigationChange }) {
   };
 }
 
-global.__register_navigation_plugin &&
-  global.__register_navigation_plugin("expo-router", { mainHook: useRouterPluginMainHook });
+global.__RNIDE_register_navigation_plugin &&
+  global.__RNIDE_register_navigation_plugin("expo-router", { mainHook: useRouterPluginMainHook });
