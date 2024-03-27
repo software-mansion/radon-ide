@@ -163,23 +163,23 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     }
     this.devtools.addListener((event, payload) => {
       switch (event) {
-        case "rnp_appReady":
+        case "RNIDE_appReady":
           Logger.debug("App ready");
           if (this.reloadingMetro) {
             this.reloadingMetro = false;
             this.updateProjectState({ status: "running" });
           }
           break;
-        case "rnp_navigationChanged":
+        case "RNIDE_navigationChanged":
           this.eventEmitter.emit("navigationChanged", {
             displayName: payload.displayName,
             id: payload.id,
           });
           break;
-        case "rnp_fastRefreshStarted":
+        case "RNIDE_fastRefreshStarted":
           this.updateProjectState({ status: "refreshing" });
           break;
-        case "rnp_fastRefreshComplete":
+        case "RNIDE_fastRefreshComplete":
           if (this.projectState.status === "starting") return;
           if (this.projectState.status === "incrementalBundleError") return;
           if (this.projectState.status === "runtimeError") return;
@@ -193,10 +193,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.debugSessionListener?.dispose();
     this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
-        case "rnp_consoleLog":
+        case "RNIDE_consoleLog":
           this.eventEmitter.emit("log", event.body);
           break;
-        case "rnp_paused":
+        case "RNIDE_paused":
           if (event.body?.reason === "exception") {
             // if we know that incrmental bundle error happened, we don't want to change the status
             if (this.projectState.status === "incrementalBundleError") return;
@@ -206,7 +206,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           }
           commands.executeCommand("workbench.view.debug");
           break;
-        case "rnp_continued":
+        case "RNIDE_continued":
           this.updateProjectState({ status: "running" });
           break;
       }
@@ -267,6 +267,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       return;
     }
     this.buildManager.focusBuildOutput();
+  }
+
+  public async focusExtensionLogsOutput() {
+    Logger.openOutputPanel();
   }
 
   public async focusDebugConsole() {

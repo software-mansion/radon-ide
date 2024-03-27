@@ -59,7 +59,7 @@ function adaptMetroConfig(config) {
   // Currently used for runtime and wrapper functionalities
   config.resolver.extraNodeModules = {
     ...config.resolver.extraNodeModules,
-    __rnp_lib__: extensionLib,
+    __RNIDE_lib__: extensionLib,
   };
 
   // This code is needed to properly resolve modules
@@ -92,7 +92,7 @@ function metroServerReadyHandler(originalOnReadyHandler) {
     process.env.EXPO_PACKAGER_PROXY_URL =
       process.env.EXPO_MANIFEST_PROXY_URL = `http://localhost:${port}`;
     originalOnReadyHandler && originalOnReadyHandler(server, ...args);
-    process.stdout.write(JSON.stringify({ type: "rnp_initialize_done", port }));
+    process.stdout.write(JSON.stringify({ type: "RNIDE_initialize_done", port }));
     process.stdout.write("\n");
   };
 }

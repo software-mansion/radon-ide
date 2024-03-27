@@ -52,6 +52,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "system",
       "font_scale",
       convertToAdbFontSize(settings.contentSize).toString(),
+      "&&",
+      `cmd uimode night ${settings.appearance === "light" ? "no" : "yes"}`,
     ]);
   }
 
@@ -306,13 +308,20 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
   } as DeviceInfo;
 }
-
-export async function listEmulators() {
-  const avdDirectory = getOrCreateAvdDirectory();
+const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
+async function getAvdIds(avdDirectory: string) {
   const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
     env: { ...process.env, ANDROID_AVD_HOME: avdDirectory },
   });
-  const avdIds = stdout.split("\n").filter((avdId) => !!avdId);
+
+  // filters out error messages and empty lines
+  // https://github.com/react-native-community/cli/issues/1801#issuecomment-1980580355
+  return stdout.split("\n").filter((id) => UUID_REGEX.test(id));
+}
+
+export async function listEmulators() {
+  const avdDirectory = getOrCreateAvdDirectory();
+  const avdIds = await getAvdIds(avdDirectory);
   const systemImages = await getAndroidSystemImages();
   return Promise.all(
     avdIds.map(async (avdId) => {
