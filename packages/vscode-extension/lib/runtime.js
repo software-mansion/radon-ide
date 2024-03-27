@@ -5,14 +5,14 @@
 const AppRegistry = require("react-native/Libraries/ReactNative/AppRegistry");
 const parseErrorStack = require("react-native/Libraries/Core/Devtools/parseErrorStack");
 
-function __rnpBreakOnError(error, isFatal) {
+function __RNIDE_breakOnError(error, isFatal) {
   // the below variables are accessed from the debugger and hence are necessary despite being unused in the code
   const message = error.message;
   const stack = parseErrorStack(error.stack);
   debugger;
 }
 
-global.ErrorUtils.setGlobalHandler(__rnpBreakOnError);
+global.ErrorUtils.setGlobalHandler(__RNIDE_breakOnError);
 
 global.__fbDisableExceptionsManager = true;
 
@@ -30,10 +30,13 @@ console.warn = wrapConsole(console.warn);
 console.error = wrapConsole(console.error);
 console.info = wrapConsole(console.info);
 
-global.__register_navigation_plugin = function (name, plugin) {
-  require("__rnp_lib__/wrapper.js").registerNavigationPlugin(name, plugin);
+// This variable can be used by external integrations to detect if they are running in the IDE
+global.__RNIDE_enabled = true;
+
+global.__RNIDE_register_navigation_plugin = function (name, plugin) {
+  require("__RNIDE_lib__/wrapper.js").registerNavigationPlugin(name, plugin);
 };
 
 AppRegistry.setWrapperComponentProvider((appParameters) => {
-  return require("__rnp_lib__/wrapper.js").PreviewAppWrapper;
+  return require("__RNIDE_lib__/wrapper.js").PreviewAppWrapper;
 });

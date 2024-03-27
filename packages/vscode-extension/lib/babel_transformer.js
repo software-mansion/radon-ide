@@ -23,12 +23,12 @@ disablePlugin("@babel/plugin-transform-react-jsx-development");
 function transformWrapper({ filename, src, plugins, ...rest }) {
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
   if (filename.endsWith("node_modules/react-native/Libraries/Core/InitializeCore.js")) {
-    src = `${src};require("__rnp_lib__/runtime.js");`;
+    src = `${src};require("__RNIDE_lib__/runtime.js");`;
   } else if (filename.endsWith("node_modules/expo-router/entry.js")) {
     // expo-router v2 integration
-    src = `${src};require("__rnp_lib__/expo_router_plugin.js");`;
+    src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
   } else if (filename.endsWith("node_modules/react-native-ide/index.js")) {
-    src = `${src};preview = require("__rnp_lib__/preview.js").preview;`;
+    src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
   }
 
   const newPlugins = [
