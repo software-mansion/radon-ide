@@ -5,7 +5,7 @@ import { DeviceSession } from "./deviceSession";
 import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
 import { DeviceManager } from "../devices/DeviceManager";
-import { DeviceInfo, Platform } from "../common/DeviceManager";
+import { DeviceInfo } from "../common/DeviceManager";
 import {
   DeviceSettings,
   ProjectEventListener,
@@ -19,6 +19,7 @@ import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
+import { shouldUseExpoGo } from "../builders/expoGo";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
@@ -337,18 +338,18 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
       Logger.debug("Metro & devtools ready");
-      const newDeviceSession = new DeviceSession(
-        device,
-        this.devtools,
-        this.metro,
-        this.buildManager.startBuild(
-          deviceInfo.platform,
-          forceCleanBuild,
-          (newStageProgress: number) => {
-            this.stageProgressListener(newStageProgress);
-          }
-        )
-      );
+
+      // TODO: refactor passing build to new device
+      const build = shouldUseExpoGo()
+        ? undefined
+        : this.buildManager.startBuild(
+            deviceInfo.platform,
+            forceCleanBuild,
+            (newStageProgress: number) => {
+              this.stageProgressListener(newStageProgress);
+            }
+          );
+      const newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
 
       await newDeviceSession.start(this.deviceSettings, (startupMessage) =>
