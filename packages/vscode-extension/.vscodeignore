@@ -5,4 +5,5 @@
 # Whitelist needed files
 !dist/**
 !lib/*
+!assets/*
 !LICENSE.txt

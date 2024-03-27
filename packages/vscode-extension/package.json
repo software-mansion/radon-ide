@@ -3,6 +3,10 @@
   "displayName": "React Native IDE",
   "description": "Extension turning VSCode into a full-featured IDE for React Native and Expo",
   "publisher": "software-mansion",
+  "categories": [
+    "Programming Languages"
+  ],
+  "icon": "assets/logo.png",
   "activationEvents": [
     "workspaceContains:node_modules/react-native",
     "workspaceContains:app.json",
@@ -14,7 +18,7 @@
     "vscode": "^1.75.0"
   },
   "extensionKind": [
-    "ui"
+    "workspace"
   ],
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
