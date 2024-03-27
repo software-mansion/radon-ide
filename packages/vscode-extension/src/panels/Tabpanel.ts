@@ -1,4 +1,13 @@
-import { WebviewPanel, window, Uri, ViewColumn, ExtensionContext, commands } from "vscode";
+import {
+  WebviewPanel,
+  window,
+  Uri,
+  ViewColumn,
+  ExtensionContext,
+  commands,
+  workspace,
+  ConfigurationChangeEvent,
+} from "vscode";
 
 import { extensionContext } from "../utilities/extensionContext";
 import { generateWebviewContent } from "./webviewContentGenerator";
@@ -6,8 +15,8 @@ import { WebviewController } from "./WebviewController";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
-export class Tabpanel {
-  public static currentPanel: Tabpanel | undefined;
+export class TabPanel {
+  public static currentPanel: TabPanel | undefined;
   private readonly _panel: WebviewPanel;
   private webviewController: WebviewController;
 
@@ -26,12 +35,21 @@ export class Tabpanel {
     );
 
     this.webviewController = new WebviewController(this._panel.webview);
+
+    workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+      if (!event.affectsConfiguration("ReactNativeIDE")) {
+        return;
+      }
+      if (workspace.getConfiguration("ReactNativeIDE").get("panelLocation") !== "tab") {
+        this.dispose();
+      }
+    });
   }
 
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
-    if (Tabpanel.currentPanel) {
+    if (TabPanel.currentPanel) {
       // If the webview panel already exists reveal it
-      Tabpanel.currentPanel._panel.reveal(ViewColumn.Beside);
+      TabPanel.currentPanel._panel.reveal(ViewColumn.Beside);
     } else {
       // If a webview panel does not already exist create and show a new one
 
@@ -51,15 +69,14 @@ export class Tabpanel {
           retainContextWhenHidden: true,
         }
       );
-      Tabpanel.currentPanel = new Tabpanel(panel);
+      TabPanel.currentPanel = new TabPanel(panel);
       context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
 
       commands.executeCommand("workbench.action.lockEditorGroup");
-      commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
-      Tabpanel.currentPanel.webviewController.project.startPreview(
+      TabPanel.currentPanel.webviewController.project.startPreview(
         `preview:/${fileName}:${lineNumber}`
       );
     }
@@ -71,7 +88,7 @@ export class Tabpanel {
     // key in this case to prevent extension from automatically opening the panel next time they open the editor
     extensionContext.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, undefined);
 
-    Tabpanel.currentPanel = undefined;
+    TabPanel.currentPanel = undefined;
 
     // Dispose of the current webview panel
     this._panel.dispose();

@@ -1,17 +1,24 @@
-import { ExtensionContext, Uri, WebviewView, WebviewViewProvider, commands } from "vscode";
+import {
+  ExtensionContext,
+  Uri,
+  WebviewView,
+  WebviewViewProvider,
+  commands,
+  workspace,
+} from "vscode";
 import { generateWebviewContent } from "./webviewContentGenerator";
-import { extensionContext } from "../utilities/extensionContext";
+
 import { WebviewController } from "./WebviewController";
 import { Logger } from "../Logger";
 
-export class SidepanelViewProvider implements WebviewViewProvider {
+export class SidePanelViewProvider implements WebviewViewProvider {
   public static readonly viewType = "ReactNativeIDE.view";
-  public static currentProvider: SidepanelViewProvider | undefined;
+  public static currentProvider: SidePanelViewProvider | undefined;
   private _view: any = null;
   private webviewController: any = null;
 
   constructor(private readonly context: ExtensionContext) {
-    SidepanelViewProvider.currentProvider = this;
+    SidePanelViewProvider.currentProvider = this;
   }
 
   refresh(): void {
@@ -23,15 +30,20 @@ export class SidepanelViewProvider implements WebviewViewProvider {
   }
 
   public static showView(context: ExtensionContext, fileName?: string, lineNumber?: number) {
-    if (SidepanelViewProvider.currentProvider) {
-      commands.executeCommand(`${SidepanelViewProvider.viewType}.focus`);
+    if (SidePanelViewProvider.currentProvider) {
+      commands.executeCommand(`${SidePanelViewProvider.viewType}.focus`);
+      if (
+        workspace.getConfiguration("ReactNativeIDE").get("panelLocation") === "secondary-side-panel"
+      ) {
+        commands.executeCommand("workbench.action.focusAuxiliaryBar");
+      }
     } else {
       Logger.error("SidepanelViewProvider does not exist.");
       return;
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
-      SidepanelViewProvider.currentProvider.webviewController.project.startPreview(
+      SidePanelViewProvider.currentProvider.webviewController.project.startPreview(
         `preview:/${fileName}:${lineNumber}`
       );
     }

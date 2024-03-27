@@ -261,6 +261,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public async stepOverDebugger() {
     this.deviceSession?.stepOverDebugger();
   }
+
   public async focusBuildOutput() {
     if (!this.projectState.selectedDevice) {
       return;

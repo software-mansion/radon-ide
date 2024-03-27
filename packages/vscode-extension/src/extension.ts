@@ -7,10 +7,10 @@ import {
   Uri,
   ExtensionContext,
   ExtensionMode,
-  DebugConfigurationProviderTriggerKind,
   ConfigurationChangeEvent,
+  DebugConfigurationProviderTriggerKind,
 } from "vscode";
-import { Tabpanel } from "./panels/Tabpanel";
+import { TabPanel } from "./panels/Tabpanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
@@ -24,7 +24,8 @@ import { command } from "./utilities/subprocess";
 import path from "path";
 import os from "os";
 import fs from "fs";
-import { SidepanelViewProvider } from "./panels/SidepanelViewProvider";
+import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
+import { PanelLocation } from "./common/WorkspaceConfig";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
@@ -54,7 +55,7 @@ export function deactivate(context: ExtensionContext): undefined {
 
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
-  IDEPanelLocationListener();
+
   setExtensionContext(context);
   if (context.extensionMode === ExtensionMode.Development) {
     enableDevModeLogging();
@@ -62,30 +63,24 @@ export async function activate(context: ExtensionContext) {
 
   await fixBinaries(context);
 
+  function showIDEPanel(fileName?: string, lineNumber?: number) {
+    if (
+      workspace.getConfiguration("ReactNativeIDE").get<PanelLocation>("panelLocation") !== "tab"
+    ) {
+      SidePanelViewProvider.showView(context, fileName, lineNumber);
+    } else {
+      TabPanel.render(context, fileName, lineNumber);
+    }
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
-      SidepanelViewProvider.viewType,
-      new SidepanelViewProvider(context)
+      SidePanelViewProvider.viewType,
+      new SidePanelViewProvider(context)
     )
   );
-  context.subscriptions.push(
-    commands.registerCommand("RNIDE.openPanel", (fileName?: string, lineNumber?: number) => {
-      if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInActivityBar")) {
-        SidepanelViewProvider.showView(context, fileName, lineNumber);
-      } else {
-        Tabpanel.render(context, fileName, lineNumber);
-      }
-    })
-  );
-  context.subscriptions.push(
-    commands.registerCommand("RNIDE.showPanel", (fileName?: string, lineNumber?: number) => {
-      if (workspace.getConfiguration("ReactNativeIDE").get<boolean>("showPanelInActivityBar")) {
-        SidepanelViewProvider.showView(context, fileName, lineNumber);
-      } else {
-        Tabpanel.render(context, fileName, lineNumber);
-      }
-    })
-  );
+  context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
+  context.subscriptions.push(commands.registerCommand("RNIDE.showPanel", showIDEPanel));
   context.subscriptions.push(
     commands.registerCommand("RNIDE.diagnose", diagnoseWorkspaceStructure)
   );
@@ -115,18 +110,15 @@ export async function activate(context: ExtensionContext) {
     )
   );
 
-  await configureAppRootFolder();
-}
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+      if (event.affectsConfiguration("ReactNativeIDE.panelLocation")) {
+        showIDEPanel();
+      }
+    })
+  );
 
-function IDEPanelLocationListener() {
-  workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-    if (!event.affectsConfiguration("ReactNativeIDE")) {
-      return;
-    }
-    if (workspace.getConfiguration("ReactNativeIDE").get("showPanelInActivityBar")) {
-      Tabpanel.currentPanel?.dispose();
-    }
-  });
+  await configureAppRootFolder();
 }
 
 async function findSingleFileInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
