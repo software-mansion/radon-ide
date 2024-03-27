@@ -19,7 +19,7 @@
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
     "type": "git",
-    "url": "https://github.com/software-mansion-labs/react-native-sztudio"
+    "url": "https://github.com/software-mansion/react-native-ide"
   },
   "main": "./dist/extension.js",
   "contributes": {

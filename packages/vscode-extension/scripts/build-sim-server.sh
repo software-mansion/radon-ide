@@ -33,8 +33,8 @@ product_path="$output_dir/sim-server-Release-${submodule_hash}"
 if [[ ! -f "$product_path" ]]; then
     echo "Simulator server binary not found: $product_path"
     echo ""
-    echo "Make sure to follow development setup instructions: https://github.com/software-mansion-labs/react-native-ide"
-    echo "You can download the binary from the releases page on GitHub: https://github.com/software-mansion-labs/react-native-ide/releases"
+    echo "Make sure to follow development setup instructions: https://github.com/software-mansion/react-native-ide"
+    echo "You can download the binary from the releases page on GitHub: https://github.com/software-mansion/react-native-ide/releases"
     exit 1
 fi
 
