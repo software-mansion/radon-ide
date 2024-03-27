@@ -1,5 +1,6 @@
 .preview-loader-container {
   width: 75%;
+  cursor: pointer;
 }
 
 .preview-loader-button-group {

@@ -43,22 +43,17 @@ function PreviewLoader() {
     }
   }, [projectState]);
 
+  function handleLoaderClick() {
+    if (projectState.startupMessage === StartupMessage.Building) {
+      project.focusBuildOutput();
+    } else {
+      project.focusExtensionLogsOutput();
+    }
+  }
+
   return (
     <>
-      <div className="preview-loader-container">
-        {projectState.startupMessage === StartupMessage.Building && (
-          <div className="preview-loader-button-group">
-            <IconButton
-              onClick={() => project.focusBuildOutput()}
-              tooltip={{
-                label: "Open build logs",
-                side: "top",
-              }}>
-              <span className="codicon codicon-symbol-keyword" />
-            </IconButton>
-          </div>
-        )}
-
+      <button className="preview-loader-container" onClick={handleLoaderClick}>
         <div className="preview-loader-button-group">
           <StartupMessageComponent className="preview-loader-message">
             {projectState.startupMessage}
@@ -69,7 +64,7 @@ function PreviewLoader() {
             </div>
           )}
         </div>
-      </div>
+      </button>
       <ProgressBar progress={progress} />
     </>
   );
