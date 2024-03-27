@@ -5,6 +5,8 @@ import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { BuildResult, DisposableBuild } from "../builders/BuildManager";
 import { DeviceSettings, StartupMessage } from "../common/Project";
+import { Platform } from "../common/DeviceManager";
+import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
@@ -123,6 +125,20 @@ export class DeviceSession implements Disposable {
 
   public openNavigation(id: string) {
     this.devtools.send("RNIDE_openNavigation", { id });
+  }
+
+  public async openDevMenu(platform: Platform) {
+    // on iOS, we can load native module and dispatch dev menu show method. On
+    // Android, this native module isn't available and we need to fallback to
+    // adb to send "menu key" (code 82) to trigger code path showing the menu.
+    //
+    // We could probably unify it in the future by running metro in interactive
+    // mode and sending keys to stdin.
+    if (platform === Platform.IOS) {
+      this.devtools.send("rnp_iosDevMenu");
+    } else {
+      await (this.device as AndroidEmulatorDevice).openDevMenu();
+    }
   }
 
   public startPreview(previewId: string) {

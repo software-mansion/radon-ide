@@ -130,6 +130,14 @@ export function PreviewAppWrapper({ children, ...rest }) {
         newRoute && push(newRoute);
       });
 
+      agent._bridge.addListener("rnp_iosDevMenu", (_payload) => {
+        // this native module is present only on iOS and will crash if called
+        // on Android
+        const DevMenu = require("react-native/Libraries/NativeModules/specs/NativeDevMenu").default;
+
+        DevMenu.show();
+      });
+
       LogBox.uninstall();
       const LoadingView = require("react-native/Libraries/Utilities/LoadingView");
       LoadingView.showMessage = (message) => {

@@ -1,12 +1,12 @@
 import { Disposable } from "vscode";
 import http from "http";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
 
 export class Devtools implements Disposable {
   private _port = 0;
   private server: any;
-  private socket: any;
+  private socket?: WebSocket;
   private listeners: Set<(event: string, payload: any) => void> = new Set();
   private startPromise: Promise<void> | undefined;
 
@@ -37,7 +37,7 @@ export class Devtools implements Disposable {
     this.server = http.createServer(() => {});
     const wss = new WebSocketServer({ server: this.server });
 
-    wss.on("connection", (ws: any) => {
+    wss.on("connection", (ws) => {
       if (this.socket !== undefined) {
         Logger.error("Devtools client already connected");
         this.socket.close();

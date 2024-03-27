@@ -103,6 +103,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
     this.serial = await initPromise;
   }
 
+  async openDevMenu() {
+    await exec(ADB_PATH, ["-s", this.serial!, "shell", "input", "keyevent", "82"]);
+  }
+
   async configureMetroPort(packageName: string, metroPort: number) {
     // read preferences
     let prefs: any;

@@ -116,7 +116,10 @@ function PreviewView() {
           <span slot="start" className="codicon codicon-debug-console" />
           Logs
         </Button>
-        <SettingsDropdown project={project} disabled={devicesNotFound}>
+        <SettingsDropdown
+          project={project}
+          isDeviceRunning={projectState.status === "running"}
+          disabled={devicesNotFound}>
           <IconButton
             onClick={() => {
               vscode.postMessage({ command: "openSettings" });
