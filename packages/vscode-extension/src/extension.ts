@@ -76,7 +76,8 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
-      new SidePanelViewProvider(context)
+      new SidePanelViewProvider(context),
+      { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
