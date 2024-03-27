@@ -1,4 +1,4 @@
-import { Webview, Disposable, window } from "vscode";
+import { Webview, Disposable, window, commands } from "vscode";
 import { DependencyChecker } from "../dependency/DependencyChecker";
 import { DependencyInstaller } from "../dependency/DependencyInstaller";
 import { DeviceManager } from "../devices/DeviceManager";
@@ -6,14 +6,14 @@ import { Project } from "../project/project";
 import { openExternalUrl } from "../utilities/vsc";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
-import { WorkspaceConfig } from "../common/WorkspaceConfig";
+import { WorkspaceConfigController } from "./WorkspaceConfigController";
 
 export class WebviewController implements Disposable {
   private readonly dependencyChecker: DependencyChecker;
   private readonly dependencyInstaller: DependencyInstaller;
   private readonly deviceManager: DeviceManager;
   public readonly project: Project;
-  public readonly workspaceConfig: WorkspaceConfig;
+  public readonly workspaceConfig: WorkspaceConfigController;
   private disposables: Disposable[] = [];
 
   private followEnabled = false;
@@ -22,7 +22,7 @@ export class WebviewController implements Disposable {
 
   constructor(private webview: Webview) {
     // Set an event listener to listen for messages passed from the webview context
-    this._setWebviewMessageListener(webview);
+    this.setWebviewMessageListener(webview);
 
     // Set the manager to listen and change the persisting storage for the extension.
     this.dependencyChecker = new DependencyChecker(webview);
@@ -31,12 +31,12 @@ export class WebviewController implements Disposable {
     this.dependencyInstaller = new DependencyInstaller(webview);
     this.dependencyInstaller.setWebviewMessageListener();
 
-    this._setupEditorListeners();
+    this.setupEditorListeners();
 
     this.deviceManager = new DeviceManager();
     this.project = new Project(this.deviceManager);
 
-    this.workspaceConfig = new WorkspaceConfig();
+    this.workspaceConfig = new WorkspaceConfigController();
 
     this.disposables.push(
       this.dependencyChecker,
@@ -51,9 +51,13 @@ export class WebviewController implements Disposable {
       ["Project", this.project as object],
       ["WorkspaceConfig", this.workspaceConfig as object],
     ]);
+
+    commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
   }
 
   public dispose() {
+    commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
+
     // Dispose of all disposables (i.e. commands) for the current webview
     while (this.disposables.length) {
       const disposable = this.disposables.pop();
@@ -63,7 +67,7 @@ export class WebviewController implements Disposable {
     }
   }
 
-  private _setWebviewMessageListener(webview: Webview) {
+  private setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
       (message: any) => {
         const command = message.command;
@@ -138,7 +142,7 @@ export class WebviewController implements Disposable {
     }
   }
 
-  private _setupEditorListeners() {
+  private setupEditorListeners() {
     extensionContext.subscriptions.push(
       window.onDidChangeActiveTextEditor((editor) => {
         if (editor) {

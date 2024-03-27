@@ -15,7 +15,7 @@ interface SettingsDropdownProps {
 }
 
 function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps) {
-  const { showPanelInSideBar } = useWorkspaceConfig();
+  const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
   return (
     <DropdownMenu.Root>
@@ -42,16 +42,56 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
             Manage devices...
           </DropdownMenu.Item>
 
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+              <span className="codicon codicon-layout" />
+              Change IDE panel location
+              <span className="codicon codicon-chevron-right right-slot" />
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent
+                className="dropdown-menu-content"
+                sideOffset={2}
+                alignOffset={-5}>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => update("panelLocation", "tab")}>
+                  <span className="codicon codicon-layout-centered" />
+                  Editor tab
+                  {panelLocation === "tab" && <span className="codicon codicon-check right-slot" />}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => update("panelLocation", "side-panel")}>
+                  <span className="codicon codicon-layout-sidebar-right" />
+                  Side panel
+                  {panelLocation === "side-panel" && (
+                    <span className="codicon codicon-check right-slot" />
+                  )}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => {
+                    update("panelLocation", "secondary-side-panel");
+                    openModal(
+                      "Drag and drop to secondary side panel",
+                      <div>
+                        Drag and drop the IDE Panel by its icon from the side bar to move it to the
+                        secondary panel.
+                      </div>
+                    );
+                  }}>
+                  <span className="codicon codicon-layout-sidebar-left" />
+                  Secondary side panel
+                  {panelLocation === "secondary-side-panel" && (
+                    <span className="codicon codicon-check right-slot" />
+                  )}
+                </DropdownMenu.Item>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
+
           <DropdownMenu.Separator className="dropdown-menu-separator" />
-          {/* TODO: add this option back when its fully working
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => {
-              // @ts-ignore TODO fix this
-              openModal("Manage Android SDKs", <AndroidImagesView />);
-            }}>
-            Manage Android SDKs...
-          </DropdownMenu.Item> */}
 
           <DropdownMenu.Item
             className="dropdown-menu-item"
@@ -62,26 +102,6 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
             Clean rebuild
           </DropdownMenu.Item>
 
-          {showPanelInSideBar && (
-            <>
-              <DropdownMenu.Separator className="dropdown-menu-separator" />
-              <DropdownMenu.Item
-                className="dropdown-menu-item"
-                onSelect={() => {
-                  project.focusIntoSecondarySidebar();
-                  openModal(
-                    "Move to secondary sidebar",
-                    <div>
-                      You can move extensions from Primary to secondary sidebar, by grab and droping
-                      them.{" "}
-                    </div>
-                  );
-                }}>
-                <span className="codicon codicon-info" />
-                Move to secondary sidebar
-              </DropdownMenu.Item>
-            </>
-          )}
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

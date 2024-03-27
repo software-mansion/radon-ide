@@ -277,10 +277,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     commands.executeCommand("workbench.panel.repl.view.focus");
   }
 
-  public async focusIntoSecondarySidebar(): Promise<void> {
-    commands.executeCommand("workbench.action.focusAuxiliaryBar");
-  }
-
   public async openNavigation(navigationItemID: string) {
     this.deviceSession?.openNavigation(navigationItemID);
   }

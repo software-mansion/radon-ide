@@ -1,23 +1,25 @@
-import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
-import { Tabpanel } from "../panels/Tabpanel";
-import { EventEmitter } from "stream";
-import { Logger } from "../Logger";
+export type PanelLocation = "tab" | "side-panel" | "secondary-side-panel";
 
 export type WorkspaceConfigProps = {
-  showPanelInSideBar: boolean;
+  panelLocation: PanelLocation;
   relativeAppLocation: string;
 };
 
 export interface WorkspaceConfigEventMap {
-  workspaceConfigChange: WorkspaceConfigProps;
+  configChange: WorkspaceConfigProps;
 }
 
 export interface WorkspaceConfigEventListener<T> {
   (event: T): void;
 }
 
-export interface WorkspaceConfigInterface {
-  getWorkspaceConfigProps(): Promise<WorkspaceConfigProps>;
+export interface WorkspaceConfig {
+  getConfig(): Promise<WorkspaceConfigProps>;
+  // update method can take any of the keys from WorkspaceConfigProps and appropriate value:
+  update<K extends keyof WorkspaceConfigProps>(
+    key: K,
+    value: WorkspaceConfigProps[K]
+  ): Promise<void>;
   addListener<K extends keyof WorkspaceConfigEventMap>(
     eventType: K,
     listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
@@ -26,69 +28,4 @@ export interface WorkspaceConfigInterface {
     eventType: K,
     listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
   ): Promise<void>;
-}
-
-export class WorkspaceConfig implements Disposable, WorkspaceConfigInterface {
-  public static currentWorkspaceConfig: WorkspaceConfig | undefined;
-  private workspaceConfigProps: WorkspaceConfigProps;
-  private eventEmitter = new EventEmitter();
-  private workspaceConfigListener: Disposable | undefined;
-
-  constructor() {
-    WorkspaceConfig.currentWorkspaceConfig = this;
-    this.workspaceConfigProps = {
-      showPanelInSideBar: workspace
-        .getConfiguration("ReactNativeIDE")
-        .get<boolean>("showPanelInSideBar")!,
-      relativeAppLocation: workspace
-        .getConfiguration("ReactNativeIDE")
-        .get<string>("relativeAppLocation")!,
-    };
-    this.IDEPanelLocationListener();
-  }
-
-  private IDEPanelLocationListener() {
-    this.workspaceConfigListener = workspace.onDidChangeConfiguration(
-      (event: ConfigurationChangeEvent) => {
-        if (!event.affectsConfiguration("ReactNativeIDE")) {
-          return;
-        }
-        if (event.affectsConfiguration("ReactNativeIDE.showPanelInSideBar")) {
-          this.workspaceConfigProps.showPanelInSideBar = workspace
-            .getConfiguration("ReactNativeIDE")
-            .get<boolean>("showPanelInSideBar")!;
-          if (workspace.getConfiguration("ReactNativeIDE").get("showPanelInSideBar")) {
-            Tabpanel.currentPanel?.dispose();
-          }
-        } else if (event.affectsConfiguration("ReactNativeIDE.relativeAppLocation")) {
-          this.workspaceConfigProps.relativeAppLocation = workspace
-            .getConfiguration("ReactNativeIDE")
-            .get<string>("relativeAppLocation")!;
-        }
-        this.eventEmitter.emit("workspaceConfigChange", this.workspaceConfigProps);
-      }
-    );
-  }
-
-  async getWorkspaceConfigProps(): Promise<WorkspaceConfigProps> {
-    return this.workspaceConfigProps;
-  }
-
-  async addListener<K extends keyof WorkspaceConfigEventMap>(
-    eventType: K,
-    listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
-  ) {
-    this.eventEmitter.addListener(eventType, listener);
-  }
-
-  async removeListener<K extends keyof WorkspaceConfigEventMap>(
-    eventType: K,
-    listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
-  ) {
-    this.eventEmitter.removeListener(eventType, listener);
-  }
-
-  dispose() {
-    this.workspaceConfigListener?.dispose();
-  }
 }

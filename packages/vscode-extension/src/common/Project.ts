@@ -79,7 +79,6 @@ export interface ProjectInterface {
   focusBuildOutput(): Promise<void>;
   focusExtensionLogsOutput(): Promise<void>;
   focusDebugConsole(): Promise<void>;
-  focusIntoSecondarySidebar(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
