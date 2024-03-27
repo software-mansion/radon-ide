@@ -267,6 +267,11 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     }
     this.buildManager.focusBuildOutput();
   }
+
+  public async focusExtensionLogsOutput() {
+    Logger.openOutputPanel();
+  }
+
   public async focusDebugConsole() {
     commands.executeCommand("workbench.panel.repl.view.focus");
   }
