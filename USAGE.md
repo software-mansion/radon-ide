@@ -10,9 +10,9 @@ The only thing you need to do is open your React Native of Expo project as works
 Once you have it open, you can start the extension panel in one of a few ways:
 
 1. When you open any file of your project to edit it, you can launch the extension from "Open IDE Panel" button in the editor toolbar:
-<img width="800" alt="sztudio_editor_button" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/18983660-0a06-4b56-ba3f-2eda2bf50f12">
+   <img width="800" alt="sztudio_editor_button" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/18983660-0a06-4b56-ba3f-2eda2bf50f12">
 2. You can use "React Native IDE: Open IDE Panel" available in vscode's command palette:
-<img width="800" alt="sztudio_command_palette" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/ea7579b1-fc40-47c2-9d1c-50907ec9d665">
+   <img width="800" alt="sztudio_command_palette" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/ea7579b1-fc40-47c2-9d1c-50907ec9d665">
 3. If you already had the panel open in this project before restarting the editor, it will automatically reopen in the same place.
 
 ## 2. Create simulator and emulator instances on the first run
@@ -28,9 +28,10 @@ Please follow the [SIMULATORS](SIMULATORS.md) section to learn how to manage sys
 
 ## 3. Decide on the location of the IDE panel
 
-The main extension window can be either presented as one of the editor tabs, which is the default behavior, or as a side panel.
-To change between these two modes, open VSCode settings and search for "React Native IDE: Show Panel in Activity Bar" option.
-Note that when the extension is used as side panel it can be dragged to the secondary side panel that's on the opposite side to where your file explorer is placed:
+The main extension window can be either presented as one of the editor tabs, which is the default behavior, or as a side panel (in primary or secondary side panel location).
+To change between these modes, you can either use React Native IDE section in the VSCode settings, or use the dropdown menu from the right top corner in the IDE panel:
+
+Here is how the IDE would look like when place in the side panel:
 <img width="800" alt="sztudio-side-panel" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/fdb01232-c735-40e1-bf75-a6cbdef5d9a6">
 
 ## 4. Wait for the project to build and run

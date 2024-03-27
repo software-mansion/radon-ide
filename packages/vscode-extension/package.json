@@ -61,12 +61,7 @@
             "side-panel",
             "secondary-side-panel"
           ],
-          "enumDescriptions": [
-            "Editor tab",
-            "Side panel",
-            "Secondary side panel"
-          ],
-          "description": "Controlls location of the IDE panel. Changing this option closes and reopens the IDE."
+          "description": "Controlls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
         }
       }
     },
