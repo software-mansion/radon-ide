@@ -2,7 +2,7 @@
   "name": "react-native-ide",
   "displayName": "React Native IDE",
   "description": "Extension turning VSCode into a full-featured IDE for React Native and Expo",
-  "publisher": "software-mansion",
+  "publisher": "swmansion",
   "categories": [
     "Programming Languages"
   ],
