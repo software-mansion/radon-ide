@@ -29,7 +29,14 @@ export async function downloadIOSExpoGo(): Promise<string> {
   await downdloadFile(IOS_EXPO_GO_DOWNLOAD_URL, archivePath);
   const readStream = fs.createReadStream(archivePath);
   const extractStream = tar.x({ cwd: appPath });
+
+  const extractPromise = new Promise((resolve, reject) => {
+    extractStream.on("finish", resolve);
+    extractStream.on("error", reject);
+  });
+
   readStream.pipe(createGunzip()).pipe(extractStream);
+  await extractPromise;
   fs.unlinkSync(archivePath);
   return appPath;
 }

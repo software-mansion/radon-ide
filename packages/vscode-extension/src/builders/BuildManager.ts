@@ -7,7 +7,7 @@ import { calculateMD5 } from "../utilities/common";
 import { Platform } from "../common/DeviceManager";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
-import { Disposable, LogOutputChannel, OutputChannel, window } from "vscode";
+import { Disposable, OutputChannel, window } from "vscode";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
@@ -16,12 +16,14 @@ export type IOSBuildResult = {
   platform: Platform.IOS;
   appPath: string;
   bundleID: string;
+  isExpoGo: boolean;
 };
 
 export type AndroidBuildResult = {
   platform: Platform.Android;
   apkPath: string;
   packageName: string;
+  isExpoGo: boolean;
 };
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
@@ -149,7 +151,11 @@ export class BuildManager {
       cancelToken,
       this.buildOutputChannel!
     );
-    const buildResult: AndroidBuildResult = { ...build, platform: Platform.Android };
+    const buildResult: AndroidBuildResult = {
+      ...build,
+      platform: Platform.Android,
+      isExpoGo: false,
+    };
 
     // store build info in the cache
     const newBuildHash = (await calculateMD5(build.apkPath)).digest("hex");
@@ -212,7 +218,7 @@ export class BuildManager {
       this.buildOutputChannel!,
       progressListener
     );
-    const buildResult: IOSBuildResult = { ...build, platform: Platform.IOS };
+    const buildResult: IOSBuildResult = { ...build, platform: Platform.IOS, isExpoGo: false };
 
     // store build info in the cache
     const newBuildHash = (await calculateMD5(build.appPath)).digest("hex");

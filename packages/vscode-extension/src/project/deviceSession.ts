@@ -18,12 +18,12 @@ export class DeviceSession implements Disposable {
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
-    private readonly disposableBuild: DisposableBuild<BuildResult>
+    private readonly disposableBuild?: DisposableBuild<BuildResult>
   ) {}
 
   public dispose() {
     this.debugSession && debug.stopDebugging(this.debugSession);
-    this.disposableBuild.dispose();
+    this.disposableBuild?.dispose();
     this.device?.dispose();
   }
 
@@ -45,13 +45,17 @@ export class DeviceSession implements Disposable {
     progressCallback(StartupMessage.BootingDevice);
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
+    let build;
     progressCallback(StartupMessage.Building);
-    const build = await this.disposableBuild.build;
+    if (!this.disposableBuild) {
+      build = await this.device.getExpoGoAppBuild();
+    } else {
+      build = await this.disposableBuild.build;
+    }
     progressCallback(StartupMessage.Installing);
     await this.device.installApp(build, false);
     progressCallback(StartupMessage.Launching);
     await this.device.launchApp(build, this.metro.port, this.devtools.port);
-
     const waitForPreview = this.device.startPreview();
     Logger.debug("Will wait for app ready and for preview");
     progressCallback(StartupMessage.WaitingForAppToLoad);

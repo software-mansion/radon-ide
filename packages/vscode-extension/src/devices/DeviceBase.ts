@@ -1,7 +1,6 @@
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceSettings } from "../common/Project";
 
 export abstract class DeviceBase implements Disposable {
@@ -10,7 +9,9 @@ export abstract class DeviceBase implements Disposable {
   abstract bootDevice(): Promise<void>;
   abstract changeSettings(settings: DeviceSettings): Promise<void>;
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
+  abstract getExpoGoAppBuild(): Promise<BuildResult>;
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
+
   abstract makePreview(): Preview;
 
   dispose() {
