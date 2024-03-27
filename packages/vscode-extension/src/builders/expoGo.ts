@@ -3,14 +3,15 @@ import { createGunzip } from "zlib";
 import path from "path";
 import tar from "tar";
 import { downdloadFile, getAppCachesDir } from "../utilities/common";
+import { getAppRootFolder } from "../utilities/extensionContext";
 
 const IOS_EXPO_GO_DOWNLOAD_URL = "https://dpq5q02fu5f55.cloudfront.net/Exponent-2.30.10.tar.gz";
 const ANDROID_EXPO_GO_DOWNLOAD_URL = "https://d1ahtucjixef4r.cloudfront.net/Exponent-2.30.11.apk";
 
 export function shouldUseExpoGo(): boolean {
   // TODO: Check for better solution to determine whether Expo Go should be used
-  const androidExists = fs.existsSync(path.join(getAppCachesDir(), "android"));
-  const iosExists = fs.existsSync(path.join(getAppCachesDir(), "ios"));
+  const androidExists = fs.existsSync(path.join(getAppRootFolder(), "android"));
+  const iosExists = fs.existsSync(path.join(getAppRootFolder(), "ios"));
   return !(androidExists && iosExists);
 }
 
