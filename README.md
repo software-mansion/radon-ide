@@ -51,4 +51,4 @@ If you want to develop the extension and contribute updates head to [DEVELOPMENT
 
 ## Discord
 
-Make sure to join [Software Mansion](https://swmansionm.com) Discord channel using invite link: https://discord.gg/jWhHbxQsPd and contact us to get added to `react-native-ide-beta` channel where we discuss issues and communicate our plans and updates.
+Make sure to join [Software Mansion](https://swmansion.com) Discord channel using invite link: https://discord.gg/jWhHbxQsPd and contact us to get added to `react-native-ide-beta` channel where we discuss issues and communicate our plans and updates.
