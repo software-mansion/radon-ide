@@ -31,6 +31,7 @@ Please follow the [SIMULATORS](SIMULATORS.md) section to learn how to manage sys
 The main extension window can be either presented as one of the editor tabs, which is the default behavior, or as a side panel.
 To change between these two modes, open VSCode settings and search for "React Native IDE: Show Panel in Activity Bar" option.
 Note that when the extension is used as side panel it can be dragged to the secondary side panel that's on the opposite side to where your file explorer is placed:
+<img width="800" alt="sztudio-side-panel" src="https://github.com/software-mansion-labs/react-native-ide/assets/726445/fdb01232-c735-40e1-bf75-a6cbdef5d9a6">
 
 ## 4. Wait for the project to build and run
 
