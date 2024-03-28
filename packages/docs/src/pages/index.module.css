@@ -29,7 +29,7 @@
   justify-content: center;
 }
 
-@media (max-width: 1440px) {
+@media (max-width: 1920px) {
   .container {
     width: 75%;
   }
