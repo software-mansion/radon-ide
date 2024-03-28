@@ -55,14 +55,14 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
                 alignOffset={-5}>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => update("panelLocation", "tab")}>
+                  onSelect={() => update("panelLocation", "tab", true)}>
                   <span className="codicon codicon-layout-centered" />
                   Editor tab
                   {panelLocation === "tab" && <span className="codicon codicon-check right-slot" />}
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => update("panelLocation", "side-panel")}>
+                  onSelect={() => update("panelLocation", "side-panel", true)}>
                   <span className="codicon codicon-layout-sidebar-right" />
                   Side panel
                   {panelLocation === "side-panel" && (

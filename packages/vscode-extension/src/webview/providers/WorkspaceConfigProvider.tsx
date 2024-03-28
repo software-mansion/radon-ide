@@ -12,7 +12,11 @@ import { WorkspaceConfig, WorkspaceConfigProps } from "../../common/WorkspaceCon
 const workspaceConfig = makeProxy<WorkspaceConfig>("WorkspaceConfig");
 
 type WorkspaceConfigContextType = WorkspaceConfigProps & {
-  update: <K extends keyof WorkspaceConfigProps>(key: K, value: WorkspaceConfigProps[K]) => void;
+  update: <K extends keyof WorkspaceConfigProps>(
+    key: K,
+    value: WorkspaceConfigProps[K],
+    configurationTarget?: boolean
+  ) => void;
 };
 
 const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
@@ -37,10 +41,14 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
   }, []);
 
   const update = useCallback(
-    <K extends keyof WorkspaceConfigProps>(key: K, value: WorkspaceConfigProps[K]) => {
+    <K extends keyof WorkspaceConfigProps>(
+      key: K,
+      value: WorkspaceConfigProps[K],
+      configurationTarget?: boolean
+    ) => {
       const newState = { ...config, [key]: value };
       setConfig(newState);
-      workspaceConfig.update(key, value);
+      workspaceConfig.update(key, value, configurationTarget);
     },
     [config, setConfig]
   );

@@ -18,7 +18,8 @@ export interface WorkspaceConfig {
   // update method can take any of the keys from WorkspaceConfigProps and appropriate value:
   update<K extends keyof WorkspaceConfigProps>(
     key: K,
-    value: WorkspaceConfigProps[K]
+    value: WorkspaceConfigProps[K],
+    configurationTarget?: boolean
   ): Promise<void>;
   addListener<K extends keyof WorkspaceConfigEventMap>(
     eventType: K,
