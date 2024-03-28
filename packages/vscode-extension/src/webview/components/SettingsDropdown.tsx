@@ -72,7 +72,7 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
                   onSelect={() => {
-                    update("panelLocation", "secondary-side-panel");
+                    update("panelLocation", "secondary-side-panel", true);
                     openModal(
                       "Drag and drop to secondary side panel",
                       <div>
