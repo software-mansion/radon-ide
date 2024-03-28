@@ -89,7 +89,26 @@
   justify-content: flex-start;
 }
 
-@media (max-width: 1900px) {
+@media (min-width: 2920px) {
+  .heroImageWrapper {
+    width: auto;
+    position: static;
+    transform: none;
+  }
+  .hero {
+    flex-direction: row-reverse;
+    margin-bottom: 0;
+    align-items: center;
+  }
+  .subheadingLabel {
+    width: 100%;
+  }
+  .heading {
+    margin: 0;
+  }
+}
+
+@media (max-width: 2400px) {
   .heroImageWrapper {
     transform: translateX(55%) translateY(5%);
   }
