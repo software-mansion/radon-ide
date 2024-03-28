@@ -33,7 +33,7 @@ function PreviewLoader() {
       let progressComponent = 0;
 
       if (projectState.stageProgress !== undefined) {
-        let progressComponent = projectState.stageProgress;
+        progressComponent = projectState.stageProgress;
       }
       setProgress(
         ((startupStageWeightSumUntillNow + progressComponent * currentWeight) /
