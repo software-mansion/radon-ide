@@ -41,6 +41,19 @@ function PreviewView() {
     };
   }, []);
 
+  useEffect(() => {
+    const disableInspectorOnEscape = (event) => {
+      if (event.key === "Escape" && isInspecing) {
+        setIsInspecting(false);
+      }
+    };
+    document.addEventListener("keydown", disableInspectorOnEscape, false);
+
+    return () => {
+      document.removeEventListener("keydown", disableInspectorOnEscape, false);
+    };
+  }, [isInspecing, setIsInspecting]);
+
   const handleDeviceDropdownChange = async (value) => {
     if (value === "manage") {
       openModal("Manage Devices", <ManageDevicesView />);
