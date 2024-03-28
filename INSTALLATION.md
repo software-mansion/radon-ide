@@ -7,7 +7,7 @@ If you wish to build the extension from source in order to make modifications, h
 
 ## 1. Download VSIX file from releases page
 
-Navigate to the [releases page on GitHub](https://github.com/software-mansion-labs/react-native/releases) and select the most recent release.
+Navigate to the [releases page on GitHub](https://github.com/software-mansion/react-native-ide/releases) and select the most recent release.
 From the "Assets" section, download the `.vsix` file:
 
 <img width="825" alt="download-vsix" src="https://github.com/software-mansion/react-native-ide/assets/726445/05f41079-9d1d-430b-a178-5c0661890687">
