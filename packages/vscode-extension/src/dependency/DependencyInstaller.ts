@@ -67,11 +67,11 @@ export class DependencyInstaller implements Disposable {
     this.webview.postMessage({
       command: "installingPods",
     });
-    try{
+    try {
       await installIOSDependencies(getAppRootFolder(), false);
       Logger.debug("Finished installing pods!");
-    }catch (error){
-      Logger.error("", error);
+    } catch (error) {
+      Logger.error("Install Pods:", error);
     }
     await this.dependencyChecker.checkPodsInstalled();
   }
