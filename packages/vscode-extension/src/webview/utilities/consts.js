@@ -1,6 +1,6 @@
 import pixel7 from "../../assets/pixel_7/skin.webp";
 import pixel7mask from "../../assets/pixel_7/mask.png";
-import iphone15pro from "../../assets/iphone_15_pro/skin.svg";
+import iphone15pro from "../../assets/iphone_15_pro/skin.webp";
 import iphone15promask from "../../assets/iphone_15_pro/mask.svg";
 
 export const ANDROID_DEVICE_GRAPHICAL_PROPERTIES = {
