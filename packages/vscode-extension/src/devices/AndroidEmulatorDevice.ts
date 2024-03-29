@@ -175,6 +175,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "-s",
       this.serial!,
       "shell",
+      "monkey",
       "-p",
       build.packageName,
       "-c",
