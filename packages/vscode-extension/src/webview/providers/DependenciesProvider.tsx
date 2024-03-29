@@ -133,10 +133,6 @@ export default function DependenciesProvider({ children }: DependenciesProviderP
     return () => window.removeEventListener("message", listener);
   }, []);
 
-  useEffect(() => {
-    console.log("YYY", useExpoGo);
-  }, [useExpoGo]);
-
   return (
     <DependenciesContext.Provider
       value={{ dependencies, isReady, isError, runDiagnostics: rerunDiagnostics }}>
