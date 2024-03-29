@@ -1,12 +1,9 @@
 import fs from "fs";
-import { createGunzip } from "zlib";
 import path from "path";
-import tar from "tar";
-import { downdloadFile, getAppCachesDir } from "../utilities/common";
 import { getAppRootFolder } from "../utilities/extensionContext";
+import http from "http";
 
-const IOS_EXPO_GO_DOWNLOAD_URL = "https://dpq5q02fu5f55.cloudfront.net/Exponent-2.30.10.tar.gz";
-const ANDROID_EXPO_GO_DOWNLOAD_URL = "https://d1ahtucjixef4r.cloudfront.net/Exponent-2.30.11.apk";
+type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
 export function shouldUseExpoGo(): boolean {
   // TODO: Check for better solution to determine whether Expo Go should be used
@@ -15,39 +12,31 @@ export function shouldUseExpoGo(): boolean {
   return !(androidExists && iosExists);
 }
 
-export function getIOSExpoGoAppPath(): string {
-  const iOSAppName = "Exponent-2.30.10.app";
-  return path.join(getAppCachesDir(), iOSAppName);
-}
-
-export async function downloadIOSExpoGo(): Promise<string> {
-  const archivePath = path.join(getAppCachesDir(), "Exponent-2.30.10.tar.gz");
-  const appPath = getIOSExpoGoAppPath();
-  if (!fs.existsSync(appPath)) {
-    fs.mkdirSync(appPath, { recursive: true });
-  }
-  await downdloadFile(IOS_EXPO_GO_DOWNLOAD_URL, archivePath);
-  const readStream = fs.createReadStream(archivePath);
-  const extractStream = tar.x({ cwd: appPath });
-
-  const extractPromise = new Promise((resolve, reject) => {
-    extractStream.on("finish", resolve);
-    extractStream.on("error", reject);
+export function fetchExpoLaunchDeeplink(
+  metroPort: number,
+  platformString: string,
+  choice: ExpoDeeplinkChoice
+) {
+  return new Promise<string | void>((resolve, reject) => {
+    const req = http.request(
+      new URL(
+        `http://localhost:${metroPort}/_expo/link?platform=${platformString}&choice=${choice}`
+      ),
+      (res) => {
+        if (res.statusCode === 307) {
+          // we want to retrieve redirect location
+          resolve(res.headers.location);
+        } else {
+          resolve();
+        }
+        res.resume();
+      }
+    );
+    req.on("error", (e) => {
+      // we still want to resolve on error, because the URL may not exists, in which
+      // case it serves as a mechanism for detecting non expo-dev-client setups
+      resolve();
+    });
+    req.end();
   });
-
-  readStream.pipe(createGunzip()).pipe(extractStream);
-  await extractPromise;
-  fs.unlinkSync(archivePath);
-  return appPath;
-}
-
-export function getAndroidExpoGoApkPath(): string {
-  const androidApkName = "Exponent-2.30.11.apk";
-  return path.join(getAppCachesDir(), androidApkName);
-}
-
-export async function downloadAndroidExpoGo(): Promise<string> {
-  const apkPath = getAndroidExpoGoApkPath();
-  await downdloadFile(ANDROID_EXPO_GO_DOWNLOAD_URL, apkPath);
-  return apkPath;
 }

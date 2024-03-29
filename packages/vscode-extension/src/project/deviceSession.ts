@@ -18,7 +18,7 @@ export class DeviceSession implements Disposable {
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
-    private readonly disposableBuild?: DisposableBuild<BuildResult>
+    private readonly disposableBuild: DisposableBuild<BuildResult>
   ) {}
 
   public dispose() {
@@ -31,7 +31,11 @@ export class DeviceSession implements Disposable {
     return this.devtools.hasConnectedClient;
   }
 
-  async start(deviceSettings: DeviceSettings, progressCallback: ProgressCallback) {
+  async start(
+    deviceSettings: DeviceSettings,
+    progressCallback: ProgressCallback,
+    useExpoGo: boolean
+  ) {
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {
         if (event === "rnp_appReady") {
@@ -45,15 +49,21 @@ export class DeviceSession implements Disposable {
     progressCallback(StartupMessage.BootingDevice);
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
-    let build;
+
     progressCallback(StartupMessage.Building);
-    if (!this.disposableBuild) {
-      build = await this.device.getExpoGoAppBuild();
+    const build = await this.disposableBuild.build;
+    if (useExpoGo) {
+      // If Expo Go is installed, we don't have to install it again, nor download the app
+      // If Expo Go is not installed, we have to download the app and perform installation
+      if (!(await this.device.isExpoGoInstalled())) {
+        await this.device.ensureExpoGoDownloaded();
+        progressCallback(StartupMessage.Installing);
+        await this.device.installApp(build, false);
+      }
     } else {
-      build = await this.disposableBuild.build;
+      progressCallback(StartupMessage.Installing);
+      await this.device.installApp(build, false);
     }
-    progressCallback(StartupMessage.Installing);
-    await this.device.installApp(build, false);
     progressCallback(StartupMessage.Launching);
     await this.device.launchApp(build, this.metro.port, this.devtools.port);
     const waitForPreview = this.device.startPreview();

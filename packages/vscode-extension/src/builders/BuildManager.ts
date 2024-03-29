@@ -8,6 +8,8 @@ import { Platform } from "../common/DeviceManager";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { Disposable, OutputChannel, window } from "vscode";
+import { EXPO_GO_APP_FILEPATH, EXPO_GO_BUNDLE_ID } from "../devices/IosSimulatorDevice";
+import { EXPO_GO_APK_FILEPATH, EXPO_GO_PACKAGE_NAME } from "../devices/AndroidEmulatorDevice";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
@@ -16,14 +18,12 @@ export type IOSBuildResult = {
   platform: Platform.IOS;
   appPath: string;
   bundleID: string;
-  isExpoGo: boolean;
 };
 
 export type AndroidBuildResult = {
   platform: Platform.Android;
   apkPath: string;
   packageName: string;
-  isExpoGo: boolean;
 };
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
@@ -86,14 +86,19 @@ export class BuildManager {
   public startBuild(
     platform: Platform,
     forceCleanBuild: boolean,
-    progressListener: (newProgress: number) => void
+    progressListener: (newProgress: number) => void,
+    useExpoGo: boolean
   ) {
-    if (platform === Platform.Android) {
+    if (platform === Platform.Android && useExpoGo) {
+      return this.getAndroidExpoGoBuild();
+    } else if (platform === Platform.Android) {
       const cancelToken = new CancelToken();
       return new DisposableBuildImpl(
         this.startAndroidBuild(forceCleanBuild, cancelToken),
         cancelToken
       );
+    } else if (platform === Platform.IOS && useExpoGo) {
+      return this.getIOSExpoGoBuild();
     } else {
       const cancelToken = new CancelToken();
       return new DisposableBuildImpl(
@@ -154,7 +159,6 @@ export class BuildManager {
     const buildResult: AndroidBuildResult = {
       ...build,
       platform: Platform.Android,
-      isExpoGo: false,
     };
 
     // store build info in the cache
@@ -218,7 +222,7 @@ export class BuildManager {
       this.buildOutputChannel!,
       progressListener
     );
-    const buildResult: IOSBuildResult = { ...build, platform: Platform.IOS, isExpoGo: false };
+    const buildResult: IOSBuildResult = { ...build, platform: Platform.IOS };
 
     // store build info in the cache
     const newBuildHash = (await calculateMD5(build.appPath)).digest("hex");
@@ -226,5 +230,32 @@ export class BuildManager {
     extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, buildInfo);
 
     return { ...build, platform: Platform.IOS } as IOSBuildResult;
+  }
+
+  private getIOSExpoGoBuild(): DisposableBuildImpl<BuildResult> {
+    const cancelToken = new CancelToken();
+    const build = {
+      platform: Platform.IOS,
+      appPath: EXPO_GO_APP_FILEPATH,
+      bundleID: EXPO_GO_BUNDLE_ID,
+    } as IOSBuildResult;
+    const buildPromise = new Promise<BuildResult>((resolve, reject) => {
+      resolve(build);
+    });
+    return new DisposableBuildImpl(buildPromise, cancelToken);
+  }
+
+  private getAndroidExpoGoBuild(): DisposableBuildImpl<BuildResult> {
+    const cancelToken = new CancelToken();
+    const build = {
+      platform: Platform.Android,
+      apkPath: EXPO_GO_APK_FILEPATH,
+      packageName: EXPO_GO_PACKAGE_NAME,
+    } as AndroidBuildResult;
+
+    const buildPromise: Promise<BuildResult> = new Promise((resolve, reject) => {
+      resolve(build);
+    });
+    return new DisposableBuildImpl(buildPromise, cancelToken);
   }
 }

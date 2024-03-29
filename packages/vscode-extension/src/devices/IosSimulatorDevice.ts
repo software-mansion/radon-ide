@@ -1,4 +1,4 @@
-import { getAppCachesDir } from "../utilities/common";
+import { downdloadFile, getAppCachesDir, getOrCreateAppDownloadsDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
@@ -8,9 +8,45 @@ import { DeviceInfo, IOSDeviceTypeInfo, IOSRuntimeInfo, Platform } from "../comm
 import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
-import http from "http";
 import { DeviceSettings } from "../common/Project";
-import { downloadIOSExpoGo, getIOSExpoGoAppPath } from "../builders/expoGo";
+import { createGunzip } from "zlib";
+import tar from "tar";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import { fetchExpoLaunchDeeplink } from "../builders/expoGo";
+
+const EXPO_GO_APP_NAME = "Exponent";
+export const EXPO_GO_BUNDLE_ID = "host.exp.Exponent";
+export const EXPO_GO_APP_FILEPATH = path.join(
+  getOrCreateAppDownloadsDir(),
+  `${EXPO_GO_APP_NAME}.app`
+);
+
+export async function downloadExpoGo() {
+  Logger.debug("Downloading Expo Go for iOS");
+  const appRootFolder = getAppRootFolder();
+  const appDownloadsDir = getOrCreateAppDownloadsDir();
+  const libPath = path.join(extensionContext.extensionPath, "lib");
+  const { stdout } = await exec(`node`, [path.join(libPath, "expo_go_download.js"), "iOS"], {
+    cwd: appRootFolder,
+  });
+  const { url, clientVersion } = JSON.parse(stdout);
+  const archivePath = path.join(appDownloadsDir, `${EXPO_GO_APP_NAME}-${clientVersion}.tar.gz`);
+  if (!fs.existsSync(EXPO_GO_APP_FILEPATH)) {
+    fs.mkdirSync(EXPO_GO_APP_FILEPATH, { recursive: true });
+  }
+  await downdloadFile(url, archivePath);
+  const readStream = fs.createReadStream(archivePath);
+  const extractStream = tar.x({ cwd: EXPO_GO_APP_FILEPATH });
+
+  const extractPromise = new Promise((resolve, reject) => {
+    extractStream.on("finish", resolve);
+    extractStream.on("error", reject);
+  });
+
+  readStream.pipe(createGunzip()).pipe(extractStream);
+  await extractPromise;
+  fs.unlinkSync(archivePath);
+}
 
 interface SimulatorInfo {
   availability?: string;
@@ -30,7 +66,6 @@ interface SimulatorData {
 }
 
 // TODO: move expo deeplink choice and fetchExpoLaunchDeeplink to separate files
-type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
 export class IosSimulatorDevice extends DeviceBase {
   constructor(private readonly deviceUDID: string) {
@@ -129,7 +164,7 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  async launchWithExpoDeeplink(build: IOSBuildResult, expoDeeplink: string) {
+  async launchWithExpoDeeplink(bundleID: string, expoDeeplink: string) {
     // For Expo dev-client and Expo Go setup, we use deeplink to launch the app. For this approach to work we do the following:
     // 1. Add the deeplink to the scheme approval list
     // 2. Terminate the app if it's running
@@ -142,7 +177,7 @@ export class IosSimulatorDevice extends DeviceBase {
       "-c",
       "Clear dict",
       "-c",
-      `Add :com.apple.CoreSimulator.CoreSimulatorBridge-->${schema} string ${build.bundleID}`,
+      `Add :com.apple.CoreSimulator.CoreSimulatorBridge-->${schema} string ${bundleID}`,
       path.join(
         deviceSetLocation,
         this.deviceUDID,
@@ -157,7 +192,7 @@ export class IosSimulatorDevice extends DeviceBase {
     try {
       await exec(
         "xcrun",
-        ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, build.bundleID],
+        ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, bundleID],
         { allowNonZeroExit: true }
       );
     } catch (e) {
@@ -177,17 +212,35 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  async launchApp(build: BuildResult, metroPort: number) {
+  async listInstalledApps() {
+    const deviceSetLocation = getOrCreateDeviceSet();
+    const { stdout } = await exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "listapps",
+      this.deviceUDID,
+      "--json",
+    ]);
+    return stdout;
+  }
+
+  async isAppInstalled(bundleID: string) {
+    const apps = await this.listInstalledApps();
+    return apps.includes(bundleID);
+  }
+
+  async launchApp(build: IOSBuildResult, metroPort: number, devtoolsPort: number) {
     if (build.platform !== Platform.IOS) {
       throw new Error("Invalid platform");
     }
-    const deepLinkChoice = build.isExpoGo ? "expo-go" : "expo-dev-client";
+    const deepLinkChoice = build.bundleID === EXPO_GO_BUNDLE_ID ? "expo-go" : "expo-dev-client";
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "ios", deepLinkChoice);
     if (expoDeeplink) {
-      this.launchWithExpoDeeplink(build, expoDeeplink);
+      this.launchWithExpoDeeplink(build.bundleID, expoDeeplink);
     } else {
       await this.configureMetroPort(build.bundleID, metroPort);
-      this.launchWithBuild(build);
+      await this.launchWithBuild(build);
     }
   }
 
@@ -217,19 +270,16 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  async getExpoGoAppBuild(): Promise<IOSBuildResult> {
-    if (!fs.existsSync(getIOSExpoGoAppPath())) {
-      Logger.debug("Downloading Expo Go app");
-      await downloadIOSExpoGo();
+  async ensureExpoGoDownloaded() {
+    // TODO: Check for newest version
+    const isDownloaded = fs.existsSync(EXPO_GO_APP_FILEPATH);
+    if (!isDownloaded) {
+      await downloadExpoGo();
     }
+  }
 
-    const build: IOSBuildResult = {
-      appPath: getIOSExpoGoAppPath(),
-      bundleID: "host.exp.Exponent",
-      platform: Platform.IOS,
-      isExpoGo: true,
-    };
-    return build;
+  async isExpoGoInstalled() {
+    return await this.isAppInstalled(EXPO_GO_BUNDLE_ID);
   }
 
   makePreview(): Preview {
@@ -350,33 +400,4 @@ function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
     case "xxxlarge":
       return "extra-extra-extra-large";
   }
-}
-
-export function fetchExpoLaunchDeeplink(
-  metroPort: number,
-  platformString: string,
-  choice: ExpoDeeplinkChoice
-) {
-  return new Promise<string | void>((resolve, reject) => {
-    const req = http.request(
-      new URL(
-        `http://localhost:${metroPort}/_expo/link?platform=${platformString}&choice=${choice}`
-      ),
-      (res) => {
-        if (res.statusCode === 307) {
-          // we want to retrieve redirect location
-          resolve(res.headers.location);
-        } else {
-          resolve();
-        }
-        res.resume();
-      }
-    );
-    req.on("error", (e) => {
-      // we still want to resolve on error, because the URL may not exists, in which
-      // case it serves as a mechanism for detecting non expo-dev-client setups
-      resolve();
-    });
-    req.end();
-  });
 }

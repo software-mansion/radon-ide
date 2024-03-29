@@ -9,9 +9,10 @@ export abstract class DeviceBase implements Disposable {
   abstract bootDevice(): Promise<void>;
   abstract changeSettings(settings: DeviceSettings): Promise<void>;
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
-  abstract getExpoGoAppBuild(): Promise<BuildResult>;
+  abstract listInstalledApps(): Promise<string[] | string>;
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
-
+  abstract ensureExpoGoDownloaded(): Promise<void>;
+  abstract isExpoGoInstalled(): Promise<boolean>;
   abstract makePreview(): Preview;
 
   dispose() {

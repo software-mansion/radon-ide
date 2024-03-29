@@ -1,4 +1,3 @@
-import { LogOutputChannel } from "vscode";
 import { DeviceInfo } from "./DeviceManager";
 
 export type DeviceSettings = {
@@ -69,6 +68,8 @@ export interface ProjectEventListener<T> {
 }
 
 export interface ProjectInterface {
+  get useExpoGo(): boolean;
+
   getProjectState(): Promise<ProjectState>;
   restart(forceCleanBuild: boolean): Promise<void>;
   reloadWebview(): Promise<void>;

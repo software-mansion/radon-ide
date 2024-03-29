@@ -55,6 +55,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
   }
 
+  public get useExpoGo() {
+    return shouldUseExpoGo();
+  }
+
   onBundleError(): void {
     this.updateProjectState({ status: "bundleError" });
   }
@@ -339,21 +343,22 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
       Logger.debug("Metro & devtools ready");
 
-      // TODO: refactor passing build to new device
-      const build = shouldUseExpoGo()
-        ? undefined
-        : this.buildManager.startBuild(
-            deviceInfo.platform,
-            forceCleanBuild,
-            (newStageProgress: number) => {
-              this.stageProgressListener(newStageProgress);
-            }
-          );
+      const build = this.buildManager.startBuild(
+        deviceInfo.platform,
+        forceCleanBuild,
+        (newStageProgress: number) => {
+          this.stageProgressListener(newStageProgress);
+        },
+        this.useExpoGo
+      );
       const newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(this.deviceSettings, (startupMessage) =>
-        this.updateProjectStateForDevice(deviceInfo, { startupMessage, stageProgress: 0 })
+      await newDeviceSession.start(
+        this.deviceSettings,
+        (startupMessage) =>
+          this.updateProjectStateForDevice(deviceInfo, { startupMessage, stageProgress: 0 }),
+        this.useExpoGo
       );
       Logger.debug("Device session started");
 
