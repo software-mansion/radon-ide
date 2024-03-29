@@ -31,11 +31,7 @@ export class DeviceSession implements Disposable {
     return this.devtools.hasConnectedClient;
   }
 
-  async start(
-    deviceSettings: DeviceSettings,
-    progressCallback: ProgressCallback,
-    useExpoGo: boolean
-  ) {
+  async start(deviceSettings: DeviceSettings, progressCallback: ProgressCallback) {
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {
         if (event === "RNIDE_appReady") {
@@ -52,20 +48,13 @@ export class DeviceSession implements Disposable {
 
     progressCallback(StartupMessage.Building);
     const build = await this.disposableBuild.build;
-    if (useExpoGo) {
-      // If Expo Go is installed, we don't have to install it again, nor download the app
-      // If Expo Go is not installed, we have to download the app and perform installation
-      if (!(await this.device.isExpoGoInstalled())) {
-        await this.device.ensureExpoGoDownloaded();
-        progressCallback(StartupMessage.Installing);
-        await this.device.installApp(build, false);
-      }
-    } else {
-      progressCallback(StartupMessage.Installing);
-      await this.device.installApp(build, false);
-    }
+
+    progressCallback(StartupMessage.Installing);
+    await this.device.installApp(build, false);
+
     progressCallback(StartupMessage.Launching);
     await this.device.launchApp(build, this.metro.port, this.devtools.port);
+
     const waitForPreview = this.device.startPreview();
     Logger.debug("Will wait for app ready and for preview");
     progressCallback(StartupMessage.WaitingForAppToLoad);

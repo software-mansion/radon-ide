@@ -1,15 +1,17 @@
-import fs from "fs";
 import path from "path";
-import { getAppRootFolder } from "../utilities/extensionContext";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import http from "http";
+import { exec } from "../utilities/subprocess";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
-export function shouldUseExpoGo(): boolean {
-  // TODO: Check for better solution to determine whether Expo Go should be used
-  const androidExists = fs.existsSync(path.join(getAppRootFolder(), "android"));
-  const iosExists = fs.existsSync(path.join(getAppRootFolder(), "ios"));
-  return !(androidExists && iosExists);
+export async function shouldUseExpoGo(): Promise<boolean> {
+  const libPath = path.join(extensionContext.extensionPath, "lib");
+  const { stdout } = await exec(`node`, [path.join(libPath, "expo_go_usage.js")], {
+    cwd: getAppRootFolder(),
+  });
+  const useExpoGo = stdout === "true";
+  return useExpoGo;
 }
 
 export function fetchExpoLaunchDeeplink(

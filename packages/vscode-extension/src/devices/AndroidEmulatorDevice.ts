@@ -5,31 +5,20 @@ import path from "path";
 import fs from "fs";
 import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
-import {
-  downdloadFile,
-  getAppCachesDir,
-  getCpuArchitecture,
-  getOrCreateAppDownloadsDir,
-} from "../utilities/common";
+import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
-import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
+import { AndroidBuildResult, BuildResult, EXPO_GO_PACKAGE_NAME } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { fetchExpoLaunchDeeplink } from "../builders/expoGo";
+
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
 
-const EXPO_GO_APP_NAME = "Exponent";
-export const EXPO_GO_PACKAGE_NAME = "host.exp.exponent";
-export const EXPO_GO_APK_FILEPATH = path.join(
-  getOrCreateAppDownloadsDir(),
-  `${EXPO_GO_APP_NAME}.apk`
-);
 interface EmulatorProcessInfo {
   pid: number;
   serialPort: number;
@@ -40,16 +29,6 @@ interface EmulatorProcessInfo {
   grpcToken: string;
 }
 
-export async function downloadExpoGo() {
-  Logger.debug("Downloading Expo Go for Android");
-  const appRootFolder = getAppRootFolder();
-  const libPath = path.join(extensionContext.extensionPath, "lib");
-  const { stdout } = await exec(`node`, [path.join(libPath, "expo_go_download.js"), "Android"], {
-    cwd: appRootFolder,
-  });
-  const { url } = JSON.parse(stdout);
-  await downdloadFile(url, EXPO_GO_APK_FILEPATH);
-}
 export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
@@ -122,7 +101,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
     });
 
     this.serial = await initPromise;
-    this.listInstalledApps();
   }
 
   async configureMetroPort(packageName: string, metroPort: number) {
@@ -224,27 +202,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
   }
 
-  async listInstalledApps() {
-    const { stdout } = await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
-      "shell",
-      "pm",
-      "list",
-      "packages",
-    ]);
-    const installedApps = stdout
-      .split("\n")
-      .map((line) => line.replace("package:", "").trim())
-      .filter(Boolean);
-    return installedApps;
-  }
-
-  async isAppInstalled(packageName: string) {
-    const installedApps = await this.listInstalledApps();
-    return installedApps.includes(packageName);
-  }
-
   async installApp(build: BuildResult, forceReinstall: boolean) {
     if (build.platform !== Platform.Android) {
       throw new Error("Invalid platform");
@@ -272,18 +229,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
       2,
       1000
     );
-  }
-
-  async ensureExpoGoDownloaded() {
-    // TODO: Check for newest version
-    const isDownloaded = fs.existsSync(EXPO_GO_APK_FILEPATH);
-    if (!isDownloaded) {
-      await downloadExpoGo();
-    }
-  }
-
-  async isExpoGoInstalled() {
-    return await this.isAppInstalled(EXPO_GO_PACKAGE_NAME);
   }
 
   makePreview(): Preview {

@@ -66,7 +66,7 @@ export interface ProjectEventListener<T> {
 }
 
 export interface ProjectInterface {
-  get useExpoGo(): boolean;
+  useExpoGo(): Promise<boolean>;
 
   getProjectState(): Promise<ProjectState>;
   restart(forceCleanBuild: boolean): Promise<void>;

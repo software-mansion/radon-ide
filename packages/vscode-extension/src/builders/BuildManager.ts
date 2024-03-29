@@ -8,11 +8,13 @@ import { Platform } from "../common/DeviceManager";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { Disposable, OutputChannel, window } from "vscode";
-import { EXPO_GO_APP_FILEPATH, EXPO_GO_BUNDLE_ID } from "../devices/IosSimulatorDevice";
-import { EXPO_GO_APK_FILEPATH, EXPO_GO_PACKAGE_NAME } from "../devices/AndroidEmulatorDevice";
+import path from "path";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
+
+export const EXPO_GO_BUNDLE_ID = "host.exp.Exponent";
+export const EXPO_GO_PACKAGE_NAME = "host.exp.exponent";
 
 export type IOSBuildResult = {
   platform: Platform.IOS;
@@ -239,28 +241,54 @@ export class BuildManager {
 
   private getIOSExpoGoBuild(): DisposableBuildImpl<BuildResult> {
     const cancelToken = new CancelToken();
-    const build = {
-      platform: Platform.IOS,
-      appPath: EXPO_GO_APP_FILEPATH,
-      bundleID: EXPO_GO_BUNDLE_ID,
-    } as IOSBuildResult;
-    const buildPromise = new Promise<BuildResult>((resolve, reject) => {
-      resolve(build);
+    const buildPromise: Promise<BuildResult> = new Promise((resolve, reject) => {
+      downloadExpoGo(Platform.IOS)
+        .then((appPath) => {
+          const build = {
+            platform: Platform.IOS,
+            appPath,
+            bundleID: EXPO_GO_BUNDLE_ID,
+          } as IOSBuildResult;
+          resolve(build);
+        })
+        .catch((e) => {
+          Logger.error("Failed to download Expo Go", e);
+          reject(e);
+        });
     });
     return new DisposableBuildImpl(buildPromise, cancelToken);
   }
 
   private getAndroidExpoGoBuild(): DisposableBuildImpl<BuildResult> {
     const cancelToken = new CancelToken();
-    const build = {
-      platform: Platform.Android,
-      apkPath: EXPO_GO_APK_FILEPATH,
-      packageName: EXPO_GO_PACKAGE_NAME,
-    } as AndroidBuildResult;
-
     const buildPromise: Promise<BuildResult> = new Promise((resolve, reject) => {
-      resolve(build);
+      downloadExpoGo(Platform.Android)
+        .then((apkPath) => {
+          const build = {
+            platform: Platform.Android,
+            apkPath,
+            packageName: EXPO_GO_PACKAGE_NAME,
+          } as AndroidBuildResult;
+          resolve(build);
+        })
+        .catch((e) => {
+          Logger.error("Failed to download Expo Go", e);
+          reject(e);
+        });
     });
     return new DisposableBuildImpl(buildPromise, cancelToken);
   }
+}
+
+async function downloadExpoGo(platform: Platform) {
+  const libPath = path.join(extensionContext.extensionPath, "lib");
+  const { stdout } = await exec(`node`, [path.join(libPath, "expo_go_download.js"), platform], {
+    cwd: getAppRootFolder(),
+  });
+
+  // While expo downloads the file, it prints '- Fetching Expo Go' and at the last line it prints the path to the downloaded file
+  // we want to wait until the file is downloaded before we return the path
+  const lines = stdout.split("\n");
+  const filepath = lines[lines.length - 1];
+  return filepath;
 }

@@ -165,7 +165,8 @@ function Preview({ isInspecting, setIsInspecting }) {
         onMouseUp,
         onMouseLeave,
       };
-
+  console.log("STATUS", projectState.status);
+  console.log("ERROR", hasBuildError);
   return (
     <div
       className="phone-wrapper"

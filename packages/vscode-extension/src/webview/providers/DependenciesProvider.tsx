@@ -55,6 +55,8 @@ interface DependenciesProviderProps {
 
 export default function DependenciesProvider({ children }: DependenciesProviderProps) {
   const [dependencies, setDependencies] = useState<Dependencies>({});
+  const [useExpoGo, setUseExpoGo] = useState(false);
+
   const { project } = useProject();
   // `isReady` is true when all dependencies were checked
   const isReady = Object.keys(dependencies).every(
@@ -62,7 +64,7 @@ export default function DependenciesProvider({ children }: DependenciesProviderP
   );
   const isError = Object.keys(dependencies).some((key) => {
     // Skips Pods check if project is using Expo Go
-    if (key === "Pods" && project.useExpoGo) return false;
+    if (key === "Pods" && useExpoGo) return false;
     return dependencies[key as keyof Dependencies]?.error !== undefined;
   });
 
@@ -82,6 +84,10 @@ export default function DependenciesProvider({ children }: DependenciesProviderP
     });
     runDiagnostics();
   }, []);
+
+  const checkExpoGo = async () => {
+    setUseExpoGo(await project.useExpoGo());
+  };
 
   useEffect(() => {
     const listener = (event: MessageEvent<any>) => {
@@ -121,11 +127,15 @@ export default function DependenciesProvider({ children }: DependenciesProviderP
     };
 
     runDiagnostics();
-
+    checkExpoGo();
     window.addEventListener("message", listener);
 
     return () => window.removeEventListener("message", listener);
   }, []);
+
+  useEffect(() => {
+    console.log("YYY", useExpoGo);
+  }, [useExpoGo]);
 
   return (
     <DependenciesContext.Provider

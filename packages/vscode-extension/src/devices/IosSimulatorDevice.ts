@@ -1,52 +1,15 @@
-import { downdloadFile, getAppCachesDir, getOrCreateAppDownloadsDir } from "../utilities/common";
+import { getAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { DeviceInfo, IOSDeviceTypeInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
-import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
+import { BuildResult, EXPO_GO_BUNDLE_ID, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
 import { DeviceSettings } from "../common/Project";
-import { createGunzip } from "zlib";
-import tar from "tar";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { fetchExpoLaunchDeeplink } from "../builders/expoGo";
-
-const EXPO_GO_APP_NAME = "Exponent";
-export const EXPO_GO_BUNDLE_ID = "host.exp.Exponent";
-export const EXPO_GO_APP_FILEPATH = path.join(
-  getOrCreateAppDownloadsDir(),
-  `${EXPO_GO_APP_NAME}.app`
-);
-
-export async function downloadExpoGo() {
-  Logger.debug("Downloading Expo Go for iOS");
-  const appRootFolder = getAppRootFolder();
-  const appDownloadsDir = getOrCreateAppDownloadsDir();
-  const libPath = path.join(extensionContext.extensionPath, "lib");
-  const { stdout } = await exec(`node`, [path.join(libPath, "expo_go_download.js"), "iOS"], {
-    cwd: appRootFolder,
-  });
-  const { url, clientVersion } = JSON.parse(stdout);
-  const archivePath = path.join(appDownloadsDir, `${EXPO_GO_APP_NAME}-${clientVersion}.tar.gz`);
-  if (!fs.existsSync(EXPO_GO_APP_FILEPATH)) {
-    fs.mkdirSync(EXPO_GO_APP_FILEPATH, { recursive: true });
-  }
-  await downdloadFile(url, archivePath);
-  const readStream = fs.createReadStream(archivePath);
-  const extractStream = tar.x({ cwd: EXPO_GO_APP_FILEPATH });
-
-  const extractPromise = new Promise((resolve, reject) => {
-    extractStream.on("finish", resolve);
-    extractStream.on("error", reject);
-  });
-
-  readStream.pipe(createGunzip()).pipe(extractStream);
-  await extractPromise;
-  fs.unlinkSync(archivePath);
-}
 
 interface SimulatorInfo {
   availability?: string;
@@ -212,24 +175,6 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  async listInstalledApps() {
-    const deviceSetLocation = getOrCreateDeviceSet();
-    const { stdout } = await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "listapps",
-      this.deviceUDID,
-      "--json",
-    ]);
-    return stdout;
-  }
-
-  async isAppInstalled(bundleID: string) {
-    const apps = await this.listInstalledApps();
-    return apps.includes(bundleID);
-  }
-
   async launchApp(build: IOSBuildResult, metroPort: number, devtoolsPort: number) {
     if (build.platform !== Platform.IOS) {
       throw new Error("Invalid platform");
@@ -268,18 +213,6 @@ export class IosSimulatorDevice extends DeviceBase {
       this.deviceUDID,
       build.appPath,
     ]);
-  }
-
-  async ensureExpoGoDownloaded() {
-    // TODO: Check for newest version
-    const isDownloaded = fs.existsSync(EXPO_GO_APP_FILEPATH);
-    if (!isDownloaded) {
-      await downloadExpoGo();
-    }
-  }
-
-  async isExpoGoInstalled() {
-    return await this.isAppInstalled(EXPO_GO_BUNDLE_ID);
   }
 
   makePreview(): Preview {
