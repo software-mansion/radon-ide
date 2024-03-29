@@ -12,13 +12,16 @@ import { WorkspaceConfig, WorkspaceConfigProps } from "../../common/WorkspaceCon
 const workspaceConfig = makeProxy<WorkspaceConfig>("WorkspaceConfig");
 
 type WorkspaceConfigContextType = WorkspaceConfigProps & {
-  update: <K extends keyof WorkspaceConfigProps>(key: K, value: WorkspaceConfigProps[K]) => void;
+  updateUserLevel: <K extends keyof WorkspaceConfigProps>(
+    key: K,
+    value: WorkspaceConfigProps[K]
+  ) => void;
 };
 
 const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
   panelLocation: "tab",
   relativeAppLocation: "",
-  update: () => {},
+  updateUserLevel: () => {},
 });
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
@@ -36,17 +39,21 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
     };
   }, []);
 
-  const update = useCallback(
-    <K extends keyof WorkspaceConfigProps>(key: K, value: WorkspaceConfigProps[K]) => {
+  const updateUserLevel = useCallback(
+    <K extends keyof WorkspaceConfigProps>(
+      key: K,
+      value: WorkspaceConfigProps[K],
+      configurationTarget?: boolean
+    ) => {
       const newState = { ...config, [key]: value };
       setConfig(newState);
-      workspaceConfig.update(key, value);
+      workspaceConfig.updateUserLevel(key, value);
     },
     [config, setConfig]
   );
 
   return (
-    <WorkspaceConfigContext.Provider value={{ ...config, update }}>
+    <WorkspaceConfigContext.Provider value={{ ...config, updateUserLevel }}>
       {children}
     </WorkspaceConfigContext.Provider>
   );
