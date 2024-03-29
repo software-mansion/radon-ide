@@ -2,7 +2,11 @@
   "name": "react-native-ide",
   "displayName": "React Native IDE",
   "description": "Extension turning VSCode into a full-featured IDE for React Native and Expo",
-  "publisher": "software-mansion",
+  "publisher": "swmansion",
+  "categories": [
+    "Programming Languages"
+  ],
+  "icon": "assets/logo.png",
   "activationEvents": [
     "workspaceContains:node_modules/react-native",
     "workspaceContains:app.json",
@@ -14,12 +18,12 @@
     "vscode": "^1.75.0"
   },
   "extensionKind": [
-    "ui"
+    "workspace"
   ],
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
     "type": "git",
-    "url": "https://github.com/software-mansion-labs/react-native-sztudio"
+    "url": "https://github.com/software-mansion/react-native-ide"
   },
   "main": "./dist/extension.js",
   "contributes": {
@@ -51,8 +55,38 @@
           "scope": "window",
           "default": null,
           "description": "Location of the React Native application root folder relative to the workspace workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
+        },
+        "ReactNativeIDE.panelLocation": {
+          "type": "string",
+          "scope": "window",
+          "default": "tab",
+          "enum": [
+            "tab",
+            "side-panel",
+            "secondary-side-panel"
+          ],
+          "description": "Controlls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ReactNativeIDE",
+          "title": "React Native IDE",
+          "icon": "assets/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "ReactNativeIDE": [
+        {
+          "type": "webview",
+          "id": "ReactNativeIDE.view",
+          "name": "IDE Panel",
+          "when": "config.ReactNativeIDE.panelLocation != 'tab'"
+        }
+      ]
     },
     "menus": {
       "editor/title": [

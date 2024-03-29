@@ -5,7 +5,20 @@ import { Logger } from "../Logger";
 import { AndroidSystemImageInfo } from "../common/DeviceManager";
 import { readdirSync, statSync } from "fs";
 export const SYSTEM_IMAGES_PATH = path.join(ANDROID_HOME, "system-images");
+
 const ACCEPTED_SYSTEM_IMAGES_TYPES = ["default", "google_apis_playstore", "google_apis"];
+
+const ANDROID_CODENAMES_TO_API_LEVELS = {
+  s: 31,
+  r: 30,
+  q: 29,
+  pie: 28,
+  oreo: 27,
+  nougat: 24,
+  marshmallow: 23,
+  lollipop: 21,
+  kitkat: 19,
+};
 
 // Temporary solution due to sdkmanager not having information about android version.
 function mapApiLevelToAndroidVersion(apiLevel: number): number | undefined {
@@ -69,7 +82,14 @@ export async function getAndroidSystemImages(): Promise<AndroidSystemImageInfo[]
 // example input: 'android-34/default/arm64-v8a/data'
 function mapToSystemImageInfo(systemImagePath: string) {
   const [imageName, systemImageType, arch] = systemImagePath.split("/");
-  const apiLevel = parseInt(imageName.split("-")[1]);
+  const apiLevelCode = imageName.split("-")[1];
+  let apiLevel = parseInt(apiLevelCode);
+  if (isNaN(apiLevel)) {
+    apiLevel =
+      ANDROID_CODENAMES_TO_API_LEVELS[
+        apiLevelCode.toLowerCase() as keyof typeof ANDROID_CODENAMES_TO_API_LEVELS
+      ];
+  }
   const androidVersion = mapApiLevelToAndroidVersion(apiLevel);
 
   let apisSuffix = "";

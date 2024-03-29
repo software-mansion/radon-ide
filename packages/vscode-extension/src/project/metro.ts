@@ -35,7 +35,7 @@ type MetroEvent =
       totalFileCount: number;
     }
   | {
-      type: "rnp_initialize_done";
+      type: "RNIDE_initialize_done";
       port: number;
     }
   | {
@@ -177,7 +177,7 @@ export class Metro implements Disposable {
           }
 
           switch (event.type) {
-            case "rnp_initialize_done":
+            case "RNIDE_initialize_done":
               this._port = event.port;
               Logger.info(`Metro started on port ${this._port}`);
               resolve();

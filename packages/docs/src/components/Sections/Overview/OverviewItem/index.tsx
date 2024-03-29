@@ -15,7 +15,7 @@ const OverviewItem = ({ title, body, mediaSrc }: Props) => {
         <p className={styles.itemBody}>{body}</p>
       </section>
       <div className={styles.media}>
-        <video autoPlay loop muted>
+        <video autoPlay loop muted playsInline>
           <source src={mediaSrc} type="video/mp4" />
         </video>
       </div>

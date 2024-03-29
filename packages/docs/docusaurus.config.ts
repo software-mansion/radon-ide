@@ -43,13 +43,7 @@ const config: Config = {
         alt: "IDE logo",
         src: "img/logo.svg",
       },
-      items: [
-        {
-          href: "https://swmansion.com",
-          className: "header-swm",
-          position: "right",
-        },
-      ],
+      items: [],
     },
     footer: {
       style: "light",

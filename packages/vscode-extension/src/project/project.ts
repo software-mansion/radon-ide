@@ -6,13 +6,13 @@ import { Logger } from "../Logger";
 import { BuildManager } from "../builders/BuildManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
+import { throttle } from "../common/utils";
 import {
   DeviceSettings,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
-  STAGE_PROGRES_UPDATE_TIMEOUT,
   StartupMessage,
 } from "../common/Project";
 import { EventEmitter } from "stream";
@@ -22,6 +22,7 @@ import stripAnsi from "strip-ansi";
 import { shouldUseExpoGo } from "../builders/expoGo";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
+
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
 
@@ -35,11 +36,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   private projectState: ProjectState = {
     status: "starting",
-    stageProgress: 0,
     previewURL: undefined,
     selectedDevice: undefined,
   };
-  private lastStageProgressUpdate: number = 0;
 
   private deviceSettings: DeviceSettings = {
     appearance: "dark",
@@ -169,23 +168,23 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     }
     this.devtools.addListener((event, payload) => {
       switch (event) {
-        case "rnp_appReady":
+        case "RNIDE_appReady":
           Logger.debug("App ready");
           if (this.reloadingMetro) {
             this.reloadingMetro = false;
             this.updateProjectState({ status: "running" });
           }
           break;
-        case "rnp_navigationChanged":
+        case "RNIDE_navigationChanged":
           this.eventEmitter.emit("navigationChanged", {
             displayName: payload.displayName,
             id: payload.id,
           });
           break;
-        case "rnp_fastRefreshStarted":
+        case "RNIDE_fastRefreshStarted":
           this.updateProjectState({ status: "refreshing" });
           break;
-        case "rnp_fastRefreshComplete":
+        case "RNIDE_fastRefreshComplete":
           if (this.projectState.status === "starting") return;
           if (this.projectState.status === "incrementalBundleError") return;
           if (this.projectState.status === "runtimeError") return;
@@ -199,10 +198,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.debugSessionListener?.dispose();
     this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
-        case "rnp_consoleLog":
+        case "RNIDE_consoleLog":
           this.eventEmitter.emit("log", event.body);
           break;
-        case "rnp_paused":
+        case "RNIDE_paused":
           if (event.body?.reason === "exception") {
             // if we know that incrmental bundle error happened, we don't want to change the status
             if (this.projectState.status === "incrementalBundleError") return;
@@ -212,16 +211,19 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           }
           commands.executeCommand("workbench.view.debug");
           break;
-        case "rnp_continued":
+        case "RNIDE_continued":
           this.updateProjectState({ status: "running" });
           break;
       }
     });
 
     Logger.debug(`Launching metro`);
-    const waitForMetro = this.metro.start(forceCleanBuild, (newStageProgress: number) => {
-      this.stageProgressListener(newStageProgress);
-    });
+    const waitForMetro = this.metro.start(
+      forceCleanBuild,
+      throttle((stageProgress: number) => {
+        this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
+      }, 100)
+    );
   }
 
   public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
@@ -264,12 +266,18 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public async stepOverDebugger() {
     this.deviceSession?.stepOverDebugger();
   }
+
   public async focusBuildOutput() {
     if (!this.projectState.selectedDevice) {
       return;
     }
     this.buildManager.focusBuildOutput();
   }
+
+  public async focusExtensionLogsOutput() {
+    Logger.openOutputPanel();
+  }
+
   public async focusDebugConsole() {
     commands.executeCommand("workbench.panel.repl.view.focus");
   }
@@ -295,19 +303,20 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
   }
-  public async stageProgressListener(newStageProgress: number) {
-    if (newStageProgress < this.projectState.stageProgress) {
+
+  private reportStageProgress(stageProgress: number, stage: string) {
+    if (stage !== this.projectState.startupMessage) {
       return;
     }
-    if (performance.now() - this.lastStageProgressUpdate < STAGE_PROGRES_UPDATE_TIMEOUT) {
-      return;
-    }
-    this.projectState = { ...this.projectState, ...{ stageProgress: newStageProgress } };
-    this.eventEmitter.emit("projectStateChanged", this.projectState);
-    this.lastStageProgressUpdate = performance.now();
+    this.updateProjectState({ stageProgress });
   }
 
   private updateProjectState(newState: Partial<ProjectState>) {
+    // stageProgress is tied to a startup stage, so when there is a change of status or startupMessage,
+    // we always want to reset the progress.
+    if (newState.status !== undefined || newState.startupMessage !== undefined) {
+      delete this.projectState.stageProgress;
+    }
     this.projectState = { ...this.projectState, ...newState };
     this.eventEmitter.emit("projectStateChanged", this.projectState);
   }
@@ -323,8 +332,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
 
     this.reloadingMetro = false;
-    this.deviceSession?.dispose();
+    const prevSession = this.deviceSession;
     this.deviceSession = undefined;
+    prevSession?.dispose();
 
     this.updateProjectState({
       selectedDevice: deviceInfo,
@@ -332,6 +342,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       startupMessage: StartupMessage.InitializingDevice,
       previewURL: undefined,
     });
+
+    let newDeviceSession;
 
     try {
       const device = await this.deviceManager.getDevice(deviceInfo);
@@ -341,23 +353,21 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       });
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
-      Logger.debug("Metro & devtools ready");
-
       const build = this.buildManager.startBuild(
         deviceInfo.platform,
         forceCleanBuild,
-        (newStageProgress: number) => {
-          this.stageProgressListener(newStageProgress);
-        },
+        throttle((stageProgress: number) => {
+          this.reportStageProgress(stageProgress, StartupMessage.Building);
+        }, 100),
         this.useExpoGo
       );
-      const newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
+      Logger.debug("Metro & devtools ready");
+      newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
 
       await newDeviceSession.start(
         this.deviceSettings,
-        (startupMessage) =>
-          this.updateProjectStateForDevice(deviceInfo, { startupMessage, stageProgress: 0 }),
+        (startupMessage) => this.updateProjectStateForDevice(deviceInfo, { startupMessage }),
         this.useExpoGo
       );
       Logger.debug("Device session started");
@@ -373,17 +383,15 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       });
     } catch (e) {
       Logger.error("Couldn't start device session", e);
-      if (this.projectState.selectedDevice === deviceInfo) {
+      if (
+        this.projectState.selectedDevice === deviceInfo &&
+        this.deviceSession === newDeviceSession
+      ) {
         this.updateProjectState({
           status: "buildError",
         });
       }
     }
-  }
-
-  public async reloadWebview() {
-    Logger.debug("Reloading webview");
-    commands.executeCommand("workbench.action.webview.reloadWebviewAction");
   }
 
   private removeDeviceListener = async (devices: DeviceInfo) => {

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import clamp from "lodash/clamp";
-import { throttle } from "../utilities/common";
+import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
@@ -150,6 +150,22 @@ function Preview({ isInspecting, setIsInspecting }) {
 
   const inspectFrame = inspectData?.frame;
 
+  const shouldPreventTouchInteraction =
+    debugPaused ||
+    debugException ||
+    hasBundleError ||
+    hasIncrementalBundleError ||
+    projectState?.status === "refreshing";
+
+  const touchHandlers = shouldPreventTouchInteraction
+    ? {}
+    : {
+        onMouseDown,
+        onMouseMove,
+        onMouseUp,
+        onMouseLeave,
+      };
+
   return (
     <div
       className="phone-wrapper"
@@ -157,12 +173,7 @@ function Preview({ isInspecting, setIsInspecting }) {
       tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
       {!isStarting && !hasBuildError && (
-        <div
-          className="phone-content"
-          onMouseMove={onMouseMove}
-          onMouseLeave={onMouseLeave}
-          onMouseDown={onMouseDown}
-          onMouseUp={onMouseUp}>
+        <div className="phone-content" {...touchHandlers}>
           <img
             src={previewURL}
             ref={previewRef}

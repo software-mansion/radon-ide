@@ -1,13 +1,15 @@
-export function throttle(func, limit) {
-  let timeout;
-  let recentArgs;
+export function throttle<T extends (...args: any[]) => any>(func: T, limitMs: number): T {
+  let timeout: NodeJS.Timeout | null = null;
+  let recentArgs: any;
 
-  return function (...args) {
+  return function (...args: any) {
     const force = args[args.length - 1] === true; // Check if the last argument is true (force flag)
 
     if (force) {
+      if (timeout != null) {
+        clearTimeout(timeout);
+      }
       timeout = null;
-      clearTimeout(timeout);
       func(...args);
       return;
     }
@@ -17,8 +19,8 @@ export function throttle(func, limit) {
         timeout = null;
         func(...recentArgs);
         recentArgs = null;
-      }, limit);
+      }, limitMs);
     }
     recentArgs = args;
-  };
+  } as T;
 }

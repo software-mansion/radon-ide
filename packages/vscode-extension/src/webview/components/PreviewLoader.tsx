@@ -30,40 +30,41 @@ function PreviewLoader() {
         .map((item) => item.weight)
         .reduce((acc, cur) => (acc += cur), 0);
 
+      let progressComponent = 0;
+
+      if (projectState.stageProgress !== undefined) {
+        progressComponent = projectState.stageProgress;
+      }
       setProgress(
-        ((startupStageWeightSumUntillNow + projectState.stageProgress * currentWeight) /
+        ((startupStageWeightSumUntillNow + progressComponent * currentWeight) /
           startupStageWeightSum) *
           100
       );
     }
   }, [projectState]);
 
+  function handleLoaderClick() {
+    if (projectState.startupMessage === StartupMessage.Building) {
+      project.focusBuildOutput();
+    } else {
+      project.focusExtensionLogsOutput();
+    }
+  }
+
   return (
     <>
-      <div className="preview-loader-container">
-        {projectState.startupMessage === StartupMessage.Building && (
-          <div className="preview-loader-button-group">
-            <IconButton
-              onClick={() => project.focusBuildOutput()}
-              tooltip={{
-                label: "Open build logs",
-                side: "top",
-              }}>
-              <span className="codicon codicon-symbol-keyword" />
-            </IconButton>
-          </div>
-        )}
-
+      <button className="preview-loader-container" onClick={handleLoaderClick}>
         <div className="preview-loader-button-group">
           <StartupMessageComponent className="preview-loader-message">
             {projectState.startupMessage}
           </StartupMessageComponent>
-          <div className="preview-loader-stage-progress">
-            {Boolean(projectState.stageProgress) &&
-              `${(projectState.stageProgress * 100).toFixed(1)}%`}
-          </div>
+          {projectState.stageProgress !== undefined && (
+            <div className="preview-loader-stage-progress">
+              {(projectState.stageProgress * 100).toFixed(1)}%
+            </div>
+          )}
         </div>
-      </div>
+      </button>
       <ProgressBar progress={progress} />
     </>
   );

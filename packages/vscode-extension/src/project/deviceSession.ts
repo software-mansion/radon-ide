@@ -38,7 +38,7 @@ export class DeviceSession implements Disposable {
   ) {
     const waitForAppReady = new Promise<void>((res) => {
       const listener = (event: string, payload: any) => {
-        if (event === "rnp_appReady") {
+        if (event === "RNIDE_appReady") {
           this.devtools?.removeListener(listener);
           res();
         }
@@ -126,25 +126,25 @@ export class DeviceSession implements Disposable {
   public inspectElementAt(xRatio: number, yRatio: number, callback: (inspecData: any) => void) {
     const id = this.inspectCallID++;
     const listener = (event: string, payload: any) => {
-      if (event === "rnp_inspectData" && payload.id === id) {
+      if (event === "RNIDE_inspectData" && payload.id === id) {
         this.devtools?.removeListener(listener);
         callback(payload);
       }
     };
     this.devtools?.addListener(listener);
-    this.devtools.send("rnp_inspect", { x: xRatio, y: yRatio, id });
+    this.devtools.send("RNIDE_inspect", { x: xRatio, y: yRatio, id });
   }
 
   public openNavigation(id: string) {
-    this.devtools.send("rnp_openNavigation", { id });
+    this.devtools.send("RNIDE_openNavigation", { id });
   }
 
   public startPreview(previewId: string) {
-    this.devtools.send("rnp_openPreview", { previewId });
+    this.devtools.send("RNIDE_openPreview", { previewId });
   }
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {
-    this.devtools.send("rnp_editorFileChanged", { filename, followEnabled });
+    this.devtools.send("RNIDE_editorFileChanged", { filename, followEnabled });
   }
 
   public async changeDeviceSettings(settings: DeviceSettings) {

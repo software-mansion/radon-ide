@@ -26,11 +26,16 @@ import {
   CDPPropertyDescriptor,
 } from "./cdp";
 
-function modifyURL(url: string, hostname: string, port: string): string {
-  const parsedURL = new URL(url);
-  parsedURL.hostname = hostname;
-  parsedURL.port = port;
-  return parsedURL.toString();
+function compareIgnoringHost(url1: string, url2: string) {
+  try {
+    const firstURL = new URL(url1);
+    const secondURL = new URL(url2);
+    firstURL.hostname = secondURL.hostname = "localhost";
+    firstURL.port = secondURL.port = "8080";
+    return firstURL.href === secondURL.href;
+  } catch (e) {
+    return false;
+  }
 }
 
 function typeToCategory(type: string) {
@@ -67,7 +72,7 @@ export class DebugAdapter extends DebugSession {
   private connection: WebSocket;
   private configuration: DebugConfiguration;
   private threads: Array<Thread> = [];
-  private sourceMaps: Array<[string, number, SourceMapConsumer]> = [];
+  private sourceMaps: Array<[string, string, SourceMapConsumer]> = [];
 
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
@@ -122,9 +127,6 @@ export class DebugAdapter extends DebugSession {
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
             this.sourceMaps.push([message.params.url, message.params.scriptId, consumer]);
-            this.sourceMaps.forEach(([url, id, consumer]) => {
-              console.log("PORT URL", url, id, consumer);
-            });
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
 
@@ -178,11 +180,11 @@ export class DebugAdapter extends DebugSession {
       outputEvent = new OutputEvent(output + "\n", typeToCategory(message.params.type));
     }
     this.sendEvent(outputEvent);
-    this.sendEvent(new Event("rnp_consoleLog", { category: outputEvent.body.category }));
+    this.sendEvent(new Event("RNIDE_consoleLog", { category: outputEvent.body.category }));
   }
 
   private findOriginalPosition(
-    scriptIdOrURL: number | string,
+    scriptIdOrURL: string,
     lineNumber1Based: number,
     columnNumber0Based: number
   ) {
@@ -190,13 +192,14 @@ export class DebugAdapter extends DebugSession {
     let sourceURL = "__source__";
     let sourceLine1Based = lineNumber1Based;
     let sourceColumn0Based = columnNumber0Based;
-    this.sourceMaps.forEach(([url, id, consumer]) => {
-      if (typeof scriptIdOrURL === "string") {
-        const { port, hostname } = new URL(url);
-        scriptIdOrURL = modifyURL(scriptIdOrURL, hostname, port);
-      }
 
-      if (id === scriptIdOrURL || url === scriptIdOrURL) {
+    this.sourceMaps.forEach(([url, id, consumer]) => {
+      // when we identify script by its URL we need to deal with a situation when the URL is sent with a different
+      // hostname and port than the one we have registered in the source maps. The reason for that is that the request
+      // that populates the source map (scriptParsed) is sent by metro, while the requests from breakpoints or logs
+      // are sent directly from the device. In different setups, specifically on Android emulator, the device uses different URLs
+      // than localhost because it has a virtual network interface. Hence we need to unify the URL:
+      if (id === scriptIdOrURL || compareIgnoringHost(url, scriptIdOrURL)) {
         scriptURL = url;
         const pos = consumer.originalPositionFor({
           line: lineNumber1Based,
@@ -264,7 +267,7 @@ export class DebugAdapter extends DebugSession {
     this.pausedDAPtoCDPObjectIdMap = new Map();
     if (
       message.params.reason === "other" &&
-      message.params.callFrames[0].functionName === "__rnpBreakOnError"
+      message.params.callFrames[0].functionName === "__RNIDE_breakOnError"
     ) {
       // this is a workaround for an issue with hermes which does not provide a full stack trace
       // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception
@@ -291,9 +294,7 @@ export class DebugAdapter extends DebugSession {
               stackObjEntry.variablesReference
             );
             const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
-            let genUrl = stackObjProperties.find((v) => v.name === "file")?.value || "";
-            // genUrl = changeURLHostname(genUrl, "localhost", "");
-            Logger.debug("GENURL", genUrl);
+            const genUrl = stackObjProperties.find((v) => v.name === "file")?.value || "";
             const genLine1Based = parseInt(
               stackObjProperties.find((v) => v.name === "lineNumber")?.value || "0"
             );
@@ -314,7 +315,7 @@ export class DebugAdapter extends DebugSession {
       );
       this.pausedStackFrames = stackFrames;
       this.sendEvent(new StoppedEvent("exception", this.threads[0].id, errorMessage));
-      this.sendEvent(new Event("rnp_paused", { reason: "exception", isFatal: isFatal }));
+      this.sendEvent(new Event("RNIDE_paused", { reason: "exception", isFatal: isFatal }));
     } else {
       this.pausedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
         const cdpLocation = cdpFrame.location;
@@ -336,7 +337,7 @@ export class DebugAdapter extends DebugSession {
         (cdpFrame: any) => cdpFrame.scopeChain
       );
       this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id, "Yollo"));
-      this.sendEvent(new Event("rnp_paused"));
+      this.sendEvent(new Event("RNIDE_paused"));
     }
   }
 
@@ -566,7 +567,7 @@ export class DebugAdapter extends DebugSession {
   ): Promise<void> {
     await this.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
     this.sendResponse(response);
-    this.sendEvent(new Event("rnp_continued"));
+    this.sendEvent(new Event("RNIDE_continued"));
   }
 
   protected async nextRequest(

@@ -7,20 +7,28 @@ import {
   Uri,
   ExtensionContext,
   ExtensionMode,
+  ConfigurationChangeEvent,
   DebugConfigurationProviderTriggerKind,
 } from "vscode";
-import { PreviewsPanel } from "./panels/PreviewsPanel";
+import { TabPanel } from "./panels/Tabpanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger, enableDevModeLogging } from "./Logger";
-import { setAppRootFolder, setExtensionContext } from "./utilities/extensionContext";
+import {
+  extensionContext,
+  setAppRootFolder,
+  setExtensionContext,
+} from "./utilities/extensionContext";
 import { command } from "./utilities/subprocess";
 import path from "path";
 import os from "os";
 import fs from "fs";
+import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
+import { PanelLocation } from "./common/WorkspaceConfig";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
+const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
 function handleUncaughtErrors() {
   process.on("unhandledRejection", (error) => {
@@ -47,6 +55,7 @@ export function deactivate(context: ExtensionContext): undefined {
 
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
+
   setExtensionContext(context);
   if (context.extensionMode === ExtensionMode.Development) {
     enableDevModeLogging();
@@ -54,16 +63,25 @@ export async function activate(context: ExtensionContext) {
 
   await fixBinaries(context);
 
+  function showIDEPanel(fileName?: string, lineNumber?: number) {
+    if (
+      workspace.getConfiguration("ReactNativeIDE").get<PanelLocation>("panelLocation") !== "tab"
+    ) {
+      SidePanelViewProvider.showView(context, fileName, lineNumber);
+    } else {
+      TabPanel.render(context, fileName, lineNumber);
+    }
+  }
+
   context.subscriptions.push(
-    commands.registerCommand("RNIDE.openPanel", (fileName?: string, lineNumber?: number) => {
-      PreviewsPanel.render(context, fileName, lineNumber);
-    })
+    window.registerWebviewViewProvider(
+      SidePanelViewProvider.viewType,
+      new SidePanelViewProvider(context),
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
   );
-  context.subscriptions.push(
-    commands.registerCommand("RNIDE.showPanel", (fileName?: string, lineNumber?: number) => {
-      PreviewsPanel.render(context, fileName, lineNumber);
-    })
-  );
+  context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
+  context.subscriptions.push(commands.registerCommand("RNIDE.showPanel", showIDEPanel));
   context.subscriptions.push(
     commands.registerCommand("RNIDE.diagnose", diagnoseWorkspaceStructure)
   );
@@ -93,6 +111,14 @@ export async function activate(context: ExtensionContext) {
     )
   );
 
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+      if (event.affectsConfiguration("ReactNativeIDE.panelLocation")) {
+        showIDEPanel();
+      }
+    })
+  );
+
   await configureAppRootFolder();
 }
 
@@ -112,13 +138,19 @@ function openWorkspaceSettings() {
   });
 }
 
+function extensionActivated() {
+  if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
+    commands.executeCommand("RNIDE.openPanel");
+  }
+}
+
 async function configureAppRootFolder() {
   const appRootFolder = await findAppRootFolder();
   if (appRootFolder) {
     Logger.info(`Found app root folder: ${appRootFolder}`);
     setAppRootFolder(appRootFolder);
     commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
-    PreviewsPanel.extensionActivated();
+    extensionActivated();
   }
   return appRootFolder;
 }

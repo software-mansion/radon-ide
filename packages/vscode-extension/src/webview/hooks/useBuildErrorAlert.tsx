@@ -20,8 +20,7 @@ function Actions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          // FIXME: this should also clean-up the backend of the extension and not only reload the webview
-          project.reloadWebview();
+          project.restart(true);
         }}
         tooltip={{ label: "Reload IDE", side: "bottom" }}>
         <span className="codicon codicon-refresh" />

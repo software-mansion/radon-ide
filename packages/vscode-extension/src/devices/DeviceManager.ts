@@ -85,7 +85,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
 
   private async loadDevicesInternal() {
     const emulators = listEmulators().catch((e) => {
-      Logger.error("Error fetching emulatos", e);
+      Logger.error("Error fetching emulators", e);
       return [];
     });
     const simulators = listSimulators().catch((e) => {

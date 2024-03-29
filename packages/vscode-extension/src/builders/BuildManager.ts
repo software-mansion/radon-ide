@@ -94,7 +94,7 @@ export class BuildManager {
     } else if (platform === Platform.Android) {
       const cancelToken = new CancelToken();
       return new DisposableBuildImpl(
-        this.startAndroidBuild(forceCleanBuild, cancelToken),
+        this.startAndroidBuild(forceCleanBuild, cancelToken, progressListener),
         cancelToken
       );
     } else if (platform === Platform.IOS && useExpoGo) {
@@ -134,7 +134,11 @@ export class BuildManager {
     return undefined;
   }
 
-  private async startAndroidBuild(forceCleanBuild: boolean, cancelToken: CancelToken) {
+  private async startAndroidBuild(
+    forceCleanBuild: boolean,
+    cancelToken: CancelToken,
+    progressListener: (newProgress: number) => void
+  ) {
     const newFingerprint = await generateWorkspaceFingerprint();
     if (!forceCleanBuild) {
       const buildResult = await this.loadAndroidCachedBuild(newFingerprint);
@@ -154,7 +158,8 @@ export class BuildManager {
       getAppRootFolder(),
       forceCleanBuild,
       cancelToken,
-      this.buildOutputChannel!
+      this.buildOutputChannel!,
+      progressListener
     );
     const buildResult: AndroidBuildResult = {
       ...build,

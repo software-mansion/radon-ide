@@ -16,7 +16,7 @@ export type ProjectState = {
     | "debuggerPaused"
     | "refreshing";
   startupMessage?: string; // Only used when status is "starting"
-  stageProgress: number;
+  stageProgress?: number;
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
 };
@@ -45,8 +45,6 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
 
-export const STAGE_PROGRES_UPDATE_TIMEOUT = 100;
-
 export type InspectData = {
   frame: {
     x: number;
@@ -72,18 +70,16 @@ export interface ProjectInterface {
 
   getProjectState(): Promise<ProjectState>;
   restart(forceCleanBuild: boolean): Promise<void>;
-  reloadWebview(): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  stageProgressListener(newStageProgress: number): void;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
   focusBuildOutput(): Promise<void>;
+  focusExtensionLogsOutput(): Promise<void>;
   focusDebugConsole(): Promise<void>;
-
   openNavigation(navigationItemID: string): Promise<void>;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;

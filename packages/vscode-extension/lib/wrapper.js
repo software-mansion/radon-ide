@@ -29,7 +29,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
   const handleNavigationChange = useCallback((navigationDescriptor) => {
     navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
     agent &&
-      agent._bridge.send("rnp_navigationChanged", {
+      agent._bridge.send("RNIDE_navigationChanged", {
         displayName: navigationDescriptor.name,
         id: navigationDescriptor.id,
       });
@@ -69,7 +69,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
         });
       }
 
-      agent._bridge.addListener("rnp_openPreview", (payload) => {
+      agent._bridge.addListener("RNIDE_openPreview", (payload) => {
         openPreview(payload.previewId);
       });
 
@@ -83,13 +83,13 @@ export function PreviewAppWrapper({ children, ...rest }) {
         }
       }
 
-      agent._bridge.addListener("rnp_openUrl", (payload) => {
+      agent._bridge.addListener("RNIDE_openUrl", (payload) => {
         closePreview();
         const url = payload.url;
         Linking.openURL(url);
       });
 
-      agent._bridge.addListener("rnp_openNavigation", (payload) => {
+      agent._bridge.addListener("RNIDE_openNavigation", (payload) => {
         if (isPreviewUrl(payload.id)) {
           openPreview(payload.id);
           return;
@@ -99,7 +99,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
         navigationDescriptor && requestNavigationChange(navigationDescriptor);
       });
 
-      agent._bridge.addListener("rnp_inspect", (payload) => {
+      agent._bridge.addListener("RNIDE_inspect", (payload) => {
         const { width, height } = Dimensions.get("screen");
         getInspectorDataForViewAtPoint(
           mainContainerRef.current,
@@ -116,7 +116,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
             const hierarchy = viewData.hierarchy.map((item) => {
               return { name: item.name, source: item.getInspectorData().source };
             });
-            agent._bridge.send("rnp_inspectData", {
+            agent._bridge.send("RNIDE_inspectData", {
               id: payload.id,
               frame: scaledFrame,
               hierarchy,
@@ -125,7 +125,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
         );
       });
 
-      agent._bridge.addListener("rnp_editorFileChanged", (payload) => {
+      agent._bridge.addListener("RNIDE_editorFileChanged", (payload) => {
         const newRoute = handleActiveFileChange(payload.filename, payload.followEnabled);
         newRoute && push(newRoute);
       });
@@ -133,10 +133,10 @@ export function PreviewAppWrapper({ children, ...rest }) {
       LogBox.uninstall();
       const LoadingView = require("react-native/Libraries/Utilities/LoadingView");
       LoadingView.showMessage = (message) => {
-        agent._bridge.send("rnp_fastRefreshStarted");
+        agent._bridge.send("RNIDE_fastRefreshStarted");
       };
       LoadingView.hide = () => {
-        agent._bridge.send("rnp_fastRefreshComplete");
+        agent._bridge.send("RNIDE_fastRefreshComplete");
       };
 
       // console.reportErrorsAsExceptions = false;
@@ -162,15 +162,15 @@ export function PreviewAppWrapper({ children, ...rest }) {
           const sceneName = SceneTracker.getActiveScene().name;
           if (!appReadyEventSent.current) {
             appReadyEventSent.current = true;
-            agent._bridge.send("rnp_appReady", {
+            agent._bridge.send("RNIDE_appReady", {
               appKey: sceneName,
               navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
             });
           }
           const isRunningPreview = isPreviewUrl(sceneName);
           if (isRunningPreview) {
-            const preview = (global.__rnp_previews || new Map()).get(sceneName);
-            agent._bridge.send("rnp_navigationChanged", {
+            const preview = (global.__RNIDE_previews || new Map()).get(sceneName);
+            agent._bridge.send("RNIDE_navigationChanged", {
               displayName: `preview:${preview.name}`, // TODO: make names unique if there are multiple previews of the same component
               id: sceneName,
             });
