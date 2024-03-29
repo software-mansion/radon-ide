@@ -48,7 +48,7 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
     ) => {
       const newState = { ...config, [key]: value };
       setConfig(newState);
-      workspaceConfig.update(key, value, configurationTarget);
+      workspaceConfig.updateUserLevel(key, value);
     },
     [config, setConfig]
   );

@@ -37,13 +37,12 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
     return this.config;
   }
 
-  async update<K extends keyof WorkspaceConfigProps>(
+  async updateUserLevel<K extends keyof WorkspaceConfigProps>(
     key: K,
-    value: WorkspaceConfigProps[K],
-    configurationTarget?: boolean
+    value: WorkspaceConfigProps[K]
   ) {
     const configuration = workspace.getConfiguration("ReactNativeIDE");
-    await configuration.update(key as string, value, configurationTarget);
+    await configuration.update(key as string, value, true);
   }
 
   async addListener<K extends keyof WorkspaceConfigEventMap>(
