@@ -45,13 +45,10 @@ export class DeviceSession implements Disposable {
     progressCallback(StartupMessage.BootingDevice);
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
-
     progressCallback(StartupMessage.Building);
     const build = await this.disposableBuild.build;
-
     progressCallback(StartupMessage.Installing);
     await this.device.installApp(build, false);
-
     progressCallback(StartupMessage.Launching);
     await this.device.launchApp(build, this.metro.port, this.devtools.port);
 
