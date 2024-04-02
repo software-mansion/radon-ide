@@ -348,19 +348,15 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       });
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
-      Logger.debug("Metro & devtools ready");
-      newDeviceSession = new DeviceSession(
-        device,
-        this.devtools,
-        this.metro,
-        this.buildManager.startBuild(
-          deviceInfo.platform,
-          forceCleanBuild,
-          throttle((stageProgress: number) => {
-            this.reportStageProgress(stageProgress, StartupMessage.Building);
-          }, 100)
-        )
+      const build = this.buildManager.startBuild(
+        deviceInfo.platform,
+        forceCleanBuild,
+        throttle((stageProgress: number) => {
+          this.reportStageProgress(stageProgress, StartupMessage.Building);
+        }, 100)
       );
+      Logger.debug("Metro & devtools ready");
+      newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
 
       await newDeviceSession.start(this.deviceSettings, (startupMessage) =>

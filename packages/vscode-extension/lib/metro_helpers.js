@@ -98,6 +98,7 @@ function metroServerReadyHandler(originalOnReadyHandler) {
 }
 
 module.exports = {
+  appRoot,
   adaptMetroConfig,
   requireFromAppDir,
   metroServerReadyHandler,

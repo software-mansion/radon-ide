@@ -6,6 +6,7 @@ import { command } from "../utilities/subprocess";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { getAppRootFolder } from "../utilities/extensionContext";
+import { isExpoGoProject } from "../builders/expoGo";
 
 export class DependencyChecker implements Disposable {
   private disposables: Disposable[] = [];
@@ -155,6 +156,11 @@ export async function checkIfCLIInstalled(cmd: string, options: Record<string, u
 }
 
 export async function checkIosDependenciesInstalled() {
+  if (await isExpoGoProject()) {
+    // for Expo Go projects, we never return an error here because Pods are never needed
+    return true;
+  }
+
   const iosDirPath = getIosSourceDir(getAppRootFolder());
 
   Logger.debug(`Check pods in ${iosDirPath} ${getAppRootFolder()}`);

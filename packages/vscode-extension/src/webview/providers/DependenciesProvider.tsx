@@ -118,7 +118,6 @@ export default function DependenciesProvider({ children }: DependenciesProviderP
     };
 
     runDiagnostics();
-
     window.addEventListener("message", listener);
 
     return () => window.removeEventListener("message", listener);

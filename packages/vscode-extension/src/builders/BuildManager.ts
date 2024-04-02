@@ -7,10 +7,14 @@ import { calculateMD5 } from "../utilities/common";
 import { Platform } from "../common/DeviceManager";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
-import { Disposable, LogOutputChannel, OutputChannel, window } from "vscode";
+import { Disposable, OutputChannel, window } from "vscode";
+import { downloadExpoGo, isExpoGoProject } from "./expoGo";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
+
+export const EXPO_GO_BUNDLE_ID = "host.exp.Exponent";
+export const EXPO_GO_PACKAGE_NAME = "host.exp.exponent";
 
 export type IOSBuildResult = {
   platform: Platform.IOS;
@@ -132,6 +136,15 @@ export class BuildManager {
     cancelToken: CancelToken,
     progressListener: (newProgress: number) => void
   ) {
+    if (await isExpoGoProject()) {
+      const apkPath = await downloadExpoGo(Platform.Android, cancelToken);
+      return {
+        platform: Platform.Android,
+        apkPath,
+        packageName: EXPO_GO_PACKAGE_NAME,
+      } as AndroidBuildResult;
+    }
+
     const newFingerprint = await generateWorkspaceFingerprint();
     if (!forceCleanBuild) {
       const buildResult = await this.loadAndroidCachedBuild(newFingerprint);
@@ -154,7 +167,10 @@ export class BuildManager {
       this.buildOutputChannel!,
       progressListener
     );
-    const buildResult: AndroidBuildResult = { ...build, platform: Platform.Android };
+    const buildResult: AndroidBuildResult = {
+      ...build,
+      platform: Platform.Android,
+    };
 
     // store build info in the cache
     const newBuildHash = (await calculateMD5(build.apkPath)).digest("hex");
@@ -195,6 +211,14 @@ export class BuildManager {
     cancelToken: CancelToken,
     progressListener: (newProgress: number) => void
   ) {
+    if (await isExpoGoProject()) {
+      const appPath = await downloadExpoGo(Platform.IOS, cancelToken);
+      return {
+        platform: Platform.IOS,
+        appPath,
+        bundleID: EXPO_GO_BUNDLE_ID,
+      } as IOSBuildResult;
+    }
     const newFingerprint = await generateWorkspaceFingerprint();
     if (!forceCleanBuild) {
       const buildResult = await this.loadIOSCachedBuild(newFingerprint);
