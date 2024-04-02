@@ -89,7 +89,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       });
       return false;
     };
-
+    
     const devices = await this.deviceManager.listAllDevices();
     if (!selectInitialDevice(devices)) {
       const listener = (devices: DeviceInfo[]) => {

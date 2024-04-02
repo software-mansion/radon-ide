@@ -2,10 +2,11 @@ import "./DevicesNotFoundView.css";
 import SmartphoneIcon from "../components/icons/SmartphoneIcon";
 import Button from "../components/shared/Button";
 import { useModal } from "../providers/ModalProvider";
-import CreateDeviceView, { SupportedAndroidDevice, SupportedIOSDevice } from "./CreateDeviceView";
+import CreateDeviceView from "./CreateDeviceView";
 import { useDevices } from "../providers/DevicesProvider";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { useState } from "react";
+import { SupportedAndroidDevices, SupportedIOSDevices } from "../utilities/consts";
 
 function DevicesNotFoundView() {
   const { openModal, closeModal } = useModal();
@@ -33,7 +34,7 @@ function DevicesNotFoundView() {
           newestAPIImage = image;
         }
       }
-      await deviceManager.createAndroidDevice(SupportedAndroidDevice.PIXEL_7, newestAPIImage);
+      await deviceManager.createAndroidDevice(SupportedAndroidDevices.PIXEL_7, newestAPIImage);
     } finally {
       setAndroidCreating(false);
     }
@@ -46,7 +47,7 @@ function DevicesNotFoundView() {
       for (const runtime of iOSRuntimes) {
         if (
           (newestRuntime === undefined || runtime.version > newestRuntime.version) &&
-          runtime.supportedDeviceTypes.find((dt) => dt.name === SupportedIOSDevice.IPHONE_15_PRO)
+          runtime.supportedDeviceTypes.find((dt) => dt.name === SupportedIOSDevices.IPHONE_15_PRO)
         ) {
           newestRuntime = runtime;
         }
@@ -56,7 +57,7 @@ function DevicesNotFoundView() {
         return;
       }
       const iOSDeviceType = newestRuntime.supportedDeviceTypes.find(
-        (dt) => dt.name === SupportedIOSDevice.IPHONE_15_PRO
+        (dt) => dt.name === SupportedIOSDevices.IPHONE_15_PRO
       );
       await deviceManager.createIOSDevice(iOSDeviceType!, newestRuntime);
     } finally {
