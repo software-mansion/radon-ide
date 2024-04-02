@@ -44,16 +44,3 @@ export function isPackageManagerAvailable(manager: PackageManagerName): boolean 
   } catch {}
   return false;
 }
-
-export async function installNodeModulesAsync(packageManager: PackageManagerName) {
-  const options = { cwd: getAppRootFolder() };
-  if (packageManager === "yarn") {
-    await new PackageManager.YarnPackageManager(options).installAsync();
-  } else if (packageManager === "pnpm") {
-    await new PackageManager.PnpmPackageManager(options).installAsync();
-  } else if (packageManager === "bun") {
-    await new PackageManager.BunPackageManager(options).installAsync();
-  } else {
-    await new PackageManager.NpmPackageManager(options).installAsync();
-  }
-}

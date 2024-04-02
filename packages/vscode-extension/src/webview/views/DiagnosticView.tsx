@@ -31,23 +31,6 @@ function DiagnosticView() {
 
       <Label>Project related</Label>
       <DiagnosticItem
-        label="Node modules installed"
-        item={dependencies.NodeModules}
-        action={
-          <IconButton
-            tooltip={{ label: "Fix", side: "bottom" }}
-            type="secondary"
-            size="small"
-            onClick={() => {
-              vscode.postMessage({
-                command: "installNodeModules",
-              });
-            }}>
-            <span className="codicon codicon-wand" />
-          </IconButton>
-        }
-      />
-      <DiagnosticItem
         label="Pods installed"
         item={dependencies.Pods}
         action={

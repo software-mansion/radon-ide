@@ -44,10 +44,6 @@ export class DependencyChecker implements Disposable {
             Logger.debug("Received checkCocoaPodsInstalled command.");
             this.checkCocoaPodsInstalled();
             return;
-          case "checkNodeModulesInstalled":
-            Logger.debug("Received checkNodeModulesInstalled command.");
-            this.checkNodeModulesInstalled();
-            return;
           case "checkPodsInstalled":
             Logger.debug("Received checkPodsInstalled command.");
             this.checkPodsInstalled();
@@ -73,24 +69,6 @@ export class DependencyChecker implements Disposable {
       },
     });
     Logger.debug("Nodejs installed: ", installed);
-    return installed;
-  }
-
-  public async checkNodeModulesInstalled() {
-    const installed = await checkIfCLIInstalled(`npm list --json`, {
-      cwd: getAppRootFolder(),
-    });
-
-    const errorMessage = "Node modules are not installed.";
-    this.webview.postMessage({
-      command: "isNodeModulesInstalled",
-      data: {
-        installed,
-        info: "Whether JavaScript packages are installed.",
-        error: installed ? undefined : errorMessage,
-      },
-    });
-    Logger.debug("Node modules installed: ", installed);
     return installed;
   }
 
@@ -151,17 +129,13 @@ export class DependencyChecker implements Disposable {
 
   public async checkPodsInstalled() {
     const installed = await checkIosDependenciesInstalled();
-    const nodeModulesInstalled = await this.checkNodeModulesInstalled();
     const errorMessage = "iOS dependencies are not installed.";
-    const extraInfoMessage = nodeModulesInstalled
-      ? ""
-      : "  Node modules need to be installed first.";
 
     this.webview.postMessage({
       command: "isPodsInstalled",
       data: {
         installed,
-        info: `Whether iOS dependencies are installed.${extraInfoMessage}`,
+        info: `Whether iOS dependencies are installed.`,
         error: installed ? undefined : errorMessage,
       },
     });

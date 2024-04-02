@@ -1,6 +1,5 @@
 import { Webview, Disposable } from "vscode";
 import { Logger } from "../Logger";
-import { installNodeModulesAsync, resolvePackageManager } from "../utilities/packageManager";
 import { DependencyChecker } from "./DependencyChecker";
 import { command } from "../utilities/subprocess";
 import { getIosSourceDir } from "../builders/buildIOS";
@@ -33,10 +32,6 @@ export class DependencyInstaller implements Disposable {
         const command = message.command;
 
         switch (command) {
-          case "installNodeModules":
-            Logger.debug("Received installNodeModules command.");
-            this.installNodeModules();
-            return;
           case "installPods":
             Logger.debug("Received installPods command.");
             this.installPods();
@@ -46,20 +41,6 @@ export class DependencyInstaller implements Disposable {
       undefined,
       this.disposables
     );
-  }
-
-  public async installNodeModules() {
-    const packageManager = await resolvePackageManager();
-    Logger.debug(`Installing node modules using ${packageManager}`);
-    this.webview.postMessage({
-      command: "installingNodeModules",
-    });
-
-    await installNodeModulesAsync(packageManager);
-    Logger.debug("Finished installing node modules!");
-    await this.dependencyChecker.checkNodeModulesInstalled();
-    // after installing node modules, we need to run checkPodsInstalled function to determine if pods can be installed (they can't be installed if node modules are not present)
-    await this.dependencyChecker.checkPodsInstalled();
   }
 
   public async installPods() {
