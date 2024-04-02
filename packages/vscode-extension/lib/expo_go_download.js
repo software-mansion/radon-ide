@@ -5,8 +5,8 @@ const { downloadExpoGoAsync } = requireFromAppDir("@expo/cli/build/src/utils/dow
 async function main() {
   let platform = process.argv[2]; // 'Android' or 'iOS'
 
-  if (!platform) {
-    throw new Error('Please provide both platform ("Android" or "iOS").');
+  if (platform !== "Android" && platform !== "iOS") {
+    throw new Error("Platform not selected.");
   }
   const { exp } = getConfig(appRoot);
   const sdkVersion = exp.sdkVersion;

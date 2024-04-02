@@ -66,8 +66,6 @@ export interface ProjectEventListener<T> {
 }
 
 export interface ProjectInterface {
-  useExpoGo(): Promise<boolean>;
-
   getProjectState(): Promise<ProjectState>;
   restart(forceCleanBuild: boolean): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;

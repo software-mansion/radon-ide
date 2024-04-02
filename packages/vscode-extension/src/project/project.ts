@@ -19,7 +19,6 @@ import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
-import { shouldUseExpoGo } from "../builders/expoGo";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 
@@ -52,10 +51,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-  }
-
-  async useExpoGo() {
-    return await shouldUseExpoGo();
   }
 
   onBundleError(): void {
@@ -353,14 +348,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       });
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
-      const useExpoGo = await this.useExpoGo();
       const build = this.buildManager.startBuild(
         deviceInfo.platform,
         forceCleanBuild,
         throttle((stageProgress: number) => {
           this.reportStageProgress(stageProgress, StartupMessage.Building);
-        }, 100),
-        useExpoGo
+        }, 100)
       );
       Logger.debug("Metro & devtools ready");
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
