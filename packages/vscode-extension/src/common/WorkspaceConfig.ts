@@ -15,8 +15,8 @@ export interface WorkspaceConfigEventListener<T> {
 
 export interface WorkspaceConfig {
   getConfig(): Promise<WorkspaceConfigProps>;
-  // updateUserLevel method can take any of the keys from WorkspaceConfigProps and appropriate value:
-  updateUserLevel<K extends keyof WorkspaceConfigProps>(
+  // update method can take any of the keys from WorkspaceConfigProps and appropriate value:
+  update<K extends keyof WorkspaceConfigProps>(
     key: K,
     value: WorkspaceConfigProps[K]
   ): Promise<void>;

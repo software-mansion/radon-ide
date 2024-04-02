@@ -15,7 +15,7 @@ interface SettingsDropdownProps {
 }
 
 function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps) {
-  const { panelLocation, updateUserLevel } = useWorkspaceConfig();
+  const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
   return (
     <DropdownMenu.Root>
@@ -55,14 +55,14 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
                 alignOffset={-5}>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => updateUserLevel("panelLocation", "tab")}>
+                  onSelect={() => update("panelLocation", "tab")}>
                   <span className="codicon codicon-layout-centered" />
                   Editor tab
                   {panelLocation === "tab" && <span className="codicon codicon-check right-slot" />}
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => updateUserLevel("panelLocation", "side-panel")}>
+                  onSelect={() => update("panelLocation", "side-panel")}>
                   <span className="codicon codicon-layout-sidebar-right" />
                   Side panel
                   {panelLocation === "side-panel" && (
@@ -72,7 +72,7 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
                   onSelect={() => {
-                    updateUserLevel("panelLocation", "secondary-side-panel");
+                    update("panelLocation", "secondary-side-panel");
                     openModal(
                       "Drag and drop to secondary side panel",
                       <div>
