@@ -1,18 +1,16 @@
 import pixel7 from "../../assets/pixel_7/skin.webp";
 import pixel7mask from "../../assets/pixel_7/mask.png";
+import pixel6a from "../../assets/pixel_6a/skin.webp";
+import pixel6amask from "../../assets/pixel_6a/mask.png";
 import iphone15pro from "../../assets/iphone_15_pro/skin.svg";
 import iphone15promask from "../../assets/iphone_15_pro/mask.svg";
+import { Platform } from "../../common/DeviceManager";
 
-export enum SupportedIOSDevices {
-  IPHONE_15_PRO = "iPhone 15 Pro",
-}
+export type SupportedDeviceName = keyof typeof SupportedDevices;
 
-export enum SupportedAndroidDevices {
-  PIXEL_7 = "Google Pixel 7",
-}
-
-export const DEVICE_GRAPHICAL_PROPERTIES = {
-  "iPhone 15 Pro" : {
+export const SupportedDevices = {
+  "iPhone 15 Pro": {
+    platform: Platform.IOS,
     screenWidth: 1179,
     screenHeight: 2556,
     frameWidth: 1285,
@@ -23,6 +21,7 @@ export const DEVICE_GRAPHICAL_PROPERTIES = {
     maskImage: iphone15promask,
   },
   "Google Pixel 7": {
+    platform: Platform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
     frameWidth: 1200,
@@ -31,9 +30,23 @@ export const DEVICE_GRAPHICAL_PROPERTIES = {
     offsetY: 58,
     frameImage: pixel7,
     maskImage: pixel7mask,
-  }
-}
+  },
+  "Google Pixel 6a": {
+    platform: Platform.Android,
+    screenWidth: 1080,
+    screenHeight: 2400,
+    frameWidth: 1207,
+    frameHeight: 2555,
+    offsetX: 57,
+    offsetY: 69,
+    frameImage: pixel6a,
+    maskImage: pixel6amask,
+  },
+};
+
 export type DeviceProperties = {
+  name: string;
+  platform: Platform;
   screenWidth: number;
   screenHeight: number;
   frameWidth: number;

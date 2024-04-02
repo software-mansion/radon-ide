@@ -4,30 +4,28 @@ import { useState } from "react";
 import { useDevices } from "../providers/DevicesProvider";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
-import { SupportedAndroidDevices } from "../utilities/consts";
+import { SupportedDeviceName, SupportedDevices } from "../utilities/consts";
+import { Platform } from "../../common/DeviceManager";
 
-
-export enum SupportedIOSDevice {
-  IPHONE_15_PRO = "iPhone 15 Pro",
-}
-
-type SupportedDevice = SupportedAndroidDevices | SupportedIOSDevice;
-
-function isSupportedAndroidDevices(device: SupportedDevice): device is SupportedAndroidDevices {
-  return Object.values(SupportedAndroidDevices).includes(device as SupportedAndroidDevices);
-}
-
-function isSupportedIOSDevice(device: SupportedDevice): device is SupportedIOSDevice {
-  return Object.values(SupportedIOSDevice).includes(device as SupportedIOSDevice);
+function isSupportedIOSDevice(device: SupportedDeviceName): boolean {
+  return SupportedDevices[device].platform === Platform.IOS;
 }
 
 const SUPPORTED_DEVICES = [
   {
-    items: Object.values(SupportedIOSDevice).map((value) => ({ value, label: value })),
+    items: Object.entries(SupportedDevices)
+      .filter((item) => {
+        return item[1].platform === Platform.IOS;
+      })
+      .map((item) => ({ value: item[0], label: item[0] })),
     label: "iOS",
   },
   {
-    items: Object.values(SupportedAndroidDevices).map((value) => ({ value, label: value })),
+    items: Object.entries(SupportedDevices)
+      .filter((item) => {
+        return item[1].platform === Platform.Android;
+      })
+      .map((item) => ({ value: item[0], label: item[0] })),
     label: "Android",
   },
 ];
@@ -38,7 +36,7 @@ interface CreateDeviceViewProps {
 }
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
-  const [deviceName, setDeviceName] = useState<SupportedDevice | undefined>(undefined);
+  const [deviceName, setDeviceName] = useState<SupportedDeviceName | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -93,7 +91,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           className="form-field"
           value={deviceName}
           onChange={(newValue: string) => {
-            setDeviceName(newValue as SupportedDevice);
+            setDeviceName(newValue as SupportedDeviceName);
             selectSystemName(undefined);
           }}
           items={SUPPORTED_DEVICES}
