@@ -36,6 +36,7 @@ export type IOSRuntimeInfo = {
   platform: "iOS" | "tvOS" | "watchOS";
   identifier: string;
   name: string;
+  version: string;
   supportedDeviceTypes: IOSDeviceTypeInfo[];
 };
 
