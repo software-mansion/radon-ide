@@ -28,8 +28,6 @@ interface SimulatorData {
   devices: { [runtimeID: string]: SimulatorInfo[] };
 }
 
-// TODO: move expo deeplink choice and fetchExpoLaunchDeeplink to separate files
-
 export class IosSimulatorDevice extends DeviceBase {
   constructor(private readonly deviceUDID: string) {
     super();
