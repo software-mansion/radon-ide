@@ -8,7 +8,7 @@ import { Platform } from "../common/DeviceManager";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { Disposable, OutputChannel, window } from "vscode";
-import { downloadExpoGo, shouldUseExpoGo } from "./expoGo";
+import { downloadExpoGo, isExpoGoProject } from "./expoGo";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
@@ -136,8 +136,7 @@ export class BuildManager {
     cancelToken: CancelToken,
     progressListener: (newProgress: number) => void
   ) {
-    const isExpoGoProject = await shouldUseExpoGo();
-    if (isExpoGoProject) {
+    if (await isExpoGoProject()) {
       const apkPath = await downloadExpoGo(Platform.Android, cancelToken);
       return {
         platform: Platform.Android,
@@ -212,8 +211,7 @@ export class BuildManager {
     cancelToken: CancelToken,
     progressListener: (newProgress: number) => void
   ) {
-    const isExpoGoProject = await shouldUseExpoGo();
-    if (isExpoGoProject) {
+    if (await isExpoGoProject()) {
       const appPath = await downloadExpoGo(Platform.IOS, cancelToken);
       return {
         platform: Platform.IOS,

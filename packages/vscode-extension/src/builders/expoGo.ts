@@ -7,7 +7,7 @@ import { CancelToken } from "./BuildManager";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
-export async function shouldUseExpoGo(): Promise<boolean> {
+export async function isExpoGoProject(): Promise<boolean> {
   const libPath = path.join(extensionContext.extensionPath, "lib");
   const { stdout } = await exec(`node`, [path.join(libPath, "expo_go_usage.js")], {
     cwd: getAppRootFolder(),
