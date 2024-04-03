@@ -1,6 +1,4 @@
-import { useEffect } from "react";
-
-import { useAlert } from "../providers/AlertProvider";
+import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
 
 import IconButton from "../components/shared/IconButton";
@@ -29,39 +27,23 @@ function Actions() {
   );
 }
 
-const buildErrorAlertId = "build-error-alert";
-
+const buildErrorAlert = {
+  id: "build-error-alert",
+  title: "Cannot run project",
+  description: "Open build logs to find out what went wrong.",
+  actions: <Actions />,
+};
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
-  const { openAlert, isOpen, closeAlert } = useAlert();
-
-  useEffect(() => {
-    if (shouldDisplayAlert && !isOpen(buildErrorAlertId)) {
-      openAlert({
-        id: buildErrorAlertId,
-        title: "Cannot run project",
-        description: "Open build logs to find out what went wrong.",
-        actions: <Actions />,
-      });
-    } else if (!shouldDisplayAlert && isOpen(buildErrorAlertId)) {
-      closeAlert(buildErrorAlertId);
-    }
-  }, [shouldDisplayAlert, isOpen, openAlert, closeAlert]);
+  useToggleableAlert(shouldDisplayAlert, buildErrorAlert);
 }
 
-const bundleErrorAlertId = "bundle-error-alert";
+const bundleErrorAlert = {
+  id: "bundle-error-alert",
+  title: "Bundle error",
+  description: "Open build logs to find out what went wrong.",
+  actions: <Actions />,
+};
 
 export function useBundleErrorAlert(shouldDisplayAlert: boolean) {
-  const { openAlert, isOpen, closeAlert } = useAlert();
-  useEffect(() => {
-    if (shouldDisplayAlert && !isOpen(bundleErrorAlertId)) {
-      openAlert({
-        id: bundleErrorAlertId,
-        title: "Bundle error",
-        description: "Open build logs to find out what went wrong.",
-        actions: <Actions />,
-      });
-    } else if (!shouldDisplayAlert && isOpen(bundleErrorAlertId)) {
-      closeAlert(bundleErrorAlertId);
-    }
-  }, [shouldDisplayAlert, isOpen, openAlert, closeAlert]);
+  useToggleableAlert(shouldDisplayAlert, bundleErrorAlert);
 }

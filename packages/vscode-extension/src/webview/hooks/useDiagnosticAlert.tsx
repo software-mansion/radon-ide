@@ -1,6 +1,4 @@
-import { useEffect } from "react";
-
-import { useAlert } from "../providers/AlertProvider";
+import { useToggleableAlert } from "../providers/AlertProvider";
 import { useModal } from "../providers/ModalProvider";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { useProject } from "../providers/ProjectProvider";
@@ -34,22 +32,13 @@ function Actions() {
   );
 }
 
-const id = "diagnostic-alert";
-
+const diagnosticAlert = {
+  id: "diagnostic-alert",
+  title: "Cannot run project",
+  description: "Run diagnostics to find out what went wrong.",
+  actions: <Actions />,
+};
 export function useDiagnosticAlert() {
-  const { openAlert, isOpen, closeAlert } = useAlert();
   const { isError } = useDependencies();
-
-  useEffect(() => {
-    if (isError && !isOpen(id)) {
-      openAlert({
-        id,
-        title: "Cannot run project",
-        description: "Run diagnostics to find out what went wrong.",
-        actions: <Actions />,
-      });
-    } else if (!isError && isOpen(id)) {
-      closeAlert(id);
-    }
-  }, [isError, isOpen, openAlert, closeAlert, id]);
+  useToggleableAlert(isError, diagnosticAlert);
 }

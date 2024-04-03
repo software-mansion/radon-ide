@@ -1,4 +1,4 @@
-import { Disposable, debug, commands, workspace, window, LogOutputChannel } from "vscode";
+import { Disposable, debug, commands, workspace, RelativePattern, FileSystemWatcher } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -18,6 +18,7 @@ import {
 import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
+import { generateWorkspaceFingerprint } from "../utilities/fingerprint";
 import stripAnsi from "strip-ansi";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
@@ -30,6 +31,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private debugSessionListener: Disposable | undefined;
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
+
+  private nativeFilesChangedSinceLastInstall: boolean;
+  private lastFingerprint?: string;
+  private workspaceWatcher!: FileSystemWatcher;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -51,6 +56,30 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
+    this.nativeFilesChangedSinceLastInstall = false;
+
+    this.trackNativeChanges();
+  }
+
+  trackNativeChanges() {
+    const firstWorkspace = workspace.workspaceFolders?.[0];
+    if (firstWorkspace !== undefined) {
+      // VS code glob patterns don't support negation so we can't exclude
+      // native build directories like android/build, android/.gradle,
+      // android/app/build, or ios/build.
+      // VSCode by default exclude .git and node_modules directories from
+      // watching, configured by `files.watcherExclude` setting.
+      //
+      // We may revisit this if better performance is needed and create
+      // recursive watches ourselves by iterating through workspace directories
+      // to workaround this issue.
+      const workspacePattern = new RelativePattern(firstWorkspace, "**/*");
+      this.workspaceWatcher = workspace.createFileSystemWatcher(workspacePattern);
+
+      this.workspaceWatcher.onDidChange(() => this.checkIfNativeChanged());
+      this.workspaceWatcher.onDidCreate(() => this.checkIfNativeChanged());
+      this.workspaceWatcher.onDidDelete(() => this.checkIfNativeChanged());
+    }
   }
 
   async dispatchPaste(text: string) {
@@ -61,7 +90,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.updateProjectState({ status: "bundleError" });
   }
 
-  onIncrementalBundleError(message: string, errorModulePath: string): void {
+  onIncrementalBundleError(message: string, _errorModulePath: string): void {
     Logger.error(stripAnsi(message));
     // if bundle build failed, we don't want to change the status
     // incrementalBundleError status should be set only when bundleError status is not set
@@ -128,6 +157,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.devtools?.dispose();
     this.debugSessionListener?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
+    this.workspaceWatcher.dispose();
   }
 
   private reloadingMetro = false;
@@ -139,9 +169,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   public async restart(forceCleanBuild: boolean) {
     this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
-    if (forceCleanBuild) {
-      await this.start(true, forceCleanBuild);
-      await this.selectDevice(this.projectState.selectedDevice!, forceCleanBuild);
+    if (forceCleanBuild || this.nativeFilesChangedSinceLastInstall) {
+      await this.start(true, true);
+      await this.selectDevice(this.projectState.selectedDevice!, true);
+      this.nativeFilesChangedSinceLastInstall = false;
       return;
     }
 
@@ -153,7 +184,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     // otherwise we trigger selectDevice which should handle restarting the device, installing
     // app and launching it
-    await this.selectDevice(this.projectState.selectedDevice!, forceCleanBuild);
+    await this.selectDevice(this.projectState.selectedDevice!, false);
   }
 
   private async start(restart: boolean, forceCleanBuild: boolean) {
@@ -389,16 +420,28 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         this.projectState.selectedDevice === deviceInfo &&
         this.deviceSession === newDeviceSession
       ) {
-        this.updateProjectState({
-          status: "buildError",
-        });
+        this.updateProjectState({ status: "buildError" });
       }
     }
   }
 
-  private removeDeviceListener = async (devices: DeviceInfo) => {
+  private async removeDeviceListener(_devices: DeviceInfo) {
     await this.trySelectingInitialDevice();
-  };
+  }
+
+  private checkIfNativeChanged = throttle(async () => {
+    if (!this.nativeFilesChangedSinceLastInstall) {
+      const newFingerprint = await generateWorkspaceFingerprint();
+      const initialized = this.lastFingerprint !== undefined;
+      const changed = this.lastFingerprint !== newFingerprint;
+
+      if (initialized && changed) {
+        this.nativeFilesChangedSinceLastInstall = true;
+        this.eventEmitter.emit("needsNativeRebuild");
+      }
+      this.lastFingerprint = newFingerprint;
+    }
+  }, 100);
 }
 
 export function isAppSourceFile(filePath: string) {

@@ -9,6 +9,8 @@ import { DeviceProperties, SupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
+
+import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import { InspectData } from "../../common/Project";
 
 declare module "react" {
@@ -107,14 +109,16 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   const { projectState, project } = useProject();
 
-  const hasBuildError = projectState?.status === "buildError";
-  const hasIncrementalBundleError = projectState?.status === "incrementalBundleError";
-  const hasBundleError = projectState?.status === "bundleError";
+  const projectStatus = projectState.status;
 
-  const debugPaused = projectState?.status === "debuggerPaused";
-  const debugException = projectState?.status === "runtimeError";
+  const hasBuildError = projectStatus === "buildError";
+  const hasIncrementalBundleError = projectStatus === "incrementalBundleError";
+  const hasBundleError = projectStatus === "bundleError";
 
-  const previewURL = projectState?.previewURL;
+  const debugPaused = projectStatus === "debuggerPaused";
+  const debugException = projectStatus === "runtimeError";
+
+  const previewURL = projectState.previewURL;
 
   const isStarting =
     hasBundleError || hasIncrementalBundleError || debugException
@@ -125,6 +129,14 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   useBuildErrorAlert(hasBuildError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
+
+  const openRebuildAlert = useNativeRebuildAlert();
+  const openNativeRebuildAlert = useCallback(() => {
+    if (projectStatus !== "starting") {
+      openRebuildAlert();
+    }
+  }, [projectStatus, openRebuildAlert]);
+
   const [inspectData, setInspectData] = useState<InspectData | null>(null);
   useEffect(() => {
     if (!isInspecting) {
@@ -237,6 +249,13 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     };
   }, [project]);
 
+  useEffect(() => {
+    project.addListener("needsNativeRebuild", openNativeRebuildAlert);
+    return () => {
+      project.removeListener("needsNativeRebuild", openNativeRebuildAlert);
+    };
+  }, [project, openNativeRebuildAlert]);
+
   const device = SupportedDevices.find((sd) => {
     return sd.name === projectState?.selectedDevice?.name;
   });
@@ -289,7 +308,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
               />
             </div>
           )}
-          {projectState.status == "refreshing" && (
+          {projectStatus === "refreshing" && (
             <div className="phone-screen phone-refreshing-overlay">
               <VSCodeProgressRing />
               <div>Refreshing...</div>

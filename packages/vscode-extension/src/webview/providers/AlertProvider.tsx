@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useState } from "react";
+import React, { createContext, useCallback, useEffect, useState } from "react";
 import Alert from "../components/shared/Alert";
 
 interface AlertType {
@@ -6,6 +6,7 @@ interface AlertType {
   title: string;
   description?: string;
   actions: React.ReactNode;
+  priority?: number; // higher – more important
 }
 
 interface AlertContextProps {
@@ -30,12 +31,12 @@ export default function AlertProvider({ children }: { children: React.ReactNode 
     [alerts]
   );
 
-  const openAlert = useCallback(({ id, title, description, actions }: AlertType) => {
+  const openAlert = useCallback(({ id, title, description, actions, priority }: AlertType) => {
     setAlerts((alerts) => {
       if (alerts.some((alert) => alert.id === id)) {
         return alerts;
       }
-      return [...alerts, { id, title, description, actions }];
+      return [...alerts, { id, title, description, actions, priority }];
     });
   }, []);
 
@@ -43,7 +44,7 @@ export default function AlertProvider({ children }: { children: React.ReactNode 
     setAlerts((alerts) => alerts.filter((alert) => alert.id !== id));
   }, []);
 
-  const topAlert = alerts[alerts.length - 1];
+  const topAlert = getTopAlert(alerts);
 
   return (
     <AlertContext.Provider value={{ openAlert, isOpen, closeAlert }}>
@@ -59,6 +60,19 @@ export default function AlertProvider({ children }: { children: React.ReactNode 
   );
 }
 
+function getTopAlert(alerts: AlertType[]) {
+  const sorted = [...alerts];
+
+  sorted.sort((a, b) => {
+    const aPriority = a.priority ?? 0;
+    const bPriority = b.priority ?? 0;
+
+    // only moves higher priority alerts to the end of array
+    return aPriority - bPriority;
+  });
+  return sorted[sorted.length - 1];
+}
+
 export function useAlert() {
   const context = React.useContext(AlertContext);
 
@@ -67,4 +81,15 @@ export function useAlert() {
   }
 
   return context;
+}
+
+export function useToggleableAlert(open: boolean, alert: AlertType) {
+  const { openAlert, isOpen, closeAlert } = useAlert();
+  useEffect(() => {
+    if (open && !isOpen(alert.id)) {
+      openAlert(alert);
+    } else if (!open && isOpen(alert.id)) {
+      closeAlert(alert.id);
+    }
+  }, [open, alert, isOpen, openAlert, closeAlert]);
 }

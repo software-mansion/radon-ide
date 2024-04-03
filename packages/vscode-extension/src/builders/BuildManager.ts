@@ -44,10 +44,10 @@ type IOSBuildCacheInfo = {
 
 export class CancelToken {
   private _cancelled = false;
-  private cancellListeners: (() => void)[] = [];
+  private cancelListeners: (() => void)[] = [];
 
   public onCancel(cb: () => void) {
-    this.cancellListeners.push(cb);
+    this.cancelListeners.push(cb);
   }
 
   public adapt(execResult: ReturnType<typeof exec>) {
@@ -57,7 +57,7 @@ export class CancelToken {
 
   public cancel() {
     this._cancelled = true;
-    for (const listener of this.cancellListeners) {
+    for (const listener of this.cancelListeners) {
       listener();
     }
   }
