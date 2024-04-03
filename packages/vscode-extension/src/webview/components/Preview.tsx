@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, MouseEvent } from "react";
 import clamp from "lodash/clamp";
 import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
@@ -8,13 +8,21 @@ import { useProject } from "../providers/ProjectProvider";
 import { Platform } from "../../common/DeviceManager";
 import {
   ANDROID_DEVICE_GRAPHICAL_PROPERTIES,
+  DeviceProperties,
   IOS_DEVICE_GRAPHICAL_PROPERTIES,
 } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
+import { InspectData } from "../../common/Project";
 
-function cssPropertiesForDevice(device) {
+declare module "react" {
+  interface CSSProperties {
+    [key: `--${string}`]: string | number;
+  }
+}
+
+function cssPropertiesForDevice(device: DeviceProperties) {
   return {
     "--phone-screen-height": `${(device.screenHeight / device.frameHeight) * 100}%`,
     "--phone-screen-width": `${(device.screenWidth / device.frameWidth) * 100}%`,
@@ -23,13 +31,18 @@ function cssPropertiesForDevice(device) {
     "--phone-mask-image": `url(${device.maskImage})`,
     "--phone-top": `${(device.offsetY / device.frameHeight) * 100}%`,
     "--phone-left": `${(device.offsetX / device.frameWidth) * 100}%`,
-  };
+  } as const;
 }
 
-function Preview({ isInspecting, setIsInspecting }) {
-  const wrapperDivRef = useRef(null);
+type Props = {
+  isInspecting: boolean;
+  setIsInspecting: (isInspecting: boolean) => void;
+};
+
+function Preview({ isInspecting, setIsInspecting }: Props) {
+  const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
-  const previewRef = useRef(null);
+  const previewRef = useRef<HTMLImageElement>(null);
 
   const { projectState, project } = useProject();
 
@@ -51,15 +64,16 @@ function Preview({ isInspecting, setIsInspecting }) {
 
   useBuildErrorAlert(hasBuildError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
-  const [inspectData, setInspectData] = useState(null);
+  const [inspectData, setInspectData] = useState<InspectData | null>(null);
   useEffect(() => {
     if (!isInspecting) {
       setInspectData(null);
     }
   }, [isInspecting]);
 
-  function sendTouch(event, type) {
-    const imgRect = previewRef.current.getBoundingClientRect();
+  type MouseMove = "Move" | "Down" | "Up";
+  function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+    const imgRect = previewRef.current!.getBoundingClientRect();
     const x = (event.clientX - imgRect.left) / imgRect.width;
     const y = (event.clientY - imgRect.top) / imgRect.height;
     const clampedX = clamp(x, 0, 1);
@@ -67,12 +81,12 @@ function Preview({ isInspecting, setIsInspecting }) {
     project.dispatchTouch(clampedX, clampedY, type);
   }
 
-  function sendInspectUnthrottled(event, type) {
+  function sendInspectUnthrottled(event: MouseEvent<HTMLDivElement>, type: MouseMove | "Leave") {
     if (type === "Leave") {
       setInspectData(null);
       return;
     }
-    const imgRect = previewRef.current.getBoundingClientRect();
+    const imgRect = previewRef.current!.getBoundingClientRect();
     const x = (event.clientX - imgRect.left) / imgRect.width;
     const y = (event.clientY - imgRect.top) / imgRect.height;
     const clampedX = clamp(x, 0, 1);
@@ -82,7 +96,7 @@ function Preview({ isInspecting, setIsInspecting }) {
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
 
-  function onMouseMove(e) {
+  function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isPressing) {
       sendTouch(e, "Move");
@@ -91,9 +105,9 @@ function Preview({ isInspecting, setIsInspecting }) {
     }
   }
 
-  function onMouseDown(e) {
+  function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    wrapperDivRef.current.focus();
+    wrapperDivRef.current!.focus();
     if (isInspecting) {
       sendInspect(e, "Down", true);
       setIsInspecting(false);
@@ -106,7 +120,7 @@ function Preview({ isInspecting, setIsInspecting }) {
     }
   }
 
-  function onMouseUp(e) {
+  function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isPressing) {
       sendTouch(e, "Up");
@@ -114,7 +128,7 @@ function Preview({ isInspecting, setIsInspecting }) {
     setIsPressing(false);
   }
 
-  function onMouseLeave(e) {
+  function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isPressing) {
       sendTouch(e, "Up");
@@ -128,7 +142,7 @@ function Preview({ isInspecting, setIsInspecting }) {
   }
 
   useEffect(() => {
-    function keyEventHandler(e) {
+    function keyEventHandler(e: KeyboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
         const hidCode = keyboardEventToHID(e);

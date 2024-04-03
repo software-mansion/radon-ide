@@ -18,7 +18,7 @@ import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 
 function PreviewView() {
-  const [isInspecing, setIsInspecting] = useState(false);
+  const [isInspecting, setIsInspecting] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [logCounter, setLogCounter] = useState(0);
 
@@ -42,7 +42,7 @@ function PreviewView() {
   }, []);
 
   useEffect(() => {
-    const disableInspectorOnEscape = (event) => {
+    const disableInspectorOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsInspecting(false);
       }
@@ -54,7 +54,7 @@ function PreviewView() {
     };
   }, []);
 
-  const handleDeviceDropdownChange = async (value) => {
+  const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
       openModal("Manage Devices", <ManageDevicesView />);
       return;
@@ -129,7 +129,7 @@ function PreviewView() {
       {selectedDevice ? (
         <Preview
           key={selectedDevice.id}
-          isInspecting={isInspecing}
+          isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
         />
       ) : (
@@ -140,11 +140,11 @@ function PreviewView() {
 
       <div className="button-group-bottom">
         <IconButton
-          active={isInspecing}
+          active={isInspecting}
           tooltip={{
             label: "Select an element to inspect it",
           }}
-          onClick={() => setIsInspecting(!isInspecing)}
+          onClick={() => setIsInspecting(!isInspecting)}
           disabled={devicesNotFound}>
           <span className="codicon codicon-inspect" />
         </IconButton>
@@ -153,7 +153,9 @@ function PreviewView() {
 
         <DeviceSelect
           devices={devices}
+          // @ts-ignore TODO: Fix typing
           value={selectedDevice?.id}
+          // @ts-ignore TODO: Fix typing
           label={selectedDevice?.name}
           onValueChange={handleDeviceDropdownChange}
           disabled={devicesNotFound}

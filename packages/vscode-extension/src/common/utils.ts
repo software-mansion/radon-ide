@@ -1,4 +1,7 @@
-export function throttle<T extends (...args: any[]) => any>(func: T, limitMs: number): T {
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limitMs: number
+): (...args: [...Parameters<T>, force?: boolean]) => ReturnType<T> {
   let timeout: NodeJS.Timeout | null = null;
   let recentArgs: any;
 
