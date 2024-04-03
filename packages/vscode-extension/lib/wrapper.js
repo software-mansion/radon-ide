@@ -130,7 +130,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
         newRoute && push(newRoute);
       });
 
-      agent._bridge.addListener("rnp_iosDevMenu", (_payload) => {
+      agent._bridge.addListener("RNIDE_iosDevMenu", (_payload) => {
         // this native module is present only on iOS and will crash if called
         // on Android
         const DevMenu = require("react-native/Libraries/NativeModules/specs/NativeDevMenu").default;

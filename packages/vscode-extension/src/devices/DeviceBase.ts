@@ -2,6 +2,7 @@ import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
 import { DeviceSettings } from "../common/Project";
+import { Platform } from "../common/DeviceManager";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
@@ -11,6 +12,7 @@ export abstract class DeviceBase implements Disposable {
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
   abstract makePreview(): Preview;
+  abstract platform(): Platform;
 
   dispose() {
     this.preview?.dispose();

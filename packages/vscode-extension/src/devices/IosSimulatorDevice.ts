@@ -33,6 +33,10 @@ export class IosSimulatorDevice extends DeviceBase {
     super();
   }
 
+  public platform(): Platform {
+    return Platform.IOS;
+  }
+
   public dispose() {
     super.dispose();
     return exec("xcrun", ["simctl", "--set", getOrCreateDeviceSet(), "shutdown", this.deviceUDID]);

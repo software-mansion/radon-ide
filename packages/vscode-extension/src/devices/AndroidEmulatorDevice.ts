@@ -37,6 +37,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
     super();
   }
 
+  public platform(): Platform {
+    return Platform.Android;
+  }
+
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
