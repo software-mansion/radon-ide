@@ -67,6 +67,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           return;
         }
         const iOSDeviceType = runtime.supportedDeviceTypes.find((dt) => dt.name === deviceName);
+        console.log("Frytki", runtime.supportedDeviceTypes);
         if (!iOSDeviceType) {
           return;
         }

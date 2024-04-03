@@ -4,6 +4,8 @@ import pixel6a from "../../assets/pixel_6a/skin.webp";
 import pixel6amask from "../../assets/pixel_6a/mask.png";
 import iphone15pro from "../../assets/iphone_15_pro/skin.svg";
 import iphone15promask from "../../assets/iphone_15_pro/mask.svg";
+import iphoneSE from "../../assets/iphone_SE/skin.png"; 
+import iphoneSEmask from "../../assets/iphone_SE/mask.png"; 
 import { Platform } from "../../common/DeviceManager";
 
 export type SupportedDeviceName = keyof typeof SupportedDevices;
@@ -13,12 +15,23 @@ export const SupportedDevices = {
     platform: Platform.IOS,
     screenWidth: 1179,
     screenHeight: 2556,
-    frameWidth: 1285,
+    frameWidth: 1297,
     frameHeight: 2663,
     offsetX: 55,
     offsetY: 55,
     frameImage: iphone15pro,
     maskImage: iphone15promask,
+  },
+  "iPhone SE (3rd generation)":{
+    platform: Platform.IOS,
+    screenWidth: 750,
+    screenHeight: 1334,
+    frameWidth: 870,
+    frameHeight: 1774,
+    offsetX: 55,
+    offsetY: 55,
+    frameImage: iphoneSE,
+    maskImage: iphoneSEmask,
   },
   "Google Pixel 7": {
     platform: Platform.Android,
