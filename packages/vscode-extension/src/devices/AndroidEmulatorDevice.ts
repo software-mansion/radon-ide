@@ -9,12 +9,12 @@ import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
-import { BuildResult } from "../builders/BuildManager";
+import { AndroidBuildResult, BuildResult, EXPO_GO_PACKAGE_NAME } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
-import { fetchExpoDevClientLaunchDeeplink } from "./IosSimulatorDevice";
+import { fetchExpoLaunchDeeplink } from "../builders/expoGo";
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
@@ -148,12 +148,22 @@ export class AndroidEmulatorDevice extends DeviceBase {
     );
   }
 
-  async launchWithExpoDevClientDeeplink(
-    metroPort: number,
-    devtoolsPort: number,
-    expoDevClientDeeplink: string
-  ) {
-    // For Expo dev-client setup, we use deeplink to launch the app. Since Expo's manifest is configured to
+  async launchWithBuild(build: AndroidBuildResult) {
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "monkey",
+      "-p",
+      build.packageName,
+      "-c",
+      "android.intent.category.LAUNCHER",
+      "1",
+    ]);
+  }
+
+  async launchWithExpoDeeplink(metroPort: number, devtoolsPort: number, expoDeeplink: string) {
+    // For Expo dev-client and expo go setup, we use deeplink to launch the app. Since Expo's manifest is configured to
     // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
     await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
     await exec(ADB_PATH, [
@@ -173,7 +183,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "-a",
       "android.intent.action.VIEW",
       "-d",
-      expoDevClientDeeplink + "&disableOnboarding=1", // disable onboarding dialog via deeplink query param,
+      expoDeeplink + "&disableOnboarding=1", // disable onboarding dialog via deeplink query param,
     ]);
   }
 
@@ -181,22 +191,14 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (build.platform !== Platform.Android) {
       throw new Error("Invalid platform");
     }
-    const expoDevClientDeeplink = await fetchExpoDevClientLaunchDeeplink(metroPort, "android");
-    if (expoDevClientDeeplink) {
-      this.launchWithExpoDevClientDeeplink(metroPort, devtoolsPort, expoDevClientDeeplink);
+    const deepLinkChoice =
+      build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
+    const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
+    if (expoDeeplink) {
+      this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
     } else {
       await this.configureMetroPort(build.packageName, metroPort);
-      await exec(ADB_PATH, [
-        "-s",
-        this.serial!,
-        "shell",
-        "monkey",
-        "-p",
-        build.packageName,
-        "-c",
-        "android.intent.category.LAUNCHER",
-        "1",
-      ]);
+      await this.launchWithBuild(build);
     }
   }
 

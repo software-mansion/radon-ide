@@ -23,7 +23,7 @@ export class DeviceSession implements Disposable {
 
   public dispose() {
     this.debugSession && debug.stopDebugging(this.debugSession);
-    this.disposableBuild.dispose();
+    this.disposableBuild?.dispose();
     this.device?.dispose();
   }
 

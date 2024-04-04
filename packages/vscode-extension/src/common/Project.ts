@@ -1,4 +1,3 @@
-import { LogOutputChannel } from "vscode";
 import { DeviceInfo } from "./DeviceManager";
 
 export type DeviceSettings = {

@@ -7,23 +7,33 @@ import { useDevices } from "../providers/DevicesProvider";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { useState } from "react";
 
-const RUNTIME_IDENTIFIER = "com.apple.CoreSimulator.SimRuntime.iOS-17-2";
-const IMAGE_LOCATION = "system-images/android-31/google_apis/arm64-v8a";
-
 function DevicesNotFoundView() {
   const { openModal, closeModal } = useModal();
   const { iOSRuntimes, androidImages, deviceManager } = useDevices();
   const [isIOSCreating, setIOSCreating] = useState(false);
   const [isAndroidCreating, setAndroidCreating] = useState(false);
 
+  function openCreateNewDeviceModal() {
+    openModal(
+      "Create new device",
+      <CreateDeviceView onCancel={closeModal} onCreate={closeModal} />
+    );
+  }
+
   async function createAndroidDevice() {
     setAndroidCreating(true);
-    const systemImage = androidImages.find((image) => image.location === IMAGE_LOCATION);
-    if (!systemImage) {
-      return;
-    }
-    await deviceManager.createAndroidDevice(SupportedAndroidDevice.PIXEL_7, systemImage);
     try {
+      if (androidImages.length === 0) {
+        openCreateNewDeviceModal();
+        return;
+      }
+      let newestAPIImage = androidImages[0];
+      for (const image of androidImages) {
+        if (image.apiLevel > newestAPIImage.apiLevel) {
+          newestAPIImage = image;
+        }
+      }
+      await deviceManager.createAndroidDevice(SupportedAndroidDevice.PIXEL_7, newestAPIImage);
     } finally {
       setAndroidCreating(false);
     }
@@ -32,17 +42,23 @@ function DevicesNotFoundView() {
   async function createIOSDevice() {
     setIOSCreating(true);
     try {
-      const runtime = iOSRuntimes.find((runtime) => runtime.identifier === RUNTIME_IDENTIFIER);
-      if (!runtime) {
+      let newestRuntime = undefined;
+      for (const runtime of iOSRuntimes) {
+        if (
+          (newestRuntime === undefined || runtime.version > newestRuntime.version) &&
+          runtime.supportedDeviceTypes.find((dt) => dt.name === SupportedIOSDevice.IPHONE_15_PRO)
+        ) {
+          newestRuntime = runtime;
+        }
+      }
+      if (newestRuntime === undefined) {
+        openCreateNewDeviceModal();
         return;
       }
-      const iOSDeviceType = runtime.supportedDeviceTypes.find(
+      const iOSDeviceType = newestRuntime.supportedDeviceTypes.find(
         (dt) => dt.name === SupportedIOSDevice.IPHONE_15_PRO
       );
-      if (!iOSDeviceType) {
-        return;
-      }
-      await deviceManager.createIOSDevice(iOSDeviceType, runtime);
+      await deviceManager.createIOSDevice(iOSDeviceType!, newestRuntime);
     } finally {
       setIOSCreating(false);
     }
@@ -59,24 +75,18 @@ function DevicesNotFoundView() {
       <div className="devices-not-found-button-group">
         <Button type="ternary" className="devices-not-found-quick-action" onClick={createIOSDevice}>
           {isIOSCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
-          Add iPhone 15 Pro
+          Add iPhone
         </Button>
         <Button
           type="ternary"
           className="devices-not-found-quick-action"
           onClick={createAndroidDevice}>
           {isAndroidCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
-          Add Google Pixel 7
+          Add Android
         </Button>
       </div>
       <p>or</p>
-      <Button
-        onClick={() => {
-          openModal(
-            "Manage Devices",
-            <CreateDeviceView onCancel={closeModal} onCreate={closeModal} />
-          );
-        }}>
+      <Button onClick={openCreateNewDeviceModal}>
         <span className="codicon codicon-add" />
         Create new device
       </Button>

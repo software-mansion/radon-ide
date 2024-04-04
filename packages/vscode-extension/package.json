@@ -13,7 +13,7 @@
     "workspaceContains:metro.config.js",
     "workspaceContains:app.config.js"
   ],
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -154,6 +154,7 @@
     "@types/node-fetch": "^2.6.9",
     "@types/plist": "^3.0.5",
     "@types/react": "^18.2.45",
+    "@types/tar": "^6.1.11",
     "@types/uuid": "^9.0.7",
     "@types/vscode": "^1.46.0",
     "@types/ws": "^8.5.10",

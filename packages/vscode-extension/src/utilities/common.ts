@@ -1,7 +1,6 @@
-import { workspace } from "vscode";
 import os from "os";
 import { createHash, Hash } from "crypto";
-import { join, extname } from "path";
+import { join } from "path";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
 import fs from "fs";
@@ -36,6 +35,14 @@ export function getAppCachesDir() {
 
 export function getLogsDir() {
   return join(getAppCachesDir(), "Logs");
+}
+
+export function getOrCreateAppDownloadsDir() {
+  const downloadsDirLocation = join(getAppCachesDir(), "Downloads");
+  if (!fs.existsSync(downloadsDirLocation)) {
+    fs.mkdirSync(downloadsDirLocation, { recursive: true });
+  }
+  return downloadsDirLocation;
 }
 
 export function isDeviceIOS(deviceId: string) {

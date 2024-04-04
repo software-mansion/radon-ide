@@ -1,7 +1,6 @@
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceSettings } from "../common/Project";
 
 export abstract class DeviceBase implements Disposable {

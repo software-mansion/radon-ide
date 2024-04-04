@@ -37,7 +37,11 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
   }, []);
 
   const update = useCallback(
-    <K extends keyof WorkspaceConfigProps>(key: K, value: WorkspaceConfigProps[K]) => {
+    <K extends keyof WorkspaceConfigProps>(
+      key: K,
+      value: WorkspaceConfigProps[K],
+      configurationTarget?: boolean
+    ) => {
       const newState = { ...config, [key]: value };
       setConfig(newState);
       workspaceConfig.update(key, value);
