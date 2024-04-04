@@ -126,7 +126,6 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   }
 
   public async createIOSDevice(deviceType: IOSDeviceTypeInfo, runtime: IOSRuntimeInfo) {
-    Logger.debug("Frytki", "create ios device")
     const simulator = await createSimulator(deviceType, runtime);
     await this.loadDevices(true);
     return simulator;
