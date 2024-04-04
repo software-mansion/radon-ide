@@ -43,7 +43,7 @@ function PreviewView() {
 
   useEffect(() => {
     const disableInspectorOnEscape = (event) => {
-      if (event.key === "Escape" && isInspecing) {
+      if (event.key === "Escape") {
         setIsInspecting(false);
       }
     };
@@ -52,7 +52,7 @@ function PreviewView() {
     return () => {
       document.removeEventListener("keydown", disableInspectorOnEscape, false);
     };
-  }, [isInspecing, setIsInspecting]);
+  }, []);
 
   const handleDeviceDropdownChange = async (value) => {
     if (value === "manage") {
