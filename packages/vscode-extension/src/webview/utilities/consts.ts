@@ -4,7 +4,7 @@ import pixel6a from "../../assets/pixel_6a/skin.webp";
 import pixel6amask from "../../assets/pixel_6a/mask.png";
 import iphone15pro from "../../assets/iphone_15_pro/skin.webp";
 import iphone15promask from "../../assets/iphone_15_pro/mask.png";
-import iphoneSE from "../../assets/iphone_SE/skin.png";
+import iphoneSE from "../../assets/iphone_SE/skin.webp";
 import iphoneSEmask from "../../assets/iphone_SE/mask.png";
 import { Platform } from "../../common/DeviceManager";
 
