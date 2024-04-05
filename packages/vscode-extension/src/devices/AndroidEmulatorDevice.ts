@@ -37,6 +37,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
     super();
   }
 
+  public get platform(): Platform {
+    return Platform.Android;
+  }
+
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
@@ -101,6 +105,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
     });
 
     this.serial = await initPromise;
+  }
+
+  async openDevMenu() {
+    await exec(ADB_PATH, ["-s", this.serial!, "shell", "input", "keyevent", "82"]);
   }
 
   async configureMetroPort(packageName: string, metroPort: number) {

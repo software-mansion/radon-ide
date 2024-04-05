@@ -281,6 +281,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.openNavigation(navigationItemID);
   }
 
+  public async openDevMenu() {
+    await this.deviceSession?.openDevMenu();
+  }
+
   public startPreview(appKey: string) {
     this.deviceSession?.startPreview(appKey);
   }

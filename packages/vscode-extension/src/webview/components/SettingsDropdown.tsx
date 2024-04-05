@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import "./shared/Dropdown.css";
 import { useModal } from "../providers/ModalProvider";
@@ -10,13 +10,15 @@ import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
+  isDeviceRunning: boolean;
   project: ProjectInterface;
   disabled?: boolean;
 }
 
-function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps) {
+function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild disabled={disabled}>
@@ -41,6 +43,16 @@ function SettingsDropdown({ project, children, disabled }: SettingsDropdownProps
             <span className="codicon codicon-device-mobile" />
             Manage devices...
           </DropdownMenu.Item>
+          {isDeviceRunning && (
+            <DropdownMenu.Item
+              className="dropdown-menu-item"
+              onSelect={() => {
+                project.openDevMenu();
+              }}>
+              <span className="codicon codicon-code" />
+              Open dev menu
+            </DropdownMenu.Item>
+          )}
 
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">

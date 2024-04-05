@@ -79,6 +79,7 @@ export interface ProjectInterface {
   focusExtensionLogsOutput(): Promise<void>;
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
+  openDevMenu(): Promise<void>;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
