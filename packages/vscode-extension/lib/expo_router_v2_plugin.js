@@ -1,7 +1,7 @@
 const { useSyncExternalStore } = require("react");
 const { useEffect } = require("react");
 const { useRouter } = require("expo-router");
-const { store } = require("expo-router/build/global-state/router-store");
+const { store } = require("expo-router/src/global-state/router-store");
 
 function computeRouteIdentifier(pathname, params) {
   return pathname + JSON.stringify(params);

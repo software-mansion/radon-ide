@@ -9,7 +9,8 @@ const ORIGINAL_TRANSFORMER_PATH = process.env.REACT_NATIVE_IDE_ORIG_BABEL_TRANSF
 // we start getting build errors.
 // Below, we implemented a workaround that disables all other plugins from being loaded using require. It returns an empty
 // babel plugin and allows for the only transformer that we want to be included.
-const { overrideModuleFromAppDir } = require("./metro_helpers");
+const { overrideModuleFromAppDir, requireFromAppDir } = require("./metro_helpers");
+
 function disablePlugin(moduleNameToOverride) {
   overrideModuleFromAppDir(moduleNameToOverride, function () {
     return { visitor: {} };
@@ -25,8 +26,13 @@ function transformWrapper({ filename, src, plugins, ...rest }) {
   if (filename.endsWith("node_modules/react-native/Libraries/Core/InitializeCore.js")) {
     src = `${src};require("__RNIDE_lib__/runtime.js");`;
   } else if (filename.endsWith("node_modules/expo-router/entry.js")) {
-    // expo-router v2 integration
-    src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
+    // expo-router v2 and v3 integration
+    const { version } = requireFromAppDir("expo-router/package.json");
+    if (version.startsWith("2.")) {
+      src = `${src};require("__RNIDE_lib__/expo_router_v2_plugin.js");`;
+    } else if (version.startsWith("3.")) {
+      src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
+    }
   } else if (filename.endsWith("node_modules/react-native-ide/index.js")) {
     src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
   }
