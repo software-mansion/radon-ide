@@ -102,8 +102,10 @@ export class Metro implements Disposable {
       require.resolve("react-native", { paths: [appRootFolder] })
     );
     return exec(
-      `${reactNativeRoot}/scripts/packager.sh`,
+      `node`,
       [
+        `${reactNativeRoot}/cli.js`,
+        "start",
         ...(resetCache ? ["--reset-cache"] : []),
         "--no-interactive",
         "--port",
