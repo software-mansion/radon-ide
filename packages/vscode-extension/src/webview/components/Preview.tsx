@@ -5,11 +5,8 @@ import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
 import { useProject } from "../providers/ProjectProvider";
-import { Platform } from "../../common/DeviceManager";
 import {
-  ANDROID_DEVICE_GRAPHICAL_PROPERTIES,
-  DeviceProperties,
-  IOS_DEVICE_GRAPHICAL_PROPERTIES,
+  DeviceProperties, SupportedDevices,
 } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
@@ -219,10 +216,9 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     };
   }, [project]);
 
-  const device =
-    projectState?.selectedDevice?.platform === Platform.Android
-      ? ANDROID_DEVICE_GRAPHICAL_PROPERTIES
-      : IOS_DEVICE_GRAPHICAL_PROPERTIES;
+  const device = SupportedDevices.find((sd)=>{
+    return sd.name === projectState?.selectedDevice?.name;
+  });
 
   const inspectFrame = inspectData?.frame;
 
@@ -245,7 +241,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   return (
     <div
       className="phone-wrapper"
-      style={cssPropertiesForDevice(device)}
+      style={cssPropertiesForDevice(device!)}
       tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
       {!isStarting && !hasBuildError && (
@@ -311,7 +307,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
               </button>
             </div>
           )}
-          <img src={device.frameImage} className="phone-frame" />
+          <img src={device!.frameImage} className="phone-frame" />
         </div>
       )}
       {isStarting && !hasBuildError && (
@@ -320,13 +316,13 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
           <div className="phone-sized phone-screen phone-content-loading ">
             <PreviewLoader />
           </div>
-          <img src={device.frameImage} className="phone-frame" />
+          <img src={device!.frameImage} className="phone-frame" />
         </div>
       )}
       {hasBuildError && (
         <div className="phone-content">
           <div className="phone-sized phone-screen extension-error-screen" />
-          <img src={device.frameImage} className="phone-frame" />
+          <img src={device!.frameImage} className="phone-frame" />
         </div>
       )}
     </div>
