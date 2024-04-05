@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent } from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject } from "react";
 import clamp from "lodash/clamp";
 import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
@@ -34,6 +34,68 @@ function cssPropertiesForDevice(device: DeviceProperties) {
   } as const;
 }
 
+const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageElement>>(
+  (props, ref) => {
+    const { src, ...rest } = props;
+    const img = (ref as RefObject<HTMLImageElement>).current;
+
+    // The below effect implements the main logic of this component. The primary
+    // reason we can't just use img tag with src directly, is that with mjpeg streams
+    // the img, after being removed from the hierarchy, will keep the connection open.
+    // As a consequence, after several reloads, we will end up maintaining multiple
+    // open streams which causes the UI to lag.
+    // To avoid this, we manually control src attribute of the img tag and reset it
+    // when the src by changing first to an empty string. We also set empty src when
+    // the component is unmounted.
+    useEffect(() => {
+      if (!img) {
+        return;
+      }
+      img.src = "";
+      img.src = src || "";
+      return () => {
+        img.src = "";
+      };
+    }, [img, ref]);
+
+    // The sole purpose of the below effect is to periodically call `decode` on the image
+    // in order to detect when the stream connection is dropped. There seem to be no better
+    // way to handle it apart from this. When `decode` fails, we reset the image source to
+    // trigger a new connection.
+    useEffect(() => {
+      let timer: NodeJS.Timeout;
+
+      let cancelled = false;
+      async function checkIfImageLoaded() {
+        if (img?.src) {
+          try {
+            // waits until image is ready to be displayed
+            await img.decode();
+          } catch {
+            // Stream connection was dropped
+            if (!cancelled) {
+              const src = img.src;
+              img.src = "";
+              img.src = src;
+            }
+          }
+        }
+        if (!cancelled) {
+          timer = setTimeout(checkIfImageLoaded, 2_000);
+        }
+      }
+      checkIfImageLoaded();
+
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
+    }, [img]);
+
+    return <img ref={ref} {...rest} />;
+  }
+);
+
 type Props = {
   isInspecting: boolean;
   setIsInspecting: (isInspecting: boolean) => void;
@@ -43,9 +105,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const previewRef = useRef<HTMLImageElement>(null);
-
-  // used for reestablishing connection to mjpeg stream
-  const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
 
   const { projectState, project } = useProject();
 
@@ -57,27 +116,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   const debugException = projectState?.status === "runtimeError";
 
   const previewURL = projectState?.previewURL;
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-
-    async function checkIfImageLoaded() {
-      try {
-        if (previewRef.current !== null && previewURL !== undefined) {
-          // waits until image is ready to be displayed
-          await previewRef.current.decode();
-        }
-      } catch {
-        // Stream connection was dropped
-        setPreviewRefreshKey((previousKey) => previousKey + 1);
-      } finally {
-        timer = setTimeout(checkIfImageLoaded, 2_000);
-      }
-    }
-    checkIfImageLoaded();
-
-    return () => clearTimeout(timer);
-  }, [previewURL, previewRef]);
 
   const isStarting =
     hasBundleError || hasIncrementalBundleError || debugException
@@ -212,8 +250,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       ref={wrapperDivRef}>
       {!isStarting && !hasBuildError && (
         <div className="phone-content" {...touchHandlers}>
-          <img
-            key={previewRefreshKey}
+          <MjpegImg
             src={previewURL}
             ref={previewRef}
             style={{
