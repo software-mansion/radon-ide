@@ -61,20 +61,20 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
-    if (previewRef.current !== null && previewURL !== undefined) {
-      async function checkIfImageLoaded() {
-        try {
+    async function checkIfImageLoaded() {
+      try {
+        if (previewRef.current !== null && previewURL !== undefined) {
           // waits until image is ready to be displayed
-          await previewRef.current!.decode();
-        } catch {
-          // Stream connection was dropped
-          setPreviewRefreshKey((previousKey) => previousKey + 1);
-        } finally {
-          timer = setTimeout(checkIfImageLoaded, 2_000);
+          await previewRef.current.decode();
         }
+      } catch {
+        // Stream connection was dropped
+        setPreviewRefreshKey((previousKey) => previousKey + 1);
+      } finally {
+        timer = setTimeout(checkIfImageLoaded, 2_000);
       }
-      checkIfImageLoaded();
     }
+    checkIfImageLoaded();
 
     return () => clearTimeout(timer);
   }, [previewURL, previewRef]);
