@@ -37,7 +37,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     super();
   }
 
-  public platform(): Platform {
+  public get platform(): Platform {
     return Platform.Android;
   }
 

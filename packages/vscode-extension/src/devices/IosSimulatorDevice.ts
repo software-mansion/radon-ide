@@ -33,7 +33,7 @@ export class IosSimulatorDevice extends DeviceBase {
     super();
   }
 
-  public platform(): Platform {
+  public get platform(): Platform {
     return Platform.IOS;
   }
 

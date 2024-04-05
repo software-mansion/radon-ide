@@ -134,7 +134,7 @@ export class DeviceSession implements Disposable {
     //
     // We could probably unify it in the future by running metro in interactive
     // mode and sending keys to stdin.
-    if (this.device.platform() === Platform.IOS) {
+    if (this.device.platform === Platform.IOS) {
       this.devtools.send("RNIDE_iosDevMenu");
     } else {
       await (this.device as AndroidEmulatorDevice).openDevMenu();

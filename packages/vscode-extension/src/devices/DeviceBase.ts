@@ -12,7 +12,7 @@ export abstract class DeviceBase implements Disposable {
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
   abstract makePreview(): Preview;
-  abstract platform(): Platform;
+  abstract get platform(): Platform;
 
   dispose() {
     this.preview?.dispose();
