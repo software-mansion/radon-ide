@@ -98,8 +98,11 @@ export class Metro implements Disposable {
     resetCache: boolean,
     metroEnv: typeof process.env
   ) {
+    const reactNativeRoot = path.dirname(
+      require.resolve("react-native", { paths: [appRootFolder] })
+    );
     return exec(
-      `${appRootFolder}/node_modules/react-native/scripts/packager.sh`,
+      `${reactNativeRoot}/scripts/packager.sh`,
       [
         ...(resetCache ? ["--reset-cache"] : []),
         "--no-interactive",
