@@ -6,6 +6,39 @@ let globalCallbackCounter = 1;
 let callbackToID = new WeakMap<(...args: any[]) => void, number>();
 let idToCallback = new Map<number, (...args: any[]) => void>();
 
+let callResultPromises = new Map<
+  number,
+  { resolve: (value: unknown) => void; reject: (reason?: any) => void }
+>();
+
+function callResultListener(event: MessageEvent) {
+  if (event.data.command === "callResult" && event.data.callId) {
+    const promise = callResultPromises.get(event.data.callId);
+    if (promise) {
+      callResultPromises.delete(event.data.callId);
+      if (callResultPromises.size === 0) {
+        window.removeEventListener("message", callResultListener);
+      }
+      if (event.data.error) {
+        promise.reject(event.data.error);
+      } else {
+        promise.resolve(event.data.result);
+      }
+    }
+  }
+}
+
+function registerCallResultPromise(
+  callId: number,
+  resolve: (value: unknown) => void,
+  reject: (reason?: any) => void
+) {
+  callResultPromises.set(callId, { resolve, reject });
+  if (callResultPromises.size === 1) {
+    window.addEventListener("message", callResultListener);
+  }
+}
+
 /* this is used on the webview side to create a proxy of an object that lives on the extension side */
 export function makeProxy<T extends object>(objectName: string) {
   return new Proxy<T>({} as T, {
@@ -42,15 +75,7 @@ export function makeProxy<T extends object>(objectName: string) {
           args: argsWithCallbacks,
         });
         return new Promise((resolve, reject) => {
-          window.addEventListener("message", (event) => {
-            if (event.data.command === "callResult" && event.data.callId === currentCallId) {
-              if (event.data.error) {
-                reject(event.data.error);
-              } else {
-                resolve(event.data.result);
-              }
-            }
-          });
+          registerCallResultPromise(currentCallId, resolve, reject);
         });
       };
     },
