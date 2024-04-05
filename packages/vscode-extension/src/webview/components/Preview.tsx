@@ -56,7 +56,7 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
       return () => {
         img.src = "";
       };
-    }, [img, ref]);
+    }, [img]);
 
     // The sole purpose of the below effect is to periodically call `decode` on the image
     // in order to detect when the stream connection is dropped. There seem to be no better
