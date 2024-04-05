@@ -8,24 +8,24 @@ import { SupportedDeviceName, SupportedDevices } from "../utilities/consts";
 import { Platform } from "../../common/DeviceManager";
 
 function isSupportedIOSDevice(device: SupportedDeviceName): boolean {
-  return SupportedDevices[device].platform === Platform.IOS;
+  return (
+    SupportedDevices.find((sd) => {
+      return sd.name === device;
+    })?.platform === Platform.IOS
+  );
 }
 
 const SUPPORTED_DEVICES = [
   {
-    items: Object.entries(SupportedDevices)
-      .filter((item) => {
-        return item[1].platform === Platform.IOS;
-      })
-      .map((item) => ({ value: item[0], label: item[0] })),
+    items: SupportedDevices.filter((item) => {
+      return item.platform === Platform.IOS;
+    }).map((item) => ({ value: item.name, label: item.name })),
     label: "iOS",
   },
   {
-    items: Object.entries(SupportedDevices)
-      .filter((item) => {
-        return item[1].platform === Platform.Android;
-      })
-      .map((item) => ({ value: item[0], label: item[0] })),
+    items: SupportedDevices.filter((item) => {
+      return item.platform === Platform.Android;
+    }).map((item) => ({ value: item.name, label: item.name })),
     label: "Android",
   },
 ];

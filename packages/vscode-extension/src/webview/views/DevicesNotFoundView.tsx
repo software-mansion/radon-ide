@@ -6,6 +6,8 @@ import CreateDeviceView from "./CreateDeviceView";
 import { useDevices } from "../providers/DevicesProvider";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { useState } from "react";
+import { SupportedDevices } from "../utilities/consts";
+import { Platform } from "../../common/DeviceManager";
 
 function DevicesNotFoundView() {
   const { openModal, closeModal } = useModal();
@@ -33,7 +35,12 @@ function DevicesNotFoundView() {
           newestAPIImage = image;
         }
       }
-      await deviceManager.createAndroidDevice("Google Pixel 7", newestAPIImage);
+      await deviceManager.createAndroidDevice(
+        SupportedDevices.find((sd) => {
+          return sd.platform === Platform.Android;
+        })!.name,
+        newestAPIImage
+      );
     } finally {
       setAndroidCreating(false);
     }
@@ -46,7 +53,13 @@ function DevicesNotFoundView() {
       for (const runtime of iOSRuntimes) {
         if (
           (newestRuntime === undefined || runtime.version > newestRuntime.version) &&
-          runtime.supportedDeviceTypes.find((dt) => dt.name === "iPhone 15 Pro")
+          runtime.supportedDeviceTypes.find(
+            (dt) =>
+              dt.name ===
+              SupportedDevices.find((sd) => {
+                return sd.platform === Platform.IOS;
+              })?.name
+          )
         ) {
           newestRuntime = runtime;
         }
@@ -56,7 +69,11 @@ function DevicesNotFoundView() {
         return;
       }
       const iOSDeviceType = newestRuntime.supportedDeviceTypes.find(
-        (dt) => dt.name === "iPhone 15 Pro"
+        (dt) =>
+          dt.name ===
+          SupportedDevices.find((sd) => {
+            return sd.platform === Platform.IOS;
+          })?.name
       );
       await deviceManager.createIOSDevice(iOSDeviceType!, newestRuntime);
     } finally {
