@@ -44,6 +44,9 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   const [isPressing, setIsPressing] = useState(false);
   const previewRef = useRef<HTMLImageElement>(null);
 
+  // used for reestablishing connection to mjpeg stream
+  const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
+
   const { projectState, project } = useProject();
 
   const hasBuildError = projectState?.status === "buildError";
@@ -54,6 +57,27 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   const debugException = projectState?.status === "runtimeError";
 
   const previewURL = projectState?.previewURL;
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+
+    async function checkIfImageLoaded() {
+      try {
+        if (previewRef.current !== null && previewURL !== undefined) {
+          // waits until image is ready to be displayed
+          await previewRef.current.decode();
+        }
+      } catch {
+        // Stream connection was dropped
+        setPreviewRefreshKey((previousKey) => previousKey + 1);
+      } finally {
+        timer = setTimeout(checkIfImageLoaded, 2_000);
+      }
+    }
+    checkIfImageLoaded();
+
+    return () => clearTimeout(timer);
+  }, [previewURL, previewRef]);
 
   const isStarting =
     hasBundleError || hasIncrementalBundleError || debugException
@@ -189,6 +213,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       {!isStarting && !hasBuildError && (
         <div className="phone-content" {...touchHandlers}>
           <img
+            key={previewRefreshKey}
             src={previewURL}
             ref={previewRef}
             style={{
