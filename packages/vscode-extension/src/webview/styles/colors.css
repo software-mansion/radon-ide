@@ -13,6 +13,14 @@
   --background-dark-10: #687ab2;
 
   /* Navy */
+  --navy-light-100: #001a72;
+  --navy-light-80: #33488e;
+  --navy-light-60: #6676aa;
+  --navy-light-40: #919fcf;
+  --navy-light-20: #c1c6e5;
+  --navy-light-10: #eef0ff;
+  --navy-light-transparent: #33488e40;
+
   --navy-dark-140: #1b2445;
   --navy-dark-120: #122154;
   --navy-dark-100: #001a72;
@@ -23,6 +31,13 @@
   --navy-dark-20: #c1c6e5;
 
   /* Purple */
+  --purple-light-100: #782aeb;
+  --purple-light-80: #b58df1;
+  --purple-light-60: #d1bbf3;
+  --purple-light-40: #e8dafc;
+  --purple-light-20: #f5eeff;
+  --purple-light-transparent: #f5eeff40;
+
   --purple-dark-140: #473d68;
   --purple-dark-120: #6a539a;
   --purple-dark-100: #b07eff;
@@ -31,6 +46,12 @@
   --purple-dark-40: #e9dbff;
 
   /* Blue */
+  --blue-light-100: #38acdd;
+  --blue-light-80: #5bb9e0;
+  --blue-light-60: #87cce8;
+  --blue-light-40: #b5e1f1;
+  --blue-light-20: #e1f3fa;
+
   --blue-dark-140: #1b4865;
   --blue-dark-120: #126893;
   --blue-dark-100: #00a9f0;
@@ -39,6 +60,12 @@
   --blue-dark-40: #d7f0fa;
 
   /* Green */
+  --green-light-100: #57b495;
+  --green-light-80: #82cab2;
+  --green-light-60: #b1dfd0;
+  --green-light-40: #dff2ec;
+  --green-light-20: #ebfcf7;
+
   --green-dark-140: #2a4f4a;
   --green-dark-120: #31775d;
   --green-dark-100: #3fc684;
@@ -47,6 +74,12 @@
   --green-dark-40: #d3f5e4;
 
   /* Red */
+  --red-light-100: #ff6259;
+  --red-light-80: #fa7f7c;
+  --red-light-60: #ffa3a1;
+  --red-light-40: #ffd2d7;
+  --red-light-20: #ffedf0;
+
   --red-dark-140: #5a3b46;
   --red-dark-120: #914f55;
   --red-dark-100: #ff7774;
@@ -55,6 +88,12 @@
   --red-dark-40: #ffdcdb;
 
   /* Yellow */
+  --yellow-light-100: #ffd61e;
+  --yellow-light-80: #ffe04b;
+  --yellow-light-60: #ffe780;
+  --yellow-light-40: #fff1b2;
+  --yellow-light-20: #fffae1;
+
   --yellow-dark-140: #5a553a;
   --yellow-dark-120: #91823d;
   --yellow-dark-100: #ffdd44;
@@ -65,9 +104,37 @@
   /* White */
   --off-white: #f8f9ff;
   --white: #fcfcff;
+}
 
-  /* UI */
-  /* These colors change in runtime whenever vscode theme is changed  */
+/* Light theme */
+body[data-vscode-theme-kind="vscode-light"] {
+  --active-item: var(--blue-dark-100);
+  --preview-background: var(--white);
+
+  --default-text: var(--navy-light-100);
+  --secondary-text: var(--navy-light-60);
+  --disabled-text: var(--navy-light-20);
+
+  --highlight-text: var(--white);
+  --highlight-active-text: var(--white);
+  --highlight-selected-text: var(--white);
+  --highlight-selected-hover-text: var(--off-white);
+
+  --highlight-hover-background: var(--off-white);
+  --highlight-active-background: var(--navy-light-20);
+  --highlight-selected-background: var(--navy-light-20);
+  --highlight-selected-hover-background: var(--off-white);
+
+  --popover-background: var(--off-white);
+
+  --select-background: var(--white);
+  --select-active-background: var(--off-white);
+
+  --separator: var(--navy-light-40);
+}
+
+/* Dark theme */
+body[data-vscode-theme-kind="vscode-dark"] {
   --active-item: var(--blue-dark-100);
   --preview-background: var(--background-dark-100);
 
