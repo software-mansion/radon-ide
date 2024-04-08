@@ -15,8 +15,8 @@
 
 .phone-content {
   position: relative;
-  min-height: var(--min-hight);
-  min-width: var(--min-width);
+  min-height: var(--min-height);
+  aspect-ratio: var(--phone-aspect-ratio);
 }
 
 .phone-screen {

@@ -21,8 +21,8 @@ function cssPropertiesForDevice(device: DeviceProperties) {
   return {
     "--phone-screen-height": `${(device.screenHeight / device.frameHeight) * 100}%`,
     "--phone-screen-width": `${(device.screenWidth / device.frameWidth) * 100}%`,
-    "--min-hight": `${650}px`,
-    "--min-width": `${650 * (device.screenWidth / device.screenHeight)}px`,
+    "--min-height": `${650}px`,
+    "--phone-aspect-ratio": `${device.frameWidth / device.frameHeight}`,
     "--phone-mask-image": `url(${device.maskImage})`,
     "--phone-top": `${(device.offsetY / device.frameHeight) * 100}%`,
     "--phone-left": `${(device.offsetX / device.frameWidth) * 100}%`,
