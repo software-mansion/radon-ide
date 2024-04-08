@@ -33,6 +33,7 @@ button {
 
 .select-content {
   overflow: hidden;
+  color: var(--default-text);
   background-color: var(--background-dark-80);
   border-radius: 6px;
   box-shadow: 0 1px 10px var(--background-dark-100);
