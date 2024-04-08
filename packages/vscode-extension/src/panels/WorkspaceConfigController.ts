@@ -24,10 +24,10 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
       if (!event.affectsConfiguration("ReactNativeIDE")) {
         return;
       }
-      const configuration = workspace.getConfiguration("ReactNativeIDE");
+      const config = workspace.getConfiguration("ReactNativeIDE");
       this.config = {
-        panelLocation: configuration.get<PanelLocation>("panelLocation")!,
-        relativeAppLocation: configuration.get<string>("relativeAppLocation")!,
+        panelLocation: config.get<PanelLocation>("panelLocation")!,
+        relativeAppLocation: config.get<string>("relativeAppLocation")!,
       };
       this.eventEmitter.emit("configChange", this.config);
     });

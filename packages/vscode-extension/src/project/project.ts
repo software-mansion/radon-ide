@@ -76,7 +76,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       const lastDeviceId = extensionContext.workspaceState.get(LAST_SELECTED_DEVICE_KEY) as
         | string
         | undefined;
-      let device = devices.find((device) => device.id === lastDeviceId);
+      let device = devices.find((item) => item.id === lastDeviceId);
       if (!device && devices.length > 0) {
         device = devices[0];
       }
@@ -92,8 +92,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     const devices = await this.deviceManager.listAllDevices();
     if (!selectInitialDevice(devices)) {
-      const listener = (devices: DeviceInfo[]) => {
-        if (selectInitialDevice(devices)) {
+      const listener = (newDevices: DeviceInfo[]) => {
+        if (selectInitialDevice(newDevices)) {
           this.deviceManager.removeListener("devicesChanged", listener);
         }
       };

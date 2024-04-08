@@ -35,14 +35,14 @@ export enum StartupMessage {
 }
 
 export const StartupStageWeight = [
-  { StartupMessage: StartupMessage.InitializingDevice, weight: 1 },
-  { StartupMessage: StartupMessage.StartingPackager, weight: 1 },
-  { StartupMessage: StartupMessage.BootingDevice, weight: 2 },
-  { StartupMessage: StartupMessage.Building, weight: 7 },
-  { StartupMessage: StartupMessage.Installing, weight: 1 },
-  { StartupMessage: StartupMessage.Launching, weight: 1 },
-  { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
-  { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
+  { startupMessage: StartupMessage.InitializingDevice, weight: 1 },
+  { startupMessage: StartupMessage.StartingPackager, weight: 1 },
+  { startupMessage: StartupMessage.BootingDevice, weight: 2 },
+  { startupMessage: StartupMessage.Building, weight: 7 },
+  { startupMessage: StartupMessage.Installing, weight: 1 },
+  { startupMessage: StartupMessage.Launching, weight: 1 },
+  { startupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
+  { startupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
 
 export type InspectData = {
