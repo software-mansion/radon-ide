@@ -247,7 +247,8 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
       {showDevicePreview && (
-        <div className="phone-content" {...touchHandlers}>
+        <div className="phone-content">
+          <div className="touch-area" {...touchHandlers}></div>
           <MjpegImg
             src={previewURL}
             ref={previewRef}
