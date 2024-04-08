@@ -22,6 +22,7 @@
 
 .form-field {
   width: 100%;
+  color: var(--default-text);
 }
 
 .dropdown .listbox {
