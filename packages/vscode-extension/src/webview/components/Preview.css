@@ -19,6 +19,16 @@
   min-width: var(--min-width);
 }
 
+.touchable-area {
+  position: absolute;
+  width: var(--phone-screen-width);
+  height: var(--phone-screen-height);
+  top: var(--phone-top);
+  left: var(--phone-left);
+  background-color: transparent;
+  z-index: 2;
+}
+
 .phone-screen {
   position: absolute;
   width: var(--phone-screen-width);

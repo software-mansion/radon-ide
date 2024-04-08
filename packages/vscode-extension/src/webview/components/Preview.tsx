@@ -243,7 +243,8 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
       {!isStarting && !hasBuildError && (
-        <div className="phone-content" {...touchHandlers}>
+        <div className="phone-content">
+        {/*<div className="touchable-area" {...touchHandlers}></div>*/}
           <MjpegImg
             src={previewURL}
             ref={previewRef}
@@ -252,6 +253,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
             }}
             className="phone-screen"
           />
+          
           {inspectFrame && (
             <div className="phone-screen phone-inspect-overlay">
               <div
