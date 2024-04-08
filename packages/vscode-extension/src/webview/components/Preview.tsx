@@ -5,9 +5,7 @@ import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
 import { useProject } from "../providers/ProjectProvider";
-import {
-  DeviceProperties, SupportedDevices,
-} from "../utilities/consts";
+import { DeviceProperties, SupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
@@ -216,7 +214,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     };
   }, [project]);
 
-  const device = SupportedDevices.find((sd)=>{
+  const device = SupportedDevices.find((sd) => {
     return sd.name === projectState?.selectedDevice?.name;
   });
 

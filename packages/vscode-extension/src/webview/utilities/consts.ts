@@ -11,7 +11,7 @@ import { Platform } from "../../common/DeviceManager";
 export type SupportedDeviceName = typeof SupportedDevices[number]["name"];
 
 // iOS devices names should match supportedDeviceTypes inside the runtime
-export const SupportedDevices = [
+export const SupportedDevices: DeviceProperties[] = [
   {
     name: "iPhone 15 Pro",
     platform: Platform.IOS,
