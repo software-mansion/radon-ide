@@ -120,11 +120,7 @@ function PreviewView() {
           project={project}
           isDeviceRunning={projectState.status === "running"}
           disabled={devicesNotFound}>
-          <IconButton
-            onClick={() => {
-              vscode.postMessage({ command: "openSettings" });
-            }}
-            tooltip={{ label: "Settings", side: "bottom" }}>
+          <IconButton tooltip={{ label: "Settings", type: "primary" }}>
             <span className="codicon codicon-settings-gear" />
           </IconButton>
         </SettingsDropdown>
@@ -166,7 +162,7 @@ function PreviewView() {
 
         <div className="spacer" />
         <DeviceSettingsDropdown disabled={devicesNotFound}>
-          <IconButton tooltip={{ label: "Device settings", side: "top" }}>
+          <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon
               color={devicesNotFound ? "var(--disabled-text)" : "var(--default-text)"}
             />
