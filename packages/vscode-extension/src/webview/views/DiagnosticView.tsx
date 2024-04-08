@@ -35,7 +35,6 @@ function DiagnosticView() {
         item={dependencies.Pods}
         action={
           <IconButton
-            disabled={!dependencies.NodeModules?.installed}
             tooltip={{
               label: "Fix",
               side: "bottom",
