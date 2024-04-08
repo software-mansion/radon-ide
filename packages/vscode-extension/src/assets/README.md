@@ -1,3 +1,7 @@
+# assets formats:
+
+To avoid bugs caused by other formats, please add skins as a `.webp` files and masks as `.png` files.
+
 # Device frames
 
 ## Android
@@ -34,4 +38,4 @@ https://developer.apple.com/help/app-store-connect/reference/screenshot-specific
 
 ### How to prepare an iOS mask
 
-Apple provides masks as vector `.pdf` files. You need to convert the .pdf file to .svg. Online converters like "pdf to svg" work just fine.
+Apple provides masks as vector `.pdf` files. You need to convert the .pdf file to .png in case of a mask and .webp in case of a frame.

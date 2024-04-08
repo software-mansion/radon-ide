@@ -51,14 +51,14 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   public async getDevice(deviceInfo: DeviceInfo) {
     if (deviceInfo.platform === Platform.IOS) {
       const simulators = await listSimulators();
-      const simulatorInfo = simulators.find((deviceInfo) => deviceInfo.id === deviceInfo.id);
+      const simulatorInfo = simulators.find((device) => device.id === deviceInfo.id);
       if (!simulatorInfo || simulatorInfo.platform !== Platform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
       return new IosSimulatorDevice(simulatorInfo.UDID);
     } else {
       const emulators = await listEmulators();
-      const emulatorInfo = emulators.find((deviceInfo) => deviceInfo.id === deviceInfo.id);
+      const emulatorInfo = emulators.find((device) => device.id === deviceInfo.id);
       if (!emulatorInfo || emulatorInfo.platform !== Platform.Android) {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
