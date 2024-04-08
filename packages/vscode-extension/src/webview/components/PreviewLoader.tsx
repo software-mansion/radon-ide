@@ -23,7 +23,7 @@ function PreviewLoader() {
       setProgress(100);
     } else {
       const currentIndex = StartupStageWeight.findIndex(
-        (item) => item.startupMessage === projectState.startupMessage
+        (item) => item.StartupMessage === projectState.startupMessage
       );
       const currentWeight = StartupStageWeight[currentIndex].weight;
       const startupStageWeightSumUntillNow = StartupStageWeight.slice(0, currentIndex)
