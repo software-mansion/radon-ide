@@ -108,10 +108,53 @@
     "debuggers": [
       {
         "type": "com.swmansion.react-native-ide",
-        "label": "React Native Preview",
+        "label": "React Native IDE internal",
+        "hiddenWhen": "true",
         "languages": [
           "javascript",
           "typescript"
+        ]
+      },
+      {
+        "type": "react-native-ide",
+        "label": "React Native IDE",
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "typescriptreact"
+        ],
+        "configurationAttributes": {
+          "preview": {
+            "required": [],
+            "properties": {
+              "iOS:scheme": {
+                "type": "string",
+                "description": "Scheme name (from xcode project) the IDE will use for iOS builds, defaults to workspace file name."
+              },
+              "iOS:configuration": {
+                "type": "string",
+                "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+              },
+              "Android:variant": {
+                "type": "string",
+                "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
+              },
+              "Preview:waitForAppLaunch": {
+                "type": "boolean",
+                "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "react-native-ide",
+            "request": "launch",
+            "name": "React Native IDE panel",
+            "iOS:mode": "Debug",
+            "Android:variant": "debug"
+          }
         ]
       }
     ]
@@ -124,7 +167,7 @@
     "build:extension-code-debug": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap && cp ./node_modules/source-map/lib/mappings.wasm dist/.",
     "build:extension-code": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --minify && cp ./node_modules/source-map/lib/mappings.wasm dist/.",
     "build:expo-fingerprint": "esbuild ./node_modules/@expo/fingerprint/build/sourcer/ExpoConfigLoader.js --bundle --format=cjs --outfile=dist/ExpoConfigLoader.js --platform=node --minify",
-    "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
+    "build:webview": "vite build --mode development && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "./scripts/build-sim-server.sh dist Debug",
     "build:sim-server": "./scripts/build-sim-server.sh dist Release",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",

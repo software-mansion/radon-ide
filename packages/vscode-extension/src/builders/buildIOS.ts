@@ -6,11 +6,19 @@ import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
 import { CancelToken } from "./BuildManager";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
-type IOSProjectInfo = {
-  name: string;
-  isWorkspace: boolean;
-};
+type IOSProjectInfo =
+  | {
+      workspaceLocation: string;
+      xcodeprojLocation: string;
+      isWorkspace: true;
+    }
+  | {
+      workspaceLocation: undefined;
+      xcodeprojLocation: string;
+      isWorkspace: false;
+    };
 
 // Assuming users have ios folder in their project's root
 export const getIosSourceDir = (appRootFolder: string) => path.join(appRootFolder, "ios");
@@ -33,24 +41,28 @@ export async function findXcodeProject(appRootFolder: string) {
     2
   );
 
+  let workspaceLocation: string | undefined;
   if (xcworkspaceFiles.length === 1) {
-    return {
-      name: Uri.joinPath(xcworkspaceFiles[0], "..").fsPath,
-      isWorkspace: true,
-    };
+    workspaceLocation = Uri.joinPath(xcworkspaceFiles[0], "..").fsPath;
   }
 
   const xcodeprojFiles = await workspace.findFiles(
     new RelativePattern(iosSourceDir, "**/*.xcodeproj/*"),
     "**/{node_modules,build,Pods}/**",
-    1
+    2
   );
 
+  let xcodeprojLocation: string | undefined;
   if (xcodeprojFiles.length === 1) {
+    xcodeprojLocation = Uri.joinPath(xcodeprojFiles[0], "..").fsPath;
+  }
+
+  if (xcodeprojLocation) {
     return {
-      name: Uri.joinPath(xcodeprojFiles[0], "..").fsPath,
-      isWorkspace: false,
-    };
+      workspaceLocation,
+      xcodeprojLocation,
+      isWorkspace: !!workspaceLocation,
+    } as IOSProjectInfo;
   }
 
   return null;
@@ -60,13 +72,14 @@ function buildProject(
   xcodeProject: IOSProjectInfo,
   buildDir: string,
   scheme: string,
+  configuration: string,
   cleanBuild: boolean
 ) {
   const xcodebuildArgs = [
     xcodeProject.isWorkspace ? "-workspace" : "-project",
-    xcodeProject.name,
+    xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation,
     "-configuration",
-    "Debug",
+    configuration,
     "-scheme",
     scheme,
     "-destination",
@@ -85,6 +98,28 @@ function buildProject(
     cwd: buildDir,
     buffer: false,
   });
+}
+
+async function findXcodeScheme(xcodeProject: IOSProjectInfo) {
+  const basename = path.basename(xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation);
+
+  // we try to search for the scheme name under .xcodeproj/xcshareddata/xcschemes
+  const schemeFiles = await workspace.findFiles(
+    xcodeProject.xcodeprojLocation,
+    "**/xcshareddata/xcschemes/*.xcscheme"
+  );
+  if (schemeFiles.length === 1) {
+    return path.basename(schemeFiles[0].fsPath, ".xcscheme");
+  } else if (schemeFiles.length === 0) {
+    Logger.warn(
+      `Could not find any scheme files in ${xcodeProject.xcodeprojLocation}, using workspace name "${basename}" as scheme`
+    );
+  } else {
+    Logger.warn(
+      `Ambiguous scheme files in ${xcodeProject.xcodeprojLocation}, using workspace name "${basename}" as scheme`
+    );
+  }
+  return basename;
 }
 
 export async function buildIos(
@@ -106,15 +141,24 @@ export async function buildIos(
   if (!xcodeProject) {
     throw new Error(`Could not find Xcode project files in "${sourceDir}" folder`);
   }
-
-  const scheme = path.basename(xcodeProject.name, path.extname(xcodeProject.name)) as string;
-
   Logger.debug(
-    `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${xcodeProject.name}`
+    `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${
+      xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation
+    }`
   );
 
+  const buildOptions = getLaunchConfiguration();
+  const scheme = buildOptions["iOS:scheme"] || (await findXcodeScheme(xcodeProject));
+  Logger.debug(`Xcode build will use "${scheme}" scheme`);
+
   const buildProcess = cancelToken.adapt(
-    buildProject(xcodeProject, sourceDir, scheme, forceCleanBuild)
+    buildProject(
+      xcodeProject,
+      sourceDir,
+      scheme,
+      buildOptions["iOS:configuration"] || "Debug",
+      forceCleanBuild
+    )
   );
 
   let platformName: string | undefined;
@@ -178,7 +222,7 @@ async function getBuildPath(
       "xcodebuild",
       [
         xcodeProject.isWorkspace ? "-workspace" : "-project",
-        xcodeProject.name,
+        xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation,
         "-scheme",
         scheme,
         "-sdk",

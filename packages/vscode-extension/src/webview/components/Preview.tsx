@@ -1,4 +1,12 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  MouseEvent,
+  forwardRef,
+  RefObject,
+  useLayoutEffect,
+} from "react";
 import clamp from "lodash/clamp";
 import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
@@ -9,7 +17,7 @@ import { DeviceProperties, SupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
-import { InspectData } from "../../common/Project";
+import { InspectData, StartupMessage } from "../../common/Project";
 
 declare module "react" {
   interface CSSProperties {
@@ -29,10 +37,11 @@ function cssPropertiesForDevice(device: DeviceProperties) {
   } as const;
 }
 
+const NO_IMAGE_DATA = "data:,";
+
 const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageElement>>(
   (props, ref) => {
     const { src, ...rest } = props;
-    const img = (ref as RefObject<HTMLImageElement>).current;
 
     // The below effect implements the main logic of this component. The primary
     // reason we can't just use img tag with src directly, is that with mjpeg streams
@@ -43,15 +52,16 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
     // when the src by changing first to an empty string. We also set empty src when
     // the component is unmounted.
     useEffect(() => {
+      const img = (ref as RefObject<HTMLImageElement>).current;
       if (!img) {
         return;
       }
-      img.src = "";
-      img.src = src || "";
+      img.src = NO_IMAGE_DATA;
+      img.src = src || NO_IMAGE_DATA;
       return () => {
-        img.src = "";
+        img.src = NO_IMAGE_DATA;
       };
-    }, [img]);
+    }, [ref, src]);
 
     // The sole purpose of the below effect is to periodically call `decode` on the image
     // in order to detect when the stream connection is dropped. There seem to be no better
@@ -62,6 +72,7 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
 
       let cancelled = false;
       async function checkIfImageLoaded() {
+        const img = (ref as RefObject<HTMLImageElement>).current;
         if (img?.src) {
           try {
             // waits until image is ready to be displayed
@@ -70,7 +81,7 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
             // Stream connection was dropped
             if (!cancelled) {
               const src = img.src;
-              img.src = "";
+              img.src = NO_IMAGE_DATA;
               img.src = src;
             }
           }
@@ -85,7 +96,7 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
         cancelled = true;
         clearTimeout(timer);
       };
-    }, [img]);
+    }, [ref]);
 
     return <img ref={ref} {...rest} />;
   }
@@ -100,6 +111,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const previewRef = useRef<HTMLImageElement>(null);
+  const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
   const { projectState, project } = useProject();
 
@@ -112,12 +124,12 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   const previewURL = projectState?.previewURL;
 
-  const isStarting =
-    hasBundleError || hasIncrementalBundleError || debugException
-      ? false
-      : !projectState ||
-        projectState.previewURL === undefined ||
-        projectState.status === "starting";
+  const hasErrors = hasBundleError || hasIncrementalBundleError || debugException;
+  const showDevicePreview =
+    previewURL &&
+    (showPreviewRequested ||
+      (!hasErrors &&
+        (projectState?.status === "running" || projectState?.status === "refreshing")));
 
   useBuildErrorAlert(hasBuildError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
@@ -225,7 +237,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     debugException ||
     hasBundleError ||
     hasIncrementalBundleError ||
-    projectState?.status === "refreshing";
+    !showDevicePreview;
 
   const touchHandlers = shouldPreventTouchInteraction
     ? {}
@@ -242,7 +254,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       style={cssPropertiesForDevice(device!)}
       tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
-      {!isStarting && !hasBuildError && (
+      {showDevicePreview && (
         <div className="phone-content" {...touchHandlers}>
           <MjpegImg
             src={previewURL}
@@ -308,11 +320,11 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
           <img src={device!.frameImage} className="phone-frame" />
         </div>
       )}
-      {isStarting && !hasBuildError && (
+      {!showDevicePreview && !hasBuildError && (
         <div className="phone-content">
           <div className="phone-sized phone-screen phone-content-loading-overlay" />
           <div className="phone-sized phone-screen phone-content-loading ">
-            <PreviewLoader />
+            <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
           </div>
           <img src={device!.frameImage} className="phone-frame" />
         </div>
