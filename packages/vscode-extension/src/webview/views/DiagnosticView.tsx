@@ -35,6 +35,9 @@ function DiagnosticView() {
         item={dependencies.Pods}
         action={
           <IconButton
+            // TODO: support checking if Node Modules are installed and instaling them,
+            // For now this condition is always true to allow usage of "Pods install" functionality.
+            disabled={!dependencies.NodeModules?.installed || true}
             tooltip={{
               label: "Fix",
               side: "bottom",
