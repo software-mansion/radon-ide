@@ -148,7 +148,7 @@ export async function buildIos(
   );
 
   const buildOptions = getLaunchConfiguration();
-  const scheme = buildOptions["iOS:scheme"] || (await findXcodeScheme(xcodeProject));
+  const scheme = buildOptions.ios?.scheme || (await findXcodeScheme(xcodeProject));
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
   const buildProcess = cancelToken.adapt(
@@ -156,7 +156,7 @@ export async function buildIos(
       xcodeProject,
       sourceDir,
       scheme,
-      buildOptions["iOS:configuration"] || "Debug",
+      buildOptions?.ios?.configuration || "Debug",
       forceCleanBuild
     )
   );
