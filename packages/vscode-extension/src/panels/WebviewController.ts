@@ -122,7 +122,7 @@ export class WebviewController implements Disposable {
             this.webview.postMessage({
               command: "callResult",
               callId,
-              res,
+              result: res,
             });
           })
           .catch((error) => {
