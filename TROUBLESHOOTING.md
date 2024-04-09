@@ -26,7 +26,14 @@ The extension relies on Android Studio to install Android emulators and on Xcode
 The extension can spawn new devices on its own, but it requires the system images can only be installed using Android Studio and Xcode.
 Please refer to [SIMULATORS](SIMULATORS.md) section to learn more about installing system images for different platforms.
 
-### 5. Accessing extension logs
+### 5. Stuck on "Waiting for app to load"
+
+You typically should not see this state for longer than a second or two.
+If it stays visible longer than that, something might be wrong with the device setup and this type of issue indicates that the extension may be unable to launch and render yout app automatically.
+When this happens, you can click on the "Waiting for app to load" text to reveal the device preview and see what's happening under the hood.
+Sometimes the app gets blocked by some system dialog that we don't have a way to detect, in which case you need to close the dialog and the app should start normally.
+
+### 6. Accessing extension logs
 
 In order to access React Native IDE extension logs you need to open "Output Panel" with the default shortcut ⇧⌘U or by using a command named "Developer: Show Logs..." from the command palette.
 On the "Output Panel", select "React Native IDE" as the source.
@@ -37,13 +44,13 @@ In order to share the logs with others you can use "Open Output in Editor" optio
 > This is done so that we don't need to ask you to change the log level setting that applies to all the extensions and the editor itself.
 > As a consequence you may see a lot of unnecessary messages in the log output, but we still believe it'd give us better signal when dealing with potential issues.
 
-### 6. Accessing build logs
+### 7. Accessing build logs
 
 Native builds are one of the most time consuming phases when launching your project.
 Build processes output a lot of logs on their own and hence they have separate output channels.
 When something goes wrong in the native build phase, instead of checking "React Native IDE" source in "Output Panel" as described in the previous point, select "React Native IDE (Android build)" or "React Native IDE (iOS build)" source depending on the platform you're building for.
 
-### 7. General ways of recovering in case of errors
+### 8. General ways of recovering in case of errors
 
 Here is what you can try when the extension got stuck on some errors:
 
