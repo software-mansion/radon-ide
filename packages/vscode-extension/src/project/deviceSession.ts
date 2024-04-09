@@ -7,7 +7,6 @@ import { BuildResult, DisposableBuild } from "../builders/BuildManager";
 import { DeviceSettings, StartupMessage } from "../common/Project";
 import { Platform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { get } from "lodash";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
