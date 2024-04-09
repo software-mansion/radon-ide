@@ -12,7 +12,8 @@
     "curly": "warn",
     "eqeqeq": "warn",
     "no-throw-literal": "warn",
-    "semi": "off"
+    "semi": "off",
+    "@typescript-eslint/no-shadow":  "error"
   },
   "ignorePatterns": ["webview-ui/**"]
 }

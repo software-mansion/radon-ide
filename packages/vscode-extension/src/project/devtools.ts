@@ -79,9 +79,9 @@ export class Devtools implements Disposable {
   }
 
   public rpc(event: string, payload: any, responseEvent: string, callback: (payload: any) => void) {
-    const listener = (event: string, payload: any) => {
-      if (event === responseEvent) {
-        callback(payload);
+    const listener = (message: string, data: any) => {
+      if (message === responseEvent) {
+        callback(data);
         this.removeListener(listener);
       }
     };

@@ -87,9 +87,9 @@ export async function calculateMD5(path: string, hash: Hash = createHash("md5"))
 
   for await (let file of files) {
     let filePath = join(path, file);
-    const stat = await fs.promises.stat(filePath);
+    const fileStat = await fs.promises.stat(filePath);
 
-    if (stat.isDirectory()) {
+    if (fileStat.isDirectory()) {
       hash = await calculateMD5(filePath, hash);
     } else {
       hash = await calculateFileMD5(filePath, hash);

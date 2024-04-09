@@ -266,7 +266,7 @@ export async function listSimulators(): Promise<DeviceInfo[]> {
 
   const simulators: DeviceInfo[] = Object.entries(devicesPerRuntime)
     .map(([runtimeID, devices]) => {
-      const runtime = runtimes.find((runtime) => runtime.identifier === runtimeID);
+      const runtime = runtimes.find((item) => item.identifier === runtimeID);
 
       return devices.map((device) => {
         return {
