@@ -32,7 +32,7 @@
   pointer-events: none;
 }
 .device-select-trigger:focus {
-  box-shadow: var(--focus-shadow);
+  box-shadow: var(--focus-outline);
 }
 
 .device-select-value {

@@ -133,7 +133,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --separator: var(--navy-light-40);
 
   /* Shadows */
-  --focus-shadow: 0 0 0 2px var(--navy-light-20);
+  --focus-outline: 0 0 0 2px var(--navy-light-20);
   --backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 
   /* Device select */
@@ -184,7 +184,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --separator: var(--background-dark-40);
 
   /* Shadows */
-  --focus-shadow: 0 0 0 2px var(--background-dark-50);
+  --focus-outline: 0 0 0 2px var(--background-dark-50);
   --backdrop-shadow: none;
 
   /* Device select */

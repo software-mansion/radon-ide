@@ -30,7 +30,7 @@
 }
 
 .icon-button:focus {
-  box-shadow: 0 0 0 2px var(--background-dark-50);
+  box-shadow: var(--focus-outline);
 }
 
 .icon-button-selected {
