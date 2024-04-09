@@ -4,6 +4,7 @@ export type LaunchConfigurationOptions = {
   "iOS:scheme": string | undefined;
   "iOS:configuration": string | undefined;
   "Android:variant": string | undefined;
+  "Preview:waitForAppLaunch": boolean | undefined;
 };
 
 export function getLaunchConfiguration(): LaunchConfigurationOptions {

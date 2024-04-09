@@ -9,7 +9,7 @@ import { DeviceProperties, SupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
-import { InspectData } from "../../common/Project";
+import { InspectData, StartupMessage } from "../../common/Project";
 
 declare module "react" {
   interface CSSProperties {
@@ -103,6 +103,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const previewRef = useRef<HTMLImageElement>(null);
+  const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
   const { projectState, project } = useProject();
 
@@ -115,12 +116,12 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   const previewURL = projectState?.previewURL;
 
-  const isStarting =
-    hasBundleError || hasIncrementalBundleError || debugException
-      ? false
-      : !projectState ||
-        projectState.previewURL === undefined ||
-        projectState.status === "starting";
+  const hasErrors = hasBundleError || hasIncrementalBundleError || debugException;
+  const showDevicePreview =
+    previewURL &&
+    (showPreviewRequested ||
+      (!hasErrors &&
+        (projectState?.status === "running" || projectState?.status === "refreshing")));
 
   useBuildErrorAlert(hasBuildError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
@@ -228,7 +229,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     debugException ||
     hasBundleError ||
     hasIncrementalBundleError ||
-    projectState?.status === "refreshing";
+    !showDevicePreview;
 
   const touchHandlers = shouldPreventTouchInteraction
     ? {}
@@ -245,7 +246,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       style={cssPropertiesForDevice(device!)}
       tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
-      {!isStarting && !hasBuildError && (
+      {showDevicePreview && (
         <div className="phone-content" {...touchHandlers}>
           <MjpegImg
             src={previewURL}
@@ -311,11 +312,11 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
           <img src={device!.frameImage} className="phone-frame" />
         </div>
       )}
-      {isStarting && !hasBuildError && (
+      {!showDevicePreview && !hasBuildError && (
         <div className="phone-content">
           <div className="phone-sized phone-screen phone-content-loading-overlay" />
           <div className="phone-sized phone-screen phone-content-loading ">
-            <PreviewLoader />
+            <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
           </div>
           <img src={device!.frameImage} className="phone-frame" />
         </div>

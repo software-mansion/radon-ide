@@ -7,10 +7,12 @@ import { BuildResult, DisposableBuild } from "../builders/BuildManager";
 import { DeviceSettings, StartupMessage } from "../common/Project";
 import { Platform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
 type ProgressCallback = (startupMessage: string) => void;
+type PreviewReadyCallback = (previewURL: string) => void;
 
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
@@ -33,16 +35,22 @@ export class DeviceSession implements Disposable {
     return this.devtools.hasConnectedClient;
   }
 
-  async start(deviceSettings: DeviceSettings, progressCallback: ProgressCallback) {
-    const waitForAppReady = new Promise<void>((res) => {
-      const listener = (event: string, payload: any) => {
-        if (event === "RNIDE_appReady") {
-          this.devtools?.removeListener(listener);
-          res();
-        }
-      };
-      this.devtools?.addListener(listener);
-    });
+  async start(
+    deviceSettings: DeviceSettings,
+    previewReadyCallback: PreviewReadyCallback,
+    progressCallback: ProgressCallback
+  ) {
+    const shouldWaitForAppLaunch = getLaunchConfiguration()["Preview:waitForAppLaunch"];
+    const waitForAppReady = shouldWaitForAppLaunch
+      ? Promise.resolve()
+      : new Promise<void>((res) => {
+          const listener = (event: string, payload: any) => {
+            if (event === "RNIDE_appReady") {
+              this.devtools?.removeListener(listener);
+            }
+          };
+          this.devtools?.addListener(listener);
+        });
 
     progressCallback(StartupMessage.BootingDevice);
     await this.device.bootDevice();
@@ -54,7 +62,9 @@ export class DeviceSession implements Disposable {
     progressCallback(StartupMessage.Launching);
     await this.device.launchApp(build, this.metro.port, this.devtools.port);
 
-    const waitForPreview = this.device.startPreview();
+    const waitForPreview = this.device.startPreview().then(() => {
+      previewReadyCallback(this.device.previewURL!);
+    });
     Logger.debug("Will wait for app ready and for preview");
     progressCallback(StartupMessage.WaitingForAppToLoad);
     await Promise.all([waitForAppReady, waitForPreview]);

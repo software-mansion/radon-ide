@@ -139,6 +139,10 @@
               "Android:variant": {
                 "type": "string",
                 "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
+              },
+              "Preview:waitForAppLaunch": {
+                "type": "boolean",
+                "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
               }
             }
           }
