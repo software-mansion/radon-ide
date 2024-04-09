@@ -1,12 +1,4 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-  MouseEvent,
-  forwardRef,
-  RefObject,
-  useLayoutEffect,
-} from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject } from "react";
 import clamp from "lodash/clamp";
 import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
