@@ -155,6 +155,9 @@ body[data-vscode-theme-kind="vscode-light"] {
 
   /* Radio group */
   --radio-group-item: var(--navy-light-60);
+
+  /* Startup message */
+  --startup-message: var(--off-white);
 }
 
 /* Dark theme */
@@ -206,4 +209,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
 
   /* Radio group */
   --radio-group-item: var(--off-white);
+
+  /* Startup message */
+  --startup-message: var(--off-white);
 }
