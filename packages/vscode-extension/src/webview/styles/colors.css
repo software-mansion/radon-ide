@@ -121,7 +121,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --highlight-selected-hover-text: var(--navy-light-10);
 
   --highlight-hover-background: var(--navy-light-10);
-  --highlight-active-background: var(--navy-light-20);
+  --highlight-active-background: var(--navy-light-10);
   --highlight-selected-background: var(--navy-light-20);
   --highlight-selected-hover-background: var(--off-white);
 

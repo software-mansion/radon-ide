@@ -41,7 +41,7 @@ button {
 }
 .dropdown-menu-item[data-highlighted] {
   background-color: var(--highlight-active-background);
-  color: var(--highlight-text);
+  color: var(--default-text);
 }
 
 .dropdown-menu-label {
