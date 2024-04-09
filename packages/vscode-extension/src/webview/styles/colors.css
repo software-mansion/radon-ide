@@ -120,7 +120,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --highlight-selected-text: var(--white);
   --highlight-selected-hover-text: var(--off-white);
 
-  --highlight-hover-background: var(--off-white);
+  --highlight-hover-background: var(--navy-light-10);
   --highlight-active-background: var(--navy-light-20);
   --highlight-selected-background: var(--navy-light-20);
   --highlight-selected-hover-background: var(--off-white);
@@ -131,6 +131,21 @@ body[data-vscode-theme-kind="vscode-light"] {
   --select-active-background: var(--off-white);
 
   --separator: var(--navy-light-40);
+
+  --focus-shadow: 0 0 0 2px var(--navy-light-20);
+
+  /* Device select */
+  --device-select-background: var(--navy-light-10);
+  --device-select-trigger-text: var(--navy-light-100);
+  --device-select-trigger-hover: var(--navy-light-10);
+  --device-select-trigger-disabled: var(--white);
+  --device-select-separator: var(--navy-light-40);
+  --device-select-highlighted: var(--off-white);
+  --device-select-disabled-text: var(--navy-light-20);
+  --device-select-label: var(--navy-light-60);
+  --device-select-rich-item-text: var(--navy-light-100);
+  --device-select-rich-item-subtitle: var(--navy-light-40);
+  --device-select-rich-item-icon: var(--navy-light-20);
 }
 
 /* Dark theme */
@@ -158,4 +173,19 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --select-active-background: var(--background-dark-80);
 
   --separator: var(--background-dark-40);
+
+  --focus-shadow: 0 0 0 2px var(--background-dark-50);
+
+  /* Device select */
+  --device-select-background: var(--background-dark-80);
+  --device-select-trigger-text: var(--off-white);
+  --device-select-trigger-hover: var(--background-dark-70);
+  --device-select-trigger-disabled: var(--background-dark-90);
+  --device-select-separator: var(--background-dark-50);
+  --device-select-highlighted: var(--background-dark-60);
+  --device-select-disabled-text: var(--background-dark-60);
+  --device-select-label: var(--background-dark-30);
+  --device-select-rich-item-text: var(--off-white);
+  --device-select-rich-item-subtitle: var(--background-dark-10);
+  --device-select-rich-item-icon: var(--background-dark-70);
 }
