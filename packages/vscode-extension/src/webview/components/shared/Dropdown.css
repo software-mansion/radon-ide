@@ -92,28 +92,3 @@ button {
     transform: translateY(0);
   }
 }
-
-.switch-root {
-  width: 35px;
-  height: 19px;
-  background-color: var(--background-dark-100);
-  border-radius: 9999px;
-  position: relative;
-}
-.switch-root[data-state="checked"] {
-  background-color: var(--active-item);
-}
-
-.switch-thumb {
-  display: block;
-  width: 15px;
-  height: 15px;
-  background-color: var(--default-text);
-  border-radius: 9999px;
-  transition: transform 100ms;
-  transform: translateX(2px);
-  will-change: transform;
-}
-.switch-thumb[data-state="checked"] {
-  transform: translateX(19px);
-}
