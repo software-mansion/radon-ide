@@ -363,19 +363,17 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(this.deviceSettings, (startupMessage) =>
-        this.updateProjectStateForDevice(deviceInfo, { startupMessage })
+      await newDeviceSession.start(
+        this.deviceSettings,
+        (previewURL) => {
+          this.updateProjectStateForDevice(deviceInfo, { previewURL });
+        },
+        (startupMessage) => this.updateProjectStateForDevice(deviceInfo, { startupMessage })
       );
       Logger.debug("Device session started");
 
-      const previewURL = newDeviceSession.previewURL;
-      if (!previewURL) {
-        throw new Error("No preview URL");
-      }
-
       this.updateProjectStateForDevice(deviceInfo, {
         status: "running",
-        previewURL,
       });
     } catch (e) {
       Logger.error("Couldn't start device session", e);

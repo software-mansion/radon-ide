@@ -108,10 +108,49 @@
     "debuggers": [
       {
         "type": "com.swmansion.react-native-ide",
-        "label": "React Native Preview",
+        "label": "React Native IDE internal",
+        "hiddenWhen": "true",
         "languages": [
           "javascript",
           "typescript"
+        ]
+      },
+      {
+        "type": "react-native-ide",
+        "label": "React Native IDE",
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "typescriptreact"
+        ],
+        "configurationAttributes": {
+          "preview": {
+            "required": [],
+            "properties": {
+              "iOS:scheme": {
+                "type": "string",
+                "description": "Scheme name (from xcode project) the IDE will use for iOS builds, defaults to workspace file name."
+              },
+              "iOS:configuration": {
+                "type": "string",
+                "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+              },
+              "Android:variant": {
+                "type": "string",
+                "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "react-native-ide",
+            "request": "launch",
+            "name": "React Native IDE panel",
+            "iOS:mode": "Debug",
+            "Android:variant": "debug"
+          }
         ]
       }
     ]
