@@ -40,13 +40,14 @@ export class DeviceSession implements Disposable {
     previewReadyCallback: PreviewReadyCallback,
     progressCallback: ProgressCallback
   ) {
-    const shouldWaitForAppLaunch = getLaunchConfiguration()["Preview:waitForAppLaunch"];
+    const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch
       ? Promise.resolve()
       : new Promise<void>((res) => {
           const listener = (event: string, payload: any) => {
             if (event === "RNIDE_appReady") {
               this.devtools?.removeListener(listener);
+              res();
             }
           };
           this.devtools?.addListener(listener);

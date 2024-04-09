@@ -125,24 +125,42 @@
           "typescriptreact"
         ],
         "configurationAttributes": {
-          "preview": {
+          "launch": {
             "required": [],
             "properties": {
-              "iOS:scheme": {
-                "type": "string",
-                "description": "Scheme name (from xcode project) the IDE will use for iOS builds, defaults to workspace file name."
+              "ios": {
+                "description": "Provides a way to customize Xcode builds for iOS",
+                "type": "object",
+                "properties": {
+                  "scheme": {
+                    "type": "string",
+                    "description": "Scheme name (from xcode project) the IDE will use for iOS builds, defaults to xcworkspace base file name."
+                  },
+                  "configuration": {
+                    "type": "string",
+                    "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+                  }
+                }
               },
-              "iOS:configuration": {
-                "type": "string",
-                "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+              "android": {
+                "description": "Provides a way to customize Gradle builds for Android",
+                "type": "object",
+                "properties": {
+                  "variant": {
+                    "type": "string",
+                    "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
+                  }
+                }
               },
-              "Android:variant": {
-                "type": "string",
-                "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
-              },
-              "Preview:waitForAppLaunch": {
-                "type": "boolean",
-                "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
+              "preview": {
+                "description": "Custommize the behavior of device preview",
+                "type": "object",
+                "properties": {
+                  "waitForAppLaunch": {
+                    "type": "boolean",
+                    "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
+                  }
+                }
               }
             }
           }
@@ -152,8 +170,12 @@
             "type": "react-native-ide",
             "request": "launch",
             "name": "React Native IDE panel",
-            "iOS:mode": "Debug",
-            "Android:variant": "debug"
+            "ios": {
+              "configuration": "Debug"
+            },
+            "android": {
+              "variant": "debug"
+            }
           }
         ]
       }

@@ -66,7 +66,7 @@ export async function buildAndroid(
     "lint",
     `-PreactNativeArchitectures=${cpuArchitecture}`,
     ...(forceCleanBuild ? ["clean"] : []),
-    makeBuildTaskName(buildOptions["Android:variant"] || "debug"),
+    makeBuildTaskName(buildOptions.android?.variant || "debug"),
     "--init-script", // init script is used to patch React Android project, see comments in configureReactNativeOverrides.gradle for more details
     path.join(extensionContext.extensionPath, "lib", "android", "initscript.gradle"),
   ];

@@ -107,7 +107,7 @@ export class WebviewController implements Disposable {
             this.webview.postMessage({
               command: "callback",
               callbackId,
-              options,
+              args: options,
             });
           };
         } else {
