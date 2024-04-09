@@ -11,6 +11,7 @@ button {
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
+  box-shadow: var(--backdrop-shadow);
 }
 
 .dropdown-menu-content[data-side="bottom"] {

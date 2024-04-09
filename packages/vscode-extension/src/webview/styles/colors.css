@@ -118,7 +118,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --highlight-text: var(--white);
   --highlight-active-text: var(--white);
   --highlight-selected-text: var(--white);
-  --highlight-selected-hover-text: var(--off-white);
+  --highlight-selected-hover-text: var(--navy-light-10);
 
   --highlight-hover-background: var(--navy-light-10);
   --highlight-active-background: var(--navy-light-20);
@@ -132,7 +132,9 @@ body[data-vscode-theme-kind="vscode-light"] {
 
   --separator: var(--navy-light-40);
 
+  /* Shadows */
   --focus-shadow: 0 0 0 2px var(--navy-light-20);
+  --backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 
   /* Device select */
   --device-select-background: var(--navy-light-10);
@@ -146,6 +148,13 @@ body[data-vscode-theme-kind="vscode-light"] {
   --device-select-rich-item-text: var(--navy-light-100);
   --device-select-rich-item-subtitle: var(--navy-light-40);
   --device-select-rich-item-icon: var(--navy-light-20);
+
+  /* Slider */
+  --slider-thumb: var(--navy-light-60);
+  --slider-track: var(--navy-light-60);
+
+  /* Radio group */
+  --radio-group-item: var(--navy-light-60);
 }
 
 /* Dark theme */
@@ -174,7 +183,9 @@ body[data-vscode-theme-kind="vscode-dark"] {
 
   --separator: var(--background-dark-40);
 
+  /* Shadows */
   --focus-shadow: 0 0 0 2px var(--background-dark-50);
+  --backdrop-shadow: none;
 
   /* Device select */
   --device-select-background: var(--background-dark-80);
@@ -188,4 +199,11 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --device-select-rich-item-text: var(--off-white);
   --device-select-rich-item-subtitle: var(--background-dark-10);
   --device-select-rich-item-icon: var(--background-dark-70);
+
+  /* Slider */
+  --slider-thumb: var(--white);
+  --slider-track: var(--white);
+
+  /* Radio group */
+  --radio-group-item: var(--off-white);
 }
