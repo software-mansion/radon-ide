@@ -25,6 +25,7 @@ input {
   max-height: 85vh;
   padding: 25px;
   animation: contentShow 175ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--swm-backdrop-shadow);
 }
 .modal-content:focus {
   outline: none;
