@@ -15,6 +15,7 @@
 
 .phone-content {
   position: relative;
+  display: flex;
   min-height: var(--min-height);
   aspect-ratio: var(--phone-aspect-ratio);
 }
