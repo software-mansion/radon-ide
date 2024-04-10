@@ -200,6 +200,13 @@ body[data-vscode-theme-kind="vscode-light"] {
   /* Devices not found */
   --swm-devices-not-found-icon: var(--white);
   --swm-devices-not-found-icon-background: var(--navy-light-20);
+
+  /* URL select */
+  --swm-url-select: var(--navy-light-100);
+  --swm-url-select-background: var(--navy-light-10);
+  --swm-url-select-hover-background: var(--navy-light-10);
+  --swm-url-select-disabled-background: var(--navy-light-40);
+  --swm-url-select-highlighted-background: var(--off-white);
 }
 
 /* Dark theme */
@@ -296,4 +303,11 @@ body[data-vscode-theme-kind="vscode-dark"] {
   /* Devices not found */
   --swm-devices-not-found-icon: var(--background-dark-100);
   --swm-devices-not-found-icon-background: var(--background-dark-80);
+
+  /* URL select */
+  --swm-url-select: var(--off-white);
+  --swm-url-select-background: var(--background-dark-80);
+  --swm-url-select-hover-background: var(--background-dark-70);
+  --swm-url-select-disabled-background: var(--background-dark-90);
+  --swm-url-select-highlighted-background: var(--background-dark-60);
 }

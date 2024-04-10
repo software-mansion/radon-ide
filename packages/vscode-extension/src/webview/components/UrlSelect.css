@@ -15,20 +15,20 @@
   border: 0px solid transparent;
   border-radius: 18px;
   gap: 5px;
-  background-color: var(--background-dark-80);
-  color: var(--off-white);
+  color: var(--swm-url-select);
+  background-color: var(--swm-url-select-background);
   user-select: none;
   min-width: var(--url-select-min-width);
   max-width: var(--url-select-max-width);
 }
 .url-select-trigger:hover {
-  background-color: var(--background-dark-70);
+  background-color: var(--swm-url-select-hover-background);
 }
 .url-select-trigger[data-state="open"] {
   border-radius: 18px 18px 0 0;
 }
 .url-select-trigger[data-disabled] {
-  background-color: var(--background-dark-90);
+  background-color: var(--swm-url-select-disabled-background);
   color: var(--swm-secondary-text);
   pointer-events: none;
 }
@@ -38,7 +38,7 @@
 
 .url-select-content {
   overflow: hidden;
-  background-color: var(--background-dark-80);
+  background-color: var(--swm-url-select-background);
   border-radius: 0 0 18px 18px;
   padding-bottom: 4px;
   min-width: var(--url-select-min-width);
@@ -62,7 +62,7 @@
 }
 .url-select-item[data-highlighted] {
   outline: none;
-  background-color: var(--background-dark-60);
+  background-color: var(--swm-url-select-highlighted-background);
   cursor: pointer;
 }
 .url-select-item-text {
