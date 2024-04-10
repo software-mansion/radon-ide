@@ -13,42 +13,44 @@ button {
   line-height: 1;
   height: 26px;
   gap: 5px;
+  color: var(--swm-default-text);
   background-color: var(--swm-select-background);
   cursor: pointer;
-  box-shadow: 0 1px 10px var(--background-dark-100);
+  box-shadow: var(--swm-select-shadow);
 }
 
 .select-trigger:hover {
-  background-color: var(--swm-select-active-background);
+  background-color: var(--swm-select-hover-background);
 }
 
 .select-trigger-disabled {
-  background-color: var(--background-dark-120);
+  color: var(--swm-select-disabled);
+  background-color: var(--swm-select-disabled-background);
 }
 
 .select-trigger-disabled:hover {
-  background-color: var(--background-dark-120);
+  background-color: var(--swm-select-disabled-background);
   cursor: auto;
 }
 
 .select-content {
   overflow: hidden;
   color: var(--swm-default-text);
-  background-color: var(--background-dark-80);
+  background-color: var(--swm-select-content-background);
   border-radius: 6px;
-  box-shadow: 0 1px 10px var(--background-dark-100);
+  box-shadow: var(--swm-backdrop-shadow);
 }
 
 .select-viewport {
   padding: 5px;
-  background-color: var(--background-dark-80);
+  background-color: var(--swm-select-content-background);
 }
 
 .select-item {
   font-size: 13px;
   line-height: 1;
   color: var(--swm-default-text);
-  background-color: var(--background-dark-80);
+  background-color: var(--swm-select-content-background);
   border-radius: 3px;
   display: flex;
   align-items: center;
@@ -59,14 +61,13 @@ button {
 }
 
 .select-item[data-disabled] {
-  background-color: var(--background-dark-100);
+  background-color: var(--swm-select-item-disabled-background);
   color: var(--swm-secondary-text);
   pointer-events: none;
 }
 .select-item[data-highlighted] {
   outline: none;
-  background-color: var(--background-dark-60);
-  color: var(--violet-1);
+  background-color: var(--swm-select-item-highlighted-background);
   cursor: pointer;
 }
 
@@ -98,7 +99,7 @@ button {
   align-items: center;
   justify-content: center;
   height: 25px;
-  background-color: var(--background-dark-80);
-  color: white;
+  background-color: var(--swm-select-content-background);
+  color: var(--swm-white);
   cursor: default;
 }

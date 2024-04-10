@@ -119,9 +119,6 @@ body[data-vscode-theme-kind="vscode-light"] {
 
   --swm-popover-background: var(--off-white);
 
-  --swm-select-background: var(--white);
-  --swm-select-active-background: var(--off-white);
-
   --swm-separator: var(--navy-light-40);
 
   /* Shadows */
@@ -188,6 +185,16 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-device-icon-background: var(--navy-light-10);
   --swm-device-delete-icon: var(--red-light-100);
   --swm-device-warning-icon: var(--yellow-light-80);
+
+  /* Select */
+  --swm-select-background: var(--white);
+  --swm-select-hover-background: var(--off-white);
+  --swm-select-shadow: 0 0 0 1px var(--navy-light-10);
+  --swm-select-disabled: var(--navy-light-20);
+  --swm-select-disabled-background: var(--navy-light-10);
+  --swm-select-content-background: var(--navy-light-10);
+  --swm-select-item-disabled-background: var(--navy-light-40);
+  --swm-select-item-highlighted-background: var(--off-white);
 }
 
 /* Dark theme */
@@ -202,9 +209,6 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-dropdown-item-highlighted: var(--background-dark-70);
 
   --swm-popover-background: var(--background-dark-80);
-
-  --swm-select-background: var(--background-dark-100);
-  --swm-select-active-background: var(--background-dark-80);
 
   --swm-separator: var(--background-dark-40);
 
@@ -272,4 +276,14 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-device-icon-background: var(--background-dark-70);
   --swm-device-delete-icon: var(--red-dark-80);
   --swm-device-warning-icon: var(--yellow-dark-100);
+
+  /* Select */
+  --swm-select-background: var(--background-dark-100);
+  --swm-select-hover-background: var(--background-dark-80);
+  --swm-select-shadow: 0 1px 10px var(--background-dark-100);
+  --swm-select-disabled: var(--navy-dark-60);
+  --swm-select-disabled-background: var(--background-dark-120);
+  --swm-select-content-background: var(--background-dark-80);
+  --swm-select-item-disabled-background: var(--background-dark-100);
+  --swm-select-item-highlighted-background: var(--background-dark-60);
 }
