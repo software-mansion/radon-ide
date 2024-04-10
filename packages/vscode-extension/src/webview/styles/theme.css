@@ -169,7 +169,8 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-button-ternary-background: var(--navy-light-60);
   --swm-button-ternary-hover: var(--navy-light-40);
 
-  --swm-button-counter: var(--navy-light-20);
+  --swm-button-counter: var(--off-white);
+  --swm-button-counter-background: var(--navy-light-60);
 
   /* Tooltip */
   --swm-tooltip-primary: var(--swm-default-text);
@@ -205,8 +206,8 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-url-select: var(--navy-light-100);
   --swm-url-select-background: var(--navy-light-10);
   --swm-url-select-hover-background: var(--navy-light-10);
-  --swm-url-select-disabled-background: var(--navy-light-40);
-  --swm-url-select-highlighted-background: var(--off-white);
+  --swm-url-select-disabled-background: var(--off-white);
+  --swm-url-select-highlighted-background: var(--white);
 }
 
 /* Dark theme */
@@ -272,7 +273,8 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-button-ternary-background: var(--background-dark-30);
   --swm-button-ternary-hover: var(--background-dark-10);
 
-  --swm-button-counter: var(--background-dark-40);
+  --swm-button-counter: var(--off-white);
+  --swm-button-counter-background: var(--background-dark-40);
 
   /* Tooltip */
   --swm-tooltip-primary: var(--swm-default-text);

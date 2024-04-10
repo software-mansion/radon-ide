@@ -71,7 +71,8 @@
   right: -5px;
   border: 0px solid transparent;
   border-radius: 4px;
-  background-color: var(--swm-button-counter);
+  color: var(--swm-button-counter);
+  background-color: var(--swm-button-counter-background);
   padding: 2px 4px;
   font-size: 11px;
 }
