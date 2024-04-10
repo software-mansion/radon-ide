@@ -181,6 +181,14 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-tooltip-secondary-background: var(--navy-light-10);
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
+
+  /* Manage devices */
+  --swm-device-title: var(--swm-default-text);
+  --swm-device-subtitle: var(--navy-light-60);
+  --swm-device-icon: var(--swm-default-text);
+  --swm-device-icon-background: var(--navy-light-10);
+  --swm-device-delete-icon: var(--red-light-100);
+  --swm-device-warning-icon: var(--yellow-light-80);
 }
 
 /* Dark theme */
@@ -258,4 +266,12 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-tooltip-secondary-background: var(--background-dark-120);
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
+
+  /* Manage devices */
+  --swm-device-title: var(--swm-default-text);
+  --swm-device-subtitle: var(--background-dark-10);
+  --swm-device-icon: var(--swm-default-text);
+  --swm-device-icon-background: var(--background-dark-70);
+  --swm-device-delete-icon: var(--red-dark-80);
+  --swm-device-warning-icon: var(--yellow-dark-100);
 }
