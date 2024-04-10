@@ -7,21 +7,22 @@
   animation-duration: 300ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
+  box-shadow: var(--swm-backdrop-shadow);
 }
 
 .tooltip-primary {
-  color: var(--swm-default-text);
-  background-color: var(--swm-popover-background);
+  color: var(--swm-tooltip-primary);
+  background-color: var(--swm-tooltip-primary-background);
 }
 
 .tooltip-secondary {
-  color: var(--swm-default-text);
-  background-color: var(--background-dark-120);
+  color: var(--swm-tooltip-secondary);
+  background-color: var(--swm-tooltip-secondary-background);
 }
 
 .tooltip-ternary {
-  color: var(--navy-dark-100);
-  background-color: var(--off-white);
+  color: var(--swm-tooltip-ternary);
+  background-color: var(--swm-tooltip-ternary-background);
 }
 
 .tooltip-content[data-state="delayed-open"][data-side="top"] {
@@ -38,14 +39,13 @@
 }
 
 .tooltip-arrow {
-  fill: var(--swm-popover-background);
+  fill: var(--swm-tooltip-primary-background);
 }
 .tooltip-arrow-secondary {
-  fill: var(--background-dark-120);
+  fill: var(--swm-tooltip-secondary-background);
 }
-
 .tooltip-arrow-ternary {
-  fill: var(--off-white);
+  fill: var(--swm-tooltip-ternary-background);
 }
 
 @keyframes slideUpAndFade {

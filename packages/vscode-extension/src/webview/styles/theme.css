@@ -173,6 +173,14 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-button-ternary-hover: var(--navy-light-40);
 
   --swm-button-counter: var(--navy-light-80);
+
+  /* Tooltip */
+  --swm-tooltip-primary: var(--swm-default-text);
+  --swm-tooltip-primary-background: var(--swm-popover-background);
+  --swm-tooltip-secondary: var(--swm-default-text);
+  --swm-tooltip-secondary-background: var(--navy-light-10);
+  --swm-tooltip-ternary: var(--navy-dark-100);
+  --swm-tooltip-ternary-background: var(--off-white);
 }
 
 /* Dark theme */
@@ -242,4 +250,12 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-button-ternary-hover: var(--background-dark-10);
 
   --swm-button-counter: var(--background-dark-40);
+
+  /* Tooltip */
+  --swm-tooltip-primary: var(--swm-default-text);
+  --swm-tooltip-primary-background: var(--swm-popover-background);
+  --swm-tooltip-secondary: var(--swm-default-text);
+  --swm-tooltip-secondary-background: var(--background-dark-120);
+  --swm-tooltip-ternary: var(--navy-dark-100);
+  --swm-tooltip-ternary-background: var(--off-white);
 }
