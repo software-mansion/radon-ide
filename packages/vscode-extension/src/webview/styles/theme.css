@@ -208,6 +208,12 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-url-select-hover-background: var(--navy-light-10);
   --swm-url-select-disabled-background: var(--off-white);
   --swm-url-select-highlighted-background: var(--white);
+
+  /* Debugger */
+  --swm-debugger-label: var(--off-white);
+  --swm-debugger-button-group: var(--white);
+  --swm-debugger-button-group-background: var(--navy-light-20);
+  --swm-debugger-button-group-border: 1px solid var(--navy-light-40);
 }
 
 /* Dark theme */
@@ -312,4 +318,10 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-url-select-hover-background: var(--background-dark-70);
   --swm-url-select-disabled-background: var(--background-dark-90);
   --swm-url-select-highlighted-background: var(--background-dark-60);
+
+  /* Debugger */
+  --swm-debugger-label: var(--off-white);
+  --swm-debugger-button-group: var(--white);
+  --swm-debugger-button-group-background: var(--background-dark-100);
+  --swm-debugger-button-group-border: 1px solid var(--background-dark-40);
 }

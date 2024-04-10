@@ -6,18 +6,19 @@
 
 .debugger-label {
   margin: 8px;
+  color: var(--swm-debugger-label);
   text-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
   user-select: none;
 }
 
 .debugger-button-group {
-  color: var(--white);
+  color: var(--swm-debugger-button-group);
   display: flex;
   flex-direction: row;
   gap: 2px;
-  background-color: var(--background-dark-100);
+  background-color: var(--swm-debugger-button-group-background);
   padding: 4px 6px;
   border-radius: 8px;
-  border: 1px solid var(--background-dark-40);
+  border: var(--swm-debugger-button-group-border);
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
