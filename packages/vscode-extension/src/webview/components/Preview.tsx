@@ -116,12 +116,12 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   const previewURL = projectState?.previewURL;
 
-  const hasErrors = hasBundleError || hasIncrementalBundleError || debugException;
+  const isStarting =
+    hasBundleError || hasIncrementalBundleError || debugException
+      ? false
+      : !projectState || projectState.status === "starting";
   const showDevicePreview =
-    previewURL &&
-    (showPreviewRequested ||
-      (!hasErrors &&
-        (projectState?.status === "running" || projectState?.status === "refreshing")));
+    projectState?.previewURL && (showPreviewRequested || (!isStarting && !hasBuildError));
 
   useBuildErrorAlert(hasBuildError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
