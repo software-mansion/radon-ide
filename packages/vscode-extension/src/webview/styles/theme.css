@@ -142,8 +142,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-device-select-rich-item-icon: var(--navy-light-20);
 
   /* Slider */
-  --swm-slider-thumb: var(--navy-light-60);
-  --swm-slider-track: var(--navy-light-60);
+  --swm-slider: var(--navy-light-60);
 
   /* Radio group */
   --swm-radio-group-item: var(--navy-light-60);
@@ -227,8 +226,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-device-select-rich-item-icon: var(--background-dark-70);
 
   /* Slider */
-  --swm-slider-thumb: var(--white);
-  --swm-slider-track: var(--white);
+  --swm-slider: var(--white);
 
   /* Radio group */
   --swm-radio-group-item: var(--off-white);
