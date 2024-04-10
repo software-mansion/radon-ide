@@ -146,6 +146,7 @@ body[data-vscode-theme-kind="vscode-light"] {
 
   /* Startup message */
   --swm-startup-message: var(--off-white);
+  --swm-phone-content-loading-overlay: rgba(0, 0, 0, 0.75);
 
   /* Button */
   --swm-button: var(--swm-default-text);
@@ -168,7 +169,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-button-ternary-background: var(--navy-light-60);
   --swm-button-ternary-hover: var(--navy-light-40);
 
-  --swm-button-counter: var(--navy-light-80);
+  --swm-button-counter: var(--navy-light-20);
 
   /* Tooltip */
   --swm-tooltip-primary: var(--swm-default-text);
@@ -241,6 +242,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
 
   /* Startup message */
   --swm-startup-message: var(--off-white);
+  --swm-phone-content-loading-overlay: rgba(255, 255, 255, 0.15);
 
   /* Button */
   --swm-button: var(--swm-default-text);
