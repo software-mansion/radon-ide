@@ -5,9 +5,10 @@ import { exec, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./BuildManager";
 import path from "path";
 import fs from "fs";
-import { OutputChannel, window } from "vscode";
+import { OutputChannel, workspace } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
@@ -44,6 +45,12 @@ export async function getAndroidBuildPaths(appRootFolder: string, cancelToken: C
   return { apkPath, packageName };
 }
 
+function makeBuildTaskName(variant: string) {
+  // task name is in the format of assemble<Variant> where variant is the name of the build variant
+  // that starts with a capital letter
+  return "assemble" + variant.charAt(0).toUpperCase() + variant.slice(1);
+}
+
 export async function buildAndroid(
   appRootFolder: string,
   forceCleanBuild: boolean,
@@ -53,12 +60,13 @@ export async function buildAndroid(
 ) {
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const cpuArchitecture = getCpuArchitecture();
+  const buildOptions = getLaunchConfiguration();
   const gradleArgs = [
     "-x",
     "lint",
     `-PreactNativeArchitectures=${cpuArchitecture}`,
     ...(forceCleanBuild ? ["clean"] : []),
-    "assembleDebug",
+    makeBuildTaskName(buildOptions.android?.variant || "debug"),
     "--init-script", // init script is used to patch React Android project, see comments in configureReactNativeOverrides.gradle for more details
     path.join(extensionContext.extensionPath, "lib", "android", "initscript.gradle"),
   ];

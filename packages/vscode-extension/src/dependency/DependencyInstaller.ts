@@ -29,9 +29,9 @@ export class DependencyInstaller implements Disposable {
     Logger.debug("Setup dependency installer listeners.");
     this.webview.onDidReceiveMessage(
       (message: any) => {
-        const command = message.command;
+        const webviewCommand = message.command;
 
-        switch (command) {
+        switch (webviewCommand) {
           case "installPods":
             Logger.debug("Received installPods command.");
             this.installPods();

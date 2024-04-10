@@ -27,8 +27,8 @@ export class DependencyChecker implements Disposable {
     Logger.debug("Setup dependency checker listeners.");
     this.webview.onDidReceiveMessage(
       (message: any) => {
-        const command = message.command;
-        switch (command) {
+        const webviewCommand = message.command;
+        switch (webviewCommand) {
           case "checkNodejsInstalled":
             Logger.debug("Received checkNodejsInstalled command.");
             this.checkNodejsInstalled();

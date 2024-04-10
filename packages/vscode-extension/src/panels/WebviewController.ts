@@ -103,11 +103,11 @@ export class WebviewController implements Disposable {
       const argsWithCallbacks = args.map((arg: any) => {
         if (typeof arg === "object" && "__callbackId" in arg) {
           const callbackId = arg.__callbackId;
-          return (...args: any[]) => {
+          return (...options: any[]) => {
             this.webview.postMessage({
               command: "callback",
               callbackId,
-              args,
+              args: options,
             });
           };
         } else {
@@ -118,11 +118,11 @@ export class WebviewController implements Disposable {
       const result = callableObject[method](...argsWithCallbacks);
       if (result instanceof Promise) {
         result
-          .then((result) => {
+          .then((res) => {
             this.webview.postMessage({
               command: "callResult",
               callId,
-              result,
+              result: res,
             });
           })
           .catch((error) => {

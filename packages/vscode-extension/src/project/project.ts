@@ -76,7 +76,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       const lastDeviceId = extensionContext.workspaceState.get(LAST_SELECTED_DEVICE_KEY) as
         | string
         | undefined;
-      let device = devices.find((device) => device.id === lastDeviceId);
+      let device = devices.find((item) => item.id === lastDeviceId);
       if (!device && devices.length > 0) {
         device = devices[0];
       }
@@ -92,8 +92,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     const devices = await this.deviceManager.listAllDevices();
     if (!selectInitialDevice(devices)) {
-      const listener = (devices: DeviceInfo[]) => {
-        if (selectInitialDevice(devices)) {
+      const listener = (newDevices: DeviceInfo[]) => {
+        if (selectInitialDevice(newDevices)) {
           this.deviceManager.removeListener("devicesChanged", listener);
         }
       };
@@ -363,19 +363,17 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(this.deviceSettings, (startupMessage) =>
-        this.updateProjectStateForDevice(deviceInfo, { startupMessage })
+      await newDeviceSession.start(
+        this.deviceSettings,
+        (previewURL) => {
+          this.updateProjectStateForDevice(deviceInfo, { previewURL });
+        },
+        (startupMessage) => this.updateProjectStateForDevice(deviceInfo, { startupMessage })
       );
       Logger.debug("Device session started");
 
-      const previewURL = newDeviceSession.previewURL;
-      if (!previewURL) {
-        throw new Error("No preview URL");
-      }
-
       this.updateProjectStateForDevice(deviceInfo, {
         status: "running",
-        previewURL,
       });
     } catch (e) {
       Logger.error("Couldn't start device session", e);

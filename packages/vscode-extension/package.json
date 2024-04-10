@@ -108,10 +108,75 @@
     "debuggers": [
       {
         "type": "com.swmansion.react-native-ide",
-        "label": "React Native Preview",
+        "label": "React Native IDE internal",
+        "hiddenWhen": "true",
         "languages": [
           "javascript",
           "typescript"
+        ]
+      },
+      {
+        "type": "react-native-ide",
+        "label": "React Native IDE",
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "typescriptreact"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "ios": {
+                "description": "Provides a way to customize Xcode builds for iOS",
+                "type": "object",
+                "properties": {
+                  "scheme": {
+                    "type": "string",
+                    "description": "Scheme name (from xcode project) the IDE will use for iOS builds, defaults to xcworkspace base file name."
+                  },
+                  "configuration": {
+                    "type": "string",
+                    "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+                  }
+                }
+              },
+              "android": {
+                "description": "Provides a way to customize Gradle builds for Android",
+                "type": "object",
+                "properties": {
+                  "variant": {
+                    "type": "string",
+                    "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
+                  }
+                }
+              },
+              "preview": {
+                "description": "Custommize the behavior of device preview",
+                "type": "object",
+                "properties": {
+                  "waitForAppLaunch": {
+                    "type": "boolean",
+                    "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "react-native-ide",
+            "request": "launch",
+            "name": "React Native IDE panel",
+            "ios": {
+              "configuration": "Debug"
+            },
+            "android": {
+              "variant": "debug"
+            }
+          }
         ]
       }
     ]

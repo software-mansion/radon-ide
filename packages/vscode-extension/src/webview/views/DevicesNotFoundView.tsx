@@ -2,10 +2,12 @@ import "./DevicesNotFoundView.css";
 import SmartphoneIcon from "../components/icons/SmartphoneIcon";
 import Button from "../components/shared/Button";
 import { useModal } from "../providers/ModalProvider";
-import CreateDeviceView, { SupportedAndroidDevice, SupportedIOSDevice } from "./CreateDeviceView";
+import CreateDeviceView from "./CreateDeviceView";
 import { useDevices } from "../providers/DevicesProvider";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { useState } from "react";
+import { SupportedDevices } from "../utilities/consts";
+import { Platform } from "../../common/DeviceManager";
 
 function DevicesNotFoundView() {
   const { openModal, closeModal } = useModal();
@@ -33,7 +35,12 @@ function DevicesNotFoundView() {
           newestAPIImage = image;
         }
       }
-      await deviceManager.createAndroidDevice(SupportedAndroidDevice.PIXEL_7, newestAPIImage);
+      await deviceManager.createAndroidDevice(
+        SupportedDevices.find((sd) => {
+          return sd.platform === Platform.Android;
+        })!.name,
+        newestAPIImage
+      );
     } finally {
       setAndroidCreating(false);
     }
@@ -46,7 +53,13 @@ function DevicesNotFoundView() {
       for (const runtime of iOSRuntimes) {
         if (
           (newestRuntime === undefined || runtime.version > newestRuntime.version) &&
-          runtime.supportedDeviceTypes.find((dt) => dt.name === SupportedIOSDevice.IPHONE_15_PRO)
+          runtime.supportedDeviceTypes.find(
+            (dt) =>
+              dt.name ===
+              SupportedDevices.find((sd) => {
+                return sd.platform === Platform.IOS;
+              })?.name
+          )
         ) {
           newestRuntime = runtime;
         }
@@ -56,7 +69,11 @@ function DevicesNotFoundView() {
         return;
       }
       const iOSDeviceType = newestRuntime.supportedDeviceTypes.find(
-        (dt) => dt.name === SupportedIOSDevice.IPHONE_15_PRO
+        (dt) =>
+          dt.name ===
+          SupportedDevices.find((sd) => {
+            return sd.platform === Platform.IOS;
+          })?.name
       );
       await deviceManager.createIOSDevice(iOSDeviceType!, newestRuntime);
     } finally {

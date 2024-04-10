@@ -13,7 +13,7 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
   0
 );
 
-function PreviewLoader() {
+function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => void }) {
   const { projectState, project } = useProject();
   const [progress, setProgress] = useState(0);
 
@@ -45,6 +45,8 @@ function PreviewLoader() {
   function handleLoaderClick() {
     if (projectState.startupMessage === StartupMessage.Building) {
       project.focusBuildOutput();
+    } else if (projectState.startupMessage === StartupMessage.WaitingForAppToLoad) {
+      onRequestShowPreview();
     } else {
       project.focusExtensionLogsOutput();
     }
