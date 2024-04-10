@@ -1,11 +1,11 @@
 .startup-message-wrapper {
   display: flex;
-  color: var(--startup-message);
+  color: var(--swm-startup-message);
 }
 
 .startup-message-dots {
   width: 16px;
   display: inline-grid;
   position: relative;
-  color: var(--startup-message);
+  color: var(--swm-startup-message);
 }

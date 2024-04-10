@@ -32,7 +32,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             onSelect={() => {
               openModal("Diagnostics", <DiagnosticView />);
             }}>
-            <DoctorIcon color="var(--default-text)" />
+            <DoctorIcon color="var(--swm-default-text)" />
             Run diagnostics...
           </DropdownMenu.Item>
           <DropdownMenu.Item

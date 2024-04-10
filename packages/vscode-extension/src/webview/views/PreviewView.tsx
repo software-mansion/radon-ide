@@ -164,7 +164,7 @@ function PreviewView() {
         <DeviceSettingsDropdown disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon
-              color={devicesNotFound ? "var(--disabled-text)" : "var(--default-text)"}
+              color={devicesNotFound ? "var(--swm-disabled-text)" : "var(--swm-default-text)"}
             />
           </IconButton>
         </DeviceSettingsDropdown>

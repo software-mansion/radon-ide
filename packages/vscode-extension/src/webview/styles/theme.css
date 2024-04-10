@@ -108,108 +108,138 @@
 
 /* Light theme */
 body[data-vscode-theme-kind="vscode-light"] {
-  --active-item: var(--blue-dark-100);
-  --preview-background: var(--white);
+  --swm-active-item: var(--blue-dark-100);
+  --swm-preview-background: var(--white);
 
-  --default-text: var(--navy-light-100);
-  --secondary-text: var(--navy-light-60);
-  --disabled-text: var(--navy-light-20);
+  --swm-default-text: var(--navy-light-100);
+  --swm-secondary-text: var(--navy-light-60);
+  --swm-disabled-text: var(--navy-light-20);
 
-  --highlight-text: var(--white);
-  --highlight-active-text: var(--white);
-  --highlight-selected-text: var(--white);
-  --highlight-selected-hover-text: var(--navy-light-10);
+  --swm-dropdown-item-highlighted: var(--navy-light-10);
 
-  --highlight-hover-background: var(--navy-light-10);
-  --highlight-active-background: var(--navy-light-10);
-  --highlight-selected-background: var(--navy-light-20);
-  --highlight-selected-hover-background: var(--off-white);
+  --swm-popover-background: var(--off-white);
 
-  --popover-background: var(--off-white);
+  --swm-select-background: var(--white);
+  --swm-select-active-background: var(--off-white);
 
-  --select-background: var(--white);
-  --select-active-background: var(--off-white);
-
-  --separator: var(--navy-light-40);
+  --swm-separator: var(--navy-light-40);
 
   /* Shadows */
-  --focus-outline: 0 0 0 2px var(--navy-light-20);
-  --backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --swm-focus-outline: 0 0 0 2px var(--navy-light-20);
+  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 
   /* Device select */
-  --device-select-background: var(--navy-light-10);
-  --device-select-trigger-text: var(--navy-light-100);
-  --device-select-trigger-hover: var(--navy-light-10);
-  --device-select-trigger-disabled: var(--white);
-  --device-select-separator: var(--navy-light-40);
-  --device-select-highlighted: var(--off-white);
-  --device-select-disabled-text: var(--navy-light-20);
-  --device-select-label: var(--navy-light-60);
-  --device-select-rich-item-text: var(--navy-light-100);
-  --device-select-rich-item-subtitle: var(--navy-light-40);
-  --device-select-rich-item-icon: var(--navy-light-20);
+  --swm-device-select-background: var(--navy-light-10);
+  --swm-device-select-trigger-text: var(--navy-light-100);
+  --swm-device-select-trigger-hover: var(--navy-light-10);
+  --swm-device-select-trigger-disabled: var(--white);
+  --swm-device-select-separator: var(--navy-light-40);
+  --swm-device-select-highlighted: var(--off-white);
+  --swm-device-select-disabled-text: var(--navy-light-20);
+  --swm-device-select-label: var(--navy-light-60);
+  --swm-device-select-rich-item-text: var(--navy-light-100);
+  --swm-device-select-rich-item-subtitle: var(--navy-light-40);
+  --swm-device-select-rich-item-icon: var(--navy-light-20);
 
   /* Slider */
-  --slider-thumb: var(--navy-light-60);
-  --slider-track: var(--navy-light-60);
+  --swm-slider-thumb: var(--navy-light-60);
+  --swm-slider-track: var(--navy-light-60);
 
   /* Radio group */
-  --radio-group-item: var(--navy-light-60);
+  --swm-radio-group-item: var(--navy-light-60);
 
   /* Startup message */
-  --startup-message: var(--off-white);
+  --swm-startup-message: var(--off-white);
+
+  /* Button */
+  --swm-button: var(--swm-default-text);
+  --swm-button-disabled: var(--swm-disabled-text);
+  --swm-button-hover: var(--navy-light-10);
+
+  --swm-button-active: var(--navy-light-100);
+  --swm-button-active-background: var(--navy-light-20);
+
+  --swm-button-selected: var(--white);
+  --swm-button-selected-background: var(--navy-light-60);
+  --swm-button-selected-hover: var(--off-white);
+  --swm-button-selected-hover-background: var(--navy-light-40);
+
+  --swm-button-secondary: var(--swm-default-text);
+  --swm-button-secondary-background: var(--off-white);
+  --swm-button-secondary-hover: var(--navy-light-40);
+
+  --swm-button-ternary: var(--off-white);
+  --swm-button-ternary-background: var(--navy-light-60);
+  --swm-button-ternary-hover: var(--navy-light-40);
+
+  --swm-button-counter: var(--navy-light-80);
 }
 
 /* Dark theme */
 body[data-vscode-theme-kind="vscode-dark"] {
-  --active-item: var(--blue-dark-100);
-  --preview-background: var(--background-dark-100);
+  --swm-active-item: var(--blue-dark-100);
+  --swm-preview-background: var(--background-dark-100);
 
-  --default-text: var(--off-white);
-  --secondary-text: var(--background-dark-10);
-  --disabled-text: var(--background-dark-40);
+  --swm-default-text: var(--off-white);
+  --swm-secondary-text: var(--background-dark-10);
+  --swm-disabled-text: var(--background-dark-40);
 
-  --highlight-text: var(--white);
-  --highlight-active-text: var(--white);
-  --highlight-selected-text: var(--white);
-  --highlight-selected-hover-text: var(--off-white);
+  --swm-dropdown-item-highlighted: var(--background-dark-70);
 
-  --highlight-hover-background: var(--background-dark-80);
-  --highlight-active-background: var(--background-dark-70);
-  --highlight-selected-background: var(--background-dark-60);
-  --highlight-selected-hover-background: var(--background-dark-50);
+  --swm-popover-background: var(--background-dark-80);
 
-  --popover-background: var(--background-dark-80);
+  --swm-select-background: var(--background-dark-100);
+  --swm-select-active-background: var(--background-dark-80);
 
-  --select-background: var(--background-dark-100);
-  --select-active-background: var(--background-dark-80);
-
-  --separator: var(--background-dark-40);
+  --swm-separator: var(--background-dark-40);
 
   /* Shadows */
-  --focus-outline: 0 0 0 2px var(--background-dark-50);
-  --backdrop-shadow: none;
+  --swm-focus-outline: 0 0 0 2px var(--background-dark-50);
+  --swm-backdrop-shadow: none;
 
   /* Device select */
-  --device-select-background: var(--background-dark-80);
-  --device-select-trigger-text: var(--off-white);
-  --device-select-trigger-hover: var(--background-dark-70);
-  --device-select-trigger-disabled: var(--background-dark-90);
-  --device-select-separator: var(--background-dark-50);
-  --device-select-highlighted: var(--background-dark-60);
-  --device-select-disabled-text: var(--background-dark-60);
-  --device-select-label: var(--background-dark-30);
-  --device-select-rich-item-text: var(--off-white);
-  --device-select-rich-item-subtitle: var(--background-dark-10);
-  --device-select-rich-item-icon: var(--background-dark-70);
+  --swm-device-select-background: var(--background-dark-80);
+  --swm-device-select-trigger-text: var(--off-white);
+  --swm-device-select-trigger-hover: var(--background-dark-70);
+  --swm-device-select-trigger-disabled: var(--background-dark-90);
+  --swm-device-select-separator: var(--background-dark-50);
+  --swm-device-select-highlighted: var(--background-dark-60);
+  --swm-device-select-disabled-text: var(--background-dark-60);
+  --swm-device-select-label: var(--background-dark-30);
+  --swm-device-select-rich-item-text: var(--off-white);
+  --swm-device-select-rich-item-subtitle: var(--background-dark-10);
+  --swm-device-select-rich-item-icon: var(--background-dark-70);
 
   /* Slider */
-  --slider-thumb: var(--white);
-  --slider-track: var(--white);
+  --swm-slider-thumb: var(--white);
+  --swm-slider-track: var(--white);
 
   /* Radio group */
-  --radio-group-item: var(--off-white);
+  --swm-radio-group-item: var(--off-white);
 
   /* Startup message */
-  --startup-message: var(--off-white);
+  --swm-startup-message: var(--off-white);
+
+  /* Button */
+  --swm-button: var(--swm-default-text);
+  --swm-button-disabled: var(--swm-disabled-text);
+  --swm-button-hover: var(--background-dark-80);
+
+  --swm-button-active: var(--white);
+  --swm-button-active-background: var(--background-dark-70);
+
+  --swm-button-selected: var(--white);
+  --swm-button-selected-background: var(--background-dark-70);
+  --swm-button-selected-hover: var(--off-white);
+  --swm-button-selected-hover-background: var(--background-dark-50);
+
+  --swm-button-secondary: var(--swm-default-text);
+  --swm-button-secondary-background: var(--background-dark-100);
+  --swm-button-secondary-hover: var(--background-dark-50);
+
+  --swm-button-ternary: var(--off-white);
+  --swm-button-ternary-background: var(--background-dark-30);
+  --swm-button-ternary-hover: var(--background-dark-10);
+
+  --swm-button-counter: var(--background-dark-40);
 }

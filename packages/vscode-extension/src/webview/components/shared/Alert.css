@@ -1,5 +1,5 @@
 .alert-dialog-content {
-  background-color: var(--popover-background);
+  background-color: var(--swm-popover-background);
   border-radius: 36px;
   display: grid;
   grid-template-columns: 50px 1fr min-content;
@@ -24,13 +24,13 @@
   margin: 0;
   margin-bottom: 4px;
   font-weight: 500;
-  color: var(--default-text);
+  color: var(--swm-default-text);
   font-size: 16px;
 }
 
 .alert-dialog-description {
   margin: 0;
-  color: var(--secondary-text);
+  color: var(--swm-secondary-text);
   font-size: 13px;
 }
 

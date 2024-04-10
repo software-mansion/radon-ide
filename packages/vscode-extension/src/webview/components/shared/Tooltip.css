@@ -10,12 +10,12 @@
 }
 
 .tooltip-primary {
-  color: var(--default-text);
-  background-color: var(--popover-background);
+  color: var(--swm-default-text);
+  background-color: var(--swm-popover-background);
 }
 
 .tooltip-secondary {
-  color: var(--default-text);
+  color: var(--swm-default-text);
   background-color: var(--background-dark-120);
 }
 
@@ -38,7 +38,7 @@
 }
 
 .tooltip-arrow {
-  fill: var(--popover-background);
+  fill: var(--swm-popover-background);
 }
 .tooltip-arrow-secondary {
   fill: var(--background-dark-120);

@@ -9,7 +9,7 @@
   background: none;
   border: 0px solid transparent;
   border-radius: 10px;
-  color: var(--default-text);
+  color: var(--swm-button);
   transition: all 200ms 0ms ease-in-out;
   user-select: none;
   gap: 8px;
@@ -19,50 +19,50 @@
 .button:disabled {
   cursor: default;
   pointer-events: none;
-  color: var(--disabled-text);
+  color: var(--swm-button-disabled);
   background-color: transparent;
 }
 
 .button:hover {
-  background-color: var(--highlight-hover-background);
+  background-color: var(--swm-button-hover);
 }
 
 .button:active {
-  color: var(--highlight-text-active);
-  background-color: var(--highlight-active-background);
+  color: var(--swm-button-active);
+  background-color: var(--swm-button-active-background);
   transform: scale(0.9);
 }
 
 .button:focus {
-  box-shadow: var(--focus-outline);
+  box-shadow: var(--swm-focus-outline);
 }
 
 .button-selected {
-  color: var(--highlight-text-selected);
-  background-color: var(--highlight-active-background);
+  color: var(--swm-button-selected);
+  background-color: var(--swm-button-selected-background);
 }
 
 .button-selected:hover {
-  color: var(--highlight-selected-hover-text);
-  background-color: var(--background-dark-50);
+  color: var(--swm-button-selected-hover);
+  background-color: var(--swm-button-selected-hover-background);
 }
 
 .button-secondary {
-  color: var(--default-text);
-  background-color: var(--background-dark-100);
+  color: var(--swm-button-secondary);
+  background-color: var(--swm-button-secondary-background);
 }
 
 .button-secondary:hover {
-  background-color: var(--background-dark-50);
+  background-color: var(--swm-button-secondary-hover);
 }
 
 .button-ternary {
-  color: var(--off-white);
-  background-color: var(--background-dark-30);
+  color: var(--swm-button-ternary);
+  background-color: var(--swm-button-ternary-background);
 }
 
 .button-ternary:hover {
-  background-color: var(--background-dark-10);
+  background-color: var(--swm-button-ternary-hover);
 }
 
 .button-counter {
@@ -71,7 +71,7 @@
   right: -5px;
   border: 0px solid transparent;
   border-radius: 4px;
-  background-color: var(--background-dark-40);
+  background-color: var(--swm-button-counter);
   padding: 2px 4px;
   font-size: 11px;
 }

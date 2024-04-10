@@ -9,11 +9,11 @@
   margin-left: 8px;
   width: 100%;
   font-size: 13px;
-  color: var(--default-text);
+  color: var(--swm-default-text);
 }
 
 .diagnostic-item-info-icon {
-  color: var(--default-text);
+  color: var(--swm-default-text);
   cursor: pointer;
 }
 

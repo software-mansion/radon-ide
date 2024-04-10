@@ -9,47 +9,47 @@
   background: none;
   border: 0px solid transparent;
   border-radius: 36px;
-  color: var(--default-text);
+  color: var(--swm-button);
   transition: all 200ms 0ms ease-in-out;
 }
 
 .icon-button:disabled {
   cursor: default;
   pointer-events: none;
-  color: var(--disabled-text);
+  color: var(--swm-button-disabled);
 }
 
 .icon-button:hover {
-  background-color: var(--highlight-hover-background);
+  background-color: var(--swm-button-hover);
 }
 
 .icon-button:active {
-  color: var(--highlight-text-active);
-  background-color: var(--highlight-active-background);
+  color: var(--swm-button-active);
+  background-color: var(--swm-button-active-background);
   transform: scale(0.9);
 }
 
 .icon-button:focus {
-  box-shadow: var(--focus-outline);
+  box-shadow: var(--swm-focus-outline);
 }
 
 .icon-button-selected {
-  color: var(--highlight-text-selected);
-  background-color: var(--highlight-active-background);
+  color: var(--swm-button-selected);
+  background-color: var(--swm-button-selected-background);
 }
 
 .icon-button-selected:hover {
-  color: var(--highlight-selected-hover-text);
-  background-color: var(--background-dark-50);
+  color: var(--swm-button-selected-hover);
+  background-color: var(--swm-button-selected-hover-background);
 }
 
 .icon-button-secondary {
-  color: var(--vscode-button-secondaryForeground);
-  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--swm-button-secondary);
+  background-color: var(--swm-button-secondary-background);
 }
 
 .icon-button-secondary:hover {
-  background-color: var(--vscode-button-secondaryHoverBackground);
+  background-color: var(--swm-button-secondary-hover);
 }
 
 .icon-button-small {

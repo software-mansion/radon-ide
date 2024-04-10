@@ -29,11 +29,11 @@
 }
 .url-select-trigger[data-disabled] {
   background-color: var(--background-dark-90);
-  color: var(--secondary-text);
+  color: var(--swm-secondary-text);
   pointer-events: none;
 }
 .url-select-trigger:focus {
-  box-shadow: var(--focus-outline);
+  box-shadow: var(--swm-focus-outline);
 }
 
 .url-select-content {
@@ -58,7 +58,7 @@
   padding: 0 4px;
   position: relative;
   border-radius: 4px;
-  color: var(--default-text);
+  color: var(--swm-default-text);
 }
 .url-select-item[data-highlighted] {
   outline: none;

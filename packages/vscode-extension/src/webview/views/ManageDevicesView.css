@@ -30,13 +30,13 @@
 }
 
 .platform-header {
-  color: var(--secondary-text);
+  color: var(--swm-secondary-text);
   margin: 8px 0;
 }
 
 .platform-section-separator {
   height: 1px;
-  background-color: var(--separator);
+  background-color: var(--swm-separator);
 }
 
 .device-row {
@@ -78,7 +78,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 16px;
-  color: var(--default-text);
+  color: var(--swm-default-text);
   background-color: var(--background-dark-70);
 }
 

@@ -13,13 +13,13 @@ button {
   line-height: 1;
   height: 26px;
   gap: 5px;
-  background-color: var(--select-background);
+  background-color: var(--swm-select-background);
   cursor: pointer;
   box-shadow: 0 1px 10px var(--background-dark-100);
 }
 
 .select-trigger:hover {
-  background-color: var(--select-active-background);
+  background-color: var(--swm-select-active-background);
 }
 
 .select-trigger-disabled {
@@ -33,7 +33,7 @@ button {
 
 .select-content {
   overflow: hidden;
-  color: var(--default-text);
+  color: var(--swm-default-text);
   background-color: var(--background-dark-80);
   border-radius: 6px;
   box-shadow: 0 1px 10px var(--background-dark-100);
@@ -47,7 +47,7 @@ button {
 .select-item {
   font-size: 13px;
   line-height: 1;
-  color: var(--default-text);
+  color: var(--swm-default-text);
   background-color: var(--background-dark-80);
   border-radius: 3px;
   display: flex;
@@ -60,7 +60,7 @@ button {
 
 .select-item[data-disabled] {
   background-color: var(--background-dark-100);
-  color: var(--secondary-text);
+  color: var(--swm-secondary-text);
   pointer-events: none;
 }
 .select-item[data-highlighted] {
@@ -74,13 +74,13 @@ button {
   padding: 0 25px;
   font-size: 12px;
   line-height: 25px;
-  color: var(--secondary-text);
+  color: var(--swm-secondary-text);
   user-select: none;
 }
 
 .select-separator {
   height: 1px;
-  background-color: var(--separator);
+  background-color: var(--swm-separator);
   margin: 5px;
 }
 

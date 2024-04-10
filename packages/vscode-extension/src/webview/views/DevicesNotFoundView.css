@@ -14,7 +14,7 @@
 }
 
 .devices-not-found-subtitle {
-  color: var(--default-text);
+  color: var(--swm-default-text);
   margin-bottom: 32px;
 }
 

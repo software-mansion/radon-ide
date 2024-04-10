@@ -14,7 +14,7 @@ input {
 }
 
 .modal-content {
-  background-color: var(--popover-background);
+  background-color: var(--swm-popover-background);
   border-radius: 6px;
   position: fixed;
   top: 50%;
@@ -33,7 +33,7 @@ input {
 .modal-title {
   margin: 0;
   font-weight: 500;
-  color: var(--default-text);
+  color: var(--swm-default-text);
   font-size: 18px;
 }
 

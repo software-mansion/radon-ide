@@ -5,13 +5,13 @@ button {
 
 .dropdown-menu-content {
   min-width: 220px;
-  background-color: var(--popover-background);
+  background-color: var(--swm-popover-background);
   border-radius: 6px;
   padding: 4px;
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
-  box-shadow: var(--backdrop-shadow);
+  box-shadow: var(--swm-backdrop-shadow);
 }
 
 .dropdown-menu-content[data-side="bottom"] {
@@ -24,7 +24,7 @@ button {
 .dropdown-menu-item {
   font-size: 13px;
   line-height: 1;
-  color: var(--default-text);
+  color: var(--swm-default-text);
   border-radius: 3px;
   display: flex;
   align-items: center;
@@ -36,29 +36,29 @@ button {
   gap: 4px;
 }
 .dropdown-menu-item[data-disabled] {
-  color: var(--disabled-text);
+  color: var(--swm-disabled-text);
   pointer-events: none;
 }
 .dropdown-menu-item[data-highlighted] {
-  background-color: var(--highlight-active-background);
-  color: var(--default-text);
+  background-color: var(--swm-dropdown-item-highlighted);
+  color: var(--swm-default-text);
 }
 
 .dropdown-menu-label {
   font-size: 12px;
   line-height: 25px;
   padding-left: 5px;
-  color: var(--secondary-text);
+  color: var(--swm-secondary-text);
 }
 
 .dropdown-menu-separator {
   height: 1px;
-  background-color: var(--separator);
+  background-color: var(--swm-separator);
   margin: 5px;
 }
 
 .dropdown-menu-arrow {
-  fill: var(--popover-background);
+  fill: var(--swm-popover-background);
 }
 
 .right-slot {
@@ -66,10 +66,10 @@ button {
   padding-left: 20px;
 }
 [data-highlighted] > .right-slot {
-  color: var(--default-text);
+  color: var(--swm-default-text);
 }
 [data-disabled] .right-slot {
-  color: var(--disabled-text);
+  color: var(--swm-disabled-text);
 }
 
 @keyframes slideUpAndFade {

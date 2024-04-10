@@ -22,7 +22,7 @@
 
 .form-field {
   width: 100%;
-  color: var(--default-text);
+  color: var(--swm-default-text);
 }
 
 .dropdown .listbox {
@@ -34,7 +34,7 @@
   width: 100%;
   margin: 4px 0px;
   height: 1px;
-  background-color: var(--separator);
+  background-color: var(--swm-separator);
 }
 
 .button-panel {
