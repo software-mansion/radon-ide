@@ -83,9 +83,9 @@ function DevicesNotFoundView() {
   return (
     <div className="devices-not-found-container">
       <div className="devices-not-found-icon">
-        <SmartphoneIcon color="var(--background-dark-100)" />
+        <SmartphoneIcon color="var(--swm-devices-not-found-icon)" />
       </div>
-      <h1>No devices found</h1>
+      <h1 className="devices-not-found-title">No devices found</h1>
       <p className="devices-not-found-subtitle">
         You can add a new device using the quick action below.
       </p>

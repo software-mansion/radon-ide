@@ -35,7 +35,7 @@ function Button({
         "button",
         type === "secondary" && "button-secondary",
         type === "ternary" && "button-ternary",
-        active && "icon-button-selected",
+        active && "button-selected",
         className
       )}>
       {children}

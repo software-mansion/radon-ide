@@ -10,13 +10,13 @@ button {
 }
 
 .radio-group-item {
-  background-color: var(--default-text);
+  background-color: var(--swm-radio-group-item);
   width: 16px;
   height: 16px;
   border-radius: 100%;
 }
 .radio-group-item:hover {
-  background-color: var(--highlight-selected-hover-text);
+  background-color: var(--swm-radio-group-item);
 }
 
 .radio-group-indicator {
@@ -33,11 +33,11 @@ button {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--popover-background);
+  background-color: var(--swm-popover-background);
 }
 
 .radio-group-label {
-  color: var(--default-text);
+  color: var(--swm-default-text);
   font-size: 12px;
   line-height: 1;
   padding-left: 10px;

@@ -9,7 +9,7 @@
 }
 
 .slider-track {
-  background-color: var(--highlight-selected-hover-text);
+  background-color: var(--swm-slider);
   position: relative;
   flex-grow: 1;
   border-radius: 9999px;
@@ -18,7 +18,7 @@
 
 .slider-range {
   position: absolute;
-  background-color: white;
+  background-color: var(--swm-slider);
   border-radius: 9999px;
   height: 100%;
 }
@@ -27,11 +27,12 @@
   display: block;
   width: 20px;
   height: 20px;
-  background-color: white;
+  background-color: var(--swm-slider);
   border-radius: 10px;
+  z-index: 1;
 }
 .slider-thumb:hover {
-  background-color: var(--highlight-selected-hover-text);
+  background-color: var(--swm-slider);
 }
 .slider-thumb:focus {
   outline: none;
@@ -47,7 +48,7 @@
 }
 
 .slider-track-dent {
-  background-color: var(--highlight-selected-hover-text);
+  background-color: var(--swm-slider);
   border-radius: 10px;
   height: 7px;
   width: 4px;

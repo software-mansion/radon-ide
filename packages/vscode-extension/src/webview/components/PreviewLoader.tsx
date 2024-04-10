@@ -7,7 +7,6 @@ import ProgressBar from "./shared/ProgressBar";
 
 import { StartupMessage, StartupStageWeight } from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
-import IconButton from "./shared/IconButton";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => (acc += cur),

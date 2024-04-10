@@ -26,5 +26,5 @@
 }
 
 .preview-loader-stage-progress {
-  color: var(--default-text);
+  color: var(--swm-startup-message);
 }

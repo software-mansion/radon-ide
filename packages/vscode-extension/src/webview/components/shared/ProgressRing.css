@@ -11,10 +11,10 @@
   width: 16px;
   height: 16px;
   margin: 2px;
-  border: 2px solid var(--active-item);
+  border: 2px solid var(--swm-active-item);
   border-radius: 50%;
   animation: progress-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  border-color: var(--active-item) transparent transparent transparent;
+  border-color: var(--swm-active-item) transparent transparent transparent;
 }
 .progress-ring div:nth-child(1) {
   animation-delay: -0.45s;

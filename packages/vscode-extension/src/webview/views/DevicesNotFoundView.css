@@ -13,8 +13,12 @@
   gap: 20px;
 }
 
+.devices-not-found-title {
+  color: var(--swm-default-text);
+}
+
 .devices-not-found-subtitle {
-  color: var(--default-text);
+  color: var(--swm-default-text);
   margin-bottom: 32px;
 }
 
@@ -24,7 +28,7 @@
 
 .devices-not-found-icon {
   padding: 24px;
-  background-color: var(--background-dark-80);
+  background-color: var(--swm-devices-not-found-icon-background);
   border-radius: 50%;
   display: flex;
   align-items: center;

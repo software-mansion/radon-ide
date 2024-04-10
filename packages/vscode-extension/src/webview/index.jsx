@@ -9,7 +9,7 @@ import ProjectProvider from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
 import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
 
-import "./styles/colors.css";
+import "./styles/theme.css";
 
 const container = document.getElementById("root");
 const root = createRoot(container);

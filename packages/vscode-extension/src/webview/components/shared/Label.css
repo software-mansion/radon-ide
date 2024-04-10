@@ -6,5 +6,5 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--default-text);
+  color: var(--swm-default-text);
 }

@@ -10,33 +10,8 @@
   box-sizing: border-box;
 }
 
-.top-bar {
-  display: flex;
-  align-items: center;
-}
-
 .delete-icon {
-  color: var(--red-dark-80);
-}
-
-.gap-right {
-  margin-right: 12px;
-}
-
-.non-exsiting-system-image-warning {
-  display: flex;
-  align-items: center;
-  color: var(--vscode-debugIcon-stopForeground);
-}
-
-.platform-header {
-  color: var(--secondary-text);
-  margin: 8px 0;
-}
-
-.platform-section-separator {
-  height: 1px;
-  background-color: var(--separator);
+  color: var(--swm-device-delete-icon);
 }
 
 .device-row {
@@ -61,12 +36,12 @@
 }
 .device-title {
   font-size: 14px;
-  color: var(--off-white);
+  color: var(--swm-device-title);
   margin-bottom: 4px;
 }
 .device-subtitle {
   font-size: 12px;
-  color: var(--background-dark-10);
+  color: var(--swm-device-subtitle);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -78,12 +53,12 @@
   align-items: center;
   justify-content: center;
   border-radius: 16px;
-  color: var(--default-text);
-  background-color: var(--background-dark-70);
+  color: var(--swm-device-icon);
+  background-color: var(--swm-device-icon-background);
 }
 
 .warning {
-  color: var(--yellow-dark-100) !important;
+  color: var(--swm-device-warning-icon) !important;
 }
 
 .create-button {

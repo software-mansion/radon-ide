@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import "./shared/Dropdown.css";
 import { useModal } from "../providers/ModalProvider";
@@ -32,7 +32,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             onSelect={() => {
               openModal("Diagnostics", <DiagnosticView />);
             }}>
-            <DoctorIcon />
+            <DoctorIcon color="var(--swm-default-text)" />
             Run diagnostics...
           </DropdownMenu.Item>
           <DropdownMenu.Item
@@ -43,16 +43,15 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             <span className="codicon codicon-device-mobile" />
             Manage devices...
           </DropdownMenu.Item>
-          {isDeviceRunning && (
-            <DropdownMenu.Item
-              className="dropdown-menu-item"
-              onSelect={() => {
-                project.openDevMenu();
-              }}>
-              <span className="codicon codicon-code" />
-              Open dev menu
-            </DropdownMenu.Item>
-          )}
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            disabled={!isDeviceRunning}
+            onSelect={() => {
+              project.openDevMenu();
+            }}>
+            <span className="codicon codicon-code" />
+            Open dev menu
+          </DropdownMenu.Item>
 
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">

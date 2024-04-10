@@ -1,0 +1,327 @@
+:root {
+  /* Background */
+  --background-dark-120: #1c1f2b;
+  --background-dark-100: #232736;
+  --background-dark-90: #272b3c;
+  --background-dark-80: #30354a;
+  --background-dark-70: #383e58;
+  --background-dark-60: #404867;
+  --background-dark-50: #485276;
+  --background-dark-40: #505c85;
+  --background-dark-30: #586694;
+  --background-dark-20: #6070a3;
+  --background-dark-10: #687ab2;
+
+  /* Navy */
+  --navy-light-100: #001a72;
+  --navy-light-80: #33488e;
+  --navy-light-60: #6676aa;
+  --navy-light-40: #919fcf;
+  --navy-light-20: #c1c6e5;
+  --navy-light-10: #eef0ff;
+  --navy-light-transparent: #33488e40;
+
+  --navy-dark-140: #1b2445;
+  --navy-dark-120: #122154;
+  --navy-dark-100: #001a72;
+  --navy-dark-80: #0a2688;
+  --navy-dark-70: #33488e;
+  --navy-dark-60: #7485bd;
+  --navy-dark-40: #abbcf5;
+  --navy-dark-20: #c1c6e5;
+
+  /* Purple */
+  --purple-light-100: #782aeb;
+  --purple-light-80: #b58df1;
+  --purple-light-60: #d1bbf3;
+  --purple-light-40: #e8dafc;
+  --purple-light-20: #f5eeff;
+  --purple-light-transparent: #f5eeff40;
+
+  --purple-dark-140: #473d68;
+  --purple-dark-120: #6a539a;
+  --purple-dark-100: #b07eff;
+  --purple-dark-80: #c49ffe;
+  --purple-dark-60: #d0b2ff;
+  --purple-dark-40: #e9dbff;
+
+  /* Blue */
+  --blue-light-100: #38acdd;
+  --blue-light-80: #5bb9e0;
+  --blue-light-60: #87cce8;
+  --blue-light-40: #b5e1f1;
+  --blue-light-20: #e1f3fa;
+
+  --blue-dark-140: #1b4865;
+  --blue-dark-120: #126893;
+  --blue-dark-100: #00a9f0;
+  --blue-dark-80: #6fcef5;
+  --blue-dark-60: #a8dbf0;
+  --blue-dark-40: #d7f0fa;
+
+  /* Green */
+  --green-light-100: #57b495;
+  --green-light-80: #82cab2;
+  --green-light-60: #b1dfd0;
+  --green-light-40: #dff2ec;
+  --green-light-20: #ebfcf7;
+
+  --green-dark-140: #2a4f4a;
+  --green-dark-120: #31775d;
+  --green-dark-100: #3fc684;
+  --green-dark-80: #7adead;
+  --green-dark-60: #a0dfc0;
+  --green-dark-40: #d3f5e4;
+
+  /* Red */
+  --red-light-100: #ff6259;
+  --red-light-80: #fa7f7c;
+  --red-light-60: #ffa3a1;
+  --red-light-40: #ffd2d7;
+  --red-light-20: #ffedf0;
+
+  --red-dark-140: #5a3b46;
+  --red-dark-120: #914f55;
+  --red-dark-100: #ff7774;
+  --red-dark-80: #ff8b88;
+  --red-dark-60: #ffb4b2;
+  --red-dark-40: #ffdcdb;
+
+  /* Yellow */
+  --yellow-light-100: #ffd61e;
+  --yellow-light-80: #ffe04b;
+  --yellow-light-60: #ffe780;
+  --yellow-light-40: #fff1b2;
+  --yellow-light-20: #fffae1;
+
+  --yellow-dark-140: #5a553a;
+  --yellow-dark-120: #91823d;
+  --yellow-dark-100: #ffdd44;
+  --yellow-dark-80: #ffe678;
+  --yellow-dark-60: #fff1b2;
+  --yellow-dark-40: #fff9db;
+
+  /* White */
+  --off-white: #f8f9ff;
+  --white: #fcfcff;
+}
+
+/* Light theme */
+body[data-vscode-theme-kind="vscode-light"] {
+  --swm-active-item: var(--blue-dark-100);
+  --swm-preview-background: var(--white);
+
+  --swm-default-text: var(--navy-light-100);
+  --swm-secondary-text: var(--navy-light-60);
+  --swm-disabled-text: var(--navy-light-20);
+
+  --swm-dropdown-item-highlighted: var(--navy-light-10);
+
+  --swm-popover-background: var(--off-white);
+
+  --swm-separator: var(--navy-light-40);
+
+  /* Shadows */
+  --swm-focus-outline: 0 0 0 2px var(--navy-light-20);
+  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+
+  /* Device select */
+  --swm-device-select-background: var(--navy-light-10);
+  --swm-device-select-trigger-text: var(--navy-light-100);
+  --swm-device-select-trigger-hover: var(--navy-light-10);
+  --swm-device-select-trigger-disabled: var(--white);
+  --swm-device-select-separator: var(--navy-light-40);
+  --swm-device-select-highlighted: var(--off-white);
+  --swm-device-select-disabled-text: var(--navy-light-20);
+  --swm-device-select-label: var(--navy-light-60);
+  --swm-device-select-rich-item-text: var(--navy-light-100);
+  --swm-device-select-rich-item-subtitle: var(--navy-light-40);
+  --swm-device-select-rich-item-icon: var(--navy-light-20);
+
+  /* Slider */
+  --swm-slider: var(--navy-light-60);
+
+  /* Radio group */
+  --swm-radio-group-item: var(--navy-light-60);
+
+  /* Startup message */
+  --swm-startup-message: var(--off-white);
+  --swm-phone-content-loading-overlay: rgba(0, 0, 0, 0.75);
+
+  /* Button */
+  --swm-button: var(--swm-default-text);
+  --swm-button-disabled: var(--swm-disabled-text);
+  --swm-button-hover: var(--navy-light-10);
+
+  --swm-button-active: var(--navy-light-100);
+  --swm-button-active-background: var(--navy-light-20);
+
+  --swm-button-selected: var(--white);
+  --swm-button-selected-background: var(--navy-light-60);
+  --swm-button-selected-hover: var(--off-white);
+  --swm-button-selected-hover-background: var(--navy-light-40);
+
+  --swm-button-secondary: var(--navy-light-80);
+  --swm-button-secondary-background: var(--navy-light-10);
+  --swm-button-secondary-hover: var(--navy-light-20);
+
+  --swm-button-ternary: var(--off-white);
+  --swm-button-ternary-background: var(--navy-light-60);
+  --swm-button-ternary-hover: var(--navy-light-40);
+
+  --swm-button-counter: var(--off-white);
+  --swm-button-counter-background: var(--navy-light-60);
+
+  /* Tooltip */
+  --swm-tooltip-primary: var(--swm-default-text);
+  --swm-tooltip-primary-background: var(--swm-popover-background);
+  --swm-tooltip-secondary: var(--swm-default-text);
+  --swm-tooltip-secondary-background: var(--navy-light-10);
+  --swm-tooltip-ternary: var(--navy-dark-100);
+  --swm-tooltip-ternary-background: var(--off-white);
+
+  /* Select */
+  --swm-select-background: var(--white);
+  --swm-select-hover-background: var(--off-white);
+  --swm-select-shadow: 0 0 0 1px var(--navy-light-10);
+  --swm-select-disabled: var(--navy-light-20);
+  --swm-select-disabled-background: var(--navy-light-10);
+  --swm-select-content-background: var(--navy-light-10);
+  --swm-select-item-disabled-background: var(--navy-light-40);
+  --swm-select-item-highlighted-background: var(--off-white);
+
+  /* Manage devices */
+  --swm-device-title: var(--swm-default-text);
+  --swm-device-subtitle: var(--navy-light-60);
+  --swm-device-icon: var(--swm-default-text);
+  --swm-device-icon-background: var(--navy-light-10);
+  --swm-device-delete-icon: var(--red-light-100);
+  --swm-device-warning-icon: var(--yellow-light-80);
+
+  /* Devices not found */
+  --swm-devices-not-found-icon: var(--white);
+  --swm-devices-not-found-icon-background: var(--navy-light-20);
+
+  /* URL select */
+  --swm-url-select: var(--navy-light-100);
+  --swm-url-select-background: var(--navy-light-10);
+  --swm-url-select-hover-background: var(--navy-light-10);
+  --swm-url-select-disabled-background: var(--off-white);
+  --swm-url-select-highlighted-background: var(--white);
+
+  /* Debugger */
+  --swm-debugger-label: var(--off-white);
+  --swm-debugger-button-group: var(--white);
+  --swm-debugger-button-group-background: var(--navy-light-20);
+  --swm-debugger-button-group-border: 1px solid var(--navy-light-40);
+}
+
+/* Dark theme */
+body[data-vscode-theme-kind="vscode-dark"] {
+  --swm-active-item: var(--blue-dark-100);
+  --swm-preview-background: var(--background-dark-100);
+
+  --swm-default-text: var(--off-white);
+  --swm-secondary-text: var(--background-dark-10);
+  --swm-disabled-text: var(--background-dark-40);
+
+  --swm-dropdown-item-highlighted: var(--background-dark-70);
+
+  --swm-popover-background: var(--background-dark-80);
+
+  --swm-separator: var(--background-dark-40);
+
+  /* Shadows */
+  --swm-focus-outline: 0 0 0 2px var(--background-dark-50);
+  --swm-backdrop-shadow: none;
+
+  /* Device select */
+  --swm-device-select-background: var(--background-dark-80);
+  --swm-device-select-trigger-text: var(--off-white);
+  --swm-device-select-trigger-hover: var(--background-dark-70);
+  --swm-device-select-trigger-disabled: var(--background-dark-90);
+  --swm-device-select-separator: var(--background-dark-50);
+  --swm-device-select-highlighted: var(--background-dark-60);
+  --swm-device-select-disabled-text: var(--background-dark-60);
+  --swm-device-select-label: var(--background-dark-30);
+  --swm-device-select-rich-item-text: var(--off-white);
+  --swm-device-select-rich-item-subtitle: var(--background-dark-10);
+  --swm-device-select-rich-item-icon: var(--background-dark-70);
+
+  /* Slider */
+  --swm-slider: var(--white);
+
+  /* Radio group */
+  --swm-radio-group-item: var(--off-white);
+
+  /* Startup message */
+  --swm-startup-message: var(--off-white);
+  --swm-phone-content-loading-overlay: rgba(255, 255, 255, 0.15);
+
+  /* Button */
+  --swm-button: var(--swm-default-text);
+  --swm-button-disabled: var(--swm-disabled-text);
+  --swm-button-hover: var(--background-dark-80);
+
+  --swm-button-active: var(--white);
+  --swm-button-active-background: var(--background-dark-70);
+
+  --swm-button-selected: var(--white);
+  --swm-button-selected-background: var(--background-dark-70);
+  --swm-button-selected-hover: var(--off-white);
+  --swm-button-selected-hover-background: var(--background-dark-50);
+
+  --swm-button-secondary: var(--swm-default-text);
+  --swm-button-secondary-background: var(--background-dark-100);
+  --swm-button-secondary-hover: var(--background-dark-50);
+
+  --swm-button-ternary: var(--off-white);
+  --swm-button-ternary-background: var(--background-dark-30);
+  --swm-button-ternary-hover: var(--background-dark-10);
+
+  --swm-button-counter: var(--off-white);
+  --swm-button-counter-background: var(--background-dark-40);
+
+  /* Tooltip */
+  --swm-tooltip-primary: var(--swm-default-text);
+  --swm-tooltip-primary-background: var(--swm-popover-background);
+  --swm-tooltip-secondary: var(--swm-default-text);
+  --swm-tooltip-secondary-background: var(--background-dark-120);
+  --swm-tooltip-ternary: var(--navy-dark-100);
+  --swm-tooltip-ternary-background: var(--off-white);
+
+  /* Select */
+  --swm-select-background: var(--background-dark-100);
+  --swm-select-hover-background: var(--background-dark-80);
+  --swm-select-shadow: 0 1px 10px var(--background-dark-100);
+  --swm-select-disabled: var(--navy-dark-60);
+  --swm-select-disabled-background: var(--background-dark-120);
+  --swm-select-content-background: var(--background-dark-80);
+  --swm-select-item-disabled-background: var(--background-dark-100);
+  --swm-select-item-highlighted-background: var(--background-dark-60);
+
+  /* Manage devices */
+  --swm-device-title: var(--swm-default-text);
+  --swm-device-subtitle: var(--background-dark-10);
+  --swm-device-icon: var(--swm-default-text);
+  --swm-device-icon-background: var(--background-dark-70);
+  --swm-device-delete-icon: var(--red-dark-80);
+  --swm-device-warning-icon: var(--yellow-dark-100);
+
+  /* Devices not found */
+  --swm-devices-not-found-icon: var(--background-dark-100);
+  --swm-devices-not-found-icon-background: var(--background-dark-80);
+
+  /* URL select */
+  --swm-url-select: var(--off-white);
+  --swm-url-select-background: var(--background-dark-80);
+  --swm-url-select-hover-background: var(--background-dark-70);
+  --swm-url-select-disabled-background: var(--background-dark-90);
+  --swm-url-select-highlighted-background: var(--background-dark-60);
+
+  /* Debugger */
+  --swm-debugger-label: var(--off-white);
+  --swm-debugger-button-group: var(--white);
+  --swm-debugger-button-group-background: var(--background-dark-100);
+  --swm-debugger-button-group-border: 1px solid var(--background-dark-40);
+}

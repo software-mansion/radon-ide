@@ -4,12 +4,12 @@
 }
 
 .device-removal-title {
-  color: var(--default-text);
+  color: var(--swm-default-text);
   margin-top: 0;
 }
 
 .device-removal-subtitle {
-  color: var(--secondary-text);
+  color: var(--swm-secondary-text);
   margin: 16px 0;
 }
 
