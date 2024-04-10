@@ -101,12 +101,13 @@ function buildProject(
 }
 
 async function findXcodeScheme(xcodeProject: IOSProjectInfo) {
-  const basename = path.basename(xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation);
+  const basename = xcodeProject.workspaceLocation
+    ? path.basename(xcodeProject.workspaceLocation, ".xcworkspace")
+    : path.basename(xcodeProject.xcodeprojLocation, ".xcodeproj");
 
   // we try to search for the scheme name under .xcodeproj/xcshareddata/xcschemes
   const schemeFiles = await workspace.findFiles(
-    xcodeProject.xcodeprojLocation,
-    "**/xcshareddata/xcschemes/*.xcscheme"
+    new RelativePattern(xcodeProject.xcodeprojLocation, "**/xcshareddata/xcschemes/*.xcscheme")
   );
   if (schemeFiles.length === 1) {
     return path.basename(schemeFiles[0].fsPath, ".xcscheme");
