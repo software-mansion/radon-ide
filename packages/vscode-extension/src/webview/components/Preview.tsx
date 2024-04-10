@@ -116,14 +116,12 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   const previewURL = projectState?.previewURL;
 
-  const hasErrors = hasBundleError || hasIncrementalBundleError || debugException;
+  const isStarting =
+    hasBundleError || hasIncrementalBundleError || debugException
+      ? false
+      : projectState?.status === "starting";
   const showDevicePreview =
-    previewURL &&
-    (showPreviewRequested ||
-      (!hasErrors &&
-        (projectState?.status === "running" ||
-          projectState?.status === "refreshing" ||
-          projectState?.status === "debuggerPaused")));
+    projectState?.previewURL && (showPreviewRequested || (!isStarting && !hasBuildError));
 
   useBuildErrorAlert(hasBuildError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
@@ -241,6 +239,8 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
         onMouseUp,
         onMouseLeave,
       };
+
+  console.log("DSS", { showDevicePreview, ps: projectState?.status, hasBuildError });
 
   return (
     <div
