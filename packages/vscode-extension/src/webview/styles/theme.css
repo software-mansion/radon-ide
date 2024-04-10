@@ -178,14 +178,6 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
 
-  /* Manage devices */
-  --swm-device-title: var(--swm-default-text);
-  --swm-device-subtitle: var(--navy-light-60);
-  --swm-device-icon: var(--swm-default-text);
-  --swm-device-icon-background: var(--navy-light-10);
-  --swm-device-delete-icon: var(--red-light-100);
-  --swm-device-warning-icon: var(--yellow-light-80);
-
   /* Select */
   --swm-select-background: var(--white);
   --swm-select-hover-background: var(--off-white);
@@ -195,6 +187,18 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-select-content-background: var(--navy-light-10);
   --swm-select-item-disabled-background: var(--navy-light-40);
   --swm-select-item-highlighted-background: var(--off-white);
+
+  /* Manage devices */
+  --swm-device-title: var(--swm-default-text);
+  --swm-device-subtitle: var(--navy-light-60);
+  --swm-device-icon: var(--swm-default-text);
+  --swm-device-icon-background: var(--navy-light-10);
+  --swm-device-delete-icon: var(--red-light-100);
+  --swm-device-warning-icon: var(--yellow-light-80);
+
+  /* Devices not found */
+  --swm-devices-not-found-icon: var(--white);
+  --swm-devices-not-found-icon-background: var(--navy-light-20);
 }
 
 /* Dark theme */
@@ -269,14 +273,6 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
 
-  /* Manage devices */
-  --swm-device-title: var(--swm-default-text);
-  --swm-device-subtitle: var(--background-dark-10);
-  --swm-device-icon: var(--swm-default-text);
-  --swm-device-icon-background: var(--background-dark-70);
-  --swm-device-delete-icon: var(--red-dark-80);
-  --swm-device-warning-icon: var(--yellow-dark-100);
-
   /* Select */
   --swm-select-background: var(--background-dark-100);
   --swm-select-hover-background: var(--background-dark-80);
@@ -286,4 +282,16 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-select-content-background: var(--background-dark-80);
   --swm-select-item-disabled-background: var(--background-dark-100);
   --swm-select-item-highlighted-background: var(--background-dark-60);
+
+  /* Manage devices */
+  --swm-device-title: var(--swm-default-text);
+  --swm-device-subtitle: var(--background-dark-10);
+  --swm-device-icon: var(--swm-default-text);
+  --swm-device-icon-background: var(--background-dark-70);
+  --swm-device-delete-icon: var(--red-dark-80);
+  --swm-device-warning-icon: var(--yellow-dark-100);
+
+  /* Devices not found */
+  --swm-devices-not-found-icon: var(--background-dark-100);
+  --swm-devices-not-found-icon-background: var(--background-dark-80);
 }
