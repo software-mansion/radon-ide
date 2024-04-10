@@ -111,7 +111,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
             value={selectedSystemName}
             onChange={(newValue) => selectSystemName(newValue)}
             items={systemImagesOptions}
-            placeholder={`Select device system image...`}
+            placeholder="Select device system image..."
           />
         ) : (
           <div className="">
