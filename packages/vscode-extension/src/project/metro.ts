@@ -137,11 +137,6 @@ export class Metro implements Disposable {
       RCT_METRO_PORT: "0",
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       REACT_NATIVE_IDE_LIB_PATH: libPath,
-      // we disable env plugins as they add additional lines at the top of the bundle that are not
-      // taken into account by source maps. As a result, this messes up line numbers reported by hermes
-      // and makes it hard to translate them back to original locations. Once this is fixed, we
-      // can restore this plugin.
-      EXPO_NO_CLIENT_ENV_VARS: "true",
     };
     let bundlerProcess: ChildProcess;
 
