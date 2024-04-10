@@ -164,9 +164,9 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-button-selected-hover: var(--off-white);
   --swm-button-selected-hover-background: var(--navy-light-40);
 
-  --swm-button-secondary: var(--swm-default-text);
-  --swm-button-secondary-background: var(--off-white);
-  --swm-button-secondary-hover: var(--navy-light-40);
+  --swm-button-secondary: var(--navy-light-80);
+  --swm-button-secondary-background: var(--navy-light-10);
+  --swm-button-secondary-hover: var(--navy-light-20);
 
   --swm-button-ternary: var(--off-white);
   --swm-button-ternary-background: var(--navy-light-60);
