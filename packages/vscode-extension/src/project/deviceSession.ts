@@ -42,8 +42,7 @@ export class DeviceSession implements Disposable {
   ) {
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch
-      ? Promise.resolve()
-      : new Promise<void>((res) => {
+      ? new Promise<void>((res) => {
           const listener = (event: string, payload: any) => {
             if (event === "RNIDE_appReady") {
               this.devtools?.removeListener(listener);
@@ -51,7 +50,8 @@ export class DeviceSession implements Disposable {
             }
           };
           this.devtools?.addListener(listener);
-        });
+        })
+      : Promise.resolve();
 
     progressCallback(StartupMessage.BootingDevice);
     await this.device.bootDevice();
