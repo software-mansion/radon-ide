@@ -121,7 +121,9 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     previewURL &&
     (showPreviewRequested ||
       (!hasErrors &&
-        (projectState?.status === "running" || projectState?.status === "refreshing")));
+        (projectState?.status === "running" ||
+          projectState?.status === "refreshing" ||
+          projectState?.status === "debuggerPaused")));
 
   useBuildErrorAlert(hasBuildError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
