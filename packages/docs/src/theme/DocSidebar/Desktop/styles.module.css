@@ -6,7 +6,7 @@
     padding-top: var(--ifm-navbar-height);
     width: var(--doc-sidebar-width);
 
-    background-color: transparent !important;
+    background-color: var(--swm-off-background) !important;
   }
 
   .sidebarWithHideableNavbar {

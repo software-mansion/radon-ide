@@ -15,7 +15,6 @@
 }
 
 [class*="navbar__items"] [class*="navbar__logo"] {
-  background-color: var(--swm-white);
   justify-content: flex-start;
 }
 
@@ -23,6 +22,10 @@
 [class*="navbar-sidebar"] [class*="navbar__logo"] {
   /* justify-content: flex-start; */
   display: none;
+}
+
+[class*="sidebar"] {
+  background-color: var(--swm-off-background);
 }
 
 /* Logo shown on the sidebar after scrolling down the page. */

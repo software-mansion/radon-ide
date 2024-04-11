@@ -38,9 +38,7 @@ export default function NavbarLayout({ children }) {
 
   return (
     <div>
-      {/* version without the elipse */}
-      {/* {isLanding && <LandingBackground />} */}
-      <LandingBackground />
+      {isLanding && <LandingBackground />}
       <nav
         ref={navbarRef}
         aria-label={translate({

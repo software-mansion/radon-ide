@@ -24,22 +24,6 @@ nav {
   display: flex;
 }
 
-@media (min-width: 996px) {
-  [class*="navbar__items--right"] [class*="navbar__item"] {
-    padding-right: 0;
-    padding-left: 1.5rem;
-  }
-}
-[class*="header-swm"] {
-  display: flex;
-}
-
-@media (max-width: 420px) {
-  [class*="header-swm"] {
-    display: none;
-  }
-}
-
 [class*="navbar__brand"] {
   background-color: var(--swm-white);
 }

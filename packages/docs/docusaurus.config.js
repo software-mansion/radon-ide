@@ -58,11 +58,6 @@ const config = {
             label: "Docs",
             position: "right",
           },
-          {
-            href: "https://swmansion.com",
-            className: "header-swm",
-            position: "right",
-          },
         ],
       },
       footer: {
