@@ -5,6 +5,11 @@ Hide color mode toggle in small viewports
   .colorModeToggle {
     display: none;
   }
+
+  [class*="navbar__items--right"] [class*="navbar__item"] {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
 }
 
 nav {
@@ -17,6 +22,22 @@ nav {
 
 [class*="navbar__item"] {
   display: flex;
+}
+
+@media (min-width: 996px) {
+  [class*="navbar__items--right"] [class*="navbar__item"] {
+    padding-right: 0;
+    padding-left: 1.5rem;
+  }
+}
+[class*="header-swm"] {
+  display: flex;
+}
+
+@media (max-width: 420px) {
+  [class*="header-swm"] {
+    display: none;
+  }
 }
 
 [class*="navbar__brand"] {
