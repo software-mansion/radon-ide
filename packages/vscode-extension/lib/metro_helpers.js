@@ -73,9 +73,11 @@ function adaptMetroConfig(config) {
     __RNIDE_lib__: extensionLib,
   };
 
-  // This code is needed to properly resolve modules
-  // It may potentially break with non-standard settings like yarn workspaces etc.
-  // TODO: figure out why setting nodeModulesPaths is needed
+  // This code is needed to resolve modules that the extension lib files import.
+  // Since node's resolution algorithm require that dependencies are present in node_modules
+  // folder that is located in the parent/gradparent/etc directory, we need to add the app's
+  // node_modules folder to allow files from the extension lib to import things like react, react-native
+  // and other dependencies.
   config.resolver.nodeModulesPaths = [
     ...(config.resolver.nodeModulesPaths || []),
     path.join(appRoot, "node_modules"),
