@@ -1,8 +1,8 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const lightCodeTheme = require("prism-react-renderer/themes/github");
+const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -26,14 +26,16 @@ const config = {
 
   presets: [
     [
-      'classic',
+      "classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
+          breadcrumbs: false,
+          sidebarPath: require.resolve("./sidebars.js"),
+          sidebarCollapsible: false,
         },
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: require.resolve("./src/css/custom.css"),
         },
       }),
     ],
@@ -42,14 +44,20 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      // Replace with your project's social card
       image: "img/og-image.png",
       navbar: {
+        hideOnScroll: true,
         logo: {
           alt: "IDE logo",
           src: "img/logo.svg",
         },
         items: [
+          {
+            to: "docs/getting-started",
+            activeBasePath: "docs",
+            label: "Docs",
+            position: "right",
+          },
           {
             href: "https://swmansion.com",
             className: "header-swm",

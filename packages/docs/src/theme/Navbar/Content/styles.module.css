@@ -19,6 +19,10 @@ nav {
   display: flex;
 }
 
+[class*="navbar__brand"] {
+  background-color: var(--swm-white);
+}
+
 [class*="navbar__items"] {
   display: flex;
 }
@@ -26,4 +30,3 @@ nav {
 [class*="navbar__logo"] {
   height: 2.75rem;
 }
-
