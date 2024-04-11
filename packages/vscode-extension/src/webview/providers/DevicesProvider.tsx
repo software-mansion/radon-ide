@@ -73,14 +73,8 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
   );
 }
 
-export function useDevices(reload = false) {
+export function useDevices() {
   const context = useContext(DevicesContext);
-
-  useEffect(() => {
-    if (reload) {
-      context.reload();
-    }
-  }, [reload]);
 
   if (context === undefined) {
     throw new Error("useDevices must be used within a DevicesProvider");

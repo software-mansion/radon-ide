@@ -1,5 +1,5 @@
 import "./ManageDevicesView.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IconButton from "../components/shared/IconButton";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
 import CreateDeviceView from "./CreateDeviceView";
@@ -53,7 +53,11 @@ function ManageDevicesView() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
 
-  const { devices } = useDevices(true);
+  const { devices, reload } = useDevices();
+
+  useEffect(() => {
+    reload();
+  }, []);
 
   const androidDevices = devices.filter((device) => device.platform === Platform.Android);
   const iosDevices = devices.filter((device) => device.platform === Platform.IOS);

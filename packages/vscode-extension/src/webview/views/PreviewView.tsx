@@ -17,6 +17,19 @@ import DeviceSelect from "../components/DeviceSelect";
 import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 
+function useDevicesWithInitialLoad() {
+  const { devices, isLoading } = useDevices();
+  const [loadedInitialDevices, setLoadedInitialDevices] = useState(false);
+
+  useEffect(() => {
+    if (devices.length > 0 && !isLoading) {
+      setLoadedInitialDevices(true);
+    }
+  }, [devices, isLoading]);
+
+  return { devices, loadedInitialDevices };
+}
+
 function PreviewView() {
   const [isInspecting, setIsInspecting] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -24,7 +37,7 @@ function PreviewView() {
 
   const { openModal } = useModal();
 
-  const { devices, isLoading: isLoadingDevices } = useDevices();
+  const { devices, loadedInitialDevices } = useDevicesWithInitialLoad();
   const { projectState, project } = useProject();
 
   const selectedDevice = projectState?.selectedDevice;
@@ -67,7 +80,7 @@ function PreviewView() {
     }
   };
 
-  if (isLoadingDevices) {
+  if (!loadedInitialDevices) {
     return (
       <div className="panel-view">
         <VSCodeProgressRing />

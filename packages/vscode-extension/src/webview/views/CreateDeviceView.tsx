@@ -1,31 +1,36 @@
 import Select from "../components/shared/Select";
 import "./CreateDeviceView.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDevices } from "../providers/DevicesProvider";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
-import { SupportedDeviceName, SupportedDevices } from "../utilities/consts";
+import { DeviceProperties, SupportedDeviceName, SupportedDevices } from "../utilities/consts";
 import { Platform } from "../../common/DeviceManager";
 
-function isSupportedIOSDevice(device: SupportedDeviceName): boolean {
-  return (
-    SupportedDevices.find((sd) => {
-      return sd.name === device;
-    })?.platform === Platform.IOS
-  );
+function isSupportedIOSDevice(name: SupportedDeviceName): boolean {
+  return SupportedDevices.some((sd) => sd.name === name && isIOSDevice(sd));
+}
+
+function isAndroidDevice(device: DeviceProperties) {
+  return device.platform === Platform.Android;
+}
+function isIOSDevice(device: DeviceProperties) {
+  return device.platform === Platform.IOS;
 }
 
 const SUPPORTED_DEVICES = [
   {
-    items: SupportedDevices.filter((item) => {
-      return item.platform === Platform.IOS;
-    }).map((item) => ({ value: item.name, label: item.name })),
+    items: SupportedDevices.filter(isIOSDevice).map((item) => ({
+      value: item.name,
+      label: item.name,
+    })),
     label: "iOS",
   },
   {
-    items: SupportedDevices.filter((item) => {
-      return item.platform === Platform.Android;
-    }).map((item) => ({ value: item.name, label: item.name })),
+    items: SupportedDevices.filter(isAndroidDevice).map((item) => ({
+      value: item.name,
+      label: item.name,
+    })),
     label: "Android",
   },
 ];
@@ -40,7 +45,11 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const { iOSRuntimes, androidImages, deviceManager } = useDevices(true);
+  const { iOSRuntimes, androidImages, deviceManager, reload } = useDevices();
+
+  useEffect(() => {
+    reload();
+  }, []);
 
   const systemImagesOptions =
     !!deviceName && isSupportedIOSDevice(deviceName)
