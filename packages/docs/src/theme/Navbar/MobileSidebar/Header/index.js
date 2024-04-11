@@ -2,7 +2,10 @@ import React from "react";
 import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
 import { translate } from "@docusaurus/Translate";
 import IconClose from "@theme/Icon/Close";
-import NavbarLogo from "@theme/Navbar/Logo";
+import ThemedImage from "@theme/ThemedImage";
+import useBaseUrl from "@docusaurus/useBaseUrl";
+import styles from "./styles.module.css";
+
 function CloseButton() {
   const mobileSidebar = useNavbarMobileSidebar();
   return (
@@ -22,7 +25,14 @@ function CloseButton() {
 export default function NavbarMobileSidebarHeader() {
   return (
     <div className="navbar-sidebar__brand">
-      <NavbarLogo />
+      <div className={styles.logoSidebarWrapper}>
+        <ThemedImage
+          sources={{
+            light: useBaseUrl("/img/logo_2.svg"),
+            dark: useBaseUrl("/img/logo_2.svg"),
+          }}
+        />
+      </div>
       <CloseButton />
     </div>
   );
