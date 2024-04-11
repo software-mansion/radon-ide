@@ -20,6 +20,15 @@
   aspect-ratio: var(--phone-aspect-ratio);
 }
 
+.touch-area {
+  position: absolute;
+  width: calc(var(--phone-screen-width) + 14px);
+  height: var(--phone-screen-height);
+  top: var(--phone-top);
+  left: calc(var(--phone-left) - 7px);
+  z-index: 20;
+}
+
 .phone-screen {
   position: absolute;
   width: var(--phone-screen-width);
@@ -45,6 +54,7 @@
   display: flex;
   overflow: hidden;
   pointer-events: none;
+  z-index: 30;
 }
 
 .inspect-area {
@@ -58,6 +68,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  z-index: 30;
 }
 
 .phone-refreshing-overlay {
@@ -66,6 +77,7 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  z-index: 30;
 }
 
 .uncaught-button {
@@ -76,11 +88,13 @@
   border: 1px solid #e65f50;
   padding: 5px;
   color: #001a72;
+  z-index: 30;
 }
 
 .phone-exception-overlay {
   background-color: rgba(255, 106, 89, 0.85);
   color: #001a72;
+  z-index: 30;
 }
 
 .phone-content-loading {
@@ -93,4 +107,5 @@
 
 .phone-content-loading-overlay {
   background-color: var(--swm-phone-content-loading-overlay);
+  z-index: 30;
 }
