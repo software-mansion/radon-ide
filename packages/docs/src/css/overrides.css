@@ -49,6 +49,10 @@ table thead tr {
   border: 1px solid var(--swm-border);
 }
 
+[class*="codeBlockContainer"] {
+  box-shadow: none !important;
+}
+
 [class*="codeBlockContent"] pre,
 [class*="codeBlockContent"] code {
   border-radius: 0;
