@@ -1,3 +1,4 @@
+import React from 'react';
 import Elipse from "@site/src/components/Elipse";
 import Layout from "@theme/Layout";
 import Hero from "@site/src/components/Hero/StartScreen";

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { type ActiveItemProps } from './FaqItem'
 import FaqItem from './FaqItem'
 
