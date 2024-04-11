@@ -1,3 +1,4 @@
+// https://gist.github.com/MightyPork/6da26e382a7ad91b5496ee55fdc73db2
 const keyToHID = {
   KeyA: 4,
   KeyB: 5,
@@ -52,6 +53,8 @@ const keyToHID = {
   Period: 55,
   Slash: 56,
   CapsLock: 57,
+  ArrowRight: 79,
+  ArrowLeft: 80,
   ShiftLeft: 225,
   ShiftRight: 229,
   ControlLeft: 224,
