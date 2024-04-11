@@ -1,3 +1,4 @@
+import React from 'react';
 import styles from './styles.module.css'
 import config from '../configStyles.module.css'
 import clsx from 'clsx'

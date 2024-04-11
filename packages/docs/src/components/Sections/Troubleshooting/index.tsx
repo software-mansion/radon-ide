@@ -1,3 +1,4 @@
+import React from 'react';
 import styles from './styles.module.css'
 import FaqList from '@site/src/components/FaqList'
 import Elipse from '@site/src/components/Elipse'

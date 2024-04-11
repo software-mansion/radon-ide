@@ -1,0 +1,6 @@
+.logoSidebarWrapper {
+  padding-left: 8px;
+}
+.logoSidebarWrapper img {
+  height: var(--swm-logo-height);
+}
