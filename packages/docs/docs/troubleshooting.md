@@ -30,7 +30,7 @@ This can be done using vscode setting that the extension exposes – open setti
 
 The extension relies on Android Studio to install Android emulators and on Xcode tools to manage and install iOS simulators.
 The extension can spawn new devices on its own, but it requires the system images can only be installed using Android Studio and Xcode.
-Please refer to [SIMULATORS](./simulators.md) section to learn more about installing system images for different platforms.
+Please refer to [simulators](./simulators.md) section to learn more about installing system images for different platforms.
 
 ### 5. Stuck on "Waiting for app to load"
 

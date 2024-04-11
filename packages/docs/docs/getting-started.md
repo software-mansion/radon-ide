@@ -41,19 +41,19 @@ The current version supports developing for Android and iOS platforms with the c
 
 ### 💽 Installation
 
-For installation instructions head to [INSTALLATION](./installation.md) section.
+For installation instructions head to [installation](./installation.md) section.
 
 ### 💻 Usage
 
-See [USAGE](./usage.md) guide on how to get started after installing the extension. You can also visit [React Native IDE](https://ide.swmansion.com) website where we hilight the most important features.
+See [usage](./usage.md) guide on how to get started after installing the extension. You can also visit [React Native IDE](https://ide.swmansion.com) website where we hilight the most important features.
 
 ### 🐛 Troubleshooting
 
-For troubleshooting and guide on reporting issues head to [TROUBLESHOOTING](./troubleshooting.md) section.
+For troubleshooting and guide on reporting issues head to [troubleshooting](./troubleshooting.md) section.
 
 ### ⚒️ Extension Development
 
-If you want to develop the extension and contribute updates head to [DEVELOPMENT](./development.md) section.
+If you want to develop the extension and contribute updates head to [development](./development.md) section.
 
 ## Discord
 

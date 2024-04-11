@@ -21,7 +21,7 @@ In order to run the extension in development mode, follow the steps below:
 
 ### 1. Clone the repository
 
-```sh
+```bash
 git clone git@github.com:software-mansion/react-native-ide.git
 ```
 
@@ -29,7 +29,7 @@ git clone git@github.com:software-mansion/react-native-ide.git
 
 Inside `packages/vscode-extension` run:
 
-```sh
+```bash
 npm install
 ```
 
@@ -38,13 +38,13 @@ npm install
 Simulator server repository is not open sourced but we have a pre-build binaries published on the GitHub releases page.
 First, you need to navigate to the [releases page on GitHub](https://github.com/software-mansion/react-native-ide/releases), open the recent release, and download the sim-server file from "Assets" section (the filename contains a git hash for build consistency):
 
-<img width="825" alt="download-sim-server" src="static/img/download_sim_server.png"/>
+<img width="825" alt="download-sim-server" src="/img/docs/download_sim_server.png"/>
 
 Next, place the downloaded file under `packages/vscode-extension/dist`.
 
 Finally, run the following script inside `packages/vscode-extension` directory:
 
-```sh
+```bash
 npm run build:sim-server-debug
 ```
 
@@ -64,12 +64,12 @@ code package/vscode-extension`
 This can only be done from withing Visual Studio Code.
 With the extension project open, go to `Run and Debug` panel and click "Start Debugging" button next to "Run Extension" configuration:
 
-<img width="373" alt="run-and-debug" src="https://github.com/software-mansion/react-native-ide/assets/726445/2907a3a2-682d-4ae2-8820-55fa5d3a7db4"/>
+<img width="373" alt="run-and-debug" src="/img/docs/run_and_debug.png"/>
 
 Running this configration will result in the new vscode window being opened.
 This new window is titled "[Extension Development Host]" and is the only window that has the development version of the extension loaded – you should use it to open you React Native project, or try some of the test apps from `test-app` folder.
 
-<img width="896" alt="extension-host-title" src="https://github.com/software-mansion/react-native-ide/assets/726445/f64efd0e-4611-4742-8012-9f6dfbf484ca"/>
+<img width="896" alt="extension-host-title" src="/img/docs/extension_host_title.png"/>
 
 ### 6. Develop the extension!
 
@@ -79,7 +79,7 @@ Code changes made to the main extension, requires restarting the extension proje
 You can use Debug Tool Bar to restart the project:
 
 <img width="438" alt="restart-extension" 
-src="https://github.com/software-mansion/react-native-ide/assets/726445/1cb5abb1-9516-48a1-8089-8ed4fbf60c16"/>
+src="/img/docs/restart_extension.png"/>
 
 For main extension code, you can set breakpoints in vscode and use debugger normally, logs will appear in the Debug Console panel.
 Unfortunately debugging isn't available for the frontend code, however you can use vscode's builtin chrome devtools to see logs or interact with the frontend portion of the project – for this you'll need to run command "Developer: Open Webview Developer Tools" from the command palette in the Extension Host window.
