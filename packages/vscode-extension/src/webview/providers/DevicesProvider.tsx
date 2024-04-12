@@ -18,7 +18,7 @@ const DeviceManager = makeProxy<DeviceManagerInterface>("DeviceManager");
 
 interface DevicesContextProps {
   devices: DeviceInfo[];
-  isLoading: boolean;
+  finishedInitialLoad: boolean;
   androidImages: AndroidSystemImageInfo[];
   iOSRuntimes: IOSRuntimeInfo[];
   deviceManager: DeviceManagerInterface;
@@ -27,7 +27,7 @@ interface DevicesContextProps {
 
 const DevicesContext = createContext<DevicesContextProps>({
   devices: [],
-  isLoading: true,
+  finishedInitialLoad: false,
   androidImages: [],
   iOSRuntimes: [],
   deviceManager: DeviceManager,
@@ -38,17 +38,16 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [androidImages, setAndroidImages] = useState<AndroidSystemImageInfo[]>([]);
   const [iOSRuntimes, setIOSRuntimes] = useState<IOSRuntimeInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [finishedInitialLoad, setFinishedInitialLoad] = useState(false);
 
   const reload = useCallback(async () => {
-    setIsLoading(true);
     await Promise.all([
       DeviceManager.listAllDevices().then(setDevices),
       DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
       DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes),
     ]);
-    setIsLoading(false);
-  }, [setDevices, setAndroidImages, setIOSRuntimes]);
+    setFinishedInitialLoad(true);
+  }, [setDevices, setAndroidImages, setIOSRuntimes, setFinishedInitialLoad]);
 
   useEffect(() => {
     DeviceManager.addListener("devicesChanged", setDevices);
@@ -62,7 +61,7 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
     <DevicesContext.Provider
       value={{
         devices,
-        isLoading,
+        finishedInitialLoad,
         androidImages,
         iOSRuntimes,
         reload,
@@ -73,14 +72,8 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
   );
 }
 
-export function useDevices(reload = false) {
+export function useDevices() {
   const context = useContext(DevicesContext);
-
-  useEffect(() => {
-    if (reload) {
-      context.reload();
-    }
-  }, [reload]);
 
   if (context === undefined) {
     throw new Error("useDevices must be used within a DevicesProvider");

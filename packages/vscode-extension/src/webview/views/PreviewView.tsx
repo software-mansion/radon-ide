@@ -24,7 +24,7 @@ function PreviewView() {
 
   const { openModal } = useModal();
 
-  const { devices, isLoading: isLoadingDevices } = useDevices();
+  const { devices, finishedInitialLoad } = useDevices();
   const { projectState, project } = useProject();
 
   const selectedDevice = projectState?.selectedDevice;
@@ -67,7 +67,7 @@ function PreviewView() {
     }
   };
 
-  if (isLoadingDevices) {
+  if (!finishedInitialLoad) {
     return (
       <div className="panel-view">
         <VSCodeProgressRing />
