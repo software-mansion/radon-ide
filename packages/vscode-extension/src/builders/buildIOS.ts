@@ -181,7 +181,14 @@ export async function buildIos(
     throw new Error(`Couldn't find "PLATFORM_NAME" in xcodebuild output`);
   }
 
-  const appPath = await getBuildPath(xcodeProject, sourceDir, platformName, scheme, cancelToken);
+  const appPath = await getBuildPath(
+    xcodeProject,
+    sourceDir,
+    platformName,
+    scheme,
+    buildOptions?.ios?.configuration || "Debug",
+    cancelToken
+  );
 
   const bundleID = await getBundleID(appPath);
 
@@ -216,6 +223,7 @@ async function getBuildPath(
   projectDir: string,
   platformName: string,
   scheme: string,
+  configuration: string,
   cancelToken: CancelToken
 ) {
   const buildSettings = await cancelToken.adapt(
@@ -229,7 +237,7 @@ async function getBuildPath(
         "-sdk",
         platformName,
         "-configuration",
-        "Debug",
+        configuration,
         "-showBuildSettings",
         "-json",
       ],
