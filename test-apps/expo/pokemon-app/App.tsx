@@ -10,6 +10,7 @@ import { PokemonsProvider } from "./src/providers/pokemons/PokemonsProvider";
 import Home from "./src/screens/home/Home";
 import PokemonDetails from "./src/screens/pokemonDetails/PokemonDetails";
 import { FavoritePokemonsProvider } from "./src/providers/favoritePokemons/FavoritePokemonsProvider";
+import { StatusBar } from "expo-status-bar";
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,7 @@ export default function App() {
           <FavoritePokemonsProvider>
             <PokemonPinsProvider>
               <PaperProvider>
+                <StatusBar translucent={true}/>
                 <NavigationContainer>
                   <Stack.Navigator>
                     <Stack.Screen
