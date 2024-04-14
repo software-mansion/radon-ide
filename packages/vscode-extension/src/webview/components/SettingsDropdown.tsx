@@ -98,6 +98,19 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                     <span className="codicon codicon-check right-slot" />
                   )}
                 </DropdownMenu.Item>
+                {panelLocation === "tab" && (
+                  <>
+                    <DropdownMenu.Separator className="dropdown-menu-separator" />
+                    <DropdownMenu.Item
+                      className="dropdown-menu-item"
+                      onSelect={() => {
+                        project.openNewWindow();
+                      }}>
+                      <span className="codicon codicon-multiple-windows" />
+                      New Window
+                    </DropdownMenu.Item>
+                  </>
+                )}
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
