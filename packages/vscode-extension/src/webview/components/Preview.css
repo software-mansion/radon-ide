@@ -107,5 +107,4 @@
 
 .phone-content-loading-overlay {
   background-color: var(--swm-phone-content-loading-overlay);
-  z-index: 30;
 }
