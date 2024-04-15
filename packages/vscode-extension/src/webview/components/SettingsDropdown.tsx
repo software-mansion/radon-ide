@@ -104,7 +104,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                     <DropdownMenu.Item
                       className="dropdown-menu-item"
                       onSelect={() => {
-                        project.openNewWindow();
+                        project.movePanelToNewWindow();
                       }}>
                       <span className="codicon codicon-multiple-windows" />
                       New Window
