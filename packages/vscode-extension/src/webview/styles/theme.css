@@ -146,7 +146,7 @@ body[data-vscode-theme-kind="vscode-light"] {
 
   /* Startup message */
   --swm-startup-message: var(--off-white);
-  --swm-phone-content-loading-overlay: rgba(0, 0, 0, 0.75);
+  --swm-phone-content-loading-background: rgba(0, 0, 0, 0.75);
 
   /* Button */
   --swm-button: var(--swm-default-text);
@@ -256,7 +256,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
 
   /* Startup message */
   --swm-startup-message: var(--off-white);
-  --swm-phone-content-loading-overlay: rgba(255, 255, 255, 0.15);
+  --swm-phone-content-loading-background: rgba(255, 255, 255, 0.15);
 
   /* Button */
   --swm-button: var(--swm-default-text);

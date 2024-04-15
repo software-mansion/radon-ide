@@ -315,7 +315,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       )}
       {!showDevicePreview && !hasBuildError && (
         <div className="phone-content">
-          <div className="phone-sized phone-screen phone-content-loading-overlay" />
+          <div className="phone-sized phone-screen phone-content-loading-background" />
           <div className="phone-sized phone-screen phone-content-loading ">
             <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
           </div>
