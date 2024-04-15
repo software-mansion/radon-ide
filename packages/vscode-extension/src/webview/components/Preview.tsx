@@ -17,6 +17,10 @@ declare module "react" {
   }
 }
 
+function isPasting(event: KeyboardEvent) {
+  return (event.metaKey || event.ctrlKey) && event.code === "KeyV";
+}
+
 function cssPropertiesForDevice(device: DeviceProperties) {
   return {
     "--phone-screen-height": `${(device.screenHeight / device.frameHeight) * 100}%`,
@@ -206,8 +210,12 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     function keyEventHandler(e: KeyboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
-        const hidCode = keyboardEventToHID(e);
-        project.dispatchKeyPress(hidCode, e.type === "keydown" ? "Down" : "Up");
+        if (isPasting(e)) {
+          project.dispatchPaste();
+        } else {
+          const hidCode = keyboardEventToHID(e);
+          project.dispatchKeyPress(hidCode, e.type === "keydown" ? "Down" : "Up");
+        }
       }
     }
     document.addEventListener("keydown", keyEventHandler);

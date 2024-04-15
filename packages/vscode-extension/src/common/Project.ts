@@ -84,6 +84,7 @@ export interface ProjectInterface {
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
+  dispatchPaste(): Promise<void>;
   inspectElementAt(
     xRatio: number,
     yRatio: number,

@@ -19,8 +19,10 @@ import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
+import { exec } from "../utilities/subprocess";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
+const PBPASTE_BINARY = "/usr/bin/pbpaste";
 
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
@@ -51,6 +53,11 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
+  }
+
+  async dispatchPaste() {
+    const { stdout } = await exec(PBPASTE_BINARY);
+    this.deviceSession?.sendPaste(stdout);
   }
 
   onBundleError(): void {

@@ -47,4 +47,8 @@ export class Preview implements Disposable {
   public sendKey(keyCode: number, direction: "Up" | "Down") {
     this.subprocess?.stdin?.write(`key${direction} ${keyCode}\n`);
   }
+
+  public sendPaste(text: string) {
+    this.subprocess?.stdin?.write(`paste${text}\n`);
+  }
 }
