@@ -26,6 +26,7 @@ import os from "os";
 import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
+import { isAlreadyRunning } from "./utilities/common";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
@@ -63,10 +64,25 @@ export async function activate(context: ExtensionContext) {
 
   await fixBinaries(context);
 
-  function showIDEPanel(fileName?: string, lineNumber?: number) {
-    if (
-      workspace.getConfiguration("ReactNativeIDE").get<PanelLocation>("panelLocation") !== "tab"
-    ) {
+  async function showIDEPanel(fileName?: string, lineNumber?: number) {
+    const running = await isAlreadyRunning();
+
+    console.warn({ running });
+    if (running) {
+      window.showErrorMessage(
+        `
+    React Native IDE is already running in other window.\n
+    We only support running one instance of React Native IDE. Please close other window and try reopening the IDE.`,
+        "Dismiss"
+      );
+      return;
+    }
+
+    const panelLocation = workspace
+      .getConfiguration("ReactNativeIDE")
+      .get<PanelLocation>("panelLocation");
+
+    if (panelLocation !== "tab") {
       SidePanelViewProvider.showView(context, fileName, lineNumber);
     } else {
       TabPanel.render(context, fileName, lineNumber);

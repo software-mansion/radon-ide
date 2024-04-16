@@ -1,6 +1,6 @@
 import os from "os";
 import { createHash, Hash } from "crypto";
-import { join } from "path";
+import path, { join } from "path";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
 import fs from "fs";
@@ -47,6 +47,41 @@ export function getOrCreateAppDownloadsDir() {
 
 export function isDeviceIOS(deviceId: string) {
   return deviceId.startsWith("ios");
+}
+
+export async function isAlreadyRunning() {
+  const pidFile = path.join(getAppCachesDir(), "main.pid");
+  const currentPid = process.pid;
+
+  if (!fs.existsSync(pidFile)) {
+    fs.writeFileSync(pidFile, currentPid.toString());
+    return false;
+  }
+
+  const contents = fs.readFileSync(pidFile).toString();
+  const maybeRunningPid = parseInt(contents, 10);
+
+  if (maybeRunningPid === currentPid) {
+    return false;
+  }
+
+  if (!isPidRunning(maybeRunningPid)) {
+    fs.writeFileSync(pidFile, currentPid.toString());
+    return false;
+  }
+
+  return true;
+}
+
+function isPidRunning(pid: number) {
+  try {
+    // Signal 0 - special case for checking if process exists
+    // https://nodejs.org/api/process.html#process_process_kill_pid_signal
+    process.kill(pid, 0);
+    return true;
+  } catch (_e) {
+    return false;
+  }
 }
 
 export async function downdloadFile(url: string, destination: string) {
