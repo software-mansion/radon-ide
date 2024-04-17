@@ -11,6 +11,7 @@ import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorA
 import Debugger from "./Debugger";
 import { InspectData } from "../../common/Project";
 import * as ContextMenu from "@radix-ui/react-context-menu";
+import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 
 declare module "react" {
   interface CSSProperties {
@@ -107,6 +108,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
   const { projectState, project } = useProject();
+  const { inspectorSelectionLength } = useWorkspaceConfig();
 
   const hasBuildError = projectState?.status === "buildError";
   const hasIncrementalBundleError = projectState?.status === "incrementalBundleError";
@@ -279,7 +281,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
               />
             </ContextMenu.Trigger>
             <ContextMenu.Content className="context-menu-content">
-              {inspectData?.hierarchy.slice(-3).map((item) => {
+              {inspectData?.hierarchy.slice(-inspectorSelectionLength).map((item) => {
                 return (
                   <ContextMenu.Item
                     className="context-menu-item"
