@@ -285,6 +285,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     await this.deviceSession?.openDevMenu();
   }
 
+  public movePanelToNewWindow() {
+    commands.executeCommand("workbench.action.moveEditorToNewWindow");
+  }
+
   public startPreview(appKey: string) {
     this.deviceSession?.startPreview(appKey);
   }
