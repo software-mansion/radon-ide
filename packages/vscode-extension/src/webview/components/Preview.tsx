@@ -259,7 +259,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       ref={wrapperDivRef}>
       {showDevicePreview && (
         <div className="phone-content">
-          {/* <div className="touch-area" {...touchHandlers}></div> */}
           <MjpegImg
             src={previewURL}
             ref={previewRef}
@@ -280,23 +279,25 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
                 }}
               />
             </ContextMenu.Trigger>
-            <ContextMenu.Content className="context-menu-content">
-              {inspectData?.hierarchy.slice(-inspectorSelectionLength).map((item) => {
-                return (
-                  <ContextMenu.Item
-                    className="context-menu-item"
-                    onSelect={() => {
-                      onHierarchyElementSelected(
-                        item.source.fileName,
-                        item.source.lineNumber,
-                        item.source.columnNumber
-                      );
-                    }}>
-                    {item.name}
-                  </ContextMenu.Item>
-                );
-              })}
-            </ContextMenu.Content>
+            <ContextMenu.Portal>
+              <ContextMenu.Content className="context-menu-content">
+                {inspectData?.hierarchy.slice(-inspectorSelectionLength).map((item) => {
+                  return (
+                    <ContextMenu.Item
+                      className="context-menu-item"
+                      onSelect={() => {
+                        onHierarchyElementSelected(
+                          item.source.fileName,
+                          item.source.lineNumber,
+                          item.source.columnNumber
+                        );
+                      }}>
+                      {item.name}
+                    </ContextMenu.Item>
+                  );
+                })}
+              </ContextMenu.Content>
+            </ContextMenu.Portal>
           </ContextMenu.Root>
           {inspectFrame && (
             <div className="phone-screen phone-inspect-overlay">
