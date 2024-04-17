@@ -46,6 +46,14 @@ export const StartupStageWeight = [
 ];
 
 export type InspectData = {
+  hierarchy: {
+    name: string;
+    source: {
+      columnNumber: number;
+      fileName: string;
+      lineNumber: number;
+    };
+  }[];
   frame: {
     x: number;
     y: number;
@@ -80,6 +88,7 @@ export interface ProjectInterface {
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
+  openFileAt(filePath: string, line0Based: number, column0Based: number): void;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;

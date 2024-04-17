@@ -9,6 +9,7 @@ import { DeviceInfo } from "../common/DeviceManager";
 import { throttle } from "../common/utils";
 import {
   DeviceSettings,
+  InspectData,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -229,27 +230,28 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.sendKey(keyCode, direction);
   }
 
+  public openFileAt(filePath: string, line0Based: number, column0Based: number): void {
+    openFileAtPosition(filePath, line0Based, column0Based);
+  }
+
   public async inspectElementAt(
     xRatio: number,
     yRatio: number,
     openComponentSource: boolean,
-    callback: (inspectData: any) => void
+    callback: (inspectData: InspectData) => void
   ) {
     this.deviceSession?.inspectElementAt(xRatio, yRatio, (inspectData) => {
-      callback({ frame: inspectData.frame });
-      if (openComponentSource) {
-        // find last element in inspectData.hierarchy with source that belongs to the workspace
-        for (let i = inspectData.hierarchy.length - 1; i >= 0; i--) {
-          const element = inspectData.hierarchy[i];
-          if (element?.source?.fileName && isAppSourceFile(element.source.fileName)) {
-            openFileAtPosition(
-              element.source.fileName,
-              element.source.lineNumber - 1,
-              element.source.columnNumber - 1
-            );
-            break;
-          }
-        }
+      const internalComponentsHierarchy = inspectData.hierarchy.filter((item: any) => {
+        return item?.source?.fileName && isAppSourceFile(item.source.fileName);
+      });
+      callback({ frame: inspectData.frame, hierarchy: internalComponentsHierarchy });
+      if (openComponentSource && internalComponentsHierarchy) {
+        const topComponent = internalComponentsHierarchy.pop();
+        openFileAtPosition(
+          topComponent.source.fileName,
+          topComponent.source.lineNumber - 1,
+          topComponent.source.columnNumber - 1
+        );
       }
     });
   }

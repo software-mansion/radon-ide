@@ -1,3 +1,40 @@
+.context-menu-content {
+  min-width: 220px;
+  background-color: var(--swm-popover-background);
+  border-radius: 6px;
+  padding: 4px;
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  box-shadow: var(--swm-backdrop-shadow);
+  z-index: 40;
+}
+
+.context-menu-item {
+  font-size: 13px;
+  line-height: 1;
+  color: var(--swm-default-text);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 6px;
+  position: relative;
+  user-select: none;
+  outline: none;
+  gap: 4px;
+}
+
+.context-menu-item[data-disabled] {
+  color: var(--swm-disabled-text);
+  pointer-events: none;
+}
+
+.context-menu-item[data-highlighted] {
+  background-color: var(--swm-dropdown-item-highlighted);
+  color: var(--swm-default-text);
+}
+
 .phone-wrapper {
   flex: 1;
   display: flex;

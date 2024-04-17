@@ -9,7 +9,8 @@ import { DeviceProperties, SupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
-import { InspectData, StartupMessage } from "../../common/Project";
+import { InspectData } from "../../common/Project";
+import * as ContextMenu from "@radix-ui/react-context-menu";
 
 declare module "react" {
   interface CSSProperties {
@@ -144,7 +145,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   function sendInspectUnthrottled(event: MouseEvent<HTMLDivElement>, type: MouseMove | "Leave") {
     if (type === "Leave") {
-      setInspectData(null);
       return;
     }
     const imgRect = previewRef.current!.getBoundingClientRect();
@@ -169,7 +169,11 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     wrapperDivRef.current!.focus();
+
     if (isInspecting) {
+      if (e.button === 2) {
+        return;
+      }
       sendInspect(e, "Down", true);
       setIsInspecting(false);
     } else if (inspectData) {
@@ -200,6 +204,11 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       // and will be dispatched later on
       sendInspect(e, "Leave", true);
     }
+  }
+
+  function onHierarchyElementSelected(filePath: string, line0Based: number, column0Based: number) {
+    project.openFileAt(filePath, line0Based, column0Based);
+    setIsInspecting(false);
   }
 
   useEffect(() => {
@@ -248,7 +257,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       ref={wrapperDivRef}>
       {showDevicePreview && (
         <div className="phone-content">
-          <div className="touch-area" {...touchHandlers}></div>
+          {/* <div className="touch-area" {...touchHandlers}></div> */}
           <MjpegImg
             src={previewURL}
             ref={previewRef}
@@ -257,6 +266,36 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
             }}
             className="phone-screen"
           />
+          <ContextMenu.Root>
+            <ContextMenu.Trigger className="touch-area" {...touchHandlers} disabled={!isInspecting}>
+              <div
+                style={{
+                  position: "absolute",
+                  left: `${0}%`,
+                  top: `${0}%`,
+                  width: `${100}%`,
+                  height: `${100}%`,
+                }}
+              />
+            </ContextMenu.Trigger>
+            <ContextMenu.Content className="context-menu-content">
+              {inspectData?.hierarchy.slice(-3).map((item) => {
+                return (
+                  <ContextMenu.Item
+                    className="context-menu-item"
+                    onSelect={() => {
+                      onHierarchyElementSelected(
+                        item.source.fileName,
+                        item.source.lineNumber,
+                        item.source.columnNumber
+                      );
+                    }}>
+                    {item.name}
+                  </ContextMenu.Item>
+                );
+              })}
+            </ContextMenu.Content>
+          </ContextMenu.Root>
           {inspectFrame && (
             <div className="phone-screen phone-inspect-overlay">
               <div
