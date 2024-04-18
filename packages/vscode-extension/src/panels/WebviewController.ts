@@ -15,6 +15,7 @@ export class WebviewController implements Disposable {
   public readonly project: Project;
   public readonly workspaceConfig: WorkspaceConfigController;
   private disposables: Disposable[] = [];
+  private idToCallback: Map<number,any> = new Map();
 
   private followEnabled = false;
 
@@ -103,13 +104,16 @@ export class WebviewController implements Disposable {
       const argsWithCallbacks = args.map((arg: any) => {
         if (typeof arg === "object" && "__callbackId" in arg) {
           const callbackId = arg.__callbackId;
-          return (...options: any[]) => {
-            this.webview.postMessage({
-              command: "callback",
-              callbackId,
-              args: options,
-            });
-          };
+          const callback = this.idToCallback.has(callbackId)
+            ? this.idToCallback.get(callbackId)?.deref()
+            : (...options: any[]) => {
+                this.webview.postMessage({
+                  command: "callback",
+                  callbackId,
+                  args: options,
+                });
+                return callback;
+              };
         } else {
           return arg;
         }
