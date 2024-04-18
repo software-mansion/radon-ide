@@ -3,9 +3,14 @@ import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
 import { DeviceSettings } from "../common/Project";
 import { Platform } from "../common/DeviceManager";
+import { tryAcquiringLock } from "../utilities/common";
+
+import fs from "fs";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
+
+  protected abstract get lockFilePath(): string;
 
   abstract bootDevice(): Promise<void>;
   abstract changeSettings(settings: DeviceSettings): Promise<void>;
@@ -14,7 +19,13 @@ export abstract class DeviceBase implements Disposable {
   abstract makePreview(): Preview;
   abstract get platform(): Platform;
 
+  async acquire() {
+    return tryAcquiringLock(this.lockFilePath);
+  }
+
   dispose() {
+    // if file doesn't exist, we ignore the error in the callback
+    fs.unlink(this.lockFilePath, (_err) => {});
     this.preview?.dispose();
   }
 

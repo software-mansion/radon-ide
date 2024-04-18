@@ -1,6 +1,6 @@
 import os from "os";
 import { createHash, Hash } from "crypto";
-import path, { join } from "path";
+import { join } from "path";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
 import fs from "fs";
@@ -49,28 +49,70 @@ export function isDeviceIOS(deviceId: string) {
   return deviceId.startsWith("ios");
 }
 
-export async function isAlreadyRunning() {
-  const pidFile = path.join(getAppCachesDir(), "main.pid");
+export async function tryAcquiringLock(pidFilePath: string) {
   const currentPid = process.pid;
 
-  if (!fs.existsSync(pidFile)) {
-    fs.writeFileSync(pidFile, currentPid.toString());
+  console.warn({ currentPid, pidFilePath });
+
+  const status = await pidFileStatus(pidFilePath);
+
+  if (status === PidFileStatus.OWNED_BY_OTHER_PROCESS) {
     return false;
   }
 
-  const contents = fs.readFileSync(pidFile).toString();
+  if (status === PidFileStatus.NO_FILE) {
+    fs.writeFileSync(pidFilePath, currentPid.toString());
+  }
+  return true;
+}
+
+enum PidFileStatus {
+  NO_FILE,
+  OWNED_BY_OTHER_PROCESS,
+  OWNED_BY_CURRENT_PROCESS,
+}
+
+async function pidFileStatus(pidFilePath: string) {
+  if (!(await exists(pidFilePath))) {
+    return PidFileStatus.NO_FILE;
+  }
+
+  const currentPid = process.pid;
+  const contents = await readFile(pidFilePath);
   const maybeRunningPid = parseInt(contents, 10);
 
-  if (maybeRunningPid === currentPid) {
-    return false;
+  const ownedByOther = maybeRunningPid !== currentPid && isPidRunning(maybeRunningPid);
+
+  if (ownedByOther) {
+    return PidFileStatus.OWNED_BY_OTHER_PROCESS;
   }
 
-  if (!isPidRunning(maybeRunningPid)) {
-    fs.writeFileSync(pidFile, currentPid.toString());
-    return false;
-  }
+  return PidFileStatus.OWNED_BY_CURRENT_PROCESS;
+}
 
-  return true;
+function exists(filePath: string) {
+  return new Promise<boolean>((resolve, reject) => {
+    fs.stat(filePath, (err, _stats) => {
+      if (err === null) {
+        resolve(true);
+      } else if (err.code === "ENOENT") {
+        resolve(false);
+      } else {
+        reject(err);
+      }
+    });
+  });
+}
+
+function readFile(filePath: string) {
+  return new Promise<string>((resolve, reject) => {
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(data.toString());
+    });
+  });
 }
 
 function isPidRunning(pid: number) {

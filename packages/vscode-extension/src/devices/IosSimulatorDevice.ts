@@ -37,6 +37,12 @@ export class IosSimulatorDevice extends DeviceBase {
     return Platform.IOS;
   }
 
+  get lockFilePath(): string {
+    const deviceSetLocation = getDeviceSetLocation();
+    const pidFile = path.join(deviceSetLocation, this.deviceUDID, "lock.pid");
+    return pidFile;
+  }
+
   public dispose() {
     super.dispose();
     return exec("xcrun", ["simctl", "--set", getOrCreateDeviceSet(), "shutdown", this.deviceUDID]);
@@ -308,9 +314,13 @@ export async function createSimulator(deviceType: IOSDeviceTypeInfo, runtime: IO
   } as DeviceInfo;
 }
 
-function getOrCreateDeviceSet() {
+function getDeviceSetLocation() {
   const appCachesDir = getAppCachesDir();
-  const deviceSetLocation = path.join(appCachesDir, "Devices", "iOS");
+  return path.join(appCachesDir, "Devices", "iOS");
+}
+
+function getOrCreateDeviceSet() {
+  const deviceSetLocation = getDeviceSetLocation();
   if (!fs.existsSync(deviceSetLocation)) {
     fs.mkdirSync(deviceSetLocation, { recursive: true });
   }

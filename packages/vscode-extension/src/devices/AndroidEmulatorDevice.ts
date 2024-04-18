@@ -41,6 +41,12 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return Platform.Android;
   }
 
+  get lockFilePath(): string {
+    const avdDirectory = getAvdDirectoryLocation();
+    const pidFile = path.join(avdDirectory, `${this.avdId}.avd`, "lock.pid");
+    return pidFile;
+  }
+
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
@@ -435,12 +441,17 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
 }
 
 function getOrCreateAvdDirectory() {
-  const appCachesDir = getAppCachesDir();
-  const avdDirectory = path.join(appCachesDir, "Devices", "Android", "avd");
+  const avdDirectory = getAvdDirectoryLocation();
   if (!fs.existsSync(avdDirectory)) {
     fs.mkdirSync(avdDirectory, { recursive: true });
   }
 
+  return avdDirectory;
+}
+
+function getAvdDirectoryLocation() {
+  const appCachesDir = getAppCachesDir();
+  const avdDirectory = path.join(appCachesDir, "Devices", "Android", "avd");
   return avdDirectory;
 }
 
