@@ -48,8 +48,9 @@ export function makeProxy<T extends object>(objectName: string) {
         let argsWithCallbacks = args.map((arg) => {
           if (typeof arg === "function") {
             const callbackId = callbackToID.get(arg) || globalCallbackCounter++;
+            callbackToID.set(arg, callbackId);
             idToCallback.set(callbackId, arg);
-            if (callbackId === 1) {
+            if (currentCallId === 1) {
               window.addEventListener("message", (event) => {
                 if (event.data.command === "callback") {
                   const callback = idToCallback.get(event.data.callbackId);
