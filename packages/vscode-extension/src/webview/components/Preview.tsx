@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject } from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, useCallback } from "react";
 import clamp from "lodash/clamp";
 import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
@@ -207,15 +207,30 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   }
 
   useEffect(() => {
+    function dispatchPaste(e: ClipboardEvent) {
+      if (document.activeElement === wrapperDivRef.current) {
+        e.preventDefault();
+
+        const text = e.clipboardData?.getData("text");
+        if (text) {
+          project.dispatchPaste(text);
+        }
+      }
+    }
+
+    addEventListener("paste", dispatchPaste);
+    return () => {
+      removeEventListener("paste", dispatchPaste);
+    };
+  }, [project]);
+
+  useEffect(() => {
     function keyEventHandler(e: KeyboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
-        if (isPasting(e)) {
-          project.dispatchPaste();
-        } else {
-          const hidCode = keyboardEventToHID(e);
-          project.dispatchKeyPress(hidCode, e.type === "keydown" ? "Down" : "Up");
-        }
+
+        const hidCode = keyboardEventToHID(e);
+        project.dispatchKeyPress(hidCode, e.type === "keydown" ? "Down" : "Up");
       }
     }
     document.addEventListener("keydown", keyEventHandler);

@@ -55,9 +55,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
   }
 
-  async dispatchPaste() {
-    const { stdout } = await exec(PBPASTE_BINARY);
-    this.deviceSession?.sendPaste(stdout);
+  async dispatchPaste(text: string) {
+    this.deviceSession?.sendPaste(text);
   }
 
   onBundleError(): void {
