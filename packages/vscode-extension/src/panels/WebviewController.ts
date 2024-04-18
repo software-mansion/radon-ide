@@ -15,7 +15,15 @@ export class WebviewController implements Disposable {
   public readonly project: Project;
   public readonly workspaceConfig: WorkspaceConfigController;
   private disposables: Disposable[] = [];
-  private idToCallback: Map<number,WeakRef<any>> = new Map();
+  private idToCallback: Map<number, WeakRef<any>> = new Map();
+  private idToCallbackFinalizationRegistry = new FinalizationRegistry((callbackId: number) => {
+    this.webview.postMessage({
+      command: "removeCallback",
+      callbackId,
+    });
+    this.idToCallback.delete(callbackId);
+    Logger.debug("FRYTKI I SANDACZ");
+  });
 
   private followEnabled = false;
 
@@ -114,14 +122,18 @@ export class WebviewController implements Disposable {
                   args: options,
                 });
               };
-            Logger.debug("Frytki ID", callbackId);
-            Logger.debug("Frytki", callback);
-            Logger.debug("Frytki", Array.from(this.idToCallback.values()).map((item)=>{
+          Logger.debug("Frytki ID", callbackId);
+          Logger.debug("Frytki", callback);
+          Logger.debug(
+            "Frytki",
+            Array.from(this.idToCallback.values()).map((item) => {
               return item.deref();
-            }));
-            this.idToCallback.set(callbackId, new WeakRef(callback));
-            Logger.debug("Frytki", Array.from(this.idToCallback.values()));
-            return callback;
+            })
+          );
+          this.idToCallback.set(callbackId, new WeakRef(callback));
+          this.idToCallbackFinalizationRegistry.register(callback, callbackId);
+          Logger.debug("Frytki", Array.from(this.idToCallback.values()));
+          return callback;
         } else {
           return arg;
         }

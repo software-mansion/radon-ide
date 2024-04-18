@@ -59,6 +59,11 @@ export function makeProxy<T extends object>(objectName: string) {
                   }
                 }
               });
+              window.addEventListener("message", (event) => {
+                if (event.data.command === "removeCallback") {
+                  idToCallback.delete(event.data.callbackId);
+                }
+              });
             }
             return {
               __callbackId: callbackId,
