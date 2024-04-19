@@ -49,6 +49,6 @@ export class Preview implements Disposable {
   }
 
   public sendPaste(text: string) {
-    this.subprocess?.stdin?.write(`paste${text}\n`);
+    this.subprocess?.stdin?.write(`paste ${text}\n`);
   }
 }
