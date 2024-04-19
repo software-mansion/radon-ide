@@ -1,5 +1,13 @@
 const { useContext, useEffect, useRef, useCallback } = require("react");
-const { LogBox, AppRegistry, RootTagContext, View, Dimensions, Linking } = require("react-native");
+const {
+  LogBox,
+  AppRegistry,
+  RootTagContext,
+  View,
+  Dimensions,
+  Linking,
+  findNodeHandle,
+} = require("react-native");
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -117,28 +125,41 @@ export function PreviewAppWrapper({ children, ...rest }) {
             if (payload.requestStack) {
               stackPromise = Promise.all(
                 viewData.hierarchy.reverse().map((item) => {
-                  const inspectorData = item.getInspectorData();
+                  const inspectorData = item.getInspectorData((arg) => {
+                    const ret = findNodeHandle(arg);
+                    return ret;
+                  });
                   const framePromise = new Promise((res, rej) => {
-                    inspectorData.measure((x, y, viewWidth, viewHeight, pageX, pageY) => {
-                      res({
-                        x: pageX / width,
-                        y: pageY / height,
-                        width: viewWidth / width,
-                        height: viewHeight / height,
+                    try {
+                      inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
+                        res({
+                          x: pageX / width,
+                          y: pageY / height,
+                          width: viewWidth / width,
+                          height: viewHeight / height,
+                        });
                       });
+                    } catch (e) {
+                      rej(e);
+                    }
+                  });
+                  return framePromise
+                    .catch(() => {
+                      return undefined;
+                    })
+                    .then((frame) => {
+                      return inspectorData.source
+                        ? {
+                            componentName: item.name,
+                            source: {
+                              fileName: inspectorData.source.fileName,
+                              line0Based: inspectorData.source.lineNumber - 1,
+                              column0Based: inspectorData.source.columnNumber - 1,
+                            },
+                            frame,
+                          }
+                        : undefined;
                     });
-                  });
-                  return framePromise.then((frame) => {
-                    return {
-                      componentName: item.name,
-                      source: {
-                        fileName: inspectorData.source.fileName,
-                        line0Based: inspectorData.source.lineNumber - 1,
-                        column0Based: inspectorData.source.columnNumber - 1,
-                      },
-                      frame,
-                    };
-                  });
                 })
               );
             }
@@ -146,7 +167,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
               agent._bridge.send("RNIDE_inspectData", {
                 id: payload.id,
                 frame: scaledFrame,
-                stack,
+                stack: stack.filter((item) => item),
               });
             });
           }

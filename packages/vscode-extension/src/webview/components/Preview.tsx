@@ -206,6 +206,8 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     } else if (inspectFrame) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
       resetInspector();
+    } else if (e.button === 2) {
+      sendInspect(e, "RightButtonDown", true);
     } else {
       setIsPressing(true);
       sendTouch(e, "Down");
