@@ -76,6 +76,7 @@ export interface ProjectEventMap {
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
   navigationChanged: { displayName: string; id: string };
+  needsNativeRebuild: void;
 }
 
 export interface ProjectEventListener<T> {

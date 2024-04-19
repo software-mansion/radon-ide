@@ -42,12 +42,22 @@ type IOSBuildCacheInfo = {
   buildResult: IOSBuildResult;
 };
 
+export async function didFingerprintChange() {
+  const newFingerprint = await generateWorkspaceFingerprint();
+  const { fingerprint: iosFingerprint } =
+    extensionContext.workspaceState.get<IOSBuildCacheInfo>(IOS_BUILD_CACHE_KEY) ?? {};
+  const { fingerprint: androidFingerprint } =
+    extensionContext.workspaceState.get<AndroidBuildCacheInfo>(ANDROID_BUILD_CACHE_KEY) ?? {};
+
+  return newFingerprint !== iosFingerprint || newFingerprint !== androidFingerprint;
+}
+
 export class CancelToken {
   private _cancelled = false;
-  private cancellListeners: (() => void)[] = [];
+  private cancelListeners: (() => void)[] = [];
 
   public onCancel(cb: () => void) {
-    this.cancellListeners.push(cb);
+    this.cancelListeners.push(cb);
   }
 
   public adapt(execResult: ReturnType<typeof exec>) {
@@ -57,7 +67,7 @@ export class CancelToken {
 
   public cancel() {
     this._cancelled = true;
-    for (const listener of this.cancellListeners) {
+    for (const listener of this.cancelListeners) {
       listener();
     }
   }
@@ -107,9 +117,8 @@ export class BuildManager {
 
   private async loadAndroidCachedBuild(newFingerprint: string) {
     try {
-      const cacheInfo = extensionContext.workspaceState.get(
-        ANDROID_BUILD_CACHE_KEY
-      ) as AndroidBuildCacheInfo;
+      const cacheInfo =
+        extensionContext.workspaceState.get<AndroidBuildCacheInfo>(ANDROID_BUILD_CACHE_KEY);
 
       if (cacheInfo && cacheInfo.fingerprint == newFingerprint) {
         const build = cacheInfo.buildResult;
@@ -182,9 +191,7 @@ export class BuildManager {
 
   private async loadIOSCachedBuild(newFingerprint: string) {
     try {
-      const cacheInfo = extensionContext.workspaceState.get(
-        IOS_BUILD_CACHE_KEY
-      ) as IOSBuildCacheInfo;
+      const cacheInfo = extensionContext.workspaceState.get<IOSBuildCacheInfo>(IOS_BUILD_CACHE_KEY);
 
       if (cacheInfo && cacheInfo.fingerprint == newFingerprint) {
         const build = cacheInfo.buildResult;
