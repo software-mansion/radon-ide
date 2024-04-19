@@ -131,11 +131,12 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
 
   const openRebuildAlert = useNativeRebuildAlert();
+
   const openNativeRebuildAlert = useCallback(() => {
-    if (projectStatus !== "starting") {
+    if (projectStatus === "running") {
       openRebuildAlert();
     }
-  }, [projectStatus, openRebuildAlert]);
+  }, [projectState, projectStatus, openRebuildAlert]); // FIXME: additional projectState dependency due to the fact we're leaking listeners in handleRemoteCall() (we're calling project.addListener())
 
   const [inspectData, setInspectData] = useState<InspectData | null>(null);
   useEffect(() => {
