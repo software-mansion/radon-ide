@@ -55,6 +55,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
   }
 
+  async dispatchPaste(text: string) {
+    this.deviceSession?.sendPaste(text);
+  }
+
   onBundleError(): void {
     this.updateProjectState({ status: "bundleError" });
   }
@@ -294,6 +298,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   public async openDevMenu() {
     await this.deviceSession?.openDevMenu();
+  }
+
+  public movePanelToNewWindow() {
+    commands.executeCommand("workbench.action.moveEditorToNewWindow");
   }
 
   public startPreview(appKey: string) {

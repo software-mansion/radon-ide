@@ -98,9 +98,11 @@ export interface ProjectInterface {
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
   openFileAt(filePath: string, line0Based: number, column0Based: number): void;
+  movePanelToNewWindow(): void;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
+  dispatchPaste(text: string): Promise<void>;
   inspectElementAt(
     xRatio: number,
     yRatio: number,
