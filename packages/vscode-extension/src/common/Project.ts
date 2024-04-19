@@ -97,7 +97,7 @@ export interface ProjectInterface {
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
-  openFileAt(filePath: string, line0Based: number, column0Based: number): void;
+  openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
   movePanelToNewWindow(): void;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;

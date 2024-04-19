@@ -235,7 +235,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.sendKey(keyCode, direction);
   }
 
-  public openFileAt(filePath: string, line0Based: number, column0Based: number): void {
+  public async openFileAt(filePath: string, line0Based: number, column0Based: number) {
     openFileAtPosition(filePath, line0Based, column0Based);
   }
 
