@@ -9,7 +9,8 @@ import { DeviceProperties, SupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
-import { InspectData } from "../../common/Project";
+import { InspectData, InspectDataStackItem } from "../../common/Project";
+import { InspectDataMenu } from "./InspectDataMenu";
 
 declare module "react" {
   interface CSSProperties {
@@ -94,6 +95,11 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
   }
 );
 
+type InspectStackData = {
+  requestLocation: { x: number; y: number };
+  stack: InspectDataStackItem[];
+};
+
 type Props = {
   isInspecting: boolean;
   setIsInspecting: (isInspecting: boolean) => void;
@@ -125,12 +131,8 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   useBuildErrorAlert(hasBuildError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
-  const [inspectData, setInspectData] = useState<InspectData | null>(null);
-  useEffect(() => {
-    if (!isInspecting) {
-      setInspectData(null);
-    }
-  }, [isInspecting]);
+  const [inspectFrame, setInspectFrame] = useState<InspectData["frame"] | null>(null);
+  const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
   type MouseMove = "Move" | "Down" | "Up";
   function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
@@ -142,9 +144,15 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     project.dispatchTouch(clampedX, clampedY, type);
   }
 
-  function sendInspectUnthrottled(event: MouseEvent<HTMLDivElement>, type: MouseMove | "Leave") {
+  function onInspectorItemSelected(item: InspectDataStackItem) {
+    project.openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+  }
+
+  function sendInspectUnthrottled(
+    event: MouseEvent<HTMLDivElement>,
+    type: MouseMove | "Leave" | "RightButtonDown"
+  ) {
     if (type === "Leave") {
-      setInspectData(null);
       return;
     }
     const imgRect = previewRef.current!.getBoundingClientRect();
@@ -152,10 +160,32 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     const y = (event.clientY - imgRect.top) / imgRect.height;
     const clampedX = clamp(x, 0, 1);
     const clampedY = clamp(y, 0, 1);
-    project.inspectElementAt(clampedX, clampedY, type === "Down", setInspectData);
+    const requestStack = type === "Down" || type === "RightButtonDown";
+    const showInspectStackModal = type === "RightButtonDown";
+    project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
+      if (requestStack && inspectData?.stack) {
+        if (showInspectStackModal) {
+          setInspectStackData({
+            requestLocation: { x: event.clientX, y: event.clientY },
+            stack: inspectData.stack,
+          });
+        } else {
+          // find first item w/o hide flag and open file
+          const firstItem = inspectData.stack.find((item) => !item.hide);
+          if (firstItem) {
+            onInspectorItemSelected(firstItem);
+          }
+        }
+      }
+      setInspectFrame(inspectData.frame);
+    });
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
+  function resetInspector() {
+    setInspectFrame(null);
+    setInspectStackData(null);
+  }
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -169,12 +199,15 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     wrapperDivRef.current!.focus();
+
     if (isInspecting) {
-      sendInspect(e, "Down", true);
+      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
       setIsInspecting(false);
-    } else if (inspectData) {
+    } else if (inspectFrame) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
-      setInspectData(null);
+      resetInspector();
+    } else if (e.button === 2) {
+      sendInspect(e, "RightButtonDown", true);
     } else {
       setIsPressing(true);
       sendTouch(e, "Down");
@@ -200,6 +233,10 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       // and will be dispatched later on
       sendInspect(e, "Leave", true);
     }
+  }
+
+  function onContextMenu(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
   }
 
   useEffect(() => {
@@ -241,8 +278,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     return sd.name === projectState?.selectedDevice?.name;
   });
 
-  const inspectFrame = inspectData?.frame;
-
   const shouldPreventTouchInteraction =
     debugPaused ||
     debugException ||
@@ -257,6 +292,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
         onMouseMove,
         onMouseUp,
         onMouseLeave,
+        onContextMenu,
       };
 
   return (
@@ -276,6 +312,19 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
             }}
             className="phone-screen"
           />
+          {inspectStackData && (
+            <InspectDataMenu
+              inspectLocation={inspectStackData.requestLocation}
+              inspectStack={inspectStackData.stack}
+              onSelected={onInspectorItemSelected}
+              onHover={(item) => {
+                if (item.frame) {
+                  setInspectFrame(item.frame);
+                }
+              }}
+              onCancel={() => resetInspector()}
+            />
+          )}
           {inspectFrame && (
             <div className="phone-screen phone-inspect-overlay">
               <div
