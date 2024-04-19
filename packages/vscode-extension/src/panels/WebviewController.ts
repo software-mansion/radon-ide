@@ -22,7 +22,6 @@ export class WebviewController implements Disposable {
       callbackId,
     });
     this.idToCallback.delete(callbackId);
-    Logger.debug("FRYTKI I SANDACZ");
   });
 
   private followEnabled = false;
@@ -112,7 +111,6 @@ export class WebviewController implements Disposable {
       const argsWithCallbacks = args.map((arg: any) => {
         if (typeof arg === "object" && "__callbackId" in arg) {
           const callbackId = arg.__callbackId;
-          Logger.debug("Frytki", arg);
           const callback = this.idToCallback.has(callbackId)
             ? this.idToCallback.get(callbackId)?.deref()
             : (...options: any[]) => {
@@ -122,17 +120,8 @@ export class WebviewController implements Disposable {
                   args: options,
                 });
               };
-          Logger.debug("Frytki ID", callbackId);
-          Logger.debug("Frytki", callback);
-          Logger.debug(
-            "Frytki",
-            Array.from(this.idToCallback.values()).map((item) => {
-              return item.deref();
-            })
-          );
           this.idToCallback.set(callbackId, new WeakRef(callback));
           this.idToCallbackFinalizationRegistry.register(callback, callbackId);
-          Logger.debug("Frytki", Array.from(this.idToCallback.values()));
           return callback;
         } else {
           return arg;
