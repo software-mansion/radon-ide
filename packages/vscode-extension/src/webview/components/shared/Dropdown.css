@@ -4,6 +4,7 @@ button {
 }
 
 .dropdown-menu-content {
+  z-index: 40;
   min-width: 220px;
   background-color: var(--swm-popover-background);
   border-radius: 6px;
