@@ -122,7 +122,12 @@ export class DeviceSession implements Disposable {
     this.device.sendKey(keyCode, direction);
   }
 
-  public inspectElementAt(xRatio: number, yRatio: number, callback: (inspecData: any) => void) {
+  public inspectElementAt(
+    xRatio: number,
+    yRatio: number,
+    requestStack: boolean,
+    callback: (inspectData: any) => void
+  ) {
     const id = this.inspectCallID++;
     const listener = (event: string, payload: any) => {
       if (event === "RNIDE_inspectData" && payload.id === id) {
@@ -131,7 +136,7 @@ export class DeviceSession implements Disposable {
       }
     };
     this.devtools?.addListener(listener);
-    this.devtools.send("RNIDE_inspect", { x: xRatio, y: yRatio, id });
+    this.devtools.send("RNIDE_inspect", { x: xRatio, y: yRatio, id, requestStack });
   }
 
   public openNavigation(id: string) {

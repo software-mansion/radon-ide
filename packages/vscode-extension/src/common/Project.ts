@@ -45,15 +45,24 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
 
+export type InspectDataStackItem = {
+  componentName: string;
+  hide: boolean;
+  source: {
+    fileName: string;
+    line0Based: number;
+    column0Based: number;
+  };
+  frame: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+};
+
 export type InspectData = {
-  hierarchy: {
-    name: string;
-    source: {
-      columnNumber: number;
-      fileName: string;
-      lineNumber: number;
-    };
-  }[];
+  stack: InspectDataStackItem[] | undefined;
   frame: {
     x: number;
     y: number;
@@ -95,7 +104,7 @@ export interface ProjectInterface {
   inspectElementAt(
     xRatio: number,
     yRatio: number,
-    openComponentSource: boolean,
+    requestStack: boolean,
     callback: (inspectData: InspectData) => void
   ): Promise<void>;
 

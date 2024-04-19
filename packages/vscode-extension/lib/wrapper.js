@@ -113,13 +113,41 @@ export function PreviewAppWrapper({ children, ...rest }) {
               width: frame.width / width,
               height: frame.height / height,
             };
-            const hierarchy = viewData.hierarchy.map((item) => {
-              return { name: item.name, source: item.getInspectorData().source };
-            });
-            agent._bridge.send("RNIDE_inspectData", {
-              id: payload.id,
-              frame: scaledFrame,
-              hierarchy,
+            let stackPromise = Promise.resolve(undefined);
+            if (payload.requestStack) {
+              stackPromise = Promise.all(
+                viewData.hierarchy.reverse().map((item) => {
+                  const inspectorData = item.getInspectorData();
+                  const framePromise = new Promise((res, rej) => {
+                    inspectorData.measure((x, y, viewWidth, viewHeight, pageX, pageY) => {
+                      res({
+                        x: pageX / width,
+                        y: pageY / height,
+                        width: viewWidth / width,
+                        height: viewHeight / height,
+                      });
+                    });
+                  });
+                  return framePromise.then((frame) => {
+                    return {
+                      componentName: item.name,
+                      source: {
+                        fileName: inspectorData.source.fileName,
+                        line0Based: inspectorData.source.lineNumber - 1,
+                        column0Based: inspectorData.source.columnNumber - 1,
+                      },
+                      frame,
+                    };
+                  });
+                })
+              );
+            }
+            stackPromise.then((stack) => {
+              agent._bridge.send("RNIDE_inspectData", {
+                id: payload.id,
+                frame: scaledFrame,
+                stack,
+              });
             });
           }
         );

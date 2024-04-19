@@ -67,23 +67,11 @@
           ],
           "description": "Controlls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
         },
-        "ReactNativeIDE.inspectorSelectionLength":{
-          "type": "number",
+        "ReactNativeIDE.inspectorExcludePattern": {
+          "type": "string",
           "scope": "window",
-          "default": 3,
-          "enum": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9
-          ],
-          "description": "Controlls the length of the contexet menu, used when you right click on an element while useing inspector."
-
+          "default": null,
+          "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
         }
       }
     },
@@ -259,6 +247,7 @@
     "file-loader": "^6.2.0",
     "glob": "^7.1.6",
     "lodash": "^4.17.21",
+    "minimatch": "^9.0.4",
     "node-fetch": "^2.7.0",
     "plist": "^3.1.0",
     "prettier": "^2.2.1",

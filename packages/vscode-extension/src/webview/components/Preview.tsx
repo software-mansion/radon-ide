@@ -9,9 +9,8 @@ import { DeviceProperties, SupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
-import { InspectData } from "../../common/Project";
-import * as ContextMenu from "@radix-ui/react-context-menu";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import { InspectData, InspectDataStackItem } from "../../common/Project";
+import { InspectDataMenu } from "./InspectDataMenu";
 
 declare module "react" {
   interface CSSProperties {
@@ -96,6 +95,11 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
   }
 );
 
+type InspectStackData = {
+  requestLocation: { x: number; y: number };
+  stack: InspectDataStackItem[];
+};
+
 type Props = {
   isInspecting: boolean;
   setIsInspecting: (isInspecting: boolean) => void;
@@ -108,7 +112,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
   const { projectState, project } = useProject();
-  const { inspectorSelectionLength } = useWorkspaceConfig();
 
   const hasBuildError = projectState?.status === "buildError";
   const hasIncrementalBundleError = projectState?.status === "incrementalBundleError";
@@ -128,12 +131,8 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   useBuildErrorAlert(hasBuildError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
-  const [inspectData, setInspectData] = useState<InspectData | null>(null);
-  useEffect(() => {
-    if (!isInspecting) {
-      setInspectData(null);
-    }
-  }, [isInspecting]);
+  const [inspectFrame, setInspectFrame] = useState<InspectData["frame"] | null>(null);
+  const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
   type MouseMove = "Move" | "Down" | "Up";
   function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
@@ -145,7 +144,14 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     project.dispatchTouch(clampedX, clampedY, type);
   }
 
-  function sendInspectUnthrottled(event: MouseEvent<HTMLDivElement>, type: MouseMove | "Leave") {
+  function onInspectorItemSelected(item: InspectDataStackItem) {
+    project.openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+  }
+
+  function sendInspectUnthrottled(
+    event: MouseEvent<HTMLDivElement>,
+    type: MouseMove | "Leave" | "RightButtonDown"
+  ) {
     if (type === "Leave") {
       return;
     }
@@ -154,10 +160,32 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     const y = (event.clientY - imgRect.top) / imgRect.height;
     const clampedX = clamp(x, 0, 1);
     const clampedY = clamp(y, 0, 1);
-    project.inspectElementAt(clampedX, clampedY, type === "Down", setInspectData);
+    const requestStack = type === "Down" || type === "RightButtonDown";
+    const showInspectStackModal = type === "RightButtonDown";
+    project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
+      if (requestStack && inspectData?.stack) {
+        if (showInspectStackModal) {
+          setInspectStackData({
+            requestLocation: { x: event.clientX, y: event.clientY },
+            stack: inspectData.stack,
+          });
+        } else {
+          // find first item w/o hide flag and open file
+          const firstItem = inspectData.stack.find((item) => !item.hide);
+          if (firstItem) {
+            onInspectorItemSelected(firstItem);
+          }
+        }
+      }
+      setInspectFrame(inspectData.frame);
+    });
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
+  function resetInspector() {
+    setInspectFrame(null);
+    setInspectStackData(null);
+  }
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -173,14 +201,11 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     wrapperDivRef.current!.focus();
 
     if (isInspecting) {
-      if (e.button === 2) {
-        return;
-      }
-      sendInspect(e, "Down", true);
+      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
       setIsInspecting(false);
-    } else if (inspectData) {
+    } else if (inspectFrame) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
-      setInspectData(null);
+      resetInspector();
     } else {
       setIsPressing(true);
       sendTouch(e, "Down");
@@ -208,9 +233,8 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     }
   }
 
-  function onHierarchyElementSelected(filePath: string, line0Based: number, column0Based: number) {
-    project.openFileAt(filePath, line0Based, column0Based);
-    setIsInspecting(false);
+  function onContextMenu(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
   }
 
   useEffect(() => {
@@ -233,8 +257,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     return sd.name === projectState?.selectedDevice?.name;
   });
 
-  const inspectFrame = inspectData?.frame;
-
   const shouldPreventTouchInteraction =
     debugPaused ||
     debugException ||
@@ -249,6 +271,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
         onMouseMove,
         onMouseUp,
         onMouseLeave,
+        onContextMenu,
       };
 
   return (
@@ -259,6 +282,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       ref={wrapperDivRef}>
       {showDevicePreview && (
         <div className="phone-content">
+          <div className="touch-area" {...touchHandlers}></div>
           <MjpegImg
             src={previewURL}
             ref={previewRef}
@@ -267,38 +291,19 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
             }}
             className="phone-screen"
           />
-          <ContextMenu.Root>
-            <ContextMenu.Trigger className="touch-area" {...touchHandlers} disabled={!isInspecting}>
-              <div
-                style={{
-                  position: "absolute",
-                  left: `${0}%`,
-                  top: `${0}%`,
-                  width: `${100}%`,
-                  height: `${100}%`,
-                }}
-              />
-            </ContextMenu.Trigger>
-            <ContextMenu.Portal>
-              <ContextMenu.Content className="context-menu-content">
-                {inspectData?.hierarchy.slice(-inspectorSelectionLength).map((item) => {
-                  return (
-                    <ContextMenu.Item
-                      className="context-menu-item"
-                      onSelect={() => {
-                        onHierarchyElementSelected(
-                          item.source.fileName,
-                          item.source.lineNumber,
-                          item.source.columnNumber
-                        );
-                      }}>
-                      {item.name}
-                    </ContextMenu.Item>
-                  );
-                })}
-              </ContextMenu.Content>
-            </ContextMenu.Portal>
-          </ContextMenu.Root>
+          {inspectStackData && (
+            <InspectDataMenu
+              inspectLocation={inspectStackData.requestLocation}
+              inspectStack={inspectStackData.stack}
+              onSelected={onInspectorItemSelected}
+              onHover={(item) => {
+                if (item.frame) {
+                  setInspectFrame(item.frame);
+                }
+              }}
+              onCancel={() => resetInspector()}
+            />
+          )}
           {inspectFrame && (
             <div className="phone-screen phone-inspect-overlay">
               <div

@@ -1,4 +1,4 @@
-import { Disposable, debug, commands, workspace, window, LogOutputChannel } from "vscode";
+import { Disposable, debug, commands, workspace } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -20,6 +20,7 @@ import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
+import { minimatch } from "minimatch";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 
@@ -237,22 +238,30 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public async inspectElementAt(
     xRatio: number,
     yRatio: number,
-    openComponentSource: boolean,
+    requestStack: boolean,
     callback: (inspectData: InspectData) => void
   ) {
-    this.deviceSession?.inspectElementAt(xRatio, yRatio, (inspectData) => {
-      const internalComponentsHierarchy = inspectData.hierarchy.filter((item: any) => {
-        return item?.source?.fileName && isAppSourceFile(item.source.fileName);
-      });
-      callback({ frame: inspectData.frame, hierarchy: internalComponentsHierarchy });
-      if (openComponentSource && internalComponentsHierarchy) {
-        const topComponent = internalComponentsHierarchy.pop();
-        openFileAtPosition(
-          topComponent.source.fileName,
-          topComponent.source.lineNumber - 1,
-          topComponent.source.columnNumber - 1
-        );
+    this.deviceSession?.inspectElementAt(xRatio, yRatio, requestStack, (inspectData) => {
+      let stack = undefined;
+      if (requestStack && inspectData?.stack) {
+        stack = inspectData.stack;
+        const inspectorExcludePattern = workspace
+          .getConfiguration("ReactNativeIDE")
+          .get("inspectorExcludePattern") as string | undefined;
+        const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
+        function testInspectorExcludeGlobPattern(filename: string) {
+          return patterns?.some((pattern) => minimatch(filename, pattern));
+        }
+        stack.forEach((item: any) => {
+          item.hide = false;
+          if (!isAppSourceFile(item.source.fileName)) {
+            item.hide = true;
+          } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
+            item.hide = true;
+          }
+        });
       }
+      callback({ frame: inspectData.frame, stack });
     });
   }
 

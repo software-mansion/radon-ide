@@ -7,7 +7,6 @@ import {
   WorkspaceConfigEventListener,
 } from "../common/WorkspaceConfig";
 import { EventEmitter } from "stream";
-import { Logger } from "../Logger";
 
 export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
   private config: WorkspaceConfigProps;
@@ -19,7 +18,6 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
     this.config = {
       panelLocation: configuration.get<PanelLocation>("panelLocation")!,
       relativeAppLocation: configuration.get<string>("relativeAppLocation")!,
-      inspectorSelectionLength: configuration.get<number>("inspectorSelectionLength")!,
     };
 
     this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
@@ -30,7 +28,6 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
       this.config = {
         panelLocation: config.get<PanelLocation>("panelLocation")!,
         relativeAppLocation: config.get<string>("relativeAppLocation")!,
-        inspectorSelectionLength: config.get<number>("inspectorSelectionLength")!,
       };
       this.eventEmitter.emit("configChange", this.config);
     });
