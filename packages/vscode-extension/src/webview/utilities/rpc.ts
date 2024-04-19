@@ -5,6 +5,7 @@ let globalCallCounter = 1;
 let globalCallbackCounter = 1;
 let callbackToID = new WeakMap<(...args: any[]) => void, number>();
 let idToCallback = new Map<number, (...args: any[]) => void>();
+let callbackMessageListenerInitialized = false;
 
 let callResultPromises = new Map<
   number,
@@ -39,6 +40,23 @@ function registerCallResultPromise(
   }
 }
 
+function maybeInitializeCallbackMessageListener() {
+  if (callbackMessageListenerInitialized) {
+    return;
+  }
+  callbackMessageListenerInitialized = true;
+  window.addEventListener("message", (event) => {
+    if (event.data.command === "callback") {
+      const callback = idToCallback.get(event.data.callbackId);
+      if (callback) {
+        callback(...event.data.args);
+      }
+    } else if (event.data.command === "cleanupCallback") {
+      idToCallback.delete(event.data.callbackId);
+    }
+  });
+}
+
 /* this is used on the webview side to create a proxy of an object that lives on the extension side */
 export function makeProxy<T extends object>(objectName: string) {
   return new Proxy<T>({} as T, {
@@ -47,18 +65,10 @@ export function makeProxy<T extends object>(objectName: string) {
         const currentCallId = globalCallCounter++;
         let argsWithCallbacks = args.map((arg) => {
           if (typeof arg === "function") {
+            maybeInitializeCallbackMessageListener();
             const callbackId = callbackToID.get(arg) || globalCallbackCounter++;
+            callbackToID.set(arg, callbackId);
             idToCallback.set(callbackId, arg);
-            if (callbackId === 1) {
-              window.addEventListener("message", (event) => {
-                if (event.data.command === "callback") {
-                  const callback = idToCallback.get(event.data.callbackId);
-                  if (callback) {
-                    callback(...event.data.args);
-                  }
-                }
-              });
-            }
             return {
               __callbackId: callbackId,
             };

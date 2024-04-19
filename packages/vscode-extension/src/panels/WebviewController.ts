@@ -15,6 +15,14 @@ export class WebviewController implements Disposable {
   public readonly project: Project;
   public readonly workspaceConfig: WorkspaceConfigController;
   private disposables: Disposable[] = [];
+  private idToCallback: Map<number, WeakRef<any>> = new Map();
+  private idToCallbackFinalizationRegistry = new FinalizationRegistry((callbackId: number) => {
+    this.idToCallback.delete(callbackId);
+    this.webview.postMessage({
+      command: "cleanupCallback",
+      callbackId,
+    });
+  });
 
   private followEnabled = false;
 
@@ -103,13 +111,22 @@ export class WebviewController implements Disposable {
       const argsWithCallbacks = args.map((arg: any) => {
         if (typeof arg === "object" && "__callbackId" in arg) {
           const callbackId = arg.__callbackId;
-          return (...options: any[]) => {
-            this.webview.postMessage({
-              command: "callback",
-              callbackId,
-              args: options,
-            });
-          };
+          let callback = this.idToCallback.get(callbackId)?.deref();
+          if (!callback) {
+            callback = (...options: any[]) => {
+              this.webview.postMessage({
+                command: "callback",
+                callbackId,
+                args: options,
+              });
+            };
+            this.idToCallback.set(callbackId, new WeakRef(callback));
+            if (this.idToCallback.size > 200) {
+              Logger.warn("Too many callbacks in memory! Something is wrong!");
+            }
+            this.idToCallbackFinalizationRegistry.register(callback, callbackId);
+          }
+          return callback;
         } else {
           return arg;
         }
