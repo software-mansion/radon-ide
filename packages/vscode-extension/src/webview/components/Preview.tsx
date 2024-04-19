@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject } from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, useCallback } from "react";
 import clamp from "lodash/clamp";
 import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
@@ -9,7 +9,7 @@ import { DeviceProperties, SupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
-import { InspectData, StartupMessage } from "../../common/Project";
+import { InspectData } from "../../common/Project";
 
 declare module "react" {
   interface CSSProperties {
@@ -203,9 +203,28 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   }
 
   useEffect(() => {
+    function dispatchPaste(e: ClipboardEvent) {
+      if (document.activeElement === wrapperDivRef.current) {
+        e.preventDefault();
+
+        const text = e.clipboardData?.getData("text");
+        if (text) {
+          project.dispatchPaste(text);
+        }
+      }
+    }
+
+    addEventListener("paste", dispatchPaste);
+    return () => {
+      removeEventListener("paste", dispatchPaste);
+    };
+  }, [project]);
+
+  useEffect(() => {
     function keyEventHandler(e: KeyboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
+
         const hidCode = keyboardEventToHID(e);
         project.dispatchKeyPress(hidCode, e.type === "keydown" ? "Down" : "Up");
       }

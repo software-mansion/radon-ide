@@ -30,6 +30,10 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.sendKey(keyCode, direction);
   }
 
+  public sendPaste(text: string) {
+    this.preview?.sendPaste(text);
+  }
+
   async startPreview() {
     this.preview = this.makePreview();
     return this.preview.start();

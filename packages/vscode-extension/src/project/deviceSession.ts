@@ -122,6 +122,10 @@ export class DeviceSession implements Disposable {
     this.device.sendKey(keyCode, direction);
   }
 
+  public sendPaste(text: string) {
+    this.device.sendPaste(text);
+  }
+
   public inspectElementAt(xRatio: number, yRatio: number, callback: (inspecData: any) => void) {
     const id = this.inspectCallID++;
     const listener = (event: string, payload: any) => {
