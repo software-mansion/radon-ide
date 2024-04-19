@@ -12,20 +12,13 @@ function Actions({ closeAlert }: Props) {
   return (
     <>
       <IconButton
-        type="primary"
-        onClick={() => {
-          project.restart(true);
-        }}
-        tooltip={{ label: "Reload IDE", side: "bottom" }}>
-        <span className="codicon codicon-refresh" />
-      </IconButton>
-      <IconButton
         type="secondary"
         onClick={() => {
-          project.focusBuildOutput();
+          project.restart(true);
+          closeAlert();
         }}
-        tooltip={{ label: "Open build logs", side: "bottom" }}>
-        <span className="codicon codicon-symbol-keyword" />
+        tooltip={{ label: "Rebuild", side: "bottom" }}>
+        <span className="codicon codicon-refresh" />
       </IconButton>
       <IconButton
         type="secondary"

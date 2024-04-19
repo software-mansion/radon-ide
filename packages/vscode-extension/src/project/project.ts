@@ -3,7 +3,7 @@ import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
 import { Logger } from "../Logger";
-import { BuildManager } from "../builders/BuildManager";
+import { BuildManager, didFingerprintChange } from "../builders/BuildManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
 import { throttle } from "../common/utils";
@@ -33,7 +33,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private eventEmitter = new EventEmitter();
 
   private nativeFilesChangedSinceLastInstall: boolean;
-  private lastFingerprint?: string;
   private workspaceWatcher!: FileSystemWatcher;
 
   private deviceSession: DeviceSession | undefined;
@@ -62,24 +61,20 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   }
 
   trackNativeChanges() {
-    const firstWorkspace = workspace.workspaceFolders?.[0];
-    if (firstWorkspace !== undefined) {
-      // VS code glob patterns don't support negation so we can't exclude
-      // native build directories like android/build, android/.gradle,
-      // android/app/build, or ios/build.
-      // VSCode by default exclude .git and node_modules directories from
-      // watching, configured by `files.watcherExclude` setting.
-      //
-      // We may revisit this if better performance is needed and create
-      // recursive watches ourselves by iterating through workspace directories
-      // to workaround this issue.
-      const workspacePattern = new RelativePattern(firstWorkspace, "**/*");
-      this.workspaceWatcher = workspace.createFileSystemWatcher(workspacePattern);
+    // VS code glob patterns don't support negation so we can't exclude
+    // native build directories like android/build, android/.gradle,
+    // android/app/build, or ios/build.
+    // VSCode by default exclude .git and node_modules directories from
+    // watching, configured by `files.watcherExclude` setting.
+    //
+    // We may revisit this if better performance is needed and create
+    // recursive watches ourselves by iterating through workspace directories
+    // to workaround this issue.
+    this.workspaceWatcher = workspace.createFileSystemWatcher("**/*");
 
-      this.workspaceWatcher.onDidChange(() => this.checkIfNativeChanged());
-      this.workspaceWatcher.onDidCreate(() => this.checkIfNativeChanged());
-      this.workspaceWatcher.onDidDelete(() => this.checkIfNativeChanged());
-    }
+    this.workspaceWatcher.onDidChange(() => this.checkIfNativeChanged());
+    this.workspaceWatcher.onDidCreate(() => this.checkIfNativeChanged());
+    this.workspaceWatcher.onDidDelete(() => this.checkIfNativeChanged());
   }
 
   async dispatchPaste(text: string) {
@@ -431,15 +426,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   private checkIfNativeChanged = throttle(async () => {
     if (!this.nativeFilesChangedSinceLastInstall) {
-      const newFingerprint = await generateWorkspaceFingerprint();
-      const initialized = this.lastFingerprint !== undefined;
-      const changed = this.lastFingerprint !== newFingerprint;
-
-      if (initialized && changed) {
+      if (await didFingerprintChange()) {
         this.nativeFilesChangedSinceLastInstall = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
-      this.lastFingerprint = newFingerprint;
     }
   }, 100);
 }
