@@ -161,13 +161,13 @@ export function PreviewAppWrapper({ children, ...rest }) {
                         : undefined;
                     });
                 })
-              );
+              ).then((stack) => stack.filter(Boolean));
             }
             stackPromise.then((stack) => {
               agent._bridge.send("RNIDE_inspectData", {
                 id: payload.id,
                 frame: scaledFrame,
-                stack: stack.filter((item) => item),
+                stack: stack,
               });
             });
           }
