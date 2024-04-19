@@ -132,12 +132,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   const openRebuildAlert = useNativeRebuildAlert();
 
-  const openNativeRebuildAlert = useCallback(() => {
-    if (projectStatus === "running") {
-      openRebuildAlert();
-    }
-  }, [projectState, projectStatus, openRebuildAlert]); // FIXME: additional projectState dependency due to the fact we're leaking listeners in handleRemoteCall() (we're calling project.addListener())
-
   const [inspectData, setInspectData] = useState<InspectData | null>(null);
   useEffect(() => {
     if (!isInspecting) {
@@ -251,11 +245,13 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   }, [project]);
 
   useEffect(() => {
-    project.addListener("needsNativeRebuild", openNativeRebuildAlert);
-    return () => {
-      project.removeListener("needsNativeRebuild", openNativeRebuildAlert);
-    };
-  }, [project, openNativeRebuildAlert]);
+    if (projectStatus === "running") {
+      project.addListener("needsNativeRebuild", openRebuildAlert);
+      return () => {
+        project.removeListener("needsNativeRebuild", openRebuildAlert);
+      };
+    }
+  }, [project, openRebuildAlert, projectStatus]);
 
   const device = SupportedDevices.find((sd) => {
     return sd.name === projectState?.selectedDevice?.name;
