@@ -19,10 +19,8 @@ import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
-import { exec } from "../utilities/subprocess";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
-const PBPASTE_BINARY = "/usr/bin/pbpaste";
 
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public static currentProject: Project | undefined;

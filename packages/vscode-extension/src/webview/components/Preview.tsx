@@ -9,16 +9,12 @@ import { DeviceProperties, SupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
-import { InspectData, StartupMessage } from "../../common/Project";
+import { InspectData } from "../../common/Project";
 
 declare module "react" {
   interface CSSProperties {
     [key: `--${string}`]: string | number;
   }
-}
-
-function isPasting(event: KeyboardEvent) {
-  return (event.metaKey || event.ctrlKey) && event.code === "KeyV";
 }
 
 function cssPropertiesForDevice(device: DeviceProperties) {
