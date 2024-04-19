@@ -265,7 +265,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           }
         });
       }
-      console.log("Call callback", inspectData);
       callback({ frame: inspectData.frame, stack });
     });
   }
