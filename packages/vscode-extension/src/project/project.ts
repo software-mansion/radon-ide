@@ -32,7 +32,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
 
-  private nativeFilesChangedSinceLastInstall: boolean;
+  private nativeFilesChangedSinceLastBuild: boolean;
   private workspaceWatcher!: FileSystemWatcher;
 
   private deviceSession: DeviceSession | undefined;
@@ -55,7 +55,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.nativeFilesChangedSinceLastInstall = false;
+    this.nativeFilesChangedSinceLastBuild = false;
 
     this.trackNativeChanges();
   }
@@ -164,10 +164,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   public async restart(forceCleanBuild: boolean) {
     this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
-    if (forceCleanBuild || this.nativeFilesChangedSinceLastInstall) {
+    if (forceCleanBuild || this.nativeFilesChangedSinceLastBuild) {
       await this.start(true, true);
       await this.selectDevice(this.projectState.selectedDevice!, true);
-      this.nativeFilesChangedSinceLastInstall = false;
+      this.nativeFilesChangedSinceLastBuild = false;
       return;
     }
 
@@ -425,9 +425,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   }
 
   private checkIfNativeChanged = throttle(async () => {
-    if (!this.nativeFilesChangedSinceLastInstall) {
+    if (!this.nativeFilesChangedSinceLastBuild) {
       if (await didFingerprintChange()) {
-        this.nativeFilesChangedSinceLastInstall = true;
+        this.nativeFilesChangedSinceLastBuild = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
