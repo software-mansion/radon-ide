@@ -18,7 +18,6 @@ import {
 import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
-import { generateWorkspaceFingerprint } from "../utilities/fingerprint";
 import stripAnsi from "strip-ansi";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
@@ -64,7 +63,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     // VS code glob patterns don't support negation so we can't exclude
     // native build directories like android/build, android/.gradle,
     // android/app/build, or ios/build.
-    // VSCode by default exclude .git and node_modules directories from
+    // VS code by default exclude .git and node_modules directories from
     // watching, configured by `files.watcherExclude` setting.
     //
     // We may revisit this if better performance is needed and create
