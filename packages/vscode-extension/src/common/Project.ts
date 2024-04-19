@@ -45,7 +45,24 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
 
+export type InspectDataStackItem = {
+  componentName: string;
+  hide: boolean;
+  source: {
+    fileName: string;
+    line0Based: number;
+    column0Based: number;
+  };
+  frame: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+};
+
 export type InspectData = {
+  stack: InspectDataStackItem[] | undefined;
   frame: {
     x: number;
     y: number;
@@ -80,14 +97,16 @@ export interface ProjectInterface {
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
+  openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
   movePanelToNewWindow(): void;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
+  dispatchPaste(text: string): Promise<void>;
   inspectElementAt(
     xRatio: number,
     yRatio: number,
-    openComponentSource: boolean,
+    requestStack: boolean,
     callback: (inspectData: InspectData) => void
   ): Promise<void>;
 

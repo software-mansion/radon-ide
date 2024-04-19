@@ -2,6 +2,7 @@ import React, { PropsWithChildren } from "react";
 import * as Select from "@radix-ui/react-select";
 import { DeviceInfo, Platform } from "../../common/DeviceManager";
 import "./DeviceSelect.css";
+import "./shared/Dropdown.css";
 import Tooltip from "./shared/Tooltip";
 
 interface RichSelectItemProps extends Select.SelectItemProps {
@@ -65,7 +66,7 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
       </Select.Trigger>
 
       <Select.Portal>
-        <Select.Content className="device-select-content" position="popper">
+        <Select.Content className="device-select-content dropdown-menu-content" position="popper">
           <Select.Viewport className="device-select-viewport">
             {iOSDevices.length > 0 && (
               <Select.Group>

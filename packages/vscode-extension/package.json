@@ -66,6 +66,12 @@
             "secondary-side-panel"
           ],
           "description": "Controlls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
+        },
+        "ReactNativeIDE.inspectorExcludePattern": {
+          "type": "string",
+          "scope": "window",
+          "default": null,
+          "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
         }
       }
     },
@@ -205,6 +211,7 @@
     "@expo/package-manager": "^1.1.2",
     "@msgpack/msgpack": "^2.8.0",
     "@radix-ui/react-alert-dialog": "^1.0.5",
+    "@radix-ui/react-context-menu": "^2.1.5",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-progress": "^1.0.3",
@@ -240,6 +247,7 @@
     "file-loader": "^6.2.0",
     "glob": "^7.1.6",
     "lodash": "^4.17.21",
+    "minimatch": "^9.0.4",
     "node-fetch": "^2.7.0",
     "plist": "^3.1.0",
     "prettier": "^2.2.1",
