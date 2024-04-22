@@ -26,15 +26,26 @@
   height: var(--phone-screen-height);
   top: var(--phone-top);
   left: calc(var(--phone-left) - 7px);
-  z-index: 20;
+}
+
+.phone-sized {
+  position: absolute;
+  width: calc(var(--phone-screen-width));
+  height: var(--phone-screen-height);
+  top: var(--phone-top);
+  left: calc(var(--phone-left));
+  -webkit-mask-image: var(--phone-mask-image);
+  mask-image: var(--phone-mask-image);
+  -webkit-mask-size: cover;
+  mask-size: cover;
 }
 
 .phone-screen {
   position: absolute;
-  width: var(--phone-screen-width);
-  height: var(--phone-screen-height);
-  top: var(--phone-top);
-  left: var(--phone-left);
+  width: calc(100% - 14px);
+  height: 100%;
+  top: 0;
+  left: 7px;
   -webkit-mask-image: var(--phone-mask-image);
   mask-image: var(--phone-mask-image);
   -webkit-mask-size: cover;
@@ -54,7 +65,6 @@
   display: flex;
   overflow: hidden;
   pointer-events: none;
-  z-index: 30;
 }
 
 .inspect-area {
@@ -68,7 +78,6 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 30;
 }
 
 .phone-refreshing-overlay {
@@ -77,7 +86,6 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  z-index: 30;
 }
 
 .uncaught-button {
@@ -88,13 +96,11 @@
   border: 1px solid #e65f50;
   padding: 5px;
   color: #001a72;
-  z-index: 30;
 }
 
 .phone-exception-overlay {
   background-color: rgba(255, 106, 89, 0.85);
   color: #001a72;
-  z-index: 30;
 }
 
 .phone-content-loading {
