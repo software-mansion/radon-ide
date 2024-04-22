@@ -1,6 +1,6 @@
 # React Native IDE
 
-## Welcome to React Native IDE Private Beta 🎉
+## Welcome to React Native IDE Beta 🎉
 
 React Native IDE is not a ready product (yet).
 We are hoping that together with the community we will be able to get there soon.
@@ -22,12 +22,12 @@ As a general rule of thumb, if your projects started from Expo template or React
 ### ✨ What does it do
 
 React Native IDE is a vscode extension that aims to streamline development of React Native and Expo applications.
-The current version supports developing for Android and iOS platforms with the current list of features available:
+The current version supports developing on a macOS operating system for Android and iOS platforms with the current list of features available:
 
-- Managing iOS and Android simulator (for now only iPhone Pro and Pixel 7 skins are available)
+- Managing iOS and Android simulators (limited set of skins is currently Available)
 - Automatically build and launch your project (keeping track of native or javascript updates automatically)
 - Integrated debugger always available – when running the project you can set breakpoints in the editor and don't need to bother with any additional configuration to get your application stop at those breakpoints
-- Element inspector that jumps to component code
+- Element inspector that jumps to component code with right-click component hierarchy preview
 - Integrated console log output panel that links to file/line with the log statement
 - Preview package that allows for working on components in isolation (render single component instead of the whole app)
 - Expo Router integration with browser-like URL toolbar
@@ -35,20 +35,20 @@ The current version supports developing for Android and iOS platforms with the c
 
 ### 💽 Installation
 
-For installation instructions head to [INSTALLATION](INSTALLATION.md) section.
+For installation instructions head to [INSTALLATION](https://ide.swmansion.com/docs/installation) section.
 
 ### 💻 Usage
 
-See [USAGE](USAGE.md) guide on how to get started after installing the extension. You can also visit [React Native IDE](https://ide.swmansion.com) website where we hilight the most important features.
+See [USAGE](https://ide.swmansion.com/docs/usage) guide on how to get started after installing the extension. You can also visit [React Native IDE](https://ide.swmansion.com) website where we hilight the most important features.
 
 ### 🐛 Troubleshooting
 
-For troubleshooting and guide on reporting issues head to [TROUBLESHOOTING](TROUBLESHOOTING.md) section.
+For troubleshooting and guide on reporting issues head to [TROUBLESHOOTING](https://ide.swmansion.com/docs/troubleshooting) section.
 
 ### ⚒️ Extension Development
 
-If you want to develop the extension and contribute updates head to [DEVELOPMENT](DEVELOPMENT.md) section.
+If you want to develop the extension and contribute updates head to [DEVELOPMENT](https://ide.swmansion.com/docs/development) section.
 
 ## Discord
 
-Make sure to join [Software Mansion](https://swmansion.com) Discord channel using invite link: https://discord.gg/jWhHbxQsPd and contact us to get added to `react-native-ide-beta` channel where we discuss issues and communicate our plans and updates.
+Make sure to join [Software Mansion](https://swmansion.com) Discord channel using this invite link: https://discord.gg/jWhHbxQsPd and contact us to get added to `react-native-ide-beta` channel where we discuss issues and communicate our plans and updates.

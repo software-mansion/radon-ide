@@ -21,7 +21,7 @@ From the "Assets" section, download the `.vsix` file:
 ## 2. Install VSIX in vscode
 
 Open Visual Studio Code to install the downloaded extension package.
-You can [follow this official vscode guide on installing VSIX extension](https://code.visualstudio.com/docs/editor/extension-marketplace#_install-from-a-vsix) to see all the possible ways how this can be handled, or navigate to extension panel and click "Install from VSIX" option that's placed under "···" button in the top right corner, then select the downloaded file.
+You can [follow this official vscode guide on installing VSIX extension](https://code.visualstudio.com/docs/editor/extension-marketplace#_install-from-a-vsix) to see all the possible ways how this can be handled, or navigate to extension panel and click **_Install from VSIX_** option that's placed under **···** button in the top right corner, then select the downloaded file.
 
 <img width="609" alt="install-from-vsix" src="/img/docs/install_from_vsix.png"/>
 
