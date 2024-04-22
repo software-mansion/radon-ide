@@ -21,7 +21,6 @@ export abstract class DeviceBase implements Disposable {
   abstract get platform(): Platform;
 
   async acquire() {
-    await createDirectory(path.dirname(this.lockFilePath));
     return tryAcquiringLock(this.lockFilePath);
   }
 
@@ -54,15 +53,4 @@ export abstract class DeviceBase implements Disposable {
     this.preview = this.makePreview();
     return this.preview.start();
   }
-}
-
-async function createDirectory(filePath: string) {
-  return new Promise<string | undefined>((resolve, reject) => {
-    fs.mkdir(filePath, { recursive: true }, (err, path) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(path);
-    });
-  });
 }
