@@ -7,6 +7,7 @@ import {
   WorkspaceConfigEventListener,
 } from "../common/WorkspaceConfig";
 import { EventEmitter } from "stream";
+import objectHash from "object-hash";
 
 export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
   private config: WorkspaceConfigProps;
@@ -58,6 +59,22 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
     listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
   ) {
     this.eventEmitter.removeListener(eventType, listener);
+  }
+
+  async addOrReplaceListener<K extends keyof WorkspaceConfigEventMap>(
+    eventType: K,
+    listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
+  ) {
+    const eventListeners = this.eventEmitter.listeners(eventType);
+
+    for (const eventListener of eventListeners) {
+      if (objectHash.MD5(eventListener) === objectHash.MD5(listener)) {
+        // @ts-ignore
+        this.eventEmitter.removeListener(eventType, eventListener);
+      }
+    }
+
+    this.eventEmitter.addListener(eventType, listener);
   }
 
   dispose() {

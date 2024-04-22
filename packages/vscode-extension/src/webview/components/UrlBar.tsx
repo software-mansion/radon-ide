@@ -19,7 +19,7 @@ function UrlBar({ project, disabled }: UrlBarProps) {
         ...urlList.filter((record) => record.id !== newRecord.id),
       ]);
     }
-    project.addListener("navigationChanged", handleNavigationChanged);
+    project.addOrReplaceListener("navigationChanged", handleNavigationChanged);
     return () => {
       project.removeListener("navigationChanged", handleNavigationChanged);
     };

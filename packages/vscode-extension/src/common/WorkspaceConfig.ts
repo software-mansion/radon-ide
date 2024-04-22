@@ -28,4 +28,8 @@ export interface WorkspaceConfig {
     eventType: K,
     listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
   ): Promise<void>;
+  addOrReplaceListener<K extends keyof WorkspaceConfigEventMap>(
+    eventType: K,
+    listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
+  ): Promise<void>;
 }

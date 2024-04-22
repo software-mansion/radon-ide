@@ -34,7 +34,7 @@ function PreviewView() {
     function incrementLogCounter() {
       setLogCounter((c) => c + 1);
     }
-    project.addListener("log", incrementLogCounter);
+    project.addOrReplaceListener("log", incrementLogCounter);
 
     return () => {
       project.removeListener("log", incrementLogCounter);

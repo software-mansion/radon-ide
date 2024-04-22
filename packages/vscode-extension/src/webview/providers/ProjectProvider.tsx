@@ -33,10 +33,10 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     project.getProjectState().then(setProjectState);
-    project.addListener("projectStateChanged", setProjectState);
+    project.addOrReplaceListener("projectStateChanged", setProjectState);
 
     project.getDeviceSettings().then(setDeviceSettings);
-    project.addListener("deviceSettingsChanged", setDeviceSettings);
+    project.addOrReplaceListener("deviceSettingsChanged", setDeviceSettings);
 
     return () => {
       project.removeListener("projectStateChanged", setProjectState);

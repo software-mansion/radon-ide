@@ -282,7 +282,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
 
   useEffect(() => {
     if (projectStatus === "running") {
-      project.addListener("needsNativeRebuild", openRebuildAlert);
+      project.addOrReplaceListener("needsNativeRebuild", openRebuildAlert);
       return () => {
         project.removeListener("needsNativeRebuild", openRebuildAlert);
       };

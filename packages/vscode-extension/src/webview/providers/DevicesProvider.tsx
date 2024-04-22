@@ -50,7 +50,7 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
   }, [setDevices, setAndroidImages, setIOSRuntimes, setFinishedInitialLoad]);
 
   useEffect(() => {
-    DeviceManager.addListener("devicesChanged", setDevices);
+    DeviceManager.addOrReplaceListener("devicesChanged", setDevices);
     reload();
     return () => {
       DeviceManager.removeListener("devicesChanged", setDevices);

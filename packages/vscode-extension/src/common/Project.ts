@@ -119,4 +119,8 @@ export interface ProjectInterface {
     eventType: K,
     listener: ProjectEventListener<ProjectEventMap[K]>
   ): Promise<void>;
+  addOrReplaceListener<K extends keyof ProjectEventMap>(
+    eventType: K,
+    listener: ProjectEventListener<ProjectEventMap[K]>
+  ): Promise<void>;
 }

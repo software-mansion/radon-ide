@@ -21,6 +21,7 @@ import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
+import objectHash from "object-hash";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 
@@ -145,6 +146,22 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     listener: ProjectEventListener<ProjectEventMap[K]>
   ) {
     this.eventEmitter.removeListener(eventType, listener);
+  }
+
+  async addOrReplaceListener<K extends keyof ProjectEventMap>(
+    eventType: K,
+    listener: ProjectEventListener<ProjectEventMap[K]>
+  ) {
+    const eventListeners = this.eventEmitter.listeners(eventType);
+
+    for (const eventListener of eventListeners) {
+      if (objectHash.MD5(eventListener) === objectHash.MD5(listener)) {
+        // @ts-ignore
+        this.eventEmitter.removeListener(eventType, eventListener);
+      }
+    }
+
+    this.eventEmitter.addListener(eventType, listener);
   }
 
   public dispose() {

@@ -71,4 +71,8 @@ export interface DeviceManagerInterface {
     eventType: K,
     listener: DeviceManagerEventListener<K>
   ): Promise<void>;
+  addOrReplaceListener<K extends keyof DeviceManagerEventMap>(
+    eventType: K,
+    listener: DeviceManagerEventListener<K>
+  ): Promise<void>;
 }

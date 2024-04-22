@@ -29,7 +29,7 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
 
   useEffect(() => {
     workspaceConfig.getConfig().then(setConfig);
-    workspaceConfig.addListener("configChange", setConfig);
+    workspaceConfig.addOrReplaceListener("configChange", setConfig);
 
     return () => {
       workspaceConfig.removeListener("configChange", setConfig);
