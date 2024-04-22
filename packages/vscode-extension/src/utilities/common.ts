@@ -51,16 +51,12 @@ export function isDeviceIOS(deviceId: string) {
 
 export async function tryAcquiringLock(pidFilePath: string) {
   const currentPid = process.pid;
-
-  console.warn({ currentPid, pidFilePath });
-
   const status = await pidFileStatus(pidFilePath);
 
   if (status === PidFileStatus.OWNED_BY_OTHER_PROCESS) {
     return false;
   }
-
-  if (status === PidFileStatus.NO_FILE) {
+  if (status !== PidFileStatus.OWNED_BY_CURRENT_PROCESS) {
     fs.writeFileSync(pidFilePath, currentPid.toString());
   }
   return true;
@@ -68,6 +64,7 @@ export async function tryAcquiringLock(pidFilePath: string) {
 
 enum PidFileStatus {
   NO_FILE,
+  STALE,
   OWNED_BY_OTHER_PROCESS,
   OWNED_BY_CURRENT_PROCESS,
 }
@@ -81,12 +78,15 @@ async function pidFileStatus(pidFilePath: string) {
   const contents = await readFile(pidFilePath);
   const maybeRunningPid = parseInt(contents, 10);
 
-  const ownedByOther = maybeRunningPid !== currentPid && isPidRunning(maybeRunningPid);
+  const isRunning = isPidRunning(maybeRunningPid);
+  const ownedByOther = maybeRunningPid !== currentPid && isRunning;
 
   if (ownedByOther) {
     return PidFileStatus.OWNED_BY_OTHER_PROCESS;
   }
-
+  if (!isRunning) {
+    return PidFileStatus.STALE;
+  }
   return PidFileStatus.OWNED_BY_CURRENT_PROCESS;
 }
 

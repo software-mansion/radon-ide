@@ -6,11 +6,12 @@ import { Platform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
 import fs from "fs";
+import path from "path";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
 
-  protected abstract get lockFilePath(): string;
+  abstract get lockFilePath(): string;
 
   abstract bootDevice(): Promise<void>;
   abstract changeSettings(settings: DeviceSettings): Promise<void>;
@@ -20,12 +21,16 @@ export abstract class DeviceBase implements Disposable {
   abstract get platform(): Platform;
 
   async acquire() {
+    await createDirectory(path.dirname(this.lockFilePath));
     return tryAcquiringLock(this.lockFilePath);
   }
 
   dispose() {
-    // if file doesn't exist, we ignore the error in the callback
-    fs.unlink(this.lockFilePath, (_err) => {});
+    try {
+      fs.unlinkSync(this.lockFilePath);
+    } catch (_error) {
+      // ignore ENOENT
+    }
     this.preview?.dispose();
   }
 
@@ -49,4 +54,15 @@ export abstract class DeviceBase implements Disposable {
     this.preview = this.makePreview();
     return this.preview.start();
   }
+}
+
+async function createDirectory(filePath: string) {
+  return new Promise<string | undefined>((resolve, reject) => {
+    fs.mkdir(filePath, { recursive: true }, (err, path) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(path);
+    });
+  });
 }
