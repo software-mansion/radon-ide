@@ -29,7 +29,6 @@
   height: 20px;
   background-color: var(--swm-slider);
   border-radius: 10px;
-  z-index: 1;
 }
 .slider-thumb:hover {
   background-color: var(--swm-slider);
