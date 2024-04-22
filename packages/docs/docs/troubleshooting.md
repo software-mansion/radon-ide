@@ -18,6 +18,7 @@ In this case lookup command called "React Native IDE: Diagnostics" – when exe
 The extension does not currently support all types and configurations of React Native projects.
 For example, Expo Go or brownfield apps aren't supported while we are improving the compatibility of different project setups.
 Please refer to ["Who can use this"](./getting-started.md) section for more details on that.
+If your project doesn't work out of the box because of some modifications made to its setup, chances are the React Native IDE can be configured to support your modifications, please check [configuration](./launch-configuration.md) guide to learn more.
 
 ### 3. Can extension locate your React Native project
 
