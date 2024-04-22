@@ -1,7 +1,7 @@
 ---
 id: development
 title: Development
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 ## Repository structure and project architecture
@@ -56,7 +56,7 @@ It is necessary that you open that exact folder rather than the whole repository
 You can do it by opening new window in Visual Studio Code and using `File > Open Folder` option, then select `packages/vscode-extension`, or if you have vscode's command line tool installed you can open it using command:
 
 ```sh
-code package/vscode-extension`
+code package/vscode-extension
 ```
 
 ### 5. Launch vscode development host with development version of the extension
@@ -78,7 +78,7 @@ Frontend code is setup with hot reload, so changes made to frontend code will up
 Code changes made to the main extension, requires restarting the extension project which will result in the Extension Host window reloading.
 You can use Debug Tool Bar to restart the project:
 
-<img width="438" alt="restart-extension" 
+<img width="438" alt="restart-extension"
 src="/img/docs/restart_extension.png"/>
 
 For main extension code, you can set breakpoints in vscode and use debugger normally, logs will appear in the Debug Console panel.
