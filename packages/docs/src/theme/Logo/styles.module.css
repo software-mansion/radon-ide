@@ -31,11 +31,11 @@
 /* Logo shown on the sidebar after scrolling down the page. */
 @media (min-width: 996px) {
   [class*="sidebar"] [class*="navbar__logo"] {
-    display: flex;
     justify-content: flex-start;
-    margin-left: 24px;
-    align-items: center;
-    height: 57px;
+    padding-left: 24px;
+    height: 64px;
+    background-color: var(--ifm-background-color);
+    width: 100%;
   }
 }
 
