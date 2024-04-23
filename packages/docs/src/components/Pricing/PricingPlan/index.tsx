@@ -12,13 +12,13 @@ interface Props {
 const PricingPlan = ({ name, price, features, cta }: Props) => {
   return (
     <div className={styles.plan__container}>
-      <h3 className={styles.plan__name}>{name}</h3>
+      <h2 className={styles.plan__name}>{name}</h2>
       <ul className={styles.plan__features}>
         {features.map((feature) => (
           <li>{feature}</li>
         ))}
       </ul>
-      {price && <h4 className={styles.plan__price}>{price}</h4>}
+      {price && <h3 className={styles.plan__price}>{price}</h3>}
       {cta && <HomepageButton href={cta.href} title={cta.text} />}
     </div>
   );
