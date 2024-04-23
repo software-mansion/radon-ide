@@ -2,7 +2,6 @@ export type PanelLocation = "tab" | "side-panel" | "secondary-side-panel";
 
 export type WorkspaceConfigProps = {
   panelLocation: PanelLocation;
-  relativeAppLocation: string;
 };
 
 export interface WorkspaceConfigEventMap {

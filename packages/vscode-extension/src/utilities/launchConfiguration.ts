@@ -1,6 +1,7 @@
 import { workspace } from "vscode";
 
 export type LaunchConfigurationOptions = {
+  appRoot: string | undefined;
   ios:
     | {
         scheme: string | undefined;

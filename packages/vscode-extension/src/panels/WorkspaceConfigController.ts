@@ -17,7 +17,6 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
     const configuration = workspace.getConfiguration("ReactNativeIDE");
     this.config = {
       panelLocation: configuration.get<PanelLocation>("panelLocation")!,
-      relativeAppLocation: configuration.get<string>("relativeAppLocation")!,
     };
 
     this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
@@ -27,7 +26,6 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
       const config = workspace.getConfiguration("ReactNativeIDE");
       this.config = {
         panelLocation: config.get<PanelLocation>("panelLocation")!,
-        relativeAppLocation: config.get<string>("relativeAppLocation")!,
       };
       this.eventEmitter.emit("configChange", this.config);
     });
