@@ -1,0 +1,13 @@
+.markdown img,
+.markdown video {
+  display: block;
+  margin: 0 auto;
+}
+
+.markdown img + p {
+  margin-top: 48px;
+}
+
+.markdown video {
+  max-width: 100%;
+}
