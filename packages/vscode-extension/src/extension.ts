@@ -26,6 +26,7 @@ import os from "os";
 import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
+import { getLaunchConfiguration } from "./utilities/launchConfiguration";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
@@ -132,12 +133,6 @@ async function findSingleFileInWorkspace(fileGlobPattern: string, excludePattern
   return undefined;
 }
 
-function openWorkspaceSettings() {
-  commands.executeCommand("workbench.action.openWorkspaceSettings", {
-    query: "React Native IDE",
-  });
-}
-
 function extensionActivated() {
   if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
     commands.executeCommand("RNIDE.openPanel");
@@ -156,27 +151,26 @@ async function configureAppRootFolder() {
 }
 
 async function findAppRootFolder() {
-  const config = workspace.getConfiguration("ReactNativeIDE");
-  const relativeLocation = config.get<string>("relativeAppLocation");
-  if (relativeLocation) {
-    // workspace root
+  const appRootFromLaunchConfig = getLaunchConfiguration().appRoot;
+  if (appRootFromLaunchConfig) {
     let appRoot: string | undefined;
     workspace.workspaceFolders?.forEach((folder) => {
-      const possibleAppRoot = Uri.joinPath(folder.uri, relativeLocation).fsPath;
+      const possibleAppRoot = Uri.joinPath(folder.uri, appRootFromLaunchConfig).fsPath;
       if (fs.existsSync(possibleAppRoot)) {
         appRoot = possibleAppRoot;
       }
     });
     if (!appRoot) {
       // when relative app location setting is set, we expect app root exists
+      const openLaunchConfigButton = "Open Launch Configuration";
       window
         .showErrorMessage(
-          `The app root folder does not exist in the workspace at ${relativeLocation}.`,
-          "Open Workspace Settings"
+          `The app root folder does not exist in the workspace at ${appRootFromLaunchConfig}.`,
+          openLaunchConfigButton
         )
         .then((item) => {
-          if (item === "Open Workspace Settings") {
-            openWorkspaceSettings();
+          if (item === openLaunchConfigButton) {
+            commands.executeCommand("workbench.action.debug.configure");
           }
         });
       return undefined;
@@ -208,6 +202,7 @@ async function findAppRootFolder() {
     return Uri.joinPath(appJsonUri, "..").fsPath;
   }
 
+  const manageLaunchConfigButton = "Manage Launch Configuration";
   window
     .showErrorMessage(
       `
@@ -215,13 +210,13 @@ async function findAppRootFolder() {
     Please make sure that the opened workspace contains a valid React Native or Expo project.\n
     The way extension verifies the project is by looking for either: app.json, metro.config.js,
     or node_modules/react-native folder. If your project structure is different, you can set the
-    relative path to the application root folder in the workspace settings.`,
-      "Open Workspace Settings",
+    app root using launch configuration.`,
+      manageLaunchConfigButton,
       "Dismiss"
     )
     .then((item) => {
-      if (item === "Open Workspace Settings") {
-        openWorkspaceSettings();
+      if (item === manageLaunchConfigButton) {
+        commands.executeCommand("debug.addConfiguration");
       }
     });
   return undefined;

@@ -17,14 +17,12 @@ type WorkspaceConfigContextType = WorkspaceConfigProps & {
 
 const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
   panelLocation: "tab",
-  relativeAppLocation: "",
   update: () => {},
 });
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<WorkspaceConfigProps>({
     panelLocation: "tab",
-    relativeAppLocation: "",
   });
 
   useEffect(() => {
