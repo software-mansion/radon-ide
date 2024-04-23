@@ -6,8 +6,8 @@ const plugin = (options) => {
     visit(ast, "heading", (node) => {
       if (node.children.length > 0) {
         node.children.forEach((child) => {
-          if (child.value.includes("-auto-num-")) {
-            child.value = child.value.replace("-auto-num-", `${number}.`);
+          if (child.value.includes("-sec-num-")) {
+            child.value = child.value.replace("-sec-num-", `${number}.`);
             number++;
           }
         });
