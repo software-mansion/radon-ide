@@ -15,8 +15,8 @@ export class WebviewController implements Disposable {
   public readonly project: Project;
   public readonly workspaceConfig: WorkspaceConfigController;
   private disposables: Disposable[] = [];
-  private idToCallback: Map<number, WeakRef<any>> = new Map();
-  private idToCallbackFinalizationRegistry = new FinalizationRegistry((callbackId: number) => {
+  private idToCallback: Map<string, WeakRef<any>> = new Map();
+  private idToCallbackFinalizationRegistry = new FinalizationRegistry((callbackId: string) => {
     this.idToCallback.delete(callbackId);
     this.webview.postMessage({
       command: "cleanupCallback",

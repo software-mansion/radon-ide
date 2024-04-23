@@ -3,12 +3,13 @@ import { vscode } from "../utilities/vscode";
 let globalCallCounter = 1;
 
 let globalCallbackCounter = 1;
-let callbackToID = new WeakMap<(...args: any[]) => void, number>();
-let idToCallback = new Map<number, (...args: any[]) => void>();
+let callbackToID = new WeakMap<(...args: any[]) => void, string>();
+let idToCallback = new Map<string, (...args: any[]) => void>();
 let callbackMessageListenerInitialized = false;
+let instanceToken = Math.floor(Math.random() * 1000000);
 
 let callResultPromises = new Map<
-  number,
+  string,
   { resolve: (value: unknown) => void; reject: (reason?: any) => void }
 >();
 
@@ -30,7 +31,7 @@ function callResultListener(event: MessageEvent) {
 }
 
 function registerCallResultPromise(
-  callId: number,
+  callId: string,
   resolve: (value: unknown) => void,
   reject: (reason?: any) => void
 ) {
@@ -62,11 +63,12 @@ export function makeProxy<T extends object>(objectName: string) {
   return new Proxy<T>({} as T, {
     get(_, methodName) {
       return (...args: any[]) => {
-        const currentCallId = globalCallCounter++;
+        const currentCallId = `${instanceToken}:${globalCallCounter++}`;
         let argsWithCallbacks = args.map((arg) => {
           if (typeof arg === "function") {
             maybeInitializeCallbackMessageListener();
-            const callbackId = callbackToID.get(arg) || globalCallbackCounter++;
+            const callbackId =
+              callbackToID.get(arg) || `${instanceToken}:${globalCallbackCounter++}`;
             callbackToID.set(arg, callbackId);
             idToCallback.set(callbackId, arg);
             return {
