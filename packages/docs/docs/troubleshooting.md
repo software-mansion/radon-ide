@@ -24,7 +24,7 @@ Please refer to ["Who can use this"](./getting-started.md) section for more deta
 The extension supports monorepo-type of setups and you should be able to use it even if the app isn't in the root folder of your workspace.
 This setup however has some limitations because the extension can only work with a single application per workspace.
 If your monorepo contain multiple projects, you'll need to instruct the extension with the location of your main React Native or Expo application folder.
-This can be done using vscode setting that the extension exposes – open settings and look for "Relative App Location" setting in "React Native IDE" section, and follow the instructions provided on the setting screen.
+This can be done using [launch configuration](./launch-configuration.md) using `appRoot` setting – please refer to [configuration guide](./launch-configuration.md) for more details.
 
 ### 4. List of available devices is empty
 

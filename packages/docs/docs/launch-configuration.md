@@ -121,3 +121,25 @@ Below is an example of how the `launch.json` file could look like with android v
   ]
 }
 ```
+
+### Other settings
+
+Here, we list other attributes that can be configured using launch configuration which doesn't fit in any of the above categories:
+
+- `appRoot` – Location of the React Native application root folder relative to the workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location.
+
+Below is a sample `launch.json` config file with `appRoot` setting specified:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "react-native-ide",
+      "request": "launch",
+      "name": "React Native IDE panel",
+      "appRoot": "packages/mobile"
+    }
+  ]
+}
+```
