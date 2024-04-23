@@ -20,9 +20,9 @@ export class TabPanel {
   private readonly _panel: WebviewPanel;
   private webviewController: WebviewController;
 
-  private constructor(panel: WebviewPanel) {
+  private constructor(panel: WebviewPanel, context: ExtensionContext) {
     this._panel = panel;
-
+    this._panel.iconPath = Uri.joinPath(context.extensionUri, "assets", "logo.svg");
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
     this._panel.onDidDispose(() => this.dispose());
@@ -69,7 +69,7 @@ export class TabPanel {
           retainContextWhenHidden: true,
         }
       );
-      TabPanel.currentPanel = new TabPanel(panel);
+      TabPanel.currentPanel = new TabPanel(panel, context);
       context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
 
       commands.executeCommand("workbench.action.lockEditorGroup");
