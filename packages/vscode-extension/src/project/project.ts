@@ -1,4 +1,4 @@
-import { Disposable, debug, commands, workspace, FileSystemWatcher } from "vscode";
+import { Disposable, debug, commands, workspace, FileSystemWatcher, window } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";

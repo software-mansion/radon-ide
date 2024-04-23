@@ -30,7 +30,6 @@ import { extensionContext } from "../utilities/extensionContext";
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
 export class DeviceAlreadyUsedError extends Error {}
-
 export class DeviceManager implements Disposable, DeviceManagerInterface {
   private eventEmitter = new EventEmitter();
 
@@ -60,6 +59,8 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
       const device = new IosSimulatorDevice(simulatorInfo.UDID);
       if (await device.acquire()) {
         return device;
+      } else {
+        device.dispose();
       }
     } else {
       const emulators = await listEmulators();
@@ -70,6 +71,8 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
       const device = new AndroidEmulatorDevice(emulatorInfo.avdId);
       if (await device.acquire()) {
         return device;
+      } else {
+        device.dispose();
       }
     }
 

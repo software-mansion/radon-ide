@@ -10,6 +10,7 @@ import path from "path";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
+  private acquired = false;
 
   abstract get lockFilePath(): string;
 
@@ -21,14 +22,18 @@ export abstract class DeviceBase implements Disposable {
   abstract get platform(): Platform;
 
   async acquire() {
-    return tryAcquiringLock(this.lockFilePath);
+    const acquired = await tryAcquiringLock(this.lockFilePath);
+    this.acquired = acquired;
+    return acquired;
   }
 
   dispose() {
-    try {
-      fs.unlinkSync(this.lockFilePath);
-    } catch (_error) {
-      // ignore ENOENT
+    if (this.acquired) {
+      try {
+        fs.unlinkSync(this.lockFilePath);
+      } catch (_error) {
+        // ignore ENOENT
+      }
     }
     this.preview?.dispose();
   }
