@@ -6,7 +6,7 @@ const plugin = (options) => {
     visit(ast, "heading", (node) => {
       if (node.children.length > 0) {
         node.children.forEach((child) => {
-          if (child.value.includes("-sec-num-")) {
+          if (child.value && child.value.includes("-sec-num-")) {
             child.value = child.value.replace("-sec-num-", `${number}.`);
             number++;
           }
