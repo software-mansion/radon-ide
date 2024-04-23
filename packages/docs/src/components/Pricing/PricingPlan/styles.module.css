@@ -13,6 +13,8 @@
 
 .plan__price {
   font-weight: 400;
+  margin-top: auto;
+  margin-bottom: 16px;
 }
 
 .plan__features {

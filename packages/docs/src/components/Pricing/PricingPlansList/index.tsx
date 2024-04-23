@@ -15,10 +15,9 @@ const plans = [
   },
   {
     name: "Enterprise",
-    price: "custom",
     features: ["pro features", "unlimited support", "no limits"],
     cta: {
-      text: "Contact sales",
+      text: "Contact us",
       href: "mailto:projects@swmansion.com",
     },
   },
