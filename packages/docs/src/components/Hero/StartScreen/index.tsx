@@ -35,7 +35,7 @@ const StartScreen = () => {
         <div className={styles.buttonContainer}>
           <HomepageButton
             target="_blank"
-            href="https://forms.gle/URs4bsbkcvNJagzeA"
+            href="https://forms.gle/sZ5GzxYyFJKz3Q9r6"
             title="Request Beta Access"
           />
         </div>
