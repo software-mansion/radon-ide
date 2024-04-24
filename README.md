@@ -9,25 +9,25 @@ We are thankful that you decided to join the beta program and help us improve th
 ### 🚧 Who can use this
 
 React Native IDE currently supports some subset of React Native projects due to a number of different setup options.
-We constantly work to improve this compatibility, and in case your project structure isn’t supported feel free to open an issue.
+We constantly work to improve this compatibility, and in case your project structure isn’t supported, feel free to open an issue.
 Below we list high-level requirements for the projects we support at the moment:
 
+- React Native IDE currently only supports development on macOS in [VS Code](https://code.visualstudio.com/) and [Cursor](https://cursor.sh/).
 - With React Native IDE you can only run iOS and Android applications. If your project supports other platforms, you should be able to use the IDE but only for launching the Android and iOS part of your project.
 - We support only recent version of React Native (0.71 onwards) as well as Expo SDK 49+
 - Brownfield-type projects are currently not supported (projects that are primarily native apps with React Native used on some screens)
-- Expo Go projects aren't currently supported
 
-As a general rule of thumb, if your projects started from Expo template or React Native community CLI template and hasn’t diverged much in terms of build configuration meaning that you can still run it using expo or react native CLI without additional steps, it should work with React Native IDE.
+As a general rule of thumb, if your projects started from Expo template or React Native community CLI template, and hasn’t diverged much in terms of build configuration, meaning that you can still run it using expo or react native CLI without additional steps, it should work with React Native IDE.
 
 ### ✨ What does it do
 
-React Native IDE is a vscode extension that aims to streamline development of React Native and Expo applications.
-The current version supports developing on a macOS operating system for Android and iOS platforms with the current list of features available:
+React Native IDE is a VS Code extension that aims to streamline development of React Native and Expo applications.
+The current version supports developing on macOS for Android and iOS platforms with the current list of features available:
 
-- Managing iOS and Android simulators (limited set of skins is currently Available)
+- Managing iOS and Android simulator (for now only iPhone Pro and Pixel 7 skins are available)
 - Automatically build and launch your project (keeping track of native or javascript updates automatically)
 - Integrated debugger always available – when running the project you can set breakpoints in the editor and don't need to bother with any additional configuration to get your application stop at those breakpoints
-- Element inspector that jumps to component code with right-click component hierarchy preview
+- Element inspector that jumps to component code
 - Integrated console log output panel that links to file/line with the log statement
 - Preview package that allows for working on components in isolation (render single component instead of the whole app)
 - Expo Router integration with browser-like URL toolbar
