@@ -191,6 +191,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
   function resetInspector() {
     setInspectFrame(null);
     setInspectStackData(null);
+    setIsInspecting(false);
   }
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
@@ -207,13 +208,18 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
     wrapperDivRef.current!.focus();
 
     if (isInspecting) {
-      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
-      setIsInspecting(false);
+      if (e.button === 2) {
+        sendInspect(e, "RightButtonDown", true);
+      } else {
+        sendInspect(e, "Down", true);
+        setIsInspecting(false);
+      }
     } else if (inspectFrame) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
       resetInspector();
     } else if (e.button === 2) {
       sendInspect(e, "RightButtonDown", true);
+      setIsInspecting(true);
     } else {
       setIsPressing(true);
       sendTouch(e, "Down");
