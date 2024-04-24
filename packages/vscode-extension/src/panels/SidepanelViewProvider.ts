@@ -1,4 +1,5 @@
 import {
+  Disposable,
   ExtensionContext,
   Uri,
   WebviewView,
@@ -11,7 +12,7 @@ import { generateWebviewContent } from "./webviewContentGenerator";
 import { WebviewController } from "./WebviewController";
 import { Logger } from "../Logger";
 
-export class SidePanelViewProvider implements WebviewViewProvider {
+export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
   public static readonly viewType = "ReactNativeIDE.view";
   public static currentProvider: SidePanelViewProvider | undefined;
   private _view: any = null;

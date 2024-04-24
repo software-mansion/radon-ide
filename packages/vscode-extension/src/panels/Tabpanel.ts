@@ -7,6 +7,7 @@ import {
   commands,
   workspace,
   ConfigurationChangeEvent,
+  Disposable,
 } from "vscode";
 
 import { extensionContext } from "../utilities/extensionContext";
@@ -15,7 +16,7 @@ import { WebviewController } from "./WebviewController";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
-export class TabPanel {
+export class TabPanel implements Disposable {
   public static currentPanel: TabPanel | undefined;
   private readonly _panel: WebviewPanel;
   private webviewController: WebviewController;
