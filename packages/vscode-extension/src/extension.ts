@@ -178,12 +178,15 @@ async function findAppRootFolder() {
     return appRoot;
   }
 
-  const metroConfigUri = await findSingleFileInWorkspace("**/metro.config.js", "**/node_modules");
+  const metroConfigUri = await findSingleFileInWorkspace(
+    "**/metro.config.{js,ts}",
+    "**/node_modules"
+  );
   if (metroConfigUri) {
     return Uri.joinPath(metroConfigUri, "..").fsPath;
   }
 
-  const appConfigUri = await findSingleFileInWorkspace("**/app.config.js", "**/node_modules");
+  const appConfigUri = await findSingleFileInWorkspace("**/app.config.{js,ts}", "**/node_modules");
   if (appConfigUri) {
     return Uri.joinPath(appConfigUri, "..").fsPath;
   }
@@ -196,7 +199,7 @@ async function findAppRootFolder() {
     return Uri.joinPath(rnPackageLocation, "../../..").fsPath;
   }
 
-  // app json is often use in non react-native projects, but in worst case scenario we can use it as a fallback
+  // app json is often used in non react-native projects, but in worst case scenario we can use it as a fallback
   const appJsonUri = await findSingleFileInWorkspace("**/app.json", "**/node_modules");
   if (appJsonUri) {
     return Uri.joinPath(appJsonUri, "..").fsPath;

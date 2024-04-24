@@ -11,7 +11,9 @@
     "workspaceContains:node_modules/react-native",
     "workspaceContains:app.json",
     "workspaceContains:metro.config.js",
-    "workspaceContains:app.config.js"
+    "workspaceContains:metro.config.ts",
+    "workspaceContains:app.config.js",
+    "workspaceContains:app.config.ts"
   ],
   "version": "0.0.7-beta",
   "engines": {
