@@ -50,6 +50,8 @@ function handleUncaughtErrors() {
 }
 
 export function deactivate(context: ExtensionContext): undefined {
+  TabPanel.currentPanel?.dispose();
+  SidePanelViewProvider.currentProvider?.dispose();
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", false);
   return undefined;
 }

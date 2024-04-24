@@ -1,4 +1,5 @@
 import {
+  Disposable,
   ExtensionContext,
   Uri,
   WebviewView,
@@ -11,7 +12,7 @@ import { generateWebviewContent } from "./webviewContentGenerator";
 import { WebviewController } from "./WebviewController";
 import { Logger } from "../Logger";
 
-export class SidePanelViewProvider implements WebviewViewProvider {
+export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
   public static readonly viewType = "ReactNativeIDE.view";
   public static currentProvider: SidePanelViewProvider | undefined;
   private _view: any = null;
@@ -19,6 +20,10 @@ export class SidePanelViewProvider implements WebviewViewProvider {
 
   constructor(private readonly context: ExtensionContext) {
     SidePanelViewProvider.currentProvider = this;
+  }
+
+  public dispose() {
+    this.webviewController?.dispose();
   }
 
   refresh(): void {
@@ -68,7 +73,7 @@ export class SidePanelViewProvider implements WebviewViewProvider {
     // Set an event listener to listen for when the webview is disposed (i.e. when the user changes
     // settings or hiddes conteiner view by hand, https://code.visualstudio.com/api/references/vscode-api#WebviewView)
     webviewView.onDidDispose(() => {
-      this.webviewController?.dispose();
+      this.dispose();
     });
     commands.executeCommand("setContext", "RNIDE.previewsViewIsOpen", true);
   }
