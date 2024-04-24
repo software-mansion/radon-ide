@@ -328,19 +328,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
               className="phone-screen"
             />
 
-            {inspectStackData && (
-              <InspectDataMenu
-                inspectLocation={inspectStackData.requestLocation}
-                inspectStack={inspectStackData.stack}
-                onSelected={onInspectorItemSelected}
-                onHover={(item) => {
-                  if (item.frame) {
-                    setInspectFrame(item.frame);
-                  }
-                }}
-                onCancel={() => resetInspector()}
-              />
-            )}
             {inspectFrame && (
               <div className="phone-screen phone-inspect-overlay">
                 <div
@@ -396,6 +383,19 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
             )}
           </div>
           <img src={device!.frameImage} className="phone-frame" />
+          {inspectStackData && (
+            <InspectDataMenu
+              inspectLocation={inspectStackData.requestLocation}
+              inspectStack={inspectStackData.stack}
+              onSelected={onInspectorItemSelected}
+              onHover={(item) => {
+                if (item.frame) {
+                  setInspectFrame(item.frame);
+                }
+              }}
+              onCancel={() => resetInspector()}
+            />
+          )}
         </div>
       )}
       {!showDevicePreview && !hasBuildError && (

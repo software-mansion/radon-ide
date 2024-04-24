@@ -20,7 +20,7 @@ export function InspectDataMenu({
   onCancel: () => void;
 }) {
   const triggerRef = useRef<HTMLDivElement>(null);
-  let filteredData = inspectStack.filter((item) => !item.hide);
+  const filteredData = inspectStack.filter((item) => !item.hide);
 
   useEffect(() => {
     const event = new MouseEvent("contextmenu", {
