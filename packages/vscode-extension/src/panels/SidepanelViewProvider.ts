@@ -21,6 +21,10 @@ export class SidePanelViewProvider implements WebviewViewProvider {
     SidePanelViewProvider.currentProvider = this;
   }
 
+  public dispose() {
+    this.webviewController?.dispose();
+  }
+
   refresh(): void {
     this._view.webview.html = generateWebviewContent(
       this.context,
@@ -68,7 +72,7 @@ export class SidePanelViewProvider implements WebviewViewProvider {
     // Set an event listener to listen for when the webview is disposed (i.e. when the user changes
     // settings or hiddes conteiner view by hand, https://code.visualstudio.com/api/references/vscode-api#WebviewView)
     webviewView.onDidDispose(() => {
-      this.webviewController?.dispose();
+      this.dispose();
     });
     commands.executeCommand("setContext", "RNIDE.previewsViewIsOpen", true);
   }
