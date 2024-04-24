@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Getting started
 
-## Welcome to React Native IDE Private Beta 🎉
+## Welcome to React Native IDE Beta 🎉
 
 React Native IDE is not a ready product (yet).
 We are hoping that together with the community we will be able to get there soon.
@@ -22,9 +22,8 @@ Below we list high-level requirements for the projects we support at the moment:
 - With React Native IDE you can only run iOS and Android applications. If your project supports other platforms, you should be able to use the IDE but only for launching the Android and iOS part of your project.
 - We support only recent version of React Native (0.71 onwards) as well as Expo SDK 49+
 - Brownfield-type projects are currently not supported (projects that are primarily native apps with React Native used on some screens)
-- Expo Go projects aren't currently supported
 
-As a general rule of thumb, if your projects started from Expo template or React Native community CLI template, and hasn’t diverged much in terms of build configuration, meaning that you can still run it using expo or react native CLI without additional steps, it should work with React Native IDE.
+As a general rule of thumb, if your project started from Expo template or React Native community CLI template, and hasn’t diverged much in terms of build configuration, meaning that you can still run it using expo or react native CLI without additional steps, it should work with React Native IDE.
 
 ### ✨ What does it do
 
