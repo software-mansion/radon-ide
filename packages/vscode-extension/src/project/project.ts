@@ -454,8 +454,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   }
 
   private checkIfNativeChanged = throttle(async () => {
-    if (!this.nativeFilesChangedSinceLastBuild) {
-      if (await didFingerprintChange()) {
+    if (!this.nativeFilesChangedSinceLastBuild && this.projectState.selectedDevice) {
+      if (await didFingerprintChange(this.projectState.selectedDevice.platform)) {
         this.nativeFilesChangedSinceLastBuild = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }

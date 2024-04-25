@@ -42,14 +42,17 @@ type IOSBuildCacheInfo = {
   buildResult: IOSBuildResult;
 };
 
-export async function didFingerprintChange() {
+export async function didFingerprintChange(platform: Platform) {
   const newFingerprint = await generateWorkspaceFingerprint();
-  const { fingerprint: iosFingerprint } =
-    extensionContext.workspaceState.get<IOSBuildCacheInfo>(IOS_BUILD_CACHE_KEY) ?? {};
+  if (platform === Platform.IOS) {
+    const { fingerprint: iosFingerprint } =
+      extensionContext.workspaceState.get<IOSBuildCacheInfo>(IOS_BUILD_CACHE_KEY) ?? {};
+    return newFingerprint !== iosFingerprint;
+  }
+
   const { fingerprint: androidFingerprint } =
     extensionContext.workspaceState.get<AndroidBuildCacheInfo>(ANDROID_BUILD_CACHE_KEY) ?? {};
-
-  return newFingerprint !== iosFingerprint || newFingerprint !== androidFingerprint;
+  return newFingerprint !== androidFingerprint;
 }
 
 export class CancelToken {
