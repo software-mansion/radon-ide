@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.7-beta",
+  "version": "0.0.8-beta",
   "engines": {
     "vscode": "^1.75.0"
   },
