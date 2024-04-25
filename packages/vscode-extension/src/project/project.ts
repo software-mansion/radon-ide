@@ -1,10 +1,10 @@
-import { Disposable, debug, commands, workspace, FileSystemWatcher } from "vscode";
+import { Disposable, debug, commands, workspace, FileSystemWatcher, window } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
 import { Logger } from "../Logger";
 import { BuildManager, didFingerprintChange } from "../builders/BuildManager";
-import { DeviceManager } from "../devices/DeviceManager";
+import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
 import { throttle } from "../common/utils";
 import {
@@ -21,6 +21,8 @@ import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
+import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
+import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 
@@ -371,6 +373,24 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
+    let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
+    try {
+      device = await this.deviceManager.acquireDevice(deviceInfo);
+    } catch (e) {
+      if (e instanceof DeviceAlreadyUsedError) {
+        window.showErrorMessage(
+          "This device is already used by other instance of React Native IDE.\nPlease select another device",
+          "Dismiss"
+        );
+      } else {
+        Logger.error(`Couldn't acquire the device ${deviceInfo.platform} – ${deviceInfo.id}`, e);
+      }
+    }
+
+    if (!device) {
+      return;
+    }
+
     Logger.log("Device selected", deviceInfo.name);
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
 
@@ -389,7 +409,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     let newDeviceSession;
 
     try {
-      const device = await this.deviceManager.getDevice(deviceInfo);
       Logger.debug("Selected device is ready");
       this.updateProjectStateForDevice(deviceInfo, {
         startupMessage: StartupMessage.StartingPackager,
@@ -421,10 +440,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       });
     } catch (e) {
       Logger.error("Couldn't start device session", e);
-      if (
-        this.projectState.selectedDevice === deviceInfo &&
-        this.deviceSession === newDeviceSession
-      ) {
+
+      const isSelected = this.projectState.selectedDevice === deviceInfo;
+      const isNewSession = this.deviceSession === newDeviceSession;
+      if (isSelected && isNewSession) {
         this.updateProjectState({ status: "buildError" });
       }
     }

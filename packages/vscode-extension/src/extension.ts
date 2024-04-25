@@ -66,10 +66,12 @@ export async function activate(context: ExtensionContext) {
 
   await fixBinaries(context);
 
-  function showIDEPanel(fileName?: string, lineNumber?: number) {
-    if (
-      workspace.getConfiguration("ReactNativeIDE").get<PanelLocation>("panelLocation") !== "tab"
-    ) {
+  async function showIDEPanel(fileName?: string, lineNumber?: number) {
+    const panelLocation = workspace
+      .getConfiguration("ReactNativeIDE")
+      .get<PanelLocation>("panelLocation");
+
+    if (panelLocation !== "tab") {
       SidePanelViewProvider.showView(context, fileName, lineNumber);
     } else {
       TabPanel.render(context, fileName, lineNumber);

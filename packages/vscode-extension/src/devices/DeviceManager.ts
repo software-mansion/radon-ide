@@ -29,6 +29,7 @@ import { extensionContext } from "../utilities/extensionContext";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
+export class DeviceAlreadyUsedError extends Error {}
 export class DeviceManager implements Disposable, DeviceManagerInterface {
   private eventEmitter = new EventEmitter();
 
@@ -48,22 +49,34 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
     this.eventEmitter.removeListener(eventType, listener);
   }
 
-  public async getDevice(deviceInfo: DeviceInfo) {
+  public async acquireDevice(deviceInfo: DeviceInfo) {
     if (deviceInfo.platform === Platform.IOS) {
       const simulators = await listSimulators();
       const simulatorInfo = simulators.find((device) => device.id === deviceInfo.id);
       if (!simulatorInfo || simulatorInfo.platform !== Platform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
-      return new IosSimulatorDevice(simulatorInfo.UDID);
+      const device = new IosSimulatorDevice(simulatorInfo.UDID);
+      if (await device.acquire()) {
+        return device;
+      } else {
+        device.dispose();
+      }
     } else {
       const emulators = await listEmulators();
       const emulatorInfo = emulators.find((device) => device.id === deviceInfo.id);
       if (!emulatorInfo || emulatorInfo.platform !== Platform.Android) {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
-      return new AndroidEmulatorDevice(emulatorInfo.avdId);
+      const device = new AndroidEmulatorDevice(emulatorInfo.avdId);
+      if (await device.acquire()) {
+        return device;
+      } else {
+        device.dispose();
+      }
     }
+
+    throw new DeviceAlreadyUsedError();
   }
 
   private loadDevicesPromise: Promise<DeviceInfo[]> | undefined;
