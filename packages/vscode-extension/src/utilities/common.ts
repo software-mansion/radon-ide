@@ -78,16 +78,15 @@ async function pidFileStatus(pidFilePath: string) {
   const contents = await readFile(pidFilePath);
   const maybeRunningPid = parseInt(contents, 10);
 
-  const isRunning = isPidRunning(maybeRunningPid);
-  const ownedByOther = maybeRunningPid !== currentPid && isRunning;
+  if (maybeRunningPid === currentPid) {
+    return PidFileStatus.OWNED_BY_CURRENT_PROCESS;
+  }
 
-  if (ownedByOther) {
+  const isRunning = isPidRunning(maybeRunningPid);
+  if (isRunning) {
     return PidFileStatus.OWNED_BY_OTHER_PROCESS;
   }
-  if (!isRunning) {
-    return PidFileStatus.STALE;
-  }
-  return PidFileStatus.OWNED_BY_CURRENT_PROCESS;
+  return PidFileStatus.STALE;
 }
 
 function exists(filePath: string) {
