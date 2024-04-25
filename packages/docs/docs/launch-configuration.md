@@ -127,8 +127,9 @@ Below is an example of how the `launch.json` file could look like with android v
 Here, we list other attributes that can be configured using launch configuration which doesn't fit in any of the above categories:
 
 - `appRoot` – Location of the React Native application root folder relative to the workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location.
+- `env` – Environment variables to be passed to all build/run commands that the IDE is launching.
 
-Below is a sample `launch.json` config file with `appRoot` setting specified:
+Below is a sample `launch.json` config file with `appRoot` and `env` setting specified:
 
 ```json
 {
@@ -138,7 +139,10 @@ Below is a sample `launch.json` config file with `appRoot` setting specified:
       "type": "react-native-ide",
       "request": "launch",
       "name": "React Native IDE panel",
-      "appRoot": "packages/mobile"
+      "appRoot": "packages/mobile",
+      "env": {
+        "MY_SECRET_KEY": "bananas"
+      }
     }
   ]
 }
