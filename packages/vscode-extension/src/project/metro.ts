@@ -5,6 +5,7 @@ import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
 import stripAnsi from "strip-ansi";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -133,6 +134,7 @@ export class Metro implements Disposable {
 
     const metroEnv = {
       ...process.env,
+      ...getLaunchConfiguration().env,
       NODE_PATH: path.join(appRootFolder, "node_modules"),
       RCT_METRO_PORT: "0",
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
