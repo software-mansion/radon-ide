@@ -7,6 +7,7 @@ import { openExternalUrl } from "../utilities/vsc";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { WorkspaceConfigController } from "./WorkspaceConfigController";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 export class WebviewController implements Disposable {
   private readonly dependencyChecker: DependencyChecker;
@@ -61,6 +62,7 @@ export class WebviewController implements Disposable {
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
+    getTelemetryReporter().sendTelemetryEvent("panelOpened");
   }
 
   public dispose() {
