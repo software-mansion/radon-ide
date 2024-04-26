@@ -56,7 +56,7 @@ It is necessary that you open that exact folder rather than the whole repository
 You can do it by opening new window in Visual Studio Code and using `File > Open Folder` option, then select `packages/vscode-extension`, or if you have vscode's command line tool installed you can open it using command:
 
 ```sh
-code package/vscode-extension
+code packages/vscode-extension
 ```
 
 ### 5. Launch vscode development host with development version of the extension
