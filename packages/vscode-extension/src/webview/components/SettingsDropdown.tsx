@@ -7,7 +7,6 @@ import ManageDevicesView from "../views/ManageDevicesView";
 import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import { commands } from "vscode";
 import ColsePanelConfirmation from "./ClosePanelConfirmation";
 
 interface SettingsDropdownProps {

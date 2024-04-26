@@ -1,7 +1,5 @@
 import "./ClosePanelConfirmation.css";
-import { DeviceInfo } from "../../common/DeviceManager";
-import { useEffect, useState } from "react";
-import { useDevices } from "../providers/DevicesProvider";
+import { useEffect } from "react";
 import Button from "./shared/Button";
 import { useModal } from "../providers/ModalProvider";
 
