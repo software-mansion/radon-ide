@@ -31,6 +31,12 @@
   "contributes": {
     "commands": [
       {
+        "command": "RNIDE.closePanel",
+        "title": "Close IDE Panel",
+        "category": "React Native IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
         "command": "RNIDE.openPanel",
         "title": "Open IDE Panel",
         "category": "React Native IDE",
@@ -86,7 +92,7 @@
           "type": "webview",
           "id": "ReactNativeIDE.view",
           "name": "IDE Panel",
-          "when": "config.ReactNativeIDE.panelLocation != 'tab'"
+          "when": "config.ReactNativeIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ]
     },
