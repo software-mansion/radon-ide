@@ -14,7 +14,7 @@ export interface CDPRemoteObject {
 function format(anything: any) {
   const formatted = util.inspect(anything, {
     showHidden: false,
-    depth: 2,
+    depth: null,
     colors: false,
     maxArrayLength: 20,
     compact: true,
@@ -26,28 +26,34 @@ function format(anything: any) {
   return formatted;
 }
 
-function formatObject(propertiesResult: any) {
-  const obj: any = {};
-  propertiesResult.forEach((prop: any) => {
-    if (prop.name === "__proto__") {
-      // do not include __proto__ in the formatted output
-      return;
-    }
-    switch (prop.value.type) {
-      case "number":
-      case "string":
-      case "boolean":
-        obj[prop.name] = prop.value.value;
-        break;
-      case "object":
-        obj[prop.name] = prop.description || new Object();
-        break;
-      case "function":
-        obj[prop.name] = prop.description || new Function();
-        break;
-    }
+async function retrieveObject(objectId: any, debugadapter: DebugAdapter) {
+  const properties = await debugadapter.sendCDPMessage("Runtime.getProperties", {
+    objectId: objectId,
+    ownProperties: true,
   });
-  return format(obj);
+  const obj: any = {};
+  await Promise.all(
+    properties.result.map(async (prop: any) => {
+      if (prop.name === "__proto__") {
+        // do not include __proto__ in the formatted output
+        return;
+      }
+      switch (prop.value.type) {
+        case "number":
+        case "string":
+        case "boolean":
+          obj[prop.name] = prop.value.value;
+          break;
+        case "object":
+          obj[prop.name] = (await retrieveObject(prop.value.objectId, debugadapter)) || {};
+          break;
+        case "function":
+          obj[prop.name] = prop.description || function () {};
+          break;
+      }
+    })
+  );
+  return obj;
 }
 
 export async function formatMessage(args: [CDPRemoteObject], debugadapter: DebugAdapter) {
@@ -55,11 +61,7 @@ export async function formatMessage(args: [CDPRemoteObject], debugadapter: Debug
     args.map(async (arg) => {
       switch (arg.type) {
         case "object":
-          const properties = await debugadapter.sendCDPMessage("Runtime.getProperties", {
-            objectId: arg.objectId,
-            ownProperties: true,
-          });
-          return formatObject(properties.result);
+          return format(await retrieveObject(arg.objectId, debugadapter));
         case "string":
         case "number":
         case "boolean":
