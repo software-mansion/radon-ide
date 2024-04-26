@@ -16,7 +16,7 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
   public static readonly viewType = "ReactNativeIDE.view";
   public static currentProvider: SidePanelViewProvider | undefined;
   private _view: any = null;
-  private webviewController: any = null;
+  private webviewController: WebviewController | null = null;
 
   constructor(private readonly context: ExtensionContext) {
     SidePanelViewProvider.currentProvider = this;
@@ -48,7 +48,7 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
-      SidePanelViewProvider.currentProvider.webviewController.project.startPreview(
+      SidePanelViewProvider.currentProvider.webviewController?.project.startPreview(
         `preview:/${fileName}:${lineNumber}`
       );
     }

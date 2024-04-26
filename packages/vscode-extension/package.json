@@ -49,6 +49,13 @@
         "enablement": "!RNIDE.extensionIsActive"
       }
     ],
+    "keybindings": [
+      {
+        "command": "RNIDE.openDevMenu",
+        "key": "ctrl+alt+z",
+        "mac": "ctrl+cmd+z"
+      }
+    ],
     "configuration": {
       "title": "React Native IDE",
       "properties": {
