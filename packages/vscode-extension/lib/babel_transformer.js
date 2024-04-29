@@ -10,9 +10,9 @@ function transformWrapper({ filename, src, plugins, ...rest }) {
     // expo-router v2 and v3 integration
     const { version } = requireFromAppDir("expo-router/package.json");
     if (version.startsWith("2.")) {
-      // src = `${src};require("__RNIDE_lib__/expo_router_v2_plugin.js");`;
+      src = `${src};require("__RNIDE_lib__/expo_router_v2_plugin.js");`;
     } else if (version.startsWith("3.")) {
-      // src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
+      src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
     }
   } else if (filename.endsWith("node_modules/react-native-ide/index.js")) {
     src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
