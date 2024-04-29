@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import Elipse from "@site/src/components/Elipse";
 import Layout from "@theme/Layout";
 import Hero from "@site/src/components/Hero/StartScreen";
@@ -6,7 +6,7 @@ import LearnMoreHero from "@site/src/components/LearnMore/LearnMoreHero";
 import LearnMoreFooter from "@site/src/components/LearnMore/LearnMoreFooter";
 import Installation from "@site/src/components/Sections/Installation";
 import Overview from "@site/src/components/Sections/Overview";
-import Troubleshooting from "@site/src/components/Sections/Troubleshooting";
+import FAQ from "@site/src/components/Sections/FAQ";
 
 import styles from "./index.module.css";
 
@@ -19,7 +19,7 @@ export default function Home(): JSX.Element {
           {/* <LearnMoreHero /> */}
           {/* <Installation /> */}
           <Overview />
-          {/* <Troubleshooting /> */}
+          <FAQ />
           <LearnMoreFooter />
         </div>
       </div>
