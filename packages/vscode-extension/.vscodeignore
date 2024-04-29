@@ -2,9 +2,9 @@
 *
 */**
 
-# Whitelist needed files
+# Allow needed files
 !dist/**
-!lib/*
-!assets/*
+!lib/**
+!assets/**
 !LICENSE.txt
 !README.md
