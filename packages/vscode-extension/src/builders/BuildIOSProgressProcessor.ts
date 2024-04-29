@@ -57,7 +57,7 @@ export class BuildIOSProgressProcessor implements BuildProgressProcessor {
       }
       this.tasksToComplete = tasksToComplete;
     } catch (err: any) {
-      Logger.warn(err);
+      Logger.warn(`Build iOS progress processor: ${err}`);
     }
   }
 
