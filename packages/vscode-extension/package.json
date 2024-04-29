@@ -91,7 +91,7 @@
         {
           "type": "webview",
           "id": "ReactNativeIDE.view",
-          "name": "IDE Panel",
+          "name": "",
           "when": "config.ReactNativeIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ]
@@ -102,6 +102,13 @@
           "command": "RNIDE.openPanel",
           "group": "navigation",
           "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "RNIDE.closePanel",
+          "group": "navigation",
+          "when": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && view == ReactNativeIDE.view"
         }
       ]
     },

@@ -7,7 +7,6 @@ import ManageDevicesView from "../views/ManageDevicesView";
 import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import ColsePanelConfirmation from "./ClosePanelConfirmation";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -18,7 +17,7 @@ interface SettingsDropdownProps {
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, update } = useWorkspaceConfig();
-  const { openModal, closeModal } = useModal();
+  const { openModal } = useModal();
 
   return (
     <DropdownMenu.Root>
@@ -125,24 +124,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             }}>
             <span className="codicon codicon-trash" />
             Clean rebuild
-          </DropdownMenu.Item>
-          <DropdownMenu.Separator className="dropdown-menu-separator" />
-
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => {
-              openModal(
-                "Close IDE Panel",
-                <ColsePanelConfirmation
-                  onClose={closeModal}
-                  onConfirm={() => {
-                    project.closePanel();
-                  }}
-                />
-              );
-            }}>
-            <span className="codicon codicon-close" />
-            Close IDE
           </DropdownMenu.Item>
 
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />

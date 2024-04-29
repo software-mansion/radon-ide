@@ -86,7 +86,6 @@ export interface ProjectEventListener<T> {
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   restart(forceCleanBuild: boolean): Promise<void>;
-  closePanel(): void;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;

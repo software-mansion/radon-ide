@@ -165,10 +165,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.metro?.reload();
   }
 
-  public closePanel() {
-    commands.executeCommand("RNIDE.closePanel");
-  }
-
   public async restart(forceCleanBuild: boolean) {
     this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
     if (forceCleanBuild || this.nativeFilesChangedSinceLastBuild) {
