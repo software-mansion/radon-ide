@@ -24,6 +24,7 @@ import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 
+const DEVICE_SETTINGS = "device_settings";
 const LAST_SELECTED_DEVICE_KEY = "lastSelectedDevice";
 
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
@@ -46,13 +47,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     selectedDevice: undefined,
   };
 
-  private deviceSettings: DeviceSettings = {
-    appearance: "dark",
-    contentSize: "normal",
-  };
+  private deviceSettings: DeviceSettings;
 
   constructor(private readonly deviceManager: DeviceManager) {
     Project.currentProject = this;
+    this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS) ?? {
+      appearance: "dark",
+      contentSize: "normal",
+    };
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
     this.start(false, false);
@@ -345,6 +347,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   public async updateDeviceSettings(settings: DeviceSettings) {
     this.deviceSettings = settings;
+    extensionContext.workspaceState.update(DEVICE_SETTINGS, settings);
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
   }
