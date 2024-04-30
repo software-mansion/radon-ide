@@ -2,21 +2,14 @@ const {
   adaptMetroConfig,
   requireFromAppDir,
   overrideModuleFromAppDir,
-  metroServerReadyHandler,
 } = require("./metro_helpers");
 
-// since expo cli doesn't accept metro-config as parameter, we use runServer override workaround
-// to update the config. This is a very similar to a workaround for accessign ephemeral port number
-// that we use for the packager.script in metro_config.js and we'd need to have it here anyways
-// in order to access the port, but in addition we also use it to update the config.
-const Metro_fork = requireFromAppDir("@expo/cli/build/src/start/server/metro/runServer-fork");
-const oldRunServer = Metro_fork.runServer;
-Metro_fork.runServer = function (bundler, config, options) {
-  adaptMetroConfig(config);
-  return oldRunServer(bundler, config, {
-    ...options,
-    onReady: metroServerReadyHandler(options.onReady),
-  });
+// since expo cli doesn't accept metro-config as parameter, we override metro's loadConfig method
+const metroConfig = requireFromAppDir("metro-config");
+const origLoadConfig = metroConfig.loadConfig;
+metroConfig.loadConfig = async function (...args) {
+  const config = await origLoadConfig(...args);
+  return adaptMetroConfig(config);
 };
 
 // In addition, expo uses freeport-async to check whether provided port is busy.
