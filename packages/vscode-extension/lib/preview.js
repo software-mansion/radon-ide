@@ -1,4 +1,10 @@
-require("expo-router/entry");
+try {
+    // Attempt to require the expo router package
+    require("expo-router/entry");
+} catch (error) {
+    console.log("The 'expo-router' package is not installed.");
+}
+
 const { AppRegistry, View } = require("react-native");
 
 global.__RNIDE_previews ||= new Map();
