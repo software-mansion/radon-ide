@@ -34,6 +34,7 @@
         "command": "RNIDE.closePanel",
         "title": "Close IDE Panel",
         "category": "React Native IDE",
+        "icon": "$(close)",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
