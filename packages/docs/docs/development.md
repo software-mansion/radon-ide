@@ -71,6 +71,10 @@ This new window is titled "[Extension Development Host]" and is the only window 
 
 <img width="896" alt="extension-host-title" src="/img/docs/extension_host_title.png"/>
 
+> NOTE: Visual Studio Code by default will open new folders in a new windows, so since you want to open the project on the same window as the extension host, you should disable that option in the settings. You can do it by going to `Settings` and searching for `window.openFoldersInNewWindow` and setting it to `off`.
+
+<img width="750" alt="new-window-vscode-setting" src="/img/docs/new_window_vscode_setting.png"/>
+
 ### 6. Develop the extension!
 
 Frontend code is setup with hot reload, so changes made to frontend code will update live.
