@@ -31,6 +31,12 @@
   "contributes": {
     "commands": [
       {
+        "command": "RNIDE.openDevMenu",
+        "title": "Open Dev Menu",
+        "category": "React Native IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
         "command": "RNIDE.closePanel",
         "title": "Close IDE Panel",
         "category": "React Native IDE",
@@ -59,8 +65,8 @@
     "keybindings": [
       {
         "command": "RNIDE.openDevMenu",
-        "key": "ctrl+alt+z",
-        "mac": "ctrl+cmd+z"
+        "key": "ctrl+d",
+        "mac": "cmd+d"
       }
     ],
     "configuration": {
