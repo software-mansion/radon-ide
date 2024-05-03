@@ -55,6 +55,7 @@ export function deactivate(context: ExtensionContext): undefined {
   TabPanel.currentPanel?.dispose();
   SidePanelViewProvider.currentProvider?.dispose();
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", false);
+  commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
   return undefined;
 }
 
@@ -68,7 +69,10 @@ export async function activate(context: ExtensionContext) {
 
   await fixBinaries(context);
 
+  commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
+
   async function showIDEPanel(fileName?: string, lineNumber?: number) {
+    commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
     const panelLocation = workspace
       .getConfiguration("ReactNativeIDE")
       .get<PanelLocation>("panelLocation");
@@ -80,6 +84,18 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  async function closeIDEPanel(fileName?: string, lineNumber?: number) {
+    const panelLocation = workspace
+      .getConfiguration("ReactNativeIDE")
+      .get<PanelLocation>("panelLocation");
+
+    if (panelLocation !== "tab") {
+      commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", true);
+    } else {
+      TabPanel.currentPanel?.dispose();
+    }
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -88,6 +104,7 @@ export async function activate(context: ExtensionContext) {
     )
   );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
+  context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.showPanel", showIDEPanel));
   context.subscriptions.push(

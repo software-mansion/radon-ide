@@ -77,10 +77,16 @@ function adaptMetroConfig(config) {
   // Since node's resolution algorithm require that dependencies are present in node_modules
   // folder that is located in the parent/gradparent/etc directory, we need to add the app's
   // node_modules folder to allow files from the extension lib to import things like react, react-native
-  // and other dependencies.
+  // and other dependencies. Since in some setups apps don't keep all dependency under app root's node_modules
+  // directory, we need to add all the parent directories to the nodeModulesPaths array.
+  const extraNodeModulesPaths = [];
+  for (let next = appRoot; path.dirname(next) !== next; next = path.dirname(next)) {
+    extraNodeModulesPaths.push(path.join(next, "node_modules"));
+  }
+
   config.resolver.nodeModulesPaths = [
     ...(config.resolver.nodeModulesPaths || []),
-    path.join(appRoot, "node_modules"),
+    ...extraNodeModulesPaths,
   ];
 
   // This code overrides the default babel transformer. Our transformer is a wrapper
@@ -99,21 +105,34 @@ function adaptMetroConfig(config) {
   return config;
 }
 
-function metroServerReadyHandler(originalOnReadyHandler) {
-  return (server, ...args) => {
-    const port = server.address().port;
-    process.env.EXPO_PACKAGER_PROXY_URL =
-      process.env.EXPO_MANIFEST_PROXY_URL = `http://localhost:${port}`;
-    originalOnReadyHandler && originalOnReadyHandler(server, ...args);
-    process.stdout.write(JSON.stringify({ type: "RNIDE_initialize_done", port }));
-    process.stdout.write("\n");
+// An ugly workaround for packager script to print actual port number.
+// Since we want to start packager on ephemeral port, we need to know the actual port number.
+// Apparently, metro only reports port provided to the config, which will be 0.
+// This workaround overrides http server prototype and prints the port number along
+// with setting some env variables specific to expo that are populated with "0" port as well.
+function patchHttpListen() {
+  const http = require("http");
+  const originalListen = http.Server.prototype.listen;
+
+  http.Server.prototype.listen = function (...args) {
+    const server = this;
+    originalListen.apply(server, args);
+    server.on("listening", () => {
+      const port = server.address().port;
+      process.env.EXPO_PACKAGER_PROXY_URL =
+        process.env.EXPO_MANIFEST_PROXY_URL = `http://localhost:${port}`;
+      process.stdout.write(JSON.stringify({ type: "RNIDE_initialize_done", port }));
+      process.stdout.write("\n");
+    });
+    return server;
   };
 }
+
+patchHttpListen();
 
 module.exports = {
   appRoot,
   adaptMetroConfig,
   requireFromAppDir,
-  metroServerReadyHandler,
   overrideModuleFromAppDir,
 };

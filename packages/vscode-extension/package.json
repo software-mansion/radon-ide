@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.8-beta",
+  "version": "0.0.9-beta",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -30,6 +30,13 @@
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "RNIDE.closePanel",
+        "title": "Close IDE Panel",
+        "category": "React Native IDE",
+        "icon": "$(close)",
+        "enablement": "RNIDE.extensionIsActive"
+      },
       {
         "command": "RNIDE.openPanel",
         "title": "Open IDE Panel",
@@ -92,8 +99,8 @@
         {
           "type": "webview",
           "id": "ReactNativeIDE.view",
-          "name": "IDE Panel",
-          "when": "config.ReactNativeIDE.panelLocation != 'tab'"
+          "name": "",
+          "when": "config.ReactNativeIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ]
     },
@@ -103,6 +110,13 @@
           "command": "RNIDE.openPanel",
           "group": "navigation",
           "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "RNIDE.closePanel",
+          "group": "navigation",
+          "when": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && view == ReactNativeIDE.view"
         }
       ]
     },
