@@ -17,6 +17,7 @@ const StartScreen = () => {
           <h1 className={styles.headingLabel}>
             <span>React Native</span>
             <span>IDE</span>
+            <span className={styles.betaChip}>BETA</span>
           </h1>
           <div className={styles.poweredBy}>
             <p>by</p>
