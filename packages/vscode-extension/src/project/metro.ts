@@ -1,11 +1,12 @@
 import path from "path";
-import { Disposable } from "vscode";
+import { Disposable, Uri } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
 import stripAnsi from "strip-ansi";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { findSingleFileInWorkspace } from "../utilities/common";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -96,7 +97,8 @@ export class Metro implements Disposable {
     appRootFolder: string,
     libPath: string,
     resetCache: boolean,
-    metroEnv: typeof process.env
+    metroEnv: typeof process.env,
+    metroConfigUri?: Uri
   ) {
     const reactNativeRoot = path.dirname(
       require.resolve("react-native", { paths: [appRootFolder] })
@@ -117,7 +119,10 @@ export class Metro implements Disposable {
       ],
       {
         cwd: appRootFolder,
-        env: metroEnv,
+        env: {
+          ...metroEnv,
+          ...(metroConfigUri ? { RN_IDE_METRO_CONFIG_PATH: metroConfigUri.path } : {}),
+        },
         buffer: false,
       }
     );
@@ -127,14 +132,15 @@ export class Metro implements Disposable {
     resetCache: boolean,
     progressListener: (newStageProgress: number) => void
   ) {
-    let appRootFolder = getAppRootFolder();
+    const appRootFolder = getAppRootFolder();
+    const launchConfiguration = getLaunchConfiguration();
     await this.devtools.ready();
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
 
     const metroEnv = {
       ...process.env,
-      ...getLaunchConfiguration().env,
+      ...launchConfiguration.env,
       NODE_PATH: path.join(appRootFolder, "node_modules"),
       RCT_METRO_PORT: "0",
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
@@ -142,10 +148,20 @@ export class Metro implements Disposable {
     };
     let bundlerProcess: ChildProcess;
 
+    let metroConfigUri: Uri | undefined;
+    if (launchConfiguration.metroConfigPath) {
+      metroConfigUri = await findMetroConfig(launchConfiguration.metroConfigPath);
+    }
     if (shouldUseExpoCLI()) {
       bundlerProcess = this.launchExpoMetro(appRootFolder, libPath, resetCache, metroEnv);
     } else {
-      bundlerProcess = this.launchPackager(appRootFolder, libPath, resetCache, metroEnv);
+      bundlerProcess = this.launchPackager(
+        appRootFolder,
+        libPath,
+        resetCache,
+        metroEnv,
+        metroConfigUri
+      );
     }
     this.subprocess = bundlerProcess;
 
@@ -249,6 +265,10 @@ export class Metro implements Disposable {
 
     return websocketAddress;
   }
+}
+
+function findMetroConfig(configPath: string) {
+  return findSingleFileInWorkspace(configPath, "**/node_modules");
 }
 
 function shouldUseExpoCLI() {
