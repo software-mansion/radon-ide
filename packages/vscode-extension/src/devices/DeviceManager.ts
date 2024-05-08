@@ -1,6 +1,7 @@
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
   IosSimulatorDevice,
+  SimulatorDirectory,
   createSimulator,
   listSimulators,
   removeIosSimulator,
@@ -139,14 +140,14 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   }
 
   public async createIOSDevice(deviceType: IOSDeviceTypeInfo, runtime: IOSRuntimeInfo) {
-    const simulator = await createSimulator(deviceType, runtime);
+    const simulator = await createSimulator(deviceType, runtime, SimulatorDirectory.RN_IDE);
     await this.loadDevices(true);
     return simulator;
   }
 
   public async removeDevice(device: DeviceInfo) {
     if (device.platform === Platform.IOS) {
-      await removeIosSimulator(device.UDID);
+      await removeIosSimulator(device.UDID, SimulatorDirectory.RN_IDE);
     }
     if (device.platform === Platform.Android) {
       await removeEmulator(device.avdId);

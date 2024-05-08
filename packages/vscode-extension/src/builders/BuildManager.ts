@@ -4,7 +4,7 @@ import { buildAndroid } from "./buildAndroid";
 import { buildIos } from "./buildIOS";
 import fs from "fs";
 import { calculateMD5 } from "../utilities/common";
-import { Platform } from "../common/DeviceManager";
+import { DeviceInfo, IOSDeviceInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { Disposable, OutputChannel, window } from "vscode";
@@ -99,11 +99,11 @@ export class BuildManager {
   }
 
   public startBuild(
-    platform: Platform,
+    deviceInfo: DeviceInfo,
     forceCleanBuild: boolean,
     progressListener: (newProgress: number) => void
   ) {
-    if (platform === Platform.Android) {
+    if (deviceInfo.platform === Platform.Android) {
       const cancelToken = new CancelToken();
       return new DisposableBuildImpl(
         this.startAndroidBuild(forceCleanBuild, cancelToken, progressListener),
@@ -112,7 +112,7 @@ export class BuildManager {
     } else {
       const cancelToken = new CancelToken();
       return new DisposableBuildImpl(
-        this.startIOSBuild(forceCleanBuild, cancelToken, progressListener),
+        this.startIOSBuild(deviceInfo, forceCleanBuild, cancelToken, progressListener),
         cancelToken
       );
     }
@@ -196,7 +196,7 @@ export class BuildManager {
     try {
       const cacheInfo = extensionContext.workspaceState.get<IOSBuildCacheInfo>(IOS_BUILD_CACHE_KEY);
 
-      if (cacheInfo && cacheInfo.fingerprint == newFingerprint) {
+      if (cacheInfo && cacheInfo.fingerprint === newFingerprint) {
         const build = cacheInfo.buildResult;
 
         // We have to check if the user removed the build that was cached.
@@ -217,17 +217,14 @@ export class BuildManager {
   }
 
   private async startIOSBuild(
+    deviceInfo: IOSDeviceInfo,
     forceCleanBuild: boolean,
     cancelToken: CancelToken,
     progressListener: (newProgress: number) => void
-  ) {
+  ): Promise<IOSBuildResult> {
     if (await isExpoGoProject()) {
       const appPath = await downloadExpoGo(Platform.IOS, cancelToken);
-      return {
-        platform: Platform.IOS,
-        appPath,
-        bundleID: EXPO_GO_BUNDLE_ID,
-      } as IOSBuildResult;
+      return { platform: Platform.IOS, appPath, bundleID: EXPO_GO_BUNDLE_ID };
     }
     const newFingerprint = await generateWorkspaceFingerprint();
     if (!forceCleanBuild) {
@@ -240,24 +237,25 @@ export class BuildManager {
       extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, undefined);
     }
 
-    this.buildOutputChannel = window.createOutputChannel(`React Native IDE (iOS build)`, {
+    this.buildOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", {
       log: true,
     });
 
     const build = await buildIos(
+      deviceInfo,
       getAppRootFolder(),
       forceCleanBuild,
       cancelToken,
       this.buildOutputChannel!,
       progressListener
     );
-    const buildResult: IOSBuildResult = { ...build, platform: Platform.IOS };
+    const buildResult = { ...build, platform: Platform.IOS };
 
     // store build info in the cache
     const newBuildHash = (await calculateMD5(build.appPath)).digest("hex");
     const buildInfo = { fingerprint: newFingerprint, buildHash: newBuildHash, buildResult };
     extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, buildInfo);
 
-    return { ...build, platform: Platform.IOS } as IOSBuildResult;
+    return { ...build, platform: Platform.IOS };
   }
 }

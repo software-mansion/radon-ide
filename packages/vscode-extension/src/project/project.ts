@@ -419,7 +419,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
       const build = this.buildManager.startBuild(
-        deviceInfo.platform,
+        deviceInfo,
         forceCleanBuild,
         throttle((stageProgress: number) => {
           this.reportStageProgress(stageProgress, StartupMessage.Building);

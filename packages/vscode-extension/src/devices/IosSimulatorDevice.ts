@@ -4,7 +4,13 @@ import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import { DeviceInfo, IOSDeviceTypeInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
+import {
+  DeviceInfo,
+  IOSDeviceInfo,
+  IOSDeviceTypeInfo,
+  IOSRuntimeInfo,
+  Platform,
+} from "../common/DeviceManager";
 import { BuildResult, EXPO_GO_BUNDLE_ID, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
@@ -22,6 +28,7 @@ interface SimulatorInfo {
   type?: "simulator" | "device" | "catalyst";
   booted?: boolean;
   lastBootedAt?: string;
+  deviceTypeIdentifier: string;
 }
 
 interface SimulatorData {
@@ -245,17 +252,21 @@ export async function removeIosRuntimes(runtimeIDs: string[]) {
   return Promise.all(removalPromises);
 }
 
-export async function removeIosSimulator(udid?: string) {
+export async function removeIosSimulator(udid: string | undefined, location: SimulatorDirectory) {
   if (!udid) {
     return;
   }
 
-  const setDirectory = getOrCreateDeviceSet();
+  let deviceSetArgs: string[] = [];
+  if (location === SimulatorDirectory.RN_IDE) {
+    const setDirectory = getOrCreateDeviceSet();
+    deviceSetArgs = ["--set", setDirectory];
+  }
 
-  return exec("xcrun", ["simctl", "--set", setDirectory, "delete", udid]);
+  return exec("xcrun", ["simctl", ...deviceSetArgs, "delete", udid]);
 }
 
-export async function listSimulators(): Promise<DeviceInfo[]> {
+export async function listSimulators(): Promise<IOSDeviceInfo[]> {
   const deviceSetLocation = getOrCreateDeviceSet();
   const { stdout } = await exec("xcrun", [
     "simctl",
@@ -270,7 +281,7 @@ export async function listSimulators(): Promise<DeviceInfo[]> {
   const { devices: devicesPerRuntime } = parsedData;
   const runtimes = await getAvailableIosRuntimes();
 
-  const simulators: DeviceInfo[] = Object.entries(devicesPerRuntime)
+  const simulators = Object.entries(devicesPerRuntime)
     .map(([runtimeID, devices]) => {
       const runtime = runtimes.find((item) => item.identifier === runtimeID);
 
@@ -282,7 +293,9 @@ export async function listSimulators(): Promise<DeviceInfo[]> {
           name: device.name,
           systemName: runtime?.name ?? "Unknown",
           available: device.isAvailable ?? false,
-        } as DeviceInfo;
+          deviceIdentifier: device.deviceTypeIdentifier,
+          runtimeInfo: runtime,
+        } as IOSDeviceInfo;
       });
     })
     .flat();
@@ -290,16 +303,36 @@ export async function listSimulators(): Promise<DeviceInfo[]> {
   return simulators;
 }
 
-export async function createSimulator(deviceType: IOSDeviceTypeInfo, runtime: IOSRuntimeInfo) {
+export enum SimulatorDirectory {
+  Default,
+  RN_IDE,
+}
+
+export async function createSimulator(
+  deviceType: IOSDeviceTypeInfo,
+  runtime: IOSRuntimeInfo,
+  location: SimulatorDirectory
+) {
   Logger.debug(`Create simulator ${deviceType.identifier} with runtime ${runtime.identifier}`);
-  const deviceSetLocation = getOrCreateDeviceSet();
+
+  let locationArgs: string[];
+  let simulatorName: string;
+  if (location === SimulatorDirectory.RN_IDE) {
+    const deviceSetLocation = getOrCreateDeviceSet();
+
+    locationArgs = ["--set", deviceSetLocation];
+    simulatorName = deviceType.name;
+  } else {
+    locationArgs = [];
+    simulatorName = `RN_IDE: ${deviceType.name}`;
+  }
+
   // create new simulator with selected runtime
   const { stdout: UDID } = await exec("xcrun", [
     "simctl",
-    "--set",
-    deviceSetLocation,
+    ...locationArgs,
     "create",
-    deviceType.name,
+    simulatorName,
     deviceType.identifier,
     runtime.identifier,
   ]);
@@ -311,7 +344,9 @@ export async function createSimulator(deviceType: IOSDeviceTypeInfo, runtime: IO
     name: deviceType.name,
     systemName: runtime.name,
     available: true, // assuming if create command went through, it's available
-  } as DeviceInfo;
+    deviceIdentifier: deviceType.identifier,
+    runtimeInfo: runtime,
+  } as IOSDeviceInfo;
 }
 
 function getDeviceSetLocation() {
