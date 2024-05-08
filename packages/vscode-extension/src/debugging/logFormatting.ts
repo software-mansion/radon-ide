@@ -1,4 +1,4 @@
-import util, { InspectOptions } from "util";
+import util from "util";
 import { DebugAdapter } from "./DebugAdapter";
 import { CDPSubType, CDPValueType, FormmatedLog } from "./cdp";
 import { Source } from "@vscode/debugadapter";
@@ -127,7 +127,7 @@ export async function formatMessage(
 
   const mappedArgs = await Promise.all(
     args.map(async (arg, index) => {
-      let res = {
+      let res : FormmatedLog= {
         prefix: `arg${index}: `,
         unindented: "",
         category,
