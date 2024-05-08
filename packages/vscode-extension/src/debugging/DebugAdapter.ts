@@ -147,7 +147,7 @@ export class DebugAdapter extends DebugSession {
       }
     });
   }
- 
+
   private sendFormatedOutputEvent(log: FormmatedLog) {
     if (log.indented) {
       const startCollapsedEvent = new OutputEvent((log.prefix ?? "") + log.unindented + "\n");
@@ -170,6 +170,19 @@ export class DebugAdapter extends DebugSession {
       // @ts-ignore group is a valid field
       endGroupEvent.body.group = "end";
       this.sendEvent(endGroupEvent);
+
+      // For now this is a neccesery workaround, because of a bug in vs code that prevents "source" and "group" properties to work together
+      // TODO: monitore if the bug was solved and remove Source Event https://github.com/microsoft/vscode/issues/212304
+      const sourceEvent = new OutputEvent("");
+      sourceEvent.body = {
+        ...sourceEvent.body,
+        category: log.category,
+        //@ts-ignore source, line, column and group are valid fieleds
+        source: log.source,
+        line: log.line,
+        column: log.column,
+      };
+      this.sendEvent(sourceEvent);
     } else {
       const outputEvent = new OutputEvent((log.prefix ?? "") + log.unindented + "\n");
       outputEvent.body = {

@@ -127,7 +127,7 @@ export async function formatMessage(
 
   const mappedArgs = await Promise.all(
     args.map(async (arg, index) => {
-      let res : FormmatedLog= {
+      let res: FormmatedLog = {
         prefix: `arg${index}: `,
         unindented: "",
         category,
