@@ -4,12 +4,18 @@ import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import { DeviceInfo, IOSDeviceTypeInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
+import {
+  IOSDeviceInfo,
+  IOSDeviceTypeInfo,
+  IOSRuntimeInfo,
+  Platform,
+} from "../common/DeviceManager";
 import { BuildResult, EXPO_GO_BUNDLE_ID, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
 import { DeviceSettings } from "../common/Project";
 import { fetchExpoLaunchDeeplink } from "../builders/expoGo";
+import { ExecaError } from "execa";
 
 interface SimulatorInfo {
   availability?: string;
@@ -22,6 +28,7 @@ interface SimulatorInfo {
   type?: "simulator" | "device" | "catalyst";
   booted?: boolean;
   lastBootedAt?: string;
+  deviceTypeIdentifier: string;
 }
 
 interface SimulatorData {
@@ -55,8 +62,8 @@ export class IosSimulatorDevice extends DeviceBase {
         allowNonZeroExit: true,
       });
     } catch (e) {
-      // @ts-ignore
-      if (e.stderr?.includes("current state: Booted")) {
+      const isAlreadyBooted = (e as ExecaError).stderr?.includes("current state: Booted");
+      if (isAlreadyBooted) {
         Logger.debug("Device already booted");
       } else {
         throw e;
@@ -245,44 +252,49 @@ export async function removeIosRuntimes(runtimeIDs: string[]) {
   return Promise.all(removalPromises);
 }
 
-export async function removeIosSimulator(udid?: string) {
+export async function removeIosSimulator(udid: string | undefined, location: SimulatorDeviceSet) {
   if (!udid) {
     return;
   }
 
-  const setDirectory = getOrCreateDeviceSet();
+  let deviceSetArgs: string[] = [];
+  if (location === SimulatorDeviceSet.RN_IDE) {
+    const setDirectory = getOrCreateDeviceSet();
+    deviceSetArgs = ["--set", setDirectory];
+  }
 
-  return exec("xcrun", ["simctl", "--set", setDirectory, "delete", udid]);
+  return exec("xcrun", ["simctl", ...deviceSetArgs, "delete", udid]);
 }
 
-export async function listSimulators(): Promise<DeviceInfo[]> {
-  const deviceSetLocation = getOrCreateDeviceSet();
-  const { stdout } = await exec("xcrun", [
-    "simctl",
-    "--set",
-    deviceSetLocation,
-    "list",
-    "devices",
-    "--json",
-  ]);
+export async function listSimulators(
+  location: SimulatorDeviceSet = SimulatorDeviceSet.RN_IDE
+): Promise<IOSDeviceInfo[]> {
+  let deviceSetArgs: string[] = [];
+  if (location === SimulatorDeviceSet.RN_IDE) {
+    const deviceSetLocation = getOrCreateDeviceSet();
+    deviceSetArgs = ["--set", deviceSetLocation];
+  }
+  const { stdout } = await exec("xcrun", ["simctl", ...deviceSetArgs, "list", "devices", "--json"]);
   const parsedData: SimulatorData = JSON.parse(stdout);
 
   const { devices: devicesPerRuntime } = parsedData;
   const runtimes = await getAvailableIosRuntimes();
 
-  const simulators: DeviceInfo[] = Object.entries(devicesPerRuntime)
+  const simulators = Object.entries(devicesPerRuntime)
     .map(([runtimeID, devices]) => {
       const runtime = runtimes.find((item) => item.identifier === runtimeID);
 
       return devices.map((device) => {
         return {
           id: `ios-${device.udid}`,
-          platform: Platform.IOS,
+          platform: Platform.IOS as const,
           UDID: device.udid,
           name: device.name,
           systemName: runtime?.name ?? "Unknown",
           available: device.isAvailable ?? false,
-        } as DeviceInfo;
+          deviceIdentifier: device.deviceTypeIdentifier,
+          runtimeInfo: runtime!,
+        };
       });
     })
     .flat();
@@ -290,17 +302,32 @@ export async function listSimulators(): Promise<DeviceInfo[]> {
   return simulators;
 }
 
-export async function createSimulator(deviceType: IOSDeviceTypeInfo, runtime: IOSRuntimeInfo) {
-  Logger.debug(`Create simulator ${deviceType.identifier} with runtime ${runtime.identifier}`);
-  const deviceSetLocation = getOrCreateDeviceSet();
+export enum SimulatorDeviceSet {
+  Default,
+  RN_IDE,
+}
+
+export async function createSimulator(
+  deviceName: string,
+  deviceIdentifier: string,
+  runtime: IOSRuntimeInfo,
+  deviceSet: SimulatorDeviceSet
+) {
+  Logger.debug(`Create simulator ${deviceIdentifier} with runtime ${runtime.identifier}`);
+
+  let locationArgs: string[] = [];
+  if (deviceSet === SimulatorDeviceSet.RN_IDE) {
+    const deviceSetLocation = getOrCreateDeviceSet();
+    locationArgs = ["--set", deviceSetLocation];
+  }
+
   // create new simulator with selected runtime
   const { stdout: UDID } = await exec("xcrun", [
     "simctl",
-    "--set",
-    deviceSetLocation,
+    ...locationArgs,
     "create",
-    deviceType.name,
-    deviceType.identifier,
+    deviceName,
+    deviceIdentifier,
     runtime.identifier,
   ]);
 
@@ -308,10 +335,12 @@ export async function createSimulator(deviceType: IOSDeviceTypeInfo, runtime: IO
     id: `ios-${UDID}`,
     platform: Platform.IOS,
     UDID,
-    name: deviceType.name,
+    name: deviceName,
     systemName: runtime.name,
     available: true, // assuming if create command went through, it's available
-  } as DeviceInfo;
+    deviceIdentifier: deviceIdentifier,
+    runtimeInfo: runtime,
+  } as IOSDeviceInfo;
 }
 
 function getDeviceSetLocation() {
