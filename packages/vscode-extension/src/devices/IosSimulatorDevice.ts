@@ -252,13 +252,13 @@ export async function removeIosRuntimes(runtimeIDs: string[]) {
   return Promise.all(removalPromises);
 }
 
-export async function removeIosSimulator(udid: string | undefined, location: SimulatorDirectory) {
+export async function removeIosSimulator(udid: string | undefined, location: SimulatorDeviceSet) {
   if (!udid) {
     return;
   }
 
   let deviceSetArgs: string[] = [];
-  if (location === SimulatorDirectory.RN_IDE) {
+  if (location === SimulatorDeviceSet.RN_IDE) {
     const setDirectory = getOrCreateDeviceSet();
     deviceSetArgs = ["--set", setDirectory];
   }
@@ -267,10 +267,10 @@ export async function removeIosSimulator(udid: string | undefined, location: Sim
 }
 
 export async function listSimulators(
-  location: SimulatorDirectory = SimulatorDirectory.RN_IDE
+  location: SimulatorDeviceSet = SimulatorDeviceSet.RN_IDE
 ): Promise<IOSDeviceInfo[]> {
   let deviceSetArgs: string[] = [];
-  if (location === SimulatorDirectory.RN_IDE) {
+  if (location === SimulatorDeviceSet.RN_IDE) {
     const deviceSetLocation = getOrCreateDeviceSet();
     deviceSetArgs = ["--set", deviceSetLocation];
   }
@@ -302,28 +302,23 @@ export async function listSimulators(
   return simulators;
 }
 
-export enum SimulatorDirectory {
+export enum SimulatorDeviceSet {
   Default,
   RN_IDE,
 }
 
 export async function createSimulator(
-  deviceType: IOSDeviceTypeInfo,
+  deviceName: string,
+  deviceIdentifier: string,
   runtime: IOSRuntimeInfo,
-  location: SimulatorDirectory
+  deviceSet: SimulatorDeviceSet
 ) {
-  Logger.debug(`Create simulator ${deviceType.identifier} with runtime ${runtime.identifier}`);
+  Logger.debug(`Create simulator ${deviceIdentifier} with runtime ${runtime.identifier}`);
 
-  let locationArgs: string[];
-  let simulatorName: string;
-  if (location === SimulatorDirectory.RN_IDE) {
+  let locationArgs: string[] = [];
+  if (deviceSet === SimulatorDeviceSet.RN_IDE) {
     const deviceSetLocation = getOrCreateDeviceSet();
-
     locationArgs = ["--set", deviceSetLocation];
-    simulatorName = deviceType.name;
-  } else {
-    locationArgs = [];
-    simulatorName = `RN_IDE: ${deviceType.name}`;
   }
 
   // create new simulator with selected runtime
@@ -331,8 +326,8 @@ export async function createSimulator(
     "simctl",
     ...locationArgs,
     "create",
-    simulatorName,
-    deviceType.identifier,
+    deviceName,
+    deviceIdentifier,
     runtime.identifier,
   ]);
 
@@ -340,10 +335,10 @@ export async function createSimulator(
     id: `ios-${UDID}`,
     platform: Platform.IOS,
     UDID,
-    name: deviceType.name,
+    name: deviceName,
     systemName: runtime.name,
     available: true, // assuming if create command went through, it's available
-    deviceIdentifier: deviceType.identifier,
+    deviceIdentifier: deviceIdentifier,
     runtimeInfo: runtime,
   } as IOSDeviceInfo;
 }

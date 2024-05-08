@@ -8,12 +8,12 @@ import { CancelToken } from "./BuildManager";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import {
-  SimulatorDirectory,
+  SimulatorDeviceSet,
   createSimulator,
   listSimulators,
   removeIosSimulator,
 } from "../devices/IosSimulatorDevice";
-import { IOSDeviceInfo } from "../common/DeviceManager";
+import { IOSDeviceInfo, IOSRuntimeInfo } from "../common/DeviceManager";
 
 type IOSProjectInfo =
   | {
@@ -26,6 +26,8 @@ type IOSProjectInfo =
       xcodeprojLocation: string;
       isWorkspace: false;
     };
+
+const TEMP_SIMULATOR_NAME_PREFIX = "__RNIDE_TEMP_SIM_";
 
 // Assuming users have ios folder in their project's root
 export const getIosSourceDir = (appRootFolder: string) => path.join(appRootFolder, "ios");
@@ -258,31 +260,28 @@ async function getBuildPath(
 }
 
 async function withTemporarySimulator<T>(
-  deviceInfo: IOSDeviceInfo,
+  originalDeviceInfo: IOSDeviceInfo,
   fn: (UDID: string) => Promise<T>
 ) {
   await removeStaleTemporarySimulators();
 
-  const deviceType = {
-    identifier: deviceInfo.deviceIdentifier,
-    name: `RN_IDE: ${deviceInfo.name}`,
-  };
   const { UDID } = await createSimulator(
-    deviceType,
-    deviceInfo.runtimeInfo,
-    SimulatorDirectory.Default
+    TEMP_SIMULATOR_NAME_PREFIX + originalDeviceInfo.deviceIdentifier,
+    originalDeviceInfo.deviceIdentifier,
+    originalDeviceInfo.runtimeInfo,
+    SimulatorDeviceSet.Default
   );
   const result = await fn(UDID);
-  await removeIosSimulator(UDID, SimulatorDirectory.Default);
+  await removeIosSimulator(UDID, SimulatorDeviceSet.Default);
 
   return result;
 }
 
 async function removeStaleTemporarySimulators() {
-  const simulators = await listSimulators(SimulatorDirectory.Default);
+  const simulators = await listSimulators(SimulatorDeviceSet.Default);
   const removedSimulators = simulators
-    .filter(({ name }) => name.startsWith("RN_IDE"))
-    .map(({ UDID }) => removeIosSimulator(UDID, SimulatorDirectory.Default));
+    .filter(({ name }) => name.startsWith(TEMP_SIMULATOR_NAME_PREFIX))
+    .map(({ UDID }) => removeIosSimulator(UDID, SimulatorDeviceSet.Default));
 
   await Promise.allSettled(removedSimulators);
 }
