@@ -51,7 +51,7 @@ From there, you can use the simulator normally to navigate in your app and try o
 
 ## -sec-num- IDE featuers highlights
 
-Visit [React Native IDE](https://ide.swmansion.com/) webside, for a nicely presented list of the feature highlights.
+Visit [React Native IDE](https://ide.swmansion.com/) website, for a nicely presented list of the feature highlights.
 
 ### Click to inspect
 
