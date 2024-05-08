@@ -1,8 +1,9 @@
 import util, { InspectOptions } from "util";
 import { DebugAdapter } from "./DebugAdapter";
 import { CDPSubType, CDPValueType, FormmatedLog } from "./cdp";
-import { Logger } from "../Logger";
 import { Source } from "@vscode/debugadapter";
+
+const MAX_OBJECT_DEPTH = 5;
 
 export interface CDPRemoteObject {
   type: CDPValueType;
@@ -16,7 +17,7 @@ export interface CDPRemoteObject {
 function format(anything: any) {
   const formatted = util.inspect(anything, {
     showHidden: false,
-    depth: 3,
+    depth: MAX_OBJECT_DEPTH,
     colors: false,
     maxArrayLength: 20,
     compact: true,
@@ -32,27 +33,27 @@ async function retrieveObject(
   objectId: any,
   debugadapter: DebugAdapter,
   category: "stderr" | "stdout",
-  depth: number
+  depth: number,
+  prefix?: string
 ): Promise<FormmatedLog> {
-  Logger.debug("Frytki", "filip");
-  if (depth > 3) {
+  if (depth > MAX_OBJECT_DEPTH) {
     return {
+      prefix,
       unindented: "{}",
       indented: [],
       category,
     };
   }
-  Logger.debug("Frytki", "magda");
   const properties = await debugadapter.sendCDPMessage("Runtime.getProperties", {
     objectId: objectId,
     ownProperties: true,
   });
   const res = {
-    unindented: "filip",
+    prefix,
+    unindented: "{...}",
     indented: new Array(),
     category,
   };
-  const obj: any = {};
   await Promise.all(
     properties.result.map(async (prop: any) => {
       if (prop.name === "__proto__") {
@@ -61,45 +62,41 @@ async function retrieveObject(
       }
       switch (prop.value.type) {
         case "number":
-          Logger.debug("Frytki", "kuba");
-          Logger.debug("Frytki", res.indented);
-          obj[prop.name] = prop.value;
           res.indented.push({
-            unindented: prop.name + ": " + prop.value,
+            prefix: prop.name + ": ",
+            unindented: prop.value.value,
             indented: "",
             category,
           });
-          Logger.debug("Frytki", res.indented);
           break;
         case "string":
-          obj[prop.name] = prop.value;
           res.indented.push({
-            unindented: prop.name + ": " + prop.value,
+            prefix: prop.name + ": ",
+            unindented: prop.value.value,
             indented: "",
             category,
           });
           break;
         case "boolean":
-          obj[prop.name] = prop.value;
           res.indented.push({
-            unindented: prop.name + ": " + prop.value,
+            prefix: prop.name + ": ",
+            unindented: prop.value.value,
             indented: "",
             category,
           });
           break;
         case "object":
-          obj[prop.name] =
-            (await retrieveObject(prop.value.objectId, debugadapter, category, depth + 1)) || {};
-          res.indented.push({
-            unindented: prop.name + ": {...}",
-            indented: [
-              await retrieveObject(prop.value.objectId, debugadapter, category, depth + 1),
-            ],
-            category,
-          });
+          res.indented.push(
+            await retrieveObject(
+              prop.value.objectId,
+              debugadapter,
+              category,
+              depth + 1,
+              prop.name + ": "
+            )
+          );
           break;
         case "function":
-          obj[prop.name] = prop.description || function () {};
           res.indented.push({
             unindented: prop.name + ": " + (prop.description || function () {}),
             indented: "",
@@ -109,7 +106,6 @@ async function retrieveObject(
       }
     })
   );
-
   return res;
 }
 
@@ -138,9 +134,7 @@ export async function formatMessage(
       };
       switch (arg.type) {
         case "object":
-          Logger.debug("Frytki", "uifwhweuhf");
-          res = await retrieveObject(arg.objectId, debugadapter, category, 0);
-          Logger.debug("Frytki dgfusdgehfiuewf kuba", res);
+          res = await retrieveObject(arg.objectId, debugadapter, category, 0, `arg${index}: `);
           break;
         case "string":
           res.unindented = arg.value;
@@ -162,18 +156,14 @@ export async function formatMessage(
     })
   );
 
-  const stringResult = mappedArgs
+  result.unindented = mappedArgs
     .map((item) => {
       return item?.unindented;
     })
-    .join(" ");
+    .join(" ")
+    .slice(0, 79);
 
-  if (stringResult.length > 30) {
-    result.unindented = stringResult.slice(0, 79) + "...";
-    result.indented = mappedArgs;
-  } else {
-    result.unindented = stringResult;
-  }
+  result.indented = mappedArgs;
 
   return result;
 }

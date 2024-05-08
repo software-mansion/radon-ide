@@ -147,10 +147,10 @@ export class DebugAdapter extends DebugSession {
       }
     });
   }
-
+ 
   private sendFormatedOutputEvent(log: FormmatedLog) {
     if (log.indented) {
-      const startCollapsedEvent = new OutputEvent(log.unindented + "\n");
+      const startCollapsedEvent = new OutputEvent((log.prefix ?? "") + log.unindented + "\n");
       startCollapsedEvent.body = {
         ...startCollapsedEvent.body,
         category: log.category,
@@ -171,7 +171,7 @@ export class DebugAdapter extends DebugSession {
       endGroupEvent.body.group = "end";
       this.sendEvent(endGroupEvent);
     } else {
-      const outputEvent = new OutputEvent(log.unindented + "\n");
+      const outputEvent = new OutputEvent((log.prefix ?? "") + log.unindented + "\n");
       outputEvent.body = {
         ...outputEvent.body,
         category: log.category,
