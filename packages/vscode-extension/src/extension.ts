@@ -190,11 +190,11 @@ async function findAppRootFolder() {
     }
     return appRoot;
   }
-  let metroConfigGlob = "**/metro.config.{js,ts}";
-  if (launchConfiguration.metroConfigPath) {
-    metroConfigGlob = `**/${launchConfiguration.metroConfigPath}`;
-  }
-  const metroConfigUri = await findSingleFileInWorkspace(metroConfigGlob, "**/node_modules");
+
+  const metroConfigUri = await findSingleFileInWorkspace(
+    "**/metro.config.{js,ts}",
+    "**/node_modules"
+  );
   if (metroConfigUri) {
     return Uri.joinPath(metroConfigUri, "..").fsPath;
   }

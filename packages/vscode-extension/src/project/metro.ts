@@ -1,12 +1,12 @@
 import path from "path";
-import { Disposable, Uri } from "vscode";
+import { Disposable, Uri, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
 import stripAnsi from "strip-ansi";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { findSingleFileInWorkspace } from "../utilities/common";
+import fs from "fs";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -150,7 +150,7 @@ export class Metro implements Disposable {
 
     let metroConfigUri: Uri | undefined;
     if (launchConfiguration.metroConfigPath) {
-      metroConfigUri = await findMetroConfig(launchConfiguration.metroConfigPath);
+      metroConfigUri = findMetroConfig(launchConfiguration.metroConfigPath);
     }
     if (shouldUseExpoCLI()) {
       bundlerProcess = this.launchExpoMetro(appRootFolder, libPath, resetCache, metroEnv);
@@ -268,7 +268,13 @@ export class Metro implements Disposable {
 }
 
 function findMetroConfig(configPath: string) {
-  return findSingleFileInWorkspace(configPath, "**/node_modules");
+  for (const folder of workspace.workspaceFolders ?? []) {
+    const possibleMetroConfigLocation = Uri.joinPath(folder.uri, configPath);
+    if (fs.existsSync(possibleMetroConfigLocation.fsPath)) {
+      return possibleMetroConfigLocation;
+    }
+  }
+  return undefined;
 }
 
 function shouldUseExpoCLI() {
