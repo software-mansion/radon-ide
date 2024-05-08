@@ -13,8 +13,7 @@ import {
   listSimulators,
   removeIosSimulator,
 } from "../devices/IosSimulatorDevice";
-import { DeviceInfo, IOSDeviceInfo, IOSRuntimeInfo } from "../common/DeviceManager";
-import { ExecaChildProcess } from "execa";
+import { IOSDeviceInfo } from "../common/DeviceManager";
 
 type IOSProjectInfo =
   | {
