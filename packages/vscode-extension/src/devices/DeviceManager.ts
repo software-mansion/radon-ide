@@ -121,9 +121,9 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   }
 
   public async listAllDevices() {
-    const devices = extensionContext.workspaceState.get(DEVICE_LIST_CACHE_KEY) as
-      | DeviceInfo[]
-      | undefined;
+    const devices = extensionContext.workspaceState.get<DeviceInfo[] | undefined>(
+      DEVICE_LIST_CACHE_KEY
+    );
     if (devices) {
       // we still want to perform load here in case anything changes, just won't wait for it
       this.loadDevices();
