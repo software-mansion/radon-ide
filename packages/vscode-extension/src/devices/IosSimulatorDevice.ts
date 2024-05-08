@@ -266,16 +266,15 @@ export async function removeIosSimulator(udid: string | undefined, location: Sim
   return exec("xcrun", ["simctl", ...deviceSetArgs, "delete", udid]);
 }
 
-export async function listSimulators(): Promise<IOSDeviceInfo[]> {
-  const deviceSetLocation = getOrCreateDeviceSet();
-  const { stdout } = await exec("xcrun", [
-    "simctl",
-    "--set",
-    deviceSetLocation,
-    "list",
-    "devices",
-    "--json",
-  ]);
+export async function listSimulators(
+  location: SimulatorDirectory = SimulatorDirectory.RN_IDE
+): Promise<IOSDeviceInfo[]> {
+  let deviceSetArgs: string[] = [];
+  if (location === SimulatorDirectory.RN_IDE) {
+    const deviceSetLocation = getOrCreateDeviceSet();
+    deviceSetArgs = ["--set", deviceSetLocation];
+  }
+  const { stdout } = await exec("xcrun", ["simctl", ...deviceSetArgs, "list", "devices", "--json"]);
   const parsedData: SimulatorData = JSON.parse(stdout);
 
   const { devices: devicesPerRuntime } = parsedData;

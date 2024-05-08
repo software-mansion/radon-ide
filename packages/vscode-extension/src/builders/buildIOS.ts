@@ -279,7 +279,8 @@ async function withTemporarySimulator<T>(
 }
 
 async function removeStaleTemporarySimulators() {
-  const removedSimulators = (await listSimulators())
+  const simulators = await listSimulators(SimulatorDirectory.Default);
+  const removedSimulators = simulators
     .filter(({ name }) => name.startsWith("RN_IDE"))
     .map(({ UDID }) => removeIosSimulator(UDID, SimulatorDirectory.Default));
 
