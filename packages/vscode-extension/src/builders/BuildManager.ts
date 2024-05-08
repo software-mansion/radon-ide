@@ -11,10 +11,7 @@ import { Disposable, OutputChannel, window } from "vscode";
 import { downloadExpoGo, isExpoGoProject } from "./expoGo";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
-function getIosCacheKey(UDID: string) {
-  const IOS_BUILD_CACHE_KEY = "ios_build_cache";
-  return `${IOS_BUILD_CACHE_KEY}_${UDID}`;
-}
+const IOS_BUILD_CACHE_KEY = "ios_build_cache";
 
 export const EXPO_GO_BUNDLE_ID = "host.exp.Exponent";
 export const EXPO_GO_PACKAGE_NAME = "host.exp.exponent";
@@ -45,11 +42,11 @@ type IOSBuildCacheInfo = {
   buildResult: IOSBuildResult;
 };
 
-export async function didFingerprintChange(deviceInfo: DeviceInfo) {
+export async function didFingerprintChange(platform: Platform) {
   const newFingerprint = await generateWorkspaceFingerprint();
-  if (deviceInfo.platform === Platform.IOS) {
+  if (platform === Platform.IOS) {
     const { fingerprint: iosFingerprint } =
-      extensionContext.workspaceState.get<IOSBuildCacheInfo>(getIosCacheKey(deviceInfo.UDID)) ?? {};
+      extensionContext.workspaceState.get<IOSBuildCacheInfo>(IOS_BUILD_CACHE_KEY) ?? {};
     return newFingerprint !== iosFingerprint;
   }
 
@@ -126,12 +123,12 @@ export class BuildManager {
       const cacheInfo =
         extensionContext.workspaceState.get<AndroidBuildCacheInfo>(ANDROID_BUILD_CACHE_KEY);
 
-      if (cacheInfo && cacheInfo.fingerprint === newFingerprint) {
+      if (cacheInfo && cacheInfo.fingerprint == newFingerprint) {
         const build = cacheInfo.buildResult;
 
         // We have to check if the user removed the build that was cached.
         if (fs.existsSync(build.apkPath)) {
-          const hash = await getAppHash(build.apkPath);
+          const hash = (await calculateMD5(build.apkPath)).digest("hex");
 
           if (hash === cacheInfo.buildHash) {
             Logger.log("Cache hit on android build. Using existing build.");
@@ -150,14 +147,14 @@ export class BuildManager {
     forceCleanBuild: boolean,
     cancelToken: CancelToken,
     progressListener: (newProgress: number) => void
-  ): Promise<AndroidBuildResult> {
+  ) {
     if (await isExpoGoProject()) {
       const apkPath = await downloadExpoGo(Platform.Android, cancelToken);
       return {
         platform: Platform.Android,
         apkPath,
         packageName: EXPO_GO_PACKAGE_NAME,
-      };
+      } as AndroidBuildResult;
     }
 
     const newFingerprint = await generateWorkspaceFingerprint();
@@ -171,7 +168,7 @@ export class BuildManager {
       extensionContext.workspaceState.update(ANDROID_BUILD_CACHE_KEY, undefined);
     }
 
-    this.buildOutputChannel = window.createOutputChannel("React Native IDE (Android build)", {
+    this.buildOutputChannel = window.createOutputChannel(`React Native IDE (Android build)`, {
       log: true,
     });
 
@@ -188,25 +185,23 @@ export class BuildManager {
     };
 
     // store build info in the cache
-    const newBuildHash = await getAppHash(build.apkPath);
+    const newBuildHash = (await calculateMD5(build.apkPath)).digest("hex");
     const buildInfo = { fingerprint: newFingerprint, buildHash: newBuildHash, buildResult };
     extensionContext.workspaceState.update(ANDROID_BUILD_CACHE_KEY, buildInfo);
 
     return buildResult;
   }
 
-  private async loadIOSCachedBuild(UDID: string, newFingerprint: string) {
+  private async loadIOSCachedBuild(newFingerprint: string) {
     try {
-      const cacheInfo = extensionContext.workspaceState.get<IOSBuildCacheInfo>(
-        getIosCacheKey(UDID)
-      );
+      const cacheInfo = extensionContext.workspaceState.get<IOSBuildCacheInfo>(IOS_BUILD_CACHE_KEY);
 
       if (cacheInfo && cacheInfo.fingerprint === newFingerprint) {
         const build = cacheInfo.buildResult;
 
         // We have to check if the user removed the build that was cached.
         if (fs.existsSync(build.appPath)) {
-          const hash = await getAppHash(build.appPath);
+          const hash = (await calculateMD5(build.appPath)).digest("hex");
 
           if (hash === cacheInfo.buildHash) {
             Logger.log("Cache hit on iOS build. Using existing build.");
@@ -233,13 +228,13 @@ export class BuildManager {
     }
     const newFingerprint = await generateWorkspaceFingerprint();
     if (!forceCleanBuild) {
-      const buildResult = await this.loadIOSCachedBuild(deviceInfo.UDID, newFingerprint);
+      const buildResult = await this.loadIOSCachedBuild(newFingerprint);
       if (buildResult) {
         return buildResult;
       }
     } else {
       // we reset the cache when force clean build is requested as the newly started build may end up being cancelled
-      extensionContext.workspaceState.update(getIosCacheKey(deviceInfo.UDID), undefined);
+      extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, undefined);
     }
 
     this.buildOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", {
@@ -257,14 +252,10 @@ export class BuildManager {
     const buildResult = { ...build, platform: Platform.IOS };
 
     // store build info in the cache
-    const newBuildHash = await getAppHash(build.appPath);
+    const newBuildHash = (await calculateMD5(build.appPath)).digest("hex");
     const buildInfo = { fingerprint: newFingerprint, buildHash: newBuildHash, buildResult };
-    extensionContext.workspaceState.update(getIosCacheKey(deviceInfo.UDID), buildInfo);
+    extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, buildInfo);
 
     return { ...build, platform: Platform.IOS };
   }
-}
-
-async function getAppHash(path: string) {
-  return (await calculateMD5(path)).digest("hex");
 }

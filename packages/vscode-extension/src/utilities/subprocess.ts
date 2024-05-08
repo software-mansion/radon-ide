@@ -1,14 +1,14 @@
 import { Logger } from "../Logger";
-import execa, { ExecaChildProcess, ExecaError } from "execa";
+import execa, { ExecaChildProcess } from "execa";
 import readline from "readline";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
 /**
- * When using this method, the subprocess should be started with buffer: false option
+ * When using this methid, the subprocess should be started with buffer: false option
  * as there's no need for allocating memory for the output that's going to be very long.
  */
-export function lineReader(childProcess: ChildProcess) {
+export function lineReader(childProcess: ExecaChildProcess<string>) {
   const input = childProcess.stdout;
   if (!input) {
     throw new Error("Child process has no stdout");
@@ -24,8 +24,9 @@ export function lineReader(childProcess: ChildProcess) {
   };
 }
 
-type ExecOptions = execa.Options & { allowNonZeroExit?: boolean };
-export function exec(...args: [string, string[]?, ExecOptions?]) {
+export function exec(
+  ...args: [string, string[]?, (execa.Options & { allowNonZeroExit?: boolean })?]
+) {
   const subprocess = execa(...args);
   const allowNonZeroExit = args[2]?.allowNonZeroExit;
   async function printErrorsOnExit() {
@@ -41,7 +42,8 @@ export function exec(...args: [string, string[]?, ExecOptions?]) {
         );
       }
     } catch (e) {
-      const { exitCode, signal } = e as ExecaError;
+      // @ts-ignore idk how to deal with error objects in ts
+      const { exitCode, signal } = e;
       if (exitCode === undefined && signal !== undefined) {
         Logger.info("Subprocess", args[0], "was terminated with", signal);
       } else {

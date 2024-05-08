@@ -13,7 +13,8 @@ import {
   listSimulators,
   removeIosSimulator,
 } from "../devices/IosSimulatorDevice";
-import { IOSDeviceInfo } from "../common/DeviceManager";
+import { DeviceInfo, IOSDeviceInfo, IOSRuntimeInfo } from "../common/DeviceManager";
+import { ExecaChildProcess } from "execa";
 
 type IOSProjectInfo =
   | {
@@ -180,9 +181,10 @@ export async function buildIos(
     lineReader(process).onLineRead((line) => {
       outputChannel.appendLine(line);
       buildIOSProgressProcessor.processLine(line);
-      const extractedPlatformName = extractPlatformName(line);
-      if (extractedPlatformName) {
-        platformName = extractedPlatformName;
+      // Xcode can sometimes escape `=` with a backslash or put the value in quotes
+      const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
+      if (platformNameMatch) {
+        platformName = platformNameMatch[1];
       }
     });
     return process;
@@ -206,15 +208,6 @@ export async function buildIos(
   const bundleID = await getBundleID(appPath);
 
   return { appPath, bundleID };
-}
-
-function extractPlatformName(buildLine: string) {
-  // Xcode can sometimes escape `=` with a backslash or put the value in quotes
-  const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(buildLine);
-  if (platformNameMatch) {
-    return platformNameMatch[1];
-  }
-  return undefined;
 }
 
 async function getBuildPath(

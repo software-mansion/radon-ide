@@ -95,7 +95,7 @@ export class DeviceSession implements Disposable {
       );
       if (debugStarted) {
         this.debugSession = debug.activeDebugSession;
-        Logger.debug("Connected to debbuger, moving on...");
+        Logger.debug("Conencted to debbuger, moving on...");
       }
     } else {
       Logger.error("Couldn't connect to debugger");

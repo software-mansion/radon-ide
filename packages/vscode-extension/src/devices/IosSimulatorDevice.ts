@@ -5,6 +5,7 @@ import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import {
+  DeviceInfo,
   IOSDeviceInfo,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
@@ -15,7 +16,6 @@ import path from "path";
 import fs from "fs";
 import { DeviceSettings } from "../common/Project";
 import { fetchExpoLaunchDeeplink } from "../builders/expoGo";
-import { ExecaError } from "execa";
 
 interface SimulatorInfo {
   availability?: string;
@@ -62,8 +62,8 @@ export class IosSimulatorDevice extends DeviceBase {
         allowNonZeroExit: true,
       });
     } catch (e) {
-      const isAlreadyBooted = (e as ExecaError).stderr?.includes("current state: Booted");
-      if (isAlreadyBooted) {
+      // @ts-ignore
+      if (e.stderr?.includes("current state: Booted")) {
         Logger.debug("Device already booted");
       } else {
         throw e;
