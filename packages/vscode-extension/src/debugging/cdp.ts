@@ -1,3 +1,5 @@
+import { Source } from "@vscode/debugadapter";
+
 export type CDPRemoteObject =
   | {
       type: "undefined";
@@ -28,6 +30,16 @@ export type CDPDebuggerScope = {
   type: "global" | "local" | "with" | "closure" | "catch" | "block" | "script" | "eval" | "module";
   name?: string;
   object: CDPRemoteObject & { type: "object" };
+};
+
+export type FormmatedLog = {
+  prefix?: string;
+  unindented: string;
+  source?: Source;
+  line?: number;
+  column?: number;
+  category: "stderr" | "stdout";
+  indented?: FormmatedLog[];
 };
 
 export function inferDAPVariableValueForCDPRemoteObject(cdpValue: CDPRemoteObject): string {
