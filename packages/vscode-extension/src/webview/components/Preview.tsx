@@ -12,6 +12,7 @@ import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import { InspectData, InspectDataStackItem } from "../../common/Project";
 import { InspectDataMenu } from "./InspectDataMenu";
+import ZoomControls from "./ZoomControls";
 
 declare module "react" {
   interface CSSProperties {
@@ -109,6 +110,7 @@ type Props = {
 function Preview({ isInspecting, setIsInspecting }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(100);
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
@@ -317,7 +319,12 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
       {showDevicePreview && (
-        <div className="phone-content">
+        <div
+          className="phone-content"
+          style={{
+            transform: `scale(${zoomLevel}%)`,
+            transformOrigin: zoomLevel > 1 ? "top" : "center",
+          }}>
           <div className="touch-area" {...touchHandlers}>
             <MjpegImg
               src={previewURL}
@@ -413,6 +420,8 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
           <img src={device!.frameImage} className="phone-frame" />
         </div>
       )}
+
+      <ZoomControls setZoomLevel={setZoomLevel} />
     </div>
   );
 }

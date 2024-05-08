@@ -6,6 +6,7 @@
   width: 100%;
   position: relative;
   user-select: none;
+  scrollbar-gutter: stable;
 }
 
 .phone-wrapper:hover,
@@ -18,6 +19,7 @@
   display: flex;
   min-height: var(--min-height);
   aspect-ratio: var(--phone-aspect-ratio);
+  transition: all 200ms 0ms ease-in-out;
 }
 
 .touch-area {
