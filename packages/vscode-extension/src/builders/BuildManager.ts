@@ -42,8 +42,19 @@ type IOSBuildCacheInfo = {
   buildResult: IOSBuildResult;
 };
 
+const EXPO_GO_FINGERPRINT = "expo_go_fingerprint";
 export async function didFingerprintChange(platform: Platform) {
   const newFingerprint = await generateWorkspaceFingerprint();
+  const isExpoGo = await isExpoGoProject();
+
+  if (isExpoGo) {
+    const lastFingerprint = extensionContext.workspaceState.get<string>(EXPO_GO_FINGERPRINT);
+    if (!lastFingerprint) {
+      extensionContext.workspaceState.update(EXPO_GO_FINGERPRINT, newFingerprint);
+    }
+    return lastFingerprint && lastFingerprint !== newFingerprint;
+  }
+
   if (platform === Platform.IOS) {
     const { fingerprint: iosFingerprint } =
       extensionContext.workspaceState.get<IOSBuildCacheInfo>(IOS_BUILD_CACHE_KEY) ?? {};
