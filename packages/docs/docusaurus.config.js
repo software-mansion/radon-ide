@@ -55,6 +55,12 @@ const config = {
         },
         items: [
           {
+            to: "/pricing",
+            activeBasePath: "pricing",
+            label: "Pricing",
+            position: "right",
+          },
+          {
             to: "docs/getting-started",
             activeBasePath: "docs",
             label: "Docs",

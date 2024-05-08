@@ -59,7 +59,7 @@ export default function NavbarContent() {
       right={
         <>
           <NavbarItems
-            items={isLanding ? rightItems : rightItems.filter((item) => item.label !== "Docs")}
+            items={rightItems.filter((item) => !location.pathname.includes(item.activeBasePath))}
           />
           {!mobileSidebar.disabled && !isLanding && <NavbarMobileSidebarToggle />}
         </>

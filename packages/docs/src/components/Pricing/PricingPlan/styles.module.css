@@ -1,0 +1,24 @@
+.plan__container {
+  border: 1px solid var(--swm-border);
+  height: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--swm-off-background);
+}
+
+.plan__name {
+  margin-bottom: 8px;
+}
+
+.plan__price {
+  font-weight: 400;
+  margin-top: auto;
+  margin-bottom: 16px;
+}
+
+.plan__features {
+  margin: 24px 0 36px 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--swm-border);
+}
