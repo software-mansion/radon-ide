@@ -40,7 +40,7 @@ Here is how your launch json file in should look like after this step:
         "configuration": "Debug"
       },
       "android": {
-        "buildType": "debug",
+        "buildType": "debug"
       }
     }
   ]
