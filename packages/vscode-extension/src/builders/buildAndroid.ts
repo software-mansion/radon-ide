@@ -54,7 +54,7 @@ export async function getAndroidBuildPaths(
 function makeBuildTaskName(productFlavor: string, buildType: string) {
   // task name is in the format of assemble<ProductFlavor><BuildType> where productFlavor and buildType
   // are the names of the productFlavor and buildType that each start with a capital letter.
-  // Andorid Gradle Plugin always creates staging and release buildTypes and does not define any productFlavor by default.
+  // By default, Android Gradle Plugin always creates staging and release buildTypes and does not define any productFlavor.
   const flavor = productFlavor.charAt(0).toUpperCase() + productFlavor.slice(1);
   return "assemble" + flavor + buildType.charAt(0).toUpperCase() + buildType.slice(1);
 }
