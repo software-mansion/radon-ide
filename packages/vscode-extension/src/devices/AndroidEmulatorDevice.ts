@@ -9,12 +9,12 @@ import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
-import { AndroidBuildResult, BuildResult, EXPO_GO_PACKAGE_NAME } from "../builders/BuildManager";
+import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
-import { fetchExpoLaunchDeeplink } from "../builders/expoGo";
+import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");

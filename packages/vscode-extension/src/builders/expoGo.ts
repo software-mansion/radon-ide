@@ -8,6 +8,9 @@ import { CancelToken } from "./BuildManager";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
+export const EXPO_GO_BUNDLE_ID = "host.exp.Exponent";
+export const EXPO_GO_PACKAGE_NAME = "host.exp.exponent";
+
 function fileExists(filePath: string, ...additionalPaths: string[]) {
   return fs.existsSync(path.join(filePath, ...additionalPaths));
 }
