@@ -1,6 +1,4 @@
-### Description
-
-Please include a summary of the changes and the related issue. Please also include relevant motivation and context. Provide any useful screenshots, or recordings. 
+Start by providing description for the PR: please include a summary of the changes, related issue, motivation, and context behind the change. Provide screenshots or recordings when appropriate. 
 
 Fixes # (issue)
 
