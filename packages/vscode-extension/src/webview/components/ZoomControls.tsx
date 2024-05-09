@@ -5,17 +5,12 @@ import "./ZoomControls.css";
 const ZOOM_STEP = 10;
 
 type ZoomControlsProps = {
-  disabled: boolean;
   setZoomLevel: React.Dispatch<React.SetStateAction<number>>;
 };
 
-function ZoomControls({ disabled, setZoomLevel }: ZoomControlsProps) {
+function ZoomControls({ setZoomLevel }: ZoomControlsProps) {
   const handleZoom = useCallback(
     (shouldIncrease: boolean) => {
-      if (disabled) {
-        return;
-      }
-
       setZoomLevel((currentZoomLevel: number) => {
         const newZoomLevel = currentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP);
 
@@ -26,7 +21,7 @@ function ZoomControls({ disabled, setZoomLevel }: ZoomControlsProps) {
         return newZoomLevel;
       });
     },
-    [setZoomLevel, disabled]
+    [setZoomLevel]
   );
 
   const handleZoomIn = useCallback(() => handleZoom(true), [handleZoom]);
@@ -36,19 +31,19 @@ function ZoomControls({ disabled, setZoomLevel }: ZoomControlsProps) {
     <div className="zoom-controls">
       <IconButton
         tooltip={{
-          label: "Zoom in",
-          side: "left",
-        }}
-        onClick={handleZoomIn}>
-        <span className="codicon codicon-zoom-in" />
-      </IconButton>
-      <IconButton
-        tooltip={{
           label: "Zoom out",
-          side: "left",
+          side: "top",
         }}
         onClick={handleZoomOut}>
         <span className="codicon codicon-zoom-out" />
+      </IconButton>
+      <IconButton
+        tooltip={{
+          label: "Zoom in",
+          side: "top",
+        }}
+        onClick={handleZoomIn}>
+        <span className="codicon codicon-zoom-in" />
       </IconButton>
     </div>
   );

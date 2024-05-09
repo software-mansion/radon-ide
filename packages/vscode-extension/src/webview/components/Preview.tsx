@@ -12,7 +12,6 @@ import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import { InspectData, InspectDataStackItem } from "../../common/Project";
 import { InspectDataMenu } from "./InspectDataMenu";
-import ZoomControls from "./ZoomControls";
 
 declare module "react" {
   interface CSSProperties {
@@ -105,12 +104,13 @@ type InspectStackData = {
 type Props = {
   isInspecting: boolean;
   setIsInspecting: (isInspecting: boolean) => void;
+  zoomLevel: number;
+  setZoomLevel: (zoomLevel: number) => void;
 };
 
-function Preview({ isInspecting, setIsInspecting }: Props) {
+function Preview({ isInspecting, setIsInspecting, zoomLevel, setZoomLevel }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(100);
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
@@ -443,8 +443,6 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
           <img src={device!.frameImage} className="phone-frame" />
         </div>
       )}
-
-      <ZoomControls disabled={!showDevicePreview || hasBuildError} setZoomLevel={setZoomLevel} />
     </div>
   );
 }

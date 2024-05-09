@@ -1,12 +1,8 @@
 .zoom-controls {
-  position: fixed;
-  bottom: 60px;
-  right: 30px;
   background-color: var(--swm-zoom-controls-background);
   border-radius: 18px;
-  min-height: 75px;
+  min-width: 75px;
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
 }
 
