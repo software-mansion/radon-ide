@@ -26,7 +26,7 @@ Then, select **React Native IDE** from the dropdown:
 
 This will create a new file under your workspace directory: `.vscode/launch.json` – this file should be added to version control (git) as it carries configuration that is specific to your project setup rather than user specific editor settings.
 
-Here is how your lsunch json file in should look like after this step:
+Here is how your launch json file in should look like after this step:
 
 ```json
 {
@@ -40,7 +40,7 @@ Here is how your lsunch json file in should look like after this step:
         "configuration": "Debug"
       },
       "android": {
-        "variant": "debug"
+        "buildType": "debug",
       }
     }
   ]
@@ -100,9 +100,10 @@ Here is how the launch configuration could look like with some custom iOS build 
 ### Android build configuration
 
 Much like in the case of iOS, Android can also be configured to use a different target for builds we'd run on the emulator.
-Similarily, you add `"android"` entry to the `configuration` object that currently supports only one attribute:
+Similarly, you add `"android"` entry to the `configuration` object that currently supports only one attribute:
 
-- `variant` – Android's build variant used when building with Gradle, defaults to "debug"
+- `buildType` – Android's build type used when building with Gradle, defaults to "debug"
+- `productFlavor` – Android's product flavor used when building with Gradle, not set by default
 
 Below is an example of how the `launch.json` file could look like with android variant customized:
 
@@ -115,7 +116,8 @@ Below is an example of how the `launch.json` file could look like with android v
       "request": "launch",
       "name": "React Native IDE panel",
       "android": {
-        "variant": "staging"
+        "buildType": "debug",
+        "productFlavor": "staging"
       }
     }
   ]
