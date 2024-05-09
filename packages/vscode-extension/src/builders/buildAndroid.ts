@@ -62,10 +62,7 @@ export async function buildAndroid(
 ) {
   if (await isExpoGoProject()) {
     const apkPath = await downloadExpoGo(Platform.Android, cancelToken);
-    return {
-      apkPath,
-      packageName: EXPO_GO_PACKAGE_NAME,
-    };
+    return { apkPath, packageName: EXPO_GO_PACKAGE_NAME };
   }
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const cpuArchitecture = getCpuArchitecture();
