@@ -3,7 +3,7 @@ import { DebugAdapter } from "./DebugAdapter";
 import { CDPSubType, CDPValueType, FormmatedLog } from "./cdp";
 import { Source } from "@vscode/debugadapter";
 
-const MAX_OBJECT_DEPTH = 5;
+
 
 export interface CDPRemoteObject {
   type: CDPValueType;
@@ -17,7 +17,7 @@ export interface CDPRemoteObject {
 function format(anything: any) {
   const formatted = util.inspect(anything, {
     showHidden: false,
-    depth: MAX_OBJECT_DEPTH,
+    depth: Infinity,
     colors: false,
     maxArrayLength: 20,
     compact: true,
@@ -33,10 +33,10 @@ async function retrieveObject(
   objectId: any,
   debugadapter: DebugAdapter,
   category: "stderr" | "stdout",
-  depth: number,
-  prefix?: string
+  processedObjects: Set<any>,
+  prefix?: string,
 ): Promise<FormmatedLog> {
-  if (depth > MAX_OBJECT_DEPTH) {
+  if (processedObjects.has(objectId)) {
     return {
       prefix,
       unindented: "{}",
@@ -91,7 +91,7 @@ async function retrieveObject(
               prop.value.objectId,
               debugadapter,
               category,
-              depth + 1,
+              processedObjects.add(objectId),
               prop.name + ": "
             )
           );
@@ -134,7 +134,7 @@ export async function formatMessage(
       };
       switch (arg.type) {
         case "object":
-          res = await retrieveObject(arg.objectId, debugadapter, category, 0, `arg${index}: `);
+          res = await retrieveObject(arg.objectId, debugadapter, category, new Set(), `arg${index}: `);
           break;
         case "string":
           res.unindented = arg.value;
