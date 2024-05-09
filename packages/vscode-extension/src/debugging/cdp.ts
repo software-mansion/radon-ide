@@ -35,10 +35,6 @@ export type CDPDebuggerScope = {
 export type FormmatedLog = {
   prefix?: string;
   unindented: string;
-  source?: Source;
-  line?: number;
-  column?: number;
-  category: "stderr" | "stdout";
   indented?: FormmatedLog[];
 };
 

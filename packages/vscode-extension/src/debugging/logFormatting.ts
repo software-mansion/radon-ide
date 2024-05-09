@@ -3,8 +3,6 @@ import { DebugAdapter } from "./DebugAdapter";
 import { CDPSubType, CDPValueType, FormmatedLog } from "./cdp";
 import { Source } from "@vscode/debugadapter";
 
-
-
 export interface CDPRemoteObject {
   type: CDPValueType;
   subtype?: CDPSubType;
@@ -32,16 +30,14 @@ function format(anything: any) {
 async function retrieveObject(
   objectId: any,
   debugadapter: DebugAdapter,
-  category: "stderr" | "stdout",
   processedObjects: Set<any>,
-  prefix?: string,
+  prefix?: string
 ): Promise<FormmatedLog> {
   if (processedObjects.has(objectId)) {
     return {
       prefix,
       unindented: "{}",
       indented: [],
-      category,
     };
   }
   const properties = await debugadapter.sendCDPMessage("Runtime.getProperties", {
@@ -52,7 +48,6 @@ async function retrieveObject(
     prefix,
     unindented: "{...}",
     indented: new Array(),
-    category,
   };
   await Promise.all(
     properties.result.map(async (prop: any) => {
@@ -66,7 +61,6 @@ async function retrieveObject(
             prefix: prop.name + ": ",
             unindented: prop.value.value,
             indented: "",
-            category,
           });
           break;
         case "string":
@@ -74,7 +68,6 @@ async function retrieveObject(
             prefix: prop.name + ": ",
             unindented: prop.value.value,
             indented: "",
-            category,
           });
           break;
         case "boolean":
@@ -82,7 +75,6 @@ async function retrieveObject(
             prefix: prop.name + ": ",
             unindented: prop.value.value,
             indented: "",
-            category,
           });
           break;
         case "object":
@@ -90,7 +82,6 @@ async function retrieveObject(
             await retrieveObject(
               prop.value.objectId,
               debugadapter,
-              category,
               processedObjects.add(objectId),
               prop.name + ": "
             )
@@ -100,7 +91,6 @@ async function retrieveObject(
           res.indented.push({
             unindented: prop.name + ": " + (prop.description || function () {}),
             indented: "",
-            category,
           });
           break;
       }
@@ -111,18 +101,10 @@ async function retrieveObject(
 
 export async function formatMessage(
   args: [CDPRemoteObject],
-  debugadapter: DebugAdapter,
-  category: "stderr" | "stdout",
-  line?: number,
-  column?: number,
-  sourceURL?: string
+  debugadapter: DebugAdapter
 ): Promise<FormmatedLog> {
   const result: FormmatedLog = {
     unindented: "",
-    line,
-    column,
-    category,
-    source: sourceURL ? new Source(sourceURL, sourceURL) : undefined,
   };
 
   const mappedArgs = await Promise.all(
@@ -130,11 +112,10 @@ export async function formatMessage(
       let res: FormmatedLog = {
         prefix: `arg${index}: `,
         unindented: "",
-        category,
       };
       switch (arg.type) {
         case "object":
-          res = await retrieveObject(arg.objectId, debugadapter, category, new Set(), `arg${index}: `);
+          res = await retrieveObject(arg.objectId, debugadapter, new Set(), `arg${index}: `);
           break;
         case "string":
           res.unindented = arg.value;

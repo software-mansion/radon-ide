@@ -148,22 +148,28 @@ export class DebugAdapter extends DebugSession {
     });
   }
 
-  private sendFormatedOutputEvent(log: FormmatedLog) {
+  private sendFormatedOutputEvent(
+    log: FormmatedLog,
+    category: "stderr" | "stdout",
+    line?: number,
+    column?: number,
+    sourceURL?: string
+  ) {
     if (log.indented) {
       const startCollapsedEvent = new OutputEvent((log.prefix ?? "") + log.unindented + "\n");
       startCollapsedEvent.body = {
         ...startCollapsedEvent.body,
-        category: log.category,
+        category,
         //@ts-ignore source, line, column and group are valid fieleds
-        source: log.source,
-        line: log.line,
-        column: log.column,
+        source: sourceURL ? new Source(sourceURL, sourceURL) : undefined,
+        line,
+        column,
         group: "startCollapsed",
       };
       this.sendEvent(startCollapsedEvent);
 
       log.indented.map((item) => {
-        this.sendFormatedOutputEvent(item);
+        this.sendFormatedOutputEvent(item, category);
       });
 
       const endGroupEvent = new OutputEvent("");
@@ -173,15 +179,15 @@ export class DebugAdapter extends DebugSession {
 
       // For now this is a neccesery workaround, because of a bug in vs code that prevents "source" and "group" properties to work together
       // TODO: monitore if the bug was solved and remove Source Event https://github.com/microsoft/vscode/issues/212304
-      if (log.source) {
+      if (sourceURL) {
         const sourceEvent = new OutputEvent("");
         sourceEvent.body = {
           ...sourceEvent.body,
-          category: log.category,
+          category,
           //@ts-ignore source, line, column and group are valid fieleds
-          source: log.source,
-          line: log.line,
-          column: log.column,
+          source: new Source(sourceURL, sourceURL),
+          line,
+          column,
         };
         this.sendEvent(sourceEvent);
       }
@@ -189,11 +195,11 @@ export class DebugAdapter extends DebugSession {
       const outputEvent = new OutputEvent((log.prefix ?? "") + log.unindented + "\n");
       outputEvent.body = {
         ...outputEvent.body,
-        category: log.category,
+        category,
         //@ts-ignore source, line and column are valid fieleds
-        source: log.source,
-        line: log.line,
-        column: log.column,
+        source: sourceURL ? new Source(sourceURL, sourceURL) : undefined,
+        line,
+        column,
       };
       this.sendEvent(outputEvent);
     }
@@ -218,23 +224,18 @@ export class DebugAdapter extends DebugSession {
         generatedColumn1Based - 1
       );
 
-      const output = await formatMessage(
-        message.params.args.slice(0, -3),
-        this,
+      const output = await formatMessage(message.params.args.slice(0, -3), this);
+
+      this.sendFormatedOutputEvent(
+        output,
         typeToCategory(message.params.type),
         this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
         this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
         sourceURL
       );
-
-      this.sendFormatedOutputEvent(output);
     } else {
-      const output = await formatMessage(
-        message.params.args,
-        this,
-        typeToCategory(message.params.type)
-      );
-      this.sendFormatedOutputEvent(output);
+      const output = await formatMessage(message.params.args, this);
+      this.sendFormatedOutputEvent(output, typeToCategory(message.params.type));
     }
     this.sendEvent(
       new Event("RNIDE_consoleLog", { category: typeToCategory(message.params.type) })
