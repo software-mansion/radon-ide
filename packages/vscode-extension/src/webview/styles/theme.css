@@ -324,4 +324,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-debugger-button-group: var(--white);
   --swm-debugger-button-group-background: var(--background-dark-100);
   --swm-debugger-button-group-border: 1px solid var(--background-dark-40);
+
+  /* Zoom controls */
+  --swm-zoom-controls-background: var(--background-dark-80);
 }

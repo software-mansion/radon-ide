@@ -1,7 +1,8 @@
 .phone-wrapper {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: safe center;
+  align-items: safe center;
   overflow: auto;
   width: 100%;
   position: relative;
@@ -17,9 +18,12 @@
 .phone-content {
   position: relative;
   display: flex;
-  min-height: var(--min-height);
   aspect-ratio: var(--phone-aspect-ratio);
   transition: all 200ms 0ms ease-in-out;
+}
+
+.phone-full-screen {
+  height: 100%;
 }
 
 .touch-area {

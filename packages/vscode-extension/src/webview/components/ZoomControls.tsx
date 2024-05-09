@@ -4,9 +4,18 @@ import "./ZoomControls.css";
 
 const ZOOM_STEP = 10;
 
-function ZoomControls({ setZoomLevel }) {
+type ZoomControlsProps = {
+  disabled: boolean;
+  setZoomLevel: React.Dispatch<React.SetStateAction<number>>;
+};
+
+function ZoomControls({ disabled, setZoomLevel }: ZoomControlsProps) {
   const handleZoom = useCallback(
     (shouldIncrease: boolean) => {
+      if (disabled) {
+        return;
+      }
+
       setZoomLevel((currentZoomLevel: number) => {
         const newZoomLevel = currentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP);
 
@@ -17,7 +26,7 @@ function ZoomControls({ setZoomLevel }) {
         return newZoomLevel;
       });
     },
-    [setZoomLevel]
+    [setZoomLevel, disabled]
   );
 
   const handleZoomIn = useCallback(() => handleZoom(true), [handleZoom]);

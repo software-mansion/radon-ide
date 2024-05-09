@@ -312,6 +312,30 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
         onContextMenu,
       };
 
+  const [phoneContentHeight, setPhoneContentHeight] = useState(0);
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      if (phoneContentHeight === 0) {
+        return;
+      }
+
+      // Recalculate zoom level based on the new height
+      const wrapperHeight = wrapperDivRef.current!.clientHeight;
+      setZoomLevel((phoneContentHeight * 100) / wrapperHeight);
+    });
+
+    resizeObserver.observe(wrapperDivRef.current!);
+
+    return () => resizeObserver.disconnect();
+  }, [wrapperDivRef, phoneContentHeight, setZoomLevel]);
+
+  useEffect(() => {
+    const wrapperHeight = wrapperDivRef.current!.clientHeight;
+
+    setPhoneContentHeight(wrapperHeight * (zoomLevel / 100));
+  }, [zoomLevel]);
+
   return (
     <div
       className="phone-wrapper"
@@ -322,8 +346,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
         <div
           className="phone-content"
           style={{
-            transform: `scale(${zoomLevel}%)`,
-            transformOrigin: zoomLevel > 1 ? "top" : "center",
+            height: phoneContentHeight,
           }}>
           <div className="touch-area" {...touchHandlers}>
             <MjpegImg
@@ -406,7 +429,7 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
         </div>
       )}
       {!showDevicePreview && !hasBuildError && (
-        <div className="phone-content">
+        <div className="phone-content phone-full-screen">
           <div className="phone-sized phone-content-loading-background" />
           <div className="phone-sized phone-content-loading ">
             <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
@@ -415,13 +438,13 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
         </div>
       )}
       {hasBuildError && (
-        <div className="phone-content">
+        <div className="phone-content phone-full-screen">
           <div className="phone-sized extension-error-screen" />
           <img src={device!.frameImage} className="phone-frame" />
         </div>
       )}
 
-      <ZoomControls setZoomLevel={setZoomLevel} />
+      <ZoomControls disabled={!showDevicePreview || hasBuildError} setZoomLevel={setZoomLevel} />
     </div>
   );
 }

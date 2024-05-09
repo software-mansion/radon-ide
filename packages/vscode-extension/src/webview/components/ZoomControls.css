@@ -1,5 +1,19 @@
 .zoom-controls {
-  position: absolute;
-  bottom: 0;
-  left: 0;
+  position: fixed;
+  bottom: 60px;
+  right: 30px;
+  background-color: var(--swm-zoom-controls-background);
+  border-radius: 18px;
+  min-height: 75px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.zoom-controls button span {
+  transition: all 200ms 0ms ease-in-out;
+}
+
+.zoom-controls button:hover span {
+  transform: scale(1.15);
 }
