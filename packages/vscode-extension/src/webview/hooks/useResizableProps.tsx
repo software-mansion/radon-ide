@@ -21,7 +21,6 @@ export function useResizableProps({ wrapperDivRef, zoomLevel, setZoomLevel }: Us
     }
 
     const wrapperHeight = wrapperDivRef.current!.clientHeight;
-
     setZoomLevel((phoneHeight * 100) / wrapperHeight);
   }, [wrapperDivRef, phoneHeight, setZoomLevel]);
 
@@ -29,16 +28,15 @@ export function useResizableProps({ wrapperDivRef, zoomLevel, setZoomLevel }: Us
 
   const onResizeStop: ResizeCallback = useCallback(
     (event, direction, ref, delta) => {
-      setResizableStyle(defaultResizableStyle);
       setPhoneHeight(phoneHeight + delta.height);
       calculateZoomLevel();
+      setResizableStyle(defaultResizableStyle);
     },
     [resizableStyle]
   );
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver(calculateZoomLevel);
-
     resizeObserver.observe(wrapperDivRef.current!);
 
     return () => resizeObserver.disconnect();
@@ -46,7 +44,6 @@ export function useResizableProps({ wrapperDivRef, zoomLevel, setZoomLevel }: Us
 
   useEffect(() => {
     const wrapperHeight = wrapperDivRef.current!.clientHeight;
-
     setPhoneHeight(wrapperHeight * (zoomLevel / 100));
   }, [wrapperDivRef, zoomLevel]);
 
