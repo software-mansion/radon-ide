@@ -3,7 +3,6 @@ import { CSSProperties, useCallback, useEffect, useState } from "react";
 
 type UseResizableProps = {
   wrapperDivRef: React.RefObject<HTMLDivElement>;
-  showDevicePreview: string | boolean | undefined;
   zoomLevel: number;
   setZoomLevel: (zoomLevel: number) => void;
 };
@@ -12,23 +11,15 @@ const defaultResizableStyle: CSSProperties = {
   transition: "all 200ms 0ms ease-in-out",
 };
 
-export function useResizableProps({
-  wrapperDivRef,
-  showDevicePreview,
-  zoomLevel,
-  setZoomLevel,
-}: UseResizableProps) {
+export function useResizableProps({ wrapperDivRef, zoomLevel, setZoomLevel }: UseResizableProps) {
   const [phoneHeight, setPhoneHeight] = useState(0);
   const [resizableStyle, setResizableStyle] = useState<CSSProperties>(defaultResizableStyle);
 
-  // When switching between devices, state has to be reset
-  useEffect(() => {
-    setPhoneHeight(0);
-    setZoomLevel(100);
-    setResizableStyle(defaultResizableStyle);
-  }, [showDevicePreview, setZoomLevel]);
-
   const calculateZoomLevel = useCallback(() => {
+    if (phoneHeight === 0) {
+      return;
+    }
+
     const wrapperHeight = wrapperDivRef.current!.clientHeight;
 
     setZoomLevel((phoneHeight * 100) / wrapperHeight);
@@ -54,18 +45,18 @@ export function useResizableProps({
   }, [wrapperDivRef, calculateZoomLevel]);
 
   useEffect(() => {
-    console.log("wrapperDivRef.current");
     const wrapperHeight = wrapperDivRef.current!.clientHeight;
 
     setPhoneHeight(wrapperHeight * (zoomLevel / 100));
   }, [wrapperDivRef, zoomLevel]);
 
   return {
-    size: { width: "auto", height: phoneHeight === 0 ? "100%" : phoneHeight },
+    size: { width: "auto", height: phoneHeight },
     onResizeStart,
     onResizeStop,
     lockAspectRatio: true,
-    style: resizableStyle,
+    // Setting display to "none" when phoneHeight is 0 to avoid the visible size transition
+    style: { ...resizableStyle, display: phoneHeight === 0 ? "none" : "initial" },
     enable: {
       top: false,
       right: false,

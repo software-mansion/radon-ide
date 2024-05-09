@@ -316,7 +316,6 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, setZoomLevel }: Pro
 
   const resizableProps = useResizableProps({
     wrapperDivRef,
-    showDevicePreview,
     zoomLevel,
     setZoomLevel,
   });
@@ -412,19 +411,23 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, setZoomLevel }: Pro
         </Resizable>
       )}
       {!showDevicePreview && !hasBuildError && (
-        <div className="phone-content">
-          <div className="phone-sized phone-content-loading-background" />
-          <div className="phone-sized phone-content-loading ">
-            <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
+        <Resizable {...resizableProps}>
+          <div className="phone-content">
+            <div className="phone-sized phone-content-loading-background" />
+            <div className="phone-sized phone-content-loading ">
+              <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
+            </div>
+            <img src={device!.frameImage} className="phone-frame" />
           </div>
-          <img src={device!.frameImage} className="phone-frame" />
-        </div>
+        </Resizable>
       )}
       {hasBuildError && (
-        <div className="phone-content">
-          <div className="phone-sized extension-error-screen" />
-          <img src={device!.frameImage} className="phone-frame" />
-        </div>
+        <Resizable {...resizableProps}>
+          <div className="phone-content">
+            <div className="phone-sized extension-error-screen" />
+            <img src={device!.frameImage} className="phone-frame" />
+          </div>
+        </Resizable>
       )}
     </div>
   );
