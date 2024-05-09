@@ -18,12 +18,9 @@
 .phone-content {
   position: relative;
   display: flex;
+  height: 100%;
   aspect-ratio: var(--phone-aspect-ratio);
   transition: all 200ms 0ms ease-in-out;
-}
-
-.phone-full-screen {
-  height: 100%;
 }
 
 .touch-area {
