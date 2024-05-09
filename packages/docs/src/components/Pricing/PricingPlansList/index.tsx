@@ -1,37 +1,71 @@
 import React from "react";
 import styles from "./styles.module.css";
-import PricingPlan from "../PricingPlan";
-
-const plans = [
-  {
-    name: "Educational",
-    price: "Free",
-    features: ["basic features", "basic support", "basic limits"],
-  },
-  {
-    name: "Individual",
-    price: "$9/month/seat",
-    features: ["pro features", "pro support", "pro limits"],
-  },
-  {
-    name: "Enterprise",
-    features: ["pro features", "unlimited support", "no limits"],
-    cta: {
-      text: "Contact us",
-      href: "mailto:contact@swmansion.com",
-    },
-  },
-];
+import Button from "../../Button";
+import clsx from "clsx";
 
 const PricingPlansList = () => {
   return (
-    <ul className={styles.list}>
-      {plans.map(({ name, price, features, cta }) => (
+    <>
+      <ul className={styles.list}>
         <li className={styles.item}>
-          <PricingPlan name={name} price={price} features={features} cta={cta} />
+          <div className={styles.plan__container}>
+            <h2 className={styles.plan__name}>Individual</h2>
+            <h3 className={styles.plan__price}>
+              $9<span> per month</span>
+            </h3>
+            <p className={styles.plan__tagline}>Support the development</p>
+            <p>What's included:</p>
+            <ul className={styles.plan__features}>
+              <li>Put breakpoints right in the VSCode</li>
+              <li>Develop components in isolation</li>
+              <li>Expo Router & React Navigation integration</li>
+              <li>Get support through official Software Mansion channels</li>
+            </ul>
+            <div className={styles.plan__spacer} />
+
+            <Button href="/" disabled>
+              Choose
+            </Button>
+          </div>
         </li>
-      ))}
-    </ul>
+        <li className={styles.item}>
+          <div className={clsx(styles.plan__container, styles.plan__highlight)}>
+            <h2 className={styles.plan__name}>Enterprise</h2>
+            <h3 className={styles.plan__price}>Get in touch</h3>
+            <p className={styles.plan__tagline}>Become a partner</p>
+            <p>What's included:</p>
+            <ul className={styles.plan__features}>
+              <li>Everything in Individual</li>
+              <li>Priority support</li>
+              <li>React Native Consulting services available</li>
+            </ul>
+            <div className={styles.plan__spacer} />
+            <Button href="https://swmansion.com/contact#contact-form">Contact us</Button>
+          </div>
+        </li>
+        <li>
+          <div className={styles.plan__container}>
+            <h2 className={styles.plan__name}>Educational</h2>
+            <h3 className={styles.plan__price}>Free</h3>
+            <p className={styles.plan__tagline}>Learn by doing</p>
+            <p>Conditions apply:</p>
+            <ul className={styles.plan__features}>
+              <li>Everything in Individual</li>
+              <li>For students from accredited educational institutions</li>
+              <li>Only for non-commercial purposes</li>
+            </ul>
+            <div className={styles.plan__spacer} />
+            <Button href="/" disabled>
+              Choose
+            </Button>
+          </div>
+        </li>
+      </ul>
+      <p>
+        Disclaimer: The following pricing is for informational purposes only and may change in the
+        future.
+      </p>
+    </>
   );
 };
 

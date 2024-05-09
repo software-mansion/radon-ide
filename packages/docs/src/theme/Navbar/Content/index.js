@@ -42,7 +42,7 @@ function NavbarContentLayout({ left, right }) {
   );
 }
 export default function NavbarContent() {
-  const { isLanding } = usePageType();
+  const { isDocumentation } = usePageType();
   const mobileSidebar = useNavbarMobileSidebar();
   const items = useNavbarItems();
   const [leftItems, rightItems] = splitNavbarItems(items);
@@ -58,10 +58,8 @@ export default function NavbarContent() {
       }
       right={
         <>
-          <NavbarItems
-            items={rightItems.filter((item) => !location.pathname.includes(item.activeBasePath))}
-          />
-          {!mobileSidebar.disabled && !isLanding && <NavbarMobileSidebarToggle />}
+          <NavbarItems items={rightItems} />
+          {!mobileSidebar.disabled && isDocumentation && <NavbarMobileSidebarToggle />}
         </>
       }
     />

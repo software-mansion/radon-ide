@@ -1,56 +1,9 @@
-.subheadingLabel {
-  font-family: var(--swm-h2-font-size);
-  font-size: var(--swm-h2-font-size);
-  font-weight: 400;
-  line-height: 1.15;
-  letter-spacing: var(--swm-heading-letter-spacing-bigger);
-
-  margin-top: 3rem;
-  margin-bottom: 5.5rem;
-  width: 50%;
-  color: var(--swm-landing-heading);
-  text-wrap: balance;
-}
-
-.headingDisclaimer {
-  margin-top: 1.5rem;
-  font-size: 16px;
-  font-weight: 400;
+.container {
   display: flex;
-  align-items: center;
-  gap: 5px;
+  flex-direction: column;
+  gap: 24px;
 }
 
-@media (min-width: 2920px) {
-  .subheadingLabel {
-    width: 100%;
-  }
-}
-
-@media (min-width: 996px) {
-  .headingLabel {
-    font-size: 48px;
-  }
-}
-
-@media (max-width: 996px) {
-  .subheadingLabel {
-    margin: 2rem 0 3.5rem 0;
-    font-size: 26px;
-    width: 100%;
-  }
-}
-
-@media (max-width: 420px) {
-  .subheadingLabel {
-    margin: 1rem 0 2rem 0;
-    font-size: 20px;
-  }
-  .headingDisclaimer {
-    align-items: flex-start;
-  }
-
-  .headingDisclaimer svg {
-    margin-top: 2px;
-  }
+.highlight {
+  text-decoration: underline;
 }
