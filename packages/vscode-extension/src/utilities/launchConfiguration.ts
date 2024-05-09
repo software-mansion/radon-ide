@@ -11,7 +11,8 @@ export type LaunchConfigurationOptions = {
     | undefined;
   android:
     | {
-        variant: string | undefined;
+        buildType: string | undefined;
+        productFlavor: string | undefined;
       }
     | undefined;
   preview:
