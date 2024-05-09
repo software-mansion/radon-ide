@@ -327,4 +327,5 @@ body[data-vscode-theme-kind="vscode-dark"] {
 
   /* Zoom controls */
   --swm-zoom-controls-background: var(--background-dark-80);
+  --swm-zoom-controls-button-background-hover: var(--background-dark-70);
 }

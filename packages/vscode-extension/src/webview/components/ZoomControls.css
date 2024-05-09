@@ -6,10 +6,6 @@
   justify-content: space-between;
 }
 
-.zoom-controls button span {
-  transition: all 200ms 0ms ease-in-out;
-}
-
-.zoom-controls button:hover span {
-  transform: scale(1.15);
+.zoom-controls .icon-button:hover {
+  background-color: var(--swm-zoom-controls-button-background-hover);
 }
