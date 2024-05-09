@@ -97,8 +97,7 @@ export class Metro implements Disposable {
     appRootFolder: string,
     libPath: string,
     resetCache: boolean,
-    metroEnv: typeof process.env,
-    metroConfigUri?: Uri
+    metroEnv: typeof process.env
   ) {
     const reactNativeRoot = path.dirname(
       require.resolve("react-native", { paths: [appRootFolder] })
@@ -119,10 +118,7 @@ export class Metro implements Disposable {
       ],
       {
         cwd: appRootFolder,
-        env: {
-          ...metroEnv,
-          ...(metroConfigUri ? { RN_IDE_METRO_CONFIG_PATH: metroConfigUri.path } : {}),
-        },
+        env: metroEnv,
         buffer: false,
       }
     );
@@ -137,10 +133,14 @@ export class Metro implements Disposable {
     await this.devtools.ready();
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
-
+    let metroConfigPath: string | undefined;
+    if (launchConfiguration.metroConfigPath) {
+      metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
+    }
     const metroEnv = {
       ...process.env,
       ...launchConfiguration.env,
+      ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
       NODE_PATH: path.join(appRootFolder, "node_modules"),
       RCT_METRO_PORT: "0",
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
@@ -148,20 +148,10 @@ export class Metro implements Disposable {
     };
     let bundlerProcess: ChildProcess;
 
-    let metroConfigUri: Uri | undefined;
-    if (launchConfiguration.metroConfigPath) {
-      metroConfigUri = findMetroConfig(launchConfiguration.metroConfigPath);
-    }
     if (shouldUseExpoCLI()) {
       bundlerProcess = this.launchExpoMetro(appRootFolder, libPath, resetCache, metroEnv);
     } else {
-      bundlerProcess = this.launchPackager(
-        appRootFolder,
-        libPath,
-        resetCache,
-        metroEnv,
-        metroConfigUri
-      );
+      bundlerProcess = this.launchPackager(appRootFolder, libPath, resetCache, metroEnv);
     }
     this.subprocess = bundlerProcess;
 
@@ -267,14 +257,14 @@ export class Metro implements Disposable {
   }
 }
 
-function findMetroConfig(configPath: string) {
+function findCustomMetroConfig(configPath: string) {
   for (const folder of workspace.workspaceFolders ?? []) {
     const possibleMetroConfigLocation = Uri.joinPath(folder.uri, configPath);
     if (fs.existsSync(possibleMetroConfigLocation.fsPath)) {
-      return possibleMetroConfigLocation;
+      return possibleMetroConfigLocation.fsPath;
     }
   }
-  return undefined;
+  throw new Error("Metro config cannot be found, please check if `metroConfigPath` path is valid");
 }
 
 function shouldUseExpoCLI() {
