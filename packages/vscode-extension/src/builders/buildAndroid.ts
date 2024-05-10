@@ -2,13 +2,15 @@ import { getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
-import { CancelToken } from "./BuildManager";
+import { AndroidBuildResult, CancelToken } from "./BuildManager";
 import path from "path";
 import fs from "fs";
 import { OutputChannel, workspace } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { EXPO_GO_PACKAGE_NAME, downloadExpoGo, isExpoGoProject } from "./expoGo";
+import { Platform } from "../common/DeviceManager";
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
@@ -55,9 +57,13 @@ export async function buildAndroid(
   appRootFolder: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
-  outputChannel: OutputChannel,
+  getOutputChannel: () => OutputChannel,
   progressListener: (newProgress: number) => void
 ) {
+  if (await isExpoGoProject()) {
+    const apkPath = await downloadExpoGo(Platform.Android, cancelToken);
+    return { apkPath, packageName: EXPO_GO_PACKAGE_NAME };
+  }
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const cpuArchitecture = getCpuArchitecture();
   const buildOptions = getLaunchConfiguration();
@@ -79,6 +85,7 @@ export async function buildAndroid(
     })
   );
   const buildAndroidProgressProcessor = new BuildAndroidProgressProcessor(progressListener);
+  const outputChannel = getOutputChannel();
   outputChannel.clear();
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
