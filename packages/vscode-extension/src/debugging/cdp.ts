@@ -33,7 +33,6 @@ export type CDPDebuggerScope = {
 };
 
 export type FormmatedLog = {
-  prefix?: string;
   unindented: string;
   indented?: FormmatedLog[];
 };

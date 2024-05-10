@@ -35,8 +35,7 @@ async function retrieveObject(
 ): Promise<FormmatedLog> {
   if (processedObjects.has(objectId)) {
     return {
-      prefix,
-      unindented: "{}",
+      unindented: (prefix ? prefix : "") + "{}",
       indented: [],
     };
   }
@@ -45,8 +44,7 @@ async function retrieveObject(
     ownProperties: true,
   });
   const res = {
-    prefix,
-    unindented: "{...}",
+    unindented: (prefix ? prefix : "") + "{...}",
     indented: new Array(),
   };
   await Promise.all(
@@ -58,22 +56,19 @@ async function retrieveObject(
       switch (prop.value.type) {
         case "number":
           res.indented.push({
-            prefix: prop.name + ": ",
-            unindented: prop.value.value,
+            unindented: prop.name + ": " + prop.value.value,
             indented: "",
           });
           break;
         case "string":
           res.indented.push({
-            prefix: prop.name + ": ",
-            unindented: prop.value.value,
+            unindented: prop.name + ": " + prop.value.value,
             indented: "",
           });
           break;
         case "boolean":
           res.indented.push({
-            prefix: prop.name + ": ",
-            unindented: prop.value.value,
+            unindented: prop.name + ": " + prop.value.value,
             indented: "",
           });
           break;
@@ -110,12 +105,11 @@ export async function formatMessage(
   const mappedArgs = await Promise.all(
     args.map(async (arg, index) => {
       let res: FormmatedLog = {
-        prefix: `arg${index}: `,
         unindented: "",
       };
       switch (arg.type) {
         case "object":
-          res = await retrieveObject(arg.objectId, debugadapter, new Set(), `arg${index}: `);
+          res = await retrieveObject(arg.objectId, debugadapter, new Set());
           break;
         case "string":
           res.unindented = arg.value;

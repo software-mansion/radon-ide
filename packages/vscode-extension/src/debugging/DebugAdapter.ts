@@ -156,7 +156,7 @@ export class DebugAdapter extends DebugSession {
     sourceURL?: string
   ) {
     if (log.indented) {
-      const startCollapsedEvent = new OutputEvent((log.prefix ?? "") + log.unindented + "\n");
+      const startCollapsedEvent = new OutputEvent(log.unindented + "\n");
       startCollapsedEvent.body = {
         ...startCollapsedEvent.body,
         category,
@@ -168,7 +168,7 @@ export class DebugAdapter extends DebugSession {
       };
       this.sendEvent(startCollapsedEvent);
 
-      log.indented.map((item) => {
+      log.indented.forEach((item) => {
         this.sendFormatedOutputEvent(item, category);
       });
 
@@ -192,7 +192,7 @@ export class DebugAdapter extends DebugSession {
         this.sendEvent(sourceEvent);
       }
     } else {
-      const outputEvent = new OutputEvent((log.prefix ?? "") + log.unindented + "\n");
+      const outputEvent = new OutputEvent(log.unindented + "\n");
       outputEvent.body = {
         ...outputEvent.body,
         category,
