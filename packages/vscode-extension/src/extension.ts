@@ -242,7 +242,7 @@ async function findAppRootFolder() {
 }
 
 async function openDevMenu() {
-  Project.openDevMenu();
+  Project.currentProject?.openDevMenu();
 }
 
 async function diagnoseWorkspaceStructure() {

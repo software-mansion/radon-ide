@@ -325,14 +325,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.openNavigation(navigationItemID);
   }
 
-  public static async openDevMenu() {
-    if (!Project.currentProject) {
-      Logger.error("Current project is not defined.");
-      return;
-    }
-    await Project.currentProject?.deviceSession?.openDevMenu();
-  }
-
   public async openDevMenu() {
     await this.deviceSession?.openDevMenu();
   }
