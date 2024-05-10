@@ -65,8 +65,8 @@
     "keybindings": [
       {
         "command": "RNIDE.openDevMenu",
-        "key": "ctrl+d",
-        "mac": "cmd+d"
+        "key": "ctrl+alt+z",
+        "mac": "ctr+cmd+z"
       }
     ],
     "configuration": {
