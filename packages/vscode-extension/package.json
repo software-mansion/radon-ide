@@ -66,7 +66,7 @@
       {
         "command": "RNIDE.openDevMenu",
         "key": "ctrl+alt+z",
-        "mac": "ctr+cmd+z"
+        "mac": "ctrl+cmd+z"
       }
     ],
     "configuration": {
