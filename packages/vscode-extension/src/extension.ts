@@ -27,7 +27,6 @@ import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
-import { getTelemetryReporter } from "./utilities/telemetry";
 import { Project } from "./project/project";
 import { findSingleFileInWorkspace } from "./utilities/common";
 
