@@ -238,10 +238,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
         Logger.error("Error while uninstalling will be ignored", e);
       }
     }
+
+    const installApk = (allowDowngrade: boolean) => {
+      return exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "install",
+        ...(allowDowngrade ? ["-d"] : []),
+        "-r",
+        build.apkPath,
+      ]);
+    };
     await retry(
-      () => exec(ADB_PATH, ["-s", this.serial!, "install", "-r", build.apkPath]),
+      () => installApk(false),
       2,
-      1000
+      1000,
+      // there's a chance that same emulator was used in newer version of Expo
+      // and then RN IDE was opened on older project, in which case installation
+      // will fail. We use -d flag which allows for downgrading debuggable
+      // applications (see `adb shell pm`, install command)
+      () => installApk(true)
     );
   }
 
