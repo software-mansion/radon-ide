@@ -140,7 +140,7 @@ export async function buildIos(
   appRootFolder: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
-  getOutputChannel: () => OutputChannel,
+  outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ) {
   if (await isExpoGoProject()) {
@@ -184,7 +184,6 @@ export async function buildIos(
     );
 
     const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
-    const outputChannel = getOutputChannel();
     outputChannel.clear();
     lineReader(process).onLineRead((line) => {
       outputChannel.appendLine(line);

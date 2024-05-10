@@ -57,7 +57,7 @@ export async function buildAndroid(
   appRootFolder: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
-  getOutputChannel: () => OutputChannel,
+  outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ) {
   if (await isExpoGoProject()) {
@@ -85,7 +85,6 @@ export async function buildAndroid(
     })
   );
   const buildAndroidProgressProcessor = new BuildAndroidProgressProcessor(progressListener);
-  const outputChannel = getOutputChannel();
   outputChannel.clear();
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
