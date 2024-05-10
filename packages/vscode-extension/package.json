@@ -152,6 +152,10 @@
                 "type": "object",
                 "description": "Environment variables to be passed to all build/run commands that the IDE is launching."
               },
+              "metroConfigPath": {
+                "type": "string",
+                "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+              },
               "ios": {
                 "description": "Provides a way to customize Xcode builds for iOS",
                 "type": "object",
