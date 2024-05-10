@@ -32,9 +32,9 @@ export type CDPDebuggerScope = {
   object: CDPRemoteObject & { type: "object" };
 };
 
-export type FormmatedLog = {
-  unindented: string;
-  indented?: FormmatedLog[];
+export type FormattedLog = {
+  label: string;
+  children?: FormattedLog[];
 };
 
 export function inferDAPVariableValueForCDPRemoteObject(cdpValue: CDPRemoteObject): string {

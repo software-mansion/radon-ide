@@ -24,7 +24,7 @@ import {
   inferDAPVariableValueForCDPRemoteObject,
   CDPDebuggerScope,
   CDPPropertyDescriptor,
-  FormmatedLog,
+  FormattedLog as FormattedLog,
 } from "./cdp";
 
 function compareIgnoringHost(url1: string, url2: string) {
@@ -148,19 +148,19 @@ export class DebugAdapter extends DebugSession {
     });
   }
 
-  private sendFormatedOutputEvent(
-    log: FormmatedLog,
+  private sendFormattedOutputEvent(
+    log: FormattedLog,
     category: "stderr" | "stdout",
     line?: number,
     column?: number,
     sourceURL?: string
   ) {
-    if (log.indented) {
-      const startCollapsedEvent = new OutputEvent(log.unindented + "\n");
+    if (log.children) {
+      const startCollapsedEvent = new OutputEvent(log.label + "\n");
       startCollapsedEvent.body = {
         ...startCollapsedEvent.body,
         category,
-        //@ts-ignore source, line, column and group are valid fieleds
+        //@ts-ignore source, line, column and group are valid fields
         source: sourceURL ? new Source(sourceURL, sourceURL) : undefined,
         line,
         column,
@@ -168,8 +168,8 @@ export class DebugAdapter extends DebugSession {
       };
       this.sendEvent(startCollapsedEvent);
 
-      log.indented.forEach((item) => {
-        this.sendFormatedOutputEvent(item, category);
+      log.children.forEach((item) => {
+        this.sendFormattedOutputEvent(item, category);
       });
 
       const endGroupEvent = new OutputEvent("");
@@ -177,14 +177,14 @@ export class DebugAdapter extends DebugSession {
       endGroupEvent.body.group = "end";
       this.sendEvent(endGroupEvent);
 
-      // For now this is a neccesery workaround, because of a bug in vs code that prevents "source" and "group" properties to work together
-      // TODO: monitore if the bug was solved and remove Source Event https://github.com/microsoft/vscode/issues/212304
+      // For now this is a necessary workaround, because of a bug in vs code that prevents "source" and "group" properties to work together
+      // TODO: monitor if the bug was solved and remove Source Event https://github.com/microsoft/vscode/issues/212304
       if (sourceURL) {
         const sourceEvent = new OutputEvent("");
         sourceEvent.body = {
           ...sourceEvent.body,
           category,
-          //@ts-ignore source, line, column and group are valid fieleds
+          //@ts-ignore source, line, column and group are valid fields
           source: new Source(sourceURL, sourceURL),
           line,
           column,
@@ -192,11 +192,11 @@ export class DebugAdapter extends DebugSession {
         this.sendEvent(sourceEvent);
       }
     } else {
-      const outputEvent = new OutputEvent(log.unindented + "\n");
+      const outputEvent = new OutputEvent(log.label + "\n");
       outputEvent.body = {
         ...outputEvent.body,
         category,
-        //@ts-ignore source, line and column are valid fieleds
+        //@ts-ignore source, line and column are valid fields
         source: sourceURL ? new Source(sourceURL, sourceURL) : undefined,
         line,
         column,
@@ -226,7 +226,7 @@ export class DebugAdapter extends DebugSession {
 
       const output = await formatMessage(message.params.args.slice(0, -3), this);
 
-      this.sendFormatedOutputEvent(
+      this.sendFormattedOutputEvent(
         output,
         typeToCategory(message.params.type),
         this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
@@ -235,7 +235,7 @@ export class DebugAdapter extends DebugSession {
       );
     } else {
       const output = await formatMessage(message.params.args, this);
-      this.sendFormatedOutputEvent(output, typeToCategory(message.params.type));
+      this.sendFormattedOutputEvent(output, typeToCategory(message.params.type));
     }
     this.sendEvent(
       new Event("RNIDE_consoleLog", { category: typeToCategory(message.params.type) })
