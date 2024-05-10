@@ -155,18 +155,14 @@ export class BuildManager {
       // we reset the cache when force clean build is requested as the newly started build may end up being cancelled
       extensionContext.workspaceState.update(ANDROID_BUILD_CACHE_KEY, undefined);
     }
-
+    this.buildOutputChannel = window.createOutputChannel("React Native IDE (Android build)", {
+      log: true,
+    });
     const build = await buildAndroid(
       getAppRootFolder(),
       forceCleanBuild,
       cancelToken,
-      () => {
-        this.buildOutputChannel = window.createOutputChannel("React Native IDE (Android build)", {
-          log: true,
-        });
-
-        return this.buildOutputChannel;
-      },
+      this.buildOutputChannel,
       progressListener
     );
     const buildResult: AndroidBuildResult = { ...build, platform: Platform.Android };
@@ -219,18 +215,15 @@ export class BuildManager {
       // we reset the cache when force clean build is requested as the newly started build may end up being cancelled
       extensionContext.workspaceState.update(IOS_BUILD_CACHE_KEY, undefined);
     }
-
+    this.buildOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", {
+      log: true,
+    });
     const build = await buildIos(
       deviceInfo,
       getAppRootFolder(),
       forceCleanBuild,
       cancelToken,
-      () => {
-        this.buildOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", {
-          log: true,
-        });
-        return this.buildOutputChannel;
-      },
+      this.buildOutputChannel,
       progressListener
     );
     const buildResult = { ...build, platform: Platform.IOS };
