@@ -27,6 +27,7 @@ import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
+import { Project } from "./project/project";
 import { findSingleFileInWorkspace } from "./utilities/common";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
@@ -102,6 +103,7 @@ export async function activate(context: ExtensionContext) {
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
+  context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.showPanel", showIDEPanel));
@@ -236,6 +238,10 @@ async function findAppRootFolder() {
       }
     });
   return undefined;
+}
+
+async function openDevMenu() {
+  Project.currentProject?.openDevMenu();
 }
 
 async function diagnoseWorkspaceStructure() {
