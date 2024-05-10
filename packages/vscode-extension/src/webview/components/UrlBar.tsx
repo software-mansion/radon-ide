@@ -20,15 +20,15 @@ function UrlBar({ project, disabled }: UrlBarProps) {
       ]);
     }
     project.addListener("navigationChanged", handleNavigationChanged);
-    const handleProjectReset = (e: ProjectState) =>{
-      if(e.status === 'starting'){
+    const handleProjectReset = (e: ProjectState) => {
+      if (e.status === "starting") {
         setUrlList([]);
       }
     };
-    project.addListener('projectStateChanged', handleProjectReset);
+    project.addListener("projectStateChanged", handleProjectReset);
     return () => {
       project.removeListener("navigationChanged", handleNavigationChanged);
-      project.removeListener('projectStateChanged', handleProjectReset);
+      project.removeListener("projectStateChanged", handleProjectReset);
     };
   }, []);
 
