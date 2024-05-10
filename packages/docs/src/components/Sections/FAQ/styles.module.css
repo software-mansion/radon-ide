@@ -1,16 +1,16 @@
-.troubleshootingMain {
+.faqMain {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   margin-bottom: 5rem;
 }
 
-.troubleshootingHeading {
+.faqHeading {
   font-size: var(--swm-h2-font-size);
   font-weight: 700;
 }
 
-.troubleshootingSubheading {
+.faqSubheading {
   font-size: 24px;
   font-weight: 400;
 }
@@ -64,13 +64,13 @@
 }
 
 @media (max-width: 390px) {
-  .troubleshootingMain {
+  .faqMain {
     margin-bottom: 3rem;
   }
-  .troubleshootingHeading {
+  .faqHeading {
     font-size: 24px;
   }
-  .troubleshootingSubheading {
+  .faqSubheading {
     font-size: 20px;
   }
 }

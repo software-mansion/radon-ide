@@ -1,11 +1,12 @@
 import path from "path";
-import { Disposable } from "vscode";
+import { Disposable, Uri, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
 import stripAnsi from "strip-ansi";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import fs from "fs";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -127,14 +128,19 @@ export class Metro implements Disposable {
     resetCache: boolean,
     progressListener: (newStageProgress: number) => void
   ) {
-    let appRootFolder = getAppRootFolder();
+    const appRootFolder = getAppRootFolder();
+    const launchConfiguration = getLaunchConfiguration();
     await this.devtools.ready();
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
-
+    let metroConfigPath: string | undefined;
+    if (launchConfiguration.metroConfigPath) {
+      metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
+    }
     const metroEnv = {
       ...process.env,
-      ...getLaunchConfiguration().env,
+      ...launchConfiguration.env,
+      ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
       NODE_PATH: path.join(appRootFolder, "node_modules"),
       RCT_METRO_PORT: "0",
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
@@ -249,6 +255,16 @@ export class Metro implements Disposable {
 
     return websocketAddress;
   }
+}
+
+function findCustomMetroConfig(configPath: string) {
+  for (const folder of workspace.workspaceFolders ?? []) {
+    const possibleMetroConfigLocation = Uri.joinPath(folder.uri, configPath);
+    if (fs.existsSync(possibleMetroConfigLocation.fsPath)) {
+      return possibleMetroConfigLocation.fsPath;
+    }
+  }
+  throw new Error("Metro config cannot be found, please check if `metroConfigPath` path is valid");
 }
 
 function shouldUseExpoCLI() {

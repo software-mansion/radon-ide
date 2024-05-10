@@ -1,4 +1,3 @@
-require("expo-router/entry");
 const { AppRegistry, View } = require("react-native");
 
 global.__RNIDE_previews ||= new Map();

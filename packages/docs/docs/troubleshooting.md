@@ -36,7 +36,7 @@ Please refer to [simulators](./simulators.md) section to learn more about instal
 ### -sec-num- Stuck on "Waiting for app to load"
 
 You typically should not see this state for longer than a second or two.
-If it stays visible longer than that, something might be wrong with the device setup and this type of issue indicates that the extension may be unable to launch and render yout app automatically.
+If it stays visible longer than that, something might be wrong with the device setup and this type of issue indicates that the extension may be unable to launch and render your app automatically.
 When this happens, you can click on the "Waiting for app to load" text to reveal the device preview and see what's happening under the hood.
 Sometimes the app gets blocked by some system dialog that we don't have a way to detect, in which case you need to close the dialog and the app should start normally.
 

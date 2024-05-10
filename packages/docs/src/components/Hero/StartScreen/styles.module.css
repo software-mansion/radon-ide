@@ -25,6 +25,18 @@
   color: var(--swm-green-light-100);
 }
 
+.betaChip {
+  background-color: var(--swm-red-light-100);
+  color: var(--swm-white);
+  font-size: 19px;
+  height: 30px;
+  border-radius: 8px;
+  padding: 4px;
+  line-height: 1.15;
+  font-weight: 500;
+  display: flex;
+}
+
 .poweredBy {
   display: flex;
   gap: 1rem;
@@ -169,5 +181,10 @@
   }
   .headingDisclaimer svg {
     margin-top: 2px;
+  }
+  .betaChip {
+    font-size: 12px;
+    height: 20px;
+    border-radius: 4px;
   }
 }

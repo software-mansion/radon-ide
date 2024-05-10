@@ -29,6 +29,7 @@ import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
 import { getTelemetryReporter } from "./utilities/telemetry";
 import { Project } from "./project/project";
+import { findSingleFileInWorkspace } from "./utilities/common";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
@@ -147,16 +148,6 @@ export async function activate(context: ExtensionContext) {
   await configureAppRootFolder();
 }
 
-async function findSingleFileInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
-  const files = await workspace.findFiles(fileGlobPattern, excludePattern, 2);
-  if (files.length === 1) {
-    return files[0];
-  } else if (files.length > 1) {
-    Logger.error(`Found multiple ${fileGlobPattern} files in the workspace`);
-  }
-  return undefined;
-}
-
 function extensionActivated() {
   if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
     commands.executeCommand("RNIDE.openPanel");
@@ -175,7 +166,8 @@ async function configureAppRootFolder() {
 }
 
 async function findAppRootFolder() {
-  const appRootFromLaunchConfig = getLaunchConfiguration().appRoot;
+  const launchConfiguration = getLaunchConfiguration();
+  const appRootFromLaunchConfig = launchConfiguration.appRoot;
   if (appRootFromLaunchConfig) {
     let appRoot: string | undefined;
     workspace.workspaceFolders?.forEach((folder) => {

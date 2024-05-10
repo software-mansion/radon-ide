@@ -3,23 +3,27 @@ export enum Platform {
   Android = "Android",
 }
 
-export type DeviceInfo =
-  | {
-      id: string;
-      platform: Platform.Android;
-      avdId: string;
-      name: string;
-      systemName: string;
-      available: boolean;
-    }
-  | {
-      id: string;
-      platform: Platform.IOS;
-      UDID: string;
-      name: string;
-      systemName: string;
-      available: boolean;
-    };
+export type DeviceInfo = AndroidDeviceInfo | IOSDeviceInfo;
+
+export type AndroidDeviceInfo = {
+  id: string;
+  platform: Platform.Android;
+  avdId: string;
+  name: string;
+  systemName: string;
+  available: boolean;
+};
+
+export type IOSDeviceInfo = {
+  id: string;
+  platform: Platform.IOS;
+  UDID: string;
+  name: string;
+  systemName: string;
+  available: boolean;
+  deviceIdentifier: string;
+  runtimeInfo: IOSRuntimeInfo;
+};
 
 export type AndroidSystemImageInfo = {
   name: string;

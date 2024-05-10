@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.9-beta",
+  "version": "0.0.10-beta",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -164,6 +164,10 @@
               "env": {
                 "type": "object",
                 "description": "Environment variables to be passed to all build/run commands that the IDE is launching."
+              },
+              "metroConfigPath": {
+                "type": "string",
+                "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
               },
               "ios": {
                 "description": "Provides a way to customize Xcode builds for iOS",
