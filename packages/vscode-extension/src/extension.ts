@@ -171,16 +171,6 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
   }
 }
 
-async function findSingleFileInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
-  const files = await workspace.findFiles(fileGlobPattern, excludePattern, 2);
-  if (files.length === 1) {
-    return files[0];
-  } else if (files.length > 1) {
-    Logger.error(`Found multiple ${fileGlobPattern} files in the workspace`);
-  }
-  return undefined;
-}
-
 function extensionActivated() {
   if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
     commands.executeCommand("RNIDE.openPanel");
