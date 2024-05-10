@@ -58,7 +58,7 @@ function DiagnosticView() {
       <div className="diagnostic-button-container">
         <Button onClick={runDiagnostics} type="secondary">
           <span slot="start" className="codicon codicon-refresh" />
-          Re-run
+          Re-run checks
         </Button>
       </div>
     </>

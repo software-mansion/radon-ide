@@ -9,12 +9,12 @@ import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
-import { AndroidBuildResult, BuildResult, EXPO_GO_PACKAGE_NAME } from "../builders/BuildManager";
+import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
-import { fetchExpoLaunchDeeplink } from "../builders/expoGo";
+import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
@@ -238,10 +238,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
         Logger.error("Error while uninstalling will be ignored", e);
       }
     }
+
+    const installApk = (allowDowngrade: boolean) => {
+      return exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "install",
+        ...(allowDowngrade ? ["-d"] : []),
+        "-r",
+        build.apkPath,
+      ]);
+    };
     await retry(
-      () => exec(ADB_PATH, ["-s", this.serial!, "install", "-r", build.apkPath]),
+      () => installApk(false),
       2,
-      1000
+      1000,
+      // there's a chance that same emulator was used in newer version of Expo
+      // and then RN IDE was opened on older project, in which case installation
+      // will fail. We use -d flag which allows for downgrading debuggable
+      // applications (see `adb shell pm`, install command)
+      () => installApk(true)
     );
   }
 

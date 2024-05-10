@@ -29,6 +29,8 @@ import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
+import { Project } from "./project/project";
+import { findSingleFileInWorkspace } from "./utilities/common";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
@@ -103,6 +105,7 @@ export async function activate(context: ExtensionContext) {
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
+  context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.showPanel", showIDEPanel));
@@ -196,7 +199,8 @@ async function configureAppRootFolder() {
 }
 
 async function findAppRootFolder() {
-  const appRootFromLaunchConfig = getLaunchConfiguration().appRoot;
+  const launchConfiguration = getLaunchConfiguration();
+  const appRootFromLaunchConfig = launchConfiguration.appRoot;
   if (appRootFromLaunchConfig) {
     let appRoot: string | undefined;
     workspace.workspaceFolders?.forEach((folder) => {
@@ -268,6 +272,10 @@ async function findAppRootFolder() {
       }
     });
   return undefined;
+}
+
+async function openDevMenu() {
+  Project.currentProject?.openDevMenu();
 }
 
 async function diagnoseWorkspaceStructure() {
