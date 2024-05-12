@@ -14,6 +14,7 @@ import { InspectData, InspectDataStackItem } from "../../common/Project";
 import { InspectDataMenu } from "./InspectDataMenu";
 import { Resizable } from "re-resizable";
 import { useResizableProps } from "../hooks/useResizableProps";
+import { ZoomLevelType } from "./ZoomControls";
 
 declare module "react" {
   interface CSSProperties {
@@ -106,8 +107,8 @@ type InspectStackData = {
 type Props = {
   isInspecting: boolean;
   setIsInspecting: (isInspecting: boolean) => void;
-  zoomLevel: number;
-  setZoomLevel: (zoomLevel: number) => void;
+  zoomLevel: ZoomLevelType;
+  setZoomLevel: (zoomLevel: ZoomLevelType) => void;
 };
 
 function Preview({ isInspecting, setIsInspecting, zoomLevel, setZoomLevel }: Props) {

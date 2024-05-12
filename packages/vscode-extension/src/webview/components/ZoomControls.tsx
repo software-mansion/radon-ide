@@ -1,18 +1,63 @@
 import { useCallback } from "react";
 import IconButton from "./shared/IconButton";
+import * as Select from "@radix-ui/react-select";
 import "./ZoomControls.css";
 
 const ZOOM_STEP = 10;
+const DEFAULT_ZOOM_LEVEL = 100;
+const ZOOM_SELECT_NUMERIC_VALUES = [300, 200, 150, 125, 100, 75, 50, 25, 10];
+
+export type ZoomLevelType = number | "Fit";
 
 type ZoomControlsProps = {
-  setZoomLevel: React.Dispatch<React.SetStateAction<number>>;
+  zoomLevel: ZoomLevelType;
+  setZoomLevel: React.Dispatch<React.SetStateAction<ZoomLevelType>>;
 };
 
-function ZoomControls({ setZoomLevel }: ZoomControlsProps) {
+const ZoomLevelSelect = ({ zoomLevel, setZoomLevel }: ZoomControlsProps) => {
+  const onValueChange = useCallback(
+    (e: string) => setZoomLevel(Number(e) || (e as ZoomLevelType)),
+    [setZoomLevel]
+  );
+
+  return (
+    <Select.Root onValueChange={onValueChange} value={zoomLevel.toString()}>
+      <Select.Trigger className="zoom-select-trigger" disabled={false}>
+        <Select.Value>
+          <div className="zoom-select-value">
+            {typeof zoomLevel === "string" ? zoomLevel : `${Math.floor(zoomLevel)}%`}
+          </div>
+        </Select.Value>
+      </Select.Trigger>
+
+      <Select.Portal>
+        <Select.Content
+          className="zoom-select-content zoom-dropdown-menu-content"
+          position="popper">
+          <Select.Viewport className="zoom-select-viewport">
+            {ZOOM_SELECT_NUMERIC_VALUES.map((level) => (
+              <Select.SelectItem key={level} value={level.toString()} className="zoom-select-item">
+                {level}%
+              </Select.SelectItem>
+            ))}
+            <Select.Separator className="zoom-select-item-separator" />
+            <Select.SelectItem value="Fit" className="zoom-select-item">
+              Fit
+            </Select.SelectItem>
+          </Select.Viewport>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
+  );
+};
+
+function ZoomControls({ zoomLevel, setZoomLevel }: ZoomControlsProps) {
   const handleZoom = useCallback(
     (shouldIncrease: boolean) => {
-      setZoomLevel((currentZoomLevel: number) => {
-        const newZoomLevel = currentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP);
+      setZoomLevel((currentZoomLevel: ZoomLevelType) => {
+        const resolvedCurrentZoomLevel =
+          typeof currentZoomLevel === "string" ? DEFAULT_ZOOM_LEVEL : currentZoomLevel;
+        const newZoomLevel = resolvedCurrentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP);
 
         if (newZoomLevel < ZOOM_STEP) {
           return currentZoomLevel;
@@ -30,6 +75,7 @@ function ZoomControls({ setZoomLevel }: ZoomControlsProps) {
   return (
     <div className="zoom-controls">
       <IconButton
+        className="zoom-out-button"
         tooltip={{
           label: "Zoom out",
           side: "top",
@@ -37,7 +83,9 @@ function ZoomControls({ setZoomLevel }: ZoomControlsProps) {
         onClick={handleZoomOut}>
         <span className="codicon codicon-zoom-out" />
       </IconButton>
+      <ZoomLevelSelect zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
       <IconButton
+        className="zoom-in-button"
         tooltip={{
           label: "Zoom in",
           side: "top",

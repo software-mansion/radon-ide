@@ -16,11 +16,11 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import ZoomControls from "../components/ZoomControls";
+import ZoomControls, { ZoomLevelType } from "../components/ZoomControls";
 
 function PreviewView() {
   const [isInspecting, setIsInspecting] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(100);
+  const [zoomLevel, setZoomLevel] = useState<ZoomLevelType>("Fit");
   const [isFollowing, setIsFollowing] = useState(false);
   const [logCounter, setLogCounter] = useState(0);
 
@@ -173,7 +173,7 @@ function PreviewView() {
           </IconButton>
         </DeviceSettingsDropdown>
 
-        <ZoomControls setZoomLevel={setZoomLevel} />
+        <ZoomControls zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
       </div>
     </div>
   );
