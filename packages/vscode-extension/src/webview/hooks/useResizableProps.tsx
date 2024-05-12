@@ -23,7 +23,7 @@ export function useResizableProps({ wrapperDivRef, zoomLevel, setZoomLevel }: Us
       return;
     }
 
-    const wrapperHeight = wrapperDivRef.current!.clientHeight;
+    const wrapperHeight = wrapperDivRef.current!.offsetHeight;
     setZoomLevel(Math.round((phoneHeight * 100) / wrapperHeight));
   }, [wrapperDivRef, phoneHeight, setZoomLevel]);
 
@@ -34,7 +34,7 @@ export function useResizableProps({ wrapperDivRef, zoomLevel, setZoomLevel }: Us
         return;
       }
 
-      const wrapperHeight = wrapperDivRef.current!.clientHeight;
+      const wrapperHeight = wrapperDivRef.current!.offsetHeight;
       setPhoneHeight(wrapperHeight * (zoomLevel / 100) + delta);
     },
     [wrapperDivRef, zoomLevel]
