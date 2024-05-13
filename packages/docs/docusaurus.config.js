@@ -66,6 +66,12 @@ const config = {
             label: "Docs",
             position: "right",
           },
+          {
+            "href": "https://github.com/software-mansion/react-native-ide/",
+            "position": "right",
+            "className": "header-github",
+            "aria-label": "GitHub repository",
+          },
         ],
       },
       footer: {

@@ -80,3 +80,24 @@ table thead tr {
 [class*="footer__link-item"] {
   color: var(--swm-navy-light-60);
 }
+
+.header-github:before {
+  display: flex;
+  height: 24px;
+  width: 24px;
+
+  mask: url(/static/img/github.svg) no-repeat 100% 100%;
+  mask-size: cover;
+  content: "";
+}
+
+@media (max-height: 768px) {
+  .header-github:before {
+    height: 20px;
+    width: 20px;
+  }
+}
+[class*="navbarLanding"] .header-github:before,
+[class*="navbarLanding"] .header-github:hover:before {
+  background-color: var(--swm-navy-light-100);
+}
