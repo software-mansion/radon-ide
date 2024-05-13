@@ -9,7 +9,9 @@ import {
   ExtensionMode,
   ConfigurationChangeEvent,
   DebugConfigurationProviderTriggerKind,
+  DebugAdapterExecutable,
 } from "vscode";
+import vscode from "vscode";
 import { TabPanel } from "./panels/Tabpanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
@@ -27,7 +29,8 @@ import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
-import { getTelemetryReporter } from "./utilities/telemetry";
+import { Project } from "./project/project";
+import { findSingleFileInWorkspace } from "./utilities/common";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
@@ -102,6 +105,7 @@ export async function activate(context: ExtensionContext) {
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
+  context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.showPanel", showIDEPanel));
@@ -109,6 +113,17 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.diagnose", diagnoseWorkspaceStructure)
   );
 
+  // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
+  // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
+  // When it does happen, we open the IDE panel and restart the app.
+  context.subscriptions.push(
+    debug.registerDebugAdapterDescriptorFactory(
+      "react-native-ide",
+      new LaunchConfigDebugAdapterDescriptorFactory()
+    )
+  );
+
+  // Debug adapter used for debugging React Native apps
   context.subscriptions.push(
     debug.registerDebugConfigurationProvider(
       "com.swmansion.react-native-ide",
@@ -145,14 +160,15 @@ export async function activate(context: ExtensionContext) {
   await configureAppRootFolder();
 }
 
-async function findSingleFileInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
-  const files = await workspace.findFiles(fileGlobPattern, excludePattern, 2);
-  if (files.length === 1) {
-    return files[0];
-  } else if (files.length > 1) {
-    Logger.error(`Found multiple ${fileGlobPattern} files in the workspace`);
+class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+  createDebugAdapterDescriptor(
+    session: vscode.DebugSession
+  ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+    commands.executeCommand("RNIDE.openPanel");
+    // we can't return undefined or throw here because then VSCode displays an ugly error dialog
+    // so we return a dummy adapter that calls echo command and exists immediately
+    return new DebugAdapterExecutable("echo", ["noop"]);
   }
-  return undefined;
 }
 
 function extensionActivated() {
@@ -173,7 +189,8 @@ async function configureAppRootFolder() {
 }
 
 async function findAppRootFolder() {
-  const appRootFromLaunchConfig = getLaunchConfiguration().appRoot;
+  const launchConfiguration = getLaunchConfiguration();
+  const appRootFromLaunchConfig = launchConfiguration.appRoot;
   if (appRootFromLaunchConfig) {
     let appRoot: string | undefined;
     workspace.workspaceFolders?.forEach((folder) => {
@@ -245,6 +262,10 @@ async function findAppRootFolder() {
       }
     });
   return undefined;
+}
+
+async function openDevMenu() {
+  Project.currentProject?.openDevMenu();
 }
 
 async function diagnoseWorkspaceStructure() {

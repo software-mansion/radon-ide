@@ -76,3 +76,7 @@ table thead tr {
 [class*="plugin-docs"] .navbar {
   background-color: var(--ifm-background-color);
 }
+
+[class*="footer__link-item"] {
+  color: var(--swm-navy-light-60);
+}

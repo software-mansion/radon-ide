@@ -4,9 +4,17 @@ import { Logger } from "../Logger";
 import path from "path";
 import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
-import { CancelToken } from "./BuildManager";
+import { CancelToken, IOSBuildResult } from "./BuildManager";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import {
+  SimulatorDeviceSet,
+  createSimulator,
+  listSimulators,
+  removeIosSimulator,
+} from "../devices/IosSimulatorDevice";
+import { IOSDeviceInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
+import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 
 type IOSProjectInfo =
   | {
@@ -19,6 +27,8 @@ type IOSProjectInfo =
       xcodeprojLocation: string;
       isWorkspace: false;
     };
+
+const TEMP_SIMULATOR_NAME_PREFIX = "__RNIDE_TEMP_SIM_";
 
 // Assuming users have ios folder in their project's root
 export const getIosSourceDir = (appRootFolder: string) => path.join(appRootFolder, "ios");
@@ -69,6 +79,7 @@ export async function findXcodeProject(appRootFolder: string) {
 }
 
 function buildProject(
+  UDID: string,
   xcodeProject: IOSProjectInfo,
   buildDir: string,
   scheme: string,
@@ -83,7 +94,7 @@ function buildProject(
     "-scheme",
     scheme,
     "-destination",
-    "generic/platform=iOS Simulator",
+    `id=${UDID}`,
     ...(cleanBuild ? ["clean"] : []),
     "build",
   ];
@@ -125,12 +136,18 @@ async function findXcodeScheme(xcodeProject: IOSProjectInfo) {
 }
 
 export async function buildIos(
+  deviceInfo: IOSDeviceInfo,
   appRootFolder: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ) {
+  if (await isExpoGoProject()) {
+    const appPath = await downloadExpoGo(Platform.IOS, cancelToken);
+    return { appPath, bundleID: EXPO_GO_BUNDLE_ID };
+  }
+
   const sourceDir = getIosSourceDir(appRootFolder);
 
   const isPodsInstalled = await checkIosDependenciesInstalled();
@@ -153,27 +170,31 @@ export async function buildIos(
   const scheme = buildOptions.ios?.scheme || (await findXcodeScheme(xcodeProject));
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
-  const buildProcess = cancelToken.adapt(
-    buildProject(
-      xcodeProject,
-      sourceDir,
-      scheme,
-      buildOptions?.ios?.configuration || "Debug",
-      forceCleanBuild
-    )
-  );
-
   let platformName: string | undefined;
-  const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
-  outputChannel.clear();
-  lineReader(buildProcess).onLineRead((line) => {
-    outputChannel.appendLine(line);
-    buildIOSProgressProcessor.processLine(line);
-    // Xcode can sometimes escape `=` with a backslash or put the value in quotes
-    const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
-    if (platformNameMatch) {
-      platformName = platformNameMatch[1];
-    }
+  const buildProcess = withTemporarySimulator(deviceInfo, (UDID) => {
+    const process = cancelToken.adapt(
+      buildProject(
+        UDID,
+        xcodeProject,
+        sourceDir,
+        scheme,
+        buildOptions?.ios?.configuration || "Debug",
+        forceCleanBuild
+      )
+    );
+
+    const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
+    outputChannel.clear();
+    lineReader(process).onLineRead((line) => {
+      outputChannel.appendLine(line);
+      buildIOSProgressProcessor.processLine(line);
+      // Xcode can sometimes escape `=` with a backslash or put the value in quotes
+      const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
+      if (platformNameMatch) {
+        platformName = platformNameMatch[1];
+      }
+    });
+    return process;
   });
 
   await buildProcess;
@@ -196,29 +217,6 @@ export async function buildIos(
   return { appPath, bundleID };
 }
 
-async function getTargetPaths(buildSettings: string) {
-  const settings = JSON.parse(buildSettings);
-
-  const targets = settings.map(({ target: settingsTarget }: any) => settingsTarget);
-
-  let selectedTarget = targets[0];
-
-  // Find app in all building settings - look for WRAPPER_EXTENSION: 'app',
-
-  const targetIndex = targets.indexOf(selectedTarget);
-
-  const wrapperExtension = settings[targetIndex].buildSettings.WRAPPER_EXTENSION;
-
-  if (wrapperExtension === "app") {
-    return {
-      targetBuildDir: settings[targetIndex].buildSettings.TARGET_BUILD_DIR,
-      executableFolderPath: settings[targetIndex].buildSettings.EXECUTABLE_FOLDER_PATH,
-    };
-  }
-
-  return {};
-}
-
 async function getBuildPath(
   xcodeProject: IOSProjectInfo,
   projectDir: string,
@@ -227,6 +225,13 @@ async function getBuildPath(
   configuration: string,
   cancelToken: CancelToken
 ) {
+  type KnownSettings = "WRAPPER_EXTENSION" | "TARGET_BUILD_DIR" | "EXECUTABLE_FOLDER_PATH";
+  type BuildSettings = {
+    action: string; // e.g. "build"
+    buildSettings: Record<KnownSettings, string> & Record<string, string>;
+    target: string;
+  }[];
+
   const buildSettings = await cancelToken.adapt(
     exec(
       "xcodebuild",
@@ -246,15 +251,43 @@ async function getBuildPath(
     )
   );
 
-  const { targetBuildDir, executableFolderPath } = await getTargetPaths(buildSettings.stdout);
-
-  if (!targetBuildDir) {
-    throw new Error("Failed to get the target build directory.");
-  }
-
-  if (!executableFolderPath) {
-    throw new Error("Failed to get the app name.");
+  const settings: BuildSettings = JSON.parse(buildSettings.stdout);
+  const {
+    WRAPPER_EXTENSION: wrapperExtension,
+    TARGET_BUILD_DIR: targetBuildDir,
+    EXECUTABLE_FOLDER_PATH: executableFolderPath,
+  } = settings[0].buildSettings;
+  // Find app in all building settings - look for WRAPPER_EXTENSION: 'app',
+  if (wrapperExtension !== "app") {
+    throw new Error("Failed to get the target build directory and app name.");
   }
 
   return `${targetBuildDir}/${executableFolderPath}`;
+}
+
+async function withTemporarySimulator<T>(
+  originalDeviceInfo: IOSDeviceInfo,
+  fn: (UDID: string) => Promise<T>
+) {
+  await removeStaleTemporarySimulators();
+
+  const { UDID } = await createSimulator(
+    TEMP_SIMULATOR_NAME_PREFIX + originalDeviceInfo.deviceIdentifier,
+    originalDeviceInfo.deviceIdentifier,
+    originalDeviceInfo.runtimeInfo,
+    SimulatorDeviceSet.Default
+  );
+  const result = await fn(UDID);
+  await removeIosSimulator(UDID, SimulatorDeviceSet.Default);
+
+  return result;
+}
+
+async function removeStaleTemporarySimulators() {
+  const simulators = await listSimulators(SimulatorDeviceSet.Default);
+  const removedSimulators = simulators
+    .filter(({ name }) => name.startsWith(TEMP_SIMULATOR_NAME_PREFIX))
+    .map(({ UDID }) => removeIosSimulator(UDID, SimulatorDeviceSet.Default));
+
+  await Promise.allSettled(removedSimulators);
 }

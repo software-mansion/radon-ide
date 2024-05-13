@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import IconButton from "./shared/IconButton";
-import { ProjectInterface } from "../../common/Project";
+import { ProjectInterface, ProjectState } from "../../common/Project";
 import UrlSelect from "./UrlSelect";
 
 interface UrlBarProps {
@@ -20,8 +20,15 @@ function UrlBar({ project, disabled }: UrlBarProps) {
       ]);
     }
     project.addListener("navigationChanged", handleNavigationChanged);
+    const handleProjectReset = (e: ProjectState) => {
+      if (e.status === "starting") {
+        setUrlList([]);
+      }
+    };
+    project.addListener("projectStateChanged", handleProjectReset);
     return () => {
       project.removeListener("navigationChanged", handleNavigationChanged);
+      project.removeListener("projectStateChanged", handleProjectReset);
     };
   }, []);
 
