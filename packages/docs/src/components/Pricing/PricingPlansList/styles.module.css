@@ -55,8 +55,13 @@
   margin-bottom: 0px;
 }
 
-.plan__price span {
+.plan__price .plan__price_second_line {
   font-size: 16px;
+  font-weight: 400;
+}
+.plan__price .plan__price_strikethrough {
+  text-decoration: line-through;
+  color: var(--swm-navy-light-60);
   font-weight: 400;
 }
 
@@ -73,4 +78,79 @@
   margin-bottom: 24px;
   font-size: 14px;
   color: var(--swm-navy-light-60);
+}
+
+.plan_pay_annually {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.plan_pay_annually p {
+  margin: 0;
+}
+
+/* Pay Annually Toggle */
+
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.toggleSwitch input[type="checkbox"] {
+  display: none;
+}
+
+.toggleSwitchBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--swm-navy-light-20);
+  border-radius: 20px;
+  transition: background-color 0.2s ease-in-out;
+  transform: translateX(0px);
+}
+
+.toggleSwitchHandle {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background-color: var(--swm-off-white);
+  border-radius: 50%;
+  transition: transform 0.2s ease-in-out;
+  transform: translateX(0px);
+}
+
+.toggleSwitch::before {
+  content: "";
+  position: absolute;
+  top: 25px;
+  right: 35px;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--swm-navy-light-60);
+  transition: color 0.2s ease-in-out;
+}
+
+.toggleSwitch input[type="checkbox"]:checked + .toggleSwitchBackground {
+  background-color: var(--swm-green-light-100);
+}
+
+.toggleSwitch input[type="checkbox"]:checked + .toggleSwitch:before {
+  content: "On";
+  color: var(--swm-green-light-100);
+  right: 15px;
+}
+
+.toggleSwitch input[type="checkbox"]:not(:checked) + .toggleSwitchBackground .toggleSwitchHandle {
+  transition: transform 0.2s ease-in-out;
+  transform: translateX(20px);
 }

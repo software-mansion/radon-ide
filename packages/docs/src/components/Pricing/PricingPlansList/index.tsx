@@ -1,18 +1,44 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./styles.module.css";
 import Button from "../../Button";
 import clsx from "clsx";
 
 const PricingPlansList = () => {
+  const [isAnnually, setIsAnnually] = useState(true);
+
+  const monthly = (
+    <>
+      $9 <span className={styles.plan__price_second_line}> per month </span>
+    </>
+  );
+
+  const annually = (
+    <>
+      <span className={styles.plan__price_strikethrough}>$9</span> $7.5{" "}
+      <span className={styles.plan__price_second_line}> per month billed annually </span>
+    </>
+  );
   return (
     <>
+      <div className={styles.plan_pay_annually}>
+        <p>Yearly</p>
+        <label className={styles.toggleSwitch}>
+          <input
+            type="checkbox"
+            checked={isAnnually}
+            onChange={() => void setIsAnnually(!isAnnually)}
+          />
+          <div className={styles.toggleSwitchBackground}>
+            <div className={styles.toggleSwitchHandle}></div>
+          </div>
+        </label>
+        <p>Monthly</p>
+      </div>
       <ul className={styles.list}>
         <li className={styles.item}>
           <div className={styles.plan__container}>
             <h2 className={styles.plan__name}>Individual</h2>
-            <h3 className={styles.plan__price}>
-              $9<span> per month</span>
-            </h3>
+            <h3 className={styles.plan__price}>{isAnnually ? annually : monthly}</h3>
             <p className={styles.plan__tagline}>Support the development</p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
