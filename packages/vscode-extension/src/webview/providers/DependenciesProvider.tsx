@@ -88,14 +88,18 @@ function entries<K extends string, T>(object: Partial<Record<K, T>>) {
 interface DependenciesContextProps {
   dependencies: Dependencies;
   isReady: boolean;
-  isError: boolean;
+  isCommonError: boolean;
+  isAndroidError: boolean;
+  isIosError: boolean;
   runDiagnostics: () => void;
 }
 
 const DependenciesContext = createContext<DependenciesContextProps>({
   dependencies: defaultDependencies,
   isReady: false,
-  isError: false,
+  isCommonError: false,
+  isAndroidError: false,
+  isIosError: false,
   runDiagnostics,
 });
 
@@ -108,7 +112,6 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   const isCommonError = hasError(dependencies, "common");
   const isIosError = hasError(dependencies, "ios");
   const isAndroidError = hasError(dependencies, "android");
-  const isError = isCommonError || isIosError || isAndroidError;
 
   const rerunDiagnostics = useCallback(() => {
     // reset `.installed` and .error, leave other data as is
@@ -140,6 +143,9 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const listener = (event: MessageEvent<DependencyMessageData>) => {
       const { command, data: rawData } = event.data;
+      if (!rawData) {
+        return;
+      }
       const data = adaptDependencyData(rawData);
       switch (command) {
         case "isNodejsInstalled":
@@ -180,7 +186,14 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
 
   return (
     <DependenciesContext.Provider
-      value={{ dependencies, isReady, isError, runDiagnostics: rerunDiagnostics }}>
+      value={{
+        dependencies,
+        isReady,
+        isCommonError,
+        isAndroidError: true,
+        isIosError,
+        runDiagnostics: rerunDiagnostics,
+      }}>
       {children}
     </DependenciesContext.Provider>
   );

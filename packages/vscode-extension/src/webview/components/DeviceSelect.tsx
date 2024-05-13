@@ -8,26 +8,33 @@ import Tooltip from "./shared/Tooltip";
 interface RichSelectItemProps extends Select.SelectItemProps {
   icon: React.ReactNode;
   title: string;
-  subtitle: string;
+  subtitle?: string;
 }
 
 const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSelectItemProps>>(
   ({ children, icon, title, subtitle, ...props }, forwardedRef) => {
-    const isLongText = subtitle?.length > 20;
+    function renderSubtitle() {
+      if (!subtitle) {
+        return null;
+      }
 
-    const subtitleComponent = <div className="device-select-rich-item-subtitle">{subtitle}</div>;
+      const subtitleComponent = <div className="device-select-rich-item-subtitle">{subtitle}</div>;
+      const isLongText = subtitle.length > 20;
+
+      if (isLongText) {
+        <Tooltip label={subtitle} side="right" instant>
+          {subtitleComponent}
+        </Tooltip>;
+      }
+      return subtitleComponent;
+    }
+
     return (
       <Select.Item className="device-select-rich-item" {...props} ref={forwardedRef}>
         <div className="device-select-rich-item-icon">{icon}</div>
         <div>
           <div className="device-select-rich-item-title">{title}</div>
-          {isLongText ? (
-            <Tooltip label={subtitle} side="right" instant>
-              {subtitleComponent}
-            </Tooltip>
-          ) : (
-            subtitleComponent
-          )}
+          {renderSubtitle()}
         </div>
       </Select.Item>
     );
@@ -47,12 +54,91 @@ interface DeviceSelectProps {
   onValueChange: (newValue: string) => void;
   label: string;
   devices: DeviceInfo[];
+  isIosAvailable: boolean;
+  isAndroidAvailable: boolean;
   disabled?: boolean;
 }
 
-function DeviceSelect({ onValueChange, devices, value, label, disabled }: DeviceSelectProps) {
-  const iOSDevices = devices.filter((device) => device.platform === Platform.IOS);
-  const androidDevices = devices.filter((device) => device.platform === Platform.Android);
+function DeviceSelect({
+  onValueChange,
+  devices,
+  value,
+  label,
+  isIosAvailable,
+  isAndroidAvailable,
+  disabled,
+}: DeviceSelectProps) {
+  const iOSDevices = devices.filter(
+    ({ platform, name }) => platform === Platform.IOS && name.length > 0
+  );
+  const androidDevices = devices.filter(
+    ({ platform, name }) => platform === Platform.Android && name.length > 0
+  );
+
+  function renderIosDevices() {
+    if (!isIosAvailable) {
+      return (
+        <Select.Group>
+          <Select.Label className="device-select-label">iOS</Select.Label>
+          <RichSelectItem
+            value="unavailable"
+            disabled
+            icon={<span className="codicon codicon-warning" />}
+            title="iOS devices unavailable, please check diagnostics"
+          />
+        </Select.Group>
+      );
+    }
+    return (
+      iOSDevices.length > 0 && (
+        <Select.Group>
+          <Select.Label className="device-select-label">iOS</Select.Label>
+          {iOSDevices.map((device) => (
+            <RichSelectItem
+              value={device.id}
+              key={device.id}
+              disabled={!device.available}
+              icon={<span className="codicon codicon-device-mobile" />}
+              title={device.name}
+              subtitle={device.systemName}
+            />
+          ))}
+        </Select.Group>
+      )
+    );
+  }
+  function renderAndroidDevices() {
+    if (!isAndroidAvailable) {
+      return (
+        <Select.Group>
+          <Select.Label className="device-select-label">Android</Select.Label>
+          <RichSelectItem
+            value="unavailable"
+            disabled
+            icon={<span className="codicon codicon-warning" />}
+            title="Android devices unavailable, please check diagnostics"
+          />
+        </Select.Group>
+      );
+    }
+    return (
+      androidDevices.length > 0 && (
+        <Select.Group>
+          <Select.Label className="device-select-label">Android</Select.Label>
+          {androidDevices.map((device) => (
+            <RichSelectItem
+              value={device.id}
+              key={device.id}
+              disabled={!device.available}
+              icon={<span className="codicon codicon-device-mobile" />}
+              title={device.name}
+              subtitle={device.systemName}
+            />
+          ))}
+        </Select.Group>
+      )
+    );
+  }
 
   return (
     <Select.Root onValueChange={onValueChange} value={value}>
@@ -68,43 +154,8 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
       <Select.Portal>
         <Select.Content className="device-select-content dropdown-menu-content" position="popper">
           <Select.Viewport className="device-select-viewport">
-            {iOSDevices.length > 0 && (
-              <Select.Group>
-                <Select.Label className="device-select-label">iOS</Select.Label>
-                {iOSDevices.map(
-                  (device) =>
-                    device?.name && (
-                      <RichSelectItem
-                        value={device.id}
-                        key={device.id}
-                        disabled={!device.available}
-                        icon={<span className="codicon codicon-device-mobile" />}
-                        title={device.name}
-                        subtitle={device.systemName}
-                      />
-                    )
-                )}
-              </Select.Group>
-            )}
-
-            {androidDevices.length > 0 && (
-              <Select.Group>
-                <Select.Label className="device-select-label">Android</Select.Label>
-                {androidDevices.map(
-                  (device) =>
-                    device.name && (
-                      <RichSelectItem
-                        value={device.id}
-                        key={device.id}
-                        disabled={!device.available}
-                        icon={<span className="codicon codicon-device-mobile" />}
-                        title={device.name}
-                        subtitle={device.systemName}
-                      />
-                    )
-                )}
-              </Select.Group>
-            )}
+            {renderIosDevices()}
+            {renderAndroidDevices()}
             {devices.length > 0 && <Select.Separator className="device-select-separator" />}
             <SelectItem value="manage">Manage devices...</SelectItem>
           </Select.Viewport>

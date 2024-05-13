@@ -6,6 +6,7 @@ import { useProject } from "../providers/ProjectProvider";
 import IconButton from "../components/shared/IconButton";
 import DiagnosticView from "../views/DiagnosticView";
 import DoctorIcon from "../components/icons/DoctorIcon";
+import { Platform } from "../../common/DeviceManager";
 
 function Actions() {
   const { project } = useProject();
@@ -38,7 +39,13 @@ const diagnosticAlert = {
   description: "Run diagnostics to find out what went wrong.",
   actions: <Actions />,
 };
-export function useDiagnosticAlert() {
-  const { isError } = useDependencies();
-  useToggleableAlert(isError, diagnosticAlert);
+export function useDiagnosticAlert(platform?: Platform) {
+  const { isCommonError, isAndroidError, isIosError } = useDependencies();
+  let open = isCommonError;
+  if (platform === Platform.Android && isAndroidError) {
+    open = true;
+  } else if (platform === Platform.IOS && isIosError) {
+    open = true;
+  }
+  useToggleableAlert(open, diagnosticAlert);
 }
