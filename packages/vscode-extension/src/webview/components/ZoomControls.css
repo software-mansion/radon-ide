@@ -71,7 +71,7 @@
 
 .zoom-dropdown-menu-content {
   min-width: var(--swm-zoom-select-width);
-  background-color: var(--swm-popover-background);
+  background-color: var(--swm-zoom-controls-background);
   border-radius: 6px 6px 0 0;
   padding: 4px;
   animation-duration: 400ms;
