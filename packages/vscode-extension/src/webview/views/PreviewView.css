@@ -13,6 +13,11 @@
   margin-bottom: 8px;
 }
 
+.feedback-button {
+  margin-right: 10px;
+  opacity: 0.5;
+}
+
 .button-group-bottom {
   margin-top: 8px;
 }
