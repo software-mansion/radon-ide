@@ -7,7 +7,7 @@
   margin: 24px 0 48px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 920px) {
   .list {
     grid-template-columns: 1fr;
   }
