@@ -29,6 +29,7 @@ interface DependencyMessageData {
   };
 }
 
+// when editing, update hasError function
 type Dependencies = {
   Nodejs?: DependencyState;
   AndroidEmulator?: DependencyState;
@@ -55,6 +56,22 @@ function runDiagnostics() {
       command: `check${prerequisite}Installed`,
     });
   });
+}
+
+function hasError(dependencies: Dependencies, domain: "ios" | "android" | "common") {
+  function errored({ error }: DependencyState) {
+    return error !== undefined;
+  }
+
+  const required = {
+    ios: ["Xcode", "CocoaPods", "Pods"],
+    android: ["AndroidEmulator"],
+    common: ["Nodejs", "NodeModules"],
+  }[domain];
+
+  return entries(dependencies)
+    .filter(([dependency, _state]) => required.includes(dependency))
+    .some(([_dependency, state]) => errored(state));
 }
 
 function adaptDependencyData(data: DependencyMessageData["data"]): DependencyState {
@@ -87,9 +104,11 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
 
   // `isReady` is true when all dependencies were checked
   const isReady = !Object.values<DependencyState | undefined>(dependencies).includes(undefined);
-  const isError = Object.values<DependencyState>(dependencies).some(
-    ({ error }) => error !== undefined
-  );
+
+  const isCommonError = hasError(dependencies, "common");
+  const isIosError = hasError(dependencies, "ios");
+  const isAndroidError = hasError(dependencies, "android");
+  const isError = isCommonError || isIosError || isAndroidError;
 
   const rerunDiagnostics = useCallback(() => {
     // reset `.installed` and .error, leave other data as is
