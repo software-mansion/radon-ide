@@ -64,7 +64,16 @@ const config = {
       },
       footer: {
         style: "light",
-        links: [],
+        links: [
+          {
+            to: "/privacy-policy",
+            label: "Privacy Policy",
+          },
+          {
+            to: "/terms-of-use",
+            label: "Terms of Use",
+          },
+        ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },
       prism: {
