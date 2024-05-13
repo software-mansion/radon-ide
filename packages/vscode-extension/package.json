@@ -17,7 +17,8 @@
   ],
   "version": "0.0.10-beta",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.75.0",
+    "os": "darwin"
   },
   "extensionKind": [
     "workspace"
