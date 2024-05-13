@@ -1,4 +1,13 @@
-import { Disposable, debug, commands, workspace, FileSystemWatcher, window } from "vscode";
+import {
+  Disposable,
+  debug,
+  commands,
+  workspace,
+  FileSystemWatcher,
+  window,
+  env,
+  Uri,
+} from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -63,6 +72,11 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.nativeFilesChangedSinceLastBuild = false;
 
     this.trackNativeChanges();
+  }
+  async reportIssue() {
+    env.openExternal(
+      Uri.parse("https://github.com/software-mansion/react-native-ide/issues/new/choose")
+    );
   }
 
   trackNativeChanges() {

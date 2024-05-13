@@ -9,7 +9,8 @@ export type LaunchConfigurationOptions = {
     configuration?: string;
   };
   android?: {
-    variant?: string;
+    buildType?: string;
+    productFlavor?: string;
   };
   preview?: {
     waitForAppLaunch?: boolean;

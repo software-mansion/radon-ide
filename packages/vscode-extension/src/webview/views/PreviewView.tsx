@@ -32,6 +32,10 @@ function PreviewView() {
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
 
+  const extensionVersion = (
+    document.querySelector("meta[name='react-native-ide-version']") as HTMLMetaElement
+  )?.content;
+
   useEffect(() => {
     function incrementLogCounter() {
       setLogCounter((c) => c + 1);
@@ -165,6 +169,9 @@ function PreviewView() {
         />
 
         <div className="spacer" />
+        <Button className="feedback-button" onClick={() => project.reportIssue()}>
+          {extensionVersion || "Beta"}: Report issue
+        </Button>
         <DeviceSettingsDropdown disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon

@@ -3,10 +3,13 @@ React Native IDE License
 Copyright (c) 2024 Software Mansion <swmansion.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, and merge, subject to the following conditions:
-1) The rights granted herein are limited to the beta version of the Software, as distributed by Software Mansion. Future versions or final releases of the Software are not covered under this license unless explicitly granted by a subsequent license.
+1) The rights granted herein are limited to the beta/early-access version of the Software, as distributed by Software Mansion. Future versions or final releases of the Software are not covered under this license unless explicitly granted by a subsequent license.
 2) The Software, or any substantial portion thereof, shall not be distributed, published, or otherwise made available to any third party without the prior written consent of Software Mansion.
 3) Contributions back to the Software by the users are allowed and encouraged under the same license terms, with the understanding that all contributions may be freely incorporated into future versions of the Software by Software Mansion without any further obligations to the contributors.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall any contributor be liable to you for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this License or out of the use or inability to use the Software (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if such contributor has been advised of the possibility of such damages. 
+
 
 For any inquiries or requests regarding the use of the software, please contact contact@swmansion.com
