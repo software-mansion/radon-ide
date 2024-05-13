@@ -10,14 +10,24 @@ const faqs = [
       "React Native IDE is a Visual Studio Code extension that aims to simplify the development of React Native applications.",
   },
   {
-    topic: "Is React Native IDE free to use?",
+    topic: "Can I use it on Windows or Linux?",
+    answer: "Right now, React Native IDE only supports macOS.",
+  },
+  {
+    topic: "How much does it cost?",
     answer: `The React Native IDE is free to use during the Beta period. We're working on a sustainable licensing model for the project.<br/><br/>
-    <strong>100% of the money earned will be used to fund the React Native open source efforts at Software Mansion and the further developments of the React Native IDE</strong>.`,
+    100% of the money earned will be used to fund the React Native open source efforts at Software Mansion and the further developments of the React Native IDE.<br/><br/>
+    `,
+  },
+  {
+    topic: "Do you offer a student discount?",
+    answer: `Yes! React Native IDE will come with a free non-commercial educational license.`,
   },
   {
     topic: "When are you planning to close the Beta?",
     answer: "At the end of Q3 2024.",
   },
+
   {
     topic: "Why did you open-source the project?",
     answer:
