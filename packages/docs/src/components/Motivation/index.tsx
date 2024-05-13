@@ -8,10 +8,10 @@ const Motivation = () => {
       <div className={styles.elipseContainer}>
         <Elipse className={styles.elipse} isSmall />
       </div>
-      <div className={styles.faq}>
+      <div className={styles.motivation}>
         <h2 className={styles.heading}>Motivation</h2>
         <p className={styles.paragraph}>
-          Software Mansion is a company behind the open-source libraries like{" "}
+          We are React Native Core Contributors and maintainers of open-source libraries like{" "}
           <a href="https://docs.swmansion.com/react-native-reanimated/" target="_blank">
             React Native Reanimated
           </a>
@@ -26,9 +26,11 @@ const Motivation = () => {
           . You most probably already use them in your applications. The maintenance of the packages
           takes a lot of development time which isn't free. That's why we've decided to sell React
           Native IDE under a paid license.{" "}
+        </p>
+        <p className={styles.paragraph}>
           <strong>
-            All the money coming from sales of the IDE will be used to fund the React Native Open
-            Source efforts at Software Mansion.
+            All the money coming from sales of the IDE will be used to fund React Native Open Source
+            efforts at Software Mansion.
           </strong>
         </p>
       </div>

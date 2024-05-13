@@ -1,13 +1,24 @@
+.motivation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
 .heading {
   font-size: var(--swm-h2-font-size);
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: 3rem;
+  text-align: center;
 }
 
 .paragraph {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 400;
   text-wrap: balance;
+  text-align: center;
+  max-width: 800px;
 }
 
 .paragraph a {
