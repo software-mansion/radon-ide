@@ -1,11 +1,13 @@
 .phone-wrapper {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: safe center;
+  align-items: safe center;
   overflow: auto;
   width: 100%;
   position: relative;
   user-select: none;
+  scrollbar-gutter: stable;
 }
 
 .phone-wrapper:hover,
@@ -16,7 +18,7 @@
 .phone-content {
   position: relative;
   display: flex;
-  min-height: var(--min-height);
+  height: 100%;
   aspect-ratio: var(--phone-aspect-ratio);
 }
 
