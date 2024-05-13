@@ -17,6 +17,8 @@ import DeviceSelect from "../components/DeviceSelect";
 import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import ZoomControls, { ZoomLevelType } from "../components/ZoomControls";
+import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
+import { useDependencies } from "../providers/DependenciesProvider";
 
 function PreviewView() {
   const [isInspecting, setIsInspecting] = useState(false);
@@ -24,16 +26,19 @@ function PreviewView() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [logCounter, setLogCounter] = useState(0);
 
-  const { openModal } = useModal();
-
   const { devices, finishedInitialLoad } = useDevices();
   const { projectState, project } = useProject();
+  const { isAndroidError, isIosError } = useDependencies();
 
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
 
-  const extensionVersion = (
-    document.querySelector("meta[name='react-native-ide-version']") as HTMLMetaElement
+  const { openModal } = useModal();
+
+  useDiagnosticAlert(selectedDevice?.platform);
+
+  const extensionVersion = document.querySelector<HTMLMetaElement>(
+    "meta[name='react-native-ide-version']"
   )?.content;
 
   useEffect(() => {
@@ -62,7 +67,10 @@ function PreviewView() {
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
-      openModal("Manage Devices", <ManageDevicesView />);
+      openModal(
+        "Manage Devices",
+        <ManageDevicesView isAndroidAvailable={!isAndroidError} isIosAvailable={!isIosError} />
+      );
       return;
     }
     if (selectedDevice?.id !== value) {
@@ -168,6 +176,8 @@ function PreviewView() {
           // @ts-ignore TODO: Fix typing
           label={selectedDevice?.name}
           onValueChange={handleDeviceDropdownChange}
+          isIosAvailable={!isIosError}
+          isAndroidAvailable={!isAndroidError}
           disabled={devicesNotFound}
         />
 

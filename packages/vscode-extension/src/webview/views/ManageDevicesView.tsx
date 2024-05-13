@@ -47,8 +47,11 @@ function DeviceRow({ deviceInfo, onDeviceDelete }: DeviceRowProps) {
     </div>
   );
 }
-
-function ManageDevicesView() {
+interface Props {
+  isIosAvailable: boolean;
+  isAndroidAvailable: boolean;
+}
+function ManageDevicesView({ isIosAvailable, isAndroidAvailable }: Props) {
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
@@ -81,6 +84,8 @@ function ManageDevicesView() {
   if (createDeviceViewOpen) {
     return (
       <CreateDeviceView
+        isIosAvailable={isIosAvailable}
+        isAndroidAvailable={isAndroidAvailable}
         onCancel={() => setCreateDeviceViewOpen(false)}
         onCreate={() => setCreateDeviceViewOpen(false)}
       />
@@ -89,7 +94,7 @@ function ManageDevicesView() {
 
   return (
     <div className="container">
-      {!!iosDevices.length && (
+      {iosDevices.length > 0 && isIosAvailable && (
         <>
           <Label>iOS Devices</Label>
           {iosDevices.map((deviceInfo) => (
@@ -101,7 +106,7 @@ function ManageDevicesView() {
           ))}
         </>
       )}
-      {!!androidDevices.length && (
+      {androidDevices.length > 0 && isAndroidAvailable && (
         <>
           <Label>Android Devices</Label>
           {androidDevices.map((deviceInfo) => (
