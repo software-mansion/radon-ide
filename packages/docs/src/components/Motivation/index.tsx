@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./styles.module.css";
 import Elipse from "@site/src/components/Elipse";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 
 const Motivation = () => {
   return (
@@ -33,6 +34,13 @@ const Motivation = () => {
             efforts at Software Mansion.
           </strong>
         </p>
+        <a href="https://swmansion.com" target="_blank">
+          <img
+            src={useBaseUrl("/img/swm-logo.svg")}
+            alt="Software Mansion"
+            className={styles.swmLogo}
+          />
+        </a>
       </div>
     </section>
   );
