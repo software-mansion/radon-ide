@@ -10,11 +10,11 @@ import {
   IOSRuntimeInfo,
   Platform,
 } from "../common/DeviceManager";
-import { BuildResult, EXPO_GO_BUNDLE_ID, IOSBuildResult } from "../builders/BuildManager";
+import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
 import { DeviceSettings } from "../common/Project";
-import { fetchExpoLaunchDeeplink } from "../builders/expoGo";
+import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { ExecaError } from "execa";
 
 interface SimulatorInfo {

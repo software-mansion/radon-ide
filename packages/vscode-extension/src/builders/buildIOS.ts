@@ -4,7 +4,7 @@ import { Logger } from "../Logger";
 import path from "path";
 import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
-import { CancelToken } from "./BuildManager";
+import { CancelToken, IOSBuildResult } from "./BuildManager";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import {
@@ -13,7 +13,8 @@ import {
   listSimulators,
   removeIosSimulator,
 } from "../devices/IosSimulatorDevice";
-import { IOSDeviceInfo, IOSRuntimeInfo } from "../common/DeviceManager";
+import { IOSDeviceInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
+import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 
 type IOSProjectInfo =
   | {
@@ -142,6 +143,11 @@ export async function buildIos(
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ) {
+  if (await isExpoGoProject()) {
+    const appPath = await downloadExpoGo(Platform.IOS, cancelToken);
+    return { appPath, bundleID: EXPO_GO_BUNDLE_ID };
+  }
+
   const sourceDir = getIosSourceDir(appRootFolder);
 
   const isPodsInstalled = await checkIosDependenciesInstalled();
