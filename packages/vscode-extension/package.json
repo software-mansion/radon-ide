@@ -216,7 +216,7 @@
               "configuration": "Debug"
             },
             "android": {
-              "variant": "debug"
+              "buildType": "debug"
             }
           }
         ]
