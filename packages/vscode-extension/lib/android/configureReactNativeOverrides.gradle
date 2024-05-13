@@ -82,7 +82,7 @@ dependencies { dep ->
         attribute(shouldTransform)
     }
     artifactTypes.getByName("aar") {
-        attributes.attribute(shouldTransform, false)
+        attributes.attribute(shouldTransform, true)
     }
 }
 
