@@ -1,7 +1,6 @@
 import util from "util";
 import { DebugAdapter } from "./DebugAdapter";
 import { CDPSubType, CDPValueType, FormattedLog } from "./cdp";
-import { Source } from "@vscode/debugadapter";
 
 export interface CDPRemoteObject {
   type: CDPValueType;
@@ -37,6 +36,7 @@ async function retrieveObject(
     return {
       label: (prefix ? prefix : "") + "{}",
       children: [],
+      objectId
     };
   }
   const properties = await debugadapter.sendCDPMessage("Runtime.getProperties", {
@@ -46,6 +46,7 @@ async function retrieveObject(
   const res = {
     label: (prefix ? prefix : "") + "{...}",
     children: new Array(),
+    objectId,
   };
   await Promise.all(
     properties.result.map(async (prop: any) => {
@@ -95,11 +96,12 @@ export async function formatMessage(
   const mappedArgs = await Promise.all(
     args.map(async (arg, index) => {
       let res: FormattedLog = {
-        label: "",
+        label: "123",
       };
       switch (arg.type) {
         case "object":
           res = await retrieveObject(arg.objectId, debugadapter, new Set());
+          res.objectId = arg.objectId
           break;
         case "string":
         case "number":

@@ -153,14 +153,16 @@ export class DebugAdapter extends DebugSession {
     category: "stderr" | "stdout",
     line?: number,
     column?: number,
-    sourceURL?: string
+    sourceURL?: string,
   ) {
     if (log.children) {
+      Logger.debug("frytki z kechupem", log.objectId, log.label)
       const startCollapsedEvent = new OutputEvent(log.label + "\n");
       startCollapsedEvent.body = {
         ...startCollapsedEvent.body,
         category,
         //@ts-ignore source, line, column and group are valid fields
+        variableReference: log.objectId,
         source: sourceURL ? new Source(sourceURL, sourceURL) : undefined,
         line,
         column,
@@ -192,11 +194,12 @@ export class DebugAdapter extends DebugSession {
         this.sendEvent(sourceEvent);
       }
     } else {
-      const outputEvent = new OutputEvent(log.label + "\n");
+      Logger.debug("frytki", log.objectId, log.label)
+      const outputEvent = new OutputEvent(log.label + "\n", category);
       outputEvent.body = {
         ...outputEvent.body,
-        category,
         //@ts-ignore source, line and column are valid fields
+        variableReference: log.objectId,
         source: sourceURL ? new Source(sourceURL, sourceURL) : undefined,
         line,
         column,

@@ -35,6 +35,7 @@ export type CDPDebuggerScope = {
 export type FormattedLog = {
   label: string;
   children?: FormattedLog[];
+  objectId?: number;
 };
 
 export function inferDAPVariableValueForCDPRemoteObject(cdpValue: CDPRemoteObject): string {
