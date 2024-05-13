@@ -1,19 +1,42 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  PropsWithChildren,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { vscode } from "../utilities/vscode";
 
-export interface DependencyData {
-  installed?: boolean;
-  info?: string;
+export enum InstallationStatus {
+  NotInstalled,
+  InProgress,
+  Installed,
+}
+
+export interface DependencyState {
+  installed: InstallationStatus;
+  info: string;
   error?: string;
 }
-interface Dependencies {
-  Nodejs?: DependencyData;
-  AndroidEmulator?: DependencyData;
-  Xcode?: DependencyData;
-  CocoaPods?: DependencyData;
-  NodeModules?: DependencyData;
-  Pods?: DependencyData;
+
+interface DependencyMessageData {
+  command: string;
+  data: {
+    installed: boolean;
+    info: string;
+    error?: string;
+  };
 }
+
+type Dependencies = {
+  Nodejs?: DependencyState;
+  AndroidEmulator?: DependencyState;
+  Xcode?: DependencyState;
+  CocoaPods?: DependencyState;
+  NodeModules?: DependencyState;
+  Pods?: DependencyState;
+};
 
 const defaultDependencies: Dependencies = {
   Nodejs: undefined,
@@ -34,6 +57,17 @@ function runDiagnostics() {
   });
 }
 
+function adaptDependencyData(data: DependencyMessageData["data"]): DependencyState {
+  if (data.installed) {
+    return { ...data, installed: InstallationStatus.Installed };
+  }
+  return { ...data, installed: InstallationStatus.NotInstalled };
+}
+
+function entries<K extends string, T>(object: Partial<Record<K, T>>) {
+  return Object.entries(object) as [K, T][];
+}
+
 interface DependenciesContextProps {
   dependencies: Dependencies;
   isReady: boolean;
@@ -48,71 +82,73 @@ const DependenciesContext = createContext<DependenciesContextProps>({
   runDiagnostics,
 });
 
-interface DependenciesProviderProps {
-  children: React.ReactNode;
-}
-
-export default function DependenciesProvider({ children }: DependenciesProviderProps) {
+export default function DependenciesProvider({ children }: PropsWithChildren) {
   const [dependencies, setDependencies] = useState<Dependencies>({});
 
   // `isReady` is true when all dependencies were checked
-  const isReady = Object.keys(dependencies).every(
-    (key) => dependencies[key as keyof Dependencies] !== undefined
-  );
-  const isError = Object.keys(dependencies).some(
-    (key) => dependencies[key as keyof Dependencies]?.error !== undefined
+  const isReady = !Object.values<DependencyState | undefined>(dependencies).includes(undefined);
+  const isError = Object.values<DependencyState>(dependencies).some(
+    ({ error }) => error !== undefined
   );
 
   const rerunDiagnostics = useCallback(() => {
-    // set `.installed` and .error to undefined, leave other data as is
+    // reset `.installed` and .error, leave other data as is
     setDependencies((prevState) => {
       const newState: Dependencies = {};
-      Object.keys(prevState).forEach((key) => {
-        const typedKey = key as keyof Dependencies;
-        newState[typedKey] = {
-          ...prevState[typedKey],
-          installed: undefined,
+      for (const [dependency, data] of entries(prevState)) {
+        newState[dependency] = {
+          ...data,
+          installed: InstallationStatus.NotInstalled,
           error: undefined,
         };
-      });
+      }
       return newState;
     });
+
     runDiagnostics();
   }, []);
 
+  const updateDependency = useCallback(
+    (name: keyof Dependencies, newState: Partial<DependencyState>) => {
+      setDependencies((prev) => ({
+        ...prev,
+        [name]: { ...prev[name], ...newState },
+      }));
+    },
+    [setDependencies]
+  );
+
   useEffect(() => {
-    const listener = (event: MessageEvent<any>) => {
-      const message = event.data;
-      switch (message.command) {
+    const listener = (event: MessageEvent<DependencyMessageData>) => {
+      const { command, data: rawData } = event.data;
+      const data = adaptDependencyData(rawData);
+      switch (command) {
         case "isNodejsInstalled":
-          setDependencies((prev) => ({ ...prev, Nodejs: message.data }));
+          updateDependency("Nodejs", data);
           break;
         case "isAndroidEmulatorInstalled":
-          setDependencies((prev) => ({ ...prev, AndroidEmulator: message.data }));
+          updateDependency("AndroidEmulator", data);
           break;
         case "isXcodeInstalled":
-          setDependencies((prev) => ({ ...prev, Xcode: message.data }));
+          updateDependency("Xcode", data);
           break;
         case "isCocoaPodsInstalled":
-          setDependencies((prev) => ({ ...prev, CocoaPods: message.data }));
+          updateDependency("CocoaPods", data);
           break;
         case "isNodeModulesInstalled":
-          setDependencies((prev) => ({ ...prev, NodeModules: message.data }));
+          updateDependency("NodeModules", data);
           break;
         case "installingNodeModules":
-          setDependencies((prev) => ({
-            ...prev,
-            NodeModules: { ...prev.NodeModules, error: undefined, installed: undefined },
-          }));
+          updateDependency("NodeModules", {
+            error: undefined,
+            installed: InstallationStatus.InProgress,
+          });
           break;
         case "isPodsInstalled":
-          setDependencies((prev) => ({ ...prev, Pods: message.data }));
+          updateDependency("Pods", data);
           break;
         case "installingPods":
-          setDependencies((prev) => ({
-            ...prev,
-            Pods: { ...prev.Pods, error: undefined, installed: undefined },
-          }));
+          updateDependency("Pods", { error: undefined, installed: InstallationStatus.InProgress });
           break;
       }
     };
