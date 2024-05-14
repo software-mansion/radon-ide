@@ -12,7 +12,6 @@ import {
   Breakpoint,
   Source,
   StackFrame,
-  Variable,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
@@ -23,9 +22,9 @@ import {
   inferDAPScopePresentationHintFromCDPType,
   inferDAPVariableValueForCDPRemoteObject,
   CDPDebuggerScope,
-  CDPPropertyDescriptor,
   CDPRemoteObject,
 } from "./cdp";
+import { VariableStore } from "./variableStore";
 
 function compareIgnoringHost(url1: string, url2: string) {
   try {
@@ -70,8 +69,7 @@ class MyBreakpoint extends Breakpoint {
 }
 
 export class DebugAdapter extends DebugSession {
-  private variableStore: Map<number, CDPPropertyDescriptor[]> = new Map();
-  private currentVariableStoreIndex = Math.pow(2, 32);
+  private variableStore: VariableStore = new VariableStore();
   private connection: WebSocket;
   private configuration: DebugConfiguration;
   private threads: Array<Thread> = [];
@@ -82,8 +80,6 @@ export class DebugAdapter extends DebugSession {
 
   private pausedStackFrames: StackFrame[] = [];
   private pausedScopeChains: CDPDebuggerScope[][] = [];
-  private pausedCDPtoDAPObjectIdMap: Map<string, number> = new Map();
-  private pausedDAPtoCDPObjectIdMap: Map<number, string> = new Map();
 
   constructor(configuration: DebugConfiguration) {
     super();
@@ -141,6 +137,10 @@ export class DebugAdapter extends DebugSession {
         case "Debugger.resumed":
           this.sendEvent(new ContinuedEvent(this.threads[0].id));
           break;
+        case "Runtime.executionContextsCleared":
+          this.variableStore.clear();
+          this.sendEvent(new OutputEvent("\x1b[2J", "console"));
+          break;
         case "Runtime.consoleAPICalled":
           this.handleConsoleAPICall(message);
           break;
@@ -169,25 +169,23 @@ export class DebugAdapter extends DebugSession {
         generatedLineNumber1Based,
         generatedColumn1Based - 1
       );
-
       // creation of two set od variables is necessary because to work properly OutputEvent can have a reference only to one object.
-      this.variableStore.set(this.currentVariableStoreIndex, [
+      let index = this.variableStore.push(
+        message.params.args.slice(0, -3).map((arg: CDPRemoteObject, index: number) => {
+          return { name: `arg${index}`, value: arg };
+        })
+      );
+      index = this.variableStore.push([
         {
           name: "RootObject",
           value: {
             type: "object",
-            objectId: (this.currentVariableStoreIndex + 1).toString(),
+            objectId: index.toString(),
             className: "Object",
             description: "object",
           },
         },
       ]);
-      this.variableStore.set(
-        this.currentVariableStoreIndex + 1,
-        message.params.args.slice(0, -3).map((arg: CDPRemoteObject, index: number) => {
-          return { name: `arg${index}`, value: arg };
-        })
-      );
 
       output = new OutputEvent(
         (await formatMessage(message.params.args.slice(0, -3))) + "\n",
@@ -199,27 +197,27 @@ export class DebugAdapter extends DebugSession {
         source: new Source(sourceURL, sourceURL),
         line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
         column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
-        variablesReference: this.currentVariableStoreIndex,
+        variablesReference: index,
       };
     } else {
-      this.variableStore.set(this.currentVariableStoreIndex, [
+      // creation of two set od variables is necessary because to work properly OutputEvent can have a reference only to one object.
+      let index = this.variableStore.push(
+        message.params.args.map((arg: CDPRemoteObject, index: number) => {
+          return { name: `arg${index}`, value: arg };
+        })
+      );
+      index = this.variableStore.push([
         {
           name: "RootObject",
           value: {
             type: "object",
-            objectId: (this.currentVariableStoreIndex + 1).toString(),
+            objectId: index.toString(),
             className: "Object",
             description: "object",
           },
         },
       ]);
-      this.variableStore.set(
-        this.currentVariableStoreIndex + 1,
-        message.params.args.map((arg: CDPRemoteObject, index: number) => {
-          return { name: `arg${index}`, value: arg };
-        })
-      );
-      // creation of two set od variables is necessary because to work properly OutputEvent can have a reference only to one object.
+
       output = new OutputEvent(
         (await formatMessage(message.params.args)) + "\n",
         typeToCategory(message.params.type)
@@ -227,10 +225,9 @@ export class DebugAdapter extends DebugSession {
       output.body = {
         ...output.body,
         //@ts-ignore source, line, column and group are valid fields
-        variablesReference: this.currentVariableStoreIndex,
+        variablesReference: index,
       };
     }
-    this.currentVariableStoreIndex += 2;
     this.sendEvent(output);
     this.sendEvent(
       new Event("RNIDE_consoleLog", { category: typeToCategory(message.params.type) })
@@ -278,53 +275,13 @@ export class DebugAdapter extends DebugSession {
     };
   }
 
-  private async fetchObjectProperties(dapObjectID: number) {
-    let properties: CDPPropertyDescriptor[];
-    if (this.variableStore.has(dapObjectID)) {
-      properties = this.variableStore.get(dapObjectID) as CDPPropertyDescriptor[];
-    } else {
-      const cdpObjectId = this.convertDAPObjectIdToCDP(dapObjectID) || dapObjectID.toString();
-      properties = (
-        await this.sendCDPMessage("Runtime.getProperties", {
-          objectId: cdpObjectId,
-          ownProperties: true,
-        })
-      ).result as CDPPropertyDescriptor[];
-    }
-
-    const variables: Variable[] = properties
-      .map((prop) => {
-        if (prop.value === undefined) {
-          return { name: prop.name, value: "undefined", variablesReference: 0 };
-        }
-        const value = inferDAPVariableValueForCDPRemoteObject(prop.value);
-        if (prop.value.type === "object") {
-          return {
-            name: prop.name,
-            value,
-            variablesReference: Number(prop.value.objectId),
-          };
-        }
-        return {
-          name: prop.name,
-          value,
-          variablesReference: 0,
-        };
-      })
-      .filter((prop) => {
-        return prop.name !== "__proto__";
-      });
-
-    return variables;
-  }
-
   private async handleDebuggerPaused(message: any) {
     // We reset the paused* variables to lifecycle of objects references in DAP. https://microsoft.github.io/debug-adapter-protocol//overview.html#lifetime-of-objects-references
     this.pausedStackFrames = [];
     this.pausedScopeChains = [];
 
-    this.pausedCDPtoDAPObjectIdMap = new Map();
-    this.pausedDAPtoCDPObjectIdMap = new Map();
+    this.variableStore.pausedCDPtoDAPObjectIdMap = new Map();
+    this.variableStore.pausedDAPtoCDPObjectIdMap = new Map();
     if (
       message.params.reason === "other" &&
       message.params.callFrames[0].functionName === "__RNIDE_breakOnError"
@@ -335,13 +292,23 @@ export class DebugAdapter extends DebugSession {
       const localScropeCDPObjectId = message.params.callFrames[0].scopeChain?.find(
         (scope: any) => scope.type === "local"
       )?.object?.objectId;
-      const localScopeObjectId = this.adaptCDPObjectId(localScropeCDPObjectId);
-      const localScopeVariables = await this.fetchObjectProperties(localScopeObjectId);
+      const localScopeObjectId = this.variableStore.adaptCDPObjectId(localScropeCDPObjectId);
+      const localScopeVariables = await this.variableStore.get(
+        localScopeObjectId,
+        (method: string, params: object) => {
+          return this.sendCDPMessage(method, params);
+        }
+      );
       const errorMessage = localScopeVariables.find((v) => v.name === "message")?.value;
       const isFatal = localScopeVariables.find((v) => v.name === "isFatal")?.value;
       const stackObjectId = localScopeVariables.find((v) => v.name === "stack")?.variablesReference;
 
-      const stackObjectProperties = await this.fetchObjectProperties(stackObjectId!);
+      const stackObjectProperties = await this.variableStore.get(
+        stackObjectId!,
+        (method: string, params: object) => {
+          return this.sendCDPMessage(method, params);
+        }
+      );
 
       const stackFrames: Array<StackFrame> = [];
       // Unfortunately we can't get proper scope chanins here, because the debugger doesn't really stop at the frame where exception is thrown
@@ -350,8 +317,11 @@ export class DebugAdapter extends DebugSession {
           // we process entry with numerical names
           if (stackObjEntry.name.match(/^\d+$/)) {
             const index = parseInt(stackObjEntry.name, 10);
-            const stackObjProperties = await this.fetchObjectProperties(
-              stackObjEntry.variablesReference
+            const stackObjProperties = await this.variableStore.get(
+              stackObjEntry.variablesReference,
+              (method: string, params: object) => {
+                return this.sendCDPMessage(method, params);
+              }
             );
             const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
             const genUrl = stackObjProperties.find((v) => v.name === "file")?.value || "";
@@ -597,7 +567,7 @@ export class DebugAdapter extends DebugSession {
     response.body.scopes =
       this.pausedScopeChains[args.frameId]?.map((scope) => ({
         name: scope.type === "closure" ? "CLOSURE" : scope.name || scope.type.toUpperCase(), // for closure type, names are just numbers, so they don't look good, instead we just use name "CLOSURE"
-        variablesReference: this.adaptCDPObjectId(scope.object.objectId),
+        variablesReference: this.variableStore.adaptCDPObjectId(scope.object.objectId),
         presentationHint: inferDAPScopePresentationHintFromCDPType(scope.type),
         expensive: scope.type !== "local", // we only mark local scope as non-expensive as it is the one typically people want to look at and shouldn't have too many objects
       })) || [];
@@ -609,7 +579,12 @@ export class DebugAdapter extends DebugSession {
     args: DebugProtocol.VariablesArguments
   ): Promise<void> {
     response.body = response.body || {};
-    response.body.variables = await this.fetchObjectProperties(args.variablesReference);
+    response.body.variables = await this.variableStore.get(
+      args.variablesReference,
+      (method: string, params: object) => {
+        return this.sendCDPMessage(method, params);
+      }
+    );
     this.sendResponse(response);
   }
 
@@ -652,7 +627,7 @@ export class DebugAdapter extends DebugSession {
     response.body.result = stringValue;
     response.body.variablesReference = 0;
     if (remoteObject.type === "object") {
-      const dapID = this.adaptCDPObjectId(remoteObject.objectId);
+      const dapID = this.variableStore.adaptCDPObjectId(remoteObject.objectId);
       response.body.type = "object";
       response.body.variablesReference = dapID;
     }
@@ -666,19 +641,5 @@ export class DebugAdapter extends DebugSession {
     request?: DebugProtocol.Request | undefined
   ): void {
     Logger.debug(`Custom req ${command} ${args}`);
-  }
-
-  private adaptCDPObjectId(objectId: string) {
-    let dapObjectID = this.pausedCDPtoDAPObjectIdMap.get(objectId);
-    if (dapObjectID === undefined) {
-      dapObjectID = this.pausedCDPtoDAPObjectIdMap.size + 1;
-      this.pausedCDPtoDAPObjectIdMap.set(objectId, dapObjectID);
-      this.pausedDAPtoCDPObjectIdMap.set(dapObjectID, objectId);
-    }
-    return dapObjectID;
-  }
-
-  private convertDAPObjectIdToCDP(dapObjectID: number) {
-    return this.pausedDAPtoCDPObjectIdMap.get(dapObjectID);
   }
 }
