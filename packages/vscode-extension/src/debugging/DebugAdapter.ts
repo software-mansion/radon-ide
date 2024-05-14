@@ -170,17 +170,17 @@ export class DebugAdapter extends DebugSession {
         generatedColumn1Based - 1
       );
       // creation of two set od variables is necessary because to work properly OutputEvent can have a reference only to one object.
-      let index = this.variableStore.push(
+      let propertiesIndex = this.variableStore.push(
         message.params.args.slice(0, -3).map((arg: CDPRemoteObject, index: number) => {
           return { name: `arg${index}`, value: arg };
         })
       );
-      index = this.variableStore.push([
+      propertiesIndex = this.variableStore.push([
         {
           name: "RootObject",
           value: {
             type: "object",
-            objectId: index.toString(),
+            objectId: propertiesIndex.toString(),
             className: "Object",
             description: "object",
           },
@@ -197,21 +197,21 @@ export class DebugAdapter extends DebugSession {
         source: new Source(sourceURL, sourceURL),
         line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
         column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
-        variablesReference: index,
+        variablesReference: propertiesIndex,
       };
     } else {
       // creation of two set od variables is necessary because to work properly OutputEvent can have a reference only to one object.
-      let index = this.variableStore.push(
+      let propertiesIndex = this.variableStore.push(
         message.params.args.map((arg: CDPRemoteObject, index: number) => {
           return { name: `arg${index}`, value: arg };
         })
       );
-      index = this.variableStore.push([
+      propertiesIndex = this.variableStore.push([
         {
           name: "RootObject",
           value: {
             type: "object",
-            objectId: index.toString(),
+            objectId: propertiesIndex.toString(),
             className: "Object",
             description: "object",
           },
@@ -225,7 +225,7 @@ export class DebugAdapter extends DebugSession {
       output.body = {
         ...output.body,
         //@ts-ignore source, line, column and group are valid fields
-        variablesReference: index,
+        variablesReference: propertiesIndex,
       };
     }
     this.sendEvent(output);
