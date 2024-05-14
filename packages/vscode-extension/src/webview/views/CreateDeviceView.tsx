@@ -35,6 +35,22 @@ const SUPPORTED_DEVICES = [
   },
 ] as const;
 
+type GetSupportedDevicesArgs = {
+  isIosAvailable: boolean;
+  isAndroidAvailable: boolean;
+};
+function getSupportedDevices({ isAndroidAvailable, isIosAvailable }: GetSupportedDevicesArgs) {
+  return SUPPORTED_DEVICES.filter(({ label }) => {
+    if (label === "Android" && !isAndroidAvailable) {
+      return false;
+    }
+    if (label === "iOS" && !isIosAvailable) {
+      return false;
+    }
+    return true;
+  });
+}
+
 interface CreateDeviceViewProps {
   onCreate: () => void;
   onCancel: () => void;
@@ -110,24 +126,16 @@ function CreateDeviceView({
             setDeviceName(newValue as SupportedDeviceName);
             selectSystemName(undefined);
           }}
-          items={SUPPORTED_DEVICES.filter(({ label }) => {
-            if (label === "Android" && !isAndroidAvailable) {
-              return false;
-            }
-            if (label === "iOS" && !isIosAvailable) {
-              return false;
-            }
-            return true;
-          })}
+          items={getSupportedDevices({ isAndroidAvailable, isIosAvailable })}
           placeholder="Choose device type..."
         />
       </div>
       <div className="form-row">
         <Label>
           <span>System image</span>
-          {!systemImagesOptions.length && <span className="codicon codicon-warning warning" />}
+          {systemImagesOptions.length === 0 && <span className="codicon codicon-warning warning" />}
         </Label>
-        <div className="form-label"></div>
+        <div className="form-label" />
         {systemImagesOptions.length > 0 ? (
           <Select
             disabled={!deviceName}
