@@ -1,26 +1,22 @@
 :root {
-  --swm-zoom-select-width: 70px;
+  --swm-zoom-select-width: 50px;
   --swm-zoom-select-trigger-offset: 20px;
 }
 
 .zoom-controls {
   background-color: var(--swm-zoom-controls-background);
   border-radius: 18px;
-  min-width: 75px;
   display: flex;
-  justify-content: space-between;
-}
-
-.zoom-controls .icon-button {
-  z-index: 1;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .zoom-controls .icon-button.zoom-out-button {
-  border-radius: 18px 0 0 18px;
+  border-radius: 18px 18px 0 0;
 }
 
 .zoom-controls .icon-button.zoom-in-button {
-  border-radius: 0 18px 18px 0;
+  border-radius: 0 0 18px 18px;
 }
 
 .zoom-controls .icon-button:hover {
@@ -32,7 +28,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 10px;
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
@@ -42,7 +37,6 @@
   background-color: var(--swm-zoom-controls-background);
   color: var(--swm-zoom-select-trigger-text);
   user-select: none;
-  width: calc(var(--swm-zoom-select-width) - var(--swm-zoom-select-trigger-offset));
 }
 .zoom-select-trigger:hover {
   background-color: var(--swm-zoom-select-trigger-hover);
@@ -59,21 +53,22 @@
 .zoom-select-content {
   overflow: hidden;
   background-color: var(--swm-zoom-controls-background);
-  width: var(--swm-zoom-select-width);
-  border-radius: 18px 18px 0 0;
+  border-radius: 18px;
   padding-top: 4px;
   margin-left: calc(var(--swm-zoom-select-trigger-offset) * -1 / 2);
 }
 
 .zoom-select-viewport {
-  padding: 6px;
+  display: flex;
+  flex-direction: row;
 }
 
 .zoom-dropdown-menu-content {
   min-width: var(--swm-zoom-select-width);
   background-color: var(--swm-zoom-controls-background);
-  border-radius: 6px 6px 0 0;
+  border-radius: 6px;
   padding: 4px;
+  margin-left: 5px;
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
@@ -91,6 +86,7 @@
   line-height: 1;
   display: flex;
   align-items: center;
+  flex-direction: row;
   justify-content: center;
   height: 32px;
   padding: 0 10px;

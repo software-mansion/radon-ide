@@ -5,7 +5,7 @@ import "./ZoomControls.css";
 
 const ZOOM_STEP = 10;
 const DEFAULT_ZOOM_LEVEL = 100;
-const ZOOM_SELECT_NUMERIC_VALUES = [300, 200, 150, 125, 100, 75, 50, 25, 10];
+const ZOOM_SELECT_NUMERIC_VALUES = [50, 100, 150, 200, 300];
 
 export type ZoomLevelType = number | "Fit";
 
@@ -25,7 +25,7 @@ const ZoomLevelSelect = ({ zoomLevel, setZoomLevel }: ZoomControlsProps) => {
       <Select.Trigger className="zoom-select-trigger" disabled={false}>
         <Select.Value>
           <div className="zoom-select-value">
-            {typeof zoomLevel === "string" ? zoomLevel : `${Math.floor(zoomLevel)}%`}
+            {typeof zoomLevel === "string" ? zoomLevel : `${Math.floor(zoomLevel) / 100}x`}
           </div>
         </Select.Value>
       </Select.Trigger>
@@ -33,17 +33,18 @@ const ZoomLevelSelect = ({ zoomLevel, setZoomLevel }: ZoomControlsProps) => {
       <Select.Portal>
         <Select.Content
           className="zoom-select-content zoom-dropdown-menu-content"
+          side="right"
           position="popper">
           <Select.Viewport className="zoom-select-viewport">
-            {ZOOM_SELECT_NUMERIC_VALUES.map((level) => (
-              <Select.SelectItem key={level} value={level.toString()} className="zoom-select-item">
-                {level}%
-              </Select.SelectItem>
-            ))}
-            <Select.Separator className="zoom-select-item-separator" />
             <Select.SelectItem value="Fit" className="zoom-select-item">
               Fit
             </Select.SelectItem>
+            <Select.Separator className="zoom-select-item-separator" />
+            {ZOOM_SELECT_NUMERIC_VALUES.map((level) => (
+              <Select.SelectItem key={level} value={level.toString()} className="zoom-select-item">
+                {level / 100}x
+              </Select.SelectItem>
+            ))}
           </Select.Viewport>
         </Select.Content>
       </Select.Portal>
