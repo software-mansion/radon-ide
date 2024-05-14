@@ -5,6 +5,7 @@ import Hero from "@site/src/components/Hero/StartScreen";
 import LearnMoreHero from "@site/src/components/LearnMore/LearnMoreHero";
 import LearnMoreFooter from "@site/src/components/LearnMore/LearnMoreFooter";
 import Installation from "@site/src/components/Sections/Installation";
+import FooterBackground from "../components/FooterBackground";
 import Overview from "@site/src/components/Sections/Overview";
 import FAQ from "@site/src/components/Sections/FAQ";
 
@@ -23,6 +24,7 @@ export default function Home(): JSX.Element {
           <LearnMoreFooter />
         </div>
       </div>
+      <FooterBackground />
     </Layout>
   );
 }
