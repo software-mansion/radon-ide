@@ -24,7 +24,7 @@ import {
   inferDAPVariableValueForCDPRemoteObject,
   CDPDebuggerScope,
   CDPPropertyDescriptor,
-  FormattedLog as FormattedLog,
+  CDPRemoteObject,
 } from "./cdp";
 
 function compareIgnoringHost(url1: string, url2: string) {
@@ -70,6 +70,8 @@ class MyBreakpoint extends Breakpoint {
 }
 
 export class DebugAdapter extends DebugSession {
+  private variableStore: Map<number, CDPPropertyDescriptor[]> = new Map();
+  private currentVariableStoreIndex = Math.pow(2, 32);
   private connection: WebSocket;
   private configuration: DebugConfiguration;
   private threads: Array<Thread> = [];
@@ -148,72 +150,13 @@ export class DebugAdapter extends DebugSession {
     });
   }
 
-  private sendFormattedOutputEvent(
-    log: FormattedLog,
-    category: "stderr" | "stdout",
-    line?: number,
-    column?: number,
-    sourceURL?: string,
-  ) {
-    if (log.children) {
-      Logger.debug("frytki z kechupem", log.objectId, log.label)
-      const startCollapsedEvent = new OutputEvent(log.label + "\n");
-      startCollapsedEvent.body = {
-        ...startCollapsedEvent.body,
-        category,
-        //@ts-ignore source, line, column and group are valid fields
-        variableReference: log.objectId,
-        source: sourceURL ? new Source(sourceURL, sourceURL) : undefined,
-        line,
-        column,
-        group: "startCollapsed",
-      };
-      this.sendEvent(startCollapsedEvent);
-
-      log.children.forEach((item) => {
-        this.sendFormattedOutputEvent(item, category);
-      });
-
-      const endGroupEvent = new OutputEvent("");
-      // @ts-ignore group is a valid field
-      endGroupEvent.body.group = "end";
-      this.sendEvent(endGroupEvent);
-
-      // For now this is a necessary workaround, because of a bug in vs code that prevents "source" and "group" properties to work together
-      // TODO: monitor if the bug was solved and remove Source Event https://github.com/microsoft/vscode/issues/212304
-      if (sourceURL) {
-        const sourceEvent = new OutputEvent("");
-        sourceEvent.body = {
-          ...sourceEvent.body,
-          category,
-          //@ts-ignore source, line, column and group are valid fields
-          source: new Source(sourceURL, sourceURL),
-          line,
-          column,
-        };
-        this.sendEvent(sourceEvent);
-      }
-    } else {
-      Logger.debug("frytki", log.objectId, log.label)
-      const outputEvent = new OutputEvent(log.label + "\n", category);
-      outputEvent.body = {
-        ...outputEvent.body,
-        //@ts-ignore source, line and column are valid fields
-        variableReference: log.objectId,
-        source: sourceURL ? new Source(sourceURL, sourceURL) : undefined,
-        line,
-        column,
-      };
-      this.sendEvent(outputEvent);
-    }
-  }
-
   private async handleConsoleAPICall(message: any) {
     // We wrap console calls and add stack information as last three arguments, however
     // some logs may baypass that, especially when printed in initialization phase, so we
     // need to detect whether the wrapper has added the stack info or not
     // We check if there are more than 3 arguments, and if the last one is a number
     const argsLen = message.params.args.length;
+    let output: OutputEvent;
     if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP
       // the line and column numbers are 1-based
@@ -227,19 +170,68 @@ export class DebugAdapter extends DebugSession {
         generatedColumn1Based - 1
       );
 
-      const output = await formatMessage(message.params.args.slice(0, -3), this);
-
-      this.sendFormattedOutputEvent(
-        output,
-        typeToCategory(message.params.type),
-        this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
-        this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
-        sourceURL
+      // creation of two set od variables is necessary because to work properly OutputEvent can have a reference only to one object.
+      this.variableStore.set(this.currentVariableStoreIndex, [
+        {
+          name: "RootObject",
+          value: {
+            type: "object",
+            objectId: (this.currentVariableStoreIndex + 1).toString(),
+            className: "Object",
+            description: "object",
+          },
+        },
+      ]);
+      this.variableStore.set(
+        this.currentVariableStoreIndex + 1,
+        message.params.args.slice(0, -3).map((arg: CDPRemoteObject, index: number) => {
+          return { name: `arg${index}`, value: arg };
+        })
       );
+
+      output = new OutputEvent(
+        (await formatMessage(message.params.args.slice(0, -3))) + "\n",
+        typeToCategory(message.params.type)
+      );
+      output.body = {
+        ...output.body,
+        //@ts-ignore source, line, column and group are valid fields
+        source: new Source(sourceURL, sourceURL),
+        line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+        column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
+        variablesReference: this.currentVariableStoreIndex,
+      };
     } else {
-      const output = await formatMessage(message.params.args, this);
-      this.sendFormattedOutputEvent(output, typeToCategory(message.params.type));
+      this.variableStore.set(this.currentVariableStoreIndex, [
+        {
+          name: "RootObject",
+          value: {
+            type: "object",
+            objectId: (this.currentVariableStoreIndex + 1).toString(),
+            className: "Object",
+            description: "object",
+          },
+        },
+      ]);
+      this.variableStore.set(
+        this.currentVariableStoreIndex + 1,
+        message.params.args.map((arg: CDPRemoteObject, index: number) => {
+          return { name: `arg${index}`, value: arg };
+        })
+      );
+      // creation of two set od variables is necessary because to work properly OutputEvent can have a reference only to one object.
+      output = new OutputEvent(
+        (await formatMessage(message.params.args)) + "\n",
+        typeToCategory(message.params.type)
+      );
+      output.body = {
+        ...output.body,
+        //@ts-ignore source, line, column and group are valid fields
+        variablesReference: this.currentVariableStoreIndex,
+      };
     }
+    this.currentVariableStoreIndex += 2;
+    this.sendEvent(output);
     this.sendEvent(
       new Event("RNIDE_consoleLog", { category: typeToCategory(message.params.type) })
     );
@@ -287,35 +279,41 @@ export class DebugAdapter extends DebugSession {
   }
 
   private async fetchObjectProperties(dapObjectID: number) {
-    const cdpObjectId = this.convertDAPObjectIdToCDP(dapObjectID);
-    if (cdpObjectId === undefined) {
-      return [];
+    let properties: CDPPropertyDescriptor[];
+    if (this.variableStore.has(dapObjectID)) {
+      properties = this.variableStore.get(dapObjectID) as CDPPropertyDescriptor[];
+    } else {
+      const cdpObjectId = this.convertDAPObjectIdToCDP(dapObjectID) || dapObjectID.toString();
+      properties = (
+        await this.sendCDPMessage("Runtime.getProperties", {
+          objectId: cdpObjectId,
+          ownProperties: true,
+        })
+      ).result as CDPPropertyDescriptor[];
     }
-    const properties = (
-      await this.sendCDPMessage("Runtime.getProperties", {
-        objectId: cdpObjectId,
-        ownProperties: true,
-      })
-    ).result as CDPPropertyDescriptor[];
 
-    const variables: Variable[] = properties.map((prop) => {
-      if (prop.value === undefined) {
-        return { name: prop.name, value: "undefined", variablesReference: 0 };
-      }
-      const value = inferDAPVariableValueForCDPRemoteObject(prop.value);
-      if (prop.value.type === "object") {
+    const variables: Variable[] = properties
+      .map((prop) => {
+        if (prop.value === undefined) {
+          return { name: prop.name, value: "undefined", variablesReference: 0 };
+        }
+        const value = inferDAPVariableValueForCDPRemoteObject(prop.value);
+        if (prop.value.type === "object") {
+          return {
+            name: prop.name,
+            value,
+            variablesReference: Number(prop.value.objectId),
+          };
+        }
         return {
           name: prop.name,
           value,
-          variablesReference: this.adaptCDPObjectId(prop.value.objectId),
+          variablesReference: 0,
         };
-      }
-      return {
-        name: prop.name,
-        value,
-        variablesReference: 0,
-      };
-    });
+      })
+      .filter((prop) => {
+        return prop.name !== "__proto__";
+      });
 
     return variables;
   }
@@ -611,14 +609,6 @@ export class DebugAdapter extends DebugSession {
     args: DebugProtocol.VariablesArguments
   ): Promise<void> {
     response.body = response.body || {};
-
-    const cdpObjectId = this.convertDAPObjectIdToCDP(args.variablesReference);
-    if (cdpObjectId === undefined) {
-      response.body.variables = [];
-      this.sendResponse(response);
-      return;
-    }
-
     response.body.variables = await this.fetchObjectProperties(args.variablesReference);
     this.sendResponse(response);
   }
