@@ -96,7 +96,7 @@ export async function buildAndroid(
   );
   const buildAndroidProgressProcessor = new BuildAndroidProgressProcessor(progressListener);
   outputChannel.clear();
-  lineReader(buildProcess).onLineRead((line) => {
+  lineReader(buildProcess, true).onLineRead((line) => {
     outputChannel.appendLine(line);
     buildAndroidProgressProcessor.processLine(line);
   });

@@ -8,18 +8,26 @@ export type ChildProcess = ExecaChildProcess<string>;
  * When using this methid, the subprocess should be started with buffer: false option
  * as there's no need for allocating memory for the output that's going to be very long.
  */
-export function lineReader(childProcess: ExecaChildProcess<string>) {
+export function lineReader(childProcess: ExecaChildProcess<string>, includeStderr = false) {
   const input = childProcess.stdout;
   if (!input) {
     throw new Error("Child process has no stdout");
   }
-  const reader = readline.createInterface({
+  const stdoutReader = readline.createInterface({
     input,
     terminal: false,
   });
+  let stderrReader = null;
+  if (includeStderr && childProcess.stderr) {
+    stderrReader = readline.createInterface({
+      input: childProcess.stderr!,
+      terminal: false,
+    });
+  }
   return {
     onLineRead: (callback: (line: string) => void) => {
-      reader.on("line", callback);
+      stdoutReader.on("line", callback);
+      stderrReader?.on("line", callback);
     },
   };
 }
