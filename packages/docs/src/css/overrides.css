@@ -105,3 +105,8 @@ table thead tr {
 [class*="navbar__item"] {
   display: flex !important;
 }
+
+/* TODO: probably to remove */
+[class*="logoWrapper"] [class*="sidebarLogo"] {
+  margin-left: 1.5rem;
+}
