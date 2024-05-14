@@ -38,7 +38,7 @@ async function extractPackageName(artifactPath: string, cancelToken: CancelToken
 
 function getApkPath(appRootFolder: string, productFlavor: string, buildType: string) {
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
-  const apkFile = ["app", productFlavor, buildType].join("-") + ".apk";
+  const apkFile = ["app", productFlavor, buildType].filter(Boolean).join("-") + ".apk";
   return path.join(androidSourceDir, RELATIVE_APK_DIR, productFlavor, buildType, apkFile);
 }
 
