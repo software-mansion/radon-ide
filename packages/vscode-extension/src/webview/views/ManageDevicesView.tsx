@@ -20,7 +20,7 @@ function DeviceRow({ deviceInfo, onDeviceDelete }: DeviceRowProps) {
       <div className="device-icon">
         {!deviceInfo.available ? (
           <Tooltip
-            label={`This device cannot be used. Perhaps the system image or runtime is missing. Try deleting and creating a new device instead.`}
+            label="This device cannot be used. Perhaps the system image or runtime is missing. Try deleting and creating a new device instead."
             instant
             side="bottom">
             <span className="codicon codicon-warning warning" />
