@@ -16,7 +16,7 @@ export class VariableStore {
    */
   public async get(
     id: number,
-    sendCDPMessage: (method: string, params: object) => Promise<any>
+    fetchProperties: (params: object) => Promise<any>
   ): Promise<Variable[]> {
     let properties: CDPPropertyDescriptor[];
     if (this._store.has(id)) {
@@ -24,7 +24,7 @@ export class VariableStore {
     } else {
       const cdpObjectId = this.convertDAPObjectIdToCDP(id) || id.toString();
       properties = (
-        await sendCDPMessage("Runtime.getProperties", {
+        await fetchProperties({
           objectId: cdpObjectId,
           ownProperties: true,
         })

@@ -295,8 +295,8 @@ export class DebugAdapter extends DebugSession {
       const localScopeObjectId = this.variableStore.adaptCDPObjectId(localScropeCDPObjectId);
       const localScopeVariables = await this.variableStore.get(
         localScopeObjectId,
-        (method: string, params: object) => {
-          return this.sendCDPMessage(method, params);
+        (params: object) => {
+          return this.sendCDPMessage("Runtime.getProperties", params);
         }
       );
       const errorMessage = localScopeVariables.find((v) => v.name === "message")?.value;
@@ -305,8 +305,8 @@ export class DebugAdapter extends DebugSession {
 
       const stackObjectProperties = await this.variableStore.get(
         stackObjectId!,
-        (method: string, params: object) => {
-          return this.sendCDPMessage(method, params);
+        (params: object) => {
+          return this.sendCDPMessage("Runtime.getProperties", params);
         }
       );
 
@@ -319,8 +319,8 @@ export class DebugAdapter extends DebugSession {
             const index = parseInt(stackObjEntry.name, 10);
             const stackObjProperties = await this.variableStore.get(
               stackObjEntry.variablesReference,
-              (method: string, params: object) => {
-                return this.sendCDPMessage(method, params);
+              (params: object) => {
+                return this.sendCDPMessage("Runtime.getProperties", params);
               }
             );
             const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
@@ -581,8 +581,8 @@ export class DebugAdapter extends DebugSession {
     response.body = response.body || {};
     response.body.variables = await this.variableStore.get(
       args.variablesReference,
-      (method: string, params: object) => {
-        return this.sendCDPMessage(method, params);
+      (params: object) => {
+        return this.sendCDPMessage("Runtime.getProperties", params);
       }
     );
     this.sendResponse(response);
