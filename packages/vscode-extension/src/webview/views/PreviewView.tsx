@@ -144,6 +144,9 @@ function PreviewView() {
           {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
         </div>
       )}
+      <div className="button-group-left">
+        <ZoomControls zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
+      </div>
 
       <div className="button-group-bottom">
         <IconButton
@@ -179,8 +182,6 @@ function PreviewView() {
             />
           </IconButton>
         </DeviceSettingsDropdown>
-
-        <ZoomControls zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
       </div>
     </div>
   );

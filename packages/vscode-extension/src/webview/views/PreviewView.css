@@ -21,6 +21,12 @@
   margin-top: 8px;
 }
 
+.button-group-left {
+  position: absolute;
+  display: flex;
+  left: 10px;
+}
+
 .bar-spacer {
   flex: 1;
   max-height: 45px;
