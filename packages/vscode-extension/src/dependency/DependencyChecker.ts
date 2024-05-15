@@ -1,4 +1,5 @@
 import { Webview, Disposable } from "vscode";
+import { coerce, gte } from "semver";
 import { Logger } from "../Logger";
 import fs from "fs";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
@@ -7,6 +8,8 @@ import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { getAppRootFolder } from "../utilities/extensionContext";
 import { isExpoGoProject } from "../builders/expoGo";
+
+const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 
 export class DependencyChecker implements Disposable {
   private disposables: Disposable[] = [];
@@ -44,6 +47,14 @@ export class DependencyChecker implements Disposable {
           case "checkCocoaPodsInstalled":
             Logger.debug("Received checkCocoaPodsInstalled command.");
             this.checkCocoaPodsInstalled();
+            return;
+          case "checkNodeModulesInstalled":
+            Logger.debug("Received checkNodeModulesInstalled command.");
+            this.checkNodeModulesInstalled();
+            return;
+          case "checkReactNativeInstalled":
+            Logger.debug("Received checkReactNativeInstalled command.");
+            this.checkReactNativeInstalled();
             return;
           case "checkPodsInstalled":
             Logger.debug("Received checkPodsInstalled command.");
@@ -128,6 +139,45 @@ export class DependencyChecker implements Disposable {
     return installed;
   }
 
+  public async checkNodeModulesInstalled() {
+    const installed = fs.existsSync(path.join(getAppRootFolder(), "node_modules"));
+    const errorMessage = "node_modules are not installed.";
+    this.webview.postMessage({
+      command: "isNodeModulesInstalled",
+      data: {
+        installed,
+        info: "Whether Node dependencies are installed.",
+        error: installed ? undefined : errorMessage,
+      },
+    });
+    Logger.debug("NodeModules installed: ", installed);
+    return installed;
+  }
+
+  public async checkReactNativeInstalled() {
+    const { installed: reactNativeInstalled, supported } = checkMinReactNativeVersionInstalled();
+    const errorMessage =
+      reactNativeInstalled && !supported
+        ? `Installed version of React Native does not match the minimum requirement: ${MIN_REACT_NATIVE_VERSION_SUPPORTED}.`
+        : "React Native is not installed.";
+
+    const installed = reactNativeInstalled && supported;
+
+    this.webview.postMessage({
+      command: "isReactNativeInstalled",
+      data: {
+        installed,
+        info: "Whether supported version of React Native is installed.",
+        error: installed ? undefined : errorMessage,
+      },
+    });
+    Logger.debug(
+      `Supported React Native version ${MIN_REACT_NATIVE_VERSION_SUPPORTED} installed: `,
+      installed
+    );
+    return installed;
+  }
+
   public async checkPodsInstalled() {
     const installed = await checkIosDependenciesInstalled();
     const errorMessage = "iOS dependencies are not installed.";
@@ -153,6 +203,23 @@ export async function checkIfCLIInstalled(cmd: string, options: Record<string, u
   } catch (_) {
     return false;
   }
+}
+
+function checkMinReactNativeVersionInstalled() {
+  const reactNativePath = path.join(getAppRootFolder(), "node_modules/react-native/package.json");
+
+  if (!fs.existsSync(reactNativePath)) {
+    return { installed: false, supported: false };
+  }
+
+  const packageJson = JSON.parse(fs.readFileSync(reactNativePath, { encoding: "utf8" }));
+  const reactNativeVersion = coerce(packageJson.version);
+  const minReactNativeVersion = coerce(MIN_REACT_NATIVE_VERSION_SUPPORTED)!;
+
+  return {
+    installed: true,
+    supported: reactNativeVersion ? gte(reactNativeVersion, minReactNativeVersion) : false,
+  };
 }
 
 export async function checkIosDependenciesInstalled() {

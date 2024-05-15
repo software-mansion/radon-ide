@@ -12,6 +12,7 @@ interface Dependencies {
   Xcode?: DependencyData;
   CocoaPods?: DependencyData;
   NodeModules?: DependencyData;
+  ReactNative?: DependencyData;
   Pods?: DependencyData;
 }
 
@@ -21,6 +22,7 @@ const defaultDependencies: Dependencies = {
   Xcode: undefined,
   CocoaPods: undefined,
   NodeModules: undefined,
+  ReactNative: undefined,
   Pods: undefined,
 };
 
@@ -104,6 +106,9 @@ export default function DependenciesProvider({ children }: DependenciesProviderP
             ...prev,
             NodeModules: { ...prev.NodeModules, error: undefined, installed: undefined },
           }));
+          break;
+        case "isReactNativeInstalled":
+          setDependencies((prev) => ({ ...prev, ReactNative: message.data }));
           break;
         case "isPodsInstalled":
           setDependencies((prev) => ({ ...prev, Pods: message.data }));
