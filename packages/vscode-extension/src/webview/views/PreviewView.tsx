@@ -16,9 +16,11 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import ZoomControls, { ZoomLevelType } from "../components/ZoomControls";
 
 function PreviewView() {
   const [isInspecting, setIsInspecting] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState<ZoomLevelType>("Fit");
   const [isFollowing, setIsFollowing] = useState(false);
   const [logCounter, setLogCounter] = useState(0);
 
@@ -134,12 +136,17 @@ function PreviewView() {
           key={selectedDevice.id}
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
+          zoomLevel={zoomLevel}
+          setZoomLevel={setZoomLevel}
         />
       ) : (
         <div className="missing-device-filler">
           {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
         </div>
       )}
+      <div className="button-group-left">
+        <ZoomControls zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
+      </div>
 
       <div className="button-group-bottom">
         <IconButton

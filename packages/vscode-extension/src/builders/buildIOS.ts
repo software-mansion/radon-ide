@@ -1,10 +1,10 @@
-import { RelativePattern, workspace, Uri, window, OutputChannel } from "vscode";
+import { RelativePattern, workspace, Uri, OutputChannel } from "vscode";
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import path from "path";
 import { checkIosDependenciesInstalled } from "../dependency/DependencyChecker";
 import { installIOSDependencies } from "../dependency/DependencyInstaller";
-import { CancelToken, IOSBuildResult } from "./BuildManager";
+import { CancelToken } from "./BuildManager";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import {
@@ -185,7 +185,7 @@ export async function buildIos(
 
     const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
     outputChannel.clear();
-    lineReader(process).onLineRead((line) => {
+    lineReader(process, true).onLineRead((line) => {
       outputChannel.appendLine(line);
       buildIOSProgressProcessor.processLine(line);
       // Xcode can sometimes escape `=` with a backslash or put the value in quotes
