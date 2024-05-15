@@ -6,6 +6,7 @@ import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
 import { DeviceProperties, SupportedDeviceName, SupportedDevices } from "../utilities/consts";
 import { Platform } from "../../common/DeviceManager";
+import { useDependencies } from "../providers/DependenciesProvider";
 
 function isSupportedIOSDevice(name: SupportedDeviceName): boolean {
   return SupportedDevices.some((sd) => sd.name === name && isIOSDevice(sd));
@@ -35,16 +36,13 @@ const SUPPORTED_DEVICES = [
   },
 ] as const;
 
-type GetSupportedDevicesArgs = {
-  isIosAvailable: boolean;
-  isAndroidAvailable: boolean;
-};
-function getSupportedDevices({ isAndroidAvailable, isIosAvailable }: GetSupportedDevicesArgs) {
+function useSupportedDevices() {
+  const { isAndroidEmulatorError, isIosSimulatorError } = useDependencies();
   return SUPPORTED_DEVICES.filter(({ label }) => {
-    if (label === "Android" && !isAndroidAvailable) {
+    if (label === "Android" && isAndroidEmulatorError) {
       return false;
     }
-    if (label === "iOS" && !isIosAvailable) {
+    if (label === "iOS" && isIosSimulatorError) {
       return false;
     }
     return true;
@@ -54,20 +52,14 @@ function getSupportedDevices({ isAndroidAvailable, isIosAvailable }: GetSupporte
 interface CreateDeviceViewProps {
   onCreate: () => void;
   onCancel: () => void;
-  isIosAvailable: boolean;
-  isAndroidAvailable: boolean;
 }
 
-function CreateDeviceView({
-  onCreate,
-  onCancel,
-  isIosAvailable,
-  isAndroidAvailable,
-}: CreateDeviceViewProps) {
+function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [deviceName, setDeviceName] = useState<SupportedDeviceName | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const supportedDevices = useSupportedDevices();
   const { iOSRuntimes, androidImages, deviceManager, reload } = useDevices();
 
   useEffect(() => {
@@ -126,7 +118,7 @@ function CreateDeviceView({
             setDeviceName(newValue as SupportedDeviceName);
             selectSystemName(undefined);
           }}
-          items={getSupportedDevices({ isAndroidAvailable, isIosAvailable })}
+          items={supportedDevices}
           placeholder="Choose device type..."
         />
       </div>
