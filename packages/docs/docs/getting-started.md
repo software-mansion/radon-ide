@@ -45,7 +45,7 @@ For installation instructions head to [installation](./installation.md) section.
 
 ### 💻 Usage
 
-See [usage](./usage.md) guide on how to get started after installing the extension. You can also visit [React Native IDE](https://ide.swmansion.com) website where we hilight the most important features.
+See [usage](./usage.md) guide on how to get started after installing the extension. You can also visit [React Native IDE](https://ide.swmansion.com) website where we highlight the most important features.
 
 ### 🐛 Troubleshooting
 

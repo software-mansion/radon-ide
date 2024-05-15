@@ -39,7 +39,7 @@ For installation instructions head to [INSTALLATION](https://ide.swmansion.com/d
 
 ### 💻 Usage
 
-See [USAGE](https://ide.swmansion.com/docs/usage) guide on how to get started after installing the extension. You can also visit [React Native IDE](https://ide.swmansion.com) website where we hilight the most important features.
+See [USAGE](https://ide.swmansion.com/docs/usage) guide on how to get started after installing the extension. You can also visit [React Native IDE](https://ide.swmansion.com) website where we highlight the most important features.
 
 ### 🐛 Troubleshooting
 
