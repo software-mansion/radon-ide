@@ -5,7 +5,11 @@ import styles from "./styles.module.css";
 const FooterBackground = () => {
   const { isLanding } = usePageType();
 
-  return <>{isLanding && <div className={styles.footerBackground} />}</>;
+  return (
+    <div className={styles.container}>
+      {isLanding && <div className={styles.footerBackground} />}
+    </div>
+  );
 };
 
 export default FooterBackground;
