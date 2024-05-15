@@ -6,6 +6,7 @@ import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
 import { DeviceProperties, SupportedDeviceName, SupportedDevices } from "../utilities/consts";
 import { Platform } from "../../common/DeviceManager";
+import { useDependencies } from "../providers/DependenciesProvider";
 
 function isSupportedIOSDevice(name: SupportedDeviceName): boolean {
   return SupportedDevices.some((sd) => sd.name === name && isIOSDevice(sd));
@@ -33,7 +34,20 @@ const SUPPORTED_DEVICES = [
     })),
     label: "Android",
   },
-];
+] as const;
+
+function useSupportedDevices() {
+  const { isAndroidEmulatorError, isIosSimulatorError } = useDependencies();
+  return SUPPORTED_DEVICES.filter(({ label }) => {
+    if (label === "Android" && isAndroidEmulatorError) {
+      return false;
+    }
+    if (label === "iOS" && isIosSimulatorError) {
+      return false;
+    }
+    return true;
+  });
+}
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -45,6 +59,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const supportedDevices = useSupportedDevices();
   const { iOSRuntimes, androidImages, deviceManager, reload } = useDevices();
 
   useEffect(() => {
@@ -103,17 +118,17 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
             setDeviceName(newValue as SupportedDeviceName);
             selectSystemName(undefined);
           }}
-          items={SUPPORTED_DEVICES}
+          items={supportedDevices}
           placeholder="Choose device type..."
         />
       </div>
       <div className="form-row">
         <Label>
           <span>System image</span>
-          {!systemImagesOptions.length && <span className="codicon codicon-warning warning" />}
+          {systemImagesOptions.length === 0 && <span className="codicon codicon-warning warning" />}
         </Label>
-        <div className="form-label"></div>
-        {!!systemImagesOptions.length ? (
+        <div className="form-label" />
+        {systemImagesOptions.length > 0 ? (
           <Select
             disabled={!deviceName}
             className="form-field"
