@@ -28,7 +28,7 @@ function PreviewView() {
 
   const { devices, finishedInitialLoad } = useDevices();
   const { projectState, project } = useProject();
-  const { isAndroidError, isIosError } = useDependencies();
+  const { isAndroidEmulatorError, isIosSimulatorError } = useDependencies();
 
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
@@ -67,10 +67,7 @@ function PreviewView() {
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
-      openModal(
-        "Manage Devices",
-        <ManageDevicesView isAndroidAvailable={!isAndroidError} isIosAvailable={!isIosError} />
-      );
+      openModal("Manage Devices", <ManageDevicesView />);
       return;
     }
     if (selectedDevice?.id !== value) {
@@ -176,8 +173,8 @@ function PreviewView() {
           // @ts-ignore TODO: Fix typing
           label={selectedDevice?.name}
           onValueChange={handleDeviceDropdownChange}
-          isIosAvailable={!isIosError}
-          isAndroidAvailable={!isAndroidError}
+          isIosAvailable={!isIosSimulatorError}
+          isAndroidAvailable={!isAndroidEmulatorError}
           disabled={devicesNotFound}
         />
 

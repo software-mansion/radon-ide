@@ -102,7 +102,7 @@ interface DiagnosticErrorProps {
   message?: string;
 }
 
-function DiagnosticError({ message }: DiagnosticErrorProps) {
+export function DiagnosticError({ message }: DiagnosticErrorProps) {
   if (!message) {
     return null;
   }

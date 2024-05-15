@@ -8,6 +8,7 @@ import { useDevices } from "../providers/DevicesProvider";
 import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
+import { useDependencies } from "../providers/DependenciesProvider";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -47,14 +48,12 @@ function DeviceRow({ deviceInfo, onDeviceDelete }: DeviceRowProps) {
     </div>
   );
 }
-interface Props {
-  isIosAvailable: boolean;
-  isAndroidAvailable: boolean;
-}
-function ManageDevicesView({ isIosAvailable, isAndroidAvailable }: Props) {
+
+function ManageDevicesView() {
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
+  const { isAndroidEmulatorError, isIosSimulatorError } = useDependencies();
 
   const { devices, reload } = useDevices();
 
@@ -84,8 +83,6 @@ function ManageDevicesView({ isIosAvailable, isAndroidAvailable }: Props) {
   if (createDeviceViewOpen) {
     return (
       <CreateDeviceView
-        isIosAvailable={isIosAvailable}
-        isAndroidAvailable={isAndroidAvailable}
         onCancel={() => setCreateDeviceViewOpen(false)}
         onCreate={() => setCreateDeviceViewOpen(false)}
       />
@@ -94,7 +91,7 @@ function ManageDevicesView({ isIosAvailable, isAndroidAvailable }: Props) {
 
   return (
     <div className="container">
-      {iosDevices.length > 0 && isIosAvailable && (
+      {iosDevices.length > 0 && !isIosSimulatorError && (
         <>
           <Label>iOS Devices</Label>
           {iosDevices.map((deviceInfo) => (
@@ -106,7 +103,7 @@ function ManageDevicesView({ isIosAvailable, isAndroidAvailable }: Props) {
           ))}
         </>
       )}
-      {androidDevices.length > 0 && isAndroidAvailable && (
+      {androidDevices.length > 0 && !isAndroidEmulatorError && (
         <>
           <Label>Android Devices</Label>
           {androidDevices.map((deviceInfo) => (

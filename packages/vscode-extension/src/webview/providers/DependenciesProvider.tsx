@@ -58,9 +58,22 @@ function runDiagnostics() {
   });
 }
 
-function hasError(dependencies: Dependencies, domain: "ios" | "android" | "common") {
-  function errored({ error }: DependencyState) {
-    return error !== undefined;
+function hasError(
+  dependencies: Dependencies,
+  domain: "ios" | "android" | "common" | "iosSimulator" | "androidEmulator"
+): boolean {
+  function errored(state: DependencyState | undefined) {
+    if (state === undefined) {
+      return false;
+    }
+    return state.error !== undefined;
+  }
+
+  if (domain === "androidEmulator") {
+    return errored(dependencies.AndroidEmulator);
+  }
+  if (domain === "iosSimulator") {
+    return errored(dependencies.Xcode);
   }
 
   const required = {
@@ -91,6 +104,8 @@ interface DependenciesContextProps {
   isCommonError: boolean;
   isAndroidError: boolean;
   isIosError: boolean;
+  isAndroidEmulatorError: boolean;
+  isIosSimulatorError: boolean;
   runDiagnostics: () => void;
 }
 
@@ -100,6 +115,8 @@ const DependenciesContext = createContext<DependenciesContextProps>({
   isCommonError: false,
   isAndroidError: false,
   isIosError: false,
+  isAndroidEmulatorError: false,
+  isIosSimulatorError: false,
   runDiagnostics,
 });
 
@@ -112,6 +129,9 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   const isCommonError = hasError(dependencies, "common");
   const isIosError = hasError(dependencies, "ios");
   const isAndroidError = hasError(dependencies, "android");
+
+  const isAndroidEmulatorError = hasError(dependencies, "androidEmulator");
+  const isIosSimulatorError = hasError(dependencies, "iosSimulator");
 
   const rerunDiagnostics = useCallback(() => {
     // reset `.installed` and .error, leave other data as is
@@ -190,8 +210,10 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
         dependencies,
         isReady,
         isCommonError,
-        isAndroidError: true,
+        isAndroidError,
         isIosError,
+        isAndroidEmulatorError,
+        isIosSimulatorError,
         runDiagnostics: rerunDiagnostics,
       }}>
       {children}
