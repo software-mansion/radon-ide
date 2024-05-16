@@ -55,16 +55,37 @@ const config = {
         },
         items: [
           {
+            to: "/pricing",
+            activeBasePath: "pricing",
+            label: "Pricing",
+            position: "right",
+          },
+          {
             to: "docs/getting-started",
             activeBasePath: "docs",
             label: "Docs",
             position: "right",
           },
+          {
+            "href": "https://github.com/software-mansion/react-native-ide/",
+            "position": "right",
+            "className": "header-github",
+            "aria-label": "GitHub repository",
+          },
         ],
       },
       footer: {
         style: "light",
-        links: [],
+        links: [
+          {
+            to: "/privacy-policy",
+            label: "Privacy Policy",
+          },
+          {
+            to: "/terms-of-use",
+            label: "Terms of Use",
+          },
+        ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },
       prism: {

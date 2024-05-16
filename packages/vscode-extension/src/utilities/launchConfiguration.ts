@@ -1,24 +1,20 @@
 import { workspace } from "vscode";
 
 export type LaunchConfigurationOptions = {
-  appRoot: string | undefined;
-  env: Record<string, string> | undefined;
-  ios:
-    | {
-        scheme: string | undefined;
-        configuration: string | undefined;
-      }
-    | undefined;
-  android:
-    | {
-        variant: string | undefined;
-      }
-    | undefined;
-  preview:
-    | {
-        waitForAppLaunch: boolean | undefined;
-      }
-    | undefined;
+  appRoot?: string;
+  metroConfigPath?: string;
+  env?: Record<string, string>;
+  ios?: {
+    scheme?: string;
+    configuration?: string;
+  };
+  android?: {
+    buildType?: string;
+    productFlavor?: string;
+  };
+  preview?: {
+    waitForAppLaunch?: boolean;
+  };
 };
 
 export function getLaunchConfiguration(): LaunchConfigurationOptions {

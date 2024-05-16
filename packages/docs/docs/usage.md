@@ -49,9 +49,9 @@ Here is how the IDE would look like when place in the side panel:
 After all the above steps, you should be able to see your app building and launching in the extension device preview.
 From there, you can use the simulator normally to navigate in your app and try out some of the developer experience enhancements that the IDE provides.
 
-## -sec-num- IDE featuers highlights
+## -sec-num- IDE features highlights
 
-Visit [React Native IDE](https://ide.swmansion.com/) webside, for a nicely presented list of the feature highlights.
+Visit [React Native IDE](https://ide.swmansion.com/) website, for a nicely presented list of the feature highlights.
 
 ### Click to inspect
 

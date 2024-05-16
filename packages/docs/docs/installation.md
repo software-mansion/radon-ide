@@ -35,4 +35,4 @@ In order to install React Native IDE extension, you need to drag and drop the VS
 ## Updates
 
 When installing updates, you should follow the same exact procedure and the new version will be installed over the previous one (you can also downgrade to some older version this way).
-When overinstalling new VSIX file, you'll be prompted with a dialog to reload vscode window, which you need to accept before the new version is loaded.
+When installing over new VSIX file, you'll be prompted with a dialog to reload vscode window, which you need to accept before the new version is loaded.

@@ -13,8 +13,18 @@
   margin-bottom: 8px;
 }
 
+.feedback-button {
+  opacity: 0.5;
+}
+
 .button-group-bottom {
   margin-top: 8px;
+}
+
+.button-group-left {
+  position: absolute;
+  display: flex;
+  left: 10px;
 }
 
 .bar-spacer {

@@ -102,6 +102,19 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+
+    flavorDimensions "version"
+
+    productFlavors {
+        staging {
+            dimension "version"
+            getIsDefault().set(true)
+        }
+
+        production {
+            dimension "version"
+        }
+    }
 }
 
 dependencies {

@@ -2,16 +2,18 @@ import { getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
-import { CancelToken } from "./BuildManager";
+import { AndroidBuildResult, CancelToken } from "./BuildManager";
 import path from "path";
 import fs from "fs";
 import { OutputChannel, workspace } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { EXPO_GO_PACKAGE_NAME, downloadExpoGo, isExpoGoProject } from "./expoGo";
+import { Platform } from "../common/DeviceManager";
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
-const RELATIVE_APK_PATH = "app/build/outputs/apk/debug/app-debug.apk";
+const RELATIVE_APK_DIR = "app/build/outputs/apk";
 
 // Assuming users have android folder in their project's root
 export const getAndroidSourceDir = (appRootFolder: string) => path.join(appRootFolder, "android");
@@ -34,21 +36,29 @@ async function extractPackageName(artifactPath: string, cancelToken: CancelToken
   return packageName;
 }
 
-function getApkPath(appRootFolder: string) {
+function getApkPath(appRootFolder: string, productFlavor: string, buildType: string) {
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
-  return path.join(androidSourceDir, RELATIVE_APK_PATH);
+  const apkFile = ["app", productFlavor, buildType].filter(Boolean).join("-") + ".apk";
+  return path.join(androidSourceDir, RELATIVE_APK_DIR, productFlavor, buildType, apkFile);
 }
 
-export async function getAndroidBuildPaths(appRootFolder: string, cancelToken: CancelToken) {
-  const apkPath = getApkPath(appRootFolder);
+export async function getAndroidBuildPaths(
+  appRootFolder: string,
+  cancelToken: CancelToken,
+  productFlavor: string,
+  buildType: string
+) {
+  const apkPath = getApkPath(appRootFolder, productFlavor, buildType);
   const packageName = await extractPackageName(apkPath, cancelToken);
   return { apkPath, packageName };
 }
 
-function makeBuildTaskName(variant: string) {
-  // task name is in the format of assemble<Variant> where variant is the name of the build variant
-  // that starts with a capital letter
-  return "assemble" + variant.charAt(0).toUpperCase() + variant.slice(1);
+function makeBuildTaskName(productFlavor: string, buildType: string) {
+  // task name is in the format of assemble<ProductFlavor><BuildType> where productFlavor and buildType
+  // are the names of the productFlavor and buildType that each start with a capital letter.
+  // By default, Android Gradle Plugin always creates staging and release buildTypes and does not define any productFlavor.
+  const flavor = productFlavor.charAt(0).toUpperCase() + productFlavor.slice(1);
+  return "assemble" + flavor + buildType.charAt(0).toUpperCase() + buildType.slice(1);
 }
 
 export async function buildAndroid(
@@ -58,15 +68,21 @@ export async function buildAndroid(
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ) {
+  if (await isExpoGoProject()) {
+    const apkPath = await downloadExpoGo(Platform.Android, cancelToken);
+    return { apkPath, packageName: EXPO_GO_PACKAGE_NAME };
+  }
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const cpuArchitecture = getCpuArchitecture();
   const buildOptions = getLaunchConfiguration();
+  const productFlavor = buildOptions.android?.productFlavor || "";
+  const buildType = buildOptions.android?.buildType || "debug";
   const gradleArgs = [
     "-x",
     "lint",
     `-PreactNativeArchitectures=${cpuArchitecture}`,
     ...(forceCleanBuild ? ["clean"] : []),
-    makeBuildTaskName(buildOptions.android?.variant || "debug"),
+    makeBuildTaskName(productFlavor, buildType),
     "--init-script", // init script is used to patch React Android project, see comments in configureReactNativeOverrides.gradle for more details
     path.join(extensionContext.extensionPath, "lib", "android", "initscript.gradle"),
   ];
@@ -80,12 +96,12 @@ export async function buildAndroid(
   );
   const buildAndroidProgressProcessor = new BuildAndroidProgressProcessor(progressListener);
   outputChannel.clear();
-  lineReader(buildProcess).onLineRead((line) => {
+  lineReader(buildProcess, true).onLineRead((line) => {
     outputChannel.appendLine(line);
     buildAndroidProgressProcessor.processLine(line);
   });
 
   await buildProcess;
   Logger.debug("Android build sucessful");
-  return getAndroidBuildPaths(appRootFolder, cancelToken);
+  return getAndroidBuildPaths(appRootFolder, cancelToken, productFlavor, buildType);
 }

@@ -1,0 +1,115 @@
+.button {
+  height: 50px;
+  padding: 8px;
+
+  font-weight: 500;
+  font-size: 18px;
+
+  color: var(--swm-off-white);
+  background-color: var(--swm-landing-button-purple);
+
+  cursor: pointer;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+
+  background-color: var(--swm-landing-button-green);
+  color: var(--swm-off-white);
+  border: 1px solid var(--swm-landing-button-green);
+}
+
+.disabled {
+  background-color: var(--swm-off-white);
+  color: var(--swm-green-light-60);
+  border: 1px solid var(--swm-green-light-60);
+  animation: none;
+}
+
+.disabledLink {
+  pointer-events: none;
+  cursor: default;
+}
+
+.button span {
+  transition: color 0.3s;
+  font-size: 16px;
+  color: var(--swm-green-light-20);
+}
+
+.button:hover span {
+  color: var(--swm-green-light-80);
+}
+
+.buttonSubtitleWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+a.buttonLink:hover {
+  text-decoration: none !important;
+}
+
+@media (max-width: 768px) {
+  .button,
+  .buttonLink {
+    width: 100%;
+  }
+  .button {
+    height: auto;
+    font-size: 18px;
+  }
+}
+
+.button p {
+  margin: 0 0 2px 0;
+}
+
+.button svg {
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arrow {
+  transition: left 0.3s;
+}
+
+.arrow {
+  left: 8px;
+}
+
+.button svg {
+  transition: stroke 0.3s;
+}
+
+.button:hover .arrow {
+  left: 16px;
+}
+
+.button svg {
+  stroke: var(--swm-off-white);
+}
+
+.button:hover {
+  background-color: transparent;
+  color: var(--swm-landing-button-green);
+}
+
+.button:hover svg {
+  stroke: var(--swm-landing-button-green);
+}
+
+.arrow {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 24px;
+  height: 24px;
+}

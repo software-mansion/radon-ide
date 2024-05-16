@@ -15,9 +15,10 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.8-beta",
+  "version": "0.0.10-beta",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.75.0",
+    "os": "darwin"
   },
   "extensionKind": [
     "workspace"
@@ -30,6 +31,19 @@
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "RNIDE.openDevMenu",
+        "title": "Open Dev Menu",
+        "category": "React Native IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.closePanel",
+        "title": "Close IDE Panel",
+        "category": "React Native IDE",
+        "icon": "$(close)",
+        "enablement": "RNIDE.extensionIsActive"
+      },
       {
         "command": "RNIDE.openPanel",
         "title": "Open IDE Panel",
@@ -47,6 +61,13 @@
         "title": "Diagnostics",
         "category": "React Native IDE",
         "enablement": "!RNIDE.extensionIsActive"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "RNIDE.openDevMenu",
+        "key": "ctrl+alt+z",
+        "mac": "ctrl+cmd+z"
       }
     ],
     "configuration": {
@@ -85,8 +106,8 @@
         {
           "type": "webview",
           "id": "ReactNativeIDE.view",
-          "name": "IDE Panel",
-          "when": "config.ReactNativeIDE.panelLocation != 'tab'"
+          "name": "",
+          "when": "config.ReactNativeIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ]
     },
@@ -96,6 +117,13 @@
           "command": "RNIDE.openPanel",
           "group": "navigation",
           "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "RNIDE.closePanel",
+          "group": "navigation",
+          "when": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && view == ReactNativeIDE.view"
         }
       ]
     },
@@ -137,6 +165,10 @@
               "env": {
                 "type": "object",
                 "description": "Environment variables to be passed to all build/run commands that the IDE is launching."
+              },
+              "metroConfigPath": {
+                "type": "string",
+                "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
               },
               "ios": {
                 "description": "Provides a way to customize Xcode builds for iOS",
@@ -184,7 +216,7 @@
               "configuration": "Debug"
             },
             "android": {
-              "variant": "debug"
+              "buildType": "debug"
             }
           }
         ]
@@ -256,6 +288,7 @@
     "node-fetch": "^2.7.0",
     "plist": "^3.1.0",
     "prettier": "^2.2.1",
+    "re-resizable": "^6.9.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "source-map": "^0.8.0-beta.0",

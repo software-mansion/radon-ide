@@ -5,6 +5,8 @@ import { Readable } from "stream";
 import { finished } from "stream/promises";
 import fs from "fs";
 import { ReadableStream } from "stream/web";
+import { workspace } from "vscode";
+import { Logger } from "../Logger";
 
 export enum CPU_ARCHITECTURE {
   ARM64 = "arm64-v8a",
@@ -16,6 +18,19 @@ export const IOS_FAIL_ERROR_MESSAGE = "IOS failed.";
 
 export function getDevServerScriptUrl() {
   return process.env.DEV_SCRIPT_URL;
+}
+
+export async function findSingleFileInWorkspace(
+  fileGlobPattern: string,
+  excludePattern: string | null
+) {
+  const files = await workspace.findFiles(fileGlobPattern, excludePattern, 2);
+  if (files.length === 1) {
+    return files[0];
+  } else if (files.length > 1) {
+    Logger.error(`Found multiple ${fileGlobPattern} files in the workspace`);
+  }
+  return undefined;
 }
 
 export function getCpuArchitecture() {

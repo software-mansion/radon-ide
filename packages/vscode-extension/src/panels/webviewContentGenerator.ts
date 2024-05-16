@@ -1,4 +1,4 @@
-import { ExtensionContext, ExtensionMode, Webview, Uri } from "vscode";
+import { ExtensionContext, ExtensionMode, Webview, Uri, extensions } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { getDevServerScriptUrl } from "../utilities/common";
@@ -34,6 +34,8 @@ export function generateWebviewContent(
 
   const nonce = getNonce();
 
+  const version = context.extension.packageJSON.version;
+
   return /*html*/ `
     <!DOCTYPE html>
     <html lang="en">
@@ -41,6 +43,7 @@ export function generateWebviewContent(
         <base href="${baseUri}">
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="react-native-ide-version" content="${version}" />
         <link rel="stylesheet" href="${codiconsCssUri}" />
         ${
           IS_DEV

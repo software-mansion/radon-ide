@@ -120,7 +120,7 @@ export class DebugAdapter extends DebugSession {
         case "Debugger.scriptParsed":
           const sourceMapURL = message.params.sourceMapURL;
 
-          if (sourceMapURL.startsWith("data:")) {
+          if (sourceMapURL?.startsWith("data:")) {
             const base64Data = sourceMapURL.split(",")[1];
             const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
             const sourceMap = JSON.parse(decodedData);

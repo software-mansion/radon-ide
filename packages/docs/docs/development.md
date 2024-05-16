@@ -6,11 +6,11 @@ sidebar_position: 6
 
 ## Repository structure and project architecture
 
-React Native IDE consis of a number of modules we are outlining below.
-It is useful to understand this architecture a bit more before contributing, so that it is cleaner which module is responsible for what part of the funtionality:
+React Native IDE consist of a number of modules we are outlining below.
+It is useful to understand this architecture a bit more before contributing, so that it is cleaner which module is responsible for what part of the functionality:
 
-1. Main vscode extension code – this is the entry point for the extension that is booted up in a separate process by vscode. The code resides under `packages/vscode-extension` with the main entry point being `packages/vscode-extension/src/extension.ts` file. The extension code is responsible for orchestrating all actions with external process such as launchig builds, as well as handling communication between the frontend and vscode APIs.
-2. Extension frontend – this is a web application written in React. Since it shares some code with the main extension it resides in the same location – `packages/vscode-extension`, but most of its code is located under `packages/vscode-extension/src/webview`. Vscode launches the frontend portion using iframe, wich enforces some limitations on what the frontend app can do (i.e. can't launch external processes directly). For this reason, most of the logic relies on calling to the main extension.
+1. Main vscode extension code – this is the entry point for the extension that is booted up in a separate process by vscode. The code resides under `packages/vscode-extension` with the main entry point being `packages/vscode-extension/src/extension.ts` file. The extension code is responsible for orchestrating all actions with external process such as launching builds, as well as handling communication between the frontend and vscode APIs.
+2. Extension frontend – this is a web application written in React. Since it shares some code with the main extension it resides in the same location – `packages/vscode-extension`, but most of its code is located under `packages/vscode-extension/src/webview`. Vscode launches the frontend portion using iframe, which enforces some limitations on what the frontend app can do (i.e. can't launch external processes directly). For this reason, most of the logic relies on calling to the main extension.
 3. Simulator server – this code lives [in a separate repository](https://github.com/software-mansion-labs/simulator-server) which isn't open source yet. It implements a server application that communicates with iOS simulator and Android emulator processes. The server is controlled from the main extension code which communicates with it via standard input/output. Currently simulator server is distributed as prebuilt binary.
 4. NPM package react-native-ide – this package defines interface for the preview functionality which allows for components to be developed in isolation. Its code is placed under `packages/react-native-ide`.
 5. Test applications from `test-apps` folder serve a purpose of verifying the IDE works properly under different setups.
@@ -66,10 +66,14 @@ With the extension project open, go to `Run and Debug` panel and click "Start De
 
 <img width="373" alt="run-and-debug" src="/img/docs/run_and_debug.png"/>
 
-Running this configration will result in the new vscode window being opened.
+Running this configuration will result in the new vscode window being opened.
 This new window is titled "[Extension Development Host]" and is the only window that has the development version of the extension loaded – you should use it to open you React Native project, or try some of the test apps from `test-app` folder.
 
 <img width="896" alt="extension-host-title" src="/img/docs/extension_host_title.png"/>
+
+> NOTE: Visual Studio Code by default will open new folders in a new windows, so since you want to open the project on the same window as the extension host, you should disable that option in the settings. You can do it by going to `Settings` and searching for `window.openFoldersInNewWindow` and setting it to `off`.
+
+<img width="750" alt="new-window-vscode-setting" src="/img/docs/new_window_vscode_setting.png"/>
 
 ### 6. Develop the extension!
 

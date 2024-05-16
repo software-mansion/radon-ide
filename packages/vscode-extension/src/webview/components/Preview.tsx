@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, useCallback } from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject } from "react";
 import clamp from "lodash/clamp";
 import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
@@ -12,6 +12,9 @@ import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import { InspectData, InspectDataStackItem } from "../../common/Project";
 import { InspectDataMenu } from "./InspectDataMenu";
+import { Resizable } from "re-resizable";
+import { useResizableProps } from "../hooks/useResizableProps";
+import { ZoomLevelType } from "./ZoomControls";
 
 declare module "react" {
   interface CSSProperties {
@@ -104,9 +107,11 @@ type InspectStackData = {
 type Props = {
   isInspecting: boolean;
   setIsInspecting: (isInspecting: boolean) => void;
+  zoomLevel: ZoomLevelType;
+  setZoomLevel: (zoomLevel: ZoomLevelType) => void;
 };
 
-function Preview({ isInspecting, setIsInspecting }: Props) {
+function Preview({ isInspecting, setIsInspecting, zoomLevel, setZoomLevel }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const previewRef = useRef<HTMLImageElement>(null);
@@ -310,6 +315,12 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
         onContextMenu,
       };
 
+  const resizableProps = useResizableProps({
+    wrapperDivRef,
+    zoomLevel,
+    setZoomLevel,
+  });
+
   return (
     <div
       className="phone-wrapper"
@@ -317,101 +328,107 @@ function Preview({ isInspecting, setIsInspecting }: Props) {
       tabIndex={0} // allows keyboard events to be captured
       ref={wrapperDivRef}>
       {showDevicePreview && (
-        <div className="phone-content">
-          <div className="touch-area" {...touchHandlers}>
-            <MjpegImg
-              src={previewURL}
-              ref={previewRef}
-              style={{
-                cursor: isInspecting ? "crosshair" : "default",
-              }}
-              className="phone-screen"
-            />
+        <Resizable {...resizableProps}>
+          <div className="phone-content">
+            <div className="touch-area" {...touchHandlers}>
+              <MjpegImg
+                src={previewURL}
+                ref={previewRef}
+                style={{
+                  cursor: isInspecting ? "crosshair" : "default",
+                }}
+                className="phone-screen"
+              />
 
-            {inspectFrame && (
-              <div className="phone-screen phone-inspect-overlay">
-                <div
-                  className="inspect-area"
-                  style={{
-                    left: `${inspectFrame.x * 100}%`,
-                    top: `${inspectFrame.y * 100}%`,
-                    width: `${inspectFrame.width * 100}%`,
-                    height: `${inspectFrame.height * 100}%`,
-                  }}
-                />
-              </div>
-            )}
-            {projectStatus === "refreshing" && (
-              <div className="phone-screen phone-refreshing-overlay">
-                <VSCodeProgressRing />
-                <div>Refreshing...</div>
-              </div>
-            )}
-            {debugPaused && (
-              <div className="phone-screen phone-debug-overlay">
-                <Debugger />
-              </div>
-            )}
-            {debugException && (
-              <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                <button className="uncaught-button" onClick={() => project.resumeDebugger()}>
-                  Uncaught exception&nbsp;
-                  <span className="codicon codicon-debug-continue" />
-                </button>
-              </div>
-            )}
-            {/* TODO: Add different label in case of bundle/incremental bundle error */}
-            {hasBundleError && (
-              <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                <button
-                  className="uncaught-button"
-                  onClick={() => {
-                    project.restart(false);
-                  }}>
-                  Bundle error&nbsp;
-                  <span className="codicon codicon-refresh" />
-                </button>
-              </div>
-            )}
-            {hasIncrementalBundleError && (
-              <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                <button className="uncaught-button" onClick={() => project.restart(false)}>
-                  Bundle error&nbsp;
-                  <span className="codicon codicon-refresh" />
-                </button>
-              </div>
+              {inspectFrame && (
+                <div className="phone-screen phone-inspect-overlay">
+                  <div
+                    className="inspect-area"
+                    style={{
+                      left: `${inspectFrame.x * 100}%`,
+                      top: `${inspectFrame.y * 100}%`,
+                      width: `${inspectFrame.width * 100}%`,
+                      height: `${inspectFrame.height * 100}%`,
+                    }}
+                  />
+                </div>
+              )}
+              {projectStatus === "refreshing" && (
+                <div className="phone-screen phone-refreshing-overlay">
+                  <VSCodeProgressRing />
+                  <div>Refreshing...</div>
+                </div>
+              )}
+              {debugPaused && (
+                <div className="phone-screen phone-debug-overlay">
+                  <Debugger />
+                </div>
+              )}
+              {debugException && (
+                <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                  <button className="uncaught-button" onClick={() => project.resumeDebugger()}>
+                    Uncaught exception&nbsp;
+                    <span className="codicon codicon-debug-continue" />
+                  </button>
+                </div>
+              )}
+              {/* TODO: Add different label in case of bundle/incremental bundle error */}
+              {hasBundleError && (
+                <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                  <button
+                    className="uncaught-button"
+                    onClick={() => {
+                      project.restart(false);
+                    }}>
+                    Bundle error&nbsp;
+                    <span className="codicon codicon-refresh" />
+                  </button>
+                </div>
+              )}
+              {hasIncrementalBundleError && (
+                <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                  <button className="uncaught-button" onClick={() => project.restart(false)}>
+                    Bundle error&nbsp;
+                    <span className="codicon codicon-refresh" />
+                  </button>
+                </div>
+              )}
+            </div>
+            <img src={device!.frameImage} className="phone-frame" />
+            {inspectStackData && (
+              <InspectDataMenu
+                inspectLocation={inspectStackData.requestLocation}
+                inspectStack={inspectStackData.stack}
+                onSelected={onInspectorItemSelected}
+                onHover={(item) => {
+                  if (item.frame) {
+                    setInspectFrame(item.frame);
+                  }
+                }}
+                onCancel={() => resetInspector()}
+              />
             )}
           </div>
-          <img src={device!.frameImage} className="phone-frame" />
-          {inspectStackData && (
-            <InspectDataMenu
-              inspectLocation={inspectStackData.requestLocation}
-              inspectStack={inspectStackData.stack}
-              onSelected={onInspectorItemSelected}
-              onHover={(item) => {
-                if (item.frame) {
-                  setInspectFrame(item.frame);
-                }
-              }}
-              onCancel={() => resetInspector()}
-            />
-          )}
-        </div>
+        </Resizable>
       )}
       {!showDevicePreview && !hasBuildError && (
-        <div className="phone-content">
-          <div className="phone-sized phone-content-loading-background" />
-          <div className="phone-sized phone-content-loading ">
-            <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
+        <Resizable {...resizableProps}>
+          <div className="phone-content">
+            <div className="phone-sized phone-content-loading-background" />
+            <div className="phone-sized phone-content-loading ">
+              <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
+            </div>
+            <img src={device!.frameImage} className="phone-frame" />
           </div>
-          <img src={device!.frameImage} className="phone-frame" />
-        </div>
+        </Resizable>
       )}
       {hasBuildError && (
-        <div className="phone-content">
-          <div className="phone-sized extension-error-screen" />
-          <img src={device!.frameImage} className="phone-frame" />
-        </div>
+        <Resizable {...resizableProps}>
+          <div className="phone-content">
+            <div className="phone-sized extension-error-screen" />
+            <img src={device!.frameImage} className="phone-frame" />
+          </div>
+        </Resizable>
       )}
     </div>
   );

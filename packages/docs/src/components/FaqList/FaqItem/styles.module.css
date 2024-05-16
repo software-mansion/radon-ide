@@ -40,6 +40,10 @@
   font-size: var(--swm-heading-font-size-smaller);
 }
 
+.answer a {
+  text-decoration: underline;
+}
+
 .question {
   font-family: var(--swm-body-font);
   font-size: var(--swm-heading-font-size-smaller);
