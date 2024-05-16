@@ -113,7 +113,7 @@ android {
 
 configurations.all { config ->
     config.dependencies.all { dependency ->
-        if (dependency.name.contains('react-android')) {
+        if (dependency.name.matches('/react-android/')) {
             dependency.attributes { attrs ->
                 attrs.attribute(shouldTransform, true)
             }
