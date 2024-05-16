@@ -1,13 +1,10 @@
+import useBaseUrl from "@docusaurus/useBaseUrl";
 import React from "react";
-import NavbarLayout from "@theme/Navbar/Layout";
-import NavbarContent from "@theme/Navbar/Content";
-import { Analytics } from "@vercel/analytics/react";
+import { Navbar } from "@swmansion/t-rex-ui";
 
-export default function Navbar() {
-  return (
-    <NavbarLayout>
-      <NavbarContent />
-      <Analytics />
-    </NavbarLayout>
-  );
+export default function NavbarWrapper(props) {
+  const heroImages = {
+    logo: useBaseUrl("/img/logo.svg"),
+  };
+  return <Navbar isAlgolia={false} isToggle={false} heroImages={heroImages} {...props} />;
 }
