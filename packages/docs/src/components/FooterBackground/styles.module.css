@@ -4,7 +4,7 @@ footer {
 
 .footerBackground {
   position: absolute;
-  bottom: -9.75rem;
+  bottom: 0;
   left: 0;
 
   background: linear-gradient(180deg, var(--swm-white) 0%, rgba(252, 252, 255, 0) 150.5%),
@@ -22,22 +22,36 @@ footer {
 
 .container {
   position: relative;
+  margin-top: 155px;
+}
+
+footer {
+  margin-top: -155px;
 }
 
 @media (max-width: 996px) {
-  .footerBackground {
-    bottom: -12.725rem;
+  .container {
+    margin-top: 202px;
+  }
+  footer {
+    margin-top: -202px;
   }
 }
 
 @media (max-width: 700px) {
-  .footerBackground {
-    bottom: -14.25rem;
+  .container {
+    margin-top: 227px;
+  }
+  footer {
+    margin-top: -227px;
   }
 }
 
 @media (max-width: 375px) {
-  .footerBackground {
-    bottom: -16rem;
+  .container {
+    margin-top: 253px;
+  }
+  footer {
+    margin-top: -253px;
   }
 }
