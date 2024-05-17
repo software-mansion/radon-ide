@@ -6,16 +6,28 @@ import clsx from "clsx";
 const PricingPlansList = () => {
   const [isAnnually, setIsAnnually] = useState(true);
 
-  const monthly = (
+  const individualMonthly = (
     <>
-      $9 <span className={styles.plan__price_second_line}> per month </span>
+      $9 <span className={styles.plan__currency}>USD</span>
+      <span className={styles.plan__price_second_line}> per person/month </span>
     </>
   );
-
-  const annually = (
+  const individualAnnually = (
     <>
-      <span className={styles.plan__price_strikethrough}>$9</span> $7.5{" "}
-      <span className={styles.plan__price_second_line}> per month billed annually </span>
+      $90 <span className={styles.plan__currency}>USD</span>{" "}
+      <span className={styles.plan__price_second_line}>per person/year </span>
+    </>
+  );
+  const supporterMonthly = (
+    <>
+      $6 <span className={styles.plan__currency}>USD</span>{" "}
+      <span className={styles.plan__price_second_line}>per person/month </span>
+    </>
+  );
+  const supporterAnnually = (
+    <>
+      $72 <span className={styles.plan__currency}>USD</span>{" "}
+      <span className={styles.plan__price_second_line}>per person/year </span>
     </>
   );
   return (
@@ -38,8 +50,10 @@ const PricingPlansList = () => {
         <li className={styles.item}>
           <div className={styles.plan__container}>
             <h2 className={styles.plan__name}>Individual</h2>
-            <h3 className={styles.plan__price}>{isAnnually ? annually : monthly}</h3>
-            <p className={styles.plan__tagline}>Support the development</p>
+            <h3 className={styles.plan__price}>
+              {isAnnually ? individualAnnually : individualMonthly}
+            </h3>
+            <p className={styles.plan__tagline}>billed {isAnnually ? "yearly" : "monthly"}</p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
               <li>Put breakpoints right in the VSCode</li>
@@ -56,9 +70,32 @@ const PricingPlansList = () => {
         </li>
         <li className={styles.item}>
           <div className={clsx(styles.plan__container, styles.plan__highlight)}>
+            <h2 className={styles.plan__name}>Supporter</h2>
+            <h3 className={styles.plan__price}>
+              {isAnnually ? supporterAnnually : supporterMonthly}
+            </h3>
+            <p className={styles.plan__tagline}>one time offer, billed yearly</p>
+            <p>What's included:</p>
+            <ul className={styles.plan__features}>
+              <li>Everything in Individual</li>
+              <li>Plan only available during Beta</li>
+              <li>Lock in your price before the full release</li>
+            </ul>
+            <div className={styles.plan__spacer} />
+            <Button href="/" disabled>
+              Choose
+            </Button>
+          </div>
+        </li>
+
+        <li className={styles.item}>
+          <div className={styles.plan__container}>
             <h2 className={styles.plan__name}>Enterprise</h2>
             <h3 className={styles.plan__price}>Get in touch</h3>
-            <p className={styles.plan__tagline}>Become a partner</p>
+            <p className={styles.plan__tagline}>
+              <a href="https://swmansion.com/contact#contact-form">Contact us</a> for pricing
+              estimates
+            </p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
               <li>Everything in Individual</li>
@@ -66,24 +103,7 @@ const PricingPlansList = () => {
               <li>React Native Consulting services available</li>
             </ul>
             <div className={styles.plan__spacer} />
-            <Button href="https://swmansion.com/contact#contact-form">Contact us</Button>
-          </div>
-        </li>
-        <li>
-          <div className={styles.plan__container}>
-            <h2 className={styles.plan__name}>Educational</h2>
-            <h3 className={styles.plan__price}>Free</h3>
-            <p className={styles.plan__tagline}>Learn by doing</p>
-            <p>Conditions apply:</p>
-            <ul className={styles.plan__features}>
-              <li>Everything in Individual</li>
-              <li>For students from accredited educational institutions</li>
-              <li>Only for non-commercial purposes</li>
-            </ul>
-            <div className={styles.plan__spacer} />
-            <Button href="/" disabled>
-              Choose
-            </Button>
+            <Button href="https://swmansion.com/contact#contact-form">Contact Sales</Button>
           </div>
         </li>
       </ul>
