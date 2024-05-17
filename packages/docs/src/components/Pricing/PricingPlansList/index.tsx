@@ -53,7 +53,9 @@ const PricingPlansList = () => {
             <h3 className={styles.plan__price}>
               {isAnnually ? individualAnnually : individualMonthly}
             </h3>
-            <p className={styles.plan__tagline}>billed {isAnnually ? "yearly" : "monthly"}</p>
+            <p className={styles.plan__tagline}>
+              billed {isAnnually ? "yearly, two months free" : "monthly"}
+            </p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
               <li>Put breakpoints right in the VSCode</li>
