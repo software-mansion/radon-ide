@@ -58,6 +58,7 @@ const PricingPlansList = () => {
             </p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
+              <li>Support the development of IDE</li>
               <li>Put breakpoints right in the VSCode</li>
               <li>Develop components in isolation</li>
               <li>Expo Router & React Navigation integration</li>
@@ -76,12 +77,13 @@ const PricingPlansList = () => {
             <h3 className={styles.plan__price}>
               {isAnnually ? supporterAnnually : supporterMonthly}
             </h3>
-            <p className={styles.plan__tagline}>one time offer, billed yearly</p>
+            <p className={styles.plan__tagline}>one-time payment for a year</p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
               <li>Everything in Individual</li>
-              <li>Plan only available during Beta</li>
-              <li>Lock in your price before the full release</li>
+              <li>One-time offer only available during Beta</li>
+              <li>Lock in a lower price</li>
+              <li>Next billing a full year after the release</li>
             </ul>
             <div className={styles.plan__spacer} />
             <Button href="/" disabled>
