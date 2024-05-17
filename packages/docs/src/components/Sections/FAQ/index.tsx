@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     topic: "Do you offer a student discount?",
-    answer: `Yes! React Native IDE will come with a free non-commercial educational license.`,
+    answer: `Yes! React Native IDE is free for students learning at accredited educational institutions. Only for non-commercial purposes.`,
   },
   {
     topic: "When are you planning to close the Beta?",
