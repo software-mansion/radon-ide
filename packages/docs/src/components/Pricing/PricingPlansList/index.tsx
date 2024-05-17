@@ -83,7 +83,7 @@ const PricingPlansList = () => {
               <li>Everything in Individual</li>
               <li>One-time offer only available during Beta</li>
               <li>Lock in a lower price</li>
-              <li>Next billing a full year after the release</li>
+              <li>Next billing a full year after the stable release</li>
             </ul>
             <div className={styles.plan__spacer} />
             <Button href="/" disabled>
