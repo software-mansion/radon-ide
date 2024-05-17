@@ -25,7 +25,8 @@ footer {
   margin-top: 155px;
 }
 
-[class*="mdx-wrapper"] footer {
+[class*="mdx-wrapper"] footer,
+[class*="plugin-docs"] footer {
   margin-top: 0 !important;
 }
 
