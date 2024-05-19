@@ -138,7 +138,7 @@ export class DebugAdapter extends DebugSession {
           this.sendEvent(new ContinuedEvent(this.threads[0].id));
           break;
         case "Runtime.executionContextsCleared":
-          this.variableStore.clear();
+          this.variableStore.clearReplVariables();
           this.sendEvent(new OutputEvent("\x1b[2J", "console"));
           break;
         case "Runtime.consoleAPICalled":
@@ -169,23 +169,8 @@ export class DebugAdapter extends DebugSession {
         generatedLineNumber1Based,
         generatedColumn1Based - 1
       );
-      // creation of two set od variables is necessary because to work properly OutputEvent can have a reference only to one object.
-      let propertiesIndex = this.variableStore.push(
-        message.params.args.slice(0, -3).map((arg: CDPRemoteObject, index: number) => {
-          return { name: `arg${index}`, value: arg };
-        })
-      );
-      propertiesIndex = this.variableStore.push([
-        {
-          name: "RootObject",
-          value: {
-            type: "object",
-            objectId: propertiesIndex.toString(),
-            className: "Object",
-            description: "object",
-          },
-        },
-      ]);
+
+      const variablesRefDapID = this.createVariableForOutputEvent(message.params.args.slice(0, -3));
 
       output = new OutputEvent(
         (await formatMessage(message.params.args.slice(0, -3))) + "\n",
@@ -197,26 +182,10 @@ export class DebugAdapter extends DebugSession {
         source: new Source(sourceURL, sourceURL),
         line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
         column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
-        variablesReference: propertiesIndex,
+        variablesReference: variablesRefDapID,
       };
     } else {
-      // creation of two set od variables is necessary because to work properly OutputEvent can have a reference only to one object.
-      let propertiesIndex = this.variableStore.push(
-        message.params.args.map((arg: CDPRemoteObject, index: number) => {
-          return { name: `arg${index}`, value: arg };
-        })
-      );
-      propertiesIndex = this.variableStore.push([
-        {
-          name: "RootObject",
-          value: {
-            type: "object",
-            objectId: propertiesIndex.toString(),
-            className: "Object",
-            description: "object",
-          },
-        },
-      ]);
+      const variablesRefDapID = this.createVariableForOutputEvent(message.params.args);
 
       output = new OutputEvent(
         (await formatMessage(message.params.args)) + "\n",
@@ -225,13 +194,35 @@ export class DebugAdapter extends DebugSession {
       output.body = {
         ...output.body,
         //@ts-ignore source, line, column and group are valid fields
-        variablesReference: propertiesIndex,
+        variablesReference: variablesRefDapID,
       };
     }
     this.sendEvent(output);
     this.sendEvent(
       new Event("RNIDE_consoleLog", { category: typeToCategory(message.params.type) })
     );
+  }
+
+  private createVariableForOutputEvent(args: CDPRemoteObject[]) {
+    // we create empty object that is needed for DAP OutputEvent to display
+    // collapsed args properly, the object references the array of args array
+    const argsObjectDapID = this.variableStore.pushReplVariable(
+      args.map((arg: CDPRemoteObject, index: number) => {
+        return { name: `arg${index}`, value: arg };
+      })
+    );
+
+    return this.variableStore.pushReplVariable([
+      {
+        name: "",
+        value: {
+          type: "object",
+          objectId: argsObjectDapID.toString(),
+          className: "Object",
+          description: "object",
+        },
+      },
+    ]);
   }
 
   private findOriginalPosition(
@@ -280,8 +271,7 @@ export class DebugAdapter extends DebugSession {
     this.pausedStackFrames = [];
     this.pausedScopeChains = [];
 
-    this.variableStore.pausedCDPtoDAPObjectIdMap = new Map();
-    this.variableStore.pausedDAPtoCDPObjectIdMap = new Map();
+    this.variableStore.resetPausedVariables();
     if (
       message.params.reason === "other" &&
       message.params.callFrames[0].functionName === "__RNIDE_breakOnError"

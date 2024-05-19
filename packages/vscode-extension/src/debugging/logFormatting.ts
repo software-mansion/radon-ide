@@ -44,9 +44,5 @@ export async function formatMessage(args: [CDPRemoteObject]): Promise<string> {
     })
   );
 
-  mappedArgs.forEach((arg) => {
-    result += `${arg} `;
-  });
-
-  return result;
+  return mappedArgs.join(" ");
 }
