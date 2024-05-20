@@ -21,7 +21,7 @@ class VSCodeAPIWrapper {
    * @remarks When running webview code inside a web browser, postMessage will instead
    * log the given message to the console.
    *
-   * @param message Abitrary data (must be JSON serializable) to send to the extension context.
+   * @param {{command: string} & Record<string, unknown>} message - Arbitrary data (must be JSON serializable) to send to the extension context.
    */
   postMessage(message) {
     if (this.vsCodeApi) {

@@ -8,10 +8,21 @@ import iphoneSE from "../../assets/iphone_SE/skin.webp";
 import iphoneSEmask from "../../assets/iphone_SE/mask.png";
 import { Platform } from "../../common/DeviceManager";
 
-export type SupportedDeviceName = typeof SupportedDevices[number]["name"];
+export type DeviceProperties = {
+  name: string;
+  platform: Platform;
+  screenWidth: number;
+  screenHeight: number;
+  frameWidth: number;
+  frameHeight: number;
+  offsetX: number;
+  offsetY: number;
+  frameImage: string;
+  maskImage: string;
+};
 
 // iOS devices names should match supportedDeviceTypes inside the runtime
-export const SupportedDevices: DeviceProperties[] = [
+export const iOSSupportedDevices: DeviceProperties[] = [
   {
     name: "iPhone 15 Pro",
     platform: Platform.IOS,
@@ -36,6 +47,9 @@ export const SupportedDevices: DeviceProperties[] = [
     frameImage: iphoneSE,
     maskImage: iphoneSEmask,
   },
+] as const;
+
+export const AndroidSupportedDevices: DeviceProperties[] = [
   {
     name: "Google Pixel 7",
     platform: Platform.Android,
@@ -61,16 +75,3 @@ export const SupportedDevices: DeviceProperties[] = [
     maskImage: pixel6amask,
   },
 ] as const;
-
-export type DeviceProperties = {
-  name: string;
-  platform: Platform;
-  screenWidth: number;
-  screenHeight: number;
-  frameWidth: number;
-  frameHeight: number;
-  offsetX: number;
-  offsetY: number;
-  frameImage: string;
-  maskImage: string;
-};

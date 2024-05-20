@@ -8,7 +8,6 @@ import { useDevices } from "../providers/DevicesProvider";
 import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
-import { useDependencies } from "../providers/DependenciesProvider";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -53,7 +52,6 @@ function ManageDevicesView() {
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
-  const { isAndroidEmulatorError, isIosSimulatorError } = useDependencies();
 
   const { devices, reload } = useDevices();
 
@@ -91,7 +89,7 @@ function ManageDevicesView() {
 
   return (
     <div className="container">
-      {iosDevices.length > 0 && !isIosSimulatorError && (
+      {iosDevices.length > 0 && (
         <>
           <Label>iOS Devices</Label>
           {iosDevices.map((deviceInfo) => (
@@ -103,7 +101,7 @@ function ManageDevicesView() {
           ))}
         </>
       )}
-      {androidDevices.length > 0 && !isAndroidEmulatorError && (
+      {androidDevices.length > 0 && (
         <>
           <Label>Android Devices</Label>
           {androidDevices.map((deviceInfo) => (
