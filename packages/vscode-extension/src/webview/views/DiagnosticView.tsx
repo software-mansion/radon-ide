@@ -23,16 +23,13 @@ function DiagnosticView() {
       <Label>Common</Label>
       <DiagnosticItem label="Node.js" item={dependencies.Nodejs} />
       <div className="diagnostic-section-margin" />
-
       <Label>Android</Label>
       <DiagnosticItem label="Android Emulator" item={dependencies.AndroidEmulator} />
       <div className="diagnostic-section-margin" />
-
       <Label>iOS</Label>
       <DiagnosticItem label="Xcode" item={dependencies.Xcode} />
       <DiagnosticItem label="CocoaPods" item={dependencies.CocoaPods} />
       <div className="diagnostic-section-margin" />
-
       <Label>Project related</Label>
       <DiagnosticItem
         label="node_modules"
@@ -57,27 +54,24 @@ function DiagnosticView() {
         }
       />
       <DiagnosticItem label="React Native" item={dependencies.ReactNative} />
-      {dependencies.Expo?.visible && <DiagnosticItem label="Expo" item={dependencies.Expo} />}
-      {dependencies.Pods?.visible && (
-        <DiagnosticItem
-          label="Pods"
-          item={dependencies.Pods}
-          action={
-            <IconButton
-              disabled={!dependencies.NodeModules?.installed}
-              tooltip={{ label: "Fix", side: "bottom" }}
-              type="secondary"
-              size="small"
-              onClick={() => {
-                vscode.postMessage({ command: "installPods" });
-              }}>
-              <span className="codicon codicon-wand" />
-            </IconButton>
-          }
-        />
-      )}
+      <DiagnosticItem label="Expo" item={dependencies.Expo} />
+      <DiagnosticItem
+        label="Pods"
+        item={dependencies.Pods}
+        action={
+          <IconButton
+            disabled={!dependencies.NodeModules?.installed}
+            tooltip={{ label: "Fix", side: "bottom" }}
+            type="secondary"
+            size="small"
+            onClick={() => {
+              vscode.postMessage({ command: "installPods" });
+            }}>
+            <span className="codicon codicon-wand" />
+          </IconButton>
+        }
+      />
       <div className="diagnostic-section-margin" />
-
       <div className="diagnostic-button-container">
         <Button onClick={runDiagnostics} type="secondary">
           <span slot="start" className="codicon codicon-refresh" />

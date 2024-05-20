@@ -185,36 +185,21 @@ export class DependencyChecker implements Disposable {
     return installed;
   }
 
-  private checkMinExpoVersionInstalled() {
-    const packageJsonPath = path.join(getAppRootFolder(), "package.json");
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, { encoding: "utf8" }));
-
-    // Expo can be a transitive dependency and we should check if it's a direct dependency first
-    if (!packageJson?.dependencies?.expo) {
-      return "not_required";
-    }
-
-    return checkMinDependencyVersionInstalled("expo", MIN_EXPO_SDK_VERSION_SUPPORTED);
-  }
-
   public async checkExpoInstalled() {
-    const status = this.checkMinExpoVersionInstalled();
+    const status = checkMinDependencyVersionInstalled("expo", MIN_EXPO_SDK_VERSION_SUPPORTED);
 
     const error = {
       installed: undefined,
-      not_required: undefined,
       not_installed: "Expo is not installed.",
       not_supported: `Installed version of Expo does not match the minimum requirement: ${MIN_EXPO_SDK_VERSION_SUPPORTED}.`,
     }[status];
 
     const installed = status === "installed";
-    const visible = status !== "not_required";
 
     this.webview.postMessage({
       command: "isExpoInstalled",
       data: {
         installed,
-        visible,
         info: "Whether supported version of Expo SDK is installed.",
         error,
       },
@@ -224,17 +209,13 @@ export class DependencyChecker implements Disposable {
   }
 
   public async checkPodsInstalled() {
-    const status = await checkIosDependenciesInstalled();
+    const installed = await checkIosDependenciesInstalled();
     const errorMessage = "iOS dependencies are not installed.";
-
-    const installed = status === "installed";
-    const visible = status !== "not_required";
 
     this.webview.postMessage({
       command: "isPodsInstalled",
       data: {
         installed,
-        visible,
         info: "Whether iOS dependencies are installed.",
         error: installed ? undefined : errorMessage,
       },
@@ -254,47 +235,48 @@ export async function checkIfCLIInstalled(cmd: string, options: Record<string, u
   }
 }
 
+function requireUncached(...params: Parameters<typeof require.resolve>) {
+  const [id, options] = params;
+  delete require.cache[require.resolve(id, options)];
+  return require.resolve(id, options);
+}
+
 export function checkMinDependencyVersionInstalled(dependency: string, minVersion: string) {
-  const dependencyPath = path.join(getAppRootFolder(), `node_modules/${dependency}/package.json`);
+  try {
+    const dependencyPath = requireUncached(path.join(dependency, "package.json"), {
+      paths: [getAppRootFolder()],
+    });
+    const dependencyVersion = coerce(require(dependencyPath).version);
+    const minDependencyVersion = coerce(minVersion)!;
 
-  const message = `Check ${dependency} dependency in ${dependencyPath}.`;
+    const message = `Check ${dependency} dependency in ${path.dirname(dependencyPath)}.`;
+    Logger.debug(message, `Version found: ${dependencyVersion}. Minimum version: ${minVersion}`);
 
-  if (!fs.existsSync(dependencyPath)) {
-    Logger.debug(message, "Not found.");
+    const matches = dependencyVersion ? gte(dependencyVersion, minDependencyVersion) : false;
+    return matches ? "installed" : "not_supported";
+  } catch (error) {
+    Logger.debug(`${dependency} dependency not found.`);
     return "not_installed";
   }
-
-  const packageJson = require(dependencyPath);
-  const dependencyVersion = coerce(packageJson.version);
-  const minDependencyVersion = coerce(minVersion)!;
-
-  Logger.debug(message, `Version found: ${dependencyVersion}. Minimum version: ${minVersion}`);
-
-  const matches = dependencyVersion ? gte(dependencyVersion, minDependencyVersion) : false;
-  return matches ? "installed" : "not_supported";
 }
 
 export async function checkIosDependenciesInstalled() {
   if (await isExpoGoProject()) {
     // for Expo Go projects, we never return an error here because Pods are never needed
-    return "not_required";
+    return true;
   }
 
   const iosDirPath = getIosSourceDir(getAppRootFolder());
 
   Logger.debug(`Check pods in ${iosDirPath} ${getAppRootFolder()}`);
   if (!iosDirPath) {
-    return "not_installed";
+    return false;
   }
 
   const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
   const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
 
-  if (podfileLockExists && podsDirExists) {
-    return "installed";
-  }
-
-  return "not_installed";
+  return podfileLockExists && podsDirExists;
 }
 
 export async function checkAndroidEmulatorExists() {

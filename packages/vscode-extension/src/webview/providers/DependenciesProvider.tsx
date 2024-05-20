@@ -16,7 +16,6 @@ export enum InstallationStatus {
 
 export interface DependencyState {
   installed: InstallationStatus;
-  visible: boolean;
   info: string;
   error?: string;
 }
@@ -25,7 +24,6 @@ interface DependencyMessageData {
   command: string;
   data: {
     installed: boolean;
-    visible: boolean;
     info: string;
     error?: string;
   };
