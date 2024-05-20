@@ -1,0 +1,12 @@
+.heroBackground {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  background-color: var(--swm-white);
+  width: 100%;
+  height: 130vh;
+  min-height: 70vw;
+  overflow: hidden;
+  z-index: -20;
+}
