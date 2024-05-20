@@ -4,12 +4,13 @@ import { Logger } from "../Logger";
 import fs from "fs";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command } from "../utilities/subprocess";
+import { getAppRootFolder } from "../utilities/extensionContext";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
-import { getAppRootFolder } from "../utilities/extensionContext";
 import { isExpoGoProject } from "../builders/expoGo";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
+const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
 
 export class DependencyChecker implements Disposable {
   private disposables: Disposable[] = [];
@@ -56,6 +57,10 @@ export class DependencyChecker implements Disposable {
             Logger.debug("Received checkReactNativeInstalled command.");
             this.checkReactNativeInstalled();
             return;
+          case "checkExpoInstalled":
+            Logger.debug("Received checkExpoInstalled command.");
+            this.checkExpoInstalled();
+            return;
           case "checkPodsInstalled":
             Logger.debug("Received checkPodsInstalled command.");
             this.checkPodsInstalled();
@@ -80,7 +85,7 @@ export class DependencyChecker implements Disposable {
         error: installed ? undefined : errorMessage,
       },
     });
-    Logger.debug("Nodejs installed: ", installed);
+    Logger.debug("Nodejs installed:", installed);
     return installed;
   }
 
@@ -97,7 +102,7 @@ export class DependencyChecker implements Disposable {
         error: installed ? undefined : errorMessage,
       },
     });
-    Logger.debug("Android Emulator installed: ", installed);
+    Logger.debug("Android Emulator installed:", installed);
     return installed;
   }
 
@@ -117,7 +122,7 @@ export class DependencyChecker implements Disposable {
         error: installed ? undefined : errorMessage,
       },
     });
-    Logger.debug("Xcode Command Line Tools installed: ", installed);
+    Logger.debug("Xcode Command Line Tools installed:", installed);
     return installed;
   }
 
@@ -135,7 +140,7 @@ export class DependencyChecker implements Disposable {
         error: installed ? undefined : errorMessage,
       },
     });
-    Logger.debug("CocoaPods installed: ", installed);
+    Logger.debug("CocoaPods installed:", installed);
     return installed;
   }
 
@@ -150,47 +155,91 @@ export class DependencyChecker implements Disposable {
         error: installed ? undefined : errorMessage,
       },
     });
-    Logger.debug("NodeModules installed: ", installed);
+    Logger.debug("NodeModules installed:", installed);
     return installed;
   }
 
   public async checkReactNativeInstalled() {
-    const { installed: reactNativeInstalled, supported } = checkMinReactNativeVersionInstalled();
-    const errorMessage =
-      reactNativeInstalled && !supported
-        ? `Installed version of React Native does not match the minimum requirement: ${MIN_REACT_NATIVE_VERSION_SUPPORTED}.`
-        : "React Native is not installed.";
+    const status = checkMinDependencyVersionInstalled(
+      "react-native",
+      MIN_REACT_NATIVE_VERSION_SUPPORTED
+    );
 
-    const installed = reactNativeInstalled && supported;
+    const error = {
+      installed: undefined,
+      not_installed: "React Native is not installed.",
+      not_supported: `Installed version of React Native does not match the minimum requirement: ${MIN_REACT_NATIVE_VERSION_SUPPORTED}.`,
+    }[status];
+
+    const installed = status === "installed";
 
     this.webview.postMessage({
       command: "isReactNativeInstalled",
       data: {
         installed,
         info: "Whether supported version of React Native is installed.",
-        error: installed ? undefined : errorMessage,
+        error,
       },
     });
-    Logger.debug(
-      `Supported React Native version ${MIN_REACT_NATIVE_VERSION_SUPPORTED} installed: `,
-      installed
-    );
+    Logger.debug(`Minimum React Native version installed:`, installed);
+    return installed;
+  }
+
+  private checkMinExpoVersionInstalled() {
+    const packageJsonPath = path.join(getAppRootFolder(), "package.json");
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, { encoding: "utf8" }));
+
+    // Expo can be a transitive dependency and we should check if it's a direct dependency first
+    if (!packageJson?.dependencies?.expo) {
+      return "not_required";
+    }
+
+    return checkMinDependencyVersionInstalled("expo", MIN_EXPO_SDK_VERSION_SUPPORTED);
+  }
+
+  public async checkExpoInstalled() {
+    const status = this.checkMinExpoVersionInstalled();
+
+    const error = {
+      installed: undefined,
+      not_required: undefined,
+      not_installed: "Expo is not installed.",
+      not_supported: `Installed version of Expo does not match the minimum requirement: ${MIN_EXPO_SDK_VERSION_SUPPORTED}.`,
+    }[status];
+
+    const installed = status === "installed";
+    const visible = status !== "not_required";
+
+    this.webview.postMessage({
+      command: "isExpoInstalled",
+      data: {
+        installed,
+        visible,
+        info: "Whether supported version of Expo SDK is installed.",
+        error,
+      },
+    });
+    Logger.debug(`Minimum Expo version installed:`, installed);
     return installed;
   }
 
   public async checkPodsInstalled() {
-    const installed = await checkIosDependenciesInstalled();
+    const status = await checkIosDependenciesInstalled();
     const errorMessage = "iOS dependencies are not installed.";
+
+    const installed = status === "installed";
+    const visible = status !== "not_required";
 
     this.webview.postMessage({
       command: "isPodsInstalled",
       data: {
         installed,
+        visible,
         info: "Whether iOS dependencies are installed.",
         error: installed ? undefined : errorMessage,
       },
     });
-    Logger.debug("Project pods installed: ", installed);
+    Logger.debug("Project pods installed:", installed);
     return installed;
   }
 }
@@ -205,40 +254,47 @@ export async function checkIfCLIInstalled(cmd: string, options: Record<string, u
   }
 }
 
-function checkMinReactNativeVersionInstalled() {
-  const reactNativePath = path.join(getAppRootFolder(), "node_modules/react-native/package.json");
+export function checkMinDependencyVersionInstalled(dependency: string, minVersion: string) {
+  const dependencyPath = path.join(getAppRootFolder(), `node_modules/${dependency}/package.json`);
 
-  if (!fs.existsSync(reactNativePath)) {
-    return { installed: false, supported: false };
+  const message = `Check ${dependency} dependency in ${dependencyPath}.`;
+
+  if (!fs.existsSync(dependencyPath)) {
+    Logger.debug(message, "Not found.");
+    return "not_installed";
   }
 
-  const packageJson = JSON.parse(fs.readFileSync(reactNativePath, { encoding: "utf8" }));
-  const reactNativeVersion = coerce(packageJson.version);
-  const minReactNativeVersion = coerce(MIN_REACT_NATIVE_VERSION_SUPPORTED)!;
+  const packageJson = require(dependencyPath);
+  const dependencyVersion = coerce(packageJson.version);
+  const minDependencyVersion = coerce(minVersion)!;
 
-  return {
-    installed: true,
-    supported: reactNativeVersion ? gte(reactNativeVersion, minReactNativeVersion) : false,
-  };
+  Logger.debug(message, `Version found: ${dependencyVersion}. Minimum version: ${minVersion}`);
+
+  const matches = dependencyVersion ? gte(dependencyVersion, minDependencyVersion) : false;
+  return matches ? "installed" : "not_supported";
 }
 
 export async function checkIosDependenciesInstalled() {
   if (await isExpoGoProject()) {
     // for Expo Go projects, we never return an error here because Pods are never needed
-    return true;
+    return "not_required";
   }
 
   const iosDirPath = getIosSourceDir(getAppRootFolder());
 
   Logger.debug(`Check pods in ${iosDirPath} ${getAppRootFolder()}`);
   if (!iosDirPath) {
-    return false;
+    return "not_installed";
   }
 
   const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
   const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
 
-  return podfileLockExists && podsDirExists;
+  if (podfileLockExists && podsDirExists) {
+    return "installed";
+  }
+
+  return "not_installed";
 }
 
 export async function checkAndroidEmulatorExists() {

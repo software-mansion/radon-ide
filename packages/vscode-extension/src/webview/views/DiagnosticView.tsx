@@ -35,7 +35,7 @@ function DiagnosticView() {
 
       <Label>Project related</Label>
       <DiagnosticItem
-        label="node_modules installed"
+        label="node_modules"
         item={dependencies.NodeModules}
         action={
           <IconButton
@@ -56,23 +56,26 @@ function DiagnosticView() {
           </IconButton>
         }
       />
-      <DiagnosticItem label="React Native installed" item={dependencies.ReactNative} />
-      <DiagnosticItem
-        label="Pods installed"
-        item={dependencies.Pods}
-        action={
-          <IconButton
-            disabled={!dependencies.NodeModules?.installed}
-            tooltip={{ label: "Fix", side: "bottom" }}
-            type="secondary"
-            size="small"
-            onClick={() => {
-              vscode.postMessage({ command: "installPods" });
-            }}>
-            <span className="codicon codicon-wand" />
-          </IconButton>
-        }
-      />
+      <DiagnosticItem label="React Native" item={dependencies.ReactNative} />
+      {dependencies.Expo?.visible && <DiagnosticItem label="Expo" item={dependencies.Expo} />}
+      {dependencies.Pods?.visible && (
+        <DiagnosticItem
+          label="Pods"
+          item={dependencies.Pods}
+          action={
+            <IconButton
+              disabled={!dependencies.NodeModules?.installed}
+              tooltip={{ label: "Fix", side: "bottom" }}
+              type="secondary"
+              size="small"
+              onClick={() => {
+                vscode.postMessage({ command: "installPods" });
+              }}>
+              <span className="codicon codicon-wand" />
+            </IconButton>
+          }
+        />
+      )}
       <div className="diagnostic-section-margin" />
 
       <div className="diagnostic-button-container">

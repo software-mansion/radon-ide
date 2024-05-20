@@ -16,6 +16,7 @@ export enum InstallationStatus {
 
 export interface DependencyState {
   installed: InstallationStatus;
+  visible: boolean;
   info: string;
   error?: string;
 }
@@ -24,6 +25,7 @@ interface DependencyMessageData {
   command: string;
   data: {
     installed: boolean;
+    visible: boolean;
     info: string;
     error?: string;
   };
@@ -37,6 +39,7 @@ type Dependencies = {
   CocoaPods?: DependencyState;
   NodeModules?: DependencyState;
   ReactNative?: DependencyState;
+  Expo?: DependencyState;
   Pods?: DependencyState;
 };
 
@@ -47,6 +50,7 @@ const defaultDependencies: Dependencies = {
   CocoaPods: undefined,
   NodeModules: undefined,
   ReactNative: undefined,
+  Expo: undefined,
   Pods: undefined,
 };
 
@@ -193,6 +197,9 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
           break;
         case "isReactNativeInstalled":
           updateDependency("ReactNative", data);
+          break;
+        case "isExpoInstalled":
+          updateDependency("Expo", data);
           break;
         case "isPodsInstalled":
           updateDependency("Pods", data);
