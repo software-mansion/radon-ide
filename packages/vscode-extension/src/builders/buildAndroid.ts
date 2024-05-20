@@ -2,6 +2,7 @@ import { getCpuArchitecture } from "../utilities/common";
 import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
+import semver from "semver";
 import { AndroidBuildResult, CancelToken } from "./BuildManager";
 import path from "path";
 import fs from "fs";
@@ -11,6 +12,7 @@ import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_PACKAGE_NAME, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { Platform } from "../common/DeviceManager";
+import { getReactNativeVersion } from "../utilities/reactNative";
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_DIR = "app/build/outputs/apk";
@@ -83,9 +85,26 @@ export async function buildAndroid(
     `-PreactNativeArchitectures=${cpuArchitecture}`,
     ...(forceCleanBuild ? ["clean"] : []),
     makeBuildTaskName(productFlavor, buildType),
-    "--init-script", // init script is used to patch React Android project, see comments in configureReactNativeOverrides.gradle for more details
-    path.join(extensionContext.extensionPath, "lib", "android", "initscript.gradle"),
+    "--init-script", // buildProgressEvaluation init script is used log build task count for build progress logging
+    path.join(
+      extensionContext.extensionPath,
+      "lib",
+      "android",
+      "buildProgressEvaluation.initscript.gradle"
+    ),
   ];
+  // configureReactNativeOverrides init script is only necessary for RN versions older then 0.74.0 see comments in configureReactNativeOverrides.gradle for more details
+  if (semver.lt(await getReactNativeVersion(), "0.74.0")) {
+    gradleArgs.push(
+      "--init-script", // configureReactNativeOverrides init script is used to patch React Android project, see comments in configureReactNativeOverrides.gradle for more details
+      path.join(
+        extensionContext.extensionPath,
+        "lib",
+        "android",
+        "configureReactNativeOverrides.initscript.gradle"
+      )
+    );
+  }
   Logger.debug("Starting Android build");
   const buildProcess = cancelToken.adapt(
     exec("./gradlew", gradleArgs, {
