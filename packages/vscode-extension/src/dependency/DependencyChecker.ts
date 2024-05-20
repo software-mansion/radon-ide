@@ -236,9 +236,8 @@ export async function checkIfCLIInstalled(cmd: string, options: Record<string, u
 }
 
 function requireUncached(...params: Parameters<typeof require.resolve>) {
-  const [id, options] = params;
-  delete require.cache[require.resolve(id, options)];
-  return require.resolve(id, options);
+  delete require.cache[require.resolve(...params)];
+  return require.resolve(...params);
 }
 
 export function checkMinDependencyVersionInstalled(dependency: string, minVersion: string) {
