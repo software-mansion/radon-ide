@@ -54,8 +54,6 @@ interface DeviceSelectProps {
   onValueChange: (newValue: string) => void;
   label: string;
   devices: DeviceInfo[];
-  isIosAvailable: boolean;
-  isAndroidAvailable: boolean;
   disabled?: boolean;
 }
 

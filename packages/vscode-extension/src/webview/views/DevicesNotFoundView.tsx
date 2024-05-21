@@ -116,11 +116,6 @@ function DevicesNotFoundView() {
           Add iPhone
         </Button>
 
-        <Button type="ternary" className="devices-not-found-quick-action" onClick={createIOSDevice}>
-          {isIOSCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
-          Add iPhone
-        </Button>
-
         <Button
           type="ternary"
           className="devices-not-found-quick-action"

@@ -23,13 +23,16 @@ function DiagnosticView() {
       <Label>Common</Label>
       <DiagnosticItem label="Node.js" item={dependencies.Nodejs} />
       <div className="diagnostic-section-margin" />
+
       <Label>Android</Label>
       <DiagnosticItem label="Android Emulator" item={dependencies.AndroidEmulator} />
       <div className="diagnostic-section-margin" />
+
       <Label>iOS</Label>
       <DiagnosticItem label="Xcode" item={dependencies.Xcode} />
       <DiagnosticItem label="CocoaPods" item={dependencies.CocoaPods} />
       <div className="diagnostic-section-margin" />
+
       <Label>Project related</Label>
       <DiagnosticItem
         label="node_modules"
@@ -69,6 +72,7 @@ function DiagnosticView() {
         }
       />
       <div className="diagnostic-section-margin" />
+
       <div className="diagnostic-button-container">
         <Button onClick={runDiagnostics} type="secondary">
           <span slot="start" className="codicon codicon-refresh" />
