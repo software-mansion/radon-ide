@@ -4,55 +4,72 @@ import { useEffect, useState } from "react";
 import { useDevices } from "../providers/DevicesProvider";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
-import { DeviceProperties, SupportedDeviceName, SupportedDevices } from "../utilities/consts";
+import {
+  DeviceProperties,
+  iOSSupportedDevices,
+  AndroidSupportedDevices,
+} from "../utilities/consts";
 import { Platform } from "../../common/DeviceManager";
-
-function isSupportedIOSDevice(name: SupportedDeviceName): boolean {
-  return SupportedDevices.some((sd) => sd.name === name && isIOSDevice(sd));
-}
-
-function isAndroidDevice(device: DeviceProperties) {
-  return device.platform === Platform.Android;
-}
-function isIOSDevice(device: DeviceProperties) {
-  return device.platform === Platform.IOS;
-}
-
-const SUPPORTED_DEVICES = [
-  {
-    items: SupportedDevices.filter(isIOSDevice).map((item) => ({
-      value: item.name,
-      label: item.name,
-    })),
-    label: "iOS",
-  },
-  {
-    items: SupportedDevices.filter(isAndroidDevice).map((item) => ({
-      value: item.name,
-      label: item.name,
-    })),
-    label: "Android",
-  },
-];
+import { useDependencies } from "../providers/DependenciesProvider";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
   onCancel: () => void;
 }
 
+function assertPlatform(platform: string): asserts platform is "ios" | "android" {
+  if (!(platform === "ios" || platform === "android")) {
+    throw new Error("Invalid platform specifier");
+  }
+}
+
+function useSupportedDevices() {
+  const { androidEmulatorError, iosSimulatorError } = useDependencies();
+
+  function buildSelections(item: DeviceProperties, platform: Platform) {
+    let prefix = "";
+    if (platform === Platform.IOS) {
+      prefix = "ios:";
+    } else {
+      prefix = "android:";
+    }
+    return { value: prefix + item.name, label: item.name };
+  }
+
+  return [
+    iosSimulatorError !== undefined
+      ? { label: "iOS – error, check diagnostics", items: [] }
+      : {
+          label: "iOS",
+          items: iOSSupportedDevices.map((device) => buildSelections(device, Platform.IOS)),
+        },
+    androidEmulatorError !== undefined
+      ? { label: "Android – error, check diagnostics", items: [] }
+      : {
+          label: "Android",
+          items: AndroidSupportedDevices.map((device) => buildSelections(device, Platform.Android)),
+        },
+  ];
+}
+
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
-  const [deviceName, setDeviceName] = useState<SupportedDeviceName | undefined>(undefined);
+  const [deviceName, setDeviceName] = useState<string | undefined>(undefined);
+  const [devicePlatform, setDevicePlatform] = useState<"ios" | "android" | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const supportedDevices = useSupportedDevices();
   const { iOSRuntimes, androidImages, deviceManager, reload } = useDevices();
 
   useEffect(() => {
     reload();
   }, []);
 
+  const platformSelected = !!deviceName && !!devicePlatform;
+  const createDisabled = loading || !deviceName || !selectedSystemName;
+
   const systemImagesOptions =
-    !!deviceName && isSupportedIOSDevice(deviceName)
+    platformSelected && devicePlatform === "ios"
       ? iOSRuntimes.map((runtime) => ({
           value: runtime.identifier,
           label: runtime.name,
@@ -62,20 +79,19 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           label: systemImage.name,
         }));
 
-  const createDisabled = loading || !deviceName || !selectedSystemName;
-
   async function createDevice() {
     if (!selectedSystemName) {
       return;
     }
+
+    setLoading(true);
     try {
-      setLoading(true);
-      if (isSupportedIOSDevice(deviceName!)) {
-        const runtime = iOSRuntimes.find((runtime) => runtime.identifier === selectedSystemName);
+      if (devicePlatform === "ios") {
+        const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;
         }
-        const iOSDeviceType = runtime.supportedDeviceTypes.find((dt) => dt.name === deviceName);
+        const iOSDeviceType = runtime.supportedDeviceTypes.find(({ name }) => name === deviceName);
         if (!iOSDeviceType) {
           return;
         }
@@ -98,34 +114,38 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Label>Device Type</Label>
         <Select
           className="form-field"
-          value={deviceName}
+          value={`${devicePlatform ?? ""}:${deviceName ?? ""}`}
           onChange={(newValue: string) => {
-            setDeviceName(newValue as SupportedDeviceName);
+            const [newPlatform, name] = newValue.split(":", 2);
+            assertPlatform(newPlatform);
+
+            setDeviceName(name);
+            setDevicePlatform(newPlatform);
             selectSystemName(undefined);
           }}
-          items={SUPPORTED_DEVICES}
+          items={supportedDevices}
           placeholder="Choose device type..."
         />
       </div>
       <div className="form-row">
         <Label>
           <span>System image</span>
-          {!systemImagesOptions.length && <span className="codicon codicon-warning warning" />}
+          {systemImagesOptions.length === 0 && <span className="codicon codicon-warning warning" />}
         </Label>
-        <div className="form-label"></div>
-        {!!systemImagesOptions.length ? (
+        <div className="form-label" />
+        {systemImagesOptions.length > 0 ? (
           <Select
-            disabled={!deviceName}
+            disabled={!platformSelected}
             className="form-field"
-            value={selectedSystemName}
+            value={selectedSystemName ?? ""}
             onChange={(newValue) => selectSystemName(newValue)}
             items={systemImagesOptions}
             placeholder="Select device system image..."
           />
         ) : (
-          <div className="">
+          <div>
             No system images found. You can install them using{" "}
-            {isSupportedIOSDevice(deviceName!) ? "Xcode" : "Android Studio"}.
+            {devicePlatform === "ios" ? "Xcode" : "Android Studio"}.
           </div>
         )}
       </div>

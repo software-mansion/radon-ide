@@ -41,12 +41,15 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
   const [finishedInitialLoad, setFinishedInitialLoad] = useState(false);
 
   const reload = useCallback(async () => {
-    await Promise.all([
-      DeviceManager.listAllDevices().then(setDevices),
-      DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
-      DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes),
-    ]);
-    setFinishedInitialLoad(true);
+    try {
+      await Promise.all([
+        DeviceManager.listAllDevices().then(setDevices),
+        DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
+        DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes),
+      ]);
+    } finally {
+      setFinishedInitialLoad(true);
+    }
   }, [setDevices, setAndroidImages, setIOSRuntimes, setFinishedInitialLoad]);
 
   useEffect(() => {

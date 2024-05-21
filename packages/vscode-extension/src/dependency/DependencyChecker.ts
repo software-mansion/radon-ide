@@ -136,7 +136,7 @@ export class DependencyChecker implements Disposable {
       command: "isPodsInstalled",
       data: {
         installed,
-        info: `Whether iOS dependencies are installed.`,
+        info: "Whether iOS dependencies are installed.",
         error: installed ? undefined : errorMessage,
       },
     });

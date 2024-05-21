@@ -1,13 +1,30 @@
-import { Webview, Disposable, window, commands } from "vscode";
+import vscode, { Webview, Disposable, window, commands } from "vscode";
 import { DependencyChecker } from "../dependency/DependencyChecker";
 import { DependencyInstaller } from "../dependency/DependencyInstaller";
 import { DeviceManager } from "../devices/DeviceManager";
 import { Project } from "../project/project";
-import { openExternalUrl } from "../utilities/vsc";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { WorkspaceConfigController } from "./WorkspaceConfigController";
 import { getTelemetryReporter } from "../utilities/telemetry";
+
+type CallArgs = {
+  callId: string;
+  object: string;
+  method: string;
+  args: unknown[];
+};
+export type WebviewEvent =
+  | {
+      command: "openExternalUrl";
+      url: string;
+    }
+  | { command: "startFollowing" }
+  | { command: "stopFollowing" }
+  | { command: "showDismissableError"; message: string }
+  | ({
+      command: "call";
+    } & CallArgs);
 
 export class WebviewController implements Disposable {
   private readonly dependencyChecker: DependencyChecker;
@@ -79,14 +96,13 @@ export class WebviewController implements Disposable {
 
   private setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
-      (message: any) => {
-        const command = message.command;
-
-        if (message.method !== "dispatchTouch") {
+      (message: WebviewEvent) => {
+        const isTouchEvent = message.command === "call" && message.method === "dispatchTouch";
+        if (!isTouchEvent) {
           Logger.log("Message from webview", message);
         }
 
-        switch (command) {
+        switch (message.command) {
           case "call":
             this.handleRemoteCall(message);
             return;
@@ -99,6 +115,9 @@ export class WebviewController implements Disposable {
           case "startFollowing":
             this.followEnabled = true;
             return;
+          case "showDismissableError":
+            showDismissableError(message.message);
+            return;
         }
       },
       undefined,
@@ -106,7 +125,7 @@ export class WebviewController implements Disposable {
     );
   }
 
-  private handleRemoteCall(message: any) {
+  private handleRemoteCall(message: CallArgs) {
     const { object, method, args, callId } = message;
     const callableObject = this.callableObjects.get(object);
     if (callableObject && method in callableObject) {
@@ -170,4 +189,13 @@ export class WebviewController implements Disposable {
       })
     );
   }
+}
+
+// Open the url in the default user's browser.
+function openExternalUrl(url: string) {
+  vscode.env.openExternal(vscode.Uri.parse(url));
+}
+
+function showDismissableError(message: string) {
+  window.showErrorMessage(message, "Dismiss");
 }
