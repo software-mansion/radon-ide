@@ -18,7 +18,6 @@ import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import ZoomControls, { ZoomLevelType } from "../components/ZoomControls";
 import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
-import { useDependencies } from "../providers/DependenciesProvider";
 
 function PreviewView() {
   const [isInspecting, setIsInspecting] = useState(false);
@@ -28,7 +27,6 @@ function PreviewView() {
 
   const { devices, finishedInitialLoad } = useDevices();
   const { projectState, project } = useProject();
-  const { isAndroidEmulatorError, isIosSimulatorError } = useDependencies();
 
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
@@ -173,8 +171,6 @@ function PreviewView() {
           // @ts-ignore TODO: Fix typing
           label={selectedDevice?.name}
           onValueChange={handleDeviceDropdownChange}
-          isIosAvailable={!isIosSimulatorError}
-          isAndroidAvailable={!isAndroidEmulatorError}
           disabled={devicesNotFound}
         />
 

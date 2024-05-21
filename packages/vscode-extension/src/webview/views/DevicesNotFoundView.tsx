@@ -6,17 +6,51 @@ import CreateDeviceView from "./CreateDeviceView";
 import { useDevices } from "../providers/DevicesProvider";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { useState } from "react";
-import { SupportedDevices } from "../utilities/consts";
-import { Platform } from "../../common/DeviceManager";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
+import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
-import { DiagnosticError } from "./DiagnosticView";
+import { vscode } from "../utilities/vscode";
+
+const firstIosDeviceName = iOSSupportedDevices[0].name;
+const firstAndroidDeviceName = AndroidSupportedDevices[0].name;
+
+function getMax<T>(array: T[], predicate: (element: T, currentMax: T) => boolean): T | undefined {
+  if (array.length === 0) {
+    return undefined;
+  }
+
+  let max = array[0];
+  for (const element of array) {
+    if (predicate(element, max)) {
+      max = element;
+    }
+  }
+  return max;
+}
+
+function firstRuntimeSupportedDevice(supportedDeviceTypes: IOSDeviceTypeInfo[]) {
+  return supportedDeviceTypes.find(({ name }) => name === firstIosDeviceName);
+}
+
+function findNewestIosRuntime(runtimes: IOSRuntimeInfo[]) {
+  function isNewest(runtime: IOSRuntimeInfo, currentNewestRuntime: IOSRuntimeInfo) {
+    const newer = runtime.version > currentNewestRuntime.version;
+    if (!newer) {
+      return false;
+    }
+    const isSupported = firstRuntimeSupportedDevice(runtime.supportedDeviceTypes) !== undefined;
+    return isSupported;
+  }
+
+  return getMax(runtimes, isNewest);
+}
 
 function DevicesNotFoundView() {
   const { openModal, closeModal } = useModal();
   const { iOSRuntimes, androidImages, deviceManager } = useDevices();
   const [isIOSCreating, setIOSCreating] = useState(false);
   const [isAndroidCreating, setAndroidCreating] = useState(false);
-  const { dependencies, isAndroidEmulatorError, isIosSimulatorError } = useDependencies();
+  const { androidEmulatorError, iosSimulatorError } = useDependencies();
 
   function openCreateNewDeviceModal() {
     openModal(
@@ -26,58 +60,42 @@ function DevicesNotFoundView() {
   }
 
   async function createAndroidDevice() {
+    if (androidEmulatorError !== undefined) {
+      vscode.postMessage({ command: "showDismissableError", message: androidEmulatorError });
+      return;
+    }
+
     setAndroidCreating(true);
+    const newestImage = getMax(
+      androidImages,
+      (image, currentNewestImage) => image.apiLevel > currentNewestImage.apiLevel
+    );
+    if (newestImage === undefined) {
+      openCreateNewDeviceModal();
+      return;
+    }
+
     try {
-      if (androidImages.length === 0) {
-        openCreateNewDeviceModal();
-        return;
-      }
-      let newestAPIImage = androidImages[0];
-      for (const image of androidImages) {
-        if (image.apiLevel > newestAPIImage.apiLevel) {
-          newestAPIImage = image;
-        }
-      }
-      await deviceManager.createAndroidDevice(
-        SupportedDevices.find((sd) => {
-          return sd.platform === Platform.Android;
-        })!.name,
-        newestAPIImage
-      );
+      await deviceManager.createAndroidDevice(firstAndroidDeviceName, newestImage);
     } finally {
       setAndroidCreating(false);
     }
   }
 
   async function createIOSDevice() {
+    if (iosSimulatorError !== undefined) {
+      vscode.postMessage({ command: "showDismissableError", message: iosSimulatorError });
+      return;
+    }
+
     setIOSCreating(true);
+    const newestRuntime = findNewestIosRuntime(iOSRuntimes);
+    if (newestRuntime === undefined) {
+      openCreateNewDeviceModal();
+      return;
+    }
+    const iOSDeviceType = firstRuntimeSupportedDevice(newestRuntime.supportedDeviceTypes);
     try {
-      let newestRuntime = undefined;
-      for (const runtime of iOSRuntimes) {
-        if (
-          (newestRuntime === undefined || runtime.version > newestRuntime.version) &&
-          runtime.supportedDeviceTypes.find(
-            (dt) =>
-              dt.name ===
-              SupportedDevices.find((sd) => {
-                return sd.platform === Platform.IOS;
-              })?.name
-          )
-        ) {
-          newestRuntime = runtime;
-        }
-      }
-      if (newestRuntime === undefined) {
-        openCreateNewDeviceModal();
-        return;
-      }
-      const iOSDeviceType = newestRuntime.supportedDeviceTypes.find(
-        (dt) =>
-          dt.name ===
-          SupportedDevices.find((sd) => {
-            return sd.platform === Platform.IOS;
-          })?.name
-      );
       await deviceManager.createIOSDevice(iOSDeviceType!, newestRuntime);
     } finally {
       setIOSCreating(false);
@@ -93,11 +111,12 @@ function DevicesNotFoundView() {
         You can add a new device using the quick action below.
       </p>
       <div className="devices-not-found-button-group">
-        <Button
-          type="ternary"
-          className="devices-not-found-quick-action"
-          onClick={createIOSDevice}
-          disabled={isIosSimulatorError}>
+        <Button type="ternary" className="devices-not-found-quick-action" onClick={createIOSDevice}>
+          {isIOSCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
+          Add iPhone
+        </Button>
+
+        <Button type="ternary" className="devices-not-found-quick-action" onClick={createIOSDevice}>
           {isIOSCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
           Add iPhone
         </Button>
@@ -105,27 +124,18 @@ function DevicesNotFoundView() {
         <Button
           type="ternary"
           className="devices-not-found-quick-action"
-          onClick={createAndroidDevice}
-          disabled={isAndroidEmulatorError}>
+          onClick={createAndroidDevice}>
           {isAndroidCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
           Add Android
         </Button>
       </div>
-      {!(isAndroidEmulatorError && isIosSimulatorError) && (
-        <>
-          <p>or</p>
-          <Button onClick={openCreateNewDeviceModal}>
-            <span className="codicon codicon-add" />
-            Create new device
-          </Button>
-        </>
-      )}
-      <div>
-        {isAndroidEmulatorError && (
-          <DiagnosticError message={dependencies.AndroidEmulator!.error!} />
-        )}
-        {isIosSimulatorError && <DiagnosticError message={dependencies.Xcode!.error!} />}
-      </div>
+      <>
+        <p>or</p>
+        <Button onClick={openCreateNewDeviceModal}>
+          <span className="codicon codicon-add" />
+          Create new device
+        </Button>
+      </>
     </div>
   );
 }

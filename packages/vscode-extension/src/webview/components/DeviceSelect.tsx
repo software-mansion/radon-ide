@@ -59,15 +59,7 @@ interface DeviceSelectProps {
   disabled?: boolean;
 }
 
-function DeviceSelect({
-  onValueChange,
-  devices,
-  value,
-  label,
-  isIosAvailable,
-  isAndroidAvailable,
-  disabled,
-}: DeviceSelectProps) {
+function DeviceSelect({ onValueChange, devices, value, label, disabled }: DeviceSelectProps) {
   const iOSDevices = devices.filter(
     ({ platform, name }) => platform === Platform.IOS && name.length > 0
   );
@@ -76,19 +68,6 @@ function DeviceSelect({
   );
 
   function renderIosDevices() {
-    if (!isIosAvailable) {
-      return (
-        <Select.Group>
-          <Select.Label className="device-select-label">iOS</Select.Label>
-          <RichSelectItem
-            value="unavailable"
-            disabled
-            icon={<span className="codicon codicon-warning" />}
-            title="iOS devices unavailable, please check diagnostics"
-          />
-        </Select.Group>
-      );
-    }
     return (
       iOSDevices.length > 0 && (
         <Select.Group>
@@ -108,19 +87,6 @@ function DeviceSelect({
     );
   }
   function renderAndroidDevices() {
-    if (!isAndroidAvailable) {
-      return (
-        <Select.Group>
-          <Select.Label className="device-select-label">Android</Select.Label>
-          <RichSelectItem
-            value="unavailable"
-            disabled
-            icon={<span className="codicon codicon-warning" />}
-            title="Android devices unavailable, please check diagnostics"
-          />
-        </Select.Group>
-      );
-    }
     return (
       androidDevices.length > 0 && (
         <Select.Group>

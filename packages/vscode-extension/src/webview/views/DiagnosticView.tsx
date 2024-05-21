@@ -38,10 +38,7 @@ function DiagnosticView() {
           <IconButton
             // TODO: add support for installing node_modules to DependencyInstaller
             disabled={true}
-            tooltip={{
-              label: "Fix",
-              side: "bottom",
-            }}
+            tooltip={{ label: "Fix", side: "bottom" }}
             type="secondary"
             size="small"
             onClick={() => {

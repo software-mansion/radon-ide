@@ -76,8 +76,13 @@
 .plan__tagline {
   margin-top: 4px;
   margin-bottom: 24px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--swm-navy-light-60);
+}
+
+.plan__tagline a {
+  color: var(--swm-navy-light-60);
+  text-decoration: underline;
 }
 
 .plan_pay_annually {
@@ -89,6 +94,10 @@
 
 .plan_pay_annually p {
   margin: 0;
+}
+
+.plan__currency {
+  font-weight: 400;
 }
 
 /* Pay Annually Toggle */
