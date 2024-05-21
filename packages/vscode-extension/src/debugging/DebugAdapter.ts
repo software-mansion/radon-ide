@@ -139,6 +139,7 @@ export class DebugAdapter extends DebugSession {
           break;
         case "Runtime.executionContextsCleared":
           this.variableStore.clearReplVariables();
+          this.variableStore.clearCDPVariables();
           this.sendEvent(new OutputEvent("\x1b[2J", "console"));
           break;
         case "Runtime.consoleAPICalled":
@@ -271,7 +272,6 @@ export class DebugAdapter extends DebugSession {
     this.pausedStackFrames = [];
     this.pausedScopeChains = [];
 
-    this.variableStore.resetPausedVariables();
     if (
       message.params.reason === "other" &&
       message.params.callFrames[0].functionName === "__RNIDE_breakOnError"
@@ -279,10 +279,10 @@ export class DebugAdapter extends DebugSession {
       // this is a workaround for an issue with hermes which does not provide a full stack trace
       // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception
       // reporting handler, and access the actual error's stack trace from local variable
-      const localScropeCDPObjectId = message.params.callFrames[0].scopeChain?.find(
+      const localScopeCDPObjectId = message.params.callFrames[0].scopeChain?.find(
         (scope: any) => scope.type === "local"
       )?.object?.objectId;
-      const localScopeObjectId = this.variableStore.adaptCDPObjectId(localScropeCDPObjectId);
+      const localScopeObjectId = this.variableStore.adaptCDPObjectId(localScopeCDPObjectId);
       const localScopeVariables = await this.variableStore.get(
         localScopeObjectId,
         (params: object) => {

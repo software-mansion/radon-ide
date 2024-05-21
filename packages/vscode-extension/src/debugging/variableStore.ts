@@ -2,7 +2,7 @@ import { Variable } from "@vscode/debugadapter";
 import { CDPPropertyDescriptor, inferDAPVariableValueForCDPRemoteObject } from "./cdp";
 
 const getVariableId = (() => {
-  let last = 1;
+  let last = Math.pow(2, 30);
   const max = 0x7fffffff - 1;
   return () => (last++ % max) + 1;
 })();
@@ -10,29 +10,29 @@ const getVariableId = (() => {
 export class VariableStore {
   private replVariables: Map<number, CDPPropertyDescriptor[]> = new Map();
 
-  private pausedCDPtoDAPObjectIdMap: Map<string, number> = new Map();
-  private pausedDAPtoCDPObjectIdMap: Map<number, string> = new Map();
+  private CDPtoDAPObjectIdMap: Map<string, number> = new Map();
+  private DAPtoCDPObjectIdMap: Map<number, string> = new Map();
 
   /**
    * If exist it returns a local variables if not it tries to fetch them from cdp.
    * @param id VariableId.
-   * @param sendCDPMessage a method for fetching properties from cdp.
+   * @param fetchProperties a method for fetching properties from cdp.
    */
   public async get(
     id: number,
     fetchProperties: (params: object) => Promise<any>
   ): Promise<Variable[]> {
     let properties: CDPPropertyDescriptor[];
-    if (this.replVariables.has(id)) {
-      properties = this.replVariables.get(id) as CDPPropertyDescriptor[];
-    } else {
-      const cdpObjectId = this.convertDAPObjectIdToCDP(id) || id.toString();
+    if (this.DAPtoCDPObjectIdMap.has(id)) {
+      const cdpObjectId = this.convertDAPObjectIdToCDP(id);
       properties = (
         await fetchProperties({
           objectId: cdpObjectId,
           ownProperties: true,
         })
       ).result as CDPPropertyDescriptor[];
+    } else {
+      properties = this.replVariables.get(id) as CDPPropertyDescriptor[];
     }
 
     const variables: Variable[] = properties
@@ -42,11 +42,15 @@ export class VariableStore {
         }
         const value = inferDAPVariableValueForCDPRemoteObject(prop.value);
         if (prop.value.type === "object") {
+          let variablesReference = Number(prop.value.objectId);
+          if (!this.replVariables.has(variablesReference)) {
+            variablesReference = this.adaptCDPObjectId(prop.value.objectId);
+          }
           return {
             name: prop.name,
             value,
             type: "object",
-            variablesReference: Number(prop.value.objectId),
+            variablesReference,
           };
         }
         return {
@@ -79,22 +83,22 @@ export class VariableStore {
     this.replVariables.clear();
   }
 
-  public clearPausedVariables() {
-    this.pausedCDPtoDAPObjectIdMap = new Map();
-    this.pausedDAPtoCDPObjectIdMap = new Map();
+  public clearCDPVariables() {
+    this.CDPtoDAPObjectIdMap = new Map();
+    this.DAPtoCDPObjectIdMap = new Map();
   }
 
   public adaptCDPObjectId(objectId: string) {
-    let dapObjectID = this.pausedCDPtoDAPObjectIdMap.get(objectId);
+    let dapObjectID = this.CDPtoDAPObjectIdMap.get(objectId);
     if (dapObjectID === undefined) {
       dapObjectID = getVariableId();
-      this.pausedCDPtoDAPObjectIdMap.set(objectId, dapObjectID);
-      this.pausedDAPtoCDPObjectIdMap.set(dapObjectID, objectId);
+      this.CDPtoDAPObjectIdMap.set(objectId, dapObjectID);
+      this.DAPtoCDPObjectIdMap.set(dapObjectID, objectId);
     }
     return dapObjectID;
   }
 
   private convertDAPObjectIdToCDP(dapObjectID: number) {
-    return this.pausedDAPtoCDPObjectIdMap.get(dapObjectID);
+    return this.DAPtoCDPObjectIdMap.get(dapObjectID);
   }
 }
