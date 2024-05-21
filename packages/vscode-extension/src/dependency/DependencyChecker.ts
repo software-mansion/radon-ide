@@ -235,14 +235,14 @@ export async function checkIfCLIInstalled(cmd: string, options: Record<string, u
   }
 }
 
-function resolveUncached(...params: Parameters<typeof require.resolve>) {
+function resolveNoCache(...params: Parameters<typeof require.resolve>) {
   delete require.cache[require.resolve(...params)];
   return require.resolve(...params);
 }
 
 export function checkMinDependencyVersionInstalled(dependency: string, minVersion: string) {
   try {
-    const dependencyPath = resolveUncached(path.join(dependency, "package.json"), {
+    const dependencyPath = resolveNoCache(path.join(dependency, "package.json"), {
       paths: [getAppRootFolder()],
     });
     const dependencyVersion = coerce(require(dependencyPath).version);
