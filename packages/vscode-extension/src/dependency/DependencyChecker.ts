@@ -235,26 +235,28 @@ export async function checkIfCLIInstalled(cmd: string, options: Record<string, u
   }
 }
 
-function resolveNoCache(...params: Parameters<typeof require.resolve>) {
-  delete require.cache[require.resolve(...params)];
-  return require.resolve(...params);
+function requireNoCache(...params: Parameters<typeof require.resolve>) {
+  const module = require.resolve(...params);
+  delete require.cache[module];
+  return require(module);
 }
 
 export function checkMinDependencyVersionInstalled(dependency: string, minVersion: string) {
+  const message = `Check ${dependency} module version.`;
+
   try {
-    const dependencyPath = resolveNoCache(path.join(dependency, "package.json"), {
+    const module = requireNoCache(path.join(dependency, "package.json"), {
       paths: [getAppRootFolder()],
     });
-    const dependencyVersion = coerce(require(dependencyPath).version);
+    const dependencyVersion = coerce(module.version);
     const minDependencyVersion = coerce(minVersion)!;
 
-    const message = `Check ${dependency} dependency in ${path.dirname(dependencyPath)}.`;
     Logger.debug(message, `Version found: ${dependencyVersion}. Minimum version: ${minVersion}`);
 
     const matches = dependencyVersion ? gte(dependencyVersion, minDependencyVersion) : false;
     return matches ? "installed" : "not_supported";
   } catch (error) {
-    Logger.debug(`${dependency} dependency not found.`);
+    Logger.debug(message, "Module not found.");
     return "not_installed";
   }
 }
