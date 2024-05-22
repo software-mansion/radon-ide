@@ -64,6 +64,11 @@ export function deactivate(context: ExtensionContext): undefined {
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
+  if (process.platform !== "darwin") {
+    window.showErrorMessage("React Native IDE works only on macOS.", "Dismiss");
+    return;
+  }
+
   setExtensionContext(context);
   if (context.extensionMode === ExtensionMode.Development) {
     enableDevModeLogging();
