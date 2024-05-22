@@ -11,13 +11,13 @@ export type ZoomLevelType = number | "Fit";
 
 type ZoomControlsProps = {
   zoomLevel: ZoomLevelType;
-  setZoomLevel: React.Dispatch<React.SetStateAction<ZoomLevelType>>;
+  onZoomChanged: (zoom: ZoomLevelType) => void;
 };
 
-const ZoomLevelSelect = ({ zoomLevel, setZoomLevel }: ZoomControlsProps) => {
+const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
   const onValueChange = useCallback(
-    (e: string) => setZoomLevel(Number(e) || (e as ZoomLevelType)),
-    [setZoomLevel]
+    (e: string) => onZoomChanged(Number(e) || (e as ZoomLevelType)),
+    [onZoomChanged]
   );
 
   return (
@@ -52,26 +52,19 @@ const ZoomLevelSelect = ({ zoomLevel, setZoomLevel }: ZoomControlsProps) => {
   );
 };
 
-function ZoomControls({ zoomLevel, setZoomLevel }: ZoomControlsProps) {
-  const handleZoom = useCallback(
-    (shouldIncrease: boolean) => {
-      setZoomLevel((currentZoomLevel: ZoomLevelType) => {
-        const resolvedCurrentZoomLevel =
-          typeof currentZoomLevel === "string" ? DEFAULT_ZOOM_LEVEL : currentZoomLevel;
-        const newZoomLevel = resolvedCurrentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP);
+function ZoomControls({ zoomLevel, onZoomChanged }: ZoomControlsProps) {
+  function handleZoom(shouldIncrease: boolean) {
+    const currentZoomLevel = zoomLevel;
+    const resolvedCurrentZoomLevel =
+      typeof currentZoomLevel === "string" ? DEFAULT_ZOOM_LEVEL : currentZoomLevel;
+    const newZoomLevel = resolvedCurrentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP);
 
-        if (newZoomLevel < ZOOM_STEP) {
-          return currentZoomLevel;
-        }
-
-        return newZoomLevel;
-      });
-    },
-    [setZoomLevel]
-  );
-
-  const handleZoomIn = useCallback(() => handleZoom(true), [handleZoom]);
-  const handleZoomOut = useCallback(() => handleZoom(false), [handleZoom]);
+    if (newZoomLevel < ZOOM_STEP) {
+      onZoomChanged(currentZoomLevel);
+    } else {
+      onZoomChanged(newZoomLevel);
+    }
+  }
 
   return (
     <div className="zoom-controls">
@@ -81,17 +74,17 @@ function ZoomControls({ zoomLevel, setZoomLevel }: ZoomControlsProps) {
           label: "Zoom out",
           side: "top",
         }}
-        onClick={handleZoomOut}>
+        onClick={() => handleZoom(false)}>
         <span className="codicon codicon-zoom-out" />
       </IconButton>
-      <ZoomLevelSelect zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
+      <ZoomLevelSelect zoomLevel={zoomLevel} onZoomChanged={onZoomChanged} />
       <IconButton
         className="zoom-in-button"
         tooltip={{
           label: "Zoom in",
           side: "top",
         }}
-        onClick={handleZoomIn}>
+        onClick={() => handleZoom(true)}>
         <span className="codicon codicon-zoom-in" />
       </IconButton>
     </div>

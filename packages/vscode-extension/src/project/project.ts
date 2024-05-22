@@ -35,12 +35,13 @@ import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 
 const DEVICE_SETTINGS_KEY = "device_settings";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
+const PREVIEW_ZOOM_KEY = "preview_zoom";
 
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
 
   private metro: Metro;
-  private devtools: Devtools;
+  private devtools = new Devtools();
   private debugSessionListener: Disposable | undefined;
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
@@ -53,18 +54,19 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private projectState: ProjectState = {
     status: "starting",
     previewURL: undefined,
+    previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
     selectedDevice: undefined,
   };
 
-  private deviceSettings: DeviceSettings;
+  private deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
+    DEVICE_SETTINGS_KEY
+  ) ?? {
+    appearance: "dark",
+    contentSize: "normal",
+  };
 
   constructor(private readonly deviceManager: DeviceManager) {
     Project.currentProject = this;
-    this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
-      appearance: "dark",
-      contentSize: "normal",
-    };
-    this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
     this.start(false, false);
     this.trySelectingInitialDevice();
@@ -120,9 +122,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
    */
   private async trySelectingInitialDevice() {
     const selectInitialDevice = (devices: DeviceInfo[]) => {
-      const lastDeviceId = extensionContext.workspaceState.get(LAST_SELECTED_DEVICE_KEY) as
-        | string
-        | undefined;
+      const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
+        LAST_SELECTED_DEVICE_KEY
+      );
       let device = devices.find((item) => item.id === lastDeviceId);
       if (!device && devices.length > 0) {
         device = devices[0];
@@ -387,6 +389,11 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     if (deviceInfo === this.projectState.selectedDevice) {
       this.updateProjectState(newState);
     }
+  }
+
+  public async updatePreviewZoomLevel(zoom: number | "Fit"): Promise<void> {
+    this.updateProjectState({ previewZoom: zoom });
+    extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {

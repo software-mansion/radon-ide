@@ -112,10 +112,10 @@ type Props = {
   isInspecting: boolean;
   setIsInspecting: (isInspecting: boolean) => void;
   zoomLevel: ZoomLevelType;
-  setZoomLevel: (zoomLevel: ZoomLevelType) => void;
+  onZoomChanged: (zoomLevel: ZoomLevelType) => void;
 };
 
-function Preview({ isInspecting, setIsInspecting, zoomLevel, setZoomLevel }: Props) {
+function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const previewRef = useRef<HTMLImageElement>(null);
@@ -322,7 +322,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, setZoomLevel }: Pro
   const resizableProps = useResizableProps({
     wrapperDivRef,
     zoomLevel,
-    setZoomLevel,
+    setZoomLevel: onZoomChanged,
   });
 
   return (

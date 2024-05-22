@@ -19,6 +19,7 @@ export type ProjectState = {
   stageProgress?: number;
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
+  previewZoom: number | "Fit" | undefined; // Preview specific. Consider extracting to different location if we store more preview state
 };
 
 // important: order of values in this enum matters
@@ -87,6 +88,7 @@ export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   restart(forceCleanBuild: boolean): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
+  updatePreviewZoomLevel(zoom: number | "Fit"): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
