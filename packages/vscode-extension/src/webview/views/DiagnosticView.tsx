@@ -34,12 +34,14 @@ function DiagnosticView() {
       <div className="diagnostic-section-margin" />
 
       <Label>Project related</Label>
+      <DiagnosticItem label="React Native" item={dependencies.ReactNative} />
+      <DiagnosticItem label="Expo" item={dependencies.Expo} />
       <DiagnosticItem
-        label="Pods installed"
+        label="Pods"
         item={dependencies.Pods}
         action={
           <IconButton
-            disabled
+            disabled={!dependencies.NodeModules?.installed}
             tooltip={{ label: "Fix", side: "bottom" }}
             type="secondary"
             size="small"

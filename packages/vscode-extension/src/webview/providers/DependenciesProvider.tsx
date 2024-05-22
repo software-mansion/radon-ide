@@ -36,6 +36,8 @@ type Dependencies = {
   Xcode?: DependencyState;
   CocoaPods?: DependencyState;
   NodeModules?: DependencyState;
+  ReactNative?: DependencyState;
+  Expo?: DependencyState;
   Pods?: DependencyState;
 };
 
@@ -45,6 +47,8 @@ const defaultDependencies: Dependencies = {
   Xcode: undefined,
   CocoaPods: undefined,
   NodeModules: undefined,
+  ReactNative: undefined,
+  Expo: undefined,
   Pods: undefined,
 };
 
@@ -178,6 +182,12 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
             error: undefined,
             installed: InstallationStatus.InProgress,
           });
+          break;
+        case "isReactNativeInstalled":
+          updateDependency("ReactNative", data);
+          break;
+        case "isExpoInstalled":
+          updateDependency("Expo", data);
           break;
         case "isPodsInstalled":
           updateDependency("Pods", data);

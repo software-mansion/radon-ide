@@ -50,7 +50,6 @@ export class DependencyInstaller implements Disposable {
       command: "installingPods",
     });
     try {
-      // TODO: ensure node modules installed first
       await installIOSDependencies(getAppRootFolder(), false);
       Logger.debug("Finished installing pods!");
     } catch (error) {
