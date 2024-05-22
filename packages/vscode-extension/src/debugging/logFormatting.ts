@@ -1,5 +1,4 @@
-import util, { InspectOptions } from "util";
-import { DebugAdapter } from "./DebugAdapter";
+import util from "util";
 import { CDPSubType, CDPValueType } from "./cdp";
 
 export interface CDPRemoteObject {
@@ -14,7 +13,7 @@ export interface CDPRemoteObject {
 function format(anything: any) {
   const formatted = util.inspect(anything, {
     showHidden: false,
-    depth: 2,
+    depth: Infinity,
     colors: false,
     maxArrayLength: 20,
     compact: true,
@@ -26,43 +25,17 @@ function format(anything: any) {
   return formatted;
 }
 
-function formatObject(propertiesResult: any) {
-  const obj: any = {};
-  propertiesResult.forEach((prop: any) => {
-    if (prop.name === "__proto__") {
-      // do not include __proto__ in the formatted output
-      return;
-    }
-    switch (prop.value.type) {
-      case "number":
-      case "string":
-      case "boolean":
-        obj[prop.name] = prop.value.value;
-        break;
-      case "object":
-        obj[prop.name] = prop.description || new Object();
-        break;
-      case "function":
-        obj[prop.name] = prop.description || new Function();
-        break;
-    }
-  });
-  return format(obj);
-}
-
-export async function formatMessage(args: [CDPRemoteObject], debugadapter: DebugAdapter) {
+export async function formatMessage(args: [CDPRemoteObject]): Promise<string> {
+  let result: string = "";
   const mappedArgs = await Promise.all(
-    args.map(async (arg) => {
+    args.map((arg, index) => {
       switch (arg.type) {
         case "object":
-          const properties = await debugadapter.sendCDPMessage("Runtime.getProperties", {
-            objectId: arg.objectId,
-            ownProperties: true,
-          });
-          return formatObject(properties.result);
+          return format(arg.description || "[Object]");
         case "string":
         case "number":
         case "boolean":
+          return arg.value;
         case "undefined":
           return format(arg.value);
         case "function":

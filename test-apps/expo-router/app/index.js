@@ -4,7 +4,27 @@ import { Link } from 'expo-router';
 import { NiceButton } from './components/NiceButton';
 import { UglyButton } from './components/UglyButton';
 
-const obj = { a: 7678 };
+const obj = {
+  something: 'lsdkjfhjdshf',
+  arrayOfThings: [
+    {
+      number: 1,
+      string: 'sdjfh',
+      andObject: {
+        prop1: 77,
+        prop2: 2837,
+      },
+    },
+    {
+      number: 2,
+      string: 'skdfh',
+      andObject: {
+        prop1: 919,
+        prop2: 22,
+      },
+    },
+  ],
+};
 
 function two(uu) {
   let b = 2;
