@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
@@ -20,13 +20,20 @@ import ZoomControls, { ZoomLevelType } from "../components/ZoomControls";
 import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
 
 function PreviewView() {
+  const { projectState, project } = useProject();
+
   const [isInspecting, setIsInspecting] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState<ZoomLevelType>("Fit");
+  const zoomLevel = projectState.previewZoom ?? "Fit";
+  const onZoomChanged = useCallback(
+    (zoom: ZoomLevelType) => {
+      project.updatePreviewZoomLevel(zoom);
+    },
+    [project]
+  );
   const [isFollowing, setIsFollowing] = useState(false);
   const [logCounter, setLogCounter] = useState(0);
 
   const { devices, finishedInitialLoad } = useDevices();
-  const { projectState, project } = useProject();
 
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
@@ -140,7 +147,7 @@ function PreviewView() {
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
           zoomLevel={zoomLevel}
-          setZoomLevel={setZoomLevel}
+          onZoomChanged={onZoomChanged}
         />
       ) : (
         <div className="missing-device-filler">
@@ -148,7 +155,7 @@ function PreviewView() {
         </div>
       )}
       <div className="button-group-left">
-        <ZoomControls zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
+        <ZoomControls zoomLevel={zoomLevel} onZoomChanged={onZoomChanged} />
       </div>
 
       <div className="button-group-bottom">
