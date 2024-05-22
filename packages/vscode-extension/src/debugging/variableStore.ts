@@ -2,7 +2,7 @@ import { Variable } from "@vscode/debugadapter";
 import { CDPPropertyDescriptor, inferDAPVariableValueForCDPRemoteObject } from "./cdp";
 
 const getVariableId = (() => {
-  let last = Math.pow(2, 30);
+  let last = 1;
   const max = 0x7fffffff - 1;
   return () => (last++ % max) + 1;
 })();
@@ -23,6 +23,7 @@ export class VariableStore {
     fetchProperties: (params: object) => Promise<any>
   ): Promise<Variable[]> {
     let properties: CDPPropertyDescriptor[];
+    let isCDPObject: boolean;
     if (this.DAPtoCDPObjectIdMap.has(id)) {
       const cdpObjectId = this.convertDAPObjectIdToCDP(id);
       properties = (
@@ -31,8 +32,10 @@ export class VariableStore {
           ownProperties: true,
         })
       ).result as CDPPropertyDescriptor[];
+      isCDPObject = true;
     } else {
       properties = this.replVariables.get(id) as CDPPropertyDescriptor[];
+      isCDPObject = false;
     }
 
     const variables: Variable[] = properties
@@ -42,9 +45,11 @@ export class VariableStore {
         }
         const value = inferDAPVariableValueForCDPRemoteObject(prop.value);
         if (prop.value.type === "object") {
-          let variablesReference = Number(prop.value.objectId);
-          if (!this.replVariables.has(variablesReference)) {
+          let variablesReference: number;
+          if (isCDPObject) {
             variablesReference = this.adaptCDPObjectId(prop.value.objectId);
+          } else {
+            variablesReference = Number(prop.value.objectId);
           }
           return {
             name: prop.name,

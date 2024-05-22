@@ -209,6 +209,9 @@ export class DebugAdapter extends DebugSession {
     // collapsed args properly, the object references the array of args array
     const argsObjectDapID = this.variableStore.pushReplVariable(
       args.map((arg: CDPRemoteObject, index: number) => {
+        if (arg.type === "object") {
+          arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
+        }
         return { name: `arg${index}`, value: arg };
       })
     );
