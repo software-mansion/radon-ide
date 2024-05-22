@@ -49,10 +49,6 @@ export class DependencyChecker implements Disposable {
             Logger.debug("Received checkCocoaPodsInstalled command.");
             this.checkCocoaPodsInstalled();
             return;
-          case "checkNodeModulesInstalled":
-            Logger.debug("Received checkNodeModulesInstalled command.");
-            this.checkNodeModulesInstalled();
-            return;
           case "checkReactNativeInstalled":
             Logger.debug("Received checkReactNativeInstalled command.");
             this.checkReactNativeInstalled();
@@ -141,21 +137,6 @@ export class DependencyChecker implements Disposable {
       },
     });
     Logger.debug("CocoaPods installed:", installed);
-    return installed;
-  }
-
-  public async checkNodeModulesInstalled() {
-    const installed = fs.existsSync(path.join(getAppRootFolder(), "node_modules"));
-    const errorMessage = "node_modules are not installed.";
-    this.webview.postMessage({
-      command: "isNodeModulesInstalled",
-      data: {
-        installed,
-        info: "Whether Node dependencies are installed.",
-        error: installed ? undefined : errorMessage,
-      },
-    });
-    Logger.debug("NodeModules installed:", installed);
     return installed;
   }
 

@@ -34,25 +34,6 @@ function DiagnosticView() {
       <div className="diagnostic-section-margin" />
 
       <Label>Project related</Label>
-      <DiagnosticItem
-        label="node_modules"
-        item={dependencies.NodeModules}
-        action={
-          <IconButton
-            // TODO: add support for installing node_modules to DependencyInstaller
-            disabled={true}
-            tooltip={{ label: "Fix", side: "bottom" }}
-            type="secondary"
-            size="small"
-            onClick={() => {
-              vscode.postMessage({
-                command: "installNodeModules",
-              });
-            }}>
-            <span className="codicon codicon-wand" />
-          </IconButton>
-        }
-      />
       <DiagnosticItem label="React Native" item={dependencies.ReactNative} />
       <DiagnosticItem label="Expo" item={dependencies.Expo} />
       <DiagnosticItem
