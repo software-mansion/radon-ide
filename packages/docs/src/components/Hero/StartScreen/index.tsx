@@ -40,6 +40,10 @@ const StartScreen = () => {
             title="Download from VSCode marketplace"
           />
         </div>
+        <div className={styles.headingDisclaimer}>
+          <InfoIcon className={styles.headingDisclaimerIcon} />
+          Works with VSCode 1.86+ and Cursor 0.32 on macOS
+        </div>
       </div>
     </section>
   );
