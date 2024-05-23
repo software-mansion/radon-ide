@@ -8,26 +8,28 @@ const PricingPlansList = () => {
 
   const individualMonthly = (
     <>
-      $9 <span className={styles.plan__currency}>USD</span>
-      <span className={styles.plan__price_second_line}> per person/month </span>
+      $19 <span className={styles.plan__currency}>USD</span>
+      <p className={styles.plan__price_second_line}> per person/month </p>
     </>
   );
   const individualAnnually = (
     <>
-      $90 <span className={styles.plan__currency}>USD</span>{" "}
-      <span className={styles.plan__price_second_line}>per person/year </span>
+      $190 <span className={styles.plan__currency}>USD</span>{" "}
+      <p className={styles.plan__price_second_line}>per person/year </p>
     </>
   );
   const supporterMonthly = (
     <>
-      $6 <span className={styles.plan__currency}>USD</span>{" "}
-      <span className={styles.plan__price_second_line}>per person/month </span>
+      <span className={styles.plan__price_strikethrough}>$19</span> $10{" "}
+      <span className={styles.plan__currency}>USD</span>{" "}
+      <p className={styles.plan__price_second_line}>per person/month </p>
     </>
   );
   const supporterAnnually = (
     <>
-      $72 <span className={styles.plan__currency}>USD</span>{" "}
-      <span className={styles.plan__price_second_line}>per person/year </span>
+      <span className={styles.plan__price_strikethrough}>$190</span> $120{" "}
+      <span className={styles.plan__currency}>USD</span>{" "}
+      <p className={styles.plan__price_second_line}>per person/year </p>
     </>
   );
   return (
@@ -65,7 +67,7 @@ const PricingPlansList = () => {
               <li>Get support through official Software Mansion channels</li>
             </ul>
             <div className={styles.plan__spacer} />
-
+            <p>Get your Individual license starting at the end of Q3 2024</p>
             <Button href="/" disabled>
               Choose
             </Button>
@@ -73,19 +75,23 @@ const PricingPlansList = () => {
         </li>
         <li className={styles.item}>
           <div className={clsx(styles.plan__container, styles.plan__highlight)}>
-            <h2 className={styles.plan__name}>Supporter</h2>
+            <h2 className={styles.plan__name}>
+              Supporter <span className={styles.plan__special_offer}>One-time special offer</span>
+            </h2>
             <h3 className={styles.plan__price}>
               {isAnnually ? supporterAnnually : supporterMonthly}
             </h3>
             <p className={styles.plan__tagline}>one-time payment for a year</p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
-              <li>Everything in Individual</li>
-              <li>One-time offer only available during Beta</li>
-              <li>Lock in a lower price</li>
-              <li>Next billing a full year after the stable release</li>
+              <li>Support the development of IDE</li>
+              <li>Put breakpoints right in the VSCode</li>
+              <li>Develop components in isolation</li>
+              <li>Expo Router & React Navigation integration</li>
+              <li>Get support through official Software Mansion channels</li>
             </ul>
             <div className={styles.plan__spacer} />
+            <p>Get your Supporter's License starting early June</p>
             <Button href="/" disabled>
               Choose
             </Button>
