@@ -46,6 +46,8 @@
   text-transform: uppercase;
   margin-bottom: 8px;
   color: var(--swm-green-light-100);
+  display: flex;
+  gap: 16px;
 }
 
 .plan__price {
@@ -98,6 +100,10 @@
 
 .plan__currency {
   font-weight: 400;
+}
+
+.plan__special_offer {
+  color: var(--swm-red-light-80);
 }
 
 /* Pay Annually Toggle */
