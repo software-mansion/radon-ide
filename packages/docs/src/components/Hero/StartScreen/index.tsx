@@ -40,10 +40,6 @@ const StartScreen = () => {
             title="Download from VSCode marketplace"
           />
         </div>
-        <div className={styles.headingDisclaimer}>
-          <InfoIcon className={styles.headingDisclaimerIcon} />
-          React Native IDE currently only supports development on macOS.
-        </div>
       </div>
     </section>
   );
