@@ -36,13 +36,13 @@ const StartScreen = () => {
         <div className={styles.buttonContainer}>
           <HomepageButton
             target="_blank"
-            href="https://forms.gle/sZ5GzxYyFJKz3Q9r6"
-            title="Request Beta Access"
+            href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
+            title="Download from VSCode marketplace"
           />
         </div>
         <div className={styles.headingDisclaimer}>
           <InfoIcon className={styles.headingDisclaimerIcon} />
-          We are currently testing the IDE with a limited number of users.
+          React Native IDE currently only supports development on macOS.
         </div>
       </div>
     </section>
