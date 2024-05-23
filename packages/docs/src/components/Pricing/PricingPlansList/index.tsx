@@ -67,7 +67,7 @@ const PricingPlansList = () => {
               <li>Get support through official Software Mansion channels</li>
             </ul>
             <div className={styles.plan__spacer} />
-            <p>Get your Individual license starting at the end of Q3 2024</p>
+            <p>Get your Individual license starting at the end of Q3 2024.</p>
             <Button href="/" disabled>
               Choose
             </Button>
@@ -91,7 +91,7 @@ const PricingPlansList = () => {
               <li>Get support through official Software Mansion channels</li>
             </ul>
             <div className={styles.plan__spacer} />
-            <p>Get your Supporter's License starting early June</p>
+            <p>Get your Supporter's License starting early June.</p>
             <Button href="/" disabled>
               Choose
             </Button>
