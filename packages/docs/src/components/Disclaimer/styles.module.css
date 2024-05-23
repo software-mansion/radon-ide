@@ -1,0 +1,31 @@
+.disclaimerContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: center;
+  margin-top: 5rem;
+}
+
+.disclaimerContainer p {
+  margin: 0;
+  font-size: 20px;
+}
+
+.disclaimerHeading {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.elipse {
+  left: 50rem;
+  width: 175px;
+  height: 175px;
+  bottom: 25%;
+}
+
+@media (max-width: 996px) {
+  .elipse {
+    left: 6rem;
+    bottom: 15%;
+  }
+}
