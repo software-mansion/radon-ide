@@ -14,7 +14,8 @@ const PricingPlansList = () => {
   );
   const individualAnnually = (
     <>
-      $190 <span className={styles.plan__currency}>USD</span>{" "}
+      <span className={styles.plan__price_strikethrough}>$228</span> $190{" "}
+      <span className={styles.plan__currency}>USD</span>{" "}
       <p className={styles.plan__price_second_line}>per person/year </p>
     </>
   );
