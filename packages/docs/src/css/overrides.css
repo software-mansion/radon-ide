@@ -101,3 +101,7 @@ table thead tr {
 [class*="navbarLanding"] .header-github:hover:before {
   background-color: var(--swm-navy-light-100);
 }
+
+[class*="navbar__item"] {
+  display: flex !important;
+}
