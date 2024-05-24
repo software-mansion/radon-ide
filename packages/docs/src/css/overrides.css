@@ -111,12 +111,3 @@ table thead tr {
 [class*="logoWrapper"] [class*="sidebarLogo"] {
   margin-left: 1.5rem;
 }
-
-@media (max-width: 996px) {
-  [class*="plugin-pages"] nav [class*="navbar__items--right"] {
-    display: none !important;
-  }
-  [class*="plugin-docs"] [class*="navbar__items--right"] [class*="navbar__item"] {
-    display: none !important;
-  }
-}
