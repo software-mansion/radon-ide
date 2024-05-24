@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import styles from "./styles.module.css";
 import Elipse from "@site/src/components/Elipse";
 import OverviewItem from "@site/src/components/Sections/Overview/OverviewItem";
@@ -52,13 +52,8 @@ const Overview = () => {
         <h1 className={styles.overviewHeading}>How it works?</h1>
         <div className={styles.overviewItemsContainer}>
           {items.map((item, idx) => (
-            <div className={styles.item}>
-              <OverviewItem
-                key={idx}
-                title={item.title}
-                body={item.body}
-                mediaSrc={item.mediaSrc}
-              />
+            <div key={idx} className={styles.item}>
+              <OverviewItem title={item.title} body={item.body} mediaSrc={item.mediaSrc} />
             </div>
           ))}
         </div>
