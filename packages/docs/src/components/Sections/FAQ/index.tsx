@@ -24,7 +24,7 @@ const faqs = [
     answer: `Yes! React Native IDE is free for students learning at accredited educational institutions. Only for non-commercial purposes.`,
   },
   {
-    topic: "When are you planning to close the Beta?",
+    topic: "When are you planning to close the public Beta?",
     answer: "At the end of Q3 2024.",
   },
 
