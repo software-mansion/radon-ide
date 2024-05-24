@@ -98,8 +98,8 @@ table thead tr {
     width: 20px;
   }
 }
-[class*="navbarLanding"] .header-github:before,
-[class*="navbarLanding"] .header-github:hover:before {
+.header-github:before,
+.header-github:hover:before {
   background-color: var(--swm-navy-light-100);
 }
 
@@ -110,4 +110,10 @@ table thead tr {
 /* TODO: probably to remove */
 [class*="logoWrapper"] [class*="sidebarLogo"] {
   margin-left: 1.5rem;
+}
+
+@media (max-width: 996px) {
+  [class*="plugin-pages"] [class*="navbar__items--right"] {
+    display: none;
+  }
 }
