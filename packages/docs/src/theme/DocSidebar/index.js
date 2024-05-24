@@ -6,9 +6,5 @@ export default function DocSidebarWrapper(props) {
   const heroImages = {
     logo: useBaseUrl("/img/logo.svg"),
   };
-  return (
-    <>
-      <DocSidebar heroImages={heroImages} {...props} />
-    </>
-  );
+  return <DocSidebar heroImages={heroImages} {...props} />;
 }
