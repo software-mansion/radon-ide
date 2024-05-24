@@ -113,7 +113,10 @@ table thead tr {
 }
 
 @media (max-width: 996px) {
-  [class*="plugin-pages"] [class*="navbar__items--right"] {
-    display: none;
+  [class*="plugin-pages"] nav [class*="navbar__items--right"] {
+    display: none !important;
+  }
+  [class*="plugin-docs"] [class*="navbar__items--right"] [class*="navbar__item"] {
+    display: none !important;
   }
 }
