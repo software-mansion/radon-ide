@@ -114,3 +114,7 @@ table thead tr {
 nav [class*="_sidebarFooter"] {
   display: none;
 }
+
+img + blockquote {
+  margin: var(--ifm-spacing-vertical) 0;
+}
