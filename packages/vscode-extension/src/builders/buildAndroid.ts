@@ -1,4 +1,4 @@
-import { getCpuArchitecture } from "../utilities/common";
+import { getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
@@ -75,14 +75,13 @@ export async function buildAndroid(
     return { apkPath, packageName: EXPO_GO_PACKAGE_NAME };
   }
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
-  const cpuArchitecture = getCpuArchitecture();
   const buildOptions = getLaunchConfiguration();
   const productFlavor = buildOptions.android?.productFlavor || "";
   const buildType = buildOptions.android?.buildType || "debug";
   const gradleArgs = [
     "-x",
     "lint",
-    `-PreactNativeArchitectures=${cpuArchitecture}`,
+    `-PreactNativeArchitectures=${getNativeABI()}`,
     ...(forceCleanBuild ? ["clean"] : []),
     makeBuildTaskName(productFlavor, buildType),
     "--init-script", // buildProgressEvaluation init script is used log build task count for build progress logging

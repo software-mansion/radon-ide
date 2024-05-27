@@ -1,11 +1,10 @@
 import { Preview } from "./preview";
 import { DeviceBase } from "./DeviceBase";
-import os from "os";
 import path from "path";
 import fs from "fs";
 import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
-import { getAppCachesDir, getCpuArchitecture } from "../utilities/common";
+import { getAppCachesDir, getNativeABI } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
@@ -272,7 +271,6 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
   const avdIni = path.join(avdDirectory, `${avdId}.ini`);
   const avdLocation = path.join(avdDirectory, `${avdId}.avd`);
   const configIni = path.join(avdLocation, "config.ini");
-  const cpuArchitecture = getCpuArchitecture();
 
   fs.mkdirSync(avdLocation, { recursive: true });
 
@@ -286,7 +284,7 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
   const configIniData = [
     ["AvdId", avdId],
     ["PlayStore.enabled", "true"],
-    ["abi.type", cpuArchitecture],
+    ["abi.type", getNativeABI()],
     ["avd.ini.displayname", displayName],
     ["avd.ini.encoding", "UTF-8"],
     ["disk.dataPartition.size", "6442450944"],
@@ -300,7 +298,7 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
     ["hw.battery", "yes"],
     ["hw.camera.back", "virtualscene"],
     ["hw.camera.front", "emulated"],
-    ["hw.cpu.arch", os.arch()],
+    ["hw.cpu.arch", getNativeQemuArch()],
     ["hw.cpu.ncore", "4"],
     ["hw.dPad", "no"],
     ["hw.device.hash2", "MD5:3db3250dab5d0d93b29353040181c7e9"],
@@ -487,5 +485,27 @@ function convertToAdbFontSize(size: DeviceSettings["contentSize"]): number {
       return 1.5;
     case "xxxlarge":
       return 1.6;
+  }
+}
+
+enum CPU_ARCH {
+  X86 = "x86",
+  X86_64 = "x86_64",
+  ARM = "arm",
+  ARM64 = "arm64",
+}
+
+function getNativeQemuArch() {
+  switch (process.arch) {
+    case "x64":
+      return CPU_ARCH.X86_64;
+    case "ia32":
+      return CPU_ARCH.X86;
+    case "arm":
+      return CPU_ARCH.ARM;
+    case "arm64":
+      return CPU_ARCH.ARM64;
+    default:
+      throw new Error("Unsupported CPU architecture.");
   }
 }

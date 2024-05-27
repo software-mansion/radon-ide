@@ -8,11 +8,6 @@ import { ReadableStream } from "stream/web";
 import { workspace } from "vscode";
 import { Logger } from "../Logger";
 
-export enum CPU_ARCHITECTURE {
-  ARM64 = "arm64-v8a",
-  X64 = "x86_64",
-}
-
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
 export const IOS_FAIL_ERROR_MESSAGE = "IOS failed.";
 
@@ -33,14 +28,20 @@ export async function findSingleFileInWorkspace(
   return undefined;
 }
 
-export function getCpuArchitecture() {
-  const arch = os.arch();
-  switch (arch) {
+export enum ABI {
+  ARMV8 = "arm64-v8a",
+  X86 = "x86",
+  X86_64 = "x86_64",
+}
+
+export function getNativeABI() {
+  switch (process.arch) {
     case "x64":
+      return ABI.X86_64;
     case "ia32":
-      return CPU_ARCHITECTURE.X64;
+      return ABI.X86;
     default:
-      return CPU_ARCHITECTURE.ARM64;
+      return ABI.ARMV8;
   }
 }
 
