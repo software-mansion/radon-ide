@@ -7,10 +7,13 @@
 
   margin: 10px;
   gap: 4px;
+  position: relative;
 }
 
 .button-group-top {
   margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .feedback-button {
