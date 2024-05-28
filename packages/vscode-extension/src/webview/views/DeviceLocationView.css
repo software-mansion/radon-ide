@@ -1,5 +1,5 @@
 .location-controls label {
-  color: #000;
+  color: var(--swm-device-title);
   display: flex;
   justify-content: space-between;
   align-items: center;
