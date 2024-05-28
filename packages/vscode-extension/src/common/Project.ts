@@ -3,6 +3,10 @@ import { DeviceInfo } from "./DeviceManager";
 export type DeviceSettings = {
   appearance: "light" | "dark";
   contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
+  location: {
+    latitude: number;
+    longitude: number;
+  };
 };
 
 export type ProjectState = {

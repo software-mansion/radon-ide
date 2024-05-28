@@ -64,6 +64,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   ) ?? {
     appearance: "dark",
     contentSize: "normal",
+    location: {
+      latitude: 0,
+      longitude: 0,
+    },
   };
 
   constructor(private readonly deviceManager: DeviceManager) {

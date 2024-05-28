@@ -1,63 +1,42 @@
-.location-controls {
-    background-color: #fff; 
-    border-radius: 18px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; 
-    padding: 20px;
-  }
-  
-  .location-controls label {
-    color: #000;
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    justify-content: space-between;
-    width: 100%;
-  }
-  
-  .location-controls .picker {
-    display: flex;
-    flex: 1 0 0;
-    justify-content: space-between;
-  }
-  
-  .location-controls input.coordinate {
-    flex: 1;
-    height: 28px;
-    margin-left: 5px;
-    background-color: #fff; 
-    border: 1px solid #000; 
-    border-radius: 4px;
-    font-size: 13px;
-    line-height: 1;
-    padding: 0 10px;
-  }
-  
-  .location-controls select.direction {
-    width: 50px;
-    height: 28px;
-    background-color: #fff; 
-    border: 1px solid #000;
-    border-radius: 4px;
-    font-size: 13px;
-    line-height: 1;
-  }
-  
-  .location-controls button {
-    color: #fff; 
-    background-color: #4caf50; 
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-    line-height: 1;
-    display: flex;
-    align-self: flex-start; 
-    padding: 10px;
-    margin-top: 10px;
-  }
-  
-  .location-controls button:hover {
-    background-color: #45a049; 
-  }
+.location-controls label {
+  color: #000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.location-controls .picker {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px;
+}
+
+.location-controls input.coordinate {
+  flex: 1;
+  height: 20px;
+  align-self: right;
+  margin-left: 5px;
+  margin-right: 5px; /* Add margin-right for padding between input and select */
+  background-color: #fff;
+  border: 1px solid #000;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 10px;
+}
+
+.location-controls select.direction {
+  width: 30px;
+  height: 20px;
+  background-color: #fff;
+  border: 1px solid #000;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+  margin-left: 10px; /* Or add it to select if you prefer */
+}
+
+.location-controls button {
+  margin: 16px auto 0;
+}

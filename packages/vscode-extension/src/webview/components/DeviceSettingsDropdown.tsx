@@ -109,7 +109,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             onSelect={() => {
               openModal("Location", <DeviceLocationView />);
             }}>
-            <DoctorIcon color="var(--swm-default-text)" />
+            <span className="codicon codicon-location" />
             Set Device Location
           </DropdownMenu.Item>
         </DropdownMenu.Content>

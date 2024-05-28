@@ -6,7 +6,7 @@ interface TooltipProps {
   children: React.ReactNode;
   label: string;
   side?: "top" | "right" | "bottom" | "left";
-  type?: "primary" | "secondary" | "ternary";
+  type?: "primary" | "secondary" | "ternary" | "submit";
   instant?: boolean;
 }
 

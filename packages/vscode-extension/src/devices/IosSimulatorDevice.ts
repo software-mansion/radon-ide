@@ -91,6 +91,15 @@ export class IosSimulatorDevice extends DeviceBase {
       "content_size",
       convertToSimctlSize(settings.contentSize),
     ]);
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "location",
+      this.deviceUDID,
+      "set",
+      `${settings.location.latitude.toString()},${settings.location.longitude.toString()}`,
+    ]);
   }
 
   async configureMetroPort(bundleID: string, metroPort: number) {
