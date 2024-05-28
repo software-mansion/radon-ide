@@ -47,7 +47,7 @@ export async function findXcodeProject(appRootFolder: string) {
   const iosSourceDir = getIosSourceDir(appRootFolder);
   const xcworkspaceFiles = await workspace.findFiles(
     new RelativePattern(iosSourceDir, "**/*.xcworkspace/*"),
-    "**/{node_modules,build,Pods,*.xcodeproj}/**",
+    "**/{node_modules,build,Pods,vendor,*.xcodeproj}/**",
     2
   );
 
@@ -58,7 +58,7 @@ export async function findXcodeProject(appRootFolder: string) {
 
   const xcodeprojFiles = await workspace.findFiles(
     new RelativePattern(iosSourceDir, "**/*.xcodeproj/*"),
-    "**/{node_modules,build,Pods}/**",
+    "**/{node_modules,build,Pods,vendor}/**",
     2
   );
 
