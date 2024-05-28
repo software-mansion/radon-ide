@@ -4,7 +4,7 @@ import Button from "../../Button";
 import clsx from "clsx";
 
 const PricingPlansList = () => {
-  const [isAnnually, setIsAnnually] = useState(true);
+  const [isMonthly, setIsMonthly] = useState(true);
 
   const individualMonthly = (
     <>
@@ -19,14 +19,14 @@ const PricingPlansList = () => {
       <p className={styles.plan__price_second_line}>per person/year </p>
     </>
   );
-  const supporterMonthly = (
+  const earlyBirdMonthly = (
     <>
       <span className={styles.plan__price_strikethrough}>$19</span> $10{" "}
       <span className={styles.plan__currency}>USD</span>{" "}
       <p className={styles.plan__price_second_line}>per person/month </p>
     </>
   );
-  const supporterAnnually = (
+  const earlyBirdAnnually = (
     <>
       <span className={styles.plan__price_strikethrough}>$190</span> $120{" "}
       <span className={styles.plan__currency}>USD</span>{" "}
@@ -36,28 +36,30 @@ const PricingPlansList = () => {
   return (
     <>
       <div className={styles.plan_pay_annually}>
-        <p>Yearly</p>
+        <p>Monthly</p>
         <label className={styles.toggleSwitch}>
           <input
             type="checkbox"
-            checked={isAnnually}
-            onChange={() => void setIsAnnually(!isAnnually)}
+            checked={isMonthly}
+            onChange={() => void setIsMonthly(!isMonthly)}
           />
           <div className={styles.toggleSwitchBackground}>
             <div className={styles.toggleSwitchHandle}></div>
           </div>
         </label>
-        <p>Monthly</p>
+        <p>
+          Yearly <span className={styles.plan_pay_annually__discount}>2 months free</span>
+        </p>
       </div>
       <ul className={styles.list}>
         <li className={styles.item}>
           <div className={styles.plan__container}>
             <h2 className={styles.plan__name}>Individual</h2>
             <h3 className={styles.plan__price}>
-              {isAnnually ? individualAnnually : individualMonthly}
+              {isMonthly ? individualMonthly : individualAnnually}
             </h3>
             <p className={styles.plan__tagline}>
-              billed {isAnnually ? "yearly, two months free" : "monthly"}
+              billed {isMonthly ? "monthly" : "yearly, two months free"}
             </p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
@@ -77,10 +79,10 @@ const PricingPlansList = () => {
         <li className={styles.item}>
           <div className={clsx(styles.plan__container, styles.plan__highlight)}>
             <h2 className={styles.plan__name}>
-              Supporter <span className={styles.plan__special_offer}>One-time special offer</span>
+              Early Bird <span className={styles.plan__special_offer}>One-time special offer</span>
             </h2>
             <h3 className={styles.plan__price}>
-              {isAnnually ? supporterAnnually : supporterMonthly}
+              {isMonthly ? earlyBirdMonthly : earlyBirdAnnually}
             </h3>
             <p className={styles.plan__tagline}>one-time payment for a year</p>
             <p>What's included:</p>
@@ -92,7 +94,7 @@ const PricingPlansList = () => {
               <li>Get support through official Software Mansion channels</li>
             </ul>
             <div className={styles.plan__spacer} />
-            <p>Get your Supporter's License starting early June.</p>
+            <p>Get your Early Bird's License starting early June.</p>
             <Button href="/" disabled>
               Choose
             </Button>
