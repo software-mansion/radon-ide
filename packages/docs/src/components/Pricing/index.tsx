@@ -14,7 +14,7 @@ const Pricing = () => {
         <br />
         <br /> React Native IDE is{" "}
         <span className={styles.highlight}>completely free during the Beta period</span> which ends
-        at the end of Q3 2024. However, you can buy our Supporter's License to help with the
+        at the end of Q3 2024. However, you can buy our Early Bird's License to help with the
         development.
       </Admonition>
       <PricingPlansList />
