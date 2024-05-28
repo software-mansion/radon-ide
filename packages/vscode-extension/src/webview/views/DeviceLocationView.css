@@ -9,30 +9,33 @@
 .location-controls .picker {
   display: flex;
   justify-content: space-between;
-  padding: 7px;
+  /* padding: 7px; */
 }
 
 .location-controls input.coordinate {
   flex: 1;
   height: 20px;
   align-self: right;
-  margin-left: 5px;
+  /* margin-left: 5px; */
   margin-right: 5px; /* Add margin-right for padding between input and select */
-  background-color: #fff;
-  border: 1px solid #000;
+  background-color: var(--swm-input-background);
+  border: 1px;
   border-radius: 4px;
   font-size: 13px;
   line-height: 1;
-  padding: 0 10px;
+  box-shadow: var(--swm-input-shadow);
+  padding: 0 6px;
 }
 
 .location-controls select.direction {
   width: 30px;
+  color: inherit;
   height: 20px;
-  background-color: #fff;
-  border: 1px solid #000;
+  background-color: var(--swm-select-background);
+  border: 1px;
   border-radius: 4px;
   font-size: 13px;
+  box-shadow: var(--swm-select-shadow);
   line-height: 1;
   margin-left: 10px; /* Or add it to select if you prefer */
 }

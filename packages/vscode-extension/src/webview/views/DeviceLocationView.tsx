@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 
 import "./DeviceLocationView.css";
 import Button from "../components/shared/Button";
+import Label from "../components/shared/Label";
 
 export function DeviceLocationView() {
   const { project, deviceSettings } = useProject();
@@ -46,8 +47,8 @@ export function DeviceLocationView() {
 
   return (
     <form onSubmit={handleSubmit} className="location-controls">
+      <Label>Latitude</Label>
       <label className="latitude">
-        Latitude:
         <div className="picker">
           <input
             className="coordinate"
@@ -66,8 +67,8 @@ export function DeviceLocationView() {
         </div>
       </label>
 
+      <Label>Longitude</Label>
       <label className="longitude">
-        Longitude:
         <div className="picker">
           <input
             className="coordinate"

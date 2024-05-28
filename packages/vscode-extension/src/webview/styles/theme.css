@@ -180,6 +180,10 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
 
+  /* Input */
+  --swm-input-background: var(--white);
+  --swm-input-shadow: 0 0 0 1px var(--navy-light-10);
+
   /* Select */
   --swm-select-background: var(--white);
   --swm-select-hover-background: var(--off-white);
@@ -299,6 +303,10 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-tooltip-secondary-background: var(--background-dark-120);
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
+
+  /* Input */
+  --swm-input-background: var(--background-dark-100);
+  --swm-input-shadow: 0 1px 10px var(--background-dark-100);
 
   /* Select */
   --swm-select-background: var(--background-dark-100);
