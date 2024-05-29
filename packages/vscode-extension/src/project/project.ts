@@ -97,10 +97,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.workspaceWatcher.onDidChange(() => this.checkIfNativeChanged());
     this.workspaceWatcher.onDidCreate(() => this.checkIfNativeChanged());
     this.workspaceWatcher.onDidDelete(() => this.checkIfNativeChanged());
-    this.fileSaveWatcherDisposable = workspace.onDidSaveTextDocument(({ fileName }) => {
-      if (fileName.includes("node_modules")) {
-        this.checkIfNativeChanged();
-      }
+    this.fileSaveWatcherDisposable = workspace.onDidSaveTextDocument(() => {
+      this.checkIfNativeChanged();
     });
   }
 
