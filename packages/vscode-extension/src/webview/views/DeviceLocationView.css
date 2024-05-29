@@ -44,16 +44,10 @@
   margin: 16px auto 0;
 }
 
-.select-disable-location {
-  width: 50px;
-  color: var(--swm-default-text);
-  height: 20px;
-  background-color: var(--swm-select-background);
-  border: 1px;
-  border-radius: 4px;
-  font-size: 13px;
-  box-shadow: var(--swm-select-shadow);
-  line-height: 1;
+.submit-rejection-message {
+  color: var(--red-light-100);
+  font-size: 11px;
+  text-align: center;
 }
 
 .SwitchRoot {
