@@ -32,12 +32,7 @@ export function DeviceLocationView() {
   const handleDisableLocation = (e: any) => {
     e.preventDefault();
 
-    let isDisabled;
-    if (e.target.value === "true") {
-      isDisabled = true;
-    } else {
-      isDisabled = false;
-    }
+    const isDisabled = e.target.value === "true";
     project.updateDeviceSettings({
       ...deviceSettings,
       location: {
