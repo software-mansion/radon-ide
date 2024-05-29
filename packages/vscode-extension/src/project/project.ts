@@ -48,6 +48,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   private nativeFilesChangedSinceLastBuild: boolean;
   private workspaceWatcher!: FileSystemWatcher;
+  private fileSaveWatcherDisposable!: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -96,6 +97,11 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.workspaceWatcher.onDidChange(() => this.checkIfNativeChanged());
     this.workspaceWatcher.onDidCreate(() => this.checkIfNativeChanged());
     this.workspaceWatcher.onDidDelete(() => this.checkIfNativeChanged());
+    this.fileSaveWatcherDisposable = workspace.onDidSaveTextDocument(({ fileName }) => {
+      if (fileName.includes("node_modules")) {
+        this.checkIfNativeChanged();
+      }
+    });
   }
 
   async dispatchPaste(text: string) {
@@ -174,6 +180,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.debugSessionListener?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.workspaceWatcher.dispose();
+    this.fileSaveWatcherDisposable.dispose();
   }
 
   private reloadingMetro = false;
