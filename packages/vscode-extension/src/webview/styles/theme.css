@@ -194,6 +194,10 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-select-item-disabled-background: var(--navy-light-40);
   --swm-select-item-highlighted-background: var(--off-white);
 
+  /* Switch */
+  --swm-switch-root-background: var(--white);
+  --swm-switch-root-shadow: 0 0 0 1px var(--navy-light-10);
+
   /* Manage devices */
   --swm-device-title: var(--swm-default-text);
   --swm-device-subtitle: var(--navy-light-60);
@@ -317,6 +321,10 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-select-content-background: var(--background-dark-80);
   --swm-select-item-disabled-background: var(--background-dark-100);
   --swm-select-item-highlighted-background: var(--background-dark-60);
+
+  /* Switch */
+  --swm-switch-root-background: var(--background-dark-100);
+  --swm-switch-root-shadow: 0 1px 10px var(--background-dark-100);
 
   /* Manage devices */
   --swm-device-title: var(--swm-default-text);

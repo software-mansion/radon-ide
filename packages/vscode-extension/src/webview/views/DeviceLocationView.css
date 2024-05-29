@@ -55,3 +55,33 @@
   box-shadow: var(--swm-select-shadow);
   line-height: 1;
 }
+
+.SwitchRoot {
+  width: 42px;
+  height: 25px;
+  background-color: var(--red-light-100);
+  border-radius: 9999px;
+  position: relative;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+.SwitchRoot:focus {
+  box-shadow: 0 0 0 2px var(--swm-switch-root-shadow);
+}
+.SwitchRoot[data-state="checked"] {
+  background-color: var(--green-light-100);
+}
+
+.SwitchThumb {
+  display: block;
+  width: 21px;
+  height: 21px;
+  background-color: white;
+  border-radius: 9999px;
+  box-shadow: 0 2px 2px;
+  transition: transform 100ms;
+  transform: translateX(2px);
+  will-change: transform;
+}
+.SwitchThumb[data-state="checked"] {
+  transform: translateX(19px);
+}

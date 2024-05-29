@@ -1,38 +1,54 @@
 import { useProject } from "../providers/ProjectProvider";
-import React, { useState, useEffect } from "react";
-
+import React, { useState } from "react";
 import "./DeviceLocationView.css";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
+import * as Switch from "@radix-ui/react-switch";
+
+enum Direction {
+  South = "S",
+  North = "N",
+  West = "W",
+  East = "E",
+}
 
 export function DeviceLocationView() {
   const { project, deviceSettings } = useProject();
 
+  const [latitude, setLatitude] = useState(
+    deviceSettings.location.latitude < 0
+      ? -deviceSettings.location.latitude
+      : deviceSettings.location.latitude
+  );
+  const [longitude, setLongitude] = useState(
+    deviceSettings.location.longitude < 0
+      ? -deviceSettings.location.longitude
+      : deviceSettings.location.longitude
+  );
+
+  const [latDirection, setLatDirection] = useState(
+    deviceSettings.location.latitude < 0 ? Direction.South : Direction.North
+  );
+
+  const [lonDirection, setLonDirection] = useState(
+    deviceSettings.location.longitude < 0 ? Direction.West : Direction.East
+  );
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // @ts-ignore
-    const latitude = event.target[0].value;
-    // @ts-ignore
-    const longitude = event.target[2].value;
-    // @ts-ignore
-    const latDirection = event.target[1].value;
-    // @ts-ignore
-    const lonDirection = event.target[3].value;
 
     project.updateDeviceSettings({
       ...deviceSettings,
       location: {
         ...deviceSettings.location,
-        latitude: latDirection === "S" ? -parseFloat(latitude) : parseFloat(latitude),
-        longitude: lonDirection === "W" ? -parseFloat(longitude) : parseFloat(longitude),
+        latitude: latDirection === Direction.South ? -latitude : latitude,
+        longitude: lonDirection === Direction.West ? -longitude : longitude,
       },
     });
   };
 
-  const handleDisableLocation = (e: any) => {
-    e.preventDefault();
-
-    const isDisabled = e.target.value === "true";
+  const handleEnableLocation = (check: boolean) => {
+    const isDisabled = !check;
     project.updateDeviceSettings({
       ...deviceSettings,
       location: {
@@ -52,17 +68,17 @@ export function DeviceLocationView() {
               className="coordinate"
               type="number"
               step="0.000001"
-              defaultValue={
-                deviceSettings.location.latitude < 0
-                  ? -deviceSettings.location.latitude
-                  : deviceSettings.location.latitude
-              }
+              defaultValue={latitude}
+              onChange={(e) => setLatitude(parseFloat(e.target.value))}
             />
             <select
               className="direction"
-              defaultValue={deviceSettings.location.latitude < 0 ? "S" : "N"}>
-              <option value="N">N</option>
-              <option value="S">S</option>
+              defaultValue={latDirection}
+              onChange={(e) =>
+                setLatDirection(e.target.value === "N" ? Direction.North : Direction.South)
+              }>
+              <option value={Direction.North}>N</option>
+              <option value={Direction.South}>S</option>
             </select>
           </div>
         </label>
@@ -74,30 +90,32 @@ export function DeviceLocationView() {
               className="coordinate"
               type="number"
               step="0.000001"
-              defaultValue={
-                deviceSettings.location.longitude < 0
-                  ? -deviceSettings.location.longitude
-                  : deviceSettings.location.longitude
-              }
+              defaultValue={longitude}
+              onChange={(e) => setLongitude(parseFloat(e.target.value))}
             />
             <select
               className="direction"
-              defaultValue={deviceSettings.location.longitude < 0 ? "W" : "E"}>
-              <option value="E">E</option>
-              <option value="W">W</option>
+              defaultValue={lonDirection}
+              onChange={(e) =>
+                setLonDirection(e.target.value === "E" ? Direction.East : Direction.West)
+              }>
+              <option value={Direction.East}>E</option>
+              <option value={Direction.West}>W</option>
             </select>
           </div>
         </label>
         <Button type="submit">Set Current Location</Button>
       </form>
-      <Label>Disable Location</Label>
-      <select
-        className="select-disable-location"
-        defaultValue={deviceSettings.location.isDisabled ? "true" : "false"}
-        onChange={handleDisableLocation}>
-        <option value="true">YES</option>
-        <option value="false">NO</option>
-      </select>
+      <Label>Enable Location</Label>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <Switch.Root
+          className="SwitchRoot"
+          id="enable-location"
+          onCheckedChange={handleEnableLocation}
+          defaultChecked={!deviceSettings.location.isDisabled}>
+          <Switch.Thumb className="SwitchThumb" />
+        </Switch.Root>
+      </div>
     </>
   );
 }
