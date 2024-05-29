@@ -5,7 +5,7 @@ import { useModal } from "../providers/ModalProvider";
 import CreateDeviceView from "./CreateDeviceView";
 import { useDevices } from "../providers/DevicesProvider";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
@@ -28,6 +28,23 @@ function getMax<T>(array: T[], predicate: (element: T, currentMax: T) => boolean
   return max;
 }
 
+function useLoadingState() {
+  const [state, setState] = useState(false);
+  const withLoading = useCallback(
+    async (fn: () => Promise<void>) => {
+      setState(true);
+      try {
+        await fn();
+      } finally {
+        setState(false);
+      }
+    },
+    [setState]
+  );
+
+  return [state, withLoading] as const;
+}
+
 function firstRuntimeSupportedDevice(supportedDeviceTypes: IOSDeviceTypeInfo[]) {
   return supportedDeviceTypes.find(({ name }) => name === firstIosDeviceName);
 }
@@ -48,8 +65,8 @@ function findNewestIosRuntime(runtimes: IOSRuntimeInfo[]) {
 function DevicesNotFoundView() {
   const { openModal, closeModal } = useModal();
   const { iOSRuntimes, androidImages, deviceManager } = useDevices();
-  const [isIOSCreating, setIOSCreating] = useState(false);
-  const [isAndroidCreating, setAndroidCreating] = useState(false);
+  const [isIOSCreating, withIosCreating] = useLoadingState();
+  const [isAndroidCreating, withAndroidCreating] = useLoadingState();
   const { androidEmulatorError, iosSimulatorError } = useDependencies();
 
   function openCreateNewDeviceModal() {
@@ -65,21 +82,18 @@ function DevicesNotFoundView() {
       return;
     }
 
-    setAndroidCreating(true);
-    const newestImage = getMax(
-      androidImages,
-      (image, currentNewestImage) => image.apiLevel > currentNewestImage.apiLevel
-    );
-    if (newestImage === undefined) {
-      openCreateNewDeviceModal();
-      return;
-    }
+    await withAndroidCreating(async () => {
+      const newestImage = getMax(
+        androidImages,
+        (image, currentNewestImage) => image.apiLevel > currentNewestImage.apiLevel
+      );
+      if (newestImage === undefined) {
+        openCreateNewDeviceModal();
+        return;
+      }
 
-    try {
       await deviceManager.createAndroidDevice(firstAndroidDeviceName, newestImage);
-    } finally {
-      setAndroidCreating(false);
-    }
+    });
   }
 
   async function createIOSDevice() {
@@ -88,18 +102,15 @@ function DevicesNotFoundView() {
       return;
     }
 
-    setIOSCreating(true);
-    const newestRuntime = findNewestIosRuntime(iOSRuntimes);
-    if (newestRuntime === undefined) {
-      openCreateNewDeviceModal();
-      return;
-    }
-    const iOSDeviceType = firstRuntimeSupportedDevice(newestRuntime.supportedDeviceTypes);
-    try {
+    await withIosCreating(async () => {
+      const newestRuntime = findNewestIosRuntime(iOSRuntimes);
+      if (newestRuntime === undefined) {
+        openCreateNewDeviceModal();
+        return;
+      }
+      const iOSDeviceType = firstRuntimeSupportedDevice(newestRuntime.supportedDeviceTypes);
       await deviceManager.createIOSDevice(iOSDeviceType!, newestRuntime);
-    } finally {
-      setIOSCreating(false);
-    }
+    });
   }
   return (
     <div className="devices-not-found-container">
