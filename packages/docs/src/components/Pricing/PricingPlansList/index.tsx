@@ -23,7 +23,7 @@ const PricingPlansList = () => {
     <>
       <span className={styles.plan__price_strikethrough}>$19</span> $10{" "}
       <span className={styles.plan__currency}>USD</span>{" "}
-      <p className={styles.plan__price_second_line}>per person/month </p>
+      <p className={styles.plan__price_second_line}>per person/month, billed yearly </p>
     </>
   );
   const earlyBirdAnnually = (
@@ -63,16 +63,15 @@ const PricingPlansList = () => {
             </p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
-              <li>Support the development of IDE</li>
               <li>Put breakpoints right in the VSCode</li>
               <li>Develop components in isolation</li>
               <li>Expo Router & React Navigation integration</li>
               <li>Get support through official Software Mansion channels</li>
+              <li>Support the development of IDE</li>
             </ul>
             <div className={styles.plan__spacer} />
-            <p>Get your Individual license starting at the end of Q3 2024.</p>
             <Button href="/" disabled>
-              Choose
+              Available soon
             </Button>
           </div>
         </li>
@@ -87,16 +86,15 @@ const PricingPlansList = () => {
             <p className={styles.plan__tagline}>one-time payment for a year</p>
             <p>What's included:</p>
             <ul className={styles.plan__features}>
+              <li>Everything in Individual</li>
+              <li>Freeze your price for the first year</li>
+              <li>License period starts Q3 2024, next billing Q3 2025</li>
+              <li>Early bird discount ends with Beta</li>
               <li>Support the development of IDE</li>
-              <li>Put breakpoints right in the VSCode</li>
-              <li>Develop components in isolation</li>
-              <li>Expo Router & React Navigation integration</li>
-              <li>Get support through official Software Mansion channels</li>
             </ul>
             <div className={styles.plan__spacer} />
-            <p>Get your Early Bird's License starting early June.</p>
             <Button href="/" disabled>
-              Choose
+              Available early June
             </Button>
           </div>
         </li>
