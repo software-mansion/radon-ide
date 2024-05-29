@@ -473,9 +473,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     }
   }
 
-  private async removeDeviceListener(_devices: DeviceInfo) {
+  // used in callbacks, needs to be an arrow function
+  private removeDeviceListener = async (_devices: DeviceInfo) => {
     await this.trySelectingInitialDevice();
-  }
+  };
 
   private checkIfNativeChanged = throttle(async () => {
     if (!this.nativeFilesChangedSinceLastBuild && this.projectState.selectedDevice) {
