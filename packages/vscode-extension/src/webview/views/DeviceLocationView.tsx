@@ -8,85 +8,101 @@ import Label from "../components/shared/Label";
 export function DeviceLocationView() {
   const { project, deviceSettings } = useProject();
 
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [latDirection, setLatDirection] = useState("N");
-  const [lonDirection, setLonDirection] = useState("E");
-
-  //   Set default values
-  useEffect(() => {
-    if (deviceSettings.location) {
-      if (deviceSettings.location.latitude < 0) {
-        setLatitude((-deviceSettings.location.latitude).toString());
-        setLatDirection("S");
-      } else {
-        setLatitude(deviceSettings.location.latitude.toString());
-        setLatDirection("N");
-      }
-      if (deviceSettings.location.longitude < 0) {
-        setLongitude((-deviceSettings.location.longitude).toString());
-        setLonDirection("W");
-      } else {
-        setLongitude(deviceSettings.location.longitude.toString());
-        setLonDirection("E");
-      }
-    }
-  }, [deviceSettings]);
-
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // @ts-ignore
+    const latitude = event.target[0].value;
+    // @ts-ignore
+    const longitude = event.target[2].value;
+    // @ts-ignore
+    const latDirection = event.target[1].value;
+    // @ts-ignore
+    const lonDirection = event.target[3].value;
 
     project.updateDeviceSettings({
       ...deviceSettings,
       location: {
+        ...deviceSettings.location,
         latitude: latDirection === "S" ? -parseFloat(latitude) : parseFloat(latitude),
         longitude: lonDirection === "W" ? -parseFloat(longitude) : parseFloat(longitude),
       },
     });
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="location-controls">
-      <Label>Latitude</Label>
-      <label className="latitude">
-        <div className="picker">
-          <input
-            className="coordinate"
-            type="number"
-            step="0.00001"
-            value={latitude}
-            onChange={(e) => setLatitude(e.target.value)}
-          />
-          <select
-            className="direction"
-            value={latDirection}
-            onChange={(e) => setLatDirection(e.target.value)}>
-            <option value="N">N</option>
-            <option value="S">S</option>
-          </select>
-        </div>
-      </label>
+  const handleDisableLocation = (e: any) => {
+    e.preventDefault();
 
-      <Label>Longitude</Label>
-      <label className="longitude">
-        <div className="picker">
-          <input
-            className="coordinate"
-            type="number"
-            step="0.00001"
-            value={longitude}
-            onChange={(e) => setLongitude(e.target.value)}
-          />
-          <select
-            className="direction"
-            value={lonDirection}
-            onChange={(e) => setLonDirection(e.target.value)}>
-            <option value="E">E</option>
-            <option value="W">W</option>
-          </select>
-        </div>
-      </label>
-      <Button type="submit">Set Current Location</Button>
-    </form>
+    let isDisabled;
+    if (e.target.value === "true") {
+      isDisabled = true;
+    } else {
+      isDisabled = false;
+    }
+    project.updateDeviceSettings({
+      ...deviceSettings,
+      location: {
+        ...deviceSettings.location,
+        isDisabled,
+      },
+    });
+  };
+
+  return (
+    <>
+      <form onSubmit={handleSubmit} className="location-controls">
+        <Label>Latitude</Label>
+        <label className="latitude">
+          <div className="picker">
+            <input
+              className="coordinate"
+              type="number"
+              step="0.000001"
+              defaultValue={
+                deviceSettings.location.latitude < 0
+                  ? -deviceSettings.location.latitude
+                  : deviceSettings.location.latitude
+              }
+            />
+            <select
+              className="direction"
+              defaultValue={deviceSettings.location.latitude < 0 ? "S" : "N"}>
+              <option value="N">N</option>
+              <option value="S">S</option>
+            </select>
+          </div>
+        </label>
+
+        <Label>Longitude</Label>
+        <label className="longitude">
+          <div className="picker">
+            <input
+              className="coordinate"
+              type="number"
+              step="0.000001"
+              defaultValue={
+                deviceSettings.location.longitude < 0
+                  ? -deviceSettings.location.longitude
+                  : deviceSettings.location.longitude
+              }
+            />
+            <select
+              className="direction"
+              defaultValue={deviceSettings.location.longitude < 0 ? "W" : "E"}>
+              <option value="E">E</option>
+              <option value="W">W</option>
+            </select>
+          </div>
+        </label>
+        <Button type="submit">Set Current Location</Button>
+      </form>
+      <Label>Disable Location</Label>
+      <select
+        className="select-disable-location"
+        defaultValue={deviceSettings.location.isDisabled ? "true" : "false"}
+        onChange={handleDisableLocation}>
+        <option value="true">YES</option>
+        <option value="false">NO</option>
+      </select>
+    </>
   );
 }

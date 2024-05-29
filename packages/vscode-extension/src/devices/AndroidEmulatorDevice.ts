@@ -64,16 +64,40 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "&&",
       `cmd uimode night ${settings.appearance === "light" ? "no" : "yes"}`,
     ]);
-    // note that geo fix command takes arguments: $longitude , $latitude so the order is reversed compared to most conventions
-    await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
-      "emu",
-      "geo",
-      "fix",
-      settings.location.longitude.toString(),
-      settings.location.latitude.toString(),
-    ]);
+    // location_mode: LOCATION_MODE_OFF: 0 LOCATION_MODE_HIGH_ACCURACY: 3 LOCATION_MODE_BATTERY_SAVING: 2 LOCATION_MODE_SENSORS_ONLY: 1
+    if (settings.location.isDisabled) {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "shell",
+        "settings",
+        "put",
+        "secure",
+        "location_mode",
+        "0",
+      ]);
+    } else {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "shell",
+        "settings",
+        "put",
+        "secure",
+        "location_mode",
+        "3",
+      ]);
+      // note that geo fix command takes arguments: $longitude , $latitude so the order is reversed compared to most conventions
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "emu",
+        "geo",
+        "fix",
+        settings.location.longitude.toString(),
+        settings.location.latitude.toString(),
+      ]);
+    }
   }
 
   async bootDevice() {

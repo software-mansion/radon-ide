@@ -65,8 +65,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     appearance: "dark",
     contentSize: "normal",
     location: {
-      latitude: 50.04865344199642,
-      longitude: 19.965474780486165,
+      latitude: 50.048653,
+      longitude: 19.965474,
+      isDisabled: false,
     },
   };
 

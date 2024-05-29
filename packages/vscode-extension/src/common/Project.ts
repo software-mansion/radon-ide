@@ -6,6 +6,7 @@ export type DeviceSettings = {
   location: {
     latitude: number;
     longitude: number;
+    isDisabled: boolean;
   };
 };
 

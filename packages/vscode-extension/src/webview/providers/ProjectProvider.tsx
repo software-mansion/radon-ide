@@ -23,6 +23,7 @@ const ProjectContext = createContext<ProjectContextProps>({
     location: {
       latitude: 0,
       longitude: 0,
+      isDisabled: false,
     },
   },
   project,
@@ -41,6 +42,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     location: {
       latitude: 0,
       longitude: 0,
+      isDisabled: false,
     },
   });
 
