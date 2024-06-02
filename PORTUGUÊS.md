@@ -46,9 +46,7 @@ Veja [USO](https://ide.swmansion.com/docs/usage) para saber como começar após 
 
 Para solução de problemas e orientações sobre como relatar questões, vá para a seção [TROUBLESHOOTING](https://ide.swmansion.com/docs/troubleshooting)
 
-### ⚒️ Extension Development
-
-If you want to develop the extension and contribute updates head to [DEVELOPMENT](https://ide.swmansion.com/docs/development) section.
+### ⚒️ Desenvolvimento da Extensão
 
 Se você quer desenvolver a extensão e contribuir com atualizações, vá para a seção [DESENVOLVIMENTO](https://ide.swmansion.com/docs/development)
 
