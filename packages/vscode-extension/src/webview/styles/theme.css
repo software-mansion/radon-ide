@@ -197,6 +197,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   /* Switch */
   --swm-switch-root-background: var(--white);
   --swm-switch-root-shadow: 0 0 0 1px var(--navy-light-10);
+  --swm-switch-root-disabled: var(--navy-dark-20);
 
   /* Manage devices */
   --swm-device-title: var(--swm-default-text);
@@ -325,6 +326,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   /* Switch */
   --swm-switch-root-background: var(--background-dark-100);
   --swm-switch-root-shadow: 0 1px 10px var(--background-dark-100);
+  --swm-switch-root-disabled: var(--background-dark-60);
 
   /* Manage devices */
   --swm-device-title: var(--swm-default-text);

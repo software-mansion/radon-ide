@@ -6,25 +6,36 @@
   width: 100%;
 }
 
+.coordinate-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .picker {
   display: flex;
+  color: var(--swm-default-text);
   justify-content: space-between;
 }
 
 input.coordinate {
   flex: 1;
   text-align: center;
-  height: 20px;
+  height: 42px;
   align-self: right;
   /* margin-left: 5px; */
   margin-right: 5px; /* Add margin-right for padding between input and select */
   background-color: var(--swm-input-background);
   border: 1px;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 18px;
   line-height: 1;
   box-shadow: var(--swm-input-shadow);
   padding: 0 6px;
+}
+
+input.coordinate:disabled {
+  color: var(--swm-disabled-text);
 }
 
 .submit-rejection-message {
@@ -36,14 +47,12 @@ input.coordinate {
 .SwitchRoot {
   width: 42px;
   height: 25px;
-  background-color: var(--red-light-100);
+  background-color: var(--swm-switch-root-disabled);
   border-radius: 9999px;
   position: relative;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
-.SwitchRoot:focus {
-  box-shadow: 0 0 0 2px var(--swm-switch-root-shadow);
-}
+
 .SwitchRoot[data-state="checked"] {
   background-color: var(--green-light-100);
 }
@@ -54,7 +63,6 @@ input.coordinate {
   height: 21px;
   background-color: white;
   border-radius: 9999px;
-  box-shadow: 0 2px 2px;
   transition: transform 100ms;
   transform: translateX(2px);
   will-change: transform;
