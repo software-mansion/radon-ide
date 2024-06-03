@@ -13,7 +13,7 @@ import {
   listSimulators,
   removeIosSimulator,
 } from "../devices/IosSimulatorDevice";
-import { IOSDeviceInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
+import { IOSDeviceInfo, Platform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 
 type IOSProjectInfo =
@@ -54,6 +54,8 @@ export async function findXcodeProject(appRootFolder: string) {
   let workspaceLocation: string | undefined;
   if (xcworkspaceFiles.length === 1) {
     workspaceLocation = Uri.joinPath(xcworkspaceFiles[0], "..").fsPath;
+  } else if (xcworkspaceFiles.length > 1) {
+    Logger.warn(`Found multiple XCode workspace files: ${xcworkspaceFiles.join()}`);
   }
 
   const xcodeprojFiles = await workspace.findFiles(
@@ -65,6 +67,8 @@ export async function findXcodeProject(appRootFolder: string) {
   let xcodeprojLocation: string | undefined;
   if (xcodeprojFiles.length === 1) {
     xcodeprojLocation = Uri.joinPath(xcodeprojFiles[0], "..").fsPath;
+  } else if (xcodeprojFiles.length > 1) {
+    Logger.warn(`Found multiple XCode project files: ${xcodeprojFiles.join()}`);
   }
 
   if (xcodeprojLocation) {
