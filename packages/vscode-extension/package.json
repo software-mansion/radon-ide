@@ -247,6 +247,7 @@
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
+    "coordinate-parser": "^1.0.7",
     "@expo/fingerprint": "^0.5.0",
     "@expo/package-manager": "^1.1.2",
     "@msgpack/msgpack": "^2.8.0",
@@ -307,8 +308,5 @@
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
     "xml2js": "^0.6.2"
-  },
-  "dependencies": {
-    "coordinate-parser": "^1.0.7"
   }
 }
