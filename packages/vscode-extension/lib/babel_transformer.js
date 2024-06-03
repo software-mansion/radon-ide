@@ -81,6 +81,15 @@ function transformWrapper({ filename, src, ...rest }) {
     // The workaround is to replace dev version of ReactNative renderer with the one build from exact
     // same react version, but with that commit reverted. The version of react used in React Native 0.74
     // comes from this commit: https://github.com/facebook/react/commit/03d6f7cf0
+    //
+    // The mentioned issue got later resolved in https://github.com/facebook/react/commit/61bd00498
+    // however, the new approach does not produce the same information as the debug entries only
+    // point to component definition lines rather than places where the component is used.
+    // There is also a follow-up attempt to bring back proper debug metadata in https://github.com/facebook/react/commit/151cce37401
+    // However, this commit is not included in React Native 0.74 and would require pulling in
+    // a lot of further changes along with it. Also, based on the commit message, this approach
+    // is experimental as it has some performance implications and may be removed in future versions.
+    //
     const { version } = requireFromAppDir("react-native/package.json");
     if (version.startsWith("0.74")) {
       const rendererFileName = filename.split("/").pop();
