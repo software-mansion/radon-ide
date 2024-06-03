@@ -6,14 +6,14 @@
   width: 100%;
 }
 
-.location-controls .picker {
+.picker {
   display: flex;
   justify-content: space-between;
-  /* padding: 7px; */
 }
 
-.location-controls input.coordinate {
+input.coordinate {
   flex: 1;
+  text-align: center;
   height: 20px;
   align-self: right;
   /* margin-left: 5px; */
@@ -25,23 +25,6 @@
   line-height: 1;
   box-shadow: var(--swm-input-shadow);
   padding: 0 6px;
-}
-
-.location-controls select.direction {
-  width: 30px;
-  color: inherit;
-  height: 20px;
-  background-color: var(--swm-select-background);
-  border: 1px;
-  border-radius: 4px;
-  font-size: 13px;
-  box-shadow: var(--swm-select-shadow);
-  line-height: 1;
-  margin-left: 10px; /* Or add it to select if you prefer */
-}
-
-.location-controls button {
-  margin: 16px auto 0;
 }
 
 .submit-rejection-message {
