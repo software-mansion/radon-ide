@@ -85,6 +85,10 @@ const config = {
             to: "/terms-of-use",
             label: "Terms of Use",
           },
+          {
+            to: "/refund-policy",
+            label: "Refund Policy",
+          },
         ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },
