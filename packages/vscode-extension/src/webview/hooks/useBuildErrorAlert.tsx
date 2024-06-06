@@ -18,7 +18,7 @@ function Actions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.restart(true);
+          project.restart(false);
         }}
         tooltip={{ label: "Reload IDE", side: "bottom" }}>
         <span className="codicon codicon-refresh" />
