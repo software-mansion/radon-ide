@@ -13,7 +13,7 @@ const Pricing = () => {
 
   // Download and initialize Paddle instance from CDN
   useEffect(() => {
-    initializePaddle({ environment: "sandbox", token: "test_e4f6457e74dffcba61da98c3e6e" }).then(
+    initializePaddle({ environment: "sandbox", token: "test_48d9904e9bca3ddd5ca51234b9a" }).then(
       (paddleInstance: Paddle | undefined) => {
         if (paddleInstance) {
           setPaddle(paddleInstance);
@@ -24,7 +24,7 @@ const Pricing = () => {
 
   const openEarlyBirdCheckout = () => {
     paddle?.Checkout.open({
-      items: [{ priceId: "pri_69609", quantity: 1 }],
+      items: [{ priceId: "pri_01hzph5p6aj767hp11y2w6n1sv", quantity: 1 }],
     });
   };
 
