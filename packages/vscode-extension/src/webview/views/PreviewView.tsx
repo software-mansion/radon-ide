@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
