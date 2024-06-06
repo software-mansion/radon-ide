@@ -9,6 +9,10 @@
   gap: 4px;
 }
 
+.panel-view {
+  user-select: none;
+}
+
 .button-group-top {
   margin-bottom: 8px;
 }
