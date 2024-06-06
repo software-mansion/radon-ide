@@ -1,5 +1,5 @@
 import { useProject } from "../providers/ProjectProvider";
-import React, { useState } from "react";
+import React, { FocusEventHandler, useRef, useState } from "react";
 import "./DeviceLocationView.css";
 import Label from "../components/shared/Label";
 import * as Switch from "@radix-ui/react-switch";
@@ -9,7 +9,7 @@ import Tooltip from "../components/shared/Tooltip";
 
 const CoordinateInfo = () => {
   return (
-    <>
+    <div className="supported-formats">
       <h3>Supported formats:</h3>
       <li>40.123, -74.123</li>
       <li>40.123° N 74.123° W</li>
@@ -33,7 +33,7 @@ const CoordinateInfo = () => {
       <li>40d 7’ 23" N 74d 7’ 23" W</li>
       <li>40.123N 74.123W</li>
       <li>40° 7.38, -74° 7.38</li>
-    </>
+    </div>
   );
 };
 
@@ -41,6 +41,7 @@ const THROTTLE_LIMIT = 1000;
 
 export function DeviceLocationView() {
   const { project, deviceSettings } = useProject();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const updateProjectSettingWithThrottle = throttleWithTrailing(
     project.updateDeviceSettings,
@@ -68,6 +69,36 @@ export function DeviceLocationView() {
         longitude: position.getLongitude(),
       },
     });
+  };
+
+  const convertDDToDMS = (D: number, lng: boolean) => {
+    return {
+      dir: D < 0 ? (lng ? "W" : "S") : lng ? "E" : "N",
+      deg: 0 | (D < 0 ? (D = -D) : D),
+      min: String(0 | (((D += 1e-9) % 1) * 60)).padStart(2, "0"),
+      sec: String(Math.floor((0 | (((D * 60) % 1) * 6000)) / 100)).padStart(2, "0"),
+    };
+  };
+
+  const formatLocation = (lat: number, lon: number): string => {
+    const latitude = convertDDToDMS(lat, false);
+    const longitude = convertDDToDMS(lon, true);
+    return `${latitude.deg}° ${latitude.min}' ${latitude.sec}'' ${latitude.dir}   ${longitude.deg}° ${longitude.min}' ${longitude.sec}'' ${longitude.dir}`;
+  };
+
+  const handleCoordinateInputBlur: FocusEventHandler<HTMLInputElement> = (event) => {
+    if (!isCoordinateValid) {
+      return;
+    }
+    const newCoordinate = inputRef.current!.value;
+    let position;
+    try {
+      position = new CoordinateParser(newCoordinate);
+    } catch (e) {
+      setIsCoordinateValid(false);
+      return;
+    }
+    inputRef.current!.value = formatLocation(position.getLatitude(), position.getLongitude());
   };
 
   const handleEnableLocation = (check: boolean) => {
@@ -102,11 +133,16 @@ export function DeviceLocationView() {
       <label className="latitude">
         <div className="picker">
           <input
+            ref={inputRef}
             className="coordinate"
             style={isCoordinateValid ? {} : { border: "1px solid var(--red-light-100)" }}
             type="string"
-            defaultValue={`(${deviceSettings.location.latitude}, ${deviceSettings.location.longitude})`}
+            defaultValue={formatLocation(
+              deviceSettings.location.latitude,
+              deviceSettings.location.longitude
+            )}
             onChange={handleCoordinateChange}
+            onBlur={handleCoordinateInputBlur}
             disabled={deviceSettings.location.isDisabled}
           />
         </div>

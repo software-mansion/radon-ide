@@ -44,6 +44,15 @@ input.coordinate:disabled {
   text-align: center;
 }
 
+.supported-formats {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.supported-formats li {
+  margin-bottom: 5px;
+}
+
 .SwitchRoot {
   width: 42px;
   height: 25px;

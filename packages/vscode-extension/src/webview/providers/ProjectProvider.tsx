@@ -21,8 +21,8 @@ const ProjectContext = createContext<ProjectContextProps>({
     appearance: "dark",
     contentSize: "normal",
     location: {
-      latitude: 0,
-      longitude: 0,
+      latitude: 50.048653,
+      longitude: 19.965474,
       isDisabled: false,
     },
   },
@@ -40,8 +40,8 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     appearance: "dark",
     contentSize: "normal",
     location: {
-      latitude: 0,
-      longitude: 0,
+      latitude: 50.048653,
+      longitude: 19.965474,
       isDisabled: false,
     },
   });
