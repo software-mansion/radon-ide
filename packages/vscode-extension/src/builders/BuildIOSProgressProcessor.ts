@@ -65,7 +65,7 @@ export class BuildIOSProgressProcessor implements BuildProgressProcessor {
     if (!this.tasksToComplete) {
       return;
     }
-    this.progressListener(this.completedTasks / this.tasksToComplete);
+    this.progressListener(Math.min(1, this.completedTasks / this.tasksToComplete));
   }
 
   async processLine(line: string) {
