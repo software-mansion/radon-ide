@@ -18,14 +18,15 @@
   color: var(--swm-url-select);
   background-color: var(--swm-url-select-background);
   user-select: none;
-  min-width: var(--url-select-min-width);
+  /* min-width: var(--url-select-min-width);  */
   max-width: var(--url-select-max-width);
 }
 .url-select-trigger:hover {
   background-color: var(--swm-url-select-hover-background);
 }
 .url-select-trigger[data-state="open"] {
-  border-radius: 18px 18px 0 0;
+  border-radius: 18px 18px 18px 18px;
+  box-shadow: var(--swm-focus-outline);
 }
 .url-select-trigger[data-disabled] {
   background-color: var(--swm-url-select-disabled-background);
@@ -39,7 +40,8 @@
 .url-select-content {
   overflow: hidden;
   background-color: var(--swm-url-select-background);
-  border-radius: 0 0 18px 18px;
+  border-radius: 18px 18px 18px 18px;
+  transform: translateY(4px);
   padding-bottom: 4px;
   min-width: var(--url-select-min-width);
   max-width: var(--url-select-max-width);

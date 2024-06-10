@@ -5,9 +5,9 @@
   align-items: safe center;
   overflow: auto;
   width: 100%;
+  /* height: 100%; */
   position: relative;
   user-select: none;
-  scrollbar-gutter: stable;
 }
 
 .phone-wrapper:hover,
@@ -18,8 +18,10 @@
 .phone-content {
   position: relative;
   display: flex;
-  height: 100%;
   aspect-ratio: var(--phone-aspect-ratio);
+  max-width: 100%;
+  max-height: 100%;
+  /* object-fit: scale-down; */
 }
 
 .touch-area {

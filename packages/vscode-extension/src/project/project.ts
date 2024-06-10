@@ -32,6 +32,7 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
+import { ZoomLevelType } from "../webview/components/ZoomControls";
 
 const DEVICE_SETTINGS_KEY = "device_settings";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -396,7 +397,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     }
   }
 
-  public async updatePreviewZoomLevel(zoom: number | "Fit"): Promise<void> {
+  public async updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void> {
     this.updateProjectState({ previewZoom: zoom });
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }

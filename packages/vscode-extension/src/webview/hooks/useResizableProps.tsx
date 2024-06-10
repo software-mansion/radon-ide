@@ -1,11 +1,14 @@
 import { ResizeCallback } from "re-resizable";
-import { CSSProperties, useCallback, useEffect, useState } from "react";
-import { ZoomLevelType } from "../components/ZoomControls";
+import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { DeviceProperties } from "../utilities/consts";
+import { ZoomLevelType } from "../../common/Project";
+import { DEVICE_DEFAULT_SCALE } from "../components/ZoomControls";
 
 type UseResizableProps = {
   wrapperDivRef: React.RefObject<HTMLDivElement>;
   zoomLevel: ZoomLevelType;
   setZoomLevel: (zoomLevel: ZoomLevelType) => void;
+  device: DeviceProperties;
 };
 
 const defaultResizableStyle: CSSProperties = {
@@ -14,28 +17,26 @@ const defaultResizableStyle: CSSProperties = {
 
 type PhoneHeight = number | `${number}%`;
 
-export function useResizableProps({ wrapperDivRef, zoomLevel, setZoomLevel }: UseResizableProps) {
+export function useResizableProps({
+  wrapperDivRef,
+  zoomLevel,
+  setZoomLevel,
+  device,
+}: UseResizableProps) {
   const [phoneHeight, setPhoneHeight] = useState<PhoneHeight>(0);
+
+  const [maxWidth, setMaxWidth] = useState<"100%" | undefined>(undefined);
   const [resizableStyle, setResizableStyle] = useState<CSSProperties>(defaultResizableStyle);
 
-  const calculateZoomLevel = useCallback(() => {
-    if (phoneHeight === 0 || typeof phoneHeight === "string") {
-      return;
-    }
-
-    const wrapperHeight = wrapperDivRef.current!.offsetHeight;
-    setZoomLevel(Math.round((phoneHeight * 100) / wrapperHeight));
-  }, [wrapperDivRef, phoneHeight, setZoomLevel]);
-
-  const calculatePhoneHeight = useCallback(
+  const calculatePhoneDimensions = useCallback(
     (delta = 0) => {
       if (zoomLevel === "Fit") {
         setPhoneHeight("100%");
+        setMaxWidth("100%");
         return;
       }
-
-      const wrapperHeight = wrapperDivRef.current!.offsetHeight;
-      setPhoneHeight(wrapperHeight * (zoomLevel / 100) + delta);
+      setPhoneHeight(device.frameHeight * zoomLevel * DEVICE_DEFAULT_SCALE + delta);
+      setMaxWidth(undefined);
     },
     [wrapperDivRef, zoomLevel]
   );
@@ -44,21 +45,13 @@ export function useResizableProps({ wrapperDivRef, zoomLevel, setZoomLevel }: Us
 
   const onResizeStop: ResizeCallback = useCallback(
     (event, direction, ref, delta) => {
-      calculatePhoneHeight(delta.height);
-      calculateZoomLevel();
+      calculatePhoneDimensions(delta.height);
       setResizableStyle(defaultResizableStyle);
     },
     [resizableStyle]
   );
 
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(calculateZoomLevel);
-    resizeObserver.observe(wrapperDivRef.current!);
-
-    return () => resizeObserver.disconnect();
-  }, [wrapperDivRef, calculateZoomLevel]);
-
-  useEffect(calculatePhoneHeight, [zoomLevel]);
+  useEffect(calculatePhoneDimensions, [zoomLevel]);
 
   return {
     size: { width: "auto", height: phoneHeight },
@@ -66,13 +59,18 @@ export function useResizableProps({ wrapperDivRef, zoomLevel, setZoomLevel }: Us
     onResizeStop,
     lockAspectRatio: true,
     // Setting display to "none" when phoneHeight is 0 to avoid the visible size transition
-    style: { ...resizableStyle, display: phoneHeight === 0 ? "none" : "initial" },
+    style: {
+      ...resizableStyle,
+      display: phoneHeight === 0 ? "none" : "flex",
+      alignItems: "center",
+    },
     handleStyles: {
       bottomRight: {
         right: 0,
         bottom: 0,
       },
     },
+    maxWidth,
     enable: {
       top: false,
       right: false,

@@ -16,8 +16,8 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import ZoomControls, { ZoomLevelType } from "../components/ZoomControls";
 import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
+import { ZoomLevelType } from "../../common/Project";
 
 function PreviewView() {
   const { projectState, project } = useProject();
@@ -36,6 +36,7 @@ function PreviewView() {
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
+
   const devicesNotFound = projectState !== undefined && devices.length === 0;
 
   const { openModal } = useModal();
@@ -154,9 +155,6 @@ function PreviewView() {
           {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
         </div>
       )}
-      <div className="button-group-left">
-        <ZoomControls zoomLevel={zoomLevel} onZoomChanged={onZoomChanged} />
-      </div>
 
       <div className="button-group-bottom">
         <IconButton
