@@ -23,7 +23,7 @@ function PreviewView() {
   const { projectState, project } = useProject();
 
   const [isInspecting, setIsInspecting] = useState(false);
-  const zoomLevel = projectState.previewZoom ?? { isFit: true, value: 1 };
+  const zoomLevel = projectState.previewZoom ?? "Fit";
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
       project.updatePreviewZoomLevel(zoom);

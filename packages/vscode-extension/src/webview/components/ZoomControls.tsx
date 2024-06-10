@@ -21,10 +21,10 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
   const onValueChange = useCallback(
     (e: string) => {
       if (e == "Fit") {
-        onZoomChanged({ isFit: true, value: zoomLevel.value ?? DEFAULT_ZOOM_LEVEL });
+        onZoomChanged("Fit");
         return;
       }
-      onZoomChanged({ isFit: false, value: Number(e) });
+      onZoomChanged(Number(e));
     },
     [onZoomChanged]
   );
@@ -32,10 +32,10 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
   return (
     <Select.Root
       onValueChange={onValueChange}
-      value={zoomLevel.isFit ? "Fit" : zoomLevel.value.toString()}>
+      value={zoomLevel === "Fit" ? "Fit" : zoomLevel.toString()}>
       <Select.Trigger className="zoom-select-trigger" disabled={false}>
         <Select.Value>
-          <div className="zoom-select-value">{zoomLevel.isFit ? "Fit" : `${zoomLevel.value}x`}</div>
+          <div className="zoom-select-value">{zoomLevel === "Fit" ? "Fit" : `${zoomLevel}x`}</div>
         </Select.Value>
       </Select.Trigger>
 
@@ -64,17 +64,17 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
 function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomControlsProps) {
   function handleZoom(shouldIncrease: boolean) {
     let currentZoomLevel;
-    if (zoomLevel.isFit) {
+    if (zoomLevel === "Fit") {
       currentZoomLevel =
         ((wrapperDivRef!.current!.offsetHeight / device!.frameHeight) * 1) / DEVICE_DEFAULT_SCALE;
     } else {
-      currentZoomLevel = zoomLevel.value;
+      currentZoomLevel = zoomLevel;
     }
     // toFixed() is necessary because of floating point rounding errors
     const newZoomLevel = +(currentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP)).toFixed(2);
 
     if (newZoomLevel >= ZOOM_STEP) {
-      onZoomChanged({ isFit: false, value: newZoomLevel });
+      onZoomChanged(newZoomLevel);
     }
   }
 

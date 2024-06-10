@@ -22,7 +22,7 @@ export type ProjectState = {
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
 };
 
-export type ZoomLevelType = { isFit: boolean; value: number };
+export type ZoomLevelType = number | "Fit";
 
 // important: order of values in this enum matters
 export enum StartupMessage {

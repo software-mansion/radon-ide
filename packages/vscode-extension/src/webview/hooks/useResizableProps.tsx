@@ -30,12 +30,12 @@ export function useResizableProps({
 
   const calculatePhoneDimensions = useCallback(
     (delta = 0) => {
-      if (zoomLevel.isFit) {
+      if (zoomLevel === "Fit") {
         setPhoneHeight("100%");
         setMaxWidth("100%");
         return;
       }
-      setPhoneHeight(device.frameHeight * zoomLevel.value * DEVICE_DEFAULT_SCALE + delta);
+      setPhoneHeight(device.frameHeight * zoomLevel * DEVICE_DEFAULT_SCALE + delta);
       setMaxWidth(undefined);
     },
     [wrapperDivRef, zoomLevel]
