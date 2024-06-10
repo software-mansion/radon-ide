@@ -314,6 +314,6 @@ async function fixBinaries(context: ExtensionContext) {
   } catch (error) {
     // if binaries are different, diff will return non-zero code and we will land in catch clouse
     await command(`dd if=${buildBinPath.fsPath} of=${exeBinPath.fsPath}`);
-    await fs.promises.chmod(exeBinPath.fsPath, 0o755);
   }
+  await fs.promises.chmod(exeBinPath.fsPath, 0o755);
 }
