@@ -1,16 +1,10 @@
 .button-group-top,
 .button-group-bottom {
   display: flex;
-  flex-flow: row wrap;
   align-items: center;
   width: 100%;
-
   margin: 10px;
   gap: 4px;
-}
-
-.panel-view {
-  user-select: none;
 }
 
 .button-group-top {

@@ -1,32 +1,41 @@
-import { useCallback } from "react";
+import { RefObject, useCallback } from "react";
 import IconButton from "./shared/IconButton";
 import * as Select from "@radix-ui/react-select";
 import "./ZoomControls.css";
+import { ZoomLevelType } from "../../common/Project";
+import { DeviceProperties } from "../utilities/consts";
 
-const ZOOM_STEP = 10;
-const DEFAULT_ZOOM_LEVEL = 100;
-const ZOOM_SELECT_NUMERIC_VALUES = [50, 100, 150, 200, 300];
-
-export type ZoomLevelType = number | "Fit";
+const ZOOM_STEP = 0.05;
+const DEFAULT_ZOOM_LEVEL = 1;
+const ZOOM_SELECT_NUMERIC_VALUES = [0.5, 0.6, 0.7, 0.8, 0.9, 1];
+export const DEVICE_DEFAULT_SCALE = 1 / 3;
 
 type ZoomControlsProps = {
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoom: ZoomLevelType) => void;
+  device?: DeviceProperties;
+  wrapperDivRef?: RefObject<HTMLDivElement>;
 };
 
 const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
   const onValueChange = useCallback(
-    (e: string) => onZoomChanged(Number(e) || (e as ZoomLevelType)),
+    (e: string) => {
+      if (e == "Fit") {
+        onZoomChanged({ isFit: true, value: zoomLevel.value ?? DEFAULT_ZOOM_LEVEL });
+        return;
+      }
+      onZoomChanged({ isFit: false, value: Number(e) });
+    },
     [onZoomChanged]
   );
 
   return (
-    <Select.Root onValueChange={onValueChange} value={zoomLevel.toString()}>
+    <Select.Root
+      onValueChange={onValueChange}
+      value={zoomLevel.isFit ? "Fit" : zoomLevel.value.toString()}>
       <Select.Trigger className="zoom-select-trigger" disabled={false}>
         <Select.Value>
-          <div className="zoom-select-value">
-            {typeof zoomLevel === "string" ? zoomLevel : `${Math.floor(zoomLevel) / 100}x`}
-          </div>
+          <div className="zoom-select-value">{zoomLevel.isFit ? "Fit" : `${zoomLevel.value}x`}</div>
         </Select.Value>
       </Select.Trigger>
 
@@ -42,7 +51,7 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
             <Select.Separator className="zoom-select-item-separator" />
             {ZOOM_SELECT_NUMERIC_VALUES.map((level) => (
               <Select.SelectItem key={level} value={level.toString()} className="zoom-select-item">
-                {level / 100}x
+                {level}x
               </Select.SelectItem>
             ))}
           </Select.Viewport>
@@ -52,17 +61,20 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
   );
 };
 
-function ZoomControls({ zoomLevel, onZoomChanged }: ZoomControlsProps) {
+function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomControlsProps) {
   function handleZoom(shouldIncrease: boolean) {
-    const currentZoomLevel = zoomLevel;
-    const resolvedCurrentZoomLevel =
-      typeof currentZoomLevel === "string" ? DEFAULT_ZOOM_LEVEL : currentZoomLevel;
-    const newZoomLevel = resolvedCurrentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP);
-
-    if (newZoomLevel < ZOOM_STEP) {
-      onZoomChanged(currentZoomLevel);
+    let currentZoomLevel;
+    if (zoomLevel.isFit) {
+      currentZoomLevel =
+        ((wrapperDivRef!.current!.offsetHeight / device!.frameHeight) * 1) / DEVICE_DEFAULT_SCALE;
     } else {
-      onZoomChanged(newZoomLevel);
+      currentZoomLevel = zoomLevel.value;
+    }
+    // toFixed() is necessary because of floating point rounding errors
+    const newZoomLevel = +(currentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP)).toFixed(2);
+
+    if (newZoomLevel >= ZOOM_STEP) {
+      onZoomChanged({ isFit: false, value: newZoomLevel });
     }
   }
 
