@@ -180,6 +180,10 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
 
+  /* Input */
+  --swm-input-background: var(--white);
+  --swm-input-shadow: 0 0 0 1px var(--navy-light-10);
+
   /* Select */
   --swm-select-background: var(--white);
   --swm-select-hover-background: var(--off-white);
@@ -189,6 +193,11 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-select-content-background: var(--navy-light-10);
   --swm-select-item-disabled-background: var(--navy-light-40);
   --swm-select-item-highlighted-background: var(--off-white);
+
+  /* Switch */
+  --swm-switch-root-background: var(--white);
+  --swm-switch-root-shadow: 0 0 0 1px var(--navy-light-10);
+  --swm-switch-root-disabled: var(--navy-dark-20);
 
   /* Manage devices */
   --swm-device-title: var(--swm-default-text);
@@ -300,6 +309,10 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
 
+  /* Input */
+  --swm-input-background: var(--background-dark-100);
+  --swm-input-shadow: 0 1px 10px var(--background-dark-100);
+
   /* Select */
   --swm-select-background: var(--background-dark-100);
   --swm-select-hover-background: var(--background-dark-80);
@@ -309,6 +322,11 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-select-content-background: var(--background-dark-80);
   --swm-select-item-disabled-background: var(--background-dark-100);
   --swm-select-item-highlighted-background: var(--background-dark-60);
+
+  /* Switch */
+  --swm-switch-root-background: var(--background-dark-100);
+  --swm-switch-root-shadow: 0 1px 10px var(--background-dark-100);
+  --swm-switch-root-disabled: var(--background-dark-60);
 
   /* Manage devices */
   --swm-device-title: var(--swm-default-text);

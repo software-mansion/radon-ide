@@ -17,7 +17,15 @@ const ProjectContext = createContext<ProjectContextProps>({
     selectedDevice: undefined,
     previewZoom: undefined,
   },
-  deviceSettings: { appearance: "dark", contentSize: "normal" },
+  deviceSettings: {
+    appearance: "dark",
+    contentSize: "normal",
+    location: {
+      latitude: 50.048653,
+      longitude: 19.965474,
+      isDisabled: false,
+    },
+  },
   project,
 });
 
@@ -31,6 +39,11 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>({
     appearance: "dark",
     contentSize: "normal",
+    location: {
+      latitude: 50.048653,
+      longitude: 19.965474,
+      isDisabled: false,
+    },
   });
 
   useEffect(() => {
