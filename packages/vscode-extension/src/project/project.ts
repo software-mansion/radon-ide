@@ -34,7 +34,7 @@ import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 
-const DEVICE_SETTINGS_KEY = "device_settings_v15";
+const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 
