@@ -4,8 +4,8 @@ import "./DeviceLocationView.css";
 import Label from "../components/shared/Label";
 import * as Switch from "@radix-ui/react-switch";
 import CoordinateParser from "coordinate-parser";
-import { throttleWithTrailing } from "../../common/utils";
 import Tooltip from "../components/shared/Tooltip";
+import { throttle } from "../../common/utils";
 
 const CoordinateInfo = () => {
   return (
@@ -43,10 +43,7 @@ export function DeviceLocationView() {
   const { project, deviceSettings } = useProject();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const updateProjectSettingWithThrottle = throttleWithTrailing(
-    project.updateDeviceSettings,
-    THROTTLE_LIMIT
-  );
+  const updateProjectSettingWithThrottle = throttle(project.updateDeviceSettings, THROTTLE_LIMIT);
 
   const [isCoordinateValid, setIsCoordinateValid] = useState(true);
 

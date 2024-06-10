@@ -27,25 +27,3 @@ export function throttle<T extends (...args: any[]) => any>(
     recentArgs = args;
   } as T;
 }
-
-export function throttleWithTrailing<T extends (...args: any[]) => any>(
-  func: T,
-  limitMs: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
-  let recentArgs: any;
-
-  return function (...args: Parameters<T>) {
-    recentArgs = args;
-
-    if (!timeout) {
-      timeout = setTimeout(() => {
-        timeout = null;
-        if (recentArgs) {
-          func(...recentArgs);
-          recentArgs = null;
-        }
-      }, limitMs);
-    }
-  };
-}
