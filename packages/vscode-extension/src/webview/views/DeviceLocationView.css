@@ -23,7 +23,6 @@ input.coordinate {
   text-align: center;
   height: 42px;
   align-self: right;
-  /* margin-left: 5px; */
   margin-right: 5px; /* Add margin-right for padding between input and select */
   background-color: var(--swm-input-background);
   border: 1px;

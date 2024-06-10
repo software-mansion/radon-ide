@@ -67,7 +67,8 @@ export function DeviceLocationView() {
       },
     });
   };
-
+  // DD - Decimal Degrees DMS - Degrees Minutes Seconds
+  // https://stackoverflow.com/questions/5786025/decimal-degrees-to-degrees-minutes-and-seconds-in-javascript
   const convertDDToDMS = (D: number, lng: boolean) => {
     return {
       dir: D < 0 ? (lng ? "W" : "S") : lng ? "E" : "N",
