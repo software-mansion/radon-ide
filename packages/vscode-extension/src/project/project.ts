@@ -24,6 +24,7 @@ import {
   ProjectInterface,
   ProjectState,
   StartupMessage,
+  ZoomLevelType,
 } from "../common/Project";
 import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
@@ -32,7 +33,6 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { ZoomLevelType } from "../webview/components/ZoomControls";
 
 const DEVICE_SETTINGS_KEY = "device_settings";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -70,10 +70,22 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       longitude: 19.965474,
       isDisabled: false,
     },
+    biometricEnrollment: false,
   };
 
   constructor(private readonly deviceManager: DeviceManager) {
     Project.currentProject = this;
+    this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
+      appearance: "dark",
+      contentSize: "normal",
+      location: {
+        latitude: 50.048653,
+        longitude: 19.965474,
+        isDisabled: false,
+      },
+      biometricEnrollment: false,
+    };
+    this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
     this.start(false, false);
     this.trySelectingInitialDevice();
@@ -377,6 +389,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
+  }
+  public async sendBiometricAuthorization(match: boolean) {
+    await this.deviceSession?.sendBiometricAuthorization(match);
   }
 
   private reportStageProgress(stageProgress: number, stage: string) {
