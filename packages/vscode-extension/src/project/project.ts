@@ -24,6 +24,7 @@ import {
   ProjectInterface,
   ProjectState,
   StartupMessage,
+  ZoomLevelType,
 } from "../common/Project";
 import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
@@ -32,9 +33,8 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { ZoomLevelType } from "../webview/components/ZoomControls";
 
-const DEVICE_SETTINGS_KEY = "device_settings";
+const DEVICE_SETTINGS_KEY = "device_settings_v15";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 
@@ -68,7 +68,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     location: {
       latitude: 50.048653,
       longitude: 19.965474,
-      isDisabled: false,
+      isDisabled: true,
     },
   };
 
