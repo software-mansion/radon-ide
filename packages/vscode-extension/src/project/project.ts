@@ -189,6 +189,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.metro?.reload();
   }
 
+  public async goHome() {
+    this.reloadMetro();
+  }
+
   public async restart(forceCleanBuild: boolean) {
     this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
     if (forceCleanBuild || this.nativeFilesChangedSinceLastBuild) {
