@@ -169,7 +169,7 @@ export class Metro implements Disposable {
           reject(new Error("Metro exited but did not start server successfully."));
         });
 
-      lineReader(bundlerProcess).onLineRead((line) => {
+      lineReader(bundlerProcess, true).onLineRead((line) => {
         try {
           const event = JSON.parse(line) as MetroEvent;
           if (event.type === "bundle_transform_progressed") {
