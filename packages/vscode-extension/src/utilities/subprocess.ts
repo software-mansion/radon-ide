@@ -4,13 +4,13 @@ import readline from "readline";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
-function updatePWDEnvWhenCwdIsSet(options: execa.Options) {
+function updatePWDEnvWhenCwdIsSet(options?: execa.Options) {
   // Some processes rely on PWD environment variable that may be copied from
   // the parent process. However, when cwd option is set, we never should use
   // PWD of the parent process as it may point to a different directory. In case
   // both cwd and PWD environment variable are set, we should update PWD to the
   // same location as requested by the cwd option.
-  if (options.cwd && options.env && options.env.PWD) {
+  if (options && options.cwd && options.env && options.env.PWD) {
     options.env.PWD = options.cwd;
   }
 }
@@ -47,7 +47,7 @@ export function exec(
   ...args: [string, string[]?, (execa.Options & { allowNonZeroExit?: boolean })?]
 ) {
   if (args.length > 1) {
-    updatePWDEnvWhenCwdIsSet(args[2]!);
+    updatePWDEnvWhenCwdIsSet(args[2]);
   }
   const subprocess = execa(...args);
   const allowNonZeroExit = args[2]?.allowNonZeroExit;
@@ -87,7 +87,7 @@ export function exec(
 
 export function execSync(...args: [string, string[]?, execa.SyncOptions?]) {
   if (args.length > 1) {
-    updatePWDEnvWhenCwdIsSet(args[2]!);
+    updatePWDEnvWhenCwdIsSet(args[2]);
   }
   const result = execa.sync(...args);
   if (result.stderr) {
@@ -104,7 +104,7 @@ export function execSync(...args: [string, string[]?, execa.SyncOptions?]) {
 
 export function command(...args: [string, execa.Options?]) {
   if (args.length > 1) {
-    updatePWDEnvWhenCwdIsSet(args[1]!);
+    updatePWDEnvWhenCwdIsSet(args[1]);
   }
   const subprocess = execa.command(...args);
   async function printErrorsOnExit() {
