@@ -150,6 +150,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
     await exec(ADB_PATH, ["-s", this.serial!, "shell", "input", "keyevent", "82"]);
   }
 
+  async configureExpoDevMenu(packageName: string) {
+    // this code disables expo devmenu popup when the app is launched. When dev menu
+    // is displayed, it blocks the JS loop and hence react devtools are unable to establish
+    // the connection, and hence we never get the app ready event.
+    const prefsXML = `<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map><boolean name="isOnboardingFinished" value="true"/></map>`;
+    await exec(
+      ADB_PATH,
+      [
+        "-s",
+        this.serial!,
+        "shell",
+        `run-as ${packageName} sh -c 'mkdir -p /data/data/${packageName}/shared_prefs && cat > /data/data/${packageName}/shared_prefs/expo.modules.devmenu.sharedpreferences.xml'`,
+      ],
+      {
+        // pass serialized prefs as input:
+        input: prefsXML,
+      }
+    );
+  }
+
   async configureMetroPort(packageName: string, metroPort: number) {
     // read preferences
     let prefs: any;
@@ -230,7 +250,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "-a",
       "android.intent.action.VIEW",
       "-d",
-      expoDeeplink + "&disableOnboarding=1", // disable onboarding dialog via deeplink query param,
+      expoDeeplink,
     ]);
   }
 
@@ -242,7 +262,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
       build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
     if (expoDeeplink) {
-      this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
+      await this.configureExpoDevMenu(build.packageName);
+      await this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
     } else {
       await this.configureMetroPort(build.packageName, metroPort);
       await this.launchWithBuild(build);
