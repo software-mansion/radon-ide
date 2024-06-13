@@ -138,7 +138,6 @@ export class Metro implements Disposable {
       metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
     }
     const metroEnv = {
-      ...process.env,
       ...launchConfiguration.env,
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
       NODE_PATH: path.join(appRootFolder, "node_modules"),

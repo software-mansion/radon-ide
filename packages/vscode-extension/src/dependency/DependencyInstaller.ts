@@ -70,7 +70,6 @@ export function installIOSDependencies(appRootFolder: string, forceCleanBuild: b
   return command("pod install", {
     cwd: iosDirPath,
     env: {
-      ...process.env,
       ...getLaunchConfiguration().env,
       LANG: "en_US.UTF-8",
     },

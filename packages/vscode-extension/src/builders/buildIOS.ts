@@ -107,7 +107,6 @@ function buildProject(
 
   return exec("xcodebuild", xcodebuildArgs, {
     env: {
-      ...process.env,
       ...getLaunchConfiguration().env,
       RCT_NO_LAUNCH_PACKAGER: "true",
     },

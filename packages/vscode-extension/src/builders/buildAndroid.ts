@@ -108,7 +108,7 @@ export async function buildAndroid(
   const buildProcess = cancelToken.adapt(
     exec("./gradlew", gradleArgs, {
       cwd: androidSourceDir,
-      env: { ...process.env, ...buildOptions.env, JAVA_HOME, ANDROID_HOME },
+      env: { ...buildOptions.env, JAVA_HOME, ANDROID_HOME },
       buffer: false,
     })
   );
