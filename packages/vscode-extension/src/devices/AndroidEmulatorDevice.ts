@@ -151,6 +151,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async configureExpoDevMenu(packageName: string) {
+    if (packageName === "host.exp.exponent") {
+      // For expo go we are unable to change this setting as the APK is not debuggable
+      return;
+    }
     // this code disables expo devmenu popup when the app is launched. When dev menu
     // is displayed, it blocks the JS loop and hence react devtools are unable to establish
     // the connection, and hence we never get the app ready event.
