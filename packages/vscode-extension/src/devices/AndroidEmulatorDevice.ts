@@ -117,7 +117,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
         "-grpc-use-token",
         "-no-snapshot-save",
       ],
-      { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
+      { env: { ANDROID_AVD_HOME: avdDirectory } }
     );
     this.emulatorProcess = subprocess;
 
@@ -396,7 +396,7 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 async function getAvdIds(avdDirectory: string) {
   const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
-    env: { ...process.env, ANDROID_AVD_HOME: avdDirectory },
+    env: { ANDROID_AVD_HOME: avdDirectory },
   });
 
   // filters out error messages and empty lines
