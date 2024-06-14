@@ -14,6 +14,21 @@ function stringifyProps(obj) {
   return keyValuePairs.join(" ");
 }
 
+function getComponentName({ type }) {
+  const name = type.name;
+  const isClassOrFunctionComponent = name !== undefined;
+  if (isClassOrFunctionComponent) {
+    return name;
+  }
+
+  const isForwardedRef = type["$$typeof"] === Symbol.for("react.forward_ref");
+  if (isForwardedRef) {
+    return "(forwarded ref)";
+  }
+
+  return "(unnamed)";
+}
+
 export function preview(component) {
   if (component._source == null) {
     return;
@@ -27,7 +42,7 @@ export function preview(component) {
   }
   global.__RNIDE_previews.set(name, {
     appKey: name,
-    name: component.type.name,
+    name: getComponentName(component),
     props: stringifyProps(component.props),
     fileName: component._source.fileName,
     lineNumber: component._source.lineNumber,
