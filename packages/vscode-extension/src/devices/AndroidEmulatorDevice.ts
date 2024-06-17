@@ -75,9 +75,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private async checkIfOldDeviceIsRunning() {
     return new Promise<void>((resolve, reject) => {
       let runningPid: string | undefined;
-      const subprocess = exec("ps", ["-A"], { env: { ...process.env } });
+      const subprocess = exec("ps", ["-A"]);
+      const regexpPattern = new RegExp(`(\\d+)\\s.*qemu.*-avd ${this.avdId}`);
       lineReader(subprocess).onLineRead(async (line) => {
-        const regexpPattern = new RegExp(`(\\d+)\\s.*${this.avdId}`);
         const regExpResult = regexpPattern.exec(line);
         if (regExpResult) {
           runningPid = regExpResult[1];
