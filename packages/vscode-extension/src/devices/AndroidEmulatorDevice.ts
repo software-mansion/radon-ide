@@ -17,6 +17,7 @@ import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoG
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
+const DISPOSE_TIMEOUT = 3000;
 
 interface EmulatorProcessInfo {
   pid: number;
@@ -49,6 +50,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
+    // If the emulator process does not shut down initially due to ongoing activities or processes,
+    // a forced termination (kill signal) is sent after a certain timeout period.
+    setTimeout(() => {
+      this.emulatorProcess?.kill(9);
+    }, DISPOSE_TIMEOUT);
   }
 
   async changeSettings(settings: DeviceSettings) {
@@ -66,10 +72,30 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
+  private async checkIfOldDeviceIsRunning() {
+    return new Promise<void>((resolve, reject) => {
+      let runningPid: string | undefined;
+      const subprocess = exec("ps", ["-A"], { env: { ...process.env } });
+      lineReader(subprocess).onLineRead(async (line) => {
+        const regexpPattern = new RegExp(`(\\d+)\\s.*${this.avdId}`);
+        const regExpResult = regexpPattern.exec(line);
+        if (regExpResult) {
+          runningPid = regExpResult[1];
+        }
+      });
+
+      subprocess.on("close", async () => {
+        if (runningPid) {
+          await exec("kill", ["-9", `${runningPid}`]);
+        }
+        resolve();
+      });
+    });
+  }
+
   async bootDevice() {
-    if (this.emulatorProcess) {
-      this.emulatorProcess.kill(9);
-    }
+    // this prevents booting device with the same AVD twice
+    await this.checkIfOldDeviceIsRunning();
 
     const avdDirectory = getOrCreateAvdDirectory();
     const subprocess = exec(
