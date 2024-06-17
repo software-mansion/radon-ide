@@ -72,7 +72,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
-  private async checkIfOldDeviceIsRunning() {
+  private async ensureOldEmulatorProcessExited() {
     return new Promise<void>((resolve, reject) => {
       let runningPid: string | undefined;
       const subprocess = exec("ps", ["-A"]);
@@ -95,7 +95,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async bootDevice() {
     // this prevents booting device with the same AVD twice
-    await this.checkIfOldDeviceIsRunning();
+    await this.ensureOldEmulatorProcessExited();
 
     const avdDirectory = getOrCreateAvdDirectory();
     const subprocess = exec(
