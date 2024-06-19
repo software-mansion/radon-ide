@@ -9,22 +9,9 @@ output_dir="${1:-out}"
 # take configuration from second argument or default to Debug
 configuration=${2:-Debug}
 
-if git submodule status ../simulator-server | grep --quiet '^ '; then # submodule is initialized
+submodule_status=$(git submodule status ../simulator-server)
 
-# Make sure, the submodule is in the up-to-date
-git submodule update --init -- ../simulator-server
-
-# execute the build from the simulator-server package
-# the build product location is printed by the build script as the very last line
-product_path=$("../simulator-server/build.sh" "$configuration" | tail -n 1)
-
-# Check if the build was successful
-if [[ $? -ne 0 ]]; then
-    echo "Build failed."
-    exit 1
-fi
-
-else # submodule doesn't exists
+if [[ $submodule_status == -* ]]; then # submodule is not initialized
 
 submodule_hash=$(git ls-tree HEAD ../simulator-server | awk '{print $3}')
 product_path="$output_dir/sim-server-Release-${submodule_hash}"
@@ -35,6 +22,32 @@ if [[ ! -f "$product_path" ]]; then
     echo ""
     echo "Make sure to follow development setup instructions: https://github.com/software-mansion/react-native-ide"
     echo "You can download the binary from the releases page on GitHub: https://github.com/software-mansion/react-native-ide/releases"
+    exit 1
+fi
+
+else # submodule is initialized
+
+# For release builds we always make sure that submodule is up to date
+if [[ $configuration == "Release" ]]; then
+    git submodule update --init -- ../simulator-server
+fi
+
+if [[ $submodule_status == +* ]]; then # submodule is not up-to-date
+    echo "Submodule has changes. Continue? [y/n]"
+    # read answer or abort if no input is provided in 5 seconds
+    read -t 5 answer
+    if [[ ! $answer =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+# execute the build from the simulator-server package
+# the build product location is printed by the build script as the very last line
+product_path=$("../simulator-server/build.sh" "$configuration" | tail -n 1)
+
+# Check if the build was successful
+if [[ $? -ne 0 ]]; then
+    echo "Build failed."
     exit 1
 fi
 

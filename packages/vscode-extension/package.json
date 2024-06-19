@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.14",
+  "version": "0.0.15",
   "engines": {
     "vscode": "^1.75.0",
     "os": "darwin"
@@ -162,6 +162,10 @@
                 "type": "string",
                 "description": "Location of the React Native application root folder relative to the workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
               },
+              "isExpo": {
+                "type": "boolean",
+                "description": "IDE tries to detect whether project uses Expo or React Native community CLI. This is needed when starting the bundler. If your project uses Expo but IDE fails to automatically detect it, you can set this parameter to `true` to force the use of Expo CLI."
+              },
               "env": {
                 "type": "object",
                 "description": "Environment variables to be passed to all build/run commands that the IDE is launching."
@@ -239,10 +243,13 @@
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
     "lint": "eslint src --ext ts && yarn prettier --check src",
-    "format": "prettier --write --list-different src"
+    "format": "prettier --write --list-different src",
+    "build:tests": "tsc --project tsconfig.test.json",
+    "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
+    "coordinate-parser": "^1.0.7",
     "@expo/fingerprint": "^0.5.0",
     "@expo/package-manager": "^1.1.2",
     "@msgpack/msgpack": "^2.8.0",
@@ -254,6 +261,7 @@
     "@radix-ui/react-radio-group": "^1.1.3",
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slider": "^1.1.2",
+    "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tooltip": "^1.0.7",
     "@types/glob": "^7.1.3",
     "@types/lodash": "^4.14.202",
@@ -262,6 +270,7 @@
     "@types/plist": "^3.0.5",
     "@types/react": "^18.2.45",
     "@types/semver": "^7.5.8",
+    "@types/sinon": "^17.0.3",
     "@types/tar": "^6.1.11",
     "@types/uuid": "^9.0.7",
     "@types/vscode": "^1.46.0",
@@ -274,6 +283,8 @@
     "@vscode/debugadapter": "^1.51.0",
     "@vscode/debugprotocol": "^1.51.0",
     "@vscode/extension-telemetry": "^0.9.6",
+    "@vscode/test-cli": "^0.0.9",
+    "@vscode/test-electron": "^2.4.0",
     "@vscode/vsce": "^2.22.0",
     "@vscode/webview-ui-toolkit": "^1.3.1",
     "babel-loader": "^9.1.3",
@@ -286,6 +297,7 @@
     "glob": "^7.1.6",
     "lodash": "^4.17.21",
     "minimatch": "^9.0.4",
+    "mocha": "^10.4.0",
     "node-fetch": "^2.7.0",
     "plist": "^3.1.0",
     "prettier": "^2.2.1",
@@ -293,6 +305,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "semver": "^7.6.2",
+    "sinon": "^18.0.0",
     "source-map": "^0.8.0-beta.0",
     "ts-loader": "^9.5.1",
     "typescript": "^4.1.3",

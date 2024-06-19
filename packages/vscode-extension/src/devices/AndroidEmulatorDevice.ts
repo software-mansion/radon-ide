@@ -64,6 +64,40 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "&&",
       `cmd uimode night ${settings.appearance === "light" ? "no" : "yes"}`,
     ]);
+    // location_mode: LOCATION_MODE_OFF: 0 LOCATION_MODE_HIGH_ACCURACY: 3 LOCATION_MODE_BATTERY_SAVING: 2 LOCATION_MODE_SENSORS_ONLY: 1
+    if (settings.location.isDisabled) {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "shell",
+        "settings",
+        "put",
+        "secure",
+        "location_mode",
+        "0",
+      ]);
+    } else {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "shell",
+        "settings",
+        "put",
+        "secure",
+        "location_mode",
+        "3",
+      ]);
+      // note that geo fix command takes arguments: $longitude , $latitude so the order is reversed compared to most conventions
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "emu",
+        "geo",
+        "fix",
+        settings.location.longitude.toString(),
+        settings.location.latitude.toString(),
+      ]);
+    }
   }
 
   async bootDevice() {
@@ -83,7 +117,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
         "-grpc-use-token",
         "-no-snapshot-save",
       ],
-      { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
+      { env: { ANDROID_AVD_HOME: avdDirectory } }
     );
     this.emulatorProcess = subprocess;
 
@@ -114,6 +148,30 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async openDevMenu() {
     await exec(ADB_PATH, ["-s", this.serial!, "shell", "input", "keyevent", "82"]);
+  }
+
+  async configureExpoDevMenu(packageName: string) {
+    if (packageName === "host.exp.exponent") {
+      // For expo go we are unable to change this setting as the APK is not debuggable
+      return;
+    }
+    // this code disables expo devmenu popup when the app is launched. When dev menu
+    // is displayed, it blocks the JS loop and hence react devtools are unable to establish
+    // the connection, and hence we never get the app ready event.
+    const prefsXML = `<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map><boolean name="isOnboardingFinished" value="true"/></map>`;
+    await exec(
+      ADB_PATH,
+      [
+        "-s",
+        this.serial!,
+        "shell",
+        `run-as ${packageName} sh -c 'mkdir -p /data/data/${packageName}/shared_prefs && cat > /data/data/${packageName}/shared_prefs/expo.modules.devmenu.sharedpreferences.xml'`,
+      ],
+      {
+        // pass serialized prefs as input:
+        input: prefsXML,
+      }
+    );
   }
 
   async configureMetroPort(packageName: string, metroPort: number) {
@@ -196,7 +254,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "-a",
       "android.intent.action.VIEW",
       "-d",
-      expoDeeplink + "&disableOnboarding=1", // disable onboarding dialog via deeplink query param,
+      expoDeeplink,
     ]);
   }
 
@@ -208,7 +266,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
       build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
     if (expoDeeplink) {
-      this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
+      await this.configureExpoDevMenu(build.packageName);
+      await this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
     } else {
       await this.configureMetroPort(build.packageName, metroPort);
       await this.launchWithBuild(build);
@@ -341,7 +400,7 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 async function getAvdIds(avdDirectory: string) {
   const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
-    env: { ...process.env, ANDROID_AVD_HOME: avdDirectory },
+    env: { ANDROID_AVD_HOME: avdDirectory },
   });
 
   // filters out error messages and empty lines

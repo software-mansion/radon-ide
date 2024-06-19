@@ -11,6 +11,11 @@ import "./DeviceSettingsDropdown.css";
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
 import { DeviceSettings } from "../../common/Project";
+import DoctorIcon from "./icons/DoctorIcon";
+import { DeviceLocationView } from "../views/DeviceLocationView";
+import { JSX } from "react/jsx-runtime";
+import DiagnosticView from "../views/DiagnosticView";
+import { useModal } from "../providers/ModalProvider";
 
 const contentSizes = [
   "xsmall",
@@ -29,6 +34,7 @@ interface DeviceSettingsDropdownProps {
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const { project, deviceSettings } = useProject();
+  const { openModal } = useModal();
 
   return (
     <DropdownMenu.Root>
@@ -97,6 +103,15 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
             <DropdownMenu.Arrow className="dropdown-menu-arrow" />
           </form>
+          <Label>Device Location</Label>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => {
+              openModal("Location", <DeviceLocationView />);
+            }}>
+            <span className="codicon codicon-location" />
+            Set Device Location
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

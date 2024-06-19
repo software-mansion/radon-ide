@@ -1,7 +1,6 @@
-const { useSyncExternalStore } = require("react");
-const { useEffect } = require("react");
-const { useRouter } = require("expo-router");
-const { store } = require("expo-router/src/global-state/router-store");
+import { useSyncExternalStore, useEffect } from "react";
+import { useRouter } from "expo-router";
+import { store } from "expo-router/src/global-state/router-store";
 
 function computeRouteIdentifier(pathname, params) {
   return pathname + JSON.stringify(params);
@@ -35,8 +34,7 @@ function useRouterPluginMainHook({ onNavigationChange }) {
       };
     },
     requestNavigationChange: ({ pathname, params }) => {
-      router.navigate(pathname);
-      router.setParams(params);
+      router.push(pathname, params);
     },
   };
 }

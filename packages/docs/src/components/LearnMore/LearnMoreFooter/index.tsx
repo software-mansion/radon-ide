@@ -1,22 +1,22 @@
-import React from 'react'
-import styles from './styles.module.css'
-import HomepageButton from '@site/src/components/HomepageButton'
+import React from "react";
+import styles from "./styles.module.css";
+import HomepageButton from "@site/src/components/HomepageButton";
 
 const LearnMoreFooter = () => {
   return (
     <section>
       <div className={styles.learnMoreSectionFooter}>
         <div>
-          <p>Learn more about the features in the newest video about IDE</p>
+          <p>Learn more about the React Native IDE features announced at App.js 2024</p>
         </div>
         <HomepageButton
-          target='_blank'
-          href='https://www.youtube.com/watch?v=YA0PMPm12SU'
-          title='See the video'
+          target="_blank"
+          href="https://www.youtube.com/watch?v=HWGssA55oNc"
+          title="See the video"
         />
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default LearnMoreFooter
+export default LearnMoreFooter;

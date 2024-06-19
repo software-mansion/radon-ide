@@ -66,6 +66,35 @@ function transformWrapper({ filename, src, ...rest }) {
     }
   } else if (filename.endsWith("node_modules/react-native-ide/index.js")) {
     src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
+  } else if (
+    filename.endsWith(
+      "node_modules/react-native/Libraries/Renderer/implementations/ReactFabric-dev.js"
+    ) ||
+    filename.endsWith(
+      "node_modules/react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js"
+    )
+  ) {
+    // This is a temporary workaround for inspector in React Native 0.74
+    // The inspector broke in that version because of this commit that's been included
+    // in React Native renderer despite it not being a part of React 18 release: https://github.com/facebook/react/commit/37d901e2b8
+    // The commit changes the way metadata properties from jsx transforms are added to the elements.
+    // The workaround is to replace dev version of ReactNative renderer with the one build from exact
+    // same react version, but with that commit reverted. The version of react used in React Native 0.74
+    // comes from this commit: https://github.com/facebook/react/commit/03d6f7cf0
+    //
+    // The mentioned issue got later resolved in https://github.com/facebook/react/commit/61bd00498
+    // however, the new approach does not produce the same information as the debug entries only
+    // point to component definition lines rather than places where the component is used.
+    // There is also a follow-up attempt to bring back proper debug metadata in https://github.com/facebook/react/commit/151cce37401
+    // However, this commit is not included in React Native 0.74 and would require pulling in
+    // a lot of further changes along with it. Also, based on the commit message, this approach
+    // is experimental as it has some performance implications and may be removed in future versions.
+    //
+    const { version } = requireFromAppDir("react-native/package.json");
+    if (version.startsWith("0.74")) {
+      const rendererFileName = filename.split("/").pop();
+      src = `module.exports = require("__RNIDE_lib__/rn74/${rendererFileName}");`;
+    }
   }
 
   return transform({ filename, src, ...rest });

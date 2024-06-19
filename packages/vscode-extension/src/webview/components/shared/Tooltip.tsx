@@ -4,9 +4,9 @@ import classnames from "classnames";
 
 interface TooltipProps {
   children: React.ReactNode;
-  label: string;
+  label: React.ReactNode;
   side?: "top" | "right" | "bottom" | "left";
-  type?: "primary" | "secondary" | "ternary";
+  type?: "primary" | "secondary" | "ternary" | "submit";
   instant?: boolean;
 }
 

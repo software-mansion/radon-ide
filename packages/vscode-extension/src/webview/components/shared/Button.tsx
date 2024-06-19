@@ -4,7 +4,7 @@ import Tooltip from "./Tooltip";
 
 interface ButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
-  type?: "primary" | "secondary" | "ternary";
+  type?: "primary" | "secondary" | "ternary" | "submit";
   disabled?: boolean;
   counter?: number;
   active?: boolean;

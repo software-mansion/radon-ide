@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es6",
-    "outDir": "out",
+    "outDir": "dist/tests",
     "lib": ["es6", "dom", "ESNext"],
     "sourceMap": true,
     "rootDir": "src",
@@ -12,14 +12,5 @@
     "allowJs": true,
     "jsx": "react-jsx"
   },
-  "exclude": [
-    "node_modules/**/*",
-    "lib/**/*",
-    "out/**/*",
-    "dist/**/*",
-    ".vscode-test",
-    "webpack.config.js",
-    ".vscode-test",
-    "vite.config.js"
-  ]
+  "include": ["src/**/*.test.ts"]
 }

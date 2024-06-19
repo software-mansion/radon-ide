@@ -3,6 +3,11 @@ import { DeviceInfo } from "./DeviceManager";
 export type DeviceSettings = {
   appearance: "light" | "dark";
   contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
+  location: {
+    latitude: number;
+    longitude: number;
+    isDisabled: boolean;
+  };
 };
 
 export type ProjectState = {
@@ -19,8 +24,10 @@ export type ProjectState = {
   stageProgress?: number;
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
-  previewZoom: number | "Fit" | undefined; // Preview specific. Consider extracting to different location if we store more preview state
+  previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
 };
+
+export type ZoomLevelType = number | "Fit";
 
 // important: order of values in this enum matters
 export enum StartupMessage {
@@ -87,8 +94,9 @@ export interface ProjectEventListener<T> {
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   restart(forceCleanBuild: boolean): Promise<void>;
+  goHome(): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
-  updatePreviewZoomLevel(zoom: number | "Fit"): Promise<void>;
+  updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;

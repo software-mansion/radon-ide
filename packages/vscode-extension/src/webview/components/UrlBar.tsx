@@ -56,6 +56,15 @@ function UrlBar({ project, disabled }: UrlBarProps) {
         disabled={disabled}>
         <span className="codicon codicon-refresh" />
       </IconButton>
+      <IconButton
+        onClick={() => project.goHome()}
+        tooltip={{
+          label: "Go to main screen",
+          side: "bottom",
+        }}
+        disabled={disabled || urlList.length == 0}>
+        <span className="codicon codicon-home" />
+      </IconButton>
       <UrlSelect
         onValueChange={(value: string) => {
           project.openNavigation(value);

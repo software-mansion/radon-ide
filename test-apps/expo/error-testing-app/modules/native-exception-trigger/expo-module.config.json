@@ -1,9 +1,0 @@
-{
-  "platforms": ["ios", "tvos", "android", "web"],
-  "ios": {
-    "modules": ["NativeExceptionTriggerModule"]
-  },
-  "android": {
-    "modules": ["expo.modules.nativeexceptiontrigger.NativeExceptionTriggerModule"]
-  }
-}

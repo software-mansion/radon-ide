@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
@@ -16,8 +16,8 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import ZoomControls, { ZoomLevelType } from "../components/ZoomControls";
 import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
+import { ZoomLevelType } from "../../common/Project";
 
 function PreviewView() {
   const { projectState, project } = useProject();
@@ -36,6 +36,7 @@ function PreviewView() {
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
+
   const devicesNotFound = projectState !== undefined && devices.length === 0;
 
   const { openModal } = useModal();
@@ -94,27 +95,6 @@ function PreviewView() {
   return (
     <div className="panel-view">
       <div className="button-group-top">
-        <IconButton
-          tooltip={{
-            label: "Follow active editor on the device",
-            side: "bottom",
-          }}
-          active={isFollowing}
-          onClick={() => {
-            vscode.postMessage({
-              command: isFollowing ? "stopFollowing" : "startFollowing",
-            });
-            setIsFollowing(!isFollowing);
-          }}
-          disabled={
-            devicesNotFound ||
-            true /* for the time being we are disabling this functionality as it incurs some performance overhead we didn't yet have time to investigate */
-          }>
-          <span className="codicon codicon-magnet" />
-        </IconButton>
-
-        <span className="group-separator" />
-
         <UrlBar project={project} disabled={devicesNotFound} />
 
         <div className="spacer" />
@@ -154,9 +134,6 @@ function PreviewView() {
           {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
         </div>
       )}
-      <div className="button-group-left">
-        <ZoomControls zoomLevel={zoomLevel} onZoomChanged={onZoomChanged} />
-      </div>
 
       <div className="button-group-bottom">
         <IconButton

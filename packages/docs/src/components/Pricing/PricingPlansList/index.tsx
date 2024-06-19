@@ -80,10 +80,13 @@ const PricingPlansList = ({ earlyBirdLicenseCallback }: PricingPlansListProps) =
           </div>
         </li>
         <li className={styles.item}>
-          <div className={clsx(styles.plan__container, styles.plan__highlight)}>
-            <h2 className={styles.plan__name}>
-              Early Bird <span className={styles.plan__special_offer}>One-time special offer</span>
-            </h2>
+          <div className={styles.plan__special_offer__wrapper}>
+            <div className={clsx(styles.plan__special_offer, styles.plan__highlight)}>
+              One-time special offer
+            </div>
+          </div>
+          <div className={styles.plan__container}>
+            <h2 className={styles.plan__name}>Early Bird</h2>
             <h3 className={styles.plan__price}>
               {isMonthly ? earlyBirdMonthly : earlyBirdAnnually}
             </h3>
@@ -91,11 +94,14 @@ const PricingPlansList = ({ earlyBirdLicenseCallback }: PricingPlansListProps) =
             <p>What's included:</p>
             <ul className={styles.plan__features}>
               <li>Everything in Individual</li>
-              <li>Freeze your price for the first year</li>
-              <li>License period starts Q3 2024, next billing Q3 2025</li>
-              <li>Early bird discount ends with Beta</li>
+              <li>Get access to direct chat with creators of IDE</li>
+              <li>Prioritized feature requests </li>
               <li>Support the development of IDE</li>
             </ul>
+            <p className={styles.plan__tagline}>
+              Freeze your price for the first year. License period starts Q3 2024, next billing Q3
+              2025. Early bird discount ends with Beta.
+            </p>
             <div className={styles.plan__spacer} />
             <Button onClick={earlyBirdLicenseCallback}>Choose</Button>
           </div>
