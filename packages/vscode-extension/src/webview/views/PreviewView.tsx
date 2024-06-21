@@ -36,8 +36,8 @@ function PreviewView() {
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
-
   const devicesNotFound = projectState !== undefined && devices.length === 0;
+  const isStarting = projectState.status === "starting";
 
   const { openModal } = useModal();
 
@@ -57,6 +57,12 @@ function PreviewView() {
       project.removeListener("log", incrementLogCounter);
     };
   }, []);
+
+  useEffect(() => {
+    if (isStarting) {
+      setLogCounter(0);
+    }
+  }, [setLogCounter, isStarting]);
 
   useEffect(() => {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {
