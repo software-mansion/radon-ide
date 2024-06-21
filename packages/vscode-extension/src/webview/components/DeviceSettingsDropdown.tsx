@@ -94,7 +94,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 <Slider.Thumb className="slider-thumb" aria-label="Text Size" />
                 <div className="slider-track-dent-container">
                   {Array.from({ length: 7 }).map((_, i) => (
-                    <div className="slider-track-dent" />
+                    <div key={i} className="slider-track-dent" />
                   ))}
                 </div>
               </Slider.Root>
