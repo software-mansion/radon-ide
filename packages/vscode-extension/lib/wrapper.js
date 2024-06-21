@@ -123,8 +123,8 @@ export function PreviewAppWrapper({ children, ...rest }) {
     "RNIDE_inspect",
     (payload) => {
       const getInspectorDataForViewAtPoint = require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
-
       const { width, height } = Dimensions.get("screen");
+
       getInspectorDataForViewAtPoint(
         mainContainerRef.current,
         payload.x * width,
@@ -141,14 +141,11 @@ export function PreviewAppWrapper({ children, ...rest }) {
           if (payload.requestStack) {
             stackPromise = Promise.all(
               viewData.hierarchy.reverse().map((item) => {
-                const inspectorData = item.getInspectorData((arg) => {
-                  const ret = findNodeHandle(arg);
-                  return ret;
-                });
-                const framePromise = new Promise((res, rej) => {
+                const inspectorData = item.getInspectorData((arg) => findNodeHandle(arg));
+                const framePromise = new Promise((resolve, reject) => {
                   try {
                     inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
-                      res({
+                      resolve({
                         x: pageX / width,
                         y: pageY / height,
                         width: viewWidth / width,
@@ -156,13 +153,12 @@ export function PreviewAppWrapper({ children, ...rest }) {
                       });
                     });
                   } catch (e) {
-                    rej(e);
+                    reject(e);
                   }
                 });
+
                 return framePromise
-                  .catch(() => {
-                    return undefined;
-                  })
+                  .catch(() => undefined)
                   .then((frame) => {
                     return inspectorData.source
                       ? {
@@ -177,7 +173,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
                       : undefined;
                   });
               })
-            ).then((stack) => stack.filter(Boolean));
+            ).then((stack) => stack?.filter(Boolean));
           }
           stackPromise.then((stack) => {
             devtoolsAgent._bridge.send("RNIDE_inspectData", {
