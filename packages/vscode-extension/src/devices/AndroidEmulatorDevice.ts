@@ -73,24 +73,19 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   private async ensureOldEmulatorProcessExited() {
-    return new Promise<void>((resolve, reject) => {
-      let runningPid: string | undefined;
-      const subprocess = exec("ps", ["-A"]);
-      const regexpPattern = new RegExp(`(\\d+)\\s.*qemu.*-avd ${this.avdId}`);
-      lineReader(subprocess).onLineRead(async (line) => {
-        const regExpResult = regexpPattern.exec(line);
-        if (regExpResult) {
-          runningPid = regExpResult[1];
-        }
-      });
-
-      subprocess.on("close", async () => {
-        if (runningPid) {
-          await exec("kill", ["-9", `${runningPid}`]);
-        }
-        resolve();
-      });
+    let runningPid: string | undefined;
+    const subprocess = exec("ps", ["-Ao", "pid,command"]);
+    const regexpPattern = new RegExp(`(\\d+)\\s.*qemu.*-avd ${this.avdId}`);
+    lineReader(subprocess).onLineRead(async (line) => {
+      const regExpResult = regexpPattern.exec(line);
+      if (regExpResult) {
+        runningPid = regExpResult[1];
+      }
     });
+    await subprocess;
+    if (runningPid) {
+      await exec("kill", ["-9", `${runningPid}`]);
+    }
   }
 
   async bootDevice() {
