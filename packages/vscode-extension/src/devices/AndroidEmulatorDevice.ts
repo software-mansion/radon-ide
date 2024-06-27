@@ -84,7 +84,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     });
     await subprocess;
     if (runningPid) {
-      await exec("kill", ["-9", `${runningPid}`]);
+      process.kill(Number(runningPid), 9);
     }
   }
 
