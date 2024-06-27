@@ -17,7 +17,7 @@ import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoG
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
-const DISPOSE_TIMEOUT = 3000;
+const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
   pid: number;
