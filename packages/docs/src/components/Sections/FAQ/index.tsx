@@ -29,7 +29,7 @@ const faqs = [
   },
 
   {
-    topic: "why did you make the source code public?",
+    topic: "Why did you make the source code public?",
     answer:
       "We are well aware there are an infinite number of ways of setting up your React Native project. With access to the code you can adjust the React Native IDE to make it run with your codebase.",
   },
