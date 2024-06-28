@@ -4,6 +4,7 @@ import pricing from "../PricingCard/pricing.module.css";
 import Button from "../../Button";
 import PricingCard from "../PricingCard";
 import SpecialOffer from "../PricingCard/SpecialOffer";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 
 function SupporterPlan() {
   return (
@@ -16,7 +17,14 @@ function SupporterPlan() {
       </h3>
       <p>What's included:</p>
       <ul className={pricing.plan__features}>
-        <li>All the features of React Native IDE</li>
+        <li>
+          <a
+            href={useBaseUrl("/docs/getting-started#-what-does-it-do")}
+            target="_blank"
+            rel="noopener noreferrer">
+            All the features of React Native IDE
+          </a>
+        </li>
         <li>Access to private Discord channel for feature requests and support</li>
         <li>For every month paid, you get a 50% discount on your Individual license</li>
         <li>Support the development of IDE</li>

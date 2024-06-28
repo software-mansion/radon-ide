@@ -3,6 +3,7 @@ import styles from "./styles.module.css";
 import pricing from "../PricingCard/pricing.module.css";
 import Button from "../../Button";
 import PricingCard from "../PricingCard";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 
 const PricingPlansList = () => {
   return (
@@ -16,7 +17,14 @@ const PricingPlansList = () => {
         <p className={pricing.plan__tagline}>Up to 14 seats</p>
         <p>What's included:</p>
         <ul className={pricing.plan__features}>
-          <li>All the features of React Native IDE</li>
+          <li>
+            <a
+              href={useBaseUrl("/docs/getting-started#-what-does-it-do")}
+              target="_blank"
+              rel="noopener noreferrer">
+              All the features of React Native IDE
+            </a>
+          </li>
           <li>Support through official Software Mansion channels</li>
           <li>Support the development of IDE</li>
         </ul>
@@ -29,7 +37,10 @@ const PricingPlansList = () => {
         <h2 className={pricing.plan__name}>Team</h2>
         <h3 className={pricing.plan__price}>Get in touch</h3>
         <p className={pricing.plan__tagline}>
-          <a href="https://swmansion.com/contact/projects" target="_blank">
+          <a
+            href="https://swmansion.com/contact/projects"
+            target="_blank"
+            rel="noopener noreferrer">
             Contact us
           </a>{" "}
           for pricing estimates
@@ -37,7 +48,14 @@ const PricingPlansList = () => {
         <p className={pricing.plan__tagline}>Starting from 15 seats</p>
         <p>What's included:</p>
         <ul className={pricing.plan__features}>
-          <li>Everything in Individual</li>
+          <li>
+            <a
+              href={useBaseUrl("/docs/getting-started#-what-does-it-do")}
+              target="_blank"
+              rel="noopener noreferrer">
+              All the features of React Native IDE
+            </a>
+          </li>
           <li>Access to priority support channels</li>
           <li>Support the development of IDE</li>
           <li>React Native Consulting services available</li>
