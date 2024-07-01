@@ -23,6 +23,9 @@
 .preview-loader-message {
   text-wrap: nowrap;
   width: 100%;
+}
+
+.preview-loader-slow-progress {
   text-decoration: underline;
 }
 
