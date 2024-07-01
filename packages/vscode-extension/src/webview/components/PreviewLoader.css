@@ -23,6 +23,7 @@
 .preview-loader-message {
   text-wrap: nowrap;
   width: 100%;
+  text-decoration: underline;
 }
 
 .preview-loader-stage-progress {
