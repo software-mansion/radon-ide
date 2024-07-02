@@ -19,12 +19,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
   const { projectState, project } = useProject();
   const [progress, setProgress] = useState(0);
 
-  const [previousProgress, setPreviousProgress] = useState({
-    status: projectState.status,
-    startupMessage: projectState.startupMessage,
-  });
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
-  console.log({ isLoadingSlowly });
   const isLoadingSlowlyTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
@@ -52,26 +47,21 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     }
   }, [projectState]);
 
+  // Order of status and startupMessage effects must be preserved.
   useEffect(() => {
-    const { status, startupMessage } = projectState;
-    if (previousProgress.status !== status) {
-      clearTimeout(isLoadingSlowlyTimeout.current);
+    clearTimeout(isLoadingSlowlyTimeout.current);
+  }, [projectState.status]);
+
+  useEffect(() => {
+    clearTimeout(isLoadingSlowlyTimeout.current);
+    // We skip reporting slow builds, this is the only most time-consuming
+    // task and times varies from project to project.
+    if (projectState.startupMessage !== StartupMessage.Building) {
+      isLoadingSlowlyTimeout.current = setTimeout(() => {
+        setIsLoadingSlowly(true);
+      }, slowLoadingThresholdMs);
     }
-    if (previousProgress.startupMessage !== startupMessage) {
-      clearTimeout(isLoadingSlowlyTimeout.current);
-      // We skip reporting slow builds, this is the only most time-consuming
-      // task and times varies from project to project.
-      if (startupMessage !== StartupMessage.Building) {
-        isLoadingSlowlyTimeout.current = setTimeout(() => {
-          setIsLoadingSlowly(true);
-        }, slowLoadingThresholdMs);
-      }
-    }
-    setPreviousProgress({
-      status: projectState.status,
-      startupMessage: projectState.startupMessage,
-    });
-  }, [projectState]);
+  }, [projectState.startupMessage]);
 
   function handleLoaderClick() {
     if (projectState.startupMessage === StartupMessage.Building) {
