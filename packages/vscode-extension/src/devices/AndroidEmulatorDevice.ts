@@ -176,7 +176,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async configureMetroPort(packageName: string, metroPort: number) {
     // read preferences
-    let prefs: { map: Object };
+    let prefs: { map: any };
     try {
       const { stdout } = await exec(
         ADB_PATH,
