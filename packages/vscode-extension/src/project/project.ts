@@ -24,6 +24,7 @@ import {
   ProjectInterface,
   ProjectState,
   StartupMessage,
+  WindowState,
   ZoomLevelType,
 } from "../common/Project";
 import { EventEmitter } from "stream";
@@ -37,6 +38,7 @@ import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
+const WINDOW_STATE_KEY = "window_state";
 
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
@@ -71,6 +73,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       isDisabled: true,
     },
   };
+
+  private windowState: WindowState = extensionContext.workspaceState.get(WINDOW_STATE_KEY, {
+    hoveredEdge: null,
+  });
 
   constructor(private readonly deviceManager: DeviceManager) {
     Project.currentProject = this;
@@ -381,6 +387,16 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
+  }
+
+  public async getWindowState() {
+    return this.windowState;
+  }
+
+  public async updateWindowState(newState: WindowState) {
+    this.windowState = newState;
+    extensionContext.workspaceState.update;
+    this.eventEmitter.emit("windowStateChanged", this.windowState);
   }
 
   private reportStageProgress(stageProgress: number, stage: string) {
