@@ -176,7 +176,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async configureMetroPort(packageName: string, metroPort: number) {
     // read preferences
-    let prefs: any;
+    let prefs: { map: {} };
     try {
       const { stdout } = await exec(
         ADB_PATH,
@@ -192,6 +192,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
         { allowNonZeroExit: true }
       );
       prefs = await xml2js.parseStringPromise(stdout, { explicitArray: true });
+      // test if prefs.map is an object, otherwise we just start from an empty prefs
+      if (typeof prefs.map !== "object") throw new Error("Invalid prefs file format");
     } catch (e) {
       // preferences file does not exists
       prefs = { map: {} };
