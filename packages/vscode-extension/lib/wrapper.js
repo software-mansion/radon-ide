@@ -71,7 +71,7 @@ export function PreviewAppWrapper({ children, ..._rest }) {
       const preview = global.__RNIDE_previews.get(previewKey);
       handleNavigationChange({ id: previewKey, name: `preview:${preview.name}` });
     },
-    [rootTag, devtoolsAgent]
+    [rootTag, handleNavigationChange]
   );
 
   const closePreview = useCallback(() => {
