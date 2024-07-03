@@ -33,6 +33,10 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
+import path from "path";
+import { homedir } from "node:os";
+import fs from "fs";
+import JSON5 from "json5";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -370,6 +374,52 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {
     this.deviceSession?.onActiveFileChange(filename, followEnabled);
+  }
+
+  public async getCommandsCurrentKeyBinding(commandName: string) {
+    const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
+    const extensionPackageJson = require(packageJsonPath);
+    let keybindingsJsonPath;
+    let keybindingsJson;
+    try {
+      keybindingsJsonPath = path.join(
+        homedir(),
+        "Library/Application Support/Code/User/keybindings.json"
+      );
+      // can not use require because the file may contain comments
+      keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());
+    } catch (e) {
+      Logger.error("error while parsing keybindings.json", e);
+      return undefined;
+    }
+
+    const isRNIDECommand =
+      extensionPackageJson.contributes.commands &&
+      extensionPackageJson.contributes.commands.find((command: any) => {
+        return command.command === commandName;
+      });
+    if (!isRNIDECommand) {
+      Logger.warn("Trying to access a keybinding for a command that is not part of an extension.");
+      return undefined;
+    }
+
+    const userKeybinding = keybindingsJson.find((command: any) => {
+      return command.command === commandName;
+    });
+    if (userKeybinding) {
+      return userKeybinding.key;
+    }
+
+    const defaultKeybinding = extensionPackageJson.contributes.keybindings.find(
+      (keybinding: any) => {
+        return keybinding.command === commandName;
+      }
+    );
+    if (defaultKeybinding) {
+      return defaultKeybinding.mac;
+    }
+
+    return undefined;
   }
 
   public async getDeviceSettings() {

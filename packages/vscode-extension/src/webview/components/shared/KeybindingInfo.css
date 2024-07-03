@@ -1,0 +1,6 @@
+.keybinding {
+  color: var(--swm-secondary-text);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+}

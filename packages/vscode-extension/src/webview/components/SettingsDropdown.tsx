@@ -7,6 +7,7 @@ import ManageDevicesView from "../views/ManageDevicesView";
 import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import { KeybindingInfo } from "./shared/KyebindingInfo";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -50,7 +51,16 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               project.openDevMenu();
             }}>
             <span className="codicon codicon-code" />
-            Open dev menu
+            <div
+              style={{
+                display: "flex",
+                width: "100%",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}>
+              Open dev menu
+              <KeybindingInfo commandName="RNIDE.openDevMenu" />
+            </div>
           </DropdownMenu.Item>
 
           <DropdownMenu.Sub>
