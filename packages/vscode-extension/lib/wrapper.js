@@ -40,8 +40,6 @@ function useAgentListener(agent, eventName, listener, deps = []) {
   }, [agent, ...deps]);
 }
 
-let currentPreviewKey = undefined;
-
 export function PreviewAppWrapper({ children, ..._rest }) {
   const rootTag = useContext(RootTagContext);
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
@@ -60,13 +58,12 @@ export function PreviewAppWrapper({ children, ..._rest }) {
   );
 
   const useNavigationMainHook = navigationPlugins[0]?.plugin.mainHook || emptyNavigationHook;
-  const { requestNavigationChange, onRouterInitialization } = useNavigationMainHook({
+  const { requestNavigationChange } = useNavigationMainHook({
     onNavigationChange: handleNavigationChange,
   });
 
   const openPreview = useCallback(
     (previewKey) => {
-      currentPreviewKey = previewKey;
       AppRegistry.runApplication(PREVIEW_APP_KEY, {
         rootTag,
         initialProps: { previewKey },
@@ -78,7 +75,7 @@ export function PreviewAppWrapper({ children, ..._rest }) {
   );
 
   const closePreview = useCallback(() => {
-    if (currentPreviewKey) {
+    if (getCurrentScene() === PREVIEW_APP_KEY) {
       AppRegistry.runApplication("main", {
         rootTag,
         initialProps: {},
@@ -116,10 +113,8 @@ export function PreviewAppWrapper({ children, ..._rest }) {
         return;
       }
       closePreview();
-      onRouterInitialization(() => {
-        const navigationDescriptor = navigationHistory.get(payload.id);
-        navigationDescriptor && requestNavigationChange(navigationDescriptor);
-      });
+      const navigationDescriptor = navigationHistory.get(payload.id);
+      navigationDescriptor && requestNavigationChange(navigationDescriptor);
     },
     [openPreview, closePreview, requestNavigationChange]
   );
@@ -235,9 +230,6 @@ export function PreviewAppWrapper({ children, ..._rest }) {
         appKey,
         navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
       });
-      if (appKey === "main") {
-        currentPreviewKey = undefined;
-      }
     }
   }, [!!devtoolsAgent && hasLayout]);
 

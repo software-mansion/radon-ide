@@ -1,7 +1,6 @@
-import { store } from "expo-router/build/global-state/router-store.js";
-
-import { useSyncExternalStore, useEffect, useState } from "react";
+import { useSyncExternalStore, useEffect } from "react";
 import { useRouter } from "expo-router";
+import { store } from "expo-router/build/global-state/router-store.js";
 
 function computeRouteIdentifier(pathname, params) {
   return pathname + JSON.stringify(params);
@@ -9,13 +8,11 @@ function computeRouteIdentifier(pathname, params) {
 
 function useRouterPluginMainHook({ onNavigationChange }) {
   const router = useRouter();
-  const [initCallbacks, setInitCallbacks] = useState([]);
   const routeInfo = useSyncExternalStore(
     store.subscribeToRootState,
     store.routeInfoSnapshot,
     store.routeInfoSnapshot
   );
-
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
   useEffect(() => {
@@ -26,16 +23,6 @@ function useRouterPluginMainHook({ onNavigationChange }) {
       id: computeRouteIdentifier(pathname, params),
     });
   }, [pathname, params]);
-
-  useEffect(() => {
-    if (router.navigationRef) {
-      for (const callback of initCallbacks) {
-        callback();
-      }
-      setInitCallbacks([]);
-    }
-  }, [router.navigationRef]);
-
   return {
     getCurrentNavigationDescriptor: () => {
       const snapshot = store.routeInfoSnapshot();
@@ -46,11 +33,9 @@ function useRouterPluginMainHook({ onNavigationChange }) {
         id: computeRouteIdentifier(snapshot.pathname, snapshot.params),
       };
     },
-    onRouterInitialization: (fn) => {
-      setInitCallbacks((callbacks) => [fn, ...callbacks]);
-    },
     requestNavigationChange: ({ pathname, params }) => {
-      router.push(pathname, params);
+      router.navigate(pathname);
+      router.setParams(params);
     },
   };
 }
