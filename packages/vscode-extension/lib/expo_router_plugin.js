@@ -6,6 +6,7 @@ function computeRouteIdentifier(pathname, params) {
   return pathname + JSON.stringify(params);
 }
 
+let navigationRoute = undefined;
 function useRouterPluginMainHook({ onNavigationChange }) {
   const router = useRouter();
   const routeInfo = useSyncExternalStore(
@@ -13,8 +14,10 @@ function useRouterPluginMainHook({ onNavigationChange }) {
     store.routeInfoSnapshot,
     store.routeInfoSnapshot
   );
+
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
+
   useEffect(() => {
     onNavigationChange({
       name: pathname,
@@ -23,6 +26,25 @@ function useRouterPluginMainHook({ onNavigationChange }) {
       id: computeRouteIdentifier(pathname, params),
     });
   }, [pathname, params]);
+
+  function requestNavigationChange({ pathname, params }) {
+    router.navigate(pathname);
+    router.setParams(params);
+  }
+
+  useEffect(() => {
+    function onReady(_state) {
+      if (navigationRoute && store.navigationRef?.isReady()) {
+        requestNavigationChange(navigationRoute);
+        navigationRoute = undefined;
+
+        store.navigationRef.removeListener("state", onReady);
+      }
+    }
+    store.navigationRef?.addListener("state", onReady);
+    return () => store.navigationRef?.removeListener("state", onReady);
+  }, [store.navigationRef?.current]);
+
   return {
     getCurrentNavigationDescriptor: () => {
       const snapshot = store.routeInfoSnapshot();
@@ -33,9 +55,12 @@ function useRouterPluginMainHook({ onNavigationChange }) {
         id: computeRouteIdentifier(snapshot.pathname, snapshot.params),
       };
     },
-    requestNavigationChange: ({ pathname, params }) => {
-      router.navigate(pathname);
-      router.setParams(params);
+    requestNavigationChange: (navigationDescriptor) => {
+      if (store.navigationRef?.isReady()) {
+        requestNavigationChange(navigationDescriptor);
+      } else {
+        navigationRoute = navigationDescriptor;
+      }
     },
   };
 }
