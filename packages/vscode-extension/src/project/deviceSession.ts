@@ -4,7 +4,7 @@ import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { BuildResult, DisposableBuild } from "../builders/BuildManager";
-import { DeviceSettings, StartupMessage } from "../common/Project";
+import { AppPermissionType, DeviceSettings, StartupMessage } from "../common/Project";
 import { Platform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
@@ -17,6 +17,7 @@ type PreviewReadyCallback = (previewURL: string) => void;
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
   private debugSession: DebugSession | undefined;
+  private buildResult: BuildResult | undefined;
 
   constructor(
     private readonly device: DeviceBase,
@@ -57,11 +58,11 @@ export class DeviceSession implements Disposable {
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
     progressCallback(StartupMessage.Building);
-    const build = await this.disposableBuild.build;
+    this.buildResult = await this.disposableBuild.build;
     progressCallback(StartupMessage.Installing);
-    await this.device.installApp(build, false);
+    await this.device.installApp(this.buildResult, false);
     progressCallback(StartupMessage.Launching);
-    await this.device.launchApp(build, this.metro.port, this.devtools.port);
+    await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
 
     const waitForPreview = this.device.startPreview().then(() => {
       previewReadyCallback(this.device.previewURL!);
@@ -112,6 +113,13 @@ export class DeviceSession implements Disposable {
 
   public stepOverDebugger() {
     this.debugSession?.customRequest("next");
+  }
+
+  public resetAppPermissions(permissionType: AppPermissionType) {
+    if (this.buildResult) {
+      return this.device.resetAppPermissions(permissionType, this.buildResult);
+    }
+    return false;
   }
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {

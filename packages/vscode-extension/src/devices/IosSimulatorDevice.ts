@@ -13,7 +13,7 @@ import {
 import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
-import { DeviceSettings } from "../common/Project";
+import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { ExecaError } from "execa";
 
@@ -250,6 +250,23 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
+  async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {
+    if (build.platform !== Platform.IOS) {
+      throw new Error("Invalid platform");
+    }
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(),
+      "privacy",
+      this.deviceUDID,
+      "reset",
+      convertToSimctlPermission(appPermission),
+      build.bundleID,
+    ]);
+    return false;
+  }
+
   makePreview(): Preview {
     return new Preview(["ios", this.deviceUDID, getOrCreateDeviceSet()]);
   }
@@ -393,5 +410,20 @@ function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
       return "extra-extra-large";
     case "xxxlarge":
       return "extra-extra-extra-large";
+  }
+}
+
+function convertToSimctlPermission(permissionType: AppPermissionType): string {
+  switch (permissionType) {
+    case "all":
+      return "all";
+    case "location":
+      return "location";
+    case "photos":
+      return "photos";
+    case "contacts":
+      return "contacts";
+    case "calendar":
+      return "calendar";
   }
 }

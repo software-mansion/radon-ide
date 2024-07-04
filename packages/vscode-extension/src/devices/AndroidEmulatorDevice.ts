@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from "uuid";
 import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
-import { DeviceSettings } from "../common/Project";
+import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 
@@ -340,6 +340,21 @@ export class AndroidEmulatorDevice extends DeviceBase {
       // applications (see `adb shell pm`, install command)
       () => installApk(true)
     );
+  }
+
+  async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {
+    if (build.platform !== Platform.Android) {
+      throw new Error("Invalid platform");
+    }
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "pm",
+      "reset-permissions",
+      build.packageName,
+    ]);
+    return true; // Android will terminate the process if any of the permissions were granted prior to reset-permissions call
   }
 
   makePreview(): Preview {

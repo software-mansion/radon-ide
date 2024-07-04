@@ -29,6 +29,8 @@ export type ProjectState = {
 
 export type ZoomLevelType = number | "Fit";
 
+export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
+
 // important: order of values in this enum matters
 export enum StartupMessage {
   InitializingDevice = "Initializing device",
@@ -112,6 +114,8 @@ export interface ProjectInterface {
   openDevMenu(): Promise<void>;
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
   movePanelToNewWindow(): void;
+
+  resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;

@@ -112,6 +112,50 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-location" />
             Set Device Location
           </DropdownMenu.Item>
+          <Label>Permissions</Label>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+              <span className="codicon codicon-redo" />
+              Reset Permissions
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent
+                className="dropdown-menu-content"
+                sideOffset={2}
+                alignOffset={-5}>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => project.resetAppPermissions("all")}>
+                  <span className="codicon codicon-check-all" />
+                  Reset All Permissions
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => project.resetAppPermissions("location")}>
+                  <span className="codicon codicon-location" />
+                  Reset Location
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => project.resetAppPermissions("photos")}>
+                  <span className="codicon codicon-file-media" />
+                  Reset Photos
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => project.resetAppPermissions("contacts")}>
+                  <span className="codicon codicon-organization" />
+                  Reset Contacts
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => project.resetAppPermissions("calendar")}>
+                  <span className="codicon codicon-calendar" />
+                  Reset Calendar
+                </DropdownMenu.Item>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
