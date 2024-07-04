@@ -8,6 +8,7 @@ const {
   Linking,
   findNodeHandle,
 } = require("react-native");
+const { PREVIEW_APP_KEY } = require("./preview");
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -16,8 +17,9 @@ export function registerNavigationPlugin(name, plugin) {
 
 let navigationHistory = new Map();
 
-function isPreviewUrl(url) {
-  return url.startsWith("preview://");
+function getCurrentScene() {
+  const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
+  return SceneTracker.getActiveScene().name;
 }
 
 function emptyNavigationHook() {
@@ -38,7 +40,7 @@ function useAgentListener(agent, eventName, listener, deps = []) {
   }, [agent, ...deps]);
 }
 
-export function PreviewAppWrapper({ children, ...rest }) {
+export function PreviewAppWrapper({ children, ..._rest }) {
   const rootTag = useContext(RootTagContext);
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
@@ -47,35 +49,33 @@ export function PreviewAppWrapper({ children, ...rest }) {
   const handleNavigationChange = useCallback(
     (navigationDescriptor) => {
       navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
-      devtoolsAgent &&
-        devtoolsAgent._bridge.send("RNIDE_navigationChanged", {
-          displayName: navigationDescriptor.name,
-          id: navigationDescriptor.id,
-        });
+      devtoolsAgent?._bridge.send("RNIDE_navigationChanged", {
+        displayName: navigationDescriptor.name,
+        id: navigationDescriptor.id,
+      });
     },
     [devtoolsAgent]
   );
 
-  const useNavigationMainHook =
-    (navigationPlugins.length && navigationPlugins[0].plugin.mainHook) || emptyNavigationHook;
+  const useNavigationMainHook = navigationPlugins[0]?.plugin.mainHook || emptyNavigationHook;
   const { requestNavigationChange } = useNavigationMainHook({
     onNavigationChange: handleNavigationChange,
   });
 
   const openPreview = useCallback(
     (previewKey) => {
-      AppRegistry.runApplication(previewKey, {
+      AppRegistry.runApplication(PREVIEW_APP_KEY, {
         rootTag,
-        initialProps: {},
+        initialProps: { previewKey },
       });
+      const preview = global.__RNIDE_previews.get(previewKey);
+      handleNavigationChange({ id: previewKey, name: `preview:${preview.name}` });
     },
-    [rootTag]
+    [rootTag, handleNavigationChange]
   );
 
   const closePreview = useCallback(() => {
-    const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
-    const isRunningPreview = isPreviewUrl(SceneTracker.getActiveScene().name);
-    if (isRunningPreview) {
+    if (getCurrentScene() === PREVIEW_APP_KEY) {
       AppRegistry.runApplication("main", {
         rootTag,
         initialProps: {},
@@ -107,7 +107,8 @@ export function PreviewAppWrapper({ children, ...rest }) {
     devtoolsAgent,
     "RNIDE_openNavigation",
     (payload) => {
-      if (isPreviewUrl(payload.id)) {
+      const isPreviewUrl = payload.id.startsWith("preview://");
+      if (isPreviewUrl) {
         openPreview(payload.id);
         return;
       }
@@ -224,10 +225,9 @@ export function PreviewAppWrapper({ children, ...rest }) {
 
   useEffect(() => {
     if (!!devtoolsAgent && hasLayout) {
-      const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
-      const sceneName = SceneTracker.getActiveScene().name;
+      const appKey = getCurrentScene();
       devtoolsAgent._bridge.send("RNIDE_appReady", {
-        appKey: sceneName,
+        appKey,
         navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
       });
     }
@@ -239,18 +239,6 @@ export function PreviewAppWrapper({ children, ...rest }) {
       style={{ flex: 1 }}
       onLayout={() => {
         setHasLayout(true);
-        if (devtoolsAgent) {
-          const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
-          const sceneName = SceneTracker.getActiveScene().name;
-          const isRunningPreview = isPreviewUrl(sceneName);
-          if (isRunningPreview) {
-            const preview = (global.__RNIDE_previews || new Map()).get(sceneName);
-            devtoolsAgent._bridge.send("RNIDE_navigationChanged", {
-              displayName: `preview:${preview.name}`, // TODO: make names unique if there are multiple previews of the same component
-              id: sceneName,
-            });
-          }
-        }
       }}>
       {children}
     </View>
