@@ -32,7 +32,8 @@ function getComponentName({ type }) {
 }
 
 export function preview(component) {
-  if (!component || component._source === null) {
+  // eslint-disable-next-line eqeqeq
+  if (!component || component._source == null) {
     return;
   }
 
