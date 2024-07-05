@@ -4,12 +4,7 @@ import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import {
-  IOSDeviceInfo,
-  IOSDeviceTypeInfo,
-  IOSRuntimeInfo,
-  Platform,
-} from "../common/DeviceManager";
+import { IOSDeviceInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
 import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
@@ -34,6 +29,21 @@ interface SimulatorInfo {
 interface SimulatorData {
   devices: { [runtimeID: string]: SimulatorInfo[] };
 }
+
+type PrivacyServiceName =
+  | "all"
+  | "calendar"
+  | "contacts-limited"
+  | "contacts"
+  | "location"
+  | "location-always"
+  | "photos-add"
+  | "photos"
+  | "media-library"
+  | "microphone"
+  | "motion"
+  | "reminders"
+  | "siri";
 
 export class IosSimulatorDevice extends DeviceBase {
   constructor(private readonly deviceUDID: string) {
@@ -254,6 +264,7 @@ export class IosSimulatorDevice extends DeviceBase {
     if (build.platform !== Platform.IOS) {
       throw new Error("Invalid platform");
     }
+    const privacyServiceName: PrivacyServiceName = appPermission;
     await exec("xcrun", [
       "simctl",
       "--set",
@@ -261,7 +272,7 @@ export class IosSimulatorDevice extends DeviceBase {
       "privacy",
       this.deviceUDID,
       "reset",
-      convertToSimctlPermission(appPermission),
+      privacyServiceName,
       build.bundleID,
     ]);
     return false;
@@ -410,20 +421,5 @@ function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
       return "extra-extra-large";
     case "xxxlarge":
       return "extra-extra-extra-large";
-  }
-}
-
-function convertToSimctlPermission(permissionType: AppPermissionType): string {
-  switch (permissionType) {
-    case "all":
-      return "all";
-    case "location":
-      return "location";
-    case "photos":
-      return "photos";
-    case "contacts":
-      return "contacts";
-    case "calendar":
-      return "calendar";
   }
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, Button } from 'react-native';
 import * as Location from 'expo-location';
 
-export default function Another() {
+export default function Location() {
   const [location, setLocation] = useState(null);
 
   async function readLocation() {
@@ -13,13 +13,13 @@ export default function Another() {
       return;
     }
 
-    let location = await Location.getCurrentPositionAsync({});
+    const location = await Location.getCurrentPositionAsync({});
     console.log('Location', location);
+    const { coords, timestamp } = location;
+    const { latitude, longitude } = coords;
     setLocation(
-      `${location.coords.latitude.toFixed(
-        4
-      )}, ${location.coords.longitude.toFixed(4)} at: ${new Date(
-        location.timestamp
+      `${latitude.toFixed(4)}, ${longitude.toFixed(4)} at: ${new Date(
+        timestamp
       ).toLocaleTimeString()}`
     );
   }
