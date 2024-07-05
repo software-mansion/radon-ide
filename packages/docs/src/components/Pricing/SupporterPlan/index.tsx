@@ -26,7 +26,7 @@ function SupporterPlan() {
           </a>
         </li>
         <li>Access to private Discord channel for feature requests and support</li>
-        <li>For every month paid, you get a 50% discount on your Individual license</li>
+        <li>50% discount on future Individual or Team license*</li>
         <li>Support the development of IDE</li>
       </ul>
       <p className={pricing.plan__tagline}>Supporter license deal ends with Beta.</p>

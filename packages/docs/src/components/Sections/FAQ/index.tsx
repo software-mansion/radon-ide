@@ -27,7 +27,11 @@ const faqs = [
     topic: "When are you planning to close the public Beta?",
     answer: "We're aiming to close the beta at the end of Q3 2024.",
   },
-
+  {
+    topic: "How does the Supporter's license discount works?",
+    answer:
+      "For every month your Supporter's license is active, you receive the 50% discount on the Individual or Team license.",
+  },
   {
     topic: "Why did you make the source code public?",
     answer:
