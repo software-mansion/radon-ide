@@ -8,6 +8,10 @@ export default function Another() {
   async function readLocation() {
     let { status } = await Location.requestForegroundPermissionsAsync();
     console.log('Permission status', status);
+    if (status !== 'granted') {
+      setLocation('Permission to access location was denied');
+      return;
+    }
 
     let location = await Location.getCurrentPositionAsync({});
     console.log('Location', location);
