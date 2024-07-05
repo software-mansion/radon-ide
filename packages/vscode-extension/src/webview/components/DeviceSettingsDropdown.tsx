@@ -10,7 +10,7 @@ import "./DeviceSettingsDropdown.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
-import { DeviceSettings } from "../../common/Project";
+import { AppPermissionType, DeviceSettings } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { JSX } from "react/jsx-runtime";
@@ -32,9 +32,24 @@ interface DeviceSettingsDropdownProps {
   disabled?: boolean;
 }
 
+const resetOptionsIOS: Array<{ label: string; value: AppPermissionType; icon: string }> = [
+  { label: "Reset All Permissions", value: "all", icon: "check-all" },
+  { label: "Reset Location", value: "location", icon: "location" },
+  { label: "Reset Photos", value: "photos", icon: "file-media" },
+  { label: "Reset Contacts", value: "contacts", icon: "organization" },
+  { label: "Reset Calendar", value: "calendar", icon: "calendar" },
+];
+
+const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon: string }> = [
+  { label: "Reset All Permissions", value: "all", icon: "check-all" },
+];
+
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
-  const { project, deviceSettings } = useProject();
+  const { project, deviceSettings, projectState } = useProject();
   const { openModal } = useModal();
+
+  const resetOptions =
+    projectState.selectedDevice?.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
 
   return (
     <DropdownMenu.Root>
@@ -123,36 +138,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 className="dropdown-menu-content"
                 sideOffset={2}
                 alignOffset={-5}>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => project.resetAppPermissions("all")}>
-                  <span className="codicon codicon-check-all" />
-                  Reset All Permissions
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => project.resetAppPermissions("location")}>
-                  <span className="codicon codicon-location" />
-                  Reset Location
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => project.resetAppPermissions("photos")}>
-                  <span className="codicon codicon-file-media" />
-                  Reset Photos
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => project.resetAppPermissions("contacts")}>
-                  <span className="codicon codicon-organization" />
-                  Reset Contacts
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => project.resetAppPermissions("calendar")}>
-                  <span className="codicon codicon-calendar" />
-                  Reset Calendar
-                </DropdownMenu.Item>
+                {resetOptions.map((option) => (
+                  <DropdownMenu.Item
+                    className="dropdown-menu-item"
+                    onSelect={() => project.resetAppPermissions(option.value)}>
+                    <span className={`codicon codicon-${option.icon}`} />
+                    {option.label}
+                  </DropdownMenu.Item>
+                ))}
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>

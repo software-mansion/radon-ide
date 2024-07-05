@@ -346,6 +346,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (build.platform !== Platform.Android) {
       throw new Error("Invalid platform");
     }
+    if (appPermission !== "all") {
+      Logger.warn(
+        "Resetting all privacy permission as individual permissions aren't currently supported on Android."
+      );
+    }
     await exec(ADB_PATH, [
       "-s",
       this.serial!,
