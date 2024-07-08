@@ -10,6 +10,7 @@ import path from "path";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
+  private previewStartPromise: Promise<steing> | undefined;
   private acquired = false;
 
   abstract get lockFilePath(): string;
@@ -59,7 +60,10 @@ export abstract class DeviceBase implements Disposable {
   }
 
   async startPreview() {
-    this.preview = this.makePreview();
-    return this.preview.start();
+    if (!this.previewStartPromise) {
+      this.preview = this.makePreview();
+      this.previewStartPromise = this.preview.start();
+    }
+    return this.previewStartPromise;
   }
 }
