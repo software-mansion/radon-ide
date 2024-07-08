@@ -82,7 +82,7 @@ export class DeviceSession implements Disposable {
       previewReadyCallback(this.device.previewURL!);
     });
 
-    this.launch(progressCallback);
+    await this.launch(progressCallback);
   }
 
   public async startDebugger() {
