@@ -66,7 +66,6 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
         Uri.joinPath(this.context.extensionUri, "node_modules"),
       ],
     };
-    Logger.debug("frytki", this.context.extensionPath);
     webviewView.webview.html = generateWebviewContent(
       this.context,
       webviewView.webview,
