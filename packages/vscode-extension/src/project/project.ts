@@ -17,6 +17,7 @@ import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager"
 import { DeviceInfo } from "../common/DeviceManager";
 import { throttle } from "../common/utils";
 import {
+  AppPermissionType,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
@@ -285,6 +286,15 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100)
     );
+  }
+
+  async resetAppPermissions(permissionType: AppPermissionType) {
+    const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
+    if (needsRestart) {
+      // we trigger device selection change here as the app process will terminate due to permission change while but the
+      // restart method may not yet detect this
+      await this.selectDevice(this.projectState.selectedDevice!, false);
+    }
   }
 
   public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
