@@ -108,6 +108,16 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  function closeWithConfirmation() {
+    window
+      .showWarningMessage("Are you sure you want to close the IDE panel?", "Yes", "No")
+      .then((item) => {
+        if (item === "Yes") {
+          commands.executeCommand("RNIDE.closePanel");
+        }
+      });
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -119,6 +129,9 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.showPanel", showIDEPanel));
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.closeWithConfirmation", closeWithConfirmation)
+  );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.diagnose", diagnoseWorkspaceStructure)
   );

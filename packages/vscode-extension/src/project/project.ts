@@ -17,6 +17,7 @@ import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager"
 import { DeviceInfo } from "../common/DeviceManager";
 import { throttle } from "../common/utils";
 import {
+  AppPermissionType,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
@@ -198,24 +199,50 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.reloadMetro();
   }
 
-  public async restart(forceCleanBuild: boolean) {
-    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
+  public async restart(forceCleanBuild: boolean, onlyReloadJSWhenPossible: boolean = true) {
+    // we save device info and device session at the start such that we can
+    // check if they weren't updated in the meantime while we await for restart
+    // procedures
+    const deviceInfo = this.projectState.selectedDevice!;
+    const deviceSession = this.deviceSession;
+
+    this.updateProjectStateForDevice(deviceInfo, {
+      status: "starting",
+      startupMessage: StartupMessage.Restarting,
+    });
+
     if (forceCleanBuild || this.nativeFilesChangedSinceLastBuild) {
       await this.start(true, true);
-      await this.selectDevice(this.projectState.selectedDevice!, true);
+      await this.selectDevice(deviceInfo, true);
       this.nativeFilesChangedSinceLastBuild = false;
       return;
     }
 
-    // if we have an active device session, we try reloading metro
-    if (this.deviceSession?.isActive) {
+    // if we have an active devtools session, we try hot reloading
+    if (onlyReloadJSWhenPossible && this.devtools.hasConnectedClient) {
       this.reloadMetro();
       return;
     }
 
-    // otherwise we trigger selectDevice which should handle restarting the device, installing
-    // app and launching it
-    await this.selectDevice(this.projectState.selectedDevice!, false);
+    // otherwise we try to restart the device session
+    try {
+      // we first check if the device session hasn't changed in the meantime
+      if (deviceSession === this.deviceSession) {
+        await this.deviceSession?.restart((startupMessage) =>
+          this.updateProjectStateForDevice(deviceInfo, { startupMessage })
+        );
+        this.updateProjectStateForDevice(deviceInfo, {
+          status: "running",
+        });
+      }
+    } catch (e) {
+      // finally in case of any errors, we restart the selected device which reboots
+      // emulator etc...
+      // we first check if the device hasn't been updated in the meantime
+      if (deviceInfo === this.projectState.selectedDevice) {
+        await this.selectDevice(this.projectState.selectedDevice!, false);
+      }
+    }
   }
 
   private async start(restart: boolean, forceCleanBuild: boolean) {
@@ -285,6 +312,13 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100)
     );
+  }
+
+  async resetAppPermissions(permissionType: AppPermissionType) {
+    const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
+    if (needsRestart) {
+      this.restart(false, false);
+    }
   }
 
   public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {

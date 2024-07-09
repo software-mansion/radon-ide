@@ -1,7 +1,7 @@
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { DeviceSettings } from "../common/Project";
+import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { Platform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
@@ -10,6 +10,7 @@ import path from "path";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
+  private previewStartPromise: Promise<steing> | undefined;
   private acquired = false;
 
   abstract get lockFilePath(): string;
@@ -20,6 +21,10 @@ export abstract class DeviceBase implements Disposable {
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
   abstract makePreview(): Preview;
   abstract get platform(): Platform;
+  abstract resetAppPermissions(
+    appPermission: AppPermissionType,
+    buildResult: BuildResult
+  ): Promise<boolean>;
 
   async acquire() {
     const acquired = await tryAcquiringLock(this.lockFilePath);
@@ -55,7 +60,10 @@ export abstract class DeviceBase implements Disposable {
   }
 
   async startPreview() {
-    this.preview = this.makePreview();
-    return this.preview.start();
+    if (!this.previewStartPromise) {
+      this.preview = this.makePreview();
+      this.previewStartPromise = this.preview.start();
+    }
+    return this.previewStartPromise;
   }
 }
