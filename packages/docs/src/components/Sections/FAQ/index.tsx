@@ -47,6 +47,10 @@ It's okay to modify the code to run in your project and to fix bugs. However, do
     answer:
       "At this moment WebStorm is not supported.<br/><br/>As the adoption for the extension grows we might add a support for WebStorm in the future.",
   },
+  {
+    topic: "How do I cancel the subscription?",
+    answer: `You can cancel your subscription at any time. To do so, click the "cancel your subscription" link in the email you received after purchase or visit <a href="https://paddle.net" target="_blank">paddle.net</a> to manage your subscription. If you have problems canceling your subscription, please contact us at ide@swmansion.com.`,
+  },
 ];
 
 const FAQ = () => {
