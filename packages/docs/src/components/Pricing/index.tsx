@@ -1,33 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styles from "./styles.module.css";
 import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
 import Motivation from "../Motivation";
 import SupporterPlan from "./SupporterPlan";
 
-import { initializePaddle, Paddle } from "@paddle/paddle-js";
-
 const Pricing = () => {
-  // Create a local state to store Paddle instance
-  const [paddle, setPaddle] = useState<Paddle>();
-
-  // Download and initialize Paddle instance from CDN
-  useEffect(() => {
-    initializePaddle({ environment: "sandbox", token: "test_e4f6457e74dffcba61da98c3e6e" }).then(
-      (paddleInstance: Paddle | undefined) => {
-        if (paddleInstance) {
-          setPaddle(paddleInstance);
-        }
-      }
-    );
-  }, []);
-
-  const openEarlyBirdCheckout = () => {
-    paddle?.Checkout.open({
-      items: [{ priceId: "pri_01hzpzgm6b6tzmh3s9aenphmgd", quantity: 1 }],
-    });
-  };
-
   return (
     <div className={styles.container}>
       <h1 className={styles.headingLabel}>Pricing</h1>
