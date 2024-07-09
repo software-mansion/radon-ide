@@ -48,7 +48,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
 
-  private nativeFilesChangedSinceLastBuild: boolean;
+  private detectedFingerprintChange: boolean;
   private workspaceWatcher!: FileSystemWatcher;
   private fileSaveWatcherDisposable!: Disposable;
 
@@ -79,7 +79,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.nativeFilesChangedSinceLastBuild = false;
+    this.detectedFingerprintChange = false;
 
     this.trackNativeChanges();
   }
@@ -211,10 +211,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       startupMessage: StartupMessage.Restarting,
     });
 
-    if (forceCleanBuild || this.nativeFilesChangedSinceLastBuild) {
+    if (forceCleanBuild) {
       await this.start(true, true);
       await this.selectDevice(deviceInfo, true);
-      this.nativeFilesChangedSinceLastBuild = false;
+      return;
+    } else if (this.detectedFingerprintChange) {
+      await this.selectDevice(deviceInfo, false);
       return;
     }
 
@@ -495,6 +497,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           this.reportStageProgress(stageProgress, StartupMessage.Building);
         }, 100)
       );
+
+      // reset fingerpring change flag when build finishes successfully
+      if (this.detectedFingerprintChange) {
+        build.build.then(() => {
+          this.detectedFingerprintChange = false;
+        });
+      }
+
       Logger.debug("Metro & devtools ready");
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
@@ -528,13 +538,13 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   };
 
   private checkIfNativeChanged = throttle(async () => {
-    if (!this.nativeFilesChangedSinceLastBuild && this.projectState.selectedDevice) {
+    if (!this.detectedFingerprintChange && this.projectState.selectedDevice) {
       if (await didFingerprintChange(this.projectState.selectedDevice.platform)) {
-        this.nativeFilesChangedSinceLastBuild = true;
+        this.detectedFingerprintChange = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
-  }, 100);
+  }, 300);
 }
 
 export function isAppSourceFile(filePath: string) {
