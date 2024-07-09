@@ -8,9 +8,20 @@ import { getAppRootFolder } from "../utilities/extensionContext";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
+import {
+  isNodeModulesInstalled,
+  isPackageManagerAvailable,
+  PackageManagerName,
+  resolvePackageManager,
+} from "../utilities/packageManager";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
+
+type checkNodeModulesInstalledReturnType = {
+  installed: boolean;
+  packageManager: PackageManagerName;
+};
 
 export class DependencyChecker implements Disposable {
   private disposables: Disposable[] = [];
@@ -263,4 +274,16 @@ export async function checkIosDependenciesInstalled() {
 
 export async function checkAndroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
+}
+
+export async function checkNodeModulesInstalled(): Promise<checkNodeModulesInstalledReturnType> {
+  const packageManager = await resolvePackageManager();
+
+  // if(!isPackageManagerAvailable(packageManager)){
+  //   // TODO some error handling
+  // }
+
+  const installed = await isNodeModulesInstalled(packageManager);
+
+  return { installed, packageManager };
 }

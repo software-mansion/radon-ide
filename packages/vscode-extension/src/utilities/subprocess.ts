@@ -102,7 +102,7 @@ export function execSync(...args: [string, string[]?, execa.SyncOptions?]) {
   return result;
 }
 
-export function command(...args: [string, execa.Options?]) {
+export function command(...args: [string, (execa.Options & { silentErrorsOnExit?: boolean })?]) {
   if (args.length > 1) {
     updatePWDEnvWhenCwdIsSet(args[1]);
   }
@@ -117,6 +117,10 @@ export function command(...args: [string, execa.Options?]) {
       Logger.error("Command", args[0], "execution resulted in an error:", e);
     }
   }
-  printErrorsOnExit(); // don't want to await here not to block the outer method
+
+  if (args[1]?.silentErrorsOnExit) {
+    printErrorsOnExit(); // don't want to await here not to block the outer method
+  }
+
   return subprocess;
 }

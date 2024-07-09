@@ -1,8 +1,8 @@
-import * as PackageManager from "@expo/package-manager";
-import { exec } from "./subprocess";
+import { command, exec } from "./subprocess";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import { getAppRootFolder } from "./extensionContext";
+import { Logger } from "../Logger";
 
 export type PackageManagerName = "npm" | "pnpm" | "yarn" | "bun";
 
@@ -43,4 +43,77 @@ export function isPackageManagerAvailable(manager: PackageManagerName): boolean 
     return true;
   } catch {}
   return false;
+}
+
+async function isNpmInstalled(): Promise<boolean> {
+  const workspacePath = getAppRootFolder();
+  try {
+    const { stdout, stderr } = await command("npm ls --json", { cwd: workspacePath });
+    const parsedJson = JSON.parse(stdout);
+    return parsedJson.problems ? false : true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function isYarnInstalled(): Promise<boolean> {
+  const workspacePath = getAppRootFolder();
+  try {
+    // because "yarn check" was removed from yarnv2 we use npm's method for checking dependencies
+    // npm is takeing into consideration yarn.lock since version 7, which means
+    // that if the users shell is using the older one this function may produce false in unexpected ways but even then
+    // we'll just run "yarn install" every time which is exactly what we would need to do without isYarnInstalled.
+    // https://docs.npmjs.com/cli/v7/commands/npm-install
+    const { stdout, stderr } = await command("npm ls --json", { cwd: workspacePath });
+    const parsedJson = JSON.parse(stdout);
+
+    // because npm marks packages installed with yarn as "extraneous" we need to check if there are any other problems.
+    if (parsedJson.problems) {
+      parsedJson.problems.forEach((element: string) => {
+        if (!element.startsWith("extraneous")) {
+          return false;
+        }
+      });
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function isNodeModulesInstalled(manager: PackageManagerName): Promise<boolean> {
+  switch (manager) {
+    case "npm":
+      return await isNpmInstalled();
+    case "yarn":
+      return await isYarnInstalled();
+  }
+}
+
+export async function installNodeModules(manager: PackageManagerName): Promise<void> {
+  const workspacePath = getAppRootFolder();
+  let installationCommand;
+
+  switch (manager) {
+    case "npm":
+      installationCommand = "npm install";
+      break;
+    case "yarn":
+      Logger.debug("Frytki");
+      installationCommand = "yarn install";
+      break;
+    case "pnpm":
+      installationCommand = "pnpm install";
+      break;
+    case "bun":
+      installationCommand = "bun install";
+      break;
+  }
+
+  const subprocess = command(installationCommand, {
+    cwd: workspacePath,
+    silentErrorsOnExit: true,
+  });
+
+  await subprocess;
 }

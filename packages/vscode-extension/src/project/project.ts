@@ -34,6 +34,8 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
+import { checkNodeModulesInstalled } from "../dependency/DependencyChecker";
+import { installNodeModules } from "../utilities/packageManager";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -280,6 +282,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           break;
       }
     });
+
+    Logger.debug("Installing Node Modules");
+    const installNodeModules = this.installNodeModules();
+
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
 
@@ -310,7 +316,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       forceCleanBuild,
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
-      }, 100)
+      }, 100),
+      [installNodeModules]
     );
   }
 
@@ -443,6 +450,18 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public async updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void> {
     this.updateProjectState({ previewZoom: zoom });
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
+  }
+
+  private async installNodeModules(): Promise<void> {
+    const nodeModulesStatus = await checkNodeModulesInstalled();
+
+    if (nodeModulesStatus.installed) {
+      Logger.debug("Node Modules installed");
+      return;
+    }
+
+    await installNodeModules(nodeModulesStatus.packageManager);
+    Logger.debug("Node Modules installed");
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
