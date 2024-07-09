@@ -147,7 +147,7 @@ export async function activate(context: ExtensionContext) {
 
     const isIDEPanelVisible = SidePanelViewProvider.currentProvider?.view?.visible;
 
-    // if closing of Auxiliary bar affected the visibility of SidePanelView, we assume that it means that it was pined to the secondary sidebar.
+    // if closing of Auxiliary bar affected the visibility of SidePanelView, we assume that it means that it was pinned to the secondary sidebar.
     if (wasIDEPanelVisible && !isIDEPanelVisible) {
       commands.executeCommand("RNIDE.closePanel");
     }
