@@ -40,11 +40,16 @@ function useAgentListener(agent, eventName, listener, deps = []) {
   }, [agent, ...deps]);
 }
 
-export function PreviewAppWrapper({ children, ..._rest }) {
+export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
   const rootTag = useContext(RootTagContext);
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
+
+  const mountCallback = initialProps?.__RNIDE_onMount;
+  useEffect(() => {
+    mountCallback?.();
+  }, [mountCallback]);
 
   const handleNavigationChange = useCallback(
     (navigationDescriptor) => {
@@ -75,12 +80,21 @@ export function PreviewAppWrapper({ children, ..._rest }) {
   );
 
   const closePreview = useCallback(() => {
+    let closePromiseResolve;
+    const closePreviewPromise = new Promise((resolve) => {
+      closePromiseResolve = resolve;
+    });
     if (getCurrentScene() === PREVIEW_APP_KEY) {
       AppRegistry.runApplication("main", {
         rootTag,
-        initialProps: {},
+        initialProps: {
+          __RNIDE_onMount: closePromiseResolve,
+        },
       });
+    } else {
+      closePromiseResolve();
     }
+    return closePreviewPromise;
   }, [rootTag]);
 
   useAgentListener(
@@ -96,9 +110,10 @@ export function PreviewAppWrapper({ children, ..._rest }) {
     devtoolsAgent,
     "RNIDE_openUrl",
     (payload) => {
-      closePreview();
-      const url = payload.url;
-      Linking.openURL(url);
+      closePreview().then(() => {
+        const url = payload.url;
+        Linking.openURL(url);
+      });
     },
     [closePreview]
   );
@@ -112,9 +127,10 @@ export function PreviewAppWrapper({ children, ..._rest }) {
         openPreview(payload.id);
         return;
       }
-      closePreview();
       const navigationDescriptor = navigationHistory.get(payload.id);
-      navigationDescriptor && requestNavigationChange(navigationDescriptor);
+      closePreview().then(() => {
+        navigationDescriptor && requestNavigationChange(navigationDescriptor);
+      });
     },
     [openPreview, closePreview, requestNavigationChange]
   );
