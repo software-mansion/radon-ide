@@ -6,33 +6,25 @@ interface KeybindingInfoProps {
   commandName: string;
 }
 
-interface SymbolProps {
-  children: ReactNode;
+function translateToUnicode(symbol: string) {
+  let icons = {
+    cmd: "⌘",
+    ctrl: "⌃",
+    alt: "⌥",
+    option: "⌥",
+    shift: "⇧",
+    tab: "⇥",
+    up: "↑",
+    down: "↓",
+    left: "←",
+    right: "→",
+  };
+  return icons[symbol.toLowerCase() as keyof typeof icons] || symbol.toUpperCase();
 }
-
-const Symbol = ({ children }: SymbolProps) => {
-  return <span className="symbol">{children}</span>;
-};
 
 export const KeybindingInfo = ({ commandName }: KeybindingInfoProps) => {
   const { project } = useProject();
   const [keybinding, setKeybinding] = useState<string[]>([]);
-
-  function translateToUnicode(symbol: string) {
-    let icons = {
-      cmd: "\u2318", // ⌘
-      ctrl: "\u2303", // ⌃
-      alt: "\u2325", // ⌥
-      option: "\u2325", // ⌥
-      shift: "\u21E7", // ⇧
-      tab: "\u21E5", // ⇥
-      up: "\u2191", // ↑
-      down: "\u2193", // ↓
-      left: "\u2190", // ←
-      right: "\u2192", // →
-    };
-    return icons[symbol.toLowerCase() as keyof typeof icons] || symbol.toUpperCase();
-  }
 
   useEffect(() => {
     project.getCommandsCurrentKeyBinding(commandName).then((res) => {
@@ -52,7 +44,11 @@ export const KeybindingInfo = ({ commandName }: KeybindingInfoProps) => {
     <div className="keybinding">
       {" "}
       {keybinding.map((symbol, index) => {
-        return <Symbol key={index}>{symbol}</Symbol>;
+        return (
+          <span key={index} className="symbol">
+            {symbol}
+          </span>
+        );
       })}
     </div>
   );
