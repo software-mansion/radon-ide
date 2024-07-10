@@ -4,15 +4,14 @@ import readline from "readline";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
-function updatePWDEnvWhenCwdIsSet(options?: execa.Options) {
-  // Some processes rely on PWD environment variable that may be copied from
-  // the parent process. However, when cwd option is set, we never should use
-  // PWD of the parent process as it may point to a different directory. In case
-  // both cwd and PWD environment variable are set, we should update PWD to the
-  // same location as requested by the cwd option.
-  if (options && options.cwd && options.env && options.env.PWD) {
-    options.env.PWD = options.cwd;
+function updatePWDInArgs<T extends execa.Options>(args: [string, string[]?, T?]) {
+  if (args.length > 1) {
+    const options = args[args.length - 1] as T;
+    if (options && options.cwd) {
+      (args[args.length - 1] as T) = { ...options, env: { ...options.env, PWD: "0" } };
+    }
   }
+  return args;
 }
 
 /**
@@ -46,10 +45,7 @@ export function lineReader(childProcess: ExecaChildProcess<string>, includeStder
 export function exec(
   ...args: [string, string[]?, (execa.Options & { allowNonZeroExit?: boolean })?]
 ) {
-  if (args.length > 1) {
-    updatePWDEnvWhenCwdIsSet(args[2]);
-  }
-  const subprocess = execa(...args);
+  const subprocess = execa(...updatePWDInArgs(args));
   const allowNonZeroExit = args[2]?.allowNonZeroExit;
   async function printErrorsOnExit() {
     try {
@@ -86,10 +82,7 @@ export function exec(
 }
 
 export function execSync(...args: [string, string[]?, execa.SyncOptions?]) {
-  if (args.length > 1) {
-    updatePWDEnvWhenCwdIsSet(args[2]);
-  }
-  const result = execa.sync(...args);
+  const result = execa.sync(...updatePWDInArgs(args));
   if (result.stderr) {
     Logger.debug(
       "Subprocess",
@@ -103,10 +96,7 @@ export function execSync(...args: [string, string[]?, execa.SyncOptions?]) {
 }
 
 export function command(...args: [string, execa.Options?]) {
-  if (args.length > 1) {
-    updatePWDEnvWhenCwdIsSet(args[1]);
-  }
-  const subprocess = execa.command(...args);
+  const subprocess = execa.command(...updatePWDInArgs(args));
   async function printErrorsOnExit() {
     try {
       const result = await subprocess;
