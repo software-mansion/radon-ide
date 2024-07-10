@@ -34,6 +34,10 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
+import path from "path";
+import { homedir } from "node:os";
+import fs from "fs";
+import JSON5 from "json5";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -48,7 +52,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
 
-  private nativeFilesChangedSinceLastBuild: boolean;
+  private detectedFingerprintChange: boolean;
   private workspaceWatcher!: FileSystemWatcher;
   private fileSaveWatcherDisposable!: Disposable;
 
@@ -79,7 +83,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.nativeFilesChangedSinceLastBuild = false;
+    this.detectedFingerprintChange = false;
 
     this.trackNativeChanges();
   }
@@ -211,10 +215,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       startupMessage: StartupMessage.Restarting,
     });
 
-    if (forceCleanBuild || this.nativeFilesChangedSinceLastBuild) {
+    if (forceCleanBuild) {
       await this.start(true, true);
       await this.selectDevice(deviceInfo, true);
-      this.nativeFilesChangedSinceLastBuild = false;
+      return;
+    } else if (this.detectedFingerprintChange) {
+      await this.selectDevice(deviceInfo, false);
       return;
     }
 
@@ -406,6 +412,52 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.onActiveFileChange(filename, followEnabled);
   }
 
+  public async getCommandsCurrentKeyBinding(commandName: string) {
+    const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
+    const extensionPackageJson = require(packageJsonPath);
+    let keybindingsJsonPath;
+    let keybindingsJson;
+    try {
+      keybindingsJsonPath = path.join(
+        homedir(),
+        "Library/Application Support/Code/User/keybindings.json"
+      );
+      // can not use require because the file may contain comments
+      keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());
+    } catch (e) {
+      Logger.error("error while parsing keybindings.json", e);
+      return undefined;
+    }
+
+    const isRNIDECommand =
+      extensionPackageJson.contributes.commands &&
+      extensionPackageJson.contributes.commands.find((command: any) => {
+        return command.command === commandName;
+      });
+    if (!isRNIDECommand) {
+      Logger.warn("Trying to access a keybinding for a command that is not part of an extension.");
+      return undefined;
+    }
+
+    const userKeybinding = keybindingsJson.find((command: any) => {
+      return command.command === commandName;
+    });
+    if (userKeybinding) {
+      return userKeybinding.key;
+    }
+
+    const defaultKeybinding = extensionPackageJson.contributes.keybindings.find(
+      (keybinding: any) => {
+        return keybinding.command === commandName;
+      }
+    );
+    if (defaultKeybinding) {
+      return defaultKeybinding.mac;
+    }
+
+    return undefined;
+  }
+
   public async getDeviceSettings() {
     return this.deviceSettings;
   }
@@ -495,6 +547,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           this.reportStageProgress(stageProgress, StartupMessage.Building);
         }, 100)
       );
+
+      // reset fingerpring change flag when build finishes successfully
+      if (this.detectedFingerprintChange) {
+        build.build.then(() => {
+          this.detectedFingerprintChange = false;
+        });
+      }
+
       Logger.debug("Metro & devtools ready");
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
@@ -528,13 +588,13 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   };
 
   private checkIfNativeChanged = throttle(async () => {
-    if (!this.nativeFilesChangedSinceLastBuild && this.projectState.selectedDevice) {
+    if (!this.detectedFingerprintChange && this.projectState.selectedDevice) {
       if (await didFingerprintChange(this.projectState.selectedDevice.platform)) {
-        this.nativeFilesChangedSinceLastBuild = true;
+        this.detectedFingerprintChange = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
-  }, 100);
+  }, 300);
 }
 
 export function isAppSourceFile(filePath: string) {
