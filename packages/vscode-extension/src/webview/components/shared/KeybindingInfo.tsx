@@ -1,6 +1,5 @@
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./KeybindingInfo.css";
-import { useProject } from "../../providers/ProjectProvider";
 import { useUtils } from "../../providers/UtilsProvider";
 
 interface KeybindingInfoProps {
@@ -20,7 +19,7 @@ function translateToUnicode(symbol: string) {
     left: "←",
     right: "→",
   };
-  return icons[symbol.toLowerCase() as keyof typeof icons] || symbol.toUpperCase();
+  return icons[symbol.toLowerCase() as keyof typeof icons] ?? symbol.toUpperCase();
 }
 
 export const KeybindingInfo = ({ commandName }: KeybindingInfoProps) => {
@@ -28,9 +27,9 @@ export const KeybindingInfo = ({ commandName }: KeybindingInfoProps) => {
   const [keybinding, setKeybinding] = useState<string[]>([]);
 
   useEffect(() => {
-    utils.getCommandsCurrentKeyBinding(commandName).then((res) => {
-      if (res) {
-        const result = res?.split(/[+ ]/).map((key) => {
+    utils.getCommandsCurrentKeyBinding(commandName).then((keys) => {
+      if (keys) {
+        const result = keys?.split(/[+ ]/).map((key) => {
           key.trim();
           return translateToUnicode(key);
         });

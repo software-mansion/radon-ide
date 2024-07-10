@@ -8,6 +8,13 @@ import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsInterface } from "../common/Utils";
 
+type keybindingType = {
+  command: string;
+  key?: string;
+  mac?: string;
+  when?: string;
+};
+
 export class Utils implements UtilsInterface {
   public async getCommandsCurrentKeyBinding(commandName: string) {
     const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
@@ -19,16 +26,16 @@ export class Utils implements UtilsInterface {
         homedir(),
         "Library/Application Support/Code/User/keybindings.json"
       );
-      // can not use require because the file may contain comments
+      // cannot use require because the file may contain comments
       keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());
     } catch (e) {
-      Logger.error("error while parsing keybindings.json", e);
+      Logger.error("Error while parsing keybindings.json", e);
       return undefined;
     }
 
     const isRNIDECommand =
-      extensionPackageJson.contributes.commands &&
-      extensionPackageJson.contributes.commands.find((command: any) => {
+      !!extensionPackageJson.contributes.commands &&
+      !!extensionPackageJson.contributes.commands.find((command: keybindingType) => {
         return command.command === commandName;
       });
     if (!isRNIDECommand) {
@@ -36,7 +43,7 @@ export class Utils implements UtilsInterface {
       return undefined;
     }
 
-    const userKeybinding = keybindingsJson.find((command: any) => {
+    const userKeybinding = keybindingsJson.find((command: keybindingType) => {
       return command.command === commandName;
     });
     if (userKeybinding) {
@@ -44,7 +51,7 @@ export class Utils implements UtilsInterface {
     }
 
     const defaultKeybinding = extensionPackageJson.contributes.keybindings.find(
-      (keybinding: any) => {
+      (keybinding: keybindingType) => {
         return keybinding.command === commandName;
       }
     );
