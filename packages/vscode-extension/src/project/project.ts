@@ -48,7 +48,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
 
-  private nativeFilesChangedSinceLastBuild: boolean;
+  private detectedFingerprintChange: boolean;
   private workspaceWatcher!: FileSystemWatcher;
   private fileSaveWatcherDisposable!: Disposable;
 
@@ -79,7 +79,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.nativeFilesChangedSinceLastBuild = false;
+    this.detectedFingerprintChange = false;
 
     this.trackNativeChanges();
   }
@@ -199,24 +199,52 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.reloadMetro();
   }
 
-  public async restart(forceCleanBuild: boolean) {
-    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
-    if (forceCleanBuild || this.nativeFilesChangedSinceLastBuild) {
+  public async restart(forceCleanBuild: boolean, onlyReloadJSWhenPossible: boolean = true) {
+    // we save device info and device session at the start such that we can
+    // check if they weren't updated in the meantime while we await for restart
+    // procedures
+    const deviceInfo = this.projectState.selectedDevice!;
+    const deviceSession = this.deviceSession;
+
+    this.updateProjectStateForDevice(deviceInfo, {
+      status: "starting",
+      startupMessage: StartupMessage.Restarting,
+    });
+
+    if (forceCleanBuild) {
       await this.start(true, true);
-      await this.selectDevice(this.projectState.selectedDevice!, true);
-      this.nativeFilesChangedSinceLastBuild = false;
+      await this.selectDevice(deviceInfo, true);
+      return;
+    } else if (this.detectedFingerprintChange) {
+      await this.selectDevice(deviceInfo, false);
       return;
     }
 
-    // if we have an active device session, we try reloading metro
-    if (this.deviceSession?.isActive) {
+    // if we have an active devtools session, we try hot reloading
+    if (onlyReloadJSWhenPossible && this.devtools.hasConnectedClient) {
       this.reloadMetro();
       return;
     }
 
-    // otherwise we trigger selectDevice which should handle restarting the device, installing
-    // app and launching it
-    await this.selectDevice(this.projectState.selectedDevice!, false);
+    // otherwise we try to restart the device session
+    try {
+      // we first check if the device session hasn't changed in the meantime
+      if (deviceSession === this.deviceSession) {
+        await this.deviceSession?.restart((startupMessage) =>
+          this.updateProjectStateForDevice(deviceInfo, { startupMessage })
+        );
+        this.updateProjectStateForDevice(deviceInfo, {
+          status: "running",
+        });
+      }
+    } catch (e) {
+      // finally in case of any errors, we restart the selected device which reboots
+      // emulator etc...
+      // we first check if the device hasn't been updated in the meantime
+      if (deviceInfo === this.projectState.selectedDevice) {
+        await this.selectDevice(this.projectState.selectedDevice!, false);
+      }
+    }
   }
 
   private async start(restart: boolean, forceCleanBuild: boolean) {
@@ -291,9 +319,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
     if (needsRestart) {
-      // we trigger device selection change here as the app process will terminate due to permission change while but the
-      // restart method may not yet detect this
-      await this.selectDevice(this.projectState.selectedDevice!, false);
+      this.restart(false, false);
     }
   }
 
@@ -471,6 +497,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           this.reportStageProgress(stageProgress, StartupMessage.Building);
         }, 100)
       );
+
+      // reset fingerpring change flag when build finishes successfully
+      if (this.detectedFingerprintChange) {
+        build.build.then(() => {
+          this.detectedFingerprintChange = false;
+        });
+      }
+
       Logger.debug("Metro & devtools ready");
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
@@ -504,13 +538,13 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   };
 
   private checkIfNativeChanged = throttle(async () => {
-    if (!this.nativeFilesChangedSinceLastBuild && this.projectState.selectedDevice) {
+    if (!this.detectedFingerprintChange && this.projectState.selectedDevice) {
       if (await didFingerprintChange(this.projectState.selectedDevice.platform)) {
-        this.nativeFilesChangedSinceLastBuild = true;
+        this.detectedFingerprintChange = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
-  }, 100);
+  }, 300);
 }
 
 export function isAppSourceFile(filePath: string) {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, Button } from 'react-native';
 import * as Location from 'expo-location';
 
-export default function Location() {
+export default function LocationScreen() {
   const [location, setLocation] = useState(null);
 
   async function readLocation() {
