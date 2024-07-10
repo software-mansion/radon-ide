@@ -7,8 +7,7 @@ import ManageDevicesView from "../views/ManageDevicesView";
 import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import { KeybindingInfo } from "./shared/KyebindingInfo";
-import { useUtils } from "../providers/UtilsProvider";
+import { KeybindingInfo } from "./shared/KeybindingInfo";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -20,7 +19,6 @@ interface SettingsDropdownProps {
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
-  const { utils } = useUtils();
 
   return (
     <DropdownMenu.Root>
@@ -53,13 +51,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               project.openDevMenu();
             }}>
             <span className="codicon codicon-code" />
-            <div
-              style={{
-                display: "flex",
-                width: "100%",
-                flexDirection: "row",
-                justifyContent: "space-between",
-              }}>
+            <div className="dropdown-menu-item-content">
               Open dev menu
               <KeybindingInfo commandName="RNIDE.openDevMenu" />
             </div>
@@ -116,7 +108,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                     <DropdownMenu.Item
                       className="dropdown-menu-item"
                       onSelect={() => {
-                        utils.movePanelToNewWindow();
+                        project.movePanelToNewWindow();
                       }}>
                       <span className="codicon codicon-multiple-windows" />
                       New Window
