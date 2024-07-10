@@ -4,6 +4,9 @@ import readline from "readline";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
+function updatePWDInArgs<T extends execa.Options>(args: [string, string[]?, T?]): typeof args;
+function updatePWDInArgs<T extends execa.Options>(args: [string, T?]): typeof args;
+
 function updatePWDInArgs<T extends execa.Options>(args: [string, string[]?, T?]) {
   if (args.length > 1) {
     const options = args[args.length - 1] as T;
