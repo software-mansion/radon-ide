@@ -15,7 +15,6 @@ import { Logger } from "../Logger";
 import { BuildManager, didFingerprintChange } from "../builders/BuildManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
-import { throttle } from "../common/utils";
 import {
   AppPermissionType,
   DeviceSettings,
@@ -38,6 +37,7 @@ import path from "path";
 import { homedir } from "node:os";
 import fs from "fs";
 import JSON5 from "json5";
+import { throttle } from "../utilities/throttle";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";

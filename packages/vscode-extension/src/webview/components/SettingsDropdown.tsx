@@ -8,6 +8,7 @@ import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { KeybindingInfo } from "./shared/KyebindingInfo";
+import { useUtils } from "../providers/UtilsProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ interface SettingsDropdownProps {
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
+  const { utils } = useUtils();
 
   return (
     <DropdownMenu.Root>
@@ -114,7 +116,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                     <DropdownMenu.Item
                       className="dropdown-menu-item"
                       onSelect={() => {
-                        project.movePanelToNewWindow();
+                        utils.movePanelToNewWindow();
                       }}>
                       <span className="codicon codicon-multiple-windows" />
                       New Window

@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import "./KeybindingInfo.css";
 import { useProject } from "../../providers/ProjectProvider";
+import { useUtils } from "../../providers/UtilsProvider";
 
 interface KeybindingInfoProps {
   commandName: string;
@@ -23,11 +24,11 @@ function translateToUnicode(symbol: string) {
 }
 
 export const KeybindingInfo = ({ commandName }: KeybindingInfoProps) => {
-  const { project } = useProject();
+  const { utils } = useUtils();
   const [keybinding, setKeybinding] = useState<string[]>([]);
 
   useEffect(() => {
-    project.getCommandsCurrentKeyBinding(commandName).then((res) => {
+    utils.getCommandsCurrentKeyBinding(commandName).then((res) => {
       if (res) {
         const result = res?.split(/[+ ]/).map((key) => {
           key.trim();
