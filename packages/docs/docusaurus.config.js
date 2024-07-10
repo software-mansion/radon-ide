@@ -93,6 +93,10 @@ const config = {
             to: "/purchase-terms",
             label: "Purchase Terms",
           },
+          {
+            to: "/supporter-terms",
+            label: "Supporter's License Terms",
+          },
         ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },
