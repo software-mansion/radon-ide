@@ -100,6 +100,7 @@ export interface ProjectInterface {
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
+  getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
 
