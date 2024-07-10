@@ -47,8 +47,11 @@ export function lineReader(childProcess: ExecaChildProcess<string>, includeStder
   };
 }
 
-type ExecArgs = [string, string[]?, (execa.Options & { allowNonZeroExit?: boolean })?];
-export function exec([name, args, options]: ExecArgs) {
+export function exec(
+  name: string,
+  args?: string[],
+  options?: execa.Options & { allowNonZeroExit?: boolean }
+) {
   const subprocess = execa(name, args, overridePWD(options));
   const allowNonZeroExit = options?.allowNonZeroExit;
   async function printErrorsOnExit() {
@@ -73,7 +76,7 @@ export function exec([name, args, options]: ExecArgs) {
   return subprocess;
 }
 
-export function execSync([name, args, options]: [string, string[]?, execa.SyncOptions?]) {
+export function execSync(name: string, args?: string[], options?: execa.SyncOptions) {
   const result = execa.sync(name, args, overridePWD(options));
   if (result.stderr) {
     Logger.debug("Subprocess", name, args?.join(" "), "produced error output:", result.stderr);
@@ -81,7 +84,7 @@ export function execSync([name, args, options]: [string, string[]?, execa.SyncOp
   return result;
 }
 
-export function command([commandWithArgs, options]: [string, execa.Options?]) {
+export function command(commandWithArgs: string, options?: execa.Options) {
   const subprocess = execa.command(commandWithArgs, overridePWD(options));
   async function printErrorsOnExit() {
     try {
