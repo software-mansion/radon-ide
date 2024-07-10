@@ -22,6 +22,20 @@ function getCurrentScene() {
   return SceneTracker.getActiveScene().name;
 }
 
+function getLoadingView() {
+  // In React Native 0.75 LoadingView was moved to DevLoadingView
+  // We need to use `try catch` pattern for both files as it has special semantics
+  // in bundler. If require isn't surrounded with try catch it will need to resolve
+  // at build time.
+  try {
+    return require("react-native/Libraries/Utilities/LoadingView");
+  } catch (e) {}
+  try {
+    return require("react-native/Libraries/Utilities/DevLoadingView");
+  } catch (e) {}
+  throw new Error("Couldn't locate LoadingView module");
+}
+
 function emptyNavigationHook() {
   return {
     getCurrentNavigationDescriptor: () => undefined,
@@ -216,7 +230,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
   useEffect(() => {
     if (devtoolsAgent) {
       LogBox.uninstall();
-      const LoadingView = require("react-native/Libraries/Utilities/LoadingView");
+      const LoadingView = getLoadingView();
       LoadingView.showMessage = (message) => {
         devtoolsAgent._bridge.send("RNIDE_fastRefreshStarted");
       };
