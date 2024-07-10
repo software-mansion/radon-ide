@@ -87,11 +87,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     this.trackNativeChanges();
   }
-  async reportIssue() {
-    env.openExternal(
-      Uri.parse("https://github.com/software-mansion/react-native-ide/issues/new/choose")
-    );
-  }
 
   trackNativeChanges() {
     // VS code glob patterns don't support negation so we can't exclude
@@ -335,10 +330,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.sendKey(keyCode, direction);
   }
 
-  public async openFileAt(filePath: string, line0Based: number, column0Based: number) {
-    openFileAtPosition(filePath, line0Based, column0Based);
-  }
-
   public async inspectElementAt(
     xRatio: number,
     yRatio: number,
@@ -400,62 +391,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     await this.deviceSession?.openDevMenu();
   }
 
-  public movePanelToNewWindow() {
-    commands.executeCommand("workbench.action.moveEditorToNewWindow");
-  }
-
   public startPreview(appKey: string) {
     this.deviceSession?.startPreview(appKey);
   }
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {
     this.deviceSession?.onActiveFileChange(filename, followEnabled);
-  }
-
-  public async getCommandsCurrentKeyBinding(commandName: string) {
-    const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
-    const extensionPackageJson = require(packageJsonPath);
-    let keybindingsJsonPath;
-    let keybindingsJson;
-    try {
-      keybindingsJsonPath = path.join(
-        homedir(),
-        "Library/Application Support/Code/User/keybindings.json"
-      );
-      // can not use require because the file may contain comments
-      keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());
-    } catch (e) {
-      Logger.error("error while parsing keybindings.json", e);
-      return undefined;
-    }
-
-    const isRNIDECommand =
-      extensionPackageJson.contributes.commands &&
-      extensionPackageJson.contributes.commands.find((command: any) => {
-        return command.command === commandName;
-      });
-    if (!isRNIDECommand) {
-      Logger.warn("Trying to access a keybinding for a command that is not part of an extension.");
-      return undefined;
-    }
-
-    const userKeybinding = keybindingsJson.find((command: any) => {
-      return command.command === commandName;
-    });
-    if (userKeybinding) {
-      return userKeybinding.key;
-    }
-
-    const defaultKeybinding = extensionPackageJson.contributes.keybindings.find(
-      (keybinding: any) => {
-        return keybinding.command === commandName;
-      }
-    );
-    if (defaultKeybinding) {
-      return defaultKeybinding.mac;
-    }
-
-    return undefined;
   }
 
   public async getDeviceSettings() {
