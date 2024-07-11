@@ -16,7 +16,7 @@ function overridePWD<T extends execa.Options>(options?: T) {
   if (options?.cwd) {
     return { ...options, env: { ...options.env, PWD: options.cwd } };
   }
-  return undefined;
+  return options;
 }
 
 /**
