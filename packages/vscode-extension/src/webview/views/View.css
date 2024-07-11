@@ -9,3 +9,7 @@
   height: 100%;
   user-select: none;
 }
+
+.panel-view ::selection {
+  background: transparent;
+}
