@@ -68,6 +68,12 @@
         "command": "RNIDE.openDevMenu",
         "key": "ctrl+alt+z",
         "mac": "ctrl+cmd+z"
+      },
+      {
+        "command": "RNIDE.closeWithConfirmation",
+        "key": "ctrl+w",
+        "mac": "cmd+w",
+        "when": "RNIDE.isTabPanelFocused"
       }
     ],
     "configuration": {

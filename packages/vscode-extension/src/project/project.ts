@@ -17,6 +17,7 @@ import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager"
 import { DeviceInfo } from "../common/DeviceManager";
 import { throttle } from "../common/utils";
 import {
+  AppPermissionType,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
@@ -33,6 +34,10 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
+import path from "path";
+import { homedir } from "node:os";
+import fs from "fs";
+import JSON5 from "json5";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -47,7 +52,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
 
-  private nativeFilesChangedSinceLastBuild: boolean;
+  private detectedFingerprintChange: boolean;
   private workspaceWatcher!: FileSystemWatcher;
   private fileSaveWatcherDisposable!: Disposable;
 
@@ -78,7 +83,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.nativeFilesChangedSinceLastBuild = false;
+    this.detectedFingerprintChange = false;
 
     this.trackNativeChanges();
   }
@@ -198,24 +203,52 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.reloadMetro();
   }
 
-  public async restart(forceCleanBuild: boolean) {
-    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
-    if (forceCleanBuild || this.nativeFilesChangedSinceLastBuild) {
+  public async restart(forceCleanBuild: boolean, onlyReloadJSWhenPossible: boolean = true) {
+    // we save device info and device session at the start such that we can
+    // check if they weren't updated in the meantime while we await for restart
+    // procedures
+    const deviceInfo = this.projectState.selectedDevice!;
+    const deviceSession = this.deviceSession;
+
+    this.updateProjectStateForDevice(deviceInfo, {
+      status: "starting",
+      startupMessage: StartupMessage.Restarting,
+    });
+
+    if (forceCleanBuild) {
       await this.start(true, true);
-      await this.selectDevice(this.projectState.selectedDevice!, true);
-      this.nativeFilesChangedSinceLastBuild = false;
+      await this.selectDevice(deviceInfo, true);
+      return;
+    } else if (this.detectedFingerprintChange) {
+      await this.selectDevice(deviceInfo, false);
       return;
     }
 
-    // if we have an active device session, we try reloading metro
-    if (this.deviceSession?.isActive) {
+    // if we have an active devtools session, we try hot reloading
+    if (onlyReloadJSWhenPossible && this.devtools.hasConnectedClient) {
       this.reloadMetro();
       return;
     }
 
-    // otherwise we trigger selectDevice which should handle restarting the device, installing
-    // app and launching it
-    await this.selectDevice(this.projectState.selectedDevice!, false);
+    // otherwise we try to restart the device session
+    try {
+      // we first check if the device session hasn't changed in the meantime
+      if (deviceSession === this.deviceSession) {
+        await this.deviceSession?.restart((startupMessage) =>
+          this.updateProjectStateForDevice(deviceInfo, { startupMessage })
+        );
+        this.updateProjectStateForDevice(deviceInfo, {
+          status: "running",
+        });
+      }
+    } catch (e) {
+      // finally in case of any errors, we restart the selected device which reboots
+      // emulator etc...
+      // we first check if the device hasn't been updated in the meantime
+      if (deviceInfo === this.projectState.selectedDevice) {
+        await this.selectDevice(this.projectState.selectedDevice!, false);
+      }
+    }
   }
 
   private async start(restart: boolean, forceCleanBuild: boolean) {
@@ -285,6 +318,13 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100)
     );
+  }
+
+  async resetAppPermissions(permissionType: AppPermissionType) {
+    const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
+    if (needsRestart) {
+      this.restart(false, false);
+    }
   }
 
   public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
@@ -370,6 +410,52 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {
     this.deviceSession?.onActiveFileChange(filename, followEnabled);
+  }
+
+  public async getCommandsCurrentKeyBinding(commandName: string) {
+    const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
+    const extensionPackageJson = require(packageJsonPath);
+    let keybindingsJsonPath;
+    let keybindingsJson;
+    try {
+      keybindingsJsonPath = path.join(
+        homedir(),
+        "Library/Application Support/Code/User/keybindings.json"
+      );
+      // can not use require because the file may contain comments
+      keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());
+    } catch (e) {
+      Logger.error("error while parsing keybindings.json", e);
+      return undefined;
+    }
+
+    const isRNIDECommand =
+      extensionPackageJson.contributes.commands &&
+      extensionPackageJson.contributes.commands.find((command: any) => {
+        return command.command === commandName;
+      });
+    if (!isRNIDECommand) {
+      Logger.warn("Trying to access a keybinding for a command that is not part of an extension.");
+      return undefined;
+    }
+
+    const userKeybinding = keybindingsJson.find((command: any) => {
+      return command.command === commandName;
+    });
+    if (userKeybinding) {
+      return userKeybinding.key;
+    }
+
+    const defaultKeybinding = extensionPackageJson.contributes.keybindings.find(
+      (keybinding: any) => {
+        return keybinding.command === commandName;
+      }
+    );
+    if (defaultKeybinding) {
+      return defaultKeybinding.mac;
+    }
+
+    return undefined;
   }
 
   public async getDeviceSettings() {
@@ -461,6 +547,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           this.reportStageProgress(stageProgress, StartupMessage.Building);
         }, 100)
       );
+
+      // reset fingerpring change flag when build finishes successfully
+      if (this.detectedFingerprintChange) {
+        build.build.then(() => {
+          this.detectedFingerprintChange = false;
+        });
+      }
+
       Logger.debug("Metro & devtools ready");
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
@@ -494,13 +588,13 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   };
 
   private checkIfNativeChanged = throttle(async () => {
-    if (!this.nativeFilesChangedSinceLastBuild && this.projectState.selectedDevice) {
+    if (!this.detectedFingerprintChange && this.projectState.selectedDevice) {
       if (await didFingerprintChange(this.projectState.selectedDevice.platform)) {
-        this.nativeFilesChangedSinceLastBuild = true;
+        this.detectedFingerprintChange = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
-  }, 100);
+  }, 300);
 }
 
 export function isAppSourceFile(filePath: string) {
