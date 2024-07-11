@@ -10,7 +10,7 @@ import path from "path";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
-  private previewStartPromise: Promise<steing> | undefined;
+  private previewStartPromise: Promise<string> | undefined;
   private acquired = false;
 
   abstract get lockFilePath(): string;
