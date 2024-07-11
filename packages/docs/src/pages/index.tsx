@@ -2,6 +2,7 @@ import React from "react";
 import Layout from "@theme/Layout";
 import Hero from "@site/src/components/Hero/StartScreen";
 import Disclaimer from "@site/src/components/Disclaimer";
+import LicenceBanner from "@site/src/components/LicenceBanner";
 import LearnMoreHero from "@site/src/components/LearnMore/LearnMoreHero";
 import LearnMoreFooter from "@site/src/components/LearnMore/LearnMoreFooter";
 import Installation from "@site/src/components/Sections/Installation";
@@ -24,6 +25,7 @@ export default function Home(): JSX.Element {
         <div className={styles.container}>
           <Hero />
           <Disclaimer />
+          <LicenceBanner />
           {/* <LearnMoreHero /> */}
           {/* <Installation /> */}
           <Overview />
