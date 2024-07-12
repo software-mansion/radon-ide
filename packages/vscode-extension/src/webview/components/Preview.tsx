@@ -26,14 +26,16 @@ declare module "react" {
   }
 }
 
-function cssPropertiesForDevice(device: DeviceProperties) {
+function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
   return {
     "--phone-screen-height": `${(device.screenHeight / device.frameHeight) * 100}%`,
-    "--phone-screen-width": `${(device.screenWidth / device.frameWidth) * 100}%`,
+    "--phone-screen-width": `${
+      frameDisabled ? 100 : (device.screenWidth / device.frameWidth) * 100
+    }%`,
     "--phone-aspect-ratio": `${device.frameWidth / device.frameHeight}`,
-    "--phone-mask-image": `url(${device.maskImage})`,
     "--phone-top": `${(device.offsetY / device.frameHeight) * 100}%`,
-    "--phone-left": `${(device.offsetX / device.frameWidth) * 100}%`,
+    "--phone-left": `${frameDisabled ? 0 : (device.offsetX / device.frameWidth) * 100}%`,
+    "--phone-mask-image": `url(${device.maskImage})`,
   } as const;
 }
 
@@ -120,7 +122,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
-  const { projectState, project } = useProject();
+  const { projectState, project, deviceSettings } = useProject();
 
   const projectStatus = projectState.status;
 
@@ -325,11 +327,28 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     device: device!,
   });
 
+  const isFrameDisabled = deviceSettings.showFrame === false;
+
+  function MaybeFrame() {
+    if (!device) {
+      return null;
+    }
+    return (
+      <img
+        src={device.frameImage}
+        className="phone-frame"
+        style={{
+          opacity: isFrameDisabled ? 0 : 1,
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <div
         className="phone-wrapper"
-        style={cssPropertiesForDevice(device!)}
+        style={cssPropertiesForDevice(device!, isFrameDisabled)}
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}>
         {showDevicePreview && (
@@ -399,7 +418,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                   </div>
                 )}
               </div>
-              <img src={device!.frameImage} className="phone-frame" />
+              <MaybeFrame />
               {inspectStackData && (
                 <InspectDataMenu
                   inspectLocation={inspectStackData.requestLocation}
@@ -423,7 +442,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
               <div className="phone-sized phone-content-loading ">
                 <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
               </div>
-              <img src={device!.frameImage} className="phone-frame" />
+              <MaybeFrame />
             </div>
           </Resizable>
         )}
@@ -431,7 +450,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
           <Resizable {...resizableProps}>
             <div className="phone-content">
               <div className="phone-sized extension-error-screen" />
-              <img src={device!.frameImage} className="phone-frame" />
+              <MaybeFrame />
             </div>
           </Resizable>
         )}

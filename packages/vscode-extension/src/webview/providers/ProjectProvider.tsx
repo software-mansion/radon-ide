@@ -18,6 +18,7 @@ const ProjectContext = createContext<ProjectContextProps>({
     previewZoom: undefined,
   },
   deviceSettings: {
+    showFrame: true,
     appearance: "dark",
     contentSize: "normal",
     location: {
@@ -44,6 +45,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
       longitude: 19.965474,
       isDisabled: false,
     },
+    showFrame: true,
   });
 
   useEffect(() => {

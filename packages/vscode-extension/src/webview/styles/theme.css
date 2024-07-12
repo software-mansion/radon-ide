@@ -104,6 +104,8 @@
   /* White */
   --off-white: #f8f9ff;
   --white: #fcfcff;
+
+  --spacing-sm: 8px;
 }
 
 /* Light theme */

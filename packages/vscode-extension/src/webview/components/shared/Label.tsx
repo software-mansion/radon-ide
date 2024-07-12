@@ -1,11 +1,8 @@
 import "./Label.css";
+import { ComponentProps } from "react";
 
-interface LabelProps {
-  children: React.ReactNode;
-}
-
-function Label({ children }: LabelProps) {
-  return <p className="label">{children}</p>;
+function Label({ className, ...props }: ComponentProps<"label">) {
+  return <label className={`${className} label`} {...props} />;
 }
 
 export default Label;

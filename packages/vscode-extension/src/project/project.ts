@@ -70,6 +70,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       longitude: 19.965474,
       isDisabled: true,
     },
+    showFrame: true,
   };
 
   constructor(private readonly deviceManager: DeviceManager) {
@@ -246,9 +247,15 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           this.updateProjectState({ status: "refreshing" });
           break;
         case "RNIDE_fastRefreshComplete":
-          if (this.projectState.status === "starting") return;
-          if (this.projectState.status === "incrementalBundleError") return;
-          if (this.projectState.status === "runtimeError") return;
+          if (this.projectState.status === "starting") {
+            return;
+          }
+          if (this.projectState.status === "incrementalBundleError") {
+            return;
+          }
+          if (this.projectState.status === "runtimeError") {
+            return;
+          }
           this.updateProjectState({ status: "running" });
           break;
       }
@@ -265,7 +272,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
         case "RNIDE_paused":
           if (event.body?.reason === "exception") {
             // if we know that incrmental bundle error happened, we don't want to change the status
-            if (this.projectState.status === "incrementalBundleError") return;
+            if (this.projectState.status === "incrementalBundleError") {
+              return;
+            }
             this.updateProjectState({ status: "runtimeError" });
           } else {
             this.updateProjectState({ status: "debuggerPaused" });

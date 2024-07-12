@@ -2,11 +2,13 @@ import React, { useRef } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
+import * as Switch from "@radix-ui/react-switch";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
 import "./shared/Slider.css";
 import "./DeviceSettingsDropdown.css";
+import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
@@ -112,6 +114,24 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-location" />
             Set Device Location
           </DropdownMenu.Item>
+          <Label>Device Frame</Label>
+          <form>
+            <div className="switch-group-center">
+              <Label htmlFor="device-frame">Enable Device Frame</Label>
+              <Switch.Root
+                className="switch-root"
+                defaultChecked={deviceSettings.showFrame !== false}
+                id="device-frame"
+                onCheckedChange={(value) => {
+                  project.updateDeviceSettings({
+                    ...deviceSettings,
+                    showFrame: value,
+                  });
+                }}>
+                <Switch.Thumb className="switch-thumb" />
+              </Switch.Root>
+            </div>
+          </form>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

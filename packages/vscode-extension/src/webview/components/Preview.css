@@ -46,7 +46,6 @@
 
 .phone-screen {
   position: absolute;
-  width: calc(100% - 14px);
   height: 100%;
   top: 0;
   left: 7px;
