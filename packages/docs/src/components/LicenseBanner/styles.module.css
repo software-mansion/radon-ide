@@ -1,5 +1,5 @@
-.licenceContainer {
-  background-color: #b1dfd0;
+.licenseContainer {
+  background-color: var(--swm-green-light-60);
   padding: 2.5rem;
   display: flex;
   flex-direction: row;
@@ -18,16 +18,17 @@
 
 .contentContainer span {
   font-size: 20px;
+  max-width: 650px;
 }
 
-.licenceContainer a {
+.licenseContainer a {
   display: flex;
   align-items: flex-end;
   z-index: 3;
 }
 
 @media (max-width: 996px) {
-  .licenceContainer {
+  .licenseContainer {
     flex-direction: column;
     gap: 1.5rem;
   }
@@ -37,7 +38,7 @@
   }
 }
 
-.elipse {
+.ellipse {
   height: 250px;
   width: 250px;
   border-radius: 50%;
@@ -46,13 +47,13 @@
   z-index: 2;
 }
 
-.elipse:nth-of-type(1) {
+.ellipse:nth-of-type(1) {
   top: -8rem;
   left: -6rem;
   rotate: 80deg;
 }
 
-.elipse:nth-of-type(2) {
+.ellipse:nth-of-type(2) {
   right: -8rem;
   bottom: -10rem;
   rotate: 180deg;
