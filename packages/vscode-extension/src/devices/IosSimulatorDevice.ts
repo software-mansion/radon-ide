@@ -4,16 +4,11 @@ import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import {
-  IOSDeviceInfo,
-  IOSDeviceTypeInfo,
-  IOSRuntimeInfo,
-  Platform,
-} from "../common/DeviceManager";
+import { IOSDeviceInfo, IOSRuntimeInfo, Platform } from "../common/DeviceManager";
 import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
-import { DeviceSettings } from "../common/Project";
+import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { ExecaError } from "execa";
 
@@ -34,6 +29,21 @@ interface SimulatorInfo {
 interface SimulatorData {
   devices: { [runtimeID: string]: SimulatorInfo[] };
 }
+
+type PrivacyServiceName =
+  | "all"
+  | "calendar"
+  | "contacts-limited"
+  | "contacts"
+  | "location"
+  | "location-always"
+  | "photos-add"
+  | "photos"
+  | "media-library"
+  | "microphone"
+  | "motion"
+  | "reminders"
+  | "siri";
 
 export class IosSimulatorDevice extends DeviceBase {
   constructor(private readonly deviceUDID: string) {
@@ -248,6 +258,24 @@ export class IosSimulatorDevice extends DeviceBase {
       this.deviceUDID,
       build.appPath,
     ]);
+  }
+
+  async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {
+    if (build.platform !== Platform.IOS) {
+      throw new Error("Invalid platform");
+    }
+    const privacyServiceName: PrivacyServiceName = appPermission;
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(),
+      "privacy",
+      this.deviceUDID,
+      "reset",
+      privacyServiceName,
+      build.bundleID,
+    ]);
+    return false;
   }
 
   makePreview(): Preview {

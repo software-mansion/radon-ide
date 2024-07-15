@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.15",
+  "version": "0.0.16",
   "engines": {
     "vscode": "^1.75.0",
     "os": "darwin"
@@ -68,6 +68,12 @@
         "command": "RNIDE.openDevMenu",
         "key": "ctrl+alt+z",
         "mac": "ctrl+cmd+z"
+      },
+      {
+        "command": "RNIDE.closeWithConfirmation",
+        "key": "ctrl+w",
+        "mac": "cmd+w",
+        "when": "RNIDE.isTabPanelFocused"
       }
     ],
     "configuration": {

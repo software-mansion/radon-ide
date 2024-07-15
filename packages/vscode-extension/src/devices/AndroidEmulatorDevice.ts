@@ -11,12 +11,13 @@ import { v4 as uuidv4 } from "uuid";
 import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
-import { DeviceSettings } from "../common/Project";
+import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 
 export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
+const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
   pid: number;
@@ -49,6 +50,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
+    // If the emulator process does not shut down initially due to ongoing activities or processes,
+    // a forced termination (kill signal) is sent after a certain timeout period.
+    setTimeout(() => {
+      this.emulatorProcess?.kill(9);
+    }, DISPOSE_TIMEOUT);
   }
 
   async changeSettings(settings: DeviceSettings) {
@@ -100,10 +106,25 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
   }
 
-  async bootDevice() {
-    if (this.emulatorProcess) {
-      this.emulatorProcess.kill(9);
+  private async ensureOldEmulatorProcessExited() {
+    let runningPid: string | undefined;
+    const subprocess = exec("ps", ["-Ao", "pid,command"]);
+    const regexpPattern = new RegExp(`(\\d+)\\s.*qemu.*-avd ${this.avdId}`);
+    lineReader(subprocess).onLineRead(async (line) => {
+      const regExpResult = regexpPattern.exec(line);
+      if (regExpResult) {
+        runningPid = regExpResult[1];
+      }
+    });
+    await subprocess;
+    if (runningPid) {
+      process.kill(Number(runningPid), 9);
     }
+  }
+
+  async bootDevice() {
+    // this prevents booting device with the same AVD twice
+    await this.ensureOldEmulatorProcessExited();
 
     const avdDirectory = getOrCreateAvdDirectory();
     const subprocess = exec(
@@ -176,7 +197,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async configureMetroPort(packageName: string, metroPort: number) {
     // read preferences
-    let prefs: any;
+    let prefs: { map: any };
     try {
       const { stdout } = await exec(
         ADB_PATH,
@@ -192,6 +213,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
         { allowNonZeroExit: true }
       );
       prefs = await xml2js.parseStringPromise(stdout, { explicitArray: true });
+      // test if prefs.map is an object, otherwise we just start from an empty prefs
+      if (typeof prefs.map !== "object") throw new Error("Invalid prefs file format");
     } catch (e) {
       // preferences file does not exists
       prefs = { map: {} };
@@ -317,6 +340,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
       // applications (see `adb shell pm`, install command)
       () => installApk(true)
     );
+  }
+
+  async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {
+    if (build.platform !== Platform.Android) {
+      throw new Error("Invalid platform");
+    }
+    if (appPermission !== "all") {
+      Logger.warn(
+        "Resetting all privacy permission as individual permissions aren't currently supported on Android."
+      );
+    }
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "pm",
+      "reset-permissions",
+      build.packageName,
+    ]);
+    return true; // Android will terminate the process if any of the permissions were granted prior to reset-permissions call
   }
 
   makePreview(): Preview {

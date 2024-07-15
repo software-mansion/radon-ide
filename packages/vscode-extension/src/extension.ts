@@ -10,6 +10,7 @@ import {
   ConfigurationChangeEvent,
   DebugConfigurationProviderTriggerKind,
   DebugAdapterExecutable,
+  Disposable,
 } from "vscode";
 import vscode from "vscode";
 import { TabPanel } from "./panels/Tabpanel";
@@ -108,6 +109,16 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  function closeWithConfirmation() {
+    window
+      .showWarningMessage("Are you sure you want to close the IDE panel?", "Yes", "No")
+      .then((item) => {
+        if (item === "Yes") {
+          commands.executeCommand("RNIDE.closePanel");
+        }
+      });
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -120,8 +131,40 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.showPanel", showIDEPanel));
   context.subscriptions.push(
+    commands.registerCommand("RNIDE.closeWithConfirmation", closeWithConfirmation)
+  );
+  context.subscriptions.push(
     commands.registerCommand("RNIDE.diagnose", diagnoseWorkspaceStructure)
   );
+
+  async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
+    registeredCommandDisposable.dispose(); // must dispose to avoid endless loops
+
+    const wasIDEPanelVisible = SidePanelViewProvider.currentProvider?.view?.visible;
+
+    // run the built-in closeAuxiliaryBar command
+    await commands.executeCommand("workbench.action.closeAuxiliaryBar");
+
+    const isIDEPanelVisible = SidePanelViewProvider.currentProvider?.view?.visible;
+
+    // if closing of Auxiliary bar affected the visibility of SidePanelView, we assume that it means that it was pinned to the secondary sidebar.
+    if (wasIDEPanelVisible && !isIDEPanelVisible) {
+      commands.executeCommand("RNIDE.closePanel");
+    }
+
+    // re-register to continue intercepting closeAuxiliaryBar commands
+    registeredCommandDisposable = commands.registerCommand(
+      "workbench.action.closeAuxiliaryBar",
+      async (arg) => closeAuxiliaryBar(registeredCommandDisposable)
+    );
+    context.subscriptions.push(registeredCommandDisposable);
+  }
+
+  let closeAuxiliaryBarDisposable = commands.registerCommand(
+    "workbench.action.closeAuxiliaryBar",
+    async (arg) => closeAuxiliaryBar(closeAuxiliaryBarDisposable)
+  );
+  context.subscriptions.push(closeAuxiliaryBarDisposable);
 
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen

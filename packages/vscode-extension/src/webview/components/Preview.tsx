@@ -162,6 +162,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
     project.openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    setIsInspecting(false);
   }
 
   function sendInspectUnthrottled(
@@ -218,7 +219,6 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
     if (isInspecting) {
       sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
-      setIsInspecting(false);
     } else if (inspectFrame) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
       resetInspector();
