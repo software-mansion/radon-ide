@@ -62,6 +62,11 @@ fi # submodule check
 mkdir -p "$output_dir"
 target_location="$output_dir/sim-server"
 
+if [[ "$OSTYPE" == "msys" ]]; then # rename to *.exe on Windows
+    mv "$product_path" "$target_location-executable.exe"
+    exit 0
+fi
+
 # Check if a file was found and copy it
 if [[ -n $product_path ]]; then
     # copy it using dd to avoid permission issues
