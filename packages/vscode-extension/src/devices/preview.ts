@@ -33,10 +33,15 @@ export class Preview implements Disposable {
         reject(new Error("Preview server exited without URL"));
       });
 
+      const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
+
       lineReader(subprocess).onLineRead((line) => {
-        if (line.includes("http://")) {
-          Logger.debug(`Preview server ready ${line}`);
-          this.streamURL = line;
+        const match = line.match(streamURLRegex);
+
+        if (match) {
+          Logger.debug(`Preview server ready ${match[1]}`);
+
+          this.streamURL = match[1];
           resolve(this.streamURL);
         }
         Logger.debug("Preview server:", line);
