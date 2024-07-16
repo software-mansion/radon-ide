@@ -84,7 +84,10 @@ export function execSync(name: string, args?: string[], options?: execa.SyncOpti
   return result;
 }
 
-export function command(commandWithArgs: string, options?: (execa.Options & { silentErrorsOnExit?: boolean })) {
+export function command(
+  commandWithArgs: string,
+  options?: execa.Options & { silentErrorsOnExit?: boolean }
+) {
   const subprocess = execa.command(commandWithArgs, overridePWD(options));
   async function printErrorsOnExit() {
     try {
