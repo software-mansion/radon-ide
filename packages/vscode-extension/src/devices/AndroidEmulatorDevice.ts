@@ -15,8 +15,12 @@ import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 
-export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
-const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
+ export const EMULATOR_BINARY = (process.platform === "win32")
+  ? path.join(ANDROID_HOME, "emulator", "emulator.exe")
+  : path.join(ANDROID_HOME, "emulator", "emulator");
+const ADB_PATH = (process.platform === "win32")
+? path.join(ANDROID_HOME, "platform-tools", "adb.exe")
+: path.join(ANDROID_HOME, "platform-tools", "adb");
 const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
@@ -108,7 +112,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   private async ensureOldEmulatorProcessExited() {
     let runningPid: string | undefined;
-    const subprocess = exec("ps", ["-Ao", "pid,command"]);
+    const command = (process.platform === "darwin") ? "ps" : 'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | Out-String -Width 10000"';
+    const args = (process.platform === "darwin") ? ["-Ao", "pid,command"] : [];
+    const subprocess = exec(command, args);
     const regexpPattern = new RegExp(`(\\d+)\\s.*qemu.*-avd ${this.avdId}`);
     lineReader(subprocess).onLineRead(async (line) => {
       const regExpResult = regexpPattern.exec(line);
@@ -443,7 +449,9 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 async function getAvdIds(avdDirectory: string) {
   const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
-    env: { ANDROID_AVD_HOME: avdDirectory },
+    env: process.platform === 'darwin'
+  ? { ANDROID_AVD_HOME: avdDirectory }
+  : { ANDROID_SDK_HOME: avdDirectory + "\\.." }
   });
 
   // filters out error messages and empty lines
