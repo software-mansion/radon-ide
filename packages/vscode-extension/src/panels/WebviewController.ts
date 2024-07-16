@@ -1,6 +1,5 @@
 import vscode, { Webview, Disposable, window, commands } from "vscode";
-import { DependencyChecker } from "../dependency/DependencyChecker";
-import { DependencyInstaller } from "../dependency/DependencyInstaller";
+import { DependencyManager } from "../dependency/DependencyManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { Project } from "../project/project";
 import { Logger } from "../Logger";
@@ -27,8 +26,7 @@ export type WebviewEvent =
     } & CallArgs);
 
 export class WebviewController implements Disposable {
-  private readonly dependencyChecker: DependencyChecker;
-  private readonly dependencyInstaller: DependencyInstaller;
+  private readonly dependencyManager: DependencyManager;
   private readonly deviceManager: DeviceManager;
   public readonly project: Project;
   public readonly workspaceConfig: WorkspaceConfigController;
@@ -51,22 +49,18 @@ export class WebviewController implements Disposable {
     this.setWebviewMessageListener(webview);
 
     // Set the manager to listen and change the persisting storage for the extension.
-    this.dependencyChecker = new DependencyChecker(webview);
-    this.dependencyChecker.setWebviewMessageListener();
-
-    this.dependencyInstaller = new DependencyInstaller(webview);
-    this.dependencyInstaller.setWebviewMessageListener();
+    this.dependencyManager = new DependencyManager(webview);
+    this.dependencyManager.setWebviewMessageListener();
 
     this.setupEditorListeners();
 
     this.deviceManager = new DeviceManager();
-    this.project = new Project(this.deviceManager);
+    this.project = new Project(this.deviceManager, this.dependencyManager);
 
     this.workspaceConfig = new WorkspaceConfigController();
 
     this.disposables.push(
-      this.dependencyChecker,
-      this.dependencyInstaller,
+      this.dependencyManager,
       this.deviceManager,
       this.project,
       this.workspaceConfig

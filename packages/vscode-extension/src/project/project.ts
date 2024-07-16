@@ -34,8 +34,7 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { checkNodeModulesInstalled } from "../dependency/DependencyChecker";
-import { installNodeModules } from "../utilities/packageManager";
+import { DependencyManager } from "../dependency/DependencyManager";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -75,7 +74,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     },
   };
 
-  constructor(private readonly deviceManager: DeviceManager) {
+  constructor(
+    private readonly deviceManager: DeviceManager,
+    private readonly dependencyManager: DependencyManager
+  ) {
     Project.currentProject = this;
     this.metro = new Metro(this.devtools, this);
     this.start(false, false);
@@ -453,14 +455,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   }
 
   private async installNodeModules(): Promise<void> {
-    const nodeModulesStatus = await checkNodeModulesInstalled();
+    const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
 
     if (nodeModulesStatus.installed) {
       Logger.debug("Node Modules installed");
       return;
     }
 
-    await installNodeModules(nodeModulesStatus.packageManager);
+    await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
     Logger.debug("Node Modules installed");
   }
 

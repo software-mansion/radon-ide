@@ -1,77 +1,81 @@
-import { Webview, Disposable } from "vscode";
-import { Logger } from "../Logger";
-import { DependencyChecker } from "./DependencyChecker";
-import { command } from "../utilities/subprocess";
-import { getIosSourceDir } from "../builders/buildIOS";
-import { getAppRootFolder } from "../utilities/extensionContext";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+// This code is deprecated in favour of DependencyManager.ts
+// It is left in the code base because it might be helpful while creating a mechanism for installing pods
+// @Filip131311
 
-export class DependencyInstaller implements Disposable {
-  private webview: Webview;
-  private dependencyChecker: DependencyChecker;
-  private disposables: Disposable[] = [];
+// import { Webview, Disposable } from "vscode";
+// import { Logger } from "../Logger";
+// import { DependencyChecker } from "./DependencyChecker";
+// import { command } from "../utilities/subprocess";
+// import { getIosSourceDir } from "../builders/buildIOS";
+// import { getAppRootFolder } from "../utilities/extensionContext";
+// import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
-  constructor(webview: Webview) {
-    this.webview = webview;
-    this.dependencyChecker = new DependencyChecker(webview);
-  }
+// export class DependencyInstaller implements Disposable {
+//   private webview: Webview;
+//   private dependencyChecker: DependencyChecker;
+//   private disposables: Disposable[] = [];
 
-  public dispose() {
-    // Dispose of all disposables (i.e. commands) for the current webview panel
-    while (this.disposables.length) {
-      const disposable = this.disposables.pop();
-      if (disposable) {
-        disposable.dispose();
-      }
-    }
-  }
+//   constructor(webview: Webview) {
+//     this.webview = webview;
+//     this.dependencyChecker = new DependencyChecker(webview);
+//   }
 
-  public setWebviewMessageListener() {
-    Logger.debug("Setup dependency installer listeners.");
-    this.webview.onDidReceiveMessage(
-      (message: any) => {
-        const webviewCommand = message.command;
+//   public dispose() {
+//     // Dispose of all disposables (i.e. commands) for the current webview panel
+//     while (this.disposables.length) {
+//       const disposable = this.disposables.pop();
+//       if (disposable) {
+//         disposable.dispose();
+//       }
+//     }
+//   }
 
-        switch (webviewCommand) {
-          case "installPods":
-            Logger.debug("Received installPods command.");
-            this.installPods();
-            return;
-        }
-      },
-      undefined,
-      this.disposables
-    );
-  }
+//   public setWebviewMessageListener() {
+//     Logger.debug("Setup dependency installer listeners.");
+//     this.webview.onDidReceiveMessage(
+//       (message: any) => {
+//         const webviewCommand = message.command;
 
-  public async installPods() {
-    Logger.debug("Installing pods");
-    this.webview.postMessage({
-      command: "installingPods",
-    });
-    try {
-      await installIOSDependencies(getAppRootFolder(), false);
-      Logger.debug("Finished installing pods!");
-    } catch (error) {
-      Logger.error("Install Pods:", error);
-    }
-    await this.dependencyChecker.checkPodsInstalled();
-  }
-}
+//         switch (webviewCommand) {
+//           case "installPods":
+//             Logger.debug("Received installPods command.");
+//             this.installPods();
+//             return;
+//         }
+//       },
+//       undefined,
+//       this.disposables
+//     );
+//   }
 
-export function installIOSDependencies(appRootFolder: string, forceCleanBuild: boolean) {
-  const iosDirPath = getIosSourceDir(appRootFolder);
+//   public async installPods() {
+//     Logger.debug("Installing pods");
+//     this.webview.postMessage({
+//       command: "installingPods",
+//     });
+//     try {
+//       await installIOSDependencies(getAppRootFolder(), false);
+//       Logger.debug("Finished installing pods!");
+//     } catch (error) {
+//       Logger.error("Install Pods:", error);
+//     }
+//     await this.dependencyChecker.checkPodsInstalled();
+//   }
+// }
 
-  if (!iosDirPath) {
-    throw new Error(`ios directory was not found inside the workspace.`);
-  }
+// export function installIOSDependencies(appRootFolder: string, forceCleanBuild: boolean) {
+//   const iosDirPath = getIosSourceDir(appRootFolder);
 
-  // TODO: support forceCleanBuild option and wipe pods prior to installing
-  return command("pod install", {
-    cwd: iosDirPath,
-    env: {
-      ...getLaunchConfiguration().env,
-      LANG: "en_US.UTF-8",
-    },
-  });
-}
+//   if (!iosDirPath) {
+//     throw new Error(`ios directory was not found inside the workspace.`);
+//   }
+
+//   // TODO: support forceCleanBuild option and wipe pods prior to installing
+//   return command("pod install", {
+//     cwd: iosDirPath,
+//     env: {
+//       ...getLaunchConfiguration().env,
+//       LANG: "en_US.UTF-8",
+//     },
+//   });
+// }

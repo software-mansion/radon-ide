@@ -22,6 +22,7 @@ function DiagnosticView() {
     <>
       <Label>Common</Label>
       <DiagnosticItem label="Node.js" item={dependencies.Nodejs} />
+      <DiagnosticItem label="Node Modules" item={dependencies.NodeModules} />
       <div className="diagnostic-section-margin" />
 
       <Label>Android</Label>

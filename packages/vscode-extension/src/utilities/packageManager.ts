@@ -1,8 +1,9 @@
 import { command, exec } from "./subprocess";
 import { promises as fs } from "fs";
-import { resolve } from "path";
+import path, { resolve } from "path";
 import { getAppRootFolder } from "./extensionContext";
 import { Logger } from "../Logger";
+import { ExecaReturnValue } from "execa";
 
 export type PackageManagerName = "npm" | "pnpm" | "yarn" | "bun";
 
@@ -31,6 +32,17 @@ export async function resolvePackageManager(): Promise<PackageManagerName> {
       return "bun";
     } else if (isNpm) {
       return "npm";
+    }
+    try {
+      const packageManager = require(path.join(workspacePath, "package.json")).packageManager;
+
+      if (packageManager) {
+        const regex = /^([a-zA-Z]+)@/;
+        const match = packageManager.match(regex);
+        return match ? match[1] : "npm";
+      }
+    } catch (e) {
+      // there might be a problem while reading package.json in which case we default to npm
     }
 
     return "npm";
@@ -81,39 +93,25 @@ async function isYarnInstalled(): Promise<boolean> {
   }
 }
 
+async function isPnpmInstalled(): Promise<boolean> {
+  // TODO: add pnpm support
+  return false;
+}
+
+async function isBunInstalled(): Promise<boolean> {
+  // TODO: add bun support
+  return false;
+}
+
 export async function isNodeModulesInstalled(manager: PackageManagerName): Promise<boolean> {
   switch (manager) {
     case "npm":
       return await isNpmInstalled();
     case "yarn":
       return await isYarnInstalled();
-  }
-}
-
-export async function installNodeModules(manager: PackageManagerName): Promise<void> {
-  const workspacePath = getAppRootFolder();
-  let installationCommand;
-
-  switch (manager) {
-    case "npm":
-      installationCommand = "npm install";
-      break;
-    case "yarn":
-      Logger.debug("Frytki");
-      installationCommand = "yarn install";
-      break;
     case "pnpm":
-      installationCommand = "pnpm install";
-      break;
+      return await isPnpmInstalled();
     case "bun":
-      installationCommand = "bun install";
-      break;
+      return await isBunInstalled();
   }
-
-  const subprocess = command(installationCommand, {
-    cwd: workspacePath,
-    silentErrorsOnExit: true,
-  });
-
-  await subprocess;
 }

@@ -14,16 +14,12 @@ import {
   PackageManagerName,
   resolvePackageManager,
 } from "../utilities/packageManager";
+import { ExecaReturnValue } from "execa";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
 
-type checkNodeModulesInstalledReturnType = {
-  installed: boolean;
-  packageManager: PackageManagerName;
-};
-
-export class DependencyChecker implements Disposable {
+export class DependencyManager implements Disposable {
   private disposables: Disposable[] = [];
 
   constructor(private readonly webview: Webview) {}
@@ -72,6 +68,10 @@ export class DependencyChecker implements Disposable {
             Logger.debug("Received checkPodsInstalled command.");
             this.checkPodsInstalled();
             return;
+          case "checkNodeModulesInstalled":
+            Logger.debug("Received checkNodeModulesInstalled command.");
+            this.checkNodeModulesInstalled();
+            return;
         }
       },
       undefined,
@@ -94,6 +94,67 @@ export class DependencyChecker implements Disposable {
     });
     Logger.debug("Nodejs installed:", installed);
     return installed;
+  }
+
+  public async checkNodeModulesInstalled() {
+    const packageManager = await resolvePackageManager();
+
+    // if(!isPackageManagerAvailable(packageManager)){
+    //   // TODO some error handling
+    // }
+
+    const installed = await isNodeModulesInstalled(packageManager);
+
+    this.webview.postMessage({
+      command: "isNodeModulesInstalled",
+      data: {
+        installed,
+        info: "Whether node modules are installed",
+        error: undefined,
+      },
+    });
+    Logger.debug("Node Modules installed:", installed);
+    return { installed, packageManager };
+  }
+
+  public async installNodeModules(manager: PackageManagerName): Promise<void> {
+    this.webview.postMessage({
+      command: "installingNodeModules",
+    });
+
+    const workspacePath = getAppRootFolder();
+    let installationCommand;
+
+    switch (manager) {
+      case "npm":
+        installationCommand = "npm install";
+        break;
+      case "yarn":
+        installationCommand = "yarn install";
+        break;
+      case "pnpm":
+        installationCommand = "pnpm install";
+        break;
+      case "bun":
+        installationCommand = "bun install";
+        break;
+    }
+
+    const subprocess = command(installationCommand, {
+      cwd: workspacePath,
+      silentErrorsOnExit: true,
+    });
+
+    await subprocess;
+
+    this.webview.postMessage({
+      command: "isNodeModulesInstalled",
+      data: {
+        installed: true,
+        info: "Whether node modules are installed",
+        error: undefined,
+      },
+    });
   }
 
   /* Android-related */
@@ -274,16 +335,4 @@ export async function checkIosDependenciesInstalled() {
 
 export async function checkAndroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
-}
-
-export async function checkNodeModulesInstalled(): Promise<checkNodeModulesInstalledReturnType> {
-  const packageManager = await resolvePackageManager();
-
-  // if(!isPackageManagerAvailable(packageManager)){
-  //   // TODO some error handling
-  // }
-
-  const installed = await isNodeModulesInstalled(packageManager);
-
-  return { installed, packageManager };
 }
