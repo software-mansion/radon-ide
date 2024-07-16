@@ -5,8 +5,21 @@ import Button from "../../Button";
 import PricingCard from "../PricingCard";
 import SpecialOffer from "../PricingCard/SpecialOffer";
 import useBaseUrl from "@docusaurus/useBaseUrl";
+import usePaddle from "@site/src/hooks/usePaddle";
+
+const supporterPriceId =
+  process.env.NODE_ENV === "production"
+    ? "pri_01j2b6c41n8qpgdbvrf5fv5ben"
+    : "pri_01j2b5fx2rnj6s98rcxv2t1p2g";
 
 function SupporterPlan() {
+  const paddle = usePaddle();
+
+  const openSupporterCheckout = () => {
+    paddle?.Checkout.open({
+      items: [{ priceId: supporterPriceId, quantity: 1 }],
+    });
+  };
   return (
     <PricingCard bold>
       <SpecialOffer />
@@ -31,9 +44,7 @@ function SupporterPlan() {
       </ul>
       <p className={pricing.plan__tagline}>Supporter license deal ends with Beta.</p>
       <div className={pricing.plan__spacer} />
-      <Button href="/" disabled>
-        Available early July
-      </Button>
+      <Button onClick={openSupporterCheckout}>Choose</Button>
     </PricingCard>
   );
 }
