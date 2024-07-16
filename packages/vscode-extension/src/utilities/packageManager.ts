@@ -60,7 +60,10 @@ export function isPackageManagerAvailable(manager: PackageManagerName): boolean 
 async function isNpmInstalled(): Promise<boolean> {
   const workspacePath = getAppRootFolder();
   try {
-    const { stdout, stderr } = await command("npm ls --json", { cwd: workspacePath });
+    const { stdout, stderr } = await command("npm ls --json", {
+      cwd: workspacePath,
+      silentErrorsOnExit: true,
+    });
     const parsedJson = JSON.parse(stdout);
     return parsedJson.problems ? false : true;
   } catch (e) {
@@ -76,7 +79,10 @@ async function isYarnInstalled(): Promise<boolean> {
     // that if the users shell is using the older one this function may produce false in unexpected ways but even then
     // we'll just run "yarn install" every time which is exactly what we would need to do without isYarnInstalled.
     // https://docs.npmjs.com/cli/v7/commands/npm-install
-    const { stdout, stderr } = await command("npm ls --json", { cwd: workspacePath });
+    const { stdout, stderr } = await command("npm ls --json", {
+      cwd: workspacePath,
+      silentErrorsOnExit: true,
+    });
     const parsedJson = JSON.parse(stdout);
 
     // because npm marks packages installed with yarn as "extraneous" we need to check if there are any other problems.

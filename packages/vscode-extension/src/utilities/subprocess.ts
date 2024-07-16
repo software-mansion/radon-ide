@@ -100,7 +100,7 @@ export function command(
     }
   }
 
-  if (options?.silentErrorsOnExit) {
+  if (!options?.silentErrorsOnExit) {
     printErrorsOnExit(); // don't want to await here not to block the outer method
   }
 
