@@ -97,7 +97,7 @@ export function command(commandWithArgs: string, options?: (execa.Options & { si
     }
   }
 
-  if (!options?.silentErrorsOnExit) {
+  if (options?.silentErrorsOnExit) {
     printErrorsOnExit(); // don't want to await here not to block the outer method
   }
 
