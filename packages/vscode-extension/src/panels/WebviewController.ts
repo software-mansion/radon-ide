@@ -7,6 +7,7 @@ import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { WorkspaceConfigController } from "./WorkspaceConfigController";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { Utils } from "../utilities/utils";
 
 type CallArgs = {
   callId: string;
@@ -32,6 +33,7 @@ export class WebviewController implements Disposable {
   private readonly deviceManager: DeviceManager;
   public readonly project: Project;
   public readonly workspaceConfig: WorkspaceConfigController;
+  public readonly utils: Utils;
   private disposables: Disposable[] = [];
   private idToCallback: Map<string, WeakRef<any>> = new Map();
   private idToCallbackFinalizationRegistry = new FinalizationRegistry((callbackId: string) => {
@@ -64,6 +66,8 @@ export class WebviewController implements Disposable {
 
     this.workspaceConfig = new WorkspaceConfigController();
 
+    this.utils = new Utils();
+
     this.disposables.push(
       this.dependencyChecker,
       this.dependencyInstaller,
@@ -76,6 +80,7 @@ export class WebviewController implements Disposable {
       ["DeviceManager", this.deviceManager as object],
       ["Project", this.project as object],
       ["WorkspaceConfig", this.workspaceConfig as object],
+      ["Utils", this.utils as object],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
