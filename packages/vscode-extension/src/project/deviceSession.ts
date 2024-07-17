@@ -60,7 +60,6 @@ export class DeviceSession implements Disposable {
 
     progressCallback(StartupMessage.AttachingDebugger);
     await this.startDebugger();
-    isNodeModulesInstalled("npm");
   }
 
   async restart(progressCallback: ProgressCallback) {
