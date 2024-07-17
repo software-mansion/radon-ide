@@ -1,4 +1,4 @@
-import { command, exec } from "./subprocess";
+import { command } from "./subprocess";
 import { promises as fs } from "fs";
 import path, { resolve } from "path";
 import { getAppRootFolder } from "./extensionContext";
@@ -49,7 +49,7 @@ export async function resolvePackageManager(): Promise<PackageManagerName> {
 
 export function isPackageManagerAvailable(manager: PackageManagerName): boolean {
   try {
-    exec(`${manager} --version`);
+    command(`${manager} --version`);
     return true;
   } catch {}
   return false;

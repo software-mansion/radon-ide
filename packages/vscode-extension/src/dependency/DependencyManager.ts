@@ -101,9 +101,10 @@ export class DependencyManager implements Disposable {
   public async checkNodeModulesInstalled() {
     const packageManager = await resolvePackageManager();
 
-    // if(!isPackageManagerAvailable(packageManager)){
-    //   // TODO some error handling
-    // }
+    if (!isPackageManagerAvailable(packageManager)) {
+      Logger.error(`Required package manager: ${packageManager} is not installed`);
+      throw new Error(`${packageManager} is not installed`);
+    }
 
     const installed = await isNodeModulesInstalled(packageManager);
 
