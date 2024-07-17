@@ -19,8 +19,8 @@ import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoG
   ? path.join(ANDROID_HOME, "emulator", "emulator.exe")
   : path.join(ANDROID_HOME, "emulator", "emulator");
 const ADB_PATH = (process.platform === "win32")
-? path.join(ANDROID_HOME, "platform-tools", "adb.exe")
-: path.join(ANDROID_HOME, "platform-tools", "adb");
+  ? path.join(ANDROID_HOME, "platform-tools", "adb.exe")
+  : path.join(ANDROID_HOME, "platform-tools", "adb");
 const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {

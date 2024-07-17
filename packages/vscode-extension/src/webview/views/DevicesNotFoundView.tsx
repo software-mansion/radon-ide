@@ -97,6 +97,10 @@ function DevicesNotFoundView() {
   }
 
   async function createIOSDevice() {
+    if (process.platform === "win32") {
+      return
+    }
+
     if (iosSimulatorError !== undefined) {
       vscode.postMessage({ command: "showDismissableError", message: iosSimulatorError });
       return;

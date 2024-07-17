@@ -65,10 +65,10 @@ export function deactivate(context: ExtensionContext): undefined {
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
-  // if (process.platform !== "darwin") {
-  //   window.showErrorMessage("React Native IDE works only on macOS.", "Dismiss");
-  //   return;
-  // }
+  if (process.platform !== "darwin" && process.platform !== "win32") {
+    window.showErrorMessage("React Native IDE works only on macOS and Windows.", "Dismiss");
+    return;
+  }
 
   setExtensionContext(context);
   if (context.extensionMode === ExtensionMode.Development) {
@@ -347,6 +347,10 @@ async function fixBinaries(context: ExtensionContext) {
   // files are allowed. To prevent the binary from being quarantined, we clone using byte-copy (with dd). This way the
   // quarantine attribute is removed. We try to do it only when the binary has been modified or for the new installation,
   // we detect that based on the modification date of the binary file.
+  if (process.platform  === "win32") {
+    return
+  }
+  
   const buildBinPath = Uri.file(context.asAbsolutePath("dist/sim-server"));
   const exeBinPath = Uri.file(context.asAbsolutePath("dist/sim-server-executable"));
 

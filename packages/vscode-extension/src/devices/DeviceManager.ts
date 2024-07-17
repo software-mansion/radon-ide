@@ -52,6 +52,10 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
 
   public async acquireDevice(deviceInfo: DeviceInfo) {
     if (deviceInfo.platform === Platform.IOS) {
+      if (process.platform === "win32") {
+        return undefined
+      }
+
       const simulators = await listSimulators();
       const simulatorInfo = simulators.find((device) => device.id === deviceInfo.id);
       if (!simulatorInfo || simulatorInfo.platform !== Platform.IOS) {
@@ -102,10 +106,12 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
       Logger.error("Error fetching emulators", e);
       return [];
     });
-    const simulators = listSimulators().catch((e) => {
-      Logger.error("Error fetching simulators", e);
-      return [];
-    });
+    const simulators = (process.platform !== "win32")
+      ? listSimulators().catch((e) => {
+        Logger.error("Error fetching simulators", e);
+        return [];
+      })
+      : Promise.resolve([]);
     const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
     const devices = [...androidDevices, ...iosDevices];
     this.eventEmitter.emit("devicesChanged", devices);

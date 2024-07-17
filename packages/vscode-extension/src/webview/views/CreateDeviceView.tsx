@@ -37,12 +37,14 @@ function useSupportedDevices() {
   }
 
   return [
-    iosSimulatorError !== undefined
-      ? { label: "iOS – error, check diagnostics", items: [] }
-      : {
-          label: "iOS",
-          items: iOSSupportedDevices.map((device) => buildSelections(device, Platform.IOS)),
-        },
+    (typeof process === 'undefined' || process.platform !== "darwin")
+      ? { label: "", items: [] }
+      : ((iosSimulatorError !== undefined)
+        ? { label: "iOS – error, check diagnostics", items: [] }
+        : {
+            label: "iOS",
+            items: iOSSupportedDevices.map((device) => buildSelections(device, Platform.IOS)),
+          }),
     androidEmulatorError !== undefined
       ? { label: "Android – error, check diagnostics", items: [] }
       : {
@@ -88,7 +90,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
 
     setLoading(true);
     try {
-      if (devicePlatform === "ios") {
+      if (devicePlatform === "ios" && !(typeof process !== 'undefined' && process.platform === 'win32')) {  //frytki macos
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;

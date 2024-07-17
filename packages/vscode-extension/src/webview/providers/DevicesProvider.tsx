@@ -45,7 +45,7 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
       await Promise.all([
         DeviceManager.listAllDevices().then(setDevices),
         DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
-        DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes),
+        ...(typeof process === 'undefined' || process.platform === "win32" ? [] : [DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes)]),  // frytki
       ]);
     } finally {
       setFinishedInitialLoad(true);

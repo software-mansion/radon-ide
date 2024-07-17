@@ -41,14 +41,6 @@ export class DependencyChecker implements Disposable {
             Logger.debug("Received checkAndroidEmulatorInstalled command.");
             this.checkAndroidEmulatorInstalled();
             return;
-          case "checkXcodeInstalled":
-            Logger.debug("Received checkXcodeInstalled command.");
-            this.checkXcodeInstalled();
-            return;
-          case "checkCocoaPodsInstalled":
-            Logger.debug("Received checkCocoaPodsInstalled command.");
-            this.checkCocoaPodsInstalled();
-            return;
           case "checkReactNativeInstalled":
             Logger.debug("Received checkReactNativeInstalled command.");
             this.checkReactNativeInstalled();
@@ -57,10 +49,23 @@ export class DependencyChecker implements Disposable {
             Logger.debug("Received checkExpoInstalled command.");
             this.checkExpoInstalled();
             return;
-          case "checkPodsInstalled":
-            Logger.debug("Received checkPodsInstalled command.");
-            this.checkPodsInstalled();
-            return;
+        }
+        if (process.platform !== "win32") {
+          switch (webviewCommand) {
+            case "checkXcodeInstalled":
+              Logger.debug("Received checkXcodeInstalled command.");
+              this.checkXcodeInstalled();
+              return;
+            case "checkCocoaPodsInstalled":
+              Logger.debug("Received checkCocoaPodsInstalled command.");
+              this.checkCocoaPodsInstalled();
+              return;
+
+            case "checkPodsInstalled":
+              Logger.debug("Received checkPodsInstalled command.");
+              this.checkPodsInstalled();
+              return;
+          }
         }
       },
       undefined,

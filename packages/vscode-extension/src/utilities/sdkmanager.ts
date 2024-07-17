@@ -82,8 +82,8 @@ export async function getAndroidSystemImages(): Promise<AndroidSystemImageInfo[]
 // example input: 'android-34/default/arm64-v8a/data'
 function mapToSystemImageInfo(systemImagePath: string) {
   const [imageName, systemImageType, arch] = (process.platform === "win32") 
-  ? systemImagePath.replace(SYSTEM_IMAGES_PATH + path.sep, "").split(path.sep)
-  : systemImagePath.split("/"); 
+    ? systemImagePath.replace(SYSTEM_IMAGES_PATH + path.sep, "").split(path.sep)
+    : systemImagePath.split("/"); 
   const apiLevelCode = imageName.split("-")[1];
   let apiLevel = parseInt(apiLevelCode);
   if (isNaN(apiLevel)) {
