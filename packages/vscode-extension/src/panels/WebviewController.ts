@@ -50,7 +50,6 @@ export class WebviewController implements Disposable {
 
     // Set the manager to listen and change the persisting storage for the extension.
     this.dependencyManager = new DependencyManager(webview);
-    this.dependencyManager.setWebviewMessageListener();
 
     this.setupEditorListeners();
 

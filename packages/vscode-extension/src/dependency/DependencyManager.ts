@@ -14,7 +14,6 @@ import {
   PackageManagerName,
   resolvePackageManager,
 } from "../utilities/packageManager";
-import { ExecaReturnValue } from "execa";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
@@ -22,7 +21,9 @@ const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
 export class DependencyManager implements Disposable {
   private disposables: Disposable[] = [];
 
-  constructor(private readonly webview: Webview) {}
+  constructor(private readonly webview: Webview) {
+    this.setWebviewMessageListener();
+  }
 
   public dispose() {
     // Dispose of all disposables (i.e. commands) for the current webview panel
@@ -34,7 +35,7 @@ export class DependencyManager implements Disposable {
     }
   }
 
-  public setWebviewMessageListener() {
+  private setWebviewMessageListener() {
     Logger.debug("Setup dependency checker listeners.");
     this.webview.onDidReceiveMessage(
       (message: any) => {
