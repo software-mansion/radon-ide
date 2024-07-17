@@ -142,12 +142,10 @@ export class DependencyManager implements Disposable {
         break;
     }
 
-    const subprocess = command(installationCommand, {
+    await command(installationCommand, {
       cwd: workspacePath,
-      silentErrorsOnExit: true,
+      quiet: true,
     });
-
-    await subprocess;
 
     this.webview.postMessage({
       command: "isNodeModulesInstalled",

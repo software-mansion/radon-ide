@@ -84,10 +84,7 @@ export function execSync(name: string, args?: string[], options?: execa.SyncOpti
   return result;
 }
 
-export function command(
-  commandWithArgs: string,
-  options?: execa.Options & { silentErrorsOnExit?: boolean }
-) {
+export function command(commandWithArgs: string, options?: execa.Options & { quiet?: boolean }) {
   const subprocess = execa.command(commandWithArgs, overridePWD(options));
   async function printErrorsOnExit() {
     try {
@@ -100,7 +97,7 @@ export function command(
     }
   }
 
-  if (!options?.silentErrorsOnExit) {
+  if (!options?.quiet) {
     printErrorsOnExit(); // don't want to await here not to block the outer method
   }
 

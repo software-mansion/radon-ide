@@ -2,8 +2,6 @@ import { command, exec } from "./subprocess";
 import { promises as fs } from "fs";
 import path, { resolve } from "path";
 import { getAppRootFolder } from "./extensionContext";
-import { Logger } from "../Logger";
-import { ExecaReturnValue } from "execa";
 
 export type PackageManagerName = "npm" | "pnpm" | "yarn" | "bun";
 
@@ -57,12 +55,12 @@ export function isPackageManagerAvailable(manager: PackageManagerName): boolean 
   return false;
 }
 
-async function isNpmInstalled(): Promise<boolean> {
+async function isNpmModulesInstalled(): Promise<boolean> {
   const workspacePath = getAppRootFolder();
   try {
     const { stdout, stderr } = await command("npm ls --json", {
       cwd: workspacePath,
-      silentErrorsOnExit: true,
+      quiet: true,
     });
     const parsedJson = JSON.parse(stdout);
     return parsedJson.problems ? false : true;
@@ -71,17 +69,17 @@ async function isNpmInstalled(): Promise<boolean> {
   }
 }
 
-async function isYarnInstalled(): Promise<boolean> {
+async function isYarnModulesInstalled(): Promise<boolean> {
   const workspacePath = getAppRootFolder();
   try {
     // because "yarn check" was removed from yarnv2 we use npm's method for checking dependencies
-    // npm is takeing into consideration yarn.lock since version 7, which means
+    // npm is taking into consideration yarn.lock since version 7, which means
     // that if the users shell is using the older one this function may produce false in unexpected ways but even then
     // we'll just run "yarn install" every time which is exactly what we would need to do without isYarnInstalled.
     // https://docs.npmjs.com/cli/v7/commands/npm-install
     const { stdout, stderr } = await command("npm ls --json", {
       cwd: workspacePath,
-      silentErrorsOnExit: true,
+      quiet: true,
     });
     const parsedJson = JSON.parse(stdout);
 
@@ -99,12 +97,12 @@ async function isYarnInstalled(): Promise<boolean> {
   }
 }
 
-async function isPnpmInstalled(): Promise<boolean> {
+async function isPnpmModulesInstalled(): Promise<boolean> {
   // TODO: add pnpm support
   return false;
 }
 
-async function isBunInstalled(): Promise<boolean> {
+async function isBunModulesInstalled(): Promise<boolean> {
   // TODO: add bun support
   return false;
 }
@@ -112,12 +110,12 @@ async function isBunInstalled(): Promise<boolean> {
 export async function isNodeModulesInstalled(manager: PackageManagerName): Promise<boolean> {
   switch (manager) {
     case "npm":
-      return await isNpmInstalled();
+      return await isNpmModulesInstalled();
     case "yarn":
-      return await isYarnInstalled();
+      return await isYarnModulesInstalled();
     case "pnpm":
-      return await isPnpmInstalled();
+      return await isPnpmModulesInstalled();
     case "bun":
-      return await isBunInstalled();
+      return await isBunModulesInstalled();
   }
 }
