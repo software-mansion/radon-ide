@@ -22,7 +22,7 @@ import { useUtils } from "../providers/UtilsProvider";
 
 function PreviewView() {
   const { projectState, project } = useProject();
-  const { utils } = useUtils();
+  const { reportIssue } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const zoomLevel = projectState.previewZoom ?? "Fit";
@@ -167,7 +167,7 @@ function PreviewView() {
         />
 
         <div className="spacer" />
-        <Button className="feedback-button" onClick={() => utils.reportIssue()}>
+        <Button className="feedback-button" onClick={() => reportIssue()}>
           {extensionVersion || "Beta"}: Report issue
         </Button>
         <DeviceSettingsDropdown disabled={devicesNotFound}>

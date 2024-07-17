@@ -23,11 +23,11 @@ function translateToUnicode(symbol: string) {
 }
 
 export const KeybindingInfo = ({ commandName }: KeybindingInfoProps) => {
-  const { utils } = useUtils();
+  const { getCommandsCurrentKeyBinding } = useUtils();
   const [keybinding, setKeybinding] = useState<string[]>([]);
 
   useEffect(() => {
-    utils.getCommandsCurrentKeyBinding(commandName).then((keys) => {
+    getCommandsCurrentKeyBinding(commandName).then((keys) => {
       if (keys) {
         const result = keys?.split(/[+ ]/).map((key) => {
           key.trim();

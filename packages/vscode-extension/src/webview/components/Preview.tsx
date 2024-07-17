@@ -122,7 +122,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
   const { projectState, project } = useProject();
-  const { utils } = useUtils();
+  const { openFileAt } = useUtils();
 
   const projectStatus = projectState.status;
 
@@ -161,7 +161,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
-    utils.openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
     setIsInspecting(false);
   }
 

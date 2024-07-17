@@ -5,16 +5,10 @@ import { UtilsInterface } from "../../common/Utils";
 
 const utils = makeProxy<Utils>("Utils");
 
-type UtilsContextType = {
-  utils: UtilsInterface;
-};
-
-const UtilsContext = createContext<UtilsContextType>({
-  utils,
-});
+const UtilsContext = createContext<UtilsInterface>(utils);
 
 export default function UtilsProvider({ children }: PropsWithChildren) {
-  return <UtilsContext.Provider value={{ utils }}>{children}</UtilsContext.Provider>;
+  return <UtilsContext.Provider value={utils}>{children}</UtilsContext.Provider>;
 }
 
 export function useUtils() {

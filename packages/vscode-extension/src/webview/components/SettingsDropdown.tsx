@@ -20,7 +20,7 @@ interface SettingsDropdownProps {
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
-  const { utils } = useUtils();
+  const { movePanelToNewWindow } = useUtils();
 
   return (
     <DropdownMenu.Root>
@@ -110,7 +110,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                     <DropdownMenu.Item
                       className="dropdown-menu-item"
                       onSelect={() => {
-                        utils.movePanelToNewWindow();
+                        movePanelToNewWindow();
                       }}>
                       <span className="codicon codicon-multiple-windows" />
                       New Window
