@@ -2,8 +2,10 @@ import { RelativePattern, workspace, Uri, OutputChannel } from "vscode";
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import path from "path";
-import { checkIosDependenciesInstalled } from "../dependency/DependencyManager";
-import { installIOSDependencies } from "../dependency/DependencyInstaller";
+import {
+  checkIosDependenciesInstalled,
+  installIOSDependencies,
+} from "../dependency/DependencyManager";
 import { CancelToken } from "./BuildManager";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";

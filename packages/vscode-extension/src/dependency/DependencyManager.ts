@@ -14,6 +14,7 @@ import {
   PackageManagerName,
   resolvePackageManager,
 } from "../utilities/packageManager";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
@@ -336,4 +337,21 @@ export async function checkIosDependenciesInstalled() {
 
 export async function checkAndroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
+}
+
+export function installIOSDependencies(appRootFolder: string, forceCleanBuild: boolean) {
+  const iosDirPath = getIosSourceDir(appRootFolder);
+
+  if (!iosDirPath) {
+    throw new Error(`ios directory was not found inside the workspace.`);
+  }
+
+  // TODO: support forceCleanBuild option and wipe pods prior to installing
+  return command("pod install", {
+    cwd: iosDirPath,
+    env: {
+      ...getLaunchConfiguration().env,
+      LANG: "en_US.UTF-8",
+    },
+  });
 }
