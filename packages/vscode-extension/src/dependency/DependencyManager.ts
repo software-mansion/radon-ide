@@ -22,6 +22,8 @@ const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
 
 export class DependencyManager implements Disposable {
   private disposables: Disposable[] = [];
+  // because during pod installation react-native inserts build scripts to the application scheme,
+  // that are based on the state of node_modules, pods need to be reinstalled after node_modules are
   private shouldReinstallPodAfterNodeModulesChanged = true;
 
   constructor(private readonly webview: Webview) {
