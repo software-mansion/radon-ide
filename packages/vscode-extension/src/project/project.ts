@@ -36,7 +36,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private metro: Metro;
   private devtools = new Devtools();
   private debugSessionListener: Disposable | undefined;
-  private buildManager = new BuildManager();
+  private buildManager: BuildManager;
   private eventEmitter = new EventEmitter();
 
   private detectedFingerprintChange: boolean;
@@ -70,6 +70,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   ) {
     Project.currentProject = this;
     this.metro = new Metro(this.devtools, this);
+    this.buildManager = new BuildManager(dependencyManager);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
