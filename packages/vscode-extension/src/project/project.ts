@@ -131,38 +131,46 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.updateProjectState({ status: "incrementalBundleError" });
   }
 
+
+  private selectInitialDevice(devices: DeviceInfo[]) {
+    const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
+      LAST_SELECTED_DEVICE_KEY
+    );
+    let device = devices.find((item) => item.id === lastDeviceId);
+    if (!device && devices.length > 0) {
+      device = devices[0];
+    }
+    if (device) {
+      this.selectDevice(device);
+      return true;
+    }
+    this.updateProjectState({
+      selectedDevice: undefined,
+    });
+    return false;
+  }
+
   /**
    * This method tried to select the last selected device from devices list.
    * If the device list is empty, we wait until we can select a device.
    */
   private async trySelectingInitialDevice() {
-    const selectInitialDevice = (devices: DeviceInfo[]) => {
-      const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
-        LAST_SELECTED_DEVICE_KEY
-      );
-      let device = devices.find((item) => item.id === lastDeviceId);
-      if (!device && devices.length > 0) {
-        device = devices[0];
-      }
-      if (device) {
-        this.selectDevice(device);
-        return true;
-      }
-      this.updateProjectState({
-        selectedDevice: undefined,
-      });
-      return false;
-    };
-
-    const devices = await this.deviceManager.listAllDevices();
-    if (!selectInitialDevice(devices)) {
+  const devices = await this.deviceManager.listAllDevices();
+    if (!this.selectInitialDevice(devices)) {
       const listener = (newDevices: DeviceInfo[]) => {
-        if (selectInitialDevice(newDevices)) {
+        if (this.selectInitialDevice(newDevices)) {
           this.deviceManager.removeListener("devicesChanged", listener);
         }
       };
       this.deviceManager.addListener("devicesChanged", listener);
     }
+  }
+
+   // Try to select device from devices list different than removedDevice in single attempt.
+  private async trySelectingAnotherDevice(removedDevice: DeviceInfo) {
+    const devices = await this.deviceManager.listAllDevices();
+    devices.splice(devices.indexOf(removedDevice), 1);
+    this.selectInitialDevice(devices);
   }
 
   async getProjectState(): Promise<ProjectState> {
@@ -584,7 +592,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   // used in callbacks, needs to be an arrow function
   private removeDeviceListener = async (_devices: DeviceInfo) => {
-    await this.trySelectingInitialDevice();
+    await this.trySelectingAnotherDevice(_devices);
   };
 
   private checkIfNativeChanged = throttle(async () => {

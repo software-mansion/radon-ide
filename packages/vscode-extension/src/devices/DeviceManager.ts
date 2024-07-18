@@ -12,6 +12,7 @@ import {
   createEmulator,
   listEmulators,
   removeEmulator,
+  ensureOldEmulatorProcessExited,
 } from "./AndroidEmulatorDevice";
 import {
   DeviceInfo,
@@ -156,14 +157,28 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
     return simulator;
   }
 
+
+
   public async removeDevice(device: DeviceInfo) {
     if (device.platform === Platform.IOS) {
-      await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
+      // kill simulator
     }
     if (device.platform === Platform.Android) {
-      await removeEmulator(device.avdId);
+      await ensureOldEmulatorProcessExited(device.avdId);
     }
-    await this.loadDevices();
-    this.eventEmitter.emit("deviceRemoved", device);
+
+    await Promise.all([
+        this.eventEmitter.emit("deviceRemoved", device),
+        new Promise<void>(async (resolve) => {
+          if (device.platform === Platform.IOS) {
+            await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
+          }
+          if (device.platform === Platform.Android) {
+              await removeEmulator(device.avdId);
+          }
+          await this.loadDevices();
+          resolve();
+      })
+    ]);
   }
 }

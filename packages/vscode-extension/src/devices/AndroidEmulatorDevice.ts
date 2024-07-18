@@ -2,6 +2,7 @@ import { Preview } from "./preview";
 import { DeviceBase } from "./DeviceBase";
 import path from "path";
 import fs from "fs";
+import { EOL } from "node:os";
 import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI } from "../utilities/common";
@@ -110,27 +111,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
   }
 
-  private async ensureOldEmulatorProcessExited() {
-    let runningPid: string | undefined;
-    const command = (process.platform === "darwin") ? "ps" : 'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | Out-String -Width 10000"';
-    const args = (process.platform === "darwin") ? ["-Ao", "pid,command"] : [];
-    const subprocess = exec(command, args);
-    const regexpPattern = new RegExp(`(\\d+)\\s.*qemu.*-avd ${this.avdId}`);
-    lineReader(subprocess).onLineRead(async (line) => {
-      const regExpResult = regexpPattern.exec(line);
-      if (regExpResult) {
-        runningPid = regExpResult[1];
-      }
-    });
-    await subprocess;
-    if (runningPid) {
-      process.kill(Number(runningPid), 9);
-    }
-  }
-
   async bootDevice() {
     // this prevents booting device with the same AVD twice
-    await this.ensureOldEmulatorProcessExited();
+    await ensureOldEmulatorProcessExited(this.avdId);
 
     const avdDirectory = getOrCreateAvdDirectory();
     const subprocess = exec(
@@ -456,7 +439,7 @@ async function getAvdIds(avdDirectory: string) {
 
   // filters out error messages and empty lines
   // https://github.com/react-native-community/cli/issues/1801#issuecomment-1980580355
-  return stdout.split("\n").filter((id) => UUID_REGEX.test(id));
+  return stdout.split(EOL).filter((id) => UUID_REGEX.test(id));
 }
 
 export async function listEmulators() {
@@ -481,6 +464,24 @@ export async function listEmulators() {
       } as DeviceInfo;
     })
   );
+}
+
+export async function ensureOldEmulatorProcessExited(avdId: string) {
+  let runningPid: string | undefined;
+  const command = (process.platform === "darwin") ? "ps" : 'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | Out-String -Width 10000"';
+  const args = (process.platform === "darwin") ? ["-Ao", "pid,command"] : [];
+  const subprocess = exec(command, args);
+  const regexpPattern = new RegExp(`(\\d+)\\s.*qemu.*-avd ${avdId}`);
+  lineReader(subprocess).onLineRead(async (line) => {
+    const regExpResult = regexpPattern.exec(line);
+    if (regExpResult) {
+      runningPid = regExpResult[1];
+    }
+  });
+  await subprocess;
+  if (runningPid) {
+    process.kill(Number(runningPid), 9);
+  }
 }
 
 export function removeEmulator(avdId: string) {
