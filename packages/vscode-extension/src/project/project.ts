@@ -1,13 +1,4 @@
-import {
-  Disposable,
-  debug,
-  commands,
-  workspace,
-  FileSystemWatcher,
-  window,
-  env,
-  Uri,
-} from "vscode";
+import { Disposable, debug, commands, workspace, FileSystemWatcher, window } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -27,16 +18,11 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { EventEmitter } from "stream";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import path from "path";
-import { homedir } from "node:os";
-import fs from "fs";
-import JSON5 from "json5";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle } from "../utilities/throttle";
 
