@@ -1,13 +1,4 @@
-import {
-  Disposable,
-  debug,
-  commands,
-  workspace,
-  FileSystemWatcher,
-  window,
-  env,
-  Uri,
-} from "vscode";
+import { Disposable, debug, commands, workspace, FileSystemWatcher, window } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -27,16 +18,12 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { EventEmitter } from "stream";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import path from "path";
-import { homedir } from "node:os";
-import fs from "fs";
-import JSON5 from "json5";
+import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle } from "../utilities/throttle";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
@@ -77,7 +64,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     },
   };
 
-  constructor(private readonly deviceManager: DeviceManager) {
+  constructor(
+    private readonly deviceManager: DeviceManager,
+    private readonly dependencyManager: DependencyManager
+  ) {
     Project.currentProject = this;
     this.metro = new Metro(this.devtools, this);
     this.start(false, false);
@@ -281,6 +271,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           break;
       }
     });
+
+    Logger.debug("Installing Node Modules");
+    const installNodeModules = this.installNodeModules();
+
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
 
@@ -311,7 +305,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       forceCleanBuild,
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
-      }, 100)
+      }, 100),
+      [installNodeModules]
     );
   }
 
@@ -436,6 +431,15 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public async updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void> {
     this.updateProjectState({ previewZoom: zoom });
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
+  }
+
+  private async installNodeModules(): Promise<void> {
+    const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
+
+    if (!nodeModulesStatus.installed) {
+      await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
+    }
+    Logger.debug("Node Modules installed");
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {

@@ -72,11 +72,15 @@ export class Metro implements Disposable {
     await this.startPromise;
   }
 
-  public async start(resetCache: boolean, progressListener: (newStageProgress: number) => void) {
+  public async start(
+    resetCache: boolean,
+    progressListener: (newStageProgress: number) => void,
+    dependencies: Promise<any>[]
+  ) {
     if (this.startPromise) {
       throw new Error("metro already started");
     }
-    this.startPromise = this.startInternal(resetCache, progressListener);
+    this.startPromise = this.startInternal(resetCache, progressListener, dependencies);
     return this.startPromise;
   }
 
@@ -126,11 +130,12 @@ export class Metro implements Disposable {
 
   public async startInternal(
     resetCache: boolean,
-    progressListener: (newStageProgress: number) => void
+    progressListener: (newStageProgress: number) => void,
+    dependencies: Promise<any>[]
   ) {
     const appRootFolder = getAppRootFolder();
     const launchConfiguration = getLaunchConfiguration();
-    await this.devtools.ready();
+    await Promise.all([this.devtools.ready()].concat(dependencies));
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
     let metroConfigPath: string | undefined;
