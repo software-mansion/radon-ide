@@ -84,14 +84,7 @@ async function isYarnModulesInstalled(): Promise<boolean> {
     const parsedJson = JSON.parse(stdout);
 
     // because npm marks packages installed with yarn as "extraneous" we need to check if there are any other problems.
-    if (parsedJson.problems) {
-      parsedJson.problems.forEach((element: string) => {
-        if (!element.startsWith("extraneous")) {
-          return false;
-        }
-      });
-    }
-    return true;
+    return parsedJson?.problems.every((problem: string) => problem.startsWith("extraneous"));
   } catch (e) {
     return false;
   }

@@ -436,12 +436,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private async installNodeModules(): Promise<void> {
     const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
 
-    if (nodeModulesStatus.installed) {
-      Logger.debug("Node Modules installed");
-      return;
+    if (!nodeModulesStatus.installed) {
+      await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
     }
-
-    await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
     Logger.debug("Node Modules installed");
   }
 
