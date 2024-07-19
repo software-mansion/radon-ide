@@ -15,12 +15,15 @@ import {
   resolvePackageManager,
 } from "../utilities/packageManager";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { CancelToken } from "../builders/BuildManager";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
 
 export class DependencyManager implements Disposable {
   private disposables: Disposable[] = [];
+  // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
+  private stalePods = true;
 
   constructor(private readonly webview: Webview) {
     this.setWebviewMessageListener();
@@ -121,6 +124,8 @@ export class DependencyManager implements Disposable {
   }
 
   public async installNodeModules(manager: PackageManagerName): Promise<void> {
+    this.stalePods = true;
+
     this.webview.postMessage({
       command: "installingNodeModules",
     });
@@ -262,20 +267,82 @@ export class DependencyManager implements Disposable {
     return installed;
   }
 
+  private async checkIosDependenciesInstalled() {
+    if (await isExpoGoProject()) {
+      // for Expo Go projects, we never return an error here because Pods are never needed
+      return true;
+    }
+
+    if (this.stalePods) {
+      return false;
+    }
+
+    const iosDirPath = getIosSourceDir(getAppRootFolder());
+
+    Logger.debug(`Check pods in ${iosDirPath} ${getAppRootFolder()}`);
+    if (!iosDirPath) {
+      return false;
+    }
+
+    const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
+    const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
+
+    return podfileLockExists && podsDirExists;
+  }
+
   public async checkPodsInstalled() {
-    const installed = await checkIosDependenciesInstalled();
-    const errorMessage = "iOS dependencies are not installed.";
+    const installed = await this.checkIosDependenciesInstalled();
 
     this.webview.postMessage({
       command: "isPodsInstalled",
       data: {
         installed,
         info: "Whether iOS dependencies are installed.",
-        error: installed ? undefined : errorMessage,
+        error: undefined,
       },
     });
     Logger.debug("Project pods installed:", installed);
     return installed;
+  }
+
+  public async installPods(
+    appRootFolder: string,
+    forceCleanBuild: boolean,
+    cancelToken: CancelToken
+  ) {
+    const iosDirPath = getIosSourceDir(appRootFolder);
+
+    if (!iosDirPath) {
+      throw new Error(`ios directory was not found inside the workspace.`);
+    }
+
+    const commandInIosDir = (args: string) => {
+      return command(args, {
+        cwd: iosDirPath,
+        env: {
+          ...getLaunchConfiguration().env,
+          LANG: "en_US.UTF-8",
+        },
+      });
+    };
+
+    if (forceCleanBuild) {
+      await cancelToken.adapt(commandInIosDir("pod deintegrate"));
+    }
+
+    await cancelToken.adapt(commandInIosDir("pod install"));
+
+    this.stalePods = false;
+
+    this.webview.postMessage({
+      command: "isPodsInstalled",
+      data: {
+        installed: true,
+        info: "Whether iOS dependencies are installed.",
+        error: undefined,
+      },
+    });
+    Logger.debug("Project pods installed");
   }
 }
 
@@ -315,42 +382,6 @@ export function checkMinDependencyVersionInstalled(dependency: string, minVersio
   }
 }
 
-export async function checkIosDependenciesInstalled() {
-  if (await isExpoGoProject()) {
-    // for Expo Go projects, we never return an error here because Pods are never needed
-    return true;
-  }
-
-  const iosDirPath = getIosSourceDir(getAppRootFolder());
-
-  Logger.debug(`Check pods in ${iosDirPath} ${getAppRootFolder()}`);
-  if (!iosDirPath) {
-    return false;
-  }
-
-  const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
-  const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
-
-  return podfileLockExists && podsDirExists;
-}
-
 export async function checkAndroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
-}
-
-export function installIOSDependencies(appRootFolder: string, forceCleanBuild: boolean) {
-  const iosDirPath = getIosSourceDir(appRootFolder);
-
-  if (!iosDirPath) {
-    throw new Error(`ios directory was not found inside the workspace.`);
-  }
-
-  // TODO: support forceCleanBuild option and wipe pods prior to installing
-  return command("pod install", {
-    cwd: iosDirPath,
-    env: {
-      ...getLaunchConfiguration().env,
-      LANG: "en_US.UTF-8",
-    },
-  });
 }
