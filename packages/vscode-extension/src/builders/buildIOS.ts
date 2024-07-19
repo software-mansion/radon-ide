@@ -13,8 +13,6 @@ import {
 } from "../devices/IosSimulatorDevice";
 import { IOSDeviceInfo, Platform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
-import { ExecaChildProcess } from "execa";
-
 type IOSProjectInfo =
   | {
       workspaceLocation: string;

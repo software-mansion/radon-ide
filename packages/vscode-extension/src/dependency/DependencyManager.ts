@@ -22,9 +22,8 @@ const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
 
 export class DependencyManager implements Disposable {
   private disposables: Disposable[] = [];
-  // because during pod installation react-native inserts build scripts to the application scheme,
-  // that are based on the state of node_modules, pods need to be reinstalled after node_modules are
-  private shouldReinstallPodAfterNodeModulesChanged = true;
+  // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
+  private stalePods = true;
 
   constructor(private readonly webview: Webview) {
     this.setWebviewMessageListener();
@@ -125,7 +124,7 @@ export class DependencyManager implements Disposable {
   }
 
   public async installNodeModules(manager: PackageManagerName): Promise<void> {
-    this.shouldReinstallPodAfterNodeModulesChanged = true;
+    this.stalePods = true;
 
     this.webview.postMessage({
       command: "installingNodeModules",
@@ -274,7 +273,7 @@ export class DependencyManager implements Disposable {
       return true;
     }
 
-    if (this.shouldReinstallPodAfterNodeModulesChanged) {
+    if (this.stalePods) {
       return false;
     }
 
@@ -317,29 +316,23 @@ export class DependencyManager implements Disposable {
       throw new Error(`ios directory was not found inside the workspace.`);
     }
 
-    if (forceCleanBuild) {
-      await cancelToken.adapt(
-        command("pod deintegrate", {
-          cwd: iosDirPath,
-          env: {
-            ...getLaunchConfiguration().env,
-            LANG: "en_US.UTF-8",
-          },
-        })
-      );
-    }
-
-    await cancelToken.adapt(
-      command("pod install", {
+    const commandInIosDir = (args: string) => {
+      return command(args, {
         cwd: iosDirPath,
         env: {
           ...getLaunchConfiguration().env,
           LANG: "en_US.UTF-8",
         },
-      })
-    );
+      });
+    };
 
-    this.shouldReinstallPodAfterNodeModulesChanged = false;
+    if (forceCleanBuild) {
+      await cancelToken.adapt(commandInIosDir("pod deintegrate"));
+    }
+
+    await cancelToken.adapt(commandInIosDir("pod install"));
+
+    this.stalePods = false;
 
     this.webview.postMessage({
       command: "isPodsInstalled",
