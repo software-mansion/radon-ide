@@ -231,8 +231,8 @@ export class BuildManager {
       () => {
         return this.dependencyManager.checkPodsInstalled();
       },
-      (appRootFolder: string, forceCleanBuild: boolean, cancelToken: CancelToken) => {
-        return this.dependencyManager.installPods(appRootFolder, forceCleanBuild, cancelToken);
+      (appRootFolder: string, cleanBuild: boolean, token: CancelToken) => {
+        return this.dependencyManager.installPods(appRootFolder, cleanBuild, token);
       }
     );
     const buildResult = { ...build, platform: Platform.IOS };
