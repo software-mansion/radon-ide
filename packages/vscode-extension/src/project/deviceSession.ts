@@ -8,6 +8,7 @@ import { AppPermissionType, DeviceSettings, StartupMessage } from "../common/Pro
 import { Platform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { isNodeModulesInstalled } from "../utilities/packageManager";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 

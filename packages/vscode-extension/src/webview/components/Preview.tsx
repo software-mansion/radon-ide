@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject } from "react";
 import clamp from "lodash/clamp";
-import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
@@ -19,6 +18,8 @@ import { InspectDataMenu } from "./InspectDataMenu";
 import { Resizable } from "re-resizable";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
+import { throttle } from "../../utilities/throttle";
+import { useUtils } from "../providers/UtilsProvider";
 
 declare module "react" {
   interface CSSProperties {
@@ -123,6 +124,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
   const { projectState, project, deviceSettings } = useProject();
+  const { openFileAt } = useUtils();
 
   const projectStatus = projectState.status;
 
@@ -161,7 +163,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
-    project.openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
     setIsInspecting(false);
   }
 
