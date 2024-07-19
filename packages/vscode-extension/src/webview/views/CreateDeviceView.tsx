@@ -90,7 +90,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
 
     setLoading(true);
     try {
-      if (devicePlatform === "ios" && !(typeof process !== 'undefined' && process.platform === 'win32')) {  //frytki macos
+      if (devicePlatform === "ios" && !(typeof process !== 'undefined' && process.platform === 'win32')) {
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;
@@ -118,7 +118,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Label>Device Type</Label>
         <Select
           className="form-field"
-          value={`${devicePlatform ?? ""}:${deviceName ?? ""}`}
+          value={`${(devicePlatform && deviceName) ? `${devicePlatform}:${deviceName}` : ""}`}
           onChange={(newValue: string) => {
             const [newPlatform, name] = newValue.split(":", 2);
             assertPlatform(newPlatform);
