@@ -6,7 +6,7 @@ import CreateDeviceView from "./CreateDeviceView";
 import { useDevices } from "../providers/DevicesProvider";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { useCallback, useState } from "react";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
+import { AndroidSupportedDevices, iOSSupportedDevices, isOSX } from "../utilities/consts";
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { vscode } from "../utilities/vscode";
@@ -97,7 +97,7 @@ function DevicesNotFoundView() {
   }
 
   async function createIOSDevice() {
-    if (process.platform === "win32") {
+    if (!isOSX) {
       return
     }
 

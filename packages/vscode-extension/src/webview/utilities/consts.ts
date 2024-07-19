@@ -75,3 +75,19 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     maskImage: pixel6amask,
   },
 ] as const;
+
+
+function getPlatform() {
+  // https://stackoverflow.com/a/73619128
+  if (typeof navigator.userAgentData !== 'undefined' && navigator.userAgentData != null) {
+      return navigator.userAgentData.platform;
+  }
+  if (typeof navigator.platform !== 'undefined') {
+      return navigator.platform;
+  }
+  return 'unknown';
+}
+
+export const platform = getPlatform().toLowerCase();
+export const  isOSX = /mac/.test(platform);
+export const  isWindows = /win/.test(platform);

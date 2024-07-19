@@ -8,6 +8,7 @@ import {
   DeviceProperties,
   iOSSupportedDevices,
   AndroidSupportedDevices,
+  isOSX,
 } from "../utilities/consts";
 import { Platform } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
@@ -37,14 +38,14 @@ function useSupportedDevices() {
   }
 
   return [
-    (typeof process === 'undefined' || process.platform !== "darwin")
-      ? { label: "", items: [] }
-      : ((iosSimulatorError !== undefined)
+    (isOSX)
+      ? ((iosSimulatorError !== undefined)
         ? { label: "iOS – error, check diagnostics", items: [] }
         : {
             label: "iOS",
             items: iOSSupportedDevices.map((device) => buildSelections(device, Platform.IOS)),
-          }),
+          })
+      : { label: "", items: [] },
     androidEmulatorError !== undefined
       ? { label: "Android – error, check diagnostics", items: [] }
       : {
@@ -90,7 +91,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
 
     setLoading(true);
     try {
-      if (devicePlatform === "ios" && !(typeof process !== 'undefined' && process.platform === 'win32')) {
+      if (devicePlatform === "ios" && isOSX) {
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;

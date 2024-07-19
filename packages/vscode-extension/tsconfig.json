@@ -10,7 +10,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowJs": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": [
+      "./node_modules/user-agent-data-types"
+     ]
   },
   "exclude": [
     "node_modules/**/*",
