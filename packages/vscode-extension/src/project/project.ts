@@ -168,9 +168,16 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
    // Try to select device from devices list different than removedDevice in single attempt.
   private async trySelectingAnotherDevice(removedDevice: DeviceInfo) {
-    const devices = await this.deviceManager.listAllDevices();
-    devices.splice(devices.indexOf(removedDevice), 1);
-    this.selectInitialDevice(devices);
+    let devices = await this.deviceManager.listAllDevices();
+    devices = devices.filter(item => item.id !== removedDevice.id);
+    if (!this.selectInitialDevice(devices)) {
+      const listener = (newDevices: DeviceInfo[]) => {
+        if (this.selectInitialDevice(newDevices)) {
+          this.deviceManager.removeListener("devicesChanged", listener);
+        }
+      };
+      this.deviceManager.addListener("devicesChanged", listener);
+    }
   }
 
   async getProjectState(): Promise<ProjectState> {

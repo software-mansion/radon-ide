@@ -53,7 +53,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
 
   public async acquireDevice(deviceInfo: DeviceInfo) {
     if (deviceInfo.platform === Platform.IOS) {
-      if (process.platform === "win32") {
+      if (process.platform !== "darwin") {
         return undefined
       }
 
@@ -107,7 +107,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
       Logger.error("Error fetching emulators", e);
       return [];
     });
-    const simulators = (process.platform !== "win32")
+    const simulators = (process.platform === "darwin")
       ? listSimulators().catch((e) => {
         Logger.error("Error fetching simulators", e);
         return [];
@@ -174,11 +174,11 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
             await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
           }
           if (device.platform === Platform.Android) {
-              await removeEmulator(device.avdId);
+            await removeEmulator(device.avdId);
           }
-          await this.loadDevices();
           resolve();
       })
     ]);
+    await this.loadDevices(true);
   }
 }
