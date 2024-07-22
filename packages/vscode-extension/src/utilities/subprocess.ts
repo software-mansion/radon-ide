@@ -13,10 +13,10 @@ function overridePWD<T extends execa.Options>(options?: T) {
   // being launched from command line using 'code' command), the PWD is set to "/".
   // This method overrides PWD to the current cwd option when it's set for the subprocess call
   // therefore removing the risk of the subprocess using the wrong working directory.
-  if (process.platform === 'win32') {
-    return options
+  if (process.platform === "win32") {
+    return options;
   }
-  
+
   if (options?.cwd) {
     return { ...options, env: { ...options.env, PWD: options.cwd } };
   }

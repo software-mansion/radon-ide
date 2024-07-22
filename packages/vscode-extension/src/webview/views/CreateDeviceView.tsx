@@ -38,13 +38,13 @@ function useSupportedDevices() {
   }
 
   return [
-    (isOSX)
-      ? ((iosSimulatorError !== undefined)
+    isOSX
+      ? iosSimulatorError !== undefined
         ? { label: "iOS – error, check diagnostics", items: [] }
         : {
             label: "iOS",
             items: iOSSupportedDevices.map((device) => buildSelections(device, Platform.IOS)),
-          })
+          }
       : { label: "", items: [] },
     androidEmulatorError !== undefined
       ? { label: "Android – error, check diagnostics", items: [] }
@@ -119,7 +119,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Label>Device Type</Label>
         <Select
           className="form-field"
-          value={`${(devicePlatform && deviceName) ? `${devicePlatform}:${deviceName}` : ""}`}
+          value={`${devicePlatform && deviceName ? `${devicePlatform}:${deviceName}` : ""}`}
           onChange={(newValue: string) => {
             const [newPlatform, name] = newValue.split(":", 2);
             assertPlatform(newPlatform);

@@ -347,10 +347,10 @@ async function fixBinaries(context: ExtensionContext) {
   // files are allowed. To prevent the binary from being quarantined, we clone using byte-copy (with dd). This way the
   // quarantine attribute is removed. We try to do it only when the binary has been modified or for the new installation,
   // we detect that based on the modification date of the binary file.
-  if (process.platform  === "win32") {
-    return
+  if (process.platform === "win32") {
+    return;
   }
-  
+
   const buildBinPath = Uri.file(context.asAbsolutePath("dist/sim-server"));
   const exeBinPath = Uri.file(context.asAbsolutePath("dist/sim-server-executable"));
 

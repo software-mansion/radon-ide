@@ -18,7 +18,7 @@ export class Preview implements Disposable {
     const simControllerBinary = path.join(
       extensionContext.extensionPath,
       "dist",
-      (process.platform === "win32") ? "sim-server-executable.exe" : "sim-server-executable"
+      process.platform === "win32" ? "sim-server-executable.exe" : "sim-server-executable"
     );
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);

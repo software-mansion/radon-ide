@@ -54,7 +54,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   public async acquireDevice(deviceInfo: DeviceInfo) {
     if (deviceInfo.platform === Platform.IOS) {
       if (process.platform !== "darwin") {
-        return undefined
+        return undefined;
       }
 
       const simulators = await listSimulators();
@@ -107,12 +107,13 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
       Logger.error("Error fetching emulators", e);
       return [];
     });
-    const simulators = (process.platform === "darwin")
-      ? listSimulators().catch((e) => {
-        Logger.error("Error fetching simulators", e);
-        return [];
-      })
-      : Promise.resolve([]);
+    const simulators =
+      process.platform === "darwin"
+        ? listSimulators().catch((e) => {
+            Logger.error("Error fetching simulators", e);
+            return [];
+          })
+        : Promise.resolve([]);
     const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
     const devices = [...androidDevices, ...iosDevices];
     this.eventEmitter.emit("devicesChanged", devices);
@@ -157,8 +158,6 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
     return simulator;
   }
 
-
-
   public async removeDevice(device: DeviceInfo) {
     if (device.platform === Platform.IOS) {
       // kill simulator
@@ -168,16 +167,16 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
     }
 
     await Promise.all([
-        this.eventEmitter.emit("deviceRemoved", device),
-        new Promise<void>(async (resolve) => {
-          if (device.platform === Platform.IOS) {
-            await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
-          }
-          if (device.platform === Platform.Android) {
-            await removeEmulator(device.avdId);
-          }
-          resolve();
-      })
+      this.eventEmitter.emit("deviceRemoved", device),
+      new Promise<void>(async (resolve) => {
+        if (device.platform === Platform.IOS) {
+          await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
+        }
+        if (device.platform === Platform.Android) {
+          await removeEmulator(device.avdId);
+        }
+        resolve();
+      }),
     ]);
     await this.loadDevices(true);
   }

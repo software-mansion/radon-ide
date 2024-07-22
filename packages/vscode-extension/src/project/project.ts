@@ -117,7 +117,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.updateProjectState({ status: "incrementalBundleError" });
   }
 
-
   private selectInitialDevice(devices: DeviceInfo[]) {
     const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
       LAST_SELECTED_DEVICE_KEY
@@ -141,7 +140,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
    * If the device list is empty, we wait until we can select a device.
    */
   private async trySelectingInitialDevice() {
-  const devices = await this.deviceManager.listAllDevices();
+    const devices = await this.deviceManager.listAllDevices();
     if (!this.selectInitialDevice(devices)) {
       const listener = (newDevices: DeviceInfo[]) => {
         if (this.selectInitialDevice(newDevices)) {
@@ -152,10 +151,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     }
   }
 
-   // Try to select device from devices list different than removedDevice in single attempt.
+  // Try to select device from devices list different than removedDevice in single attempt.
   private async trySelectingAnotherDevice(removedDevice: DeviceInfo) {
     let devices = await this.deviceManager.listAllDevices();
-    devices = devices.filter(item => item.id !== removedDevice.id);
+    devices = devices.filter((item) => item.id !== removedDevice.id);
     if (!this.selectInitialDevice(devices)) {
       const listener = (newDevices: DeviceInfo[]) => {
         if (this.selectInitialDevice(newDevices)) {
