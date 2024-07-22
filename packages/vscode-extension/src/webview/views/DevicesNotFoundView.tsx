@@ -126,10 +126,12 @@ function DevicesNotFoundView() {
         You can add a new device using the quick action below.
       </p>
       <div className="devices-not-found-button-group">
-        <Button type="ternary" className="devices-not-found-quick-action" onClick={createIOSDevice}>
-          {isIOSCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
-          Add iPhone
-        </Button>
+        {isOSX &&
+          (<Button type="ternary" className="devices-not-found-quick-action" onClick={createIOSDevice}>
+            {isIOSCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
+            Add iPhone
+          </Button>)
+        }
 
         <Button
           type="ternary"
