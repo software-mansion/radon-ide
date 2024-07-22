@@ -104,6 +104,10 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
+      announcementBar: {
+        id: `supporter-license-banner`,
+        content: `Supporter's License is now available! <a href="https://ide.swmansion.com/pricing">Learn more</a>`,
+      },
       metadata: [
         {
           name: "google-site-verification",

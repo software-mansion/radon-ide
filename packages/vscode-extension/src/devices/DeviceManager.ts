@@ -90,12 +90,12 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   private async loadDevices(forceReload = false) {
     if (forceReload) {
       // Clear the cache when force reload is requested
-      extensionContext.workspaceState.update(DEVICE_LIST_CACHE_KEY, undefined);
+      extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, undefined);
     }
     if (!this.loadDevicesPromise || forceReload) {
       this.loadDevicesPromise = this.loadDevicesInternal().then((devices) => {
         this.loadDevicesPromise = undefined;
-        extensionContext.workspaceState.update(DEVICE_LIST_CACHE_KEY, devices);
+        extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, devices);
         return devices;
       });
     }
@@ -128,7 +128,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   }
 
   public async listAllDevices() {
-    const devices = extensionContext.workspaceState.get(DEVICE_LIST_CACHE_KEY) as
+    const devices = extensionContext.globalState.get(DEVICE_LIST_CACHE_KEY) as
       | DeviceInfo[]
       | undefined;
     if (devices) {

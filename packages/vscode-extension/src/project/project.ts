@@ -1,13 +1,4 @@
-import {
-  Disposable,
-  debug,
-  commands,
-  workspace,
-  FileSystemWatcher,
-  window,
-  env,
-  Uri,
-} from "vscode";
+import { Disposable, debug, commands, workspace, FileSystemWatcher, window } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -15,7 +6,6 @@ import { Logger } from "../Logger";
 import { BuildManager, didFingerprintChange } from "../builders/BuildManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
-import { throttle } from "../common/utils";
 import {
   AppPermissionType,
   DeviceSettings,
@@ -28,16 +18,13 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { EventEmitter } from "stream";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import path from "path";
-import { homedir } from "node:os";
-import fs from "fs";
-import JSON5 from "json5";
+import { DependencyManager } from "../dependency/DependencyManager";
+import { throttle } from "../utilities/throttle";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -49,7 +36,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private metro: Metro;
   private devtools = new Devtools();
   private debugSessionListener: Disposable | undefined;
-  private buildManager = new BuildManager();
+  private buildManager: BuildManager;
   private eventEmitter = new EventEmitter();
 
   private detectedFingerprintChange: boolean;
@@ -77,20 +64,19 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     },
   };
 
-  constructor(private readonly deviceManager: DeviceManager) {
+  constructor(
+    private readonly deviceManager: DeviceManager,
+    private readonly dependencyManager: DependencyManager
+  ) {
     Project.currentProject = this;
     this.metro = new Metro(this.devtools, this);
+    this.buildManager = new BuildManager(dependencyManager);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.detectedFingerprintChange = false;
 
     this.trackNativeChanges();
-  }
-  async reportIssue() {
-    env.openExternal(
-      Uri.parse("https://github.com/software-mansion/react-native-ide/issues/new/choose")
-    );
   }
 
   trackNativeChanges() {
@@ -301,6 +287,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
           break;
       }
     });
+
+    Logger.debug("Installing Node Modules");
+    const installNodeModules = this.installNodeModules();
+
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
 
@@ -331,7 +321,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       forceCleanBuild,
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
-      }, 100)
+      }, 100),
+      [installNodeModules]
     );
   }
 
@@ -348,10 +339,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
     this.deviceSession?.sendKey(keyCode, direction);
-  }
-
-  public async openFileAt(filePath: string, line0Based: number, column0Based: number) {
-    openFileAtPosition(filePath, line0Based, column0Based);
   }
 
   public async inspectElementAt(
@@ -415,62 +402,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     await this.deviceSession?.openDevMenu();
   }
 
-  public movePanelToNewWindow() {
-    commands.executeCommand("workbench.action.moveEditorToNewWindow");
-  }
-
   public startPreview(appKey: string) {
     this.deviceSession?.startPreview(appKey);
   }
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {
     this.deviceSession?.onActiveFileChange(filename, followEnabled);
-  }
-
-  public async getCommandsCurrentKeyBinding(commandName: string) {
-    const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
-    const extensionPackageJson = require(packageJsonPath);
-    let keybindingsJsonPath;
-    let keybindingsJson;
-    try {
-      keybindingsJsonPath = path.join(
-        homedir(),
-        "Library/Application Support/Code/User/keybindings.json"
-      );
-      // can not use require because the file may contain comments
-      keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());
-    } catch (e) {
-      Logger.error("error while parsing keybindings.json", e);
-      return undefined;
-    }
-
-    const isRNIDECommand =
-      extensionPackageJson.contributes.commands &&
-      extensionPackageJson.contributes.commands.find((command: any) => {
-        return command.command === commandName;
-      });
-    if (!isRNIDECommand) {
-      Logger.warn("Trying to access a keybinding for a command that is not part of an extension.");
-      return undefined;
-    }
-
-    const userKeybinding = keybindingsJson.find((command: any) => {
-      return command.command === commandName;
-    });
-    if (userKeybinding) {
-      return userKeybinding.key;
-    }
-
-    const defaultKeybinding = extensionPackageJson.contributes.keybindings.find(
-      (keybinding: any) => {
-        return keybinding.command === commandName;
-      }
-    );
-    if (defaultKeybinding) {
-      return defaultKeybinding.mac;
-    }
-
-    return undefined;
   }
 
   public async getDeviceSettings() {
@@ -510,6 +447,15 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public async updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void> {
     this.updateProjectState({ previewZoom: zoom });
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
+  }
+
+  private async installNodeModules(): Promise<void> {
+    const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
+
+    if (!nodeModulesStatus.installed) {
+      await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
+    }
+    Logger.debug("Node Modules installed");
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
