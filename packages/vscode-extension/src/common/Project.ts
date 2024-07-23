@@ -8,7 +8,6 @@ export type DeviceSettings = {
     longitude: number;
     isDisabled: boolean;
   };
-  showFrame?: boolean;
 };
 
 export type ProjectState = {

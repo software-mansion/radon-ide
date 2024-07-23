@@ -1,8 +1,9 @@
 import "./Label.css";
 import { ComponentProps } from "react";
+import classNames from "classnames";
 
 function Label({ className, ...props }: ComponentProps<"label">) {
-  return <label className={`${className} label`} {...props} />;
+  return <label className={classNames("label", className)} {...props} />;
 }
 
 export default Label;

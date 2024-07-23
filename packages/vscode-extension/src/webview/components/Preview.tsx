@@ -20,6 +20,7 @@ import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { useUtils } from "../providers/UtilsProvider";
+import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 
 declare module "react" {
   interface CSSProperties {
@@ -29,12 +30,12 @@ declare module "react" {
 
 function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
   return {
-    "--phone-screen-height": `${(device.screenHeight / device.frameHeight) * 100}%`,
+    "--phone-screen-height": `${frameDisabled ? 100 : (device.screenHeight / device.frameHeight) * 100}%`,
     "--phone-screen-width": `${
       frameDisabled ? 100 : (device.screenWidth / device.frameWidth) * 100
     }%`,
-    "--phone-aspect-ratio": `${device.frameWidth / device.frameHeight}`,
-    "--phone-top": `${(device.offsetY / device.frameHeight) * 100}%`,
+    "--phone-aspect-ratio": `${frameDisabled ? device.screenWidth / device.screenHeight : device.frameWidth / device.frameHeight}`,
+    "--phone-top": `${frameDisabled ? 0 : (device.offsetY / device.frameHeight) * 100}%`,
     "--phone-left": `${frameDisabled ? 0 : (device.offsetX / device.frameWidth) * 100}%`,
     "--phone-mask-image": `url(${device.maskImage})`,
   } as const;
@@ -329,9 +330,10 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     device: device!,
   });
 
-  const isFrameDisabled = deviceSettings.showFrame === false;
-
-  function MaybeFrame() {
+  const workspace = useWorkspaceConfig();
+  const isFrameDisabled = workspace.showDeviceFrame === false;
+  
+  function DeviceFrame() {
     if (!device) {
       return null;
     }
@@ -420,7 +422,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                   </div>
                 )}
               </div>
-              <MaybeFrame />
+              <DeviceFrame />
               {inspectStackData && (
                 <InspectDataMenu
                   inspectLocation={inspectStackData.requestLocation}
@@ -444,7 +446,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
               <div className="phone-sized phone-content-loading ">
                 <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
               </div>
-              <MaybeFrame />
+              <DeviceFrame />
             </div>
           </Resizable>
         )}
@@ -452,7 +454,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
           <Resizable {...resizableProps}>
             <div className="phone-content">
               <div className="phone-sized extension-error-screen" />
-              <MaybeFrame />
+              <DeviceFrame />
             </div>
           </Resizable>
         )}

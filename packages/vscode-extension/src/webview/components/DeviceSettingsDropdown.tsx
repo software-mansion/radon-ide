@@ -151,24 +151,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-          <Label>Device Frame</Label>
-          <form>
-            <div className="switch-group-center">
-              <Label htmlFor="device-frame">Enable Device Frame</Label>
-              <Switch.Root
-                className="switch-root"
-                defaultChecked={deviceSettings.showFrame !== false}
-                id="device-frame"
-                onCheckedChange={(value) => {
-                  project.updateDeviceSettings({
-                    ...deviceSettings,
-                    showFrame: value,
-                  });
-                }}>
-                <Switch.Thumb className="switch-thumb" />
-              </Switch.Root>
-            </div>
-          </form>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
