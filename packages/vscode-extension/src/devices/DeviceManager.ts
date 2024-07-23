@@ -158,18 +158,13 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   }
 
   public async removeDevice(device: DeviceInfo) {
-    await Promise.all([
-      this.eventEmitter.emit("deviceRemoved", device),
-      new Promise<void>(async (resolve) => {
-        if (device.platform === DevicePlatform.IOS) {
-          await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
-        }
-        if (device.platform === DevicePlatform.Android) {
-          await removeEmulator(device.avdId);
-        }
-        resolve();
-      }),
-    ]);
+    if (device.platform === DevicePlatform.IOS) {
+      await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
+    }
+    if (device.platform === DevicePlatform.Android) {
+      await removeEmulator(device.avdId);
+    }
     await this.loadDevices();
+    this.eventEmitter.emit("deviceRemoved", device);
   }
 }

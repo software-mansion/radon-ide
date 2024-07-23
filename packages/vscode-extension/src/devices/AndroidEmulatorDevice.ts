@@ -501,7 +501,7 @@ export async function removeEmulator(avdId: string) {
   if (Platform.OS == "windows") {
     await AndroidEmulatorDevice.ensureOldEmulatorProcessExited(avdId);
   }
-  
+
   const avdDirectory = getOrCreateAvdDirectory();
   const removeAvd = fs.promises.rm(path.join(avdDirectory, `${avdId}.avd`), {
     recursive: true,
