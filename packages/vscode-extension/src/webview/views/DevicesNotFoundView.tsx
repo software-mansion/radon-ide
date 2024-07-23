@@ -6,10 +6,11 @@ import CreateDeviceView from "./CreateDeviceView";
 import { useDevices } from "../providers/DevicesProvider";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { useCallback, useState } from "react";
-import { AndroidSupportedDevices, iOSSupportedDevices, isOSX } from "../utilities/consts";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { vscode } from "../utilities/vscode";
+import { Platform } from "../../utilities/platform";
 
 const firstIosDeviceName = iOSSupportedDevices[0].name;
 const firstAndroidDeviceName = AndroidSupportedDevices[0].name;
@@ -97,10 +98,6 @@ function DevicesNotFoundView() {
   }
 
   async function createIOSDevice() {
-    if (!isOSX) {
-      return;
-    }
-
     if (iosSimulatorError !== undefined) {
       vscode.postMessage({ command: "showDismissableError", message: iosSimulatorError });
       return;
@@ -126,7 +123,7 @@ function DevicesNotFoundView() {
         You can add a new device using the quick action below.
       </p>
       <div className="devices-not-found-button-group">
-        {isOSX && (
+        {Platform.OS === "macos" && (
           <Button
             type="ternary"
             className="devices-not-found-quick-action"

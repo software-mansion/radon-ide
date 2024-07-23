@@ -16,7 +16,7 @@ import {
 } from "./AndroidEmulatorDevice";
 import {
   DeviceInfo,
-  Platform,
+  DevicePlatform,
   DeviceManagerInterface,
   IOSRuntimeInfo,
   DeviceManagerEventMap,
@@ -52,14 +52,14 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   }
 
   public async acquireDevice(deviceInfo: DeviceInfo) {
-    if (deviceInfo.platform === Platform.IOS) {
+    if (deviceInfo.platform === DevicePlatform.IOS) {
       if (process.platform !== "darwin") {
         return undefined;
       }
 
       const simulators = await listSimulators();
       const simulatorInfo = simulators.find((device) => device.id === deviceInfo.id);
-      if (!simulatorInfo || simulatorInfo.platform !== Platform.IOS) {
+      if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
       const device = new IosSimulatorDevice(simulatorInfo.UDID);
@@ -71,7 +71,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
     } else {
       const emulators = await listEmulators();
       const emulatorInfo = emulators.find((device) => device.id === deviceInfo.id);
-      if (!emulatorInfo || emulatorInfo.platform !== Platform.Android) {
+      if (!emulatorInfo || emulatorInfo.platform !== DevicePlatform.Android) {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
       const device = new AndroidEmulatorDevice(emulatorInfo.avdId);
@@ -159,20 +159,20 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
   }
 
   public async removeDevice(device: DeviceInfo) {
-    if (device.platform === Platform.IOS) {
+    if (device.platform === DevicePlatform.IOS) {
       // kill simulator
     }
-    if (device.platform === Platform.Android) {
+    if (device.platform === DevicePlatform.Android) {
       await ensureOldEmulatorProcessExited(device.avdId);
     }
 
     await Promise.all([
       this.eventEmitter.emit("deviceRemoved", device),
       new Promise<void>(async (resolve) => {
-        if (device.platform === Platform.IOS) {
+        if (device.platform === DevicePlatform.IOS) {
           await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
         }
-        if (device.platform === Platform.Android) {
+        if (device.platform === DevicePlatform.Android) {
           await removeEmulator(device.avdId);
         }
         resolve();

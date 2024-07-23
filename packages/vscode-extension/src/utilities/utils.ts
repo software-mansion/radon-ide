@@ -6,7 +6,7 @@ import JSON5 from "json5";
 import fs from "fs";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
-import { UtilsInterface } from "../common/Utils";
+import { UtilsInterface } from "../common/utils";
 
 type keybindingType = {
   command: string;

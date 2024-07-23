@@ -6,6 +6,7 @@ import { AndroidSystemImageInfo } from "../common/DeviceManager";
 import { readdirSync, statSync } from "fs";
 import { getNativeABI } from "./common";
 export const SYSTEM_IMAGES_PATH = path.join(ANDROID_HOME, "system-images");
+import { Platform } from "./platform";
 
 const ACCEPTED_SYSTEM_IMAGES_TYPES = ["default", "google_apis_playstore", "google_apis"];
 
@@ -81,10 +82,10 @@ export async function getAndroidSystemImages(): Promise<AndroidSystemImageInfo[]
 
 // example input: 'android-34/default/arm64-v8a/data'
 function mapToSystemImageInfo(systemImagePath: string) {
-  const [imageName, systemImageType, arch] =
-    process.platform === "win32"
-      ? systemImagePath.replace(SYSTEM_IMAGES_PATH + path.sep, "").split(path.sep)
-      : systemImagePath.split("/");
+  const [imageName, systemImageType, arch] = Platform.select({
+    macos: systemImagePath.split("/"),
+    windows: systemImagePath.replace(SYSTEM_IMAGES_PATH + path.sep, "").split(path.sep),
+  });
   const apiLevelCode = imageName.split("-")[1];
   let apiLevel = parseInt(apiLevelCode);
   if (isNaN(apiLevel)) {

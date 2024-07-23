@@ -3,6 +3,7 @@ import path from "path";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
+import { Platform } from "../utilities/platform";
 
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
@@ -18,7 +19,7 @@ export class Preview implements Disposable {
     const simControllerBinary = path.join(
       extensionContext.extensionPath,
       "dist",
-      process.platform === "win32" ? "sim-server-executable.exe" : "sim-server-executable"
+      Platform.select({ macos: "sim-server-executable", windows: "sim-server-executable.exe" })
     );
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);

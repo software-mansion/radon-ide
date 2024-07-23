@@ -32,6 +32,7 @@ import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
 import { Project } from "./project/project";
 import { findSingleFileInWorkspace } from "./utilities/common";
+import { Platform } from "./utilities/platform";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
@@ -65,7 +66,7 @@ export function deactivate(context: ExtensionContext): undefined {
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
-  if (process.platform !== "darwin" && process.platform !== "win32") {
+  if (Platform.OS !== "macos" && Platform.OS !== "windows") {
     window.showErrorMessage("React Native IDE works only on macOS and Windows.", "Dismiss");
     return;
   }
@@ -347,10 +348,6 @@ async function fixBinaries(context: ExtensionContext) {
   // files are allowed. To prevent the binary from being quarantined, we clone using byte-copy (with dd). This way the
   // quarantine attribute is removed. We try to do it only when the binary has been modified or for the new installation,
   // we detect that based on the modification date of the binary file.
-  if (process.platform === "win32") {
-    return;
-  }
-
   const buildBinPath = Uri.file(context.asAbsolutePath("dist/sim-server"));
   const exeBinPath = Uri.file(context.asAbsolutePath("dist/sim-server-executable"));
 

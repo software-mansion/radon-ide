@@ -8,10 +8,10 @@ import {
   DeviceProperties,
   iOSSupportedDevices,
   AndroidSupportedDevices,
-  isOSX,
 } from "../utilities/consts";
-import { Platform } from "../../common/DeviceManager";
+import { DevicePlatform } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
+import { Platform } from "../../utilities/platform";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -27,9 +27,9 @@ function assertPlatform(platform: string): asserts platform is "ios" | "android"
 function useSupportedDevices() {
   const { androidEmulatorError, iosSimulatorError } = useDependencies();
 
-  function buildSelections(item: DeviceProperties, platform: Platform) {
+  function buildSelections(item: DeviceProperties, platform: DevicePlatform) {
     let prefix = "";
-    if (platform === Platform.IOS) {
+    if (platform === DevicePlatform.IOS) {
       prefix = "ios:";
     } else {
       prefix = "android:";
@@ -38,19 +38,25 @@ function useSupportedDevices() {
   }
 
   return [
-    isOSX
-      ? iosSimulatorError !== undefined
-        ? { label: "iOS – error, check diagnostics", items: [] }
-        : {
-            label: "iOS",
-            items: iOSSupportedDevices.map((device) => buildSelections(device, Platform.IOS)),
-          }
-      : { label: "", items: [] },
+    Platform.select({
+      macos:
+        iosSimulatorError !== undefined
+          ? { label: "iOS – error, check diagnostics", items: [] }
+          : {
+              label: "iOS",
+              items: iOSSupportedDevices.map((device) =>
+                buildSelections(device, DevicePlatform.IOS)
+              ),
+            },
+      windows: { label: "", items: [] },
+    }),
     androidEmulatorError !== undefined
       ? { label: "Android – error, check diagnostics", items: [] }
       : {
           label: "Android",
-          items: AndroidSupportedDevices.map((device) => buildSelections(device, Platform.Android)),
+          items: AndroidSupportedDevices.map((device) =>
+            buildSelections(device, DevicePlatform.Android)
+          ),
         },
   ];
 }
@@ -91,7 +97,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
 
     setLoading(true);
     try {
-      if (devicePlatform === "ios" && isOSX) {
+      if (devicePlatform === "ios" && Platform.OS === "macos") {
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;

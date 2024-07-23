@@ -1,7 +1,7 @@
 import { PropsWithChildren, useContext, createContext } from "react";
 import { makeProxy } from "../utilities/rpc";
 import { Utils } from "../../utilities/utils";
-import { UtilsInterface } from "../../common/Utils";
+import { UtilsInterface } from "../../common/utils";
 
 const utils = makeProxy<Utils>("Utils");
 
