@@ -114,9 +114,35 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
   }
 
+  public static async ensureOldEmulatorProcessExited(avdId: string) {
+    let runningPid: string | undefined;
+    const command = Platform.select({
+      macos: "ps",
+      windows:
+        'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Csv -NoTypeInformation"',
+    });
+    const args = Platform.select({ macos: ["-Ao", "pid,command"], windows: [] });
+    const subprocess = exec(command, args);
+    const pattern = Platform.select({
+      macos: `(\\d+)\\s.*qemu.*-avd ${avdId}`,
+      windows: `"(\\d+)".*qemu.*-avd ${avdId}`,
+    });
+    const regexpPattern = new RegExp(pattern);
+    lineReader(subprocess).onLineRead(async (line) => {
+      const regExpResult = regexpPattern.exec(line);
+      if (regExpResult) {
+        runningPid = regExpResult[1];
+      }
+    });
+    await subprocess;
+    if (runningPid) {
+      process.kill(Number(runningPid), 9);
+    }
+  }
+
   async bootDevice() {
     // this prevents booting device with the same AVD twice
-    await ensureOldEmulatorProcessExited(this.avdId);
+    await AndroidEmulatorDevice.ensureOldEmulatorProcessExited(this.avdId);
 
     const avdDirectory = getOrCreateAvdDirectory();
     const subprocess = exec(
@@ -437,7 +463,7 @@ async function getAvdIds(avdDirectory: string) {
   const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
     env: Platform.select({
       macos: { ANDROID_AVD_HOME: avdDirectory },
-      windows: { ANDROID_SDK_HOME: avdDirectory + "\\.." },
+      windows: { ANDROID_SDK_HOME: path.join(avdDirectory, "..") },
     }),
   });
 
@@ -470,29 +496,12 @@ export async function listEmulators() {
   );
 }
 
-export async function ensureOldEmulatorProcessExited(avdId: string) {
-  let runningPid: string | undefined;
-  const command = Platform.select({
-    macos: "ps",
-    windows:
-      'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | Out-String -Width 10000"',
-  });
-  const args = Platform.select({ macos: [], windows: ["-Ao", "pid,command"] });
-  const subprocess = exec(command, args);
-  const regexpPattern = new RegExp(`(\\d+)\\s.*qemu.*-avd ${avdId}`);
-  lineReader(subprocess).onLineRead(async (line) => {
-    const regExpResult = regexpPattern.exec(line);
-    if (regExpResult) {
-      runningPid = regExpResult[1];
-    }
-  });
-  await subprocess;
-  if (runningPid) {
-    process.kill(Number(runningPid), 9);
+export async function removeEmulator(avdId: string) {
+  // ensure to kill emulator process before removing avd files used by that process
+  if (Platform.OS == "windows") {
+    await AndroidEmulatorDevice.ensureOldEmulatorProcessExited(avdId);
   }
-}
-
-export function removeEmulator(avdId: string) {
+  
   const avdDirectory = getOrCreateAvdDirectory();
   const removeAvd = fs.promises.rm(path.join(avdDirectory, `${avdId}.avd`), {
     recursive: true,
