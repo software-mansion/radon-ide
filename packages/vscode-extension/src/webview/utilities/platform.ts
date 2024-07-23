@@ -1,16 +1,9 @@
-import * as os from "os";
-
 export class Platform {
   static OS: "macos" | "windows" | "unknown" = (() => {
-    const platform = os.platform();
-    switch (platform) {
-      case "darwin":
-        return "macos";
-      case "win32":
-        return "windows";
-      default:
-        return "macos";
-    }
+    const platform = navigator.userAgentData?.platform ?? navigator.platform ?? "unknown";
+    if (/mac/.test(platform)) return "macos";
+    if (/win/.test(platform)) return "windows";
+    return "macos";
   })();
 
   static select(obj: { macos: any; windows: any }) {

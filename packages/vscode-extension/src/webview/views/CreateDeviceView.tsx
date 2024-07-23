@@ -11,7 +11,7 @@ import {
 } from "../utilities/consts";
 import { DevicePlatform } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
-import { Platform } from "../../utilities/platform";
+import { Platform } from "../utilities/platform";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -97,7 +97,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
 
     setLoading(true);
     try {
-      if (devicePlatform === "ios" && Platform.OS === "macos") {
+      if (devicePlatform === "ios" && Platform.OS == "macos") {
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;

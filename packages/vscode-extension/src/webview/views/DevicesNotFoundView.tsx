@@ -10,7 +10,7 @@ import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/const
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { vscode } from "../utilities/vscode";
-import { Platform } from "../../utilities/platform";
+import { Platform } from "../utilities/platform";
 
 const firstIosDeviceName = iOSSupportedDevices[0].name;
 const firstAndroidDeviceName = AndroidSupportedDevices[0].name;
@@ -123,7 +123,7 @@ function DevicesNotFoundView() {
         You can add a new device using the quick action below.
       </p>
       <div className="devices-not-found-button-group">
-        {Platform.OS === "macos" && (
+        {Platform.OS == "macos" && (
           <Button
             type="ternary"
             className="devices-not-found-quick-action"

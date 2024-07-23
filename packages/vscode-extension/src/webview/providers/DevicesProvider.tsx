@@ -13,7 +13,7 @@ import {
   DeviceManagerInterface,
   IOSRuntimeInfo,
 } from "../../common/DeviceManager";
-import { Platform } from "../../utilities/platform";
+import { Platform } from "../utilities/platform";
 
 const DeviceManager = makeProxy<DeviceManagerInterface>("DeviceManager");
 
@@ -46,7 +46,7 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
       await Promise.all([
         DeviceManager.listAllDevices().then(setDevices),
         DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
-        ...(Platform.OS === "macos"
+        ...(Platform.OS == "macos"
           ? [DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes)]
           : []),
       ]);
