@@ -14,7 +14,7 @@ submodule_status=$(git submodule status ../simulator-server)
 if [[ $submodule_status == -* ]]; then # submodule is not initialized
 
 submodule_hash=$(git ls-tree HEAD ../simulator-server | awk '{print $3}')
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
     product_path="$output_dir/sim-server-Release-${submodule_hash}.exe"
 else
     product_path="$output_dir/sim-server-Release-${submodule_hash}"
@@ -62,7 +62,7 @@ fi # submodule check
 mkdir -p "$output_dir"
 target_location="$output_dir/sim-server"
 
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then # rename to *.exe on Windows
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then # rename to *.exe on Windows
     mv "$product_path" "$target_location-executable.exe"
     exit 0
 fi
