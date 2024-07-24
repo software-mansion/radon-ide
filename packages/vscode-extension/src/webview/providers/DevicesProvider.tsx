@@ -13,7 +13,7 @@ import {
   DeviceManagerInterface,
   IOSRuntimeInfo,
 } from "../../common/DeviceManager";
-import { Platform } from "../utilities/platform";
+import { useUtils } from "../providers/UtilsProvider";
 
 const DeviceManager = makeProxy<DeviceManagerInterface>("DeviceManager");
 
@@ -36,6 +36,7 @@ const DevicesContext = createContext<DevicesContextProps>({
 });
 
 export default function DevicesProvider({ children }: PropsWithChildren) {
+  const { Platform } = useUtils();
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [androidImages, setAndroidImages] = useState<AndroidSystemImageInfo[]>([]);
   const [iOSRuntimes, setIOSRuntimes] = useState<IOSRuntimeInfo[]>([]);

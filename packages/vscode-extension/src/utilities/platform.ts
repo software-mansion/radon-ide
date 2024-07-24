@@ -1,21 +1,21 @@
 import * as os from "os";
 
-export class Platform {
-  static OS: "macos" | "windows" | "unknown" = (() => {
-    const platform = os.platform();
+type PlatformType = "macos" | "windows";
+
+export const Platform = {
+  OS: (() => {
+    const platform = os.platform() as "darwin" | "win32";
     switch (platform) {
       case "darwin":
-        return "macos";
+        return "macos" as PlatformType;
       case "win32":
-        return "windows";
-      default:
-        return "macos";
+        return "windows" as PlatformType;
     }
-  })();
+  })(),
 
-  static select(obj: { macos: any; windows: any }) {
-    if (Platform.OS !== "unknown" && Platform.OS in obj) {
-      return obj[Platform.OS];
-    }
+  select: <R, T>(obj: { macos: R; windows: T }) => {
+    return obj[Platform.OS];
   }
 }
+
+export type Platform = typeof Platform;
