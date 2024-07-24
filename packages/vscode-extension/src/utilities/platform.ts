@@ -15,7 +15,7 @@ export const Platform = {
 
   select: <R, T>(obj: { macos: R; windows: T }) => {
     return obj[Platform.OS];
-  }
-}
+  },
+};
 
 export type Platform = typeof Platform;

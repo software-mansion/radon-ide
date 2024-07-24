@@ -8,5 +8,5 @@ export interface UtilsInterface {
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
   movePanelToNewWindow(): void;
 
-  get Platform(): Platform; 
+  get Platform(): Platform;
 }

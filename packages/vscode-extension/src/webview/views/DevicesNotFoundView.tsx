@@ -15,7 +15,6 @@ import { useUtils } from "../providers/UtilsProvider";
 const firstIosDeviceName = iOSSupportedDevices[0].name;
 const firstAndroidDeviceName = AndroidSupportedDevices[0].name;
 
-
 function getMax<T>(array: T[], predicate: (element: T, currentMax: T) => boolean): T | undefined {
   if (array.length === 0) {
     return undefined;
@@ -100,7 +99,6 @@ function DevicesNotFoundView() {
   }
 
   async function createIOSDevice() {
-    
     if (iosSimulatorError !== undefined) {
       vscode.postMessage({ command: "showDismissableError", message: iosSimulatorError });
       return;
@@ -115,7 +113,6 @@ function DevicesNotFoundView() {
       const iOSDeviceType = firstRuntimeSupportedDevice(newestRuntime.supportedDeviceTypes);
       await deviceManager.createIOSDevice(iOSDeviceType!, newestRuntime);
     });
-    
   }
   return (
     <div className="devices-not-found-container">
