@@ -1,3 +1,5 @@
+import { Platform } from "../utilities/platform";
+
 export interface UtilsInterface {
   getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
 
@@ -5,4 +7,6 @@ export interface UtilsInterface {
 
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
   movePanelToNewWindow(): void;
+
+  get Platform(): Platform;
 }

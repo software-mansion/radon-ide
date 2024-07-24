@@ -6,6 +6,7 @@ import { AndroidSystemImageInfo } from "../common/DeviceManager";
 import { readdirSync, statSync } from "fs";
 import { getNativeABI } from "./common";
 export const SYSTEM_IMAGES_PATH = path.join(ANDROID_HOME, "system-images");
+import { Platform } from "./platform";
 
 const ACCEPTED_SYSTEM_IMAGES_TYPES = ["default", "google_apis_playstore", "google_apis"];
 
@@ -24,6 +25,8 @@ const ANDROID_CODENAMES_TO_API_LEVELS = {
 // Temporary solution due to sdkmanager not having information about android version.
 function mapApiLevelToAndroidVersion(apiLevel: number): number | undefined {
   switch (apiLevel) {
+    case 35:
+      return 15;
     case 34:
       return 14;
     case 33:
@@ -68,7 +71,7 @@ function recursiveSystemImagePathsSearch(
     results.push(...recursiveSystemImagePathsSearch(filePath, currentDepth + 1, maxDepth));
   }
 
-  return results.map((filepath) => filepath.replace(SYSTEM_IMAGES_PATH + "/", ""));
+  return results.map((filepath) => filepath.replace(SYSTEM_IMAGES_PATH + path.sep, ""));
 }
 
 export async function getAndroidSystemImages(): Promise<AndroidSystemImageInfo[]> {
@@ -79,7 +82,7 @@ export async function getAndroidSystemImages(): Promise<AndroidSystemImageInfo[]
 
 // example input: 'android-34/default/arm64-v8a/data'
 function mapToSystemImageInfo(systemImagePath: string) {
-  const [imageName, systemImageType, arch] = systemImagePath.split("/");
+  const [imageName, systemImageType, arch] = systemImagePath.split(path.sep);
   const apiLevelCode = imageName.split("-")[1];
   let apiLevel = parseInt(apiLevelCode);
   if (isNaN(apiLevel)) {

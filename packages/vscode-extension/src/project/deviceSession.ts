@@ -5,7 +5,7 @@ import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { BuildResult, DisposableBuild } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, StartupMessage } from "../common/Project";
-import { Platform } from "../common/DeviceManager";
+import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { isNodeModulesInstalled } from "../utilities/packageManager";
@@ -172,7 +172,7 @@ export class DeviceSession implements Disposable {
     //
     // We could probably unify it in the future by running metro in interactive
     // mode and sending keys to stdin.
-    if (this.device.platform === Platform.IOS) {
+    if (this.device.platform === DevicePlatform.IOS) {
       this.devtools.send("RNIDE_iosDevMenu");
     } else {
       await (this.device as AndroidEmulatorDevice).openDevMenu();

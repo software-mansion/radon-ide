@@ -6,7 +6,8 @@ import JSON5 from "json5";
 import fs from "fs";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
-import { UtilsInterface } from "../common/Utils";
+import { UtilsInterface } from "../common/utils";
+import { Platform } from "./platform";
 
 type keybindingType = {
   command: string;
@@ -74,5 +75,9 @@ export class Utils implements UtilsInterface {
 
   public movePanelToNewWindow() {
     commands.executeCommand("workbench.action.moveEditorToNewWindow");
+  }
+
+  public get Platform() {
+    return Platform;
   }
 }
