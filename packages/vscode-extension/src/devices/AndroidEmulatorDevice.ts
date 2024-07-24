@@ -114,35 +114,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
   }
 
-  public static async ensureOldEmulatorProcessExited(avdId: string) {
-    let runningPid: string | undefined;
-    const command = Platform.select({
-      macos: "ps",
-      windows:
-        'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Csv -NoTypeInformation"',
-    });
-    const args = Platform.select({ macos: ["-Ao", "pid,command"], windows: [] });
-    const subprocess = exec(command, args);
-    const pattern = Platform.select({
-      macos: `(\\d+)\\s.*qemu.*-avd ${avdId}`,
-      windows: `"(\\d+)".*qemu.*-avd ${avdId}`,
-    });
-    const regexpPattern = new RegExp(pattern);
-    lineReader(subprocess).onLineRead(async (line) => {
-      const regExpResult = regexpPattern.exec(line);
-      if (regExpResult) {
-        runningPid = regExpResult[1];
-      }
-    });
-    await subprocess;
-    if (runningPid) {
-      process.kill(Number(runningPid), 9);
-    }
-  }
-
   async bootDevice() {
     // this prevents booting device with the same AVD twice
-    await AndroidEmulatorDevice.ensureOldEmulatorProcessExited(this.avdId);
+    await ensureOldEmulatorProcessExited(this.avdId);
 
     const avdDirectory = getOrCreateAvdDirectory();
     const subprocess = exec(
@@ -493,10 +467,32 @@ export async function listEmulators() {
   );
 }
 
+async function ensureOldEmulatorProcessExited(avdId: string) {
+  let runningPid: string | undefined;
+  const command = Platform.select({
+    macos: "ps",
+    windows:
+      'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Csv -NoTypeInformation"',
+  });
+  const args = Platform.select({ macos: ["-Ao", "pid,command"], windows: [] });
+  const subprocess = exec(command, args);
+  const regexpPattern = new RegExp(`(\\d+).*qemu.*-avd ${avdId}`);
+  lineReader(subprocess).onLineRead(async (line) => {
+    const regExpResult = regexpPattern.exec(line);
+    if (regExpResult) {
+      runningPid = regExpResult[1];
+    }
+  });
+  await subprocess;
+  if (runningPid) {
+    process.kill(Number(runningPid), 9);
+  }
+}
+
 export async function removeEmulator(avdId: string) {
   // ensure to kill emulator process before removing avd files used by that process
   if (Platform.OS == "windows") {
-    await AndroidEmulatorDevice.ensureOldEmulatorProcessExited(avdId);
+    await ensureOldEmulatorProcessExited(avdId);
   }
 
   const avdDirectory = getOrCreateAvdDirectory();
