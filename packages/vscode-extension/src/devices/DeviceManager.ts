@@ -27,6 +27,7 @@ import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
+import { Platform } from "../utilities/platform";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
@@ -52,8 +53,8 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
 
   public async acquireDevice(deviceInfo: DeviceInfo) {
     if (deviceInfo.platform === DevicePlatform.IOS) {
-      if (process.platform !== "darwin") {
-        return undefined;
+      if (Platform.OS !== "macos") {
+        throw new Error("Invalid platform. Expected macos.");
       }
 
       const simulators = await listSimulators();
@@ -107,7 +108,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
       return [];
     });
     const simulators =
-      process.platform === "darwin"
+      Platform.OS === "macos"
         ? listSimulators().catch((e) => {
             Logger.error("Error fetching simulators", e);
             return [];

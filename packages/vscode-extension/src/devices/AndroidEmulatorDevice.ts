@@ -461,10 +461,7 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 async function getAvdIds(avdDirectory: string) {
   const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
-    env: Platform.select({
-      macos: { ANDROID_AVD_HOME: avdDirectory },
-      windows: { ANDROID_SDK_HOME: path.join(avdDirectory, "..") },
-    }),
+    env: { ANDROID_AVD_HOME: avdDirectory },
   });
 
   // filters out error messages and empty lines

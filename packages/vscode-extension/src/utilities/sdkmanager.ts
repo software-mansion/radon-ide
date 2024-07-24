@@ -71,7 +71,7 @@ function recursiveSystemImagePathsSearch(
     results.push(...recursiveSystemImagePathsSearch(filePath, currentDepth + 1, maxDepth));
   }
 
-  return results.map((filepath) => filepath.replace(SYSTEM_IMAGES_PATH + "/", ""));
+  return results.map((filepath) => filepath.replace(SYSTEM_IMAGES_PATH + path.sep, ""));
 }
 
 export async function getAndroidSystemImages(): Promise<AndroidSystemImageInfo[]> {
@@ -82,10 +82,7 @@ export async function getAndroidSystemImages(): Promise<AndroidSystemImageInfo[]
 
 // example input: 'android-34/default/arm64-v8a/data'
 function mapToSystemImageInfo(systemImagePath: string) {
-  const [imageName, systemImageType, arch] = Platform.select({
-    macos: systemImagePath.split("/"),
-    windows: systemImagePath.replace(SYSTEM_IMAGES_PATH + path.sep, "").split(path.sep),
-  });
+  const [imageName, systemImageType, arch] = systemImagePath.split(path.sep);
   const apiLevelCode = imageName.split("-")[1];
   let apiLevel = parseInt(apiLevelCode);
   if (isNaN(apiLevel)) {
