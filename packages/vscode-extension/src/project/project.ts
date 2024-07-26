@@ -529,9 +529,11 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   }
 
   // used in callbacks, needs to be an arrow function
-  private removeDeviceListener = async (_devices: DeviceInfo) => {
-    this.updateProjectState({ status: "starting" });
-    await this.trySelectingInitialDevice();
+  private removeDeviceListener = async (device: DeviceInfo) => {
+    if (this.projectState.selectedDevice?.id === device.id) {
+      this.updateProjectState({ status: "starting" });
+      await this.trySelectingInitialDevice();
+    }
   };
 
   private checkIfNativeChanged = throttle(async () => {
