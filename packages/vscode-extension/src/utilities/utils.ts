@@ -76,8 +76,4 @@ export class Utils implements UtilsInterface {
   public movePanelToNewWindow() {
     commands.executeCommand("workbench.action.moveEditorToNewWindow");
   }
-
-  public get Platform() {
-    return Platform;
-  }
 }
