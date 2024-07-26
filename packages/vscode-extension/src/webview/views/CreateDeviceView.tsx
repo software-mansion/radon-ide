@@ -11,7 +11,7 @@ import {
 } from "../utilities/consts";
 import { DevicePlatform } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
-import { useUtils } from "../providers/UtilsProvider";
+import { Platform } from "../providers/UtilsProvider";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -25,7 +25,6 @@ function assertPlatform(platform: string): asserts platform is "ios" | "android"
 }
 
 function useSupportedDevices() {
-  const { Platform } = useUtils();
   const { androidEmulatorError, iosSimulatorError } = useDependencies();
 
   function buildSelections(item: DeviceProperties, platform: DevicePlatform) {
@@ -63,7 +62,6 @@ function useSupportedDevices() {
 }
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
-  const { Platform } = useUtils();
   const [deviceName, setDeviceName] = useState<string | undefined>(undefined);
   const [devicePlatform, setDevicePlatform] = useState<"ios" | "android" | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
@@ -99,7 +97,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
 
     setLoading(true);
     try {
-      if (devicePlatform === "ios" && Platform.OS == "macos") {
+      if (devicePlatform === "ios" && Platform.OS === "macos") {
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;

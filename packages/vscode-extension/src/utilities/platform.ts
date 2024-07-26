@@ -1,18 +1,18 @@
-import * as os from "os";
+import os from "os";
 
-type PlatformType = "macos" | "windows";
-
+const OS: "macos" | "windows" = (() => {
+  const platform = os.platform();
+  switch (platform) {
+    case "darwin":
+      return "macos";
+    case "win32":
+      return "windows";
+    default:
+      throw new Error("Unsupported platform");
+  }
+})();
 export const Platform = {
-  OS: (() => {
-    const platform = os.platform() as "darwin" | "win32";
-    switch (platform) {
-      case "darwin":
-        return "macos" as PlatformType;
-      case "win32":
-        return "windows" as PlatformType;
-    }
-  })(),
-
+  OS,
   select: <R, T>(obj: { macos: R; windows: T }) => {
     return obj[Platform.OS];
   },

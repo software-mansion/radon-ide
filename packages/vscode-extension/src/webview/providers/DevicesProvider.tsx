@@ -13,7 +13,7 @@ import {
   DeviceManagerInterface,
   IOSRuntimeInfo,
 } from "../../common/DeviceManager";
-import { useUtils } from "../providers/UtilsProvider";
+import { Platform } from "../providers/UtilsProvider";
 
 const DeviceManager = makeProxy<DeviceManagerInterface>("DeviceManager");
 
@@ -36,7 +36,6 @@ const DevicesContext = createContext<DevicesContextProps>({
 });
 
 export default function DevicesProvider({ children }: PropsWithChildren) {
-  const { Platform } = useUtils();
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [androidImages, setAndroidImages] = useState<AndroidSystemImageInfo[]>([]);
   const [iOSRuntimes, setIOSRuntimes] = useState<IOSRuntimeInfo[]>([]);
@@ -47,9 +46,10 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
       await Promise.all([
         DeviceManager.listAllDevices().then(setDevices),
         DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
-        ...(Platform.OS == "macos"
-          ? [DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes)]
-          : []),
+        ...Platform.select({
+          macos: [DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes)],
+          windows: [],
+        }),
       ]);
     } finally {
       setFinishedInitialLoad(true);
