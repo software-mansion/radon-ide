@@ -1,4 +1,4 @@
-import { Disposable, debug, commands, workspace, FileSystemWatcher, window } from "vscode";
+import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -25,17 +25,17 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle } from "../utilities/throttle";
+import { DebugSessionDelegate } from "../debugging/DebugSession";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 
-export class Project implements Disposable, MetroDelegate, ProjectInterface {
+export class Project implements Disposable, MetroDelegate, DebugSessionDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
 
   private metro: Metro;
   private devtools = new Devtools();
-  private debugSessionListener: Disposable | undefined;
   private buildManager: BuildManager;
   private eventEmitter = new EventEmitter();
 
@@ -80,6 +80,29 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       this.checkIfNativeChanged();
     });
   }
+
+  //#region Debugger events
+  onConsoleLog(event: DebugSessionCustomEvent) {
+    this.eventEmitter.emit("log", event.body);
+  }
+
+  onDebuggerPaused(event: DebugSessionCustomEvent) {
+    if (event.body?.reason === "exception") {
+      // if we know that incremental bundle error happened, we don't want to change the status
+      if (this.projectState.status === "incrementalBundleError") {
+        return;
+      }
+      this.updateProjectState({ status: "runtimeError" });
+    } else {
+      this.updateProjectState({ status: "debuggerPaused" });
+    }
+    commands.executeCommand("workbench.view.debug");
+  }
+
+  onDebuggerResumed() {
+    this.updateProjectState({ status: "running" });
+  }
+  //#endregion
 
   async dispatchPaste(text: string) {
     this.deviceSession?.sendPaste(text);
@@ -154,7 +177,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
-    this.debugSessionListener?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.fileWatcher.dispose();
   }
@@ -259,28 +281,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
-
-    this.debugSessionListener?.dispose();
-    this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
-      switch (event.event) {
-        case "RNIDE_consoleLog":
-          this.eventEmitter.emit("log", event.body);
-          break;
-        case "RNIDE_paused":
-          if (event.body?.reason === "exception") {
-            // if we know that incrmental bundle error happened, we don't want to change the status
-            if (this.projectState.status === "incrementalBundleError") return;
-            this.updateProjectState({ status: "runtimeError" });
-          } else {
-            this.updateProjectState({ status: "debuggerPaused" });
-          }
-          commands.executeCommand("workbench.view.debug");
-          break;
-        case "RNIDE_continued":
-          this.updateProjectState({ status: "running" });
-          break;
-      }
-    });
 
     Logger.debug(`Launching metro`);
     const waitForMetro = this.metro.start(
@@ -483,7 +483,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       }
 
       Logger.debug("Metro & devtools ready");
-      newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
+      newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build, this);
       this.deviceSession = newDeviceSession;
 
       await newDeviceSession.start(
