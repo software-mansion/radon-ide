@@ -40,8 +40,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private eventEmitter = new EventEmitter();
 
   private detectedFingerprintChange: boolean;
-  private workspaceWatcher!: FileSystemWatcher;
-  private fileSaveWatcherDisposable!: Disposable;
+
+  private fileWatcher: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -76,25 +76,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.detectedFingerprintChange = false;
 
-    this.trackNativeChanges();
-  }
-
-  trackNativeChanges() {
-    // VS code glob patterns don't support negation so we can't exclude
-    // native build directories like android/build, android/.gradle,
-    // android/app/build, or ios/build.
-    // VS code by default exclude .git and node_modules directories from
-    // watching, configured by `files.watcherExclude` setting.
-    //
-    // We may revisit this if better performance is needed and create
-    // recursive watches ourselves by iterating through workspace directories
-    // to workaround this issue.
-    this.workspaceWatcher = workspace.createFileSystemWatcher("**/*");
-
-    this.workspaceWatcher.onDidChange(() => this.checkIfNativeChanged());
-    this.workspaceWatcher.onDidCreate(() => this.checkIfNativeChanged());
-    this.workspaceWatcher.onDidDelete(() => this.checkIfNativeChanged());
-    this.fileSaveWatcherDisposable = workspace.onDidSaveTextDocument(() => {
+    this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
     });
   }
@@ -174,8 +156,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.devtools?.dispose();
     this.debugSessionListener?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
-    this.workspaceWatcher.dispose();
-    this.fileSaveWatcherDisposable.dispose();
+    this.fileWatcher.dispose();
   }
 
   private reloadingMetro = false;
@@ -544,6 +525,31 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       }
     }
   }, 300);
+}
+
+function watchProjectFiles(onChange: () => void) {
+  // VS code glob patterns don't support negation so we can't exclude
+  // native build directories like android/build, android/.gradle,
+  // android/app/build, or ios/build.
+  // VS code by default exclude .git and node_modules directories from
+  // watching, configured by `files.watcherExclude` setting.
+  //
+  // We may revisit this if better performance is needed and create
+  // recursive watches ourselves by iterating through workspace directories
+  // to workaround this issue.
+  const savedFileWatcher = workspace.onDidSaveTextDocument(onChange);
+
+  const watcher = workspace.createFileSystemWatcher("**/*");
+  watcher.onDidChange(onChange);
+  watcher.onDidCreate(onChange);
+  watcher.onDidDelete(onChange);
+
+  return {
+    dispose: () => {
+      watcher.dispose();
+      savedFileWatcher.dispose();
+    },
+  };
 }
 
 export function isAppSourceFile(filePath: string) {
