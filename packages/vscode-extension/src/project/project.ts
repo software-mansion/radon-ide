@@ -131,10 +131,8 @@ export class Project implements Disposable, MetroDelegate, DebugSessionDelegate,
       const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
         LAST_SELECTED_DEVICE_KEY
       );
-      let device = devices.find((item) => item.id === lastDeviceId);
-      if (!device && devices.length > 0) {
-        device = devices[0];
-      }
+      const device = devices.find(({ id }) => id === lastDeviceId) ?? devices.at(0);
+
       if (device) {
         this.selectDevice(device);
         return true;
