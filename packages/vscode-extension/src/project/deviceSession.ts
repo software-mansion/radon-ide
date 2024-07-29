@@ -150,12 +150,21 @@ export class DeviceSession implements Disposable {
     return this.device.installApp(this.buildResult, reinstall);
   }
 
+  private async waitForMetroReady() {
+    this.eventDelegate.onStateChange(StartupMessage.StartingPackager);
+    // wait for metro/devtools to start before we continue
+    await Promise.all([this.metro.ready(), this.devtools.ready()]);
+    Logger.debug("Metro & devtools ready");
+  }
+
   public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+    await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
     await this.buildApp({ clean: cleanBuild });
     await this.installApp({ reinstall: false });
     await this.launchApp();
+    Logger.debug("Device session started");
   }
 
   private async startDebugger() {
