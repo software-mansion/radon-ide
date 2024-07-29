@@ -82,6 +82,13 @@ export class Project
       this.checkIfNativeChanged();
     });
   }
+
+  //#region Build progress
+  onStateChange(state: StartupMessage): void {
+    this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
+  }
+  //#endregion
+
   //#region App events
   onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void {
     switch (event) {
@@ -249,9 +256,7 @@ export class Project
     try {
       // we first check if the device session hasn't changed in the meantime
       if (deviceSession === this.deviceSession) {
-        await this.deviceSession?.restart((startupMessage) =>
-          this.updateProjectStateForDevice(deviceInfo, { startupMessage })
-        );
+        await this.deviceSession?.restart();
         this.updateProjectStateForDevice(deviceInfo, {
           status: "running",
         });
@@ -424,6 +429,7 @@ export class Project
     Logger.debug("Node Modules installed");
   }
 
+  //#region Select device
   private async selectDeviceOnly(deviceInfo: DeviceInfo) {
     let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
     try {
@@ -493,13 +499,9 @@ export class Project
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build, this, this);
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(
-        this.deviceSettings,
-        (previewURL) => {
-          this.updateProjectStateForDevice(deviceInfo, { previewURL });
-        },
-        (startupMessage) => this.updateProjectStateForDevice(deviceInfo, { startupMessage })
-      );
+      await newDeviceSession.start(this.deviceSettings, (previewURL) => {
+        this.updateProjectStateForDevice(deviceInfo, { previewURL });
+      });
       Logger.debug("Device session started");
 
       this.updateProjectStateForDevice(deviceInfo, {
@@ -515,6 +517,7 @@ export class Project
       }
     }
   }
+  //#endregion
 
   // used in callbacks, needs to be an arrow function
   private removeDeviceListener = async (device: DeviceInfo) => {
