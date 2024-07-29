@@ -82,6 +82,32 @@ export class Project
       this.checkIfNativeChanged();
     });
   }
+  //#region App events
+  onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void {
+    switch (event) {
+      case "appReady":
+        Logger.debug("App ready");
+        if (this.reloadingMetro) {
+          this.reloadingMetro = false;
+          this.updateProjectState({ status: "running" });
+        }
+        break;
+      case "navigationChanged":
+        this.eventEmitter.emit("navigationChanged", payload);
+        break;
+      case "fastRefreshStarted":
+        this.updateProjectState({ status: "refreshing" });
+        break;
+      case "fastRefreshComplete":
+        const ignoredEvents = ["starting", "incrementalBundleError", "runtimeError"];
+        if (ignoredEvents.includes(this.projectState.status)) {
+          return;
+        }
+        this.updateProjectState({ status: "running" });
+        break;
+    }
+  }
+  //#endregion
 
   //#region Build progress
   onStateChange(state: StartupMessage): void {
