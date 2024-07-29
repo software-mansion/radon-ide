@@ -476,20 +476,16 @@ export class Project
       });
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
-      const build = this.buildManager.startBuild(
-        deviceInfo,
-        forceCleanBuild,
-        throttle((stageProgress: number) => {
+      const build = this.buildManager.startBuild(deviceInfo, {
+        clean: forceCleanBuild,
+        progressListener: throttle((stageProgress: number) => {
           this.reportStageProgress(stageProgress, StartupMessage.Building);
-        }, 100)
-      );
-
-      // reset fingerprint change flag when build finishes successfully
-      if (this.detectedFingerprintChange) {
-        build.build.then(() => {
+        }, 100),
+        onSuccess: () => {
+          // reset fingerprint change flag when build finishes successfully
           this.detectedFingerprintChange = false;
-        });
-      }
+        },
+      });
 
       Logger.debug("Metro & devtools ready");
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build, this, this);
