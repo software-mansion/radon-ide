@@ -239,17 +239,13 @@ export class Project
 
     if (forceCleanBuild) {
       await this.start(true, true);
-      await this.selectDevice(deviceInfo, true);
-      return;
+      return await this.selectDevice(deviceInfo, true);
     } else if (this.detectedFingerprintChange) {
-      await this.selectDevice(deviceInfo, false);
-      return;
+      return await this.selectDevice(deviceInfo, false);
     }
 
-    // if we have an active devtools session, we try hot reloading
-    if (onlyReloadJSWhenPossible && this.devtools.hasConnectedClient) {
-      await this.reloadMetro();
-      return;
+    if (onlyReloadJSWhenPossible) {
+      return await this.reloadMetro();
     }
 
     // otherwise we try to restart the device session
