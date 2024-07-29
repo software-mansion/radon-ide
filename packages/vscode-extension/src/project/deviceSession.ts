@@ -31,8 +31,15 @@ export type EventDelegate = {
 };
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
-  private buildResult: BuildResult | undefined;
+  private _buildResult: BuildResult | undefined;
   private debugSession: DebugSession | undefined;
+
+  private get buildResult() {
+    if (!this._buildResult) {
+      throw new Error("Expecting build to be ready");
+    }
+    return this._buildResult;
+  }
 
   constructor(
     private readonly device: DeviceBase,
@@ -68,6 +75,10 @@ export class DeviceSession implements Disposable {
 
   public async perform(type: PerformAction) {
     switch (type) {
+      case "reinstall":
+        await this.installApp({ reinstall: true });
+        await this.launchApp();
+        return true;
       case "restartProcess":
         await this.launchApp();
         return true;
@@ -82,9 +93,6 @@ export class DeviceSession implements Disposable {
   }
 
   private async launchApp() {
-    if (!this.buildResult) {
-      throw new Error("Expecting build to be ready");
-    }
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch
       ? new Promise<void>((resolve) => {
@@ -110,6 +118,11 @@ export class DeviceSession implements Disposable {
     await this.startDebugger();
   }
 
+  private async installApp({ reinstall }: { reinstall: boolean }) {
+    this.eventDelegate.onStateChange(StartupMessage.Installing);
+    return this.device.installApp(this.buildResult, reinstall);
+  }
+
   public async restart() {
     await this.perform("restartProcess");
   }
@@ -119,10 +132,9 @@ export class DeviceSession implements Disposable {
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
     this.eventDelegate.onStateChange(StartupMessage.Building);
-    this.buildResult = await this.disposableBuild.build;
-    this.eventDelegate.onStateChange(StartupMessage.Installing);
-    await this.device.installApp(this.buildResult, false);
-    await this.perform("restartProcess");
+    this._buildResult = await this.disposableBuild.build;
+    await this.installApp({ reinstall: false });
+    await this.launchApp();
   }
 
   private async startDebugger() {
@@ -148,8 +160,8 @@ export class DeviceSession implements Disposable {
   }
 
   public resetAppPermissions(permissionType: AppPermissionType) {
-    if (this.buildResult) {
-      return this.device.resetAppPermissions(permissionType, this.buildResult);
+    if (this._buildResult) {
+      return this.device.resetAppPermissions(permissionType, this._buildResult);
     }
     return false;
   }
