@@ -87,6 +87,10 @@ export class Project
   onStateChange(state: StartupMessage): void {
     this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
   }
+
+  onPreviewReady(url: string): void {
+    this.updateProjectStateForDevice(this.projectState.selectedDevice!, { previewURL: url });
+  }
   //#endregion
 
   //#region App events
@@ -491,9 +495,7 @@ export class Project
       newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build, this, this);
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(this.deviceSettings, (previewURL) => {
-        this.updateProjectStateForDevice(deviceInfo, { previewURL });
-      });
+      await newDeviceSession.start(this.deviceSettings);
       Logger.debug("Device session started");
 
       this.updateProjectStateForDevice(deviceInfo, {

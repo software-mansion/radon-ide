@@ -43,10 +43,6 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.dispose();
   }
 
-  get previewURL(): string | undefined {
-    return this.preview?.streamURL;
-  }
-
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
     this.preview?.sendTouch(xRatio, yRatio, type);
   }
