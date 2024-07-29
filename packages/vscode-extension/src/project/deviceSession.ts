@@ -102,17 +102,7 @@ export class DeviceSession implements Disposable {
 
   private async launchApp() {
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
-    const waitForAppReady = shouldWaitForAppLaunch
-      ? new Promise<void>((resolve) => {
-          const listener = (event: string) => {
-            if (event === "RNIDE_appReady") {
-              this.devtools.removeListener(listener);
-              resolve();
-            }
-          };
-          this.devtools.addListener(listener);
-        })
-      : Promise.resolve();
+    const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.eventDelegate.onStateChange(StartupMessage.Launching);
     await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
