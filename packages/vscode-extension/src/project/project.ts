@@ -422,7 +422,7 @@ export class Project implements Disposable, MetroDelegate, DebugSessionDelegate,
     Logger.debug("Node Modules installed");
   }
 
-  public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
+  private async selectDeviceOnly(deviceInfo: DeviceInfo) {
     let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
     try {
       device = await this.deviceManager.acquireDevice(deviceInfo);
@@ -437,17 +437,24 @@ export class Project implements Disposable, MetroDelegate, DebugSessionDelegate,
       }
     }
 
+    if (device) {
+      Logger.log("Device selected", deviceInfo.name);
+      extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
+      return device;
+    }
+    return undefined;
+  }
+
+  public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
+    const device = await this.selectDeviceOnly(deviceInfo);
     if (!device) {
       return;
     }
 
-    Logger.log("Device selected", deviceInfo.name);
-    extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
-
     this.reloadingMetro = false;
-    const prevSession = this.deviceSession;
+
+    this.deviceSession?.dispose();
     this.deviceSession = undefined;
-    prevSession?.dispose();
 
     this.updateProjectState({
       selectedDevice: deviceInfo,
