@@ -10,8 +10,6 @@ import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 
-type PreviewReadyCallback = (previewURL: string) => void;
-
 type PerformAction =
   | "rebuild"
   | "reboot"
@@ -29,6 +27,7 @@ export type AppEvent = {
 export type EventDelegate = {
   onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void;
   onStateChange(state: StartupMessage): void;
+  onPreviewReady(url: string): void;
 };
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
@@ -69,31 +68,33 @@ export class DeviceSession implements Disposable {
 
   public async perform(type: PerformAction) {
     switch (type) {
+      case "restartProcess":
+        await this.launchApp();
+        return true;
       case "hotReload":
         if (this.devtools.hasConnectedClient) {
           await this.metro.reload();
           return true;
         }
         return false;
-      default:
-        throw new Error("Not implemented " + type);
     }
+    throw new Error("Not implemented " + type);
   }
 
-  private async launch() {
+  private async launchApp() {
     if (!this.buildResult) {
       throw new Error("Expecting build to be ready");
     }
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch
       ? new Promise<void>((resolve) => {
-          const listener = (event: string, payload: any) => {
+          const listener = (event: string) => {
             if (event === "RNIDE_appReady") {
-              this.devtools?.removeListener(listener);
+              this.devtools.removeListener(listener);
               resolve();
             }
           };
-          this.devtools?.addListener(listener);
+          this.devtools.addListener(listener);
         })
       : Promise.resolve();
 
@@ -102,17 +103,18 @@ export class DeviceSession implements Disposable {
 
     Logger.debug("Will wait for app ready and for preview");
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
-    await Promise.all([waitForAppReady, this.device.startPreview()]);
+    const [previewUrl] = await Promise.all([this.device.startPreview(), waitForAppReady]);
+    this.eventDelegate.onPreviewReady(previewUrl);
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
   }
 
   public async restart() {
-    return this.launch();
+    await this.perform("restartProcess");
   }
 
-  public async start(deviceSettings: DeviceSettings, previewReadyCallback: PreviewReadyCallback) {
+  public async start(deviceSettings: DeviceSettings) {
     this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
@@ -120,12 +122,7 @@ export class DeviceSession implements Disposable {
     this.buildResult = await this.disposableBuild.build;
     this.eventDelegate.onStateChange(StartupMessage.Installing);
     await this.device.installApp(this.buildResult, false);
-
-    this.device.startPreview().then(() => {
-      previewReadyCallback(this.device.previewURL!);
-    });
-
-    await this.launch();
+    await this.perform("restartProcess");
   }
 
   private async startDebugger() {
@@ -140,10 +137,6 @@ export class DeviceSession implements Disposable {
     } else {
       Logger.error("Couldn't connect to debugger");
     }
-  }
-
-  public get previewURL(): string | undefined {
-    return this.device.previewURL;
   }
 
   public resumeDebugger() {
