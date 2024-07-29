@@ -33,7 +33,6 @@ export type EventDelegate = {
   onStateChange(state: StartupMessage): void;
   onBuildProgress(stageProgress: number): void;
   onBuildSuccess(): void;
-  onPreviewReady(url: string): void;
 };
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
@@ -121,10 +120,10 @@ export class DeviceSession implements Disposable {
     Logger.debug("Will wait for app ready and for preview");
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
     const [previewUrl] = await Promise.all([this.device.startPreview(), waitForAppReady]);
-    this.eventDelegate.onPreviewReady(previewUrl);
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
+    return previewUrl;
   }
 
   private async bootDevice(deviceSettings: DeviceSettings) {
@@ -163,8 +162,9 @@ export class DeviceSession implements Disposable {
     await this.bootDevice(deviceSettings);
     await this.buildApp({ clean: cleanBuild });
     await this.installApp({ reinstall: false });
-    await this.launchApp();
+    const previewUrl = await this.launchApp();
     Logger.debug("Device session started");
+    return previewUrl;
   }
 
   private async startDebugger() {
