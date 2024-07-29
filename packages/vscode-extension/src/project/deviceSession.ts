@@ -116,10 +116,9 @@ export class DeviceSession implements Disposable {
     return previewUrl;
   }
 
-  private async bootDevice(deviceSettings: DeviceSettings) {
+  private async bootDevice() {
     this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
     await this.device.bootDevice();
-    await this.device.changeSettings(deviceSettings);
   }
 
   private async buildApp({ clean }: { clean: boolean }) {
@@ -146,10 +145,10 @@ export class DeviceSession implements Disposable {
     Logger.debug("Metro & devtools ready");
   }
 
-  public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+  public async start({ cleanBuild }: StartOptions) {
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
-    await this.bootDevice(deviceSettings);
+    await this.bootDevice();
     await this.buildApp({ clean: cleanBuild });
     await this.installApp({ reinstall: false });
     const previewUrl = await this.launchApp();
@@ -239,6 +238,10 @@ export class DeviceSession implements Disposable {
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {
     this.devtools.send("RNIDE_editorFileChanged", { filename, followEnabled });
+  }
+
+  public getDeviceSettings() {
+    return this.device.settings;
   }
 
   public async changeDeviceSettings(settings: DeviceSettings) {

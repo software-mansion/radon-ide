@@ -10,12 +10,18 @@ import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
 import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
-import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
+import {
+  AndroidDeviceInfo,
+  AndroidSystemImageInfo,
+  DeviceInfo,
+  DevicePlatform,
+} from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
+import { getDeviceSettings } from "../project/persistentStorage";
 
 export const EMULATOR_BINARY = Platform.select({
   macos: path.join(ANDROID_HOME, "emulator", "emulator"),
@@ -38,19 +44,17 @@ interface EmulatorProcessInfo {
 }
 
 export class AndroidEmulatorDevice extends DeviceBase {
+  private readonly avdId: string;
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
 
-  constructor(private readonly avdId: string, private readonly _deviceInfo: DeviceInfo) {
-    super();
+  constructor(deviceInfo: AndroidDeviceInfo) {
+    super(deviceInfo, getDeviceSettings(deviceInfo.id));
+    this.avdId = deviceInfo.avdId;
   }
 
   public get platform(): DevicePlatform {
     return DevicePlatform.Android;
-  }
-
-  get deviceInfo(): DeviceInfo {
-    return this._deviceInfo;
   }
 
   get lockFilePath(): string {
@@ -70,6 +74,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async changeSettings(settings: DeviceSettings) {
+    await super.changeSettings(settings);
     await exec(ADB_PATH, [
       "-s",
       this.serial!,

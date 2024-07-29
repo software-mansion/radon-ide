@@ -6,7 +6,7 @@ import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
 import fs from "fs";
-import path from "path";
+import { storeDeviceSettings } from "../project/persistentStorage";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
@@ -16,16 +16,16 @@ export abstract class DeviceBase implements Disposable {
   abstract get lockFilePath(): string;
 
   abstract bootDevice(): Promise<void>;
-  abstract changeSettings(settings: DeviceSettings): Promise<void>;
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
   abstract makePreview(): Preview;
   abstract get platform(): DevicePlatform;
-  abstract get deviceInfo(): DeviceInfo;
   abstract resetAppPermissions(
     appPermission: AppPermissionType,
     buildResult: BuildResult
   ): Promise<boolean>;
+
+  constructor(public readonly deviceInfo: DeviceInfo, public readonly settings: DeviceSettings) {}
 
   async acquire() {
     const acquired = await tryAcquiringLock(this.lockFilePath);
@@ -42,6 +42,10 @@ export abstract class DeviceBase implements Disposable {
       }
     }
     this.preview?.dispose();
+  }
+
+  public async changeSettings(settings: DeviceSettings): Promise<void> {
+    await storeDeviceSettings(this.deviceInfo.id, settings);
   }
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {

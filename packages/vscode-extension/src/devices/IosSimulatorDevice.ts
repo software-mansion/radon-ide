@@ -11,6 +11,7 @@ import fs from "fs";
 import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { ExecaError } from "execa";
+import { getDeviceSettings } from "../project/persistentStorage";
 
 interface SimulatorInfo {
   availability?: string;
@@ -46,16 +47,15 @@ type PrivacyServiceName =
   | "siri";
 
 export class IosSimulatorDevice extends DeviceBase {
-  constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
-    super();
+  private readonly deviceUDID: string;
+
+  constructor(deviceInfo: IOSDeviceInfo) {
+    super(deviceInfo, getDeviceSettings(deviceInfo.id));
+    this.deviceUDID = deviceInfo.UDID;
   }
 
   public get platform(): DevicePlatform {
     return DevicePlatform.IOS;
-  }
-
-  public get deviceInfo() {
-    return this._deviceInfo;
   }
 
   get lockFilePath(): string {
@@ -86,6 +86,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async changeSettings(settings: DeviceSettings) {
+    await super.changeSettings(settings);
     const deviceSetLocation = getOrCreateDeviceSet();
     await exec("xcrun", [
       "simctl",

@@ -59,6 +59,12 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  useEffect(() => {
+    if (projectState.selectedDevice?.id) {
+      project.getDeviceSettings().then(setDeviceSettings);
+    }
+  }, [projectState.selectedDevice?.id]);
+
   return (
     <ProjectContext.Provider value={{ projectState, deviceSettings, project }}>
       {children}

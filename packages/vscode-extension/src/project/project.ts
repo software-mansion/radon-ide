@@ -39,30 +39,14 @@ export class Project
   private metro: Metro;
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
-
   private detectedFingerprintChange: boolean;
-
   private fileWatcher: Disposable;
-
   private deviceSession: DeviceSession | undefined;
-
   private projectState: ProjectState = {
     status: "starting",
     previewURL: undefined,
     previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
     selectedDevice: undefined,
-  };
-
-  private deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
-    DEVICE_SETTINGS_KEY
-  ) ?? {
-    appearance: "dark",
-    contentSize: "normal",
-    location: {
-      latitude: 50.048653,
-      longitude: 19.965474,
-      isDisabled: true,
-    },
   };
 
   constructor(
@@ -79,6 +63,13 @@ export class Project
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
     });
+  }
+
+  private get runningDeviceSession() {
+    if (!this.deviceSession) {
+      throw new Error("Device session not started");
+    }
+    return this.deviceSession;
   }
 
   //#region Build progress
@@ -376,14 +367,12 @@ export class Project
   }
 
   public async getDeviceSettings() {
-    return this.deviceSettings;
+    return this.runningDeviceSession.getDeviceSettings();
   }
 
   public async updateDeviceSettings(settings: DeviceSettings) {
-    this.deviceSettings = settings;
-    extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
-    await this.deviceSession?.changeDeviceSettings(settings);
-    this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
+    await this.runningDeviceSession.changeDeviceSettings(settings);
+    this.eventEmitter.emit("deviceSettingsChanged", settings);
   }
 
   private reportStageProgress(stageProgress: number, stage: string) {
@@ -476,9 +465,7 @@ export class Project
       );
       this.deviceSession = newDeviceSession;
 
-      const previewURL = await newDeviceSession.start(this.deviceSettings, {
-        cleanBuild: forceCleanBuild,
-      });
+      const previewURL = await newDeviceSession.start({ cleanBuild: forceCleanBuild });
       this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
         previewURL,
         status: "running",

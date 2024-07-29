@@ -27,6 +27,7 @@ import { EventEmitter } from "stream";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
+import { removeSettingsForDevice } from "../project/persistentStorage";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
@@ -59,7 +60,7 @@ export class DeviceManager implements DeviceManagerInterface {
       if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
-      const device = new IosSimulatorDevice(simulatorInfo.UDID, simulatorInfo);
+      const device = new IosSimulatorDevice(simulatorInfo);
       if (await device.acquire()) {
         return device;
       } else {
@@ -71,7 +72,7 @@ export class DeviceManager implements DeviceManagerInterface {
       if (!emulatorInfo || emulatorInfo.platform !== DevicePlatform.Android) {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
-      const device = new AndroidEmulatorDevice(emulatorInfo.avdId, emulatorInfo);
+      const device = new AndroidEmulatorDevice(emulatorInfo);
       if (await device.acquire()) {
         return device;
       } else {
@@ -155,14 +156,15 @@ export class DeviceManager implements DeviceManagerInterface {
     return simulator;
   }
 
-  public async removeDevice(device: DeviceInfo) {
-    if (device.platform === DevicePlatform.IOS) {
-      await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
+  public async removeDevice(deviceInfo: DeviceInfo) {
+    if (deviceInfo.platform === DevicePlatform.IOS) {
+      await removeIosSimulator(deviceInfo.UDID, SimulatorDeviceSet.RN_IDE);
     }
-    if (device.platform === DevicePlatform.Android) {
-      await removeEmulator(device.avdId);
+    if (deviceInfo.platform === DevicePlatform.Android) {
+      await removeEmulator(deviceInfo.avdId);
     }
+    await removeSettingsForDevice(deviceInfo.id);
     await this.loadDevices();
-    this.eventEmitter.emit("deviceRemoved", device);
+    this.eventEmitter.emit("deviceRemoved", deviceInfo);
   }
 }
