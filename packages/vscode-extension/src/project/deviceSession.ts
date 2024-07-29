@@ -3,12 +3,13 @@ import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { BuildResult, DisposableBuild } from "../builders/BuildManager";
+import { BuildManager, BuildResult, DisposableBuild } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, StartupMessage } from "../common/Project";
 import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
+import { throttle } from "../utilities/throttle";
 
 type PerformAction =
   | "rebuild"
@@ -17,6 +18,8 @@ type PerformAction =
   | "restartProcess"
   | "reloadJs"
   | "hotReload";
+
+type StartOptions = { cleanBuild: boolean };
 
 export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
@@ -27,12 +30,15 @@ export type AppEvent = {
 export type EventDelegate = {
   onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void;
   onStateChange(state: StartupMessage): void;
+  onBuildProgress(stageProgress: number): void;
+  onBuildSuccess(): void;
   onPreviewReady(url: string): void;
 };
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
   private _buildResult: BuildResult | undefined;
   private debugSession: DebugSession | undefined;
+  private disposableBuild: DisposableBuild<BuildResult> | undefined;
 
   private get buildResult() {
     if (!this._buildResult) {
@@ -45,7 +51,7 @@ export class DeviceSession implements Disposable {
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
-    private readonly disposableBuild: DisposableBuild<BuildResult>,
+    private readonly buildManager: BuildManager,
     private readonly debugEventDelegate: DebugSessionDelegate,
     private readonly eventDelegate: EventDelegate
   ) {
@@ -118,17 +124,33 @@ export class DeviceSession implements Disposable {
     await this.startDebugger();
   }
 
+  private async bootDevice(deviceSettings: DeviceSettings) {
+    this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
+    await this.device.bootDevice();
+    await this.device.changeSettings(deviceSettings);
+  }
+
+  private async buildApp({ clean }: { clean: boolean }) {
+    this.eventDelegate.onStateChange(StartupMessage.Building);
+    this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
+      clean,
+      onSuccess: this.eventDelegate.onBuildSuccess,
+      progressListener: throttle((stageProgress: number) => {
+        this.eventDelegate.onBuildProgress(stageProgress);
+      }, 100),
+    });
+    this._buildResult = await this.disposableBuild.build;
+  }
+
   private async installApp({ reinstall }: { reinstall: boolean }) {
     this.eventDelegate.onStateChange(StartupMessage.Installing);
     return this.device.installApp(this.buildResult, reinstall);
   }
 
-  public async start(deviceSettings: DeviceSettings) {
-    this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
-    await this.device.bootDevice();
-    await this.device.changeSettings(deviceSettings);
-    this.eventDelegate.onStateChange(StartupMessage.Building);
-    this._buildResult = await this.disposableBuild.build;
+  public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+    // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
+    await this.bootDevice(deviceSettings);
+    await this.buildApp({ clean: cleanBuild });
     await this.installApp({ reinstall: false });
     await this.launchApp();
   }

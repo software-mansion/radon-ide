@@ -62,7 +62,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
       if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
-      const device = new IosSimulatorDevice(simulatorInfo.UDID);
+      const device = new IosSimulatorDevice(simulatorInfo.UDID, simulatorInfo);
       if (await device.acquire()) {
         return device;
       } else {
@@ -74,7 +74,7 @@ export class DeviceManager implements Disposable, DeviceManagerInterface {
       if (!emulatorInfo || emulatorInfo.platform !== DevicePlatform.Android) {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
-      const device = new AndroidEmulatorDevice(emulatorInfo.avdId);
+      const device = new AndroidEmulatorDevice(emulatorInfo.avdId, emulatorInfo);
       if (await device.acquire()) {
         return device;
       } else {
