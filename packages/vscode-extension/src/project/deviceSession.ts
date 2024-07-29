@@ -136,6 +136,16 @@ export class DeviceSession implements Disposable {
     this.device.sendTouch(xRatio, yRatio, type);
   }
 
+  public sendMultiTouch(
+    xRatio: number,
+    yRatio: number,
+    xAnchorRatio: number,
+    yAnchorRatio: number,
+    type: "Up" | "Move" | "Down"
+  ) {
+    this.device.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
+  }
+
   public sendKey(keyCode: number, direction: "Up" | "Down") {
     this.device.sendKey(keyCode, direction);
   }

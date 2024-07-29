@@ -322,6 +322,16 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.sendTouch(xRatio, yRatio, type);
   }
 
+  public async dispatchMultiTouch(
+    xRatio: number,
+    yRatio: number,
+    xAnchorRatio: number,
+    yAnchorRatio: number,
+    type: "Up" | "Move" | "Down"
+  ) {
+    this.deviceSession?.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
+  }
+
   public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
     this.deviceSession?.sendKey(keyCode, direction);
   }

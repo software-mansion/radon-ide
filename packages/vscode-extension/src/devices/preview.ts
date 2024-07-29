@@ -54,6 +54,18 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write(`touch${type} ${xRatio} ${yRatio}\n`);
   }
 
+  public sendMultiTouch(
+    xRatio: number,
+    yRatio: number,
+    xAnchorRatio: number,
+    yAnchorRatio: number,
+    type: "Up" | "Move" | "Down"
+  ) {
+    // this.subprocess?.stdin?.write(
+    //   `multitouch${type} ${xRatio} ${yRatio} ${xAnchorRatio} ${yAnchorRatio}\n` // TODO set proper multitouch simserver command
+    // );
+  }
+
   public sendKey(keyCode: number, direction: "Up" | "Down") {
     this.subprocess?.stdin?.write(`key${direction} ${keyCode}\n`);
   }
