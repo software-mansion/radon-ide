@@ -401,6 +401,25 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     device: device!,
   });
 
+  const TouchPointMarker: React.FC<TouchPoint> = ({ x, y }) => {
+    const styles: React.CSSProperties = {
+      position: "absolute",
+      top: `${y * 100}%`,
+      left: `${x * 100}%`,
+      width: "33px",
+      height: "33px",
+      backgroundColor: "rgba(175, 175, 175, 0.75)",
+      borderRadius: "50%",
+      borderColor: "rgba(135, 135, 135, 0.6)",
+      borderWidth: "1px",
+      borderStyle: "solid",
+      transform: "translate(-50%, -50%)",
+      boxShadow: isPressing ? "none" : "2px 2px 6px 1px rgba(0, 0, 0, 0.2)",
+      display: isMultiTouchVisible ? "block" : "none",
+    };
+    return <div style={styles} />;
+  };
+
   return (
     <>
       <div
@@ -420,6 +439,9 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                   }}
                   className="phone-screen"
                 />
+
+                <TouchPointMarker x={touchPoint.x} y={touchPoint.y} />
+                <TouchPointMarker x={mirroredTouchPoint.x} y={mirroredTouchPoint.y} />
 
                 {inspectFrame && (
                   <div className="phone-screen phone-inspect-overlay">
