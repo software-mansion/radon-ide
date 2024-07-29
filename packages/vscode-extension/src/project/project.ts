@@ -94,10 +94,6 @@ export class Project
   onStateChange(state: StartupMessage): void {
     this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
   }
-
-  onPreviewReady(url: string): void {
-    this.updateProjectStateForDevice(this.projectState.selectedDevice!, { previewURL: url });
-  }
   //#endregion
 
   //#region App events
@@ -494,8 +490,13 @@ export class Project
       );
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(this.deviceSettings, { cleanBuild: forceCleanBuild });
-      this.updateProjectStateForDevice(deviceInfo, { status: "running" });
+      const previewURL = await newDeviceSession.start(this.deviceSettings, {
+        cleanBuild: forceCleanBuild,
+      });
+      this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
+        previewURL,
+        status: "running",
+      });
     } catch (e) {
       Logger.error("Couldn't start device session", e);
 
