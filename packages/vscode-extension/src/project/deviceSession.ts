@@ -21,7 +21,6 @@ type PerformAction =
   | "hotReload";
 
 export type AppEvent = {
-  appReady: undefined;
   navigationChanged: { displayName: string; id: string };
   fastRefreshStarted: undefined;
   fastRefreshComplete: undefined;
@@ -47,7 +46,7 @@ export class DeviceSession implements Disposable {
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "RNIDE_appReady":
-          this.eventDelegate.onAppEvent("appReady", undefined);
+          Logger.debug("App ready");
           break;
         case "RNIDE_navigationChanged":
           this.eventDelegate.onAppEvent("navigationChanged", payload);

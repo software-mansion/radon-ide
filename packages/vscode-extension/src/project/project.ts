@@ -92,13 +92,6 @@ export class Project
   //#region App events
   onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void {
     switch (event) {
-      case "appReady":
-        Logger.debug("App ready");
-        if (this.reloadingMetro) {
-          this.reloadingMetro = false;
-          this.updateProjectState({ status: "running" });
-        }
-        break;
       case "navigationChanged":
         this.eventEmitter.emit("navigationChanged", payload);
         break;
@@ -214,17 +207,17 @@ export class Project
     this.fileWatcher.dispose();
   }
 
-  private reloadingMetro = false;
-
-  public reloadMetro() {
-    this.reloadingMetro = true;
-    this.metro?.reload();
+  public async reloadMetro() {
+    if (await this.deviceSession?.perform("hotReload")) {
+      this.updateProjectState({ status: "running" });
+    }
   }
 
   public async goHome() {
-    this.reloadMetro();
+    await this.reloadMetro();
   }
 
+  //#region Restart
   public async restart(forceCleanBuild: boolean, onlyReloadJSWhenPossible: boolean = true) {
     // we save device info and device session at the start such that we can
     // check if they weren't updated in the meantime while we await for restart
@@ -248,7 +241,7 @@ export class Project
 
     // if we have an active devtools session, we try hot reloading
     if (onlyReloadJSWhenPossible && this.devtools.hasConnectedClient) {
-      this.reloadMetro();
+      await this.reloadMetro();
       return;
     }
 
@@ -270,6 +263,7 @@ export class Project
       }
     }
   }
+  //#endregion
 
   private async start(restart: boolean, forceCleanBuild: boolean) {
     if (restart) {
@@ -469,8 +463,6 @@ export class Project
       return;
     }
 
-    this.reloadingMetro = false;
-
     this.deviceSession?.dispose();
     this.deviceSession = undefined;
 
@@ -498,7 +490,7 @@ export class Project
         }, 100)
       );
 
-      // reset fingerpring change flag when build finishes successfully
+      // reset fingerprint change flag when build finishes successfully
       if (this.detectedFingerprintChange) {
         build.build.then(() => {
           this.detectedFingerprintChange = false;
