@@ -10,6 +10,7 @@ import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
+import { DependencyManager } from "../dependency/DependencyManager";
 
 type PerformAction =
   | "rebuild"
@@ -40,6 +41,7 @@ export class DeviceSession implements Disposable {
   private maybeBuildResult: BuildResult | undefined;
   private debugSession: DebugSession | undefined;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
+  private buildManager: BuildManager;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -52,10 +54,11 @@ export class DeviceSession implements Disposable {
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
-    private readonly buildManager: BuildManager,
+    readonly dependencyManager: DependencyManager,
     private readonly debugEventDelegate: DebugSessionDelegate,
     private readonly eventDelegate: EventDelegate
   ) {
+    this.buildManager = new BuildManager(dependencyManager);
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "RNIDE_appReady":
@@ -252,5 +255,9 @@ export class DeviceSession implements Disposable {
 
   public async changeDeviceSettings(settings: DeviceSettings) {
     await this.device.changeSettings(settings);
+  }
+
+  public focusBuildOutput() {
+    this.buildManager.focusBuildOutput();
   }
 }

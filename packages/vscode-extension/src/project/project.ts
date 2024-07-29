@@ -3,7 +3,7 @@ import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { Logger } from "../Logger";
-import { BuildManager, didFingerprintChange } from "../builders/BuildManager";
+import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
 import {
@@ -38,7 +38,6 @@ export class Project
 
   private metro: Metro;
   private devtools = new Devtools();
-  private buildManager: BuildManager;
   private eventEmitter = new EventEmitter();
 
   private detectedFingerprintChange: boolean;
@@ -72,7 +71,6 @@ export class Project
   ) {
     Project.currentProject = this;
     this.metro = new Metro(this.devtools, this);
-    this.buildManager = new BuildManager(dependencyManager);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -368,10 +366,7 @@ export class Project
   }
 
   public async focusBuildOutput() {
-    if (!this.projectState.selectedDevice) {
-      return;
-    }
-    this.buildManager.focusBuildOutput();
+    this.deviceSession?.focusBuildOutput();
   }
 
   public async focusExtensionLogsOutput() {
@@ -501,7 +496,7 @@ export class Project
         device,
         this.devtools,
         this.metro,
-        this.buildManager,
+        this.dependencyManager,
         this,
         this
       );
