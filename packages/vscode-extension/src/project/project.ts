@@ -14,6 +14,7 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
+  ReloadAction,
   StartupMessage,
   ZoomLevelType,
 } from "../common/Project";
@@ -224,7 +225,7 @@ export class Project
     await this.reloadMetro();
   }
 
-  //#region Restart
+  //#region Session lifecycle
   public async restart(forceCleanBuild: boolean, onlyReloadJSWhenPossible: boolean = true) {
     // we save device info and device session at the start such that we can
     // check if they weren't updated in the meantime while we await for restart
@@ -266,7 +267,13 @@ export class Project
       }
     }
   }
-  //#endregion
+
+  public async reload(type: ReloadAction): Promise<boolean> {
+    this.updateProjectState({ status: "starting" });
+    const success = (await this.deviceSession?.perform(type)) ?? false;
+    this.updateProjectState({ status: "running" });
+    return success;
+  }
 
   private async start(restart: boolean, forceCleanBuild: boolean) {
     if (restart) {
@@ -293,6 +300,7 @@ export class Project
       [installNodeModules]
     );
   }
+  //#endregion
 
   async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);

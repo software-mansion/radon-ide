@@ -1,0 +1,11 @@
+.dropdown-arrow {
+  color: var(--swm-button);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+}
+
+.icon-container {
+  position: relative;
+}

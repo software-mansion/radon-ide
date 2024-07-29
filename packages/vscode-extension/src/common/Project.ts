@@ -55,6 +55,14 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
 
+export type ReloadAction =
+  | "rebuild"
+  | "reboot"
+  | "reinstall"
+  | "restartProcess"
+  | "reloadJs"
+  | "hotReload";
+
 export type InspectDataStackItem = {
   componentName: string;
   hide: boolean;
@@ -95,6 +103,7 @@ export interface ProjectEventListener<T> {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
+  reload(type: ReloadAction): Promise<boolean>;
   restart(forceCleanBuild: boolean): Promise<void>;
   goHome(): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;

@@ -4,21 +4,13 @@ import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { BuildManager, BuildResult, DisposableBuild } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, StartupMessage } from "../common/Project";
+import { AppPermissionType, DeviceSettings, ReloadAction, StartupMessage } from "../common/Project";
 import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
-
-type PerformAction =
-  | "rebuild"
-  | "reboot"
-  | "reinstall"
-  | "restartProcess"
-  | "reloadJs"
-  | "hotReload";
 
 type StartOptions = { cleanBuild: boolean };
 
@@ -82,7 +74,7 @@ export class DeviceSession implements Disposable {
     this.device?.dispose();
   }
 
-  public async perform(type: PerformAction) {
+  public async perform(type: ReloadAction) {
     switch (type) {
       case "reinstall":
         await this.installApp({ reinstall: true });
