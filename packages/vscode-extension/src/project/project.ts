@@ -470,6 +470,7 @@ export class Project
     if (!device) {
       return;
     }
+    Logger.debug("Selected device is ready");
 
     this.deviceSession?.dispose();
     this.deviceSession = undefined;
@@ -482,16 +483,7 @@ export class Project
     });
 
     let newDeviceSession;
-
     try {
-      Logger.debug("Selected device is ready");
-      this.updateProjectStateForDevice(deviceInfo, {
-        startupMessage: StartupMessage.StartingPackager,
-      });
-      // wait for metro/devtools to start before we continue
-      await Promise.all([this.metro.ready(), this.devtools.ready()]);
-
-      Logger.debug("Metro & devtools ready");
       newDeviceSession = new DeviceSession(
         device,
         this.devtools,
@@ -503,11 +495,7 @@ export class Project
       this.deviceSession = newDeviceSession;
 
       await newDeviceSession.start(this.deviceSettings, { cleanBuild: forceCleanBuild });
-      Logger.debug("Device session started");
-
-      this.updateProjectStateForDevice(deviceInfo, {
-        status: "running",
-      });
+      this.updateProjectStateForDevice(deviceInfo, { status: "running" });
     } catch (e) {
       Logger.error("Couldn't start device session", e);
 
