@@ -12,6 +12,14 @@ import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 
 type PreviewReadyCallback = (previewURL: string) => void;
 
+type PerformAction =
+  | "rebuild"
+  | "reboot"
+  | "reinstall"
+  | "restartProcess"
+  | "reloadJs"
+  | "hotReload";
+
 export type AppEvent = {
   appReady: undefined;
   navigationChanged: { displayName: string; id: string };
@@ -58,6 +66,19 @@ export class DeviceSession implements Disposable {
     this.debugSession?.dispose();
     this.disposableBuild?.dispose();
     this.device?.dispose();
+  }
+
+  public async perform(type: PerformAction) {
+    switch (type) {
+      case "hotReload":
+        if (this.devtools.hasConnectedClient) {
+          await this.metro.reload();
+          return true;
+        }
+        return false;
+      default:
+        throw new Error("Not implemented " + type);
+    }
   }
 
   private async launch() {
