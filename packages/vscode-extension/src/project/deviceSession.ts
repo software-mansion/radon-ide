@@ -13,6 +13,16 @@ import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 type ProgressCallback = (startupMessage: string) => void;
 type PreviewReadyCallback = (previewURL: string) => void;
 
+export type AppEvent = {
+  appReady: undefined;
+  navigationChanged: { displayName: string; id: string };
+  fastRefreshStarted: undefined;
+  fastRefreshComplete: undefined;
+};
+
+export type EventDelegate = {
+  onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void;
+};
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
   private buildResult: BuildResult | undefined;
@@ -23,8 +33,26 @@ export class DeviceSession implements Disposable {
     private readonly devtools: Devtools,
     private readonly metro: Metro,
     private readonly disposableBuild: DisposableBuild<BuildResult>,
-    private readonly debugEventDelegate: DebugSessionDelegate
-  ) {}
+    private readonly debugEventDelegate: DebugSessionDelegate,
+    private readonly eventDelegate: EventDelegate
+  ) {
+    this.devtools.addListener((event, payload) => {
+      switch (event) {
+        case "RNIDE_appReady":
+          this.eventDelegate.onAppEvent("appReady", undefined);
+          break;
+        case "RNIDE_navigationChanged":
+          this.eventDelegate.onAppEvent("navigationChanged", payload);
+          break;
+        case "RNIDE_fastRefreshStarted":
+          this.eventDelegate.onAppEvent("fastRefreshStarted", undefined);
+          break;
+        case "RNIDE_fastRefreshComplete":
+          this.eventDelegate.onAppEvent("fastRefreshComplete", undefined);
+          break;
+      }
+    });
+  }
 
   public dispose() {
     this.debugSession?.dispose();
