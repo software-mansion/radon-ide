@@ -123,10 +123,6 @@ export class DeviceSession implements Disposable {
     return this.device.installApp(this.buildResult, reinstall);
   }
 
-  public async restart() {
-    await this.perform("restartProcess");
-  }
-
   public async start(deviceSettings: DeviceSettings) {
     this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
     await this.device.bootDevice();

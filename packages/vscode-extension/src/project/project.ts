@@ -211,7 +211,7 @@ export class Project
     this.fileWatcher.dispose();
   }
 
-  public async reloadMetro() {
+  private async reloadMetro() {
     if (await this.deviceSession?.perform("hotReload")) {
       this.updateProjectState({ status: "running" });
     }
@@ -253,7 +253,7 @@ export class Project
     try {
       // we first check if the device session hasn't changed in the meantime
       if (deviceSession === this.deviceSession) {
-        await this.deviceSession?.restart();
+        await this.deviceSession?.perform("restartProcess");
         this.updateProjectStateForDevice(deviceInfo, {
           status: "running",
         });
