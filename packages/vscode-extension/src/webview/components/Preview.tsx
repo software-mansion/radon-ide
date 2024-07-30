@@ -302,6 +302,12 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
       sendTouch(e, "Up");
       setIsPressing(false);
     }
+    if (isMultiTouching) {
+      sendMultiTouch(e, "Up");
+      setIsMultiTouching(false);
+      setIsPanning(false);
+      setIsMultiTouchVisible(false);
+    }
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
       // and will be dispatched later on
