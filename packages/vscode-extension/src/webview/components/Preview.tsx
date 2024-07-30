@@ -126,9 +126,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [touchPoint, setTouchPoint] = useState<TouchPoint>({ x: 0.5, y: 0.5 });
-  const [mirroredTouchPoint, setMirroredTouchPoint] = useState<TouchPoint>({ x: 0.5, y: 0.5 });
   const [anchorPoint, setAnchorPoint] = useState<TouchPoint>({ x: 0.5, y: 0.5 });
-  const [isMultiTouchVisible, setIsMultiTouchVisible] = useState(false);
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
@@ -252,7 +250,6 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     if (isMultiTouching) {
       isPanning && moveAnchorPoint(e);
       isPressing && sendMultiTouch(e, "Move");
-      setMirroredTouchPoint(getMirroredTouchPosition(anchorPoint));
     } else if (isPressing) {
       sendTouch(e, "Move");
     } else if (isInspecting) {
@@ -275,7 +272,6 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     } else if (isMultiTouching) {
       setIsPressing(true);
       sendMultiTouch(e, "Down");
-      setMirroredTouchPoint(getMirroredTouchPosition(anchorPoint));
     } else {
       setIsPressing(true);
       sendTouch(e, "Down");
@@ -302,7 +298,6 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
       sendMultiTouch(e, "Up");
       setIsMultiTouching(false);
       setIsPanning(false);
-      setIsMultiTouchVisible(false);
     }
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
@@ -340,12 +335,8 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
         const isKeydown = e.type === "keydown";
 
         if (e.code === "AltLeft" || e.code === "AltRight") {
-          if (isKeydown) {
-            setAnchorPoint({ x: 0.5, y: 0.5 });
-            setMirroredTouchPoint(getMirroredTouchPosition({ x: 0.5, y: 0.5 }));
-          }
+          isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
           setIsMultiTouching(isKeydown);
-          setIsMultiTouchVisible(isKeydown);
         }
         if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
           setIsPanning(isKeydown);
@@ -361,7 +352,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
       document.removeEventListener("keydown", keyEventHandler);
       document.removeEventListener("keyup", keyEventHandler);
     };
-  }, [project, touchPoint]);
+  }, [project]);
 
   useEffect(() => {
     if (projectStatus === "running") {
@@ -414,7 +405,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
       borderStyle: "solid",
       transform: "translate(-50%, -50%)",
       boxShadow: isPressing ? "none" : "2px 2px 6px 1px rgba(0, 0, 0, 0.2)",
-      display: isMultiTouchVisible ? "block" : "none",
+      display: isMultiTouching ? "block" : "none",
     };
     return <div style={styles} />;
   };
@@ -440,7 +431,11 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                 />
 
                 <TouchPointMarker x={touchPoint.x} y={touchPoint.y} />
-                <TouchPointMarker x={mirroredTouchPoint.x} y={mirroredTouchPoint.y} />
+                <TouchPointMarker x={anchorPoint.x} y={anchorPoint.y} />
+                <TouchPointMarker
+                  x={getMirroredTouchPosition(anchorPoint).x}
+                  y={getMirroredTouchPosition(anchorPoint).y}
+                />
 
                 {inspectFrame && (
                   <div className="phone-screen phone-inspect-overlay">
