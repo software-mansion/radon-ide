@@ -250,12 +250,8 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isMultiTouching) {
-      if (isPanning) {
-        moveAnchorPoint(e);
-      }
-      if (isPressing) {
-        sendMultiTouch(e, "Move");
-      }
+      isPanning && moveAnchorPoint(e);
+      isPressing && sendMultiTouch(e, "Move");
       setMirroredTouchPoint(getMirroredTouchPosition(anchorPoint));
     } else if (isPressing) {
       sendTouch(e, "Move");
