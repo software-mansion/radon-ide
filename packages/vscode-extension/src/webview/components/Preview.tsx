@@ -200,8 +200,6 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
   function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
     const { x, y } = getTouchPosition(event);
-    setTouchPoint({ x, y });
-    setMirroredTouchPoint(getMirroredTouchPosition(anchorPoint));
     project.dispatchMultiTouch(x, y, anchorPoint.x, anchorPoint.y, type);
   }
 
@@ -251,17 +249,18 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isPressing) {
-      sendTouch(e, "Move");
-    } else if (isInspecting) {
-      sendInspect(e, "Move", false);
-    }
-
     if (isMultiTouching) {
       if (isPanning) {
         moveAnchorPoint(e);
       }
-      sendMultiTouch(e, "Move");
+      if (isPressing) {
+        sendMultiTouch(e, "Move");
+      }
+      setMirroredTouchPoint(getMirroredTouchPosition(anchorPoint));
+    } else if (isPressing) {
+      sendTouch(e, "Move");
+    } else if (isInspecting) {
+      sendInspect(e, "Move", false);
     }
     setTouchPoint(getTouchPosition(e));
   }
@@ -277,26 +276,24 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
       resetInspector();
     } else if (e.button === 2) {
       sendInspect(e, "RightButtonDown", true);
+    } else if (isMultiTouching) {
+      setIsPressing(true);
+      sendMultiTouch(e, "Down");
+      setMirroredTouchPoint(getMirroredTouchPosition(anchorPoint));
     } else {
       setIsPressing(true);
       sendTouch(e, "Down");
-    }
-
-    if (isMultiTouching) {
-      sendMultiTouch(e, "Down");
     }
   }
 
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isPressing) {
+    if (isMultiTouching) {
+      sendMultiTouch(e, "Up");
+    } else if (isPressing) {
       sendTouch(e, "Up");
     }
     setIsPressing(false);
-
-    if (isMultiTouching) {
-      sendMultiTouch(e, "Up");
-    }
   }
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
