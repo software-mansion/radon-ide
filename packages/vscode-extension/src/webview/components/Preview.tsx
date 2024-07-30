@@ -103,6 +103,33 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
   }
 );
 
+type TouchPointMarkerProps = {
+  x: number;
+  y: number;
+  isPressing: boolean;
+};
+
+function TouchPointMarker({ x, y, isPressing }: TouchPointMarkerProps) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: `${y * 100}%`,
+        left: `${x * 100}%`,
+        width: "33px",
+        height: "33px",
+        backgroundColor: "rgba(175, 175, 175, 0.75)",
+        borderRadius: "50%",
+        borderColor: "rgba(135, 135, 135, 0.6)",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        transform: "translate(-50%, -50%)",
+        boxShadow: isPressing ? "none" : "2px 2px 6px 1px rgba(0, 0, 0, 0.2)",
+      }}
+    />
+  );
+}
+
 type InspectStackData = {
   requestLocation: { x: number; y: number };
   stack: InspectDataStackItem[];
@@ -391,24 +418,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     device: device!,
   });
 
-  const TouchPointMarker: React.FC<TouchPoint> = ({ x, y }) => {
-    const styles: React.CSSProperties = {
-      position: "absolute",
-      top: `${y * 100}%`,
-      left: `${x * 100}%`,
-      width: "33px",
-      height: "33px",
-      backgroundColor: "rgba(175, 175, 175, 0.75)",
-      borderRadius: "50%",
-      borderColor: "rgba(135, 135, 135, 0.6)",
-      borderWidth: "1px",
-      borderStyle: "solid",
-      transform: "translate(-50%, -50%)",
-      boxShadow: isPressing ? "none" : "2px 2px 6px 1px rgba(0, 0, 0, 0.2)",
-      display: isMultiTouching ? "block" : "none",
-    };
-    return <div style={styles} />;
-  };
+  const mirroredTouchPosition = getMirroredTouchPosition(anchorPoint);
 
   return (
     <>
@@ -430,12 +440,16 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                   className="phone-screen"
                 />
 
-                <TouchPointMarker x={touchPoint.x} y={touchPoint.y} />
-                <TouchPointMarker x={anchorPoint.x} y={anchorPoint.y} />
-                <TouchPointMarker
-                  x={getMirroredTouchPosition(anchorPoint).x}
-                  y={getMirroredTouchPosition(anchorPoint).y}
-                />
+                {isMultiTouching && (
+                  <TouchPointMarker x={touchPoint.x} y={touchPoint.y} isPressing={isPressing} />
+                )}
+                {isMultiTouching && (
+                  <TouchPointMarker
+                    x={mirroredTouchPosition.x}
+                    y={mirroredTouchPosition.y}
+                    isPressing={isPressing}
+                  />
+                )}
 
                 {inspectFrame && (
                   <div className="phone-screen phone-inspect-overlay">
