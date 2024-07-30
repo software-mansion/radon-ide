@@ -16,6 +16,7 @@ import {
 } from "../utilities/packageManager";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { CancelToken } from "../builders/BuildManager";
+import { Platform } from "../utilities/platform";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
@@ -53,14 +54,6 @@ export class DependencyManager implements Disposable {
             Logger.debug("Received checkAndroidEmulatorInstalled command.");
             this.checkAndroidEmulatorInstalled();
             return;
-          case "checkXcodeInstalled":
-            Logger.debug("Received checkXcodeInstalled command.");
-            this.checkXcodeInstalled();
-            return;
-          case "checkCocoaPodsInstalled":
-            Logger.debug("Received checkCocoaPodsInstalled command.");
-            this.checkCocoaPodsInstalled();
-            return;
           case "checkReactNativeInstalled":
             Logger.debug("Received checkReactNativeInstalled command.");
             this.checkReactNativeInstalled();
@@ -69,14 +62,26 @@ export class DependencyManager implements Disposable {
             Logger.debug("Received checkExpoInstalled command.");
             this.checkExpoInstalled();
             return;
-          case "checkPodsInstalled":
-            Logger.debug("Received checkPodsInstalled command.");
-            this.checkPodsInstalled();
-            return;
           case "checkNodeModulesInstalled":
             Logger.debug("Received checkNodeModulesInstalled command.");
             this.checkNodeModulesInstalled();
             return;
+        }
+        if (Platform.OS === "macos") {
+          switch (webviewCommand) {
+            case "checkXcodeInstalled":
+              Logger.debug("Received checkXcodeInstalled command.");
+              this.checkXcodeInstalled();
+              return;
+            case "checkCocoaPodsInstalled":
+              Logger.debug("Received checkCocoaPodsInstalled command.");
+              this.checkCocoaPodsInstalled();
+              return;
+            case "checkPodsInstalled":
+              Logger.debug("Received checkPodsInstalled command.");
+              this.checkPodsInstalled();
+              return;
+          }
         }
       },
       undefined,
