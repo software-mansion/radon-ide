@@ -41,7 +41,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
 
-  constructor(private readonly avdId: string, private readonly _deviceInfo: DeviceInfo) {
+  constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
     super();
   }
 
@@ -50,7 +50,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   get deviceInfo(): DeviceInfo {
-    return this._deviceInfo;
+    return this.info;
   }
 
   get lockFilePath(): string {
