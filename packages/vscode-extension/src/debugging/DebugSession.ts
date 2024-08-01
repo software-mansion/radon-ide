@@ -12,7 +12,7 @@ export type DebugSessionDelegate = {
 };
 
 export class DebugSession implements Disposable {
-  private _session: VscDebugSession | undefined;
+  private vscSession: VscDebugSession | undefined;
   private debugEventsListener: Disposable;
 
   constructor(private debuggerUrl: string, private delegate: DebugSessionDelegate) {
@@ -56,7 +56,7 @@ export class DebugSession implements Disposable {
       }
     );
     if (debugStarted) {
-      this._session = debug.activeDebugSession!;
+      this.vscSession = debug.activeDebugSession!;
       return true;
     }
     return false;
@@ -71,9 +71,9 @@ export class DebugSession implements Disposable {
   }
 
   private get session() {
-    if (!this._session) {
+    if (!this.vscSession) {
       throw new Error("Debugger not started");
     }
-    return this._session;
+    return this.vscSession;
   }
 }
