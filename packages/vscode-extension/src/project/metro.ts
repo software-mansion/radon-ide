@@ -211,8 +211,9 @@ export class Metro implements Disposable {
   }
 
   public async reload() {
+    const appReady = this.devtools.appReady();
     await fetch(`http://localhost:${this._port}/reload`);
-    await this.devtools.appReady();
+    await appReady;
   }
 
   public async getDebuggerURL() {
