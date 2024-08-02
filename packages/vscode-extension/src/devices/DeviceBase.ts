@@ -2,7 +2,7 @@ import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings } from "../common/Project";
-import { Platform } from "../common/DeviceManager";
+import { DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
 import fs from "fs";
@@ -10,7 +10,7 @@ import path from "path";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;
-  private previewStartPromise: Promise<steing> | undefined;
+  private previewStartPromise: Promise<string> | undefined;
   private acquired = false;
 
   abstract get lockFilePath(): string;
@@ -20,7 +20,7 @@ export abstract class DeviceBase implements Disposable {
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
   abstract makePreview(): Preview;
-  abstract get platform(): Platform;
+  abstract get platform(): DevicePlatform;
   abstract resetAppPermissions(
     appPermission: AppPermissionType,
     buildResult: BuildResult
@@ -49,6 +49,16 @@ export abstract class DeviceBase implements Disposable {
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
     this.preview?.sendTouch(xRatio, yRatio, type);
+  }
+
+  public sendMultiTouch(
+    xRatio: number,
+    yRatio: number,
+    xAnchorRatio: number,
+    yAnchorRatio: number,
+    type: "Up" | "Move" | "Down"
+  ) {
+    this.preview?.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {

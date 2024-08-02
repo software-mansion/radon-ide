@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.15",
+  "version": "0.0.16",
   "engines": {
     "vscode": "^1.75.0",
     "os": "darwin"
@@ -242,8 +242,8 @@
     "build:extension-code": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --minify && cp ./node_modules/source-map/lib/mappings.wasm dist/.",
     "build:expo-fingerprint": "esbuild ./node_modules/@expo/fingerprint/build/sourcer/ExpoConfigLoader.js --bundle --format=cjs --outfile=dist/ExpoConfigLoader.js --platform=node --minify",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
-    "build:sim-server-debug": "./scripts/build-sim-server.sh dist Debug",
-    "build:sim-server": "./scripts/build-sim-server.sh dist Release",
+    "build:sim-server-debug": "bash ./scripts/build-sim-server.sh dist Debug",
+    "build:sim-server": "bash ./scripts/build-sim-server.sh dist Release",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
     "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview",
     "watch:extension": "vite",
@@ -255,7 +255,6 @@
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
-    "coordinate-parser": "^1.0.7",
     "@expo/fingerprint": "^0.5.0",
     "@expo/package-manager": "^1.1.2",
     "@msgpack/msgpack": "^2.8.0",
@@ -296,6 +295,7 @@
     "babel-loader": "^9.1.3",
     "chrome-remote-interface": "^0.33.0",
     "classnames": "^2.5.1",
+    "coordinate-parser": "^1.0.7",
     "esbuild": "^0.19.9",
     "eslint": "^7.19.0",
     "execa": "^5.1.1",
@@ -310,6 +310,7 @@
     "re-resizable": "^6.9.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "rollup": "^4.18.1",
     "semver": "^7.6.2",
     "sinon": "^18.0.0",
     "source-map": "^0.8.0-beta.0",
