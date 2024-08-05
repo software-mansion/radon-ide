@@ -307,25 +307,29 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isMultiTouching) {
-      sendMultiTouch(e, "Up");
-    } else if (isPressing) {
-      sendTouch(e, "Up");
+    if (isPressing) {
+      if (isMultiTouching) {
+        sendMultiTouch(e, "Up");
+      } else {
+        sendTouch(e, "Up");
+      }
+      setIsPressing(false);
     }
-    setIsPressing(false);
   }
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isPressing) {
-      sendTouch(e, "Up");
+      if (isMultiTouching) {
+        setIsMultiTouching(false);
+        setIsPanning(false);
+        sendMultiTouch(e, "Up");
+      } else {
+        sendTouch(e, "Up");
+      }
       setIsPressing(false);
     }
-    if (isMultiTouching) {
-      sendMultiTouch(e, "Up");
-      setIsMultiTouching(false);
-      setIsPanning(false);
-    }
+
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
       // and will be dispatched later on
