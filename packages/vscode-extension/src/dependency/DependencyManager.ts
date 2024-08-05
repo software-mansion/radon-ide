@@ -318,6 +318,14 @@ export class DependencyManager implements Disposable {
     const iosDirPath = getIosSourceDir(appRootFolder);
 
     if (!iosDirPath) {
+      this.webview.postMessage({
+        command: "isPodsInstalled",
+        data: {
+          installed: false,
+          info: "Whether iOS dependencies are installed.",
+          error: "iOS directory does not exist",
+        },
+      });
       throw new Error(`ios directory was not found inside the workspace.`);
     }
 
@@ -331,11 +339,24 @@ export class DependencyManager implements Disposable {
       });
     };
 
-    if (forceCleanBuild) {
-      await cancelToken.adapt(commandInIosDir("pod deintegrate"));
-    }
+    try {
+      if (forceCleanBuild) {
+        await cancelToken.adapt(commandInIosDir("pod deintegrate"));
+      }
 
-    await cancelToken.adapt(commandInIosDir("pod install"));
+      await cancelToken.adapt(commandInIosDir("pod install"));
+    } catch (e) {
+      Logger.error("Pods not installed", e);
+      this.webview.postMessage({
+        command: "isPodsInstalled",
+        data: {
+          installed: false,
+          info: "Whether iOS dependencies are installed.",
+          error: "Unable to install pods",
+        },
+      });
+      return;
+    }
 
     this.stalePods = false;
 
