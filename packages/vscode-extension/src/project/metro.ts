@@ -214,10 +214,12 @@ export class Metro implements Disposable {
     await fetch(`http://localhost:${this._port}/reload`);
   }
 
-  public async getDebuggerURL(timeoutMs: number) {
+  public async getDebuggerURL() {
+    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
+
     const startTime = Date.now();
     let websocketAddress: string | undefined;
-    while (!websocketAddress && Date.now() - startTime < timeoutMs) {
+    while (!websocketAddress && Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
       websocketAddress = await this.fetchDebuggerURL();
       await new Promise((res) => setTimeout(res, 1000));
     }

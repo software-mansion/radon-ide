@@ -78,18 +78,6 @@ export class Devtools implements Disposable {
     this.socket?.send(JSON.stringify({ event, payload }));
   }
 
-  public rpc(event: string, payload: any, responseEvent: string, callback: (payload: any) => void) {
-    const listener = (message: string, data: any) => {
-      if (message === responseEvent) {
-        callback(data);
-        this.removeListener(listener);
-      }
-    };
-
-    this.addListener(listener);
-    this.send(event, payload);
-  }
-
   public addListener(listener: (event: string, payload: any) => void) {
     this.listeners.add(listener);
   }

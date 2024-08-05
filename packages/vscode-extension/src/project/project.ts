@@ -1,4 +1,4 @@
-import { Disposable, debug, commands, workspace, FileSystemWatcher, window } from "vscode";
+import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceSession } from "./deviceSession";
@@ -25,23 +25,23 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle } from "../utilities/throttle";
+import { DebugSessionDelegate } from "../debugging/DebugSession";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 
-export class Project implements Disposable, MetroDelegate, ProjectInterface {
+export class Project implements Disposable, MetroDelegate, DebugSessionDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
 
   private metro: Metro;
   private devtools = new Devtools();
-  private debugSessionListener: Disposable | undefined;
   private buildManager: BuildManager;
   private eventEmitter = new EventEmitter();
 
   private detectedFingerprintChange: boolean;
-  private workspaceWatcher!: FileSystemWatcher;
-  private fileSaveWatcherDisposable!: Disposable;
+
+  private fileWatcher: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -76,28 +76,33 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.detectedFingerprintChange = false;
 
-    this.trackNativeChanges();
-  }
-
-  trackNativeChanges() {
-    // VS code glob patterns don't support negation so we can't exclude
-    // native build directories like android/build, android/.gradle,
-    // android/app/build, or ios/build.
-    // VS code by default exclude .git and node_modules directories from
-    // watching, configured by `files.watcherExclude` setting.
-    //
-    // We may revisit this if better performance is needed and create
-    // recursive watches ourselves by iterating through workspace directories
-    // to workaround this issue.
-    this.workspaceWatcher = workspace.createFileSystemWatcher("**/*");
-
-    this.workspaceWatcher.onDidChange(() => this.checkIfNativeChanged());
-    this.workspaceWatcher.onDidCreate(() => this.checkIfNativeChanged());
-    this.workspaceWatcher.onDidDelete(() => this.checkIfNativeChanged());
-    this.fileSaveWatcherDisposable = workspace.onDidSaveTextDocument(() => {
+    this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
     });
   }
+
+  //#region Debugger events
+  onConsoleLog(event: DebugSessionCustomEvent) {
+    this.eventEmitter.emit("log", event.body);
+  }
+
+  onDebuggerPaused(event: DebugSessionCustomEvent) {
+    if (event.body?.reason === "exception") {
+      // if we know that incremental bundle error happened, we don't want to change the status
+      if (this.projectState.status === "incrementalBundleError") {
+        return;
+      }
+      this.updateProjectState({ status: "runtimeError" });
+    } else {
+      this.updateProjectState({ status: "debuggerPaused" });
+    }
+    commands.executeCommand("workbench.view.debug");
+  }
+
+  onDebuggerResumed() {
+    this.updateProjectState({ status: "running" });
+  }
+  //#endregion
 
   async dispatchPaste(text: string) {
     this.deviceSession?.sendPaste(text);
@@ -172,10 +177,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
-    this.debugSessionListener?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
-    this.workspaceWatcher.dispose();
-    this.fileSaveWatcherDisposable.dispose();
+    this.fileWatcher.dispose();
   }
 
   private reloadingMetro = false;
@@ -278,28 +281,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
-
-    this.debugSessionListener?.dispose();
-    this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
-      switch (event.event) {
-        case "RNIDE_consoleLog":
-          this.eventEmitter.emit("log", event.body);
-          break;
-        case "RNIDE_paused":
-          if (event.body?.reason === "exception") {
-            // if we know that incrmental bundle error happened, we don't want to change the status
-            if (this.projectState.status === "incrementalBundleError") return;
-            this.updateProjectState({ status: "runtimeError" });
-          } else {
-            this.updateProjectState({ status: "debuggerPaused" });
-          }
-          commands.executeCommand("workbench.view.debug");
-          break;
-        case "RNIDE_continued":
-          this.updateProjectState({ status: "running" });
-          break;
-      }
-    });
 
     Logger.debug(`Launching metro`);
     const waitForMetro = this.metro.start(
@@ -512,7 +493,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       }
 
       Logger.debug("Metro & devtools ready");
-      newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
+      newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build, this);
       this.deviceSession = newDeviceSession;
 
       await newDeviceSession.start(
@@ -554,6 +535,31 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       }
     }
   }, 300);
+}
+
+function watchProjectFiles(onChange: () => void) {
+  // VS code glob patterns don't support negation so we can't exclude
+  // native build directories like android/build, android/.gradle,
+  // android/app/build, or ios/build.
+  // VS code by default exclude .git and node_modules directories from
+  // watching, configured by `files.watcherExclude` setting.
+  //
+  // We may revisit this if better performance is needed and create
+  // recursive watches ourselves by iterating through workspace directories
+  // to workaround this issue.
+  const savedFileWatcher = workspace.onDidSaveTextDocument(onChange);
+
+  const watcher = workspace.createFileSystemWatcher("**/*");
+  watcher.onDidChange(onChange);
+  watcher.onDidCreate(onChange);
+  watcher.onDidDelete(onChange);
+
+  return {
+    dispose: () => {
+      watcher.dispose();
+      savedFileWatcher.dispose();
+    },
+  };
 }
 
 export function isAppSourceFile(filePath: string) {

@@ -1,4 +1,4 @@
-import { Disposable, debug, DebugSession } from "vscode";
+import { Disposable } from "vscode";
 import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
@@ -8,27 +8,26 @@ import { AppPermissionType, DeviceSettings, StartupMessage } from "../common/Pro
 import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { isNodeModulesInstalled } from "../utilities/packageManager";
-
-const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
+import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 
 type ProgressCallback = (startupMessage: string) => void;
 type PreviewReadyCallback = (previewURL: string) => void;
 
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
-  private debugSession: DebugSession | undefined;
   private buildResult: BuildResult | undefined;
+  private debugSession: DebugSession | undefined;
 
   constructor(
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
-    private readonly disposableBuild: DisposableBuild<BuildResult>
+    private readonly disposableBuild: DisposableBuild<BuildResult>,
+    private readonly debugEventDelegate: DebugSessionDelegate
   ) {}
 
   public dispose() {
-    this.debugSession && debug.stopDebugging(this.debugSession);
+    this.debugSession?.dispose();
     this.disposableBuild?.dispose();
     this.device?.dispose();
   }
@@ -39,11 +38,11 @@ export class DeviceSession implements Disposable {
     }
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch
-      ? new Promise<void>((res) => {
+      ? new Promise<void>((resolve) => {
           const listener = (event: string, payload: any) => {
             if (event === "RNIDE_appReady") {
               this.devtools?.removeListener(listener);
-              res();
+              resolve();
             }
           };
           this.devtools?.addListener(listener);
@@ -62,11 +61,11 @@ export class DeviceSession implements Disposable {
     await this.startDebugger();
   }
 
-  async restart(progressCallback: ProgressCallback) {
+  public async restart(progressCallback: ProgressCallback) {
     return this.launch(progressCallback);
   }
 
-  async start(
+  public async start(
     deviceSettings: DeviceSettings,
     previewReadyCallback: PreviewReadyCallback,
     progressCallback: ProgressCallback
@@ -86,27 +85,14 @@ export class DeviceSession implements Disposable {
     await this.launch(progressCallback);
   }
 
-  public async startDebugger() {
-    const websocketAddress = await this.metro.getDebuggerURL(WAIT_FOR_DEBUGGER_TIMEOUT);
+  private async startDebugger() {
+    const websocketAddress = await this.metro.getDebuggerURL();
     if (websocketAddress) {
-      const debugStarted = await debug.startDebugging(
-        undefined,
-        {
-          type: "com.swmansion.react-native-ide",
-          name: "React Native IDE Debugger",
-          request: "attach",
-          websocketAddress,
-        },
-        {
-          suppressDebugStatusbar: true,
-          suppressDebugView: true,
-          suppressDebugToolbar: true,
-          suppressSaveBeforeStart: true,
-        }
-      );
-      if (debugStarted) {
-        this.debugSession = debug.activeDebugSession;
-        Logger.debug("Conencted to debbuger, moving on...");
+      this.debugSession = new DebugSession(websocketAddress, this.debugEventDelegate);
+      const started = await this.debugSession.start();
+      if (started) {
+        // TODO(jgonet): Right now, we ignore start failure
+        Logger.debug("Connected to debugger, moving on...");
       }
     } else {
       Logger.error("Couldn't connect to debugger");
@@ -118,11 +104,11 @@ export class DeviceSession implements Disposable {
   }
 
   public resumeDebugger() {
-    this.debugSession?.customRequest("continue");
+    this.debugSession?.resumeDebugger();
   }
 
   public stepOverDebugger() {
-    this.debugSession?.customRequest("next");
+    this.debugSession?.stepOverDebugger();
   }
 
   public resetAppPermissions(permissionType: AppPermissionType) {
