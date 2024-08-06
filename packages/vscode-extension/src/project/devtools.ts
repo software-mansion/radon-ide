@@ -25,6 +25,18 @@ export class Devtools implements Disposable {
     await this.startPromise;
   }
 
+  public async appReady() {
+    return new Promise<void>((resolve) => {
+      const listener = (event: string) => {
+        if (event === "RNIDE_appReady") {
+          this.removeListener(listener);
+          resolve();
+        }
+      };
+      this.addListener(listener);
+    });
+  }
+
   public async start() {
     if (this.startPromise) {
       throw new Error("Devtools already started");

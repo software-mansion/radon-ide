@@ -3,7 +3,7 @@ import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { Logger } from "../Logger";
-import { BuildManager, didFingerprintChange } from "../builders/BuildManager";
+import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
 import {
@@ -38,7 +38,6 @@ export class Project
 
   private metro: Metro;
   private devtools = new Devtools();
-  private buildManager: BuildManager;
   private eventEmitter = new EventEmitter();
 
   private detectedFingerprintChange: boolean;
@@ -72,7 +71,6 @@ export class Project
   ) {
     Project.currentProject = this;
     this.metro = new Metro(this.devtools, this);
-    this.buildManager = new BuildManager(dependencyManager);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -95,10 +93,6 @@ export class Project
 
   onStateChange(state: StartupMessage): void {
     this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
-  }
-
-  onPreviewReady(url: string): void {
-    this.updateProjectStateForDevice(this.projectState.selectedDevice!, { previewURL: url });
   }
   //#endregion
 
@@ -245,17 +239,13 @@ export class Project
 
     if (forceCleanBuild) {
       await this.start(true, true);
-      await this.selectDevice(deviceInfo, true);
-      return;
+      return await this.selectDevice(deviceInfo, true);
     } else if (this.detectedFingerprintChange) {
-      await this.selectDevice(deviceInfo, false);
-      return;
+      return await this.selectDevice(deviceInfo, false);
     }
 
-    // if we have an active devtools session, we try hot reloading
-    if (onlyReloadJSWhenPossible && this.devtools.hasConnectedClient) {
-      await this.reloadMetro();
-      return;
+    if (onlyReloadJSWhenPossible) {
+      return await this.reloadMetro();
     }
 
     // otherwise we try to restart the device session
@@ -368,10 +358,7 @@ export class Project
   }
 
   public async focusBuildOutput() {
-    if (!this.projectState.selectedDevice) {
-      return;
-    }
-    this.buildManager.focusBuildOutput();
+    this.deviceSession?.focusBuildOutput();
   }
 
   public async focusExtensionLogsOutput() {
@@ -475,6 +462,7 @@ export class Project
     if (!device) {
       return;
     }
+    Logger.debug("Selected device is ready");
 
     this.deviceSession?.dispose();
     this.deviceSession = undefined;
@@ -487,30 +475,22 @@ export class Project
     });
 
     let newDeviceSession;
-
     try {
-      Logger.debug("Selected device is ready");
-      this.updateProjectStateForDevice(deviceInfo, {
-        startupMessage: StartupMessage.StartingPackager,
-      });
-      // wait for metro/devtools to start before we continue
-      await Promise.all([this.metro.ready(), this.devtools.ready()]);
-
-      Logger.debug("Metro & devtools ready");
       newDeviceSession = new DeviceSession(
         device,
         this.devtools,
         this.metro,
-        this.buildManager,
+        this.dependencyManager,
         this,
         this
       );
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(this.deviceSettings, { cleanBuild: forceCleanBuild });
-      Logger.debug("Device session started");
-
-      this.updateProjectStateForDevice(deviceInfo, {
+      const previewURL = await newDeviceSession.start(this.deviceSettings, {
+        cleanBuild: forceCleanBuild,
+      });
+      this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
+        previewURL,
         status: "running",
       });
     } catch (e) {

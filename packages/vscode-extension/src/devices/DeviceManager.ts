@@ -24,7 +24,6 @@ import {
   AndroidSystemImageInfo,
 } from "../common/DeviceManager";
 import { EventEmitter } from "stream";
-import { Disposable } from "vscode";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
@@ -32,10 +31,8 @@ import { Platform } from "../utilities/platform";
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
 export class DeviceAlreadyUsedError extends Error {}
-export class DeviceManager implements Disposable, DeviceManagerInterface {
+export class DeviceManager implements DeviceManagerInterface {
   private eventEmitter = new EventEmitter();
-
-  public dispose() {}
 
   public async addListener<K extends keyof DeviceManagerEventMap>(
     eventType: K,

@@ -10,6 +10,7 @@ import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
+import { DependencyManager } from "../dependency/DependencyManager";
 
 type PerformAction =
   | "rebuild"
@@ -32,7 +33,6 @@ export type EventDelegate = {
   onStateChange(state: StartupMessage): void;
   onBuildProgress(stageProgress: number): void;
   onBuildSuccess(): void;
-  onPreviewReady(url: string): void;
 };
 
 export class DeviceSession implements Disposable {
@@ -40,6 +40,7 @@ export class DeviceSession implements Disposable {
   private maybeBuildResult: BuildResult | undefined;
   private debugSession: DebugSession | undefined;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
+  private buildManager: BuildManager;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -52,10 +53,11 @@ export class DeviceSession implements Disposable {
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
-    private readonly buildManager: BuildManager,
+    readonly dependencyManager: DependencyManager,
     private readonly debugEventDelegate: DebugSessionDelegate,
     private readonly eventDelegate: EventDelegate
   ) {
+    this.buildManager = new BuildManager(dependencyManager);
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "RNIDE_appReady":
@@ -101,17 +103,7 @@ export class DeviceSession implements Disposable {
 
   private async launchApp() {
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
-    const waitForAppReady = shouldWaitForAppLaunch
-      ? new Promise<void>((resolve) => {
-          const listener = (event: string) => {
-            if (event === "RNIDE_appReady") {
-              this.devtools.removeListener(listener);
-              resolve();
-            }
-          };
-          this.devtools.addListener(listener);
-        })
-      : Promise.resolve();
+    const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.eventDelegate.onStateChange(StartupMessage.Launching);
     await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
@@ -119,10 +111,10 @@ export class DeviceSession implements Disposable {
     Logger.debug("Will wait for app ready and for preview");
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
     const [previewUrl] = await Promise.all([this.device.startPreview(), waitForAppReady]);
-    this.eventDelegate.onPreviewReady(previewUrl);
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
+    return previewUrl;
   }
 
   private async bootDevice(deviceSettings: DeviceSettings) {
@@ -148,12 +140,22 @@ export class DeviceSession implements Disposable {
     return this.device.installApp(this.buildResult, reinstall);
   }
 
+  private async waitForMetroReady() {
+    this.eventDelegate.onStateChange(StartupMessage.StartingPackager);
+    // wait for metro/devtools to start before we continue
+    await Promise.all([this.metro.ready(), this.devtools.ready()]);
+    Logger.debug("Metro & devtools ready");
+  }
+
   public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+    await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
     await this.buildApp({ clean: cleanBuild });
     await this.installApp({ reinstall: false });
-    await this.launchApp();
+    const previewUrl = await this.launchApp();
+    Logger.debug("Device session started");
+    return previewUrl;
   }
 
   private async startDebugger() {
@@ -252,5 +254,9 @@ export class DeviceSession implements Disposable {
 
   public async changeDeviceSettings(settings: DeviceSettings) {
     await this.device.changeSettings(settings);
+  }
+
+  public focusBuildOutput() {
+    this.buildManager.focusBuildOutput();
   }
 }

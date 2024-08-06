@@ -211,16 +211,7 @@ export class Metro implements Disposable {
   }
 
   public async reload() {
-    const appReady = new Promise<void>((resolve) => {
-      const waitForAppReady = (event: string) => {
-        if (event === "RNIDE_appReady") {
-          this.devtools.removeListener(waitForAppReady);
-          resolve();
-        }
-      };
-      this.devtools.addListener(waitForAppReady);
-    });
-
+    const appReady = this.devtools.appReady();
     await fetch(`http://localhost:${this._port}/reload`);
     await appReady;
   }
