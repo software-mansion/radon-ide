@@ -100,11 +100,8 @@ export interface ProjectInterface {
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
-  getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-
-  reportIssue(): Promise<void>;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
@@ -113,12 +110,17 @@ export interface ProjectInterface {
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
-  openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
-  movePanelToNewWindow(): void;
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
+  dispatchMultiTouch(
+    xRatio: number,
+    yRatio: number,
+    xAnchorRatio: number,
+    yAnchorRatio: number,
+    type: "Up" | "Move" | "Down"
+  ): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
   dispatchPaste(text: string): Promise<void>;
   inspectElementAt(

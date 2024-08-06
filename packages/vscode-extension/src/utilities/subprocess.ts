@@ -1,6 +1,7 @@
 import { Logger } from "../Logger";
 import execa, { ExecaChildProcess } from "execa";
 import readline from "readline";
+import { Platform } from "./platform";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
@@ -13,6 +14,7 @@ function overridePWD<T extends execa.Options>(options?: T) {
   // being launched from command line using 'code' command), the PWD is set to "/".
   // This method overrides PWD to the current cwd option when it's set for the subprocess call
   // therefore removing the risk of the subprocess using the wrong working directory.
+
   if (options?.cwd) {
     return { ...options, env: { ...options.env, PWD: options.cwd } };
   }
@@ -52,7 +54,11 @@ export function exec(
   args?: string[],
   options?: execa.Options & { allowNonZeroExit?: boolean }
 ) {
-  const subprocess = execa(name, args, overridePWD(options));
+  const subprocess = execa(
+    name,
+    args,
+    Platform.select({ macos: overridePWD(options), windows: options })
+  );
   const allowNonZeroExit = options?.allowNonZeroExit;
   async function printErrorsOnExit() {
     try {
@@ -77,15 +83,22 @@ export function exec(
 }
 
 export function execSync(name: string, args?: string[], options?: execa.SyncOptions) {
-  const result = execa.sync(name, args, overridePWD(options));
+  const result = execa.sync(
+    name,
+    args,
+    Platform.select({ macos: overridePWD(options), windows: options })
+  );
   if (result.stderr) {
     Logger.debug("Subprocess", name, args?.join(" "), "produced error output:", result.stderr);
   }
   return result;
 }
 
-export function command(commandWithArgs: string, options?: execa.Options) {
-  const subprocess = execa.command(commandWithArgs, overridePWD(options));
+export function command(commandWithArgs: string, options?: execa.Options & { quiet?: boolean }) {
+  const subprocess = execa.command(
+    commandWithArgs,
+    Platform.select({ macos: overridePWD(options), windows: options })
+  );
   async function printErrorsOnExit() {
     try {
       const result = await subprocess;
@@ -96,6 +109,10 @@ export function command(commandWithArgs: string, options?: execa.Options) {
       Logger.error("Command", commandWithArgs, "execution resulted in an error:", e);
     }
   }
-  printErrorsOnExit(); // don't want to await here not to block the outer method
+
+  if (!options?.quiet) {
+    printErrorsOnExit(); // don't want to await here not to block the outer method
+  }
+
   return subprocess;
 }

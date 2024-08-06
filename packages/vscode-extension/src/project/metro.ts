@@ -72,11 +72,15 @@ export class Metro implements Disposable {
     await this.startPromise;
   }
 
-  public async start(resetCache: boolean, progressListener: (newStageProgress: number) => void) {
+  public async start(
+    resetCache: boolean,
+    progressListener: (newStageProgress: number) => void,
+    dependencies: Promise<any>[]
+  ) {
     if (this.startPromise) {
       throw new Error("metro already started");
     }
-    this.startPromise = this.startInternal(resetCache, progressListener);
+    this.startPromise = this.startInternal(resetCache, progressListener, dependencies);
     return this.startPromise;
   }
 
@@ -126,11 +130,12 @@ export class Metro implements Disposable {
 
   public async startInternal(
     resetCache: boolean,
-    progressListener: (newStageProgress: number) => void
+    progressListener: (newStageProgress: number) => void,
+    dependencies: Promise<any>[]
   ) {
     const appRootFolder = getAppRootFolder();
     const launchConfiguration = getLaunchConfiguration();
-    await this.devtools.ready();
+    await Promise.all([this.devtools.ready()].concat(dependencies));
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
     let metroConfigPath: string | undefined;
@@ -206,13 +211,17 @@ export class Metro implements Disposable {
   }
 
   public async reload() {
+    const appReady = this.devtools.appReady();
     await fetch(`http://localhost:${this._port}/reload`);
+    await appReady;
   }
 
-  public async getDebuggerURL(timeoutMs: number) {
+  public async getDebuggerURL() {
+    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
+
     const startTime = Date.now();
     let websocketAddress: string | undefined;
-    while (!websocketAddress && Date.now() - startTime < timeoutMs) {
+    while (!websocketAddress && Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
       websocketAddress = await this.fetchDebuggerURL();
       await new Promise((res) => setTimeout(res, 1000));
     }

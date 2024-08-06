@@ -1,21 +1,11 @@
-import {
-  Disposable,
-  debug,
-  commands,
-  workspace,
-  FileSystemWatcher,
-  window,
-  env,
-  Uri,
-} from "vscode";
+import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
-import { DeviceSession } from "./deviceSession";
+import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { Logger } from "../Logger";
-import { BuildManager, didFingerprintChange } from "../builders/BuildManager";
+import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
-import { throttle } from "../common/utils";
 import {
   AppPermissionType,
   DeviceSettings,
@@ -28,33 +18,31 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { EventEmitter } from "stream";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { extensionContext } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import path from "path";
-import { homedir } from "node:os";
-import fs from "fs";
-import JSON5 from "json5";
+import { DependencyManager } from "../dependency/DependencyManager";
+import { throttle } from "../utilities/throttle";
+import { DebugSessionDelegate } from "../debugging/DebugSession";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 
-export class Project implements Disposable, MetroDelegate, ProjectInterface {
+export class Project
+  implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
+{
   public static currentProject: Project | undefined;
 
   private metro: Metro;
   private devtools = new Devtools();
-  private debugSessionListener: Disposable | undefined;
-  private buildManager = new BuildManager();
   private eventEmitter = new EventEmitter();
 
   private detectedFingerprintChange: boolean;
-  private workspaceWatcher!: FileSystemWatcher;
-  private fileSaveWatcherDisposable!: Disposable;
+
+  private fileWatcher: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -77,7 +65,10 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     },
   };
 
-  constructor(private readonly deviceManager: DeviceManager) {
+  constructor(
+    private readonly deviceManager: DeviceManager,
+    private readonly dependencyManager: DependencyManager
+  ) {
     Project.currentProject = this;
     this.metro = new Metro(this.devtools, this);
     this.start(false, false);
@@ -85,33 +76,68 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.detectedFingerprintChange = false;
 
-    this.trackNativeChanges();
-  }
-  async reportIssue() {
-    env.openExternal(
-      Uri.parse("https://github.com/software-mansion/react-native-ide/issues/new/choose")
-    );
-  }
-
-  trackNativeChanges() {
-    // VS code glob patterns don't support negation so we can't exclude
-    // native build directories like android/build, android/.gradle,
-    // android/app/build, or ios/build.
-    // VS code by default exclude .git and node_modules directories from
-    // watching, configured by `files.watcherExclude` setting.
-    //
-    // We may revisit this if better performance is needed and create
-    // recursive watches ourselves by iterating through workspace directories
-    // to workaround this issue.
-    this.workspaceWatcher = workspace.createFileSystemWatcher("**/*");
-
-    this.workspaceWatcher.onDidChange(() => this.checkIfNativeChanged());
-    this.workspaceWatcher.onDidCreate(() => this.checkIfNativeChanged());
-    this.workspaceWatcher.onDidDelete(() => this.checkIfNativeChanged());
-    this.fileSaveWatcherDisposable = workspace.onDidSaveTextDocument(() => {
+    this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
     });
   }
+
+  //#region Build progress
+  onBuildProgress(stageProgress: number): void {
+    this.reportStageProgress(stageProgress, StartupMessage.Building);
+  }
+
+  onBuildSuccess(): void {
+    // reset fingerprint change flag when build finishes successfully
+    this.detectedFingerprintChange = false;
+  }
+
+  onStateChange(state: StartupMessage): void {
+    this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
+  }
+  //#endregion
+
+  //#region App events
+  onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void {
+    switch (event) {
+      case "navigationChanged":
+        this.eventEmitter.emit("navigationChanged", payload);
+        break;
+      case "fastRefreshStarted":
+        this.updateProjectState({ status: "refreshing" });
+        break;
+      case "fastRefreshComplete":
+        const ignoredEvents = ["starting", "incrementalBundleError", "runtimeError"];
+        if (ignoredEvents.includes(this.projectState.status)) {
+          return;
+        }
+        this.updateProjectState({ status: "running" });
+        break;
+    }
+  }
+  //#endregion
+
+  //#region Debugger events
+  onConsoleLog(event: DebugSessionCustomEvent) {
+    this.eventEmitter.emit("log", event.body);
+  }
+
+  onDebuggerPaused(event: DebugSessionCustomEvent) {
+    if (event.body?.reason === "exception") {
+      // if we know that incremental bundle error happened, we don't want to change the status
+      if (this.projectState.status === "incrementalBundleError") {
+        return;
+      }
+      this.updateProjectState({ status: "runtimeError" });
+    } else {
+      this.updateProjectState({ status: "debuggerPaused" });
+    }
+    commands.executeCommand("workbench.view.debug");
+  }
+
+  onDebuggerResumed() {
+    this.updateProjectState({ status: "running" });
+  }
+  //#endregion
 
   async dispatchPaste(text: string) {
     this.deviceSession?.sendPaste(text);
@@ -140,10 +166,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
         LAST_SELECTED_DEVICE_KEY
       );
-      let device = devices.find((item) => item.id === lastDeviceId);
-      if (!device && devices.length > 0) {
-        device = devices[0];
-      }
+      const device = devices.find(({ id }) => id === lastDeviceId) ?? devices.at(0);
+
       if (device) {
         this.selectDevice(device);
         return true;
@@ -186,23 +210,21 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
-    this.debugSessionListener?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
-    this.workspaceWatcher.dispose();
-    this.fileSaveWatcherDisposable.dispose();
+    this.fileWatcher.dispose();
   }
 
-  private reloadingMetro = false;
-
-  public reloadMetro() {
-    this.reloadingMetro = true;
-    this.metro?.reload();
+  private async reloadMetro() {
+    if (await this.deviceSession?.perform("hotReload")) {
+      this.updateProjectState({ status: "running" });
+    }
   }
 
   public async goHome() {
-    this.reloadMetro();
+    await this.reloadMetro();
   }
 
+  //#region Restart
   public async restart(forceCleanBuild: boolean, onlyReloadJSWhenPossible: boolean = true) {
     // we save device info and device session at the start such that we can
     // check if they weren't updated in the meantime while we await for restart
@@ -217,26 +239,20 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
     if (forceCleanBuild) {
       await this.start(true, true);
-      await this.selectDevice(deviceInfo, true);
-      return;
+      return await this.selectDevice(deviceInfo, true);
     } else if (this.detectedFingerprintChange) {
-      await this.selectDevice(deviceInfo, false);
-      return;
+      return await this.selectDevice(deviceInfo, false);
     }
 
-    // if we have an active devtools session, we try hot reloading
-    if (onlyReloadJSWhenPossible && this.devtools.hasConnectedClient) {
-      this.reloadMetro();
-      return;
+    if (onlyReloadJSWhenPossible) {
+      return await this.reloadMetro();
     }
 
     // otherwise we try to restart the device session
     try {
       // we first check if the device session hasn't changed in the meantime
       if (deviceSession === this.deviceSession) {
-        await this.deviceSession?.restart((startupMessage) =>
-          this.updateProjectStateForDevice(deviceInfo, { startupMessage })
-        );
+        await this.deviceSession?.perform("restartProcess");
         this.updateProjectStateForDevice(deviceInfo, {
           status: "running",
         });
@@ -250,6 +266,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       }
     }
   }
+  //#endregion
 
   private async start(restart: boolean, forceCleanBuild: boolean) {
     if (restart) {
@@ -260,63 +277,20 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       oldDevtools.dispose();
       oldMetro.dispose();
     }
-    this.devtools.addListener((event, payload) => {
-      switch (event) {
-        case "RNIDE_appReady":
-          Logger.debug("App ready");
-          if (this.reloadingMetro) {
-            this.reloadingMetro = false;
-            this.updateProjectState({ status: "running" });
-          }
-          break;
-        case "RNIDE_navigationChanged":
-          this.eventEmitter.emit("navigationChanged", {
-            displayName: payload.displayName,
-            id: payload.id,
-          });
-          break;
-        case "RNIDE_fastRefreshStarted":
-          this.updateProjectState({ status: "refreshing" });
-          break;
-        case "RNIDE_fastRefreshComplete":
-          if (this.projectState.status === "starting") return;
-          if (this.projectState.status === "incrementalBundleError") return;
-          if (this.projectState.status === "runtimeError") return;
-          this.updateProjectState({ status: "running" });
-          break;
-      }
-    });
+
+    Logger.debug("Installing Node Modules");
+    const installNodeModules = this.installNodeModules();
+
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
-
-    this.debugSessionListener?.dispose();
-    this.debugSessionListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
-      switch (event.event) {
-        case "RNIDE_consoleLog":
-          this.eventEmitter.emit("log", event.body);
-          break;
-        case "RNIDE_paused":
-          if (event.body?.reason === "exception") {
-            // if we know that incrmental bundle error happened, we don't want to change the status
-            if (this.projectState.status === "incrementalBundleError") return;
-            this.updateProjectState({ status: "runtimeError" });
-          } else {
-            this.updateProjectState({ status: "debuggerPaused" });
-          }
-          commands.executeCommand("workbench.view.debug");
-          break;
-        case "RNIDE_continued":
-          this.updateProjectState({ status: "running" });
-          break;
-      }
-    });
 
     Logger.debug(`Launching metro`);
     const waitForMetro = this.metro.start(
       forceCleanBuild,
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
-      }, 100)
+      }, 100),
+      [installNodeModules]
     );
   }
 
@@ -331,12 +305,18 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.deviceSession?.sendTouch(xRatio, yRatio, type);
   }
 
-  public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
-    this.deviceSession?.sendKey(keyCode, direction);
+  public async dispatchMultiTouch(
+    xRatio: number,
+    yRatio: number,
+    xAnchorRatio: number,
+    yAnchorRatio: number,
+    type: "Up" | "Move" | "Down"
+  ) {
+    this.deviceSession?.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
   }
 
-  public async openFileAt(filePath: string, line0Based: number, column0Based: number) {
-    openFileAtPosition(filePath, line0Based, column0Based);
+  public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
+    this.deviceSession?.sendKey(keyCode, direction);
   }
 
   public async inspectElementAt(
@@ -378,10 +358,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   }
 
   public async focusBuildOutput() {
-    if (!this.projectState.selectedDevice) {
-      return;
-    }
-    this.buildManager.focusBuildOutput();
+    this.deviceSession?.focusBuildOutput();
   }
 
   public async focusExtensionLogsOutput() {
@@ -400,62 +377,12 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     await this.deviceSession?.openDevMenu();
   }
 
-  public movePanelToNewWindow() {
-    commands.executeCommand("workbench.action.moveEditorToNewWindow");
-  }
-
   public startPreview(appKey: string) {
     this.deviceSession?.startPreview(appKey);
   }
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {
     this.deviceSession?.onActiveFileChange(filename, followEnabled);
-  }
-
-  public async getCommandsCurrentKeyBinding(commandName: string) {
-    const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
-    const extensionPackageJson = require(packageJsonPath);
-    let keybindingsJsonPath;
-    let keybindingsJson;
-    try {
-      keybindingsJsonPath = path.join(
-        homedir(),
-        "Library/Application Support/Code/User/keybindings.json"
-      );
-      // can not use require because the file may contain comments
-      keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());
-    } catch (e) {
-      Logger.error("error while parsing keybindings.json", e);
-      return undefined;
-    }
-
-    const isRNIDECommand =
-      extensionPackageJson.contributes.commands &&
-      extensionPackageJson.contributes.commands.find((command: any) => {
-        return command.command === commandName;
-      });
-    if (!isRNIDECommand) {
-      Logger.warn("Trying to access a keybinding for a command that is not part of an extension.");
-      return undefined;
-    }
-
-    const userKeybinding = keybindingsJson.find((command: any) => {
-      return command.command === commandName;
-    });
-    if (userKeybinding) {
-      return userKeybinding.key;
-    }
-
-    const defaultKeybinding = extensionPackageJson.contributes.keybindings.find(
-      (keybinding: any) => {
-        return keybinding.command === commandName;
-      }
-    );
-    if (defaultKeybinding) {
-      return defaultKeybinding.mac;
-    }
-
-    return undefined;
   }
 
   public async getDeviceSettings() {
@@ -497,7 +424,17 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
 
-  public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
+  private async installNodeModules(): Promise<void> {
+    const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
+
+    if (!nodeModulesStatus.installed) {
+      await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
+    }
+    Logger.debug("Node Modules installed");
+  }
+
+  //#region Select device
+  private async selectDeviceOnly(deviceInfo: DeviceInfo) {
     let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
     try {
       device = await this.deviceManager.acquireDevice(deviceInfo);
@@ -512,17 +449,23 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       }
     }
 
+    if (device) {
+      Logger.log("Device selected", deviceInfo.name);
+      extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
+      return device;
+    }
+    return undefined;
+  }
+
+  public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
+    const device = await this.selectDeviceOnly(deviceInfo);
     if (!device) {
       return;
     }
+    Logger.debug("Selected device is ready");
 
-    Logger.log("Device selected", deviceInfo.name);
-    extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
-
-    this.reloadingMetro = false;
-    const prevSession = this.deviceSession;
+    this.deviceSession?.dispose();
     this.deviceSession = undefined;
-    prevSession?.dispose();
 
     this.updateProjectState({
       selectedDevice: deviceInfo,
@@ -532,43 +475,22 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     });
 
     let newDeviceSession;
-
     try {
-      Logger.debug("Selected device is ready");
-      this.updateProjectStateForDevice(deviceInfo, {
-        startupMessage: StartupMessage.StartingPackager,
-      });
-      // wait for metro/devtools to start before we continue
-      await Promise.all([this.metro.ready(), this.devtools.ready()]);
-      const build = this.buildManager.startBuild(
-        deviceInfo,
-        forceCleanBuild,
-        throttle((stageProgress: number) => {
-          this.reportStageProgress(stageProgress, StartupMessage.Building);
-        }, 100)
+      newDeviceSession = new DeviceSession(
+        device,
+        this.devtools,
+        this.metro,
+        this.dependencyManager,
+        this,
+        this
       );
-
-      // reset fingerpring change flag when build finishes successfully
-      if (this.detectedFingerprintChange) {
-        build.build.then(() => {
-          this.detectedFingerprintChange = false;
-        });
-      }
-
-      Logger.debug("Metro & devtools ready");
-      newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build);
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(
-        this.deviceSettings,
-        (previewURL) => {
-          this.updateProjectStateForDevice(deviceInfo, { previewURL });
-        },
-        (startupMessage) => this.updateProjectStateForDevice(deviceInfo, { startupMessage })
-      );
-      Logger.debug("Device session started");
-
-      this.updateProjectStateForDevice(deviceInfo, {
+      const previewURL = await newDeviceSession.start(this.deviceSettings, {
+        cleanBuild: forceCleanBuild,
+      });
+      this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
+        previewURL,
         status: "running",
       });
     } catch (e) {
@@ -581,10 +503,14 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       }
     }
   }
+  //#endregion
 
   // used in callbacks, needs to be an arrow function
-  private removeDeviceListener = async (_devices: DeviceInfo) => {
-    await this.trySelectingInitialDevice();
+  private removeDeviceListener = async (device: DeviceInfo) => {
+    if (this.projectState.selectedDevice?.id === device.id) {
+      this.updateProjectState({ status: "starting" });
+      await this.trySelectingInitialDevice();
+    }
   };
 
   private checkIfNativeChanged = throttle(async () => {
@@ -595,6 +521,31 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
       }
     }
   }, 300);
+}
+
+function watchProjectFiles(onChange: () => void) {
+  // VS code glob patterns don't support negation so we can't exclude
+  // native build directories like android/build, android/.gradle,
+  // android/app/build, or ios/build.
+  // VS code by default exclude .git and node_modules directories from
+  // watching, configured by `files.watcherExclude` setting.
+  //
+  // We may revisit this if better performance is needed and create
+  // recursive watches ourselves by iterating through workspace directories
+  // to workaround this issue.
+  const savedFileWatcher = workspace.onDidSaveTextDocument(onChange);
+
+  const watcher = workspace.createFileSystemWatcher("**/*");
+  watcher.onDidChange(onChange);
+  watcher.onDidCreate(onChange);
+  watcher.onDidDelete(onChange);
+
+  return {
+    dispose: () => {
+      watcher.dispose();
+      savedFileWatcher.dispose();
+    },
+  };
 }
 
 export function isAppSourceFile(filePath: string) {
