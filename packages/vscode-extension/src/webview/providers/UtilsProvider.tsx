@@ -1,7 +1,21 @@
 import { PropsWithChildren, useContext, createContext } from "react";
 import { makeProxy } from "../utilities/rpc";
 import { Utils } from "../../utilities/utils";
-import { UtilsInterface } from "../../common/Utils";
+import { UtilsInterface } from "../../common/utils";
+
+declare global {
+  interface Window {
+    // set in generateWebviewContent()
+    RNIDE_hostOS: "macos" | "windows";
+  }
+}
+
+export const Platform = {
+  OS: window.RNIDE_hostOS,
+  select: <R, T>(obj: { macos: R; windows: T }) => {
+    return obj[Platform.OS];
+  },
+};
 
 const utils = makeProxy<Utils>("Utils");
 

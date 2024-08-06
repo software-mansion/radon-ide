@@ -3,6 +3,7 @@ import path from "path";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
+import { Platform } from "../utilities/platform";
 
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
@@ -18,7 +19,7 @@ export class Preview implements Disposable {
     const simControllerBinary = path.join(
       extensionContext.extensionPath,
       "dist",
-      "sim-server-executable"
+      Platform.select({ macos: "sim-server-executable", windows: "sim-server-executable.exe" })
     );
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
@@ -51,6 +52,18 @@ export class Preview implements Disposable {
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
     this.subprocess?.stdin?.write(`touch${type} ${xRatio} ${yRatio}\n`);
+  }
+
+  public sendMultiTouch(
+    xRatio: number,
+    yRatio: number,
+    xAnchorRatio: number,
+    yAnchorRatio: number,
+    type: "Up" | "Move" | "Down"
+  ) {
+    // this.subprocess?.stdin?.write(
+    //   `multitouch${type} ${xRatio} ${yRatio} ${xAnchorRatio} ${yAnchorRatio}\n` // TODO set proper multitouch simserver command
+    // );
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
