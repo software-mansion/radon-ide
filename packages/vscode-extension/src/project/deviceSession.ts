@@ -10,9 +10,19 @@ import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 
-type ProgressCallback = (startupMessage: string) => void;
 type PreviewReadyCallback = (previewURL: string) => void;
 
+export type AppEvent = {
+  appReady: undefined;
+  navigationChanged: { displayName: string; id: string };
+  fastRefreshStarted: undefined;
+  fastRefreshComplete: undefined;
+};
+
+export type EventDelegate = {
+  onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void;
+  onStateChange(state: StartupMessage): void;
+};
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
   private buildResult: BuildResult | undefined;
@@ -23,8 +33,26 @@ export class DeviceSession implements Disposable {
     private readonly devtools: Devtools,
     private readonly metro: Metro,
     private readonly disposableBuild: DisposableBuild<BuildResult>,
-    private readonly debugEventDelegate: DebugSessionDelegate
-  ) {}
+    private readonly debugEventDelegate: DebugSessionDelegate,
+    private readonly eventDelegate: EventDelegate
+  ) {
+    this.devtools.addListener((event, payload) => {
+      switch (event) {
+        case "RNIDE_appReady":
+          this.eventDelegate.onAppEvent("appReady", undefined);
+          break;
+        case "RNIDE_navigationChanged":
+          this.eventDelegate.onAppEvent("navigationChanged", payload);
+          break;
+        case "RNIDE_fastRefreshStarted":
+          this.eventDelegate.onAppEvent("fastRefreshStarted", undefined);
+          break;
+        case "RNIDE_fastRefreshComplete":
+          this.eventDelegate.onAppEvent("fastRefreshComplete", undefined);
+          break;
+      }
+    });
+  }
 
   public dispose() {
     this.debugSession?.dispose();
@@ -32,7 +60,7 @@ export class DeviceSession implements Disposable {
     this.device?.dispose();
   }
 
-  private async launch(progressCallback: ProgressCallback) {
+  private async launch() {
     if (!this.buildResult) {
       throw new Error("Expecting build to be ready");
     }
@@ -49,40 +77,35 @@ export class DeviceSession implements Disposable {
         })
       : Promise.resolve();
 
-    progressCallback(StartupMessage.Launching);
+    this.eventDelegate.onStateChange(StartupMessage.Launching);
     await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
 
     Logger.debug("Will wait for app ready and for preview");
-    progressCallback(StartupMessage.WaitingForAppToLoad);
+    this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
     await Promise.all([waitForAppReady, this.device.startPreview()]);
     Logger.debug("App and preview ready, moving on...");
-
-    progressCallback(StartupMessage.AttachingDebugger);
+    this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
   }
 
-  public async restart(progressCallback: ProgressCallback) {
-    return this.launch(progressCallback);
+  public async restart() {
+    return this.launch();
   }
 
-  public async start(
-    deviceSettings: DeviceSettings,
-    previewReadyCallback: PreviewReadyCallback,
-    progressCallback: ProgressCallback
-  ) {
-    progressCallback(StartupMessage.BootingDevice);
+  public async start(deviceSettings: DeviceSettings, previewReadyCallback: PreviewReadyCallback) {
+    this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
-    progressCallback(StartupMessage.Building);
+    this.eventDelegate.onStateChange(StartupMessage.Building);
     this.buildResult = await this.disposableBuild.build;
-    progressCallback(StartupMessage.Installing);
+    this.eventDelegate.onStateChange(StartupMessage.Installing);
     await this.device.installApp(this.buildResult, false);
 
     this.device.startPreview().then(() => {
       previewReadyCallback(this.device.previewURL!);
     });
 
-    await this.launch(progressCallback);
+    await this.launch();
   }
 
   private async startDebugger() {
