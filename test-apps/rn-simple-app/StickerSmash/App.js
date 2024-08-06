@@ -1,11 +1,10 @@
+import { AppRegistry } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { preview } from "react-native-ide";
-import Details from "./components/Details";
-// import { Task } from "./components/Task";
 import Task, { Default, Pinned, Archived } from "./components/Task.stories.jsx";
 
-export { default } from "./.storybook"; // Render Storybook
+// export { default } from "./.storybook"; // Render Storybook
 
 export function App() {
   return (
@@ -16,6 +15,8 @@ export function App() {
   );
 }
 
+AppRegistry.registerComponent("main", () => App);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -25,12 +26,4 @@ const styles = StyleSheet.create({
   },
 });
 
-const sampleTask = { id: 1, title: "Example Task", state: "TASK_INBOX" };
-
-//preview(<Details />, [1]);
-
-preview(
-  <Task task={sampleTask} onArchiveTask={() => {}} onPinTask={() => {}} />,
-  [Default, Pinned, Archived],
-  0
-);
+// preview(<Task />, [Default, Pinned, Archived]);

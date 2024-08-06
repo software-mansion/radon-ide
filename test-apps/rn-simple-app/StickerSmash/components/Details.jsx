@@ -1,8 +1,12 @@
+import { Button } from "react-native";
+import { preview } from "react-native-ide";
 
 export default function Details() {
     return (
       <div>
-        <Text>FRYTKI</Text>
+        <Button>FRYTKI</Button>
       </div>
     );
   }
+
+preview(<Details />);

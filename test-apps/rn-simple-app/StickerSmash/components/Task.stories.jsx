@@ -1,5 +1,4 @@
-// import { fn } from "@storybook/test";
-
+import { preview } from "react-native-ide";
 import Task from './Task';
 
 export const ActionsData = {
@@ -7,7 +6,8 @@ export const ActionsData = {
   // onPinTask: fn(),
 };
 
-export default {
+const meta = {
+  // export default {
   component: Task,
   title: 'Task',
   tags: ['autodocs'],
@@ -17,6 +17,8 @@ export default {
     ...ActionsData,
   },
 };
+
+export default meta;
 
 export const Default = {
     args: {
@@ -45,3 +47,6 @@ export const Default = {
       },
     },
   };
+
+
+preview(meta, [Default, Pinned, Archived]);
