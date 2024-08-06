@@ -199,6 +199,8 @@ export async function activate(context: ExtensionContext) {
     languages.registerCodeLensProvider(
       [
         { scheme: "file", language: "typescriptreact" },
+        { scheme: "file", language: "javascriptreact" },
+        { scheme: "file", language: "typescript" },
         { scheme: "file", language: "javascript" },
       ],
       new PreviewCodeLensProvider()
