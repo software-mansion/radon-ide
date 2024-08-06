@@ -12,8 +12,15 @@ import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 
 type PreviewReadyCallback = (previewURL: string) => void;
 
+type PerformAction =
+  | "rebuild"
+  | "reboot"
+  | "reinstall"
+  | "restartProcess"
+  | "reloadJs"
+  | "hotReload";
+
 export type AppEvent = {
-  appReady: undefined;
   navigationChanged: { displayName: string; id: string };
   fastRefreshStarted: undefined;
   fastRefreshComplete: undefined;
@@ -39,7 +46,7 @@ export class DeviceSession implements Disposable {
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "RNIDE_appReady":
-          this.eventDelegate.onAppEvent("appReady", undefined);
+          Logger.debug("App ready");
           break;
         case "RNIDE_navigationChanged":
           this.eventDelegate.onAppEvent("navigationChanged", payload);
@@ -58,6 +65,19 @@ export class DeviceSession implements Disposable {
     this.debugSession?.dispose();
     this.disposableBuild?.dispose();
     this.device?.dispose();
+  }
+
+  public async perform(type: PerformAction) {
+    switch (type) {
+      case "hotReload":
+        if (this.devtools.hasConnectedClient) {
+          await this.metro.reload();
+          return true;
+        }
+        return false;
+      default:
+        throw new Error("Not implemented " + type);
+    }
   }
 
   private async launch() {
