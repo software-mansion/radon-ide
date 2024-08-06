@@ -3,12 +3,13 @@ import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { BuildResult, DisposableBuild } from "../builders/BuildManager";
+import { BuildManager, BuildResult, DisposableBuild } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, StartupMessage } from "../common/Project";
 import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
+import { throttle } from "../utilities/throttle";
 
 type PerformAction =
   | "rebuild"
@@ -17,6 +18,8 @@ type PerformAction =
   | "restartProcess"
   | "reloadJs"
   | "hotReload";
+
+type StartOptions = { cleanBuild: boolean };
 
 export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
@@ -27,18 +30,29 @@ export type AppEvent = {
 export type EventDelegate = {
   onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void;
   onStateChange(state: StartupMessage): void;
+  onBuildProgress(stageProgress: number): void;
+  onBuildSuccess(): void;
   onPreviewReady(url: string): void;
 };
+
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
-  private buildResult: BuildResult | undefined;
+  private maybeBuildResult: BuildResult | undefined;
   private debugSession: DebugSession | undefined;
+  private disposableBuild: DisposableBuild<BuildResult> | undefined;
+
+  private get buildResult() {
+    if (!this.maybeBuildResult) {
+      throw new Error("Expecting build to be ready");
+    }
+    return this.maybeBuildResult;
+  }
 
   constructor(
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
-    private readonly disposableBuild: DisposableBuild<BuildResult>,
+    private readonly buildManager: BuildManager,
     private readonly debugEventDelegate: DebugSessionDelegate,
     private readonly eventDelegate: EventDelegate
   ) {
@@ -68,6 +82,10 @@ export class DeviceSession implements Disposable {
 
   public async perform(type: PerformAction) {
     switch (type) {
+      case "reinstall":
+        await this.installApp({ reinstall: true });
+        await this.launchApp();
+        return true;
       case "restartProcess":
         await this.launchApp();
         return true;
@@ -82,9 +100,6 @@ export class DeviceSession implements Disposable {
   }
 
   private async launchApp() {
-    if (!this.buildResult) {
-      throw new Error("Expecting build to be ready");
-    }
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch
       ? new Promise<void>((resolve) => {
@@ -110,19 +125,35 @@ export class DeviceSession implements Disposable {
     await this.startDebugger();
   }
 
-  public async restart() {
-    await this.perform("restartProcess");
-  }
-
-  public async start(deviceSettings: DeviceSettings) {
+  private async bootDevice(deviceSettings: DeviceSettings) {
     this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
+  }
+
+  private async buildApp({ clean }: { clean: boolean }) {
     this.eventDelegate.onStateChange(StartupMessage.Building);
-    this.buildResult = await this.disposableBuild.build;
+    this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
+      clean,
+      onSuccess: this.eventDelegate.onBuildSuccess,
+      progressListener: throttle((stageProgress: number) => {
+        this.eventDelegate.onBuildProgress(stageProgress);
+      }, 100),
+    });
+    this.maybeBuildResult = await this.disposableBuild.build;
+  }
+
+  private async installApp({ reinstall }: { reinstall: boolean }) {
     this.eventDelegate.onStateChange(StartupMessage.Installing);
-    await this.device.installApp(this.buildResult, false);
-    await this.perform("restartProcess");
+    return this.device.installApp(this.buildResult, reinstall);
+  }
+
+  public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+    // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
+    await this.bootDevice(deviceSettings);
+    await this.buildApp({ clean: cleanBuild });
+    await this.installApp({ reinstall: false });
+    await this.launchApp();
   }
 
   private async startDebugger() {
@@ -148,8 +179,8 @@ export class DeviceSession implements Disposable {
   }
 
   public resetAppPermissions(permissionType: AppPermissionType) {
-    if (this.buildResult) {
-      return this.device.resetAppPermissions(permissionType, this.buildResult);
+    if (this.maybeBuildResult) {
+      return this.device.resetAppPermissions(permissionType, this.maybeBuildResult);
     }
     return false;
   }

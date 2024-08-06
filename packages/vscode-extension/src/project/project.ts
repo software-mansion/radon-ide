@@ -84,6 +84,15 @@ export class Project
   }
 
   //#region Build progress
+  onBuildProgress(stageProgress: number): void {
+    this.reportStageProgress(stageProgress, StartupMessage.Building);
+  }
+
+  onBuildSuccess(): void {
+    // reset fingerprint change flag when build finishes successfully
+    this.detectedFingerprintChange = false;
+  }
+
   onStateChange(state: StartupMessage): void {
     this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
   }
@@ -211,7 +220,7 @@ export class Project
     this.fileWatcher.dispose();
   }
 
-  public async reloadMetro() {
+  private async reloadMetro() {
     if (await this.deviceSession?.perform("hotReload")) {
       this.updateProjectState({ status: "running" });
     }
@@ -253,7 +262,7 @@ export class Project
     try {
       // we first check if the device session hasn't changed in the meantime
       if (deviceSession === this.deviceSession) {
-        await this.deviceSession?.restart();
+        await this.deviceSession?.perform("restartProcess");
         this.updateProjectStateForDevice(deviceInfo, {
           status: "running",
         });
@@ -486,26 +495,19 @@ export class Project
       });
       // wait for metro/devtools to start before we continue
       await Promise.all([this.metro.ready(), this.devtools.ready()]);
-      const build = this.buildManager.startBuild(
-        deviceInfo,
-        forceCleanBuild,
-        throttle((stageProgress: number) => {
-          this.reportStageProgress(stageProgress, StartupMessage.Building);
-        }, 100)
-      );
-
-      // reset fingerprint change flag when build finishes successfully
-      if (this.detectedFingerprintChange) {
-        build.build.then(() => {
-          this.detectedFingerprintChange = false;
-        });
-      }
 
       Logger.debug("Metro & devtools ready");
-      newDeviceSession = new DeviceSession(device, this.devtools, this.metro, build, this, this);
+      newDeviceSession = new DeviceSession(
+        device,
+        this.devtools,
+        this.metro,
+        this.buildManager,
+        this,
+        this
+      );
       this.deviceSession = newDeviceSession;
 
-      await newDeviceSession.start(this.deviceSettings);
+      await newDeviceSession.start(this.deviceSettings, { cleanBuild: forceCleanBuild });
       Logger.debug("Device session started");
 
       this.updateProjectStateForDevice(deviceInfo, {
