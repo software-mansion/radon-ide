@@ -34,17 +34,18 @@ export type EventDelegate = {
   onBuildSuccess(): void;
   onPreviewReady(url: string): void;
 };
+
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
-  private _buildResult: BuildResult | undefined;
+  private maybeBuildResult: BuildResult | undefined;
   private debugSession: DebugSession | undefined;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
 
   private get buildResult() {
-    if (!this._buildResult) {
+    if (!this.maybeBuildResult) {
       throw new Error("Expecting build to be ready");
     }
-    return this._buildResult;
+    return this.maybeBuildResult;
   }
 
   constructor(
@@ -139,7 +140,7 @@ export class DeviceSession implements Disposable {
         this.eventDelegate.onBuildProgress(stageProgress);
       }, 100),
     });
-    this._buildResult = await this.disposableBuild.build;
+    this.maybeBuildResult = await this.disposableBuild.build;
   }
 
   private async installApp({ reinstall }: { reinstall: boolean }) {
@@ -178,8 +179,8 @@ export class DeviceSession implements Disposable {
   }
 
   public resetAppPermissions(permissionType: AppPermissionType) {
-    if (this._buildResult) {
-      return this.device.resetAppPermissions(permissionType, this._buildResult);
+    if (this.maybeBuildResult) {
+      return this.device.resetAppPermissions(permissionType, this.maybeBuildResult);
     }
     return false;
   }
