@@ -56,11 +56,11 @@ export const StartupStageWeight = [
 ];
 
 export type ReloadAction =
-  | "rebuild"
-  | "reboot"
-  | "reinstall"
-  | "restartProcess"
-  | "reloadJs"
+  | "rebuild" // clean build, boot device, install app
+  | "reboot" // reboots device, launch app
+  | "reinstall" // force reinstall app
+  | "restartProcess" // relaunch app
+  | "reloadJs" // refetch JS scripts from metro
   | "hotReload";
 
 export type InspectDataStackItem = {
