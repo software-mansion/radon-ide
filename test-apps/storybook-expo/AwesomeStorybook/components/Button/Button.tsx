@@ -1,14 +1,20 @@
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { preview } from "react-native-ide";
 
 interface MyButtonProps {
-  onPress: () => void;
+  // onPress: () => void;
   text: string;
 }
 
-export const MyButton = ({ onPress, text }: MyButtonProps) => {
+export const MyButton = ({ text }: MyButtonProps) => {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={() => {
+        console.log("click!");
+      }}
+    >
       <Text style={styles.text}>{text}</Text>
     </TouchableOpacity>
   );
@@ -24,3 +30,5 @@ const styles = StyleSheet.create({
   },
   text: { color: "white", fontSize: 16, fontWeight: "bold" },
 });
+
+preview(<MyButton text="123" />);

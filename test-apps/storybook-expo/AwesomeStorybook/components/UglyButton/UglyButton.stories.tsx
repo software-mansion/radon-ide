@@ -1,14 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
 import { View } from "react-native";
-import { MyButton } from "./Button";
+import { UglyButton } from "./UglyButton";
 
 const meta = {
-  title: "MyButton",
-  component: MyButton,
-  args: {
-    text: "Hello world",
-  },
+  title: "UglyButton",
+  component: UglyButton,
+  args: {},
   decorators: [
     (Story) => (
       <View style={{ padding: 16 }}>
@@ -16,15 +14,19 @@ const meta = {
       </View>
     ),
   ],
-} satisfies Meta<typeof MyButton>;
+} satisfies Meta<typeof UglyButton>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
 export const Basic: Story = {};
-export const DiffText: Story = {
-  args: {
-    text: "ABCD",
-  },
+export const MoreDecorators: Story = {
+  decorators: [
+    (Story) => (
+      <View style={{ backgroundColor: "red" }}>
+        <Story />
+      </View>
+    ),
+  ],
 };
