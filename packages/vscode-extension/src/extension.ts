@@ -32,6 +32,7 @@ import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
 import { Project } from "./project/project";
 import { findSingleFileInWorkspace } from "./utilities/common";
+import { Platform } from "./utilities/platform";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
@@ -65,8 +66,8 @@ export function deactivate(context: ExtensionContext): undefined {
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
-  if (process.platform !== "darwin") {
-    window.showErrorMessage("React Native IDE works only on macOS.", "Dismiss");
+  if (Platform.OS !== "macos" && Platform.OS !== "windows") {
+    window.showErrorMessage("React Native IDE works only on macOS and Windows.", "Dismiss");
     return;
   }
 
@@ -75,11 +76,13 @@ export async function activate(context: ExtensionContext) {
     enableDevModeLogging();
   }
 
-  try {
-    await fixBinaries(context);
-  } catch (error) {
-    Logger.error("Error when processing simulator-server binaries", error);
-    // we let the activation continue, as otherwise the diagnostics command would fail
+  if (Platform.OS === "macos") {
+    try {
+      await fixMacosBinary(context);
+    } catch (error) {
+      Logger.error("Error when processing simulator-server binaries", error);
+      // we let the activation continue, as otherwise the diagnostics command would fail
+    }
   }
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
@@ -340,7 +343,7 @@ async function diagnoseWorkspaceStructure() {
   }
 }
 
-async function fixBinaries(context: ExtensionContext) {
+async function fixMacosBinary(context: ExtensionContext) {
   // MacOS prevents binary files from being executed when downloaded from the internet.
   // It requires notarization ticket to be available in the package where the binary was distributed
   // with. Apparently Apple does not allow for individual binary files to be notarized and only .app/.pkg and .dmg

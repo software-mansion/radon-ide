@@ -11,7 +11,7 @@ import {
   listSimulators,
   removeIosSimulator,
 } from "../devices/IosSimulatorDevice";
-import { IOSDeviceInfo, Platform } from "../common/DeviceManager";
+import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 type IOSProjectInfo =
   | {
@@ -162,7 +162,7 @@ export async function buildIos(
   ) => Promise<void>
 ) {
   if (await isExpoGoProject()) {
-    const appPath = await downloadExpoGo(Platform.IOS, cancelToken);
+    const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);
     return { appPath, bundleID: EXPO_GO_BUNDLE_ID };
   }
 
