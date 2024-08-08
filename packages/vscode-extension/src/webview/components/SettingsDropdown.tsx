@@ -9,7 +9,6 @@ import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
-import * as Switch from "@radix-ui/react-switch";
 import "./shared/SwitchGroup.css";
 
 interface SettingsDropdownProps {
@@ -20,7 +19,7 @@ interface SettingsDropdownProps {
 }
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
-  const { panelLocation, showDeviceFrame, update } = useWorkspaceConfig();
+  const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
   const { movePanelToNewWindow } = useUtils();
 
@@ -60,22 +59,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <KeybindingInfo commandName="RNIDE.openDevMenu" />
             </div>
           </DropdownMenu.Item>
-          <div className="dropdown-menu-item">
-            <span className="codicon codicon-device-mobile" />
-            <label className="switch-group-center" htmlFor="device-frame" style={{ width: "100%" }}>
-              <span>Show Device Frame</span>
-              <Switch.Root
-                style={{ transform: "scale(0.75)", marginLeft: "auto" }}
-                className="switch-root"
-                defaultChecked={showDeviceFrame}
-                id="device-frame"
-                onCheckedChange={(value) => {
-                  update("showDeviceFrame", value);
-                }}>
-                <Switch.Thumb className="switch-thumb" />
-              </Switch.Root>
-            </label>
-          </div>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-layout" />
