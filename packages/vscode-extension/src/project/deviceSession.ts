@@ -172,7 +172,7 @@ export class DeviceSession implements Disposable {
     this.debugSession?.stepOverDebugger();
   }
 
-  public resetAppPermissions(permissionType: AppPermissionType) {
+  public async resetAppPermissions(permissionType: AppPermissionType) {
     if (this.maybeBuildResult) {
       return this.device.resetAppPermissions(permissionType, this.maybeBuildResult);
     }
