@@ -112,6 +112,27 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
   }
 );
 
+type DeviceFrameProps = {
+  device: DeviceProperties | undefined;
+  isFrameDisabled: boolean;
+};
+
+function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
+  if (!device) {
+    return null;
+  }
+
+  return (
+    <img
+      src={device.frameImage}
+      className="phone-frame"
+      style={{
+        opacity: isFrameDisabled ? 0 : 1,
+      }}
+    />
+  );
+}
+
 type TouchPointMarkerProps = {
   x: number;
   y: number;
@@ -166,8 +187,11 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
+  const workspace = useWorkspaceConfig();
   const { projectState, project, deviceSettings } = useProject();
   const { openFileAt } = useUtils();
+
+  const isFrameDisabled = workspace.showDeviceFrame === false;
 
   const projectStatus = projectState.status;
 
@@ -427,23 +451,6 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     device: device!,
   });
 
-  const workspace = useWorkspaceConfig();
-  const isFrameDisabled = workspace.showDeviceFrame === false;
-
-  function DeviceFrame() {
-    if (!device) {
-      return null;
-    }
-    return (
-      <img
-        src={device.frameImage}
-        className="phone-frame"
-        style={{
-          opacity: isFrameDisabled ? 0 : 1,
-        }}
-      />
-    );
-  }
   const mirroredTouchPosition = getMirroredTouchPosition(anchorPoint);
 
   return (
@@ -531,7 +538,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                   </div>
                 )}
               </div>
-              <DeviceFrame />
+              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
               {inspectStackData && (
                 <InspectDataMenu
                   inspectLocation={inspectStackData.requestLocation}
@@ -555,7 +562,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
               <div className="phone-sized phone-content-loading ">
                 <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
               </div>
-              <DeviceFrame />
+              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
             </div>
           </Resizable>
         )}
@@ -563,7 +570,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
           <Resizable {...resizableProps}>
             <div className="phone-content">
               <div className="phone-sized extension-error-screen" />
-              <DeviceFrame />
+              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
             </div>
           </Resizable>
         )}

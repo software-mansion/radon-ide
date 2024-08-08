@@ -1,9 +1,3 @@
-.switch-group-center {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
 .switch-root {
   width: 42px;
   height: 25px;
