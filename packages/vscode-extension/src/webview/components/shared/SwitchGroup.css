@@ -1,0 +1,26 @@
+.switch-root {
+  width: 42px;
+  height: 25px;
+  background-color: var(--swm-switch-root-disabled);
+  border-radius: 9999px;
+  position: relative;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+.switch-root[data-state="checked"] {
+  background-color: var(--navy-light-60);
+}
+
+.switch-thumb {
+  display: block;
+  width: 21px;
+  height: 21px;
+  background-color: white;
+  border-radius: 9999px;
+  transition: transform 100ms;
+  transform: translateX(2px);
+  will-change: transform;
+}
+.switch-thumb[data-state="checked"] {
+  transform: translateX(19px);
+}

@@ -2,11 +2,13 @@ import React, { useRef } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
+import * as Switch from "@radix-ui/react-switch";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
 import "./shared/Slider.css";
 import "./DeviceSettingsDropdown.css";
+import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
