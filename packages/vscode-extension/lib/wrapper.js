@@ -17,7 +17,7 @@ export function registerNavigationPlugin(name, plugin) {
 
 let navigationHistory = new Map();
 
-const NativeModules = {
+const RNInternals = {
   get getInspectorDataForViewAtPoint() {
     return require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
   },
@@ -43,7 +43,7 @@ const NativeModules = {
 };
 
 function getCurrentScene() {
-  return NativeModules.SceneTracker.getActiveScene().name;
+  return RNInternals.SceneTracker.getActiveScene().name;
 }
 
 function emptyNavigationHook() {
@@ -163,7 +163,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     devtoolsAgent,
     "RNIDE_inspect",
     (payload) => {
-      const getInspectorDataForViewAtPoint = NativeModules.getInspectorDataForViewAtPoint;
+      const getInspectorDataForViewAtPoint = RNInternals.getInspectorDataForViewAtPoint;
       const { width, height } = Dimensions.get("screen");
 
       getInspectorDataForViewAtPoint(
@@ -232,13 +232,13 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
   useAgentListener(devtoolsAgent, "RNIDE_iosDevMenu", (_payload) => {
     // this native module is present only on iOS and will crash if called
     // on Android
-    NativeModules.DevMenu.show();
+    RNInternals.DevMenu.show();
   });
 
   useEffect(() => {
     if (devtoolsAgent) {
       LogBox.uninstall();
-      const LoadingView = NativeModules.LoadingView;
+      const LoadingView = RNInternals.LoadingView;
       LoadingView.showMessage = (message) => {
         devtoolsAgent._bridge.send("RNIDE_fastRefreshStarted");
       };
