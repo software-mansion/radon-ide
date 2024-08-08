@@ -16,6 +16,7 @@ import { DeviceLocationView } from "../views/DeviceLocationView";
 import { JSX } from "react/jsx-runtime";
 import DiagnosticView from "../views/DiagnosticView";
 import { useModal } from "../providers/ModalProvider";
+import { useDropdownOffset } from "../hooks/useDropdownOffset";
 
 const contentSizes = [
   "xsmall",
@@ -47,6 +48,8 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const { project, deviceSettings, projectState } = useProject();
   const { openModal } = useModal();
+  const { calcOffset, sideOffset, alignOffset } = useDropdownOffset();
+
 
   const resetOptions =
     projectState.selectedDevice?.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
@@ -129,15 +132,16 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           </DropdownMenu.Item>
           <Label>Permissions</Label>
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+            <DropdownMenu.SubTrigger className="dropdown-menu-item" onMouseEnter={calcOffset}>
               <span className="codicon codicon-redo" />
               Reset Permissions
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent
                 className="dropdown-menu-content"
-                sideOffset={2}
-                alignOffset={-5}>
+                sideOffset={sideOffset}
+                collisionPadding={100}
+                alignOffset={alignOffset}>
                 {resetOptions.map((option) => (
                   <DropdownMenu.Item
                     className="dropdown-menu-item"

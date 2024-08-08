@@ -9,6 +9,7 @@ import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
+import { useDropdownOffset } from "../hooks/useDropdownOffset";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -21,6 +22,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
   const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
   const { movePanelToNewWindow } = useUtils();
+  const { calcOffset, sideOffset, alignOffset } = useDropdownOffset();
 
   return (
     <DropdownMenu.Root>
@@ -60,7 +62,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           </DropdownMenu.Item>
 
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+            <DropdownMenu.SubTrigger className="dropdown-menu-item" onMouseEnter={calcOffset}>
               <span className="codicon codicon-layout" />
               Change IDE panel location
               <span className="codicon codicon-chevron-right right-slot" />
@@ -68,8 +70,9 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent
                 className="dropdown-menu-content"
-                sideOffset={2}
-                alignOffset={-5}>
+                sideOffset={sideOffset}
+                collisionPadding={100}
+                alignOffset={alignOffset}>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
                   onSelect={() => update("panelLocation", "tab")}>
