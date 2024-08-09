@@ -1,10 +1,10 @@
 import { preview } from "react-native-ide";
 import Task from './Task';
 
-export const ActionsData = {
-  // onArchiveTask: fn(),
-  // onPinTask: fn(),
-};
+// export const ActionsData = {
+//   onArchiveTask,
+//   onPinTask,
+// };
 
 const meta = {
   // export default {
@@ -14,7 +14,7 @@ const meta = {
   //👇 Our exports that end in "Data" are not stories.
   excludeStories: /.*Data$/,
   args: {
-    ...ActionsData,
+    // ...ActionsData,
   },
 };
 

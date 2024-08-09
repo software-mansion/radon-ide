@@ -1,10 +1,9 @@
-import { AppRegistry } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { preview } from "react-native-ide";
 import Task, { Default, Pinned, Archived } from "./components/Task.stories.jsx";
 
-// export { default } from "./.storybook"; // Render Storybook
+export { default } from "./.storybook"; // Render Storybook
 
 export function App() {
   return (
@@ -14,8 +13,6 @@ export function App() {
     </View>
   );
 }
-
-AppRegistry.registerComponent("main", () => App);
 
 const styles = StyleSheet.create({
   container: {

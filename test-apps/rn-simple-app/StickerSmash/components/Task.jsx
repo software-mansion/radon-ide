@@ -1,4 +1,5 @@
-export default function Task({ task: { id, title, state }, onArchiveTask, onPinTask }) {
+// export default function Task({ task: { id, title, state }, onArchiveTask, onPinTask }) {
+  export default function Task({ task: { id, title, state } }) {
     return (
       <div className="list-item">
         <label htmlFor={`title-${id}`} aria-label={title}>
