@@ -9,6 +9,7 @@ import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
+import "./shared/SwitchGroup.css";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -58,7 +59,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <KeybindingInfo commandName="RNIDE.openDevMenu" />
             </div>
           </DropdownMenu.Item>
-
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-layout" />
