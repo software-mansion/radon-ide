@@ -120,18 +120,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-
-          <DropdownMenu.Separator className="dropdown-menu-separator" />
-
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => {
-              project.restart(true);
-            }}>
-            <span className="codicon codicon-trash" />
-            Clean rebuild
-          </DropdownMenu.Item>
-
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
