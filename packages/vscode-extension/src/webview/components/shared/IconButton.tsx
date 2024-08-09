@@ -5,7 +5,6 @@ import Tooltip from "./Tooltip";
 
 export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
-  onHover?: (hovering: boolean) => void;
   children: React.ReactNode;
   disabled?: boolean;
   active?: boolean;
@@ -23,7 +22,6 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
   const {
     children,
     onClick,
-    onHover,
     tooltip,
     disabled,
     active,
@@ -34,12 +32,6 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
   } = props;
   const button = (
     <button
-      onMouseOver={() => {
-        onHover?.(true);
-      }}
-      onMouseLeave={() => {
-        onHover?.(false);
-      }}
       onClick={onClick}
       disabled={disabled}
       className={classnames(

@@ -1,6 +1,7 @@
 .dropdown-arrow {
   color: var(--swm-button);
   position: absolute;
+  left: 0;
   right: 0;
   bottom: 0;
   font-size: 12px !important;

@@ -15,27 +15,16 @@ export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWit
     const timer = useRef<NodeJS.Timeout | undefined>(undefined);
     const [dropdownTriggerVisible, setDropdownTriggerVisible] = useState(false);
 
-    function toggleTriggerVisibility(hovering: boolean) {
-      const DELAY_MS = 1_000;
-
-      if (hovering) {
-        setDropdownTriggerVisible(true);
-        clearTimeout(timer.current);
-      } else {
-        timer.current = setTimeout(() => {
-          setDropdownTriggerVisible(false);
-        }, DELAY_MS);
-      }
-    }
-
     return (
-      <div className="icon-container">
-        <IconButton
-          ref={ref}
-          {...iconButtonProps}
-          onHover={(hovering) => {
-            toggleTriggerVisibility(hovering);
-          }}>
+      <div
+        className="icon-container"
+        onMouseEnter={() => {
+          setDropdownTriggerVisible(true);
+        }}
+        onMouseLeave={() => {
+          setDropdownTriggerVisible(false);
+        }}>
+        <IconButton ref={ref} {...iconButtonProps}>
           {children}
         </IconButton>
         <DropdownMenu.Root>

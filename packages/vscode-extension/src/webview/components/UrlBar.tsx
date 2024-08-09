@@ -16,7 +16,6 @@ interface ReloadButtonProps {
 }
 
 function ReloadButton({ project, disabled }: ReloadButtonProps) {
-  const noop = () => {};
   return (
     <IconButtonWithOptions
       onClick={() => project.restart(false)}
@@ -74,7 +73,7 @@ function UrlBar({ project, disabled }: UrlBarProps) {
         }}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
-      <ReloadButton project={project} disabled={disabled} />
+      <ReloadButton project={project} disabled={disabled ?? false} />
       <IconButton
         onClick={() => {
           project.goHome();
