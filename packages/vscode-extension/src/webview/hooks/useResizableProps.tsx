@@ -82,5 +82,5 @@ export function useResizableProps({
       bottomLeft: false,
       topLeft: false,
     },
-  };
+  } as const;
 }
