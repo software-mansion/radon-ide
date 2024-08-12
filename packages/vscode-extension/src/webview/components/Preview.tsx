@@ -133,44 +133,8 @@ function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
   );
 }
 
-type TouchPointMarkerProps = {
-  x: number;
-  y: number;
-  isPressing: boolean;
-  sizeFactor?: number;
-  color?: string;
-  pressedColor?: string;
-};
-
-function TouchPointMarker({
-  x,
-  y,
-  isPressing,
-  color = "175, 175, 175",
-  pressedColor = "135, 135, 135",
-  sizeFactor = 1,
-}: TouchPointMarkerProps) {
-  const adjustedSize = 33 * sizeFactor;
-  const finalSize = isPressing ? adjustedSize * 0.8 : adjustedSize;
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top: `${y * 100}%`,
-        left: `${x * 100}%`,
-        width: `${finalSize}px`,
-        height: `${finalSize}px`,
-        backgroundColor: `rgba(${isPressing ? pressedColor : color}, 0.6)`,
-        borderRadius: "50%",
-        borderColor: `rgba(${isPressing ? pressedColor : color}, 0.5)`,
-        borderWidth: "1px",
-        borderStyle: "solid",
-        transform: "translate(-50%, -50%)",
-        boxShadow: isPressing ? "none" : "2px 2px 6px 1px rgba(0, 0, 0, 0.4)",
-      }}
-    />
-  );
+function TouchPointMarker({ isPressing }: { isPressing: boolean }) {
+  return <div className={`touch-marker ${isPressing ? "pressed" : ""}`}></div>;
 }
 
 type InspectStackData = {
@@ -266,13 +230,11 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   type MouseMove = "Move" | "Down" | "Up";
   function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
     const { x, y } = getTouchPosition(event);
-    console.log("FRYTKI SINGLE", x, y, type);
     project.dispatchTouch(x, y, type);
   }
 
   function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
     const { x, y } = getTouchPosition(event);
-    console.log("FRYTKI SINGLE", x, y, anchorPoint.x, anchorPoint.y, type);
     project.dispatchMultiTouch(x, y, anchorPoint.x, anchorPoint.y, type);
   }
 
@@ -471,6 +433,8 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   });
 
   const mirroredTouchPosition = getMirroredTouchPosition(anchorPoint);
+  const normalTouchMarkerSize = 33;
+  const smallTouchMarkerSize = 9;
 
   return (
     <>
@@ -493,32 +457,34 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                 />
 
                 {isMultiTouching && (
-                  <TouchPointMarker
-                    x={touchPoint.x}
-                    y={touchPoint.y}
-                    isPressing={isPressing}
-                    color="175, 175, 175"
-                    pressedColor="84, 180, 148"
-                  />
+                  <div
+                    style={{
+                      "--x": `${touchPoint.x * 100}%`,
+                      "--y": `${touchPoint.y * 100}%`,
+                      "--size": `${normalTouchMarkerSize}px`,
+                    }}>
+                    <TouchPointMarker isPressing={isPressing} />
+                  </div>
                 )}
                 {isMultiTouching && (
-                  <TouchPointMarker
-                    x={anchorPoint.x}
-                    y={anchorPoint.y}
-                    isPressing={true}
-                    sizeFactor={0.3}
-                    color="135, 135, 135"
-                    pressedColor="135, 135, 135"
-                  />
+                  <div
+                    style={{
+                      "--x": `${anchorPoint.x * 100}%`,
+                      "--y": `${anchorPoint.y * 100}%`,
+                      "--size": `${smallTouchMarkerSize}px`,
+                    }}>
+                    <TouchPointMarker isPressing={false} />
+                  </div>
                 )}
                 {isMultiTouching && (
-                  <TouchPointMarker
-                    x={mirroredTouchPosition.x}
-                    y={mirroredTouchPosition.y}
-                    isPressing={isPressing}
-                    color="175, 175, 175"
-                    pressedColor="84, 180, 148"
-                  />
+                  <div
+                    style={{
+                      "--x": `${mirroredTouchPosition.x * 100}%`,
+                      "--y": `${mirroredTouchPosition.y * 100}%`,
+                      "--size": `${normalTouchMarkerSize}px`,
+                    }}>
+                    <TouchPointMarker isPressing={isPressing} />
+                  </div>
                 )}
 
                 {inspectFrame && (
