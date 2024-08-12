@@ -4,11 +4,15 @@ import {
   LaunchConfig,
   LaunchConfigEventListener,
   LaunchConfigEventMap,
-  LaunchConfigProps,
+  LaunchConfigurationOptions,
 } from "../common/LaunchConfig";
+import { getAppRootFolder } from "../utilities/extensionContext";
+import { findXcodeProject, findXcodeScheme } from "../utilities/xcode";
+import { Logger } from "../Logger";
+import { getIosSourceDir } from "../builders/buildIOS";
 
 export class LaunchConfigController implements Disposable, LaunchConfig {
-  private config: LaunchConfigProps;
+  private config: LaunchConfigurationOptions;
   private eventEmitter = new EventEmitter();
   private configListener: Disposable | undefined;
 
@@ -27,7 +31,10 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
       const { android, appRoot, ios, isExpo, metroConfigPath, env, ...rest } = RNIDEConfiguration;
 
-      return ({ android, appRoot, ios, isExpo, metroConfigPath, env } as LaunchConfigProps) ?? {};
+      return (
+        ({ android, appRoot, ios, isExpo, metroConfigPath, env } as LaunchConfigurationOptions) ??
+        {}
+      );
     };
 
     this.config = getCurrentConfig();
@@ -47,7 +54,10 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
     return this.config;
   }
 
-  async update<K extends keyof LaunchConfigProps>(key: K, value: LaunchConfigProps[K]) {
+  async update<K extends keyof LaunchConfigurationOptions>(
+    key: K,
+    value: LaunchConfigurationOptions[K]
+  ) {
     const configurations = workspace.getConfiguration("launch");
 
     const newLaunchConfig = { ...this.config, [key]: value };
@@ -64,6 +74,24 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
     await configurations.update("configurations", newConfigurations);
   }
 
+  async getAvailableXcodeSchemes() {
+    const appRootFolder = getAppRootFolder();
+    const sourceDir = getIosSourceDir(appRootFolder);
+
+    const xcodeProject = await findXcodeProject(appRootFolder);
+
+    if (!xcodeProject) {
+      Logger.debug(`Could not find Xcode project files in "${sourceDir}" folder`);
+      return [];
+    }
+
+    Logger.debug(
+      `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${
+        xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation
+      }`
+    );
+    return await findXcodeScheme(xcodeProject);
+  }
   async addListener<K extends keyof LaunchConfigEventMap>(
     eventType: K,
     listener: LaunchConfigEventListener<LaunchConfigEventMap[K]>

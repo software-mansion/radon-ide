@@ -7,22 +7,32 @@ import {
   useCallback,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
-import { LaunchConfig, LaunchConfigProps } from "../../common/LaunchConfig";
+import { LaunchConfig, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 
 const launchConfig = makeProxy<LaunchConfig>("LaunchConfig");
 
-type LaunchConfigContextType = LaunchConfigProps & {
-  update: <K extends keyof LaunchConfigProps>(key: K, value: LaunchConfigProps[K]) => void;
+type LaunchConfigContextType = LaunchConfigurationOptions & {
+  update: <K extends keyof LaunchConfigurationOptions>(
+    key: K,
+    value: LaunchConfigurationOptions[K]
+  ) => void;
+  xcodeSchemes: string[];
 };
 
-const LaunchConfigContext = createContext<LaunchConfigContextType>({ update: () => {} });
+const LaunchConfigContext = createContext<LaunchConfigContextType>({
+  update: () => {},
+  xcodeSchemes: [],
+});
 
 export default function LaunchConfigProvider({ children }: PropsWithChildren) {
-  const [config, setConfig] = useState<LaunchConfigProps>({});
+  const [config, setConfig] = useState<LaunchConfigurationOptions>({});
+  const [xcodeSchemes, setXcodeSchemes] = useState<string[]>([]);
 
   useEffect(() => {
     launchConfig.getConfig().then(setConfig);
     launchConfig.addListener("launchConfigChange", setConfig);
+
+    launchConfig.getAvailableXcodeSchemes().then(setXcodeSchemes);
 
     return () => {
       launchConfig.removeListener("launchConfigChange", setConfig);
@@ -30,7 +40,7 @@ export default function LaunchConfigProvider({ children }: PropsWithChildren) {
   }, []);
 
   const update = useCallback(
-    <K extends keyof LaunchConfigProps>(key: K, value: LaunchConfigProps[K]) => {
+    <K extends keyof LaunchConfigurationOptions>(key: K, value: LaunchConfigurationOptions[K]) => {
       const newState = { ...config, [key]: value };
       setConfig(newState);
       launchConfig.update(key, value);
@@ -39,7 +49,7 @@ export default function LaunchConfigProvider({ children }: PropsWithChildren) {
   );
 
   return (
-    <LaunchConfigContext.Provider value={{ ...config, update }}>
+    <LaunchConfigContext.Provider value={{ ...config, update, xcodeSchemes }}>
       {children}
     </LaunchConfigContext.Provider>
   );

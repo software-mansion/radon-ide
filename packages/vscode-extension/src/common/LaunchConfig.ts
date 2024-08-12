@@ -1,20 +1,23 @@
-export type LaunchConfigProps = {
-  android?: {
-    buildType?: string;
-    productFlavor?: string;
-  };
+export type LaunchConfigurationOptions = {
   appRoot?: string;
+  metroConfigPath?: string;
+  env?: Record<string, string>;
   ios?: {
     scheme?: string;
     configuration?: string;
   };
   isExpo?: boolean;
-  metroConfigPath?: string;
-  env?: object;
+  android?: {
+    buildType?: string;
+    productFlavor?: string;
+  };
+  preview?: {
+    waitForAppLaunch?: boolean;
+  };
 };
 
 export interface LaunchConfigEventMap {
-  launchConfigChange: LaunchConfigProps;
+  launchConfigChange: LaunchConfigurationOptions;
 }
 
 export interface LaunchConfigEventListener<T> {
@@ -22,9 +25,14 @@ export interface LaunchConfigEventListener<T> {
 }
 
 export interface LaunchConfig {
-  getConfig(): Promise<LaunchConfigProps>;
+  getConfig(): Promise<LaunchConfigurationOptions>;
   // update method can take any of the keys from WorkspaceConfigProps and appropriate value:
-  update<K extends keyof LaunchConfigProps>(key: K, value: LaunchConfigProps[K]): Promise<void>;
+  update<K extends keyof LaunchConfigurationOptions>(
+    key: K,
+    value: LaunchConfigurationOptions[K]
+  ): Promise<void>;
+
+  getAvailableXcodeSchemes(): Promise<string[]>;
   addListener<K extends keyof LaunchConfigEventMap>(
     eventType: K,
     listener: LaunchConfigEventListener<LaunchConfigEventMap[K]>
