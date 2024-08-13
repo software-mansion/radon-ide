@@ -4,6 +4,7 @@ import { vscode } from "../utilities/vscode";
 import Anchor from "../components/shared/Anchor";
 import CheckIcon from "../components/icons/CheckIcon";
 import CloseIcon from "../components/icons/CloseIcon";
+import CloseGrayIcon from "../components/icons/CloseGrayIcon";
 import {
   DependencyState,
   InstallationStatus,
@@ -68,6 +69,7 @@ function DiagnosticItem({ label, item, action }: DiagnosticItemProps) {
       [InstallationStatus.Installed]: <CheckIcon />,
       [InstallationStatus.NotInstalled]: <CloseIcon />,
       [InstallationStatus.InProgress]: <ProgressRing />,
+      [InstallationStatus.Optional]: <CloseGrayIcon />,
     }[item.installed];
   }
   return (
