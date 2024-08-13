@@ -4,7 +4,7 @@ import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform } from "../common/DeviceManager";
+import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo } from "../common/DeviceManager";
 import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
@@ -46,12 +46,16 @@ type PrivacyServiceName =
   | "siri";
 
 export class IosSimulatorDevice extends DeviceBase {
-  constructor(private readonly deviceUDID: string) {
+  constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
     super();
   }
 
   public get platform(): DevicePlatform {
     return DevicePlatform.IOS;
+  }
+
+  public get deviceInfo() {
+    return this._deviceInfo;
   }
 
   get lockFilePath(): string {

@@ -121,3 +121,23 @@
 .phone-content-loading-background {
   background-color: var(--swm-phone-content-loading-background);
 }
+
+.touch-marker {
+  position: absolute;
+  top: var(--y, 50%);
+  left: var(--x, 50%);
+  background-color: var(--touch-marker-background);
+  border-radius: 50%;
+  border: 1px solid;
+  border-color: var(--touch-marker-border);
+  width: var(--size);
+  height: var(--size);
+  transform: translate(-50%, -50%);
+  opacity: 0.6;
+}
+
+.touch-marker.pressed {
+  background-color: var(--touch-marker-pressed-background);
+  border-color: var(--touch-marker-pressed-border);
+  box-shadow: var(--touch-marker-pressed-shadow);
+}
