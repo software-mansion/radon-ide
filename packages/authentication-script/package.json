@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "esbuild main.js --bundle --platform=node --outfile=dist/checkjwt.js",
+    "build": "esbuild main.js --bundle --platform=node --outfile=../vscode-extension/dist/checkjwt.js",
     "test": "node main.js public.pem"
   },
   "keywords": [],

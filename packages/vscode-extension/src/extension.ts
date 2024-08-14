@@ -78,9 +78,7 @@ export async function activate(context: ExtensionContext) {
   const publicPemPath = path.join(basePath, "public.pem");
 
   try {
-    const { stdout } = await exec("node", [checkJWTBinary, publicPemPath, apiKey || ""]);
-
-    console.log({ dupa: stdout });
+    await exec("node", [checkJWTBinary, publicPemPath, apiKey || ""]);
   } catch (e) {
     window.showErrorMessage("Authentication failed. Set a proper token.", "Dismiss");
     // return;
