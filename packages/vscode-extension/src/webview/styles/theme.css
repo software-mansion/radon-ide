@@ -104,6 +104,27 @@
   /* White */
   --off-white: #f8f9ff;
   --white: #fcfcff;
+
+  /* Gray */
+  --grey-light-100: #f7f7f7;
+  --grey-light-80: #e1e1e1;
+  --grey-light-60: #cccccc;
+  --grey-light-40: #b2b2b2;
+  --grey-light-20: #999999;
+
+  --grey-dark-140: #333333;
+  --grey-dark-120: #4d4d4d;
+  --grey-dark-100: #666666;
+  --grey-dark-80: #808080;
+  --grey-dark-60: #999999;
+  --grey-dark-40: #b3b3b3;
+
+  /* Touch marker */
+  --touch-marker-background: var(--grey-dark-40);
+  --touch-marker-border: var(--grey-dark-80);
+  --touch-marker-pressed-background: var(--green-light-100);
+  --touch-marker-pressed-border: var(--green-dark-120);
+  --touch-marker-pressed-shadow: 2px 2px 6px 1px rgba(0, 0, 0, 0.8);
 }
 
 /* Light theme */

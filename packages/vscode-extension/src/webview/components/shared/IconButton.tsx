@@ -3,7 +3,7 @@ import classnames from "classnames";
 import "./IconButton.css";
 import Tooltip from "./Tooltip";
 
-interface IconButtonProps {
+export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   children: React.ReactNode;
   disabled?: boolean;

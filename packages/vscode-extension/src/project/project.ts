@@ -14,6 +14,7 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
+  ReloadAction,
   StartupMessage,
   ZoomLevelType,
 } from "../common/Project";
@@ -82,22 +83,22 @@ export class Project
   }
 
   //#region Build progress
-  onBuildProgress(stageProgress: number): void {
+  onBuildProgress = (stageProgress: number): void => {
     this.reportStageProgress(stageProgress, StartupMessage.Building);
-  }
+  };
 
-  onBuildSuccess(): void {
+  onBuildSuccess = (): void => {
     // reset fingerprint change flag when build finishes successfully
     this.detectedFingerprintChange = false;
-  }
+  };
 
-  onStateChange(state: StartupMessage): void {
+  onStateChange = (state: StartupMessage): void => {
     this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
-  }
+  };
   //#endregion
 
   //#region App events
-  onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void {
+  onAppEvent = <E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void => {
     switch (event) {
       case "navigationChanged":
         this.eventEmitter.emit("navigationChanged", payload);
@@ -113,7 +114,7 @@ export class Project
         this.updateProjectState({ status: "running" });
         break;
     }
-  }
+  };
   //#endregion
 
   //#region Debugger events
@@ -224,7 +225,7 @@ export class Project
     await this.reloadMetro();
   }
 
-  //#region Restart
+  //#region Session lifecycle
   public async restart(forceCleanBuild: boolean, onlyReloadJSWhenPossible: boolean = true) {
     // we save device info and device session at the start such that we can
     // check if they weren't updated in the meantime while we await for restart
@@ -266,7 +267,14 @@ export class Project
       }
     }
   }
-  //#endregion
+
+  public async reload(type: ReloadAction): Promise<boolean> {
+    this.updateProjectState({ status: "starting" });
+    const success = (await this.deviceSession?.perform(type)) ?? false;
+    // TODO(jgonet): Don't assume that success is always true
+    this.updateProjectState({ status: "running" });
+    return success;
+  }
 
   private async start(restart: boolean, forceCleanBuild: boolean) {
     if (restart) {
@@ -293,6 +301,7 @@ export class Project
       [installNodeModules]
     );
   }
+  //#endregion
 
   async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);

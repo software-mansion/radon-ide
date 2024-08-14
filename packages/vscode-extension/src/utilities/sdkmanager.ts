@@ -91,7 +91,7 @@ function mapToSystemImageInfo(systemImagePath: string) {
         apiLevelCode.toLowerCase() as keyof typeof ANDROID_CODENAMES_TO_API_LEVELS
       ];
   }
-  const androidVersion = mapApiLevelToAndroidVersion(apiLevel);
+  const androidVersion = mapApiLevelToAndroidVersion(apiLevel) ?? "";
 
   let apisSuffix = "";
   if (systemImageType === "google_apis_playstore") {
