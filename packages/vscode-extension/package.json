@@ -61,6 +61,11 @@
         "title": "Diagnostics",
         "category": "React Native IDE",
         "enablement": "!RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.setAPIKey",
+        "title": "Set API Key",
+        "category": "React Native IDE"
       }
     ],
     "keybindings": [

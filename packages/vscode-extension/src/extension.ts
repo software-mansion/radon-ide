@@ -11,6 +11,7 @@ import {
   DebugConfigurationProviderTriggerKind,
   DebugAdapterExecutable,
   Disposable,
+  SecretStorage,
 } from "vscode";
 import vscode from "vscode";
 import { TabPanel } from "./panels/Tabpanel";
@@ -23,7 +24,7 @@ import {
   setAppRootFolder,
   setExtensionContext,
 } from "./utilities/extensionContext";
-import { command } from "./utilities/subprocess";
+import { command, exec } from "./utilities/subprocess";
 import path from "path";
 import os from "os";
 import fs from "fs";
@@ -65,6 +66,25 @@ export function deactivate(context: ExtensionContext): undefined {
 
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
+
+  let apiKey = await context.secrets.get("API_KEY");
+
+  if (!apiKey) {
+    apiKey = await storeAPIKey(context.secrets);
+  }
+
+  const basePath = path.join(context.extensionPath, "dist");
+  const checkJWTBinary = path.join(basePath, "checkjwt");
+  const publicPemPath = path.join(basePath, "public.pem");
+
+  try {
+    const { stdout } = await exec("node", [checkJWTBinary, publicPemPath, apiKey || ""]);
+
+    console.log({ dupa: stdout });
+  } catch (e) {
+    window.showErrorMessage("Authentication failed. Set a proper token.", "Dismiss");
+    // return;
+  }
 
   if (Platform.OS !== "macos" && Platform.OS !== "windows") {
     window.showErrorMessage("React Native IDE works only on macOS and Windows.", "Dismiss");
@@ -210,6 +230,12 @@ export async function activate(context: ExtensionContext) {
       if (event.affectsConfiguration("ReactNativeIDE.panelLocation")) {
         showIDEPanel();
       }
+    })
+  );
+
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.setAPIKey", async () => {
+      return await storeAPIKey(context.secrets);
     })
   );
 
@@ -362,4 +388,17 @@ async function fixMacosBinary(context: ExtensionContext) {
     await command(`dd if=${buildBinPath.fsPath} of=${exeBinPath.fsPath}`);
   }
   await fs.promises.chmod(exeBinPath.fsPath, 0o755);
+}
+
+async function storeAPIKey(secrets: SecretStorage) {
+  const key = await window.showInputBox({ password: true, prompt: "Your API key" });
+
+  if (!key) {
+    window.showErrorMessage("No API key provided.", "Dismiss");
+    return;
+  }
+
+  await secrets.store("API_KEY", key);
+
+  return key;
 }
