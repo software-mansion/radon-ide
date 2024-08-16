@@ -7,6 +7,7 @@ import { Devtools } from "./devtools";
 import stripAnsi from "strip-ansi";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import fs from "fs";
+import { configureAppRootFolder } from "../extension";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -128,6 +129,8 @@ export class Metro implements Disposable {
     resetCache: boolean,
     progressListener: (newStageProgress: number) => void
   ) {
+    await configureAppRootFolder();
+
     const appRootFolder = getAppRootFolder();
     const launchConfiguration = getLaunchConfiguration();
     await this.devtools.ready();
@@ -270,7 +273,9 @@ function findCustomMetroConfig(configPath: string) {
   throw new Error("Metro config cannot be found, please check if `metroConfigPath` path is valid");
 }
 
-function shouldUseExpoCLI() {
+async function shouldUseExpoCLI() {
+  await configureAppRootFolder();
+
   // The mechanism for detecting whether the project should use Expo CLI or React Native Community CLI works as follows:
   // We check launch configuration, which has an option to force Expo CLI, we verify that first and if it is set to true we use Expo CLI.
   // When the Expo option isn't set, we need all of the below checks to be true in order to use Expo CLI:
@@ -285,7 +290,6 @@ function shouldUseExpoCLI() {
   if (config.metroConfigPath) {
     return false;
   }
-
   const appRootFolder = getAppRootFolder();
   let hasExpoCLIInstalled = false,
     hasExpoCommandsInScripts = false;

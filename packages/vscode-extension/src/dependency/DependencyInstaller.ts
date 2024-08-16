@@ -5,6 +5,7 @@ import { command } from "../utilities/subprocess";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { getAppRootFolder } from "../utilities/extensionContext";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { configureAppRootFolder } from "../extension";
 
 export class DependencyInstaller implements Disposable {
   private webview: Webview;
@@ -50,6 +51,7 @@ export class DependencyInstaller implements Disposable {
       command: "installingPods",
     });
     try {
+      await configureAppRootFolder();
       await installIOSDependencies(getAppRootFolder(), false);
       Logger.debug("Finished installing pods!");
     } catch (error) {

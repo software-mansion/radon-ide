@@ -7,25 +7,18 @@ import ManageDevicesView from "../views/ManageDevicesView";
 import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import { LaunchConfigurationOptions } from "../../utilities/launchConfiguration";
+import { useProject } from "../providers/ProjectProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
   isDeviceRunning: boolean;
-  project: ProjectInterface;
   disabled?: boolean;
 }
 
-function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
+function SettingsDropdown({ isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, update } = useWorkspaceConfig();
-  const launchConfigurations = [
-    {
-      name: "Test",
-      appRoot: "/",
-    },
-  ];
-
-  const appRoot = "/";
-
+  const { projectState, project } = useProject();
   const { openModal } = useModal();
 
   return (
@@ -135,17 +128,18 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 className="dropdown-menu-content"
                 sideOffset={2}
                 alignOffset={-5}>
-                {!!launchConfigurations.length ? (
-                  launchConfigurations.map((launchConfig) => (
+                {!!projectState.launchConfigurations.length ? (
+                  projectState.launchConfigurations.map((launchConfig) => (
                     <DropdownMenu.Item
                       className="dropdown-menu-item"
                       onSelect={async () => {
-                        await project.restart(true);
+                        await project.selectLaunchConfiguration(launchConfig);
                       }}>
                       <span className="codicon codicon-debug-console" />
                       {launchConfig.name}
 
-                      {appRoot === launchConfig.appRoot && (
+                      {projectState.selectedLaunchConfiguration?.appRoot ===
+                        launchConfig.appRoot && (
                         <span className="codicon codicon-check right-slot" />
                       )}
                     </DropdownMenu.Item>

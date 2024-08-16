@@ -8,6 +8,7 @@ import { getAppRootFolder } from "../utilities/extensionContext";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
+import { configureAppRootFolder } from "../extension";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
@@ -224,22 +225,23 @@ function requireNoCache(...params: Parameters<typeof require.resolve>) {
 
 export function checkMinDependencyVersionInstalled(dependency: string, minVersion: string) {
   const message = `Check ${dependency} module version.`;
+  return configureAppRootFolder()
+    .then(() => {
+      const module = requireNoCache(path.join(dependency, "package.json"), {
+        paths: [getAppRootFolder()],
+      });
+      const dependencyVersion = coerce(module.version);
+      const minDependencyVersion = coerce(minVersion)!;
 
-  try {
-    const module = requireNoCache(path.join(dependency, "package.json"), {
-      paths: [getAppRootFolder()],
+      Logger.debug(message, `Version found: ${dependencyVersion}. Minimum version: ${minVersion}`);
+
+      const matches = dependencyVersion ? gte(dependencyVersion, minDependencyVersion) : false;
+      return matches ? "installed" : "not_supported";
+    })
+    .catch((error) => {
+      Logger.error(message, error);
+      return "not_installed";
     });
-    const dependencyVersion = coerce(module.version);
-    const minDependencyVersion = coerce(minVersion)!;
-
-    Logger.debug(message, `Version found: ${dependencyVersion}. Minimum version: ${minVersion}`);
-
-    const matches = dependencyVersion ? gte(dependencyVersion, minDependencyVersion) : false;
-    return matches ? "installed" : "not_supported";
-  } catch (error) {
-    Logger.debug(message, "Module not found.");
-    return "not_installed";
-  }
 }
 
 export async function checkIosDependenciesInstalled() {
@@ -247,7 +249,7 @@ export async function checkIosDependenciesInstalled() {
     // for Expo Go projects, we never return an error here because Pods are never needed
     return true;
   }
-
+  await configureAppRootFolder();
   const iosDirPath = getIosSourceDir(getAppRootFolder());
 
   Logger.debug(`Check pods in ${iosDirPath} ${getAppRootFolder()}`);

@@ -2,6 +2,7 @@ import path from "path";
 import { Logger } from "../Logger";
 import { createFingerprintAsync } from "@expo/fingerprint";
 import { getAppRootFolder } from "./extensionContext";
+import { configureAppRootFolder } from "../extension";
 
 const IGNORE_PATHS = [
   path.join("android", ".gradle/**/*"),
@@ -14,6 +15,8 @@ const IGNORE_PATHS = [
 ];
 
 export async function generateWorkspaceFingerprint() {
+  await configureAppRootFolder();
+
   const fingerprint = await createFingerprintAsync(getAppRootFolder(), {
     ignorePaths: IGNORE_PATHS,
   });

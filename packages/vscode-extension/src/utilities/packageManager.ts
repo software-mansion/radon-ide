@@ -3,6 +3,7 @@ import { exec } from "./subprocess";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import { getAppRootFolder } from "./extensionContext";
+import { configureAppRootFolder } from "../extension";
 
 export type PackageManagerName = "npm" | "pnpm" | "yarn" | "bun";
 
@@ -16,6 +17,8 @@ async function pathExists(p: string) {
 }
 
 export async function resolvePackageManager(): Promise<PackageManagerName> {
+  await configureAppRootFolder();
+
   const workspacePath = getAppRootFolder();
   return await Promise.all([
     pathExists(resolve(workspacePath, "yarn.lock")),

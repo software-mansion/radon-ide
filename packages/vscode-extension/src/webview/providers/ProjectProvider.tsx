@@ -12,6 +12,8 @@ interface ProjectContextProps {
 
 const ProjectContext = createContext<ProjectContextProps>({
   projectState: {
+    selectedLaunchConfiguration: undefined,
+    launchConfigurations: [],
     status: "starting",
     previewURL: undefined,
     selectedDevice: undefined,
@@ -35,6 +37,8 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     previewURL: undefined,
     selectedDevice: undefined,
     previewZoom: undefined,
+    selectedLaunchConfiguration: undefined,
+    launchConfigurations: [],
   });
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>({
     appearance: "dark",

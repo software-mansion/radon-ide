@@ -28,15 +28,21 @@ import {
 } from "../common/Project";
 import { EventEmitter } from "stream";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
-import { extensionContext } from "../utilities/extensionContext";
+import { extensionContext, setLaunchConfig } from "../utilities/extensionContext";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
+import {
+  getAllLaunchConfigurations,
+  getLaunchConfiguration,
+  LaunchConfigurationOptions,
+} from "../utilities/launchConfiguration";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
+export const SELECTED_LAUNCH_CONFIGURATION_KEY = "selected_launch_configuration";
 
 export class Project implements Disposable, MetroDelegate, ProjectInterface {
   public static currentProject: Project | undefined;
@@ -54,6 +60,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
   private deviceSession: DeviceSession | undefined;
 
   private projectState: ProjectState = {
+    selectedLaunchConfiguration: undefined,
+    launchConfigurations: getAllLaunchConfigurations(),
     status: "starting",
     previewURL: undefined,
     previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
@@ -79,6 +87,8 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.nativeFilesChangedSinceLastBuild = false;
+    this.projectState.launchConfigurations = getAllLaunchConfigurations();
+    this.projectState.selectedLaunchConfiguration = getLaunchConfiguration();
 
     this.trackNativeChanges();
   }
@@ -86,6 +96,23 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     env.openExternal(
       Uri.parse("https://github.com/software-mansion/react-native-ide/issues/new/choose")
     );
+  }
+
+  getSelectedLaunchConfiguration() {
+    const selectedLaunchConfiguration = extensionContext.workspaceState.get(
+      SELECTED_LAUNCH_CONFIGURATION_KEY
+    );
+
+    return selectedLaunchConfiguration as LaunchConfigurationOptions;
+  }
+
+  async selectLaunchConfiguration(launchConfiguration: LaunchConfigurationOptions) {
+    await extensionContext.workspaceState.update(
+      SELECTED_LAUNCH_CONFIGURATION_KEY,
+      launchConfiguration
+    );
+    this.updateProjectState({ selectedLaunchConfiguration: launchConfiguration });
+    await this.restart(true);
   }
 
   trackNativeChanges() {

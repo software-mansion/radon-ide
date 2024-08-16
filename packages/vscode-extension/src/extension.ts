@@ -28,8 +28,11 @@ import os from "os";
 import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
-import { getLaunchConfiguration } from "./utilities/launchConfiguration";
-import { Project } from "./project/project";
+import {
+  getLaunchConfiguration,
+  LaunchConfigurationOptions,
+} from "./utilities/launchConfiguration";
+import { Project, SELECTED_LAUNCH_CONFIGURATION_KEY } from "./project/project";
 import { findSingleFileInWorkspace } from "./utilities/common";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
@@ -200,7 +203,7 @@ function extensionActivated() {
   }
 }
 
-async function configureAppRootFolder() {
+export async function configureAppRootFolder() {
   const appRootFolder = await findAppRootFolder();
   if (appRootFolder) {
     Logger.info(`Found app root folder: ${appRootFolder}`);
@@ -212,7 +215,9 @@ async function configureAppRootFolder() {
 }
 
 async function findAppRootFolder() {
-  const launchConfiguration = getLaunchConfiguration();
+  const launchConfiguration = extensionContext.workspaceState.get(
+    SELECTED_LAUNCH_CONFIGURATION_KEY
+  ) as LaunchConfigurationOptions;
   const appRootFromLaunchConfig = launchConfiguration.appRoot;
   if (appRootFromLaunchConfig) {
     let appRoot: string | undefined;

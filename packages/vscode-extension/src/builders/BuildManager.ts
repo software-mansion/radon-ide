@@ -8,6 +8,7 @@ import { DeviceInfo, IOSDeviceInfo, Platform } from "../common/DeviceManager";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { Disposable, OutputChannel, window } from "vscode";
+import { configureAppRootFolder } from "../extension";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
@@ -158,6 +159,8 @@ export class BuildManager {
     this.buildOutputChannel = window.createOutputChannel("React Native IDE (Android build)", {
       log: true,
     });
+    await configureAppRootFolder();
+
     const build = await buildAndroid(
       getAppRootFolder(),
       forceCleanBuild,
@@ -218,6 +221,8 @@ export class BuildManager {
     this.buildOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", {
       log: true,
     });
+    await configureAppRootFolder();
+
     const build = await buildIos(
       deviceInfo,
       getAppRootFolder(),

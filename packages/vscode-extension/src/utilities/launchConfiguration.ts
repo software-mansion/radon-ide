@@ -2,6 +2,7 @@ import { workspace } from "vscode";
 
 export type LaunchConfigurationOptions = {
   appRoot?: string;
+  name?: string;
   metroConfigPath?: string;
   env?: Record<string, string>;
   ios?: {
@@ -23,5 +24,13 @@ export function getLaunchConfiguration(): LaunchConfigurationOptions {
     workspace
       .getConfiguration("launch")
       ?.configurations?.find((config: any) => config.type === "react-native-ide") || {}
+  );
+}
+
+export function getAllLaunchConfigurations(): LaunchConfigurationOptions[] {
+  return (
+    workspace
+      .getConfiguration("launch")
+      ?.configurations?.filter((config: any) => config.type === "react-native-ide") || {}
   );
 }

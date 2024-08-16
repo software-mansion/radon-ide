@@ -1,4 +1,7 @@
 import { ExtensionContext } from "vscode";
+import { LaunchConfigurationOptions } from "./launchConfiguration";
+import fs from "fs";
+import { Logger } from "../Logger";
 
 let _extensionContext: ExtensionContext | null = null;
 

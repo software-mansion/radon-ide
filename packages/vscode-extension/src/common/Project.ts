@@ -1,3 +1,4 @@
+import { LaunchConfigurationOptions } from "../utilities/launchConfiguration";
 import { DeviceInfo } from "./DeviceManager";
 
 export type DeviceSettings = {
@@ -11,6 +12,8 @@ export type DeviceSettings = {
 };
 
 export type ProjectState = {
+  launchConfigurations: LaunchConfigurationOptions[];
+  selectedLaunchConfiguration: LaunchConfigurationOptions | undefined;
   status:
     | "starting"
     | "running"
@@ -97,6 +100,9 @@ export interface ProjectInterface {
   goHome(): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
+
+  getSelectedLaunchConfiguration(): LaunchConfigurationOptions;
+  selectLaunchConfiguration(launchConfiguration: LaunchConfigurationOptions): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;

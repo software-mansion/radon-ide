@@ -5,6 +5,7 @@ import fs from "fs";
 import { exec } from "../utilities/subprocess";
 import { Platform } from "../common/DeviceManager";
 import { CancelToken } from "./BuildManager";
+import { configureAppRootFolder } from "../extension";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
@@ -24,6 +25,7 @@ export async function isExpoGoProject(): Promise<boolean> {
   // 2) The project doesn't have an android or ios folder
   // 3) The expo_go_project_tester.js script runs successfully – the script uses expo-cli
   // internals to resolve project config and tells expo-go and dev-client apart.
+  await configureAppRootFolder();
   const appRoot = getAppRootFolder();
 
   if (!fileExists(appRoot, "app.json") && !fileExists(appRoot, "app.config.js")) {
@@ -83,6 +85,7 @@ export function fetchExpoLaunchDeeplink(
 
 export async function downloadExpoGo(platform: Platform, cancelToken: CancelToken) {
   const downloadScript = path.join(extensionContext.extensionPath, "lib", "expo_go_download.js");
+  await configureAppRootFolder();
   const { stdout } = await cancelToken.adapt(
     exec(`node`, [downloadScript, platform], {
       cwd: getAppRootFolder(),
