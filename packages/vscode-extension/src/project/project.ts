@@ -32,6 +32,7 @@ import {
 import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
+import { configureAppRootFolder } from "../extension";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v2";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -172,9 +173,13 @@ export class Project
     return this.projectState.selectedLaunchConfiguration ?? {};
   }
 
-  selectLaunchConfiguration(launchConfiguration: LaunchConfigurationOptions) {
+  async selectLaunchConfiguration(launchConfiguration: LaunchConfigurationOptions) {
     this.projectState.selectedLaunchConfiguration = launchConfiguration;
-    extensionContext.workspaceState.update(SELECTED_LAUNCH_CONFIGURATION_KEY, launchConfiguration);
+    await extensionContext.workspaceState.update(
+      SELECTED_LAUNCH_CONFIGURATION_KEY,
+      launchConfiguration
+    );
+    await this.restart(true, true);
     return Promise.resolve();
   }
 
@@ -236,6 +241,7 @@ export class Project
   }
 
   private async reloadMetro() {
+    await configureAppRootFolder();
     if (await this.deviceSession?.perform("hotReload")) {
       this.updateProjectState({ status: "running" });
     }
