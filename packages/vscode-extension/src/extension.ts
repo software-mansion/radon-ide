@@ -248,9 +248,10 @@ export async function configureAppRootFolder() {
 }
 
 async function findAppRootFolder() {
-  const launchConfiguration = extensionContext.workspaceState.get(
-    SELECTED_LAUNCH_CONFIGURATION_KEY
-  ) as LaunchConfigurationOptions;
+  const launchConfiguration =
+    (extensionContext.workspaceState.get(
+      SELECTED_LAUNCH_CONFIGURATION_KEY
+    ) as LaunchConfigurationOptions) || getLaunchConfiguration();
   const appRootFromLaunchConfig = launchConfiguration.appRoot;
   if (appRootFromLaunchConfig) {
     let appRoot: string | undefined;
