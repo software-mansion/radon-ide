@@ -3,7 +3,7 @@ import { extensionContext, getAppRootFolder } from "../utilities/extensionContex
 import http from "http";
 import fs from "fs";
 import { exec } from "../utilities/subprocess";
-import { Platform } from "../common/DeviceManager";
+import { DevicePlatform } from "../common/DeviceManager";
 import { CancelToken } from "./BuildManager";
 import { configureAppRootFolder } from "../extension";
 
@@ -83,7 +83,7 @@ export function fetchExpoLaunchDeeplink(
   });
 }
 
-export async function downloadExpoGo(platform: Platform, cancelToken: CancelToken) {
+export async function downloadExpoGo(platform: DevicePlatform, cancelToken: CancelToken) {
   const downloadScript = path.join(extensionContext.extensionPath, "lib", "expo_go_download.js");
   await configureAppRootFolder();
   const { stdout } = await cancelToken.adapt(

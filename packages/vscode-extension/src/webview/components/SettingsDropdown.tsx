@@ -4,11 +4,12 @@ import "./shared/Dropdown.css";
 import { useModal } from "../providers/ModalProvider";
 import DiagnosticView from "../views/DiagnosticView";
 import ManageDevicesView from "../views/ManageDevicesView";
-import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import { LaunchConfigurationOptions } from "../../utilities/launchConfiguration";
 import { useProject } from "../providers/ProjectProvider";
+import { KeybindingInfo } from "./shared/KeybindingInfo";
+import { useUtils } from "../providers/UtilsProvider";
+import "./shared/SwitchGroup.css";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ function SettingsDropdown({ isDeviceRunning, children, disabled }: SettingsDropd
   const { panelLocation, update } = useWorkspaceConfig();
   const { projectState, project } = useProject();
   const { openModal } = useModal();
+  const { movePanelToNewWindow } = useUtils();
 
   return (
     <DropdownMenu.Root>
@@ -52,9 +54,11 @@ function SettingsDropdown({ isDeviceRunning, children, disabled }: SettingsDropd
               project.openDevMenu();
             }}>
             <span className="codicon codicon-code" />
-            Open dev menu
+            <div className="dropdown-menu-item-content">
+              Open dev menu
+              <KeybindingInfo commandName="RNIDE.openDevMenu" />
+            </div>
           </DropdownMenu.Item>
-
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-layout" />
@@ -106,7 +110,7 @@ function SettingsDropdown({ isDeviceRunning, children, disabled }: SettingsDropd
                     <DropdownMenu.Item
                       className="dropdown-menu-item"
                       onSelect={() => {
-                        project.movePanelToNewWindow();
+                        movePanelToNewWindow();
                       }}>
                       <span className="codicon codicon-multiple-windows" />
                       New Window

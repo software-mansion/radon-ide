@@ -2,15 +2,17 @@ import React, { useRef } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
+import * as Switch from "@radix-ui/react-switch";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
 import "./shared/Slider.css";
 import "./DeviceSettingsDropdown.css";
+import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
-import { DeviceSettings } from "../../common/Project";
+import { AppPermissionType, DeviceSettings } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { JSX } from "react/jsx-runtime";
@@ -32,9 +34,24 @@ interface DeviceSettingsDropdownProps {
   disabled?: boolean;
 }
 
+const resetOptionsIOS: Array<{ label: string; value: AppPermissionType; icon: string }> = [
+  { label: "Reset All Permissions", value: "all", icon: "check-all" },
+  { label: "Reset Location", value: "location", icon: "location" },
+  { label: "Reset Photos", value: "photos", icon: "file-media" },
+  { label: "Reset Contacts", value: "contacts", icon: "organization" },
+  { label: "Reset Calendar", value: "calendar", icon: "calendar" },
+];
+
+const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon: string }> = [
+  { label: "Reset All Permissions", value: "all", icon: "check-all" },
+];
+
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
-  const { project, deviceSettings } = useProject();
+  const { project, deviceSettings, projectState } = useProject();
   const { openModal } = useModal();
+
+  const resetOptions =
+    projectState.selectedDevice?.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
 
   return (
     <DropdownMenu.Root>
@@ -48,7 +65,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <Label>device appearance</Label>
           <form>
             <RadioGroup.Root
-              className="dropdown-menu-content  radio-group-root"
+              className="dropdown-menu-content radio-group-root"
               defaultValue={deviceSettings.appearance}
               onValueChange={(value) => {
                 project.updateDeviceSettings({
@@ -112,6 +129,28 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-location" />
             Set Device Location
           </DropdownMenu.Item>
+          <Label>Permissions</Label>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+              <span className="codicon codicon-redo" />
+              Reset Permissions
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent
+                className="dropdown-menu-content"
+                sideOffset={2}
+                alignOffset={-5}>
+                {resetOptions.map((option) => (
+                  <DropdownMenu.Item
+                    className="dropdown-menu-item"
+                    onSelect={() => project.resetAppPermissions(option.value)}>
+                    <span className={`codicon codicon-${option.icon}`} />
+                    {option.label}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

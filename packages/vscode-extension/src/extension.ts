@@ -10,6 +10,7 @@ import {
   ConfigurationChangeEvent,
   DebugConfigurationProviderTriggerKind,
   DebugAdapterExecutable,
+  Disposable,
 } from "vscode";
 import vscode from "vscode";
 import { TabPanel } from "./panels/Tabpanel";
@@ -34,6 +35,7 @@ import {
 } from "./utilities/launchConfiguration";
 import { Project, SELECTED_LAUNCH_CONFIGURATION_KEY } from "./project/project";
 import { findSingleFileInWorkspace } from "./utilities/common";
+import { Platform } from "./utilities/platform";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
@@ -67,8 +69,8 @@ export function deactivate(context: ExtensionContext): undefined {
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
-  if (process.platform !== "darwin") {
-    window.showErrorMessage("React Native IDE works only on macOS.", "Dismiss");
+  if (Platform.OS !== "macos" && Platform.OS !== "windows") {
+    window.showErrorMessage("React Native IDE works only on macOS and Windows.", "Dismiss");
     return;
   }
 
@@ -77,11 +79,13 @@ export async function activate(context: ExtensionContext) {
     enableDevModeLogging();
   }
 
-  try {
-    await fixBinaries(context);
-  } catch (error) {
-    Logger.error("Error when processing simulator-server binaries", error);
-    // we let the activation continue, as otherwise the diagnostics command would fail
+  if (Platform.OS === "macos") {
+    try {
+      await fixMacosBinary(context);
+    } catch (error) {
+      Logger.error("Error when processing simulator-server binaries", error);
+      // we let the activation continue, as otherwise the diagnostics command would fail
+    }
   }
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
@@ -138,6 +142,35 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.diagnose", diagnoseWorkspaceStructure)
   );
+
+  async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
+    registeredCommandDisposable.dispose(); // must dispose to avoid endless loops
+
+    const wasIDEPanelVisible = SidePanelViewProvider.currentProvider?.view?.visible;
+
+    // run the built-in closeAuxiliaryBar command
+    await commands.executeCommand("workbench.action.closeAuxiliaryBar");
+
+    const isIDEPanelVisible = SidePanelViewProvider.currentProvider?.view?.visible;
+
+    // if closing of Auxiliary bar affected the visibility of SidePanelView, we assume that it means that it was pinned to the secondary sidebar.
+    if (wasIDEPanelVisible && !isIDEPanelVisible) {
+      commands.executeCommand("RNIDE.closePanel");
+    }
+
+    // re-register to continue intercepting closeAuxiliaryBar commands
+    registeredCommandDisposable = commands.registerCommand(
+      "workbench.action.closeAuxiliaryBar",
+      async (arg) => closeAuxiliaryBar(registeredCommandDisposable)
+    );
+    context.subscriptions.push(registeredCommandDisposable);
+  }
+
+  let closeAuxiliaryBarDisposable = commands.registerCommand(
+    "workbench.action.closeAuxiliaryBar",
+    async (arg) => closeAuxiliaryBar(closeAuxiliaryBarDisposable)
+  );
+  context.subscriptions.push(closeAuxiliaryBarDisposable);
 
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
@@ -315,7 +348,7 @@ async function diagnoseWorkspaceStructure() {
   }
 }
 
-async function fixBinaries(context: ExtensionContext) {
+async function fixMacosBinary(context: ExtensionContext) {
   // MacOS prevents binary files from being executed when downloaded from the internet.
   // It requires notarization ticket to be available in the package where the binary was distributed
   // with. Apparently Apple does not allow for individual binary files to be notarized and only .app/.pkg and .dmg

@@ -12,6 +12,7 @@ export enum InstallationStatus {
   NotInstalled,
   InProgress,
   Installed,
+  Optional,
 }
 
 export interface DependencyState {
@@ -145,7 +146,11 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   }, []);
 
   const updateDependency = useCallback(
-    (name: keyof Dependencies, newState: Partial<DependencyState>) => {
+    (name: keyof Dependencies, newState: Partial<DependencyState>, { isOptional = false } = {}) => {
+      if (isOptional && newState.installed === InstallationStatus.NotInstalled) {
+        newState.installed = InstallationStatus.Optional;
+      }
+
       setDependencies((prev) => ({
         ...prev,
         [name]: { ...prev[name], ...newState },
@@ -178,10 +183,7 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
           updateDependency("NodeModules", data);
           break;
         case "installingNodeModules":
-          updateDependency("NodeModules", {
-            error: undefined,
-            installed: InstallationStatus.InProgress,
-          });
+          updateDependency("NodeModules", { installed: InstallationStatus.InProgress });
           break;
         case "isReactNativeInstalled":
           updateDependency("ReactNative", data);

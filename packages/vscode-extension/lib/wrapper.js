@@ -16,8 +16,39 @@ export function registerNavigationPlugin(name, plugin) {
 
 let navigationHistory = new Map();
 
-function isPreviewUrl(url) {
-  return url.startsWith("preview://");
+const InternalImports = {
+  get PREVIEW_APP_KEY(){
+    return require("./preview").PREVIEW_APP_KEY;
+  }
+}
+
+const RNInternals = {
+  get getInspectorDataForViewAtPoint() {
+    return require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
+  },
+  get SceneTracker() {
+    return require("react-native/Libraries/Utilities/SceneTracker");
+  },
+  get LoadingView() {
+    // In React Native 0.75 LoadingView was moved to DevLoadingView
+    // We need to use `try catch` pattern for both files as it has special semantics
+    // in bundler. If require isn't surrounded with try catch it will need to resolve
+    // at build time.
+    try {
+      return require("react-native/Libraries/Utilities/LoadingView");
+    } catch (e) {}
+    try {
+      return require("react-native/Libraries/Utilities/DevLoadingView");
+    } catch (e) {}
+    throw new Error("Couldn't locate LoadingView module");
+  },
+  get DevMenu() {
+    return require("react-native/Libraries/NativeModules/specs/NativeDevMenu").default;
+  },
+};
+
+function getCurrentScene() {
+  return RNInternals.SceneTracker.getActiveScene().name;
 }
 
 function emptyNavigationHook() {
@@ -38,49 +69,63 @@ function useAgentListener(agent, eventName, listener, deps = []) {
   }, [agent, ...deps]);
 }
 
-export function PreviewAppWrapper({ children, ...rest }) {
+export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
   const rootTag = useContext(RootTagContext);
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
 
+  const mountCallback = initialProps?.__RNIDE_onMount;
+  useEffect(() => {
+    mountCallback?.();
+  }, [mountCallback]);
+
+  const layoutCallback = initialProps?.__RNIDE_onLayout;
+
   const handleNavigationChange = useCallback(
     (navigationDescriptor) => {
       navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
-      devtoolsAgent &&
-        devtoolsAgent._bridge.send("RNIDE_navigationChanged", {
-          displayName: navigationDescriptor.name,
-          id: navigationDescriptor.id,
-        });
+      devtoolsAgent?._bridge.send("RNIDE_navigationChanged", {
+        displayName: navigationDescriptor.name,
+        id: navigationDescriptor.id,
+      });
     },
     [devtoolsAgent]
   );
 
-  const useNavigationMainHook =
-    (navigationPlugins.length && navigationPlugins[0].plugin.mainHook) || emptyNavigationHook;
+  const useNavigationMainHook = navigationPlugins[0]?.plugin.mainHook || emptyNavigationHook;
   const { requestNavigationChange } = useNavigationMainHook({
     onNavigationChange: handleNavigationChange,
   });
 
   const openPreview = useCallback(
     (previewKey) => {
-      AppRegistry.runApplication(previewKey, {
+      AppRegistry.runApplication(InternalImports.PREVIEW_APP_KEY, {
         rootTag,
-        initialProps: {},
+        initialProps: { previewKey },
       });
+      const preview = global.__RNIDE_previews.get(previewKey);
+      handleNavigationChange({ id: previewKey, name: `preview:${preview.name}` });
     },
-    [rootTag]
+    [rootTag, handleNavigationChange]
   );
 
   const closePreview = useCallback(() => {
-    const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
-    const isRunningPreview = isPreviewUrl(SceneTracker.getActiveScene().name);
-    if (isRunningPreview) {
+    let closePromiseResolve;
+    const closePreviewPromise = new Promise((resolve) => {
+      closePromiseResolve = resolve;
+    });
+    if (getCurrentScene() === InternalImports.PREVIEW_APP_KEY) {
       AppRegistry.runApplication("main", {
         rootTag,
-        initialProps: {},
+        initialProps: {
+          __RNIDE_onLayout: closePromiseResolve,
+        },
       });
+    } else {
+      closePromiseResolve();
     }
+    return closePreviewPromise;
   }, [rootTag]);
 
   useAgentListener(
@@ -96,9 +141,10 @@ export function PreviewAppWrapper({ children, ...rest }) {
     devtoolsAgent,
     "RNIDE_openUrl",
     (payload) => {
-      closePreview();
-      const url = payload.url;
-      Linking.openURL(url);
+      closePreview().then(() => {
+        const url = payload.url;
+        Linking.openURL(url);
+      });
     },
     [closePreview]
   );
@@ -107,13 +153,15 @@ export function PreviewAppWrapper({ children, ...rest }) {
     devtoolsAgent,
     "RNIDE_openNavigation",
     (payload) => {
-      if (isPreviewUrl(payload.id)) {
+      const isPreviewUrl = payload.id.startsWith("preview://");
+      if (isPreviewUrl) {
         openPreview(payload.id);
         return;
       }
-      closePreview();
       const navigationDescriptor = navigationHistory.get(payload.id);
-      navigationDescriptor && requestNavigationChange(navigationDescriptor);
+      closePreview().then(() => {
+        navigationDescriptor && requestNavigationChange(navigationDescriptor);
+      });
     },
     [openPreview, closePreview, requestNavigationChange]
   );
@@ -122,7 +170,7 @@ export function PreviewAppWrapper({ children, ...rest }) {
     devtoolsAgent,
     "RNIDE_inspect",
     (payload) => {
-      const getInspectorDataForViewAtPoint = require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
+      const getInspectorDataForViewAtPoint = RNInternals.getInspectorDataForViewAtPoint;
       const { width, height } = Dimensions.get("screen");
 
       getInspectorDataForViewAtPoint(
@@ -191,15 +239,13 @@ export function PreviewAppWrapper({ children, ...rest }) {
   useAgentListener(devtoolsAgent, "RNIDE_iosDevMenu", (_payload) => {
     // this native module is present only on iOS and will crash if called
     // on Android
-    const DevMenu = require("react-native/Libraries/NativeModules/specs/NativeDevMenu").default;
-
-    DevMenu.show();
+    RNInternals.DevMenu.show();
   });
 
   useEffect(() => {
     if (devtoolsAgent) {
       LogBox.uninstall();
-      const LoadingView = require("react-native/Libraries/Utilities/LoadingView");
+      const LoadingView = RNInternals.LoadingView;
       LoadingView.showMessage = (message) => {
         devtoolsAgent._bridge.send("RNIDE_fastRefreshStarted");
       };
@@ -224,10 +270,9 @@ export function PreviewAppWrapper({ children, ...rest }) {
 
   useEffect(() => {
     if (!!devtoolsAgent && hasLayout) {
-      const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
-      const sceneName = SceneTracker.getActiveScene().name;
+      const appKey = getCurrentScene();
       devtoolsAgent._bridge.send("RNIDE_appReady", {
-        appKey: sceneName,
+        appKey,
         navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
       });
     }
@@ -238,19 +283,8 @@ export function PreviewAppWrapper({ children, ...rest }) {
       ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={() => {
+        layoutCallback?.();
         setHasLayout(true);
-        if (devtoolsAgent) {
-          const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
-          const sceneName = SceneTracker.getActiveScene().name;
-          const isRunningPreview = isPreviewUrl(sceneName);
-          if (isRunningPreview) {
-            const preview = (global.__RNIDE_previews || new Map()).get(sceneName);
-            devtoolsAgent._bridge.send("RNIDE_navigationChanged", {
-              displayName: `preview:${preview.name}`, // TODO: make names unique if there are multiple previews of the same component
-              id: sceneName,
-            });
-          }
-        }
       }}>
       {children}
     </View>

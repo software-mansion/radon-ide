@@ -7,17 +7,17 @@ after(() => {
   sinon.restore();
 });
 
-test("Shows error on Windows", async () => {
-  stubWindowsPlatform();
+test("Shows error on Linux", async () => {
+  stubLinuxPlatform();
   const { showErrorMessage } = stubMessageBox();
 
   await getExtension().activate();
 
-  assert.ok(showErrorMessage.calledOnceWith("React Native IDE works only on macOS."));
+  assert.ok(showErrorMessage.calledOnceWith("React Native IDE works only on macOS and Windows."));
 });
 
-function stubWindowsPlatform() {
-  sinon.stub(process, "platform").value("win32");
+function stubLinuxPlatform() {
+  sinon.stub(process, "platform").value("linux");
 }
 
 function stubMessageBox() {
