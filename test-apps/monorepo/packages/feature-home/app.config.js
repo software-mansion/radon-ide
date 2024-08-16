@@ -1,7 +1,7 @@
 export default ({ config }) => ({
   ...config,
-  name: '@acme/feature-home',
-  slug: '@acme/feature-home',
+  name: '@acme/feat',
+  slug: '@acme/feat',
   version: '0.0.1',
   orientation: 'portrait',
   icon: './assets/icon.png',

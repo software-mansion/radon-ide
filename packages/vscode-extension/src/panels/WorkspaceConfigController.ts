@@ -7,7 +7,6 @@ import {
   WorkspaceConfigEventListener,
 } from "../common/WorkspaceConfig";
 import { EventEmitter } from "stream";
-import { getLaunchConfigurations } from "../utilities/launchConfiguration";
 
 export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
   private config: WorkspaceConfigProps;
@@ -18,8 +17,6 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
     const configuration = workspace.getConfiguration("ReactNativeIDE");
     this.config = {
       panelLocation: configuration.get<PanelLocation>("panelLocation")!,
-      launchConfigurations: getLaunchConfigurations(),
-      appRoot: configuration.get<string>("appRoot")! || getLaunchConfigurations()[0].appRoot || ".",
     };
 
     this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
@@ -29,8 +26,6 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
       const config = workspace.getConfiguration("ReactNativeIDE");
       this.config = {
         panelLocation: config.get<PanelLocation>("panelLocation")!,
-        launchConfigurations: getLaunchConfigurations(),
-        appRoot: config.get<string>("appRoot")! || getLaunchConfigurations()[0].appRoot || ".",
       };
       this.eventEmitter.emit("configChange", this.config);
     });

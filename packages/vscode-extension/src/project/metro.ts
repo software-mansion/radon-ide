@@ -5,9 +5,8 @@ import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { Devtools } from "./devtools";
 import stripAnsi from "strip-ansi";
-import { getDefaultLaunchConfiguration } from "../utilities/launchConfiguration";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import fs from "fs";
-import { findAppRootFolder } from "../extension";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -129,12 +128,8 @@ export class Metro implements Disposable {
     resetCache: boolean,
     progressListener: (newStageProgress: number) => void
   ) {
-    const launchConfiguration = getDefaultLaunchConfiguration();
-
     const appRootFolder = getAppRootFolder();
-
-    Logger.info("Starting Metro -->", launchConfiguration.appRoot);
-
+    const launchConfiguration = getLaunchConfiguration();
     await this.devtools.ready();
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
@@ -282,7 +277,7 @@ function shouldUseExpoCLI() {
   // 1. expo cli package is present in the app's node_modules (we can resolve it using require.resolve)
   // 2. package.json has expo scripts in it (i.e. "expo start" or "expo build" scripts are present in the scripts section of package.json)
   // 3. the user doesn't use a custom metro config option – this is only available for RN CLI projects
-  const config = getDefaultLaunchConfiguration();
+  const config = getLaunchConfiguration();
   if (config.isExpo) {
     return true;
   }

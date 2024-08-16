@@ -13,7 +13,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@acme/feature-home": "*",
+    "@acme/feat": "*",
     "@expo/metro-runtime": "^3.2.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "expo": "^51.0.8",

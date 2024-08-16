@@ -4,7 +4,7 @@ import { DependencyChecker } from "./DependencyChecker";
 import { command } from "../utilities/subprocess";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { getAppRootFolder } from "../utilities/extensionContext";
-import { getDefaultLaunchConfiguration } from "../utilities/launchConfiguration";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 export class DependencyInstaller implements Disposable {
   private webview: Webview;
@@ -70,8 +70,7 @@ export function installIOSDependencies(appRootFolder: string, forceCleanBuild: b
   return command("pod install", {
     cwd: iosDirPath,
     env: {
-      ...process.env,
-      ...getDefaultLaunchConfiguration().env,
+      ...getLaunchConfiguration().env,
       LANG: "en_US.UTF-8",
     },
   });

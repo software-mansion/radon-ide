@@ -16,7 +16,16 @@ interface SettingsDropdownProps {
 }
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
-  const { panelLocation, update, launchConfigurations, appRoot } = useWorkspaceConfig();
+  const { panelLocation, update } = useWorkspaceConfig();
+  const launchConfigurations = [
+    {
+      name: "Test",
+      appRoot: "/",
+    },
+  ];
+
+  const appRoot = "/";
+
   const { openModal } = useModal();
 
   return (
@@ -131,14 +140,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                     <DropdownMenu.Item
                       className="dropdown-menu-item"
                       onSelect={async () => {
-                        update(
-                          "appRoot",
-                          launchConfigurations.find(
-                            (config) => config.appRoot === launchConfig.appRoot
-                          )!.appRoot!
-                        );
-
-                        await project.restart(true, true);
+                        await project.restart(true);
                       }}>
                       <span className="codicon codicon-debug-console" />
                       {launchConfig.name}

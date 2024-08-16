@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@acme/feature-home",
+  "name": "@acme/feat",
   "version": "1.0.0",
   "types": "./build/index.d.ts",
   "react-native": "./src/index.ts",

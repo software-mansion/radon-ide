@@ -1,4 +1,4 @@
-import { HomeIcon, HomeScreen } from '@acme/feature-home';
+import { HomeIcon, HomeScreen } from '@acme/feat';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 

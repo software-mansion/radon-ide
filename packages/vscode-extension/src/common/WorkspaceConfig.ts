@@ -1,11 +1,7 @@
-import { LaunchConfigurationOptions } from "../utilities/launchConfiguration";
-
 export type PanelLocation = "tab" | "side-panel" | "secondary-side-panel";
 
 export type WorkspaceConfigProps = {
   panelLocation: PanelLocation;
-  launchConfigurations: LaunchConfigurationOptions[];
-  appRoot: string;
 };
 
 export interface WorkspaceConfigEventMap {

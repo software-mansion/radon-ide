@@ -28,7 +28,7 @@ import os from "os";
 import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
-import { getDefaultLaunchConfiguration } from "./utilities/launchConfiguration";
+import { getLaunchConfiguration } from "./utilities/launchConfiguration";
 import { Project } from "./project/project";
 import { findSingleFileInWorkspace } from "./utilities/common";
 
@@ -180,14 +180,6 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  context.subscriptions.push(
-    workspace.onDidChangeConfiguration(async (event: ConfigurationChangeEvent) => {
-      if (event.affectsConfiguration("ReactNativeIDE.appRoot")) {
-        await configureAppRootFolder();
-      }
-    })
-  );
-
   await configureAppRootFolder();
 }
 
@@ -219,7 +211,9 @@ async function configureAppRootFolder() {
   return appRootFolder;
 }
 
-export async function findFolder(appRootFromLaunchConfig?: string) {
+async function findAppRootFolder() {
+  const launchConfiguration = getLaunchConfiguration();
+  const appRootFromLaunchConfig = launchConfiguration.appRoot;
   if (appRootFromLaunchConfig) {
     let appRoot: string | undefined;
     workspace.workspaceFolders?.forEach((folder) => {
@@ -291,14 +285,6 @@ export async function findFolder(appRootFromLaunchConfig?: string) {
       }
     });
   return undefined;
-}
-
-async function findAppRootFolder() {
-  const launchConfiguration = getDefaultLaunchConfiguration();
-
-  const appRootFolder = await findFolder(launchConfiguration.appRoot);
-
-  return appRootFolder;
 }
 
 async function openDevMenu() {

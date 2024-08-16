@@ -7,6 +7,8 @@
   ],
   "scripts": {
     "dev": "turbo dev",
+    "ui": "yarn workspace @acme/ui",
+    "feat": "yarn workspace @acme/feat",
     "dev:mobile": "turbo dev --filter=\"{./apps/mobile}...\"",
     "dev:packages": "turbo dev --filter=\"{./packages/*}\"",
     "lint": "turbo lint",

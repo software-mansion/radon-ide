@@ -198,7 +198,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     this.reloadMetro();
   }
 
-  public async restart(forceCleanBuild: boolean, forceMetroRestart: boolean = false) {
+  public async restart(forceCleanBuild: boolean) {
     this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
     if (forceCleanBuild || this.nativeFilesChangedSinceLastBuild) {
       await this.start(true, true);
@@ -208,7 +208,7 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     }
 
     // if we have an active device session, we try reloading metro
-    if (this.deviceSession?.isActive || forceMetroRestart) {
+    if (this.deviceSession?.isActive) {
       this.reloadMetro();
       return;
     }
@@ -287,9 +287,6 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     });
 
     Logger.debug(`Launching metro`);
-    this.metro.dispose();
-    // Wait 1s to ensure that the previous metro process is killed
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     const waitForMetro = this.metro.start(
       forceCleanBuild,
       throttle((stageProgress: number) => {

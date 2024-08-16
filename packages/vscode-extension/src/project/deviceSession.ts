@@ -7,7 +7,7 @@ import { BuildResult, DisposableBuild } from "../builders/BuildManager";
 import { DeviceSettings, StartupMessage } from "../common/Project";
 import { Platform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { getDefaultLaunchConfiguration } from "../utilities/launchConfiguration";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
 
@@ -29,7 +29,6 @@ export class DeviceSession implements Disposable {
     this.debugSession && debug.stopDebugging(this.debugSession);
     this.disposableBuild?.dispose();
     this.device?.dispose();
-    this.metro.dispose();
   }
 
   get isActive() {
@@ -41,8 +40,7 @@ export class DeviceSession implements Disposable {
     previewReadyCallback: PreviewReadyCallback,
     progressCallback: ProgressCallback
   ) {
-    const shouldWaitForAppLaunch =
-      getDefaultLaunchConfiguration().preview?.waitForAppLaunch !== false;
+    const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch
       ? new Promise<void>((res) => {
           const listener = (event: string, payload: any) => {
