@@ -80,6 +80,8 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     mountCallback?.();
   }, [mountCallback]);
 
+  const layoutCallback = initialProps?.__RNIDE_onLayout;
+
   const handleNavigationChange = useCallback(
     (navigationDescriptor) => {
       navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
@@ -117,7 +119,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
       AppRegistry.runApplication("main", {
         rootTag,
         initialProps: {
-          __RNIDE_onMount: closePromiseResolve,
+          __RNIDE_onLayout: closePromiseResolve,
         },
       });
     } else {
@@ -281,6 +283,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
       ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={() => {
+        layoutCallback?.();
         setHasLayout(true);
       }}>
       {children}
