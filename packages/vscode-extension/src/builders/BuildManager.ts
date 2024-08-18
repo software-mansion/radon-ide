@@ -10,9 +10,6 @@ import { Disposable, OutputChannel, window } from "vscode";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelToken } from "./cancelToken";
 
-const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
-const IOS_BUILD_CACHE_KEY = "ios_build_cache";
-
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
 type BuildCacheInfo = {
@@ -47,13 +44,12 @@ export class BuildManager {
 
     const buildApp = async () => {
       const newFingerprint = await generateWorkspaceFingerprint();
-      const cacheKey =
-        platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
       if (forceCleanBuild) {
-        // we reset the cache when force clean build is requested as the newly started build may end up being cancelled
-        await extensionContext.workspaceState.update(cacheKey, undefined);
+        // we reset the cache when force clean build is requested as the newly
+        // started build may end up being cancelled
+        await storeCachedBuild(platform, undefined);
       } else {
-        const cachedBuild = await loadCachedBuild(cacheKey, newFingerprint);
+        const cachedBuild = await loadCachedBuild(platform, newFingerprint);
         if (cachedBuild) {
           return cachedBuild;
         }
@@ -90,8 +86,7 @@ export class BuildManager {
           }
         );
       }
-
-      await extensionContext.workspaceState.update(cacheKey, {
+      await storeCachedBuild(platform, {
         fingerprint: newFingerprint,
         buildHash: await getAppHash(getAppPath(buildResult)),
         buildResult,
@@ -112,11 +107,8 @@ export class BuildManager {
   }
 }
 
-async function loadCachedBuild(
-  cacheKey: typeof ANDROID_BUILD_CACHE_KEY | typeof IOS_BUILD_CACHE_KEY,
-  newFingerprint: string
-) {
-  const cacheInfo = extensionContext.workspaceState.get<BuildCacheInfo>(cacheKey);
+async function loadCachedBuild(platform: DevicePlatform, newFingerprint: string) {
+  const cacheInfo = getCachedBuild(platform);
   const fingerprintsMatch = cacheInfo?.fingerprint === newFingerprint;
   if (!fingerprintsMatch) {
     return undefined;
@@ -145,16 +137,9 @@ async function loadCachedBuild(
 
 export async function didFingerprintChange(platform: DevicePlatform) {
   const newFingerprint = await generateWorkspaceFingerprint();
+  const { fingerprint } = getCachedBuild(platform) ?? {};
 
-  if (platform === DevicePlatform.IOS) {
-    const { fingerprint: iosFingerprint } =
-      extensionContext.workspaceState.get<BuildCacheInfo>(IOS_BUILD_CACHE_KEY) ?? {};
-    return newFingerprint !== iosFingerprint;
-  }
-
-  const { fingerprint: androidFingerprint } =
-    extensionContext.workspaceState.get<BuildCacheInfo>(ANDROID_BUILD_CACHE_KEY) ?? {};
-  return newFingerprint !== androidFingerprint;
+  return newFingerprint !== fingerprint;
 }
 
 async function getAppHash(appPath: string) {
@@ -163,4 +148,19 @@ async function getAppHash(appPath: string) {
 
 function getAppPath(build: BuildResult) {
   return build.platform === DevicePlatform.Android ? build.apkPath : build.appPath;
+}
+
+const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
+const IOS_BUILD_CACHE_KEY = "ios_build_cache";
+
+async function storeCachedBuild(platform: DevicePlatform, build: BuildCacheInfo | undefined) {
+  const cacheKey =
+    platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+  await extensionContext.workspaceState.update(cacheKey, build);
+}
+
+function getCachedBuild(platform: DevicePlatform) {
+  const cacheKey =
+    platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+  return extensionContext.workspaceState.get<BuildCacheInfo>(cacheKey);
 }
