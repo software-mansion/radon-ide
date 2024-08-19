@@ -210,7 +210,7 @@
               },
               "buildScript": {
                 "type": "object",
-                "description": "Script used to build app or fetch app from known location. Executed as part of building process. Should return a path to built app.",
+                "description": "Script used to build app or fetch app from known location. Executed as part of building process. Receives 'ios' or 'android' as first argument and should return a path to built app.",
                 "properties": {
                   "name": {
                     "type": "string",
