@@ -84,6 +84,10 @@ function adaptMetroConfig(config) {
     extraNodeModulesPaths.push(path.join(next, "node_modules"));
   }
 
+  // because some libraries imported by the files in extension lib are not imported directly by an application, 
+  // but are imported by react native we need to add it's node_modules to the paths list
+  extraNodeModulesPaths.push(path.join(appRoot,"node_modules/react-native/node_modules"));
+
   config.resolver.nodeModulesPaths = [
     ...(config.resolver.nodeModulesPaths || []),
     ...extraNodeModulesPaths,
