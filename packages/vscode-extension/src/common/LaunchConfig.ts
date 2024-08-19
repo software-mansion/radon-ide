@@ -1,6 +1,10 @@
 export type LaunchConfigurationOptions = {
   appRoot?: string;
   metroConfigPath?: string;
+  buildScript?: {
+    name: string;
+    args?: string[];
+  };
   env?: Record<string, string>;
   ios?: {
     scheme?: string;

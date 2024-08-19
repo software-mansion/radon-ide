@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import { OutputChannel } from "vscode";
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
@@ -83,7 +84,23 @@ export async function buildIos(
     cancelToken: CancelToken
   ) => Promise<void>
 ): Promise<IOSBuildResult> {
-  const { ios: buildOptions } = getLaunchConfiguration();
+  const { buildScript, ios: buildOptions } = getLaunchConfiguration();
+
+  if (buildScript) {
+    const buildProcess = cancelToken.adapt(exec(buildScript.name, buildScript.args));
+    let appPath: string | undefined;
+    lineReader(buildProcess).onLineRead((line) => {
+      appPath = line.trim();
+    });
+
+    await buildProcess;
+
+    if (!appPath || fs.existsSync(appPath)) {
+      throw new Error("Build script didn't output any existing app path");
+    }
+
+    return { appPath, bundleID: await getBundleID(appPath), platform: DevicePlatform.IOS };
+  }
 
   if (await isExpoGoProject()) {
     const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);

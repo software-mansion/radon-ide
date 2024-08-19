@@ -76,14 +76,36 @@ export async function buildAndroid(
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ): Promise<AndroidBuildResult> {
+  const { buildScript, env, android } = getLaunchConfiguration();
+
+  if (buildScript) {
+    const buildProcess = cancelToken.adapt(exec(buildScript.name, buildScript.args));
+    let apkPath: string | undefined;
+    lineReader(buildProcess).onLineRead((line) => {
+      apkPath = line.trim();
+    });
+
+    await buildProcess;
+
+    if (!apkPath || fs.existsSync(apkPath)) {
+      throw new Error("Build script didn't output any app path");
+    }
+
+    return {
+      apkPath,
+      packageName: await extractPackageName(apkPath, cancelToken),
+      platform: DevicePlatform.Android,
+    };
+  }
+
   if (await isExpoGoProject()) {
     const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken);
     return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
   }
+
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
-  const buildOptions = getLaunchConfiguration();
-  const productFlavor = buildOptions.android?.productFlavor || "";
-  const buildType = buildOptions.android?.buildType || "debug";
+  const productFlavor = android?.productFlavor || "";
+  const buildType = android?.buildType || "debug";
   const gradleArgs = [
     "-x",
     "lint",
@@ -114,7 +136,7 @@ export async function buildAndroid(
   const buildProcess = cancelToken.adapt(
     exec("./gradlew", gradleArgs, {
       cwd: androidSourceDir,
-      env: { ...buildOptions.env, JAVA_HOME, ANDROID_HOME },
+      env: { ...env, JAVA_HOME, ANDROID_HOME },
       buffer: false,
     })
   );

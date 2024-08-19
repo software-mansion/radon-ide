@@ -208,6 +208,26 @@
                 "type": "string",
                 "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
               },
+              "buildScript": {
+                "type": "object",
+                "description": "Script used to build app or fetch app from known location. Executed as part of building process. Should return a path to built app.",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "A path to building script."
+                  },
+                  "args": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Arguments passed to the build script."
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              },
               "ios": {
                 "description": "Provides a way to customize Xcode builds for iOS",
                 "type": "object",
