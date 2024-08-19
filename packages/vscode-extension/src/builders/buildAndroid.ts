@@ -79,7 +79,9 @@ export async function buildAndroid(
   const { buildScript, env, android } = getLaunchConfiguration();
 
   if (buildScript) {
-    const buildProcess = cancelToken.adapt(exec(buildScript.name, buildScript.args));
+    const buildProcess = cancelToken.adapt(
+      exec(buildScript.name, ["android", ...(buildScript.args ?? [])])
+    );
     let apkPath: string | undefined;
     lineReader(buildProcess).onLineRead((line) => {
       apkPath = line.trim();

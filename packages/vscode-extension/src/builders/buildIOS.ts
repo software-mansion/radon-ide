@@ -87,7 +87,9 @@ export async function buildIos(
   const { buildScript, ios: buildOptions } = getLaunchConfiguration();
 
   if (buildScript) {
-    const buildProcess = cancelToken.adapt(exec(buildScript.name, buildScript.args));
+    const buildProcess = cancelToken.adapt(
+      exec(buildScript.name, ["ios", ...(buildScript.args ?? [])])
+    );
     let appPath: string | undefined;
     lineReader(buildProcess).onLineRead((line) => {
       appPath = line.trim();
