@@ -38,6 +38,7 @@ function DiagnosticView() {
       <DiagnosticItem label="React Native" item={dependencies.ReactNative} />
       <DiagnosticItem label="Expo" item={dependencies.Expo} />
       <DiagnosticItem label="Pods" item={dependencies.Pods} />
+      <DiagnosticItem label="Storybook" item={dependencies.Storybook} />
       <div className="diagnostic-section-margin" />
 
       <div className="diagnostic-button-container">
