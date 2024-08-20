@@ -1,4 +1,4 @@
-import { Disposable } from "vscode";
+import vscode, { Disposable, window } from "vscode";
 import path from "path";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { extensionContext } from "../utilities/extensionContext";
@@ -22,8 +22,14 @@ export class Preview implements Disposable {
       Platform.select({ macos: "sim-server-executable", windows: "sim-server-executable.exe" })
     );
 
+    const token = await extensionContext.secrets.get("API_KEY");
+    if (!token) {
+      window.showErrorMessage("No token provided!");
+      return;
+    }
+
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
-    const subprocess = exec(simControllerBinary, this.args, { buffer: false });
+    const subprocess = exec(simControllerBinary, this.args.concat([token]), { buffer: false });
     this.subprocess = subprocess;
 
     return new Promise<string>((resolve, reject) => {

@@ -68,20 +68,8 @@ export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
   let apiKey = await context.secrets.get("API_KEY");
-
   if (!apiKey) {
     apiKey = await storeAPIKey(context.secrets);
-  }
-
-  const basePath = path.join(context.extensionPath, "dist");
-  const checkJWTBinary = path.join(basePath, "checkjwt");
-  const publicPemPath = path.join(basePath, "public.pem");
-
-  try {
-    await exec("node", [checkJWTBinary, publicPemPath, apiKey || ""]);
-  } catch (e) {
-    window.showErrorMessage("Authentication failed. Set a proper token.", "Dismiss");
-    // return;
   }
 
   if (Platform.OS !== "macos" && Platform.OS !== "windows") {
