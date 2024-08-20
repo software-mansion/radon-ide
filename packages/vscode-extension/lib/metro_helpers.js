@@ -71,6 +71,7 @@ function adaptMetroConfig(config) {
   config.resolver.extraNodeModules = {
     ...config.resolver.extraNodeModules,
     __RNIDE_lib__: extensionLib,
+    __APPDIR__: appRoot,
   };
 
   // This code is needed to resolve modules that the extension lib files import.
