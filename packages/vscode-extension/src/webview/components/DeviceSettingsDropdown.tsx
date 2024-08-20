@@ -140,9 +140,10 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 className="dropdown-menu-content"
                 sideOffset={2}
                 alignOffset={-5}>
-                {resetOptions.map((option) => (
+                {resetOptions.map((option, index) => (
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
+                    key={index}
                     onSelect={() => project.resetAppPermissions(option.value)}>
                     <span className={`codicon codicon-${option.icon}`} />
                     {option.label}
