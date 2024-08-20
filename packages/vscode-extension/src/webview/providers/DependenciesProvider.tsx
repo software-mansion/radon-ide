@@ -203,7 +203,7 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
           updateDependency("Pods", { error: undefined, installed: InstallationStatus.InProgress });
           break;
         case "isStorybookInstalled":
-          updateDependency("Storybook", data);
+          updateDependency("Storybook", data, { isOptional: true });
           break;
       }
     };
