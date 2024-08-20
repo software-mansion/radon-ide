@@ -9,6 +9,7 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { PREVIEW_APP_KEY } = require("./preview");
+const { openStorybook, selectStorybookStory } = require("./storybook_helper");
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -74,6 +75,8 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
         initialProps: { previewKey },
       });
       const preview = global.__RNIDE_previews.get(previewKey);
+      // console.log("FRYTKI previewKey", previewKey);
+      // console.log("FRYTKI preview", preview);
       handleNavigationChange({ id: previewKey, name: `preview:${preview.name}` });
     },
     [rootTag, handleNavigationChange]
@@ -96,6 +99,15 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     }
     return closePreviewPromise;
   }, [rootTag]);
+
+  const openStorybookStory = useCallback(
+    async (componentTitle, storyName) => {
+      openStorybook();
+      selectStorybookStory(componentTitle, storyName);
+      openPreview("preview:/123:123"); // frytki
+    },
+    [rootTag, handleNavigationChange]
+  );
 
   useAgentListener(
     devtoolsAgent,
@@ -212,6 +224,15 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
 
     DevMenu.show();
   });
+
+  useAgentListener(
+    devtoolsAgent,
+    "RNIDE_selectStorybookStory",
+    (payload) => {
+      openStorybookStory(payload.componentTitle, payload.storyName);
+    },
+    [openStorybookStory]
+  );
 
   useEffect(() => {
     if (devtoolsAgent) {

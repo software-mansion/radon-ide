@@ -52,6 +52,9 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
     selectedDevice: undefined,
   };
 
+  // TODO add istallation state
+  // private storybookInstallationState: "Installed" | "Uninstalled"
+
   private deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
     DEVICE_SETTINGS_KEY
   ) ?? {
@@ -399,6 +402,16 @@ export class Project implements Disposable, MetroDelegate, ProjectInterface {
 
   public startPreview(appKey: string) {
     this.deviceSession?.startPreview(appKey);
+  }
+
+  public async isStorybookInstalled() {
+    // TODO change veryfication method
+    return await this.dependencyManager.checkStorybookInstalled();
+  }
+
+  public async selectStorybookStory(componentTitle: string, storyName: string) {
+    (await this.isStorybookInstalled()) &&
+      this.devtools.send("RNIDE_selectStorybookStory", { componentTitle, storyName });
   }
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {
