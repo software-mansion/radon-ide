@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.16",
+  "version": "0.0.17",
   "engines": {
     "vscode": "^1.75.0",
     "os": "darwin"
@@ -89,6 +89,12 @@
             "secondary-side-panel"
           ],
           "description": "Controlls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
+        },
+        "ReactNativeIDE.showDeviceFrame": {
+          "type": "boolean",
+          "scope": "window",
+          "default": true,
+          "description": "Shows device frame in the IDE panel."
         },
         "ReactNativeIDE.inspectorExcludePattern": {
           "type": "string",

@@ -61,7 +61,7 @@ export function generateWebviewContent(
       </head>
       <body>
         <div id="root"></div>
-        <script>window.RNIDE_hostOS = "${Platform.OS}";</script>
+        <script nonce="${nonce}">window.RNIDE_hostOS = "${Platform.OS}";</script>
         <script type="module" nonce="${nonce}" src="${scriptUri}" />
       </body>
     </html>

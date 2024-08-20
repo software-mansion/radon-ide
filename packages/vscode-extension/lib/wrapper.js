@@ -8,7 +8,6 @@ const {
   Linking,
   findNodeHandle,
 } = require("react-native");
-const { PREVIEW_APP_KEY } = require("./preview");
 const { openStorybook, selectStorybookStory } = require("./storybook_helper");
 
 const navigationPlugins = [];
@@ -18,9 +17,39 @@ export function registerNavigationPlugin(name, plugin) {
 
 let navigationHistory = new Map();
 
+const InternalImports = {
+  get PREVIEW_APP_KEY() {
+    return require("./preview").PREVIEW_APP_KEY;
+  },
+};
+
+const RNInternals = {
+  get getInspectorDataForViewAtPoint() {
+    return require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
+  },
+  get SceneTracker() {
+    return require("react-native/Libraries/Utilities/SceneTracker");
+  },
+  get LoadingView() {
+    // In React Native 0.75 LoadingView was moved to DevLoadingView
+    // We need to use `try catch` pattern for both files as it has special semantics
+    // in bundler. If require isn't surrounded with try catch it will need to resolve
+    // at build time.
+    try {
+      return require("react-native/Libraries/Utilities/LoadingView");
+    } catch (e) {}
+    try {
+      return require("react-native/Libraries/Utilities/DevLoadingView");
+    } catch (e) {}
+    throw new Error("Couldn't locate LoadingView module");
+  },
+  get DevMenu() {
+    return require("react-native/Libraries/NativeModules/specs/NativeDevMenu").default;
+  },
+};
+
 function getCurrentScene() {
-  const SceneTracker = require("react-native/Libraries/Utilities/SceneTracker");
-  return SceneTracker.getActiveScene().name;
+  return RNInternals.SceneTracker.getActiveScene().name;
 }
 
 function emptyNavigationHook() {
@@ -52,6 +81,8 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     mountCallback?.();
   }, [mountCallback]);
 
+  const layoutCallback = initialProps?.__RNIDE_onLayout;
+
   const handleNavigationChange = useCallback(
     (navigationDescriptor) => {
       navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
@@ -70,7 +101,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
 
   const openPreview = useCallback(
     (previewKey) => {
-      AppRegistry.runApplication(PREVIEW_APP_KEY, {
+      AppRegistry.runApplication(InternalImports.PREVIEW_APP_KEY, {
         rootTag,
         initialProps: { previewKey },
       });
@@ -87,11 +118,11 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     const closePreviewPromise = new Promise((resolve) => {
       closePromiseResolve = resolve;
     });
-    if (getCurrentScene() === PREVIEW_APP_KEY) {
+    if (getCurrentScene() === InternalImports.PREVIEW_APP_KEY) {
       AppRegistry.runApplication("main", {
         rootTag,
         initialProps: {
-          __RNIDE_onMount: closePromiseResolve,
+          __RNIDE_onLayout: closePromiseResolve,
         },
       });
     } else {
@@ -151,7 +182,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     devtoolsAgent,
     "RNIDE_inspect",
     (payload) => {
-      const getInspectorDataForViewAtPoint = require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
+      const getInspectorDataForViewAtPoint = RNInternals.getInspectorDataForViewAtPoint;
       const { width, height } = Dimensions.get("screen");
 
       getInspectorDataForViewAtPoint(
@@ -220,9 +251,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
   useAgentListener(devtoolsAgent, "RNIDE_iosDevMenu", (_payload) => {
     // this native module is present only on iOS and will crash if called
     // on Android
-    const DevMenu = require("react-native/Libraries/NativeModules/specs/NativeDevMenu").default;
-
-    DevMenu.show();
+    RNInternals.DevMenu.show();
   });
 
   useAgentListener(
@@ -237,7 +266,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
   useEffect(() => {
     if (devtoolsAgent) {
       LogBox.uninstall();
-      const LoadingView = require("react-native/Libraries/Utilities/LoadingView");
+      const LoadingView = RNInternals.LoadingView;
       LoadingView.showMessage = (message) => {
         devtoolsAgent._bridge.send("RNIDE_fastRefreshStarted");
       };
@@ -275,6 +304,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
       ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={() => {
+        layoutCallback?.();
         setHasLayout(true);
       }}>
       {children}

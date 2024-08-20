@@ -4,6 +4,7 @@ import { vscode } from "../utilities/vscode";
 import Anchor from "../components/shared/Anchor";
 import CheckIcon from "../components/icons/CheckIcon";
 import CloseIcon from "../components/icons/CloseIcon";
+import CloseGrayIcon from "../components/icons/CloseGrayIcon";
 import {
   DependencyState,
   InstallationStatus,
@@ -14,6 +15,7 @@ import Tooltip from "../components/shared/Tooltip";
 import IconButton from "../components/shared/IconButton";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
+import { Platform } from "../providers/UtilsProvider";
 
 function DiagnosticView() {
   const { dependencies, runDiagnostics } = useDependencies();
@@ -29,15 +31,19 @@ function DiagnosticView() {
       <DiagnosticItem label="Android Emulator" item={dependencies.AndroidEmulator} />
       <div className="diagnostic-section-margin" />
 
-      <Label>iOS</Label>
-      <DiagnosticItem label="Xcode" item={dependencies.Xcode} />
-      <DiagnosticItem label="CocoaPods" item={dependencies.CocoaPods} />
-      <div className="diagnostic-section-margin" />
+      {Platform.OS === "macos" && (
+        <>
+          <Label>iOS</Label>
+          <DiagnosticItem label="Xcode" item={dependencies.Xcode} />
+          <DiagnosticItem label="CocoaPods" item={dependencies.CocoaPods} />
+          <div className="diagnostic-section-margin" />
+        </>
+      )}
 
       <Label>Project related</Label>
       <DiagnosticItem label="React Native" item={dependencies.ReactNative} />
       <DiagnosticItem label="Expo" item={dependencies.Expo} />
-      <DiagnosticItem label="Pods" item={dependencies.Pods} />
+      {Platform.OS === "macos" && <DiagnosticItem label="Pods" item={dependencies.Pods} />}
       <DiagnosticItem label="Storybook" item={dependencies.Storybook} />
       <div className="diagnostic-section-margin" />
 
@@ -64,6 +70,7 @@ function DiagnosticItem({ label, item, action }: DiagnosticItemProps) {
       [InstallationStatus.Installed]: <CheckIcon />,
       [InstallationStatus.NotInstalled]: <CloseIcon />,
       [InstallationStatus.InProgress]: <ProgressRing />,
+      [InstallationStatus.Optional]: <CloseGrayIcon />,
     }[item.installed];
   }
   return (

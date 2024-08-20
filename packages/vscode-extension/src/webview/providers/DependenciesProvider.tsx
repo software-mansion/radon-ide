@@ -12,6 +12,7 @@ export enum InstallationStatus {
   NotInstalled,
   InProgress,
   Installed,
+  Optional,
 }
 
 export interface DependencyState {
@@ -150,7 +151,11 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   }, []);
 
   const updateDependency = useCallback(
-    (name: keyof Dependencies, newState: Partial<DependencyState>) => {
+    (name: keyof Dependencies, newState: Partial<DependencyState>, { isOptional = false } = {}) => {
+      if (isOptional && newState.installed === InstallationStatus.NotInstalled) {
+        newState.installed = InstallationStatus.Optional;
+      }
+
       setDependencies((prev) => ({
         ...prev,
         [name]: { ...prev[name], ...newState },

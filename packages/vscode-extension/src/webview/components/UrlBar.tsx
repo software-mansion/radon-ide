@@ -2,10 +2,37 @@ import { useEffect, useState } from "react";
 import IconButton from "./shared/IconButton";
 import { ProjectInterface, ProjectState } from "../../common/Project";
 import UrlSelect from "./UrlSelect";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { IconButtonWithOptions } from "./IconButtonWithOptions";
 
 interface UrlBarProps {
   project: ProjectInterface;
   disabled?: boolean;
+}
+
+interface ReloadButtonProps {
+  project: ProjectInterface;
+  disabled: boolean;
+}
+
+function ReloadButton({ project, disabled }: ReloadButtonProps) {
+  return (
+    <IconButtonWithOptions
+      onClick={() => project.restart(false)}
+      tooltip={{
+        label: "Reload the app",
+        side: "bottom",
+      }}
+      disabled={disabled}
+      options={{
+        "Hot reload": () => project.reload("hotReload"),
+        "Restart app process": () => project.reload("restartProcess"),
+        "Reinstall app": () => project.reload("reinstall"),
+        "Clean rebuild": () => project.restart(true),
+      }}>
+      <span className="codicon codicon-refresh" />
+    </IconButtonWithOptions>
+  );
 }
 
 function UrlBar({ project, disabled }: UrlBarProps) {
@@ -46,15 +73,7 @@ function UrlBar({ project, disabled }: UrlBarProps) {
         }}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
-      <IconButton
-        onClick={() => project.restart(false)}
-        tooltip={{
-          label: "Reset the app",
-          side: "bottom",
-        }}
-        disabled={disabled}>
-        <span className="codicon codicon-refresh" />
-      </IconButton>
+      <ReloadButton project={project} disabled={disabled ?? false} />
       <IconButton
         onClick={() => {
           project.goHome();

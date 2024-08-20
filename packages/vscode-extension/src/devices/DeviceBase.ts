@@ -2,7 +2,7 @@ import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings } from "../common/Project";
-import { DevicePlatform } from "../common/DeviceManager";
+import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
 import fs from "fs";
@@ -21,6 +21,7 @@ export abstract class DeviceBase implements Disposable {
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
   abstract makePreview(): Preview;
   abstract get platform(): DevicePlatform;
+  abstract get deviceInfo(): DeviceInfo;
   abstract resetAppPermissions(
     appPermission: AppPermissionType,
     buildResult: BuildResult
@@ -41,10 +42,6 @@ export abstract class DeviceBase implements Disposable {
       }
     }
     this.preview?.dispose();
-  }
-
-  get previewURL(): string | undefined {
-    return this.preview?.streamURL;
   }
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {

@@ -25,6 +25,18 @@ export class Devtools implements Disposable {
     await this.startPromise;
   }
 
+  public async appReady() {
+    return new Promise<void>((resolve) => {
+      const listener = (event: string) => {
+        if (event === "RNIDE_appReady") {
+          this.removeListener(listener);
+          resolve();
+        }
+      };
+      this.addListener(listener);
+    });
+  }
+
   public async start() {
     if (this.startPromise) {
       throw new Error("Devtools already started");
@@ -76,18 +88,6 @@ export class Devtools implements Disposable {
 
   public send(event: string, payload?: any) {
     this.socket?.send(JSON.stringify({ event, payload }));
-  }
-
-  public rpc(event: string, payload: any, responseEvent: string, callback: (payload: any) => void) {
-    const listener = (message: string, data: any) => {
-      if (message === responseEvent) {
-        callback(data);
-        this.removeListener(listener);
-      }
-    };
-
-    this.addListener(listener);
-    this.send(event, payload);
   }
 
   public addListener(listener: (event: string, payload: any) => void) {
