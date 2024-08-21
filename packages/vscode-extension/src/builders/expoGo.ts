@@ -42,7 +42,7 @@ export async function isExpoGoProject(): Promise<boolean> {
     "expo_go_project_tester.js"
   );
   try {
-    const result = await exec(`node`, [expoGoProjectTesterScript], {
+    const result = await exec("node", [expoGoProjectTesterScript], {
       cwd: getAppRootFolder(),
       allowNonZeroExit: true,
     });
@@ -84,7 +84,7 @@ export function fetchExpoLaunchDeeplink(
 export async function downloadExpoGo(platform: DevicePlatform, cancelToken: CancelToken) {
   const downloadScript = path.join(extensionContext.extensionPath, "lib", "expo_go_download.js");
   const { stdout } = await cancelToken.adapt(
-    exec(`node`, [downloadScript, platform], {
+    exec("node", [downloadScript, platform], {
       cwd: getAppRootFolder(),
     })
   );

@@ -95,9 +95,9 @@ export class DeviceSession implements Disposable {
   }
 
   private async launchApp() {
-    // FIXME: Windows getting stuck waiting for the promise to resolve. This is
-    // caused by wrapper.js not being used as a wrapper, despite being used in
-    // runtime.js. runtime.js and Metro transforms are ran by JS engine.
+    // FIXME: Windows getting stuck waiting for the promise to resolve. This
+    // seems like a problem with app connecting to Metro and using embedded
+    // bundle instead.
     const shouldWaitForAppLaunch = Platform.select({
       macos: getLaunchConfiguration().preview?.waitForAppLaunch !== false,
       windows: false,

@@ -90,7 +90,7 @@ export class Metro implements Disposable {
     resetCache: boolean,
     metroEnv: typeof process.env
   ) {
-    return exec(`node`, [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
+    return exec("node", [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
       cwd: appRootFolder,
       env: metroEnv,
       buffer: false,
@@ -107,7 +107,7 @@ export class Metro implements Disposable {
       require.resolve("react-native", { paths: [appRootFolder] })
     );
     return exec(
-      `node`,
+      "node",
       [
         path.join(reactNativeRoot, "cli.js"),
         "start",
