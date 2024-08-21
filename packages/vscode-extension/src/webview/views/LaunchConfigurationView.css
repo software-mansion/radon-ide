@@ -1,4 +1,4 @@
-.configuration {
+.input-configuration {
   display: inline-flex;
   box-sizing: border-box;
   align-items: center;
@@ -13,10 +13,11 @@
   background-color: var(--swm-select-background);
   cursor: pointer;
   box-shadow: var(--swm-select-shadow);
+  margin-bottom: 5px;
 }
 
 .scheme {
-  margin-bottom: 15px;
+  margin-bottom: 5px;
 }
 .setting-description {
   font-size: 10px;
@@ -34,5 +35,5 @@
   flex: 1;
 }
 .launch-configuration-section-margin {
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }

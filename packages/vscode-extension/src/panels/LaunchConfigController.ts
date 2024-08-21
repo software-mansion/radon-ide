@@ -60,7 +60,7 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
   ) {
     const configurations = workspace.getConfiguration("launch");
 
-    const newLaunchConfig = { ...this.config, [key]: value };
+    const newLaunchConfig = { ...this.config, [key]: value !== "Auto" ? value : undefined };
 
     const oldConfigurations = configurations.get<Array<any>>("configurations");
 
