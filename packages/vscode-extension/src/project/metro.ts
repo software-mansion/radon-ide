@@ -109,7 +109,7 @@ export class Metro implements Disposable {
     return exec(
       `node`,
       [
-        `${reactNativeRoot}/cli.js`,
+        path.join(reactNativeRoot, "cli.js"),
         "start",
         ...(resetCache ? ["--reset-cache"] : []),
         "--no-interactive",
