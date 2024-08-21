@@ -106,8 +106,6 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
         initialProps: { previewKey },
       });
       const preview = global.__RNIDE_previews.get(previewKey);
-      // console.log("FRYTKI previewKey", previewKey);
-      // console.log("FRYTKI preview", preview);
       handleNavigationChange({ id: previewKey, name: `preview:${preview.name}` });
     },
     [rootTag, handleNavigationChange]
@@ -133,9 +131,9 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
 
   const openStorybookStory = useCallback(
     async (componentTitle, storyName) => {
+      await selectStorybookStory(componentTitle, storyName);
       openStorybook();
-      selectStorybookStory(componentTitle, storyName);
-      openPreview("preview:/123:123"); // frytki
+      openPreview("preview:/storybook:storybook");
     },
     [rootTag, handleNavigationChange]
   );
