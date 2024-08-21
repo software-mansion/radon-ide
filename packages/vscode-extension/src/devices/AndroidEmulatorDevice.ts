@@ -495,7 +495,7 @@ async function ensureOldEmulatorProcessExited(avdId: string) {
 
 export async function removeEmulator(avdId: string) {
   // ensure to kill emulator process before removing avd files used by that process
-  if (Platform.OS == "windows") {
+  if (Platform.OS === "windows") {
     await ensureOldEmulatorProcessExited(avdId);
   }
 
