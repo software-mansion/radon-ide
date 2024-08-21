@@ -11,6 +11,7 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
+import { Platform } from "../utilities/platform";
 
 type StartOptions = { cleanBuild: boolean };
 
@@ -94,7 +95,13 @@ export class DeviceSession implements Disposable {
   }
 
   private async launchApp() {
-    const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
+    // FIXME: Windows getting stuck waiting for the promise to resolve. This is
+    // caused by wrapper.js not being used as a wrapper, despite being used in
+    // runtime.js. runtime.js and Metro transforms are ran by JS engine.
+    const shouldWaitForAppLaunch = Platform.select({
+      macos: getLaunchConfiguration().preview?.waitForAppLaunch !== false,
+      windows: false,
+    });
     const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.eventDelegate.onStateChange(StartupMessage.Launching);
