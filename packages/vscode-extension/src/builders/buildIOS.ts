@@ -131,12 +131,7 @@ export async function buildIos(
     return process;
   });
 
-  try {
-    await buildProcess;
-  } catch (e) {
-    // one of possible places
-    throw e;
-  }
+  await buildProcess;
 
   if (!platformName) {
     throw new Error(`Couldn't find "PLATFORM_NAME" in xcodebuild output`);

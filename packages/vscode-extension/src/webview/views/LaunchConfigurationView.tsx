@@ -61,19 +61,17 @@ interface iosConfigurationProps {
 function IosConfiguration({ scheme, configuration, update, xcodeSchemes }: iosConfigurationProps) {
   const configurationInputRef = useRef<HTMLInputElement>(null);
 
-  const onSchemeChange = (newScheme: string) => {
+  const onSchemeChange = (newScheme: string | undefined) => {
     if (newScheme === "Auto") {
-      update("ios", { scheme: undefined, configuration });
-      return;
+      newScheme = undefined;
     }
     update("ios", { scheme: newScheme, configuration });
   };
 
   const onConfigurationBlur = () => {
-    const newConfiguration = configurationInputRef.current?.value;
+    let newConfiguration = configurationInputRef.current?.value;
     if (newConfiguration === "Auto" || !newConfiguration) {
-      update("ios", { scheme, configuration: "Auto" });
-      return;
+      newConfiguration = undefined;
     }
     update("ios", { scheme, configuration: newConfiguration });
   };
@@ -91,7 +89,8 @@ function IosConfiguration({ scheme, configuration, update, xcodeSchemes }: iosCo
         value={scheme ?? "Auto"}
         onChange={onSchemeChange}
         items={availableXcodeSchemes}
-        className="scheme"></Select>
+        className="scheme"
+      />
       <div className="setting-description">Configuration:</div>
       <input
         ref={configurationInputRef}
@@ -118,19 +117,17 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
   const productFlavorInputRef = useRef<HTMLInputElement>(null);
 
   const onBuildTypeBlur = () => {
-    const newBuildType = buildTypeInputRef.current?.value;
+    let newBuildType = buildTypeInputRef.current?.value;
     if (newBuildType === "Auto" || !newBuildType) {
-      update("android", { buildType: "Auto", productFlavor });
-      return;
+      newBuildType = undefined;
     }
     update("android", { buildType: newBuildType, productFlavor });
   };
 
   const onProductFlavorBlur = () => {
-    const newProductFlavor = productFlavorInputRef.current?.value;
+    let newProductFlavor = productFlavorInputRef.current?.value;
     if (newProductFlavor === "Auto" || !newProductFlavor) {
-      update("android", { buildType, productFlavor: "Auto" });
-      return;
+      newProductFlavor = undefined;
     }
     update("android", { buildType, productFlavor: newProductFlavor });
   };
@@ -169,10 +166,9 @@ function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
   const appRootInputRef = useRef<HTMLInputElement>(null);
 
   const onAppRootBlur = () => {
-    const newAppRoot = appRootInputRef.current?.value;
-    if (newAppRoot === "Auto" || !newAppRoot) {
-      update("appRoot", "Auto");
-      return;
+    let newAppRoot = appRootInputRef.current?.value;
+    if (!newAppRoot) {
+      newAppRoot = "Auto";
     }
     update("appRoot", newAppRoot);
   };
@@ -184,7 +180,7 @@ function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
         ref={appRootInputRef}
         className="input-configuration"
         type="string"
-        defaultValue={!!appRoot ? appRoot : "Auto"}
+        defaultValue={appRoot ?? "Auto"}
         onBlur={onAppRootBlur}
       />
     </div>
@@ -203,10 +199,9 @@ function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConf
   const metroPathInputRef = useRef<HTMLInputElement>(null);
 
   const onMetroPathBlur = () => {
-    const newMetroPath = metroPathInputRef.current?.value;
-    if (newMetroPath === "Auto" || !newMetroPath) {
-      update("metroConfigPath", "Auto");
-      return;
+    let newMetroPath = metroPathInputRef.current?.value;
+    if (!newMetroPath) {
+      newMetroPath = "Auto";
     }
     update("metroConfigPath", newMetroPath);
   };
@@ -218,7 +213,7 @@ function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConf
         ref={metroPathInputRef}
         className="input-configuration"
         type="string"
-        defaultValue={!!metroConfigPath ? metroConfigPath : "Auto"}
+        defaultValue={metroConfigPath ?? "Auto"}
         onBlur={onMetroPathBlur}
       />
     </div>
@@ -241,15 +236,14 @@ function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
   ];
 
   const onIsExpoChange = (newIsExpo: string) => {
+    let updatedIsExpo: string | boolean = "Auto";
     if (newIsExpo === "true") {
-      update("isExpo", true);
-      return;
+      updatedIsExpo = true;
     } else if (newIsExpo === "false") {
-      update("isExpo", false);
-      return;
+      updatedIsExpo = false;
     }
     // @ts-ignore
-    update("isExpo", "Auto");
+    update("isExpo", updatedIsExpo);
   };
 
   return (
@@ -259,7 +253,8 @@ function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
         value={isExpo !== undefined ? isExpo.toString() : "Auto"}
         onChange={onIsExpoChange}
         items={options}
-        className="scheme"></Select>
+        className="scheme"
+      />
     </div>
   );
 }

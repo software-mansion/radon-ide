@@ -26,7 +26,7 @@ export interface LaunchConfigEventListener<T> {
 
 export interface LaunchConfig {
   getConfig(): Promise<LaunchConfigurationOptions>;
-  // update method can take any of the keys from WorkspaceConfigProps and appropriate value:
+
   update<K extends keyof LaunchConfigurationOptions>(
     key: K,
     value: LaunchConfigurationOptions[K]

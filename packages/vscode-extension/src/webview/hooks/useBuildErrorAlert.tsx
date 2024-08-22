@@ -45,8 +45,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   let description = "Open build logs to find out what went wrong.";
 
   if (!ios?.scheme && xcodeSchemes.length > 1) {
-    description =
-      "Your project has defined multiple build schemas consider choosing one of them in launch configuration.";
+    description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
   }
 
   const buildErrorAlert = {

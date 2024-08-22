@@ -11,7 +11,6 @@
   gap: 5px;
   color: var(--swm-default-text);
   background-color: var(--swm-select-background);
-  cursor: pointer;
   box-shadow: var(--swm-select-shadow);
   margin-bottom: 5px;
 }
@@ -31,9 +30,6 @@
   padding-left: 10px;
 }
 
-.frytki {
-  flex: 1;
-}
 .launch-configuration-section-margin {
   margin-bottom: 10px;
 }

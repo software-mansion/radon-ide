@@ -14,10 +14,10 @@ import { getIosSourceDir } from "../builders/buildIOS";
 export class LaunchConfigController implements Disposable, LaunchConfig {
   private config: LaunchConfigurationOptions;
   private eventEmitter = new EventEmitter();
-  private configListener: Disposable | undefined;
+  private configListener: Disposable;
 
   constructor() {
-    const getCurrentConfig = () => {
+    const getCurrentConfig = (): LaunchConfigurationOptions => {
       const launchConfiguration = workspace.getConfiguration(
         "launch",
         workspace.workspaceFolders![0].uri
@@ -29,12 +29,13 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
         return config.type === "react-native-ide";
       });
 
+      if (!RNIDEConfiguration) {
+        return {};
+      }
+
       const { android, appRoot, ios, isExpo, metroConfigPath, env, ...rest } = RNIDEConfiguration;
 
-      return (
-        ({ android, appRoot, ios, isExpo, metroConfigPath, env } as LaunchConfigurationOptions) ??
-        {}
-      );
+      return { android, appRoot, ios, isExpo, metroConfigPath, env };
     };
 
     this.config = getCurrentConfig();
@@ -60,16 +61,30 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
   ) {
     const configurations = workspace.getConfiguration("launch");
 
+    Logger.debug("frytki", configurations);
+
     const newLaunchConfig = { ...this.config, [key]: value !== "Auto" ? value : undefined };
 
     const oldConfigurations = configurations.get<Array<any>>("configurations");
+
+    let RNIDEConfigurationExits = false;
 
     const newConfigurations = oldConfigurations?.map((configuration) => {
       if (configuration.type !== "react-native-ide") {
         return configuration;
       }
+      RNIDEConfigurationExits = true;
       return { ...configuration, ...newLaunchConfig };
     });
+
+    if (!RNIDEConfigurationExits) {
+      newConfigurations?.push({
+        type: "react-native-ide",
+        request: "launch",
+        name: "React Native IDE panel",
+        ...newLaunchConfig,
+      });
+    }
 
     await configurations.update("configurations", newConfigurations);
   }
@@ -107,6 +122,6 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
   }
 
   dispose() {
-    this.configListener?.dispose();
+    this.configListener.dispose();
   }
 }
