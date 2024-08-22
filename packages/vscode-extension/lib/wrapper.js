@@ -8,7 +8,7 @@ const {
   Linking,
   findNodeHandle,
 } = require("react-native");
-const { openStorybook, selectStorybookStory } = require("./storybook_helper");
+const { storybookPreview } = require("./storybook_helper");
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -105,6 +105,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
         rootTag,
         initialProps: { previewKey },
       });
+      console.log("FRYTKI openPreview previewKey ", previewKey);
       const preview = global.__RNIDE_previews.get(previewKey);
       handleNavigationChange({ id: previewKey, name: `preview:${preview.name}` });
     },
@@ -129,11 +130,10 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     return closePreviewPromise;
   }, [rootTag]);
 
-  const openStorybookStory = useCallback(
+  const selectStorybookStory = useCallback(
     async (componentTitle, storyName) => {
-      await selectStorybookStory(componentTitle, storyName);
-      openStorybook();
-      openPreview("preview:/storybook:storybook");
+      const previewKey = await storybookPreview(componentTitle, storyName);
+      previewKey !== undefined && openPreview(previewKey);
     },
     [rootTag, handleNavigationChange]
   );
@@ -256,9 +256,9 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     devtoolsAgent,
     "RNIDE_selectStorybookStory",
     (payload) => {
-      openStorybookStory(payload.componentTitle, payload.storyName);
+      selectStorybookStory(payload.componentTitle, payload.storyName);
     },
-    [openStorybookStory]
+    [selectStorybookStory]
   );
 
   useEffect(() => {
