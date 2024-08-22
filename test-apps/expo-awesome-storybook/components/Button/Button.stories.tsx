@@ -7,15 +7,15 @@ const meta = {
   title: "MyButton",
   component: MyButton,
   args: {
-    text: "Hello world",
+    text: "Gello world",
   },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: 16 }}>
-        <Story />
-      </View>
-    ),
-  ],
+  // decorators: [
+  //   (Story) => (
+  //     <View style={{ padding: 16 }}>
+  //       <Story />
+  //     </View>
+  //   ),
+  // ],
 } satisfies Meta<typeof MyButton>;
 
 export default meta;

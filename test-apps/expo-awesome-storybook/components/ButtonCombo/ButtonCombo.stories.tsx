@@ -1,40 +1,31 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
 import { View } from "react-native";
-import { NiceButton } from "./NiceButton";
+import { ButtonCombo } from "./ButtonCombo";
 
 const meta = {
-  title: "NiceButton",
-  component: NiceButton,
-  args: {
-    text: "Button",
-  },
-} satisfies Meta<typeof NiceButton>;
+  title: "ButtonCombo",
+  component: ButtonCombo,
+} satisfies Meta<typeof ButtonCombo>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
 export const Basic: Story = {};
-export const NewText: Story = {
-  args: {
-    text: "booo!",
-  },
+export const WithPadding: Story = {
   decorators: [
     (Story) => (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: 20 }}>
         <Story />
       </View>
     ),
   ],
 };
-export const Foo: Story = {
-  args: {
-    text: "foo!",
-  },
+export const WithBackground: Story = {
   decorators: [
     (Story) => (
-      <View style={{ backgroundColor: "blue" }}>
+      <View style={{ backgroundColor: "purple" }}>
         <Story />
       </View>
     ),

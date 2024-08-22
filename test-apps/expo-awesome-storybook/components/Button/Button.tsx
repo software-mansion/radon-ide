@@ -31,4 +31,4 @@ const styles = StyleSheet.create({
   text: { color: "white", fontSize: 16, fontWeight: "bold" },
 });
 
-preview(<MyButton text="123" />);
+preview(<MyButton text="Gello world" />);
