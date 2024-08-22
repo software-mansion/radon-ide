@@ -2,10 +2,9 @@ import "./View.css";
 import "./LaunchConfigurationView.css";
 import Label from "../components/shared/Label";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
-import { LaunchConfigurationOptions } from "../../common/LaunchConfig";
+import { LaunchConfigUpdateType, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import Select from "../components/shared/Select";
 import { useRef } from "react";
-import { valid } from "semver";
 
 function LaunchConfigurationView() {
   const { android, appRoot, ios, isExpo, metroConfigPath, env, update, xcodeSchemes } =
@@ -51,10 +50,7 @@ function LaunchConfigurationView() {
 interface iosConfigurationProps {
   scheme?: string;
   configuration?: string;
-  update: <K extends keyof LaunchConfigurationOptions>(
-    key: K,
-    value: LaunchConfigurationOptions[K]
-  ) => void;
+  update: LaunchConfigUpdateType;
   xcodeSchemes: string[];
 }
 
@@ -70,7 +66,7 @@ function IosConfiguration({ scheme, configuration, update, xcodeSchemes }: iosCo
 
   const onConfigurationBlur = () => {
     let newConfiguration = configurationInputRef.current?.value;
-    if (newConfiguration === "Auto" || !newConfiguration) {
+    if (newConfiguration === "Auto" || newConfiguration !== "") {
       newConfiguration = undefined;
     }
     update("ios", { scheme, configuration: newConfiguration });
@@ -106,10 +102,7 @@ function IosConfiguration({ scheme, configuration, update, xcodeSchemes }: iosCo
 interface androidConfigurationProps {
   buildType?: string;
   productFlavor?: string;
-  update: <K extends keyof LaunchConfigurationOptions>(
-    key: K,
-    value: LaunchConfigurationOptions[K]
-  ) => void;
+  update: LaunchConfigUpdateType;
 }
 
 function AndroidConfiguration({ buildType, productFlavor, update }: androidConfigurationProps) {
@@ -118,7 +111,7 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
 
   const onBuildTypeBlur = () => {
     let newBuildType = buildTypeInputRef.current?.value;
-    if (newBuildType === "Auto" || !newBuildType) {
+    if (newBuildType === "Auto" || newBuildType !== "") {
       newBuildType = undefined;
     }
     update("android", { buildType: newBuildType, productFlavor });
@@ -126,7 +119,7 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
 
   const onProductFlavorBlur = () => {
     let newProductFlavor = productFlavorInputRef.current?.value;
-    if (newProductFlavor === "Auto" || !newProductFlavor) {
+    if (newProductFlavor === "Auto" || newProductFlavor !== "") {
       newProductFlavor = undefined;
     }
     update("android", { buildType, productFlavor: newProductFlavor });
@@ -156,10 +149,7 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
 
 interface appRootConfigurationProps {
   appRoot?: string;
-  update: <K extends keyof LaunchConfigurationOptions>(
-    key: K,
-    value: LaunchConfigurationOptions[K]
-  ) => void;
+  update: LaunchConfigUpdateType;
 }
 
 function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
@@ -167,7 +157,7 @@ function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
 
   const onAppRootBlur = () => {
     let newAppRoot = appRootInputRef.current?.value;
-    if (!newAppRoot) {
+    if (newAppRoot !== "") {
       newAppRoot = "Auto";
     }
     update("appRoot", newAppRoot);
@@ -189,10 +179,7 @@ function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
 
 interface metroPathConfigurationProps {
   metroConfigPath?: string;
-  update: <K extends keyof LaunchConfigurationOptions>(
-    key: K,
-    value: LaunchConfigurationOptions[K]
-  ) => void;
+  update: LaunchConfigUpdateType;
 }
 
 function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConfigurationProps) {
@@ -200,7 +187,7 @@ function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConf
 
   const onMetroPathBlur = () => {
     let newMetroPath = metroPathInputRef.current?.value;
-    if (!newMetroPath) {
+    if (newMetroPath !== "") {
       newMetroPath = "Auto";
     }
     update("metroConfigPath", newMetroPath);
@@ -222,10 +209,7 @@ function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConf
 
 interface isExpoConfigurationProps {
   isExpo?: boolean;
-  update: <K extends keyof LaunchConfigurationOptions>(
-    key: K,
-    value: LaunchConfigurationOptions[K]
-  ) => void;
+  update: LaunchConfigUpdateType;
 }
 
 function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
@@ -236,13 +220,12 @@ function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
   ];
 
   const onIsExpoChange = (newIsExpo: string) => {
-    let updatedIsExpo: string | boolean = "Auto";
+    let updatedIsExpo: "Auto" | boolean = "Auto";
     if (newIsExpo === "true") {
       updatedIsExpo = true;
     } else if (newIsExpo === "false") {
       updatedIsExpo = false;
     }
-    // @ts-ignore
     update("isExpo", updatedIsExpo);
   };
 
@@ -250,7 +233,7 @@ function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
     <div className="container">
       <div className="setting-description">Is Expo:</div>
       <Select
-        value={isExpo !== undefined ? isExpo.toString() : "Auto"}
+        value={isExpo?.toString() ?? "Auto"}
         onChange={onIsExpoChange}
         items={options}
         className="scheme"

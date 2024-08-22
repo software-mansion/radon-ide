@@ -7,15 +7,16 @@ import {
   useCallback,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
-import { LaunchConfig, LaunchConfigurationOptions } from "../../common/LaunchConfig";
+import {
+  LaunchConfig,
+  LaunchConfigUpdateType,
+  LaunchConfigurationOptions,
+} from "../../common/LaunchConfig";
 
 const launchConfig = makeProxy<LaunchConfig>("LaunchConfig");
 
 type LaunchConfigContextType = LaunchConfigurationOptions & {
-  update: <K extends keyof LaunchConfigurationOptions>(
-    key: K,
-    value: LaunchConfigurationOptions[K]
-  ) => void;
+  update: LaunchConfigUpdateType;
   xcodeSchemes: string[];
 };
 
@@ -40,7 +41,10 @@ export default function LaunchConfigProvider({ children }: PropsWithChildren) {
   }, []);
 
   const update = useCallback(
-    <K extends keyof LaunchConfigurationOptions>(key: K, value: LaunchConfigurationOptions[K]) => {
+    <K extends keyof LaunchConfigurationOptions>(
+      key: K,
+      value: LaunchConfigurationOptions[K] | "Auto"
+    ) => {
       const newState = { ...config, [key]: value };
       setConfig(newState);
       launchConfig.update(key, value);

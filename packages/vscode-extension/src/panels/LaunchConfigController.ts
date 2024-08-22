@@ -25,9 +25,7 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
       const configurations = launchConfiguration.get<Array<any>>("configurations")!;
 
-      const RNIDEConfiguration = configurations.find((config) => {
-        return config.type === "react-native-ide";
-      });
+      const RNIDEConfiguration = configurations.find(({ type }) => type === "react-native-ide");
 
       if (!RNIDEConfiguration) {
         return {};
@@ -57,11 +55,9 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
   async update<K extends keyof LaunchConfigurationOptions>(
     key: K,
-    value: LaunchConfigurationOptions[K]
+    value: LaunchConfigurationOptions[K] | "Auto"
   ) {
     const configurations = workspace.getConfiguration("launch");
-
-    Logger.debug("frytki", configurations);
 
     const newLaunchConfig = { ...this.config, [key]: value !== "Auto" ? value : undefined };
 
