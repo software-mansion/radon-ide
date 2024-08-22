@@ -23,7 +23,7 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
         workspace.workspaceFolders![0].uri
       );
 
-      const configurations = launchConfiguration.get<Array<any>>("configurations")!;
+      const configurations = launchConfiguration.get<Array<Record<string, any>>>("configurations")!;
 
       const RNIDEConfiguration = configurations.find(({ type }) => type === "react-native-ide");
 
@@ -61,7 +61,7 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
     const newLaunchConfig = { ...this.config, [key]: value !== "Auto" ? value : undefined };
 
-    const oldConfigurations = configurations.get<Array<any>>("configurations");
+    const oldConfigurations = configurations.get<Array<Record<string, any>>>("configurations");
 
     let RNIDEConfigurationExits = false;
 
