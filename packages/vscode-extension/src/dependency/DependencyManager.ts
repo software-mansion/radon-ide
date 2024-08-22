@@ -15,7 +15,7 @@ import {
   resolvePackageManager,
 } from "../utilities/packageManager";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { CancelToken } from "../builders/BuildManager";
+import { CancelToken } from "../builders/cancelToken";
 import { Platform } from "../utilities/platform";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";

@@ -4,7 +4,7 @@ import http from "http";
 import fs from "fs";
 import { exec } from "../utilities/subprocess";
 import { DevicePlatform } from "../common/DeviceManager";
-import { CancelToken } from "./BuildManager";
+import { CancelToken } from "./cancelToken";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
