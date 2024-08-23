@@ -65,17 +65,17 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusBuildOutput();
+          project.focusDebugConsole();
         }}
-        tooltip={{ label: "Open build logs", side: "bottom" }}>
-        <span className="codicon codicon-symbol-keyword" />
+        tooltip={{ label: "Open debug console", side: "bottom" }}>
+        <span className="codicon codicon-debug-console" />
       </IconButton>
       <IconButton
         type="secondary"
         onClick={() => {
-          project.restart(false);
+          project.reload("reloadJs");
         }}
-        tooltip={{ label: "Reload IDE", side: "bottom" }}>
+        tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />
       </IconButton>
     </>
@@ -85,7 +85,7 @@ function BundleErrorActions() {
 const bundleErrorAlert = {
   id: "bundle-error-alert",
   title: "Bundle error",
-  description: "Open build logs to find out what went wrong.",
+  description: "Open application logs to find out what went wrong.",
   actions: <BundleErrorActions />,
 };
 
