@@ -20,9 +20,15 @@
 }
 
 .button-group-left {
-  position: absolute;
   display: flex;
+  transition: 0.5s;
+  transform: translateX(-40px);
+}
+
+.button-group-left-container {
+  position: absolute;
   left: 10px;
+  display: flex;
 }
 
 .bar-spacer {
