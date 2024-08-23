@@ -22,7 +22,7 @@
 .button-group-left {
   display: flex;
   transition: 0.5s;
-  transform: translateX(-100px);
+  transform: translateX(-40px);
 }
 
 .button-group-left-container {
