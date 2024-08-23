@@ -105,7 +105,6 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
         rootTag,
         initialProps: { previewKey },
       });
-      console.log("FRYTKI openPreview previewKey ", previewKey);
       const preview = global.__RNIDE_previews.get(previewKey);
       handleNavigationChange({ id: previewKey, name: `preview:${preview.name}` });
     },
