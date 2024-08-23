@@ -2,7 +2,7 @@ import { OutputChannel } from "vscode";
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import path from "path";
-import { CancelToken } from "./BuildManager";
+import { CancelToken } from "./cancelToken";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import {
@@ -14,6 +14,12 @@ import {
 import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
+
+export type IOSBuildResult = {
+  platform: DevicePlatform.IOS;
+  appPath: string;
+  bundleID: string;
+};
 
 const TEMP_SIMULATOR_NAME_PREFIX = "__RNIDE_TEMP_SIM_";
 
@@ -76,10 +82,12 @@ export async function buildIos(
     forceCleanBuild: boolean,
     cancelToken: CancelToken
   ) => Promise<void>
-) {
+): Promise<IOSBuildResult> {
+  const { ios: buildOptions } = getLaunchConfiguration();
+
   if (await isExpoGoProject()) {
     const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);
-    return { appPath, bundleID: EXPO_GO_BUNDLE_ID };
+    return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
   }
 
   const sourceDir = getIosSourceDir(appRootFolder);
@@ -100,8 +108,7 @@ export async function buildIos(
     }`
   );
 
-  const buildOptions = getLaunchConfiguration();
-  const scheme = buildOptions.ios?.scheme || (await findXcodeScheme(xcodeProject))[0];
+  const scheme = buildOptions?.scheme || (await findXcodeScheme(xcodeProject))[0];
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
   let platformName: string | undefined;
@@ -112,7 +119,7 @@ export async function buildIos(
         xcodeProject,
         sourceDir,
         scheme,
-        buildOptions?.ios?.configuration || "Debug",
+        buildOptions?.configuration || "Debug",
         forceCleanBuild
       )
     );
@@ -142,13 +149,13 @@ export async function buildIos(
     sourceDir,
     platformName,
     scheme,
-    buildOptions?.ios?.configuration || "Debug",
+    buildOptions?.configuration || "Debug",
     cancelToken
   );
 
   const bundleID = await getBundleID(appPath);
 
-  return { appPath, bundleID };
+  return { appPath, bundleID, platform: DevicePlatform.IOS };
 }
 
 async function getBuildPath(

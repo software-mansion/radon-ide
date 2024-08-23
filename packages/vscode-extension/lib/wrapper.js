@@ -8,7 +8,6 @@ const {
   Linking,
   findNodeHandle,
 } = require("react-native");
-const { PREVIEW_APP_KEY } = require("./preview");
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -16,6 +15,12 @@ export function registerNavigationPlugin(name, plugin) {
 }
 
 let navigationHistory = new Map();
+
+const InternalImports = {
+  get PREVIEW_APP_KEY(){
+    return require("./preview").PREVIEW_APP_KEY;
+  }
+}
 
 const RNInternals = {
   get getInspectorDataForViewAtPoint() {
@@ -75,6 +80,8 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     mountCallback?.();
   }, [mountCallback]);
 
+  const layoutCallback = initialProps?.__RNIDE_onLayout;
+
   const handleNavigationChange = useCallback(
     (navigationDescriptor) => {
       navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
@@ -93,7 +100,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
 
   const openPreview = useCallback(
     (previewKey) => {
-      AppRegistry.runApplication(PREVIEW_APP_KEY, {
+      AppRegistry.runApplication(InternalImports.PREVIEW_APP_KEY, {
         rootTag,
         initialProps: { previewKey },
       });
@@ -108,11 +115,11 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     const closePreviewPromise = new Promise((resolve) => {
       closePromiseResolve = resolve;
     });
-    if (getCurrentScene() === PREVIEW_APP_KEY) {
+    if (getCurrentScene() === InternalImports.PREVIEW_APP_KEY) {
       AppRegistry.runApplication("main", {
         rootTag,
         initialProps: {
-          __RNIDE_onMount: closePromiseResolve,
+          __RNIDE_onLayout: closePromiseResolve,
         },
       });
     } else {
@@ -276,6 +283,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
       ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={() => {
+        layoutCallback?.();
         setHasLayout(true);
       }}>
       {children}

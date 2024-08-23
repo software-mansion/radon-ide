@@ -3,16 +3,22 @@ import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import semver from "semver";
-import { AndroidBuildResult, CancelToken } from "./BuildManager";
+import { CancelToken } from "./cancelToken";
 import path from "path";
 import fs from "fs";
-import { OutputChannel, workspace } from "vscode";
+import { OutputChannel } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_PACKAGE_NAME, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
+
+export type AndroidBuildResult = {
+  platform: DevicePlatform.Android;
+  apkPath: string;
+  packageName: string;
+};
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
 const RELATIVE_APK_DIR = "app/build/outputs/apk";
@@ -69,10 +75,10 @@ export async function buildAndroid(
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
-) {
+): Promise<AndroidBuildResult> {
   if (await isExpoGoProject()) {
     const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken);
-    return { apkPath, packageName: EXPO_GO_PACKAGE_NAME };
+    return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
   }
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const buildOptions = getLaunchConfiguration();
@@ -121,5 +127,6 @@ export async function buildAndroid(
 
   await buildProcess;
   Logger.debug("Android build sucessful");
-  return getAndroidBuildPaths(appRootFolder, cancelToken, productFlavor, buildType);
+  const apkInfo = await getAndroidBuildPaths(appRootFolder, cancelToken, productFlavor, buildType);
+  return { ...apkInfo, platform: DevicePlatform.Android };
 }

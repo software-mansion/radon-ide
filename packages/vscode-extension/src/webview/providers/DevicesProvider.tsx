@@ -43,14 +43,14 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
 
   const reload = useCallback(async () => {
     try {
-      await Promise.all([
+      const promises = [
         DeviceManager.listAllDevices().then(setDevices),
         DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
-        ...Platform.select({
-          macos: [DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes)],
-          windows: [],
-        }),
-      ]);
+      ];
+      if (Platform.OS === "macos") {
+        promises.push(DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes));
+      }
+      await Promise.all(promises);
     } finally {
       setFinishedInitialLoad(true);
     }

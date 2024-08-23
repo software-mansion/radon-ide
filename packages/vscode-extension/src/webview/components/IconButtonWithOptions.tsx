@@ -40,8 +40,8 @@ export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWit
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
             <DropdownMenu.Content className="dropdown-menu-content">
-              {Object.entries(options).map(([title, onSelect]) => (
-                <DropdownMenu.Item className="dropdown-menu-item" onSelect={onSelect}>
+              {Object.entries(options).map(([title, onSelect], index) => (
+                <DropdownMenu.Item className="dropdown-menu-item" key={index} onSelect={onSelect}>
                   {title}
                 </DropdownMenu.Item>
               ))}

@@ -83,22 +83,22 @@ export class Project
   }
 
   //#region Build progress
-  onBuildProgress(stageProgress: number): void {
+  onBuildProgress = (stageProgress: number): void => {
     this.reportStageProgress(stageProgress, StartupMessage.Building);
-  }
+  };
 
-  onBuildSuccess(): void {
+  onBuildSuccess = (): void => {
     // reset fingerprint change flag when build finishes successfully
     this.detectedFingerprintChange = false;
-  }
+  };
 
-  onStateChange(state: StartupMessage): void {
+  onStateChange = (state: StartupMessage): void => {
     this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
-  }
+  };
   //#endregion
 
   //#region App events
-  onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void {
+  onAppEvent = <E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void => {
     switch (event) {
       case "navigationChanged":
         this.eventEmitter.emit("navigationChanged", payload);
@@ -114,7 +114,7 @@ export class Project
         this.updateProjectState({ status: "running" });
         break;
     }
-  }
+  };
   //#endregion
 
   //#region Debugger events
