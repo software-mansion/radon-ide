@@ -1,5 +1,4 @@
-// TODO remove workaround with .ondevice2, add .ondevice to bundle
-const { view } = require("__APPDIR__/.ondevice2/storybook.requires");
+const { view } = require("__APPDIR__/.ondevice/storybook.requires");
 const { toId, storyNameFromExport } = require("__APPDIR__/node_modules/@storybook/csf");
 import { Text } from "react-native";
 

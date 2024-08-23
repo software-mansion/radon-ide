@@ -66,6 +66,26 @@ function adaptMetroConfig(config) {
     config.resolver = {};
   }
 
+  // Override the resolveRequest method to include files in the ".ondevice/"
+  // directory, which contains "storybook.requires.js".
+  // For all other files it uses the original resolveRequest method.
+  const originalResolveRequest = config.resolver?.resolveRequest;
+  const storybookResolveRequest = (context, moduleName, platform) => {
+    const defaultResolveResult = context.resolveRequest(context, moduleName, platform);
+    if (!originalResolveRequest || defaultResolveResult?.filePath?.includes(".ondevice/")) {
+      return defaultResolveResult;
+    }
+    return originalResolveRequest(context, moduleName, platform);
+  };
+
+  config = {
+    ...config,
+    resolver: {
+      ...config.resolver,
+      resolveRequest: storybookResolveRequest,
+    },
+  };
+
   // This code allows us to host some files from the extension's lib folder
   // Currently used for runtime and wrapper functionalities
   config.resolver.extraNodeModules = {
@@ -85,9 +105,9 @@ function adaptMetroConfig(config) {
     extraNodeModulesPaths.push(path.join(next, "node_modules"));
   }
 
-  // because some libraries imported by the files in extension lib are not imported directly by an application, 
+  // because some libraries imported by the files in extension lib are not imported directly by an application,
   // but are imported by react native we need to add it's node_modules to the paths list
-  extraNodeModulesPaths.push(path.join(appRoot,"node_modules/react-native/node_modules"));
+  extraNodeModulesPaths.push(path.join(appRoot, "node_modules/react-native/node_modules"));
 
   config.resolver.nodeModulesPaths = [
     ...(config.resolver.nodeModulesPaths || []),
