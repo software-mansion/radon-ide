@@ -24,7 +24,7 @@ export interface LaunchConfigEventListener<T> {
   (event: T): void;
 }
 
-export type LaunchConfigUpdateType = <K extends keyof LaunchConfigurationOptions>(
+export type LaunchConfigUpdater = <K extends keyof LaunchConfigurationOptions>(
   key: K,
   value: LaunchConfigurationOptions[K] | "Auto"
 ) => void;
@@ -32,7 +32,7 @@ export type LaunchConfigUpdateType = <K extends keyof LaunchConfigurationOptions
 export interface LaunchConfig {
   getConfig(): Promise<LaunchConfigurationOptions>;
 
-  update: LaunchConfigUpdateType;
+  update: LaunchConfigUpdater;
 
   getAvailableXcodeSchemes(): Promise<string[]>;
   addListener<K extends keyof LaunchConfigEventMap>(

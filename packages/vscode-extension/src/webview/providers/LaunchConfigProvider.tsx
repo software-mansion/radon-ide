@@ -9,14 +9,14 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import {
   LaunchConfig,
-  LaunchConfigUpdateType,
+  LaunchConfigUpdater,
   LaunchConfigurationOptions,
 } from "../../common/LaunchConfig";
 
 const launchConfig = makeProxy<LaunchConfig>("LaunchConfig");
 
 type LaunchConfigContextType = LaunchConfigurationOptions & {
-  update: LaunchConfigUpdateType;
+  update: LaunchConfigUpdater;
   xcodeSchemes: string[];
 };
 

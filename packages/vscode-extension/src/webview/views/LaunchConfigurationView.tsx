@@ -2,7 +2,7 @@ import "./View.css";
 import "./LaunchConfigurationView.css";
 import Label from "../components/shared/Label";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
-import { LaunchConfigUpdateType, LaunchConfigurationOptions } from "../../common/LaunchConfig";
+import { LaunchConfigUpdater, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import Select from "../components/shared/Select";
 import { useRef } from "react";
 
@@ -50,7 +50,7 @@ function LaunchConfigurationView() {
 interface iosConfigurationProps {
   scheme?: string;
   configuration?: string;
-  update: LaunchConfigUpdateType;
+  update: LaunchConfigUpdater;
   xcodeSchemes: string[];
 }
 
@@ -102,7 +102,7 @@ function IosConfiguration({ scheme, configuration, update, xcodeSchemes }: iosCo
 interface androidConfigurationProps {
   buildType?: string;
   productFlavor?: string;
-  update: LaunchConfigUpdateType;
+  update: LaunchConfigUpdater;
 }
 
 function AndroidConfiguration({ buildType, productFlavor, update }: androidConfigurationProps) {
@@ -149,7 +149,7 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
 
 interface appRootConfigurationProps {
   appRoot?: string;
-  update: LaunchConfigUpdateType;
+  update: LaunchConfigUpdater;
 }
 
 function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
@@ -179,7 +179,7 @@ function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
 
 interface metroPathConfigurationProps {
   metroConfigPath?: string;
-  update: LaunchConfigUpdateType;
+  update: LaunchConfigUpdater;
 }
 
 function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConfigurationProps) {
@@ -209,7 +209,7 @@ function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConf
 
 interface isExpoConfigurationProps {
   isExpo?: boolean;
-  update: LaunchConfigUpdateType;
+  update: LaunchConfigUpdater;
 }
 
 function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {

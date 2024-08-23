@@ -26,8 +26,8 @@
 .container {
   flex: 1;
 
-  padding-right: 30px;
-  padding-left: 10px;
+  padding-right: 5%;
+  padding-left: 2.5%;
 }
 
 .launch-configuration-section-margin {
