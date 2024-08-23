@@ -23,9 +23,7 @@ import {
   setAppRootFolder,
   setExtensionContext,
 } from "./utilities/extensionContext";
-import { command } from "./utilities/subprocess";
-import path from "path";
-import os from "os";
+import { command, setupPathEnv } from "./utilities/subprocess";
 import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
@@ -88,7 +86,18 @@ export async function activate(context: ExtensionContext) {
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
   async function showIDEPanel(fileName?: string, lineNumber?: number) {
-    commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
+    await commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
+
+    if (Platform.OS === "macos") {
+      try {
+        await setupPathEnv();
+      } catch (error) {
+        window.showWarningMessage(
+          "Error when setting up PATH environment variable, RN IDE may not work correctly.",
+          "Dismiss"
+        );
+      }
+    }
     const panelLocation = workspace
       .getConfiguration("ReactNativeIDE")
       .get<PanelLocation>("panelLocation");
