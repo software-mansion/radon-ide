@@ -24,10 +24,15 @@ export async function getPathEnv() {
     // which won't be triggered when running a ZSH in a subprocess.
 
     // fish, bash, and zsh all support -i and -c flags
-    const { stdout: miseEnv } = await nodeExec(
-      `${shellPath} -i -c 'whence mise > /dev/null && mise hook-env | grep \"PATH=\"'`
-    );
-    return extractLastPathVariable(miseEnv);
+    try {
+      const { stdout: miseEnv } = await nodeExec(
+        `${shellPath} -i -c 'mise hook-env | grep \"PATH=\"'`
+      );
+      return extractLastPathVariable(miseEnv);
+    } catch (_error) {
+      // mise isn't installed
+      return undefined;
+    }
   }
 
   async function getEnv(shellPath: string) {
