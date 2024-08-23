@@ -246,7 +246,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-debugger-button-group-border: 1px solid var(--navy-light-40);
 
   /* Zoom controls */
-  --swm-zoom-controls-background: var(--navy-light-10);
+  --swm-zoom-controls-background: var(--navy-light-20);
   --swm-zoom-controls-button-background-hover: var(--navy-light-10);
   --swm-zoom-select-trigger-text: var(--navy-light-100);
   --swm-zoom-select-trigger-hover: var(--navy-light-10);
@@ -375,7 +375,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-debugger-button-group-border: 1px solid var(--background-dark-40);
 
   /* Zoom controls */
-  --swm-zoom-controls-background: var(--background-dark-80);
+  --swm-zoom-controls-background: var(--background-dark-70);
   --swm-zoom-controls-button-background-hover: var(--background-dark-70);
   --swm-zoom-select-trigger-text: var(--off-white);
   --swm-zoom-select-trigger-hover: var(--background-dark-70);
