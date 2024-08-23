@@ -43,6 +43,8 @@ export class Project
 
   private detectedFingerprintChange: boolean;
 
+  private storybookStatus: boolean;
+
   private fileWatcher: Disposable;
 
   private deviceSession: DeviceSession | undefined;
@@ -53,9 +55,6 @@ export class Project
     previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
     selectedDevice: undefined,
   };
-
-  // TODO add istallation state
-  // private storybookInstallationState: "Installed" | "Uninstalled"
 
   private deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
     DEVICE_SETTINGS_KEY
@@ -79,6 +78,7 @@ export class Project
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.detectedFingerprintChange = false;
+    this.storybookStatus = false;
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
@@ -303,6 +303,9 @@ export class Project
       }, 100),
       [installNodeModules]
     );
+
+    Logger.debug("Checking storybook");
+    this.storybookStatus = await this.dependencyManager.checkStorybookInstalled();
   }
   //#endregion
 
@@ -393,14 +396,12 @@ export class Project
     this.deviceSession?.startPreview(appKey);
   }
 
-  public async isStorybookInstalled() {
-    // TODO change veryfication method
-    return await this.dependencyManager.checkStorybookInstalled();
-  }
-
   public async selectStorybookStory(componentTitle: string, storyName: string) {
-    (await this.isStorybookInstalled()) &&
+    if (this.storybookStatus) {
       this.devtools.send("RNIDE_selectStorybookStory", { componentTitle, storyName });
+    } else {
+      Logger.error("Storybook is not installed.");
+    }
   }
 
   public onActiveFileChange(filename: string, followEnabled: boolean) {

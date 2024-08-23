@@ -123,9 +123,6 @@ export async function activate(context: ExtensionContext) {
   }
 
   async function selectStorybookStory(componentTitle: string, storyName: string) {
-    if (!(await Project.currentProject?.isStorybookInstalled())) {
-      throw new Error("Storybook is not installed");
-    }
     Project.currentProject?.selectStorybookStory(componentTitle, storyName);
   }
 
