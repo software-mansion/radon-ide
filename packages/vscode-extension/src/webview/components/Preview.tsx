@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject } from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, ReactNode } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
@@ -27,6 +27,8 @@ declare module "react" {
     [key: `--${string}`]: string | number;
   }
 }
+
+const HIDE_ZOOM_CONTROLS_DELAY = 2000;
 
 function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
   return {
@@ -135,6 +137,37 @@ function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
 
 function TouchPointMarker({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-marker ${isPressing ? "pressed" : ""}`}></div>;
+}
+
+type ButtonGroupLeftProps = {
+  children: ReactNode;
+};
+
+function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
+  const [isMouseOver, setIsMouseOver] = useState(false);
+
+  const hideButtonGroupTimeout = useRef<any | undefined>();
+
+  const onMouseOver = () => {
+    clearTimeout(hideButtonGroupTimeout.current);
+    setIsMouseOver(true);
+  };
+
+  const onMouseOut = () => {
+    hideButtonGroupTimeout.current = setTimeout(() => {
+      setIsMouseOver(false);
+    }, HIDE_ZOOM_CONTROLS_DELAY);
+  };
+
+  return (
+    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} className="button-group-left-container">
+      <div
+        style={isMouseOver ? { transform: "translateX(0px)" } : {}}
+        className="button-group-left">
+        {children}
+      </div>
+    </div>
+  );
 }
 
 type InspectStackData = {
@@ -578,14 +611,14 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
           </Resizable>
         )}
       </div>
-      <div className="button-group-left">
+      <ButtonGroupLeft>
         <ZoomControls
           zoomLevel={zoomLevel}
           onZoomChanged={onZoomChanged}
           device={device}
           wrapperDivRef={wrapperDivRef}
         />
-      </div>
+      </ButtonGroupLeft>
     </>
   );
 }
