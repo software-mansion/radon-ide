@@ -146,7 +146,7 @@ type ButtonGroupLeftProps = {
 function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   const [isMouseOver, setIsMouseOver] = useState(false);
 
-  const hideButtonGroupTimeout = useRef<any | undefined>();
+  const hideButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
 
   const onMouseOver = () => {
     clearTimeout(hideButtonGroupTimeout.current);
