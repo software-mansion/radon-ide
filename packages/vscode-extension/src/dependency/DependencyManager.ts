@@ -20,7 +20,7 @@ import { Platform } from "../utilities/platform";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
-const MIN_STORYBOOK_VERSION_SUPPORTED = "0.0.0"; // TODO determine minimum supported version for storybook
+const MIN_STORYBOOK_VERSION_SUPPORTED = "5.2.0";
 
 export class DependencyManager implements Disposable {
   private disposables: Disposable[] = [];
