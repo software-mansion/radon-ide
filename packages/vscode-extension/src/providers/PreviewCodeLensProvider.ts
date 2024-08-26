@@ -13,49 +13,76 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
     token: CancellationToken
   ): CodeLens[] | Thenable<CodeLens[]> {
     const text = document.getText();
-    const isStory = /.*stories.?(js|ts|jsx|tsx)/.test(document.fileName);
+    const isStory = /.*stories.?(js|ts|jsx|tsx)$/.test(document.fileName);
 
-    // imported preview
     if (!text.includes("react-native-ide") && !isStory) {
       return [];
     }
 
-    const codeLenses = [];
-    // TODO refactor
+    const codeLenses: CodeLens[] = [];
+
     if (isStory) {
-      const componentTitleRegex = /title:\s*(".*?"|'.*?'|`.*?`)/g;
-      const componentTitleMatch = componentTitleRegex.exec(text);
-      if (componentTitleMatch === undefined) {
+      const componentName = this.extractComponentName(text);
+      if (!componentName) {
         return [];
       }
-      const componentTitle = componentTitleMatch![1].slice(1, -1);
-
-      const storyRegex = /export const (\w+)(?::\s*\w+\s*)? =/g;
-      for (const match of text.matchAll(storyRegex)) {
-        const storyName = match[1];
-        const line = document.lineAt(document.positionAt(match.index).line);
-        const range = new Range(line.lineNumber, 0, line.lineNumber, line.text.length);
-        const command: Command = {
-          title: "Select story",
-          command: "RNIDE.selectStorybookStory",
-          arguments: [componentTitle, storyName],
-        };
-        codeLenses.push(new CodeLens(range, command));
-      }
+      this.addStorybookCodeLenses(text, document, codeLenses, componentName);
     } else {
-      const regex = /\bpreview\b\s*\(/g;
-      for (const match of text.matchAll(regex)) {
-        const line = document.lineAt(document.positionAt(match.index).line);
-        const range = new Range(line.lineNumber, 0, line.lineNumber, line.text.length);
-        const command: Command = {
-          title: "Open preview",
-          command: "RNIDE.showPanel",
-          arguments: [document.fileName, line.lineNumber + 1],
-        };
-        codeLenses.push(new CodeLens(range, command));
+      this.addPreviewCodeLenses(text, document, codeLenses);
+    }
+    return codeLenses;
+  }
+
+  extractComponentName(text: string): string | null {
+    let componentName: string | null = null;
+    const titlePropRegex = /title:\s*(['"`])(\w+)\1/;
+    const titlePropMatch = titlePropRegex.exec(text);
+    if (titlePropMatch) {
+      componentName = titlePropMatch[2];
+    } else {
+      const componentRegex = /component:\s*(\w+)/;
+      const componentMatch = componentRegex.exec(text);
+      if (componentMatch) {
+        componentName = componentMatch[1];
       }
     }
+    return componentName;
+  }
 
-    return codeLenses;
+  addStorybookCodeLenses(
+    text: string,
+    document: TextDocument,
+    codeLenses: CodeLens[],
+    componentName: string
+  ) {
+    const storyRegex = /export const (\w+)(?::\s*\w+\s*)? =/g;
+    for (const match of text.matchAll(storyRegex)) {
+      const storyName = match[1];
+      const range = this.createRange(document, match.index);
+      const command: Command = {
+        title: "Select story",
+        command: "RNIDE.selectStorybookStory",
+        arguments: [componentName, storyName],
+      };
+      codeLenses.push(new CodeLens(range, command));
+    }
+  }
+
+  addPreviewCodeLenses(text: string, document: TextDocument, codeLenses: CodeLens[]) {
+    const previewRegex = /\bpreview\b\s*\(/g;
+    for (const match of text.matchAll(previewRegex)) {
+      const range = this.createRange(document, match.index);
+      const command: Command = {
+        title: "Open preview",
+        command: "RNIDE.showPanel",
+        arguments: [document.fileName, range.start.line + 1],
+      };
+      codeLenses.push(new CodeLens(range, command));
+    }
+  }
+  createRange(document: TextDocument, matchIndex: number): Range {
+    const position = document.positionAt(matchIndex);
+    const line = document.lineAt(position.line);
+    return new Range(line.lineNumber, 0, line.lineNumber, line.text.length);
   }
 }
