@@ -27,9 +27,8 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
         return [];
       }
       this.addStorybookCodeLenses(text, document, codeLenses, componentName);
-    } else {
-      this.addPreviewCodeLenses(text, document, codeLenses);
     }
+    this.addPreviewCodeLenses(text, document, codeLenses);
     return codeLenses;
   }
 
