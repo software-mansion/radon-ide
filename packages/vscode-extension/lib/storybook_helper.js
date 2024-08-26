@@ -1,17 +1,18 @@
-const { view } = require("__APPDIR__/.ondevice/storybook.requires");
-const { toId, storyNameFromExport } = require("__APPDIR__/node_modules/@storybook/csf");
 import { Text } from "react-native";
 
 async function isStoryIdValid(storyId) {
-  if (view === undefined) {
-    throw new Error("Storybook view is undefined.");
-  }
   const stories = await view._storyIndex.entries;
   return Object.values(stories).some((story) => story.id === storyId);
 }
 
 export async function storybookPreview(componentTitle, storyName) {
   try {
+    const { view } = require("__APPDIR__/.ondevice/storybook.requires");
+    const { toId, storyNameFromExport } = require("__APPDIR__/node_modules/@storybook/csf");
+    if (view === undefined) {
+      throw new Error("Storybook view is undefined.");
+    }
+
     const preparedStoryName = storyNameFromExport(storyName);
     const storyId = toId(componentTitle, preparedStoryName);
     if (!isStoryIdValid(storyId)) {
