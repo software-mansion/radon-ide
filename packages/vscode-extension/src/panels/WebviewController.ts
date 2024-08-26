@@ -7,6 +7,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { WorkspaceConfigController } from "./WorkspaceConfigController";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Utils } from "../utilities/utils";
+import { LaunchConfigController } from "./LaunchConfigController";
 
 type CallArgs = {
   callId: string;
@@ -31,6 +32,7 @@ export class WebviewController implements Disposable {
   private readonly deviceManager: DeviceManager;
   public readonly project: Project;
   public readonly workspaceConfig: WorkspaceConfigController;
+  public readonly launchConfig: LaunchConfigController;
   public readonly utils: Utils;
   private disposables: Disposable[] = [];
   private idToCallback: Map<string, WeakRef<any>> = new Map();
@@ -59,15 +61,22 @@ export class WebviewController implements Disposable {
     this.project = new Project(this.deviceManager, this.dependencyManager);
 
     this.workspaceConfig = new WorkspaceConfigController();
+    this.launchConfig = new LaunchConfigController();
 
     this.utils = new Utils();
 
-    this.disposables.push(this.dependencyManager, this.project, this.workspaceConfig);
+    this.disposables.push(
+      this.dependencyManager,
+      this.project,
+      this.workspaceConfig,
+      this.launchConfig
+    );
 
     this.callableObjects = new Map([
       ["DeviceManager", this.deviceManager as object],
       ["Project", this.project as object],
       ["WorkspaceConfig", this.workspaceConfig as object],
+      ["LaunchConfig", this.launchConfig as object],
       ["Utils", this.utils as object],
     ]);
 

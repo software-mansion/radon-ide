@@ -6,7 +6,6 @@ import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
 import fs from "fs";
-import path from "path";
 
 export abstract class DeviceBase implements Disposable {
   private preview: Preview | undefined;

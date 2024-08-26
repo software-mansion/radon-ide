@@ -1,8 +1,8 @@
-import { RelativePattern, workspace, Uri, OutputChannel } from "vscode";
+import { OutputChannel } from "vscode";
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import path from "path";
-import { CancelToken } from "./BuildManager";
+import { CancelToken } from "./cancelToken";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import {
@@ -13,17 +13,13 @@ import {
 } from "../devices/IosSimulatorDevice";
 import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
-type IOSProjectInfo =
-  | {
-      workspaceLocation: string;
-      xcodeprojLocation: string;
-      isWorkspace: true;
-    }
-  | {
-      workspaceLocation: undefined;
-      xcodeprojLocation: string;
-      isWorkspace: false;
-    };
+import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
+
+export type IOSBuildResult = {
+  platform: DevicePlatform.IOS;
+  appPath: string;
+  bundleID: string;
+};
 
 const TEMP_SIMULATOR_NAME_PREFIX = "__RNIDE_TEMP_SIM_";
 
@@ -38,57 +34,6 @@ async function getBundleID(appPath: string) {
       path.join(appPath, "Info.plist"),
     ])
   ).stdout;
-}
-
-export async function findXcodeProject(appRootFolder: string) {
-  function getParentDirectory(filePath: Uri) {
-    return Uri.joinPath(filePath, "..").fsPath;
-  }
-
-  function inSameDirectory(file1: Uri, file2: Uri) {
-    const parentDirectory1 = getParentDirectory(file1);
-    const parentDirectory2 = getParentDirectory(file2);
-
-    return parentDirectory1 === parentDirectory2;
-  }
-
-  const iosSourceDir = getIosSourceDir(appRootFolder);
-
-  const xcworkspaceFiles = await workspace.findFiles(
-    new RelativePattern(iosSourceDir, "**/*.xcworkspace/*"),
-    "**/{node_modules,build,Pods,vendor,*.xcodeproj}/**",
-    2
-  );
-
-  let workspaceLocation: string | undefined;
-  if (xcworkspaceFiles.length === 2 && !inSameDirectory(xcworkspaceFiles[0], xcworkspaceFiles[1])) {
-    Logger.warn(`Found multiple XCode workspace files: ${xcworkspaceFiles.join(", ")}`);
-  } else if (xcworkspaceFiles.length >= 1) {
-    workspaceLocation = getParentDirectory(xcworkspaceFiles[0]);
-  }
-
-  const xcodeprojFiles = await workspace.findFiles(
-    new RelativePattern(iosSourceDir, "**/*.xcodeproj/*"),
-    "**/{node_modules,build,Pods,vendor}/**",
-    2
-  );
-
-  let xcodeprojLocation: string | undefined;
-  if (xcodeprojFiles.length === 2 && !inSameDirectory(xcodeprojFiles[0], xcodeprojFiles[1])) {
-    Logger.warn(`Found multiple XCode project files: ${xcodeprojFiles.join(", ")}`);
-  } else if (xcodeprojFiles.length >= 1) {
-    xcodeprojLocation = getParentDirectory(xcodeprojFiles[0]);
-  }
-
-  if (xcodeprojLocation) {
-    return {
-      workspaceLocation,
-      xcodeprojLocation,
-      isWorkspace: workspaceLocation !== undefined,
-    } as IOSProjectInfo;
-  }
-
-  return null;
 }
 
 function buildProject(
@@ -124,29 +69,6 @@ function buildProject(
   });
 }
 
-async function findXcodeScheme(xcodeProject: IOSProjectInfo) {
-  const basename = xcodeProject.workspaceLocation
-    ? path.basename(xcodeProject.workspaceLocation, ".xcworkspace")
-    : path.basename(xcodeProject.xcodeprojLocation, ".xcodeproj");
-
-  // we try to search for the scheme name under .xcodeproj/xcshareddata/xcschemes
-  const schemeFiles = await workspace.findFiles(
-    new RelativePattern(xcodeProject.xcodeprojLocation, "**/xcshareddata/xcschemes/*.xcscheme")
-  );
-  if (schemeFiles.length === 1) {
-    return path.basename(schemeFiles[0].fsPath, ".xcscheme");
-  } else if (schemeFiles.length === 0) {
-    Logger.warn(
-      `Could not find any scheme files in ${xcodeProject.xcodeprojLocation}, using workspace name "${basename}" as scheme`
-    );
-  } else {
-    Logger.warn(
-      `Ambiguous scheme files in ${xcodeProject.xcodeprojLocation}, using workspace name "${basename}" as scheme`
-    );
-  }
-  return basename;
-}
-
 export async function buildIos(
   deviceInfo: IOSDeviceInfo,
   appRootFolder: string,
@@ -160,10 +82,12 @@ export async function buildIos(
     forceCleanBuild: boolean,
     cancelToken: CancelToken
   ) => Promise<void>
-) {
+): Promise<IOSBuildResult> {
+  const { ios: buildOptions } = getLaunchConfiguration();
+
   if (await isExpoGoProject()) {
     const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);
-    return { appPath, bundleID: EXPO_GO_BUNDLE_ID };
+    return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
   }
 
   const sourceDir = getIosSourceDir(appRootFolder);
@@ -184,8 +108,7 @@ export async function buildIos(
     }`
   );
 
-  const buildOptions = getLaunchConfiguration();
-  const scheme = buildOptions.ios?.scheme || (await findXcodeScheme(xcodeProject));
+  const scheme = buildOptions?.scheme || (await findXcodeScheme(xcodeProject))[0];
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
   let platformName: string | undefined;
@@ -196,7 +119,7 @@ export async function buildIos(
         xcodeProject,
         sourceDir,
         scheme,
-        buildOptions?.ios?.configuration || "Debug",
+        buildOptions?.configuration || "Debug",
         forceCleanBuild
       )
     );
@@ -226,13 +149,13 @@ export async function buildIos(
     sourceDir,
     platformName,
     scheme,
-    buildOptions?.ios?.configuration || "Debug",
+    buildOptions?.configuration || "Debug",
     cancelToken
   );
 
   const bundleID = await getBundleID(appPath);
 
-  return { appPath, bundleID };
+  return { appPath, bundleID, platform: DevicePlatform.IOS };
 }
 
 async function getBuildPath(

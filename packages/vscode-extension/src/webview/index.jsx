@@ -11,6 +11,7 @@ import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
 
 import "./styles/theme.css";
 import UtilsProvider from "./providers/UtilsProvider";
+import LaunchConfigProvider from "./providers/LaunchConfigProvider";
 
 const container = document.getElementById("root");
 const root = createRoot(container);
@@ -20,15 +21,17 @@ root.render(
     <ProjectProvider>
       <UtilsProvider>
         <WorkspaceConfigProvider>
-          <DevicesProvider>
-            <DependenciesProvider>
-              <ModalProvider>
-                <AlertProvider>
-                  <App />
-                </AlertProvider>
-              </ModalProvider>
-            </DependenciesProvider>
-          </DevicesProvider>
+          <LaunchConfigProvider>
+            <DevicesProvider>
+              <DependenciesProvider>
+                <ModalProvider>
+                  <AlertProvider>
+                    <App />
+                  </AlertProvider>
+                </ModalProvider>
+              </DependenciesProvider>
+            </DevicesProvider>
+          </LaunchConfigProvider>
         </WorkspaceConfigProvider>
       </UtilsProvider>
     </ProjectProvider>

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "ReactNative75.app"
-               BlueprintName = "ReactNative75"
-               ReferencedContainer = "container:ReactNative75.xcodeproj">
+               BuildableName = "reactNative75.app"
+               BlueprintName = "reactNative75"
+               ReferencedContainer = "container:reactNative75.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "ReactNative75Tests.xctest"
-               BlueprintName = "ReactNative75Tests"
-               ReferencedContainer = "container:ReactNative75.xcodeproj">
+               BuildableName = "reactNative75Tests.xctest"
+               BlueprintName = "reactNative75Tests"
+               ReferencedContainer = "container:reactNative75.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "ReactNative75.app"
-            BlueprintName = "ReactNative75"
-            ReferencedContainer = "container:ReactNative75.xcodeproj">
+            BuildableName = "reactNative75.app"
+            BlueprintName = "reactNative75"
+            ReferencedContainer = "container:reactNative75.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "ReactNative75.app"
-            BlueprintName = "ReactNative75"
-            ReferencedContainer = "container:ReactNative75.xcodeproj">
+            BuildableName = "reactNative75.app"
+            BlueprintName = "reactNative75"
+            ReferencedContainer = "container:reactNative75.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

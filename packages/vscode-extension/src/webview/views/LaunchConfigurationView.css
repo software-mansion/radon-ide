@@ -1,0 +1,35 @@
+.input-configuration {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 4px;
+  padding: 0 8px;
+  font-size: 13px;
+  line-height: 1;
+  height: 26px;
+  gap: 5px;
+  color: var(--swm-default-text);
+  background-color: var(--swm-select-background);
+  box-shadow: var(--swm-select-shadow);
+  margin-bottom: 5px;
+}
+
+.scheme {
+  margin-bottom: 5px;
+}
+.setting-description {
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+
+.container {
+  flex: 1;
+
+  padding-right: 5%;
+  padding-left: 2.5%;
+}
+
+.launch-configuration-section-margin {
+  margin-bottom: 10px;
+}
