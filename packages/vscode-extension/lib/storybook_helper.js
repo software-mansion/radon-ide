@@ -28,7 +28,7 @@ export async function storybookPreview(componentTitle, storyName) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const { unboundStoryFn: StoryComponent } = story;
 
-    const key = `preview://storybook:${storyId}`;
+    const key = `sb://${storyId}`;
     global.__RNIDE_previews.set(key, {
       component: (
         <>{StoryComponent ? <StoryComponent {...story} /> : <Text>Failed to render story.</Text>}</>

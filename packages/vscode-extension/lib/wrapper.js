@@ -106,7 +106,8 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
         initialProps: { previewKey },
       });
       const preview = global.__RNIDE_previews.get(previewKey);
-      handleNavigationChange({ id: previewKey, name: `preview:${preview.name}` });
+      const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
+      handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name });
     },
     [rootTag, handleNavigationChange]
   );
@@ -162,7 +163,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     devtoolsAgent,
     "RNIDE_openNavigation",
     (payload) => {
-      const isPreviewUrl = payload.id.startsWith("preview://");
+      const isPreviewUrl = payload.id.startsWith("preview://") || payload.id.startsWith("sb://");
       if (isPreviewUrl) {
         openPreview(payload.id);
         return;
