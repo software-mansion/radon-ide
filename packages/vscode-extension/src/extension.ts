@@ -122,8 +122,8 @@ export async function activate(context: ExtensionContext) {
       });
   }
 
-  async function selectStorybookStory(componentTitle: string, storyName: string) {
-    Project.currentProject?.selectStorybookStory(componentTitle, storyName);
+  async function showStorybookStory(componentTitle: string, storyName: string) {
+    Project.currentProject?.showStorybookStory(componentTitle, storyName);
   }
 
   context.subscriptions.push(
@@ -144,7 +144,7 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.diagnose", diagnoseWorkspaceStructure)
   );
   context.subscriptions.push(
-    commands.registerCommand("RNIDE.selectStorybookStory", selectStorybookStory)
+    commands.registerCommand("RNIDE.showStorybookStory", showStorybookStory)
   );
 
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {

@@ -130,7 +130,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     return closePreviewPromise;
   }, [rootTag]);
 
-  const selectStorybookStory = useCallback(
+  const showStorybookStory = useCallback(
     async (componentTitle, storyName) => {
       const previewKey = await storybookPreview(componentTitle, storyName);
       previewKey !== undefined && openPreview(previewKey);
@@ -254,11 +254,11 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
 
   useAgentListener(
     devtoolsAgent,
-    "RNIDE_selectStorybookStory",
+    "RNIDE_showStorybookStory",
     (payload) => {
-      selectStorybookStory(payload.componentTitle, payload.storyName);
+      showStorybookStory(payload.componentTitle, payload.storyName);
     },
-    [selectStorybookStory]
+    [showStorybookStory]
   );
 
   useEffect(() => {

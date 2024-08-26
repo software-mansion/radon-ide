@@ -396,9 +396,9 @@ export class Project
     this.deviceSession?.startPreview(appKey);
   }
 
-  public async selectStorybookStory(componentTitle: string, storyName: string) {
+  public async showStorybookStory(componentTitle: string, storyName: string) {
     if (this.storybookStatus) {
-      this.devtools.send("RNIDE_selectStorybookStory", { componentTitle, storyName });
+      this.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
     } else {
       Logger.error("Storybook is not installed.");
     }

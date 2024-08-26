@@ -60,7 +60,7 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
       const range = this.createRange(document, match.index);
       const command: Command = {
         title: "Select story",
-        command: "RNIDE.selectStorybookStory",
+        command: "RNIDE.showStorybookStory",
         arguments: [componentName, storyName],
       };
       codeLenses.push(new CodeLens(range, command));
