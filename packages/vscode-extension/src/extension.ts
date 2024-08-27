@@ -123,6 +123,7 @@ export async function activate(context: ExtensionContext) {
   }
 
   async function showStorybookStory(componentTitle: string, storyName: string) {
+    commands.executeCommand("RNIDE.openPanel");
     Project.currentProject?.showStorybookStory(componentTitle, storyName);
   }
 
