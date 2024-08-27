@@ -66,13 +66,13 @@ function adaptMetroConfig(config) {
     config.resolver = {};
   }
 
-  // Override the resolveRequest method to include files in the ".ondevice/"
+  // Override the resolveRequest method to include files in the ".storybook/"
   // directory, which contains "storybook.requires.js".
   // For all other files it uses the original resolveRequest method.
   const originalResolveRequest = config.resolver?.resolveRequest;
   const storybookResolveRequest = (context, moduleName, platform) => {
     const defaultResolveResult = context.resolveRequest(context, moduleName, platform);
-    if (!originalResolveRequest || defaultResolveResult?.filePath?.includes(".ondevice/")) {
+    if (!originalResolveRequest || defaultResolveResult?.filePath?.includes(".storybook/")) {
       return defaultResolveResult;
     }
     return originalResolveRequest(context, moduleName, platform);
