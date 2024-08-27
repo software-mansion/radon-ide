@@ -23,11 +23,12 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 32,
     paddingVertical: 8,
-    backgroundColor: "purple",
+    backgroundColor: "blue",
     alignSelf: "flex-start",
     borderRadius: 8,
   },
   text: { color: "white", fontSize: 16, fontWeight: "bold" },
 });
 
+preview(<MyButton text="Hello world" />);
 preview(<MyButton text="Gello world" />);
