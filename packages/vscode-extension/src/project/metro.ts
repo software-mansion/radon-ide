@@ -149,7 +149,6 @@ export class Metro implements Disposable {
       RCT_METRO_PORT: "0",
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       REACT_NATIVE_IDE_LIB_PATH: libPath,
-      STORYBOOK_ENABLED: "true",
     };
     let bundlerProcess: ChildProcess;
 

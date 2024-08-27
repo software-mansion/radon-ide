@@ -66,6 +66,26 @@ function adaptMetroConfig(config) {
     config.resolver = {};
   }
 
+  // Override the resolveRequest method to include files in the ".storybook/"
+  // directory, which contains "storybook.requires.js".
+  // For all other files it uses the original resolveRequest method.
+  const originalResolveRequest = config.resolver?.resolveRequest;
+  const storybookResolveRequest = (context, moduleName, platform) => {
+    const defaultResolveResult = context.resolveRequest(context, moduleName, platform);
+    if (!originalResolveRequest || defaultResolveResult?.filePath?.includes(".storybook/")) {
+      return defaultResolveResult;
+    }
+    return originalResolveRequest(context, moduleName, platform);
+  };
+
+  config = {
+    ...config,
+    resolver: {
+      ...config.resolver,
+      resolveRequest: storybookResolveRequest,
+    },
+  };
+
   // This code allows us to host some files from the extension's lib folder
   // Currently used for runtime and wrapper functionalities
   config.resolver.extraNodeModules = {
