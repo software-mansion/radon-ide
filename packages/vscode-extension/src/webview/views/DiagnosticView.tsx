@@ -44,6 +44,9 @@ function DiagnosticView() {
       <DiagnosticItem label="React Native" item={dependencies.ReactNative} />
       <DiagnosticItem label="Expo" item={dependencies.Expo} />
       {Platform.OS === "macos" && <DiagnosticItem label="Pods" item={dependencies.Pods} />}
+      <div className="diagnostic-section-margin" />
+
+      <Label>Optional</Label>
       <DiagnosticItem label="Storybook" item={dependencies.Storybook} />
       <div className="diagnostic-section-margin" />
 
