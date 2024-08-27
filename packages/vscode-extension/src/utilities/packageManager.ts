@@ -41,12 +41,12 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo> {
   const appRootPath = getAppRootFolder();
   const workspacePath = findWorkspace(appRootPath);
 
-  async function findPackageManager(workspacePath: string) {
+  async function findPackageManager(workspace: string) {
     return await Promise.all([
-      pathExists(resolve(workspacePath, "yarn.lock")),
-      pathExists(resolve(workspacePath, "package-lock.json")),
-      pathExists(resolve(workspacePath, "pnpm-lock.yaml")),
-      pathExists(resolve(workspacePath, "bun.lockb")),
+      pathExists(resolve(workspace, "yarn.lock")),
+      pathExists(resolve(workspace, "package-lock.json")),
+      pathExists(resolve(workspace, "pnpm-lock.yaml")),
+      pathExists(resolve(workspace, "bun.lockb")),
     ]).then(([isYarn, isNpm, isPnpm, isBun]) => {
       if (isYarn) {
         return "yarn";
@@ -58,7 +58,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo> {
         return "npm";
       }
       try {
-        const packageManager = require(path.join(workspacePath, "package.json")).packageManager;
+        const packageManager = require(path.join(workspace, "package.json")).packageManager;
 
         if (packageManager) {
           const regex = /^([a-zA-Z]+)@/;
