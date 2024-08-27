@@ -17,7 +17,7 @@ export function UglyButton() {
 
   return (
     <Button
-      title="Throw error xd"
+      title="Throw error"
       onPress={() => {
         console.log("ugly");
         setA(a + 1);

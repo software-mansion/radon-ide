@@ -2,9 +2,9 @@ import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
 import { View } from "react-native";
 import { NiceButton } from "./NiceButton";
+import { preview } from "react-native-ide";
 
 const meta = {
-  title: "NiceButton",
   component: NiceButton,
   args: {
     text: "Button",
@@ -22,7 +22,7 @@ export const NewText: Story = {
   },
   decorators: [
     (Story) => (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: 50 }}>
         <Story />
       </View>
     ),
@@ -40,3 +40,5 @@ export const Foo: Story = {
     ),
   ],
 };
+
+preview(<NiceButton text="222" />);
