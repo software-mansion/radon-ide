@@ -11,7 +11,7 @@ import { isExpoGoProject } from "../builders/expoGo";
 import {
   isNodeModulesInstalled,
   isPackageManagerAvailable,
-  PackageManagerName,
+  PackageManagerInfo,
   resolvePackageManager,
 } from "../utilities/packageManager";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
@@ -128,7 +128,7 @@ export class DependencyManager implements Disposable {
     return { installed, packageManager };
   }
 
-  public async installNodeModules(manager: PackageManagerName): Promise<void> {
+  public async installNodeModules(manager: PackageManagerInfo): Promise<void> {
     this.stalePods = true;
 
     this.webview.postMessage({
@@ -138,7 +138,7 @@ export class DependencyManager implements Disposable {
     const workspacePath = getAppRootFolder();
     let installationCommand;
 
-    switch (manager) {
+    switch (manager.name) {
       case "npm":
         installationCommand = "npm install";
         break;

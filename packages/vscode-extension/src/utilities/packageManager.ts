@@ -1,9 +1,13 @@
 import { command } from "./subprocess";
-import { promises as fs } from "fs";
+import { existsSync, promises as fs } from "fs";
 import path, { resolve } from "path";
 import { getAppRootFolder } from "./extensionContext";
+import { Logger } from "../Logger";
 
-export type PackageManagerName = "npm" | "pnpm" | "yarn" | "bun";
+export type PackageManagerInfo = {
+  name: "npm" | "pnpm" | "yarn" | "bun";
+  workspacePath?: string;
+};
 
 async function pathExists(p: string) {
   try {
@@ -14,49 +18,74 @@ async function pathExists(p: string) {
   }
 }
 
-export async function resolvePackageManager(): Promise<PackageManagerName> {
-  const workspacePath = getAppRootFolder();
-  return await Promise.all([
-    pathExists(resolve(workspacePath, "yarn.lock")),
-    pathExists(resolve(workspacePath, "package-lock.json")),
-    pathExists(resolve(workspacePath, "pnpm-lock.yaml")),
-    pathExists(resolve(workspacePath, "bun.lockb")),
-  ]).then(([isYarn, isNpm, isPnpm, isBun]) => {
-    if (isYarn) {
-      return "yarn";
-    } else if (isPnpm) {
-      return "pnpm";
-    } else if (isBun) {
-      return "bun";
-    } else if (isNpm) {
-      return "npm";
-    }
-    try {
-      const packageManager = require(path.join(workspacePath, "package.json")).packageManager;
-
-      if (packageManager) {
-        const regex = /^([a-zA-Z]+)@/;
-        const match = packageManager.match(regex);
-        return match ? match[1] : "npm";
+export async function resolvePackageManager(): Promise<PackageManagerInfo> {
+  function findWorkspace(appRoot: string) {
+    let currentDir = appRoot;
+    let parentDir = path.resolve(currentDir, "..");
+    while (parentDir !== currentDir) {
+      currentDir = parentDir;
+      parentDir = path.resolve(currentDir, "..");
+      const packageJsonPath = path.join(currentDir, "package.json");
+      if (!existsSync(packageJsonPath)) {
+        continue;
       }
-    } catch (e) {
-      // there might be a problem while reading package.json in which case we default to npm
+      const workspaces = require(packageJsonPath).workspaces;
+      if (!workspaces) {
+        continue;
+      }
+      return currentDir;
     }
+    return undefined;
+  }
 
-    return "npm";
-  });
+  const appRootPath = getAppRootFolder();
+  const workspacePath = findWorkspace(appRootPath);
+
+  async function findPackageManager(workspacePath: string) {
+    return await Promise.all([
+      pathExists(resolve(workspacePath, "yarn.lock")),
+      pathExists(resolve(workspacePath, "package-lock.json")),
+      pathExists(resolve(workspacePath, "pnpm-lock.yaml")),
+      pathExists(resolve(workspacePath, "bun.lockb")),
+    ]).then(([isYarn, isNpm, isPnpm, isBun]) => {
+      if (isYarn) {
+        return "yarn";
+      } else if (isPnpm) {
+        return "pnpm";
+      } else if (isBun) {
+        return "bun";
+      } else if (isNpm) {
+        return "npm";
+      }
+      try {
+        const packageManager = require(path.join(workspacePath, "package.json")).packageManager;
+
+        if (packageManager) {
+          const regex = /^([a-zA-Z]+)@/;
+          const match = packageManager.match(regex);
+          return match ? match[1] : "npm";
+        }
+      } catch (e) {
+        // there might be a problem while reading package.json in which case we default to npm
+      }
+      return "npm";
+    });
+  }
+
+  const name = await findPackageManager(workspacePath ?? appRootPath);
+
+  return { name, workspacePath };
 }
 
-export function isPackageManagerAvailable(manager: PackageManagerName): boolean {
+export function isPackageManagerAvailable(manager: PackageManagerInfo): boolean {
   try {
-    command(`${manager} --version`);
+    command(`${manager.name} --version`);
     return true;
   } catch {}
   return false;
 }
 
-async function isNpmModulesInstalled(): Promise<boolean> {
-  const workspacePath = getAppRootFolder();
+async function isNpmModulesInstalled(workspacePath: string): Promise<boolean> {
   try {
     const { stdout, stderr } = await command("npm ls --json", {
       cwd: workspacePath,
@@ -69,8 +98,7 @@ async function isNpmModulesInstalled(): Promise<boolean> {
   }
 }
 
-async function isYarnModulesInstalled(): Promise<boolean> {
-  const workspacePath = getAppRootFolder();
+async function isYarnModulesInstalled(workspacePath: string): Promise<boolean> {
   try {
     // because "yarn check" was removed from yarnv2 we use npm's method for checking dependencies
     // npm is taking into consideration yarn.lock since version 7, which means
@@ -100,12 +128,13 @@ async function isBunModulesInstalled(): Promise<boolean> {
   return false;
 }
 
-export async function isNodeModulesInstalled(manager: PackageManagerName): Promise<boolean> {
-  switch (manager) {
+export async function isNodeModulesInstalled(manager: PackageManagerInfo): Promise<boolean> {
+  const workspacePath = manager.workspacePath ?? getAppRootFolder();
+  switch (manager.name) {
     case "npm":
-      return await isNpmModulesInstalled();
+      return await isNpmModulesInstalled(workspacePath);
     case "yarn":
-      return await isYarnModulesInstalled();
+      return await isYarnModulesInstalled(workspacePath);
     case "pnpm":
       return await isPnpmModulesInstalled();
     case "bun":
