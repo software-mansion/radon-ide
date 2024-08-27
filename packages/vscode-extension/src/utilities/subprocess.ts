@@ -9,15 +9,6 @@ const nodeExec = util.promisify(bareExec);
 export type ChildProcess = ExecaChildProcess<string>;
 
 export async function getPathEnv() {
-  function extractLastPathVariable(env: string) {
-    return env
-      .split("\n")
-      .filter((line) => /^(export )?PATH=/.test(line))
-      .at(-1)
-      ?.split("=")[1]
-      .replaceAll("'", "");
-  }
-
   async function getMiseEnv(shellPath: string) {
     // [Mise](https://mise.jdx.dev) is the only widely used tool manager that
     // doesn't inject shims or paths in the PATH. It relies on a shell hook
@@ -25,10 +16,10 @@ export async function getPathEnv() {
 
     // fish, bash, and zsh all support -i and -c flags
     try {
-      const { stdout: miseEnv } = await nodeExec(
-        `${shellPath} -i -c 'mise hook-env | grep \"PATH=\"'`
+      const { stdout: misePath } = await nodeExec(
+        `${shellPath} -i -c 'eval "$(mise hook-env)"; echo $PATH'`
       );
-      return extractLastPathVariable(miseEnv);
+      return misePath.trim();
     } catch (_error) {
       // mise isn't installed
       return undefined;
@@ -37,13 +28,13 @@ export async function getPathEnv() {
 
   async function getEnv(shellPath: string) {
     // fish, bash, and zsh all support -i and -c flags
-    const { stdout: env } = await nodeExec(`${shellPath} -i -c 'env | grep \"PATH=\"'`);
-    return extractLastPathVariable(env);
+    const { stdout: path } = await nodeExec(`${shellPath} -i -c 'echo $PATH'`);
+    return path.trim();
   }
 
   const shellPath = process.env.SHELL ?? "/bin/zsh";
-  const [miseEnv, env] = await Promise.all([getMiseEnv(shellPath), getEnv(shellPath)]);
-  return miseEnv ?? env;
+  const [misePath, path] = await Promise.all([getMiseEnv(shellPath), getEnv(shellPath)]);
+  return misePath ?? path;
 }
 
 let pathEnv: string | undefined;
