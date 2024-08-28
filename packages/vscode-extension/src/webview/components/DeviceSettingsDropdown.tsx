@@ -18,6 +18,7 @@ import { DeviceLocationView } from "../views/DeviceLocationView";
 import { JSX } from "react/jsx-runtime";
 import DiagnosticView from "../views/DiagnosticView";
 import { useModal } from "../providers/ModalProvider";
+import { DevicePlatform } from "../../common/DeviceManager";
 
 const contentSizes = [
   "xsmall",
@@ -118,49 +119,50 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <span className="device-settings-large-text-indicator" />
             </div>
             <div className="device-settings-margin" />
+            {projectState.selectedDevice?.platform === DevicePlatform.IOS && (
+              <DropdownMenu.Sub>
+                <DropdownMenu.SubTrigger className="dropdown-menu-item">
+                  <span className="codicon codicon-layout" />
+                  Biometrics
+                  <span className="codicon codicon-chevron-right right-slot" />
+                </DropdownMenu.SubTrigger>
 
-            <DropdownMenu.Sub>
-              <DropdownMenu.SubTrigger className="dropdown-menu-item">
-                <span className="codicon codicon-layout" />
-                Biometrics
-                <span className="codicon codicon-chevron-right right-slot" />
-              </DropdownMenu.SubTrigger>
-
-              <DropdownMenu.Portal>
-                <DropdownMenu.SubContent className="dropdown-menu-content">
-                  <DropdownMenu.Item
-                    className="dropdown-menu-item"
-                    onSelect={() => {
-                      project.updateDeviceSettings({
-                        ...deviceSettings,
-                        biometricEnrollment: !deviceSettings.biometricEnrollment,
-                      });
-                    }}>
-                    <span className="codicon codicon-layout-sidebar-left" />
-                    Enrolment
-                    {deviceSettings.biometricEnrollment && (
-                      <span className="codicon codicon-check right-slot" />
-                    )}
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="dropdown-menu-item"
-                    onSelect={() => {
-                      project.sendBiometricAuthorization(true);
-                    }}>
-                    <span className="codicon codicon-layout-sidebar-left" />
-                    Matching ID
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="dropdown-menu-item"
-                    onSelect={() => {
-                      project.sendBiometricAuthorization(false);
-                    }}>
-                    <span className="codicon codicon-layout-sidebar-left" />
-                    Non-Matching ID
-                  </DropdownMenu.Item>
-                </DropdownMenu.SubContent>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Sub>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.SubContent className="dropdown-menu-content">
+                    <DropdownMenu.Item
+                      className="dropdown-menu-item"
+                      onSelect={() => {
+                        project.updateDeviceSettings({
+                          ...deviceSettings,
+                          biometricEnrollment: !deviceSettings.biometricEnrollment,
+                        });
+                      }}>
+                      <span className="codicon codicon-layout-sidebar-left" />
+                      Enrolment
+                      {deviceSettings.biometricEnrollment && (
+                        <span className="codicon codicon-check right-slot" />
+                      )}
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      className="dropdown-menu-item"
+                      onSelect={() => {
+                        project.sendBiometricAuthorization(true);
+                      }}>
+                      <span className="codicon codicon-layout-sidebar-left" />
+                      Matching ID
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      className="dropdown-menu-item"
+                      onSelect={() => {
+                        project.sendBiometricAuthorization(false);
+                      }}>
+                      <span className="codicon codicon-layout-sidebar-left" />
+                      Non-Matching ID
+                    </DropdownMenu.Item>
+                  </DropdownMenu.SubContent>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Sub>
+            )}
             <DropdownMenu.Arrow className="dropdown-menu-arrow" />
           </form>
           <Label>Device Location</Label>
