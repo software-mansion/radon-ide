@@ -130,10 +130,13 @@ export async function activate(context: ExtensionContext) {
     )
   );
   context.subscriptions.push(
-    commands.registerCommand("RNIDE.matchBiometricAuthorization", matchBiometricAuthorization)
+    commands.registerCommand("RNIDE.performBiometricAuthorization", performBiometricAuthorization)
   );
   context.subscriptions.push(
-    commands.registerCommand("RNIDE.nonMatchBiometricAuthorization", nonMatchBiometricAuthorization)
+    commands.registerCommand(
+      "RNIDE.performFailedBiometricAuthorization",
+      performFailedBiometricAuthorization
+    )
   );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
@@ -330,11 +333,11 @@ async function openDevMenu() {
   Project.currentProject?.openDevMenu();
 }
 
-async function matchBiometricAuthorization() {
+async function performBiometricAuthorization() {
   Project.currentProject?.sendBiometricAuthorization(true);
 }
 
-async function nonMatchBiometricAuthorization() {
+async function performFailedBiometricAuthorization() {
   Project.currentProject?.sendBiometricAuthorization(false);
 }
 

@@ -8,7 +8,7 @@ export type DeviceSettings = {
     longitude: number;
     isDisabled: boolean;
   };
-  biometricEnrollment: boolean;
+  hasEnrolledBiometrics: boolean;
 };
 
 export type ProjectState = {

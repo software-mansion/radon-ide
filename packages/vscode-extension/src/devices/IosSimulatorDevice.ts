@@ -5,12 +5,13 @@ import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo } from "../common/DeviceManager";
-import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
+import { BuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
 import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { ExecaError } from "execa";
+import { IOSBuildResult } from "../builders/buildIOS";
 
 interface SimulatorInfo {
   availability?: string;
@@ -134,7 +135,7 @@ export class IosSimulatorDevice extends DeviceBase {
       "notifyutil",
       "-s",
       "com.apple.BiometricKit.enrollmentChanged",
-      settings.biometricEnrollment ? "1" : "0",
+      settings.hasEnrolledBiometrics ? "1" : "0",
     ]);
     await exec("xcrun", [
       "simctl",

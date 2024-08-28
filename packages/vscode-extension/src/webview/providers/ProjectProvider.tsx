@@ -20,7 +20,7 @@ const ProjectContext = createContext<ProjectContextProps>({
   deviceSettings: {
     appearance: "dark",
     contentSize: "normal",
-    biometricEnrollment: false,
+    hasEnrolledBiometrics: false,
     location: {
       latitude: 50.048653,
       longitude: 19.965474,
@@ -40,7 +40,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>({
     appearance: "dark",
     contentSize: "normal",
-    biometricEnrollment: false,
+    hasEnrolledBiometrics: false,
     location: {
       latitude: 50.048653,
       longitude: 19.965474,

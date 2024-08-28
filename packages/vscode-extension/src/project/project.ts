@@ -64,7 +64,7 @@ export class Project
       longitude: 19.965474,
       isDisabled: true,
     },
-    biometricEnrollment: false,
+    hasEnrolledBiometrics: false,
   };
 
   constructor(
@@ -80,7 +80,7 @@ export class Project
         longitude: 19.965474,
         isDisabled: false,
       },
-      biometricEnrollment: false,
+      hasEnrolledBiometrics: false,
     };
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);

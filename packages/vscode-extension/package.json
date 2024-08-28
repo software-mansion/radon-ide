@@ -63,14 +63,14 @@
         "enablement": "!RNIDE.extensionIsActive"
       },
       {
-        "command": "RNIDE.matchBiometricAuthorization",
-        "title": "Matching Biometric Authorization ",
+        "command": "RNIDE.performBiometricAuthorization",
+        "title": "Perform Biometric Authorization ",
         "category": "React Native IDE",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
-        "command": "RNIDE.nonMatchBiometricAuthorization",
-        "title": "Non Matching Biometric Authorization",
+        "command": "RNIDE.performFailedBiometricAuthorization",
+        "title": "Perform Failed Biometric Authorization",
         "category": "React Native IDE",
         "enablement": "RNIDE.extensionIsActive"
       }
@@ -88,12 +88,12 @@
         "when": "RNIDE.isTabPanelFocused"
       },
       {
-        "command": "RNIDE.matchBiometricAuthorization",
+        "command": "RNIDE.performBiometricAuthorization",
         "key": "ctrl+shift+M",
         "mac": "cmd+shift+M"
       },
       {
-        "command": "RNIDE.nonMatchBiometricAuthorization",
+        "command": "RNIDE.performFailedBiometricAuthorization",
         "key": "ctrl+shift+N",
         "mac": "cmd+shift+N"
       }
