@@ -21,6 +21,7 @@ export function isWorkspaceRoot(dir: string) {
   try {
     workspaces = require(packageJsonPath).workspaces;
   } catch (e) {
+    // No package.json
     return false;
   }
 

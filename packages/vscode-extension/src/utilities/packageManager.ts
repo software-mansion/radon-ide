@@ -37,34 +37,35 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo> {
   const workspacePath = findWorkspace(appRootPath);
 
   async function findPackageManager(workspace: string) {
-    return await Promise.all([
-      pathExists(resolve(workspace, "yarn.lock")),
-      pathExists(resolve(workspace, "package-lock.json")),
-      pathExists(resolve(workspace, "pnpm-lock.yaml")),
-      pathExists(resolve(workspace, "bun.lockb")),
-    ]).then(([isYarn, isNpm, isPnpm, isBun]) => {
-      if (isYarn) {
-        return "yarn";
-      } else if (isPnpm) {
-        return "pnpm";
-      } else if (isBun) {
-        return "bun";
-      } else if (isNpm) {
-        return "npm";
-      }
-      try {
-        const packageManager = require(path.join(workspace, "package.json")).packageManager;
+    const lockFiles = new Map(
+      Object.entries({
+        "yarn.lock": "yarn",
+        "package-lock.json": "npm",
+        "pnpm-lock.yaml": "pnpm",
+        "bun.lockb": "bun",
+      } as const)
+    );
 
-        if (packageManager) {
-          const regex = /^([a-zA-Z]+)@/;
-          const match = packageManager.match(regex);
-          return match ? match[1] : "npm";
-        }
-      } catch (e) {
-        // there might be a problem while reading package.json in which case we default to npm
+    const files = await fs.readdir(workspace);
+    for (const file of files) {
+      const packageManager = lockFiles.get(file);
+      if (packageManager) {
+        Logger.debug("Frytki", packageManager);
+        return packageManager;
       }
-      return "npm";
-    });
+    }
+    try {
+      const packageManager = require(path.join(workspace, "package.json")).packageManager;
+
+      if (packageManager) {
+        // e.g. yarn@3.6.4
+        const match = packageManager.match(/^([a-zA-Z]+)@/);
+        return match ? match[1] : "npm";
+      }
+    } catch (e) {
+      // there might be a problem while reading package.json in which case we default to npm
+    }
+    return "npm";
   }
 
   const name = await findPackageManager(workspacePath ?? appRootPath);
