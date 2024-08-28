@@ -19,6 +19,7 @@ import { JSX } from "react/jsx-runtime";
 import DiagnosticView from "../views/DiagnosticView";
 import { useModal } from "../providers/ModalProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
+import { KeybindingInfo } from "./shared/KeybindingInfo";
 
 const contentSizes = [
   "xsmall",
@@ -149,7 +150,10 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                         project.sendBiometricAuthorization(true);
                       }}>
                       <span className="codicon codicon-layout-sidebar-left" />
-                      Matching ID
+                      <div className="dropdown-menu-item-content">
+                        Matching ID
+                        <KeybindingInfo commandName="RNIDE.matchBiometricAuthorization" />
+                      </div>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
                       className="dropdown-menu-item"
@@ -157,7 +161,10 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                         project.sendBiometricAuthorization(false);
                       }}>
                       <span className="codicon codicon-layout-sidebar-left" />
-                      Non-Matching ID
+                      <div className="dropdown-menu-item-content">
+                        Non-Matching ID
+                        <KeybindingInfo commandName="RNIDE.nonMatchBiometricAuthorization" />
+                      </div>
                     </DropdownMenu.Item>
                   </DropdownMenu.SubContent>
                 </DropdownMenu.Portal>

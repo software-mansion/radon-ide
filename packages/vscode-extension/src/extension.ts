@@ -129,6 +129,12 @@ export async function activate(context: ExtensionContext) {
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.matchBiometricAuthorization", matchBiometricAuthorization)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.nonMatchBiometricAuthorization", nonMatchBiometricAuthorization)
+  );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
@@ -322,6 +328,14 @@ async function findAppRootFolder() {
 
 async function openDevMenu() {
   Project.currentProject?.openDevMenu();
+}
+
+async function matchBiometricAuthorization() {
+  Project.currentProject?.sendBiometricAuthorization(true);
+}
+
+async function nonMatchBiometricAuthorization() {
+  Project.currentProject?.sendBiometricAuthorization(false);
 }
 
 async function diagnoseWorkspaceStructure() {
