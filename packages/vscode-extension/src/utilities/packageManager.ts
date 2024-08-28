@@ -50,7 +50,6 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo> {
     for (const file of files) {
       const packageManager = lockFiles.get(file);
       if (packageManager) {
-        Logger.debug("Frytki", packageManager);
         return packageManager;
       }
     }
