@@ -28,11 +28,13 @@ export async function storybookPreview(componentTitle, storyName) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const { unboundStoryFn: StoryComponent } = story;
 
+    if (StoryComponent === undefined) {
+      throw new Error("Component is undefined.");
+    }
+
     const key = `sb://${storyId}`;
     global.__RNIDE_previews.set(key, {
-      component: (
-        <>{StoryComponent ? <StoryComponent {...story} /> : <Text>Failed to render story.</Text>}</>
-      ),
+      component: <StoryComponent {...story} />,
       name: storyId,
     });
 

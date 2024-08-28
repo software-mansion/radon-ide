@@ -13,7 +13,7 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
     token: CancellationToken
   ): CodeLens[] | Thenable<CodeLens[]> {
     const text = document.getText();
-    const isStory = /.*stories.?(js|ts|jsx|tsx)$/.test(document.fileName);
+    const isStory = /stories.?(js|ts|jsx|tsx)$/.test(document.fileName);
 
     if (!text.includes("react-native-ide") && !isStory) {
       return [];
@@ -54,7 +54,7 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
     codeLenses: CodeLens[],
     componentName: string
   ) {
-    const storyRegex = /^(?:(?!\/\/).)*export const (\w+)(?::\s*\w+\s*)? =/gm;
+    const storyRegex = /^(?:(?!\/\/) )*export const (\w+)(?::\s*\w+\s*)? =/gm;
     for (const match of text.matchAll(storyRegex)) {
       const storyName = match[1];
       const range = this.createRange(document, match.index);
@@ -68,7 +68,7 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
   }
 
   addPreviewCodeLenses(text: string, document: TextDocument, codeLenses: CodeLens[]) {
-    const previewRegex = /^(?:(?!\/\/).)*\bpreview\b\s*\(/gm;
+    const previewRegex = /^(?:(?!\/\/) )*\bpreview\b\s*\(/gm;
     for (const match of text.matchAll(previewRegex)) {
       const range = this.createRange(document, match.index);
       const command: Command = {

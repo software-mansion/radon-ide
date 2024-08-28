@@ -43,7 +43,7 @@ export class Project
 
   private detectedFingerprintChange: boolean;
 
-  private storybookStatus: boolean;
+  private storybookInstalled: boolean;
 
   private fileWatcher: Disposable;
 
@@ -78,7 +78,7 @@ export class Project
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.detectedFingerprintChange = false;
-    this.storybookStatus = false;
+    this.storybookInstalled = false;
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
@@ -305,7 +305,7 @@ export class Project
     );
 
     Logger.debug("Checking storybook");
-    this.storybookStatus = await this.dependencyManager.checkStorybookInstalled();
+    this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
   }
   //#endregion
 
@@ -397,10 +397,10 @@ export class Project
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
-    if (this.storybookStatus) {
+    if (this.storybookInstalled) {
       this.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
     } else {
-      Logger.error("Storybook is not installed.");
+      window.showErrorMessage("Storybook is not installed.", "Dismiss");
     }
   }
 

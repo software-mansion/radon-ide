@@ -130,13 +130,10 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     return closePreviewPromise;
   }, [rootTag]);
 
-  const showStorybookStory = useCallback(
-    async (componentTitle, storyName) => {
-      const previewKey = await storybookPreview(componentTitle, storyName);
-      previewKey !== undefined && openPreview(previewKey);
-    },
-    [rootTag, handleNavigationChange]
-  );
+  const showStorybookStory = useCallback(async (componentTitle, storyName) => {
+    const previewKey = await storybookPreview(componentTitle, storyName);
+    previewKey !== undefined && openPreview(previewKey);
+  }, []);
 
   useAgentListener(
     devtoolsAgent,
