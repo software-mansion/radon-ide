@@ -5,15 +5,52 @@ import { Platform } from "./platform";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
-function overridePWD<T extends execa.Options>(options?: T) {
+async function getPathEnv(appRoot: string) {
+  // We run an interactive shell session to make sure that tool managers (nvm,
+  // asdf, mise, etc.) are loaded and PATH is set correctly. Mise in
+  // particular sets the PATH by hooking into change dir and prompt display
+  // events.
+  // We make sure of that by doing a cd into app root directory, which has
+  // ensures that correct versions of tools are used (you can have different
+  // versions based on directory in most managers).
+
+  // Fish, bash, and zsh all support -i and -c flags.
+  const shellPath = process.env.SHELL ?? "/bin/zsh";
+  const { stdout: path } = await execa(shellPath, ["-i", "-c", `cd "${appRoot}" && echo "$PATH"`]);
+  return path.trim();
+}
+
+let pathEnv: string | undefined;
+export async function setupPathEnv(appRoot: string) {
+  if (!pathEnv) {
+    pathEnv = await getPathEnv(appRoot);
+    if (!pathEnv) {
+      throw new Error("Error in getting PATH environment variable");
+    }
+  }
+}
+
+function overrideEnv<T extends execa.Options>(options?: T): T | undefined {
   // Some processes rely on PWD environment variable to tell the current working
-  // directory in which cases PWD takes precedence over process.cwd.
-  // By default, execa would copy all process env to the subprocess (which is desired)
-  // including PWD that may point to a different location that the selected cwd (indicated
-  // by options.cwd). Specifically, when VSCode is launched from the launcher (as opposed to
-  // being launched from command line using 'code' command), the PWD is set to "/".
-  // This method overrides PWD to the current cwd option when it's set for the subprocess call
-  // therefore removing the risk of the subprocess using the wrong working directory.
+  // directory in which cases PWD takes precedence over process.cwd. By default,
+  // execa would copy all process env to the subprocess (which is desired)
+  // including PWD that may point to a different location that the selected cwd
+  // (indicated by options.cwd). Specifically, when VSCode is launched from the
+  // launcher (as opposed to being launched from command line using 'code'
+  // command), the PWD is set to "/". This method overrides PWD to the current
+  // cwd option when it's set for the subprocess call therefore removing the
+  // risk of the subprocess using the wrong working directory.
+
+  // Additionally, we overwrite PATH env variable using env from interactive
+  // shell, ensuring that we have access to node and other tools, even when
+  // VSCode is launched as an application and not from the terminal.
+  const overridePath = options?.env?.PATH === undefined && pathEnv !== undefined;
+  if (overridePath) {
+    options = {
+      ...options,
+      env: { ...options?.env, PATH: pathEnv },
+    } as unknown as T;
+  }
 
   if (options?.cwd) {
     return { ...options, env: { ...options.env, PWD: options.cwd } };
@@ -57,7 +94,7 @@ export function exec(
   const subprocess = execa(
     name,
     args,
-    Platform.select({ macos: overridePWD(options), windows: options })
+    Platform.select({ macos: overrideEnv(options), windows: options })
   );
   const allowNonZeroExit = options?.allowNonZeroExit;
   async function printErrorsOnExit() {
@@ -86,7 +123,7 @@ export function execSync(name: string, args?: string[], options?: execa.SyncOpti
   const result = execa.sync(
     name,
     args,
-    Platform.select({ macos: overridePWD(options), windows: options })
+    Platform.select({ macos: overrideEnv(options), windows: options })
   );
   if (result.stderr) {
     Logger.debug("Subprocess", name, args?.join(" "), "produced error output:", result.stderr);
@@ -97,7 +134,7 @@ export function execSync(name: string, args?: string[], options?: execa.SyncOpti
 export function command(commandWithArgs: string, options?: execa.Options & { quiet?: boolean }) {
   const subprocess = execa.command(
     commandWithArgs,
-    Platform.select({ macos: overridePWD(options), windows: options })
+    Platform.select({ macos: overrideEnv(options), windows: options })
   );
   async function printErrorsOnExit() {
     try {
