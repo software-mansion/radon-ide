@@ -64,27 +64,26 @@ function adaptMetroConfig(config) {
   // Handle the case when resolver is not defined in the config
   if (!config.resolver) {
     config.resolver = {};
-  }
-
-  // // Override the resolveRequest method to include files in the ".storybook/"
-  // // directory, which contains "storybook.requires.js".
-  // // For all other files it uses the original resolveRequest method.
-  const originalResolveRequest = config.resolver?.resolveRequest;
-  const storybookResolveRequest = (context, moduleName, platform) => {
-    const defaultResolveResult = context.resolveRequest(context, moduleName, platform);
-    if (!originalResolveRequest || defaultResolveResult?.filePath?.includes(".storybook/")) {
-      return defaultResolveResult;
+  } else {
+    const originalResolveRequest = config.resolver?.resolveRequest;
+    if (originalResolveRequest) {
+      // Override the resolveRequest method to include files in the ".storybook/"
+      // directory, which contains "storybook.requires.js".
+      const storybookResolveRequest = (context, moduleName, platform) => {
+        process.env.STORYBOOK_ENABLED = "true";
+        const res = originalResolveRequest(context, moduleName, platform);
+        process.env.STORYBOOK_ENABLED = "false";
+        return res;
+      };
+      config = {
+        ...config,
+        resolver: {
+          ...config.resolver,
+          resolveRequest: storybookResolveRequest,
+        },
+      };
     }
-    return originalResolveRequest(context, moduleName, platform);
-  };
-
-  config = {
-    ...config,
-    resolver: {
-      ...config.resolver,
-      resolveRequest: storybookResolveRequest,
-    },
-  };
+  }
 
   // This code allows us to host some files from the extension's lib folder
   // Currently used for runtime and wrapper functionalities
