@@ -20,7 +20,7 @@ const InternalImports = {
   get PREVIEW_APP_KEY(){
     return require("./preview").PREVIEW_APP_KEY;
   }
-}
+};
 
 const RNInternals = {
   get getInspectorDataForViewAtPoint() {
@@ -82,12 +82,9 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
 
   const handleNavigationChange = useCallback(
     (navigationDescriptor) => {
-      const queryParams = new URLSearchParams(navigationDescriptor.params).toString();
       navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
       devtoolsAgent?._bridge.send("RNIDE_navigationChanged", {
-        displayName: `${navigationDescriptor.name}${
-          queryParams.length > 0 ? `?${queryParams}` : ""
-        }`,
+        displayName: navigationDescriptor.name,
         id: navigationDescriptor.id,
       });
     },
