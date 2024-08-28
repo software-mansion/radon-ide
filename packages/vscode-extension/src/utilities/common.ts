@@ -181,16 +181,16 @@ async function calculateFileMD5(filePath: string, hash: Hash) {
   return hash;
 }
 
-export async function calculateMD5(path: string, hash: Hash = createHash("md5")) {
-  const stat = await fs.promises.stat(path);
+export async function calculateMD5(fsPath: string, hash: Hash = createHash("md5")) {
+  const stat = await fs.promises.stat(fsPath);
   if (stat.isFile()) {
-    return calculateFileMD5(path, hash);
+    return calculateFileMD5(fsPath, hash);
   }
 
-  const files = await fs.promises.readdir(path);
+  const files = await fs.promises.readdir(fsPath);
 
   for await (let file of files) {
-    let filePath = join(path, file);
+    let filePath = join(fsPath, file);
     const fileStat = await fs.promises.stat(filePath);
 
     if (fileStat.isDirectory()) {
