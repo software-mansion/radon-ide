@@ -3,6 +3,7 @@ import { existsSync, promises as fs } from "fs";
 import path, { resolve } from "path";
 import { getAppRootFolder } from "./extensionContext";
 import { Logger } from "../Logger";
+import { isWorkspaceRoot } from "./common";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
@@ -25,15 +26,9 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo> {
     while (parentDir !== currentDir) {
       currentDir = parentDir;
       parentDir = path.resolve(currentDir, "..");
-      const packageJsonPath = path.join(currentDir, "package.json");
-      if (!existsSync(packageJsonPath)) {
-        continue;
+      if (isWorkspaceRoot(currentDir)) {
+        return currentDir;
       }
-      const workspaces = require(packageJsonPath).workspaces;
-      if (!workspaces) {
-        continue;
-      }
-      return currentDir;
     }
     return undefined;
   }

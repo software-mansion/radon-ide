@@ -1,9 +1,9 @@
 import os from "os";
 import { createHash, Hash } from "crypto";
-import { join } from "path";
+import path, { join } from "path";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
-import fs from "fs";
+import fs, { existsSync } from "fs";
 import { ReadableStream } from "stream/web";
 import { workspace } from "vscode";
 import { Logger } from "../Logger";
@@ -15,17 +15,28 @@ export function getDevServerScriptUrl() {
   return process.env.DEV_SCRIPT_URL;
 }
 
-export async function findSingleFileInWorkspace(
-  fileGlobPattern: string,
-  excludePattern: string | null
-) {
-  const files = await workspace.findFiles(fileGlobPattern, excludePattern, 2);
-  if (files.length === 1) {
-    return files[0];
-  } else if (files.length > 1) {
-    Logger.error(`Found multiple ${fileGlobPattern} files in the workspace`);
+export function isWorkspaceRoot(dir: string) {
+  const packageJsonPath = path.join(dir, "package.json");
+  let workspaces;
+  try {
+    workspaces = require(packageJsonPath).workspaces;
+  } catch (e) {
+    return false;
   }
-  return undefined;
+
+  if (workspaces) {
+    return true;
+  }
+
+  return false;
+}
+
+export async function findFilesInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
+  const files = await workspace.findFiles(fileGlobPattern, excludePattern);
+  if (files.length > 1) {
+    Logger.warn(`Found multiple ${fileGlobPattern} files in the workspace`);
+  }
+  return files;
 }
 
 export enum ABI {
