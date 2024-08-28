@@ -3,7 +3,8 @@
     "start": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "storybook-generate": "sb-rn-get-stories"
   },
   "dependencies": {
     "babel-plugin-module-resolver": "^5.0.2",
@@ -26,7 +27,14 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@babel/plugin-proposal-export-namespace-from": "^7.18.9"
+    "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
+    "@react-native-async-storage/async-storage": "^2.0.0",
+    "@react-native-community/datetimepicker": "^8.2.0",
+    "@react-native-community/slider": "^4.5.2",
+    "@storybook/addon-ondevice-actions": "^7.6.20",
+    "@storybook/addon-ondevice-controls": "^7.6.20",
+    "@storybook/react-native": "^7.6.20",
+    "babel-loader": "^8.3.0"
   },
   "resolutions": {
     "metro": "0.76.0",
