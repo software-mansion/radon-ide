@@ -5,9 +5,10 @@
  * @format
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import type {PropsWithChildren} from 'react';
 import {
+  Button,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -16,6 +17,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import ReactNativeBiometrics from 'react-native-biometrics';
 
 import {
   Colors,
@@ -56,6 +58,29 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 }
 
 function App(): React.JSX.Element {
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [biometrics, setBiometrics] = useState(new ReactNativeBiometrics({allowDeviceCredentials: true}) );
+  async function AuthSimplePrompt(){
+    const { biometryType } = await biometrics.isSensorAvailable();
+    console.log("isSensorAvailable", biometryType)
+    try{
+      const {success} = await biometrics.simplePrompt({
+        promptMessage: 'Confirmation',
+      });
+      
+      if (success) {
+        setIsAuthorized(true);
+      }
+      else{
+        setIsAuthorized(false);
+      }
+    }catch(e){
+      setIsAuthorized(false);
+      console.log("isSensorAvailable", e);
+    }
+   
+  } 
+
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
@@ -72,6 +97,24 @@ function App(): React.JSX.Element {
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
         <Header />
+        <View
+          style={{
+            display: "flex",
+            justifyContent:"center",
+            alignItems: "center",
+            height: 500,
+            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+          }}>
+            <Button title = {"Try and Authorize"} onPress={AuthSimplePrompt}></Button>
+            <View>
+              {isAuthorized &&
+                <Text>I am authorized!</Text>
+              }
+              {!isAuthorized &&
+                <Text>I am NOT authorized!</Text>
+              }
+            </View>
+        </View>
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
