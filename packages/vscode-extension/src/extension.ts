@@ -212,11 +212,14 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  await configureAppRootFolder();
+  const appRoot = await configureAppRootFolder();
+  if (!appRoot) {
+    return;
+  }
 
   if (Platform.OS === "macos") {
     try {
-      await setupPathEnv();
+      await setupPathEnv(appRoot);
     } catch (error) {
       window.showWarningMessage(
         "Error when setting up PATH environment variable, RN IDE may not work correctly.",

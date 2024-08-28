@@ -2,11 +2,10 @@ import { Logger } from "../Logger";
 import execa, { ExecaChildProcess } from "execa";
 import readline from "readline";
 import { Platform } from "./platform";
-import { getAppRootFolder } from "./extensionContext";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
-export async function getPathEnv() {
+async function getPathEnv(appRoot: string) {
   // We run an interactive shell session to make sure that tool managers (nvm,
   // asdf, mise, etc.) are loaded and PATH is set correctly. Mise in
   // particular sets the PATH by hooking into change dir and prompt display
@@ -17,15 +16,14 @@ export async function getPathEnv() {
 
   // Fish, bash, and zsh all support -i and -c flags.
   const shellPath = process.env.SHELL ?? "/bin/zsh";
-  const appRoot = getAppRootFolder();
   const { stdout: path } = await execa(shellPath, ["-i", "-c", `cd "${appRoot}" && echo "$PATH"`]);
   return path.trim();
 }
 
 let pathEnv: string | undefined;
-export async function setupPathEnv() {
+export async function setupPathEnv(appRoot: string) {
   if (!pathEnv) {
-    pathEnv = await getPathEnv();
+    pathEnv = await getPathEnv(appRoot);
     if (!pathEnv) {
       throw new Error("Error in getting PATH environment variable");
     }
