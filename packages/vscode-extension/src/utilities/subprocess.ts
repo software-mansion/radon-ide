@@ -4,37 +4,25 @@ import readline from "readline";
 import { Platform } from "./platform";
 import util from "util";
 import { exec as bareExec } from "child_process";
+import { getAppRootFolder } from "./extensionContext";
 const nodeExec = util.promisify(bareExec);
 
 export type ChildProcess = ExecaChildProcess<string>;
 
 export async function getPathEnv() {
-  async function getMiseEnv(shellPath: string) {
-    // [Mise](https://mise.jdx.dev) is the only widely used tool manager that
-    // doesn't inject shims or paths in the PATH. It relies on a shell hook
-    // which won't be triggered when running a ZSH in a subprocess.
+  // We run an interactive shell session to make sure that tool managers (nvm,
+  // asdf, mise, etc.) are loaded and PATH is set correctly. Mise in
+  // particular sets the PATH by hooking into change dir and prompt display
+  // events.
+  // We make sure of that by doing a cd into app root directory, which has
+  // ensures that correct versions of tools are used (you can have different
+  // versions based on directory in most managers).
 
-    // fish, bash, and zsh all support -i and -c flags
-    try {
-      const { stdout: misePath } = await nodeExec(
-        `${shellPath} -i -c 'eval "$(mise hook-env)"; echo $PATH'`
-      );
-      return misePath.trim();
-    } catch (_error) {
-      // mise isn't installed
-      return undefined;
-    }
-  }
-
-  async function getEnv(shellPath: string) {
-    // fish, bash, and zsh all support -i and -c flags
-    const { stdout: path } = await nodeExec(`${shellPath} -i -c 'echo $PATH'`);
-    return path.trim();
-  }
-
+  // Fish, bash, and zsh all support -i and -c flags.
   const shellPath = process.env.SHELL ?? "/bin/zsh";
-  const [misePath, path] = await Promise.all([getMiseEnv(shellPath), getEnv(shellPath)]);
-  return misePath ?? path;
+  const appRoot = getAppRootFolder();
+  const { stdout: path } = await nodeExec(`${shellPath} -i -c 'cd "${appRoot}" && echo "$PATH"'`);
+  return path.trim();
 }
 
 let pathEnv: string | undefined;
