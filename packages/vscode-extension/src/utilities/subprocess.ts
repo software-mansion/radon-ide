@@ -2,10 +2,7 @@ import { Logger } from "../Logger";
 import execa, { ExecaChildProcess } from "execa";
 import readline from "readline";
 import { Platform } from "./platform";
-import util from "util";
-import { exec as bareExec } from "child_process";
 import { getAppRootFolder } from "./extensionContext";
-const nodeExec = util.promisify(bareExec);
 
 export type ChildProcess = ExecaChildProcess<string>;
 
@@ -21,7 +18,7 @@ export async function getPathEnv() {
   // Fish, bash, and zsh all support -i and -c flags.
   const shellPath = process.env.SHELL ?? "/bin/zsh";
   const appRoot = getAppRootFolder();
-  const { stdout: path } = await nodeExec(`${shellPath} -i -c 'cd "${appRoot}" && echo "$PATH"'`);
+  const { stdout: path } = await execa(shellPath, ["-i", "-c", `cd "${appRoot}" && echo "$PATH"`]);
   return path.trim();
 }
 
@@ -49,10 +46,11 @@ function overrideEnv<T extends execa.Options>(options?: T): T | undefined {
   // Additionally, we overwrite PATH env variable using env from interactive
   // shell, ensuring that we have access to node and other tools, even when
   // VSCode is launched as an application and not from the terminal.
-  if (pathEnv) {
+  const overridePath = options?.env?.PATH === undefined && pathEnv !== undefined;
+  if (overridePath) {
     options = {
       ...options,
-      env: { ...options?.env, PATH: pathEnv ?? options?.env?.PATH },
+      env: { ...options?.env, PATH: pathEnv },
     } as unknown as T;
   }
 

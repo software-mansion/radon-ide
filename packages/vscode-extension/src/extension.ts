@@ -88,16 +88,6 @@ export async function activate(context: ExtensionContext) {
   async function showIDEPanel(fileName?: string, lineNumber?: number) {
     await commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
-    if (Platform.OS === "macos") {
-      try {
-        await setupPathEnv();
-      } catch (error) {
-        window.showWarningMessage(
-          "Error when setting up PATH environment variable, RN IDE may not work correctly.",
-          "Dismiss"
-        );
-      }
-    }
     const panelLocation = workspace
       .getConfiguration("ReactNativeIDE")
       .get<PanelLocation>("panelLocation");
@@ -223,6 +213,19 @@ export async function activate(context: ExtensionContext) {
   );
 
   await configureAppRootFolder();
+
+  if (Platform.OS === "macos") {
+    try {
+      await setupPathEnv();
+    } catch (error) {
+      window.showWarningMessage(
+        "Error when setting up PATH environment variable, RN IDE may not work correctly.",
+        "Dismiss"
+      );
+    }
+  }
+
+  extensionActivated();
 }
 
 class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
@@ -248,7 +251,6 @@ async function configureAppRootFolder() {
     Logger.info(`Found app root folder: ${appRootFolder}`);
     setAppRootFolder(appRootFolder);
     commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
-    extensionActivated();
   }
   return appRootFolder;
 }
