@@ -1,12 +1,13 @@
 import vscode, { Webview, Disposable, window, commands } from "vscode";
-import { DependencyChecker } from "../dependency/DependencyChecker";
-import { DependencyInstaller } from "../dependency/DependencyInstaller";
+import { DependencyManager } from "../dependency/DependencyManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { Project } from "../project/project";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { WorkspaceConfigController } from "./WorkspaceConfigController";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { Utils } from "../utilities/utils";
+import { LaunchConfigController } from "./LaunchConfigController";
 
 type CallArgs = {
   callId: string;
@@ -27,11 +28,12 @@ export type WebviewEvent =
     } & CallArgs);
 
 export class WebviewController implements Disposable {
-  private readonly dependencyChecker: DependencyChecker;
-  private readonly dependencyInstaller: DependencyInstaller;
+  private readonly dependencyManager: DependencyManager;
   private readonly deviceManager: DeviceManager;
   public readonly project: Project;
   public readonly workspaceConfig: WorkspaceConfigController;
+  public readonly launchConfig: LaunchConfigController;
+  public readonly utils: Utils;
   private disposables: Disposable[] = [];
   private idToCallback: Map<string, WeakRef<any>> = new Map();
   private idToCallbackFinalizationRegistry = new FinalizationRegistry((callbackId: string) => {
@@ -51,31 +53,31 @@ export class WebviewController implements Disposable {
     this.setWebviewMessageListener(webview);
 
     // Set the manager to listen and change the persisting storage for the extension.
-    this.dependencyChecker = new DependencyChecker(webview);
-    this.dependencyChecker.setWebviewMessageListener();
-
-    this.dependencyInstaller = new DependencyInstaller(webview);
-    this.dependencyInstaller.setWebviewMessageListener();
+    this.dependencyManager = new DependencyManager(webview);
 
     this.setupEditorListeners();
 
     this.deviceManager = new DeviceManager();
-    this.project = new Project(this.deviceManager);
+    this.project = new Project(this.deviceManager, this.dependencyManager);
 
     this.workspaceConfig = new WorkspaceConfigController();
+    this.launchConfig = new LaunchConfigController();
+
+    this.utils = new Utils();
 
     this.disposables.push(
-      this.dependencyChecker,
-      this.dependencyInstaller,
-      this.deviceManager,
+      this.dependencyManager,
       this.project,
-      this.workspaceConfig
+      this.workspaceConfig,
+      this.launchConfig
     );
 
     this.callableObjects = new Map([
       ["DeviceManager", this.deviceManager as object],
       ["Project", this.project as object],
       ["WorkspaceConfig", this.workspaceConfig as object],
+      ["LaunchConfig", this.launchConfig as object],
+      ["Utils", this.utils as object],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);

@@ -1,121 +1,203 @@
-import { Disposable, debug, DebugSession } from "vscode";
+import { Disposable } from "vscode";
 import { Metro } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { BuildResult, DisposableBuild } from "../builders/BuildManager";
-import { DeviceSettings, StartupMessage } from "../common/Project";
-import { Platform } from "../common/DeviceManager";
+import { BuildManager, BuildResult, DisposableBuild } from "../builders/BuildManager";
+import { AppPermissionType, DeviceSettings, ReloadAction, StartupMessage } from "../common/Project";
+import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
+import { throttle } from "../utilities/throttle";
+import { DependencyManager } from "../dependency/DependencyManager";
+import { Platform } from "../utilities/platform";
 
-const WAIT_FOR_DEBUGGER_TIMEOUT = 15000; // 15 seconds
+type StartOptions = { cleanBuild: boolean };
 
-type ProgressCallback = (startupMessage: string) => void;
-type PreviewReadyCallback = (previewURL: string) => void;
+export type AppEvent = {
+  navigationChanged: { displayName: string; id: string };
+  fastRefreshStarted: undefined;
+  fastRefreshComplete: undefined;
+};
+
+export type EventDelegate = {
+  onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void;
+  onStateChange(state: StartupMessage): void;
+  onBuildProgress(stageProgress: number): void;
+  onBuildSuccess(): void;
+};
 
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
+  private maybeBuildResult: BuildResult | undefined;
   private debugSession: DebugSession | undefined;
+  private disposableBuild: DisposableBuild<BuildResult> | undefined;
+  private buildManager: BuildManager;
+
+  private get buildResult() {
+    if (!this.maybeBuildResult) {
+      throw new Error("Expecting build to be ready");
+    }
+    return this.maybeBuildResult;
+  }
 
   constructor(
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
-    private readonly disposableBuild: DisposableBuild<BuildResult>
-  ) {}
+    readonly dependencyManager: DependencyManager,
+    private readonly debugEventDelegate: DebugSessionDelegate,
+    private readonly eventDelegate: EventDelegate
+  ) {
+    this.buildManager = new BuildManager(dependencyManager);
+    this.devtools.addListener((event, payload) => {
+      switch (event) {
+        case "RNIDE_appReady":
+          Logger.debug("App ready");
+          break;
+        case "RNIDE_navigationChanged":
+          this.eventDelegate.onAppEvent("navigationChanged", payload);
+          break;
+        case "RNIDE_fastRefreshStarted":
+          this.eventDelegate.onAppEvent("fastRefreshStarted", undefined);
+          break;
+        case "RNIDE_fastRefreshComplete":
+          this.eventDelegate.onAppEvent("fastRefreshComplete", undefined);
+          break;
+      }
+    });
+  }
 
   public dispose() {
-    this.debugSession && debug.stopDebugging(this.debugSession);
+    this.debugSession?.dispose();
     this.disposableBuild?.dispose();
     this.device?.dispose();
   }
 
-  get isActive() {
-    return this.devtools.hasConnectedClient;
+  public async perform(type: ReloadAction) {
+    switch (type) {
+      case "reinstall":
+        await this.installApp({ reinstall: true });
+        await this.launchApp();
+        return true;
+      case "restartProcess":
+        await this.launchApp();
+        return true;
+      case "hotReload":
+        if (this.devtools.hasConnectedClient) {
+          await this.metro.reload();
+          return true;
+        }
+        return false;
+    }
+    throw new Error("Not implemented " + type);
   }
 
-  async start(
-    deviceSettings: DeviceSettings,
-    previewReadyCallback: PreviewReadyCallback,
-    progressCallback: ProgressCallback
-  ) {
-    const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
-    const waitForAppReady = shouldWaitForAppLaunch
-      ? new Promise<void>((res) => {
-          const listener = (event: string, payload: any) => {
-            if (event === "RNIDE_appReady") {
-              this.devtools?.removeListener(listener);
-              res();
-            }
-          };
-          this.devtools?.addListener(listener);
-        })
-      : Promise.resolve();
+  private async launchApp() {
+    // FIXME: Windows getting stuck waiting for the promise to resolve. This
+    // seems like a problem with app connecting to Metro and using embedded
+    // bundle instead.
+    const shouldWaitForAppLaunch = Platform.select({
+      macos: getLaunchConfiguration().preview?.waitForAppLaunch !== false,
+      windows: false,
+    });
+    const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
-    progressCallback(StartupMessage.BootingDevice);
+    this.eventDelegate.onStateChange(StartupMessage.Launching);
+    await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
+
+    Logger.debug("Will wait for app ready and for preview");
+    this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+    const [previewUrl] = await Promise.all([this.device.startPreview(), waitForAppReady]);
+    Logger.debug("App and preview ready, moving on...");
+    this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
+    await this.startDebugger();
+    return previewUrl;
+  }
+
+  private async bootDevice(deviceSettings: DeviceSettings) {
+    this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
     await this.device.bootDevice();
     await this.device.changeSettings(deviceSettings);
-    progressCallback(StartupMessage.Building);
-    const build = await this.disposableBuild.build;
-    progressCallback(StartupMessage.Installing);
-    await this.device.installApp(build, false);
-    progressCallback(StartupMessage.Launching);
-    await this.device.launchApp(build, this.metro.port, this.devtools.port);
-
-    const waitForPreview = this.device.startPreview().then(() => {
-      previewReadyCallback(this.device.previewURL!);
-    });
-    Logger.debug("Will wait for app ready and for preview");
-    progressCallback(StartupMessage.WaitingForAppToLoad);
-    await Promise.all([waitForAppReady, waitForPreview]);
-    Logger.debug("App and preview ready, moving on...");
-
-    progressCallback(StartupMessage.AttachingDebugger);
-    await this.startDebugger();
   }
 
-  public async startDebugger() {
-    const websocketAddress = await this.metro.getDebuggerURL(WAIT_FOR_DEBUGGER_TIMEOUT);
+  private async buildApp({ clean }: { clean: boolean }) {
+    this.eventDelegate.onStateChange(StartupMessage.Building);
+    this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
+      clean,
+      onSuccess: this.eventDelegate.onBuildSuccess,
+      progressListener: throttle((stageProgress: number) => {
+        this.eventDelegate.onBuildProgress(stageProgress);
+      }, 100),
+    });
+    this.maybeBuildResult = await this.disposableBuild.build;
+  }
+
+  private async installApp({ reinstall }: { reinstall: boolean }) {
+    this.eventDelegate.onStateChange(StartupMessage.Installing);
+    return this.device.installApp(this.buildResult, reinstall);
+  }
+
+  private async waitForMetroReady() {
+    this.eventDelegate.onStateChange(StartupMessage.StartingPackager);
+    // wait for metro/devtools to start before we continue
+    await Promise.all([this.metro.ready(), this.devtools.ready()]);
+    Logger.debug("Metro & devtools ready");
+  }
+
+  public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+    await this.waitForMetroReady();
+    // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
+    await this.bootDevice(deviceSettings);
+    await this.buildApp({ clean: cleanBuild });
+    await this.installApp({ reinstall: false });
+    const previewUrl = await this.launchApp();
+    Logger.debug("Device session started");
+    return previewUrl;
+  }
+
+  private async startDebugger() {
+    const websocketAddress = await this.metro.getDebuggerURL();
     if (websocketAddress) {
-      const debugStarted = await debug.startDebugging(
-        undefined,
-        {
-          type: "com.swmansion.react-native-ide",
-          name: "React Native IDE Debugger",
-          request: "attach",
-          websocketAddress,
-        },
-        {
-          suppressDebugStatusbar: true,
-          suppressDebugView: true,
-          suppressDebugToolbar: true,
-          suppressSaveBeforeStart: true,
-        }
-      );
-      if (debugStarted) {
-        this.debugSession = debug.activeDebugSession;
-        Logger.debug("Conencted to debbuger, moving on...");
+      this.debugSession = new DebugSession(websocketAddress, this.debugEventDelegate);
+      const started = await this.debugSession.start();
+      if (started) {
+        // TODO(jgonet): Right now, we ignore start failure
+        Logger.debug("Connected to debugger, moving on...");
       }
     } else {
       Logger.error("Couldn't connect to debugger");
     }
   }
 
-  public get previewURL(): string | undefined {
-    return this.device.previewURL;
-  }
-
   public resumeDebugger() {
-    this.debugSession?.customRequest("continue");
+    this.debugSession?.resumeDebugger();
   }
 
   public stepOverDebugger() {
-    this.debugSession?.customRequest("next");
+    this.debugSession?.stepOverDebugger();
+  }
+
+  public async resetAppPermissions(permissionType: AppPermissionType) {
+    if (this.maybeBuildResult) {
+      return this.device.resetAppPermissions(permissionType, this.maybeBuildResult);
+    }
+    return false;
   }
 
   public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
     this.device.sendTouch(xRatio, yRatio, type);
+  }
+
+  public sendMultiTouch(
+    xRatio: number,
+    yRatio: number,
+    xAnchorRatio: number,
+    yAnchorRatio: number,
+    type: "Up" | "Move" | "Down"
+  ) {
+    this.device.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
@@ -154,7 +236,7 @@ export class DeviceSession implements Disposable {
     //
     // We could probably unify it in the future by running metro in interactive
     // mode and sending keys to stdin.
-    if (this.device.platform === Platform.IOS) {
+    if (this.device.platform === DevicePlatform.IOS) {
       this.devtools.send("RNIDE_iosDevMenu");
     } else {
       await (this.device as AndroidEmulatorDevice).openDevMenu();
@@ -171,6 +253,10 @@ export class DeviceSession implements Disposable {
 
   public async changeDeviceSettings(settings: DeviceSettings) {
     await this.device.changeSettings(settings);
+  }
+
+  public focusBuildOutput() {
+    this.buildManager.focusBuildOutput();
   }
 
   public async sendBiometricAuthorization(match: boolean) {

@@ -1,0 +1,18 @@
+.dropdown-arrow {
+  color: var(--swm-button);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-size: 12px !important;
+  opacity: 1;
+  transition: opacity 200ms ease-out;
+}
+
+.dropdown-arrow-hide {
+  opacity: 0;
+}
+
+.icon-container {
+  position: relative;
+}

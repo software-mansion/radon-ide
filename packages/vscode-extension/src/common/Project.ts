@@ -30,6 +30,8 @@ export type ProjectState = {
 
 export type ZoomLevelType = number | "Fit";
 
+export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
+
 // important: order of values in this enum matters
 export enum StartupMessage {
   InitializingDevice = "Initializing device",
@@ -53,6 +55,14 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
+
+export type ReloadAction =
+  | "rebuild" // clean build, boot device, install app
+  | "reboot" // reboots device, launch app
+  | "reinstall" // force reinstall app
+  | "restartProcess" // relaunch app
+  | "reloadJs" // refetch JS scripts from metro
+  | "hotReload";
 
 export type InspectDataStackItem = {
   componentName: string;
@@ -94,15 +104,15 @@ export interface ProjectEventListener<T> {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
+  reload(type: ReloadAction): Promise<boolean>;
   restart(forceCleanBuild: boolean): Promise<void>;
+  goHome(): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
   sendBiometricAuthorization(match: boolean): Promise<void>;
-
-  reportIssue(): Promise<void>;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
@@ -111,10 +121,17 @@ export interface ProjectInterface {
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
-  openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
-  movePanelToNewWindow(): void;
+
+  resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
   dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
+  dispatchMultiTouch(
+    xRatio: number,
+    yRatio: number,
+    xAnchorRatio: number,
+    yAnchorRatio: number,
+    type: "Up" | "Move" | "Down"
+  ): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
   dispatchPaste(text: string): Promise<void>;
   inspectElementAt(

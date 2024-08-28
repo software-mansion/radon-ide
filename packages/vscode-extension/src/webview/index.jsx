@@ -10,6 +10,8 @@ import AlertProvider from "./providers/AlertProvider";
 import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
 
 import "./styles/theme.css";
+import UtilsProvider from "./providers/UtilsProvider";
+import LaunchConfigProvider from "./providers/LaunchConfigProvider";
 
 const container = document.getElementById("root");
 const root = createRoot(container);
@@ -17,17 +19,21 @@ const root = createRoot(container);
 root.render(
   <React.StrictMode>
     <ProjectProvider>
-      <WorkspaceConfigProvider>
-        <DevicesProvider>
-          <DependenciesProvider>
-            <ModalProvider>
-              <AlertProvider>
-                <App />
-              </AlertProvider>
-            </ModalProvider>
-          </DependenciesProvider>
-        </DevicesProvider>
-      </WorkspaceConfigProvider>
+      <UtilsProvider>
+        <WorkspaceConfigProvider>
+          <LaunchConfigProvider>
+            <DevicesProvider>
+              <DependenciesProvider>
+                <ModalProvider>
+                  <AlertProvider>
+                    <App />
+                  </AlertProvider>
+                </ModalProvider>
+              </DependenciesProvider>
+            </DevicesProvider>
+          </LaunchConfigProvider>
+        </WorkspaceConfigProvider>
+      </UtilsProvider>
     </ProjectProvider>
   </React.StrictMode>
 );

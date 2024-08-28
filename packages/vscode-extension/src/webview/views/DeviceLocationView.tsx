@@ -1,11 +1,12 @@
 import { useProject } from "../providers/ProjectProvider";
 import React, { FocusEventHandler, useRef, useState } from "react";
 import "./DeviceLocationView.css";
+import "../components/shared/SwitchGroup.css";
 import Label from "../components/shared/Label";
 import * as Switch from "@radix-ui/react-switch";
 import CoordinateParser from "coordinate-parser";
 import Tooltip from "../components/shared/Tooltip";
-import { throttle } from "../../common/utils";
+import { throttle } from "../../utilities/throttle";
 
 const CoordinateInfo = () => {
   return (
@@ -115,11 +116,11 @@ export function DeviceLocationView() {
       <Label>Enable Location</Label>
       <div style={{ display: "flex", alignItems: "center" }}>
         <Switch.Root
-          className="SwitchRoot"
+          className="switch-root"
           id="enable-location"
           onCheckedChange={handleEnableLocation}
           defaultChecked={!deviceSettings.location.isDisabled}>
-          <Switch.Thumb className="SwitchThumb" />
+          <Switch.Thumb className="switch-thumb" />
         </Switch.Root>
       </div>
       <div className="coordinate-label">

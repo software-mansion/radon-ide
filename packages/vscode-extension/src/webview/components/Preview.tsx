@@ -1,6 +1,5 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject } from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, ReactNode } from "react";
 import clamp from "lodash/clamp";
-import { throttle } from "../../common/utils";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
@@ -19,6 +18,9 @@ import { InspectDataMenu } from "./InspectDataMenu";
 import { Resizable } from "re-resizable";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
+import { throttle } from "../../utilities/throttle";
+import { useUtils } from "../providers/UtilsProvider";
+import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 
 declare module "react" {
   interface CSSProperties {
@@ -26,14 +28,24 @@ declare module "react" {
   }
 }
 
-function cssPropertiesForDevice(device: DeviceProperties) {
+const HIDE_ZOOM_CONTROLS_DELAY = 2000;
+
+function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
   return {
-    "--phone-screen-height": `${(device.screenHeight / device.frameHeight) * 100}%`,
-    "--phone-screen-width": `${(device.screenWidth / device.frameWidth) * 100}%`,
-    "--phone-aspect-ratio": `${device.frameWidth / device.frameHeight}`,
+    "--phone-screen-height": `${
+      frameDisabled ? 100 : (device.screenHeight / device.frameHeight) * 100
+    }%`,
+    "--phone-screen-width": `${
+      frameDisabled ? 100 : (device.screenWidth / device.frameWidth) * 100
+    }%`,
+    "--phone-aspect-ratio": `${
+      frameDisabled
+        ? device.screenWidth / device.screenHeight
+        : device.frameWidth / device.frameHeight
+    }`,
+    "--phone-top": `${frameDisabled ? 0 : (device.offsetY / device.frameHeight) * 100}%`,
+    "--phone-left": `${frameDisabled ? 0 : (device.offsetX / device.frameWidth) * 100}%`,
     "--phone-mask-image": `url(${device.maskImage})`,
-    "--phone-top": `${(device.offsetY / device.frameHeight) * 100}%`,
-    "--phone-left": `${(device.offsetX / device.frameWidth) * 100}%`,
   } as const;
 }
 
@@ -102,6 +114,62 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
   }
 );
 
+type DeviceFrameProps = {
+  device: DeviceProperties | undefined;
+  isFrameDisabled: boolean;
+};
+
+function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
+  if (!device) {
+    return null;
+  }
+
+  return (
+    <img
+      src={device.frameImage}
+      className="phone-frame"
+      style={{
+        opacity: isFrameDisabled ? 0 : 1,
+      }}
+    />
+  );
+}
+
+function TouchPointMarker({ isPressing }: { isPressing: boolean }) {
+  return <div className={`touch-marker ${isPressing ? "pressed" : ""}`}></div>;
+}
+
+type ButtonGroupLeftProps = {
+  children: ReactNode;
+};
+
+function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
+  const [isMouseOver, setIsMouseOver] = useState(false);
+
+  const hideButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
+
+  const onMouseOver = () => {
+    clearTimeout(hideButtonGroupTimeout.current);
+    setIsMouseOver(true);
+  };
+
+  const onMouseOut = () => {
+    hideButtonGroupTimeout.current = setTimeout(() => {
+      setIsMouseOver(false);
+    }, HIDE_ZOOM_CONTROLS_DELAY);
+  };
+
+  return (
+    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} className="button-group-left-container">
+      <div
+        style={isMouseOver ? { transform: "translateX(0px)" } : {}}
+        className="button-group-left">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 type InspectStackData = {
   requestLocation: { x: number; y: number };
   stack: InspectDataStackItem[];
@@ -115,12 +183,25 @@ type Props = {
 };
 
 function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Props) {
+  interface TouchPoint {
+    x: number;
+    y: number;
+  }
+
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
+  const [isMultiTouching, setIsMultiTouching] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const [touchPoint, setTouchPoint] = useState<TouchPoint>({ x: 0.5, y: 0.5 });
+  const [anchorPoint, setAnchorPoint] = useState<TouchPoint>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
-  const { projectState, project } = useProject();
+  const workspace = useWorkspaceConfig();
+  const { projectState, project, deviceSettings } = useProject();
+  const { openFileAt } = useUtils();
+
+  const isFrameDisabled = workspace.showDeviceFrame === false;
 
   const projectStatus = projectState.status;
 
@@ -148,18 +229,51 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   const [inspectFrame, setInspectFrame] = useState<InspectData["frame"] | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
-  type MouseMove = "Move" | "Down" | "Up";
-  function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+  function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
     const imgRect = previewRef.current!.getBoundingClientRect();
     const x = (event.clientX - imgRect.left) / imgRect.width;
     const y = (event.clientY - imgRect.top) / imgRect.height;
     const clampedX = clamp(x, 0, 1);
     const clampedY = clamp(y, 0, 1);
-    project.dispatchTouch(clampedX, clampedY, type);
+    return { x: clampedX, y: clampedY };
+  }
+
+  function moveAnchorPoint(event: MouseEvent<HTMLDivElement>) {
+    let { x: anchorX, y: anchorY } = anchorPoint;
+    const { x: prevPointX, y: prevPointY } = touchPoint;
+    const { x: newPointX, y: newPointY } = getTouchPosition(event);
+
+    anchorX += newPointX - prevPointX;
+    anchorY += newPointY - prevPointY;
+    anchorX = clamp(anchorX, 0, 1);
+    anchorY = clamp(anchorY, 0, 1);
+    setAnchorPoint({ x: anchorX, y: anchorY });
+  }
+
+  function getMirroredTouchPosition(mirrorPoint: TouchPoint) {
+    const { x: pointX, y: pointY } = touchPoint;
+    const { x: mirrorX, y: mirrorY } = mirrorPoint;
+    const mirroredPointX = 2 * mirrorX - pointX;
+    const mirroredPointY = 2 * mirrorY - pointY;
+    const clampedX = clamp(mirroredPointX, 0, 1);
+    const clampedY = clamp(mirroredPointY, 0, 1);
+    return { x: clampedX, y: clampedY };
+  }
+
+  type MouseMove = "Move" | "Down" | "Up";
+  function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+    const { x, y } = getTouchPosition(event);
+    project.dispatchTouch(x, y, type);
+  }
+
+  function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+    const { x, y } = getTouchPosition(event);
+    project.dispatchMultiTouch(x, y, anchorPoint.x, anchorPoint.y, type);
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
-    project.openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    setIsInspecting(false);
   }
 
   function sendInspectUnthrottled(
@@ -203,11 +317,15 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isPressing) {
+    if (isMultiTouching) {
+      isPanning && moveAnchorPoint(e);
+      isPressing && sendMultiTouch(e, "Move");
+    } else if (isPressing) {
       sendTouch(e, "Move");
     } else if (isInspecting) {
       sendInspect(e, "Move", false);
     }
+    setTouchPoint(getTouchPosition(e));
   }
 
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
@@ -216,12 +334,14 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
     if (isInspecting) {
       sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
-      setIsInspecting(false);
     } else if (inspectFrame) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
       resetInspector();
     } else if (e.button === 2) {
       sendInspect(e, "RightButtonDown", true);
+    } else if (isMultiTouching) {
+      setIsPressing(true);
+      sendMultiTouch(e, "Down");
     } else {
       setIsPressing(true);
       sendTouch(e, "Down");
@@ -231,17 +351,28 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isPressing) {
-      sendTouch(e, "Up");
+      if (isMultiTouching) {
+        sendMultiTouch(e, "Up");
+      } else {
+        sendTouch(e, "Up");
+      }
+      setIsPressing(false);
     }
-    setIsPressing(false);
   }
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isPressing) {
-      sendTouch(e, "Up");
+      if (isMultiTouching) {
+        setIsMultiTouching(false);
+        setIsPanning(false);
+        sendMultiTouch(e, "Up");
+      } else {
+        sendTouch(e, "Up");
+      }
       setIsPressing(false);
     }
+
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
       // and will be dispatched later on
@@ -275,9 +406,18 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     function keyEventHandler(e: KeyboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
+        const isKeydown = e.type === "keydown";
+
+        if (e.code === "AltLeft" || e.code === "AltRight") {
+          isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
+          setIsMultiTouching(isKeydown);
+        }
+        if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
+          setIsPanning(isKeydown);
+        }
 
         const hidCode = keyboardEventToHID(e);
-        project.dispatchKeyPress(hidCode, e.type === "keydown" ? "Down" : "Up");
+        project.dispatchKeyPress(hidCode, isKeydown ? "Down" : "Up");
       }
     }
     document.addEventListener("keydown", keyEventHandler);
@@ -325,11 +465,15 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     device: device!,
   });
 
+  const mirroredTouchPosition = getMirroredTouchPosition(anchorPoint);
+  const normalTouchMarkerSize = 33;
+  const smallTouchMarkerSize = 9;
+
   return (
     <>
       <div
         className="phone-wrapper"
-        style={cssPropertiesForDevice(device!)}
+        style={cssPropertiesForDevice(device!, isFrameDisabled)}
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}>
         {showDevicePreview && (
@@ -344,6 +488,37 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                   }}
                   className="phone-screen"
                 />
+
+                {isMultiTouching && (
+                  <div
+                    style={{
+                      "--x": `${touchPoint.x * 100}%`,
+                      "--y": `${touchPoint.y * 100}%`,
+                      "--size": `${normalTouchMarkerSize}px`,
+                    }}>
+                    <TouchPointMarker isPressing={isPressing} />
+                  </div>
+                )}
+                {isMultiTouching && (
+                  <div
+                    style={{
+                      "--x": `${anchorPoint.x * 100}%`,
+                      "--y": `${anchorPoint.y * 100}%`,
+                      "--size": `${smallTouchMarkerSize}px`,
+                    }}>
+                    <TouchPointMarker isPressing={false} />
+                  </div>
+                )}
+                {isMultiTouching && (
+                  <div
+                    style={{
+                      "--x": `${mirroredTouchPosition.x * 100}%`,
+                      "--y": `${mirroredTouchPosition.y * 100}%`,
+                      "--size": `${normalTouchMarkerSize}px`,
+                    }}>
+                    <TouchPointMarker isPressing={isPressing} />
+                  </div>
+                )}
 
                 {inspectFrame && (
                   <div className="phone-screen phone-inspect-overlay">
@@ -399,7 +574,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                   </div>
                 )}
               </div>
-              <img src={device!.frameImage} className="phone-frame" />
+              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
               {inspectStackData && (
                 <InspectDataMenu
                   inspectLocation={inspectStackData.requestLocation}
@@ -423,7 +598,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
               <div className="phone-sized phone-content-loading ">
                 <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
               </div>
-              <img src={device!.frameImage} className="phone-frame" />
+              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
             </div>
           </Resizable>
         )}
@@ -431,19 +606,19 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
           <Resizable {...resizableProps}>
             <div className="phone-content">
               <div className="phone-sized extension-error-screen" />
-              <img src={device!.frameImage} className="phone-frame" />
+              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
             </div>
           </Resizable>
         )}
       </div>
-      <div className="button-group-left">
+      <ButtonGroupLeft>
         <ZoomControls
           zoomLevel={zoomLevel}
           onZoomChanged={onZoomChanged}
           device={device}
           wrapperDivRef={wrapperDivRef}
         />
-      </div>
+      </ButtonGroupLeft>
     </>
   );
 }

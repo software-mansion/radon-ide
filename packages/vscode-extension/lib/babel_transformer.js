@@ -2,13 +2,13 @@ const ORIGINAL_TRANSFORMER_PATH = process.env.REACT_NATIVE_IDE_ORIG_BABEL_TRANSF
 
 const { requireFromAppDir, overrideModuleFromAppDir } = require("./metro_helpers");
 
-// In some configurations, React Native may pull several different version of JSX transoform plugins:
+// In some configurations, React Native may pull several different version of JSX transform plugins:
 // plugin-transform-react-jsx-self, plugin-transform-react-jsx-source, plugin-transform-react-jsx and
 // plugin-transform-react-jsx-development. For line and column numbers to be added to components, we
 // need the development version of the plugin. Apparently, it is up to the order of plugins being added
 // whether the development version would actually be allowed to produce the JSXElement node output.
 //
-// Since babel doesn't have goo extension points, as the plugin system relies on directly requiring plugin
+// Since babel doesn't have good extension points, as the plugin system relies on directly requiring plugin
 // modules, the only option to intercept that process is by overriding require. This, however isn't ideal
 // as we don't know which plugins are loaded and in what order.
 //
@@ -74,8 +74,8 @@ function transformWrapper({ filename, src, ...rest }) {
       "node_modules/react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js"
     )
   ) {
-    // This is a temporary workaround for inspector in React Native 0.74
-    // The inspector broke in that version because of this commit that's been included
+    // This is a temporary workaround for inspector in React Native 0.74 & 0.75
+    // The inspector broke in those versions because of this commit that's been included
     // in React Native renderer despite it not being a part of React 18 release: https://github.com/facebook/react/commit/37d901e2b8
     // The commit changes the way metadata properties from jsx transforms are added to the elements.
     // The workaround is to replace dev version of ReactNative renderer with the one build from exact
@@ -91,9 +91,9 @@ function transformWrapper({ filename, src, ...rest }) {
     // is experimental as it has some performance implications and may be removed in future versions.
     //
     const { version } = requireFromAppDir("react-native/package.json");
-    if (version.startsWith("0.74")) {
+    if (version.startsWith("0.74") || version.startsWith("0.75")) {
       const rendererFileName = filename.split("/").pop();
-      src = `module.exports = require("__RNIDE_lib__/rn74/${rendererFileName}");`;
+      src = `module.exports = require("__RNIDE_lib__/rn-renderer/${rendererFileName}");`;
     }
   }
 

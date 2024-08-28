@@ -72,11 +72,15 @@ export class Metro implements Disposable {
     await this.startPromise;
   }
 
-  public async start(resetCache: boolean, progressListener: (newStageProgress: number) => void) {
+  public async start(
+    resetCache: boolean,
+    progressListener: (newStageProgress: number) => void,
+    dependencies: Promise<any>[]
+  ) {
     if (this.startPromise) {
       throw new Error("metro already started");
     }
-    this.startPromise = this.startInternal(resetCache, progressListener);
+    this.startPromise = this.startInternal(resetCache, progressListener, dependencies);
     return this.startPromise;
   }
 
@@ -86,7 +90,7 @@ export class Metro implements Disposable {
     resetCache: boolean,
     metroEnv: typeof process.env
   ) {
-    return exec(`node`, [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
+    return exec("node", [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
       cwd: appRootFolder,
       env: metroEnv,
       buffer: false,
@@ -103,9 +107,9 @@ export class Metro implements Disposable {
       require.resolve("react-native", { paths: [appRootFolder] })
     );
     return exec(
-      `node`,
+      "node",
       [
-        `${reactNativeRoot}/cli.js`,
+        path.join(reactNativeRoot, "cli.js"),
         "start",
         ...(resetCache ? ["--reset-cache"] : []),
         "--no-interactive",
@@ -126,11 +130,12 @@ export class Metro implements Disposable {
 
   public async startInternal(
     resetCache: boolean,
-    progressListener: (newStageProgress: number) => void
+    progressListener: (newStageProgress: number) => void,
+    dependencies: Promise<any>[]
   ) {
     const appRootFolder = getAppRootFolder();
     const launchConfiguration = getLaunchConfiguration();
-    await this.devtools.ready();
+    await Promise.all([this.devtools.ready()].concat(dependencies));
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
     let metroConfigPath: string | undefined;
@@ -138,7 +143,6 @@ export class Metro implements Disposable {
       metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
     }
     const metroEnv = {
-      ...process.env,
       ...launchConfiguration.env,
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
       NODE_PATH: path.join(appRootFolder, "node_modules"),
@@ -169,7 +173,7 @@ export class Metro implements Disposable {
           reject(new Error("Metro exited but did not start server successfully."));
         });
 
-      lineReader(bundlerProcess).onLineRead((line) => {
+      lineReader(bundlerProcess, true).onLineRead((line) => {
         try {
           const event = JSON.parse(line) as MetroEvent;
           if (event.type === "bundle_transform_progressed") {
@@ -207,13 +211,17 @@ export class Metro implements Disposable {
   }
 
   public async reload() {
+    const appReady = this.devtools.appReady();
     await fetch(`http://localhost:${this._port}/reload`);
+    await appReady;
   }
 
-  public async getDebuggerURL(timeoutMs: number) {
+  public async getDebuggerURL() {
+    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
+
     const startTime = Date.now();
     let websocketAddress: string | undefined;
-    while (!websocketAddress && Date.now() - startTime < timeoutMs) {
+    while (!websocketAddress && Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
       websocketAddress = await this.fetchDebuggerURL();
       await new Promise((res) => setTimeout(res, 1000));
     }

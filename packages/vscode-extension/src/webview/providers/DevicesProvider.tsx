@@ -13,6 +13,7 @@ import {
   DeviceManagerInterface,
   IOSRuntimeInfo,
 } from "../../common/DeviceManager";
+import { Platform } from "../providers/UtilsProvider";
 
 const DeviceManager = makeProxy<DeviceManagerInterface>("DeviceManager");
 
@@ -42,11 +43,14 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
 
   const reload = useCallback(async () => {
     try {
-      await Promise.all([
+      const promises = [
         DeviceManager.listAllDevices().then(setDevices),
         DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
-        DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes),
-      ]);
+      ];
+      if (Platform.OS === "macos") {
+        promises.push(DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes));
+      }
+      await Promise.all(promises);
     } finally {
       setFinishedInitialLoad(true);
     }

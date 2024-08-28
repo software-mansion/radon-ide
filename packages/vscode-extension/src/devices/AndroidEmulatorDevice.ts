@@ -2,6 +2,7 @@ import { Preview } from "./preview";
 import { DeviceBase } from "./DeviceBase";
 import path from "path";
 import fs from "fs";
+import { EOL } from "node:os";
 import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI } from "../utilities/common";
@@ -9,14 +10,22 @@ import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
 import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
-import { AndroidSystemImageInfo, DeviceInfo, Platform } from "../common/DeviceManager";
+import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
-import { DeviceSettings } from "../common/Project";
+import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
+import { Platform } from "../utilities/platform";
 
-export const EMULATOR_BINARY = path.join(ANDROID_HOME, "emulator", "emulator");
-const ADB_PATH = path.join(ANDROID_HOME, "platform-tools", "adb");
+export const EMULATOR_BINARY = Platform.select({
+  macos: path.join(ANDROID_HOME, "emulator", "emulator"),
+  windows: path.join(ANDROID_HOME, "emulator", "emulator.exe"),
+});
+const ADB_PATH = Platform.select({
+  macos: path.join(ANDROID_HOME, "platform-tools", "adb"),
+  windows: path.join(ANDROID_HOME, "platform-tools", "adb.exe"),
+});
+const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
   pid: number;
@@ -32,12 +41,16 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
 
-  constructor(private readonly avdId: string) {
+  constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
     super();
   }
 
-  public get platform(): Platform {
-    return Platform.Android;
+  public get platform(): DevicePlatform {
+    return DevicePlatform.Android;
+  }
+
+  get deviceInfo(): DeviceInfo {
+    return this.info;
   }
 
   get lockFilePath(): string {
@@ -49,6 +62,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
+    // If the emulator process does not shut down initially due to ongoing activities or processes,
+    // a forced termination (kill signal) is sent after a certain timeout period.
+    setTimeout(() => {
+      this.emulatorProcess?.kill(9);
+    }, DISPOSE_TIMEOUT);
   }
 
   async changeSettings(settings: DeviceSettings) {
@@ -101,9 +119,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async bootDevice() {
-    if (this.emulatorProcess) {
-      this.emulatorProcess.kill(9);
-    }
+    // this prevents booting device with the same AVD twice
+    await ensureOldEmulatorProcessExited(this.avdId);
 
     const avdDirectory = getOrCreateAvdDirectory();
     const subprocess = exec(
@@ -117,7 +134,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
         "-grpc-use-token",
         "-no-snapshot-save",
       ],
-      { env: { ...process.env, ANDROID_AVD_HOME: avdDirectory } }
+      { env: { ANDROID_AVD_HOME: avdDirectory } }
     );
     this.emulatorProcess = subprocess;
 
@@ -150,9 +167,33 @@ export class AndroidEmulatorDevice extends DeviceBase {
     await exec(ADB_PATH, ["-s", this.serial!, "shell", "input", "keyevent", "82"]);
   }
 
+  async configureExpoDevMenu(packageName: string) {
+    if (packageName === "host.exp.exponent") {
+      // For expo go we are unable to change this setting as the APK is not debuggable
+      return;
+    }
+    // this code disables expo devmenu popup when the app is launched. When dev menu
+    // is displayed, it blocks the JS loop and hence react devtools are unable to establish
+    // the connection, and hence we never get the app ready event.
+    const prefsXML = `<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map><boolean name="isOnboardingFinished" value="true"/></map>`;
+    await exec(
+      ADB_PATH,
+      [
+        "-s",
+        this.serial!,
+        "shell",
+        `run-as ${packageName} sh -c 'mkdir -p /data/data/${packageName}/shared_prefs && cat > /data/data/${packageName}/shared_prefs/expo.modules.devmenu.sharedpreferences.xml'`,
+      ],
+      {
+        // pass serialized prefs as input:
+        input: prefsXML,
+      }
+    );
+  }
+
   async configureMetroPort(packageName: string, metroPort: number) {
     // read preferences
-    let prefs: any;
+    let prefs: { map: any };
     try {
       const { stdout } = await exec(
         ADB_PATH,
@@ -168,6 +209,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
         { allowNonZeroExit: true }
       );
       prefs = await xml2js.parseStringPromise(stdout, { explicitArray: true });
+      // test if prefs.map is an object, otherwise we just start from an empty prefs
+      if (typeof prefs.map !== "object") throw new Error("Invalid prefs file format");
     } catch (e) {
       // preferences file does not exists
       prefs = { map: {} };
@@ -230,19 +273,20 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "-a",
       "android.intent.action.VIEW",
       "-d",
-      expoDeeplink + "&disableOnboarding=1", // disable onboarding dialog via deeplink query param,
+      expoDeeplink,
     ]);
   }
 
   async launchApp(build: BuildResult, metroPort: number, devtoolsPort: number) {
-    if (build.platform !== Platform.Android) {
+    if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
     }
     const deepLinkChoice =
       build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
     if (expoDeeplink) {
-      this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
+      await this.configureExpoDevMenu(build.packageName);
+      await this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
     } else {
       await this.configureMetroPort(build.packageName, metroPort);
       await this.launchWithBuild(build);
@@ -250,7 +294,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async installApp(build: BuildResult, forceReinstall: boolean) {
-    if (build.platform !== Platform.Android) {
+    if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
     }
     // adb install sometimes fails because we call it too early after the device is initialized.
@@ -292,6 +336,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
       // applications (see `adb shell pm`, install command)
       () => installApk(true)
     );
+  }
+
+  async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {
+    if (build.platform !== DevicePlatform.Android) {
+      throw new Error("Invalid platform");
+    }
+    if (appPermission !== "all") {
+      Logger.warn(
+        "Resetting all privacy permission as individual permissions aren't currently supported on Android."
+      );
+    }
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "pm",
+      "reset-permissions",
+      build.packageName,
+    ]);
+    return true; // Android will terminate the process if any of the permissions were granted prior to reset-permissions call
   }
 
   makePreview(): Preview {
@@ -365,7 +429,7 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
   await fs.promises.writeFile(configIni, configIniContent, "utf-8");
   return {
     id: `android-${avdId}`,
-    platform: Platform.Android,
+    platform: DevicePlatform.Android,
     avdId,
     name: displayName,
     systemName: systemImage.name,
@@ -375,12 +439,12 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 async function getAvdIds(avdDirectory: string) {
   const { stdout } = await exec(EMULATOR_BINARY, ["-list-avds"], {
-    env: { ...process.env, ANDROID_AVD_HOME: avdDirectory },
+    env: { ANDROID_AVD_HOME: avdDirectory },
   });
 
   // filters out error messages and empty lines
   // https://github.com/react-native-community/cli/issues/1801#issuecomment-1980580355
-  return stdout.split("\n").filter((id) => UUID_REGEX.test(id));
+  return stdout.split(EOL).filter((id) => UUID_REGEX.test(id));
 }
 
 export async function listEmulators() {
@@ -397,7 +461,7 @@ export async function listEmulators() {
       )?.name;
       return {
         id: `android-${avdId}`,
-        platform: Platform.Android,
+        platform: DevicePlatform.Android,
         avdId,
         name: displayName,
         systemName: systemImageName ?? "Unknown",
@@ -407,7 +471,34 @@ export async function listEmulators() {
   );
 }
 
-export function removeEmulator(avdId: string) {
+async function ensureOldEmulatorProcessExited(avdId: string) {
+  let runningPid: string | undefined;
+  const command = Platform.select({
+    macos: "ps",
+    windows:
+      'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Csv -NoTypeInformation"',
+  });
+  const args = Platform.select({ macos: ["-Ao", "pid,command"], windows: [] });
+  const subprocess = exec(command, args);
+  const regexpPattern = new RegExp(`(\\d+).*qemu.*-avd ${avdId}`);
+  lineReader(subprocess).onLineRead(async (line) => {
+    const regExpResult = regexpPattern.exec(line);
+    if (regExpResult) {
+      runningPid = regExpResult[1];
+    }
+  });
+  await subprocess;
+  if (runningPid) {
+    process.kill(Number(runningPid), 9);
+  }
+}
+
+export async function removeEmulator(avdId: string) {
+  // ensure to kill emulator process before removing avd files used by that process
+  if (Platform.OS === "windows") {
+    await ensureOldEmulatorProcessExited(avdId);
+  }
+
   const avdDirectory = getOrCreateAvdDirectory();
   const removeAvd = fs.promises.rm(path.join(avdDirectory, `${avdId}.avd`), {
     recursive: true,
