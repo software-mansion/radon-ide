@@ -258,4 +258,8 @@ export class DeviceSession implements Disposable {
   public focusBuildOutput() {
     this.buildManager.focusBuildOutput();
   }
+
+  public async sendBiometricAuthorization(isMatch: boolean) {
+    await this.device.sendBiometricAuthorization(isMatch);
+  }
 }

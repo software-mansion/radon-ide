@@ -18,6 +18,8 @@ import { DeviceLocationView } from "../views/DeviceLocationView";
 import { JSX } from "react/jsx-runtime";
 import DiagnosticView from "../views/DiagnosticView";
 import { useModal } from "../providers/ModalProvider";
+import { DevicePlatform } from "../../common/DeviceManager";
+import { KeybindingInfo } from "./shared/KeybindingInfo";
 
 const contentSizes = [
   "xsmall",
@@ -117,7 +119,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </Slider.Root>
               <span className="device-settings-large-text-indicator" />
             </div>
-
+            <div className="device-settings-margin" />
+            {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
             <DropdownMenu.Arrow className="dropdown-menu-arrow" />
           </form>
           <Label>Device Location</Label>
@@ -157,5 +160,60 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
     </DropdownMenu.Root>
   );
 }
+
+const BiometricsItem = () => {
+  const { project, deviceSettings } = useProject();
+
+  return (
+    <DropdownMenu.Sub>
+      <DropdownMenu.SubTrigger className="dropdown-menu-item">
+        <span className="codicon codicon-layout" />
+        Biometrics
+        <span className="codicon codicon-chevron-right right-slot" />
+      </DropdownMenu.SubTrigger>
+
+      <DropdownMenu.Portal>
+        <DropdownMenu.SubContent className="dropdown-menu-content">
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => {
+              project.updateDeviceSettings({
+                ...deviceSettings,
+                hasEnrolledBiometrics: !deviceSettings.hasEnrolledBiometrics,
+              });
+            }}>
+            <span className="codicon codicon-layout-sidebar-left" />
+            Enrolled
+            {deviceSettings.hasEnrolledBiometrics && (
+              <span className="codicon codicon-check right-slot" />
+            )}
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => {
+              project.sendBiometricAuthorization(true);
+            }}>
+            <span className="codicon codicon-layout-sidebar-left" />
+            <div className="dropdown-menu-item-content">
+              Matching ID
+              <KeybindingInfo commandName="RNIDE.performBiometricAuthorization" />
+            </div>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => {
+              project.sendBiometricAuthorization(false);
+            }}>
+            <span className="codicon codicon-layout-sidebar-left" />
+            <div className="dropdown-menu-item-content">
+              Non-Matching ID
+              <KeybindingInfo commandName="RNIDE.performFailedBiometricAuthorization" />
+            </div>
+          </DropdownMenu.Item>
+        </DropdownMenu.SubContent>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Sub>
+  );
+};
 
 export default DeviceSettingsDropdown;

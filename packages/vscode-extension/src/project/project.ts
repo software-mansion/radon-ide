@@ -64,6 +64,7 @@ export class Project
       longitude: 19.965474,
       isDisabled: true,
     },
+    hasEnrolledBiometrics: false,
   };
 
   constructor(
@@ -71,6 +72,17 @@ export class Project
     private readonly dependencyManager: DependencyManager
   ) {
     Project.currentProject = this;
+    this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
+      appearance: "dark",
+      contentSize: "normal",
+      location: {
+        latitude: 50.048653,
+        longitude: 19.965474,
+        isDisabled: false,
+      },
+      hasEnrolledBiometrics: false,
+    };
+    this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
     this.start(false, false);
     this.trySelectingInitialDevice();
@@ -403,6 +415,9 @@ export class Project
     extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
+  }
+  public async sendBiometricAuthorization(isMatch: boolean) {
+    await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
 
   private reportStageProgress(stageProgress: number, stage: string) {
