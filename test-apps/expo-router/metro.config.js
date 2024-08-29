@@ -9,27 +9,25 @@ generate({
 
 const defaultConfig = getDefaultConfig(__dirname);
 
-// defaultConfig.resolver.resolverMainFields.unshift("sbmodern");
-
 defaultConfig.transformer.unstable_allowRequireContext = true;
 
-// defaultConfig.resolver.resolveRequest = (context, moduleName, platform) => {
-//   const defaultResolveResult = context.resolveRequest(
-//     context,
-//     moduleName,
-//     platform
-//   );
+defaultConfig.resolver.resolveRequest = (context, moduleName, platform) => {
+  const defaultResolveResult = context.resolveRequest(
+    context,
+    moduleName,
+    platform
+  );
 
-//   if (
-//     process.env.STORYBOOK_ENABLED !== "true" &&
-//     defaultResolveResult?.filePath?.includes?.(".storybook/")
-//   ) {
-//     return {
-//       type: "empty",
-//     };
-//   }
+  if (
+    process.env.STORYBOOK_ENABLED !== "true" &&
+    defaultResolveResult?.filePath?.includes?.(".storybook/")
+  ) {
+    return {
+      type: "empty",
+    };
+  }
 
-//   return defaultResolveResult;
-// };
+  return defaultResolveResult;
+};
 
 module.exports = defaultConfig;

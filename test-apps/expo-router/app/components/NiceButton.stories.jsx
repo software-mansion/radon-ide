@@ -6,7 +6,7 @@ export function NiceButton({ color, onPress }) {
 }
 
 export default {
-  title: "NiceButton",
+  title: "NiceButtonTitle",
   component: NiceButton,
 };
 
@@ -22,7 +22,7 @@ export const RedButton = () => (
 
 RedButton.storyName = "red";
 
-export const GreenButton = () => (
+export let GreenButton = () => (
   <NiceButton
     color="green"
     onPress={() => console.log("Green button pressed!")}
