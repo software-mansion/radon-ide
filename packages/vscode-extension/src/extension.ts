@@ -29,7 +29,7 @@ import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
 import { Project } from "./project/project";
-import { findSingleFileInWorkspace } from "./utilities/common";
+import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
 
 const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
@@ -267,6 +267,54 @@ async function configureAppRootFolder() {
   return appRootFolder;
 }
 
+async function findAppRootCandidates(): Promise<string[]> {
+  const candidates: string[] = [];
+
+  const metroConfigUris = await findFilesInWorkspace("**/metro.config.{js,ts}", "**/node_modules");
+  metroConfigUris.forEach((metroConfigUri) => {
+    candidates.push(Uri.joinPath(metroConfigUri, "..").fsPath);
+  });
+
+  const appConfigUris = await findFilesInWorkspace("**/app.config.{js,ts}", "**/node_modules");
+  appConfigUris.forEach((appConfigUri) => {
+    const appRootFsPath = Uri.joinPath(appConfigUri, "..").fsPath;
+    if (!candidates.includes(appRootFsPath)) {
+      candidates.push(appRootFsPath);
+    }
+  });
+
+  // given that if the user uses workspaces his node_modules are installed not in the root of an application,
+  // but in the root of the workspace we need to detect workspaces root and exclude it.
+  let excludePattern = null;
+  workspace.workspaceFolders?.forEach((folder) => {
+    if (isWorkspaceRoot(folder.uri.fsPath)) {
+      excludePattern = "node_modules/react-native/package.json";
+    }
+  });
+
+  const rnPackageLocations = await findFilesInWorkspace(
+    "**/node_modules/react-native/package.json",
+    excludePattern
+  );
+  rnPackageLocations.forEach((rnPackageLocation) => {
+    const appRootFsPath = Uri.joinPath(rnPackageLocation, "../../..").fsPath;
+    if (!candidates.includes(appRootFsPath)) {
+      candidates.push(appRootFsPath);
+    }
+  });
+
+  // app json is often used in non react-native projects, but in worst case scenario we can use it as a fallback
+  const appJsonUris = await findFilesInWorkspace("**/app.json", "**/node_modules");
+  appJsonUris.forEach((appJsonUri) => {
+    const appRootFsPath = Uri.joinPath(appJsonUri, "..").fsPath;
+    if (!candidates.includes(appRootFsPath)) {
+      candidates.push(appRootFsPath);
+    }
+  });
+
+  return candidates;
+}
+
 async function findAppRootFolder() {
   const launchConfiguration = getLaunchConfiguration();
   const appRootFromLaunchConfig = launchConfiguration.appRoot;
@@ -296,31 +344,24 @@ async function findAppRootFolder() {
     return appRoot;
   }
 
-  const metroConfigUri = await findSingleFileInWorkspace(
-    "**/metro.config.{js,ts}",
-    "**/node_modules"
-  );
-  if (metroConfigUri) {
-    return Uri.joinPath(metroConfigUri, "..").fsPath;
+  const appRootCandidates = await findAppRootCandidates();
+
+  if (appRootCandidates.length > 1) {
+    const openLaunchConfigButton = "Open Launch Configuration";
+    window
+      .showWarningMessage(
+        `Multiple react-native applications were detected in the workspace. "${appRootCandidates[0]}" was automatically chosen as your application root. To change that or remove this warning in the future, you can setup a permanent appRoot in Launch Configuration.`,
+        openLaunchConfigButton
+      )
+      .then((item) => {
+        if (item === openLaunchConfigButton) {
+          commands.executeCommand("workbench.action.debug.configure");
+        }
+      });
   }
 
-  const appConfigUri = await findSingleFileInWorkspace("**/app.config.{js,ts}", "**/node_modules");
-  if (appConfigUri) {
-    return Uri.joinPath(appConfigUri, "..").fsPath;
-  }
-
-  const rnPackageLocation = await findSingleFileInWorkspace(
-    "**/node_modules/react-native/package.json",
-    null
-  );
-  if (rnPackageLocation) {
-    return Uri.joinPath(rnPackageLocation, "../../..").fsPath;
-  }
-
-  // app json is often used in non react-native projects, but in worst case scenario we can use it as a fallback
-  const appJsonUri = await findSingleFileInWorkspace("**/app.json", "**/node_modules");
-  if (appJsonUri) {
-    return Uri.joinPath(appJsonUri, "..").fsPath;
+  if (appRootCandidates) {
+    return appRootCandidates[0];
   }
 
   const manageLaunchConfigButton = "Manage Launch Configuration";
