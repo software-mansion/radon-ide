@@ -326,8 +326,8 @@ async function findAppRootFolder() {
   if (appRootCandidates.length > 1) {
     const openLaunchConfigButton = "Open Launch Configuration";
     window
-      .showErrorMessage(
-        `multiple reat-native applications were detected in the workspace, ${appRootCandidates[0]} were chosen, but you can change the root of your application in lunch configuration.`,
+      .showWarningMessage(
+        `Multiple react-native applications were detected in the workspace. "${appRootCandidates[0]}" was automatically chosen as your application root. To change that or remove this warning in the future, you can setup a permanent appRoot in Launch Configuration.`,
         openLaunchConfigButton
       )
       .then((item) => {
