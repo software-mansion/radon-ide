@@ -1,5 +1,3 @@
-import { Text } from "react-native";
-
 async function isStoryIdValid(storyId) {
   const stories = await view._storyIndex.entries;
   return Object.values(stories).some((story) => story.id === storyId);
