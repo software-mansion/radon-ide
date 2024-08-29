@@ -9,13 +9,14 @@ import { getAppCachesDir, getNativeABI } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
-import { AndroidBuildResult, BuildResult } from "../builders/BuildManager";
+import { BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
+import { AndroidBuildResult } from "../builders/buildAndroid";
 
 export const EMULATOR_BINARY = Platform.select({
   macos: path.join(ANDROID_HOME, "emulator", "emulator"),
@@ -360,6 +361,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   makePreview(): Preview {
     return new Preview(["android", this.serial!]);
+  }
+
+  async sendBiometricAuthorization(isMatch: boolean) {
+    // TO DO: implement android biometric authorization
   }
 }
 

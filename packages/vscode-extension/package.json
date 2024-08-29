@@ -61,6 +61,18 @@
         "title": "Diagnostics",
         "category": "React Native IDE",
         "enablement": "!RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.performBiometricAuthorization",
+        "title": "Perform Biometric Authorization ",
+        "category": "React Native IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.performFailedBiometricAuthorization",
+        "title": "Perform Failed Biometric Authorization",
+        "category": "React Native IDE",
+        "enablement": "RNIDE.extensionIsActive"
       }
     ],
     "keybindings": [
@@ -74,6 +86,16 @@
         "key": "ctrl+w",
         "mac": "cmd+w",
         "when": "RNIDE.isTabPanelFocused"
+      },
+      {
+        "command": "RNIDE.performBiometricAuthorization",
+        "key": "ctrl+shift+M",
+        "mac": "cmd+shift+M"
+      },
+      {
+        "command": "RNIDE.performFailedBiometricAuthorization",
+        "key": "ctrl+shift+N",
+        "mac": "cmd+shift+N"
       }
     ],
     "configuration": {

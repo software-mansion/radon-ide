@@ -1,9 +1,9 @@
 import os from "os";
 import { createHash, Hash } from "crypto";
-import { join } from "path";
+import path, { join } from "path";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
-import fs from "fs";
+import fs, { existsSync } from "fs";
 import { ReadableStream } from "stream/web";
 import { workspace } from "vscode";
 import { Logger } from "../Logger";
@@ -15,17 +15,29 @@ export function getDevServerScriptUrl() {
   return process.env.DEV_SCRIPT_URL;
 }
 
-export async function findSingleFileInWorkspace(
-  fileGlobPattern: string,
-  excludePattern: string | null
-) {
-  const files = await workspace.findFiles(fileGlobPattern, excludePattern, 2);
-  if (files.length === 1) {
-    return files[0];
-  } else if (files.length > 1) {
-    Logger.error(`Found multiple ${fileGlobPattern} files in the workspace`);
+export function isWorkspaceRoot(dir: string) {
+  const packageJsonPath = path.join(dir, "package.json");
+  let workspaces;
+  try {
+    workspaces = require(packageJsonPath).workspaces;
+  } catch (e) {
+    // No package.json
+    return false;
   }
-  return undefined;
+
+  if (workspaces) {
+    return true;
+  }
+
+  return false;
+}
+
+export async function findFilesInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
+  const files = await workspace.findFiles(fileGlobPattern, excludePattern);
+  if (files.length > 1) {
+    Logger.warn(`Found multiple ${fileGlobPattern} files in the workspace`);
+  }
+  return files;
 }
 
 export enum ABI {
@@ -169,16 +181,16 @@ async function calculateFileMD5(filePath: string, hash: Hash) {
   return hash;
 }
 
-export async function calculateMD5(path: string, hash: Hash = createHash("md5")) {
-  const stat = await fs.promises.stat(path);
+export async function calculateMD5(fsPath: string, hash: Hash = createHash("md5")) {
+  const stat = await fs.promises.stat(fsPath);
   if (stat.isFile()) {
-    return calculateFileMD5(path, hash);
+    return calculateFileMD5(fsPath, hash);
   }
 
-  const files = await fs.promises.readdir(path);
+  const files = await fs.promises.readdir(fsPath);
 
   for await (let file of files) {
-    let filePath = join(path, file);
+    let filePath = join(fsPath, file);
     const fileStat = await fs.promises.stat(filePath);
 
     if (fileStat.isDirectory()) {

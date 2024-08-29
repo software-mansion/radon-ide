@@ -5,12 +5,13 @@ import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo } from "../common/DeviceManager";
-import { BuildResult, IOSBuildResult } from "../builders/BuildManager";
+import { BuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
 import { AppPermissionType, DeviceSettings } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { ExecaError } from "execa";
+import { IOSBuildResult } from "../builders/buildIOS";
 
 interface SimulatorInfo {
   availability?: string;
@@ -125,6 +126,42 @@ export class IosSimulatorDevice extends DeviceBase {
         `${settings.location.latitude.toString()},${settings.location.longitude.toString()}`,
       ]);
     }
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "spawn",
+      this.deviceUDID,
+      "notifyutil",
+      "-s",
+      "com.apple.BiometricKit.enrollmentChanged",
+      settings.hasEnrolledBiometrics ? "1" : "0",
+    ]);
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "spawn",
+      this.deviceUDID,
+      "notifyutil",
+      "-p",
+      "com.apple.BiometricKit.enrollmentChanged",
+    ]);
+  }
+  async sendBiometricAuthorization(isMatch: boolean) {
+    const deviceSetLocation = getOrCreateDeviceSet();
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "spawn",
+      this.deviceUDID,
+      "notifyutil",
+      "-p",
+      isMatch
+        ? "com.apple.BiometricKit_Sim.fingerTouch.match"
+        : "com.apple.BiometricKit_Sim.fingerTouch.nomatch",
+    ]);
   }
 
   async configureMetroPort(bundleID: string, metroPort: number) {
