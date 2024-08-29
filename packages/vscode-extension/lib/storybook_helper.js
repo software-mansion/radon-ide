@@ -38,6 +38,6 @@ export async function storybookPreview(componentTitle, storyName) {
 
     return key;
   } catch (e) {
-    console.log("Failed to select story: ", e);
+    console.error("Failed to select story: ", e);
   }
 }

@@ -67,8 +67,15 @@ function adaptMetroConfig(config) {
   } else {
     const originalResolveRequest = config.resolver?.resolveRequest;
     if (originalResolveRequest) {
-      // Override the resolveRequest method to include files in the ".storybook/"
-      // directory, which contains "storybook.requires.js".
+      // Some storybook setups relie on resolveRequest being overridden
+      // in order to exclude storybook files from being imported into the bundle.
+      // The files are only included when STORYBOOK_ENABLED environment variable
+      // is set. Apparently, we can't set that variable for the whole metro process
+      // as you'd normally do with storybook, because it also controls swapping out
+      // the main app entry point which also accesses that env constant via expo-constants
+      // module. We here implement a workaround which only sets the env variable for the
+      // duration of resolveRequest call and reset it back afterwards such that it only
+      // impacts resolution process.
       const storybookResolveRequest = (context, moduleName, platform) => {
         process.env.STORYBOOK_ENABLED = "true";
         const res = originalResolveRequest(context, moduleName, platform);

@@ -13,14 +13,15 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
     token: CancellationToken
   ): CodeLens[] | Thenable<CodeLens[]> {
     const text = document.getText();
-    const isStory = /stories.?(js|ts|jsx|tsx)$/.test(document.fileName);
 
+    // We detect whether a file is a storybook story based on filename.
+    // If is ends with ".stories.js/ts/jsx/tsx", we treat it as a story file.
+    const isStory = /\.stories\.(js|ts|jsx|tsx)$/.test(document.fileName);
     if (!text.includes("react-native-ide") && !isStory) {
       return [];
     }
 
     const codeLenses: CodeLens[] = [];
-
     if (isStory) {
       const componentName = this.extractComponentName(text);
       if (!componentName) {
@@ -33,12 +34,17 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
   }
 
   extractComponentName(text: string): string | null {
+    // Search for a "title" or a "component" field within the text to identify the component name.
+    // If no "title" field is present, then search for the "component" field,
+    // which is mandatory in the Component Story Format (CSF).
     let componentName: string | null = null;
+    // Detected example: title: "#ComponentTitle#".
     const titlePropRegex = /title:\s*(['"`])(\w+)\1/;
     const titlePropMatch = titlePropRegex.exec(text);
     if (titlePropMatch) {
       componentName = titlePropMatch[2];
     } else {
+      // Detected example: component: #ComponentName#.
       const componentRegex = /component:\s*(\w+)/;
       const componentMatch = componentRegex.exec(text);
       if (componentMatch) {
@@ -54,9 +60,14 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
     codeLenses: CodeLens[],
     componentName: string
   ) {
-    const storyRegex = /^(?:(?!\/\/) )*export const (\w+)(?::\s*\w+\s*)? =/gm;
+    // Detect stories defined in the Component Story Format (CSF).
+    // Each named export within the file corresponds to a story object. CodeLens annotations are applied to these lines.
+    // The pattern captures stories with whitespace between 'export' and identifiers like 'const', 'let', or 'var',
+    // and it excludes lines commented out with double slashes preceding the export.
+    // Detected example: export const Basic: Story =
+    const storyRegex = /^(?:(?!\/\/) )*export\s+(const|let|var)\s+(\w+)(?::\s*\w+\s*)? =/gm;
     for (const match of text.matchAll(storyRegex)) {
-      const storyName = match[1];
+      const storyName = match[2];
       const range = this.createRange(document, match.index);
       const command: Command = {
         title: "Select story",
@@ -68,6 +79,8 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
   }
 
   addPreviewCodeLenses(text: string, document: TextDocument, codeLenses: CodeLens[]) {
+    // Detect usage of the preview function followed by an opening parenthesis
+    // which are not preceded by double slashes indicating a comment. Detected example: preview(
     const previewRegex = /^(?:(?!\/\/) )*\bpreview\b\s*\(/gm;
     for (const match of text.matchAll(previewRegex)) {
       const range = this.createRange(document, match.index);
