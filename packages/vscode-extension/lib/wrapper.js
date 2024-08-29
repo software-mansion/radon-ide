@@ -20,7 +20,7 @@ const InternalImports = {
   get PREVIEW_APP_KEY(){
     return require("./preview").PREVIEW_APP_KEY;
   }
-}
+};
 
 const RNInternals = {
   get getInspectorDataForViewAtPoint() {
