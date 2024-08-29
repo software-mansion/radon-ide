@@ -46,6 +46,10 @@ function DiagnosticView() {
       {Platform.OS === "macos" && <DiagnosticItem label="Pods" item={dependencies.Pods} />}
       <div className="diagnostic-section-margin" />
 
+      <Label>Optional</Label>
+      <DiagnosticItem label="Storybook" item={dependencies.Storybook} />
+      <div className="diagnostic-section-margin" />
+
       <div className="diagnostic-button-container">
         <Button onClick={runDiagnostics} type="secondary">
           <span slot="start" className="codicon codicon-refresh" />

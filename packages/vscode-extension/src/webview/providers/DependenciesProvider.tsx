@@ -40,6 +40,7 @@ type Dependencies = {
   ReactNative?: DependencyState;
   Expo?: DependencyState;
   Pods?: DependencyState;
+  Storybook?: DependencyState;
 };
 
 const defaultDependencies: Dependencies = {
@@ -51,6 +52,7 @@ const defaultDependencies: Dependencies = {
   ReactNative: undefined,
   Expo: undefined,
   Pods: undefined,
+  Storybook: undefined,
 };
 
 const prerequisites = Object.keys(defaultDependencies);
@@ -102,6 +104,7 @@ interface DependenciesContextProps {
   androidEmulatorError: string | undefined;
   iosSimulatorError: string | undefined;
   runDiagnostics: () => void;
+  isStorybookInstalled: boolean;
 }
 
 const DependenciesContext = createContext<DependenciesContextProps>({
@@ -113,6 +116,7 @@ const DependenciesContext = createContext<DependenciesContextProps>({
   androidEmulatorError: undefined,
   iosSimulatorError: undefined,
   runDiagnostics,
+  isStorybookInstalled: false,
 });
 
 export default function DependenciesProvider({ children }: PropsWithChildren) {
@@ -120,6 +124,7 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
 
   // `isReady` is true when all dependencies were checked
   const isReady = !Object.values<DependencyState | undefined>(dependencies).includes(undefined);
+  const isStorybookInstalled = false;
 
   const isCommonError = hasError(dependencies, "common");
   const isIosError = hasError(dependencies, "ios");
@@ -197,6 +202,9 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
         case "installingPods":
           updateDependency("Pods", { error: undefined, installed: InstallationStatus.InProgress });
           break;
+        case "isStorybookInstalled":
+          updateDependency("Storybook", data, { isOptional: true });
+          break;
       }
     };
 
@@ -217,6 +225,7 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
         androidEmulatorError,
         iosSimulatorError,
         runDiagnostics: rerunDiagnostics,
+        isStorybookInstalled,
       }}>
       {children}
     </DependenciesContext.Provider>

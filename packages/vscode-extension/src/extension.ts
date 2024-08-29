@@ -121,6 +121,11 @@ export async function activate(context: ExtensionContext) {
       });
   }
 
+  async function showStorybookStory(componentTitle: string, storyName: string) {
+    commands.executeCommand("RNIDE.openPanel");
+    Project.currentProject?.showStorybookStory(componentTitle, storyName);
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -146,6 +151,9 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.diagnose", diagnoseWorkspaceStructure)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.showStorybookStory", showStorybookStory)
   );
 
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
@@ -207,6 +215,8 @@ export async function activate(context: ExtensionContext) {
     languages.registerCodeLensProvider(
       [
         { scheme: "file", language: "typescriptreact" },
+        { scheme: "file", language: "javascriptreact" },
+        { scheme: "file", language: "typescript" },
         { scheme: "file", language: "javascript" },
       ],
       new PreviewCodeLensProvider()

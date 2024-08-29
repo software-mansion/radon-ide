@@ -20,6 +20,7 @@ import { Platform } from "../utilities/platform";
 
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
+const MIN_STORYBOOK_VERSION_SUPPORTED = "5.2.0";
 
 export class DependencyManager implements Disposable {
   private disposables: Disposable[] = [];
@@ -65,6 +66,10 @@ export class DependencyManager implements Disposable {
           case "checkNodeModulesInstalled":
             Logger.debug("Received checkNodeModulesInstalled command.");
             this.checkNodeModulesInstalled();
+            return;
+          case "checkStorybookInstalled":
+            Logger.debug("Received checkStorybookInstalled command.");
+            this.checkStorybookInstalled();
             return;
         }
         if (Platform.OS === "macos") {
@@ -307,6 +312,25 @@ export class DependencyManager implements Disposable {
       },
     });
     Logger.debug("Project pods installed:", installed);
+    return installed;
+  }
+
+  public async checkStorybookInstalled() {
+    const status = checkMinDependencyVersionInstalled(
+      "@storybook/react-native",
+      MIN_STORYBOOK_VERSION_SUPPORTED
+    );
+    const installed = status === "installed";
+
+    this.webview.postMessage({
+      command: "isStorybookInstalled",
+      data: {
+        installed,
+        info: "Whether Storybook is installed.",
+        error: undefined,
+      },
+    });
+    Logger.debug("Storybook installed:", installed);
     return installed;
   }
 

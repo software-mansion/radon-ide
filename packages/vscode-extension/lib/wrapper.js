@@ -8,6 +8,7 @@ const {
   Linking,
   findNodeHandle,
 } = require("react-native");
+const { storybookPreview } = require("./storybook_helper");
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -17,9 +18,9 @@ export function registerNavigationPlugin(name, plugin) {
 let navigationHistory = new Map();
 
 const InternalImports = {
-  get PREVIEW_APP_KEY(){
+  get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
-  }
+  },
 };
 
 const RNInternals = {
@@ -105,7 +106,8 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
         initialProps: { previewKey },
       });
       const preview = global.__RNIDE_previews.get(previewKey);
-      handleNavigationChange({ id: previewKey, name: `preview:${preview.name}` });
+      const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
+      handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name });
     },
     [rootTag, handleNavigationChange]
   );
@@ -127,6 +129,14 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     }
     return closePreviewPromise;
   }, [rootTag]);
+
+  const showStorybookStory = useCallback(
+    async (componentTitle, storyName) => {
+      const previewKey = await storybookPreview(componentTitle, storyName);
+      previewKey !== undefined && openPreview(previewKey);
+    },
+    [handleNavigationChange]
+  );
 
   useAgentListener(
     devtoolsAgent,
@@ -153,7 +163,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     devtoolsAgent,
     "RNIDE_openNavigation",
     (payload) => {
-      const isPreviewUrl = payload.id.startsWith("preview://");
+      const isPreviewUrl = payload.id.startsWith("preview://") || payload.id.startsWith("sb://");
       if (isPreviewUrl) {
         openPreview(payload.id);
         return;
@@ -241,6 +251,15 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     // on Android
     RNInternals.DevMenu.show();
   });
+
+  useAgentListener(
+    devtoolsAgent,
+    "RNIDE_showStorybookStory",
+    (payload) => {
+      showStorybookStory(payload.componentTitle, payload.storyName);
+    },
+    [showStorybookStory]
+  );
 
   useEffect(() => {
     if (devtoolsAgent) {
