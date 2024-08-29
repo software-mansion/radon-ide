@@ -3,6 +3,7 @@ import { Button, TextInput, View, Text, useColorScheme } from "react-native";
 import { Link } from "expo-router";
 import { NiceButton } from "./components/NiceButton";
 import { UglyButton } from "./components/UglyButton";
+import Constants from "expo-constants";
 
 const obj = {
   something: "lsdkjfhjdshf",
@@ -43,7 +44,7 @@ function one() {
   two(uu);
 }
 
-export default function Home() {
+function Home() {
   const ref = useRef(null);
   const appearance = useColorScheme();
 
@@ -78,6 +79,7 @@ export default function Home() {
       />
       <Button
         title="Throw error 1"
+        a
         onPress={() => {
           throw new Error("from button");
         }}
@@ -87,3 +89,19 @@ export default function Home() {
     </View>
   );
 }
+
+let EntryPoint = Home;
+
+const storybookEnabled = Constants.expoConfig.extra.storybookEnabled === "true";
+if (storybookEnabled) {
+  const StorybookUI = require("../.storybook").default;
+  EntryPoint = () => {
+    return (
+      <View style={{ flex: 1 }}>
+        <StorybookUI />
+      </View>
+    );
+  };
+}
+
+export default EntryPoint;
