@@ -148,7 +148,7 @@ export class IosSimulatorDevice extends DeviceBase {
       "com.apple.BiometricKit.enrollmentChanged",
     ]);
   }
-  async sendBiometricAuthorization(match: boolean) {
+  async sendBiometricAuthorization(isMatch: boolean) {
     const deviceSetLocation = getOrCreateDeviceSet();
     await exec("xcrun", [
       "simctl",
@@ -158,7 +158,7 @@ export class IosSimulatorDevice extends DeviceBase {
       this.deviceUDID,
       "notifyutil",
       "-p",
-      match
+      isMatch
         ? "com.apple.BiometricKit_Sim.fingerTouch.match"
         : "com.apple.BiometricKit_Sim.fingerTouch.nomatch",
     ]);

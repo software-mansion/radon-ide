@@ -363,7 +363,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return new Preview(["android", this.serial!]);
   }
 
-  async sendBiometricAuthorization(match: boolean) {
+  async sendBiometricAuthorization(isMatch: boolean) {
     // TO DO: implement android biometric authorization
   }
 }

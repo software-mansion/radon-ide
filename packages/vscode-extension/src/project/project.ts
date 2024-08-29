@@ -416,8 +416,8 @@ export class Project
     await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
   }
-  public async sendBiometricAuthorization(match: boolean) {
-    await this.deviceSession?.sendBiometricAuthorization(match);
+  public async sendBiometricAuthorization(isMatch: boolean) {
+    await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
 
   private reportStageProgress(stageProgress: number, stage: string) {
