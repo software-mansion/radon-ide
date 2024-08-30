@@ -58,6 +58,14 @@ Native builds are one of the most time consuming phases when launching your proj
 Build processes output a lot of logs on their own and hence they have separate output channels.
 When something goes wrong in the native build phase, instead of checking "React Native IDE" source in "Output Panel" as described in the previous point, select "React Native IDE (Android build)" or "React Native IDE (iOS build)" source depending on the platform you're building for.
 
+### -sec-num- Fresh installation in VSCode / Cursor
+
+There are two locations on the disk where React Native IDE stores its information.
+1) The installation directory is located under `~/.vscode/extensions/swmansion.react-native-ide-*` – with a suffix of current version + CPU architecture
+2) Emulator instance storage is located under `~/Library/Caches/com.swmansion.react-native-ide`
+
+If you'd like to perform a clean installation, you can delete both of those folders, restart VSCode and install the extension again from the marketplace.
+
 ### -sec-num- General ways of recovering in case of errors
 
 Here is what you can try when the extension got stuck on some errors:
