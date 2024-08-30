@@ -84,12 +84,6 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
   return (
     <>
       <IconButton
-        onClick={() => {
-          console.log("FRYTKI urlHistory", urlHistory);
-        }}>
-        <span className="codicon codicon-rocket" />
-      </IconButton>
-      <IconButton
         tooltip={{
           label: "Go back",
           side: "bottom",
