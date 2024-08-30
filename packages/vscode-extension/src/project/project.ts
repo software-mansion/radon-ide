@@ -237,7 +237,7 @@ export class Project
   }
 
   public async goHome() {
-    await this.reloadMetro();
+    await this.openNavigation("/{}");
   }
 
   //#region Session lifecycle

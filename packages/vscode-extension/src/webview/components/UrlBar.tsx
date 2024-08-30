@@ -8,6 +8,7 @@ import { IconButtonWithOptions } from "./IconButtonWithOptions";
 interface UrlBarProps {
   project: ProjectInterface;
   disabled?: boolean;
+  resetUrlHistory?: boolean;
 }
 
 interface ReloadButtonProps {
@@ -35,8 +36,11 @@ function ReloadButton({ project, disabled }: ReloadButtonProps) {
   );
 }
 
-function UrlBar({ project, disabled }: UrlBarProps) {
+function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
+  const MAX_URL_HISTORY_SIZE = 20;
   const [urlList, setUrlList] = useState<{ name: string; id: string }[]>([]);
+  const [urlHistory, setUrlHistory] = useState<string[]>([]);
+
   useEffect(() => {
     function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
       const newRecord = { name: navigationData.displayName, id: navigationData.id };
@@ -44,6 +48,19 @@ function UrlBar({ project, disabled }: UrlBarProps) {
         newRecord,
         ...urlList.filter((record) => record.id !== newRecord.id),
       ]);
+
+      if (
+        newRecord.id !== "{}" &&
+        (!urlHistory.length || (urlHistory.length > 0 && urlHistory[0] !== newRecord.id))
+      ) {
+        setUrlHistory((prevUrlHistory) => {
+          const updatedUrlHistory = [newRecord.id, ...prevUrlHistory];
+          if (updatedUrlHistory.length > MAX_URL_HISTORY_SIZE) {
+            updatedUrlHistory.pop();
+          }
+          return updatedUrlHistory;
+        });
+      }
     }
     project.addListener("navigationChanged", handleNavigationChanged);
     const handleProjectReset = (e: ProjectState) => {
@@ -56,20 +73,34 @@ function UrlBar({ project, disabled }: UrlBarProps) {
       project.removeListener("navigationChanged", handleNavigationChanged);
       project.removeListener("projectStateChanged", handleProjectReset);
     };
-  }, []);
+  }, [urlHistory]);
+
+  useEffect(() => {
+    if (resetUrlHistory) {
+      setUrlHistory((prevUrlHistory) => []);
+    }
+  }, [resetUrlHistory]);
 
   return (
     <>
+      <IconButton
+        onClick={() => {
+          console.log("FRYTKI urlHistory", urlHistory);
+        }}>
+        <span className="codicon codicon-rocket" />
+      </IconButton>
       <IconButton
         tooltip={{
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabled || urlList.length < 2}
+        disabled={disabled || urlHistory.length < 2}
         onClick={() => {
-          project.openNavigation(urlList[1].id);
-          // remove first item from the url list
-          setUrlList((urlList) => urlList.slice(1));
+          setUrlHistory((prevUrlHistory) => {
+            const newUrlHistory = prevUrlHistory.slice(1);
+            project.openNavigation(newUrlHistory[0]);
+            return newUrlHistory;
+          });
         }}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
@@ -77,13 +108,12 @@ function UrlBar({ project, disabled }: UrlBarProps) {
       <IconButton
         onClick={() => {
           project.goHome();
-          setUrlList([]);
         }}
         tooltip={{
           label: "Go to main screen",
           side: "bottom",
         }}
-        disabled={disabled || urlList.length == 0}>
+        disabled={disabled || urlList.length === 0}>
         <span className="codicon codicon-home" />
       </IconButton>
       <UrlSelect

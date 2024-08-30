@@ -40,6 +40,7 @@ function PreviewView() {
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
   const isStarting = projectState.status === "starting";
+  const isRunning = projectState.status === "running";
 
   const { openModal } = useModal();
 
@@ -103,7 +104,7 @@ function PreviewView() {
   return (
     <div className="panel-view">
       <div className="button-group-top">
-        <UrlBar project={project} disabled={devicesNotFound} />
+        <UrlBar project={project} disabled={devicesNotFound} resetUrlHistory={!isRunning} />
 
         <div className="spacer" />
 
@@ -120,10 +121,7 @@ function PreviewView() {
           <span slot="start" className="codicon codicon-debug-console" />
           Logs
         </Button>
-        <SettingsDropdown
-          project={project}
-          isDeviceRunning={projectState.status === "running"}
-          disabled={devicesNotFound}>
+        <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Settings", type: "primary" }}>
             <span className="codicon codicon-settings-gear" />
           </IconButton>
