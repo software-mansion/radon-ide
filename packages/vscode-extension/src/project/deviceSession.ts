@@ -98,10 +98,7 @@ export class DeviceSession implements Disposable {
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
     // bundle instead.
-    const shouldWaitForAppLaunch = Platform.select({
-      macos: getLaunchConfiguration().preview?.waitForAppLaunch !== false,
-      windows: false,
-    });
+    const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.eventDelegate.onStateChange(StartupMessage.Launching);
