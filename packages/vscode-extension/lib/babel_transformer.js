@@ -1,5 +1,5 @@
 const ORIGINAL_TRANSFORMER_PATH = process.env.REACT_NATIVE_IDE_ORIG_BABEL_TRANSFORMER_PATH;
-
+const path = require("path");
 const { requireFromAppDir, overrideModuleFromAppDir } = require("./metro_helpers");
 
 // In some configurations, React Native may pull several different version of JSX transform plugins:
