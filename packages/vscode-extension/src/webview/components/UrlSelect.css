@@ -53,10 +53,11 @@
 
 .url-select-item {
   font-size: 13px;
-  line-height: 1;
+  line-height: 1.2;
   display: flex;
   align-items: center;
-  height: 30px;
+  min-height: 30px;
+  height: auto;
   padding: 0 4px;
   position: relative;
   border-radius: 4px;
@@ -72,4 +73,9 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   max-width: 240px;
+}
+.url-select-item:hover .url-select-item-text {
+  white-space: normal;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
