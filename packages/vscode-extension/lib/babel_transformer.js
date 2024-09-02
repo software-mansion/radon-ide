@@ -53,10 +53,14 @@ overrideModuleFromAppDir("@babel/plugin-transform-react-jsx-self", {
 });
 
 function transformWrapper({ filename, src, ...rest }) {
+  function isTransforming(unixPath) {
+    return filename.endsWith(path.normalize(unixPath));
+  }
+
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
-  if (filename.endsWith("node_modules/react-native/Libraries/Core/InitializeCore.js")) {
+  if (isTransforming("node_modules/react-native/Libraries/Core/InitializeCore.js")) {
     src = `${src};require("__RNIDE_lib__/runtime.js");`;
-  } else if (filename.endsWith("node_modules/expo-router/entry.js")) {
+  } else if (isTransforming("node_modules/expo-router/entry.js")) {
     // expo-router v2 and v3 integration
     const { version } = requireFromAppDir("expo-router/package.json");
     if (version.startsWith("2.")) {
@@ -64,13 +68,13 @@ function transformWrapper({ filename, src, ...rest }) {
     } else if (version.startsWith("3.")) {
       src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
     }
-  } else if (filename.endsWith("node_modules/react-native-ide/index.js")) {
+  } else if (isTransforming("node_modules/react-native-ide/index.js")) {
     src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
   } else if (
-    filename.endsWith(
+    isTransforming(
       "node_modules/react-native/Libraries/Renderer/implementations/ReactFabric-dev.js"
     ) ||
-    filename.endsWith(
+    isTransforming(
       "node_modules/react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js"
     )
   ) {
