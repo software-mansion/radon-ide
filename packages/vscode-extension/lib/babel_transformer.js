@@ -1,5 +1,5 @@
 const ORIGINAL_TRANSFORMER_PATH = process.env.REACT_NATIVE_IDE_ORIG_BABEL_TRANSFORMER_PATH;
-
+const path = require("path");
 const { requireFromAppDir, overrideModuleFromAppDir } = require("./metro_helpers");
 
 // In some configurations, React Native may pull several different version of JSX transform plugins:
@@ -96,7 +96,7 @@ function transformWrapper({ filename, src, ...rest }) {
     //
     const { version } = requireFromAppDir("react-native/package.json");
     if (version.startsWith("0.74") || version.startsWith("0.75")) {
-      const rendererFileName = filename.split("/").pop();
+      const rendererFileName = filename.split(path.sep).pop();
       src = `module.exports = require("__RNIDE_lib__/rn-renderer/${rendererFileName}");`;
     }
   }
