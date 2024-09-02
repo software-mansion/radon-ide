@@ -52,7 +52,7 @@ overrideModuleFromAppDir("@babel/plugin-transform-react-jsx-self", {
   visitor: {},
 });
 
-function transformWrapper({ filename, src, options, plugins }) {
+function transformWrapper({ filename, src, ...rest }) {
   function isTransforming(unixPath) {
     return filename.endsWith(path.normalize(unixPath));
   }
@@ -101,7 +101,7 @@ function transformWrapper({ filename, src, options, plugins }) {
     }
   }
 
-  return transform({ filename, src, options, plugins });
+  return transform({ filename, src, ...rest });
 }
 
 module.exports = { transform: transformWrapper };
