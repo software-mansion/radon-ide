@@ -96,7 +96,7 @@ function transformWrapper({ filename, src, ...rest }) {
     //
     const { version } = requireFromAppDir("react-native/package.json");
     if (version.startsWith("0.74") || version.startsWith("0.75")) {
-      const rendererFileName = filename.split("/").pop();
+      const rendererFileName = filename.split(path.sep).pop();
       src = `module.exports = require("__RNIDE_lib__/rn-renderer/${rendererFileName}");`;
     }
   }
