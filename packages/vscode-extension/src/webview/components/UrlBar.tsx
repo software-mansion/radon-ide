@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import IconButton from "./shared/IconButton";
 import { ProjectInterface, ProjectState } from "../../common/Project";
 import UrlSelect from "./UrlSelect";
@@ -38,27 +38,37 @@ function ReloadButton({ project, disabled }: ReloadButtonProps) {
 
 function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
   const MAX_URL_HISTORY_SIZE = 20;
+  const MAX_LAST_SELECTED_URLS_SIZE = 5;
   const [urlList, setUrlList] = useState<{ name: string; id: string }[]>([]);
+  const [recentUrlList, setRecentUrlList] = useState<{ name: string; id: string }[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
 
   useEffect(() => {
     function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
-      const newRecord = { name: navigationData.displayName, id: navigationData.id };
-      setUrlList((urlList) => [
-        newRecord,
-        ...urlList.filter((record) => record.id !== newRecord.id),
-      ]);
+      if (navigationData.id === "{}" || navigationData.id === "/{}") {
+        return;
+      }
 
-      if (
-        newRecord.id !== "{}" &&
-        (!urlHistory.length || (urlHistory.length > 0 && urlHistory[0] !== newRecord.id))
-      ) {
+      const newRecord = { name: navigationData.displayName, id: navigationData.id };
+      const isNotInHistory = !urlHistory.length || urlHistory[0] !== newRecord.id;
+
+      setUrlList((urls) => [newRecord, ...urls.filter((record) => record.id !== newRecord.id)]);
+      setRecentUrlList((recentUrls) => {
+        const filteredRecentUrls = [
+          newRecord,
+          ...recentUrls.filter((record) => record.id !== newRecord.id),
+        ];
+        return filteredRecentUrls.length > MAX_LAST_SELECTED_URLS_SIZE
+          ? filteredRecentUrls.slice(0, MAX_LAST_SELECTED_URLS_SIZE)
+          : filteredRecentUrls;
+      });
+
+      if (isNotInHistory) {
         setUrlHistory((prevUrlHistory) => {
           const updatedUrlHistory = [newRecord.id, ...prevUrlHistory];
-          if (updatedUrlHistory.length > MAX_URL_HISTORY_SIZE) {
-            updatedUrlHistory.pop();
-          }
-          return updatedUrlHistory;
+          return updatedUrlHistory.length > MAX_URL_HISTORY_SIZE
+            ? updatedUrlHistory.slice(0, MAX_URL_HISTORY_SIZE)
+            : updatedUrlHistory;
         });
       }
     }
@@ -75,9 +85,16 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
     };
   }, [urlHistory]);
 
+  const sortedUrlList = useMemo(
+    () => urlList.sort((a, b) => a.name.localeCompare(b.name)),
+    [urlList]
+  );
+
   useEffect(() => {
     if (resetUrlHistory) {
-      setUrlHistory((prevUrlHistory) => []);
+      setUrlHistory([]);
+      setRecentUrlList([]);
+      setUrlList([]);
     }
   }, [resetUrlHistory]);
 
@@ -114,7 +131,8 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
         onValueChange={(value: string) => {
           project.openNavigation(value);
         }}
-        items={urlList}
+        recentItems={recentUrlList}
+        items={sortedUrlList}
         value={urlList[0]?.id}
         disabled={disabled || urlList.length < 1}
       />
