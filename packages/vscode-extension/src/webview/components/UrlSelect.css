@@ -45,10 +45,17 @@
   padding-bottom: 4px;
   min-width: var(--url-select-min-width);
   max-width: var(--url-select-max-width);
+  max-height: var(--radix-select-content-available-height);
 }
 
 .url-select-viewport {
   padding: 6px;
+}
+
+.url-select-scroll {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .url-select-label {

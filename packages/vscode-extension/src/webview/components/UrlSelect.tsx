@@ -72,6 +72,9 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           className="url-select-content"
           position="popper"
           style={{ width: urlWidth }}>
+          <Select.ScrollUpButton className="url-select-scroll">
+            <span className="codicon codicon-chevron-up" />
+          </Select.ScrollUpButton>
           <Select.Viewport className="url-select-viewport">
             <Select.Group>
               <Select.Label className="url-select-label">Recently used:</Select.Label>
@@ -97,6 +100,9 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               )}
             </Select.Group>
           </Select.Viewport>
+          <Select.ScrollDownButton className="url-select-scroll">
+            <span className="codicon codicon-chevron-down" />
+          </Select.ScrollDownButton>
         </Select.Content>
       </Select.Portal>
     </Select.Root>
