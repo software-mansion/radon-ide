@@ -24,13 +24,29 @@ function UrlSelect({ onValueChange, items, value, disabled }: UrlSelectProps) {
   const longestURl = Math.max(...items.map((item) => item.name.length));
   const urlWidth = Math.min(Math.max(longestURl * 7, 180), 280);
 
+// Reformats text to max 37 characters per line, breaking at last dash if possible.
   function splitLines(text: string): string {
-    const numberOfChunks = Math.ceil(text.length / maxLineLenght);
-    const result = Array.from({ length: numberOfChunks }, (_, index) => {
-      return text.substring(index * maxLineLenght, (index + 1) * maxLineLenght);
-    }).join("\n");
+    const findBreakPoint = (chunk: string, startIndex: number): number => {
+      const lastDash = chunk.lastIndexOf("-");
+      if (lastDash !== -1) {
+        return lastDash + 1 + startIndex;
+      }
+      return Math.min(startIndex + maxLineLenght, text.length);
+    };
 
-    return result;
+    let result = "";
+    let startIndex = 0;
+    while (startIndex < text.length) {
+      if (startIndex + maxLineLenght > text.length) {
+        result += text.substring(startIndex);
+        break;
+      }
+      let chunk = text.substring(startIndex, startIndex + maxLineLenght);
+      let nextBreakPoint = findBreakPoint(chunk, startIndex);
+      result += text.substring(startIndex, nextBreakPoint) + "\n";
+      startIndex = nextBreakPoint;
+    }
+    return result.trim();
   }
 
   return (
