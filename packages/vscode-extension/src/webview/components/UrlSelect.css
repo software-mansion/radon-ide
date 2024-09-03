@@ -51,6 +51,18 @@
   padding: 6px;
 }
 
+.url-select-label {
+  padding: 0 4px 0 4px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.url-select-separator {
+  height: 1px;
+  background-color: var(--swm-url-select-separator);
+  margin: 5px;
+}
+
 .url-select-item {
   font-size: 13px;
   line-height: 1.2;
