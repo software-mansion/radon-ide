@@ -7,7 +7,6 @@ import { IconButtonWithOptions } from "./IconButtonWithOptions";
 interface UrlBarProps {
   project: ProjectInterface;
   disabled?: boolean;
-  resetUrlHistory?: boolean;
 }
 
 interface ReloadButtonProps {
@@ -35,7 +34,7 @@ function ReloadButton({ project, disabled }: ReloadButtonProps) {
   );
 }
 
-function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
+function UrlBar({ project, disabled }: UrlBarProps) {
   const MAX_URL_HISTORY_SIZE = 20;
   const MAX_RECENT_URL_SIZE = 5;
   const [urlList, setUrlList] = useState<{ name: string; id: string }[]>([]);
@@ -95,14 +94,6 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
   const sortedUrlList = useMemo(() => {
     return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
   }, [urlList]);
-
-  useEffect(() => {
-    if (resetUrlHistory) {
-      setUrlHistory(() => []);
-      setRecentUrlList(() => []);
-      setUrlList(() => []);
-    }
-  }, [resetUrlHistory]);
 
   return (
     <>

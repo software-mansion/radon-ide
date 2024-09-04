@@ -32,15 +32,14 @@ function PreviewView() {
     },
     [project]
   );
-  const [isFollowing, setIsFollowing] = useState(false);
   const [logCounter, setLogCounter] = useState(0);
+  const [resetKey, setResetKey] = useState(0);
 
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
   const isStarting = projectState.status === "starting";
-  const isRunning = projectState.status === "running";
 
   const { openModal } = useModal();
 
@@ -64,6 +63,7 @@ function PreviewView() {
   useEffect(() => {
     if (isStarting) {
       setLogCounter(0);
+      setResetKey((prevKey) => prevKey + 1);
     }
   }, [setLogCounter, isStarting]);
 
@@ -104,7 +104,7 @@ function PreviewView() {
   return (
     <div className="panel-view">
       <div className="button-group-top">
-        <UrlBar project={project} disabled={devicesNotFound} resetUrlHistory={!isRunning} />
+        <UrlBar key={resetKey} project={project} disabled={devicesNotFound} />
 
         <div className="spacer" />
 
@@ -121,7 +121,10 @@ function PreviewView() {
           <span slot="start" className="codicon codicon-debug-console" />
           Logs
         </Button>
-        <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={devicesNotFound}>
+        <SettingsDropdown
+          project={project}
+          isDeviceRunning={projectState.status === "running"}
+          disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Settings", type: "primary" }}>
             <span className="codicon codicon-settings-gear" />
           </IconButton>
