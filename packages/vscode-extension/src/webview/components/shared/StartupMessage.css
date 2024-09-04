@@ -1,6 +1,9 @@
 .startup-message-wrapper {
   display: flex;
   color: var(--swm-startup-message);
+  width: fit-content;
+  white-space: normal;
+  align-items: flex-end;
 }
 
 .startup-message-dots {
