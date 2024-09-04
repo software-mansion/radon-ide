@@ -10,6 +10,7 @@
   padding: 0 10px;
   font-size: 13px;
   line-height: 1;
+  overflow: hidden;
   cursor: pointer;
   height: 36px;
   border: 0px solid transparent;
@@ -18,8 +19,6 @@
   color: var(--swm-url-select);
   background-color: var(--swm-url-select-background);
   user-select: none;
-  /* min-width: var(--url-select-min-width);  */
-  max-width: var(--url-select-max-width);
 }
 .url-select-trigger:hover {
   background-color: var(--swm-url-select-hover-background);
@@ -43,8 +42,7 @@
   border-radius: 18px 18px 18px 18px;
   transform: translateY(4px);
   padding-bottom: 4px;
-  min-width: var(--url-select-min-width);
-  max-width: var(--url-select-max-width);
+  max-width: var(--radix-select-content-available-width);
   max-height: var(--radix-select-content-available-height);
 }
 
@@ -91,7 +89,6 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  max-width: 240px;
 }
 .url-select-item:hover .url-select-item-text {
   white-space: normal;

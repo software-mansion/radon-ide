@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from "react";
 import IconButton from "./shared/IconButton";
 import { ProjectInterface, ProjectState } from "../../common/Project";
 import UrlSelect from "./UrlSelect";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 
 interface UrlBarProps {
@@ -45,7 +44,7 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
 
   useEffect(() => {
     function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
-      if (navigationData.id === "{}" || navigationData.id === "/{}") {
+      if (navigationData.id === "{}") {
         return;
       }
 
@@ -72,6 +71,7 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
         });
       }
     }
+
     project.addListener("navigationChanged", handleNavigationChanged);
     const handleProjectReset = (e: ProjectState) => {
       if (e.status === "starting") {
@@ -85,16 +85,15 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
     };
   }, [urlHistory]);
 
-  const sortedUrlList = useMemo(
-    () => urlList.sort((a, b) => a.name.localeCompare(b.name)),
-    [urlList]
-  );
+  const sortedUrlList = useMemo(() => {
+    return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
+  }, [urlList]);
 
   useEffect(() => {
     if (resetUrlHistory) {
-      setUrlHistory([]);
-      setRecentUrlList([]);
-      setUrlList([]);
+      setUrlHistory(() => []);
+      setRecentUrlList(() => []);
+      setUrlList(() => []);
     }
   }, [resetUrlHistory]);
 
