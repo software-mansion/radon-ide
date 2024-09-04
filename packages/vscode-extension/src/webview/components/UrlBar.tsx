@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import IconButton from "./shared/IconButton";
 import { ProjectInterface, ProjectState } from "../../common/Project";
-import UrlSelect from "./UrlSelect";
+import UrlSelect, { UrlItem } from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 
 interface UrlBarProps {
@@ -37,8 +37,8 @@ function ReloadButton({ project, disabled }: ReloadButtonProps) {
 function UrlBar({ project, disabled }: UrlBarProps) {
   const MAX_URL_HISTORY_SIZE = 20;
   const MAX_RECENT_URL_SIZE = 5;
-  const [urlList, setUrlList] = useState<{ name: string; id: string }[]>([]);
-  const [recentUrlList, setRecentUrlList] = useState<{ name: string; id: string }[]>([]);
+  const [urlList, setUrlList] = useState<UrlItem[]>([]);
+  const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
 
   useEffect(() => {
@@ -47,33 +47,27 @@ function UrlBar({ project, disabled }: UrlBarProps) {
         return;
       }
 
-      function removeDynamicPostfix(url: string): string {
-        return url.split("?")[0];
-      }
-
       const newRecord = {
-        name: navigationData.displayName, //removeDynamicPostfix(), TODO
+        name: navigationData.displayName,
         id: navigationData.id,
       };
-      const isNotInHistory = !urlHistory.length || urlHistory[0] !== newRecord.id;
+      const isNotInHistory = urlHistory.length === 0 || urlHistory[0] !== newRecord.id;
 
+      function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {
+        return [newUrl, ...urls.filter((record) => record.id !== newUrl.id)];
+      }
+
+      setUrlList(moveAsMostRecent(urlList, newRecord));
       setUrlList((urls) => [newRecord, ...urls.filter((record) => record.id !== newRecord.id)]);
-      setRecentUrlList((recentUrls) => {
-        const filteredRecentUrls = [
-          newRecord,
-          ...recentUrls.filter((record) => record.id !== newRecord.id),
-        ];
-        return filteredRecentUrls.length > MAX_RECENT_URL_SIZE
-          ? filteredRecentUrls.slice(0, MAX_RECENT_URL_SIZE)
-          : filteredRecentUrls;
+      setRecentUrlList(() => {
+        const updatedRecentUrls = moveAsMostRecent(recentUrlList, newRecord);
+        return updatedRecentUrls.slice(0, MAX_RECENT_URL_SIZE);
       });
 
       if (isNotInHistory) {
         setUrlHistory((prevUrlHistory) => {
           const updatedUrlHistory = [newRecord.id, ...prevUrlHistory];
-          return updatedUrlHistory.length > MAX_URL_HISTORY_SIZE
-            ? updatedUrlHistory.slice(0, MAX_URL_HISTORY_SIZE)
-            : updatedUrlHistory;
+          return updatedUrlHistory.slice(0, MAX_URL_HISTORY_SIZE);
         });
       }
     }

@@ -2,6 +2,8 @@ import React, { PropsWithChildren, useState, useEffect } from "react";
 import * as Select from "@radix-ui/react-select";
 import "./UrlSelect.css";
 
+export type UrlItem = { id: string; name: string };
+
 const SelectItem = React.forwardRef<
   HTMLDivElement,
   PropsWithChildren<Select.SelectItemProps & { urlWidth: number }>
@@ -11,7 +13,7 @@ const SelectItem = React.forwardRef<
     <Select.Item className="url-select-item" {...props} ref={forwardedRef}>
       <Select.ItemText>
         <div className="url-select-item-text" style={itemStyle}>
-          {children}{" "}
+          {children}
         </div>
       </Select.ItemText>
     </Select.Item>
@@ -21,8 +23,8 @@ const SelectItem = React.forwardRef<
 interface UrlSelectProps {
   value: string;
   onValueChange: (newValue: string) => void;
-  recentItems: { id: string; name: string }[];
-  items: { id: string; name: string }[];
+  recentItems: UrlItem[];
+  items: UrlItem[];
   disabled?: boolean;
 }
 
@@ -37,10 +39,9 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   let urlWidth = Math.min(Math.max(longestUrl * 7.5, 180), windowWidth * 0.6);
   const maxCharsInSingleLine = Math.floor(urlWidth / 7.5);
 
-  const handleValueChange = (newValue: string) => {
-    const dashIndex = newValue.indexOf("#");
-    const strippedValue = dashIndex === -1 ? newValue : newValue.substring(dashIndex + 1);
-    onValueChange(strippedValue);
+  const handleValueChange = (newSelection: string) => {
+    const stripped = newSelection.replace(/^recent#/, "");
+    onValueChange(stripped);
   };
 
   const handleResize = () => {
@@ -55,7 +56,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   }, []);
 
   function splitLines(text: string) {
-    // Reformats text to max line lenght characters per line, breaking at last special char if possible.
+    // Reformats text to max line length characters per line, breaking at last special char if possible.
     const findBreakPoint = (chunk: string, startIndex: number) => {
       const specialChars = "-+=?&#";
       let lastSpecialCharIndex = -1;
@@ -78,8 +79,8 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
         result += text.substring(startIndex);
         break;
       }
-      let chunk = text.substring(startIndex, startIndex + maxCharsInSingleLine);
-      let nextBreakPoint = findBreakPoint(chunk, startIndex);
+      const chunk = text.substring(startIndex, startIndex + maxCharsInSingleLine);
+      const nextBreakPoint = findBreakPoint(chunk, startIndex);
       result += text.substring(startIndex, nextBreakPoint) + "\n";
       startIndex = nextBreakPoint;
     }
