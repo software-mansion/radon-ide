@@ -37,7 +37,7 @@ function ReloadButton({ project, disabled }: ReloadButtonProps) {
 
 function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
   const MAX_URL_HISTORY_SIZE = 20;
-  const MAX_LAST_SELECTED_URLS_SIZE = 5;
+  const MAX_RECENT_URL_SIZE = 5;
   const [urlList, setUrlList] = useState<{ name: string; id: string }[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<{ name: string; id: string }[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
@@ -53,7 +53,7 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
       }
 
       const newRecord = {
-        name: removeDynamicPostfix(navigationData.displayName),
+        name: navigationData.displayName, //removeDynamicPostfix(), TODO
         id: navigationData.id,
       };
       const isNotInHistory = !urlHistory.length || urlHistory[0] !== newRecord.id;
@@ -64,8 +64,8 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
           newRecord,
           ...recentUrls.filter((record) => record.id !== newRecord.id),
         ];
-        return filteredRecentUrls.length > MAX_LAST_SELECTED_URLS_SIZE
-          ? filteredRecentUrls.slice(0, MAX_LAST_SELECTED_URLS_SIZE)
+        return filteredRecentUrls.length > MAX_RECENT_URL_SIZE
+          ? filteredRecentUrls.slice(0, MAX_RECENT_URL_SIZE)
           : filteredRecentUrls;
       });
 
@@ -111,7 +111,7 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabled}
+        disabled={disabled || urlHistory.length < 2}
         onClick={() => {
           setUrlHistory((prevUrlHistory) => {
             const newUrlHistory = prevUrlHistory.slice(1);
@@ -130,7 +130,7 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
           label: "Go to main screen",
           side: "bottom",
         }}
-        disabled={disabled || urlList.length === 0}>
+        disabled={disabled || urlList.length < 1}>
         <span className="codicon codicon-home" />
       </IconButton>
       <UrlSelect
