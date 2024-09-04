@@ -48,7 +48,14 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
         return;
       }
 
-      const newRecord = { name: navigationData.displayName, id: navigationData.id };
+      function removeDynamicPostfix(url: string): string {
+        return url.split("?")[0];
+      }
+
+      const newRecord = {
+        name: removeDynamicPostfix(navigationData.displayName),
+        id: navigationData.id,
+      };
       const isNotInHistory = !urlHistory.length || urlHistory[0] !== newRecord.id;
 
       setUrlList((urls) => [newRecord, ...urls.filter((record) => record.id !== newRecord.id)]);
@@ -104,7 +111,7 @@ function UrlBar({ project, disabled, resetUrlHistory }: UrlBarProps) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabled || urlHistory.length < 2}
+        disabled={disabled}
         onClick={() => {
           setUrlHistory((prevUrlHistory) => {
             const newUrlHistory = prevUrlHistory.slice(1);

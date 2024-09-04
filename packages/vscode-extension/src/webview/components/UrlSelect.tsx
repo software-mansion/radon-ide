@@ -2,15 +2,21 @@ import React, { PropsWithChildren, useState, useEffect } from "react";
 import * as Select from "@radix-ui/react-select";
 import "./UrlSelect.css";
 
-const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
-  ({ children, ...props }, forwardedRef) => (
+const SelectItem = React.forwardRef<
+  HTMLDivElement,
+  PropsWithChildren<Select.SelectItemProps & { urlWidth: number }>
+>(({ children, urlWidth, ...props }, forwardedRef) => {
+  const itemStyle = { maxWidth: urlWidth - 20 };
+  return (
     <Select.Item className="url-select-item" {...props} ref={forwardedRef}>
       <Select.ItemText>
-        <div className="url-select-item-text">{children}</div>
+        <div className="url-select-item-text" style={itemStyle}>
+          {children}{" "}
+        </div>
       </Select.ItemText>
     </Select.Item>
-  )
-);
+  );
+});
 
 interface UrlSelectProps {
   value: string;
@@ -26,35 +32,53 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   // value is prefixed to differentiate their origins when presented in the Select
   // component. This prefix is stripped off when the selected value is passed back
   // through onValueChange.
-  const maxLineLenght = 37; // maximum length for an item name without truncation
-  const longestURl = Math.max(...items.map((item) => item.name.length));
-  const urlWidth = Math.min(Math.max(longestURl * 7, 180), 280);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const longestUrl = Math.max(...items.map((item) => item.name.length));
+  let urlWidth = Math.min(Math.max(longestUrl * 7.5, 180), windowWidth * 0.6);
+  const maxCharsInSingleLine = Math.floor(urlWidth / 7.5);
 
   const handleValueChange = (newValue: string) => {
     const dashIndex = newValue.indexOf("#");
     const strippedValue = dashIndex === -1 ? newValue : newValue.substring(dashIndex + 1);
-    console.log("FRYTKI strippedValue", strippedValue);
     onValueChange(strippedValue);
   };
 
+  const handleResize = () => {
+    setWindowWidth(window.innerWidth);
+  };
+
+  useEffect(() => {
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   function splitLines(text: string) {
-    // Reformats text to max 37 characters per line, breaking at last dash if possible.
-    const findBreakPoint = (chunk: string, startIndex: number): number => {
-      const lastDash = chunk.lastIndexOf("-");
-      if (lastDash !== -1) {
-        return lastDash + 1 + startIndex;
+    // Reformats text to max line lenght characters per line, breaking at last special char if possible.
+    const findBreakPoint = (chunk: string, startIndex: number) => {
+      const specialChars = "-+=?&#";
+      let lastSpecialCharIndex = -1;
+      for (let i = 0; i < specialChars.length; i++) {
+        const currentCharIndex = chunk.lastIndexOf(specialChars[i]);
+        if (currentCharIndex > lastSpecialCharIndex) {
+          lastSpecialCharIndex = currentCharIndex;
+        }
       }
-      return Math.min(startIndex + maxLineLenght, text.length);
+      if (lastSpecialCharIndex !== -1) {
+        return lastSpecialCharIndex + 1 + startIndex;
+      }
+      return Math.min(startIndex + maxCharsInSingleLine, text.length);
     };
 
     let result = "";
     let startIndex = 0;
     while (startIndex < text.length) {
-      if (startIndex + maxLineLenght > text.length) {
+      if (startIndex + maxCharsInSingleLine > text.length) {
         result += text.substring(startIndex);
         break;
       }
-      let chunk = text.substring(startIndex, startIndex + maxLineLenght);
+      let chunk = text.substring(startIndex, startIndex + maxCharsInSingleLine);
       let nextBreakPoint = findBreakPoint(chunk, startIndex);
       result += text.substring(startIndex, nextBreakPoint) + "\n";
       startIndex = nextBreakPoint;
@@ -65,7 +89,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   return (
     <Select.Root onValueChange={handleValueChange} value={value} disabled={disabled}>
       <Select.Trigger className="url-select-trigger" style={{ width: urlWidth }}>
-        <Select.Value placeholder="/" aria-label={value}></Select.Value>
+        <Select.Value placeholder="/" aria-label={value} />
       </Select.Trigger>
       <Select.Portal>
         <Select.Content
@@ -81,20 +105,20 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               {recentItems.map(
                 (item) =>
                   item.name && (
-                    <SelectItem value={`recent#${item.id}`} key={item.id}>
-                      {item.name.length > maxLineLenght ? splitLines(item.name) : item.name}
+                    <SelectItem value={`recent#${item.id}`} key={item.id} urlWidth={urlWidth}>
+                      {item.name.length > maxCharsInSingleLine ? splitLines(item.name) : item.name}
                     </SelectItem>
                   )
               )}
             </Select.Group>
             <Select.Separator className="url-select-separator" />
             <Select.Group>
-              <Select.Label className="url-select-label">All paths:</Select.Label>
+              <Select.Label className="url-select-label">All visited paths:</Select.Label>
               {items.map(
                 (item) =>
                   item.name && (
-                    <SelectItem value={item.id} key={item.id}>
-                      {item.name.length > maxLineLenght ? splitLines(item.name) : item.name}
+                    <SelectItem value={item.id} key={item.id} urlWidth={urlWidth}>
+                      {item.name.length > maxCharsInSingleLine ? splitLines(item.name) : item.name}
                     </SelectItem>
                   )
               )}
