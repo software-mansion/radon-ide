@@ -33,8 +33,6 @@ function PreviewView() {
     [project]
   );
   const [logCounter, setLogCounter] = useState(0);
-  const [resetKey, setResetKey] = useState(0);
-
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
@@ -63,7 +61,6 @@ function PreviewView() {
   useEffect(() => {
     if (isStarting) {
       setLogCounter(0);
-      setResetKey((prevKey) => prevKey + 1);
     }
   }, [setLogCounter, isStarting]);
 
@@ -104,7 +101,7 @@ function PreviewView() {
   return (
     <div className="panel-view">
       <div className="button-group-top">
-        <UrlBar key={resetKey} project={project} disabled={devicesNotFound} />
+        <UrlBar project={project} disabled={devicesNotFound} />
 
         <div className="spacer" />
 

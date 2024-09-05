@@ -43,7 +43,7 @@ function UrlBar({ project, disabled }: UrlBarProps) {
 
   useEffect(() => {
     function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
-      if (navigationData.id === "{}") {
+      if (navigationData.displayName === "") {
         return;
       }
 
@@ -76,6 +76,8 @@ function UrlBar({ project, disabled }: UrlBarProps) {
     const handleProjectReset = (e: ProjectState) => {
       if (e.status === "starting") {
         setUrlList([]);
+        setRecentUrlList([]);
+        setUrlHistory([]);
       }
     };
     project.addListener("projectStateChanged", handleProjectReset);
