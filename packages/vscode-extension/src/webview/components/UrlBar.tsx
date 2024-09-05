@@ -42,7 +42,11 @@ function UrlBar({ project, disabled }: UrlBarProps) {
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
 
   useEffect(() => {
-    function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
+    function handleNavigationChanged(navigationData: {
+      displayName: string;
+      id: string;
+      params: string;
+    }) {
       if (navigationData.displayName === "") {
         return;
       }
