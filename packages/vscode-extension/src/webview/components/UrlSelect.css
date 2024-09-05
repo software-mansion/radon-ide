@@ -5,7 +5,7 @@
 
 .url-select-trigger {
   box-sizing: border-box;
-  display: inline-flex;
+  display: inline;
   align-items: center;
   padding: 0 10px;
   font-size: 13px;
@@ -19,6 +19,7 @@
   color: var(--swm-url-select);
   background-color: var(--swm-url-select-background);
   user-select: none;
+  min-width: var(--url-select-min-width);
 }
 .url-select-trigger:hover {
   background-color: var(--swm-url-select-hover-background);
@@ -89,9 +90,16 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  max-width: calc(var(--radix-select-content-available-width) - 15px);
 }
 .url-select-item:hover .url-select-item-text {
   white-space: normal;
   padding-top: 6px;
   padding-bottom: 6px;
+}
+
+@media (width <= 400px) {
+  .url-select-trigger {
+    min-width: 0;
+  }
 }
