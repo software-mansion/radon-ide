@@ -94,7 +94,7 @@ export interface ProjectEventMap {
   log: { type: string };
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
-  navigationChanged: { displayName: string; id: string; params: string };
+  navigationChanged: { displayName: string; id: string };
   needsNativeRebuild: void;
 }
 

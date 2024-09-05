@@ -16,7 +16,7 @@ import { Platform } from "../utilities/platform";
 type StartOptions = { cleanBuild: boolean };
 
 export type AppEvent = {
-  navigationChanged: { displayName: string; id: string; params: string };
+  navigationChanged: { displayName: string; id: string };
   fastRefreshStarted: undefined;
   fastRefreshComplete: undefined;
 };

@@ -88,7 +88,6 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
       navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
       devtoolsAgent?._bridge.send("RNIDE_navigationChanged", {
         displayName: navigationDescriptor.name,
-        params: navigationDescriptor.params,
         id: navigationDescriptor.id,
       });
     },
@@ -108,7 +107,7 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
       });
       const preview = global.__RNIDE_previews.get(previewKey);
       const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
-      handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name, params: "{}" });
+      handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name });
     },
     [rootTag, handleNavigationChange]
   );
