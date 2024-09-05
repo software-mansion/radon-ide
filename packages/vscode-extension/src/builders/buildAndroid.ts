@@ -13,6 +13,7 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_PACKAGE_NAME, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
+import { runExternalBuild } from "./customBuild";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
@@ -78,20 +79,12 @@ export async function buildAndroid(
 ): Promise<AndroidBuildResult> {
   const { buildScript, env, android } = getLaunchConfiguration();
 
-  if (buildScript) {
-    const buildProcess = cancelToken.adapt(
-      exec(buildScript.name, ["android", ...(buildScript.args ?? [])])
+  if (buildScript?.android) {
+    const apkPath = await runExternalBuild(
+      cancelToken,
+      DevicePlatform.Android,
+      buildScript.android
     );
-    let apkPath: string | undefined;
-    lineReader(buildProcess).onLineRead((line) => {
-      apkPath = line.trim();
-    });
-
-    await buildProcess;
-
-    if (!apkPath || fs.existsSync(apkPath)) {
-      throw new Error("Build script didn't output any app path");
-    }
 
     return {
       apkPath,
@@ -150,7 +143,7 @@ export async function buildAndroid(
   });
 
   await buildProcess;
-  Logger.debug("Android build sucessful");
+  Logger.debug("Android build successful");
   const apkInfo = await getAndroidBuildPaths(appRootFolder, cancelToken, productFlavor, buildType);
   return { ...apkInfo, platform: DevicePlatform.Android };
 }

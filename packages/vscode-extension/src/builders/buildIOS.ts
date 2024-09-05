@@ -1,6 +1,8 @@
 import path from "path";
 import fs from "fs";
 import { OutputChannel } from "vscode";
+import path from "path";
+
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
@@ -15,6 +17,7 @@ import {
 import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
+import { runExternalBuild } from "./customBuild";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
@@ -86,22 +89,14 @@ export async function buildIos(
 ): Promise<IOSBuildResult> {
   const { buildScript, ios: buildOptions } = getLaunchConfiguration();
 
-  if (buildScript) {
-    const buildProcess = cancelToken.adapt(
-      exec(buildScript.name, ["ios", ...(buildScript.args ?? [])])
-    );
-    let appPath: string | undefined;
-    lineReader(buildProcess).onLineRead((line) => {
-      appPath = line.trim();
-    });
+  if (buildScript?.ios) {
+    const appPath = await runExternalBuild(cancelToken, DevicePlatform.IOS, buildScript.ios);
 
-    await buildProcess;
-
-    if (!appPath || fs.existsSync(appPath)) {
-      throw new Error("Build script didn't output any existing app path");
-    }
-
-    return { appPath, bundleID: await getBundleID(appPath), platform: DevicePlatform.IOS };
+    return {
+      appPath,
+      bundleID: await getBundleID(appPath),
+      platform: DevicePlatform.IOS,
+    };
   }
 
   if (await isExpoGoProject()) {

@@ -2,8 +2,8 @@ export type LaunchConfigurationOptions = {
   appRoot?: string;
   metroConfigPath?: string;
   buildScript?: {
-    name: string;
-    args?: string[];
+    ios?: string;
+    android?: string;
   };
   env?: Record<string, string>;
   ios?: {
