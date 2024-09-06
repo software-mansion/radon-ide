@@ -239,7 +239,6 @@ export class Project
   }
 
   public async goHome(homeUrl: string) {
-    console.log("FRYTKI ", homeUrl);
     if (this.expoRouterInstalled) {
       await this.openNavigation(homeUrl);
     }
