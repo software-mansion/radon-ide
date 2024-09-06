@@ -238,8 +238,10 @@ export class Project
     }
   }
 
-  public async goHome() {
-    await this.openNavigation("/{}");
+  public async goHome(homeUrl: string) {
+    if (this.expoRouterInstalled) {
+      await this.openNavigation(homeUrl);
+    }
   }
 
   //#region Session lifecycle

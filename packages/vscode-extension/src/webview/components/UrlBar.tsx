@@ -37,9 +37,11 @@ function ReloadButton({ project, disabled }: ReloadButtonProps) {
 function UrlBar({ project, disabled }: UrlBarProps) {
   const MAX_URL_HISTORY_SIZE = 20;
   const MAX_RECENT_URL_SIZE = 5;
+
   const [urlList, setUrlList] = useState<UrlItem[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
+  const [homeUrl, setHomeUrl] = useState<string>("");
 
   useEffect(() => {
     function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
@@ -53,8 +55,8 @@ function UrlBar({ project, disabled }: UrlBarProps) {
       };
       const isNotInHistory = urlHistory.length === 0 || urlHistory[0] !== newRecord.id;
 
-      function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {
-        return [newUrl, ...urls.filter((record) => record.id !== newUrl.id)];
+      if (homeUrl === "") {
+        setHomeUrl(newRecord.id);
       }
 
       setUrlList(moveAsMostRecent(urlList, newRecord));
@@ -111,7 +113,7 @@ function UrlBar({ project, disabled }: UrlBarProps) {
       <ReloadButton project={project} disabled={disabled ?? false} />
       <IconButton
         onClick={() => {
-          project.goHome();
+          project.goHome(homeUrl);
         }}
         tooltip={{
           label: "Go to main screen",
