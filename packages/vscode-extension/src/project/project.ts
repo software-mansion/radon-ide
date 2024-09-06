@@ -239,6 +239,7 @@ export class Project
   }
 
   public async goHome(homeUrl: string) {
+    console.log("FRYTKI ", homeUrl);
     if (this.expoRouterInstalled) {
       await this.openNavigation(homeUrl);
     }
@@ -320,8 +321,9 @@ export class Project
       [installNodeModules]
     );
 
-    Logger.debug("Checking storybook");
+    Logger.debug("Checking expo router");
     this.expoRouterInstalled = await this.dependencyManager.checkExpoRouterInstalled();
+    Logger.debug("Checking storybook");
     this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
   }
   //#endregion

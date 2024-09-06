@@ -41,53 +41,42 @@ function UrlBar({ project, disabled }: UrlBarProps) {
   const [urlList, setUrlList] = useState<UrlItem[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
-  const [homeUrl, setHomeUrl] = useState<string>("");
 
   useEffect(() => {
+    function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {
+      return [newUrl, ...urls.filter((record) => record.id !== newUrl.id)];
+    }
+
     function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
       if (navigationData.displayName === "") {
         return;
       }
 
-      const newRecord = {
+      const newRecord: UrlItem = {
         name: navigationData.displayName,
         id: navigationData.id,
       };
       const isNotInHistory = urlHistory.length === 0 || urlHistory[0] !== newRecord.id;
 
-      if (homeUrl === "") {
-        setHomeUrl(newRecord.id);
-      }
-
-      setUrlList(moveAsMostRecent(urlList, newRecord));
-      setUrlList((urls) => [newRecord, ...urls.filter((record) => record.id !== newRecord.id)]);
-      setRecentUrlList(() => {
-        const updatedRecentUrls = moveAsMostRecent(recentUrlList, newRecord);
+      setUrlList((currentUrlList) => moveAsMostRecent(currentUrlList, newRecord));
+      setRecentUrlList((currentRecentUrlList) => {
+        const updatedRecentUrls = moveAsMostRecent(currentRecentUrlList, newRecord);
         return updatedRecentUrls.slice(0, MAX_RECENT_URL_SIZE);
       });
 
       if (isNotInHistory) {
-        setUrlHistory((prevUrlHistory) => {
-          const updatedUrlHistory = [newRecord.id, ...prevUrlHistory];
+        setUrlHistory((currentUrlHistoryList) => {
+          const updatedUrlHistory = [newRecord.id, ...currentUrlHistoryList];
           return updatedUrlHistory.slice(0, MAX_URL_HISTORY_SIZE);
         });
       }
     }
 
     project.addListener("navigationChanged", handleNavigationChanged);
-    const handleProjectReset = (e: ProjectState) => {
-      if (e.status === "starting") {
-        setUrlList([]);
-        setRecentUrlList([]);
-        setUrlHistory([]);
-      }
-    };
-    project.addListener("projectStateChanged", handleProjectReset);
     return () => {
       project.removeListener("navigationChanged", handleNavigationChanged);
-      project.removeListener("projectStateChanged", handleProjectReset);
     };
-  }, [urlHistory]);
+  }, []);
 
   const sortedUrlList = useMemo(() => {
     return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
@@ -113,13 +102,13 @@ function UrlBar({ project, disabled }: UrlBarProps) {
       <ReloadButton project={project} disabled={disabled ?? false} />
       <IconButton
         onClick={() => {
-          project.goHome(homeUrl);
+          project.goHome("/{}");
         }}
         tooltip={{
           label: "Go to main screen",
           side: "bottom",
         }}
-        disabled={disabled || urlList.length < 1}>
+        disabled={disabled || urlList.length < 2}>
         <span className="codicon codicon-home" />
       </IconButton>
       <UrlSelect
@@ -129,7 +118,7 @@ function UrlBar({ project, disabled }: UrlBarProps) {
         recentItems={recentUrlList}
         items={sortedUrlList}
         value={urlList[0]?.id}
-        disabled={disabled || urlList.length < 1}
+        disabled={disabled || urlList.length < 2}
       />
     </>
   );
