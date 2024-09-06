@@ -52,7 +52,7 @@ export async function findXcodeProject(appRootFolder: string) {
     return parentDirectory1 === parentDirectory2;
   }
 
-  const iosSourceDir = getIosSourceDir(appRootFolder);
+  const iosSourceDir = appRootFolder; //getIosSourceDir(appRootFolder);
 
   const xcworkspaceFiles = await workspace.findFiles(
     new RelativePattern(iosSourceDir, "**/*.xcworkspace/*"),

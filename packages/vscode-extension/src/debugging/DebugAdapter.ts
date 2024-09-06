@@ -87,12 +87,13 @@ export class DebugAdapter extends DebugSession {
     this.connection = new WebSocket(configuration.websocketAddress);
 
     this.connection.on("open", () => {
+      // this.sendCDPMessage("FuseboxClient.setClientMetadata", {});
       this.sendCDPMessage("Runtime.enable", {});
       this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
       this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
-      this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 });
-      this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] });
-      this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {});
+      // this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 });
+      // this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] });
+      // this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {});
       this.sendCDPMessage("Runtime.evaluate", {
         expression: "__RNIDE_onDebuggerConnected()",
       });
@@ -104,11 +105,13 @@ export class DebugAdapter extends DebugSession {
 
     this.connection.on("message", async (data) => {
       const message = JSON.parse(data.toString());
-      if (message.result) {
-        const resolve = this.cdpMessagePromises.get(message.id);
+      if (message.result || message.error) {
+        const { resolve, reject } = this.cdpMessagePromises.get(message.id);
         this.cdpMessagePromises.delete(message.id);
-        if (resolve) {
+        if (message.result && resolve) {
           resolve(message.result);
+        } else if (message.error && reject) {
+          reject(message.error);
         }
         return;
       }
@@ -265,6 +268,10 @@ export class DebugAdapter extends DebugSession {
         }
       }
     });
+    sourceURL = sourceURL.replace(
+      "/[metro-project]",
+      "/Users/mdk/Projects/playground/ReactNative76"
+    );
     return {
       sourceURL,
       lineNumber1Based: sourceLine1Based,
@@ -368,7 +375,10 @@ export class DebugAdapter extends DebugSession {
   }
 
   private cdpMessageId = 0;
-  private cdpMessagePromises: Map<number, (result: any) => void> = new Map();
+  private cdpMessagePromises: Map<
+    number,
+    { resolve: (result: any) => void; reject: (error: any) => void }
+  > = new Map();
 
   public async sendCDPMessage(method: string, params: object) {
     const message = {
@@ -377,8 +387,8 @@ export class DebugAdapter extends DebugSession {
       params: params,
     };
     this.connection.send(JSON.stringify(message));
-    return new Promise<any>((resolve) => {
-      this.cdpMessagePromises.set(message.id, resolve);
+    return new Promise<any>((resolve, reject) => {
+      this.cdpMessagePromises.set(message.id, { resolve, reject });
     });
   }
 
@@ -404,6 +414,7 @@ export class DebugAdapter extends DebugSession {
   }
 
   private toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
+    file = file.replace("/Users/mdk/Projects/playground/ReactNative76", "/[metro-project]");
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
     this.sourceMaps.forEach(([sourceURL, scriptId, consumer]) => {

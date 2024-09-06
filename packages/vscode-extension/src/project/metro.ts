@@ -240,17 +240,17 @@ export class Metro implements Disposable {
       // pageId can sometimes be negative so we can't just use .split('-') here
       const matches = page.id.match(/([^-]+)-(-?\d+)/);
 
-      if (!matches) continue;
-      const pageId = parseInt(matches[2]);
-      if (pageId !== -1) continue;
-      //If deviceId is a number we want to pick the highest one, with expo it's never a number and we pick the latest record
-      if (Number.isInteger(matches[1])) {
-        const deviceId = parseInt(matches[1]);
-        if (deviceId < recentDeviceId) {
-          continue;
-        }
-        recentDeviceId = deviceId;
-      }
+      // if (!matches) continue;
+      // const pageId = parseInt(matches[2]);
+      // if (pageId !== -1) continue;
+      // //If deviceId is a number we want to pick the highest one, with expo it's never a number and we pick the latest record
+      // if (Number.isInteger(matches[1])) {
+      //   const deviceId = parseInt(matches[1]);
+      //   if (deviceId < recentDeviceId) {
+      //     continue;
+      //   }
+      //   recentDeviceId = deviceId;
+      // }
       // Port and host in webSocketDebuggerUrl are set manually to match current metro address,
       // because we always know what the correct one is and some versions of RN are sending out wrong port (0 or 8081)
       const websocketDebuggerUrl = new URL(page.webSocketDebuggerUrl);

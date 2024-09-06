@@ -127,6 +127,7 @@ export async function buildIos(
     const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
     outputChannel.clear();
     lineReader(process, true).onLineRead((line) => {
+      console.log("LINE", line);
       outputChannel.appendLine(line);
       buildIOSProgressProcessor.processLine(line);
       // Xcode can sometimes escape `=` with a backslash or put the value in quotes
