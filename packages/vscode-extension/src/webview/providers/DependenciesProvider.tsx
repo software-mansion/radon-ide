@@ -40,6 +40,7 @@ type Dependencies = {
   ReactNative?: DependencyState;
   Expo?: DependencyState;
   Pods?: DependencyState;
+  ExpoRouter?: DependencyState;
   Storybook?: DependencyState;
 };
 
@@ -52,6 +53,7 @@ const defaultDependencies: Dependencies = {
   ReactNative: undefined,
   Expo: undefined,
   Pods: undefined,
+  ExpoRouter: undefined,
   Storybook: undefined,
 };
 
@@ -104,6 +106,7 @@ interface DependenciesContextProps {
   androidEmulatorError: string | undefined;
   iosSimulatorError: string | undefined;
   runDiagnostics: () => void;
+  isExpoRouterInstalled: boolean;
   isStorybookInstalled: boolean;
 }
 
@@ -116,6 +119,7 @@ const DependenciesContext = createContext<DependenciesContextProps>({
   androidEmulatorError: undefined,
   iosSimulatorError: undefined,
   runDiagnostics,
+  isExpoRouterInstalled: false,
   isStorybookInstalled: false,
 });
 
@@ -124,6 +128,7 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
 
   // `isReady` is true when all dependencies were checked
   const isReady = !Object.values<DependencyState | undefined>(dependencies).includes(undefined);
+  const isExpoRouterInstalled = false;
   const isStorybookInstalled = false;
 
   const isCommonError = hasError(dependencies, "common");
@@ -202,6 +207,9 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
         case "installingPods":
           updateDependency("Pods", { error: undefined, installed: InstallationStatus.InProgress });
           break;
+        case "isExpoRouterInstalled":
+          updateDependency("ExpoRouter", data, { isOptional: true });
+          break;
         case "isStorybookInstalled":
           updateDependency("Storybook", data, { isOptional: true });
           break;
@@ -225,6 +233,7 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
         androidEmulatorError,
         iosSimulatorError,
         runDiagnostics: rerunDiagnostics,
+        isExpoRouterInstalled,
         isStorybookInstalled,
       }}>
       {children}

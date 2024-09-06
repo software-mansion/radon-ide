@@ -21,6 +21,7 @@ import { Platform } from "../utilities/platform";
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
 const MIN_STORYBOOK_VERSION_SUPPORTED = "5.2.0";
+const MIN_EXPO_ROUTER_VERSION_SUPPORTED = "0.0.0";
 
 export class DependencyManager implements Disposable {
   private disposables: Disposable[] = [];
@@ -66,6 +67,10 @@ export class DependencyManager implements Disposable {
           case "checkNodeModulesInstalled":
             Logger.debug("Received checkNodeModulesInstalled command.");
             this.checkNodeModulesInstalled();
+            return;
+          case "checkExpoRouterInstalled":
+            Logger.debug("Received checkExpoRouterInstalled command.");
+            this.checkExpoRouterInstalled();
             return;
           case "checkStorybookInstalled":
             Logger.debug("Received checkStorybookInstalled command.");
@@ -312,6 +317,26 @@ export class DependencyManager implements Disposable {
       },
     });
     Logger.debug("Project pods installed:", installed);
+    return installed;
+  }
+
+  public async checkExpoRouterInstalled() {
+    const status = checkMinDependencyVersionInstalled(
+      "expo-router",
+      MIN_EXPO_ROUTER_VERSION_SUPPORTED
+    );
+
+    const installed = status === "installed";
+
+    this.webview.postMessage({
+      command: "isExpoRouterInstalled",
+      data: {
+        installed,
+        info: "Whether supported version of Expo Router is installed.",
+        error: undefined,
+      },
+    });
+    Logger.debug(`Minimum Expo version installed:`, installed);
     return installed;
   }
 

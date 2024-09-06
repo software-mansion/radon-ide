@@ -43,6 +43,7 @@ export class Project
 
   private detectedFingerprintChange: boolean;
 
+  private expoRouterInstalled: boolean;
   private storybookInstalled: boolean;
 
   private fileWatcher: Disposable;
@@ -90,6 +91,7 @@ export class Project
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.detectedFingerprintChange = false;
+    this.expoRouterInstalled = false;
     this.storybookInstalled = false;
 
     this.fileWatcher = watchProjectFiles(() => {
@@ -317,6 +319,7 @@ export class Project
     );
 
     Logger.debug("Checking storybook");
+    this.expoRouterInstalled = await this.dependencyManager.checkExpoRouterInstalled();
     this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
   }
   //#endregion

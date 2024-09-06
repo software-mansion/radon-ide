@@ -47,6 +47,7 @@ function DiagnosticView() {
       <div className="diagnostic-section-margin" />
 
       <Label>Optional</Label>
+      <DiagnosticItem label="Expo Router" item={dependencies.ExpoRouter} />
       <DiagnosticItem label="Storybook" item={dependencies.Storybook} />
       <div className="diagnostic-section-margin" />
 
