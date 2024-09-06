@@ -1,20 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
-import IconButton from "./shared/IconButton";
-import { ProjectInterface, ProjectState } from "../../common/Project";
+import { useProject } from "../providers/ProjectProvider";
 import UrlSelect, { UrlItem } from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
+import IconButton from "./shared/IconButton";
 
-interface UrlBarProps {
-  project: ProjectInterface;
-  disabled?: boolean;
-}
-
-interface ReloadButtonProps {
-  project: ProjectInterface;
-  disabled: boolean;
-}
-
-function ReloadButton({ project, disabled }: ReloadButtonProps) {
+function ReloadButton({ disabled }: { disabled: boolean }) {
+  const { project } = useProject();
   return (
     <IconButtonWithOptions
       onClick={() => project.restart(false)}
@@ -34,7 +25,9 @@ function ReloadButton({ project, disabled }: ReloadButtonProps) {
   );
 }
 
-function UrlBar({ project, disabled }: UrlBarProps) {
+function UrlBar({ disabled }: { disabled?: boolean }) {
+  const { project } = useProject();
+
   const MAX_URL_HISTORY_SIZE = 20;
   const MAX_RECENT_URL_SIZE = 5;
 
@@ -99,7 +92,7 @@ function UrlBar({ project, disabled }: UrlBarProps) {
         }}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
-      <ReloadButton project={project} disabled={disabled ?? false} />
+      <ReloadButton disabled={disabled ?? false} />
       <IconButton
         onClick={() => {
           project.goHome("/{}");

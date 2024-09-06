@@ -103,7 +103,7 @@ function PreviewView() {
   return (
     <div className="panel-view">
       <div className="button-group-top">
-        <UrlBar key={resetKey} project={project} disabled={devicesNotFound} />
+        <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
         <Button
           counter={logCounter}
