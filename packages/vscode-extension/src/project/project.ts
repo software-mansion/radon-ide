@@ -241,6 +241,8 @@ export class Project
   public async goHome(homeUrl: string) {
     if (this.expoRouterInstalled) {
       await this.openNavigation(homeUrl);
+    } else {
+      await this.reloadMetro();
     }
   }
 
