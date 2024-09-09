@@ -69,7 +69,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
     return () => {
       project.removeListener("navigationChanged", handleNavigationChanged);
     };
-  }, []);
+  }, [recentUrlList, urlHistory]);
 
   const sortedUrlList = useMemo(() => {
     return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
