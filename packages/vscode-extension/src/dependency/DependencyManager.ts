@@ -467,11 +467,7 @@ export function isExpoRouterProject() {
   try {
     const appRoot = getAppRootFolder();
     const packageJson = require(path.join(appRoot, "package.json"));
-    const hasExpoRouterDependency = Object.values<string>(packageJson.dependencies).some(
-      (dependencies: string) => {
-        return dependencies.includes("expo-router");
-      }
-    );
+    const hasExpoRouter = Object.values<string>(packageJson.dependencies).some((dependency) => dependency === "expo-router");
     return hasExpoRouterDependency;
   } catch (e) {
     return false;
