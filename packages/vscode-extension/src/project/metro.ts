@@ -54,8 +54,13 @@ export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
   private startPromise: Promise<void> | undefined;
+  private usesNewDebugger = false;
 
   constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
+
+  public get isUsingNewDebugger() {
+    return this.usesNewDebugger;
+  }
 
   public get port() {
     return this._port;
@@ -279,7 +284,10 @@ export class Metro implements Disposable {
     // the old debugger connection (we can tell by the page naming scheme whether
     // it's the old or new debugger)
     let websocketAddress = this.lookupWsAddressForNewDebugger(listJson);
-    if (!websocketAddress) {
+    if (websocketAddress) {
+      this.usesNewDebugger = true;
+    } else {
+      this.usesNewDebugger = false;
       websocketAddress = this.lookupWsAddressForOldDebugger(listJson);
     }
 

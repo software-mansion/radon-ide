@@ -115,6 +115,7 @@ export class DebugAdapter extends DebugSession {
         if (message.result && messagePromise?.resolve) {
           messagePromise.resolve(message.result);
         } else if (message.error && messagePromise?.reject) {
+          Logger.warn("CDP message error received", message.error);
           messagePromise.reject(message.error);
         }
         return;
