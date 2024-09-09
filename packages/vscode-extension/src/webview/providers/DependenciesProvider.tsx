@@ -19,6 +19,7 @@ export interface DependencyState {
   installed: InstallationStatus;
   info: string;
   error?: string;
+  isOptional?: boolean;
 }
 
 interface DependencyMessageData {
@@ -27,6 +28,7 @@ interface DependencyMessageData {
     installed: boolean;
     info: string;
     error?: string;
+    isOptional?: boolean;
   };
 }
 
@@ -88,9 +90,17 @@ function hasError(dependencies: Dependencies, domain: "ios" | "android" | "commo
 
 function adaptDependencyData(data: DependencyMessageData["data"]): DependencyState {
   if (data.installed) {
-    return { ...data, installed: InstallationStatus.Installed };
+    return {
+      ...data,
+      installed: InstallationStatus.Installed,
+      isOptional: data.isOptional ?? false,
+    };
   }
-  return { ...data, installed: InstallationStatus.NotInstalled };
+  return {
+    ...data,
+    installed: InstallationStatus.NotInstalled,
+    isOptional: data.isOptional ?? false,
+  };
 }
 
 function entries<K extends string, T>(object: Partial<Record<K, T>>) {
@@ -156,8 +166,8 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   }, []);
 
   const updateDependency = useCallback(
-    (name: keyof Dependencies, newState: Partial<DependencyState>, { isOptional = false } = {}) => {
-      if (isOptional && newState.installed === InstallationStatus.NotInstalled) {
+    (name: keyof Dependencies, newState: Partial<DependencyState>) => {
+      if (newState.isOptional && newState.installed === InstallationStatus.NotInstalled) {
         newState.installed = InstallationStatus.Optional;
       }
 
@@ -208,10 +218,10 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
           updateDependency("Pods", { error: undefined, installed: InstallationStatus.InProgress });
           break;
         case "isExpoRouterInstalled":
-          updateDependency("ExpoRouter", data, { isOptional: true });
+          updateDependency("ExpoRouter", data);
           break;
         case "isStorybookInstalled":
-          updateDependency("Storybook", data, { isOptional: true });
+          updateDependency("Storybook", data);
           break;
       }
     };

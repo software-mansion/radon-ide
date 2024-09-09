@@ -334,6 +334,7 @@ export class DependencyManager implements Disposable {
         installed,
         info: "Whether supported version of Expo Router is installed.",
         error: undefined,
+        isOptional: !isExpoRouterProject(),
       },
     });
     Logger.debug(`Minimum Expo version installed:`, installed);
@@ -353,6 +354,7 @@ export class DependencyManager implements Disposable {
         installed,
         info: "Whether Storybook is installed.",
         error: undefined,
+        isOptional: true,
       },
     });
     Logger.debug("Storybook installed:", installed);
@@ -459,4 +461,19 @@ export function checkMinDependencyVersionInstalled(dependency: string, minVersio
 
 export async function checkAndroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
+}
+
+export function isExpoRouterProject() {
+  try {
+    const appRoot = getAppRootFolder();
+    const packageJson = require(path.join(appRoot, "package.json"));
+    const hasExpoRouterDependency = Object.values<string>(packageJson.dependencies).some(
+      (dependencies: string) => {
+        return dependencies.includes("expo-router");
+      }
+    );
+    return hasExpoRouterDependency;
+  } catch (e) {
+    return false;
+  }
 }
