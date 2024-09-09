@@ -466,7 +466,7 @@ export async function checkAndroidEmulatorExists() {
 export function isExpoRouterProject() {
   try {
     const appRoot = getAppRootFolder();
-    const packageJson = require(path.join(appRoot, "package.json"));
+    const packageJson = requireNoCache(path.join(appRoot, "package.json"));
     const hasExpoRouter = Object.values<string>(packageJson.dependencies).some(
       (dependency) => dependency === "expo-router"
     );
