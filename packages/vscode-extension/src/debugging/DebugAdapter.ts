@@ -71,6 +71,8 @@ class MyBreakpoint extends Breakpoint {
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
   private connection: WebSocket;
+  private absoluteProjectPath: string;
+  private projectPathAlias?: string;
   private configuration: DebugConfiguration;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, string, SourceMapConsumer]> = [];
@@ -84,16 +86,18 @@ export class DebugAdapter extends DebugSession {
   constructor(configuration: DebugConfiguration) {
     super();
     this.configuration = configuration;
+    this.absoluteProjectPath = configuration.absoluteProjectPath;
+    this.projectPathAlias = configuration.projectPathAlias;
     this.connection = new WebSocket(configuration.websocketAddress);
 
     this.connection.on("open", () => {
-      // this.sendCDPMessage("FuseboxClient.setClientMetadata", {});
+      this.sendCDPMessage("FuseboxClient.setClientMetadata", {});
       this.sendCDPMessage("Runtime.enable", {});
       this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
       this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
-      // this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 });
-      // this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] });
-      // this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {});
+      this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 });
+      this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] });
+      this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {});
       this.sendCDPMessage("Runtime.evaluate", {
         expression: "__RNIDE_onDebuggerConnected()",
       });
@@ -106,12 +110,12 @@ export class DebugAdapter extends DebugSession {
     this.connection.on("message", async (data) => {
       const message = JSON.parse(data.toString());
       if (message.result || message.error) {
-        const { resolve, reject } = this.cdpMessagePromises.get(message.id);
+        const messagePromise = this.cdpMessagePromises.get(message.id);
         this.cdpMessagePromises.delete(message.id);
-        if (message.result && resolve) {
-          resolve(message.result);
-        } else if (message.error && reject) {
-          reject(message.error);
+        if (message.result && messagePromise?.resolve) {
+          messagePromise.resolve(message.result);
+        } else if (message.error && messagePromise?.reject) {
+          messagePromise.reject(message.error);
         }
         return;
       }
@@ -268,10 +272,10 @@ export class DebugAdapter extends DebugSession {
         }
       }
     });
-    sourceURL = sourceURL.replace(
-      "/[metro-project]",
-      "/Users/mdk/Projects/playground/ReactNative76"
-    );
+    if (this.projectPathAlias) {
+      sourceURL = sourceURL.replace(this.projectPathAlias, this.absoluteProjectPath);
+    }
+
     return {
       sourceURL,
       lineNumber1Based: sourceLine1Based,
@@ -414,7 +418,10 @@ export class DebugAdapter extends DebugSession {
   }
 
   private toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
-    file = file.replace("/Users/mdk/Projects/playground/ReactNative76", "/[metro-project]");
+    let genFileName = file;
+    if (this.projectPathAlias) {
+      genFileName = file.replace(this.absoluteProjectPath, this.projectPathAlias);
+    }
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
     this.sourceMaps.forEach(([sourceURL, scriptId, consumer]) => {
@@ -423,7 +430,7 @@ export class DebugAdapter extends DebugSession {
         sources.push(mapping.source);
       });
       const pos = consumer.generatedPositionFor({
-        source: file,
+        source: genFileName,
         line: lineNumber1Based,
         column: columnNumber0Based,
         bias: SourceMapConsumer.LEAST_UPPER_BOUND,
