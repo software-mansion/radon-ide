@@ -228,40 +228,73 @@ export class Metro implements Disposable {
     return websocketAddress;
   }
 
-  private async fetchDebuggerURL() {
-    // query list from http://localhost:${metroPort}/json/list
-    const list = await fetch(`http://localhost:${this._port}/json/list`);
-    const listJson = await list.json();
-    // with metro, pages are identified as "deviceId-pageId", we search for the most
-    // recent device id and want want to use special -1 page identifier (reloadable page)
+  private lookupWsAddressForOldDebugger(listJson: any) {
+    // Pre 0.76 RN metro lists debugger pages that are identified as "deviceId-pageId"
+    // After new device is connected, the deviceId is incremented while pageId could be
+    // either 1 or -1 where "-1" corresponds to connection that supports reloads.
+    // We search for the most recent device id and want to use special -1 page identifier (reloadable page)
     let recentDeviceId = -1;
     let websocketAddress: string | undefined;
     for (const page of listJson) {
       // pageId can sometimes be negative so we can't just use .split('-') here
       const matches = page.id.match(/([^-]+)-(-?\d+)/);
 
-      // if (!matches) continue;
-      // const pageId = parseInt(matches[2]);
-      // if (pageId !== -1) continue;
-      // //If deviceId is a number we want to pick the highest one, with expo it's never a number and we pick the latest record
-      // if (Number.isInteger(matches[1])) {
-      //   const deviceId = parseInt(matches[1]);
-      //   if (deviceId < recentDeviceId) {
-      //     continue;
-      //   }
-      //   recentDeviceId = deviceId;
-      // }
+      if (!matches) continue;
+      const pageId = parseInt(matches[2]);
+      if (pageId !== -1) continue;
+      //If deviceId is a number we want to pick the highest one, with expo it's never a number and we pick the latest record
+      if (Number.isInteger(matches[1])) {
+        const deviceId = parseInt(matches[1]);
+        if (deviceId < recentDeviceId) {
+          continue;
+        }
+        recentDeviceId = deviceId;
+      }
+      websocketAddress = page.webSocketDebuggerUrl;
+    }
+    return websocketAddress;
+  }
+
+  private lookupWsAddressForNewDebugger(listJson: any) {
+    // in the new debugger, ids are generated in the following format: "deviceId-pageId"
+    // but unlike with the old debugger, deviceId is a hex string (UUID most likely)
+    // that is stable between reloads.
+    // Subsequent runtimes that register get incremented pageId (e.g. main runtime will
+    // be 1, reanimated worklet runtime would get 2, etc.)
+    // The most recent runtimes are listed first, so we can pick the first one with title
+    // that that starts with "React Native Bridge" (which is the main runtime)
+    for (const page of listJson) {
+      if (page.reactNative && page.title.startsWith("React Native Bridge")) {
+        return page.webSocketDebuggerUrl;
+      }
+    }
+  }
+
+  private async fetchDebuggerURL() {
+    // query list from http://localhost:${metroPort}/json/list
+    const list = await fetch(`http://localhost:${this._port}/json/list`);
+    const listJson = await list.json();
+
+    // we try using "new debugger" lookup first, and then switch to trying out
+    // the old debugger connection (we can tell by the page naming scheme whether
+    // it's the old or new debugger)
+    let websocketAddress = this.lookupWsAddressForNewDebugger(listJson);
+    if (!websocketAddress) {
+      websocketAddress = this.lookupWsAddressForOldDebugger(listJson);
+    }
+
+    if (websocketAddress) {
       // Port and host in webSocketDebuggerUrl are set manually to match current metro address,
       // because we always know what the correct one is and some versions of RN are sending out wrong port (0 or 8081)
-      const websocketDebuggerUrl = new URL(page.webSocketDebuggerUrl);
+      const websocketDebuggerUrl = new URL(websocketAddress);
       // replace port number with metro port number:
       websocketDebuggerUrl.port = this._port.toString();
       // replace host with localhost:
       websocketDebuggerUrl.host = "localhost";
-      websocketAddress = websocketDebuggerUrl.toString();
+      return websocketDebuggerUrl.toString();
     }
 
-    return websocketAddress;
+    return undefined;
   }
 }
 
