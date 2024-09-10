@@ -2,22 +2,30 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import fetch from "node-fetch";
-import { mkdtemp } from "fs/promises";
+import { mkdtemp, readdir } from "fs/promises";
 import { finished } from "stream/promises";
 
 import { Logger } from "../Logger";
-import { command, lineReader } from "../utilities/subprocess";
+import { command, exec, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { getAppRootFolder } from "../utilities/extensionContext";
 
-type Timestamp = string; // e.g. "2024-09-04T09:44:07.001Z"
+type UnixTimestamp = number;
+
+type EasBuildUrl = {
+  platform: DevicePlatform;
+  binaryUrl: string;
+  completedAt: UnixTimestamp;
+};
+
+type IsoTimestamp = string; // e.g. "2024-09-04T09:44:07.001Z"
 type UUID = string;
 type Version = string; // e.g. "50.0.0"
 
 type EASBuild = {
   id: string;
-  status: string; // "FINISHED" for build ones
+  status: "FINISHED" | "CANCELLED" | string;
   platform: "ANDROID" | "IOS";
   artifacts: {
     buildUrl: string;
@@ -44,10 +52,10 @@ type EASBuild = {
   gitCommitHash: string;
   gitCommitMessage: string;
   priority: string; // e.g. "NORMAL_PLUS"
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  completedAt: Timestamp;
-  expirationDate: Timestamp;
+  createdAt: IsoTimestamp;
+  updatedAt: IsoTimestamp;
+  completedAt: IsoTimestamp;
+  expirationDate: IsoTimestamp;
   isForIosSimulator: false;
 };
 
@@ -58,10 +66,11 @@ export async function runExternalBuild(
 ): Promise<string> {
   const { stdout, lastLine: binaryPath } = await runExternalScript(cancelToken, externalCommand);
 
-  const easBinaryPath = await downloadAppFromEas(stdout, platform);
-  const isEasBuild = easBinaryPath !== undefined;
+  const easAppPath = await downloadAppFromEas(stdout, platform, cancelToken);
+
+  const isEasBuild = easAppPath !== undefined;
   if (isEasBuild) {
-    return easBinaryPath;
+    return easAppPath;
   }
 
   if (binaryPath && !fs.existsSync(binaryPath)) {
@@ -105,14 +114,17 @@ function getScriptName(fullCommand: string) {
   return externalCommandName ? path.basename(externalCommandName) : fullCommand;
 }
 
-async function downloadAppFromEas(processOutput: string, platform: DevicePlatform) {
+async function downloadAppFromEas(
+  processOutput: string,
+  platform: DevicePlatform,
+  cancelToken: CancelToken
+) {
   const artifacts = parseEasBuildOutput(processOutput);
-  if (!artifacts) {
+  if (!artifacts || artifacts.length === 0) {
     return undefined;
   }
 
-  const easPlatformEnum = platform === DevicePlatform.Android ? "ANDROID" : "IOS";
-  const { binaryUrl } = artifacts.find((buildInfo) => buildInfo.platform === easPlatformEnum) ?? {};
+  const { binaryUrl } = getMostRecentBuild(artifacts, platform) ?? {};
   if (!binaryUrl) {
     Logger.warn(`Failed to find binary URL from EAS for platform ${platform}, ignoring`);
     return undefined;
@@ -124,30 +136,45 @@ async function downloadAppFromEas(processOutput: string, platform: DevicePlatfor
     Logger.warn(`Failed to download binary from ${binaryUrl}, ignoring`);
   }
 
+  if (appBinaryPath?.endsWith(".ipa")) {
+    return await extractIpa(appBinaryPath, cancelToken);
+  }
+
   return appBinaryPath;
 }
 
-function parseEasBuildOutput(stdout: string) {
+function parseEasBuildOutput(stdout: string): EasBuildUrl[] | undefined {
   let buildInfo: EASBuild[];
   try {
-    buildInfo = JSON.parse(stdout);
+    // Supports eas build, eas build:list, eas build:view
+    buildInfo = [JSON.parse(stdout)].flat();
     assertEasBuildOutput(buildInfo);
   } catch (_e) {
     // Not an EAS build output, ignore
     return undefined;
   }
-  return buildInfo.map(({ platform, artifacts }) => {
-    return { platform, binaryUrl: artifacts.applicationArchiveUrl };
-  });
+
+  const platformMapping = { ANDROID: DevicePlatform.Android, IOS: DevicePlatform.IOS };
+  return buildInfo
+    .filter(({ status }) => status === "FINISHED")
+    .map(({ platform: easPlatform, artifacts, completedAt }) => {
+      return {
+        platform: platformMapping[easPlatform],
+        binaryUrl: artifacts.applicationArchiveUrl,
+        completedAt: Date.parse(completedAt),
+      };
+    });
 }
 
 function assertEasBuildOutput(buildInfo: any): asserts buildInfo is EASBuild[] {
-  if (!Array.isArray(buildInfo)) {
-    throw new Error("Not an EAS build output");
-  }
+  for (const { platform, artifacts, completedAt, status } of buildInfo) {
+    if (status !== "FINISHED") {
+      continue;
+    }
 
-  for (const { platform, artifacts } of buildInfo) {
-    if (!platform || !artifacts) {
+    const isInvalidPlatform = platform !== "ANDROID" && platform !== "IOS";
+    const hasMissingFields = !artifacts || !completedAt;
+    if (isInvalidPlatform || hasMissingFields) {
       throw new Error("Not an EAS build output");
     }
   }
@@ -182,4 +209,35 @@ async function downloadBinary(url: string, directory: string) {
   } else {
     return undefined;
   }
+}
+
+function getMostRecentBuild(artifacts: EasBuildUrl[], platform: DevicePlatform) {
+  let latestBuild: EasBuildUrl | undefined = undefined;
+  for (const build of artifacts) {
+    if (platform !== build.platform) {
+      continue;
+    }
+    const isLater = !latestBuild || latestBuild.completedAt < build.completedAt;
+
+    if (isLater) {
+      latestBuild = build;
+    }
+  }
+  return latestBuild;
+}
+
+async function extractIpa(ipaPath: string, cancelToken: CancelToken) {
+  const extractDirName = path.basename(ipaPath, path.extname(ipaPath));
+  const extractDir = path.join(path.dirname(ipaPath), extractDirName);
+  try {
+    await cancelToken.adapt(exec("unzip", ["-d", extractDir, ipaPath]));
+  } catch (error) {
+    Logger.error(`Failed to extract archive ${ipaPath} to ${extractDir}`, error);
+    return undefined;
+  }
+
+  const payloadDir = path.join(extractDir, "Payload");
+
+  const appName = (await readdir(payloadDir))[0];
+  return path.join(payloadDir, appName);
 }
