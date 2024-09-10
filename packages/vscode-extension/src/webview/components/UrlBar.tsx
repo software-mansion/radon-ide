@@ -31,6 +31,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const MAX_URL_HISTORY_SIZE = 20;
   const MAX_RECENT_URL_SIZE = 5;
 
+  const [backNavigationPath, setBackNavigationPath] = useState<string>("");
   const [urlList, setUrlList] = useState<UrlItem[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
@@ -41,7 +42,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
     }
 
     function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
-      if (navigationData.displayName === "") {
+      if (backNavigationPath && backNavigationPath !== navigationData.id) {
         return;
       }
 
@@ -63,13 +64,14 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           return updatedUrlHistory.slice(0, MAX_URL_HISTORY_SIZE);
         });
       }
+      setBackNavigationPath("");
     }
 
     project.addListener("navigationChanged", handleNavigationChanged);
     return () => {
       project.removeListener("navigationChanged", handleNavigationChanged);
     };
-  }, [recentUrlList, urlHistory]);
+  }, [recentUrlList, urlHistory, backNavigationPath]);
 
   const sortedUrlList = useMemo(() => {
     return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
@@ -77,6 +79,12 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
 
   return (
     <>
+      <IconButton
+        onClick={() => {
+          console.log("FRYTKI ", urlHistory, urlList);
+        }}>
+        <span className="codicon codicon-arrow-left" />
+      </IconButton>
       <IconButton
         tooltip={{
           label: "Go back",
@@ -86,6 +94,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         onClick={() => {
           setUrlHistory((prevUrlHistory) => {
             const newUrlHistory = prevUrlHistory.slice(1);
+            setBackNavigationPath(newUrlHistory[0]);
             project.openNavigation(newUrlHistory[0]);
             return newUrlHistory;
           });
