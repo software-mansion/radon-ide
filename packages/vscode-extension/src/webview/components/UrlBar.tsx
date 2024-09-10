@@ -80,12 +80,6 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   return (
     <>
       <IconButton
-        onClick={() => {
-          console.log("FRYTKI ", urlHistory, urlList);
-        }}>
-        <span className="codicon codicon-arrow-left" />
-      </IconButton>
-      <IconButton
         tooltip={{
           label: "Go back",
           side: "bottom",
