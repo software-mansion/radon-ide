@@ -514,9 +514,9 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.SetBreakpointsResponse,
     args: DebugProtocol.SetBreakpointsArguments
   ): Promise<void> {
-    const path = args.source.path as string;
+    const sourcePath = args.source.path as string;
 
-    const previousBreakpoints = this.breakpoints.get(path) || [];
+    const previousBreakpoints = this.breakpoints.get(sourcePath) || [];
 
     const breakpoints = (args.breakpoints || []).map((bp) => {
       const previousBp = previousBreakpoints.find(
@@ -539,14 +539,14 @@ export class DebugAdapter extends DebugSession {
       }
     });
 
-    this.breakpoints.set(path, breakpoints);
+    this.breakpoints.set(sourcePath, breakpoints);
 
     const resolvedBreakpoints = await Promise.all<Breakpoint>(
       breakpoints.map(async (bp) => {
         if (bp.verified) {
           return bp;
         } else {
-          const breakpointId = await this.setCDPBreakpoint(path, bp.line, bp.column || 0);
+          const breakpointId = await this.setCDPBreakpoint(sourcePath, bp.line, bp.column || 0);
           if (breakpointId !== null) {
             bp.verified = true;
             bp.setId(breakpointId);
