@@ -502,7 +502,7 @@ export class DebugAdapter extends DebugSession {
         );
         if (newId !== null) {
           bp.setId(newId);
-          bp.verified = true;;
+          bp.verified = true;
         } else {
           bp.verified = false;
         }
