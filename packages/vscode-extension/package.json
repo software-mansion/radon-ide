@@ -276,7 +276,7 @@
     "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview",
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
-    "lint": "eslint src --ext ts && yarn prettier --check src",
+    "lint": "eslint src --ext ts && npm exec prettier --check src",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
     "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test"
