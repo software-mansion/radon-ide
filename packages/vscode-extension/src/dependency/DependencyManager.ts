@@ -464,6 +464,8 @@ export async function checkAndroidEmulatorExists() {
 }
 
 export function isExpoRouterProject() {
+  // we assume that a expo router based project contain
+  // the package "expo-router" in its dependencies or devDependencies
   try {
     const appRoot = getAppRootFolder();
     const packageJson = requireNoCache(path.join(appRoot, "package.json"));
