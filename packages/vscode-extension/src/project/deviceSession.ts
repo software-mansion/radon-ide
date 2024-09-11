@@ -98,10 +98,7 @@ export class DeviceSession implements Disposable {
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
     // bundle instead.
-    const shouldWaitForAppLaunch = Platform.select({
-      macos: getLaunchConfiguration().preview?.waitForAppLaunch !== false,
-      windows: false,
-    });
+    const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.eventDelegate.onStateChange(StartupMessage.Launching);
@@ -158,14 +155,11 @@ export class DeviceSession implements Disposable {
   }
 
   private async startDebugger() {
-    const websocketAddress = await this.metro.getDebuggerURL();
-    if (websocketAddress) {
-      this.debugSession = new DebugSession(websocketAddress, this.debugEventDelegate);
-      const started = await this.debugSession.start();
-      if (started) {
-        // TODO(jgonet): Right now, we ignore start failure
-        Logger.debug("Connected to debugger, moving on...");
-      }
+    this.debugSession = new DebugSession(this.metro, this.debugEventDelegate);
+    const started = await this.debugSession.start();
+    if (started) {
+      // TODO(jgonet): Right now, we ignore start failure
+      Logger.debug("Connected to debugger, moving on...");
     } else {
       Logger.error("Couldn't connect to debugger");
     }
