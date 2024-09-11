@@ -155,14 +155,11 @@ export class DeviceSession implements Disposable {
   }
 
   private async startDebugger() {
-    const websocketAddress = await this.metro.getDebuggerURL();
-    if (websocketAddress) {
-      this.debugSession = new DebugSession(websocketAddress, this.debugEventDelegate);
-      const started = await this.debugSession.start();
-      if (started) {
-        // TODO(jgonet): Right now, we ignore start failure
-        Logger.debug("Connected to debugger, moving on...");
-      }
+    this.debugSession = new DebugSession(this.metro, this.debugEventDelegate);
+    const started = await this.debugSession.start();
+    if (started) {
+      // TODO(jgonet): Right now, we ignore start failure
+      Logger.debug("Connected to debugger, moving on...");
     } else {
       Logger.error("Couldn't connect to debugger");
     }
