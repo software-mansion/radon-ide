@@ -11,7 +11,7 @@ const faqs = [
   },
   {
     topic: "Can I use it on Windows or Linux?",
-    answer: "Right now, React Native IDE only supports macOS.",
+    answer: "You can use the IDE with VSCode and Cursor to develop React Native apps for Android and iOS on macOS. Since version 0.0.18 we added experimental support for Windows that is compatible with VSCode and allows for developing apps for Android. Support for Linux is not yet available.",
   },
   {
     topic: "How much does it cost?",

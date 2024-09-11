@@ -25,6 +25,15 @@ import {
   CDPRemoteObject,
 } from "./cdp";
 import { VariableStore } from "./variableStore";
+import path from "path";
+
+type ResolveType<T = unknown> = (result: T) => void;
+type RejectType = (error: unknown) => void;
+
+interface PromiseHandlers<T = unknown> {
+  resolve: ResolveType<T>;
+  reject: RejectType;
+}
 
 function compareIgnoringHost(url1: string, url2: string) {
   try {
@@ -71,7 +80,8 @@ class MyBreakpoint extends Breakpoint {
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
   private connection: WebSocket;
-  private configuration: DebugConfiguration;
+  private absoluteProjectPath: string;
+  private projectPathAlias?: string;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, string, SourceMapConsumer]> = [];
 
@@ -83,10 +93,12 @@ export class DebugAdapter extends DebugSession {
 
   constructor(configuration: DebugConfiguration) {
     super();
-    this.configuration = configuration;
+    this.absoluteProjectPath = configuration.absoluteProjectPath;
+    this.projectPathAlias = configuration.projectPathAlias;
     this.connection = new WebSocket(configuration.websocketAddress);
 
     this.connection.on("open", () => {
+      this.sendCDPMessage("FuseboxClient.setClientMetadata", {});
       this.sendCDPMessage("Runtime.enable", {});
       this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
       this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
@@ -104,11 +116,14 @@ export class DebugAdapter extends DebugSession {
 
     this.connection.on("message", async (data) => {
       const message = JSON.parse(data.toString());
-      if (message.result) {
-        const resolve = this.cdpMessagePromises.get(message.id);
+      if (message.result || message.error) {
+        const messagePromise = this.cdpMessagePromises.get(message.id);
         this.cdpMessagePromises.delete(message.id);
-        if (resolve) {
-          resolve(message.result);
+        if (message.result && messagePromise?.resolve) {
+          messagePromise.resolve(message.result);
+        } else if (message.error && messagePromise?.reject) {
+          Logger.warn("CDP message error received", message.error);
+          messagePromise.reject(message.error);
         }
         return;
       }
@@ -265,6 +280,11 @@ export class DebugAdapter extends DebugSession {
         }
       }
     });
+    if (this.projectPathAlias) {
+      // URL may contain ".." fragments, so we want to resolve it to a proper absolute file path
+      sourceURL = path.resolve(sourceURL.replace(this.projectPathAlias, this.absoluteProjectPath));
+    }
+
     return {
       sourceURL,
       lineNumber1Based: sourceLine1Based,
@@ -368,7 +388,7 @@ export class DebugAdapter extends DebugSession {
   }
 
   private cdpMessageId = 0;
-  private cdpMessagePromises: Map<number, (result: any) => void> = new Map();
+  private cdpMessagePromises: Map<number, PromiseHandlers> = new Map();
 
   public async sendCDPMessage(method: string, params: object) {
     const message = {
@@ -377,8 +397,8 @@ export class DebugAdapter extends DebugSession {
       params: params,
     };
     this.connection.send(JSON.stringify(message));
-    return new Promise<any>((resolve) => {
-      this.cdpMessagePromises.set(message.id, resolve);
+    return new Promise<any>((resolve, reject) => {
+      this.cdpMessagePromises.set(message.id, { resolve, reject });
     });
   }
 
@@ -404,6 +424,13 @@ export class DebugAdapter extends DebugSession {
   }
 
   private toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
+    let genFileName = file;
+    if (this.projectPathAlias) {
+      // we first convert the file path to be relative to project:
+      const fileRelative = path.relative(this.absoluteProjectPath, file);
+      // no we append the project path alias that represents the root of the project
+      genFileName = path.join(this.projectPathAlias, fileRelative);
+    }
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
     this.sourceMaps.forEach(([sourceURL, scriptId, consumer]) => {
@@ -412,7 +439,7 @@ export class DebugAdapter extends DebugSession {
         sources.push(mapping.source);
       });
       const pos = consumer.generatedPositionFor({
-        source: file,
+        source: genFileName,
         line: lineNumber1Based,
         column: columnNumber0Based,
         bias: SourceMapConsumer.LEAST_UPPER_BOUND,
@@ -462,14 +489,14 @@ export class DebugAdapter extends DebugSession {
       }
     });
 
-    pathsToUpdate.forEach((path) => {
-      const breakpoints = this.breakpoints.get(path) || [];
+    pathsToUpdate.forEach((pathToUpdate) => {
+      const breakpoints = this.breakpoints.get(pathToUpdate) || [];
       breakpoints.forEach(async (bp) => {
         if (bp.verified) {
           this.sendCDPMessage("Debugger.removeBreakpoint", { breakpointId: bp.getId() });
         }
         const newId = await this.setCDPBreakpoint(
-          path,
+          pathToUpdate,
           this.linesStartAt1 ? bp.line : bp.line + 1,
           this.columnsStartAt1 ? (bp.column || 1) - 1 : bp.column || 0
         );
@@ -487,9 +514,9 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.SetBreakpointsResponse,
     args: DebugProtocol.SetBreakpointsArguments
   ): Promise<void> {
-    const path = args.source.path as string;
+    const sourcePath = args.source.path as string;
 
-    const previousBreakpoints = this.breakpoints.get(path) || [];
+    const previousBreakpoints = this.breakpoints.get(sourcePath) || [];
 
     const breakpoints = (args.breakpoints || []).map((bp) => {
       const previousBp = previousBreakpoints.find(
@@ -512,14 +539,14 @@ export class DebugAdapter extends DebugSession {
       }
     });
 
-    this.breakpoints.set(path, breakpoints);
+    this.breakpoints.set(sourcePath, breakpoints);
 
     const resolvedBreakpoints = await Promise.all<Breakpoint>(
       breakpoints.map(async (bp) => {
         if (bp.verified) {
           return bp;
         } else {
-          const breakpointId = await this.setCDPBreakpoint(path, bp.line, bp.column || 0);
+          const breakpointId = await this.setCDPBreakpoint(sourcePath, bp.line, bp.column || 0);
           if (breakpointId !== null) {
             bp.verified = true;
             bp.setId(breakpointId);
