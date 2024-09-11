@@ -467,9 +467,9 @@ export function isExpoRouterProject() {
   try {
     const appRoot = getAppRootFolder();
     const packageJson = requireNoCache(path.join(appRoot, "package.json"));
-    const hasExpoRouter = Object.values<string>(packageJson.dependencies).some(
-      (dependency) => dependency === "expo-router"
-    );
+    const hasExpoRouter =
+      Object.keys(packageJson.dependencies).some((dependency) => dependency === "expo-router") ||
+      Object.keys(packageJson.devDependencies).some((dependency) => dependency === "expo-router");
     return hasExpoRouter;
   } catch (e) {
     return false;
