@@ -489,14 +489,14 @@ export class DebugAdapter extends DebugSession {
       }
     });
 
-    pathsToUpdate.forEach((path) => {
-      const breakpoints = this.breakpoints.get(path) || [];
+    pathsToUpdate.forEach((pathToUpdate) => {
+      const breakpoints = this.breakpoints.get(pathToUpdate) || [];
       breakpoints.forEach(async (bp) => {
         if (bp.verified) {
           this.sendCDPMessage("Debugger.removeBreakpoint", { breakpointId: bp.getId() });
         }
         const newId = await this.setCDPBreakpoint(
-          path,
+          pathToUpdate,
           this.linesStartAt1 ? bp.line : bp.line + 1,
           this.columnsStartAt1 ? (bp.column || 1) - 1 : bp.column || 0
         );
