@@ -25,6 +25,15 @@ import {
   CDPRemoteObject,
 } from "./cdp";
 import { VariableStore } from "./variableStore";
+import path from "path";
+
+type ResolveType<T = unknown> = (result: T) => void;
+type RejectType = (error: unknown) => void;
+
+interface PromiseHandlers<T = unknown> {
+  resolve: ResolveType<T>;
+  reject: RejectType;
+}
 
 function compareIgnoringHost(url1: string, url2: string) {
   try {
@@ -73,7 +82,6 @@ export class DebugAdapter extends DebugSession {
   private connection: WebSocket;
   private absoluteProjectPath: string;
   private projectPathAlias?: string;
-  private configuration: DebugConfiguration;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, string, SourceMapConsumer]> = [];
 
@@ -85,7 +93,6 @@ export class DebugAdapter extends DebugSession {
 
   constructor(configuration: DebugConfiguration) {
     super();
-    this.configuration = configuration;
     this.absoluteProjectPath = configuration.absoluteProjectPath;
     this.projectPathAlias = configuration.projectPathAlias;
     this.connection = new WebSocket(configuration.websocketAddress);
@@ -274,7 +281,8 @@ export class DebugAdapter extends DebugSession {
       }
     });
     if (this.projectPathAlias) {
-      sourceURL = sourceURL.replace(this.projectPathAlias, this.absoluteProjectPath);
+      // URL may contain ".." fragments, so we want to resolve it to a proper absolute file path
+      sourceURL = path.resolve(sourceURL.replace(this.projectPathAlias, this.absoluteProjectPath));
     }
 
     return {
@@ -380,10 +388,7 @@ export class DebugAdapter extends DebugSession {
   }
 
   private cdpMessageId = 0;
-  private cdpMessagePromises: Map<
-    number,
-    { resolve: (result: any) => void; reject: (error: any) => void }
-  > = new Map();
+  private cdpMessagePromises: Map<number, PromiseHandlers> = new Map();
 
   public async sendCDPMessage(method: string, params: object) {
     const message = {
@@ -421,7 +426,10 @@ export class DebugAdapter extends DebugSession {
   private toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
     let genFileName = file;
     if (this.projectPathAlias) {
-      genFileName = file.replace(this.absoluteProjectPath, this.projectPathAlias);
+      // we first convert the file path to be relative to project:
+      const fileRelative = path.relative(this.absoluteProjectPath, file);
+      // no we append the project path alias that represents the root of the project
+      genFileName = path.join(this.projectPathAlias, fileRelative);
     }
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";

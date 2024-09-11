@@ -13,6 +13,15 @@ export interface MetroDelegate {
   onIncrementalBundleError(message: string, errorModulePath: string): void;
 }
 
+interface CDPTargetDescription {
+  id: string;
+  title: string;
+  type: string;
+  url: string;
+  webSocketDebuggerUrl: string;
+  [key: string]: any; // To allow for any additional properties
+}
+
 type MetroEvent =
   | {
       type: "bundle_build_failed"; // related to bundleError status
@@ -54,11 +63,14 @@ export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
   private startPromise: Promise<void> | undefined;
-  private usesNewDebugger = false;
+  private usesNewDebugger?: Boolean;
 
   constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
 
   public get isUsingNewDebugger() {
+    if (this.usesNewDebugger === undefined) {
+      throw new Error("Debugger is not yet initialized. Call getDebuggerURL first.");
+    }
     return this.usesNewDebugger;
   }
 
@@ -233,7 +245,7 @@ export class Metro implements Disposable {
     return websocketAddress;
   }
 
-  private lookupWsAddressForOldDebugger(listJson: any) {
+  private lookupWsAddressForOldDebugger(listJson: CDPTargetDescription[]) {
     // Pre 0.76 RN metro lists debugger pages that are identified as "deviceId-pageId"
     // After new device is connected, the deviceId is incremented while pageId could be
     // either 1 or -1 where "-1" corresponds to connection that supports reloads.
@@ -260,7 +272,7 @@ export class Metro implements Disposable {
     return websocketAddress;
   }
 
-  private lookupWsAddressForNewDebugger(listJson: any) {
+  private lookupWsAddressForNewDebugger(listJson: CDPTargetDescription[]) {
     // in the new debugger, ids are generated in the following format: "deviceId-pageId"
     // but unlike with the old debugger, deviceId is a hex string (UUID most likely)
     // that is stable between reloads.
