@@ -106,7 +106,7 @@ export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   reload(type: ReloadAction): Promise<boolean>;
   restart(forceCleanBuild: boolean): Promise<void>;
-  goHome(): Promise<void>;
+  goHome(homeUrl: string): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 

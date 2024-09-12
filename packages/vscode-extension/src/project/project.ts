@@ -43,6 +43,7 @@ export class Project
 
   private detectedFingerprintChange: boolean;
 
+  private expoRouterInstalled: boolean;
   private storybookInstalled: boolean;
 
   private fileWatcher: Disposable;
@@ -90,6 +91,7 @@ export class Project
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.detectedFingerprintChange = false;
+    this.expoRouterInstalled = false;
     this.storybookInstalled = false;
 
     this.fileWatcher = watchProjectFiles(() => {
@@ -236,8 +238,12 @@ export class Project
     }
   }
 
-  public async goHome() {
-    await this.reloadMetro();
+  public async goHome(homeUrl: string) {
+    if (this.expoRouterInstalled) {
+      await this.openNavigation(homeUrl);
+    } else {
+      await this.reloadMetro();
+    }
   }
 
   //#region Session lifecycle
@@ -316,6 +322,8 @@ export class Project
       [installNodeModules]
     );
 
+    Logger.debug("Checking expo router");
+    this.expoRouterInstalled = await this.dependencyManager.checkExpoRouterInstalled();
     Logger.debug("Checking storybook");
     this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
   }

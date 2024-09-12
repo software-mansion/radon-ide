@@ -46,7 +46,8 @@ function DiagnosticView() {
       {Platform.OS === "macos" && <DiagnosticItem label="Pods" item={dependencies.Pods} />}
       <div className="diagnostic-section-margin" />
 
-      <Label>Optional</Label>
+      <Label>Other</Label>
+      <DiagnosticItem label="Expo Router" item={dependencies.ExpoRouter} />
       <DiagnosticItem label="Storybook" item={dependencies.Storybook} />
       <div className="diagnostic-section-margin" />
 
