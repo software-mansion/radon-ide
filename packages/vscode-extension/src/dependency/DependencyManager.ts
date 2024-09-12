@@ -21,6 +21,7 @@ import { Platform } from "../utilities/platform";
 const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
 const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
 const MIN_STORYBOOK_VERSION_SUPPORTED = "5.2.0";
+const MIN_EXPO_ROUTER_VERSION_SUPPORTED = "0.0.0";
 
 export class DependencyManager implements Disposable {
   private disposables: Disposable[] = [];
@@ -66,6 +67,10 @@ export class DependencyManager implements Disposable {
           case "checkNodeModulesInstalled":
             Logger.debug("Received checkNodeModulesInstalled command.");
             this.checkNodeModulesInstalled();
+            return;
+          case "checkExpoRouterInstalled":
+            Logger.debug("Received checkExpoRouterInstalled command.");
+            this.checkExpoRouterInstalled();
             return;
           case "checkStorybookInstalled":
             Logger.debug("Received checkStorybookInstalled command.");
@@ -315,6 +320,27 @@ export class DependencyManager implements Disposable {
     return installed;
   }
 
+  public async checkExpoRouterInstalled() {
+    const status = checkMinDependencyVersionInstalled(
+      "expo-router",
+      MIN_EXPO_ROUTER_VERSION_SUPPORTED
+    );
+
+    const installed = status === "installed";
+
+    this.webview.postMessage({
+      command: "isExpoRouterInstalled",
+      data: {
+        installed,
+        info: "Whether supported version of Expo Router is installed.",
+        error: undefined,
+        isOptional: !isExpoRouterProject(),
+      },
+    });
+    Logger.debug(`Minimum Expo version installed:`, installed);
+    return installed;
+  }
+
   public async checkStorybookInstalled() {
     const status = checkMinDependencyVersionInstalled(
       "@storybook/react-native",
@@ -328,6 +354,7 @@ export class DependencyManager implements Disposable {
         installed,
         info: "Whether Storybook is installed.",
         error: undefined,
+        isOptional: true,
       },
     });
     Logger.debug("Storybook installed:", installed);
@@ -434,4 +461,19 @@ export function checkMinDependencyVersionInstalled(dependency: string, minVersio
 
 export async function checkAndroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
+}
+
+export function isExpoRouterProject() {
+  // we assume that a expo router based project contain
+  // the package "expo-router" in its dependencies or devDependencies
+  try {
+    const appRoot = getAppRootFolder();
+    const packageJson = requireNoCache(path.join(appRoot, "package.json"));
+    const hasExpoRouter =
+      Object.keys(packageJson.dependencies).some((dependency) => dependency === "expo-router") ||
+      Object.keys(packageJson.devDependencies).some((dependency) => dependency === "expo-router");
+    return hasExpoRouter;
+  } catch (e) {
+    return false;
+  }
 }

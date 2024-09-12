@@ -22,14 +22,14 @@ export const RedButton = () => (
 
 RedButton.storyName = "red";
 
-export let GreenButton = () => (
+export let TheLongestNameOfStorybookStoryAkaGreenButton = () => (
   <NiceButton
     color="green"
     onPress={() => console.log("Green button pressed!")}
   />
 );
 
-GreenButton.storyName = "green";
+TheLongestNameOfStorybookStoryAkaGreenButton.storyName = "green";
 
 const Template = (args) => <NiceButton {...args} />;
 
@@ -40,3 +40,27 @@ Dynamic.args = {
 };
 
 Dynamic.storyName = "dynamic";
+
+export const A = () => (
+  <NiceButton color="#ff11aa" onPress={() => console.log("Button A pressed!")} />
+);
+
+export const B = () => (
+  <NiceButton color="#22bb33" onPress={() => console.log("Button B pressed!")} />
+);
+
+export const C = () => (
+  <NiceButton color="#3344cc" onPress={() => console.log("Button C pressed!")} />
+);
+
+export const D = () => (
+  <NiceButton color="#8855ff" onPress={() => console.log("Button D pressed!")} />
+);
+
+export const E = () => (
+  <NiceButton color="#ee7733" onPress={() => console.log("Button E pressed!")} />
+);
+
+export const F = () => (
+  <NiceButton color="#997744" onPress={() => console.log("Button F pressed!")} />
+);
