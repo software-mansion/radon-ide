@@ -14,7 +14,7 @@ While some project setups (like brownfield projects) are more challenging than o
 
 ## Creating configuration file
 
-React Native IDE uses the standard VS Code `launch.json` format for customizing build process to your project.
+Radon IDE uses the standard VS Code `launch.json` format for customizing build process to your project.
 Before you can change any of the options you'll need to create launch configuration file, unless you already have one in your project.
 
 If you have the launch configuration file you can move to the next step.
@@ -47,7 +47,7 @@ Here is how your launch json file in should look like after this step:
 }
 ```
 
-## Adding React Native IDE launch configuration (when `launch.json` file already exists)
+## Adding Radon IDE launch configuration (when `launch.json` file already exists)
 
 This step is only necessary if you already had launch configuration.
 In that scenario, you'll need to open `.vscode/launch.json` and add a object the following object to `configurations` array:
@@ -63,7 +63,7 @@ In that scenario, you'll need to open `.vscode/launch.json` and add a object the
 Make sure there is only one configuration with type `react-native-ide` in your `configurations` array.
 See the sample `launch.json` from the above step to make sure the format of the file is correct.
 
-## Customizing launch configuration for React Native IDE
+## Customizing launch configuration for Radon IDE
 
 Launch configuration offers a number of options that can be listed when editing the `react-native-ide` entry in VS Code thanks to code completion (IntelliSense).
 Along with the code completion, a documentation is displayed provided for individual options.
@@ -71,7 +71,7 @@ Below we list the currently present options
 
 ### iOS Build configuration
 
-React Native IDE builds your app for both Android and iOS.
+Radon IDE builds your app for both Android and iOS.
 If you have a custom build scheme configured in your project, and want to use it instead of the default one, you can specify that using `ios` object in the `configuration` section.
 The following attributes can be set within the `ios` object:
 

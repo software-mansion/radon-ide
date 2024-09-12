@@ -6,7 +6,7 @@ sidebar_position: 6
 
 ## Repository structure and project architecture
 
-React Native IDE consist of a number of modules we are outlining below.
+Radon IDE consist of a number of modules we are outlining below.
 It is useful to understand this architecture a bit more before contributing, so that it is cleaner which module is responsible for what part of the functionality:
 
 1. Main vscode extension code – this is the entry point for the extension that is booted up in a separate process by vscode. The code resides under `packages/vscode-extension` with the main entry point being `packages/vscode-extension/src/extension.ts` file. The extension code is responsible for orchestrating all actions with external process such as launching builds, as well as handling communication between the frontend and vscode APIs.

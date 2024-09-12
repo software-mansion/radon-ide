@@ -4,9 +4,9 @@ title: Troubleshooting
 sidebar_position: 7
 ---
 
-## Troubleshooting issues with React Native IDE
+## Troubleshooting issues with Radon IDE
 
-Below, we outline some ways that may help you self-diagnose and hopefully resolve issues you may encounter when using the React Native IDE extension.
+Below, we outline some ways that may help you self-diagnose and hopefully resolve issues you may encounter when using the Radon IDE extension.
 
 ### -sec-num- Project setup diagnostics commands
 
@@ -42,7 +42,7 @@ Sometimes the app gets blocked by some system dialog that we don't have a way to
 
 ### -sec-num- Accessing extension logs
 
-In order to access React Native IDE extension logs you need to open "Output Panel" with the default shortcut ⇧⌘U or by using a command named "Developer: Show Logs..." from the command palette.
+In order to access Radon IDE extension logs you need to open "Output Panel" with the default shortcut ⇧⌘U or by using a command named "Developer: Show Logs..." from the command palette.
 On the "Output Panel", select "React Native IDE" as the source.
 In order to share the logs with others you can use "Open Output in Editor" option available from the Output Panel toolbar.
 
@@ -60,9 +60,10 @@ When something goes wrong in the native build phase, instead of checking "React 
 
 ### -sec-num- Fresh installation in VSCode / Cursor
 
-There are two locations on the disk where React Native IDE stores its information.
-1) The installation directory is located under `~/.vscode/extensions/swmansion.react-native-ide-*` – with a suffix of current version + CPU architecture
-2) Emulator instance storage is located under `~/Library/Caches/com.swmansion.react-native-ide`
+There are two locations on the disk where Radon IDE stores its information.
+
+1. The installation directory is located under `~/.vscode/extensions/swmansion.react-native-ide-*` – with a suffix of current version + CPU architecture
+2. Emulator instance storage is located under `~/Library/Caches/com.swmansion.react-native-ide`
 
 If you'd like to perform a clean installation, you can delete both of those folders, restart VSCode and install the extension again from the marketplace.
 
@@ -77,6 +78,6 @@ Here is what you can try when the extension got stuck on some errors:
 
 ### -sec-num- Installing an older version of the IDE
 
-If you need to install an older version of an IDE, you can do so by navigating to the cogwheel menu next to the "install" button in the market place. 
+If you need to install an older version of an IDE, you can do so by navigating to the cogwheel menu next to the "install" button in the market place.
 
 <img width="698" alt="download-older-version" src="/img/docs/marketplace_install_older_version.png"/>

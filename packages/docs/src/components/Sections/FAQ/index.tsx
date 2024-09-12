@@ -5,23 +5,24 @@ import Elipse from "@site/src/components/Elipse";
 
 const faqs = [
   {
-    topic: "What is React Native IDE?",
+    topic: "What is Radon IDE?",
     answer:
-      "React Native IDE is a Visual Studio Code extension that aims to simplify the development of React Native applications.",
+      "Radon IDE is a Visual Studio Code extension that aims to simplify the development of React Native applications.",
   },
   {
     topic: "Can I use it on Windows or Linux?",
-    answer: "You can use the IDE with VSCode and Cursor to develop React Native apps for Android and iOS on macOS. Since version 0.0.18 we added experimental support for Windows that is compatible with VSCode and allows for developing apps for Android. Support for Linux is not yet available.",
+    answer:
+      "You can use the IDE with VSCode and Cursor to develop React Native apps for Android and iOS on macOS. Since version 0.0.18 we added experimental support for Windows that is compatible with VSCode and allows for developing apps for Android. Support for Linux is not yet available.",
   },
   {
     topic: "How much does it cost?",
-    answer: `The React Native IDE is free to use during the Beta period. We're working on a sustainable licensing model for the project.<br/><br/>
-    100% of the money earned will be used to fund the React Native open source efforts at Software Mansion and the further developments of the React Native IDE.<br/><br/>
+    answer: `Radon IDE is free to use during the Beta period. We're working on a sustainable licensing model for the project.<br/><br/>
+    100% of the money earned will be used to fund the React Native open source efforts at Software Mansion and the further developments of the Radon IDE.<br/><br/>
     `,
   },
   {
     topic: "Do you offer a student discount?",
-    answer: `Yes! React Native IDE is free for students learning at accredited educational institutions. Only for non-commercial purposes.`,
+    answer: `Yes! Radon IDE is free for students learning at accredited educational institutions. Only for non-commercial purposes.`,
   },
   {
     topic: "When are you planning to close the public Beta?",
@@ -30,10 +31,10 @@ const faqs = [
   {
     topic: "Why did you make the source code public?",
     answer:
-      "We are well aware there are an infinite number of ways of setting up your React Native project. With access to the code you can adjust the React Native IDE to make it run with your codebase.",
+      "We are well aware there are an infinite number of ways of setting up your React Native project. With access to the code you can adjust the Radon IDE to make it run with your codebase.",
   },
   {
-    topic: "What's up with the code license of the React Native IDE?",
+    topic: "What's up with the code license of the Radon IDE?",
     answer: `TL;DR<br/>
 It's okay to modify the code to run in your project and to fix bugs. However, do not distribute the project on your own in any way or form besides our official channels.<br/><br/>This license will evolve as we move beyond the Beta period. <a href="https://github.com/software-mansion/react-native-ide/blob/main/LICENSE.txt" target="_blank">You can read the full license here</a>.`,
   },
@@ -64,7 +65,7 @@ const FAQ = () => {
         <div className={styles.faqMain}>
           <h2 className={styles.faqHeading}>FAQ</h2>
           <span className={styles.faqSubheading}>
-            Here are the answers to your most frequent questions about the React Native IDE.
+            Here are the answers to your most frequent questions about the Radon IDE.
           </span>
         </div>
         <div>
