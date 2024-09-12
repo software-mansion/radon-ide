@@ -89,16 +89,14 @@ function hasError(dependencies: Dependencies, domain: "ios" | "android" | "commo
 }
 
 function adaptDependencyData(data: DependencyMessageData["data"]): DependencyState {
-  if (data.installed) {
-    return {
-      ...data,
-      installed: InstallationStatus.Installed,
-      isOptional: data.isOptional ?? false,
-    };
-  }
+  const installationStatus = data.installed
+    ? InstallationStatus.Installed
+    : InstallationStatus.NotInstalled;
+
   return {
     ...data,
-    installed: InstallationStatus.NotInstalled,
+    installed: installationStatus,
+    error: data.isOptional ? undefined : data.error,
     isOptional: data.isOptional ?? false,
   };
 }
