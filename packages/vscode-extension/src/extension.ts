@@ -82,7 +82,6 @@ export async function activate(context: ExtensionContext) {
       // we let the activation continue, as otherwise the diagnostics command would fail
     }
   }
-
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
   async function showIDEPanel(fileName?: string, lineNumber?: number) {
@@ -190,7 +189,13 @@ export async function activate(context: ExtensionContext) {
   // When it does happen, we open the IDE panel and restart the app.
   context.subscriptions.push(
     debug.registerDebugAdapterDescriptorFactory(
-      "react-native-ide",
+      "react-native-ide", // we use previous type name here to support old launch configurations that were using "react-native-ide" type
+      new LaunchConfigDebugAdapterDescriptorFactory()
+    )
+  );
+  context.subscriptions.push(
+    debug.registerDebugAdapterDescriptorFactory(
+      "radon-ide",
       new LaunchConfigDebugAdapterDescriptorFactory()
     )
   );
@@ -198,7 +203,7 @@ export async function activate(context: ExtensionContext) {
   // Debug adapter used for debugging React Native apps
   context.subscriptions.push(
     debug.registerDebugConfigurationProvider(
-      "com.swmansion.react-native-ide",
+      "com.swmansion.react-native-debugger",
       new DebugConfigProvider(),
       DebugConfigurationProviderTriggerKind.Dynamic
     )
@@ -206,7 +211,7 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     debug.registerDebugAdapterDescriptorFactory(
-      "com.swmansion.react-native-ide",
+      "com.swmansion.react-native-debugger",
       new DebugAdapterDescriptorFactory()
     )
   );

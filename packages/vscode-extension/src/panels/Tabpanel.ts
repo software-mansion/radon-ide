@@ -68,7 +68,7 @@ export class TabPanel implements Disposable {
       const emptyGroup = window.tabGroups.all.find((group) => group.tabs.length === 0);
 
       const panel = window.createWebviewPanel(
-        "react-native-ide-panel",
+        "radon-ide-panel",
         "React Native IDE",
         { viewColumn: emptyGroup?.viewColumn || ViewColumn.Beside },
         {

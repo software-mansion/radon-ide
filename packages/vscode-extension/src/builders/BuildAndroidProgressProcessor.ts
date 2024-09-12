@@ -14,7 +14,7 @@ export class BuildAndroidProgressProcessor implements BuildProgressProcessor {
   }
 
   processLine(line: string): void {
-    const taskGrapfSizeMatch = /React-Native-IDE:TaskGraphSize: (\d+)/m.exec(line);
+    const taskGrapfSizeMatch = /RadonIDE:TaskGraphSize: (\d+)/m.exec(line);
 
     if (taskGrapfSizeMatch) {
       this.tasksToComplete += Number(taskGrapfSizeMatch[1]);
