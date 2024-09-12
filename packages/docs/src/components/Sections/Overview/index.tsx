@@ -7,17 +7,17 @@ const items = [
   {
     title: "Integrated experience",
     body: "See the preview of your application right where you need it the most – close to your codebase. \n\nRadon IDE runs IOS Simulator and Android emulator directly in your Visual Studio Code project.",
-    mediaSrc: "video/1_sztudio_integrated.mp4",
+    mediaSrc: "video/1-radon-integrated-experience.mp4",
   },
   {
     title: "Click to inspect",
     body: "Using the built-in inspector you can jump directly from preview to a file where your component is defined. It can't really get simpler than that.",
-    mediaSrc: "video/2_sztudio_inspect.mp4",
+    mediaSrc: "video/2-radon-click-to-inspect.mp4",
   },
   {
     title: "Use breakpoints right in VSCode",
     body: "Without any additional setup the extension allows to add a breakpoints in Visual Studio Code to debug your React Native application. It. Just. Works.\n\nIDE also automatically stops at runtime exceptions showing you the exact line of code where they happened.",
-    mediaSrc: "video/3_sztudio_debugger.mp4",
+    mediaSrc: "video/3-radon-use-breakpoints.mp4",
   },
   {
     title: "Navigation made easier",
@@ -37,7 +37,7 @@ const items = [
   {
     title: "Adjust device settings on the fly",
     body: "You can adjust text size and light/dark mode right from the Radon IDE.\n\nFocus just on your app without switching between windows.",
-    mediaSrc: "video/7_sztudio_device_settings.mp4",
+    mediaSrc: "video/7-radon-adjust-device-settings.mp4",
   },
 ];
 
