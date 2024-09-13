@@ -15,8 +15,8 @@ If you wish to build the extension from source in order to make modifications, h
 In the Visual Studio Code:
 
 - Go to Extensions tab
-- Search for `React Native IDE`
-- Go to the React Native IDE extension page
+- Search for `Radon IDE`
+- Go to the Radon IDE extension page
 - Click **Install**
 
 <img width="500" src="/img/docs/ide_install_vscode.png"/>
