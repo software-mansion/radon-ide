@@ -17,7 +17,7 @@ Once you have it open, you can start the extension panel in one of a few ways:
 
 1. When you open any file of your project to edit it, you can launch the extension from "Open IDE Panel" button in the editor toolbar:
    <img width="800" alt="sztudio_editor_button" src="/img/docs/sztudio_editor_button.png"/>
-2. You can use "React Native IDE: Open IDE Panel" available in vscode's command palette:
+2. You can use "Radon IDE: Open IDE Panel" available in vscode's command palette:
    <img width="800" alt="sztudio_command_palette" src="/img/docs/sztudio_command_palette.png"/>
 3. If you already had the panel open in this project before restarting the editor, it will automatically reopen in the same place.
 

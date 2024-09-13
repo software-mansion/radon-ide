@@ -21,7 +21,7 @@ If you have the launch configuration file you can move to the next step.
 Otherwise go to **Run and Build** panel and click **create a launch.json file**:
 <img width="400" src="/img/docs/ide_create_launch_config.png"/>
 
-Then, select **React Native IDE** from the dropdown:
+Then, select **Radon IDE** from the dropdown:
 <img width="400" src="/img/docs/ide_launch_config_ide.png"/>
 
 This will create a new file under your workspace directory: `.vscode/launch.json` – this file should be added to version control (git) as it carries configuration that is specific to your project setup rather than user specific editor settings.
@@ -35,7 +35,7 @@ Here is how your launch json file in should look like after this step:
     {
       "type": "react-native-ide",
       "request": "launch",
-      "name": "React Native IDE panel",
+      "name": "Radon IDE panel",
       "ios": {
         "configuration": "Debug"
       },
@@ -56,7 +56,7 @@ In that scenario, you'll need to open `.vscode/launch.json` and add a object the
 {
   "type": "react-native-ide",
   "request": "launch",
-  "name": "React Native IDE panel" // The name could be changed
+  "name": "Radon IDE panel" // The name could be changed
 }
 ```
 
@@ -87,7 +87,7 @@ Here is how the launch configuration could look like with some custom iOS build 
     {
       "type": "react-native-ide",
       "request": "launch",
-      "name": "React Native IDE panel",
+      "name": "Radon IDE panel",
       "ios": {
         "scheme": "AcmeApp",
         "configuration": "Staging"
@@ -114,7 +114,7 @@ Below is an example of how the `launch.json` file could look like with android v
     {
       "type": "react-native-ide",
       "request": "launch",
-      "name": "React Native IDE panel",
+      "name": "Radon IDE panel",
       "android": {
         "buildType": "debug",
         "productFlavor": "staging"
@@ -144,7 +144,7 @@ Below is a sample `launch.json` config file with `appRoot`, `metroConfigPath`, a
     {
       "type": "react-native-ide",
       "request": "launch",
-      "name": "React Native IDE panel",
+      "name": "Radon IDE panel",
       "appRoot": "packages/mobile",
       "metroConfigPath": "metro.config.dev.js",
       "env": {
