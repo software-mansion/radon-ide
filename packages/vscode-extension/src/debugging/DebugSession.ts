@@ -50,8 +50,8 @@ export class DebugSession implements Disposable {
     const debugStarted = await debug.startDebugging(
       undefined,
       {
-        type: "com.swmansion.react-native-ide",
-        name: "React Native IDE Debugger",
+        type: "com.swmansion.react-native-debugger",
+        name: "Radon IDE Debugger",
         request: "attach",
         websocketAddress: websocketAddress,
         absoluteProjectPath: getAppRootFolder(),

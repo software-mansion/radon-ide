@@ -68,7 +68,10 @@ function transformWrapper({ filename, src, ...rest }) {
     } else if (version.startsWith("3.")) {
       src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
     }
-  } else if (isTransforming("node_modules/react-native-ide/index.js")) {
+  } else if (
+    isTransforming("node_modules/react-native-ide/index.js") || // using react-native-ide for compatibility with old NPM package name
+    isTransforming("node_modules/radon-ide/index.js")
+  ) {
     src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
   } else if (
     isTransforming(

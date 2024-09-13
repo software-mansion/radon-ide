@@ -45,7 +45,7 @@ function PreviewView() {
   useDiagnosticAlert(selectedDevice?.platform);
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
-    "meta[name='react-native-ide-version']"
+    "meta[name='radon-ide-version']"
   )?.content;
 
   useEffect(() => {

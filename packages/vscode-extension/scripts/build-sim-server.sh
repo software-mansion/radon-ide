@@ -24,7 +24,7 @@ fi
 if [[ ! -f "$product_path" ]]; then
     echo "Simulator server binary not found: $product_path"
     echo ""
-    echo "Make sure to follow development setup instructions: https://github.com/software-mansion/react-native-ide"
+    echo "Make sure to follow development setup instructions: https://ide.swmansion.com/docs/development"
     echo "You can download the binary from the releases page on GitHub: https://github.com/software-mansion/react-native-ide/releases"
     exit 1
 fi
