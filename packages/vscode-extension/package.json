@@ -226,9 +226,13 @@
                 "description": "Provides a way to customize Gradle builds for Android",
                 "type": "object",
                 "properties": {
-                  "variant": {
+                  "buildType": {
                     "type": "string",
-                    "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
+                    "description": "Android's build type used when building with Gradle, defaults to \"debug\"."
+                  },
+                  "productFlavor": {
+                    "type": "string",
+                    "description": "Android's build product flavor used when building with Gradle, by default no flavor is used."
                   }
                 }
               },
@@ -306,9 +310,13 @@
                 "description": "Provides a way to customize Gradle builds for Android",
                 "type": "object",
                 "properties": {
-                  "variant": {
+                  "buildType": {
                     "type": "string",
-                    "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
+                    "description": "Android's build type used when building with Gradle, defaults to \"debug\"."
+                  },
+                  "productFlavor": {
+                    "type": "string",
+                    "description": "Android's build product flavor used when building with Gradle, by default no flavor is used."
                   }
                 }
               },
