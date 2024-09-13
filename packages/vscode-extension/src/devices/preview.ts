@@ -51,18 +51,9 @@ export class Preview implements Disposable {
     });
   }
 
-  public sendTouch(
-    touchPoint: TouchPoint,
-    secondTouchPoint: TouchPoint | null,
-    type: "Up" | "Move" | "Down"
-  ) {
-    if (!secondTouchPoint) {
-      this.subprocess?.stdin?.write(`touch${type} ${touchPoint.xRatio} ${touchPoint.yRatio}\n`);
-    } else {
-      this.subprocess?.stdin?.write(
-        `touch${type} ${touchPoint.xRatio} ${touchPoint.yRatio} ${secondTouchPoint.xRatio} ${secondTouchPoint.yRatio}\n`
-      );
-    }
+  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+    const fff = `touch${type} ` + touches.map((pt) => `${pt.xRatio} ${pt.yRatio}`).join(" ") + "\n";
+    this.subprocess?.stdin?.write(fff);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {

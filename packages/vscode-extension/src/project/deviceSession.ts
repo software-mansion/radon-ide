@@ -186,12 +186,8 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
-  public sendTouch(
-    touchPoint: TouchPoint,
-    secondTouchPoint: TouchPoint | null,
-    type: "Up" | "Move" | "Down"
-  ) {
-    this.device.sendTouch(touchPoint, secondTouchPoint, type);
+  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+    this.device.sendTouches(touches, type);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {

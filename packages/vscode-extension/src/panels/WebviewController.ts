@@ -99,7 +99,7 @@ export class WebviewController implements Disposable {
   private setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
       (message: WebviewEvent) => {
-        const isTouchEvent = message.command === "call" && message.method === "dispatchTouch";
+        const isTouchEvent = message.command === "call" && message.method === "dispatchTouches";
         if (!isTouchEvent) {
           Logger.log("Message from webview", message);
         }

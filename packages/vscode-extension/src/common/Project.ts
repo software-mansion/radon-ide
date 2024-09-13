@@ -129,11 +129,7 @@ export interface ProjectInterface {
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
-  dispatchTouch(
-    touchPoint: TouchPoint,
-    secondTouchPoint: TouchPoint | null,
-    type: "Up" | "Move" | "Down"
-  ): Promise<void>;
+  dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
   dispatchPaste(text: string): Promise<void>;
   inspectElementAt(

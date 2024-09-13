@@ -337,12 +337,8 @@ export class Project
     }
   }
 
-  public async dispatchTouch(
-    touchPoint: TouchPoint,
-    secondTouchPoint: TouchPoint | null,
-    type: "Up" | "Move" | "Down"
-  ) {
-    this.deviceSession?.sendTouch(touchPoint, secondTouchPoint, type);
+  public async dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+    this.deviceSession?.sendTouches(touches, type);
   }
 
   public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {

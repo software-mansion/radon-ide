@@ -263,15 +263,17 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   type MouseMove = "Move" | "Down" | "Up";
   function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
     const { x, y } = getTouchPosition(event);
-    project.dispatchTouch({ xRatio: x, yRatio: y }, null, type);
+    project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
     const pt = getTouchPosition(event);
     const secondPt = calculateMirroredTouchPosition(pt, anchorPoint);
-    project.dispatchTouch(
-      { xRatio: pt.x, yRatio: pt.y },
-      { xRatio: secondPt.x, yRatio: secondPt.y },
+    project.dispatchTouches(
+      [
+        { xRatio: pt.x, yRatio: pt.y },
+        { xRatio: secondPt.x, yRatio: secondPt.y },
+      ],
       type
     );
   }
