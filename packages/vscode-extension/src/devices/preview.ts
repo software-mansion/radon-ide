@@ -23,7 +23,19 @@ export class Preview implements Disposable {
     );
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
-    const subprocess = exec(simControllerBinary, this.args, { buffer: false });
+
+    let simControllerBinaryEnv: { DYLD_FRAMEWORK_PATH: string } | undefined;
+
+    if (Platform.OS === "macos") {
+      const { stdout } = await exec("xcode-select", ["-p"]);
+      const DYLD_FRAMEWORK_PATH = path.join(stdout, "Library", "PrivateFrameworks");
+      simControllerBinaryEnv = { DYLD_FRAMEWORK_PATH };
+    }
+
+    const subprocess = exec(simControllerBinary, this.args, {
+      buffer: false,
+      env: simControllerBinaryEnv,
+    });
     this.subprocess = subprocess;
 
     return new Promise<string>((resolve, reject) => {
