@@ -33,7 +33,7 @@ Here is how your launch json file in should look like after this step:
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "react-native-ide",
+      "type": "radon-ide",
       "request": "launch",
       "name": "Radon IDE panel",
       "ios": {
@@ -54,18 +54,18 @@ In that scenario, you'll need to open `.vscode/launch.json` and add a object the
 
 ```json
 {
-  "type": "react-native-ide",
+  "type": "radon-ide",
   "request": "launch",
   "name": "Radon IDE panel" // The name could be changed
 }
 ```
 
-Make sure there is only one configuration with type `react-native-ide` in your `configurations` array.
+Make sure there is only one configuration with type `radon-ide` in your `configurations` array.
 See the sample `launch.json` from the above step to make sure the format of the file is correct.
 
 ## Customizing launch configuration for Radon IDE
 
-Launch configuration offers a number of options that can be listed when editing the `react-native-ide` entry in VS Code thanks to code completion (IntelliSense).
+Launch configuration offers a number of options that can be listed when editing the `radon-ide` entry in VS Code thanks to code completion (IntelliSense).
 Along with the code completion, a documentation is displayed provided for individual options.
 Below we list the currently present options
 
@@ -85,7 +85,7 @@ Here is how the launch configuration could look like with some custom iOS build 
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "react-native-ide",
+      "type": "radon-ide",
       "request": "launch",
       "name": "Radon IDE panel",
       "ios": {
@@ -112,7 +112,7 @@ Below is an example of how the `launch.json` file could look like with android v
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "react-native-ide",
+      "type": "radon-ide",
       "request": "launch",
       "name": "Radon IDE panel",
       "android": {
@@ -142,7 +142,7 @@ Below is a sample `launch.json` config file with `appRoot`, `metroConfigPath`, a
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "react-native-ide",
+      "type": "radon-ide",
       "request": "launch",
       "name": "Radon IDE panel",
       "appRoot": "packages/mobile",
