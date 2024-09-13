@@ -34,7 +34,7 @@ const faqs = [
       "We are well aware there are an infinite number of ways of setting up your React Native project. With access to the code you can adjust the Radon IDE to make it run with your codebase.",
   },
   {
-    topic: "What's up with the code license of the Radon IDE?",
+    topic: "What's up with the code license for Radon IDE?",
     answer: `TL;DR<br/>
 It's okay to modify the code to run in your project and to fix bugs. However, do not distribute the project on your own in any way or form besides our official channels.<br/><br/>This license will evolve as we move beyond the Beta period. <a href="https://github.com/software-mansion/react-native-ide/blob/main/LICENSE.txt" target="_blank">You can read the full license here</a>.`,
   },
@@ -44,7 +44,7 @@ It's okay to modify the code to run in your project and to fix bugs. However, do
       "At this moment WebStorm is not supported.<br/><br/>As the adoption for the extension grows we might add a support for WebStorm in the future.",
   },
   {
-    topic: "How does the Supporter's license discount works?",
+    topic: "How does the Supporter's license discount work?",
     answer:
       "For every month your Supporter's license is active, you receive a 50% discount on the Individual or Team license. For example, if you have been a Supporter for 2 months, you will receive a 50% discount on an Individual or Team license for 2 months.",
   },
