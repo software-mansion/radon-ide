@@ -132,7 +132,7 @@ export class WebviewController implements Disposable {
     const callableObject = this.callableObjects.get(object);
     if (callableObject && method in callableObject) {
       const argsWithCallbacks = args.map((arg: any) => {
-        if (typeof arg === "object" && "__callbackId" in arg) {
+        if (typeof arg === "object" && arg !== null && "__callbackId" in arg) {
           const callbackId = arg.__callbackId;
           let callback = this.idToCallback.get(callbackId)?.deref();
           if (!callback) {

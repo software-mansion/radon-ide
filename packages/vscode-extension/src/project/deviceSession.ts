@@ -4,7 +4,13 @@ import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { BuildManager, BuildResult, DisposableBuild } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, ReloadAction, StartupMessage } from "../common/Project";
+import {
+  AppPermissionType,
+  DeviceSettings,
+  ReloadAction,
+  StartupMessage,
+  TouchPoint,
+} from "../common/Project";
 import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
@@ -180,18 +186,12 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
-  public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.device.sendTouch(xRatio, yRatio, type);
-  }
-
-  public sendMultiTouch(
-    xRatio: number,
-    yRatio: number,
-    xAnchorRatio: number,
-    yAnchorRatio: number,
+  public sendTouch(
+    touchPoint: TouchPoint,
+    secondTouchPoint: TouchPoint | null,
     type: "Up" | "Move" | "Down"
   ) {
-    this.device.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
+    this.device.sendTouch(touchPoint, secondTouchPoint, type);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {

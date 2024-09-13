@@ -4,6 +4,7 @@ import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
+import { TouchPoint } from "../common/Project";
 
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
@@ -50,20 +51,18 @@ export class Preview implements Disposable {
     });
   }
 
-  public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.subprocess?.stdin?.write(`touch${type} ${xRatio} ${yRatio}\n`);
-  }
-
-  public sendMultiTouch(
-    xRatio: number,
-    yRatio: number,
-    xAnchorRatio: number,
-    yAnchorRatio: number,
+  public sendTouch(
+    touchPoint: TouchPoint,
+    secondTouchPoint: TouchPoint | null,
     type: "Up" | "Move" | "Down"
   ) {
-    // this.subprocess?.stdin?.write(
-    //   `multitouch${type} ${xRatio} ${yRatio} ${xAnchorRatio} ${yAnchorRatio}\n` // TODO set proper multitouch simserver command
-    // );
+    if (!secondTouchPoint) {
+      this.subprocess?.stdin?.write(`touch${type} ${touchPoint.xRatio} ${touchPoint.yRatio}\n`);
+    } else {
+      this.subprocess?.stdin?.write(
+        `touch${type} ${touchPoint.xRatio} ${touchPoint.yRatio} ${secondTouchPoint.xRatio} ${secondTouchPoint.yRatio}\n`
+      );
+    }
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
