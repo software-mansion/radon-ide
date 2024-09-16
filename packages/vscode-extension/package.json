@@ -171,12 +171,96 @@
     ],
     "debuggers": [
       {
-        "type": "com.swmansion.react-native-ide",
-        "label": "React Native IDE internal",
+        "type": "com.swmansion.react-native-debugger",
+        "label": "Radon IDE internal debugger for React Native",
         "hiddenWhen": "true",
         "languages": [
           "javascript",
           "typescript"
+        ]
+      },
+      {
+        "type": "radon-ide",
+        "label": "Radon IDE",
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "typescriptreact"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "appRoot": {
+                "type": "string",
+                "description": "Location of the React Native application root folder relative to the workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
+              },
+              "isExpo": {
+                "type": "boolean",
+                "description": "IDE tries to detect whether project uses Expo or React Native community CLI. This is needed when starting the bundler. If your project uses Expo but IDE fails to automatically detect it, you can set this parameter to `true` to force the use of Expo CLI."
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables to be passed to all build/run commands that the IDE is launching."
+              },
+              "metroConfigPath": {
+                "type": "string",
+                "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+              },
+              "ios": {
+                "description": "Provides a way to customize Xcode builds for iOS",
+                "type": "object",
+                "properties": {
+                  "scheme": {
+                    "type": "string",
+                    "description": "Scheme name (from xcode project) the IDE will use for iOS builds, defaults to xcworkspace base file name."
+                  },
+                  "configuration": {
+                    "type": "string",
+                    "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+                  }
+                }
+              },
+              "android": {
+                "description": "Provides a way to customize Gradle builds for Android",
+                "type": "object",
+                "properties": {
+                  "buildType": {
+                    "type": "string",
+                    "description": "Android's build type used when building with Gradle, defaults to \"debug\"."
+                  },
+                  "productFlavor": {
+                    "type": "string",
+                    "description": "Android's build product flavor used when building with Gradle, by default no flavor is used."
+                  }
+                }
+              },
+              "preview": {
+                "description": "Custommize the behavior of device preview",
+                "type": "object",
+                "properties": {
+                  "waitForAppLaunch": {
+                    "type": "boolean",
+                    "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "react-native-ide",
+            "request": "launch",
+            "name": "React Native IDE panel",
+            "ios": {
+              "configuration": "Debug"
+            },
+            "android": {
+              "buildType": "debug"
+            }
+          }
         ]
       },
       {
@@ -226,9 +310,13 @@
                 "description": "Provides a way to customize Gradle builds for Android",
                 "type": "object",
                 "properties": {
-                  "variant": {
+                  "buildType": {
                     "type": "string",
-                    "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
+                    "description": "Android's build type used when building with Gradle, defaults to \"debug\"."
+                  },
+                  "productFlavor": {
+                    "type": "string",
+                    "description": "Android's build product flavor used when building with Gradle, by default no flavor is used."
                   }
                 }
               },
