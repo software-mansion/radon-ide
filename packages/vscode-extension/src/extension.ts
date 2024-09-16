@@ -92,6 +92,7 @@ export async function activate(context: ExtensionContext) {
       .getConfiguration("ReactNativeIDE")
       .get<PanelLocation>("panelLocation");
 
+    console.log("FRYTKI panelLocation", panelLocation);
     if (panelLocation !== "tab") {
       SidePanelViewProvider.showView(context, fileName, lineNumber);
     } else {

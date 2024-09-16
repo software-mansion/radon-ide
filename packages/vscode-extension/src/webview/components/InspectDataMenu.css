@@ -1,5 +1,5 @@
 .context-menu-content {
-  min-width: 220px;
+  /* min-width: 220px; */
   background-color: var(--swm-popover-background);
   border-radius: 6px;
   padding: 4px;
@@ -7,25 +7,31 @@
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
   box-shadow: var(--swm-backdrop-shadow);
+  max-width: calc(var(--radix-context-menu-content-available-width) - 10px);
 }
 
 .context-menu-content code {
   font-family: monospace;
+  font-size: clamp(5px, 5vw, 12px);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .context-menu-item {
-  font-size: 13px;
+  font-size: clamp(4px, 4vw, 12px);
   line-height: 1;
   color: var(--swm-default-text);
   border-radius: 3px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  height: 28px;
+  height: auto;
+  min-height: 28px;
   padding: 0 6px;
   position: relative;
   user-select: none;
   outline: none;
-  gap: 4px;
+  margin: 1px 0;
 }
 
 .context-menu-item[data-disabled] {
@@ -36,9 +42,13 @@
 .context-menu-item[data-highlighted] {
   background-color: var(--swm-dropdown-item-highlighted);
   color: var(--swm-default-text);
+  overflow-wrap: anywhere;
 }
 
 .context-menu-item .right-slot {
   color: var(--swm-device-select-rich-item-subtitle);
   font-size: 90%;
+  margin-left: auto;
+  overflow-wrap: anywhere;
+  padding-left: 10px;
 }
