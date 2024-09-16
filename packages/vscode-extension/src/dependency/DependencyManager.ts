@@ -487,8 +487,6 @@ export function isExpoProject() {
       script.includes("expo ")
     );
   } catch (e) {}
-
-  console.log("FRYTKI expo?", hasExpoCLInDependencies && hasExpoCommandsInScripts);
   return hasExpoCLInDependencies && hasExpoCommandsInScripts;
 }
 
