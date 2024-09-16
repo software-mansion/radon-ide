@@ -1,5 +1,5 @@
 :root {
-  --url-select-min-width: 180px;
+  --url-select-min-width: 130px;
   --url-select-max-width: 300px;
 }
 
@@ -98,7 +98,7 @@
   padding-bottom: 6px;
 }
 
-@media (width <= 400px) {
+@media (width <= 350px) {
   .url-select-trigger {
     min-width: 0;
   }
