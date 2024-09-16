@@ -113,7 +113,7 @@ function ManageDevicesView() {
           ))}
         </>
       )}
-      <Button className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
+      <Button autoFocus className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
         <span className="codicon codicon-add" />
         <div className="create-button-text">Create new device</div>
       </Button>
