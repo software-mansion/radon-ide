@@ -7,7 +7,7 @@ sidebar_position: 3
 After [installing](./installation.md) the extension, you should be able to start using the extension by opening your React Native or Expo project as a workspace in Visual Studio Code.
 If that's not the case and you have problems getting the extension to run, please check [troubleshooting](./troubleshooting.md) guide.
 
-For a quick overview of the features the IDE provides, you can check [React Native IDE website](https://ide.swmansion.com).
+For a quick overview of the features the IDE provides, you can check [Radon IDE website](https://ide.swmansion.com).
 
 ## -sec-num- Open your project in vscode and start the extension panel
 
@@ -17,7 +17,7 @@ Once you have it open, you can start the extension panel in one of a few ways:
 
 1. When you open any file of your project to edit it, you can launch the extension from "Open IDE Panel" button in the editor toolbar:
    <img width="800" alt="sztudio_editor_button" src="/img/docs/sztudio_editor_button.png"/>
-2. You can use "React Native IDE: Open IDE Panel" available in vscode's command palette:
+2. You can use "Radon IDE: Open IDE Panel" available in vscode's command palette:
    <img width="800" alt="sztudio_command_palette" src="/img/docs/sztudio_command_palette.png"/>
 3. If you already had the panel open in this project before restarting the editor, it will automatically reopen in the same place.
 
@@ -36,7 +36,7 @@ Please follow the [simulators](./simulators.md) section to learn how to manage s
 ## -sec-num- Decide on the location of the IDE panel
 
 The main extension window can be either presented as one of the editor tabs, which is the default behavior, or as a side panel (in primary or secondary side panel location).
-To change between these modes, you can either use React Native IDE section in the VSCode settings, or use the dropdown menu from the right top corner in the IDE panel:
+To change between these modes, you can either use Radon IDE section in the VSCode settings, or use the dropdown menu from the right top corner in the IDE panel:
 
 <img width="450" alt="sztudio-change-position" src="/img/docs/sztudio_change_position.png"/>
 
@@ -51,7 +51,7 @@ From there, you can use the simulator normally to navigate in your app and try o
 
 ## -sec-num- IDE features highlights
 
-Visit [React Native IDE](https://ide.swmansion.com/) website, for a nicely presented list of the feature highlights.
+Visit [Radon IDE](https://ide.swmansion.com/) website, for a nicely presented list of the feature highlights.
 
 ### Click to inspect
 
@@ -73,7 +73,7 @@ IDE also automatically stops at runtime exceptions showing you the exact line of
 
 ### URL bar (currently supports expo-router only)
 
-The React Native IDE integrates with your deep-linked application allowing you to jump around the navigation structure.
+The Radon IDE integrates with your deep-linked application allowing you to jump around the navigation structure.
 
 <video autoPlay loop width="500" controls>
   <source src="/video/4_sztudio_url_bar.mp4" type="video/mp4"/>
@@ -81,7 +81,7 @@ The React Native IDE integrates with your deep-linked application allowing you t
 
 ### Logs integration
 
-React Native IDE uses the built-in VSCode console allowing you to filter through the logs.
+Radon IDE uses the built-in VSCode console allowing you to filter through the logs.
 The links displayed in the console are automatically linking back to your source code.
 
 <video autoPlay loop width="500" controls>
@@ -92,10 +92,10 @@ The links displayed in the console are automatically linking back to your source
 
 Develop your components individually without distractions.
 
-Install `react-native-ide` package and use `preview` method from it to define the components that should render in preview mode:
+Install `radon-ide` package and use `preview` method from it to define the components that should render in preview mode:
 
 ```js
-import { preview } from "react-native-ide";
+import { preview } from "radon-ide";
 
 preview(<MyComponent param={42} />);
 ```
@@ -108,7 +108,7 @@ The extension will display a clickable "Open preview" button over the line with 
 
 ### Adjust device settings on the fly
 
-You can adjust text size and light/dark mode right from the React Native IDE.
+You can adjust text size and light/dark mode right from the Radon IDE.
 Focus just on your app without switching between windows.
 
 <video autoPlay loop width="500" controls>

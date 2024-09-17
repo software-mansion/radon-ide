@@ -80,6 +80,11 @@ export type InspectDataStackItem = {
   };
 };
 
+export type TouchPoint = {
+  xRatio: number;
+  yRatio: number;
+};
+
 export type InspectData = {
   stack: InspectDataStackItem[] | undefined;
   frame: {
@@ -124,14 +129,7 @@ export interface ProjectInterface {
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
-  dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down"): Promise<void>;
-  dispatchMultiTouch(
-    xRatio: number,
-    yRatio: number,
-    xAnchorRatio: number,
-    yAnchorRatio: number,
-    type: "Up" | "Move" | "Down"
-  ): Promise<void>;
+  dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
   dispatchPaste(text: string): Promise<void>;
   inspectElementAt(

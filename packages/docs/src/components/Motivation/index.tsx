@@ -25,7 +25,7 @@ const Motivation = () => {
           </a>
           . You most probably already use them in your applications. The maintenance of the packages
           takes a lot of development time which isn't free. That's why we've decided to distribute
-          React Native IDE under a paid license.{" "}
+          Radon IDE under a paid license.{" "}
         </p>
         <p className={styles.paragraph}>
           <strong>

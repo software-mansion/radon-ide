@@ -274,23 +274,19 @@ function Preview({
     console.log("FRYTKI sendTouch", type);
 
     const { x, y } = getTouchPosition(event);
-    project.dispatchTouch(x, y, type); // FRYTKI temp
-    // project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
+    project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
-    console.log("FRYTKI sendMultiTouch", type);
-
     const pt = getTouchPosition(event);
     const secondPt = calculateMirroredTouchPosition(pt, anchorPoint);
-    project.dispatchMultiTouch(pt.x, pt.y, secondPt.x, secondPt.y, type); // FRYTKI temp
-    // project.dispatchTouches(
-    //   [
-    //     { xRatio: pt.x, yRatio: pt.y },
-    //     { xRatio: secondPt.x, yRatio: secondPt.y },
-    //   ],
-    //   type
-    // );
+    project.dispatchTouches(
+      [
+        { xRatio: pt.x, yRatio: pt.y },
+        { xRatio: secondPt.x, yRatio: secondPt.y },
+      ],
+      type
+    );
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
