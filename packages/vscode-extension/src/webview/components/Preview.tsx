@@ -390,8 +390,6 @@ function Preview({
     e.preventDefault();
     wrapperDivRef.current!.focus();
 
-    setIsTouchAreaActive(true);
-
     if (isPressing) {
       if (isMultiTouching) {
         sendMultiTouch(e, "Down");
@@ -399,6 +397,7 @@ function Preview({
         sendTouch(e, "Down");
       }
     }
+    setIsTouchAreaActive(true);
   }
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
@@ -510,7 +509,7 @@ function Preview({
   const normalTouchMarkerSize = 33;
   const smallTouchMarkerSize = 9;
 
-  const isTouchVisable = isTouchAreaActive && isMultiTouching;
+  const isTouchVisible = isTouchAreaActive && isMultiTouching;
 
   return (
     <>
@@ -532,7 +531,7 @@ function Preview({
                   className="phone-screen"
                 />
 
-                {isTouchVisable && (
+                {isTouchVisible && (
                   <div
                     style={{
                       "--x": `${touchPoint.x * 100}%`,
@@ -542,7 +541,7 @@ function Preview({
                     <TouchPointMarker isPressing={isPressing} />
                   </div>
                 )}
-                {isTouchVisable && (
+                {isTouchVisible && (
                   <div
                     style={{
                       "--x": `${anchorPoint.x * 100}%`,
@@ -552,7 +551,7 @@ function Preview({
                     <TouchPointMarker isPressing={false} />
                   </div>
                 )}
-                {isTouchVisable && (
+                {isTouchVisible && (
                   <div
                     style={{
                       "--x": `${mirroredTouchPosition.x * 100}%`,
