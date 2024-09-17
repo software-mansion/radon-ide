@@ -178,6 +178,8 @@ type InspectStackData = {
 type Props = {
   isInspecting: boolean;
   setIsInspecting: (isInspecting: boolean) => void;
+  isPressing: boolean;
+  setIsPressing: (isPressing: boolean) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
 };
@@ -197,11 +199,18 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
   return { x: clampedX, y: clampedY };
 }
 
-function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Props) {
+function Preview({
+  isInspecting,
+  setIsInspecting,
+  isPressing,
+  setIsPressing,
+  zoomLevel,
+  onZoomChanged,
+}: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
-  const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
+  const [isTouchAreaActive, setIsTouchAreaActive] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLImageElement>(null);
@@ -262,20 +271,26 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
   type MouseMove = "Move" | "Down" | "Up";
   function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+    console.log("FRYTKI sendTouch", type);
+
     const { x, y } = getTouchPosition(event);
-    project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
+    project.dispatchTouch(x, y, type); // FRYTKI temp
+    // project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+    console.log("FRYTKI sendMultiTouch", type);
+
     const pt = getTouchPosition(event);
     const secondPt = calculateMirroredTouchPosition(pt, anchorPoint);
-    project.dispatchTouches(
-      [
-        { xRatio: pt.x, yRatio: pt.y },
-        { xRatio: secondPt.x, yRatio: secondPt.y },
-      ],
-      type
-    );
+    project.dispatchMultiTouch(pt.x, pt.y, secondPt.x, secondPt.y, type); // FRYTKI temp
+    // project.dispatchTouches(
+    //   [
+    //     { xRatio: pt.x, yRatio: pt.y },
+    //     { xRatio: secondPt.x, yRatio: secondPt.y },
+    //   ],
+    //   type
+    // );
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
@@ -324,6 +339,10 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
+    if (!isTouchAreaActive) {
+      return;
+    }
+
     if (isMultiTouching) {
       isPanning && moveAnchorPoint(e);
       isPressing && sendMultiTouch(e, "Move");
@@ -363,7 +382,22 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
       } else {
         sendTouch(e, "Up");
       }
-      setIsPressing(false);
+    }
+    setIsPressing(false);
+  }
+
+  function onMouseEnter(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    wrapperDivRef.current!.focus();
+
+    setIsTouchAreaActive(true);
+
+    if (isPressing) {
+      if (isMultiTouching) {
+        sendMultiTouch(e, "Down");
+      } else {
+        sendTouch(e, "Down");
+      }
     }
   }
 
@@ -371,14 +405,13 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     e.preventDefault();
     if (isPressing) {
       if (isMultiTouching) {
-        setIsMultiTouching(false);
-        setIsPanning(false);
         sendMultiTouch(e, "Up");
       } else {
         sendTouch(e, "Up");
+        setIsPressing(false);
       }
-      setIsPressing(false);
     }
+    setIsTouchAreaActive(false);
 
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
@@ -461,6 +494,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
         onMouseDown,
         onMouseMove,
         onMouseUp,
+        onMouseEnter,
         onMouseLeave,
         onContextMenu,
       };
@@ -475,6 +509,8 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchMarkerSize = 33;
   const smallTouchMarkerSize = 9;
+
+  const isTouchVisable = isTouchAreaActive && isMultiTouching;
 
   return (
     <>
@@ -496,7 +532,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                   className="phone-screen"
                 />
 
-                {isMultiTouching && (
+                {isTouchVisable && (
                   <div
                     style={{
                       "--x": `${touchPoint.x * 100}%`,
@@ -506,7 +542,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                     <TouchPointMarker isPressing={isPressing} />
                   </div>
                 )}
-                {isMultiTouching && (
+                {isTouchVisable && (
                   <div
                     style={{
                       "--x": `${anchorPoint.x * 100}%`,
@@ -516,7 +552,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                     <TouchPointMarker isPressing={false} />
                   </div>
                 )}
-                {isMultiTouching && (
+                {isTouchVisable && (
                   <div
                     style={{
                       "--x": `${mirroredTouchPosition.x * 100}%`,
