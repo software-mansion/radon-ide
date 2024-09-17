@@ -15,6 +15,7 @@ interface ButtonProps {
     type?: "primary" | "secondary";
   };
   className?: string;
+  autoFocus: boolean;
 }
 
 function Button({
@@ -26,9 +27,11 @@ function Button({
   disabled,
   active,
   tooltip,
+  autoFocus,
 }: ButtonProps) {
   const button = (
     <button
+      autoFocus={autoFocus}
       onClick={onClick}
       disabled={disabled}
       className={classNames(
