@@ -362,14 +362,14 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isPressing) {
-      if (isMultiTouching) {
-        setIsMultiTouching(false);
-        setIsPanning(false);
-        sendMultiTouch(e, "Up");
-      } else {
-        sendTouch(e, "Up");
-      }
+
+    if (isMultiTouching) {
+      setIsMultiTouching(false);
+      setIsPanning(false);
+      setIsPressing(false);
+      sendMultiTouch(e, "Up");
+    } else if (isPressing) {
+      sendTouch(e, "Up");
       setIsPressing(false);
     }
 
