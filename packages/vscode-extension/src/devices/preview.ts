@@ -52,8 +52,8 @@ export class Preview implements Disposable {
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    const fff = `touch${type} ` + touches.map((pt) => `${pt.xRatio} ${pt.yRatio}`).join(" ") + "\n";
-    this.subprocess?.stdin?.write(fff);
+    const touchesCoords = touches.map((pt) => `${pt.xRatio} ${pt.yRatio}`).join(" ");
+    this.subprocess?.stdin?.write(`touch${type} ${touchesCoords}\n`);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
