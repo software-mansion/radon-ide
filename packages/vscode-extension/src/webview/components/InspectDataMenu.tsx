@@ -1,7 +1,7 @@
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { InspectDataStackItem } from "../../common/Project";
 import { useEffect, useRef } from "react";
-import path from "path";
+
 import "./InspectDataMenu.css";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
@@ -43,7 +43,7 @@ export function InspectDataMenu({
         <ContextMenu.Content className="context-menu-content">
           {filteredData.map((item) => {
             // extract file name from path:
-            const fileName = item.source.fileName.split(path.sep).pop();
+            const fileName = item.source.fileName.split("/").pop();
             return (
               <ContextMenu.Item
                 className="context-menu-item"
