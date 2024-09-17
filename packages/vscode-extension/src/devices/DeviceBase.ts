@@ -1,7 +1,7 @@
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings } from "../common/Project";
+import { AppPermissionType, DeviceSettings, TouchPoint } from "../common/Project";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
@@ -44,18 +44,8 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.dispose();
   }
 
-  public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.preview?.sendTouch(xRatio, yRatio, type);
-  }
-
-  public sendMultiTouch(
-    xRatio: number,
-    yRatio: number,
-    xAnchorRatio: number,
-    yAnchorRatio: number,
-    type: "Up" | "Move" | "Down"
-  ) {
-    this.preview?.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
+  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+    this.preview?.sendTouches(touches, type);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {

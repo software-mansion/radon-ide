@@ -16,6 +16,7 @@ import {
   ProjectState,
   ReloadAction,
   StartupMessage,
+  TouchPoint,
   ZoomLevelType,
 } from "../common/Project";
 import { EventEmitter } from "stream";
@@ -336,18 +337,8 @@ export class Project
     }
   }
 
-  public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.deviceSession?.sendTouch(xRatio, yRatio, type);
-  }
-
-  public async dispatchMultiTouch(
-    xRatio: number,
-    yRatio: number,
-    xAnchorRatio: number,
-    yAnchorRatio: number,
-    type: "Up" | "Move" | "Down"
-  ) {
-    this.deviceSession?.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
+  public async dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+    this.deviceSession?.sendTouches(touches, type);
   }
 
   public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
