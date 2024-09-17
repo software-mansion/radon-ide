@@ -19,7 +19,7 @@ import { Resizable } from "re-resizable";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { Platform, useUtils } from "../providers/UtilsProvider";
+import { useUtils } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 
 declare module "react" {
@@ -182,18 +182,28 @@ type Props = {
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
 };
 
-function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Props) {
-  interface TouchPoint {
-    x: number;
-    y: number;
-  }
+interface Point {
+  x: number;
+  y: number;
+}
 
+function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
+  const { x: pointX, y: pointY } = touchPoint;
+  const { x: mirrorX, y: mirrorY } = anchorPoint;
+  const mirroredPointX = 2 * mirrorX - pointX;
+  const mirroredPointY = 2 * mirrorY - pointY;
+  const clampedX = clamp(mirroredPointX, 0, 1);
+  const clampedY = clamp(mirroredPointY, 0, 1);
+  return { x: clampedX, y: clampedY };
+}
+
+function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
-  const [touchPoint, setTouchPoint] = useState<TouchPoint>({ x: 0.5, y: 0.5 });
-  const [anchorPoint, setAnchorPoint] = useState<TouchPoint>({ x: 0.5, y: 0.5 });
+  const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
+  const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
@@ -250,25 +260,22 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     setAnchorPoint({ x: anchorX, y: anchorY });
   }
 
-  function getMirroredTouchPosition(mirrorPoint: TouchPoint) {
-    const { x: pointX, y: pointY } = touchPoint;
-    const { x: mirrorX, y: mirrorY } = mirrorPoint;
-    const mirroredPointX = 2 * mirrorX - pointX;
-    const mirroredPointY = 2 * mirrorY - pointY;
-    const clampedX = clamp(mirroredPointX, 0, 1);
-    const clampedY = clamp(mirroredPointY, 0, 1);
-    return { x: clampedX, y: clampedY };
-  }
-
   type MouseMove = "Move" | "Down" | "Up";
   function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
     const { x, y } = getTouchPosition(event);
-    project.dispatchTouch(x, y, type);
+    project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
-    const { x, y } = getTouchPosition(event);
-    project.dispatchMultiTouch(x, y, anchorPoint.x, anchorPoint.y, type);
+    const pt = getTouchPosition(event);
+    const secondPt = calculateMirroredTouchPosition(pt, anchorPoint);
+    project.dispatchTouches(
+      [
+        { xRatio: pt.x, yRatio: pt.y },
+        { xRatio: secondPt.x, yRatio: secondPt.y },
+      ],
+      type
+    );
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
@@ -362,14 +369,14 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-
-    if (isMultiTouching) {
-      setIsMultiTouching(false);
-      setIsPanning(false);
-      setIsPressing(false);
-      sendMultiTouch(e, "Up");
-    } else if (isPressing) {
-      sendTouch(e, "Up");
+    if (isPressing) {
+      if (isMultiTouching) {
+        setIsMultiTouching(false);
+        setIsPanning(false);
+        sendMultiTouch(e, "Up");
+      } else {
+        sendTouch(e, "Up");
+      }
       setIsPressing(false);
     }
 
@@ -408,12 +415,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
         e.preventDefault();
         const isKeydown = e.type === "keydown";
 
-        const isMultitouchKeyPressed = Platform.select({
-          macos: e.code === "AltLeft" || e.code === "AltRight",
-          windows: e.code === "ControlLeft" || e.code === "ControlRight",
-        });
-
-        if (isMultitouchKeyPressed) {
+        if (e.code === "AltLeft" || e.code === "AltRight") {
           isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
           setIsMultiTouching(isKeydown);
         }
@@ -470,7 +472,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
     device: device!,
   });
 
-  const mirroredTouchPosition = getMirroredTouchPosition(anchorPoint);
+  const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchMarkerSize = 33;
   const smallTouchMarkerSize = 9;
 
