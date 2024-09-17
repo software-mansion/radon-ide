@@ -376,8 +376,8 @@ function Preview({
       } else {
         sendTouch(e, "Up");
       }
+      setIsPressing(false);
     }
-    setIsPressing(false);
   }
 
   function onMouseEnter(e: MouseEvent<HTMLDivElement>) {
