@@ -393,6 +393,7 @@ function Preview({
         sendTouch(e, "Down");
       }
     }
+    setTouchPoint(getTouchPosition(e));
     setIsTouchAreaActive(true);
   }
 
