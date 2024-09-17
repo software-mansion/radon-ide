@@ -17,6 +17,7 @@ import { InspectData, InspectDataStackItem, ZoomLevelType } from "../../common/P
 import { InspectDataMenu } from "./InspectDataMenu";
 import { Resizable } from "re-resizable";
 import { useResizableProps } from "../hooks/useResizableProps";
+import { useHasFocus } from "../hooks/useHasFocus";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { useUtils } from "../providers/UtilsProvider";
@@ -219,6 +220,7 @@ function Preview({
   const workspace = useWorkspaceConfig();
   const { projectState, project, deviceSettings } = useProject();
   const { openFileAt } = useUtils();
+  const focus = useHasFocus();
 
   const isFrameDisabled = workspace.showDeviceFrame === false;
 
@@ -417,6 +419,15 @@ function Preview({
   function onContextMenu(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
   }
+
+  useEffect(() => {
+    if (!focus) {
+      setIsPanning(false);
+      setIsMultiTouching(false);
+      setIsPressing(false);
+    }
+    setIsTouchAreaActive(focus);
+  }, [focus]);
 
   useEffect(() => {
     function dispatchPaste(e: ClipboardEvent) {
