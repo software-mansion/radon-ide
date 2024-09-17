@@ -135,8 +135,8 @@ function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
   );
 }
 
-function TouchPointMarker({ isPressing }: { isPressing: boolean }) {
-  return <div className={`touch-marker ${isPressing ? "pressed" : ""}`}></div>;
+function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
+  return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
 }
 
 type ButtonGroupLeftProps = {
@@ -501,8 +501,8 @@ function Preview({
   });
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
-  const normalTouchMarkerSize = 33;
-  const smallTouchMarkerSize = 9;
+  const normalTouchIndicatorSize = 33;
+  const smallTouchIndicatorSize = 9;
 
   const isTouchVisible = isTouchAreaActive && isMultiTouching;
 
@@ -531,9 +531,9 @@ function Preview({
                     style={{
                       "--x": `${touchPoint.x * 100}%`,
                       "--y": `${touchPoint.y * 100}%`,
-                      "--size": `${normalTouchMarkerSize}px`,
+                      "--size": `${normalTouchIndicatorSize}px`,
                     }}>
-                    <TouchPointMarker isPressing={isPressing} />
+                    <TouchPointIndicator isPressing={isPressing} />
                   </div>
                 )}
                 {isTouchVisible && (
@@ -541,9 +541,9 @@ function Preview({
                     style={{
                       "--x": `${anchorPoint.x * 100}%`,
                       "--y": `${anchorPoint.y * 100}%`,
-                      "--size": `${smallTouchMarkerSize}px`,
+                      "--size": `${smallTouchIndicatorSize}px`,
                     }}>
-                    <TouchPointMarker isPressing={false} />
+                    <TouchPointIndicator isPressing={false} />
                   </div>
                 )}
                 {isTouchVisible && (
@@ -551,9 +551,9 @@ function Preview({
                     style={{
                       "--x": `${mirroredTouchPosition.x * 100}%`,
                       "--y": `${mirroredTouchPosition.y * 100}%`,
-                      "--size": `${normalTouchMarkerSize}px`,
+                      "--size": `${normalTouchIndicatorSize}px`,
                     }}>
-                    <TouchPointMarker isPressing={isPressing} />
+                    <TouchPointIndicator isPressing={isPressing} />
                   </div>
                 )}
 
