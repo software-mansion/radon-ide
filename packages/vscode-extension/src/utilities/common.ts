@@ -57,9 +57,13 @@ export function getNativeABI() {
   }
 }
 
+export function getOldAppCachesDir() {
+  return join(os.homedir(), "Library", "Caches", "com.swmansion.react-native-ide");
+}
+
 export function getAppCachesDir() {
   // this one is tricky to rename as Android emulators keep absolute path in config files
-  return join(os.homedir(), "Library", "Caches", "com.swmansion.react-native-ide");
+  return join(os.homedir(), "Library", "Caches", "com.swmansion.radon-ide");
 }
 
 export function getLogsDir() {

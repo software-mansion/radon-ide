@@ -1,4 +1,4 @@
-import { getAppCachesDir } from "../utilities/common";
+import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
@@ -60,18 +60,18 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   get lockFilePath(): string {
-    const deviceSetLocation = getDeviceSetLocation();
+    const deviceSetLocation = getDeviceSetLocation(this.deviceUDID);
     const pidFile = path.join(deviceSetLocation, this.deviceUDID, "lock.pid");
     return pidFile;
   }
 
-  public dispose() {
+  public async dispose() {
     super.dispose();
-    return exec("xcrun", ["simctl", "--set", getOrCreateDeviceSet(), "shutdown", this.deviceUDID]);
+    return exec("xcrun", ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID), "shutdown", this.deviceUDID]);
   }
 
   async bootDevice() {
-    const deviceSetLocation = getOrCreateDeviceSet();
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     try {
       await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", this.deviceUDID], {
         allowNonZeroExit: true,
@@ -87,7 +87,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async changeSettings(settings: DeviceSettings) {
-    const deviceSetLocation = getOrCreateDeviceSet();
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     await exec("xcrun", [
       "simctl",
       "--set",
@@ -149,7 +149,7 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
   async sendBiometricAuthorization(isMatch: boolean) {
-    const deviceSetLocation = getOrCreateDeviceSet();
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     await exec("xcrun", [
       "simctl",
       "--set",
@@ -165,7 +165,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async configureMetroPort(bundleID: string, metroPort: number) {
-    const deviceSetLocation = getOrCreateDeviceSet();
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     const { stdout: appDataLocation } = await exec("xcrun", [
       "simctl",
       "--set",
@@ -201,7 +201,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async launchWithBuild(build: IOSBuildResult) {
-    const deviceSetLocation = getOrCreateDeviceSet();
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     await exec("xcrun", [
       "simctl",
       "--set",
@@ -218,7 +218,7 @@ export class IosSimulatorDevice extends DeviceBase {
     // 1. Add the deeplink to the scheme approval list
     // 2. Terminate the app if it's running
     // 3. Open the deeplink
-    const deviceSetLocation = getOrCreateDeviceSet();
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
     // Add the deeplink to the scheme approval list:
     const schema = new URL(expoDeeplink).protocol.slice(0, -1);
@@ -279,7 +279,7 @@ export class IosSimulatorDevice extends DeviceBase {
     if (build.platform !== DevicePlatform.IOS) {
       throw new Error("Invalid platform");
     }
-    const deviceSetLocation = getOrCreateDeviceSet();
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     if (forceReinstall) {
       try {
         await exec(
@@ -309,7 +309,7 @@ export class IosSimulatorDevice extends DeviceBase {
     await exec("xcrun", [
       "simctl",
       "--set",
-      getOrCreateDeviceSet(),
+      getOrCreateDeviceSet(this.deviceUDID),
       "privacy",
       this.deviceUDID,
       "reset",
@@ -320,7 +320,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   makePreview(): Preview {
-    return new Preview(["ios", this.deviceUDID, getOrCreateDeviceSet()]);
+    return new Preview(["ios", this.deviceUDID, getOrCreateDeviceSet(this.deviceUDID)]);
   }
 }
 
@@ -348,28 +348,52 @@ export async function removeIosSimulator(udid: string | undefined, location: Sim
 
   let deviceSetArgs: string[] = [];
   if (location === SimulatorDeviceSet.RN_IDE) {
-    const setDirectory = getOrCreateDeviceSet();
+    const setDirectory = getOrCreateDeviceSet(udid);
     deviceSetArgs = ["--set", setDirectory];
   }
 
   return exec("xcrun", ["simctl", ...deviceSetArgs, "delete", udid]);
 }
 
+async function listSimulatorsForLocation(location?: string){
+  let deviceSetArgs: string[] = [];
+  if (location) {
+    deviceSetArgs = ["--set", location];
+  }
+  try{
+    const { stdout } = await exec("xcrun", ["simctl", ...deviceSetArgs, "list", "devices", "--json"]);
+    const parsedData: SimulatorData = JSON.parse(stdout);
+  
+    const { devices: devicesPerRuntime } = parsedData;
+  
+    return Object.entries(devicesPerRuntime);
+  }catch(e){
+    // ignore errors because some locations might not exist
+  }
+  return [];
+}
+
 export async function listSimulators(
   location: SimulatorDeviceSet = SimulatorDeviceSet.RN_IDE
 ): Promise<IOSDeviceInfo[]> {
-  let deviceSetArgs: string[] = [];
+  let devicesPerRuntime;
   if (location === SimulatorDeviceSet.RN_IDE) {
     const deviceSetLocation = getOrCreateDeviceSet();
-    deviceSetArgs = ["--set", deviceSetLocation];
-  }
-  const { stdout } = await exec("xcrun", ["simctl", ...deviceSetArgs, "list", "devices", "--json"]);
-  const parsedData: SimulatorData = JSON.parse(stdout);
+    
+    devicesPerRuntime = await listSimulatorsForLocation(deviceSetLocation);
+    
+    const oldDeviceSetLocation = getOldDeviceSetLocation();
+    const oldDevicesPerRuntime = await listSimulatorsForLocation(oldDeviceSetLocation);
 
-  const { devices: devicesPerRuntime } = parsedData;
+    devicesPerRuntime = devicesPerRuntime.concat(oldDevicesPerRuntime);
+  }else{
+    devicesPerRuntime = await listSimulatorsForLocation();
+  }
+  
+  
   const runtimes = await getAvailableIosRuntimes();
 
-  const simulators = Object.entries(devicesPerRuntime)
+  const simulators = devicesPerRuntime
     .map(([runtimeID, devices]) => {
       const runtime = runtimes.find((item) => item.identifier === runtimeID);
 
@@ -432,13 +456,26 @@ export async function createSimulator(
   } as IOSDeviceInfo;
 }
 
-function getDeviceSetLocation() {
+function getDeviceSetLocation(deviceUDID?: string) {
   const appCachesDir = getAppCachesDir();
+  if(!deviceUDID){
+    return path.join(appCachesDir, "Devices", "iOS"); 
+  }
+  const oldDeviceSetLocation = getOldDeviceSetLocation();
+  const devices = fs.readdirSync(oldDeviceSetLocation);
+  if (devices.includes(deviceUDID)){
+    return oldDeviceSetLocation;
+  }
   return path.join(appCachesDir, "Devices", "iOS");
 }
 
-function getOrCreateDeviceSet() {
-  const deviceSetLocation = getDeviceSetLocation();
+function getOldDeviceSetLocation(){
+  const oldAppCachesDir = getOldAppCachesDir();
+  return path.join(oldAppCachesDir, "Devices", "iOS");
+}
+
+function getOrCreateDeviceSet(deviceUDID?: string) {
+  let deviceSetLocation = getDeviceSetLocation(deviceUDID);
   if (!fs.existsSync(deviceSetLocation)) {
     fs.mkdirSync(deviceSetLocation, { recursive: true });
   }
