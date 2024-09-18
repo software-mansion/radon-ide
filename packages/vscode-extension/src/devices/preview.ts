@@ -37,7 +37,12 @@ export class Preview implements Disposable {
 
       const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
 
-      lineReader(subprocess).onLineRead((line) => {
+      lineReader(subprocess).onLineRead((line, stderr) => {
+        if (stderr) {
+          Logger.warn("sim-server err:", line);
+          return;
+        }
+
         const match = line.match(streamURLRegex);
 
         if (match) {
@@ -46,7 +51,7 @@ export class Preview implements Disposable {
           this.streamURL = match[1];
           resolve(this.streamURL);
         }
-        Logger.debug("Preview server:", line);
+        Logger.debug("sim-server out:", line);
       });
     });
   }

@@ -120,7 +120,7 @@ export async function buildAndroid(
   );
   const buildAndroidProgressProcessor = new BuildAndroidProgressProcessor(progressListener);
   outputChannel.clear();
-  lineReader(buildProcess, true).onLineRead((line) => {
+  lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
     buildAndroidProgressProcessor.processLine(line);
   });
