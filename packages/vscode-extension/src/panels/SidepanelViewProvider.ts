@@ -13,7 +13,7 @@ import { WebviewController } from "./WebviewController";
 import { Logger } from "../Logger";
 
 export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
-  public static readonly viewType = "ReactNativeIDE.view";
+  public static readonly viewType = "RadonIDE.view";
   public static currentProvider: SidePanelViewProvider | undefined;
   private _view: any = null;
   public get view(): any {
@@ -40,9 +40,7 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
   public static showView(context: ExtensionContext, fileName?: string, lineNumber?: number) {
     if (SidePanelViewProvider.currentProvider) {
       commands.executeCommand(`${SidePanelViewProvider.viewType}.focus`);
-      if (
-        workspace.getConfiguration("ReactNativeIDE").get("panelLocation") === "secondary-side-panel"
-      ) {
+      if (workspace.getConfiguration("RadonIDE").get("panelLocation") === "secondary-side-panel") {
         commands.executeCommand("workbench.action.focusAuxiliaryBar");
       }
     } else {

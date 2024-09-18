@@ -78,9 +78,9 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
     if (!RNIDEConfigurationExits) {
       newConfigurations?.push({
-        type: "react-native-ide", // TODO: this should be renamed but will be visible to users
+        type: "radon-ide",
         request: "launch",
-        name: "React Native IDE panel",
+        name: "Radon IDE panel",
         ...newLaunchConfig,
       });
     }

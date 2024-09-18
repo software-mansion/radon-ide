@@ -1,6 +1,6 @@
 import { window } from "vscode";
 
-const outputChannel = window.createOutputChannel("React Native IDE", { log: true });
+const outputChannel = window.createOutputChannel("Radon IDE", { log: true });
 
 const logger = {
   log(_message: string, ..._args: any[]) {},

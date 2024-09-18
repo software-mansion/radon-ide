@@ -356,7 +356,7 @@ export class Project
       if (requestStack && inspectData?.stack) {
         stack = inspectData.stack;
         const inspectorExcludePattern = workspace
-          .getConfiguration("ReactNativeIDE")
+          .getConfiguration("RadonIDE")
           .get("inspectorExcludePattern") as string | undefined;
         const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
         function testInspectorExcludeGlobPattern(filename: string) {
@@ -478,7 +478,7 @@ export class Project
     } catch (e) {
       if (e instanceof DeviceAlreadyUsedError) {
         window.showErrorMessage(
-          "This device is already used by other instance of React Native IDE.\nPlease select another device",
+          "This device is already used by other instance of Radon IDE.\nPlease select another device",
           "Dismiss"
         );
       } else {

@@ -13,7 +13,7 @@ test("Shows error on Linux", async () => {
 
   await getExtension().activate();
 
-  assert.ok(showErrorMessage.calledOnceWith("React Native IDE works only on macOS and Windows."));
+  assert.ok(showErrorMessage.calledOnceWith("Radon IDE works only on macOS and Windows."));
 });
 
 function stubLinuxPlatform() {

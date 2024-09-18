@@ -1,6 +1,6 @@
 {
   "name": "react-native-ide",
-  "displayName": "React Native IDE",
+  "displayName": "Radon IDE",
   "description": "Extension turning VSCode into a full-featured IDE for React Native and Expo",
   "publisher": "swmansion",
   "categories": [
@@ -34,44 +34,44 @@
       {
         "command": "RNIDE.openDevMenu",
         "title": "Open Dev Menu",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
         "command": "RNIDE.closePanel",
         "title": "Close IDE Panel",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "icon": "$(close)",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
         "command": "RNIDE.openPanel",
         "title": "Open IDE Panel",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
       },
       {
         "command": "RNIDE.showPanel",
         "title": "Show IDE Panel",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       },
       {
         "command": "RNIDE.diagnose",
         "title": "Diagnostics",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "!RNIDE.extensionIsActive"
       },
       {
         "command": "RNIDE.performBiometricAuthorization",
         "title": "Perform Biometric Authorization ",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
         "command": "RNIDE.performFailedBiometricAuthorization",
         "title": "Perform Failed Biometric Authorization",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
       }
     ],
@@ -99,9 +99,9 @@
       }
     ],
     "configuration": {
-      "title": "React Native IDE",
+      "title": "Radon IDE",
       "properties": {
-        "ReactNativeIDE.panelLocation": {
+        "RadonIDE.panelLocation": {
           "type": "string",
           "scope": "window",
           "default": "tab",
@@ -112,13 +112,13 @@
           ],
           "description": "Controlls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
         },
-        "ReactNativeIDE.showDeviceFrame": {
+        "RadonIDE.showDeviceFrame": {
           "type": "boolean",
           "scope": "window",
           "default": true,
           "description": "Shows device frame in the IDE panel."
         },
-        "ReactNativeIDE.inspectorExcludePattern": {
+        "RadonIDE.inspectorExcludePattern": {
           "type": "string",
           "scope": "window",
           "default": null,
@@ -129,19 +129,19 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "ReactNativeIDE",
-          "title": "React Native IDE",
+          "id": "RadonIDE",
+          "title": "Radon IDE",
           "icon": "assets/logo.svg"
         }
       ]
     },
     "views": {
-      "ReactNativeIDE": [
+      "RadonIDE": [
         {
           "type": "webview",
-          "id": "ReactNativeIDE.view",
+          "id": "RadonIDE.view",
           "name": "",
-          "when": "config.ReactNativeIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
+          "when": "config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ]
     },
@@ -157,7 +157,7 @@
         {
           "command": "RNIDE.closePanel",
           "group": "navigation",
-          "when": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && view == ReactNativeIDE.view"
+          "when": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && view == RadonIDE.view"
         }
       ]
     },
@@ -251,9 +251,9 @@
         },
         "initialConfigurations": [
           {
-            "type": "react-native-ide",
+            "type": "radon-ide",
             "request": "launch",
-            "name": "React Native IDE panel",
+            "name": "Radon IDE panel",
             "ios": {
               "configuration": "Debug"
             },
@@ -265,7 +265,8 @@
       },
       {
         "type": "react-native-ide",
-        "label": "React Native IDE",
+        "label": "Radon IDE",
+        "deprecated": "true",
         "languages": [
           "javascript",
           "typescript",
@@ -337,7 +338,7 @@
           {
             "type": "react-native-ide",
             "request": "launch",
-            "name": "React Native IDE panel",
+            "name": "Radon IDE panel",
             "ios": {
               "configuration": "Debug"
             },
