@@ -83,4 +83,4 @@ If you need to install an older version of an IDE, you can do so by navigating t
 
 ### -sec-num- Configureing Alternative Xcode Versions
 
-If you are using alternative Xcode version ( e.g. xcode-beta, "xcodes" ) IDE will only work if xcode-select points to the correct directory to set it up run: `xcode-select --switch ${PathToYourXCode}/Contents/Developer`
+If you are using alternative Xcode version ( e.g. xcode-beta, ["xcodes"](https://www.xcodes.app/) IDE will only work if xcode-select points to the correct directory to set it up run: `xcode-select --switch ${PathToYourXCode}/Contents/Developer`
