@@ -17,7 +17,6 @@ import { InspectData, InspectDataStackItem, ZoomLevelType } from "../../common/P
 import { InspectDataMenu } from "./InspectDataMenu";
 import { Resizable } from "re-resizable";
 import { useResizableProps } from "../hooks/useResizableProps";
-import { useHasFocus } from "../hooks/useHasFocus";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { useUtils } from "../providers/UtilsProvider";
@@ -220,7 +219,6 @@ function Preview({
   const workspace = useWorkspaceConfig();
   const { projectState, project, deviceSettings } = useProject();
   const { openFileAt } = useUtils();
-  const focus = useHasFocus();
 
   const isFrameDisabled = workspace.showDeviceFrame === false;
 
@@ -335,10 +333,6 @@ function Preview({
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (!isTouchAreaActive) {
-      return;
-    }
-
     if (isMultiTouching) {
       isPanning && moveAnchorPoint(e);
       isPressing && sendMultiTouch(e, "Move");
@@ -394,7 +388,6 @@ function Preview({
       }
     }
     setTouchPoint(getTouchPosition(e));
-    setIsTouchAreaActive(true);
   }
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
@@ -407,7 +400,6 @@ function Preview({
         setIsPressing(false);
       }
     }
-    setIsTouchAreaActive(false);
 
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
@@ -421,13 +413,16 @@ function Preview({
   }
 
   useEffect(() => {
-    if (!focus) {
-      setIsPanning(false);
-      setIsMultiTouching(false);
-      setIsPressing(false);
+    function onBlurChange() {
+      if (!document.hasFocus()) {
+        setIsPanning(false);
+        setIsMultiTouching(false);
+        setIsPressing(false);
+      }
     }
-    setIsTouchAreaActive(focus);
-  }, [focus]);
+    addEventListener("blur", onBlurChange);
+    return () => removeEventListener("blur", onBlurChange);
+  }, [project]);
 
   useEffect(() => {
     function dispatchPaste(e: ClipboardEvent) {
@@ -440,7 +435,6 @@ function Preview({
         }
       }
     }
-
     addEventListener("paste", dispatchPaste);
     return () => {
       removeEventListener("paste", dispatchPaste);
@@ -515,8 +509,6 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
-  const isTouchVisible = isTouchAreaActive && isMultiTouching;
-
   return (
     <>
       <div
@@ -537,7 +529,7 @@ function Preview({
                   className="phone-screen"
                 />
 
-                {isTouchVisible && (
+                {isMultiTouching && (
                   <div
                     style={{
                       "--x": `${touchPoint.x * 100}%`,
@@ -547,7 +539,7 @@ function Preview({
                     <TouchPointIndicator isPressing={isPressing} />
                   </div>
                 )}
-                {isTouchVisible && (
+                {isMultiTouching && (
                   <div
                     style={{
                       "--x": `${anchorPoint.x * 100}%`,
@@ -557,7 +549,7 @@ function Preview({
                     <TouchPointIndicator isPressing={false} />
                   </div>
                 )}
-                {isTouchVisible && (
+                {isMultiTouching && (
                   <div
                     style={{
                       "--x": `${mirroredTouchPosition.x * 100}%`,
