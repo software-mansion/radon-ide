@@ -34,6 +34,7 @@ function PreviewView() {
   );
   const [logCounter, setLogCounter] = useState(0);
   const [resetKey, setResetKey] = useState(0);
+  const [replayURL, setReplayURL] = useState<string | undefined>(undefined);
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
@@ -106,6 +107,20 @@ function PreviewView() {
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
         <Button
+          tooltip={{
+            label: "Create video snapshot of the device preview",
+          }}
+          onClick={async () => {
+            const replayURL = await project.createVideoSnapshot();
+            setReplayURL(replayURL);
+          }}>
+          <span style={{ padding: 0 }}>
+            <span className="codicon codicon-triangle-left icons-rewind" />
+            <span className="codicon codicon-triangle-left icons-rewind" />
+          </span>
+          Replay
+        </Button>
+        <Button
           counter={logCounter}
           onClick={() => {
             setLogCounter(0);
@@ -133,6 +148,7 @@ function PreviewView() {
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
           zoomLevel={zoomLevel}
+          replayURL={replayURL}
           onZoomChanged={onZoomChanged}
         />
       ) : (

@@ -158,6 +158,13 @@ export class Project
   }
   //#endregion
 
+  async createVideoSnapshot(): Promise<string> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    return this.deviceSession.createVideoSnapshot();
+  }
+
   async dispatchPaste(text: string) {
     this.deviceSession?.sendPaste(text);
   }

@@ -186,6 +186,10 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
+  public async createVideoSnapshot() {
+    return this.device.createVideoSnapshot();
+  }
+
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
     this.device.sendTouches(touches, type);
   }

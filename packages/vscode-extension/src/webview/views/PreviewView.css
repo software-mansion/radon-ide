@@ -7,6 +7,10 @@
   gap: 4px;
 }
 
+.icons-rewind:before {
+  width: 10px;
+}
+
 .button-group-top {
   margin-bottom: 8px;
 }

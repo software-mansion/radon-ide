@@ -180,6 +180,7 @@ type Props = {
   setIsInspecting: (isInspecting: boolean) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
+  replayURL: string | undefined;
 };
 
 interface Point {
@@ -197,7 +198,7 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
   return { x: clampedX, y: clampedY };
 }
 
-function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Props) {
+function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged, replayURL }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
@@ -495,6 +496,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged }: Pr
                   }}
                   className="phone-screen"
                 />
+                {replayURL && <video src={replayURL} className="phone-screen" />}
 
                 {isMultiTouching && (
                   <div

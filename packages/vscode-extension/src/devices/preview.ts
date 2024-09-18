@@ -6,9 +6,16 @@ import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
 import { TouchPoint } from "../common/Project";
 
+interface ReplayPromiseHandlers {
+  resolve: (value: string) => void;
+  reject: (reason?: any) => void;
+}
+
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
   public streamURL?: string;
+  private replayPromises: Map<number, ReplayPromiseHandlers> = new Map();
+  private replayCounter = 0;
 
   constructor(private args: string[]) {}
 
@@ -37,18 +44,47 @@ export class Preview implements Disposable {
 
       const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
 
-      lineReader(subprocess).onLineRead((line) => {
-        const match = line.match(streamURLRegex);
-
-        if (match) {
-          Logger.debug(`Preview server ready ${match[1]}`);
-
-          this.streamURL = match[1];
-          resolve(this.streamURL);
+      lineReader(subprocess).onLineRead((line, stderr) => {
+        if (stderr) {
+          // forward sim-server stderr to the main logger as warnings
+          Logger.warn("sim-server err:", line);
+          return;
         }
-        Logger.debug("Preview server:", line);
+
+        if (line.startsWith("http")) {
+          const match = line.match(streamURLRegex);
+
+          if (match) {
+            Logger.debug(`sim-server ready ${match[1]}`);
+
+            this.streamURL = match[1];
+            resolve(this.streamURL);
+          }
+        } else if (line.startsWith("replay")) {
+        }
+        Logger.debug("sim-server out:", line);
       });
     });
+  }
+
+  public createVideoSnapshot() {
+    const stdin = this.subprocess?.stdin;
+    if (!stdin) {
+      throw new Error("sim-server process not available");
+    }
+    let resolvePromise: (value: string) => void;
+    let rejectPromise: (reason?: any) => void;
+    const promise = new Promise<string>((resolve, reject) => {
+      resolvePromise = resolve;
+      rejectPromise = reject;
+    });
+    this.replayCounter += 1;
+    this.replayPromises.set(this.replayCounter, {
+      resolve: resolvePromise!,
+      reject: rejectPromise!,
+    });
+    stdin.write("replay 10\n");
+    return promise;
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
