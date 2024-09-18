@@ -8,6 +8,7 @@ import { getAppRootFolder } from "../utilities/extensionContext";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
+import { shouldUseExpoCLI } from "../../src/project/metro";
 import {
   isNodeModulesInstalled,
   isPackageManagerAvailable,
@@ -276,7 +277,7 @@ export class DependencyManager implements Disposable {
         installed,
         info: "Whether supported version of Expo SDK is installed.",
         error,
-        isOptional: !isExpoProject(),
+        isOptional: !shouldUseExpoCLI(),
       },
     });
     Logger.debug(`Minimum Expo version installed:`, installed);
@@ -462,32 +463,6 @@ export function checkMinDependencyVersionInstalled(dependency: string, minVersio
 
 export async function checkAndroidEmulatorExists() {
   return fs.existsSync(EMULATOR_BINARY);
-}
-
-export function isExpoProject() {
-  // determine if a project is an Expo project based on dependencies and scripts in package.json
-  const appRoot = getAppRootFolder();
-  const config = getLaunchConfiguration();
-
-  if (config.isExpo) {
-    return true;
-  }
-
-  const packageJson = requireNoCache(path.join(appRoot, "package.json"));
-  let hasExpoCLInDependencies = false;
-  try {
-    hasExpoCLInDependencies =
-      Object.keys(packageJson.dependencies).some((dependency) => dependency === "expo") ||
-      Object.keys(packageJson.devDependencies).some((dependency) => dependency === "expo");
-  } catch (e) {}
-
-  let hasExpoCommandsInScripts = false;
-  try {
-    hasExpoCommandsInScripts = Object.values<string>(packageJson.scripts).some((script: string) =>
-      script.includes("expo ")
-    );
-  } catch (e) {}
-  return hasExpoCLInDependencies && hasExpoCommandsInScripts;
 }
 
 export function isExpoRouterProject() {

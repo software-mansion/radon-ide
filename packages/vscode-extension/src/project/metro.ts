@@ -328,7 +328,7 @@ function findCustomMetroConfig(configPath: string) {
   throw new Error("Metro config cannot be found, please check if `metroConfigPath` path is valid");
 }
 
-function shouldUseExpoCLI() {
+export function shouldUseExpoCLI() {
   // The mechanism for detecting whether the project should use Expo CLI or React Native Community CLI works as follows:
   // We check launch configuration, which has an option to force Expo CLI, we verify that first and if it is set to true we use Expo CLI.
   // When the Expo option isn't set, we need all of the below checks to be true in order to use Expo CLI:
