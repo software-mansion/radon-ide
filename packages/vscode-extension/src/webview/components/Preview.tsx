@@ -420,9 +420,9 @@ function Preview({
         setIsPressing(false);
       }
     }
-    addEventListener("blur", onBlurChange);
-    return () => removeEventListener("blur", onBlurChange);
-  }, [project]);
+    addEventListener("blur", onBlurChange, true);
+    return () => removeEventListener("blur", onBlurChange, true);
+  }, []);
 
   useEffect(() => {
     function dispatchPaste(e: ClipboardEvent) {
