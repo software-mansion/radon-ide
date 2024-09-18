@@ -367,13 +367,11 @@ async function listSimulatorsForLocation(location?: string) {
     deviceSetArgs = ["--set", location];
   }
   try {
-    const { stdout } = await exec("xcrun", [
-      "simctl",
-      ...deviceSetArgs,
-      "list",
-      "devices",
-      "--json",
-    ]);
+    const { stdout } = await exec(
+      "xcrun",
+      ["simctl", ...deviceSetArgs, "list", "devices", "--json"],
+      { allowNonZeroExit: true }
+    );
     const parsedData: SimulatorData = JSON.parse(stdout);
 
     const { devices: devicesPerRuntime } = parsedData;
@@ -469,10 +467,14 @@ export async function createSimulator(
 
 function getDeviceSetLocation(deviceUDID?: string) {
   const appCachesDir = getAppCachesDir();
+  const deviceSetLocation = path.join(appCachesDir, "Devices", "iOS");
   if (!deviceUDID) {
-    return path.join(appCachesDir, "Devices", "iOS");
+    return deviceSetLocation;
   }
   const oldDeviceSetLocation = getOldDeviceSetLocation();
+  if (!fs.existsSync(oldDeviceSetLocation)) {
+    return deviceSetLocation;
+  }
   const devices = fs.readdirSync(oldDeviceSetLocation);
   if (devices.includes(deviceUDID)) {
     return oldDeviceSetLocation;

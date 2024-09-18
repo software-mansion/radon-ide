@@ -616,11 +616,13 @@ function getAvdDirectoryLocation(avd?: string) {
   }
 
   const oldAvdDirectory = getOldAvdDirectoryLocation();
+  if (!fs.existsSync(oldAvdDirectory)) {
+    return avdDirectory;
+  }
   const devices = fs.readdirSync(oldAvdDirectory);
   if (devices.includes(`${avd}.avd`)) {
     return oldAvdDirectory;
   }
-
   return avdDirectory;
 }
 
