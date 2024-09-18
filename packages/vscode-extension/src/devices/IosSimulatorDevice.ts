@@ -67,7 +67,13 @@ export class IosSimulatorDevice extends DeviceBase {
 
   public async dispose() {
     super.dispose();
-    return exec("xcrun", ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID), "shutdown", this.deviceUDID]);
+    return exec("xcrun", [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(this.deviceUDID),
+      "shutdown",
+      this.deviceUDID,
+    ]);
   }
 
   async bootDevice() {
@@ -355,19 +361,25 @@ export async function removeIosSimulator(udid: string | undefined, location: Sim
   return exec("xcrun", ["simctl", ...deviceSetArgs, "delete", udid]);
 }
 
-async function listSimulatorsForLocation(location?: string){
+async function listSimulatorsForLocation(location?: string) {
   let deviceSetArgs: string[] = [];
   if (location) {
     deviceSetArgs = ["--set", location];
   }
-  try{
-    const { stdout } = await exec("xcrun", ["simctl", ...deviceSetArgs, "list", "devices", "--json"]);
+  try {
+    const { stdout } = await exec("xcrun", [
+      "simctl",
+      ...deviceSetArgs,
+      "list",
+      "devices",
+      "--json",
+    ]);
     const parsedData: SimulatorData = JSON.parse(stdout);
-  
+
     const { devices: devicesPerRuntime } = parsedData;
-  
+
     return Object.entries(devicesPerRuntime);
-  }catch(e){
+  } catch (e) {
     // ignore errors because some locations might not exist
   }
   return [];
@@ -379,18 +391,17 @@ export async function listSimulators(
   let devicesPerRuntime;
   if (location === SimulatorDeviceSet.RN_IDE) {
     const deviceSetLocation = getOrCreateDeviceSet();
-    
+
     devicesPerRuntime = await listSimulatorsForLocation(deviceSetLocation);
-    
+
     const oldDeviceSetLocation = getOldDeviceSetLocation();
     const oldDevicesPerRuntime = await listSimulatorsForLocation(oldDeviceSetLocation);
 
     devicesPerRuntime = devicesPerRuntime.concat(oldDevicesPerRuntime);
-  }else{
+  } else {
     devicesPerRuntime = await listSimulatorsForLocation();
   }
-  
-  
+
   const runtimes = await getAvailableIosRuntimes();
 
   const simulators = devicesPerRuntime
@@ -458,18 +469,18 @@ export async function createSimulator(
 
 function getDeviceSetLocation(deviceUDID?: string) {
   const appCachesDir = getAppCachesDir();
-  if(!deviceUDID){
-    return path.join(appCachesDir, "Devices", "iOS"); 
+  if (!deviceUDID) {
+    return path.join(appCachesDir, "Devices", "iOS");
   }
   const oldDeviceSetLocation = getOldDeviceSetLocation();
   const devices = fs.readdirSync(oldDeviceSetLocation);
-  if (devices.includes(deviceUDID)){
+  if (devices.includes(deviceUDID)) {
     return oldDeviceSetLocation;
   }
   return path.join(appCachesDir, "Devices", "iOS");
 }
 
-function getOldDeviceSetLocation(){
+function getOldDeviceSetLocation() {
   const oldAppCachesDir = getOldAppCachesDir();
   return path.join(oldAppCachesDir, "Devices", "iOS");
 }
