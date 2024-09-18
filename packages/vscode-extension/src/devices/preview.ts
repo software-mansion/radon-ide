@@ -29,6 +29,7 @@ export class Preview implements Disposable {
     if (Platform.OS === "macos") {
       const { stdout } = await exec("xcode-select", ["-p"]);
       const DYLD_FRAMEWORK_PATH = path.join(stdout, "Library", "PrivateFrameworks");
+      Logger.debug(`Setting DYLD_FRAMEWORK_PATH to ${DYLD_FRAMEWORK_PATH}`);
       simControllerBinaryEnv = { DYLD_FRAMEWORK_PATH };
     }
 
