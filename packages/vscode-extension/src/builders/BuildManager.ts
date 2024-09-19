@@ -57,7 +57,7 @@ export class BuildManager {
 
       let buildResult: BuildResult;
       if (platform === DevicePlatform.Android) {
-        this.buildOutputChannel = window.createOutputChannel("React Native IDE (Android build)", {
+        this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
           log: true,
         });
         buildResult = await buildAndroid(
@@ -68,7 +68,7 @@ export class BuildManager {
           progressListener
         );
       } else {
-        this.buildOutputChannel = window.createOutputChannel("React Native IDE (iOS build)", {
+        this.buildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
           log: true,
         });
         buildResult = await buildIos(

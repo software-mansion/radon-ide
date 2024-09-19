@@ -48,10 +48,10 @@ export class TabPanel implements Disposable {
     this.webviewController = new WebviewController(this._panel.webview);
 
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-      if (!event.affectsConfiguration("ReactNativeIDE")) {
+      if (!event.affectsConfiguration("RadonIDE")) {
         return;
       }
-      if (workspace.getConfiguration("ReactNativeIDE").get("panelLocation") !== "tab") {
+      if (workspace.getConfiguration("RadonIDE").get("panelLocation") !== "tab") {
         this.dispose();
       }
     });
@@ -69,7 +69,7 @@ export class TabPanel implements Disposable {
 
       const panel = window.createWebviewPanel(
         "radon-ide-panel",
-        "React Native IDE",
+        "Radon IDE",
         { viewColumn: emptyGroup?.viewColumn || ViewColumn.Beside },
         {
           enableScripts: true,
