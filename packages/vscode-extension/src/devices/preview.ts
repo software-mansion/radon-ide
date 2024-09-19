@@ -50,16 +50,21 @@ export class Preview implements Disposable {
 
       const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
 
-      lineReader(subprocess).onLineRead((line) => {
+      lineReader(subprocess).onLineRead((line, stderr) => {
+        if (stderr) {
+          Logger.info("sim-server:", line);
+          return;
+        }
+
         const match = line.match(streamURLRegex);
 
         if (match) {
-          Logger.debug(`Preview server ready ${match[1]}`);
+          Logger.info(`Stream ready ${match[1]}`);
 
           this.streamURL = match[1];
           resolve(this.streamURL);
         }
-        Logger.debug("Preview server:", line);
+        Logger.info("sim-server:", line);
       });
     });
   }
