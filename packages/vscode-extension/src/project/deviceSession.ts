@@ -4,7 +4,14 @@ import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { BuildManager, BuildResult, DisposableBuild } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, ReloadAction, StartupMessage, TouchPoint, Locale} from "../common/Project";
+import {
+  AppPermissionType,
+  DeviceSettings,
+  ReloadAction,
+  StartupMessage,
+  TouchPoint,
+  Locale,
+} from "../common/Project";
 import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
