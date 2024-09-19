@@ -81,3 +81,7 @@ Here is what you can try when the extension got stuck on some errors:
 If you need to install an older version of an IDE, you can do so by navigating to the cogwheel menu next to the "install" button in the market place.
 
 <img width="698" alt="download-older-version" src="/img/docs/marketplace_install_older_version.png"/>
+
+### -sec-num- Configureing Alternative Xcode Versions
+
+If you are using alternative Xcode version ( e.g. xcode-beta, ["xcodes"](https://www.xcodes.app/) IDE will only work if xcode-select points to the correct directory to set it up run: `xcode-select --switch ${PathToYourXCode}/Contents/Developer`

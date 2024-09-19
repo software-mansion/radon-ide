@@ -21,7 +21,7 @@ function DiagnosticView() {
   const { dependencies, runDiagnostics } = useDependencies();
 
   return (
-    <>
+    <div className="diagnostic-container">
       <Label>Common</Label>
       <DiagnosticItem label="Node.js" item={dependencies.Nodejs} />
       <DiagnosticItem label="Node Modules" item={dependencies.NodeModules} />
@@ -57,7 +57,7 @@ function DiagnosticView() {
           Re-run checks
         </Button>
       </div>
-    </>
+    </div>
   );
 }
 

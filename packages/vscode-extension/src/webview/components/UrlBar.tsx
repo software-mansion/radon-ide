@@ -104,7 +104,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go to main screen",
           side: "bottom",
         }}
-        disabled={disabled || urlList.length < 2}>
+        disabled={disabled}>
         <span className="codicon codicon-home" />
       </IconButton>
       <UrlSelect

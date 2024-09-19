@@ -8,6 +8,7 @@ import { getAppRootFolder } from "../utilities/extensionContext";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
+import { shouldUseExpoCLI } from "../utilities/expoCli";
 import {
   isNodeModulesInstalled,
   isPackageManagerAvailable,
@@ -276,6 +277,7 @@ export class DependencyManager implements Disposable {
         installed,
         info: "Whether supported version of Expo SDK is installed.",
         error,
+        isOptional: !shouldUseExpoCLI(),
       },
     });
     Logger.debug(`Minimum Expo version installed:`, installed);

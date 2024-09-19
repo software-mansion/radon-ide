@@ -31,7 +31,20 @@ export class Preview implements Disposable {
     );
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
-    const subprocess = exec(simControllerBinary, this.args, { buffer: false });
+
+    let simControllerBinaryEnv: { DYLD_FRAMEWORK_PATH: string } | undefined;
+
+    if (Platform.OS === "macos") {
+      const { stdout } = await exec("xcode-select", ["-p"]);
+      const DYLD_FRAMEWORK_PATH = path.join(stdout, "Library", "PrivateFrameworks");
+      Logger.debug(`Setting DYLD_FRAMEWORK_PATH to ${DYLD_FRAMEWORK_PATH}`);
+      simControllerBinaryEnv = { DYLD_FRAMEWORK_PATH };
+    }
+
+    const subprocess = exec(simControllerBinary, this.args, {
+      buffer: false,
+      env: simControllerBinaryEnv,
+    });
     this.subprocess = subprocess;
 
     return new Promise<string>((resolve, reject) => {
@@ -46,6 +59,7 @@ export class Preview implements Disposable {
 
       lineReader(subprocess).onLineRead((line, stderr) => {
         if (stderr) {
+<<<<<<< HEAD
           // forward sim-server stderr to the main logger as warnings
           Logger.warn("sim-server err:", line);
           return;
@@ -63,6 +77,21 @@ export class Preview implements Disposable {
         } else if (line.startsWith("replay")) {
         }
         Logger.debug("sim-server out:", line);
+=======
+          Logger.info("sim-server:", line);
+          return;
+        }
+
+        const match = line.match(streamURLRegex);
+
+        if (match) {
+          Logger.info(`Stream ready ${match[1]}`);
+
+          this.streamURL = match[1];
+          resolve(this.streamURL);
+        }
+        Logger.info("sim-server:", line);
+>>>>>>> origin/main
       });
     });
   }
