@@ -12,18 +12,22 @@ export async function openFileAtPosition(
   });
 
   const selection = new Range(line0Based, column0Based, line0Based, column0Based);
+  const activeRNIDEColumn = window.tabGroups.all.find(
+    (group) => group.activeTab?.label === "React Native IDE"
+  )?.viewColumn;
+  const column = activeRNIDEColumn === ViewColumn.One ? ViewColumn.Beside : ViewColumn.One;
   if (existingDocument) {
     // If the file is already open, show (focus on) its editor
     await window.showTextDocument(existingDocument, {
       selection,
-      viewColumn: ViewColumn.One,
+      viewColumn: column,
     });
   } else {
     // If the file is not open, open it in a new editor
     const document = await workspace.openTextDocument(filePath);
     await window.showTextDocument(document, {
       selection,
-      viewColumn: ViewColumn.One,
+      viewColumn: column,
     });
   }
 }
