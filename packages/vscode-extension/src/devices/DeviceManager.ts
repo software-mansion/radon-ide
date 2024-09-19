@@ -27,6 +27,7 @@ import { EventEmitter } from "stream";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
+import { checkXcodeExists } from "../dependency/DependencyManager";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
@@ -104,13 +105,15 @@ export class DeviceManager implements DeviceManagerInterface {
       Logger.error("Error fetching emulators", e);
       return [];
     });
-    const simulators =
-      Platform.OS === "macos"
-        ? listSimulators().catch((e) => {
-            Logger.error("Error fetching simulators", e);
-            return [];
-          })
-        : Promise.resolve([]);
+
+    const shouldLoadSimulators = Platform.OS === "macos" && (await checkXcodeExists());
+
+    const simulators = shouldLoadSimulators
+      ? listSimulators().catch((e) => {
+          Logger.error("Error fetching simulators", e);
+          return [];
+        })
+      : Promise.resolve([]);
     const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
     const devices = [...androidDevices, ...iosDevices];
     this.eventEmitter.emit("devicesChanged", devices);
@@ -125,11 +128,11 @@ export class DeviceManager implements DeviceManagerInterface {
     return getAvailableIosRuntimes();
   }
 
-  public async listAllDevices() {
+  public async listAllDevices(force?: boolean) {
     const devices = extensionContext.globalState.get(DEVICE_LIST_CACHE_KEY) as
       | DeviceInfo[]
       | undefined;
-    if (devices) {
+    if (devices && !force) {
       // we still want to perform load here in case anything changes, just won't wait for it
       this.loadDevices();
       return devices;

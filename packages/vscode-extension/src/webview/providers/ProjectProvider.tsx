@@ -26,6 +26,7 @@ const ProjectContext = createContext<ProjectContextProps>({
       longitude: 19.965474,
       isDisabled: false,
     },
+    locale: "en_US",
   },
   project,
 });
@@ -46,6 +47,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
       longitude: 19.965474,
       isDisabled: false,
     },
+    locale: "en_US",
   });
 
   useEffect(() => {

@@ -200,7 +200,7 @@ export class Project
       return false;
     };
 
-    const devices = await this.deviceManager.listAllDevices();
+    const devices = await this.deviceManager.listAllDevices(true);
     if (!selectInitialDevice(devices)) {
       const listener = (newDevices: DeviceInfo[]) => {
         if (selectInitialDevice(newDevices)) {
