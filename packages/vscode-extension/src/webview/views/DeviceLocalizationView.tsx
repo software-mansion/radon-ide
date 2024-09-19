@@ -106,7 +106,7 @@ const LocalizationChangeConfirmationView = ({
       <h2 className="localization-change-title">
         Are you sure you want to change the localization to <i>{locale.Description}</i>?
       </h2>
-      <p className="localization-change-subtitle">This action will reset the device.</p>
+      <p className="localization-change-subtitle">This action will reboot the device.</p>
       <div className="localization-change-button-group">
         <Button type="secondary" className="localization-change-button" onClick={onCancel}>
           Cancel
