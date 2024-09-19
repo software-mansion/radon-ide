@@ -5,7 +5,7 @@ import fs from "fs";
 import { EOL } from "node:os";
 import xml2js from "xml2js";
 import { retry } from "../utilities/retry";
-import { getAppCachesDir, getNativeABI } from "../utilities/common";
+import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { v4 as uuidv4 } from "uuid";
@@ -124,7 +124,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // this prevents booting device with the same AVD twice
     await ensureOldEmulatorProcessExited(this.avdId);
 
-    const avdDirectory = getOrCreateAvdDirectory();
+    const avdDirectory = getOrCreateAvdDirectory(this.avdId);
     const subprocess = exec(
       EMULATOR_BINARY,
       [
@@ -457,6 +457,16 @@ async function getAvdIds(avdDirectory: string) {
 
 export async function listEmulators() {
   const avdDirectory = getOrCreateAvdDirectory();
+  const emulators = listEmulatorsForDirectory(avdDirectory);
+  const oldAvdDirectory = getOldAvdDirectoryLocation();
+  const oldEmulators = listEmulatorsForDirectory(oldAvdDirectory);
+
+  const combinedEmulators = await Promise.all([emulators, oldEmulators]);
+
+  return combinedEmulators[0].concat(combinedEmulators[1]);
+}
+
+async function listEmulatorsForDirectory(avdDirectory: string) {
   const avdIds = await getAvdIds(avdDirectory);
   const systemImages = await getAndroidSystemImages();
   return Promise.all(
@@ -507,7 +517,7 @@ export async function removeEmulator(avdId: string) {
     await ensureOldEmulatorProcessExited(avdId);
   }
 
-  const avdDirectory = getOrCreateAvdDirectory();
+  const avdDirectory = getOrCreateAvdDirectory(avdId);
   const removeAvd = fs.promises.rm(path.join(avdDirectory, `${avdId}.avd`), {
     recursive: true,
   });
@@ -587,8 +597,8 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
   ]);
 }
 
-function getOrCreateAvdDirectory() {
-  const avdDirectory = getAvdDirectoryLocation();
+function getOrCreateAvdDirectory(avd?: string) {
+  const avdDirectory = getAvdDirectoryLocation(avd);
   if (!fs.existsSync(avdDirectory)) {
     fs.mkdirSync(avdDirectory, { recursive: true });
   }
@@ -596,9 +606,26 @@ function getOrCreateAvdDirectory() {
   return avdDirectory;
 }
 
-function getAvdDirectoryLocation() {
+function getOldAvdDirectoryLocation() {
+  const oldAppCachesDir = getOldAppCachesDir();
+  return path.join(oldAppCachesDir, "Devices", "Android", "avd");
+}
+
+function getAvdDirectoryLocation(avd?: string) {
   const appCachesDir = getAppCachesDir();
   const avdDirectory = path.join(appCachesDir, "Devices", "Android", "avd");
+  if (!avd) {
+    return avdDirectory;
+  }
+
+  const oldAvdDirectory = getOldAvdDirectoryLocation();
+  if (!fs.existsSync(oldAvdDirectory)) {
+    return avdDirectory;
+  }
+  const devices = fs.readdirSync(oldAvdDirectory);
+  if (devices.includes(`${avd}.avd`)) {
+    return oldAvdDirectory;
+  }
   return avdDirectory;
 }
 
