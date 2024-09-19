@@ -65,7 +65,7 @@ export class IosSimulatorDevice extends DeviceBase {
     return pidFile;
   }
 
-  public async dispose() {
+  public dispose() {
     super.dispose();
     return exec("xcrun", [
       "simctl",
@@ -479,7 +479,7 @@ function getDeviceSetLocation(deviceUDID?: string) {
   if (devices.includes(deviceUDID)) {
     return oldDeviceSetLocation;
   }
-  return path.join(appCachesDir, "Devices", "iOS");
+  return deviceSetLocation;
 }
 
 function getOldDeviceSetLocation() {
