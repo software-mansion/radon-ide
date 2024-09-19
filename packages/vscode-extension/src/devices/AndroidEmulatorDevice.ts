@@ -363,7 +363,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   makePreview(): Preview {
-    return new Preview(["android", this.serial!]);
+    return new Preview(["android", "--id", this.serial!]);
   }
 
   async sendBiometricAuthorization(isMatch: boolean) {
