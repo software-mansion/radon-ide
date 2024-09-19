@@ -55,43 +55,42 @@ export class Preview implements Disposable {
         reject(new Error("Preview server exited without URL"));
       });
 
-      const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
-
       lineReader(subprocess).onLineRead((line, stderr) => {
         if (stderr) {
-<<<<<<< HEAD
-          // forward sim-server stderr to the main logger as warnings
-          Logger.warn("sim-server err:", line);
-          return;
-        }
-
-        if (line.startsWith("http")) {
-          const match = line.match(streamURLRegex);
-
-          if (match) {
-            Logger.debug(`sim-server ready ${match[1]}`);
-
-            this.streamURL = match[1];
-            resolve(this.streamURL);
-          }
-        } else if (line.startsWith("replay")) {
-        }
-        Logger.debug("sim-server out:", line);
-=======
           Logger.info("sim-server:", line);
           return;
         }
 
-        const match = line.match(streamURLRegex);
+        if (line.includes("Serving MJPEG")) {
+          const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
+          const match = line.match(streamURLRegex);
 
-        if (match) {
-          Logger.info(`Stream ready ${match[1]}`);
+          if (match) {
+            Logger.info(`Stream ready ${match[1]}`);
 
-          this.streamURL = match[1];
-          resolve(this.streamURL);
+            this.streamURL = match[1];
+            resolve(this.streamURL);
+          }
+        } else if (line.includes("replay_ready") || line.includes("replay_error")) {
+          // replay response format message format looks as follows:
+          // replay_ready <ID> <URL>
+          // replay_error <ID> <Error message>
+          const replayResponseRegex = /(replay_(ready|error)) (\d+) (.*)/;
+          const match = line.match(replayResponseRegex);
+          if (match) {
+            const id = parseInt(match[1], 10);
+            const handlers = this.replayPromises.get(id);
+            if (handlers) {
+              if (match[0] === "replay_error") {
+                handlers.reject(new Error(match[2]));
+              } else {
+                handlers.resolve(match[2]);
+              }
+              this.replayPromises.delete(id);
+            }
+          }
         }
         Logger.info("sim-server:", line);
->>>>>>> origin/main
       });
     });
   }
