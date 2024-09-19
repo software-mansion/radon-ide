@@ -119,7 +119,7 @@ export class IosSimulatorDevice extends DeviceBase {
     return true;
   }
 
-  async changeSettings(settings: DeviceSettings, ignoreChecks?: boolean): Promise<boolean> {
+  async changeSettings(settings: DeviceSettings): Promise<boolean> {
     let shouldRestart = false;
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
@@ -383,7 +383,13 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   makePreview(): Preview {
-    return new Preview(["ios", "--id", this.deviceUDID, "--device-set", getOrCreateDeviceSet(this.deviceUDID)]);
+    return new Preview([
+      "ios",
+      "--id",
+      this.deviceUDID,
+      "--device-set",
+      getOrCreateDeviceSet(this.deviceUDID),
+    ]);
   }
 }
 
