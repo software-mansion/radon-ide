@@ -19,7 +19,7 @@ import { Resizable } from "re-resizable";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { useUtils } from "../providers/UtilsProvider";
+import { Platform, useUtils } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 
 declare module "react" {
@@ -446,7 +446,12 @@ function Preview({
         e.preventDefault();
         const isKeydown = e.type === "keydown";
 
-        if (e.code === "AltLeft" || e.code === "AltRight") {
+        const isMultitouchKeyPressed = Platform.select({
+          macos: e.code === "AltLeft" || e.code === "AltRight",
+          windows: e.code === "ControlLeft" || e.code === "ControlRight",
+        });
+
+        if (isMultitouchKeyPressed) {
           isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
           setIsMultiTouching(isKeydown);
         }
