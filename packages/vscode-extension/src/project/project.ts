@@ -10,6 +10,7 @@ import {
   AppPermissionType,
   DeviceSettings,
   InspectData,
+  Locale,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -28,7 +29,7 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
 
-const DEVICE_SETTINGS_KEY = "device_settings_v2";
+const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 
@@ -67,6 +68,7 @@ export class Project
       isDisabled: true,
     },
     hasEnrolledBiometrics: false,
+    locale: "en_US",
   };
 
   constructor(
@@ -83,6 +85,7 @@ export class Project
         isDisabled: false,
       },
       hasEnrolledBiometrics: false,
+      locale: "en_US",
     };
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
@@ -241,7 +244,11 @@ export class Project
   }
 
   //#region Session lifecycle
-  public async restart(forceCleanBuild: boolean, onlyReloadJSWhenPossible: boolean = true) {
+  public async restart(
+    forceCleanBuild: boolean,
+    onlyReloadJSWhenPossible: boolean = true,
+    restartDevice: boolean = false
+  ) {
     // we save device info and device session at the start such that we can
     // check if they weren't updated in the meantime while we await for restart
     // procedures
@@ -256,7 +263,13 @@ export class Project
     if (forceCleanBuild) {
       await this.start(true, true);
       return await this.selectDevice(deviceInfo, true);
-    } else if (this.detectedFingerprintChange) {
+    }
+
+    if (this.detectedFingerprintChange) {
+      return await this.selectDevice(deviceInfo, false);
+    }
+
+    if (restartDevice) {
       return await this.selectDevice(deviceInfo, false);
     }
 
@@ -427,9 +440,14 @@ export class Project
   public async updateDeviceSettings(settings: DeviceSettings) {
     this.deviceSettings = settings;
     extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
-    await this.deviceSession?.changeDeviceSettings(settings);
+    let needsRestart = await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
+
+    if (needsRestart) {
+      await this.restart(false, false, true);
+    }
   }
+
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }

@@ -1,5 +1,7 @@
 import { DeviceInfo } from "./DeviceManager";
 
+export type Locale = string;
+
 export type DeviceSettings = {
   appearance: "light" | "dark";
   contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
@@ -9,6 +11,7 @@ export type DeviceSettings = {
     isDisabled: boolean;
   };
   hasEnrolledBiometrics: boolean;
+  locale: Locale;
 };
 
 export type ProjectState = {

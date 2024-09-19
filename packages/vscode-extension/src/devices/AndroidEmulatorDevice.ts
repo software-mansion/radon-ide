@@ -117,9 +117,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
         settings.location.latitude.toString(),
       ]);
     }
+    return false;
   }
 
-  async bootDevice() {
+  async bootDevice(settings: DeviceSettings) {
     // this prevents booting device with the same AVD twice
     await ensureOldEmulatorProcessExited(this.avdId);
 
@@ -162,6 +163,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
     });
 
     this.serial = await initPromise;
+
+    await this.changeSettings(settings);
   }
 
   async openDevMenu() {

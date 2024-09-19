@@ -201,6 +201,13 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
 
+  /* ScrollArea */
+  --swm-scroll-area-background: var(--white);
+  --swm-scroll-area-shadow: 0 0 0 1px var(--navy-light-10);
+  --swm-scrollbar-background: var(--navy-light-10);
+  --swm-scrollbar-thumb: var(--navy-light-60);
+  --swm-scrollbar-hover: var(--navy-light-20);
+
   /* Input */
   --swm-input-background: var(--white);
   --swm-input-shadow: 0 0 0 1px var(--navy-light-10);
@@ -329,6 +336,13 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-tooltip-secondary-background: var(--background-dark-120);
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
+
+  /* ScrollArea */
+  --swm-scroll-area-background: var(--background-dark-100);
+  --swm-scroll-area-shadow: 0 1px 10px var(--background-dark-100);
+  --swm-scrollbar-background: var(--navy-dark-10);
+  --swm-scrollbar-thumb: var(--navy-dark-60);
+  --swm-scrollbar-hover: var(--navy-dark-20);
 
   /* Input */
   --swm-input-background: var(--background-dark-100);

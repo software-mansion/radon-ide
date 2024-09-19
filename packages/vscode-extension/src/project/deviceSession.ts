@@ -4,7 +4,13 @@ import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { BuildManager, BuildResult, DisposableBuild } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, ReloadAction, StartupMessage } from "../common/Project";
+import {
+  AppPermissionType,
+  DeviceSettings,
+  Locale,
+  ReloadAction,
+  StartupMessage,
+} from "../common/Project";
 import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
@@ -115,8 +121,7 @@ export class DeviceSession implements Disposable {
 
   private async bootDevice(deviceSettings: DeviceSettings) {
     this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
-    await this.device.bootDevice();
-    await this.device.changeSettings(deviceSettings);
+    await this.device.bootDevice(deviceSettings);
   }
 
   private async buildApp({ clean }: { clean: boolean }) {
@@ -248,8 +253,8 @@ export class DeviceSession implements Disposable {
     this.devtools.send("RNIDE_editorFileChanged", { filename, followEnabled });
   }
 
-  public async changeDeviceSettings(settings: DeviceSettings) {
-    await this.device.changeSettings(settings);
+  public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
+    return this.device.changeSettings(settings);
   }
 
   public focusBuildOutput() {
