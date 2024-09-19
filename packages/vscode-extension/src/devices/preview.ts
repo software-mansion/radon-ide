@@ -39,19 +39,19 @@ export class Preview implements Disposable {
 
       lineReader(subprocess).onLineRead((line, stderr) => {
         if (stderr) {
-          Logger.warn("sim-server err:", line);
+          Logger.info("sim-server:", line);
           return;
         }
 
         const match = line.match(streamURLRegex);
 
         if (match) {
-          Logger.debug(`Preview server ready ${match[1]}`);
+          Logger.info(`Stream ready ${match[1]}`);
 
           this.streamURL = match[1];
           resolve(this.streamURL);
         }
-        Logger.debug("sim-server out:", line);
+        Logger.info("sim-server:", line);
       });
     });
   }
