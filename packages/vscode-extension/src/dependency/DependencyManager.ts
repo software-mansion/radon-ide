@@ -8,7 +8,7 @@ import { getAppRootFolder } from "../utilities/extensionContext";
 import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
-import { shouldUseExpoCLI } from "../../src/project/metro";
+import { shouldUseExpoCLI } from "../utilities/expoCli";
 import {
   isNodeModulesInstalled,
   isPackageManagerAvailable,
