@@ -70,12 +70,12 @@ export class Preview implements Disposable {
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    const touchesCoords = touches.map((pt) => `${pt.xRatio} ${pt.yRatio}`).join(" ");
-    this.subprocess?.stdin?.write(`touch${type} ${touchesCoords}\n`);
+    const touchesCoords = touches.map((pt) => `${pt.xRatio},${pt.yRatio}`).join(" ");
+    this.subprocess?.stdin?.write(`touch ${type} ${touchesCoords}\n`);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
-    this.subprocess?.stdin?.write(`key${direction} ${keyCode}\n`);
+    this.subprocess?.stdin?.write(`key ${direction} ${keyCode}\n`);
   }
 
   public sendPaste(text: string) {

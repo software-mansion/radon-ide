@@ -320,7 +320,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   makePreview(): Preview {
-    return new Preview(["ios", this.deviceUDID, getOrCreateDeviceSet()]);
+    return new Preview(["ios", "--id", this.deviceUDID, "--device-set", getOrCreateDeviceSet()]);
   }
 }
 
