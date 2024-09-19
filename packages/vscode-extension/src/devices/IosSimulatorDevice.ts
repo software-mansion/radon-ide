@@ -8,7 +8,7 @@ import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo } from "../co
 import { BuildResult } from "../builders/BuildManager";
 import path from "path";
 import fs from "fs";
-import { AppPermissionType, DeviceSettings } from "../common/Project";
+import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { ExecaError } from "execa";
 import { IOSBuildResult } from "../builders/buildIOS";
@@ -76,8 +76,13 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  async bootDevice() {
+  async bootDevice(settings: DeviceSettings) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+
+    if (await this.shouldUpdateLocale(settings.locale)) {
+      await this.changeLocale(settings.locale);
+    }
+
     try {
       await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", this.deviceUDID], {
         allowNonZeroExit: true,
@@ -90,10 +95,39 @@ export class IosSimulatorDevice extends DeviceBase {
         throw e;
       }
     }
+
+    await this.changeSettings(settings);
   }
 
-  async changeSettings(settings: DeviceSettings) {
+  private async shouldUpdateLocale(locale: Locale): Promise<boolean> {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    const deviceLocale = await exec("/usr/libexec/PlistBuddy", [
+      "-c",
+      `print :AppleLocale`,
+      path.join(
+        deviceSetLocation,
+        this.deviceUDID,
+        "data",
+        "Library",
+        "Preferences",
+        ".GlobalPreferences.plist"
+      ),
+    ]);
+    if (deviceLocale.stdout === locale) {
+      return false;
+    }
+    return true;
+  }
+
+  async changeSettings(settings: DeviceSettings): Promise<boolean> {
+    let shouldRestart = false;
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+
+    if (await this.shouldUpdateLocale(settings.locale)) {
+      shouldRestart = true;
+      this.changeLocale(settings.locale);
+    }
+
     await exec("xcrun", [
       "simctl",
       "--set",
@@ -153,7 +187,10 @@ export class IosSimulatorDevice extends DeviceBase {
       "-p",
       "com.apple.BiometricKit.enrollmentChanged",
     ]);
+
+    return shouldRestart;
   }
+
   async sendBiometricAuthorization(isMatch: boolean) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     await exec("xcrun", [
@@ -168,6 +205,26 @@ export class IosSimulatorDevice extends DeviceBase {
         ? "com.apple.BiometricKit_Sim.fingerTouch.match"
         : "com.apple.BiometricKit_Sim.fingerTouch.nomatch",
     ]);
+  }
+
+  private async changeLocale(newLocale: Locale): Promise<boolean> {
+    const deviceSetLocation = getOrCreateDeviceSet();
+    const languageCode = newLocale.match(/([^_-]*)/)![1];
+    await exec("/usr/libexec/PlistBuddy", [
+      "-c",
+      `set :AppleLanguages:0 ${languageCode}`,
+      "-c",
+      `set :AppleLocale ${newLocale}`,
+      path.join(
+        deviceSetLocation,
+        this.deviceUDID,
+        "data",
+        "Library",
+        "Preferences",
+        ".GlobalPreferences.plist"
+      ),
+    ]);
+    return true;
   }
 
   async configureMetroPort(bundleID: string, metroPort: number) {
@@ -326,7 +383,13 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   makePreview(): Preview {
-    return new Preview(["ios", "--id", this.deviceUDID, "--device-set", getOrCreateDeviceSet(this.deviceUDID)]);
+    return new Preview([
+      "ios",
+      "--id",
+      this.deviceUDID,
+      "--device-set",
+      getOrCreateDeviceSet(this.deviceUDID),
+    ]);
   }
 }
 

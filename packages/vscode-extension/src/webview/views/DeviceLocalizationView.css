@@ -1,0 +1,130 @@
+.ScrollAreaRoot {
+  width: 100%;
+  height: 100%;
+  border: 1px;
+  border-radius: 4px;
+  line-height: 1;
+  box-shadow: var(--swm-scroll-area-shadow);
+  overflow: hidden;
+  background-color: var(--swm-scroll-area-background);
+  --scrollbar-size: 5px;
+}
+
+.ScrollAreaViewport {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.ScrollAreaScrollbar {
+  display: flex;
+  /* ensures no selection */
+  user-select: none;
+  /* disable browser handling of all panning and zooming gestures on touch devices */
+  touch-action: none;
+  padding: 2px;
+  background: var(--swm-scrollbar-background);
+  transition: background 160ms ease-out;
+}
+.ScrollAreaScrollbar:hover {
+  background: var(--swm-scrollbar-hover);
+}
+.ScrollAreaScrollbar[data-orientation="vertical"] {
+  width: var(--scrollbar-size);
+}
+.ScrollAreaScrollbar[data-orientation="horizontal"] {
+  flex-direction: column;
+  height: var(--scrollbar-size);
+}
+
+.ScrollAreaThumb {
+  flex: 1;
+  background: var(--swm-scrollbar-thumb);
+  border-radius: var(--scrollbar-size);
+  position: relative;
+}
+
+/* increase target size for touch devices https://www.w3.org/WAI/WCAG21/Understanding/target-size.html */
+.ScrollAreaThumb::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.localeTile {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+  color: var(--swm-default-text);
+  font-size: 13px;
+  line-height: 18px;
+  padding-bottom: 10px;
+  padding-top: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.localeTile:hover {
+  background-color: var(--swm-scrollbar-hover);
+}
+
+.localization-container {
+  display: flex;
+  flex-direction: column;
+  height: 400px;
+}
+
+.localization-change-wrapper {
+  text-align: center;
+  text-wrap: balance;
+}
+
+.localization-change-title {
+  color: var(--swm-default-text);
+  margin-top: 0;
+}
+
+.localization-change-subtitle {
+  color: var(--swm-secondary-text);
+  margin: 16px 0;
+}
+
+.localization-change-button-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.localization-change-button {
+  width: 100px;
+}
+
+.search-input {
+  flex: 1;
+  height: 42px;
+  align-self: right;
+  background-color: var(--swm-input-background);
+  border: 1px;
+  border-radius: 4px;
+  line-height: 1;
+  box-shadow: var(--swm-input-shadow);
+  padding: 0 6px;
+}
+
+.search-bar {
+  display: flex;
+  color: var(--swm-default-text);
+  justify-content: space-between;
+  margin-bottom: 12px;
+  margin-top: 15px;
+}
