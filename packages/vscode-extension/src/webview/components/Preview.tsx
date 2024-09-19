@@ -210,7 +210,6 @@ function Preview({
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
-  const [isTouchAreaActive, setIsTouchAreaActive] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLImageElement>(null);
