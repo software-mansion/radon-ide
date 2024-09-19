@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, MouseEvent } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
@@ -25,6 +25,7 @@ function PreviewView() {
   const { reportIssue } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
+  const [isPressing, setIsPressing] = useState(false);
   const zoomLevel = projectState.previewZoom ?? "Fit";
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
@@ -32,9 +33,8 @@ function PreviewView() {
     },
     [project]
   );
-  const [isFollowing, setIsFollowing] = useState(false);
   const [logCounter, setLogCounter] = useState(0);
-
+  const [resetKey, setResetKey] = useState(0);
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
@@ -46,7 +46,7 @@ function PreviewView() {
   useDiagnosticAlert(selectedDevice?.platform);
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
-    "meta[name='react-native-ide-version']"
+    "meta[name='radon-ide-version']"
   )?.content;
 
   useEffect(() => {
@@ -63,6 +63,7 @@ function PreviewView() {
   useEffect(() => {
     if (isStarting) {
       setLogCounter(0);
+      setResetKey((prevKey) => prevKey + 1);
     }
   }, [setLogCounter, isStarting]);
 
@@ -100,13 +101,26 @@ function PreviewView() {
     );
   }
 
+  function onMouseDown(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(true);
+  }
+
+  function onMouseUp(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(false);
+  }
+
+  const touchHandlers = {
+    onMouseDown,
+    onMouseUp,
+  };
+
   return (
-    <div className="panel-view">
+    <div className="panel-view" {...touchHandlers}>
       <div className="button-group-top">
-        <UrlBar project={project} disabled={devicesNotFound} />
-
+        <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
-
         <Button
           counter={logCounter}
           onClick={() => {
@@ -134,6 +148,8 @@ function PreviewView() {
           key={selectedDevice.id}
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
+          isPressing={isPressing}
+          setIsPressing={setIsPressing}
           zoomLevel={zoomLevel}
           onZoomChanged={onZoomChanged}
         />

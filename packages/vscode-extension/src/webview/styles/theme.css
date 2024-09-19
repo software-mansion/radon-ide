@@ -119,12 +119,12 @@
   --grey-dark-60: #999999;
   --grey-dark-40: #b3b3b3;
 
-  /* Touch marker */
-  --touch-marker-background: var(--grey-dark-40);
-  --touch-marker-border: var(--grey-dark-80);
-  --touch-marker-pressed-background: var(--green-light-100);
-  --touch-marker-pressed-border: var(--green-dark-120);
-  --touch-marker-pressed-shadow: 2px 2px 6px 1px rgba(0, 0, 0, 0.8);
+  /* Touch indicator */
+  --touch-indicator-background: var(--grey-dark-40);
+  --touch-indicator-border: var(--grey-dark-80);
+  --touch-indicator-pressed-background: var(--green-light-100);
+  --touch-indicator-pressed-border: var(--green-dark-120);
+  --touch-indicator-pressed-shadow: 2px 2px 6px 1px rgba(0, 0, 0, 0.8);
 }
 
 /* Light theme */
@@ -245,6 +245,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-url-select-hover-background: var(--navy-light-10);
   --swm-url-select-disabled-background: var(--off-white);
   --swm-url-select-highlighted-background: var(--white);
+  --swm-url-select-separator: var(--navy-light-40);
 
   /* Debugger */
   --swm-debugger-label: var(--off-white);
@@ -381,6 +382,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-url-select-hover-background: var(--background-dark-70);
   --swm-url-select-disabled-background: var(--background-dark-90);
   --swm-url-select-highlighted-background: var(--background-dark-60);
+  --swm-url-select-separator: var(--background-dark-60);
 
   /* Debugger */
   --swm-debugger-label: var(--off-white);

@@ -17,6 +17,7 @@ import {
   ProjectState,
   ReloadAction,
   StartupMessage,
+  TouchPoint,
   ZoomLevelType,
 } from "../common/Project";
 import { EventEmitter } from "stream";
@@ -44,6 +45,7 @@ export class Project
 
   private detectedFingerprintChange: boolean;
 
+  private expoRouterInstalled: boolean;
   private storybookInstalled: boolean;
 
   private fileWatcher: Disposable;
@@ -93,6 +95,7 @@ export class Project
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.detectedFingerprintChange = false;
+    this.expoRouterInstalled = false;
     this.storybookInstalled = false;
 
     this.fileWatcher = watchProjectFiles(() => {
@@ -239,8 +242,12 @@ export class Project
     }
   }
 
-  public async goHome() {
-    await this.reloadMetro();
+  public async goHome(homeUrl: string) {
+    if (this.expoRouterInstalled) {
+      await this.openNavigation(homeUrl);
+    } else {
+      await this.reloadMetro();
+    }
   }
 
   //#region Session lifecycle
@@ -329,6 +336,8 @@ export class Project
       [installNodeModules]
     );
 
+    Logger.debug("Checking expo router");
+    this.expoRouterInstalled = await this.dependencyManager.checkExpoRouterInstalled();
     Logger.debug("Checking storybook");
     this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
   }
@@ -341,18 +350,8 @@ export class Project
     }
   }
 
-  public async dispatchTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.deviceSession?.sendTouch(xRatio, yRatio, type);
-  }
-
-  public async dispatchMultiTouch(
-    xRatio: number,
-    yRatio: number,
-    xAnchorRatio: number,
-    yAnchorRatio: number,
-    type: "Up" | "Move" | "Down"
-  ) {
-    this.deviceSession?.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
+  public async dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+    this.deviceSession?.sendTouches(touches, type);
   }
 
   public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
@@ -370,7 +369,7 @@ export class Project
       if (requestStack && inspectData?.stack) {
         stack = inspectData.stack;
         const inspectorExcludePattern = workspace
-          .getConfiguration("ReactNativeIDE")
+          .getConfiguration("RadonIDE")
           .get("inspectorExcludePattern") as string | undefined;
         const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
         function testInspectorExcludeGlobPattern(filename: string) {
@@ -497,7 +496,7 @@ export class Project
     } catch (e) {
       if (e instanceof DeviceAlreadyUsedError) {
         window.showErrorMessage(
-          "This device is already used by other instance of React Native IDE.\nPlease select another device",
+          "This device is already used by other instance of Radon IDE.\nPlease select another device",
           "Dismiss"
         );
       } else {

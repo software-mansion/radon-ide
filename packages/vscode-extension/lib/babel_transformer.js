@@ -68,7 +68,10 @@ function transformWrapper({ filename, src, ...rest }) {
     } else if (version.startsWith("3.")) {
       src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
     }
-  } else if (isTransforming("node_modules/react-native-ide/index.js")) {
+  } else if (
+    isTransforming("node_modules/react-native-ide/index.js") || // using react-native-ide for compatibility with old NPM package name
+    isTransforming("node_modules/radon-ide/index.js")
+  ) {
     src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
   } else if (
     isTransforming(
@@ -78,7 +81,7 @@ function transformWrapper({ filename, src, ...rest }) {
       "node_modules/react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js"
     )
   ) {
-    // This is a temporary workaround for inspector in React Native 0.74 & 0.75
+    // This is a temporary workaround for inspector in React Native 0.74 & 0.75 & 0.76
     // The inspector broke in those versions because of this commit that's been included
     // in React Native renderer despite it not being a part of React 18 release: https://github.com/facebook/react/commit/37d901e2b8
     // The commit changes the way metadata properties from jsx transforms are added to the elements.
@@ -95,7 +98,7 @@ function transformWrapper({ filename, src, ...rest }) {
     // is experimental as it has some performance implications and may be removed in future versions.
     //
     const { version } = requireFromAppDir("react-native/package.json");
-    if (version.startsWith("0.74") || version.startsWith("0.75")) {
+    if (version.startsWith("0.74") || version.startsWith("0.75") || version.startsWith("0.76")) {
       const rendererFileName = filename.split(path.sep).pop();
       src = `module.exports = require("__RNIDE_lib__/rn-renderer/${rendererFileName}");`;
     }

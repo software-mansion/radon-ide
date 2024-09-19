@@ -4,13 +4,7 @@ import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import { BuildManager, BuildResult, DisposableBuild } from "../builders/BuildManager";
-import {
-  AppPermissionType,
-  DeviceSettings,
-  Locale,
-  ReloadAction,
-  StartupMessage,
-} from "../common/Project";
+import { AppPermissionType, DeviceSettings, ReloadAction, StartupMessage, TouchPoint, Locale} from "../common/Project";
 import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
@@ -160,14 +154,11 @@ export class DeviceSession implements Disposable {
   }
 
   private async startDebugger() {
-    const websocketAddress = await this.metro.getDebuggerURL();
-    if (websocketAddress) {
-      this.debugSession = new DebugSession(websocketAddress, this.debugEventDelegate);
-      const started = await this.debugSession.start();
-      if (started) {
-        // TODO(jgonet): Right now, we ignore start failure
-        Logger.debug("Connected to debugger, moving on...");
-      }
+    this.debugSession = new DebugSession(this.metro, this.debugEventDelegate);
+    const started = await this.debugSession.start();
+    if (started) {
+      // TODO(jgonet): Right now, we ignore start failure
+      Logger.debug("Connected to debugger, moving on...");
     } else {
       Logger.error("Couldn't connect to debugger");
     }
@@ -188,18 +179,8 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
-  public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.device.sendTouch(xRatio, yRatio, type);
-  }
-
-  public sendMultiTouch(
-    xRatio: number,
-    yRatio: number,
-    xAnchorRatio: number,
-    yAnchorRatio: number,
-    type: "Up" | "Move" | "Down"
-  ) {
-    this.device.sendMultiTouch(xRatio, yRatio, xAnchorRatio, yAnchorRatio, type);
+  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+    this.device.sendTouches(touches, type);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {

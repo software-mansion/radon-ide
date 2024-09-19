@@ -22,7 +22,7 @@ const PricingPlansList = () => {
               href={useBaseUrl("/docs/getting-started#-what-does-it-do")}
               target="_blank"
               rel="noopener noreferrer">
-              All the features of React Native IDE
+              All the features of Radon IDE
             </a>
           </li>
           <li>Support through official Software Mansion channels</li>
@@ -53,7 +53,7 @@ const PricingPlansList = () => {
               href={useBaseUrl("/docs/getting-started#-what-does-it-do")}
               target="_blank"
               rel="noopener noreferrer">
-              All the features of React Native IDE
+              All the features of Radon IDE
             </a>
           </li>
           <li>Access to priority support channels</li>

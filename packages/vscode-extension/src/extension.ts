@@ -65,7 +65,7 @@ export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
   if (Platform.OS !== "macos" && Platform.OS !== "windows") {
-    window.showErrorMessage("React Native IDE works only on macOS and Windows.", "Dismiss");
+    window.showErrorMessage("Radon IDE works only on macOS and Windows.", "Dismiss");
     return;
   }
 
@@ -73,6 +73,8 @@ export async function activate(context: ExtensionContext) {
   if (context.extensionMode === ExtensionMode.Development) {
     enableDevModeLogging();
   }
+
+  migrateOldConfiguration();
 
   if (Platform.OS === "macos") {
     try {
@@ -82,14 +84,13 @@ export async function activate(context: ExtensionContext) {
       // we let the activation continue, as otherwise the diagnostics command would fail
     }
   }
-
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
   async function showIDEPanel(fileName?: string, lineNumber?: number) {
     await commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
     const panelLocation = workspace
-      .getConfiguration("ReactNativeIDE")
+      .getConfiguration("RadonIDE")
       .get<PanelLocation>("panelLocation");
 
     if (panelLocation !== "tab") {
@@ -101,7 +102,7 @@ export async function activate(context: ExtensionContext) {
 
   async function closeIDEPanel(fileName?: string, lineNumber?: number) {
     const panelLocation = workspace
-      .getConfiguration("ReactNativeIDE")
+      .getConfiguration("RadonIDE")
       .get<PanelLocation>("panelLocation");
 
     if (panelLocation !== "tab") {
@@ -190,7 +191,13 @@ export async function activate(context: ExtensionContext) {
   // When it does happen, we open the IDE panel and restart the app.
   context.subscriptions.push(
     debug.registerDebugAdapterDescriptorFactory(
-      "react-native-ide",
+      "react-native-ide", // we use previous type name here to support old launch configurations that were using "react-native-ide" type
+      new LaunchConfigDebugAdapterDescriptorFactory()
+    )
+  );
+  context.subscriptions.push(
+    debug.registerDebugAdapterDescriptorFactory(
+      "radon-ide",
       new LaunchConfigDebugAdapterDescriptorFactory()
     )
   );
@@ -198,7 +205,7 @@ export async function activate(context: ExtensionContext) {
   // Debug adapter used for debugging React Native apps
   context.subscriptions.push(
     debug.registerDebugConfigurationProvider(
-      "com.swmansion.react-native-ide",
+      "com.swmansion.react-native-debugger",
       new DebugConfigProvider(),
       DebugConfigurationProviderTriggerKind.Dynamic
     )
@@ -206,7 +213,7 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     debug.registerDebugAdapterDescriptorFactory(
-      "com.swmansion.react-native-ide",
+      "com.swmansion.react-native-debugger",
       new DebugAdapterDescriptorFactory()
     )
   );
@@ -225,7 +232,7 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-      if (event.affectsConfiguration("ReactNativeIDE.panelLocation")) {
+      if (event.affectsConfiguration("RadonIDE.panelLocation")) {
         showIDEPanel();
       }
     })
@@ -378,7 +385,7 @@ async function findAppRootFolder() {
   window
     .showErrorMessage(
       `
-    React Native IDE couldn't find root application folder in this workspace.\n
+    Radon IDE couldn't find root application folder in this workspace.\n
     Please make sure that the opened workspace contains a valid React Native or Expo project.\n
     The way extension verifies the project is by looking for either: app.json, metro.config.js,
     or node_modules/react-native folder. If your project structure is different, you can set the
@@ -422,6 +429,37 @@ async function diagnoseWorkspaceStructure() {
           commands.executeCommand("RNIDE.openPanel");
         }
       });
+  }
+}
+
+function migrateOldConfiguration() {
+  // At the moment of migration, all configuration settings are considered "global"
+  // in a sense that while they can potentially be set workspace-wide, they are not
+  // intended to, and hence we are only interested in migrating global settings.
+
+  // We ignore all potential errors that may occur in the process of migration.
+  // The current settings are not as critical to break user experience in case any
+  // of the method throws
+
+  try {
+    const oldConfiguration = workspace.getConfiguration("ReactNativeIDE");
+    const newConfigurations = workspace.getConfiguration("RadonIDE");
+    // iterate over all keys and set the in the new configuration
+    for (const key in oldConfiguration) {
+      try {
+        if (oldConfiguration.has(key)) {
+          const valueDetails = oldConfiguration.inspect(key);
+          if (valueDetails?.globalValue) {
+            newConfigurations.update(key, valueDetails.globalValue, true);
+            oldConfiguration.update(key, valueDetails.defaultValue, true);
+          }
+        }
+      } catch (e) {
+        Logger.error("Error when migrating parameter", key, e);
+      }
+    }
+  } catch (e) {
+    Logger.error("Error when migrating old configuration", e);
   }
 }
 

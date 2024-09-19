@@ -25,7 +25,9 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
       const configurations = launchConfiguration.get<Array<Record<string, any>>>("configurations")!;
 
-      const RNIDEConfiguration = configurations.find(({ type }) => type === "react-native-ide");
+      const RNIDEConfiguration = configurations.find(
+        ({ type }) => type === "react-native-ide" || type === "radon-ide" // for compatibility we want to support old configuration type name
+      );
 
       if (!RNIDEConfiguration) {
         return {};
@@ -66,7 +68,8 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
     let RNIDEConfigurationExits = false;
 
     const newConfigurations = oldConfigurations?.map((configuration) => {
-      if (configuration.type !== "react-native-ide") {
+      if (configuration.type !== "react-native-ide" && configuration.type !== "radon-ide") {
+        // for compatibility we want to support old configuration type name
         return configuration;
       }
       RNIDEConfigurationExits = true;
@@ -75,9 +78,9 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
     if (!RNIDEConfigurationExits) {
       newConfigurations?.push({
-        type: "react-native-ide",
+        type: "radon-ide",
         request: "launch",
-        name: "React Native IDE panel",
+        name: "Radon IDE panel",
         ...newLaunchConfig,
       });
     }

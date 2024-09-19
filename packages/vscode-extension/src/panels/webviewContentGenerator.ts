@@ -44,7 +44,7 @@ export function generateWebviewContent(
         <base href="${baseUri}">
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="react-native-ide-version" content="${version}" />
+        <meta name="radon-ide-version" content="${version}" />
         <link rel="stylesheet" href="${codiconsCssUri}" />
         ${
           IS_DEV

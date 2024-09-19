@@ -10,7 +10,7 @@ const Pricing = () => {
     <div className={styles.container}>
       <h1 className={styles.headingLabel}>Pricing</h1>
       <p>
-        React Native IDE is currently in Beta. Using{" "}
+        Radon IDE is currently in Beta. Using{" "}
         <span className={styles.highlight}>
           the Beta version doesn't require purchasing any license
         </span>{" "}
@@ -36,8 +36,8 @@ const Pricing = () => {
         <PricingPlansList />
       </div>
       <p>
-        If you want to help the development of React Native IDE, affect the prioritization of
-        features and get better support, you can buy our Supporter's License.
+        If you want to help the development of Radon IDE, affect the prioritization of features and
+        get better support, you can buy our Supporter's License.
       </p>
       <Motivation />
       <FAQ />

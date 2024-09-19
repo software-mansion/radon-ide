@@ -1,6 +1,6 @@
 {
   "name": "react-native-ide",
-  "displayName": "React Native IDE",
+  "displayName": "Radon IDE",
   "description": "Extension turning VSCode into a full-featured IDE for React Native and Expo",
   "publisher": "swmansion",
   "categories": [
@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.17",
+  "version": "0.0.18",
   "engines": {
     "vscode": "^1.75.0",
     "os": "darwin"
@@ -34,44 +34,44 @@
       {
         "command": "RNIDE.openDevMenu",
         "title": "Open Dev Menu",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
         "command": "RNIDE.closePanel",
         "title": "Close IDE Panel",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "icon": "$(close)",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
         "command": "RNIDE.openPanel",
         "title": "Open IDE Panel",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
       },
       {
         "command": "RNIDE.showPanel",
         "title": "Show IDE Panel",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       },
       {
         "command": "RNIDE.diagnose",
         "title": "Diagnostics",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "!RNIDE.extensionIsActive"
       },
       {
         "command": "RNIDE.performBiometricAuthorization",
         "title": "Perform Biometric Authorization ",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
         "command": "RNIDE.performFailedBiometricAuthorization",
         "title": "Perform Failed Biometric Authorization",
-        "category": "React Native IDE",
+        "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
       }
     ],
@@ -99,9 +99,9 @@
       }
     ],
     "configuration": {
-      "title": "React Native IDE",
+      "title": "Radon IDE",
       "properties": {
-        "ReactNativeIDE.panelLocation": {
+        "RadonIDE.panelLocation": {
           "type": "string",
           "scope": "window",
           "default": "tab",
@@ -112,13 +112,13 @@
           ],
           "description": "Controlls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
         },
-        "ReactNativeIDE.showDeviceFrame": {
+        "RadonIDE.showDeviceFrame": {
           "type": "boolean",
           "scope": "window",
           "default": true,
           "description": "Shows device frame in the IDE panel."
         },
-        "ReactNativeIDE.inspectorExcludePattern": {
+        "RadonIDE.inspectorExcludePattern": {
           "type": "string",
           "scope": "window",
           "default": null,
@@ -129,19 +129,19 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "ReactNativeIDE",
-          "title": "React Native IDE",
+          "id": "RadonIDE",
+          "title": "Radon IDE",
           "icon": "assets/logo.svg"
         }
       ]
     },
     "views": {
-      "ReactNativeIDE": [
+      "RadonIDE": [
         {
           "type": "webview",
-          "id": "ReactNativeIDE.view",
+          "id": "RadonIDE.view",
           "name": "",
-          "when": "config.ReactNativeIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
+          "when": "config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ]
     },
@@ -157,7 +157,7 @@
         {
           "command": "RNIDE.closePanel",
           "group": "navigation",
-          "when": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && view == ReactNativeIDE.view"
+          "when": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && view == RadonIDE.view"
         }
       ]
     },
@@ -171,8 +171,8 @@
     ],
     "debuggers": [
       {
-        "type": "com.swmansion.react-native-ide",
-        "label": "React Native IDE internal",
+        "type": "com.swmansion.react-native-debugger",
+        "label": "Radon IDE internal debugger for React Native",
         "hiddenWhen": "true",
         "languages": [
           "javascript",
@@ -180,8 +180,8 @@
         ]
       },
       {
-        "type": "react-native-ide",
-        "label": "React Native IDE",
+        "type": "radon-ide",
+        "label": "Radon IDE",
         "languages": [
           "javascript",
           "typescript",
@@ -226,9 +226,98 @@
                 "description": "Provides a way to customize Gradle builds for Android",
                 "type": "object",
                 "properties": {
-                  "variant": {
+                  "buildType": {
                     "type": "string",
-                    "description": "Android's build variant used when building with Gradle, defaults to \"debug\"."
+                    "description": "Android's build type used when building with Gradle, defaults to \"debug\"."
+                  },
+                  "productFlavor": {
+                    "type": "string",
+                    "description": "Android's build product flavor used when building with Gradle, by default no flavor is used."
+                  }
+                }
+              },
+              "preview": {
+                "description": "Custommize the behavior of device preview",
+                "type": "object",
+                "properties": {
+                  "waitForAppLaunch": {
+                    "type": "boolean",
+                    "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "radon-ide",
+            "request": "launch",
+            "name": "Radon IDE panel",
+            "ios": {
+              "configuration": "Debug"
+            },
+            "android": {
+              "buildType": "debug"
+            }
+          }
+        ]
+      },
+      {
+        "type": "react-native-ide",
+        "label": "Radon IDE",
+        "deprecated": "true",
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "typescriptreact"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "appRoot": {
+                "type": "string",
+                "description": "Location of the React Native application root folder relative to the workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
+              },
+              "isExpo": {
+                "type": "boolean",
+                "description": "IDE tries to detect whether project uses Expo or React Native community CLI. This is needed when starting the bundler. If your project uses Expo but IDE fails to automatically detect it, you can set this parameter to `true` to force the use of Expo CLI."
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables to be passed to all build/run commands that the IDE is launching."
+              },
+              "metroConfigPath": {
+                "type": "string",
+                "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+              },
+              "ios": {
+                "description": "Provides a way to customize Xcode builds for iOS",
+                "type": "object",
+                "properties": {
+                  "scheme": {
+                    "type": "string",
+                    "description": "Scheme name (from xcode project) the IDE will use for iOS builds, defaults to xcworkspace base file name."
+                  },
+                  "configuration": {
+                    "type": "string",
+                    "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+                  }
+                }
+              },
+              "android": {
+                "description": "Provides a way to customize Gradle builds for Android",
+                "type": "object",
+                "properties": {
+                  "buildType": {
+                    "type": "string",
+                    "description": "Android's build type used when building with Gradle, defaults to \"debug\"."
+                  },
+                  "productFlavor": {
+                    "type": "string",
+                    "description": "Android's build product flavor used when building with Gradle, by default no flavor is used."
                   }
                 }
               },
@@ -249,7 +338,7 @@
           {
             "type": "react-native-ide",
             "request": "launch",
-            "name": "React Native IDE panel",
+            "name": "Radon IDE panel",
             "ios": {
               "configuration": "Debug"
             },
@@ -276,7 +365,7 @@
     "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview",
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
-    "lint": "eslint src --ext ts && yarn prettier --check src",
+    "lint": "eslint src --ext ts && npm exec prettier --check src",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
     "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test"

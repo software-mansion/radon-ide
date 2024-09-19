@@ -7,7 +7,7 @@ const LearnMoreFooter = () => {
     <section>
       <div className={styles.learnMoreSectionFooter}>
         <div>
-          <p>Learn more about the React Native IDE features announced at App.js 2024</p>
+          <p>Learn more about the Radon IDE features announced at App.js 2024</p>
         </div>
         <HomepageButton
           target="_blank"

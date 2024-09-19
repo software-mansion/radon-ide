@@ -4,6 +4,8 @@ import {
   Disposable,
   DebugSession as VscDebugSession,
 } from "vscode";
+import { getAppRootFolder } from "../utilities/extensionContext";
+import { Metro } from "../project/metro";
 
 export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
@@ -15,7 +17,7 @@ export class DebugSession implements Disposable {
   private vscSession: VscDebugSession | undefined;
   private debugEventsListener: Disposable;
 
-  constructor(private debuggerUrl: string, private delegate: DebugSessionDelegate) {
+  constructor(private metro: Metro, private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
         case "RNIDE_consoleLog":
@@ -40,13 +42,20 @@ export class DebugSession implements Disposable {
   }
 
   public async start() {
+    const websocketAddress = await this.metro.getDebuggerURL();
+    if (!websocketAddress) {
+      return false;
+    }
+
     const debugStarted = await debug.startDebugging(
       undefined,
       {
-        type: "com.swmansion.react-native-ide",
-        name: "React Native IDE Debugger",
+        type: "com.swmansion.react-native-debugger",
+        name: "Radon IDE Debugger",
         request: "attach",
-        websocketAddress: this.debuggerUrl,
+        websocketAddress: websocketAddress,
+        absoluteProjectPath: getAppRootFolder(),
+        projectPathAlias: this.metro.isUsingNewDebugger ? "/[metro-project]" : undefined,
       },
       {
         suppressDebugStatusbar: true,
@@ -55,6 +64,7 @@ export class DebugSession implements Disposable {
         suppressSaveBeforeStart: true,
       }
     );
+
     if (debugStarted) {
       this.vscSession = debug.activeDebugSession!;
       return true;

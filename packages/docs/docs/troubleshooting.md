@@ -4,21 +4,21 @@ title: Troubleshooting
 sidebar_position: 7
 ---
 
-## Troubleshooting issues with React Native IDE
+## Troubleshooting issues with Radon IDE
 
-Below, we outline some ways that may help you self-diagnose and hopefully resolve issues you may encounter when using the React Native IDE extension.
+Below, we outline some ways that may help you self-diagnose and hopefully resolve issues you may encounter when using the Radon IDE extension.
 
 ### -sec-num- Project setup diagnostics commands
 
 This command can be located on the vscode commands palette when a given workspace is not recognized as a valid React Native of Expo project.
-In this case lookup command called "React Native IDE: Diagnostics" – when executed it will show a notification message with pointers on why React Native IDE panel cannot be opened for this project.
+In this case lookup command called "Radon IDE: Diagnostics" – when executed it will show a notification message with pointers on why Radon IDE panel cannot be opened for this project.
 
 ### -sec-num- Is your project setup supported?
 
 The extension does not currently support all types and configurations of React Native projects.
 For example, Expo Go or brownfield apps aren't supported while we are improving the compatibility of different project setups.
 Please refer to ["Who can use this"](./getting-started.md) section for more details on that.
-If your project doesn't work out of the box because of some modifications made to its setup, chances are the React Native IDE can be configured to support your modifications, please check [configuration](./launch-configuration.md) guide to learn more.
+If your project doesn't work out of the box because of some modifications made to its setup, chances are the Radon IDE can be configured to support your modifications, please check [configuration](./launch-configuration.md) guide to learn more.
 
 ### -sec-num- Can extension locate your React Native project
 
@@ -42,8 +42,8 @@ Sometimes the app gets blocked by some system dialog that we don't have a way to
 
 ### -sec-num- Accessing extension logs
 
-In order to access React Native IDE extension logs you need to open "Output Panel" with the default shortcut ⇧⌘U or by using a command named "Developer: Show Logs..." from the command palette.
-On the "Output Panel", select "React Native IDE" as the source.
+In order to access Radon IDE extension logs you need to open "Output Panel" with the default shortcut ⇧⌘U or by using a command named "Developer: Show Logs..." from the command palette.
+On the "Output Panel", select "Radon IDE" as the source.
 In order to share the logs with others you can use "Open Output in Editor" option available from the Output Panel toolbar.
 
 :::info
@@ -56,13 +56,14 @@ As a consequence you may see a lot of unnecessary messages in the log output, bu
 
 Native builds are one of the most time consuming phases when launching your project.
 Build processes output a lot of logs on their own and hence they have separate output channels.
-When something goes wrong in the native build phase, instead of checking "React Native IDE" source in "Output Panel" as described in the previous point, select "React Native IDE (Android build)" or "React Native IDE (iOS build)" source depending on the platform you're building for.
+When something goes wrong in the native build phase, instead of checking "Radon IDE" source in "Output Panel" as described in the previous point, select "Radon IDE (Android build)" or "Radon IDE (iOS build)" source depending on the platform you're building for.
 
 ### -sec-num- Fresh installation in VSCode / Cursor
 
-There are two locations on the disk where React Native IDE stores its information.
-1) The installation directory is located under `~/.vscode/extensions/swmansion.react-native-ide-*` – with a suffix of current version + CPU architecture
-2) Emulator instance storage is located under `~/Library/Caches/com.swmansion.react-native-ide`
+There are two locations on the disk where Radon IDE stores its information.
+
+1. The installation directory is located under `~/.vscode/extensions/swmansion.react-native-ide-*` – with a suffix of current version + CPU architecture
+2. Emulator instance storage is located under `~/Library/Caches/com.swmansion.react-native-ide`
 
 If you'd like to perform a clean installation, you can delete both of those folders, restart VSCode and install the extension again from the marketplace.
 
@@ -77,6 +78,10 @@ Here is what you can try when the extension got stuck on some errors:
 
 ### -sec-num- Installing an older version of the IDE
 
-If you need to install an older version of an IDE, you can do so by navigating to the cogwheel menu next to the "install" button in the market place. 
+If you need to install an older version of an IDE, you can do so by navigating to the cogwheel menu next to the "install" button in the market place.
 
 <img width="698" alt="download-older-version" src="/img/docs/marketplace_install_older_version.png"/>
+
+### -sec-num- Configureing Alternative Xcode Versions
+
+If you are using alternative Xcode version ( e.g. xcode-beta, ["xcodes"](https://www.xcodes.app/) IDE will only work if xcode-select points to the correct directory to set it up run: `xcode-select --switch ${PathToYourXCode}/Contents/Developer`

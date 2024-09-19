@@ -4,6 +4,7 @@ import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
+import { TouchPoint } from "../common/Project";
 
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
@@ -23,7 +24,20 @@ export class Preview implements Disposable {
     );
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
-    const subprocess = exec(simControllerBinary, this.args, { buffer: false });
+
+    let simControllerBinaryEnv: { DYLD_FRAMEWORK_PATH: string } | undefined;
+
+    if (Platform.OS === "macos") {
+      const { stdout } = await exec("xcode-select", ["-p"]);
+      const DYLD_FRAMEWORK_PATH = path.join(stdout, "Library", "PrivateFrameworks");
+      Logger.debug(`Setting DYLD_FRAMEWORK_PATH to ${DYLD_FRAMEWORK_PATH}`);
+      simControllerBinaryEnv = { DYLD_FRAMEWORK_PATH };
+    }
+
+    const subprocess = exec(simControllerBinary, this.args, {
+      buffer: false,
+      env: simControllerBinaryEnv,
+    });
     this.subprocess = subprocess;
 
     return new Promise<string>((resolve, reject) => {
@@ -36,34 +50,28 @@ export class Preview implements Disposable {
 
       const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
 
-      lineReader(subprocess).onLineRead((line) => {
+      lineReader(subprocess).onLineRead((line, stderr) => {
+        if (stderr) {
+          Logger.info("sim-server:", line);
+          return;
+        }
+
         const match = line.match(streamURLRegex);
 
         if (match) {
-          Logger.debug(`Preview server ready ${match[1]}`);
+          Logger.info(`Stream ready ${match[1]}`);
 
           this.streamURL = match[1];
           resolve(this.streamURL);
         }
-        Logger.debug("Preview server:", line);
+        Logger.info("sim-server:", line);
       });
     });
   }
 
-  public sendTouch(xRatio: number, yRatio: number, type: "Up" | "Move" | "Down") {
-    this.subprocess?.stdin?.write(`touch${type} ${xRatio} ${yRatio}\n`);
-  }
-
-  public sendMultiTouch(
-    xRatio: number,
-    yRatio: number,
-    xAnchorRatio: number,
-    yAnchorRatio: number,
-    type: "Up" | "Move" | "Down"
-  ) {
-    // this.subprocess?.stdin?.write(
-    //   `multitouch${type} ${xRatio} ${yRatio} ${xAnchorRatio} ${yAnchorRatio}\n` // TODO set proper multitouch simserver command
-    // );
+  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+    const touchesCoords = touches.map((pt) => `${pt.xRatio} ${pt.yRatio}`).join(" ");
+    this.subprocess?.stdin?.write(`touch${type} ${touchesCoords}\n`);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {

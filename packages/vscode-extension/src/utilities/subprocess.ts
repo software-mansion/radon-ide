@@ -2,6 +2,7 @@ import { Logger } from "../Logger";
 import execa, { ExecaChildProcess } from "execa";
 import readline from "readline";
 import { Platform } from "./platform";
+import { inc } from "semver";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
@@ -62,26 +63,25 @@ function overrideEnv<T extends execa.Options>(options?: T): T | undefined {
  * When using this methid, the subprocess should be started with buffer: false option
  * as there's no need for allocating memory for the output that's going to be very long.
  */
-export function lineReader(childProcess: ExecaChildProcess<string>, includeStderr = false) {
-  const input = childProcess.stdout;
-  if (!input) {
-    throw new Error("Child process has no stdout");
+export function lineReader(childProcess: ExecaChildProcess<string>) {
+  if (!childProcess.stdout) {
+    throw new Error("Child process doesn't have stdout");
   }
   const stdoutReader = readline.createInterface({
-    input,
+    input: childProcess.stdout,
     terminal: false,
   });
-  let stderrReader = null;
-  if (includeStderr && childProcess.stderr) {
+  let stderrReader: readline.Interface | null = null;
+  if (childProcess.stderr) {
     stderrReader = readline.createInterface({
-      input: childProcess.stderr!,
+      input: childProcess.stderr,
       terminal: false,
     });
   }
   return {
-    onLineRead: (callback: (line: string) => void) => {
+    onLineRead: (callback: (line: string, stderr?: boolean) => void) => {
       stdoutReader.on("line", callback);
-      stderrReader?.on("line", callback);
+      stderrReader?.on("line", (line) => callback(line, true));
     },
   };
 }

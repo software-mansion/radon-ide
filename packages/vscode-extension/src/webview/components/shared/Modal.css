@@ -32,7 +32,7 @@ input {
 }
 
 .modal-title {
-  margin: 0;
+  margin: 0 0 10px 0;
   font-weight: 500;
   color: var(--swm-default-text);
   font-size: 18px;
@@ -40,6 +40,7 @@ input {
 
 .modal-content-container {
   max-height: 80vh;
+  overflow-y: auto;
 }
 
 .modal-close-button {

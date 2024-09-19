@@ -21,7 +21,7 @@ function DiagnosticView() {
   const { dependencies, runDiagnostics } = useDependencies();
 
   return (
-    <>
+    <div className="diagnostic-container">
       <Label>Common</Label>
       <DiagnosticItem label="Node.js" item={dependencies.Nodejs} />
       <DiagnosticItem label="Node Modules" item={dependencies.NodeModules} />
@@ -46,7 +46,8 @@ function DiagnosticView() {
       {Platform.OS === "macos" && <DiagnosticItem label="Pods" item={dependencies.Pods} />}
       <div className="diagnostic-section-margin" />
 
-      <Label>Optional</Label>
+      <Label>Other</Label>
+      <DiagnosticItem label="Expo Router" item={dependencies.ExpoRouter} />
       <DiagnosticItem label="Storybook" item={dependencies.Storybook} />
       <div className="diagnostic-section-margin" />
 
@@ -56,7 +57,7 @@ function DiagnosticView() {
           Re-run checks
         </Button>
       </div>
-    </>
+    </div>
   );
 }
 

@@ -1,0 +1,9 @@
+{
+  "name": "radon-ide",
+  "version": "0.0.1",
+  "description": "Helper functions for Radon IDE project",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "author": "Software Mansion <contact@swmansion.com>",
+  "license": "MIT"
+}

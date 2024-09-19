@@ -122,22 +122,22 @@
   background-color: var(--swm-phone-content-loading-background);
 }
 
-.touch-marker {
+.touch-indicator {
   position: absolute;
   top: var(--y, 50%);
   left: var(--x, 50%);
-  background-color: var(--touch-marker-background);
+  background-color: var(--touch-indicator-background);
   border-radius: 50%;
   border: 1px solid;
-  border-color: var(--touch-marker-border);
+  border-color: var(--touch-indicator-border);
   width: var(--size);
   height: var(--size);
   transform: translate(-50%, -50%);
   opacity: 0.6;
 }
 
-.touch-marker.pressed {
-  background-color: var(--touch-marker-pressed-background);
-  border-color: var(--touch-marker-pressed-border);
-  box-shadow: var(--touch-marker-pressed-shadow);
+.touch-indicator.pressed {
+  background-color: var(--touch-indicator-pressed-background);
+  border-color: var(--touch-indicator-pressed-border);
+  box-shadow: var(--touch-indicator-pressed-shadow);
 }

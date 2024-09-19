@@ -17,7 +17,8 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
     // We detect whether a file is a storybook story based on filename.
     // If is ends with ".stories.js/ts/jsx/tsx", we treat it as a story file.
     const isStory = /\.stories\.(js|ts|jsx|tsx)$/.test(document.fileName);
-    if (!text.includes("react-native-ide") && !isStory) {
+    if (!text.includes("react-native-ide") && !text.includes("radon-ide") && !isStory) {
+      // we use previous NPM package name for compatibility
       return [];
     }
 

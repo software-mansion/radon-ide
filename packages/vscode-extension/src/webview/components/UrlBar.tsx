@@ -1,21 +1,11 @@
-import { useEffect, useState } from "react";
-import IconButton from "./shared/IconButton";
-import { ProjectInterface, ProjectState } from "../../common/Project";
-import UrlSelect from "./UrlSelect";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useEffect, useState, useMemo } from "react";
+import { useProject } from "../providers/ProjectProvider";
+import UrlSelect, { UrlItem } from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
+import IconButton from "./shared/IconButton";
 
-interface UrlBarProps {
-  project: ProjectInterface;
-  disabled?: boolean;
-}
-
-interface ReloadButtonProps {
-  project: ProjectInterface;
-  disabled: boolean;
-}
-
-function ReloadButton({ project, disabled }: ReloadButtonProps) {
+function ReloadButton({ disabled }: { disabled: boolean }) {
+  const { project } = useProject();
   return (
     <IconButtonWithOptions
       onClick={() => project.restart(false)}
@@ -35,28 +25,57 @@ function ReloadButton({ project, disabled }: ReloadButtonProps) {
   );
 }
 
-function UrlBar({ project, disabled }: UrlBarProps) {
-  const [urlList, setUrlList] = useState<{ name: string; id: string }[]>([]);
+function UrlBar({ disabled }: { disabled?: boolean }) {
+  const { project } = useProject();
+
+  const MAX_URL_HISTORY_SIZE = 20;
+  const MAX_RECENT_URL_SIZE = 5;
+
+  const [backNavigationPath, setBackNavigationPath] = useState<string>("");
+  const [urlList, setUrlList] = useState<UrlItem[]>([]);
+  const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
+  const [urlHistory, setUrlHistory] = useState<string[]>([]);
+
   useEffect(() => {
-    function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
-      const newRecord = { name: navigationData.displayName, id: navigationData.id };
-      setUrlList((urlList) => [
-        newRecord,
-        ...urlList.filter((record) => record.id !== newRecord.id),
-      ]);
+    function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {
+      return [newUrl, ...urls.filter((record) => record.id !== newUrl.id)];
     }
-    project.addListener("navigationChanged", handleNavigationChanged);
-    const handleProjectReset = (e: ProjectState) => {
-      if (e.status === "starting") {
-        setUrlList([]);
+
+    function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
+      if (backNavigationPath && backNavigationPath !== navigationData.id) {
+        return;
       }
-    };
-    project.addListener("projectStateChanged", handleProjectReset);
+
+      const newRecord: UrlItem = {
+        name: navigationData.displayName,
+        id: navigationData.id,
+      };
+      const isNotInHistory = urlHistory.length === 0 || urlHistory[0] !== newRecord.id;
+
+      setUrlList((currentUrlList) => moveAsMostRecent(currentUrlList, newRecord));
+      setRecentUrlList((currentRecentUrlList) => {
+        const updatedRecentUrls = moveAsMostRecent(currentRecentUrlList, newRecord);
+        return updatedRecentUrls.slice(0, MAX_RECENT_URL_SIZE);
+      });
+
+      if (isNotInHistory) {
+        setUrlHistory((currentUrlHistoryList) => {
+          const updatedUrlHistory = [newRecord.id, ...currentUrlHistoryList];
+          return updatedUrlHistory.slice(0, MAX_URL_HISTORY_SIZE);
+        });
+      }
+      setBackNavigationPath("");
+    }
+
+    project.addListener("navigationChanged", handleNavigationChanged);
     return () => {
       project.removeListener("navigationChanged", handleNavigationChanged);
-      project.removeListener("projectStateChanged", handleProjectReset);
     };
-  }, []);
+  }, [recentUrlList, urlHistory, backNavigationPath]);
+
+  const sortedUrlList = useMemo(() => {
+    return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
+  }, [urlList]);
 
   return (
     <>
@@ -65,34 +84,37 @@ function UrlBar({ project, disabled }: UrlBarProps) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabled || urlList.length < 2}
+        disabled={disabled || urlHistory.length < 2}
         onClick={() => {
-          project.openNavigation(urlList[1].id);
-          // remove first item from the url list
-          setUrlList((urlList) => urlList.slice(1));
+          setUrlHistory((prevUrlHistory) => {
+            const newUrlHistory = prevUrlHistory.slice(1);
+            setBackNavigationPath(newUrlHistory[0]);
+            project.openNavigation(newUrlHistory[0]);
+            return newUrlHistory;
+          });
         }}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
-      <ReloadButton project={project} disabled={disabled ?? false} />
+      <ReloadButton disabled={disabled ?? false} />
       <IconButton
         onClick={() => {
-          project.goHome();
-          setUrlList([]);
+          project.goHome("/{}");
         }}
         tooltip={{
           label: "Go to main screen",
           side: "bottom",
         }}
-        disabled={disabled || urlList.length == 0}>
+        disabled={disabled}>
         <span className="codicon codicon-home" />
       </IconButton>
       <UrlSelect
         onValueChange={(value: string) => {
           project.openNavigation(value);
         }}
-        items={urlList}
+        recentItems={recentUrlList}
+        items={sortedUrlList}
         value={urlList[0]?.id}
-        disabled={disabled || urlList.length < 1}
+        disabled={disabled || urlList.length < 2}
       />
     </>
   );

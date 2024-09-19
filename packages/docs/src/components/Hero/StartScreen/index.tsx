@@ -15,7 +15,7 @@ const StartScreen = () => {
       <div className={styles.heading}>
         <div>
           <h1 className={styles.headingLabel}>
-            <span>React Native</span>
+            <span>Radon</span>
             <span>IDE</span>
             <span className={styles.betaChip}>BETA</span>
           </h1>
@@ -42,7 +42,7 @@ const StartScreen = () => {
         </div>
         <div className={styles.headingDisclaimer}>
           <InfoIcon className={styles.headingDisclaimerIcon} />
-          Works with VSCode 1.86+ and Cursor 0.32 on macOS
+          Works with VSCode 1.86+ and Cursor 0.32 on macOS and Windows
         </div>
       </div>
     </section>
