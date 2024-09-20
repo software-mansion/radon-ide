@@ -1,0 +1,74 @@
+.replay-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.corner {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border: 2px solid white;
+  margin: 20px;
+  filter: blur(1px);
+}
+
+.top-left {
+  top: 0px;
+  left: 0px;
+  border-bottom: none;
+  border-right: none;
+}
+
+.top-right {
+  top: 0px;
+  right: 0px;
+  border-bottom: none;
+  border-left: none;
+}
+
+.bottom-left {
+  bottom: 0px;
+  left: 0px;
+  border-top: none;
+  border-right: none;
+}
+
+.bottom-right {
+  bottom: 0px;
+  right: 0px;
+  border-top: none;
+  border-left: none;
+}
+
+.rec-indicator {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 200%;
+  filter: blur(0.8px);
+  font-family:'Courier new', fixed;
+}
+
+.rec-dot {
+  width: 20px;
+  height: 20px;
+  background-color: red;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.replay-close {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+}

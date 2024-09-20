@@ -149,6 +149,7 @@ function PreviewView() {
           setIsInspecting={setIsInspecting}
           zoomLevel={zoomLevel}
           replayURL={replayURL}
+          onReplayClose={() => setReplayURL(undefined)}
           onZoomChanged={onZoomChanged}
         />
       ) : (

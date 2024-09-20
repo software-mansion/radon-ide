@@ -22,7 +22,10 @@ function callResultListener(event: MessageEvent) {
         window.removeEventListener("message", callResultListener);
       }
       if (event.data.error) {
-        promise.reject(event.data.error);
+        const errorData = event.data.error;
+        const error = new Error(errorData.message);
+        error.name = errorData.name;
+        promise.reject(error);
       } else {
         promise.resolve(event.data.result);
       }

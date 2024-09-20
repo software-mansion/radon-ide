@@ -32,18 +32,9 @@ export class Preview implements Disposable {
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
 
-    let simControllerBinaryEnv: { DYLD_FRAMEWORK_PATH: string } | undefined;
-
-    if (Platform.OS === "macos") {
-      const { stdout } = await exec("xcode-select", ["-p"]);
-      const DYLD_FRAMEWORK_PATH = path.join(stdout, "Library", "PrivateFrameworks");
-      Logger.debug(`Setting DYLD_FRAMEWORK_PATH to ${DYLD_FRAMEWORK_PATH}`);
-      simControllerBinaryEnv = { DYLD_FRAMEWORK_PATH };
-    }
-
     const subprocess = exec(simControllerBinary, this.args, {
       buffer: false,
-      env: simControllerBinaryEnv,
+      env: { SIMSERVER_REPLAY: "1" },
     });
     this.subprocess = subprocess;
 
@@ -78,13 +69,19 @@ export class Preview implements Disposable {
           const replayResponseRegex = /(replay_(ready|error)) (\d+) (.*)/;
           const match = line.match(replayResponseRegex);
           if (match) {
-            const id = parseInt(match[1], 10);
+            // match array looks as follows:
+            // [0] full match
+            // [1] replay_ready or replay_error
+            // [2] ready or error
+            // [3] ID
+            // [4] URL or error message
+            const id = parseInt(match[3], 10);
             const handlers = this.replayPromises.get(id);
             if (handlers) {
-              if (match[0] === "replay_error") {
-                handlers.reject(new Error(match[2]));
+              if (match[1] === "replay_error") {
+                handlers.reject(new Error(match[4]));
               } else {
-                handlers.resolve(match[2]);
+                handlers.resolve(match[4]);
               }
               this.replayPromises.delete(id);
             }
@@ -106,12 +103,12 @@ export class Preview implements Disposable {
       resolvePromise = resolve;
       rejectPromise = reject;
     });
-    this.replayCounter += 1;
-    this.replayPromises.set(this.replayCounter, {
+    const replyID = ++this.replayCounter;
+    this.replayPromises.set(replyID, {
       resolve: resolvePromise!,
       reject: rejectPromise!,
     });
-    stdin.write("replay 10\n");
+    stdin.write(`replay ${replyID} 10\n`);
     return promise;
   }
 

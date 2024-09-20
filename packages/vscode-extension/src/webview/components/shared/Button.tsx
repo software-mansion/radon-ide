@@ -15,7 +15,7 @@ interface ButtonProps {
     type?: "primary" | "secondary";
   };
   className?: string;
-  autoFocus: boolean;
+  autoFocus?: boolean;
 }
 
 function Button({

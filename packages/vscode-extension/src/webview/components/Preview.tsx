@@ -21,6 +21,7 @@ import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { useUtils } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import ReplayVideo from "./ReplayVideo";
 
 declare module "react" {
   interface CSSProperties {
@@ -181,6 +182,7 @@ type Props = {
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
   replayURL: string | undefined;
+  onReplayClose: () => void;
 };
 
 interface Point {
@@ -198,7 +200,14 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
   return { x: clampedX, y: clampedY };
 }
 
-function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged, replayURL }: Props) {
+function Preview({
+  isInspecting,
+  setIsInspecting,
+  zoomLevel,
+  onZoomChanged,
+  replayURL,
+  onReplayClose,
+}: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
@@ -496,7 +505,7 @@ function Preview({ isInspecting, setIsInspecting, zoomLevel, onZoomChanged, repl
                   }}
                   className="phone-screen"
                 />
-                {replayURL && <video src={replayURL} className="phone-screen" />}
+                {replayURL && <ReplayVideo onClose={onReplayClose} src={replayURL} />}
 
                 {isMultiTouching && (
                   <div
