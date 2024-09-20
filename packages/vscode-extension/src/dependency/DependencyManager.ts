@@ -426,7 +426,7 @@ export async function checkIfCLIInstalled(cmd: string, options: Record<string, u
   try {
     // We are not checking the stderr here, because some of the CLIs put the warnings there.
     const { stdout } = await command(cmd, { encoding: "utf8", quiet: true, ...options });
-    const result = !!stdout.length;
+    const result = stdout.length > 0;
     Logger.debug(`CLI: ${cmd} ${result ? "" : "not"} installed `);
     return result;
   } catch (_) {
