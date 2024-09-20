@@ -166,7 +166,7 @@ export class DependencyManager implements Disposable {
 
     await command(installationCommand, {
       cwd: workspacePath,
-      quiet: true,
+      quietErrorsOnExit: true,
     });
 
     this.webview.postMessage({
@@ -425,7 +425,11 @@ export class DependencyManager implements Disposable {
 export async function checkIfCLIInstalled(cmd: string, options: Record<string, unknown> = {}) {
   try {
     // We are not checking the stderr here, because some of the CLIs put the warnings there.
-    const { stdout } = await command(cmd, { encoding: "utf8", quiet: true, ...options });
+    const { stdout } = await command(cmd, {
+      encoding: "utf8",
+      quietErrorsOnExit: true,
+      ...options,
+    });
     const result = stdout.length > 0;
     Logger.debug(`CLI: ${cmd} ${result ? "" : "not"} installed `);
     return result;

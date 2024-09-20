@@ -128,11 +128,11 @@ export class DeviceManager implements DeviceManagerInterface {
     return getAvailableIosRuntimes();
   }
 
-  public async listAllDevices(force?: boolean) {
+  public async listAllDevices(forceReload?: boolean) {
     const devices = extensionContext.globalState.get(DEVICE_LIST_CACHE_KEY) as
       | DeviceInfo[]
       | undefined;
-    if (devices && !force) {
+    if (devices && !forceReload) {
       // we still want to perform load here in case anything changes, just won't wait for it
       this.loadDevices();
       return devices;

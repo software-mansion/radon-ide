@@ -131,7 +131,10 @@ export function execSync(name: string, args?: string[], options?: execa.SyncOpti
   return result;
 }
 
-export function command(commandWithArgs: string, options?: execa.Options & { quiet?: boolean }) {
+export function command(
+  commandWithArgs: string,
+  options?: execa.Options & { quietErrorsOnExit?: boolean }
+) {
   const subprocess = execa.command(
     commandWithArgs,
     Platform.select({ macos: overrideEnv(options), windows: options })
@@ -147,7 +150,7 @@ export function command(commandWithArgs: string, options?: execa.Options & { qui
     }
   }
 
-  if (!options?.quiet) {
+  if (!options?.quietErrorsOnExit) {
     printErrorsOnExit(); // don't want to await here not to block the outer method
   }
 
