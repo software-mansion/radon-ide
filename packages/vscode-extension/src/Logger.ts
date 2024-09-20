@@ -20,7 +20,7 @@ const logger = {
   },
 
   warn(message: string, ...args: any[]) {
-    outputChannel.error(message, ...args);
+    outputChannel.warn(message, ...args);
   },
 
   error(message: string, ...args: any[]) {

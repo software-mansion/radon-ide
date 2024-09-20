@@ -377,7 +377,7 @@ async function findAppRootFolder() {
       });
   }
 
-  if (appRootCandidates) {
+  if (appRootCandidates.length > 0) {
     return appRootCandidates[0];
   }
 
