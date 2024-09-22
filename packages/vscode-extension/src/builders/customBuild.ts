@@ -66,11 +66,14 @@ export async function runExternalBuild(
 ): Promise<string> {
   const { stdout, lastLine: binaryPath } = await runExternalScript(cancelToken, externalCommand);
 
-  const easAppPath = await downloadAppFromEas(stdout, platform, cancelToken);
+  let easBinaryPath = await downloadAppFromEas(stdout, platform);
 
-  const isEasBuild = easAppPath !== undefined;
-  if (isEasBuild) {
-    return easAppPath;
+  if (easBinaryPath?.endsWith(".ipa")) {
+    easBinaryPath = await extractIpa(easBinaryPath, cancelToken);
+  }
+
+  if (easBinaryPath) {
+    return easBinaryPath;
   }
 
   if (binaryPath && !fs.existsSync(binaryPath)) {
@@ -88,7 +91,7 @@ async function runExternalScript(cancelToken: CancelToken, externalCommand: stri
 
   let lastLine: string | undefined;
   const scriptName = getScriptName(externalCommand);
-  lineReader(process, true).onLineRead((line) => {
+  lineReader(process).onLineRead((line) => {
     Logger.info(`External script: ${scriptName} (${process.pid})`, line);
     lastLine = line.trim();
   });
@@ -114,11 +117,7 @@ function getScriptName(fullCommand: string) {
   return externalCommandName ? path.basename(externalCommandName) : fullCommand;
 }
 
-async function downloadAppFromEas(
-  processOutput: string,
-  platform: DevicePlatform,
-  cancelToken: CancelToken
-) {
+async function downloadAppFromEas(processOutput: string, platform: DevicePlatform) {
   const artifacts = parseEasBuildOutput(processOutput);
   if (!artifacts || artifacts.length === 0) {
     return undefined;
@@ -134,10 +133,6 @@ async function downloadAppFromEas(
   const appBinaryPath = await downloadBinary(binaryUrl, tmpDirectory);
   if (!appBinaryPath) {
     Logger.warn(`Failed to download binary from ${binaryUrl}, ignoring`);
-  }
-
-  if (appBinaryPath?.endsWith(".ipa")) {
-    return await extractIpa(appBinaryPath, cancelToken);
   }
 
   return appBinaryPath;
@@ -239,5 +234,7 @@ async function extractIpa(ipaPath: string, cancelToken: CancelToken) {
   const payloadDir = path.join(extractDir, "Payload");
 
   const appName = (await readdir(payloadDir))[0];
-  return path.join(payloadDir, appName);
+  const appPath = path.join(payloadDir, appName);
+  Logger.debug("Extracted .ipa to", appPath);
+  return appPath;
 }
