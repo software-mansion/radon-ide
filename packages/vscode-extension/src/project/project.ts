@@ -203,6 +203,8 @@ export class Project
     const selectInitialDevicePromise = selectInitialDevice(devices);
 
     const listener = async (newDevices: DeviceInfo[]) => {
+      // we do this check because selectDevice which is called by selectInitialDevice sends "deviceChanged" event,
+      // when it is successful. This could cause double load of the device if lister was called before it's removal below.
       if (await selectInitialDevicePromise) {
         this.deviceManager.removeListener("devicesChanged", listener);
         return;
