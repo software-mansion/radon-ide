@@ -56,7 +56,7 @@ export type DeviceManagerEventListener<K extends keyof DeviceManagerEventMap> = 
 ) => void;
 
 export interface DeviceManagerInterface {
-  listAllDevices(forceReload?: boolean): Promise<DeviceInfo[]>;
+  listAllDevices(): Promise<DeviceInfo[]>;
 
   createAndroidDevice(
     displayName: string,

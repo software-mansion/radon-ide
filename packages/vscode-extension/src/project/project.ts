@@ -184,15 +184,14 @@ export class Project
    * If the device list is empty, we wait until we can select a device.
    */
   private async trySelectingInitialDevice() {
-    const selectInitialDevice = (devices: DeviceInfo[]) => {
+    const selectInitialDevice = async (devices: DeviceInfo[]) => {
       const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
         LAST_SELECTED_DEVICE_KEY
       );
       const device = devices.find(({ id }) => id === lastDeviceId) ?? devices.at(0);
 
       if (device) {
-        this.selectDevice(device);
-        return true;
+        return await this.selectDevice(device);
       }
       this.updateProjectState({
         selectedDevice: undefined,
@@ -200,14 +199,22 @@ export class Project
       return false;
     };
 
-    const devices = await this.deviceManager.listAllDevices(true);
-    if (!selectInitialDevice(devices)) {
-      const listener = (newDevices: DeviceInfo[]) => {
-        if (selectInitialDevice(newDevices)) {
-          this.deviceManager.removeListener("devicesChanged", listener);
-        }
-      };
-      this.deviceManager.addListener("devicesChanged", listener);
+    const devices = await this.deviceManager.listAllDevices();
+    const selectInitialDevicePromise = selectInitialDevice(devices);
+
+    const listener = async (newDevices: DeviceInfo[]) => {
+      if (await selectInitialDevicePromise) {
+        this.deviceManager.removeListener("devicesChanged", listener);
+        return;
+      }
+      if (await selectInitialDevice(newDevices)) {
+        this.deviceManager.removeListener("devicesChanged", listener);
+      }
+    };
+    this.deviceManager.addListener("devicesChanged", listener);
+
+    if (await selectInitialDevicePromise) {
+      this.deviceManager.removeListener("devicesChanged", listener);
     }
   }
 
@@ -269,15 +276,18 @@ export class Project
 
     if (forceCleanBuild) {
       await this.start(true, true);
-      return await this.selectDevice(deviceInfo, true);
+      await this.selectDevice(deviceInfo, true);
+      return;
     }
 
     if (this.detectedFingerprintChange) {
-      return await this.selectDevice(deviceInfo, false);
+      await this.selectDevice(deviceInfo, false);
+      return;
     }
 
     if (restartDevice) {
-      return await this.selectDevice(deviceInfo, false);
+      await this.selectDevice(deviceInfo, false);
+      return;
     }
 
     if (onlyReloadJSWhenPossible) {
@@ -515,7 +525,7 @@ export class Project
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
     const device = await this.selectDeviceOnly(deviceInfo);
     if (!device) {
-      return;
+      return false;
     }
     Logger.debug("Selected device is ready");
 
@@ -556,7 +566,9 @@ export class Project
       if (isSelected && isNewSession) {
         this.updateProjectState({ status: "buildError" });
       }
+      return false;
     }
+    return true;
   }
   //#endregion
 
