@@ -66,13 +66,9 @@ export async function runExternalBuild(
 ): Promise<string> {
   const { stdout, lastLine: binaryPath } = await runExternalScript(cancelToken, externalCommand);
 
-  let easBinaryPath = await downloadAppFromEas(stdout, platform);
-
-  if (easBinaryPath?.endsWith(".ipa")) {
-    easBinaryPath = await extractIpa(easBinaryPath, cancelToken);
-  }
-
+  let easBinaryPath = await downloadAppFromEas(stdout, platform, cancelToken);
   if (easBinaryPath) {
+    Logger.debug(`Using binary from EAS: ${easBinaryPath}`);
     return easBinaryPath;
   }
 
@@ -117,25 +113,59 @@ function getScriptName(fullCommand: string) {
   return externalCommandName ? path.basename(externalCommandName) : fullCommand;
 }
 
-async function downloadAppFromEas(processOutput: string, platform: DevicePlatform) {
+async function downloadAppFromEas(
+  processOutput: string,
+  platform: DevicePlatform,
+  cancelToken: CancelToken
+) {
+  function isAppFile(name: string) {
+    return name.endsWith(".app");
+  }
+
   const artifacts = parseEasBuildOutput(processOutput);
   if (!artifacts || artifacts.length === 0) {
+    Logger.warn(
+      'Failed to find any EAS build artifacts, ignoring. If you\'re building iOS app, make sure you set `"ios.simulator": true` option.'
+    );
     return undefined;
   }
 
   const { binaryUrl } = getMostRecentBuild(artifacts, platform) ?? {};
   if (!binaryUrl) {
-    Logger.warn(`Failed to find binary URL from EAS for platform ${platform}, ignoring`);
+    Logger.warn(`Failed to find binary URL from EAS for platform ${platform}, ignoring.`);
     return undefined;
   }
 
-  const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-external-build-"));
-  const appBinaryPath = await downloadBinary(binaryUrl, tmpDirectory);
-  if (!appBinaryPath) {
-    Logger.warn(`Failed to download binary from ${binaryUrl}, ignoring`);
+  const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-eas-build-"));
+  const binaryPath = await downloadBinary(binaryUrl, tmpDirectory);
+  if (!binaryPath) {
+    Logger.warn(`Failed to download archive from ${binaryUrl}, ignoring`);
+    return undefined;
+  }
+  // on iOS we need to extract the .tar.gz archive to get the .app file
+  const shouldExtractArchive = platform === DevicePlatform.IOS;
+  if (!shouldExtractArchive) {
+    return binaryPath;
   }
 
-  return appBinaryPath;
+  const extractDir = path.dirname(binaryPath);
+  try {
+    await cancelToken.adapt(tarCommand({ archivePath: binaryPath, extractDir }));
+  } catch (error) {
+    Logger.error(`Failed to extract archive ${binaryPath} to ${extractDir}`, error);
+    return undefined;
+  }
+
+  // assuming that the archive contains only one .app file
+  const appName = (await readdir(extractDir)).find(isAppFile);
+  if (!appName) {
+    Logger.error(`Failed to find .app in extracted archive ${binaryPath}`);
+    return undefined;
+  }
+
+  const appPath = path.join(extractDir, appName);
+  Logger.debug("Extracted app archive to", appPath);
+  return appPath;
 }
 
 function parseEasBuildOutput(stdout: string): EasBuildUrl[] | undefined {
@@ -151,7 +181,12 @@ function parseEasBuildOutput(stdout: string): EasBuildUrl[] | undefined {
 
   const platformMapping = { ANDROID: DevicePlatform.Android, IOS: DevicePlatform.IOS };
   return buildInfo
-    .filter(({ status }) => status === "FINISHED")
+    .filter(({ status, isForIosSimulator, platform }) => {
+      const isFinished = status === "FINISHED";
+      const isUsableForDevice = (platform === "IOS" && isForIosSimulator) || platform === "ANDROID";
+
+      return isFinished && isUsableForDevice;
+    })
     .map(({ platform: easPlatform, artifacts, completedAt }) => {
       return {
         platform: platformMapping[easPlatform],
@@ -221,20 +256,7 @@ function getMostRecentBuild(artifacts: EasBuildUrl[], platform: DevicePlatform) 
   return latestBuild;
 }
 
-async function extractIpa(ipaPath: string, cancelToken: CancelToken) {
-  const extractDirName = path.basename(ipaPath, path.extname(ipaPath));
-  const extractDir = path.join(path.dirname(ipaPath), extractDirName);
-  try {
-    await cancelToken.adapt(exec("unzip", ["-d", extractDir, ipaPath]));
-  } catch (error) {
-    Logger.error(`Failed to extract archive ${ipaPath} to ${extractDir}`, error);
-    return undefined;
-  }
-
-  const payloadDir = path.join(extractDir, "Payload");
-
-  const appName = (await readdir(payloadDir))[0];
-  const appPath = path.join(payloadDir, appName);
-  Logger.debug("Extracted .ipa to", appPath);
-  return appPath;
+type TarCommandArgs = { archivePath: string; extractDir: string };
+function tarCommand({ archivePath, extractDir }: TarCommandArgs) {
+  return exec("tar", ["-xf", archivePath, "-C", extractDir]);
 }
