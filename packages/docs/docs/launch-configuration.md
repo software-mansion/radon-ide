@@ -124,6 +124,43 @@ Below is an example of how the `launch.json` file could look like with android v
 }
 ```
 
+### Custom build settings
+
+Instead of letting Radon IDE build your app, you can use scripts or [Expo
+Application Services (EAS)](https://expo.dev/eas) to do
+it with `buildScript` configuration option.
+
+The requirement for scripts is to output the absolute path to the built app as the
+last line of standard output.
+
+You can also use `eas build`, `eas build:list` or `eas build:view` with
+JSON output to use builds from EAS. If multiple builds are present, Radon IDE
+will take the most recent one. Builds for iOS need to have `"ios.simulator":
+true` config option set.
+
+`buildScript` configuration option is an object with `ios` and `android` keys.
+Both are optional, specifying any of them will replace default build logic for
+that platform with command of your choice.
+
+Below is an example that replaces Android build with build from EAS:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "radon-ide",
+      "request": "launch",
+      "name": "Radon IDE panel",
+      "buildScript": {
+        "android": "eas build:list --non-interactive --json --platform android"
+      }
+    }
+  ]
+}
+```
+
+
 ### Other settings
 
 Here, we list other attributes that can be configured using launch configuration which doesn't fit in any of the above categories:

@@ -210,7 +210,7 @@
               },
               "buildScript": {
                 "type": "object",
-                "description": "Scripts used to build Android or iOS app or fetch them from known location. Executed as part of building process. Should print a JSON result from `eas build` command (invoked with --json --non-interactive flags and profile used for development) or a filesystem path to the built app as the last line of the standard output.",
+                "description": "Scripts used to build Android or iOS app or fetch them from known location. Executed as a part of building process. Should print a JSON result from `eas build` command or a filesystem path to the built app as the last line of the standard output.\nIf using EAS, it should be invoked with --json --non-interactive flags and use a profile for development, iOS additionally needs `\"ios.simulator\": true` config option in eas.json",
                 "properties": {
                   "ios": {
                     "type": "string",
