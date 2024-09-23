@@ -208,7 +208,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   private async changeLocale(newLocale: Locale): Promise<boolean> {
-    const deviceSetLocation = getOrCreateDeviceSet();
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     const languageCode = newLocale.match(/([^_-]*)/)![1];
     await exec("/usr/libexec/PlistBuddy", [
       "-c",
