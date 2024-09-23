@@ -203,7 +203,7 @@ export class Project
     const selectInitialDevicePromise = selectInitialDevice(devices);
 
     const listener = async (newDevices: DeviceInfo[]) => {
-      // we do this check because listAllDevices sends "deviceChanged" event, which should be ignored if selectInitialDevice was successful
+      // we do this check because listAllDevices sends "devicesChanged" event, which should be ignored if selectInitialDevice was successful
       // but used to try again in case it was not. (e.g. when the location of Xcode was changed)
       if (await selectInitialDevicePromise) {
         this.deviceManager.removeListener("devicesChanged", listener);
