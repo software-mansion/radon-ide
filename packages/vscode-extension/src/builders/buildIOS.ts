@@ -90,7 +90,7 @@ export async function buildIos(
   const { buildScript, ios: buildOptions } = getLaunchConfiguration();
 
   if (buildScript?.ios) {
-    const appPath = await runExternalBuild(cancelToken, DevicePlatform.IOS, buildScript.ios);
+    const appPath = await runExternalBuild(cancelToken, DevicePlatform.IOS, buildScript.ios, env);
 
     return {
       appPath,

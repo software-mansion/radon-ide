@@ -83,7 +83,8 @@ export async function buildAndroid(
     const apkPath = await runExternalBuild(
       cancelToken,
       DevicePlatform.Android,
-      buildScript.android
+      buildScript.android,
+      env
     );
 
     return {

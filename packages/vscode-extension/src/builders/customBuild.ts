@@ -62,9 +62,14 @@ type EASBuild = {
 export async function runExternalBuild(
   cancelToken: CancelToken,
   platform: DevicePlatform,
-  externalCommand: string
+  externalCommand: string,
+  env: Record<string, string> | undefined
 ): Promise<string> {
-  const { stdout, lastLine: binaryPath } = await runExternalScript(cancelToken, externalCommand);
+  const { stdout, lastLine: binaryPath } = await runExternalScript(
+    cancelToken,
+    externalCommand,
+    env
+  );
 
   let easBinaryPath = await downloadAppFromEas(stdout, platform, cancelToken);
   if (easBinaryPath) {
@@ -81,8 +86,12 @@ export async function runExternalBuild(
   return binaryPath;
 }
 
-async function runExternalScript(cancelToken: CancelToken, externalCommand: string) {
-  const process = cancelToken.adapt(command(externalCommand, { cwd: getAppRootFolder() }));
+async function runExternalScript(
+  cancelToken: CancelToken,
+  externalCommand: string,
+  env: Record<string, string> | undefined
+) {
+  const process = cancelToken.adapt(command(externalCommand, { cwd: getAppRootFolder(), env }));
   Logger.info(`Running external script: ${externalCommand}`);
 
   let lastLine: string | undefined;
