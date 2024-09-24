@@ -67,7 +67,9 @@
   margin-right: 8px;
 }
 
-.replay-close {
+.replay-fns {
+  display: flex;
+  flex-direction: row;
   position: absolute;
   top: 30px;
   right: 30px;

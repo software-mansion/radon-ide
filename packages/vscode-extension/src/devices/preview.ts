@@ -108,7 +108,7 @@ export class Preview implements Disposable {
       resolve: resolvePromise!,
       reject: rejectPromise!,
     });
-    stdin.write(`replay ${replyID} 10\n`);
+    stdin.write(`replay ${replyID} 5\n`);
     return promise;
   }
 

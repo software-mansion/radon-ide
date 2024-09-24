@@ -8,7 +8,8 @@
 }
 
 .icons-rewind:before {
-  width: 10px;
+  width: 0px;
+  margin: -4px;
 }
 
 .button-group-top {

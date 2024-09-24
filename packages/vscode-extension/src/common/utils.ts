@@ -4,5 +4,8 @@ export interface UtilsInterface {
   reportIssue(): Promise<void>;
 
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
+
+  downloadFile(url: string, destinationPath?: string): Promise<void>;
+
   movePanelToNewWindow(): void;
 }

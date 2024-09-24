@@ -108,13 +108,13 @@ function PreviewView() {
         <div className="spacer" />
         <Button
           tooltip={{
-            label: "Create video snapshot of the device preview",
+            label: "Replay the last few seconds of the app",
           }}
           onClick={async () => {
             const replayURL = await project.createVideoSnapshot();
             setReplayURL(replayURL);
           }}>
-          <span style={{ padding: 0 }}>
+          <span>
             <span className="codicon codicon-triangle-left icons-rewind" />
             <span className="codicon codicon-triangle-left icons-rewind" />
           </span>

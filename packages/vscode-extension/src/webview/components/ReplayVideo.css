@@ -7,10 +7,21 @@
   padding-bottom: 5%;
   padding-top: 15%;
   flex-direction: row;
+	gap: 5px;
   align-items: center;
+	opacity: 0;
+	transition: opacity 0.3s ease;
 }
 
-.replay-controls > .button:hover {
+.phone-screen:hover .replay-controls {
+  opacity: 1;
+}
+
+.replay-controls-pad {
+	width: 0%;
+}
+
+.replay-controls .button:hover {
   background-color: rgba(0, 0, 0, 0.2);
 }
 

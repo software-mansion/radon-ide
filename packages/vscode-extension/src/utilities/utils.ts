@@ -1,4 +1,4 @@
-import { commands, Disposable, env, Uri } from "vscode";
+import { commands, env, Uri, window } from "vscode";
 import { Logger } from "../Logger";
 import { homedir } from "node:os";
 import path from "path";
@@ -71,6 +71,20 @@ export class Utils implements UtilsInterface {
 
   public async openFileAt(filePath: string, line0Based: number, column0Based: number) {
     openFileAtPosition(filePath, line0Based, column0Based);
+  }
+
+  public async downloadFile(url: string, destinationPath?: string) {
+    let folderUri;
+    if (destinationPath) {
+      folderUri = Uri.file(destinationPath);
+    } else {
+      folderUri = await window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        openLabel: "Select folder to save file",
+      });
+    }
   }
 
   public movePanelToNewWindow() {

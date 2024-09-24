@@ -59,6 +59,10 @@ interface SeekbarProps {
   videoRef: React.RefObject<HTMLVideoElement>;
 }
 
+function isVideoPlaying(videoElement: HTMLVideoElement) {
+  return !videoElement.paused && !videoElement.ended && videoElement.readyState > 2;
+}
+
 function Seekbar({ videoRef }: SeekbarProps) {
   const [progress, setProgress] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -85,6 +89,7 @@ function Seekbar({ videoRef }: SeekbarProps) {
     const seekPosition = (e.clientX - rect.left) / rect.width;
     const video = videoRef.current;
     if (video) {
+      console.log("Seek", seekPosition * video.duration);
       video.currentTime = seekPosition * video.duration;
     }
   };
@@ -121,13 +126,30 @@ export default function ReplayVideo({ src, onClose }: ReplayVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isRewinding, setIsRewinding] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isEnded, setIsEnded] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
 
   function rewind() {
     setIsRewinding(true);
     rewindVideo(videoRef.current!, () => {
       setIsRewinding(false);
+      videoRef.current!.play();
     });
+  }
+
+  function stepForward() {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime += 1 / 60;
+    }
+  }
+
+  function stepBackward() {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime -= 1 / 60;
+    }
   }
 
   useEffect(() => {
@@ -140,29 +162,65 @@ export default function ReplayVideo({ src, onClose }: ReplayVideoProps) {
     }
 
     function handleTimeUpdate() {
+      setIsPlaying(isVideoPlaying(video!));
+      setIsEnded(video!.ended);
       setCurrentTime(video!.currentTime);
     }
 
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("play", handleTimeUpdate);
+    video.addEventListener("pause", handleTimeUpdate);
 
     return () => {
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("play", handleTimeUpdate);
+      video.removeEventListener("pause", handleTimeUpdate);
     };
   }, [src]);
+
+  let actionIcon = "start";
+  if (isEnded) {
+    actionIcon = "restart";
+  } else if (isPlaying) {
+    actionIcon = "pause";
+  }
 
   return (
     <>
       <ReplayOverlay time={currentTime} onClose={onClose} />
       <video ref={videoRef} src={src} className="phone-screen replay-video" />
       {isRewinding && <VHSRewind />}
-      <div className="replay-controls">
-        <Button onClick={rewind}>
-          <span className="codicon codicon-debug-restart" />
-        </Button>
-        <Seekbar videoRef={videoRef} />
-        <Button onClick={onClose}>Save</Button>
-      </div>
+      {!isRewinding && (
+        <div className="phone-screen">
+          <div className="replay-controls">
+            <span className="replay-controls-pad" />
+            <Button
+              onClick={() => {
+                if (videoRef.current) {
+                  if (isVideoPlaying(videoRef.current)) {
+                    videoRef.current.pause();
+                  } else {
+                    videoRef.current.play();
+                  }
+                }
+              }}>
+              <span className={`codicon codicon-debug-${actionIcon}`} />
+            </Button>
+            <Seekbar videoRef={videoRef} />
+            <div style={{ display: "flex", flexDirection: "row" }}>
+              <Button onClick={stepBackward}>
+                <span className="codicon codicon-triangle-left" />
+              </Button>
+              <Button onClick={stepForward}>
+                <span className="codicon codicon-triangle-right" />
+              </Button>
+            </div>
+            <span className="replay-controls-pad" />
+          </div>
+        </div>
+      )}
     </>
   );
 }
