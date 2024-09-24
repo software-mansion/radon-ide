@@ -574,7 +574,6 @@ export class Project
       if (isSelected && isNewSession) {
         this.updateProjectState({ status: "buildError" });
       }
-      return false;
     }
     return true;
   }
