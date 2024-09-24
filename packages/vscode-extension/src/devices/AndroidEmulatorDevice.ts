@@ -332,26 +332,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // flag in waitForEmulatorOnline. But even after that even is delivered, adb install also sometimes
     // fails claiming it is too early. The workaround therefore is to retry install command.
     if (forceReinstall) {
-      uninstallApp(build.packageName);
+      await uninstallApp(build.packageName);
     }
 
     await retry(
       async (retryNumber) => {
         if (retryNumber === 0) {
-          installApk(false);
+          await installApk(false);
         } else if (retryNumber === 1) {
           // There's a chance that same emulator was used in newer version of Expo
           // and then RN IDE was opened on older project, in which case installation
           // will fail. We use -d flag which allows for downgrading debuggable
           // applications (see `adb shell pm`, install command)
-          installApk(true);
+          await installApk(true);
         } else {
           // If the app is still not installed, we try to uninstall it first to
           // avoid "INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package <name>
           // signatures do not match newer version; ignoring!" error. This error
           // may come when building locally and with EAS.
           await uninstallApp(build.packageName);
-          installApk(true);
+          await installApk(true);
         }
       },
       2,
