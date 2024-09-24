@@ -185,39 +185,44 @@ export class Project
    */
   private async trySelectingInitialDevice() {
     const selectInitialDevice = async (devices: DeviceInfo[]) => {
+      // we try to pick the last selected device that we saved in the persistent state, otherwise
+      // we take the first device from the list
       const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
         LAST_SELECTED_DEVICE_KEY
       );
       const device = devices.find(({ id }) => id === lastDeviceId) ?? devices.at(0);
 
       if (device) {
-        return await this.selectDevice(device);
+        // if we found a device on the devices list, we try to select it
+        const isDeviceSelected = await this.selectDevice(device);
+        if (isDeviceSelected) {
+          return true;
+        }
       }
+
+      // if device selection wasn't successful we will retry it later on when devicesChange
+      // event is emitted (i.e. when user create a new device). We also make sure that the
+      // device selection is cleared in the project state:
       this.updateProjectState({
         selectedDevice: undefined,
       });
+      // because devices might be outdated after xcode installation change we list them again
+      const newDeviceList = await this.deviceManager.listAllDevices();
+      if (JSON.stringify(newDeviceList) !== JSON.stringify(devices)) {
+        selectInitialDevice(newDeviceList);
+      } else {
+        const listener = async (newDevices: DeviceInfo[]) => {
+          this.deviceManager.removeListener("devicesChanged", listener);
+          selectInitialDevice(newDevices);
+        };
+        this.deviceManager.addListener("devicesChanged", listener);
+      }
+
       return false;
     };
 
     const devices = await this.deviceManager.listAllDevices();
-    const selectInitialDevicePromise = selectInitialDevice(devices);
-
-    const listener = async (newDevices: DeviceInfo[]) => {
-      // we do this check because listAllDevices sends "devicesChanged" event, which should be ignored if selectInitialDevice was successful
-      // but used to try again in case it was not. (e.g. when the location of Xcode was changed)
-      if (await selectInitialDevicePromise) {
-        this.deviceManager.removeListener("devicesChanged", listener);
-        return;
-      }
-      if (await selectInitialDevice(newDevices)) {
-        this.deviceManager.removeListener("devicesChanged", listener);
-      }
-    };
-    this.deviceManager.addListener("devicesChanged", listener);
-
-    if (await selectInitialDevicePromise) {
-      this.deviceManager.removeListener("devicesChanged", listener);
-    }
+    await selectInitialDevice(devices);
   }
 
   async getProjectState(): Promise<ProjectState> {
