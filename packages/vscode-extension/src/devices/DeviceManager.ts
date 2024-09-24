@@ -27,6 +27,7 @@ import { EventEmitter } from "stream";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
+import { checkXcodeExists } from "../dependency/DependencyManager";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
@@ -104,13 +105,20 @@ export class DeviceManager implements DeviceManagerInterface {
       Logger.error("Error fetching emulators", e);
       return [];
     });
-    const simulators =
-      Platform.OS === "macos"
-        ? listSimulators().catch((e) => {
-            Logger.error("Error fetching simulators", e);
-            return [];
-          })
-        : Promise.resolve([]);
+
+    let shouldLoadSimulators = Platform.OS === "macos";
+
+    if (!(await checkXcodeExists())) {
+      shouldLoadSimulators = false;
+      Logger.debug("Couldn't list iOS simulators as XCode installation wasn't found");
+    }
+
+    const simulators = shouldLoadSimulators
+      ? listSimulators().catch((e) => {
+          Logger.error("Error fetching simulators", e);
+          return [];
+        })
+      : Promise.resolve([]);
     const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
     const devices = [...androidDevices, ...iosDevices];
     this.eventEmitter.emit("devicesChanged", devices);

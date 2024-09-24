@@ -20,6 +20,27 @@ import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
 import { ZoomLevelType } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 
+type LoadingComponentProps = {
+  finishedInitialLoad: boolean;
+  devicesNotFound: boolean;
+};
+
+function LoadingComponent({ finishedInitialLoad, devicesNotFound }: LoadingComponentProps) {
+  if (!finishedInitialLoad) {
+    return (
+      <div className="missing-device-filler">
+        <VSCodeProgressRing />
+      </div>
+    );
+  }
+
+  return (
+    <div className="missing-device-filler">
+      {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
+    </div>
+  );
+}
+
 function PreviewView() {
   const { projectState, project } = useProject();
   const { reportIssue } = useUtils();
@@ -93,14 +114,6 @@ function PreviewView() {
     }
   };
 
-  if (!finishedInitialLoad) {
-    return (
-      <div className="panel-view">
-        <VSCodeProgressRing />
-      </div>
-    );
-  }
-
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsPressing(true);
@@ -143,7 +156,7 @@ function PreviewView() {
           </IconButton>
         </SettingsDropdown>
       </div>
-      {selectedDevice ? (
+      {selectedDevice && finishedInitialLoad ? (
         <Preview
           key={selectedDevice.id}
           isInspecting={isInspecting}
@@ -154,9 +167,10 @@ function PreviewView() {
           onZoomChanged={onZoomChanged}
         />
       ) : (
-        <div className="missing-device-filler">
-          {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
-        </div>
+        <LoadingComponent
+          finishedInitialLoad={finishedInitialLoad}
+          devicesNotFound={devicesNotFound}
+        />
       )}
 
       <div className="button-group-bottom">

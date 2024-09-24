@@ -6,6 +6,7 @@ import { Logger } from "../Logger";
 import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
+import { isEqual } from "lodash";
 import {
   AppPermissionType,
   DeviceSettings,
@@ -184,31 +185,45 @@ export class Project
    * If the device list is empty, we wait until we can select a device.
    */
   private async trySelectingInitialDevice() {
-    const selectInitialDevice = (devices: DeviceInfo[]) => {
+    const selectInitialDevice = async (devices: DeviceInfo[]) => {
+      // we try to pick the last selected device that we saved in the persistent state, otherwise
+      // we take the first device from the list
       const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
         LAST_SELECTED_DEVICE_KEY
       );
       const device = devices.find(({ id }) => id === lastDeviceId) ?? devices.at(0);
 
       if (device) {
-        this.selectDevice(device);
-        return true;
+        // if we found a device on the devices list, we try to select it
+        const isDeviceSelected = await this.selectDevice(device);
+        if (isDeviceSelected) {
+          return true;
+        }
       }
+
+      // if device selection wasn't successful we will retry it later on when devicesChange
+      // event is emitted (i.e. when user create a new device). We also make sure that the
+      // device selection is cleared in the project state:
       this.updateProjectState({
         selectedDevice: undefined,
       });
+      // because devices might be outdated after xcode installation change we list them again
+      const newDeviceList = await this.deviceManager.listAllDevices();
+      if (!isEqual(newDeviceList, devices)) {
+        selectInitialDevice(newDeviceList);
+      } else {
+        const listener = async (newDevices: DeviceInfo[]) => {
+          this.deviceManager.removeListener("devicesChanged", listener);
+          selectInitialDevice(newDevices);
+        };
+        this.deviceManager.addListener("devicesChanged", listener);
+      }
+
       return false;
     };
 
     const devices = await this.deviceManager.listAllDevices();
-    if (!selectInitialDevice(devices)) {
-      const listener = (newDevices: DeviceInfo[]) => {
-        if (selectInitialDevice(newDevices)) {
-          this.deviceManager.removeListener("devicesChanged", listener);
-        }
-      };
-      this.deviceManager.addListener("devicesChanged", listener);
-    }
+    await selectInitialDevice(devices);
   }
 
   async getProjectState(): Promise<ProjectState> {
@@ -269,15 +284,18 @@ export class Project
 
     if (forceCleanBuild) {
       await this.start(true, true);
-      return await this.selectDevice(deviceInfo, true);
+      await this.selectDevice(deviceInfo, true);
+      return;
     }
 
     if (this.detectedFingerprintChange) {
-      return await this.selectDevice(deviceInfo, false);
+      await this.selectDevice(deviceInfo, false);
+      return;
     }
 
     if (restartDevice) {
-      return await this.selectDevice(deviceInfo, false);
+      await this.selectDevice(deviceInfo, false);
+      return;
     }
 
     if (onlyReloadJSWhenPossible) {
@@ -515,7 +533,7 @@ export class Project
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
     const device = await this.selectDeviceOnly(deviceInfo);
     if (!device) {
-      return;
+      return false;
     }
     Logger.debug("Selected device is ready");
 
@@ -556,7 +574,9 @@ export class Project
       if (isSelected && isNewSession) {
         this.updateProjectState({ status: "buildError" });
       }
+      return false;
     }
+    return true;
   }
   //#endregion
 

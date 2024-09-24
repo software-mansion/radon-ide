@@ -166,7 +166,7 @@ export class DependencyManager implements Disposable {
 
     await command(installationCommand, {
       cwd: workspacePath,
-      quiet: true,
+      quietErrorsOnExit: true,
     });
 
     this.webview.postMessage({
@@ -198,12 +198,9 @@ export class DependencyManager implements Disposable {
 
   /* iOS-related */
   public async checkXcodeInstalled() {
-    const isXcodebuildInstalled = await checkIfCLIInstalled("xcodebuild -version");
-    const isXcrunInstalled = await checkIfCLIInstalled("xcrun --version");
-    const isSimctlInstalled = await checkIfCLIInstalled("xcrun simctl help");
-    const installed = isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
+    const installed = await checkXcodeExists();
     const errorMessage =
-      "Xcode was not found. [Install Xcode from the Mac App Store](https://apps.apple.com/us/app/xcode/id497799835?mt=12) and have Xcode Command Line Tools enabled.";
+      "Xcode was not found. If you are using alternative Xcode version you can find out more in troubleshooting section of our documentation. Otherwise, [Install Xcode from the Mac App Store](https://apps.apple.com/us/app/xcode/id497799835?mt=12) and have Xcode Command Line Tools enabled.";
     this.webview.postMessage({
       command: "isXcodeInstalled",
       data: {
@@ -428,9 +425,16 @@ export class DependencyManager implements Disposable {
 export async function checkIfCLIInstalled(cmd: string, options: Record<string, unknown> = {}) {
   try {
     // We are not checking the stderr here, because some of the CLIs put the warnings there.
-    const { stdout } = await command(cmd, { encoding: "utf8", ...options });
-    return !!stdout.length;
+    const { stdout } = await command(cmd, {
+      encoding: "utf8",
+      quietErrorsOnExit: true,
+      ...options,
+    });
+    const result = stdout.length > 0;
+    Logger.debug(`CLI: ${cmd} ${result ? "" : "not"} installed `);
+    return result;
   } catch (_) {
+    Logger.debug(`CLI: ${cmd} not installed `);
     return false;
   }
 }
@@ -459,6 +463,13 @@ export function checkMinDependencyVersionInstalled(dependency: string, minVersio
     Logger.debug(message, "Module not found.");
     return "not_installed";
   }
+}
+
+export async function checkXcodeExists() {
+  const isXcodebuildInstalled = await checkIfCLIInstalled("xcodebuild -version");
+  const isXcrunInstalled = await checkIfCLIInstalled("xcrun --version");
+  const isSimctlInstalled = await checkIfCLIInstalled("xcrun simctl help");
+  return isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
 }
 
 export async function checkAndroidEmulatorExists() {
