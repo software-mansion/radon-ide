@@ -6,6 +6,7 @@ import { Logger } from "../Logger";
 import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
+import { isEqual } from "lodash";
 import {
   AppPermissionType,
   DeviceSettings,
@@ -208,7 +209,7 @@ export class Project
       });
       // because devices might be outdated after xcode installation change we list them again
       const newDeviceList = await this.deviceManager.listAllDevices();
-      if (JSON.stringify(newDeviceList) !== JSON.stringify(devices)) {
+      if (!isEqual(newDeviceList, devices)) {
         selectInitialDevice(newDeviceList);
       } else {
         const listener = async (newDevices: DeviceInfo[]) => {
