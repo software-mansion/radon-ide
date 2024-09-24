@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.18",
+  "version": "0.0.19",
   "engines": {
     "vscode": "^1.75.0",
     "os": "darwin"
