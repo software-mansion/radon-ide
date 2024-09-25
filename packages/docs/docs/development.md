@@ -22,7 +22,7 @@ In order to run the extension in development mode, follow the steps below:
 ### 1. Clone the repository
 
 ```bash
-git clone git@github.com:software-mansion/react-native-ide.git
+git clone git@github.com:software-mansion/radon-ide.git
 ```
 
 ### 2. Install NPM dependencies in `packages/vscode-extension` folder
@@ -36,7 +36,7 @@ npm install
 ### 3. Prepare simulator server build
 
 Simulator server repository is not open sourced but we have a pre-build binaries published on the GitHub releases page.
-First, you need to navigate to the [releases page on GitHub](https://github.com/software-mansion/react-native-ide/releases), open the recent release, and download the sim-server file from "Assets" section (the filename contains a git hash for build consistency):
+First, you need to navigate to the [releases page on GitHub](https://github.com/software-mansion/radon-ide/releases), open the recent release, and download the sim-server file from "Assets" section (the filename contains a git hash for build consistency):
 
 <img width="825" alt="download-sim-server" src="/img/docs/download_sim_server.png"/>
 

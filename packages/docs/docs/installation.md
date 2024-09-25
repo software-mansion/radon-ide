@@ -23,7 +23,7 @@ In the Visual Studio Code:
 
 ## -sec-num- Installing the Radon IDE extension in [Cursor](https://cursor.sh/)
 
-Navigate to the [releases page on GitHub](https://github.com/software-mansion/react-native-ide/releases) and select the most recent release.
+Navigate to the [releases page on GitHub](https://github.com/software-mansion/radon-ide/releases) and select the most recent release.
 From the "Assets" section, download the `.vsix` file:
 
 <img width="825" alt="download-vsix" src="/img/docs/download_vsix.png"/>
