@@ -36,7 +36,7 @@ const faqs = [
   {
     topic: "What's up with the code license for Radon IDE?",
     answer: `TL;DR<br/>
-It's okay to modify the code to run in your project and to fix bugs. However, do not distribute the project on your own in any way or form besides our official channels.<br/><br/>This license will evolve as we move beyond the Beta period. <a href="https://github.com/software-mansion/react-native-ide/blob/main/LICENSE.txt" target="_blank">You can read the full license here</a>.`,
+It's okay to modify the code to run in your project and to fix bugs. However, do not distribute the project on your own in any way or form besides our official channels.<br/><br/>This license will evolve as we move beyond the Beta period. <a href="https://github.com/software-mansion/radon-ide/blob/main/LICENSE.txt" target="_blank">You can read the full license here</a>.`,
   },
   {
     topic: "Is WebStorm supported?",
