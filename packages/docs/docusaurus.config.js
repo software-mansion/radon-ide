@@ -14,7 +14,7 @@ const config = {
 
   baseUrl: "/",
 
-  organizationName: "software-mansion-labs",
+  organizationName: "software-mansion",
   projectName: "radon-ide",
 
   onBrokenLinks: "throw",
