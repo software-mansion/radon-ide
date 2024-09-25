@@ -13,7 +13,8 @@ export async function openFileAtPosition(
 
   const selection = new Range(line0Based, column0Based, line0Based, column0Based);
   const activeRNIDEColumn = window.tabGroups.all.find(
-    (group) => group.activeTab?.label === "React Native IDE"
+    (group) =>
+      group.activeTab?.label === "React Native IDE" || group.activeTab?.label === "Radon IDE"
   )?.viewColumn;
   const column = activeRNIDEColumn === ViewColumn.One ? ViewColumn.Beside : ViewColumn.One;
   if (existingDocument) {

@@ -8,7 +8,7 @@ Radon IDE is an extension for VSCode and Cursor that turns the code editor into 
 
 ### ✨ What does it do
 
-React Native IDE is a VSCode and Cursor extension that aims to streamline development of React Native and Expo applications.
+Radon IDE is a VSCode and Cursor extension that aims to streamline development of React Native and Expo applications.
 The current version supports developing on macOS for Android and iOS platforms with the current list of features available:
 
 - Managing iOS and Android simulator (for now only iPhone Pro and Pixel 7 skins are available)
@@ -26,7 +26,7 @@ For installation instructions head to [INSTALLATION](https://ide.swmansion.com/d
 
 ### 💻 Usage
 
-See [USAGE](https://ide.swmansion.com/docs/usage) guide on how to get started after installing the extension. You can also visit [React Native IDE](https://ide.swmansion.com) website where we highlight the most important features.
+See [USAGE](https://ide.swmansion.com/docs/usage) guide on how to get started after installing the extension. You can also visit [Radon IDE](https://ide.swmansion.com) website where we highlight the most important features.
 
 ### 🐛 Troubleshooting
 
@@ -35,7 +35,3 @@ For troubleshooting and guide on reporting issues head to [TROUBLESHOOTING](http
 ### ⚒️ Extension Development
 
 If you want to develop the extension and contribute updates head to [DEVELOPMENT](https://ide.swmansion.com/docs/development) section.
-
-## Discord
-
-Make sure to join [Software Mansion](https://swmansion.com) Discord channel using this invite link: https://discord.gg/jWhHbxQsPd and contact us to get added to `react-native-ide-beta` channel where we discuss issues and communicate our plans and updates.
