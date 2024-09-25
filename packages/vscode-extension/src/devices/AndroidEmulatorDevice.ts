@@ -55,7 +55,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   get lockFilePath(): string {
-    const avdDirectory = getAvdDirectoryLocation();
+    const avdDirectory = getAvdDirectoryLocation(this.avdId);
     const pidFile = path.join(avdDirectory, `${this.avdId}.avd`, "lock.pid");
     return pidFile;
   }
