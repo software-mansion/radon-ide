@@ -67,7 +67,7 @@ const config = {
             position: "right",
           },
           {
-            "href": "https://github.com/software-mansion/react-native-ide/",
+            "href": "https://github.com/software-mansion/radon-ide/",
             "position": "right",
             "className": "header-github",
             "aria-label": "GitHub repository",
