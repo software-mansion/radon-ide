@@ -62,8 +62,8 @@ When something goes wrong in the native build phase, instead of checking "Radon 
 
 There are two locations on the disk where Radon IDE stores its information.
 
-1. The installation directory is located under `~/.vscode/extensions/swmansion.react-native-ide-*` – with a suffix of current version + CPU architecture
-2. Emulator and simulator instance storage is located under `~/Library/Caches/com.swmansion.radon-ide` and `~/Library/Caches/com.swmansion.react-native-ide`
+1. The installation directory is located under `~/.vscode/extensions/swmansion.radon-ide-*` – with a suffix of current version + CPU architecture
+2. Emulator and simulator instance storage is located under `~/Library/Caches/com.swmansion.radon-ide` and `~/Library/Caches/com.swmansion.radon-ide`
 
 If you'd like to perform a clean installation, you can delete both of those folders, restart VSCode and install the extension again from the marketplace.
 
