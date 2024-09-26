@@ -14,8 +14,8 @@ const config = {
 
   baseUrl: "/",
 
-  organizationName: "software-mansion-labs",
-  projectName: "react-native-ide",
+  organizationName: "software-mansion",
+  projectName: "radon-ide",
 
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
