@@ -1,3 +1,4 @@
+import fs from "fs";
 import {
   commands,
   languages,
@@ -24,7 +25,6 @@ import {
   setExtensionContext,
 } from "./utilities/extensionContext";
 import { command, setupPathEnv } from "./utilities/subprocess";
-import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";

@@ -1,9 +1,9 @@
 import os from "os";
+import fs from "fs";
 import { createHash, Hash } from "crypto";
 import path, { join } from "path";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
-import fs, { existsSync } from "fs";
 import { ReadableStream } from "stream/web";
 import { workspace } from "vscode";
 import { Logger } from "../Logger";

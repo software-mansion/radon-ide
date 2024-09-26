@@ -1,12 +1,11 @@
 import path from "path";
+import { readdirSync, statSync } from "fs";
 import { ANDROID_HOME } from "./android";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
 import { AndroidSystemImageInfo } from "../common/DeviceManager";
-import { readdirSync, statSync } from "fs";
 import { getNativeABI } from "./common";
 export const SYSTEM_IMAGES_PATH = path.join(ANDROID_HOME, "system-images");
-import { Platform } from "./platform";
 
 const ACCEPTED_SYSTEM_IMAGES_TYPES = ["default", "google_apis_playstore", "google_apis"];
 
@@ -61,9 +60,13 @@ function recursiveSystemImagePathsSearch(
   for (const file of files) {
     const filePath = path.join(directory, file);
     const isDirectory = statSync(filePath).isDirectory();
-    if (!isDirectory) continue;
+    if (!isDirectory) {
+      continue;
+    }
     // Skip image directories which are not present in the accepted types (on the 2nd depth level only)
-    if (currentDepth === 1 && !ACCEPTED_SYSTEM_IMAGES_TYPES.includes(file)) continue;
+    if (currentDepth === 1 && !ACCEPTED_SYSTEM_IMAGES_TYPES.includes(file)) {
+      continue;
+    }
 
     if (currentDepth === maxDepth) {
       results.push(filePath);
