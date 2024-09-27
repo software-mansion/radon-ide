@@ -162,11 +162,11 @@ export class Project
   }
   //#endregion
 
-  async createVideoSnapshot(): Promise<string> {
+  async captureReplay(): Promise<string> {
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    return this.deviceSession.createVideoSnapshot();
+    return this.deviceSession.captureReplay();
   }
 
   async dispatchPaste(text: string) {

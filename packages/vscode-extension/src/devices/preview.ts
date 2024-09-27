@@ -1,10 +1,12 @@
-import { Disposable } from "vscode";
+import { Disposable, Uri } from "vscode";
 import path from "path";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
 import { TouchPoint } from "../common/Project";
+import { TabPanel } from "../panels/Tabpanel";
+import { WebviewController } from "../panels/WebviewController";
 
 interface ReplayPromiseHandlers {
   resolve: (value: string) => void;
@@ -14,8 +16,7 @@ interface ReplayPromiseHandlers {
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
   public streamURL?: string;
-  private replayPromises: Map<number, ReplayPromiseHandlers> = new Map();
-  private replayCounter = 0;
+  private lastReplayPromise?: ReplayPromiseHandlers;
 
   constructor(private args: string[]) {}
 
@@ -51,7 +52,7 @@ export class Preview implements Disposable {
           return;
         }
 
-        if (line.includes("Serving MJPEG")) {
+        if (line.includes("stream_ready")) {
           const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
           const match = line.match(streamURLRegex);
 
@@ -61,28 +62,25 @@ export class Preview implements Disposable {
             this.streamURL = match[1];
             resolve(this.streamURL);
           }
-        } else if (line.includes("replay_ready") || line.includes("replay_error")) {
-          // replay response format message format looks as follows:
-          // replay_ready <ID> <URL>
-          // replay_error <ID> <Error message>
-          const replayResponseRegex = /(replay_(ready|error)) (\d+) (.*)/;
+        } else if (line.includes("video_ready replay") || line.includes("video_error replay")) {
+          // video response format for replays looks as follows:
+          // video_ready replay <URL>
+          // video_error replay <Error message>
+          const replayResponseRegex = /video_(ready|error) replay (.*)/;
           const match = line.match(replayResponseRegex);
           if (match) {
             // match array looks as follows:
-            // [0] full match
-            // [1] replay_ready or replay_error
-            // [2] ready or error
-            // [3] ID
-            // [4] URL or error message
-            const id = parseInt(match[3], 10);
-            const handlers = this.replayPromises.get(id);
+            // [0] - full match
+            // [1] - "ready" or "error"
+            // [2] - URL or error message
+            const handlers = this.lastReplayPromise;
+            this.lastReplayPromise = undefined;
             if (handlers) {
-              if (match[1] === "replay_error") {
-                handlers.reject(new Error(match[4]));
+              if (match[1] === "video_error") {
+                handlers.reject(new Error(match[2]));
               } else {
-                handlers.resolve(match[4]);
+                handlers.resolve(match[2]);
               }
-              this.replayPromises.delete(id);
             }
           }
         }
@@ -91,7 +89,15 @@ export class Preview implements Disposable {
     });
   }
 
-  public createVideoSnapshot() {
+  public async startReplays() {
+    const stdin = this.subprocess?.stdin;
+    if (!stdin) {
+      throw new Error("sim-server process not available");
+    }
+    stdin.write("video replay start -m -b 50\n"); // 50MB buffer for in-memory video
+  }
+
+  public captureReplay() {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -102,12 +108,13 @@ export class Preview implements Disposable {
       resolvePromise = resolve;
       rejectPromise = reject;
     });
-    const replyID = ++this.replayCounter;
-    this.replayPromises.set(replyID, {
-      resolve: resolvePromise!,
-      reject: rejectPromise!,
-    });
-    stdin.write(`replay ${replyID} 5\n`);
+    if (this.lastReplayPromise) {
+      promise.then(this.lastReplayPromise.resolve, this.lastReplayPromise.reject);
+    }
+    this.lastReplayPromise = { resolve: resolvePromise!, reject: rejectPromise! };
+    stdin.write(`video replay stop\n`);
+    // immediately restart replays
+    this.startReplays();
     return promise;
   }
 

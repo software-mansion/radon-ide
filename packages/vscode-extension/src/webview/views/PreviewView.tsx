@@ -141,7 +141,7 @@ function PreviewView() {
           }}
           onClick={async () => {
             try {
-              const replayURL = await project.createVideoSnapshot();
+              const replayURL = await project.captureReplay();
               setReplayURL(replayURL);
             } catch (e) {}
           }}>

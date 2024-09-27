@@ -132,7 +132,7 @@ export interface ProjectInterface {
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
-  createVideoSnapshot(): Promise<string>;
+  captureReplay(): Promise<string>;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;

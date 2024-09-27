@@ -117,6 +117,7 @@ export class DeviceSession implements Disposable {
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
+    this.device.startReplays();
     return previewUrl;
   }
 
@@ -186,8 +187,8 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
-  public async createVideoSnapshot() {
-    return this.device.createVideoSnapshot();
+  public async captureReplay() {
+    return this.device.captureReplay();
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
