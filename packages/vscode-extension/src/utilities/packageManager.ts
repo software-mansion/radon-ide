@@ -84,7 +84,7 @@ async function isNpmModulesInstalled(workspacePath: string): Promise<boolean> {
   try {
     const { stdout, stderr } = await command("npm ls --json", {
       cwd: workspacePath,
-      quiet: true,
+      quietErrorsOnExit: true,
     });
     const parsedJson = JSON.parse(stdout);
     return parsedJson.problems ? false : true;
@@ -102,7 +102,7 @@ async function isYarnModulesInstalled(workspacePath: string): Promise<boolean> {
     // https://docs.npmjs.com/cli/v7/commands/npm-install
     const { stdout, stderr } = await command("npm ls --json", {
       cwd: workspacePath,
-      quiet: true,
+      quietErrorsOnExit: true,
     });
     const parsedJson = JSON.parse(stdout);
 

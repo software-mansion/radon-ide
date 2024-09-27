@@ -1,7 +1,7 @@
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, TouchPoint } from "../common/Project";
+import { AppPermissionType, DeviceSettings, TouchPoint, Locale } from "../common/Project";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
@@ -14,8 +14,8 @@ export abstract class DeviceBase implements Disposable {
 
   abstract get lockFilePath(): string;
 
-  abstract bootDevice(): Promise<void>;
-  abstract changeSettings(settings: DeviceSettings): Promise<void>;
+  abstract bootDevice(deviceSettings: DeviceSettings): Promise<void>;
+  abstract changeSettings(settings: DeviceSettings): Promise<boolean>;
   abstract sendBiometricAuthorization(isMatch: boolean): Promise<void>;
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;

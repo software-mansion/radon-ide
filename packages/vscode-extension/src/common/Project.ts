@@ -1,5 +1,7 @@
 import { DeviceInfo } from "./DeviceManager";
 
+export type Locale = string;
+
 export type DeviceSettings = {
   appearance: "light" | "dark";
   contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
@@ -9,6 +11,7 @@ export type DeviceSettings = {
     isDisabled: boolean;
   };
   hasEnrolledBiometrics: boolean;
+  locale: Locale;
 };
 
 export type ProjectState = {
@@ -112,7 +115,7 @@ export interface ProjectInterface {
   reload(type: ReloadAction): Promise<boolean>;
   restart(forceCleanBuild: boolean): Promise<void>;
   goHome(homeUrl: string): Promise<void>;
-  selectDevice(deviceInfo: DeviceInfo): Promise<void>;
+  selectDevice(deviceInfo: DeviceInfo): Promise<boolean>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;

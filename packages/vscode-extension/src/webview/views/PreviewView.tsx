@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, MouseEvent } from "react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
@@ -20,11 +20,33 @@ import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
 import { ZoomLevelType } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 
+type LoadingComponentProps = {
+  finishedInitialLoad: boolean;
+  devicesNotFound: boolean;
+};
+
+function LoadingComponent({ finishedInitialLoad, devicesNotFound }: LoadingComponentProps) {
+  if (!finishedInitialLoad) {
+    return (
+      <div className="missing-device-filler">
+        <VSCodeProgressRing />
+      </div>
+    );
+  }
+
+  return (
+    <div className="missing-device-filler">
+      {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
+    </div>
+  );
+}
+
 function PreviewView() {
   const { projectState, project } = useProject();
   const { reportIssue } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
+  const [isPressing, setIsPressing] = useState(false);
   const zoomLevel = projectState.previewZoom ?? "Fit";
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
@@ -93,16 +115,23 @@ function PreviewView() {
     }
   };
 
-  if (!finishedInitialLoad) {
-    return (
-      <div className="panel-view">
-        <VSCodeProgressRing />
-      </div>
-    );
+  function onMouseDown(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(true);
   }
 
+  function onMouseUp(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(false);
+  }
+
+  const touchHandlers = {
+    onMouseDown,
+    onMouseUp,
+  };
+
   return (
-    <div className="panel-view">
+    <div className="panel-view" {...touchHandlers}>
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
@@ -142,20 +171,23 @@ function PreviewView() {
           </IconButton>
         </SettingsDropdown>
       </div>
-      {selectedDevice ? (
+      {selectedDevice && finishedInitialLoad ? (
         <Preview
           key={selectedDevice.id}
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
+          isPressing={isPressing}
+          setIsPressing={setIsPressing}
           zoomLevel={zoomLevel}
           replayURL={replayURL}
           onReplayClose={() => setReplayURL(undefined)}
           onZoomChanged={onZoomChanged}
         />
       ) : (
-        <div className="missing-device-filler">
-          {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
-        </div>
+        <LoadingComponent
+          finishedInitialLoad={finishedInitialLoad}
+          devicesNotFound={devicesNotFound}
+        />
       )}
 
       <div className="button-group-bottom">

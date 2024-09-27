@@ -119,12 +119,12 @@
   --grey-dark-60: #999999;
   --grey-dark-40: #b3b3b3;
 
-  /* Touch marker */
-  --touch-marker-background: var(--grey-dark-40);
-  --touch-marker-border: var(--grey-dark-80);
-  --touch-marker-pressed-background: var(--green-light-100);
-  --touch-marker-pressed-border: var(--green-dark-120);
-  --touch-marker-pressed-shadow: 2px 2px 6px 1px rgba(0, 0, 0, 0.8);
+  /* Touch indicator */
+  --touch-indicator-background: var(--grey-dark-40);
+  --touch-indicator-border: var(--grey-dark-80);
+  --touch-indicator-pressed-background: var(--green-light-100);
+  --touch-indicator-pressed-border: var(--green-dark-120);
+  --touch-indicator-pressed-shadow: 2px 2px 6px 1px rgba(0, 0, 0, 0.8);
 }
 
 /* Light theme */
@@ -200,6 +200,13 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-tooltip-secondary-background: var(--navy-light-10);
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
+
+  /* ScrollArea */
+  --swm-scroll-area-background: var(--white);
+  --swm-scroll-area-shadow: 0 0 0 1px var(--navy-light-10);
+  --swm-scrollbar-background: var(--navy-light-10);
+  --swm-scrollbar-thumb: var(--navy-light-60);
+  --swm-scrollbar-hover: var(--navy-light-20);
 
   /* Input */
   --swm-input-background: var(--white);
@@ -330,6 +337,13 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-tooltip-secondary-background: var(--background-dark-120);
   --swm-tooltip-ternary: var(--navy-dark-100);
   --swm-tooltip-ternary-background: var(--off-white);
+
+  /* ScrollArea */
+  --swm-scroll-area-background: var(--background-dark-100);
+  --swm-scroll-area-shadow: 0 1px 10px var(--background-dark-100);
+  --swm-scrollbar-background: var(--navy-dark-10);
+  --swm-scrollbar-thumb: var(--navy-dark-60);
+  --swm-scrollbar-hover: var(--navy-dark-20);
 
   /* Input */
   --swm-input-background: var(--background-dark-100);

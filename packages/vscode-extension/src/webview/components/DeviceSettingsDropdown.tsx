@@ -2,7 +2,6 @@ import React, { useRef } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
-import * as Switch from "@radix-ui/react-switch";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
@@ -13,13 +12,11 @@ import "./shared/SwitchGroup.css";
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
 import { AppPermissionType, DeviceSettings } from "../../common/Project";
-import DoctorIcon from "./icons/DoctorIcon";
 import { DeviceLocationView } from "../views/DeviceLocationView";
-import { JSX } from "react/jsx-runtime";
-import DiagnosticView from "../views/DiagnosticView";
 import { useModal } from "../providers/ModalProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
+import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 
 const contentSizes = [
   "xsmall",
@@ -132,6 +129,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-location" />
             Set Device Location
           </DropdownMenu.Item>
+          {projectState.selectedDevice?.platform === DevicePlatform.IOS && <LocalizationItem />}
           <Label>Permissions</Label>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
@@ -160,6 +158,23 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
     </DropdownMenu.Root>
   );
 }
+
+const LocalizationItem = () => {
+  const { openModal } = useModal();
+  return (
+    <>
+      <Label>Device Localization</Label>
+      <DropdownMenu.Item
+        className="dropdown-menu-item"
+        onSelect={() => {
+          openModal("Localization", <DeviceLocalizationView />);
+        }}>
+        <span className="codicon codicon-globe" />
+        Set Device Localization
+      </DropdownMenu.Item>
+    </>
+  );
+};
 
 const BiometricsItem = () => {
   const { project, deviceSettings } = useProject();

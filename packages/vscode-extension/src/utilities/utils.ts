@@ -64,9 +64,7 @@ export class Utils implements UtilsInterface {
   }
 
   async reportIssue() {
-    env.openExternal(
-      Uri.parse("https://github.com/software-mansion/react-native-ide/issues/new/choose")
-    );
+    env.openExternal(Uri.parse("https://github.com/software-mansion/radon-ide/issues/new/choose"));
   }
 
   public async openFileAt(filePath: string, line0Based: number, column0Based: number) {

@@ -19,7 +19,7 @@ import { Resizable } from "re-resizable";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { useUtils } from "../providers/UtilsProvider";
+import { Platform, useUtils } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import ReplayVideo from "./ReplayVideo";
 
@@ -136,8 +136,8 @@ function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
   );
 }
 
-function TouchPointMarker({ isPressing }: { isPressing: boolean }) {
-  return <div className={`touch-marker ${isPressing ? "pressed" : ""}`}></div>;
+function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
+  return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
 }
 
 type ButtonGroupLeftProps = {
@@ -179,6 +179,8 @@ type InspectStackData = {
 type Props = {
   isInspecting: boolean;
   setIsInspecting: (isInspecting: boolean) => void;
+  isPressing: boolean;
+  setIsPressing: (isPressing: boolean) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
   replayURL: string | undefined;
@@ -203,13 +205,14 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
 function Preview({
   isInspecting,
   setIsInspecting,
+  isPressing,
+  setIsPressing,
   zoomLevel,
   onZoomChanged,
   replayURL,
   onReplayClose,
 }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
-  const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
@@ -377,17 +380,29 @@ function Preview({
     }
   }
 
+  function onMouseEnter(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    wrapperDivRef.current!.focus();
+
+    if (isPressing) {
+      if (isMultiTouching) {
+        sendMultiTouch(e, "Down");
+      } else {
+        sendTouch(e, "Down");
+      }
+    }
+    setTouchPoint(getTouchPosition(e));
+  }
+
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isPressing) {
       if (isMultiTouching) {
-        setIsMultiTouching(false);
-        setIsPanning(false);
         sendMultiTouch(e, "Up");
       } else {
         sendTouch(e, "Up");
+        setIsPressing(false);
       }
-      setIsPressing(false);
     }
 
     if (isInspecting) {
@@ -402,6 +417,18 @@ function Preview({
   }
 
   useEffect(() => {
+    function onBlurChange() {
+      if (!document.hasFocus()) {
+        setIsPanning(false);
+        setIsMultiTouching(false);
+        setIsPressing(false);
+      }
+    }
+    addEventListener("blur", onBlurChange, true);
+    return () => removeEventListener("blur", onBlurChange, true);
+  }, []);
+
+  useEffect(() => {
     function dispatchPaste(e: ClipboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
@@ -412,7 +439,6 @@ function Preview({
         }
       }
     }
-
     addEventListener("paste", dispatchPaste);
     return () => {
       removeEventListener("paste", dispatchPaste);
@@ -425,7 +451,12 @@ function Preview({
         e.preventDefault();
         const isKeydown = e.type === "keydown";
 
-        if (e.code === "AltLeft" || e.code === "AltRight") {
+        const isMultitouchKeyPressed = Platform.select({
+          macos: e.code === "AltLeft" || e.code === "AltRight",
+          windows: e.code === "ControlLeft" || e.code === "ControlRight",
+        });
+
+        if (isMultitouchKeyPressed) {
           isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
           setIsMultiTouching(isKeydown);
         }
@@ -471,6 +502,7 @@ function Preview({
         onMouseDown,
         onMouseMove,
         onMouseUp,
+        onMouseEnter,
         onMouseLeave,
         onContextMenu,
       };
@@ -483,8 +515,8 @@ function Preview({
   });
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
-  const normalTouchMarkerSize = 33;
-  const smallTouchMarkerSize = 9;
+  const normalTouchIndicatorSize = 33;
+  const smallTouchIndicatorSize = 9;
 
   return (
     <>
@@ -512,9 +544,9 @@ function Preview({
                     style={{
                       "--x": `${touchPoint.x * 100}%`,
                       "--y": `${touchPoint.y * 100}%`,
-                      "--size": `${normalTouchMarkerSize}px`,
+                      "--size": `${normalTouchIndicatorSize}px`,
                     }}>
-                    <TouchPointMarker isPressing={isPressing} />
+                    <TouchPointIndicator isPressing={isPressing} />
                   </div>
                 )}
                 {isMultiTouching && (
@@ -522,9 +554,9 @@ function Preview({
                     style={{
                       "--x": `${anchorPoint.x * 100}%`,
                       "--y": `${anchorPoint.y * 100}%`,
-                      "--size": `${smallTouchMarkerSize}px`,
+                      "--size": `${smallTouchIndicatorSize}px`,
                     }}>
-                    <TouchPointMarker isPressing={false} />
+                    <TouchPointIndicator isPressing={false} />
                   </div>
                 )}
                 {isMultiTouching && (
@@ -532,9 +564,9 @@ function Preview({
                     style={{
                       "--x": `${mirroredTouchPosition.x * 100}%`,
                       "--y": `${mirroredTouchPosition.y * 100}%`,
-                      "--size": `${normalTouchMarkerSize}px`,
+                      "--size": `${normalTouchIndicatorSize}px`,
                     }}>
-                    <TouchPointMarker isPressing={isPressing} />
+                    <TouchPointIndicator isPressing={isPressing} />
                   </div>
                 )}
 

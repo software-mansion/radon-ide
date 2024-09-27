@@ -1,0 +1,318 @@
+[
+  {
+    "localeIdentifier": "sq",
+    "Description": "Albanian"
+  },
+  {
+    "localeIdentifier": "am",
+    "Description": "Amharic"
+  },
+  {
+    "localeIdentifier": "ar",
+    "Description": "Arabic"
+  },
+  {
+    "localeIdentifier": "hy_AM",
+    "Description": "Armenian (Armenia)"
+  },
+  {
+    "localeIdentifier": "eu_ES",
+    "Description": "Basque (Spain)"
+  },
+  {
+    "localeIdentifier": "be",
+    "Description": "Belarusian"
+  },
+  {
+    "localeIdentifier": "bn_BD",
+    "Description": "Bengali (Bangladesh)"
+  },
+  {
+    "localeIdentifier": "bg",
+    "Description": "Bulgarian"
+  },
+  {
+    "localeIdentifier": "my_MM",
+    "Description": "Burmese (Myanmar [Burma])"
+  },
+  {
+    "localeIdentifier": "ca",
+    "Description": "Catalan"
+  },
+  {
+    "localeIdentifier": "hr",
+    "Description": "Croatian"
+  },
+  {
+    "localeIdentifier": "cs_CZ",
+    "Description": "Czech (Czech Republic)"
+  },
+  {
+    "localeIdentifier": "da_DK",
+    "Description": "Danish (Denmark)"
+  },
+  {
+    "localeIdentifier": "nl_NL",
+    "Description": "Dutch (Netherlands)"
+  },
+  {
+    "localeIdentifier": "en_AU",
+    "Description": "English (Australia)"
+  },
+  {
+    "localeIdentifier": "en_CA",
+    "Description": "English (Canada)"
+  },
+  {
+    "localeIdentifier": "en_IN",
+    "Description": "English (India)"
+  },
+  {
+    "localeIdentifier": "en_SG",
+    "Description": "English (Singapore)"
+  },
+  {
+    "localeIdentifier": "en_ZA",
+    "Description": "English (South Africa)"
+  },
+  {
+    "localeIdentifier": "en_US",
+    "Description": "English (USA)"
+  },
+  {
+    "localeIdentifier": "en_GB",
+    "Description": "English (United Kingdom)"
+  },
+  {
+    "localeIdentifier": "et",
+    "Description": "Estonian"
+  },
+  {
+    "localeIdentifier": "fil",
+    "Description": "Filipino"
+  },
+  {
+    "localeIdentifier": "fi_FI",
+    "Description": "Finnish (Finland)"
+  },
+  {
+    "localeIdentifier": "fr_CA",
+    "Description": "French (Canada)"
+  },
+  {
+    "localeIdentifier": "fr_FR",
+    "Description": "French (France)"
+  },
+  {
+    "localeIdentifier": "gl_ES",
+    "Description": "Galician (Spain)"
+  },
+  {
+    "localeIdentifier": "ka_GE",
+    "Description": "Georgian (Georgia)"
+  },
+  {
+    "localeIdentifier": "de_DE",
+    "Description": "German (Germany)"
+  },
+  {
+    "localeIdentifier": "el_GR",
+    "Description": "Greek (Greece)"
+  },
+  {
+    "localeIdentifier": "gu",
+    "Description": "Gujarati"
+  },
+  {
+    "localeIdentifier": "hi_IN",
+    "Description": "Hindi (India)"
+  },
+  {
+    "localeIdentifier": "hu_HU",
+    "Description": "Hungarian (Hungary)"
+  },
+  {
+    "localeIdentifier": "is_IS",
+    "Description": "Icelandic (Iceland)"
+  },
+  {
+    "localeIdentifier": "id",
+    "Description": "Indonesian"
+  },
+  {
+    "localeIdentifier": "it_IT",
+    "Description": "Italian (Italy)"
+  },
+  {
+    "localeIdentifier": "ja_JP",
+    "Description": "Japanese (Japan)"
+  },
+  {
+    "localeIdentifier": "kn_IN",
+    "Description": "Kannada (India)"
+  },
+  {
+    "localeIdentifier": "kk",
+    "Description": "Kazakh"
+  },
+  {
+    "localeIdentifier": "km_KH",
+    "Description": "Khmer (Cambodia)"
+  },
+  {
+    "localeIdentifier": "ko_KR",
+    "Description": "Korean (South Korea)"
+  },
+  {
+    "localeIdentifier": "ky_KG",
+    "Description": "Kyrgyz (Kyrgyzstan)"
+  },
+  {
+    "localeIdentifier": "lo_LA",
+    "Description": "Lao (Laos)"
+  },
+  {
+    "localeIdentifier": "lv",
+    "Description": "Latvian"
+  },
+  {
+    "localeIdentifier": "lt",
+    "Description": "Lithuanian"
+  },
+  {
+    "localeIdentifier": "mk_MK",
+    "Description": "Macedonian (Macedonia)"
+  },
+  {
+    "localeIdentifier": "ms",
+    "Description": "Malay"
+  },
+  {
+    "localeIdentifier": "ms_MY",
+    "Description": "Malay (Malaysia)"
+  },
+  {
+    "localeIdentifier": "ml_IN",
+    "Description": "Malayalam (India)"
+  },
+  {
+    "localeIdentifier": "mr_IN",
+    "Description": "Marathi (India)"
+  },
+  {
+    "localeIdentifier": "mn_MN",
+    "Description": "Mongolian (Mongolia)"
+  },
+  {
+    "localeIdentifier": "ne_NP",
+    "Description": "Nepali (Nepal)"
+  },
+  {
+    "localeIdentifier": "fa",
+    "Description": "Persian"
+  },
+  {
+    "localeIdentifier": "fa_AF",
+    "Description": "Persian (Afghanistan)"
+  },
+  {
+    "localeIdentifier": "fa_IR",
+    "Description": "Persian (Iran)"
+  },
+  {
+    "localeIdentifier": "pl_PL",
+    "Description": "Polish (Poland)"
+  },
+  {
+    "localeIdentifier": "pt_BR",
+    "Description": "Portuguese (Brazil)"
+  },
+  {
+    "localeIdentifier": "pt_PT",
+    "Description": "Portuguese (Portugal)"
+  },
+  {
+    "localeIdentifier": "pa",
+    "Description": "Punjabi"
+  },
+  {
+    "localeIdentifier": "ro",
+    "Description": "Romanian"
+  },
+  {
+    "localeIdentifier": "rm",
+    "Description": "Romansh"
+  },
+  {
+    "localeIdentifier": "ru_RU",
+    "Description": "Russian (Russia)"
+  },
+  {
+    "localeIdentifier": "sr",
+    "Description": "Serbian"
+  },
+  {
+    "localeIdentifier": "si_LK",
+    "Description": "Sinhala (Sri Lanka)"
+  },
+  {
+    "localeIdentifier": "sk",
+    "Description": "Slovak"
+  },
+  {
+    "localeIdentifier": "sl",
+    "Description": "Slovenian"
+  },
+  {
+    "localeIdentifier": "es_419",
+    "Description": "Spanish (Latin America)"
+  },
+  {
+    "localeIdentifier": "es_ES",
+    "Description": "Spanish (Spain)"
+  },
+  {
+    "localeIdentifier": "es_US",
+    "Description": "Spanish (United States)"
+  },
+  {
+    "localeIdentifier": "sw",
+    "Description": "Swahili"
+  },
+  {
+    "localeIdentifier": "sv_SE",
+    "Description": "Swedish (Sweden)"
+  },
+  {
+    "localeIdentifier": "ta_IN",
+    "Description": "Tamil (India)"
+  },
+  {
+    "localeIdentifier": "te_IN",
+    "Description": "Telugu (India)"
+  },
+  {
+    "localeIdentifier": "th",
+    "Description": "Thai"
+  },
+  {
+    "localeIdentifier": "tr_TR",
+    "Description": "Turkish (Turkey)"
+  },
+  {
+    "localeIdentifier": "uk",
+    "Description": "Ukrainian"
+  },
+  {
+    "localeIdentifier": "ur",
+    "Description": "Urdu"
+  },
+  {
+    "localeIdentifier": "vi",
+    "Description": "Vietnamese"
+  },
+  {
+    "localeIdentifier": "zu",
+    "Description": "Zulu"
+  }
+]

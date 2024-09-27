@@ -6,10 +6,12 @@ import { Logger } from "../Logger";
 import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { DeviceInfo } from "../common/DeviceManager";
+import { isEqual } from "lodash";
 import {
   AppPermissionType,
   DeviceSettings,
   InspectData,
+  Locale,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -29,7 +31,7 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
 
-const DEVICE_SETTINGS_KEY = "device_settings_v2";
+const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 
@@ -69,6 +71,7 @@ export class Project
       isDisabled: true,
     },
     hasEnrolledBiometrics: false,
+    locale: "en_US",
   };
 
   constructor(
@@ -85,6 +88,7 @@ export class Project
         isDisabled: false,
       },
       hasEnrolledBiometrics: false,
+      locale: "en_US",
     };
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
@@ -188,31 +192,45 @@ export class Project
    * If the device list is empty, we wait until we can select a device.
    */
   private async trySelectingInitialDevice() {
-    const selectInitialDevice = (devices: DeviceInfo[]) => {
+    const selectInitialDevice = async (devices: DeviceInfo[]) => {
+      // we try to pick the last selected device that we saved in the persistent state, otherwise
+      // we take the first device from the list
       const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
         LAST_SELECTED_DEVICE_KEY
       );
       const device = devices.find(({ id }) => id === lastDeviceId) ?? devices.at(0);
 
       if (device) {
-        this.selectDevice(device);
-        return true;
+        // if we found a device on the devices list, we try to select it
+        const isDeviceSelected = await this.selectDevice(device);
+        if (isDeviceSelected) {
+          return true;
+        }
       }
+
+      // if device selection wasn't successful we will retry it later on when devicesChange
+      // event is emitted (i.e. when user create a new device). We also make sure that the
+      // device selection is cleared in the project state:
       this.updateProjectState({
         selectedDevice: undefined,
       });
+      // because devices might be outdated after xcode installation change we list them again
+      const newDeviceList = await this.deviceManager.listAllDevices();
+      if (!isEqual(newDeviceList, devices)) {
+        selectInitialDevice(newDeviceList);
+      } else {
+        const listener = async (newDevices: DeviceInfo[]) => {
+          this.deviceManager.removeListener("devicesChanged", listener);
+          selectInitialDevice(newDevices);
+        };
+        this.deviceManager.addListener("devicesChanged", listener);
+      }
+
       return false;
     };
 
     const devices = await this.deviceManager.listAllDevices();
-    if (!selectInitialDevice(devices)) {
-      const listener = (newDevices: DeviceInfo[]) => {
-        if (selectInitialDevice(newDevices)) {
-          this.deviceManager.removeListener("devicesChanged", listener);
-        }
-      };
-      this.deviceManager.addListener("devicesChanged", listener);
-    }
+    await selectInitialDevice(devices);
   }
 
   async getProjectState(): Promise<ProjectState> {
@@ -255,7 +273,11 @@ export class Project
   }
 
   //#region Session lifecycle
-  public async restart(forceCleanBuild: boolean, onlyReloadJSWhenPossible: boolean = true) {
+  public async restart(
+    forceCleanBuild: boolean,
+    onlyReloadJSWhenPossible: boolean = true,
+    restartDevice: boolean = false
+  ) {
     // we save device info and device session at the start such that we can
     // check if they weren't updated in the meantime while we await for restart
     // procedures
@@ -269,9 +291,18 @@ export class Project
 
     if (forceCleanBuild) {
       await this.start(true, true);
-      return await this.selectDevice(deviceInfo, true);
-    } else if (this.detectedFingerprintChange) {
-      return await this.selectDevice(deviceInfo, false);
+      await this.selectDevice(deviceInfo, true);
+      return;
+    }
+
+    if (this.detectedFingerprintChange) {
+      await this.selectDevice(deviceInfo, false);
+      return;
+    }
+
+    if (restartDevice) {
+      await this.selectDevice(deviceInfo, false);
+      return;
     }
 
     if (onlyReloadJSWhenPossible) {
@@ -433,9 +464,14 @@ export class Project
   public async updateDeviceSettings(settings: DeviceSettings) {
     this.deviceSettings = settings;
     extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
-    await this.deviceSession?.changeDeviceSettings(settings);
+    let needsRestart = await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
+
+    if (needsRestart) {
+      await this.restart(false, false, true);
+    }
   }
+
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
@@ -504,7 +540,7 @@ export class Project
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
     const device = await this.selectDeviceOnly(deviceInfo);
     if (!device) {
-      return;
+      return false;
     }
     Logger.debug("Selected device is ready");
 
@@ -546,6 +582,7 @@ export class Project
         this.updateProjectState({ status: "buildError" });
       }
     }
+    return true;
   }
   //#endregion
 
