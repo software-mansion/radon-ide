@@ -7,7 +7,6 @@ import fs from "fs";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsInterface } from "../common/utils";
-import { Platform } from "./platform";
 
 type keybindingType = {
   command: string;
@@ -85,7 +84,15 @@ export class Utils implements UtilsInterface {
     }
   }
 
-  public movePanelToNewWindow() {
+  public async movePanelToNewWindow() {
     commands.executeCommand("workbench.action.moveEditorToNewWindow");
+  }
+
+  public async showDismissableError(errorMessage: string) {
+    window.showErrorMessage(errorMessage, "Dismiss");
+  }
+
+  public async openExternalUrl(uriString: string) {
+    env.openExternal(Uri.parse(uriString));
   }
 }

@@ -17,15 +17,8 @@ type CallArgs = {
 };
 export type WebviewEvent =
   | {
-      command: "openExternalUrl";
-      url: string;
-    }
-  | { command: "startFollowing" }
-  | { command: "stopFollowing" }
-  | { command: "showDismissableError"; message: string }
-  | ({
       command: "call";
-    } & CallArgs);
+    } & CallArgs;
 
 export class WebviewController implements Disposable {
   private readonly dependencyManager: DependencyManager;
@@ -44,8 +37,6 @@ export class WebviewController implements Disposable {
     });
   });
 
-  private followEnabled = false;
-
   private readonly callableObjects: Map<string, object>;
 
   constructor(private webview: Webview) {
@@ -54,8 +45,6 @@ export class WebviewController implements Disposable {
 
     // Set the manager to listen and change the persisting storage for the extension.
     this.dependencyManager = new DependencyManager(webview);
-
-    this.setupEditorListeners();
 
     this.deviceManager = new DeviceManager();
     this.project = new Project(this.deviceManager, this.dependencyManager);
@@ -107,18 +96,6 @@ export class WebviewController implements Disposable {
         switch (message.command) {
           case "call":
             this.handleRemoteCall(message);
-            return;
-          case "openExternalUrl":
-            openExternalUrl(message.url);
-            return;
-          case "stopFollowing":
-            this.followEnabled = false;
-            return;
-          case "startFollowing":
-            this.followEnabled = true;
-            return;
-          case "showDismissableError":
-            showDismissableError(message.message);
             return;
         }
       },
@@ -181,23 +158,4 @@ export class WebviewController implements Disposable {
       }
     }
   }
-
-  private setupEditorListeners() {
-    extensionContext.subscriptions.push(
-      window.onDidChangeActiveTextEditor((editor) => {
-        if (editor) {
-          this.project.onActiveFileChange(editor.document.fileName, this.followEnabled);
-        }
-      })
-    );
-  }
-}
-
-// Open the url in the default user's browser.
-function openExternalUrl(url: string) {
-  vscode.env.openExternal(vscode.Uri.parse(url));
-}
-
-function showDismissableError(message: string) {
-  window.showErrorMessage(message, "Dismiss");
 }

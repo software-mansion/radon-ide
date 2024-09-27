@@ -241,10 +241,6 @@ export class DeviceSession implements Disposable {
     this.devtools.send("RNIDE_openPreview", { previewId });
   }
 
-  public onActiveFileChange(filename: string, followEnabled: boolean) {
-    this.devtools.send("RNIDE_editorFileChanged", { filename, followEnabled });
-  }
-
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
     return this.device.changeSettings(settings);
   }

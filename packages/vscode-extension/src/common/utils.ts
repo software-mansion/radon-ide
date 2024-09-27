@@ -7,5 +7,9 @@ export interface UtilsInterface {
 
   downloadFile(url: string, destinationPath?: string): Promise<void>;
 
-  movePanelToNewWindow(): void;
+  movePanelToNewWindow(): Promise<void>;
+
+  showDismissableError(errorMessage: string): Promise<void>;
+
+  openExternalUrl(uriString: string): Promise<void>;
 }

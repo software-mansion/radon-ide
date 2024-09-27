@@ -140,8 +140,10 @@ function PreviewView() {
             label: "Replay the last few seconds of the app",
           }}
           onClick={async () => {
-            const replayURL = await project.createVideoSnapshot();
-            setReplayURL(replayURL);
+            try {
+              const replayURL = await project.createVideoSnapshot();
+              setReplayURL(replayURL);
+            } catch (e) {}
           }}>
           <span>
             <span className="codicon codicon-triangle-left icons-rewind" />
