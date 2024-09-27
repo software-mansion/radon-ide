@@ -446,10 +446,6 @@ export class Project
     }
   }
 
-  public onActiveFileChange(filename: string, followEnabled: boolean) {
-    this.deviceSession?.onActiveFileChange(filename, followEnabled);
-  }
-
   public async getDeviceSettings() {
     return this.deviceSettings;
   }

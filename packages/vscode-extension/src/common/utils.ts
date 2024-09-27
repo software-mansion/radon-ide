@@ -4,5 +4,10 @@ export interface UtilsInterface {
   reportIssue(): Promise<void>;
 
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
-  movePanelToNewWindow(): void;
+
+  movePanelToNewWindow(): Promise<void>;
+
+  showDismissableError(errorMessage: string): Promise<void>;
+
+  openExternalUrl(uriString: string): Promise<void>;
 }

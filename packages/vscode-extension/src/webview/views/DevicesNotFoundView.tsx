@@ -10,7 +10,7 @@ import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/const
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { vscode } from "../utilities/vscode";
-import { Platform } from "../providers/UtilsProvider";
+import { Platform, useUtils } from "../providers/UtilsProvider";
 
 const firstIosDeviceName = iOSSupportedDevices[0].name;
 const firstAndroidDeviceName = AndroidSupportedDevices[0].name;
@@ -69,6 +69,7 @@ function DevicesNotFoundView() {
   const [isIOSCreating, withIosCreating] = useLoadingState();
   const [isAndroidCreating, withAndroidCreating] = useLoadingState();
   const { androidEmulatorError, iosSimulatorError } = useDependencies();
+  const utils = useUtils();
 
   function openCreateNewDeviceModal() {
     openModal(
@@ -79,7 +80,7 @@ function DevicesNotFoundView() {
 
   async function createAndroidDevice() {
     if (androidEmulatorError !== undefined) {
-      vscode.postMessage({ command: "showDismissableError", message: androidEmulatorError });
+      utils.showDismissableError(androidEmulatorError);
       return;
     }
 
@@ -99,7 +100,7 @@ function DevicesNotFoundView() {
 
   async function createIOSDevice() {
     if (iosSimulatorError !== undefined) {
-      vscode.postMessage({ command: "showDismissableError", message: iosSimulatorError });
+      utils.showDismissableError(iosSimulatorError);
       return;
     }
 
