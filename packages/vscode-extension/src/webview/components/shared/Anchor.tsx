@@ -1,18 +1,16 @@
-import { vscode } from "../../utilities/vscode";
+import { useUtils } from "../../providers/UtilsProvider";
 
 interface AnchorProps {
-  url?: string;
+  url: string;
   children: React.ReactNode;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 function Anchor({ url, children, onClick }: AnchorProps) {
+  const utils = useUtils();
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    vscode.postMessage({
-      command: "openExternalUrl",
-      url,
-    });
+    utils.openExternalUrl(url);
   };
 
   return (
