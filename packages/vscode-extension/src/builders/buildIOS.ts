@@ -18,6 +18,7 @@ import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
 import { runExternalBuild } from "./customBuild";
+import { fetchEasBuild } from "./eas";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
@@ -87,10 +88,26 @@ export async function buildIos(
     cancelToken: CancelToken
   ) => Promise<void>
 ): Promise<IOSBuildResult> {
-  const { buildScript, ios: buildOptions } = getLaunchConfiguration();
+  const { buildScript, eas, ios: buildOptions, env } = getLaunchConfiguration();
 
   if (buildScript?.ios) {
-    const appPath = await runExternalBuild(cancelToken, DevicePlatform.IOS, buildScript.ios, env);
+    const appPath = await runExternalBuild(cancelToken, buildScript.ios, env);
+    if (!appPath) {
+      throw new Error("Failed to build iOS app using custom script.");
+    }
+
+    return {
+      appPath,
+      bundleID: await getBundleID(appPath),
+      platform: DevicePlatform.IOS,
+    };
+  }
+
+  if (eas?.ios) {
+    const appPath = await fetchEasBuild(cancelToken, eas.ios, DevicePlatform.IOS);
+    if (!appPath) {
+      throw new Error("Failed to build iOS app using EAS build.");
+    }
 
     return {
       appPath,

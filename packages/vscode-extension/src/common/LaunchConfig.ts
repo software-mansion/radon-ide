@@ -1,9 +1,17 @@
+export type EasConfig =
+  | { profile: string; useBuildType: "latest" }
+  | { profile: string; useBuildType: "id"; buildUUID: string };
+
 export type LaunchConfigurationOptions = {
   appRoot?: string;
   metroConfigPath?: string;
   buildScript?: {
     ios?: string;
     android?: string;
+  };
+  eas?: {
+    ios?: EasConfig;
+    android?: EasConfig;
   };
   env?: Record<string, string>;
   ios?: {
@@ -35,9 +43,7 @@ export type LaunchConfigUpdater = <K extends keyof LaunchConfigurationOptions>(
 
 export interface LaunchConfig {
   getConfig(): Promise<LaunchConfigurationOptions>;
-
   update: LaunchConfigUpdater;
-
   getAvailableXcodeSchemes(): Promise<string[]>;
   addListener<K extends keyof LaunchConfigEventMap>(
     eventType: K,

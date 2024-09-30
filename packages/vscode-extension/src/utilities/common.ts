@@ -2,10 +2,9 @@ import os from "os";
 import fs from "fs";
 import { createHash, Hash } from "crypto";
 import path, { join } from "path";
-import { Readable } from "stream";
 import { finished } from "stream/promises";
-import { ReadableStream } from "stream/web";
 import { workspace } from "vscode";
+import fetch from "node-fetch";
 import { Logger } from "../Logger";
 
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
@@ -155,6 +154,38 @@ function isPidRunning(pid: number) {
     return true;
   } catch (_e) {
     return false;
+  }
+}
+
+export async function downloadBinary(url: string, directory: string) {
+  const filename = url.split("/").pop();
+  const hasInvalidFormat = !filename;
+  if (hasInvalidFormat) {
+    return undefined;
+  }
+
+  let body: NodeJS.ReadableStream;
+  let ok: boolean;
+  try {
+    const result = await fetch(url);
+    if (!result.body) {
+      return undefined;
+    }
+    body = result.body;
+    ok = result.ok;
+  } catch (_e) {
+    // Network error
+    return undefined;
+  }
+
+  if (ok) {
+    const destination = path.resolve(directory, filename);
+    const fileStream = fs.createWriteStream(destination, { flags: "wx" });
+    await finished(body.pipe(fileStream));
+
+    return destination.toString();
+  } else {
+    return undefined;
   }
 }
 
