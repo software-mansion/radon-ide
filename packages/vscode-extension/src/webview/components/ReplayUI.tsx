@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
+import * as Select from "@radix-ui/react-select";
 import "./ReplayUI.css";
 import Button from "./shared/Button";
 import ReplayOverlay from "./ReplayOverlay";
 import { RecordingData } from "../../common/Project";
+
+const INITIAL_REPLAY_LENGTH_SEC = 5;
 
 type ReplayVideoProps = {
   replayData: RecordingData;
@@ -57,13 +60,14 @@ function VHSRewind() {
 
 interface SeekbarProps {
   videoRef: React.RefObject<HTMLVideoElement>;
+  startTime: number;
 }
 
 function isVideoPlaying(videoElement: HTMLVideoElement) {
   return !videoElement.paused && !videoElement.ended && videoElement.readyState > 2;
 }
 
-function Seekbar({ videoRef }: SeekbarProps) {
+function Seekbar({ videoRef, startTime }: SeekbarProps) {
   const [progress, setProgress] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const seekbarRef = useRef<HTMLDivElement>(null);
@@ -73,13 +77,14 @@ function Seekbar({ videoRef }: SeekbarProps) {
     if (!video) return;
 
     const updateProgress = () => {
-      const progress = (video.currentTime / video.duration) * 100;
+      const progress = ((video.currentTime - startTime) / (video.duration - startTime)) * 100;
       setProgress(progress);
     };
+    updateProgress();
 
     video.addEventListener("timeupdate", updateProgress);
     return () => video.removeEventListener("timeupdate", updateProgress);
-  }, [videoRef]);
+  }, [videoRef, startTime]);
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const seekbar = seekbarRef.current;
@@ -89,7 +94,7 @@ function Seekbar({ videoRef }: SeekbarProps) {
     const seekPosition = (e.clientX - rect.left) / rect.width;
     const video = videoRef.current;
     if (video) {
-      video.currentTime = seekPosition * video.duration;
+      video.currentTime = startTime + seekPosition * (video.duration - startTime);
     }
   };
 
@@ -121,12 +126,64 @@ function Seekbar({ videoRef }: SeekbarProps) {
   );
 }
 
+interface LengthSelectorProps {
+  startTime: number;
+  videoRef: React.RefObject<HTMLVideoElement>;
+  setStartTime: (startTime: number) => void;
+}
+
+function LengthSelector({ startTime, videoRef, setStartTime }: LengthSelectorProps) {
+  const videoDuration = videoRef.current?.duration ?? 0;
+
+  const options = [5, 10, 30, 0].filter((l) => l < videoDuration);
+  const value = startTime === 0 ? 0 : videoDuration - startTime;
+
+  function str(length: number) {
+    if (length === 0) {
+      return "Full";
+    }
+    return `${length}s.`;
+  }
+
+  function onValueChange(value: string) {
+    console.log("VALUE", value);
+    if (value === "Full") {
+    } else {
+      const newStartTime = videoDuration - parseInt(value);
+      setStartTime(newStartTime);
+    }
+  }
+
+  return (
+    <Select.Root value={str(value)} onValueChange={onValueChange}>
+      <Select.Trigger className="len-select-trigger" aria-label="Food">
+        <Select.Value>{str(value)}</Select.Value>
+        <Select.Icon className="len-select-icon">
+          <span className="codicon codicon-chevron-down" />
+        </Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Content className="len-select-content">
+          <Select.Viewport className="len-select-viewport">
+            {options.map((length) => (
+              <Select.Item value={str(length)} key={length} className="len-select-item">
+                <Select.ItemText className="len-select-item-text">{str(length)}</Select.ItemText>
+              </Select.Item>
+            ))}
+          </Select.Viewport>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
+  );
+}
+
 export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isRewinding, setIsRewinding] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
+  const [startTime, setStartTime] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
 
   function rewind() {
@@ -157,6 +214,7 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
 
     function handleLoadedMetadata() {
       setIsLoaded(true);
+      setStartTime(Math.max(0, video!.duration - INITIAL_REPLAY_LENGTH_SEC));
       rewind();
     }
 
@@ -195,6 +253,7 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
         <div className="phone-screen">
           <div className="replay-controls">
             <span className="replay-controls-pad" />
+            <LengthSelector videoRef={videoRef} startTime={startTime} setStartTime={setStartTime} />
             <Button
               onClick={() => {
                 if (videoRef.current) {
@@ -207,7 +266,7 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
               }}>
               <span className={`codicon codicon-debug-${actionIcon}`} />
             </Button>
-            <Seekbar videoRef={videoRef} />
+            <Seekbar videoRef={videoRef} startTime={startTime} />
             <div style={{ display: "flex", flexDirection: "row" }}>
               <Button onClick={stepBackward}>
                 <span className="codicon codicon-triangle-left" />

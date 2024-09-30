@@ -9,7 +9,7 @@
   flex-direction: row;
 	gap: 5px;
   align-items: center;
-	opacity: 0;
+	/* opacity: 0; */
 	transition: opacity 0.3s ease;
 }
 
@@ -23,6 +23,108 @@
 
 .replay-controls .button:hover {
   background-color: rgba(0, 0, 0, 0.2);
+}
+
+.len-select-trigger {
+  box-sizing: border-box;
+  display: inline;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 1;
+  overflow: hidden;
+  cursor: pointer;
+  height: 36px;
+  border: 0px solid transparent;
+  border-radius: 18px;
+  gap: 5px;
+  color: var(--swm-len-select);
+  background-color: var(--swm-len-select-background);
+  user-select: none;
+  min-width: var(--len-select-min-width);
+}
+
+.len-select-trigger:hover {
+  background-color: var(--swm-len-select-hover-background);
+}
+
+.len-select-trigger[data-state="open"] {
+  border-radius: 18px 18px 18px 18px;
+  box-shadow: var(--swm-focus-outline);
+}
+
+.len-select-trigger[data-disabled] {
+  background-color: var(--swm-len-select-disabled-background);
+  color: var(--swm-secondary-text);
+  pointer-events: none;
+}
+
+.len-select-trigger:focus {
+  box-shadow: var(--swm-focus-outline);
+}
+
+.len-select-content {
+  overflow: hidden;
+  background-color: var(--swm-len-select-background);
+  border-radius: 18px 18px 18px 18px;
+  transform: translateY(4px);
+  padding-bottom: 4px;
+  max-width: var(--radix-select-content-available-width);
+  max-height: var(--radix-select-content-available-height);
+}
+
+.len-select-viewport {
+  padding: 6px;
+}
+
+.len-select-scroll {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.len-select-label {
+  padding: 0 4px 0 4px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.len-select-separator {
+  height: 1px;
+  background-color: var(--swm-len-select-separator);
+  margin: 5px;
+}
+
+.len-select-item {
+  font-size: 13px;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  height: auto;
+  padding: 0 4px;
+  position: relative;
+  border-radius: 4px;
+  color: var(--swm-default-text);
+}
+
+.len-select-item[data-highlighted] {
+  outline: none;
+  background-color: var(--swm-len-select-highlighted-background);
+  cursor: pointer;
+}
+
+.len-select-item-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: calc(var(--radix-select-content-available-width) - 15px);
+}
+
+.len-select-item:hover .len-select-item-text {
+  white-space: normal;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
 .seekbar {
