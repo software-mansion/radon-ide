@@ -6,14 +6,18 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "copy-shared": "../shared/copy.sh bare ./shared"
   },
   "dependencies": {
+    "@types/react": "~18.2.45",
     "expo": "~50.0.14",
+    "expo-dev-client": "~3.3.11",
     "expo-status-bar": "~1.11.1",
+    "radon-ide": "^0.0.1",
     "react": "18.2.0",
     "react-native": "0.73.6",
-    "expo-dev-client": "~3.3.11"
+    "typescript": "^5.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
