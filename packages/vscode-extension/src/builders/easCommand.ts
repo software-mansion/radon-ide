@@ -1,4 +1,5 @@
 import { DevicePlatform } from "../common/DeviceManager";
+import { getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 
 type UnixTimestamp = number;
@@ -8,6 +9,7 @@ export type EASBuild = {
   binaryUrl: string;
   appVersion: string;
   completedAt: UnixTimestamp;
+  expired: boolean;
 };
 
 type IsoTimestamp = string; // e.g. "2024-09-04T09:44:07.001Z"
@@ -53,20 +55,26 @@ type EASBuildJson = {
 export async function listEasBuilds(platform: DevicePlatform, profile: string) {
   const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
 
-  const { stdout } = await exec("eas", [
-    "build:list",
-    "--non-interactive",
-    "--json",
-    "--platform",
-    platformMapping[platform],
-    "--profile",
-    profile,
-  ]);
+  const { stdout } = await exec(
+    "eas",
+    [
+      "build:list",
+      "--non-interactive",
+      "--json",
+      "--platform",
+      platformMapping[platform],
+      "--profile",
+      profile,
+    ],
+    { cwd: getAppRootFolder() }
+  );
   return parseEasBuildOutput(stdout, platform);
 }
 
 export async function viewEasBuild(buildUUID: UUID, platform: DevicePlatform) {
-  const { stdout } = await exec("eas", ["build:view", buildUUID, "--json"]);
+  const { stdout } = await exec("eas", ["build:view", buildUUID, "--json"], {
+    cwd: getAppRootFolder(),
+  });
   return parseEasBuildOutput(stdout, platform)?.at(0);
 }
 
@@ -85,12 +93,13 @@ function parseEasBuildOutput(stdout: string, platform: DevicePlatform): EASBuild
 
       return isFinished && isUsableForDevice && platformMapping[easPlatform] === platform;
     })
-    .map(({ platform: easPlatform, artifacts, completedAt, appVersion }) => {
+    .map(({ platform: easPlatform, artifacts, completedAt, appVersion, expirationDate }) => {
       return {
         platform: platformMapping[easPlatform],
         binaryUrl: artifacts.applicationArchiveUrl,
         appVersion,
         completedAt: Date.parse(completedAt),
+        expired: Date.parse(expirationDate) < Date.now(),
       };
     });
 }

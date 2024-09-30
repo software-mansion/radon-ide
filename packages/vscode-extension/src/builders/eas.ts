@@ -35,8 +35,14 @@ async function fetchBuildUrl(config: EasConfig, platform: DevicePlatform) {
     case "latest": {
       const builds = await listEasBuilds(platform, config.profile);
       if (!builds || builds.length === 0) {
-        Logger.warn(
+        Logger.error(
           `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile. If you're building iOS app, make sure you set '"ios.simulator": true' option in eas.json.`
+        );
+        return undefined;
+      }
+      if (builds.every((build) => build.expired)) {
+        Logger.error(
+          `All EAS build artifacts for ${platform} with ${config.profile} profile have expired.`
         );
         return undefined;
       }
@@ -45,9 +51,13 @@ async function fetchBuildUrl(config: EasConfig, platform: DevicePlatform) {
     case "id": {
       const build = await viewEasBuild(config.buildUUID, platform);
       if (!build) {
-        Logger.warn(
+        Logger.error(
           `Failed to find EAS build artifact with ID ${config.buildUUID} for platform ${platform}.`
         );
+        return undefined;
+      }
+      if (build.expired) {
+        Logger.error(`EAS build artifact with ID ${config.buildUUID} has expired.`);
         return undefined;
       }
       return build.binaryUrl;
@@ -69,7 +79,7 @@ async function downloadAppFromEas(
   // is unique identifier.
   const binaryPath = await downloadBinary(binaryUrl, tmpDirectory);
   if (!binaryPath) {
-    Logger.warn(`Failed to download archive from '${binaryUrl}'.`);
+    Logger.error(`Failed to download archive from '${binaryUrl}'.`);
     return undefined;
   }
   // on iOS we need to extract the .tar.gz archive to get the .app file
