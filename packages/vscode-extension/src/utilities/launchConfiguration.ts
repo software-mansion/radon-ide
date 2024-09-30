@@ -20,7 +20,7 @@ function assertValidConfig({ buildScript, eas }: LaunchConfigurationOptions) {
     const missingBuildId = easConfig?.useBuildType === "id" && easConfig?.buildUUID === undefined;
     if (missingBuildId) {
       throw new Error(
-        `EAS Build configuration for ${platform} is missing buildUUID (using id for selecting build).`
+        `EAS Build configuration for ${platform} is missing 'buildUUID' (using "id" for selecting build).`
       );
     }
   }

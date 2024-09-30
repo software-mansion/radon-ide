@@ -26,7 +26,7 @@ export async function fetchEasBuild(
     return undefined;
   }
 
-  Logger.debug(`Using built app from EAS: ${easBinaryPath}`);
+  Logger.debug(`Using built app from EAS: '${easBinaryPath}'`);
   return easBinaryPath;
 }
 
