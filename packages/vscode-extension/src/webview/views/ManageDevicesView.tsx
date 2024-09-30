@@ -8,16 +8,18 @@ import { useDevices } from "../providers/DevicesProvider";
 import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
+import { useProject } from "../providers/ProjectProvider";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
   onDeviceDelete: (device: DeviceInfo) => void;
+  isSelected: boolean;
 }
 
-function DeviceRow({ deviceInfo, onDeviceDelete }: DeviceRowProps) {
+function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
   return (
     <div className="device-row">
-      <div className="device-icon">
+      <div className={isSelected ? "device-icon-selected":"device-icon"}>
         {!deviceInfo.available ? (
           <Tooltip
             label="This device cannot be used. Perhaps the system image or runtime is missing. Try deleting and creating a new device instead."
@@ -30,7 +32,7 @@ function DeviceRow({ deviceInfo, onDeviceDelete }: DeviceRowProps) {
         )}
       </div>
       <div className="device-label">
-        <div className="device-title">{deviceInfo.name}</div>
+        <div className="device-title">{isSelected ? <b>{deviceInfo.name}</b> : deviceInfo.name}</div>
         <div className="device-subtitle">{deviceInfo.systemName}</div>
       </div>
       <IconButton
@@ -49,6 +51,8 @@ function DeviceRow({ deviceInfo, onDeviceDelete }: DeviceRowProps) {
 }
 
 function ManageDevicesView() {
+  const { projectState } = useProject();
+  const selectedProjectDevice = projectState?.selectedDevice;
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
@@ -97,6 +101,7 @@ function ManageDevicesView() {
               key={deviceInfo.id}
               deviceInfo={deviceInfo}
               onDeviceDelete={handleDeviceDelete}
+              isSelected={deviceInfo.id === selectedProjectDevice?.id}
             />
           ))}
         </>
@@ -109,6 +114,7 @@ function ManageDevicesView() {
               key={deviceInfo.id}
               deviceInfo={deviceInfo}
               onDeviceDelete={handleDeviceDelete}
+              isSelected={deviceInfo.id === selectedProjectDevice?.id}
             />
           ))}
         </>

@@ -46,7 +46,7 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.device-icon {
+.device-icon, .device-icon-selected {
   width: 32px;
   height: 32px;
   display: flex;
@@ -55,6 +55,10 @@
   border-radius: 16px;
   color: var(--swm-device-icon);
   background-color: var(--swm-device-icon-background);
+}
+.device-icon-selected {
+  color: var(--swm-device-icon);
+  background-color: var(--swm-device-icon-background-selected);
 }
 
 .warning {
