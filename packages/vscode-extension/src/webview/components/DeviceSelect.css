@@ -123,6 +123,16 @@
   color: var(--swm-default-text);
   background-color: var(--swm-device-select-rich-item-icon);
 }
+.device-select-rich-item-icon[checked] {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  color: red;
+  background-color: var(--swm-device-select-rich-item-icon);
+}
 
 .device-select-label {
   padding: 0 10px;

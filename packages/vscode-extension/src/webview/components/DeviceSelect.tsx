@@ -9,10 +9,11 @@ interface RichSelectItemProps extends Select.SelectItemProps {
   icon: React.ReactNode;
   title: string;
   subtitle?: string;
+  isSelected?: boolean;
 }
 
 const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSelectItemProps>>(
-  ({ children, icon, title, subtitle, ...props }, forwardedRef) => {
+  ({ children, icon, title, subtitle, isSelected, ...props }, forwardedRef) => {
     function renderSubtitle() {
       if (!subtitle) {
         return null;
@@ -33,7 +34,11 @@ const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSe
       <Select.Item className="device-select-rich-item" {...props} ref={forwardedRef}>
         <div className="device-select-rich-item-icon">{icon}</div>
         <div>
-          <div className="device-select-rich-item-title">{title}</div>
+          {
+            isSelected ? <div className="device-select-rich-item-title">{title}</div> :
+            <div className="device-select-rich-item-title"><b>{title}</b></div>
+          }
+          
           {renderSubtitle()}
         </div>
       </Select.Item>
@@ -78,6 +83,7 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
               icon={<span className="codicon codicon-device-mobile" />}
               title={device.name}
               subtitle={device.systemName}
+              isSelected={true}
             />
           ))}
         </Select.Group>
@@ -97,6 +103,7 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
               icon={<span className="codicon codicon-device-mobile" />}
               title={device.name}
               subtitle={device.systemName}
+              isSelected={true}
             />
           ))}
         </Select.Group>
