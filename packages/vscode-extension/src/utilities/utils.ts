@@ -1,14 +1,14 @@
-import { commands, window, env, Uri } from "vscode";
-import { Logger } from "../Logger";
 import { homedir } from "node:os";
+import fs from "fs";
 import path from "path";
 import JSON5 from "json5";
-import fs from "fs";
+import { commands, window, env, Uri } from "vscode";
+import { Logger } from "../Logger";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsInterface } from "../common/utils";
 
-type keybindingType = {
+type KeybindingType = {
   command: string;
   key?: string;
   mac?: string;
@@ -35,7 +35,7 @@ export class Utils implements UtilsInterface {
 
     const isRNIDECommand =
       !!extensionPackageJson.contributes.commands &&
-      !!extensionPackageJson.contributes.commands.find((command: keybindingType) => {
+      !!extensionPackageJson.contributes.commands.find((command: KeybindingType) => {
         return command.command === commandName;
       });
     if (!isRNIDECommand) {
@@ -43,7 +43,7 @@ export class Utils implements UtilsInterface {
       return undefined;
     }
 
-    const userKeybinding = keybindingsJson.find((command: keybindingType) => {
+    const userKeybinding = keybindingsJson.find((command: KeybindingType) => {
       return command.command === commandName;
     });
     if (userKeybinding) {
@@ -51,7 +51,7 @@ export class Utils implements UtilsInterface {
     }
 
     const defaultKeybinding = extensionPackageJson.contributes.keybindings.find(
-      (keybinding: keybindingType) => {
+      (keybinding: KeybindingType) => {
         return keybinding.command === commandName;
       }
     );

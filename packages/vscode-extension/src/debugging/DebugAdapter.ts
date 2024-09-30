@@ -1,3 +1,4 @@
+import path from "path";
 import { DebugConfiguration } from "vscode";
 import {
   DebugSession,
@@ -25,7 +26,6 @@ import {
   CDPRemoteObject,
 } from "./cdp";
 import { VariableStore } from "./variableStore";
-import path from "path";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;

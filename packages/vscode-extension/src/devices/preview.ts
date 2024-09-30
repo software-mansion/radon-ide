@@ -1,5 +1,5 @@
-import { Disposable } from "vscode";
 import path from "path";
+import { Disposable } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";

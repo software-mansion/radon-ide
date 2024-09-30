@@ -1,3 +1,6 @@
+import path from "path";
+import fs from "fs";
+import { ExecaError } from "execa";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -6,11 +9,8 @@ import { exec } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
-import path from "path";
-import fs from "fs";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
-import { ExecaError } from "execa";
 import { IOSBuildResult } from "../builders/buildIOS";
 
 interface SimulatorInfo {

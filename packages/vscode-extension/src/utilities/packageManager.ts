@@ -1,8 +1,7 @@
+import path from "path";
+import { promises as fs } from "fs";
 import { command } from "./subprocess";
-import { existsSync, promises as fs } from "fs";
-import path, { resolve } from "path";
 import { getAppRootFolder } from "./extensionContext";
-import { Logger } from "../Logger";
 import { isWorkspaceRoot } from "./common";
 
 export type PackageManagerInfo = {

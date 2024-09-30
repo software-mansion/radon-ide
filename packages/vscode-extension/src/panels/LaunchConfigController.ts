@@ -1,5 +1,5 @@
-import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
 import { EventEmitter } from "stream";
+import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
 import {
   LaunchConfig,
   LaunchConfigEventListener,

@@ -1,8 +1,7 @@
-import { Logger } from "../Logger";
-import execa, { ExecaChildProcess } from "execa";
 import readline from "readline";
+import execa, { ExecaChildProcess } from "execa";
+import { Logger } from "../Logger";
 import { Platform } from "./platform";
-import { inc } from "semver";
 
 export type ChildProcess = ExecaChildProcess<string>;
 

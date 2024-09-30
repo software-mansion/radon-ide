@@ -1,5 +1,5 @@
-import { getAppRootFolder } from "./extensionContext";
 import path from "path";
+import { getAppRootFolder } from "./extensionContext";
 
 export async function getReactNativeVersion() {
   const workspacePath = getAppRootFolder();

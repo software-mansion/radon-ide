@@ -1,12 +1,12 @@
+import fs from "fs";
+import { Disposable, OutputChannel, window } from "vscode";
 import { Logger } from "../Logger";
 import { generateWorkspaceFingerprint } from "../utilities/fingerprint";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
-import fs from "fs";
 import { calculateMD5 } from "../utilities/common";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
-import { Disposable, OutputChannel, window } from "vscode";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelToken } from "./cancelToken";
 

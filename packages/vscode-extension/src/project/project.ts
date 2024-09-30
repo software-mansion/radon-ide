@@ -1,11 +1,7 @@
+import { EventEmitter } from "stream";
 import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
-import { Metro, MetroDelegate } from "./metro";
-import { Devtools } from "./devtools";
-import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
-import { Logger } from "../Logger";
-import { didFingerprintChange } from "../builders/BuildManager";
-import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { DeviceInfo } from "../common/DeviceManager";
+import stripAnsi from "strip-ansi";
+import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
   AppPermissionType,
@@ -21,15 +17,19 @@ import {
   TouchPoint,
   ZoomLevelType,
 } from "../common/Project";
-import { EventEmitter } from "stream";
+import { Logger } from "../Logger";
+import { didFingerprintChange } from "../builders/BuildManager";
+import { DeviceInfo } from "../common/DeviceManager";
+import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
-import stripAnsi from "strip-ansi";
-import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
+import { Metro, MetroDelegate } from "./metro";
+import { Devtools } from "./devtools";
+import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";

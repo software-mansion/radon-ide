@@ -1,11 +1,11 @@
+import fs from "fs";
+import path from "path";
 import { Webview, Disposable } from "vscode";
 import { coerce, gte } from "semver";
 import { Logger } from "../Logger";
-import fs from "fs";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command } from "../utilities/subprocess";
 import { getAppRootFolder } from "../utilities/extensionContext";
-import path from "path";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import { shouldUseExpoCLI } from "../utilities/expoCli";

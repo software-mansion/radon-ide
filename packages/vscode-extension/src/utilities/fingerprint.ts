@@ -1,6 +1,6 @@
 import path from "path";
-import { Logger } from "../Logger";
 import { createFingerprintAsync } from "@expo/fingerprint";
+import { Logger } from "../Logger";
 import { getAppRootFolder } from "./extensionContext";
 
 const IGNORE_PATHS = [
