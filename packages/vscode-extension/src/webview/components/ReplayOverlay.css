@@ -10,7 +10,7 @@
   align-items: center;
 }
 
-.corner {
+.replay-corner {
   position: absolute;
   width: 50px;
   height: 50px;
@@ -19,35 +19,35 @@
   filter: blur(1px);
 }
 
-.top-left {
+.replay-top-left {
   top: 0px;
   left: 0px;
   border-bottom: none;
   border-right: none;
 }
 
-.top-right {
+.replay-top-right {
   top: 0px;
   right: 0px;
   border-bottom: none;
   border-left: none;
 }
 
-.bottom-left {
+.replay-bottom-left {
   bottom: 0px;
   left: 0px;
   border-top: none;
   border-right: none;
 }
 
-.bottom-right {
+.replay-bottom-right {
   bottom: 0px;
   right: 0px;
   border-top: none;
   border-left: none;
 }
 
-.rec-indicator {
+.replay-rec-indicator {
   position: absolute;
   top: 30px;
   left: 30px;
@@ -59,7 +59,7 @@
   font-family:'Courier new', fixed;
 }
 
-.rec-dot {
+.replay-rec-dot {
   width: 20px;
   height: 20px;
   background-color: red;
@@ -67,10 +67,17 @@
   margin-right: 8px;
 }
 
-.replay-fns {
+.replay-close {
+  display: flex;
+  position: absolute;
+  top: 30px;
+  right: 30px;
+}
+
+.replay-save {
   display: flex;
   flex-direction: row;
   position: absolute;
-  top: 30px;
+  bottom: 30px;
   right: 30px;
 }

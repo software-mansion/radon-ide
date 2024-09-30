@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import "./ReplayVideo.css";
+import "./ReplayUI.css";
 import Button from "./shared/Button";
 import ReplayOverlay from "./ReplayOverlay";
+import { RecordingData } from "../../common/Project";
 
 type ReplayVideoProps = {
-  src: string;
+  replayData: RecordingData;
   onClose: () => void;
 };
 
-function rewindVideo(video: HTMLVideoElement, readyCallback: () => void) {
+function acceleratedRewind(video: HTMLVideoElement, readyCallback: () => void) {
   const rewindTimeSec = 1.6;
 
   const v0 = 0.1;
@@ -25,9 +26,7 @@ function rewindVideo(video: HTMLVideoElement, readyCallback: () => void) {
     }
     const elapsedSec = Math.min((timestampMs - startTimeMs) / 1000, rewindTimeSec);
 
-    // progress = v0 * t + 0.5 * a * t^2
     const progress = v0 * elapsedSec + 0.5 * acc * elapsedSec * elapsedSec;
-    // console.log("EEE", elapsedSec, progress);
 
     if (elapsedSec < rewindTimeSec) {
       video.currentTime = Math.max(0, videoDuration * (1 - progress));
@@ -55,6 +54,7 @@ function VHSRewind() {
     </div>
   );
 }
+
 interface SeekbarProps {
   videoRef: React.RefObject<HTMLVideoElement>;
 }
@@ -89,7 +89,6 @@ function Seekbar({ videoRef }: SeekbarProps) {
     const seekPosition = (e.clientX - rect.left) / rect.width;
     const video = videoRef.current;
     if (video) {
-      console.log("Seek", seekPosition * video.duration);
       video.currentTime = seekPosition * video.duration;
     }
   };
@@ -122,7 +121,7 @@ function Seekbar({ videoRef }: SeekbarProps) {
   );
 }
 
-export default function ReplayVideo({ src, onClose }: ReplayVideoProps) {
+export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isRewinding, setIsRewinding] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -132,7 +131,7 @@ export default function ReplayVideo({ src, onClose }: ReplayVideoProps) {
 
   function rewind() {
     setIsRewinding(true);
-    rewindVideo(videoRef.current!, () => {
+    acceleratedRewind(videoRef.current!, () => {
       setIsRewinding(false);
       videoRef.current!.play();
     });
@@ -178,7 +177,7 @@ export default function ReplayVideo({ src, onClose }: ReplayVideoProps) {
       video.removeEventListener("play", handleTimeUpdate);
       video.removeEventListener("pause", handleTimeUpdate);
     };
-  }, [src]);
+  }, [replayData.url]);
 
   let actionIcon = "start";
   if (isEnded) {
@@ -189,8 +188,8 @@ export default function ReplayVideo({ src, onClose }: ReplayVideoProps) {
 
   return (
     <>
-      <ReplayOverlay time={currentTime} onClose={onClose} />
-      <video ref={videoRef} src={src} className="phone-screen replay-video" />
+      <ReplayOverlay time={currentTime} onClose={onClose} replayData={replayData} />
+      <video ref={videoRef} src={replayData.url} className="phone-screen replay-video" />
       {isRewinding && <VHSRewind />}
       {!isRewinding && (
         <div className="phone-screen">

@@ -41,6 +41,8 @@ export class DeviceSession implements Disposable {
   private debugSession: DebugSession | undefined;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
+  private deviceSettings: DeviceSettings | undefined;
+  private isLaunching = true;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -102,6 +104,9 @@ export class DeviceSession implements Disposable {
   }
 
   private async launchApp() {
+    this.isLaunching = true;
+    this.device.stopReplays();
+
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
     // bundle instead.
@@ -117,7 +122,12 @@ export class DeviceSession implements Disposable {
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
-    this.device.startReplays();
+
+    this.isLaunching = false;
+    if (this.deviceSettings?.replaysEnabled) {
+      this.device.startReplays();
+    }
+
     return previewUrl;
   }
 
@@ -243,6 +253,12 @@ export class DeviceSession implements Disposable {
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
+    this.deviceSettings = settings;
+    if (settings.replaysEnabled && !this.isLaunching) {
+      this.device.startReplays();
+    } else {
+      this.device.stopReplays();
+    }
     return this.device.changeSettings(settings);
   }
 

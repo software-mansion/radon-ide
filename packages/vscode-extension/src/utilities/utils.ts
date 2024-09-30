@@ -1,4 +1,4 @@
-import { commands, env, Uri, window } from "vscode";
+import { commands, env, Uri, window, workspace } from "vscode";
 import { Logger } from "../Logger";
 import { homedir } from "node:os";
 import path from "path";
@@ -7,6 +7,7 @@ import fs from "fs";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsInterface } from "../common/utils";
+import { RecordingData } from "../common/Project";
 
 type keybindingType = {
   command: string;
@@ -70,18 +71,25 @@ export class Utils implements UtilsInterface {
     openFileAtPosition(filePath, line0Based, column0Based);
   }
 
-  public async downloadFile(url: string, destinationPath?: string) {
-    let folderUri;
-    if (destinationPath) {
-      folderUri = Uri.file(destinationPath);
-    } else {
-      folderUri = await window.showOpenDialog({
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-        openLabel: "Select folder to save file",
-      });
+  public async saveVideoRecording(recordingData: RecordingData) {
+    const extension = path.extname(recordingData.tempFileLocation);
+    const defaultUri = Uri.file(
+      path.join(workspace.workspaceFolders![0].uri.fsPath, recordingData.fileName)
+    );
+    // save dialog open the location dialog, it also warns the user if the file already exists
+    let saveUri = await window.showSaveDialog({
+      defaultUri: defaultUri,
+      filters: {
+        "Video Files": [extension],
+      },
+    });
+
+    if (!saveUri) {
+      return false;
     }
+
+    await fs.promises.copyFile(recordingData.tempFileLocation, saveUri.fsPath);
+    return true;
   }
 
   public async movePanelToNewWindow() {

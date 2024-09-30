@@ -12,6 +12,7 @@ export type DeviceSettings = {
   };
   hasEnrolledBiometrics: boolean;
   locale: Locale;
+  replaysEnabled: boolean;
 };
 
 export type ProjectState = {
@@ -110,6 +111,12 @@ export interface ProjectEventListener<T> {
   (event: T): void;
 }
 
+export type RecordingData = {
+  url: string;
+  tempFileLocation: string;
+  fileName: string;
+};
+
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   reload(type: ReloadAction): Promise<boolean>;
@@ -132,7 +139,7 @@ export interface ProjectInterface {
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
-  captureReplay(): Promise<string>;
+  captureReplay(): Promise<RecordingData>;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;

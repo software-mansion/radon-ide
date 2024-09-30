@@ -44,7 +44,11 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.dispose();
   }
 
-  public async startReplays() {
+  public stopReplays() {
+    return this.preview?.stopReplays();
+  }
+
+  public startReplays() {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
