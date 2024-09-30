@@ -126,24 +126,18 @@ Below is an example of how the `launch.json` file could look like with android v
 
 ### Custom build settings
 
-Instead of letting Radon IDE build your app, you can use scripts or [Expo
-Application Services (EAS)](https://expo.dev/eas) to do
-it with `buildScript` configuration option.
+Instead of letting Radon IDE build your app, you can use scripts (`buildScript` option) or [Expo
+Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it.
 
 The requirement for scripts is to output the absolute path to the built app as the
-last line of standard output.
+last line of the standard output.
 
-You can also use `eas build`, `eas build:list` or `eas build:view` with
-JSON output to use builds from EAS. If multiple builds are present, Radon IDE
-will take the most recent one. Builds for iOS need to have `"ios.simulator":
-true` config option set.
+Both `buildScript` and `eas` are objects having `ios` and `android` optional
+keys. You can't specify one platform in both custom script and EAS build
+options.
 
-`buildScript` configuration option is an object with `ios` and `android` keys.
-Both are optional, specifying any of them will replace default build logic for
-that platform with command of your choice.
-
-Below is an example that replaces Android build with build from EAS:
-
+`buildScript.ios` and `buildScript.android` are string keys, representing custom
+command used to build the app. Example below:
 ```json
 {
   "version": "0.2.0",
@@ -153,7 +147,40 @@ Below is an example that replaces Android build with build from EAS:
       "request": "launch",
       "name": "Radon IDE panel",
       "buildScript": {
-        "android": "eas build:list --non-interactive --json --platform android"
+        "android": "npm run build:ftp-fetch-android"
+      }
+    }
+  ]
+}
+```
+
+`eas.ios` and `eas.android` are objects taking keys:
+- `profile` – required, used for [selecting builds](https://docs.expo.dev/build/eas-json/#development-builds) suitable for running in simulators.
+- `useBuildType` – required, affects how IDE will select builds from EAS. Can be
+  `latest` which will use the most recent build with matching platform and profile or `id` which
+  will use build with matching UUID. If no matching builds are found, IDE will
+  show an error.
+- `buildUUID` – required when using `useBuildType=id`, selects build to use.
+
+Below is an example that replaces iOS and Android local builds with builds from EAS:
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "radon-ide",
+      "request": "launch",
+      "name": "Radon IDE panel",
+      "eas": {
+        "ios": {
+          "profile": "development",
+          "useBuildType": "latest"
+        },
+        "android": {
+          "profile": "development",
+          "useBuildType": "id",
+          "buildUUID": "40466d0a-96fa-5d9c-80db-d055e78023bd"
+        }
       }
     }
   ]
