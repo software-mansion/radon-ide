@@ -16,10 +16,15 @@ const ANDROID_STUDIO_PATH = Platform.select({
 });
 
 function findJavaHome() {
-  // we try to use java bundled with Android Studio if exists
-  // in newer distributions java is placed under Contents/jbr/Contents/Home and with some
-  // older (but still recent ones) it is under Contents/jre/Contents/Home
-  // we check if the first path exists and if not we try the second one
+  // we first try to use environment variable and if it is not set, we then use java bundled with Android Studio
+  // if exists in newer distributions java is placed under Contents/jbr/Contents/Home and with some
+  // older (but still recent ones) it is under Contents/jre/Contents/Home we check if the first path
+  // exists and if not we try the second one
+
+  const envJavaHome = process.env.JAVA_HOME;
+  if (envJavaHome && fs.existsSync(envJavaHome)) {
+    return envJavaHome;
+  }
 
   const jbrPath = Platform.select({
     macos: path.join(ANDROID_STUDIO_PATH, "Contents/jbr/Contents/Home"),
@@ -31,14 +36,7 @@ function findJavaHome() {
     windows: path.join(ANDROID_STUDIO_PATH, "jre"),
   });
 
-  if (fs.existsSync(jbrPath)) {
-    return jbrPath;
-  }
-
-  if (fs.existsSync(jrePath)) {
-    return jrePath;
-  }
-  return process.env.JAVA_HOME;
+  return fs.existsSync(jbrPath) ? jbrPath : jrePath;
 }
 
 export const JAVA_HOME = findJavaHome();
