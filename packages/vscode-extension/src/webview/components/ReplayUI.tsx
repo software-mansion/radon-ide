@@ -146,8 +146,8 @@ function LengthSelector({ startTime, videoRef, setStartTime }: LengthSelectorPro
   }
 
   function onValueChange(value: string) {
-    console.log("VALUE", value);
     if (value === "Full") {
+      setStartTime(0);
     } else {
       const newStartTime = videoDuration - parseInt(value);
       setStartTime(newStartTime);
