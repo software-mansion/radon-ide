@@ -46,6 +46,7 @@ async function fetchBuildUrl(config: EasConfig, platform: DevicePlatform) {
         );
         return undefined;
       }
+
       return maxBy(builds, "completedAt")!.binaryUrl;
     }
     case "id": {
@@ -60,6 +61,7 @@ async function fetchBuildUrl(config: EasConfig, platform: DevicePlatform) {
         Logger.error(`EAS build artifact with ID ${config.buildUUID} has expired.`);
         return undefined;
       }
+
       return build.binaryUrl;
     }
   }
@@ -89,10 +91,9 @@ async function downloadAppFromEas(
   }
 
   const extractDir = path.dirname(binaryPath);
-  try {
-    await cancelToken.adapt(tarCommand({ archivePath: binaryPath, extractDir }));
-  } catch (error) {
-    Logger.error(`Failed to extract archive '${binaryPath}' to '${extractDir}'.`, error);
+  const { failed } = await cancelToken.adapt(tarCommand({ archivePath: binaryPath, extractDir }));
+  if (failed) {
+    Logger.error(`Failed to extract archive '${binaryPath}' to '${extractDir}'.`);
     return undefined;
   }
 

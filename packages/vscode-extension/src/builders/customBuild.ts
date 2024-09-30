@@ -42,8 +42,8 @@ async function runExternalScript(
     lastLine = line.trim();
   });
 
-  const { exitCode } = await process;
-  if (exitCode !== 0) {
+  const { failed } = await process;
+  if (failed) {
     return undefined;
   }
 
