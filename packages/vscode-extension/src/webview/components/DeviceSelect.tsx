@@ -4,6 +4,7 @@ import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
 import "./DeviceSelect.css";
 import "./shared/Dropdown.css";
 import Tooltip from "./shared/Tooltip";
+import { useProject } from "../providers/ProjectProvider";
 
 interface RichSelectItemProps extends Select.SelectItemProps {
   icon: React.ReactNode;
@@ -32,13 +33,21 @@ const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSe
 
     return (
       <Select.Item className="device-select-rich-item" {...props} ref={forwardedRef}>
-        <div className="device-select-rich-item-icon">{icon}</div>
+        <div
+          className={
+            isSelected ? "device-select-rich-item-icon-selected" : "device-select-rich-item-icon"
+          }>
+          {icon}
+        </div>
         <div>
-          {
-            isSelected ? <div className="device-select-rich-item-title">{title}</div> :
-            <div className="device-select-rich-item-title"><b>{title}</b></div>
-          }
-          
+          {isSelected ? (
+            <div className="device-select-rich-item-title">
+              <b>{title}</b>
+            </div>
+          ) : (
+            <div className="device-select-rich-item-title">{title}</div>
+          )}
+
           {renderSubtitle()}
         </div>
       </Select.Item>
@@ -63,6 +72,9 @@ interface DeviceSelectProps {
 }
 
 function DeviceSelect({ onValueChange, devices, value, label, disabled }: DeviceSelectProps) {
+  const { projectState } = useProject();
+  const selectedProjectDevice = projectState?.selectedDevice;
+
   const iOSDevices = devices.filter(
     ({ platform, name }) => platform === DevicePlatform.IOS && name.length > 0
   );
@@ -83,7 +95,7 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
               icon={<span className="codicon codicon-device-mobile" />}
               title={device.name}
               subtitle={device.systemName}
-              isSelected={true}
+              isSelected={device.id === selectedProjectDevice?.id}
             />
           ))}
         </Select.Group>
@@ -103,7 +115,7 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
               icon={<span className="codicon codicon-device-mobile" />}
               title={device.name}
               subtitle={device.systemName}
-              isSelected={true}
+              isSelected={device.id === selectedProjectDevice?.id}
             />
           ))}
         </Select.Group>

@@ -296,6 +296,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-device-select-rich-item-text: var(--off-white);
   --swm-device-select-rich-item-subtitle: var(--background-dark-10);
   --swm-device-select-rich-item-icon: var(--background-dark-70);
+  --swm-device-select-rich-item-icon-selected: var(--background-dark-50);
 
   /* Slider */
   --swm-slider: var(--white);
@@ -370,7 +371,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-device-subtitle: var(--background-dark-10);
   --swm-device-icon: var(--swm-default-text);
   --swm-device-icon-background: var(--background-dark-70);
-  --swm-device-icon-background-selected: var(--background-dark-60);
+  --swm-device-icon-background-selected: var(--background-dark-50);
   --swm-device-delete-icon: var(--red-dark-80);
   --swm-device-warning-icon: var(--yellow-dark-100);
 
