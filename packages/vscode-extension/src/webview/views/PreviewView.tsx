@@ -150,7 +150,8 @@ function PreviewView() {
             tooltip={{
               label: "Replay the last few seconds of the app",
             }}
-            onClick={handleReplay}>
+            onClick={handleReplay}
+            disabled={isStarting}>
             <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
               <span className="codicon codicon-triangle-left icons-rewind" />
