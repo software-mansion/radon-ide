@@ -180,6 +180,7 @@ function PreviewView() {
           </IconButton>
         </SettingsDropdown>
       </div>
+
       {selectedDevice && finishedInitialLoad ? (
         <Preview
           key={selectedDevice.id}

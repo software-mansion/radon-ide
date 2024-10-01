@@ -8,6 +8,7 @@
   /* height: 100%; */
   position: relative;
   user-select: none;
+  z-index: 1;
 }
 
 .phone-wrapper:hover,
