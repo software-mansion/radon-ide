@@ -260,6 +260,10 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
     if (currentTime < newStartTime) {
       videoRef.current!.currentTime = newStartTime;
     }
+    if (isEnded) {
+      videoRef.current!.currentTime = newStartTime;
+      videoRef.current!.play();
+    }
   }
 
   return (
@@ -286,6 +290,9 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
                 if (videoRef.current) {
                   if (isVideoPlaying(videoRef.current)) {
                     videoRef.current.pause();
+                  } else if (isEnded) {
+                    videoRef.current.currentTime = startTime;
+                    videoRef.current.play();
                   } else {
                     videoRef.current.play();
                   }

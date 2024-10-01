@@ -159,6 +159,7 @@ export class DeviceSession implements Disposable {
   }
 
   public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+    this.deviceSettings = deviceSettings;
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
