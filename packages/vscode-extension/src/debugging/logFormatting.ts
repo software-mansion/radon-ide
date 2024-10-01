@@ -1,16 +1,7 @@
 import util from "util";
-import { CDPSubType, CDPValueType } from "./cdp";
+import { CDPRemoteObject } from "./cdp";
 
-export interface CDPRemoteObject {
-  type: CDPValueType;
-  subtype?: CDPSubType;
-  className?: string;
-  value?: any;
-  objectId?: number;
-  description?: string;
-}
-
-function format(anything: any) {
+function format(anything: unknown) {
   const formatted = util.inspect(anything, {
     showHidden: false,
     depth: Infinity,
@@ -25,10 +16,9 @@ function format(anything: any) {
   return formatted;
 }
 
-export async function formatMessage(args: [CDPRemoteObject]): Promise<string> {
-  let result: string = "";
-  const mappedArgs = await Promise.all(
-    args.map((arg, index) => {
+export async function formatMessage(args: CDPRemoteObject[]): Promise<string> {
+  return args
+    .map((arg) => {
       switch (arg.type) {
         case "object":
           return format(arg.description || "[Object]");
@@ -37,12 +27,10 @@ export async function formatMessage(args: [CDPRemoteObject]): Promise<string> {
         case "boolean":
           return arg.value;
         case "undefined":
-          return format(arg.value);
+          return format(undefined);
         case "function":
           return format(arg.description || "[Function]");
       }
     })
-  );
-
-  return mappedArgs.join(" ");
+    .join(" ");
 }

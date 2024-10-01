@@ -1,14 +1,14 @@
-import { Preview } from "./preview";
-import { DeviceBase } from "./DeviceBase";
 import path from "path";
 import fs from "fs";
 import { EOL } from "node:os";
 import xml2js from "xml2js";
+import { v4 as uuidv4 } from "uuid";
+import { Preview } from "./preview";
+import { DeviceBase } from "./DeviceBase";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
-import { v4 as uuidv4 } from "uuid";
 import { BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
@@ -214,7 +214,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
       );
       prefs = await xml2js.parseStringPromise(stdout, { explicitArray: true });
       // test if prefs.map is an object, otherwise we just start from an empty prefs
-      if (typeof prefs.map !== "object") throw new Error("Invalid prefs file format");
+      if (typeof prefs.map !== "object") {
+        throw new Error("Invalid prefs file format");
+      }
     } catch (e) {
       // preferences file does not exists
       prefs = { map: {} };

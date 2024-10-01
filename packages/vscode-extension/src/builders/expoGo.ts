@@ -1,7 +1,7 @@
 import path from "path";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import http from "http";
 import fs from "fs";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { DevicePlatform } from "../common/DeviceManager";
 import { CancelToken } from "./cancelToken";

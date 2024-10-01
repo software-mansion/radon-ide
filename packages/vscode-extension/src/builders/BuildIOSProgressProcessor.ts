@@ -1,8 +1,8 @@
-import { decodeArrayStream } from "@msgpack/msgpack";
 import fs from "fs";
-import { BuildProgressProcessor } from "./BuildProgressProcessor";
-import { isArray } from "lodash";
 import path from "path";
+import { isArray } from "lodash";
+import { decodeArrayStream } from "@msgpack/msgpack";
+import { BuildProgressProcessor } from "./BuildProgressProcessor";
 import { Logger } from "../Logger";
 
 //all constants in ms

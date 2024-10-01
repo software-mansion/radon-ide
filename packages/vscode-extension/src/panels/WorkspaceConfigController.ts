@@ -1,3 +1,4 @@
+import { EventEmitter } from "stream";
 import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
 import {
   PanelLocation,
@@ -6,7 +7,6 @@ import {
   WorkspaceConfigEventMap,
   WorkspaceConfigEventListener,
 } from "../common/WorkspaceConfig";
-import { EventEmitter } from "stream";
 
 export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
   private config: WorkspaceConfigProps;

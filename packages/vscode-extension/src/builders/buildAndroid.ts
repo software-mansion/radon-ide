@@ -1,12 +1,12 @@
+import fs from "fs";
+import path from "path";
+import semver from "semver";
+import { OutputChannel } from "vscode";
 import { getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
-import semver from "semver";
 import { CancelToken } from "./cancelToken";
-import path from "path";
-import fs from "fs";
-import { OutputChannel } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";

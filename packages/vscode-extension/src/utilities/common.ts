@@ -1,9 +1,9 @@
 import os from "os";
+import fs from "fs";
 import { createHash, Hash } from "crypto";
 import path, { join } from "path";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
-import fs, { existsSync } from "fs";
 import { ReadableStream } from "stream/web";
 import { workspace } from "vscode";
 import { Logger } from "../Logger";
@@ -158,19 +158,10 @@ function isPidRunning(pid: number) {
   }
 }
 
-export async function downdloadFile(url: string, destination: string) {
-  const stream = fs.createWriteStream(destination);
-  const { body } = await fetch(url);
-  if (!body) {
-    throw new Error(`Unexpected error during the file download from ${url}.`);
-  }
-  await finished(Readable.fromWeb(body as ReadableStream).pipe(stream));
-}
-
 async function calculateFileMD5(filePath: string, hash: Hash) {
   const BUFFER_SIZE = 8192;
   const fd = fs.openSync(filePath, "r");
-  const buffer = Buffer.alloc(BUFFER_SIZE);
+  const buffer = new Uint8Array(BUFFER_SIZE);
 
   try {
     let bytesRead;
