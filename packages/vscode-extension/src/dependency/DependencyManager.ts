@@ -309,8 +309,8 @@ export async function checkXcodeExists() {
 function isExpoRouterProject() {
   // we assume that a expo router based project contain
   // the package "expo-router" in its dependencies or devDependencies
+  const appRoot = getAppRootFolder();
   try {
-    const appRoot = getAppRootFolder();
     const packageJson = requireNoCache(path.join(appRoot, "package.json"));
     const allDependencies = [
       ...Object.keys(packageJson.dependencies),

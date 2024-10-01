@@ -86,7 +86,9 @@ function DiagnosticItem({ label, name, info, action }: DiagnosticItemProps) {
     }
 
     const messages = dependencyDescription(name);
-    error = messages.error;
+    if (!info.isOptional && info.status === "notInstalled") {
+      error = messages.error;
+    }
     description = messages.info;
   }
 
