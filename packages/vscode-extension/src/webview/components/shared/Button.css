@@ -76,3 +76,7 @@
   padding: 2px 4px;
   font-size: 11px;
 }
+
+.button-absolute {
+  position: absolute;
+}
