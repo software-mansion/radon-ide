@@ -17,9 +17,21 @@ interface DeviceRowProps {
 }
 
 function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
+  const { project } = useProject();
+
+  const handleDeviceChange = async () => {
+    if (!isSelected) {
+      project.selectDevice(deviceInfo);
+    }
+  };
+
   return (
-    <div className="device-row">
-      <div className={isSelected ? "device-icon-selected":"device-icon"}>
+    <div
+      className="device-row"
+      onClick={async () => {
+        await handleDeviceChange();
+      }}>
+      <div className={isSelected ? "device-icon-selected" : "device-icon"}>
         {!deviceInfo.available ? (
           <Tooltip
             label="This device cannot be used. Perhaps the system image or runtime is missing. Try deleting and creating a new device instead."
@@ -32,7 +44,9 @@ function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
         )}
       </div>
       <div className="device-label">
-        <div className="device-title">{isSelected ? <b>{deviceInfo.name}</b> : deviceInfo.name}</div>
+        <div className="device-title">
+          {isSelected ? <b>{deviceInfo.name}</b> : deviceInfo.name}
+        </div>
         <div className="device-subtitle">{deviceInfo.systemName}</div>
       </div>
       <IconButton
@@ -43,7 +57,10 @@ function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
           side: "bottom",
           type: "secondary",
         }}
-        onClick={() => onDeviceDelete(deviceInfo)}>
+        onClick={(e) => {
+          e.stopPropagation();
+          onDeviceDelete(deviceInfo);
+        }}>
         <span className="codicon codicon-trash delete-icon" />
       </IconButton>
     </div>
@@ -63,8 +80,12 @@ function ManageDevicesView() {
     reload();
   }, []);
 
-  const androidDevices = devices.filter((device) => device.platform === DevicePlatform.Android);
-  const iosDevices = devices.filter((device) => device.platform === DevicePlatform.IOS);
+  const iosDevices = devices.filter(
+    ({ platform, name }) => platform === DevicePlatform.IOS && name.length > 0
+  );
+  const androidDevices = devices.filter(
+    ({ platform, name }) => platform === DevicePlatform.Android && name.length > 0
+  );
 
   const handleDeviceDelete = (device: DeviceInfo) => {
     setSelectedDevice(device);

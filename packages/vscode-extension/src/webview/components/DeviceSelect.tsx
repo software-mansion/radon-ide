@@ -6,6 +6,14 @@ import "./shared/Dropdown.css";
 import Tooltip from "./shared/Tooltip";
 import { useProject } from "../providers/ProjectProvider";
 
+const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
+  ({ children, ...props }, forwardedRef) => (
+    <Select.Item className="device-select-item" {...props} ref={forwardedRef}>
+      <Select.ItemText>{children}</Select.ItemText>
+    </Select.Item>
+  )
+);
+
 interface RichSelectItemProps extends Select.SelectItemProps {
   icon: React.ReactNode;
   title: string;
@@ -55,18 +63,10 @@ const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSe
   }
 );
 
-const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
-  ({ children, ...props }, forwardedRef) => (
-    <Select.Item className="device-select-item" {...props} ref={forwardedRef}>
-      <Select.ItemText>{children}</Select.ItemText>
-    </Select.Item>
-  )
-);
-
 function renderDevices(
   deviceType: DevicePlatform,
   devices: DeviceInfo[],
-  selectedProjectDevice: DeviceInfo | undefined
+  selectedProjectDevice?: DeviceInfo
 ) {
   if (devices.length === 0) {
     return null;

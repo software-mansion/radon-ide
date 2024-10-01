@@ -16,13 +16,22 @@
 
 .device-row {
   display: grid;
-  grid-template-columns: 32px 1fr 32px;
+  grid-template-columns: 32px 1fr 36px;
   align-items: center;
   margin-bottom: 0 2px 4px 2px;
   gap: 10px;
   line-height: 1;
   height: 48px;
+  padding: 2px 2px 2px 2px;
+  border-radius: 6px;
 }
+
+.device-row:hover {
+  outline: none;
+  background-color: var(--swm-device-select-highlighted);
+  cursor: pointer;
+}
+
 .device-label-row {
   display: flex;
   flex-grow: 1;
