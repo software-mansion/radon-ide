@@ -254,6 +254,14 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
     actionIcon = "pause";
   }
 
+  function handleStartTimeChange(newStartTime: number) {
+    setStartTime(newStartTime);
+    const currentTime = videoRef.current?.currentTime ?? newStartTime;
+    if (currentTime < newStartTime) {
+      videoRef.current!.currentTime = newStartTime;
+    }
+  }
+
   return (
     <>
       <ReplayOverlay
@@ -268,7 +276,11 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
         <div className="phone-screen">
           <div className="replay-controls">
             <span className="replay-controls-pad" />
-            <LengthSelector videoRef={videoRef} startTime={startTime} setStartTime={setStartTime} />
+            <LengthSelector
+              videoRef={videoRef}
+              startTime={startTime}
+              setStartTime={handleStartTimeChange}
+            />
             <Button
               onClick={() => {
                 if (videoRef.current) {

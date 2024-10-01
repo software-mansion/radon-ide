@@ -127,7 +127,7 @@ async function loadCachedBuild(platform: DevicePlatform, newFingerprint: string)
     const hash = await getAppHash(appPath);
     const hashesMatch = hash === cacheInfo.buildHash;
     if (hashesMatch) {
-      Logger.info("Using cached existing build.");
+      Logger.info("Using cached build.");
       return build;
     }
   } catch (e) {
