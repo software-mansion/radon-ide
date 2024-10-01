@@ -62,7 +62,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       <DropdownMenu.Portal>
         <DropdownMenu.Content className="dropdown-menu-content device-settings-content">
           <h4 className="device-settings-heading">Device Settings</h4>
-          <Label>device appearance</Label>
+          <Label>Device appearance</Label>
           <form>
             <RadioGroup.Root
               className="dropdown-menu-content radio-group-root"
@@ -91,7 +91,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </div>
             </RadioGroup.Root>
             <div className="device-settings-margin" />
-            <Label>text size</Label>
+            <Label>Text size</Label>
             <div className="device-settings-center">
               <span className="device-settings-small-text-indicator" />
               <Slider.Root
@@ -121,7 +121,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
             <DropdownMenu.Arrow className="dropdown-menu-arrow" />
           </form>
-          <Label>Device Location</Label>
+          <Label>Device location</Label>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
@@ -155,19 +155,20 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
           <Label>Screen recording</Label>
-          <div className="device-settings-center">
-            <span>
+          <div className="dropdown-menu-item">
+            <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
               <span className="codicon codicon-triangle-left icons-rewind" />
             </span>
-            Enable replays
+            Enable Replays
             <Switch.Root
-              className="switch-root"
-              id="enable-location"
+              className="switch-root small-switch"
+              id="enable-replays"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
               }
-              defaultChecked={deviceSettings.replaysEnabled}>
+              defaultChecked={deviceSettings.replaysEnabled}
+              style={{ marginLeft: "5px" }}>
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
