@@ -53,6 +53,11 @@
   flex: 1;
 }
 
+.icons-container {
+  display: flex;
+  align-items: center;
+}
+
 .dropdown-separator {
   width: 100%;
   margin: 4px 0px;

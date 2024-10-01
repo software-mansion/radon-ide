@@ -151,7 +151,7 @@ function PreviewView() {
               label: "Replay the last few seconds of the app",
             }}
             onClick={handleReplay}>
-            <span>
+            <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
               <span className="codicon codicon-triangle-left icons-rewind" />
             </span>
