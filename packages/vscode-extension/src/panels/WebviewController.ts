@@ -63,6 +63,7 @@ export class WebviewController implements Disposable {
 
     this.callableObjects = new Map([
       ["DeviceManager", this.deviceManager as object],
+      ["DependencyManager", this.dependencyManager as object],
       ["Project", this.project as object],
       ["WorkspaceConfig", this.workspaceConfig as object],
       ["LaunchConfig", this.launchConfig as object],

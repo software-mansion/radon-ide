@@ -7,6 +7,11 @@ import {
   useState,
 } from "react";
 import { vscode } from "../utilities/vscode";
+import { makeProxy } from "../utilities/rpc";
+import { DependencyManager } from "../../common/DependencyManager";
+import { Platform } from "../providers/UtilsProvider";
+
+const dependencyManager = makeProxy<DependencyManager>("DependencyManager");
 
 export enum InstallationStatus {
   NotInstalled,
@@ -46,28 +51,35 @@ type Dependencies = {
   Storybook?: DependencyState;
 };
 
-const defaultDependencies: Dependencies = {
-  Nodejs: undefined,
-  AndroidEmulator: undefined,
-  Xcode: undefined,
-  CocoaPods: undefined,
-  NodeModules: undefined,
-  ReactNative: undefined,
-  Expo: undefined,
-  Pods: undefined,
-  ExpoRouter: undefined,
-  Storybook: undefined,
-};
+const prerequisites = [
+  "Nodejs",
+  "AndroidEmulator",
+  "Xcode",
+  "CocoaPods",
+  "NodeModules",
+  "ReactNative",
+  "Expo",
+  "Pods",
+  "ExpoRouter",
+  "Storybook",
+] as const;
 
-const prerequisites = Object.keys(defaultDependencies);
+const prerequisitesProxy = [
+  "nodejs",
+  "androidEmulator",
+  "xcode",
+  "cocoaPods",
+  "nodeModules",
+  "reactNative",
+  "expo",
+  "pods",
+  "expoRouter",
+  "storybook",
+] as const;
 
-function runDiagnostics() {
-  prerequisites.forEach((prerequisite) => {
-    vscode.postMessage({
-      command: `check${prerequisite}Installed`,
-    });
-  });
-}
+const defaultDependencies = Object.fromEntries(
+  prerequisites.map((prerequisite) => [prerequisite, undefined])
+) as Record<typeof prerequisites[number], DependencyState | undefined>;
 
 function hasError(dependencies: Dependencies, domain: "ios" | "android" | "common"): boolean {
   function errored(state: DependencyState | undefined) {
@@ -126,10 +138,40 @@ const DependenciesContext = createContext<DependenciesContextProps>({
   isIosError: false,
   androidEmulatorError: undefined,
   iosSimulatorError: undefined,
-  runDiagnostics,
+  runDiagnostics: () => {
+    throw new Error("Provider not initialized");
+  },
   isExpoRouterInstalled: false,
   isStorybookInstalled: false,
 });
+
+async function runDiagnosticsProxy() {
+  function availableOnPlatform(prerequisite: typeof prerequisitesProxy[number]) {
+    const macosOnly = ["xcode", "cocoaPods", "pods"].includes(prerequisite);
+
+    if (macosOnly) {
+      return Platform.OS === "macos";
+    }
+    return true;
+  }
+  console.log("XD: before Promise.all", prerequisitesProxy.filter(availableOnPlatform));
+
+  try {
+    const statuses = await Promise.all(
+      prerequisitesProxy
+        .filter(availableOnPlatform)
+        .map((prerequisite) => dependencyManager.getDependencyStatus(prerequisite))
+    );
+
+    console.log("XD: after Promise.all", statuses);
+
+    return Object.fromEntries(
+      prerequisites.map((prerequisite, i) => [prerequisite, adaptDependencyData(statuses[i])])
+    ) as Record<typeof prerequisites[number], DependencyState>;
+  } catch (error) {
+    console.log("XD: error", error);
+  }
+}
 
 export default function DependenciesProvider({ children }: PropsWithChildren) {
   const [dependencies, setDependencies] = useState<Dependencies>({});
@@ -146,7 +188,7 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   const androidEmulatorError = dependencies.AndroidEmulator?.error;
   const iosSimulatorError = dependencies.Xcode?.error;
 
-  const rerunDiagnostics = useCallback(() => {
+  const rerunDiagnostics = useCallback(async () => {
     // reset `.installed` and .error, leave other data as is
     setDependencies((prevState) => {
       const newState: Dependencies = {};
@@ -160,7 +202,11 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
       return newState;
     });
 
-    runDiagnostics();
+    const diagnostics = await runDiagnosticsProxy();
+    console.log({ diagnostics });
+    for (const [dependency, status] of Object.entries(diagnostics)) {
+      updateDependency(dependency as typeof prerequisites[number], status);
+    }
   }, []);
 
   const updateDependency = useCallback(
@@ -185,29 +231,11 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
       }
       const data = adaptDependencyData(rawData);
       switch (command) {
-        case "isNodejsInstalled":
-          updateDependency("Nodejs", data);
-          break;
-        case "isAndroidEmulatorInstalled":
-          updateDependency("AndroidEmulator", data);
-          break;
-        case "isXcodeInstalled":
-          updateDependency("Xcode", data);
-          break;
-        case "isCocoaPodsInstalled":
-          updateDependency("CocoaPods", data);
-          break;
         case "isNodeModulesInstalled":
           updateDependency("NodeModules", data);
           break;
         case "installingNodeModules":
           updateDependency("NodeModules", { installed: InstallationStatus.InProgress });
-          break;
-        case "isReactNativeInstalled":
-          updateDependency("ReactNative", data);
-          break;
-        case "isExpoInstalled":
-          updateDependency("Expo", data);
           break;
         case "isPodsInstalled":
           updateDependency("Pods", data);
@@ -215,18 +243,17 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
         case "installingPods":
           updateDependency("Pods", { error: undefined, installed: InstallationStatus.InProgress });
           break;
-        case "isExpoRouterInstalled":
-          updateDependency("ExpoRouter", data);
-          break;
-        case "isStorybookInstalled":
-          updateDependency("Storybook", data);
-          break;
       }
     };
 
-    runDiagnostics();
-    window.addEventListener("message", listener);
+    runDiagnosticsProxy().then((diagnostics) => {
+      console.log({ diagnosticsInitial: diagnostics });
+      for (const [dependency, status] of Object.entries(diagnostics)) {
+        updateDependency(dependency as typeof prerequisites[number], status);
+      }
+    });
 
+    window.addEventListener("message", listener);
     return () => window.removeEventListener("message", listener);
   }, []);
 
