@@ -14,6 +14,8 @@ import {
 import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
+import { getAppRootFolder } from "../utilities/extensionContext";
+import { DependencyManager } from "../dependency/DependencyManager";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
@@ -71,17 +73,11 @@ function buildProject(
 
 export async function buildIos(
   deviceInfo: IOSDeviceInfo,
-  appRootFolder: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void,
-  checkIosDependenciesInstalled: () => Promise<boolean>,
-  installPods: (
-    appRootFolder: string,
-    forceCleanBuild: boolean,
-    cancelToken: CancelToken
-  ) => Promise<void>
+  dependencyManager: DependencyManager
 ): Promise<IOSBuildResult> {
   const { ios: buildOptions } = getLaunchConfiguration();
 
@@ -89,12 +85,12 @@ export async function buildIos(
     const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);
     return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
   }
-
+  const appRootFolder = getAppRootFolder();
   const sourceDir = getIosSourceDir(appRootFolder);
 
-  const isPodsInstalled = await checkIosDependenciesInstalled();
+  const isPodsInstalled = await dependencyManager.isInstalled("pods");
   if (!isPodsInstalled) {
-    await installPods(appRootFolder, forceCleanBuild, cancelToken);
+    await dependencyManager.installPods({ forceCleanBuild, cancelToken });
   }
 
   const xcodeProject = await findXcodeProject(appRootFolder);

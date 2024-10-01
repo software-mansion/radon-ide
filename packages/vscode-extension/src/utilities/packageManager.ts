@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import { command } from "./subprocess";
 import { getAppRootFolder } from "./extensionContext";
 import { isWorkspaceRoot } from "./common";
+import { Logger } from "../Logger";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
@@ -68,15 +69,14 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo> {
 
   const name = await findPackageManager(workspacePath ?? appRootPath);
 
-  return { name, workspacePath };
-}
-
-export function isPackageManagerAvailable(manager: PackageManagerInfo): boolean {
   try {
-    command(`${manager.name} --version`);
-    return true;
-  } catch {}
-  return false;
+    command(`${name} --version`);
+  } catch (e) {
+    Logger.error(`Required package manager: ${name} is not installed`);
+    throw new Error(`${name} is not installed`);
+  }
+
+  return { name, workspacePath };
 }
 
 async function isNpmModulesInstalled(workspacePath: string): Promise<boolean> {

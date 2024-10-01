@@ -43,8 +43,7 @@ export class WebviewController implements Disposable {
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
-    // Set the manager to listen and change the persisting storage for the extension.
-    this.dependencyManager = new DependencyManager(webview);
+    this.dependencyManager = new DependencyManager();
 
     this.deviceManager = new DeviceManager();
     this.project = new Project(this.deviceManager, this.dependencyManager);

@@ -355,9 +355,9 @@ export class Project
     );
 
     Logger.debug("Checking expo router");
-    this.expoRouterInstalled = await this.dependencyManager.checkExpoRouterInstalled();
+    this.expoRouterInstalled = await this.dependencyManager.isInstalled("expoRouter");
     Logger.debug("Checking storybook");
-    this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
+    this.storybookInstalled = await this.dependencyManager.isInstalled("storybook");
   }
   //#endregion
 
@@ -494,10 +494,9 @@ export class Project
   }
 
   private async installNodeModules(): Promise<void> {
-    const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
-
-    if (!nodeModulesStatus.installed) {
-      await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
+    const installed = await this.dependencyManager.isInstalled("nodeModules");
+    if (!installed) {
+      await this.dependencyManager.installNodeModules();
     }
     Logger.debug("Node Modules installed");
   }

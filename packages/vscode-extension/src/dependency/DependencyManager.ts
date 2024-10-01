@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { EventEmitter } from "stream";
-import { Webview, Disposable } from "vscode";
+import { Disposable } from "vscode";
 import semver, { SemVer } from "semver";
 import zipObject from "lodash/zipObject";
 import { Logger } from "../Logger";
@@ -12,43 +12,45 @@ import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import {
   isNodeModulesInstalled,
-  isPackageManagerAvailable,
   PackageManagerInfo,
   resolvePackageManager,
 } from "../utilities/packageManager";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { CancelToken } from "../builders/cancelToken";
 import {
+  DependenciesStatus,
   Dependency,
   DependencyListener,
+  DependencyManagerInterface,
   DependencyStatus,
   InstallationStatus,
+  InstallPodsOptions,
   MinSupportedVersion,
 } from "../common/DependencyManager";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 
-export class DependencyManager implements Disposable {
+export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
   private stalePods = true;
   private eventEmitter = new EventEmitter();
-
-  constructor(private readonly webview: Webview) {}
+  private packageManagerInternal: PackageManagerInfo | undefined;
 
   public dispose() {
     this.eventEmitter.removeAllListeners();
   }
 
-  public addListener(listener: DependencyListener) {
-    this.eventEmitter.addListener("dependencyStateChange", listener);
+  public async addListener(listener: DependencyListener) {
+    this.eventEmitter.addListener("updatedDependencyInstallationStatus", listener);
   }
 
-  public removeListener(listener: DependencyListener) {
-    this.eventEmitter.removeListener("dependencyStateChange", listener);
+  public async removeListener(listener: DependencyListener) {
+    this.eventEmitter.removeListener("updatedDependencyInstallationStatus", listener);
   }
 
-  public async isInstalled(
-    dependencies: Dependency[]
-  ): Promise<Record<Dependency, DependencyStatus>> {
+  private emitEvent(dependency: Dependency, status: InstallationStatus) {
+    this.eventEmitter.emit("updatedDependencyInstallationStatus", dependency, status);
+  }
+
+  public async getStatus(dependencies: Dependency[]): Promise<DependenciesStatus> {
     const statuses = await Promise.all(
       dependencies.map(async (dependency): Promise<DependencyStatus> => {
         switch (dependency) {
@@ -65,7 +67,7 @@ export class DependencyManager implements Disposable {
           case "reactNative":
             return { status: await this.supportedReactNativeStatus(), isOptional: false };
           case "pods":
-            return { status: await this.podsStatus(), isOptional: false }; // TODO(jgonet): make it optional for expo
+            return { status: await this.podsStatus(), isOptional: !isExpoGoProject() };
           case "expo":
             return { status: await this.supportedExpoStatus(), isOptional: !shouldUseExpoCLI() };
           case "expoRouter":
@@ -76,7 +78,12 @@ export class DependencyManager implements Disposable {
       })
     );
 
-    return zipObject(dependencies, statuses) as Record<Dependency, DependencyStatus>;
+    return zipObject(dependencies, statuses) as DependenciesStatus;
+  }
+
+  public async isInstalled(dependency: Dependency) {
+    const status = await this.getStatus([dependency]);
+    return status[dependency].status === "installed";
   }
 
   private async androidEmulatorStatus() {
@@ -119,11 +126,6 @@ export class DependencyManager implements Disposable {
   private async nodeModulesStatus() {
     const packageManager = await resolvePackageManager();
 
-    if (!isPackageManagerAvailable(packageManager)) {
-      Logger.error(`Required package manager: ${packageManager} is not installed`);
-      throw new Error(`${packageManager} is not installed`);
-    }
-
     const installed = await isNodeModulesInstalled(packageManager);
     if (installed) {
       return "installed";
@@ -158,37 +160,21 @@ export class DependencyManager implements Disposable {
     );
   }
 
-  public async checkNodeModulesInstalled() {
-    const packageManager = await resolvePackageManager();
-
-    if (!isPackageManagerAvailable(packageManager)) {
-      Logger.error(`Required package manager: ${packageManager} is not installed`);
-      throw new Error(`${packageManager} is not installed`);
+  private async getPackageManager() {
+    if (!this.packageManagerInternal) {
+      this.packageManagerInternal = await resolvePackageManager();
     }
-
-    const installed = await isNodeModulesInstalled(packageManager);
-
-    this.webview.postMessage({
-      command: "isNodeModulesInstalled",
-      data: {
-        installed,
-        info: "Whether node modules are installed",
-        error: undefined,
-      },
-    });
-    Logger.debug("Node Modules installed:", installed);
-    return { installed, packageManager };
+    return this.packageManagerInternal;
   }
-  public async installNodeModules(manager: PackageManagerInfo): Promise<void> {
+
+  public async installNodeModules(): Promise<void> {
+    const manager = await this.getPackageManager();
+    const workspacePath = getAppRootFolder();
     this.stalePods = true;
 
-    this.webview.postMessage({
-      command: "installingNodeModules",
-    });
+    this.emitEvent("nodeModules", "installing");
 
-    const workspacePath = getAppRootFolder();
     let installationCommand;
-
     switch (manager.name) {
       case "npm":
         installationCommand = "npm install";
@@ -209,37 +195,12 @@ export class DependencyManager implements Disposable {
       quietErrorsOnExit: true,
     });
 
-    this.webview.postMessage({
-      command: "isNodeModulesInstalled",
-      data: {
-        installed: true,
-        info: "Whether node modules are installed",
-        error: undefined,
-      },
-    });
-  }
-
-  public async checkCocoaPodsInstalled() {
-    const installed = await checkIfCLIInstalled("pod --version", {
-      env: { LANG: "en_US.UTF-8" },
-    });
-    const errorMessage =
-      "CocoaPods was not found. Make sure to [install CocoaPods](https://guides.cocoapods.org/using/getting-started.html).";
-    this.webview.postMessage({
-      command: "isCocoaPodsInstalled",
-      data: {
-        installed,
-        info: "Used for installing iOS dependencies.",
-        error: installed ? undefined : errorMessage,
-      },
-    });
-    Logger.debug("CocoaPods installed:", installed);
-    return installed;
+    this.emitEvent("nodeModules", "installed");
   }
 
   private async checkIosDependenciesInstalled() {
     if (await isExpoGoProject()) {
-      // for Expo Go projects, we never return an error here because Pods are never needed
+      // Expo Go projects don't need pods
       return true;
     }
 
@@ -247,9 +208,10 @@ export class DependencyManager implements Disposable {
       return false;
     }
 
-    const iosDirPath = getIosSourceDir(getAppRootFolder());
+    const appRootFolder = getAppRootFolder();
+    const iosDirPath = getIosSourceDir(appRootFolder);
 
-    Logger.debug(`Check pods in ${iosDirPath} ${getAppRootFolder()}`);
+    Logger.debug(`Check pods in ${iosDirPath}`);
     if (!iosDirPath) {
       return false;
     }
@@ -260,88 +222,21 @@ export class DependencyManager implements Disposable {
     return podfileLockExists && podsDirExists;
   }
 
-  public async checkPodsInstalled() {
-    const installed = await this.checkIosDependenciesInstalled();
-
-    this.webview.postMessage({
-      command: "isPodsInstalled",
-      data: {
-        installed,
-        info: "Whether iOS dependencies are installed.",
-        error: undefined,
-      },
-    });
-    Logger.debug("Project pods installed:", installed);
-    return installed;
-  }
-
-  public async checkExpoRouterInstalled() {
-    const status = checkMinDependencyVersionInstalled(
-      "expo-router",
-      MinSupportedVersion.expoRouter
-    );
-
-    const installed = status === "installed";
-
-    this.webview.postMessage({
-      command: "isExpoRouterInstalled",
-      data: {
-        installed,
-        info: "Whether supported version of Expo Router is installed.",
-        error: undefined,
-        isOptional: !isExpoRouterProject(),
-      },
-    });
-    Logger.debug(`Minimum Expo version installed:`, installed);
-    return installed;
-  }
-
-  public async checkStorybookInstalled() {
-    const status = checkMinDependencyVersionInstalled(
-      "@storybook/react-native",
-      MinSupportedVersion.storybook
-    );
-    const installed = status === "installed";
-
-    this.webview.postMessage({
-      command: "isStorybookInstalled",
-      data: {
-        installed,
-        info: "Whether Storybook is installed.",
-        error: undefined,
-        isOptional: true,
-      },
-    });
-    Logger.debug("Storybook installed:", installed);
-    return installed;
-  }
-
-  public async installPods(
-    appRootFolder: string,
-    forceCleanBuild: boolean,
-    cancelToken: CancelToken
-  ) {
+  public async installPods(options: InstallPodsOptions) {
+    const { forceCleanBuild, cancelToken } = options;
+    const appRootFolder = getAppRootFolder();
     const iosDirPath = getIosSourceDir(appRootFolder);
 
     if (!iosDirPath) {
-      this.webview.postMessage({
-        command: "isPodsInstalled",
-        data: {
-          installed: false,
-          info: "Whether iOS dependencies are installed.",
-          error: "iOS directory does not exist",
-        },
-      });
-      throw new Error(`ios directory was not found inside the workspace.`);
+      this.emitEvent("pods", "notInstalled");
+      throw new Error("ios directory was not found inside the workspace.");
     }
 
     const commandInIosDir = (args: string) => {
+      const env = getLaunchConfiguration().env;
       return command(args, {
         cwd: iosDirPath,
-        env: {
-          ...getLaunchConfiguration().env,
-          LANG: "en_US.UTF-8",
-        },
+        env: { ...env, LANG: "en_US.UTF-8" },
       });
     };
 
@@ -353,32 +248,18 @@ export class DependencyManager implements Disposable {
       await cancelToken.adapt(commandInIosDir("pod install"));
     } catch (e) {
       Logger.error("Pods not installed", e);
-      this.webview.postMessage({
-        command: "isPodsInstalled",
-        data: {
-          installed: false,
-          info: "Whether iOS dependencies are installed.",
-          error: "Unable to install pods",
-        },
-      });
+      this.emitEvent("pods", "notInstalled");
       return;
     }
 
     this.stalePods = false;
 
-    this.webview.postMessage({
-      command: "isPodsInstalled",
-      data: {
-        installed: true,
-        info: "Whether iOS dependencies are installed.",
-        error: undefined,
-      },
-    });
+    this.emitEvent("pods", "installed");
     Logger.debug("Project pods installed");
   }
 }
 
-export async function checkIfCLIInstalled(cmd: string, options: Record<string, unknown> = {}) {
+async function checkIfCLIInstalled(cmd: string, options: Record<string, unknown> = {}) {
   try {
     // We are not checking the stderr here, because some of the CLIs put the warnings there.
     const { stdout } = await command(cmd, {
@@ -401,10 +282,10 @@ function requireNoCache(...params: Parameters<typeof require.resolve>) {
   return require(module);
 }
 
-export function checkMinDependencyVersionInstalled(
+function checkMinDependencyVersionInstalled(
   dependency: string,
   minVersion: string | semver.SemVer
-): InstallationStatus {
+) {
   try {
     const module = requireNoCache(path.join(dependency, "package.json"), {
       paths: [getAppRootFolder()],
@@ -430,7 +311,7 @@ export async function checkXcodeExists() {
   return isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
 }
 
-export function isExpoRouterProject() {
+function isExpoRouterProject() {
   // we assume that a expo router based project contain
   // the package "expo-router" in its dependencies or devDependencies
   try {

@@ -73,17 +73,11 @@ export class BuildManager {
         });
         buildResult = await buildIos(
           deviceInfo,
-          getAppRootFolder(),
           forceCleanBuild,
           cancelToken,
           this.buildOutputChannel,
           progressListener,
-          () => {
-            return this.dependencyManager.checkPodsInstalled();
-          },
-          (appRootFolder: string, cleanBuild: boolean, token: CancelToken) => {
-            return this.dependencyManager.installPods(appRootFolder, cleanBuild, token);
-          }
+          this.dependencyManager
         );
       }
       await storeCachedBuild(platform, {

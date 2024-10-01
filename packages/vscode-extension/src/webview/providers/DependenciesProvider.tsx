@@ -8,13 +8,14 @@ import {
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
-  DependencyManager,
+  DependencyManagerInterface,
   DependencyStatus,
+  InstallationStatus,
   MinSupportedVersion,
 } from "../../common/DependencyManager";
 import { Platform } from "../providers/UtilsProvider";
 
-const dependencyManager = makeProxy<DependencyManager>("DependencyManager");
+const dependencyManager = makeProxy<DependencyManagerInterface>("DependencyManager");
 
 const dependencies = [
   "nodejs",
@@ -61,8 +62,18 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    function handleUpdatedDependency(dependency: Dependency, state: DependencyStatus) {
-      updateDependencies({ [dependency]: state });
+    function handleUpdatedDependency(
+      dependency: Dependency,
+      installationStatus: InstallationStatus
+    ) {
+      updateDependencies((prev) => {
+        const previousState = prev[dependency];
+        if (!previousState) {
+          throw new Error(`Dependency ${dependency} updated before it was initialized`);
+        }
+
+        return { [dependency]: { ...previousState, status: installationStatus } };
+      });
     }
 
     runDiagnostics();
@@ -102,8 +113,19 @@ function objectFromKeys<K extends string, V>(keys: readonly K[], defaultValue: V
 function useObjectState<K extends string, V>(keys: readonly K[]) {
   const [state, setState] = useState(() => objectFromKeys<K, V | undefined>(keys, undefined));
 
-  function update(object: Partial<Record<K, V>>): void {
-    setState((prev) => ({ ...prev, ...object }));
+  function update(
+    objectOrUpdater:
+      | Partial<Record<K, V>>
+      | ((prev: Record<K, V | undefined>) => Partial<Record<K, V>>)
+  ): void {
+    const isUpdater = typeof objectOrUpdater === "function";
+    if (isUpdater) {
+      const updater = objectOrUpdater;
+      setState((prev) => ({ ...prev, ...updater(prev) }));
+    } else {
+      const object = objectOrUpdater;
+      setState((prev) => ({ ...prev, ...object }));
+    }
   }
 
   return [state, update] as const;
