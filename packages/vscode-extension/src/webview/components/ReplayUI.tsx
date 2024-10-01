@@ -12,15 +12,25 @@ type ReplayVideoProps = {
   onClose: () => void;
 };
 
-function acceleratedRewind(video: HTMLVideoElement, readyCallback: () => void) {
+/**
+ * Setting negative playbackRate doesn't work in VSCode's WebView, so the rewinding
+ * is done using requestAnimationFrame with a custom acceleration curve, such that
+ * the rewinding speeds up over time and also takes a fixed amount of time to rewind.
+ */
+function acceleratedRewind(
+  video: HTMLVideoElement,
+  fromTime: number,
+  toTime: number,
+  readyCallback: () => void
+) {
   const rewindTimeSec = 1.6;
 
   const v0 = 0.1;
   const vFinal = 2 / rewindTimeSec - v0;
   const acc = (vFinal - v0) / rewindTimeSec;
 
-  const videoDuration = video.duration;
-  video.currentTime = videoDuration;
+  const rewindTime = fromTime - toTime;
+  video.currentTime = fromTime;
 
   let startTimeMs: number | null = null;
   function frame(timestampMs: number) {
@@ -32,10 +42,11 @@ function acceleratedRewind(video: HTMLVideoElement, readyCallback: () => void) {
     const progress = v0 * elapsedSec + 0.5 * acc * elapsedSec * elapsedSec;
 
     if (elapsedSec < rewindTimeSec) {
-      video.currentTime = Math.max(0, videoDuration * (1 - progress));
+      video.currentTime = Math.max(0, toTime + rewindTime * (1 - progress));
       requestAnimationFrame(frame);
     } else {
-      video.currentTime = 0;
+      console.log("Fin rewind", toTime);
+      video.currentTime = toTime;
       readyCallback();
     }
   }
@@ -186,14 +197,6 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
   const [startTime, setStartTime] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
 
-  function rewind() {
-    setIsRewinding(true);
-    acceleratedRewind(videoRef.current!, () => {
-      setIsRewinding(false);
-      videoRef.current!.play();
-    });
-  }
-
   function stepForward() {
     if (videoRef.current) {
       videoRef.current.pause();
@@ -210,12 +213,19 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (video === null) {
+      return;
+    }
 
     function handleLoadedMetadata() {
       setIsLoaded(true);
-      setStartTime(Math.max(0, video!.duration - INITIAL_REPLAY_LENGTH_SEC));
-      rewind();
+      setIsRewinding(true);
+      const newStartTime = Math.max(0, video!.duration - INITIAL_REPLAY_LENGTH_SEC);
+      setStartTime(newStartTime);
+      acceleratedRewind(video!, video!.duration, newStartTime, () => {
+        setIsRewinding(false);
+        videoRef.current!.play();
+      });
     }
 
     function handleTimeUpdate() {
@@ -246,7 +256,12 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
 
   return (
     <>
-      <ReplayOverlay time={currentTime} onClose={onClose} replayData={replayData} />
+      <ReplayOverlay
+        time={currentTime}
+        startTime={startTime}
+        onClose={onClose}
+        replayData={replayData}
+      />
       <video ref={videoRef} src={replayData.url} className="phone-screen replay-video" />
       {isRewinding && <VHSRewind />}
       {!isRewinding && (

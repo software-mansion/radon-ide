@@ -111,6 +111,7 @@ async function loadCachedBuild(platform: DevicePlatform, newFingerprint: string)
   const cacheInfo = getCachedBuild(platform);
   const fingerprintsMatch = cacheInfo?.fingerprint === newFingerprint;
   if (!fingerprintsMatch) {
+    Logger.info("Fingerprint mismatch, cannot use cached build.");
     return undefined;
   }
 
@@ -119,13 +120,14 @@ async function loadCachedBuild(platform: DevicePlatform, newFingerprint: string)
   try {
     const builtAppExists = fs.existsSync(appPath);
     if (!builtAppExists) {
+      Logger.info("Couldn't use cached build. App artifact not found.");
       return undefined;
     }
 
     const hash = await getAppHash(appPath);
     const hashesMatch = hash === cacheInfo.buildHash;
     if (hashesMatch) {
-      Logger.log("Using existing build.");
+      Logger.info("Using cached existing build.");
       return build;
     }
   } catch (e) {
