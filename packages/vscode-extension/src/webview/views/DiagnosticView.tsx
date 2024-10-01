@@ -1,21 +1,16 @@
 import "./View.css";
 import "./DiagnosticView.css";
-import { vscode } from "../utilities/vscode";
 import Anchor from "../components/shared/Anchor";
 import CheckIcon from "../components/icons/CheckIcon";
 import CloseIcon from "../components/icons/CloseIcon";
 import CloseGrayIcon from "../components/icons/CloseGrayIcon";
-import {
-  DependencyState,
-  InstallationStatus,
-  useDependencies,
-} from "../providers/DependenciesProvider";
+import { dependencyDescription, useDependencies } from "../providers/DependenciesProvider";
 import ProgressRing from "../components/shared/ProgressRing";
 import Tooltip from "../components/shared/Tooltip";
-import IconButton from "../components/shared/IconButton";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
 import { Platform } from "../providers/UtilsProvider";
+import { Dependency, DependencyStatus } from "../../common/DependencyManager";
 
 function DiagnosticView() {
   const { dependencies, runDiagnostics } = useDependencies();
@@ -23,32 +18,38 @@ function DiagnosticView() {
   return (
     <div className="diagnostic-container">
       <Label>Common</Label>
-      <DiagnosticItem label="Node.js" item={dependencies.Nodejs} />
-      <DiagnosticItem label="Node Modules" item={dependencies.NodeModules} />
+      <DiagnosticItem label="Node.js" name="nodejs" info={dependencies.nodejs} />
+      <DiagnosticItem label="Node Modules" name="nodeModules" info={dependencies.nodeModules} />
       <div className="diagnostic-section-margin" />
 
       <Label>Android</Label>
-      <DiagnosticItem label="Android Emulator" item={dependencies.AndroidEmulator} />
+      <DiagnosticItem
+        label="Android Emulator"
+        name="androidEmulator"
+        info={dependencies.androidEmulator}
+      />
       <div className="diagnostic-section-margin" />
 
       {Platform.OS === "macos" && (
         <>
           <Label>iOS</Label>
-          <DiagnosticItem label="Xcode" item={dependencies.Xcode} />
-          <DiagnosticItem label="CocoaPods" item={dependencies.CocoaPods} />
+          <DiagnosticItem label="Xcode" name="xcode" info={dependencies.xcode} />
+          <DiagnosticItem label="CocoaPods" name="cocoaPods" info={dependencies.cocoaPods} />
           <div className="diagnostic-section-margin" />
         </>
       )}
 
       <Label>Project related</Label>
-      <DiagnosticItem label="React Native" item={dependencies.ReactNative} />
-      <DiagnosticItem label="Expo" item={dependencies.Expo} />
-      {Platform.OS === "macos" && <DiagnosticItem label="Pods" item={dependencies.Pods} />}
+      <DiagnosticItem label="React Native" name="reactNative" info={dependencies.reactNative} />
+      <DiagnosticItem label="Expo" name="expo" info={dependencies.expo} />
+      {Platform.OS === "macos" && (
+        <DiagnosticItem label="Pods" name="pods" info={dependencies.pods} />
+      )}
       <div className="diagnostic-section-margin" />
 
       <Label>Other</Label>
-      <DiagnosticItem label="Expo Router" item={dependencies.ExpoRouter} />
-      <DiagnosticItem label="Storybook" item={dependencies.Storybook} />
+      <DiagnosticItem label="Expo Router" name="expoRouter" info={dependencies.expoRouter} />
+      <DiagnosticItem label="Storybook" name="storybook" info={dependencies.storybook} />
       <div className="diagnostic-section-margin" />
 
       <div className="diagnostic-button-container">
@@ -63,34 +64,46 @@ function DiagnosticView() {
 
 interface DiagnosticItemProps {
   label: string;
-  item?: DependencyState;
+  name: Dependency;
+  info?: DependencyStatus;
   action?: React.ReactNode;
 }
 
-function DiagnosticItem({ label, item, action }: DiagnosticItemProps) {
+function DiagnosticItem({ label, name, info, action }: DiagnosticItemProps) {
+  let error: string | undefined = undefined;
+  let description: string | undefined = undefined;
+
   let icon = <ProgressRing />;
-  if (item) {
+  if (info) {
     icon = {
-      [InstallationStatus.Installed]: <CheckIcon />,
-      [InstallationStatus.NotInstalled]: <CloseIcon />,
-      [InstallationStatus.InProgress]: <ProgressRing />,
-      [InstallationStatus.Optional]: <CloseGrayIcon />,
-    }[item.installed];
+      installed: <CheckIcon />,
+      notInstalled: <CloseIcon />,
+      installing: <ProgressRing />,
+    }[info.status];
+
+    if (info.isOptional && info.status === "notInstalled") {
+      icon = <CloseGrayIcon />;
+    }
+
+    const messages = dependencyDescription(name);
+    error = messages.error;
+    description = messages.info;
   }
+
   return (
     <div className="diagnostic-item-wrapper">
       <div className="diagnostic-item">
         <div className="diagnostic-icon">{icon}</div>
         <p className="diagnostic-item-text">{label}</p>
-        {item?.info && (
-          <Tooltip label={item.info} type="secondary" instant>
+        {description && (
+          <Tooltip label={description} type="secondary" instant>
             <span className="diagnostic-item-info-icon codicon codicon-info" />
           </Tooltip>
         )}
       </div>
-      {item?.error && (
+      {error && (
         <div className="diagnostic-error-wrapper">
-          <DiagnosticError message={item?.error} />
+          <DiagnosticError message={error} />
           {action}
         </div>
       )}

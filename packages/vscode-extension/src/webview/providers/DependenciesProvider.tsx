@@ -6,65 +6,17 @@ import {
   useEffect,
   useState,
 } from "react";
-import { vscode } from "../utilities/vscode";
 import { makeProxy } from "../utilities/rpc";
-import { DependencyManager } from "../../common/DependencyManager";
+import {
+  DependencyManager,
+  DependencyStatus,
+  MinSupportedVersion,
+} from "../../common/DependencyManager";
 import { Platform } from "../providers/UtilsProvider";
 
 const dependencyManager = makeProxy<DependencyManager>("DependencyManager");
 
-export enum InstallationStatus {
-  NotInstalled,
-  InProgress,
-  Installed,
-  Optional,
-}
-
-export interface DependencyState {
-  installed: InstallationStatus;
-  info: string;
-  error?: string;
-  isOptional?: boolean;
-}
-
-interface DependencyMessageData {
-  command: string;
-  data: {
-    installed: boolean;
-    info: string;
-    error?: string;
-    isOptional?: boolean;
-  };
-}
-
-// when editing, update hasError function
-type Dependencies = {
-  Nodejs?: DependencyState;
-  AndroidEmulator?: DependencyState;
-  Xcode?: DependencyState;
-  CocoaPods?: DependencyState;
-  NodeModules?: DependencyState;
-  ReactNative?: DependencyState;
-  Expo?: DependencyState;
-  Pods?: DependencyState;
-  ExpoRouter?: DependencyState;
-  Storybook?: DependencyState;
-};
-
-const prerequisites = [
-  "Nodejs",
-  "AndroidEmulator",
-  "Xcode",
-  "CocoaPods",
-  "NodeModules",
-  "ReactNative",
-  "Expo",
-  "Pods",
-  "ExpoRouter",
-  "Storybook",
-] as const;
-
-const prerequisitesProxy = [
+const dependencies = [
   "nodejs",
   "androidEmulator",
   "xcode",
@@ -77,199 +29,56 @@ const prerequisitesProxy = [
   "storybook",
 ] as const;
 
-const defaultDependencies = Object.fromEntries(
-  prerequisites.map((prerequisite) => [prerequisite, undefined])
-) as Record<typeof prerequisites[number], DependencyState | undefined>;
+type Dependency = typeof dependencies[number];
 
-function hasError(dependencies: Dependencies, domain: "ios" | "android" | "common"): boolean {
-  function errored(state: DependencyState | undefined) {
-    if (state === undefined) {
-      return false;
-    }
-    return state.error !== undefined;
-  }
-
-  const required = {
-    ios: ["Xcode", "CocoaPods", "Pods"],
-    android: ["AndroidEmulator"],
-    common: ["Nodejs", "NodeModules"],
-  }[domain];
-
-  return entries(dependencies)
-    .filter(([dependency, _state]) => required.includes(dependency))
-    .some(([_dependency, state]) => errored(state));
-}
-
-function adaptDependencyData(data: DependencyMessageData["data"]): DependencyState {
-  const installationStatus = data.installed
-    ? InstallationStatus.Installed
-    : InstallationStatus.NotInstalled;
-
-  return {
-    ...data,
-    installed: installationStatus,
-    error: data.isOptional ? undefined : data.error,
-    isOptional: data.isOptional ?? false,
-  };
-}
-
-function entries<K extends string, T>(object: Partial<Record<K, T>>) {
-  return Object.entries(object) as [K, T][];
-}
+type ErrorType = "ios" | "simulator" | "emulator" | "android" | "common";
+type Errors = Partial<Record<ErrorType, { message: string }>>;
 
 interface DependenciesContextProps {
-  dependencies: Dependencies;
-  isReady: boolean;
-  isCommonError: boolean;
-  isAndroidError: boolean;
-  isIosError: boolean;
-  androidEmulatorError: string | undefined;
-  iosSimulatorError: string | undefined;
-  runDiagnostics: () => void;
-  isExpoRouterInstalled: boolean;
-  isStorybookInstalled: boolean;
+  dependencies: Record<Dependency, DependencyStatus | undefined>;
+  errors: Errors | undefined;
+  runDiagnostics: () => Promise<void>;
 }
 
 const DependenciesContext = createContext<DependenciesContextProps>({
-  dependencies: defaultDependencies,
-  isReady: false,
-  isCommonError: false,
-  isAndroidError: false,
-  isIosError: false,
-  androidEmulatorError: undefined,
-  iosSimulatorError: undefined,
+  dependencies: objectFromKeys<Dependency, DependencyStatus | undefined>(dependencies, undefined),
+  errors: undefined,
   runDiagnostics: () => {
     throw new Error("Provider not initialized");
   },
-  isExpoRouterInstalled: false,
-  isStorybookInstalled: false,
 });
 
-async function runDiagnosticsProxy() {
-  function availableOnPlatform(prerequisite: typeof prerequisitesProxy[number]) {
-    const macosOnly = ["xcode", "cocoaPods", "pods"].includes(prerequisite);
-
-    if (macosOnly) {
-      return Platform.OS === "macos";
-    }
-    return true;
-  }
-  console.log("XD: before Promise.all", prerequisitesProxy.filter(availableOnPlatform));
-
-  try {
-    const statuses = await Promise.all(
-      prerequisitesProxy
-        .filter(availableOnPlatform)
-        .map((prerequisite) => dependencyManager.getDependencyStatus(prerequisite))
-    );
-
-    console.log("XD: after Promise.all", statuses);
-
-    return Object.fromEntries(
-      prerequisites.map((prerequisite, i) => [prerequisite, adaptDependencyData(statuses[i])])
-    ) as Record<typeof prerequisites[number], DependencyState>;
-  } catch (error) {
-    console.log("XD: error", error);
-  }
-}
-
 export default function DependenciesProvider({ children }: PropsWithChildren) {
-  const [dependencies, setDependencies] = useState<Dependencies>({});
-
-  // `isReady` is true when all dependencies were checked
-  const isReady = !Object.values<DependencyState | undefined>(dependencies).includes(undefined);
-  const isExpoRouterInstalled = false;
-  const isStorybookInstalled = false;
-
-  const isCommonError = hasError(dependencies, "common");
-  const isIosError = hasError(dependencies, "ios");
-  const isAndroidError = hasError(dependencies, "android");
-
-  const androidEmulatorError = dependencies.AndroidEmulator?.error;
-  const iosSimulatorError = dependencies.Xcode?.error;
-
-  const rerunDiagnostics = useCallback(async () => {
-    // reset `.installed` and .error, leave other data as is
-    setDependencies((prevState) => {
-      const newState: Dependencies = {};
-      for (const [dependency, data] of entries(prevState)) {
-        newState[dependency] = {
-          ...data,
-          installed: InstallationStatus.NotInstalled,
-          error: undefined,
-        };
-      }
-      return newState;
-    });
-
-    const diagnostics = await runDiagnosticsProxy();
-    console.log({ diagnostics });
-    for (const [dependency, status] of Object.entries(diagnostics)) {
-      updateDependency(dependency as typeof prerequisites[number], status);
-    }
-  }, []);
-
-  const updateDependency = useCallback(
-    (name: keyof Dependencies, newState: Partial<DependencyState>) => {
-      if (newState.isOptional && newState.installed === InstallationStatus.NotInstalled) {
-        newState.installed = InstallationStatus.Optional;
-      }
-
-      setDependencies((prev) => ({
-        ...prev,
-        [name]: { ...prev[name], ...newState },
-      }));
-    },
-    [setDependencies]
+  const [dependencyState, updateDependencies] = useObjectState<Dependency, DependencyStatus>(
+    dependencies
   );
 
+  const runDiagnostics = useCallback(async () => {
+    const checkableDependencies = dependencies.filter(availableOnPlatform);
+    const diagnostics = await dependencyManager.getStatus(checkableDependencies);
+
+    updateDependencies(diagnostics);
+  }, []);
+
   useEffect(() => {
-    const listener = (event: MessageEvent<DependencyMessageData>) => {
-      const { command, data: rawData } = event.data;
-      if (!rawData) {
-        return;
-      }
-      const data = adaptDependencyData(rawData);
-      switch (command) {
-        case "isNodeModulesInstalled":
-          updateDependency("NodeModules", data);
-          break;
-        case "installingNodeModules":
-          updateDependency("NodeModules", { installed: InstallationStatus.InProgress });
-          break;
-        case "isPodsInstalled":
-          updateDependency("Pods", data);
-          break;
-        case "installingPods":
-          updateDependency("Pods", { error: undefined, installed: InstallationStatus.InProgress });
-          break;
-      }
+    function handleUpdatedDependency(dependency: Dependency, state: DependencyStatus) {
+      updateDependencies({ [dependency]: state });
+    }
+
+    runDiagnostics();
+
+    dependencyManager.addListener(handleUpdatedDependency);
+    return () => {
+      dependencyManager.removeListener(handleUpdatedDependency);
     };
-
-    runDiagnosticsProxy().then((diagnostics) => {
-      console.log({ diagnosticsInitial: diagnostics });
-      for (const [dependency, status] of Object.entries(diagnostics)) {
-        updateDependency(dependency as typeof prerequisites[number], status);
-      }
-    });
-
-    window.addEventListener("message", listener);
-    return () => window.removeEventListener("message", listener);
   }, []);
 
   return (
     <DependenciesContext.Provider
       value={{
-        dependencies,
-        isReady,
-        isCommonError,
-        isAndroidError,
-        isIosError,
-        androidEmulatorError,
-        iosSimulatorError,
-        runDiagnostics: rerunDiagnostics,
-        isExpoRouterInstalled,
-        isStorybookInstalled,
+        dependencies: dependencyState,
+        runDiagnostics,
+        errors: getErrors(dependencyState),
       }}>
       {children}
     </DependenciesContext.Provider>
@@ -284,4 +93,122 @@ export function useDependencies() {
   }
 
   return context;
+}
+
+function objectFromKeys<K extends string, V>(keys: readonly K[], defaultValue: V): Record<K, V> {
+  return Object.fromEntries(keys.map((key) => [key, defaultValue])) as Record<K, V>;
+}
+
+function useObjectState<K extends string, V>(keys: readonly K[]) {
+  const [state, setState] = useState(() => objectFromKeys<K, V | undefined>(keys, undefined));
+
+  function update(object: Partial<Record<K, V>>): void {
+    setState((prev) => ({ ...prev, ...object }));
+  }
+
+  return [state, update] as const;
+}
+
+function getErrors(statuses: Record<Dependency, DependencyStatus | undefined>) {
+  const errors: Errors = {};
+  let hasErrors = false;
+  function setFirstError(dependency: Dependency, errorName: ErrorType) {
+    hasErrors = true;
+    if (!errors[errorName]) {
+      const message = dependencyDescription(dependency).error;
+      errors.simulator = { message };
+    }
+  }
+
+  Object.entries(statuses)
+    .filter(([_dependency, info]) => {
+      const notInstalled = info !== undefined && !info.isOptional && info.status === "notInstalled";
+      return notInstalled;
+    })
+    .forEach(([dependency, _info]) => {
+      switch (dependency) {
+        case "xcode":
+          setFirstError(dependency, "emulator");
+        /* fallthrough */
+        case "cocoaPods":
+        case "pods":
+          setFirstError(dependency, "ios");
+          break;
+        case "androidEmulator":
+          setFirstError(dependency, "android");
+          setFirstError(dependency, "emulator");
+          break;
+        case "nodejs":
+        case "nodeModules":
+          setFirstError(dependency, "common");
+          break;
+        default:
+          break;
+      }
+    });
+  return hasErrors ? errors : undefined;
+}
+
+function availableOnPlatform(dependency: Dependency) {
+  const macosOnly = ["xcode", "cocoaPods", "pods"].includes(dependency);
+
+  if (macosOnly) {
+    return Platform.OS === "macos";
+  }
+  return true;
+}
+
+export function dependencyDescription(dependency: Dependency) {
+  switch (dependency) {
+    case "nodejs":
+      return {
+        info: "Used for running scripts and getting dependencies.",
+        error: "Node.js was not found. Make sure to [install Node.js](https://nodejs.org/en).",
+      };
+    case "androidEmulator":
+      return {
+        info: "Used for running Android apps.",
+        error:
+          "Android Emulator was not found. Make sure to [install Android Emulator](https://developer.android.com/studio/run/managing-avds).",
+      };
+    case "xcode":
+      return {
+        info: "Used for building and running iOS apps.",
+        error:
+          "Xcode was not found. If you are using alternative Xcode version you can find out more in troubleshooting section of our documentation. Otherwise, [Install Xcode from the Mac App Store](https://apps.apple.com/us/app/xcode/id497799835?mt=12) and have Xcode Command Line Tools enabled.",
+      };
+    case "cocoaPods":
+      return {
+        info: "Used for installing iOS dependencies.",
+        error:
+          "CocoaPods was not found. Make sure to [install CocoaPods](https://guides.cocoapods.org/using/getting-started.html).",
+      };
+    case "nodeModules":
+      return {
+        info: "Whether node modules are installed",
+        error: "Node modules are not installed.",
+      };
+    case "reactNative":
+      return {
+        info: "Whether supported version of React Native is installed.",
+        error: `React Native is not installed or it is older than supported version ${MinSupportedVersion.reactNative}.`,
+      };
+    case "expo":
+      return {
+        info: "Whether supported version of Expo SDK is installed.",
+        error: `Expo is not installed or it is older than supported version ${MinSupportedVersion.expo}.`,
+      };
+    case "pods":
+      return { info: "Whether iOS dependencies are installed.", error: "Pods are not installed." };
+    case "expoRouter":
+      return {
+        info: "Whether supported version of Expo Router is installed.",
+        error: `expo-router is not installed or it is older than supported version ${MinSupportedVersion.expoRouter}.`,
+      };
+    case "storybook":
+      return {
+        info: "Whether Storybook is installed.",
+        error: "Storybook is not installed.",
+      };
+  }
 }

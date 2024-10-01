@@ -25,7 +25,7 @@ function assertPlatform(platform: string): asserts platform is "ios" | "android"
 }
 
 function useSupportedDevices() {
-  const { androidEmulatorError, iosSimulatorError } = useDependencies();
+  const { errors } = useDependencies();
 
   function buildSelections(item: DeviceProperties, platform: DevicePlatform) {
     let prefix = "";
@@ -39,18 +39,15 @@ function useSupportedDevices() {
 
   return [
     Platform.select({
-      macos:
-        iosSimulatorError !== undefined
-          ? { label: "iOS – error, check diagnostics", items: [] }
-          : {
-              label: "iOS",
-              items: iOSSupportedDevices.map((device) =>
-                buildSelections(device, DevicePlatform.IOS)
-              ),
-            },
+      macos: errors?.simulator
+        ? { label: "iOS – error, check diagnostics", items: [] }
+        : {
+            label: "iOS",
+            items: iOSSupportedDevices.map((device) => buildSelections(device, DevicePlatform.IOS)),
+          },
       windows: { label: "", items: [] },
     }),
-    androidEmulatorError !== undefined
+    errors?.emulator
       ? { label: "Android – error, check diagnostics", items: [] }
       : {
           label: "Android",

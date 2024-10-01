@@ -1,14 +1,15 @@
 import fs from "fs";
 import path from "path";
+import { EventEmitter } from "stream";
 import { Webview, Disposable } from "vscode";
-import { coerce, gte } from "semver";
+import semver, { SemVer } from "semver";
+import zipObject from "lodash/zipObject";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command } from "../utilities/subprocess";
 import { getAppRootFolder } from "../utilities/extensionContext";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
-import { shouldUseExpoCLI } from "../utilities/expoCli";
 import {
   isNodeModulesInstalled,
   isPackageManagerAvailable,
@@ -17,99 +18,105 @@ import {
 } from "../utilities/packageManager";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { CancelToken } from "../builders/cancelToken";
-import { Dependency, DependencyState } from "../common/DependencyManager";
-
-const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
-const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
-const MIN_STORYBOOK_VERSION_SUPPORTED = "5.2.0";
-const MIN_EXPO_ROUTER_VERSION_SUPPORTED = "0.0.0";
+import {
+  Dependency,
+  DependencyListener,
+  DependencyStatus,
+  InstallationStatus,
+  MinSupportedVersion,
+} from "../common/DependencyManager";
+import { shouldUseExpoCLI } from "../utilities/expoCli";
 
 export class DependencyManager implements Disposable {
-  private disposables: Disposable[] = [];
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
   private stalePods = true;
+  private eventEmitter = new EventEmitter();
 
   constructor(private readonly webview: Webview) {}
 
-  public getDependencyStatus(dependency: Dependency): Promise<DependencyState> {
-    switch (dependency) {
-      case "androidEmulator":
-        return this.isAndroidEmulatorInstalled();
-      case "xcode":
-        return this.isXcodeInstalled();
-      case "cocoaPods":
-        return this.isCocoaPodsInstalled();
-      case "nodejs":
-        return this.isNodeInstalled();
-      case "nodeModules":
-        return this.isNodeModulesInstalled();
-      case "reactNative":
-        return this.isSupportedReactNativeInstalled();
-      case "pods":
-        return this.isPodsInstalled();
-      case "expo":
-        return this.isSupportedExpoInstalled();
-      case "expoRouter":
-        return this.isExpoRouterInstalled();
-      case "storybook":
-        return this.isStorybookInstalled();
+  public dispose() {
+    this.eventEmitter.removeAllListeners();
+  }
+
+  public addListener(listener: DependencyListener) {
+    this.eventEmitter.addListener("dependencyStateChange", listener);
+  }
+
+  public removeListener(listener: DependencyListener) {
+    this.eventEmitter.removeListener("dependencyStateChange", listener);
+  }
+
+  public async isInstalled(
+    dependencies: Dependency[]
+  ): Promise<Record<Dependency, DependencyStatus>> {
+    const statuses = await Promise.all(
+      dependencies.map(async (dependency): Promise<DependencyStatus> => {
+        switch (dependency) {
+          case "androidEmulator":
+            return { status: await this.androidEmulatorStatus(), isOptional: false };
+          case "xcode":
+            return { status: await this.xcodeStatus(), isOptional: false };
+          case "cocoaPods":
+            return { status: await this.cocoapodsStatus(), isOptional: false };
+          case "nodejs":
+            return { status: await this.nodeStatus(), isOptional: false };
+          case "nodeModules":
+            return { status: await this.nodeModulesStatus(), isOptional: false };
+          case "reactNative":
+            return { status: await this.supportedReactNativeStatus(), isOptional: false };
+          case "pods":
+            return { status: await this.podsStatus(), isOptional: false }; // TODO(jgonet): make it optional for expo
+          case "expo":
+            return { status: await this.supportedExpoStatus(), isOptional: !shouldUseExpoCLI() };
+          case "expoRouter":
+            return { status: await this.expoRouterStatus(), isOptional: !isExpoRouterProject() };
+          case "storybook":
+            return { status: await this.storybookStatus(), isOptional: true };
+        }
+      })
+    );
+
+    return zipObject(dependencies, statuses) as Record<Dependency, DependencyStatus>;
+  }
+
+  private async androidEmulatorStatus() {
+    if (fs.existsSync(EMULATOR_BINARY)) {
+      return "installed";
     }
+    return "notInstalled";
   }
 
-  private async isAndroidEmulatorInstalled() {
-    const installed = fs.existsSync(EMULATOR_BINARY);
-    const errorMessage =
-      "Android Emulator was not found. Make sure to [install Android Emulator](https://developer.android.com/studio/run/managing-avds).";
-
-    return {
-      installed,
-      info: "Used for running Android apps.",
-      error: installed ? undefined : errorMessage,
-    };
-  }
-
-  private async isXcodeInstalled() {
+  private async xcodeStatus() {
     const isXcodebuildInstalled = await checkIfCLIInstalled("xcodebuild -version");
     const isXcrunInstalled = await checkIfCLIInstalled("xcrun --version");
     const isSimctlInstalled = await checkIfCLIInstalled("xcrun simctl help");
-    const installed = isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
 
-    const errorMessage =
-      "Xcode was not found. If you are using alternative Xcode version you can find out more in troubleshooting section of our documentation. Otherwise, [Install Xcode from the Mac App Store](https://apps.apple.com/us/app/xcode/id497799835?mt=12) and have Xcode Command Line Tools enabled.";
-    return {
-      installed,
-      info: "Used for building and running iOS apps.",
-      error: installed ? undefined : errorMessage,
-    };
+    if (isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled) {
+      return "installed";
+    }
+    return "notInstalled";
   }
 
-  private async isCocoaPodsInstalled() {
+  private async cocoapodsStatus() {
     const installed = await checkIfCLIInstalled("pod --version", {
       env: { LANG: "en_US.UTF-8" },
     });
-    const errorMessage =
-      "CocoaPods was not found. Make sure to [install CocoaPods](https://guides.cocoapods.org/using/getting-started.html).";
 
-    return {
-      installed,
-      info: "Used for installing iOS dependencies.",
-      error: installed ? undefined : errorMessage,
-    };
+    if (installed) {
+      return "installed";
+    }
+    return "notInstalled";
   }
 
-  private async isNodeInstalled() {
+  private async nodeStatus() {
     const installed = await checkIfCLIInstalled("node -v");
-    const errorMessage =
-      "Node.js was not found. Make sure to [install Node.js](https://nodejs.org/en).";
-
-    return {
-      installed,
-      info: "Used for running scripts and getting dependencies.",
-      error: installed ? undefined : errorMessage,
-    };
+    if (installed) {
+      return "installed";
+    }
+    return "notInstalled";
   }
 
-  private async isNodeModulesInstalled() {
+  private async nodeModulesStatus() {
     const packageManager = await resolvePackageManager();
 
     if (!isPackageManagerAvailable(packageManager)) {
@@ -118,103 +125,37 @@ export class DependencyManager implements Disposable {
     }
 
     const installed = await isNodeModulesInstalled(packageManager);
-
-    return {
-      installed,
-      info: "Whether node modules are installed",
-      error: undefined,
-    };
-  }
-
-  private async isSupportedReactNativeInstalled() {
-    const status = checkMinDependencyVersionInstalled(
-      "react-native",
-      MIN_REACT_NATIVE_VERSION_SUPPORTED
-    );
-
-    const error = {
-      installed: undefined,
-      not_installed: "React Native is not installed.",
-      not_supported: `Installed version of React Native does not match the minimum requirement: ${MIN_REACT_NATIVE_VERSION_SUPPORTED}.`,
-    }[status];
-
-    const installed = status === "installed";
-
-    return {
-      installed,
-      info: "Whether supported version of React Native is installed.",
-      error,
-    };
-  }
-
-  private async isPodsInstalled() {
-    const installed = await this.checkIosDependenciesInstalled();
-
-    return {
-      installed,
-      info: "Whether iOS dependencies are installed.",
-      error: undefined,
-    };
-  }
-
-  private async isSupportedExpoInstalled() {
-    const status = checkMinDependencyVersionInstalled("expo", MIN_EXPO_SDK_VERSION_SUPPORTED);
-
-    const error = {
-      installed: undefined,
-      not_installed: "Expo is not installed.",
-      not_supported: `Installed version of Expo does not match the minimum requirement: ${MIN_EXPO_SDK_VERSION_SUPPORTED}.`,
-    }[status];
-
-    const installed = status === "installed";
-
-    return {
-      installed,
-      info: "Whether supported version of Expo SDK is installed.",
-      error,
-      isOptional: !shouldUseExpoCLI(),
-    };
-  }
-
-  private async isExpoRouterInstalled() {
-    const status = checkMinDependencyVersionInstalled(
-      "expo-router",
-      MIN_EXPO_ROUTER_VERSION_SUPPORTED
-    );
-
-    const installed = status === "installed";
-
-    return {
-      installed,
-      info: "Whether supported version of Expo Router is installed.",
-      error: undefined,
-      isOptional: !isExpoRouterProject(),
-    };
-  }
-
-  private async isStorybookInstalled() {
-    const status = checkMinDependencyVersionInstalled(
-      "@storybook/react-native",
-      MIN_STORYBOOK_VERSION_SUPPORTED
-    );
-    const installed = status === "installed";
-
-    return {
-      installed,
-      info: "Whether Storybook is installed.",
-      error: undefined,
-      isOptional: true,
-    };
-  }
-
-  public dispose() {
-    // Dispose of all disposables (i.e. commands) for the current webview panel
-    while (this.disposables.length) {
-      const disposable = this.disposables.pop();
-      if (disposable) {
-        disposable.dispose();
-      }
+    if (installed) {
+      return "installed";
     }
+    return "notInstalled";
+  }
+
+  private async supportedReactNativeStatus() {
+    return checkMinDependencyVersionInstalled("react-native", MinSupportedVersion.reactNative);
+  }
+
+  private async podsStatus() {
+    const installed = await this.checkIosDependenciesInstalled();
+    if (installed) {
+      return "installed";
+    }
+    return "notInstalled";
+  }
+
+  private async supportedExpoStatus() {
+    return checkMinDependencyVersionInstalled("expo", MinSupportedVersion.expo);
+  }
+
+  private async expoRouterStatus() {
+    return checkMinDependencyVersionInstalled("expo-router", MinSupportedVersion.expoRouter);
+  }
+
+  private async storybookStatus() {
+    return checkMinDependencyVersionInstalled(
+      "@storybook/react-native",
+      MinSupportedVersion.storybook
+    );
   }
 
   public async checkNodeModulesInstalled() {
@@ -238,7 +179,6 @@ export class DependencyManager implements Disposable {
     Logger.debug("Node Modules installed:", installed);
     return { installed, packageManager };
   }
-
   public async installNodeModules(manager: PackageManagerInfo): Promise<void> {
     this.stalePods = true;
 
@@ -338,7 +278,7 @@ export class DependencyManager implements Disposable {
   public async checkExpoRouterInstalled() {
     const status = checkMinDependencyVersionInstalled(
       "expo-router",
-      MIN_EXPO_ROUTER_VERSION_SUPPORTED
+      MinSupportedVersion.expoRouter
     );
 
     const installed = status === "installed";
@@ -359,7 +299,7 @@ export class DependencyManager implements Disposable {
   public async checkStorybookInstalled() {
     const status = checkMinDependencyVersionInstalled(
       "@storybook/react-native",
-      MIN_STORYBOOK_VERSION_SUPPORTED
+      MinSupportedVersion.storybook
     );
     const installed = status === "installed";
 
@@ -461,24 +401,26 @@ function requireNoCache(...params: Parameters<typeof require.resolve>) {
   return require(module);
 }
 
-export function checkMinDependencyVersionInstalled(dependency: string, minVersion: string) {
-  const message = `Check ${dependency} module version.`;
-
+export function checkMinDependencyVersionInstalled(
+  dependency: string,
+  minVersion: string | semver.SemVer
+): InstallationStatus {
   try {
     const module = requireNoCache(path.join(dependency, "package.json"), {
       paths: [getAppRootFolder()],
     });
-    const dependencyVersion = coerce(module.version);
-    const minDependencyVersion = coerce(minVersion)!;
+    const version = semver.coerce(module.version);
+    minVersion = new SemVer(minVersion);
 
-    Logger.debug(message, `Version found: ${dependencyVersion}. Minimum version: ${minVersion}`);
-
-    const matches = dependencyVersion ? gte(dependencyVersion, minDependencyVersion) : false;
-    return matches ? "installed" : "not_supported";
-  } catch (error) {
-    Logger.debug(message, "Module not found.");
-    return "not_installed";
+    const isSupported = version ? semver.gte(version, minVersion) : false;
+    // if not supported, we treat it as not installed
+    if (isSupported) {
+      return "installed";
+    }
+  } catch (_error) {
+    // ignore if not installed
   }
+  return "notInstalled";
 }
 
 export async function checkXcodeExists() {
@@ -494,10 +436,11 @@ export function isExpoRouterProject() {
   try {
     const appRoot = getAppRootFolder();
     const packageJson = requireNoCache(path.join(appRoot, "package.json"));
-    const hasExpoRouter =
-      Object.keys(packageJson.dependencies).some((dependency) => dependency === "expo-router") ||
-      Object.keys(packageJson.devDependencies).some((dependency) => dependency === "expo-router");
-    return hasExpoRouter;
+    const allDependencies = [
+      ...Object.keys(packageJson.dependencies),
+      ...Object.keys(packageJson.devDependencies),
+    ];
+    return allDependencies.includes("expo-router");
   } catch (e) {
     return false;
   }

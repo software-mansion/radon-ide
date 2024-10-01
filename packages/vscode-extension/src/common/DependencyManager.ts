@@ -1,3 +1,10 @@
+export const MinSupportedVersion = {
+  reactNative: "0.71.0",
+  expo: "49.0.0",
+  storybook: "5.2.0",
+  expoRouter: "0.0.0",
+} as const;
+
 export type Dependency =
   | "androidEmulator"
   | "xcode"
@@ -10,22 +17,18 @@ export type Dependency =
   | "expoRouter"
   | "storybook";
 
-export enum InstallationStatus {
-  NotInstalled,
-  InProgress,
-  Installed,
-  Optional,
-}
-
-export interface DependencyState {
-  installed: boolean;
-  info: string;
-  isOptional?: boolean;
-  error?: string;
-}
+export type InstallationStatus = "installed" | "notInstalled" | "installing";
+export type DependencyListener = (dependency: Dependency, status: DependencyStatus) => void;
+export type DependencyStatus = {
+  status: InstallationStatus;
+  isOptional: boolean;
+};
 
 export interface DependencyManager {
-  getDependencyStatus(dependency: Dependency): Promise<DependencyState>;
-  installNodeModules(): Promise<void>;
-  installPods(): Promise<void>;
+  getStatus(dependencies: Dependency[]): Promise<Record<Dependency, DependencyStatus>>;
+  installNodeModules2(): Promise<void>;
+  installPods2(): Promise<void>;
+
+  addListener(listener: DependencyListener): Promise<void>;
+  removeListener(listener: DependencyListener): Promise<void>;
 }
