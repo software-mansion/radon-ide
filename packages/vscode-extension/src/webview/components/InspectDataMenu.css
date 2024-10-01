@@ -8,6 +8,7 @@
   will-change: transform, opacity;
   box-shadow: var(--swm-backdrop-shadow);
   max-width: calc(var(--radix-context-menu-content-available-width) - 10px);
+  z-index: 10;
 }
 
 .context-menu-content code {

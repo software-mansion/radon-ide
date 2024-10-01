@@ -45,6 +45,7 @@
   padding-bottom: 4px;
   max-width: var(--radix-select-content-available-width);
   max-height: var(--radix-select-content-available-height);
+  z-index: 10;
 }
 
 .url-select-viewport {
