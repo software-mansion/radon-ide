@@ -138,8 +138,27 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   private async podsStatus() {
-    const installed = await this.checkIosDependenciesInstalled();
-    if (installed) {
+    if (await isExpoGoProject()) {
+      // Expo Go projects don't need pods
+      return "installed";
+    }
+
+    if (this.stalePods) {
+      return "notInstalled";
+    }
+
+    const appRootFolder = getAppRootFolder();
+    const iosDirPath = getIosSourceDir(appRootFolder);
+
+    Logger.debug(`Check pods in ${iosDirPath}`);
+    if (!iosDirPath) {
+      return "notInstalled";
+    }
+
+    const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
+    const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
+
+    if (podfileLockExists && podsDirExists) {
       return "installed";
     }
     return "notInstalled";
@@ -196,30 +215,6 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     });
 
     this.emitEvent("nodeModules", "installed");
-  }
-
-  private async checkIosDependenciesInstalled() {
-    if (await isExpoGoProject()) {
-      // Expo Go projects don't need pods
-      return true;
-    }
-
-    if (this.stalePods) {
-      return false;
-    }
-
-    const appRootFolder = getAppRootFolder();
-    const iosDirPath = getIosSourceDir(appRootFolder);
-
-    Logger.debug(`Check pods in ${iosDirPath}`);
-    if (!iosDirPath) {
-      return false;
-    }
-
-    const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
-    const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
-
-    return podfileLockExists && podsDirExists;
   }
 
   public async installPods(options: InstallPodsOptions) {
