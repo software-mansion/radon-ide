@@ -1,8 +1,5 @@
 import path from "path";
-import fs from "fs";
 import { OutputChannel } from "vscode";
-import path from "path";
-
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
