@@ -360,11 +360,7 @@ export class DependencyManager implements Disposable {
     return installed;
   }
 
-  public async installPods(
-    appRootFolder: string,
-    forceCleanBuild: boolean,
-    cancelToken: CancelToken
-  ) {
+  public async installPods(appRootFolder: string, cancelToken: CancelToken) {
     const iosDirPath = getIosSourceDir(appRootFolder);
 
     if (!iosDirPath) {
@@ -390,10 +386,6 @@ export class DependencyManager implements Disposable {
     };
 
     try {
-      if (forceCleanBuild) {
-        await cancelToken.adapt(commandInIosDir("pod deintegrate"));
-      }
-
       await cancelToken.adapt(commandInIosDir("pod install"));
     } catch (e) {
       Logger.error("Pods not installed", e);

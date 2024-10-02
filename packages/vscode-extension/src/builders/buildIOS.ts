@@ -82,12 +82,7 @@ export async function buildIos(
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void,
-  checkIosDependenciesInstalled: () => Promise<boolean>,
-  installPods: (
-    appRootFolder: string,
-    forceCleanBuild: boolean,
-    cancelToken: CancelToken
-  ) => Promise<void>
+  installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
   const { ios: buildOptions } = getLaunchConfiguration();
 
@@ -98,10 +93,7 @@ export async function buildIos(
 
   const sourceDir = getIosSourceDir(appRootFolder);
 
-  const isPodsInstalled = await checkIosDependenciesInstalled();
-  if (!isPodsInstalled) {
-    await installPods(appRootFolder, forceCleanBuild, cancelToken);
-  }
+  await installPodsIfNeeded();
 
   const xcodeProject = await findXcodeProject(appRootFolder);
 

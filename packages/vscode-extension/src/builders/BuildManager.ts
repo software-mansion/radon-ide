@@ -43,7 +43,7 @@ export class BuildManager {
     const cancelToken = new CancelToken();
 
     const buildApp = async () => {
-      const newFingerprint = await generateWorkspaceFingerprint();
+      let newFingerprint = await generateWorkspaceFingerprint();
       if (forceCleanBuild) {
         // we reset the cache when force clean build is requested as the newly
         // started build may end up being cancelled
@@ -71,19 +71,25 @@ export class BuildManager {
         this.buildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
           log: true,
         });
+        const appRootFolder = getAppRootFolder();
+        const installPodsIfNeeded = async () => {
+          const podsInstalled = await this.dependencyManager.checkPodsInstalled();
+          if (!podsInstalled) {
+            Logger.info("Pods installation is missing or outdated. Installing Pods.");
+            // installing pods may impact the fingerprint as new pods may be created under the project directory
+            // for this reason we need to recalculate the fingerprint after installing pods
+            await this.dependencyManager.installPods(appRootFolder, cancelToken);
+            newFingerprint = await generateWorkspaceFingerprint();
+          }
+        };
         buildResult = await buildIos(
           deviceInfo,
-          getAppRootFolder(),
+          appRootFolder,
           forceCleanBuild,
           cancelToken,
           this.buildOutputChannel,
           progressListener,
-          () => {
-            return this.dependencyManager.checkPodsInstalled();
-          },
-          (appRootFolder: string, cleanBuild: boolean, token: CancelToken) => {
-            return this.dependencyManager.installPods(appRootFolder, cleanBuild, token);
-          }
+          installPodsIfNeeded
         );
       }
       await storeCachedBuild(platform, {

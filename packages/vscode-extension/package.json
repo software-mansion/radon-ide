@@ -373,7 +373,7 @@
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
-    "@expo/fingerprint": "^0.5.0",
+    "@expo/fingerprint": "^0.10.3",
     "@expo/package-manager": "^1.1.2",
     "@msgpack/msgpack": "^2.8.0",
     "@radix-ui/react-alert-dialog": "^1.0.5",
