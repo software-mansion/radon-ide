@@ -7,7 +7,7 @@ import zipObject from "lodash/zipObject";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command } from "../utilities/subprocess";
-import { getAppRootFolder } from "../utilities/extensionContext";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import {
@@ -28,9 +28,11 @@ import {
 } from "../common/DependencyManager";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 
+const STALE_PODS = "stalePods";
+
 export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
-  private stalePods = true;
+  private stalePods = extensionContext.workspaceState.get<boolean>(STALE_PODS) ?? false;
   private eventEmitter = new EventEmitter();
   private packageManagerInternal: PackageManagerInfo | undefined;
 
@@ -103,7 +105,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
   public async installNodeModules(): Promise<void> {
     const manager = await this.getPackageManager();
-    this.stalePods = true;
+    await this.setStalePodsAsync(true);
 
     this.emitEvent("nodeModules", "installing");
 
@@ -146,10 +148,15 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       return;
     }
 
-    this.stalePods = false;
+    await this.setStalePodsAsync(false);
 
     this.emitEvent("pods", "installed");
     Logger.debug("Project pods installed");
+  }
+
+  private async setStalePodsAsync(stale: boolean) {
+    this.stalePods = stale;
+    await extensionContext.workspaceState.update(STALE_PODS, stale);
   }
 
   private async getPackageManager() {
@@ -258,6 +265,7 @@ function dependencyStatus(dependency: string, minVersion?: string | semver.SemVe
     const module = requireNoCache(path.join(dependency, "package.json"), {
       paths: [getAppRootFolder()],
     });
+
     if (!minVersion) {
       return "installed";
     }

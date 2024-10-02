@@ -340,7 +340,7 @@ export class Project
     }
 
     Logger.debug("Installing Node Modules");
-    const installNodeModules = this.installNodeModules();
+    const waitForNodeModules = this.installNodeModules();
 
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
@@ -351,7 +351,7 @@ export class Project
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
-      [installNodeModules]
+      [waitForNodeModules]
     );
 
     Logger.debug("Checking expo router");

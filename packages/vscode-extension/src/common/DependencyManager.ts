@@ -19,20 +19,23 @@ export type Dependency =
   | "storybook";
 
 export type InstallationStatus = "installed" | "notInstalled" | "installing";
-export type DependencyListener = (
-  dependency: Dependency,
-  installationStatus: InstallationStatus
-) => void;
+
 export type DependencyStatus = {
   status: InstallationStatus;
   isOptional: boolean;
 };
+
 export type DependenciesStatus = Record<Dependency, DependencyStatus>;
 
 export type InstallPodsOptions = {
   forceCleanBuild: boolean;
   cancelToken: CancelToken;
 };
+
+export type DependencyListener = (
+  dependency: Dependency,
+  installationStatus: InstallationStatus
+) => void;
 
 export interface DependencyManagerInterface {
   getStatus(dependencies: Dependency[]): Promise<Record<Dependency, DependencyStatus>>;
