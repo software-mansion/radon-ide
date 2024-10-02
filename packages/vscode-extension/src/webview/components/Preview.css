@@ -1,3 +1,11 @@
+.preview-wrapper {
+  flex: 1; 
+  width: 100%;
+  position: relative;
+  display: flex;
+  overflow: scroll;
+}
+
 .phone-wrapper {
   flex: 1;
   display: flex;
@@ -140,4 +148,11 @@
   background-color: var(--touch-indicator-pressed-background);
   border-color: var(--touch-indicator-pressed-border);
   box-shadow: var(--touch-indicator-pressed-shadow);
+}
+
+.inspect-data-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
 }

@@ -170,6 +170,22 @@ function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   );
 }
 
+type InspectDataContainerProps = {
+  device: DeviceProperties;
+  frame: InspectData["frame"] ;
+};
+
+const InspectDataContainer = ({ device, frame } : InspectDataContainerProps) => {
+  const width = parseFloat((frame.width * device.screenWidth).toFixed(2));
+  const height = parseFloat((frame.height * device.screenHeight).toFixed(2));
+
+  return (
+    <div className="inspect-data-container">
+      { width } × { height } 
+    </div> 
+  );
+};
+
 type InspectStackData = {
   requestLocation: { x: number; y: number };
   stack: InspectDataStackItem[];
@@ -515,145 +531,150 @@ function Preview({
 
   return (
     <>
-      <div
-        className="phone-wrapper"
-        style={cssPropertiesForDevice(device!, isFrameDisabled)}
-        tabIndex={0} // allows keyboard events to be captured
-        ref={wrapperDivRef}>
-        {showDevicePreview && (
-          <Resizable {...resizableProps}>
-            <div className="phone-content">
-              <div className="touch-area" {...touchHandlers}>
-                <MjpegImg
-                  src={previewURL}
-                  ref={previewRef}
-                  style={{
-                    cursor: isInspecting ? "crosshair" : "default",
-                  }}
-                  className="phone-screen"
-                />
+      <div className="preview-wrapper">
+        {inspectFrame && device && (
+          <InspectDataContainer device={device} frame={inspectFrame} />
+        )}
+        <div
+          className="phone-wrapper"
+          style={cssPropertiesForDevice(device!, isFrameDisabled)}
+          tabIndex={0} // allows keyboard events to be captured
+          ref={wrapperDivRef}>
+          {showDevicePreview && (
+            <Resizable {...resizableProps}>
+              <div className="phone-content">
+                <div className="touch-area" {...touchHandlers}>
+                  <MjpegImg
+                    src={previewURL}
+                    ref={previewRef}
+                    style={{
+                      cursor: isInspecting ? "crosshair" : "default",
+                    }}
+                    className="phone-screen"
+                  />
 
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${touchPoint.x * 100}%`,
-                      "--y": `${touchPoint.y * 100}%`,
-                      "--size": `${normalTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={isPressing} />
-                  </div>
-                )}
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${anchorPoint.x * 100}%`,
-                      "--y": `${anchorPoint.y * 100}%`,
-                      "--size": `${smallTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={false} />
-                  </div>
-                )}
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${mirroredTouchPosition.x * 100}%`,
-                      "--y": `${mirroredTouchPosition.y * 100}%`,
-                      "--size": `${normalTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={isPressing} />
-                  </div>
-                )}
-
-                {inspectFrame && (
-                  <div className="phone-screen phone-inspect-overlay">
+                  {isMultiTouching && (
                     <div
-                      className="inspect-area"
                       style={{
-                        left: `${inspectFrame.x * 100}%`,
-                        top: `${inspectFrame.y * 100}%`,
-                        width: `${inspectFrame.width * 100}%`,
-                        height: `${inspectFrame.height * 100}%`,
-                      }}
-                    />
-                  </div>
-                )}
-                {projectStatus === "refreshing" && (
-                  <div className="phone-screen phone-refreshing-overlay">
-                    <VSCodeProgressRing />
-                    <div>Refreshing...</div>
-                  </div>
-                )}
-                {debugPaused && (
-                  <div className="phone-screen phone-debug-overlay">
-                    <Debugger />
-                  </div>
-                )}
-                {debugException && (
-                  <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                    <button className="uncaught-button" onClick={() => project.resumeDebugger()}>
-                      Uncaught exception&nbsp;
-                      <span className="codicon codicon-debug-continue" />
-                    </button>
-                  </div>
-                )}
-                {/* TODO: Add different label in case of bundle/incremental bundle error */}
-                {hasBundleError && (
-                  <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                    <button
-                      className="uncaught-button"
-                      onClick={() => {
-                        project.restart(false);
+                        "--x": `${touchPoint.x * 100}%`,
+                        "--y": `${touchPoint.y * 100}%`,
+                        "--size": `${normalTouchIndicatorSize}px`,
                       }}>
-                      Bundle error&nbsp;
-                      <span className="codicon codicon-refresh" />
-                    </button>
-                  </div>
-                )}
-                {hasIncrementalBundleError && (
-                  <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                    <button className="uncaught-button" onClick={() => project.restart(false)}>
-                      Bundle error&nbsp;
-                      <span className="codicon codicon-refresh" />
-                    </button>
-                  </div>
+                      <TouchPointIndicator isPressing={isPressing} />
+                    </div>
+                  )}
+                  {isMultiTouching && (
+                    <div
+                      style={{
+                        "--x": `${anchorPoint.x * 100}%`,
+                        "--y": `${anchorPoint.y * 100}%`,
+                        "--size": `${smallTouchIndicatorSize}px`,
+                      }}>
+                      <TouchPointIndicator isPressing={false} />
+                    </div>
+                  )}
+                  {isMultiTouching && (
+                    <div
+                      style={{
+                        "--x": `${mirroredTouchPosition.x * 100}%`,
+                        "--y": `${mirroredTouchPosition.y * 100}%`,
+                        "--size": `${normalTouchIndicatorSize}px`,
+                      }}>
+                      <TouchPointIndicator isPressing={isPressing} />
+                    </div>
+                  )}
+
+                  {inspectFrame && (
+                    <div className="phone-screen phone-inspect-overlay">
+                      <div
+                        className="inspect-area"
+                        style={{
+                          left: `${inspectFrame.x * 100}%`,
+                          top: `${inspectFrame.y * 100}%`,
+                          width: `${inspectFrame.width * 100}%`,
+                          height: `${inspectFrame.height * 100}%`,
+                        }}
+                      />
+                    </div>
+                  )}
+                  {projectStatus === "refreshing" && (
+                    <div className="phone-screen phone-refreshing-overlay">
+                      <VSCodeProgressRing />
+                      <div>Refreshing...</div>
+                    </div>
+                  )}
+                  {debugPaused && (
+                    <div className="phone-screen phone-debug-overlay">
+                      <Debugger />
+                    </div>
+                  )}
+                  {debugException && (
+                    <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                      <button className="uncaught-button" onClick={() => project.resumeDebugger()}>
+                        Uncaught exception&nbsp;
+                        <span className="codicon codicon-debug-continue" />
+                      </button>
+                    </div>
+                  )}
+                  {/* TODO: Add different label in case of bundle/incremental bundle error */}
+                  {hasBundleError && (
+                    <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                      <button
+                        className="uncaught-button"
+                        onClick={() => {
+                          project.restart(false);
+                        }}>
+                        Bundle error&nbsp;
+                        <span className="codicon codicon-refresh" />
+                      </button>
+                    </div>
+                  )}
+                  {hasIncrementalBundleError && (
+                    <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                      <button className="uncaught-button" onClick={() => project.restart(false)}>
+                        Bundle error&nbsp;
+                        <span className="codicon codicon-refresh" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
+                {inspectStackData && (
+                  <InspectDataMenu
+                    inspectLocation={inspectStackData.requestLocation}
+                    inspectStack={inspectStackData.stack}
+                    onSelected={onInspectorItemSelected}
+                    onHover={(item) => {
+                      if (item.frame) {
+                        setInspectFrame(item.frame);
+                      }
+                    }}
+                    onCancel={() => resetInspector()}
+                  />
                 )}
               </div>
-              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
-              {inspectStackData && (
-                <InspectDataMenu
-                  inspectLocation={inspectStackData.requestLocation}
-                  inspectStack={inspectStackData.stack}
-                  onSelected={onInspectorItemSelected}
-                  onHover={(item) => {
-                    if (item.frame) {
-                      setInspectFrame(item.frame);
-                    }
-                  }}
-                  onCancel={() => resetInspector()}
-                />
-              )}
-            </div>
-          </Resizable>
-        )}
-        {!showDevicePreview && !hasBuildError && (
-          <Resizable {...resizableProps}>
-            <div className="phone-content">
-              <div className="phone-sized phone-content-loading-background" />
-              <div className="phone-sized phone-content-loading ">
-                <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
+            </Resizable>
+          )}
+          {!showDevicePreview && !hasBuildError && (
+            <Resizable {...resizableProps}>
+              <div className="phone-content">
+                <div className="phone-sized phone-content-loading-background" />
+                <div className="phone-sized phone-content-loading ">
+                  <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
+                </div>
+                <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
               </div>
-              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
-            </div>
-          </Resizable>
-        )}
-        {hasBuildError && (
-          <Resizable {...resizableProps}>
-            <div className="phone-content">
-              <div className="phone-sized extension-error-screen" />
-              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
-            </div>
-          </Resizable>
-        )}
+            </Resizable>
+          )}
+          {hasBuildError && (
+            <Resizable {...resizableProps}>
+              <div className="phone-content">
+                <div className="phone-sized extension-error-screen" />
+                <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
+              </div>
+            </Resizable>
+          )}
+        </div>
       </div>
       <ButtonGroupLeft>
         <ZoomControls
