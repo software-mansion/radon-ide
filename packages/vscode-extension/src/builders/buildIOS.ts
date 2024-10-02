@@ -14,6 +14,7 @@ import {
 import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
+import { getXcodebuildArch } from "../utilities/common";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
@@ -37,7 +38,7 @@ async function getBundleID(appPath: string) {
 }
 
 function buildProject(
-  UDID: string,
+  deviceInfo: IOSDeviceInfo,
   xcodeProject: IOSProjectInfo,
   buildDir: string,
   scheme: string,
@@ -51,8 +52,13 @@ function buildProject(
     configuration,
     "-scheme",
     scheme,
-    "-destination",
-    `id=${UDID}`,
+    "-arch",
+    getXcodebuildArch(),
+    "-sdk",
+    `iphonesimulator${deviceInfo.runtimeInfo.version}`,
+    "-showBuildTimingSummary",
+    "-destination-timeout",
+    "0",
     ...(cleanBuild ? ["clean"] : []),
     "build",
   ];
@@ -112,30 +118,27 @@ export async function buildIos(
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
   let platformName: string | undefined;
-  const buildProcess = withTemporarySimulator(deviceInfo, (UDID) => {
-    const process = cancelToken.adapt(
-      buildProject(
-        UDID,
-        xcodeProject,
-        sourceDir,
-        scheme,
-        buildOptions?.configuration || "Debug",
-        forceCleanBuild
-      )
-    );
+  const buildProcess = cancelToken.adapt(
+    buildProject(
+      deviceInfo,
+      xcodeProject,
+      sourceDir,
+      scheme,
+      buildOptions?.configuration || "Debug",
+      forceCleanBuild
+    )
+  );
 
-    const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
-    outputChannel.clear();
-    lineReader(process).onLineRead((line) => {
-      outputChannel.appendLine(line);
-      buildIOSProgressProcessor.processLine(line);
-      // Xcode can sometimes escape `=` with a backslash or put the value in quotes
-      const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
-      if (platformNameMatch) {
-        platformName = platformNameMatch[1];
-      }
-    });
-    return process;
+  const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
+  outputChannel.clear();
+  lineReader(buildProcess).onLineRead((line) => {
+    outputChannel.appendLine(line);
+    buildIOSProgressProcessor.processLine(line);
+    // Xcode can sometimes escape `=` with a backslash or put the value in quotes
+    const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
+    if (platformNameMatch) {
+      platformName = platformNameMatch[1];
+    }
   });
 
   await buildProcess;
@@ -204,24 +207,6 @@ async function getBuildPath(
   }
 
   return `${targetBuildDir}/${executableFolderPath}`;
-}
-
-async function withTemporarySimulator<T>(
-  originalDeviceInfo: IOSDeviceInfo,
-  fn: (UDID: string) => Promise<T>
-) {
-  await removeStaleTemporarySimulators();
-
-  const { UDID } = await createSimulator(
-    TEMP_SIMULATOR_NAME_PREFIX + originalDeviceInfo.deviceIdentifier,
-    originalDeviceInfo.deviceIdentifier,
-    originalDeviceInfo.runtimeInfo,
-    SimulatorDeviceSet.Default
-  );
-  const result = await fn(UDID);
-  await removeIosSimulator(UDID, SimulatorDeviceSet.Default);
-
-  return result;
 }
 
 async function removeStaleTemporarySimulators() {

@@ -17,6 +17,6 @@ export async function generateWorkspaceFingerprint() {
   const fingerprint = await createFingerprintAsync(getAppRootFolder(), {
     ignorePaths: IGNORE_PATHS,
   });
-  Logger.log("FINGERPRINT: ----------------", fingerprint.hash, "------------------");
+  Logger.log("New workspace fingerprint", fingerprint.hash);
   return fingerprint.hash;
 }
