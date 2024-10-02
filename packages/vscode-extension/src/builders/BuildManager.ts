@@ -71,20 +71,19 @@ export class BuildManager {
         this.buildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
           log: true,
         });
-        const appRootFolder = getAppRootFolder();
         const installPodsIfNeeded = async () => {
-          const podsInstalled = await this.dependencyManager.checkPodsInstalled();
+          const podsInstalled = await this.dependencyManager.isInstalled("pods");
           if (!podsInstalled) {
             Logger.info("Pods installation is missing or outdated. Installing Pods.");
             // installing pods may impact the fingerprint as new pods may be created under the project directory
             // for this reason we need to recalculate the fingerprint after installing pods
-            await this.dependencyManager.installPods(appRootFolder, cancelToken);
+            return this.dependencyManager.installPods(cancelToken);
             newFingerprint = await generateWorkspaceFingerprint();
           }
         };
         buildResult = await buildIos(
           deviceInfo,
-          appRootFolder,
+          getAppRootFolder(),
           forceCleanBuild,
           cancelToken,
           this.buildOutputChannel,

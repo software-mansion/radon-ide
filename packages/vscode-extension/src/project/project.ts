@@ -339,7 +339,7 @@ export class Project
       oldMetro.dispose();
     }
 
-    const maybeInstallNodeModules = this.maybeInstallNodeModules();
+    const waitForNodeModules = this.maybeInstallNodeModules();
 
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
@@ -350,13 +350,13 @@ export class Project
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
-      [maybeInstallNodeModules]
+      [waitForNodeModules]
     );
 
     Logger.debug("Checking expo router");
-    this.expoRouterInstalled = await this.dependencyManager.checkExpoRouterInstalled();
+    this.expoRouterInstalled = await this.dependencyManager.isInstalled("expoRouter");
     Logger.debug("Checking storybook");
-    this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
+    this.storybookInstalled = await this.dependencyManager.isInstalled("storybook");
   }
   //#endregion
 
@@ -492,12 +492,15 @@ export class Project
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
 
-  private async maybeInstallNodeModules(): Promise<void> {
-    const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
+  private async maybeInstallNodeModules() {
+    const installed = await this.dependencyManager.isInstalled("nodeModules");
 
-    if (!nodeModulesStatus.installed) {
+    if (!installed) {
       Logger.info("Installing node modules");
-      await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
+      await this.dependencyManager.installNodeModules();
+      Logger.debug("Installing node modules succeeded");
+    } else {
+      Logger.debug("Node modules already installed - skipping");
     }
   }
 
