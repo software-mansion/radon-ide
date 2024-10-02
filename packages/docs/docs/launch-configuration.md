@@ -156,11 +156,8 @@ command used to build the app. Example below:
 
 `eas.ios` and `eas.android` are objects taking keys:
 - `profile` – required, used for [selecting builds](https://docs.expo.dev/build/eas-json/#development-builds) suitable for running in simulators.
-- `useBuildType` – required, affects how IDE will select builds from EAS. Can be
-  `latest` which will use the most recent build with matching platform and profile or `id` which
-  will use build with matching UUID. If no matching builds are found, IDE will
-  show an error.
-- `buildUUID` – required when using `useBuildType=id`, selects build to use.
+- `buildUUID` – when specified, downloads build using its UUID. It uses latest
+  build otherwise.
 
 Below is an example that replaces iOS and Android local builds with builds from EAS:
 ```json
@@ -174,11 +171,9 @@ Below is an example that replaces iOS and Android local builds with builds from 
       "eas": {
         "ios": {
           "profile": "development",
-          "useBuildType": "latest"
         },
         "android": {
           "profile": "development",
-          "useBuildType": "id",
           "buildUUID": "40466d0a-96fa-5d9c-80db-d055e78023bd"
         }
       }
