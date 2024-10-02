@@ -90,6 +90,12 @@ export async function buildIos(
 ): Promise<IOSBuildResult> {
   const { buildScript, eas, ios: buildOptions, env } = getLaunchConfiguration();
 
+  if (buildScript?.ios && eas?.ios) {
+    throw new Error(
+      "Both custom build script and EAS build are configured for iOS. Please use only one build method."
+    );
+  }
+
   if (buildScript?.ios) {
     const appPath = await runExternalBuild(cancelToken, buildScript.ios, env);
     if (!appPath) {

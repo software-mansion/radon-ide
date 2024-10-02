@@ -80,6 +80,12 @@ export async function buildAndroid(
 ): Promise<AndroidBuildResult> {
   const { buildScript, eas, env, android } = getLaunchConfiguration();
 
+  if (buildScript?.android && eas?.android) {
+    throw new Error(
+      "Both custom build script and EAS build are configured for Android. Please use only one build method."
+    );
+  }
+
   if (buildScript?.android) {
     const apkPath = await runExternalBuild(cancelToken, buildScript.android, env);
     if (!apkPath) {

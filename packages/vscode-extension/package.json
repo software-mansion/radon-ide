@@ -234,22 +234,13 @@
                         "type": "string",
                         "description": "Profile used to build the app in EAS. Built app should be in debug version."
                       },
-                      "useBuildType": {
-                        "type": "string",
-                        "enum": [
-                          "latest",
-                          "id"
-                        ],
-                        "description": "Used to select build from EAS. Values: `latest` (uses latest built app) or `id` (uses specific build, identified by UUID)."
-                      },
                       "buildUUID": {
                         "type": "string",
                         "description": "UUID of the EAS build used in `eas build:view` command."
                       }
                     },
                     "required": [
-                      "profile",
-                      "useBuildType"
+                      "profile"
                     ]
                   },
                   "ios": {
@@ -260,22 +251,13 @@
                         "type": "string",
                         "description": "Profile used to build the app in EAS. Built app should be in debug version and have '\"ios.simulator\": true' option set."
                       },
-                      "useBuildType": {
-                        "type": "string",
-                        "enum": [
-                          "latest",
-                          "id"
-                        ],
-                        "description": "Used to select build from EAS. Values: `latest` (uses latest built app) or `id` (uses specific build, identified by UUID)."
-                      },
                       "buildUUID": {
                         "type": "string",
                         "description": "UUID of the EAS build used in `eas build:view` command."
                       }
                     },
                     "required": [
-                      "profile",
-                      "useBuildType"
+                      "profile"
                     ]
                   }
                 }

@@ -31,40 +31,37 @@ export async function fetchEasBuild(
 }
 
 async function fetchBuildUrl(config: EasConfig, platform: DevicePlatform) {
-  switch (config.useBuildType) {
-    case "latest": {
-      const builds = await listEasBuilds(platform, config.profile);
-      if (!builds || builds.length === 0) {
-        Logger.error(
-          `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile. If you're building iOS app, make sure you set '"ios.simulator": true' option in eas.json.`
-        );
-        return undefined;
-      }
-      if (builds.every((build) => build.expired)) {
-        Logger.error(
-          `All EAS build artifacts for ${platform} with ${config.profile} profile have expired.`
-        );
-        return undefined;
-      }
-
-      return maxBy(builds, "completedAt")!.binaryUrl;
+  if (config.buildUUID) {
+    const build = await viewEasBuild(config.buildUUID, platform);
+    if (!build) {
+      Logger.error(
+        `Failed to find EAS build artifact with ID ${config.buildUUID} for platform ${platform}.`
+      );
+      return undefined;
     }
-    case "id": {
-      const build = await viewEasBuild(config.buildUUID, platform);
-      if (!build) {
-        Logger.error(
-          `Failed to find EAS build artifact with ID ${config.buildUUID} for platform ${platform}.`
-        );
-        return undefined;
-      }
-      if (build.expired) {
-        Logger.error(`EAS build artifact with ID ${config.buildUUID} has expired.`);
-        return undefined;
-      }
-
-      return build.binaryUrl;
+    if (build.expired) {
+      Logger.error(`EAS build artifact with ID ${config.buildUUID} has expired.`);
+      return undefined;
     }
+
+    return build.binaryUrl;
   }
+
+  const builds = await listEasBuilds(platform, config.profile);
+  if (!builds || builds.length === 0) {
+    Logger.error(
+      `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile. If you're building iOS app, make sure you set '"ios.simulator": true' option in eas.json.`
+    );
+    return undefined;
+  }
+  if (builds.every((build) => build.expired)) {
+    Logger.error(
+      `All EAS build artifacts for ${platform} with ${config.profile} profile have expired.`
+    );
+    return undefined;
+  }
+
+  return maxBy(builds, "completedAt")!.binaryUrl;
 }
 
 async function downloadAppFromEas(

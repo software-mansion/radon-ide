@@ -1,6 +1,4 @@
-export type EasConfig =
-  | { profile: string; useBuildType: "latest" }
-  | { profile: string; useBuildType: "id"; buildUUID: string };
+export type EasConfig = { profile: string; buildUUID?: string };
 
 export type LaunchConfigurationOptions = {
   appRoot?: string;
