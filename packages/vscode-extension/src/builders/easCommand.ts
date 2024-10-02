@@ -5,6 +5,7 @@ import { exec } from "../utilities/subprocess";
 type UnixTimestamp = number;
 
 export type EASBuild = {
+  id: string;
   platform: DevicePlatform;
   binaryUrl: string;
   appVersion: string;
@@ -93,8 +94,9 @@ function parseEasBuildOutput(stdout: string, platform: DevicePlatform): EASBuild
 
       return isFinished && isUsableForDevice && platformMapping[easPlatform] === platform;
     })
-    .map(({ platform: easPlatform, artifacts, completedAt, appVersion, expirationDate }) => {
+    .map(({ id, platform: easPlatform, artifacts, completedAt, appVersion, expirationDate }) => {
       return {
+        id,
         platform: platformMapping[easPlatform],
         binaryUrl: artifacts.applicationArchiveUrl,
         appVersion,

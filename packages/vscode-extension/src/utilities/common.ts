@@ -157,36 +157,29 @@ function isPidRunning(pid: number) {
   }
 }
 
-export async function downloadBinary(url: string, directory: string) {
-  const filename = url.split("/").pop();
-  const hasInvalidFormat = !filename;
-  if (hasInvalidFormat) {
-    return undefined;
-  }
-
+export async function downloadBinary(url: string, destination: string) {
   let body: NodeJS.ReadableStream;
   let ok: boolean;
   try {
     const result = await fetch(url);
     if (!result.body) {
-      return undefined;
+      return false;
     }
     body = result.body;
     ok = result.ok;
   } catch (_e) {
     // Network error
-    return undefined;
+    return false;
   }
 
-  if (ok) {
-    const destination = path.resolve(directory, filename);
-    const fileStream = fs.createWriteStream(destination, { flags: "wx" });
-    await finished(body.pipe(fileStream));
-
-    return destination.toString();
-  } else {
-    return undefined;
+  if (!ok) {
+    return false;
   }
+
+  const fileStream = fs.createWriteStream(destination, { flags: "w" });
+  await finished(body.pipe(fileStream));
+
+  return true;
 }
 
 async function calculateFileMD5(filePath: string, hash: Hash) {

@@ -9,19 +9,19 @@ import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
 import { exec } from "../utilities/subprocess";
 import { downloadBinary } from "../utilities/common";
-import { listEasBuilds, viewEasBuild } from "./easCommand";
+import { EASBuild, listEasBuilds, viewEasBuild } from "./easCommand";
 
 export async function fetchEasBuild(
   cancelToken: CancelToken,
   config: EasConfig,
   platform: DevicePlatform
 ): Promise<string | undefined> {
-  const binaryUrl = await fetchBuildUrl(config, platform);
-  if (!binaryUrl) {
+  const build = await fetchBuild(config, platform);
+  if (!build) {
     return undefined;
   }
 
-  let easBinaryPath = await downloadAppFromEas(binaryUrl, platform, cancelToken);
+  let easBinaryPath = await downloadAppFromEas(build, platform, cancelToken);
   if (!easBinaryPath) {
     return undefined;
   }
@@ -30,7 +30,7 @@ export async function fetchEasBuild(
   return easBinaryPath;
 }
 
-async function fetchBuildUrl(config: EasConfig, platform: DevicePlatform) {
+async function fetchBuild(config: EasConfig, platform: DevicePlatform) {
   if (config.buildUUID) {
     const build = await viewEasBuild(config.buildUUID, platform);
     if (!build) {
@@ -44,7 +44,8 @@ async function fetchBuildUrl(config: EasConfig, platform: DevicePlatform) {
       return undefined;
     }
 
-    return build.binaryUrl;
+    Logger.debug(`Using EAS build artifact with ID ${build.id}.`);
+    return build;
   }
 
   const builds = await listEasBuilds(platform, config.profile);
@@ -61,11 +62,14 @@ async function fetchBuildUrl(config: EasConfig, platform: DevicePlatform) {
     return undefined;
   }
 
-  return maxBy(builds, "completedAt")!.binaryUrl;
+  const build = maxBy(builds, "completedAt")!;
+
+  Logger.debug(`Using EAS build artifact with ID ${build.id}.`);
+  return build;
 }
 
 async function downloadAppFromEas(
-  binaryUrl: string,
+  build: EASBuild,
   platform: DevicePlatform,
   cancelToken: CancelToken
 ) {
@@ -73,11 +77,13 @@ async function downloadAppFromEas(
     return name.endsWith(".app");
   }
 
+  const { id, binaryUrl } = build;
+
   const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-eas-build-"));
-  // URL should be in format "https://expo.dev/artifacts/eas/ID.apk", where ID
-  // is unique identifier.
-  const binaryPath = await downloadBinary(binaryUrl, tmpDirectory);
-  if (!binaryPath) {
+  const binaryPath = path.join(tmpDirectory, id);
+
+  const success = await downloadBinary(binaryUrl, binaryPath);
+  if (!success) {
     Logger.error(`Failed to download archive from '${binaryUrl}'.`);
     return undefined;
   }
@@ -87,21 +93,22 @@ async function downloadAppFromEas(
     return binaryPath;
   }
 
-  const extractDir = path.dirname(binaryPath);
-  const { failed } = await cancelToken.adapt(tarCommand({ archivePath: binaryPath, extractDir }));
+  const { failed } = await cancelToken.adapt(
+    tarCommand({ archivePath: binaryPath, extractDir: tmpDirectory })
+  );
   if (failed) {
-    Logger.error(`Failed to extract archive '${binaryPath}' to '${extractDir}'.`);
+    Logger.error(`Failed to extract archive '${binaryPath}' to '${tmpDirectory}'.`);
     return undefined;
   }
 
   // assuming that the archive contains only one .app file
-  const appName = (await readdir(extractDir)).find(isAppFile);
+  const appName = (await readdir(tmpDirectory)).find(isAppFile);
   if (!appName) {
     Logger.error(`Failed to find .app in extracted archive '${binaryPath}'.`);
     return undefined;
   }
 
-  const appPath = path.join(extractDir, appName);
+  const appPath = path.join(tmpDirectory, appName);
   Logger.debug(`Extracted app archive to '${appPath}'.`);
   return appPath;
 }
