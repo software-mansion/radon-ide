@@ -19,7 +19,7 @@ async function pathExists(p: string) {
   }
 }
 
-export async function resolvePackageManager(): Promise<PackageManagerInfo> {
+export async function resolvePackageManager(): Promise<PackageManagerInfo | undefined> {
   function findWorkspace(appRoot: string) {
     let currentDir = appRoot;
     let parentDir = path.resolve(currentDir, "..");
@@ -70,10 +70,10 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo> {
   const name = await findPackageManager(workspacePath ?? appRootPath);
 
   try {
-    command(`${name} --version`);
+    await command(`${name} --version`);
   } catch (e) {
     Logger.error(`Required package manager: ${name} is not installed`);
-    throw new Error(`${name} is not installed`);
+    return undefined;
   }
 
   return { name, workspacePath };

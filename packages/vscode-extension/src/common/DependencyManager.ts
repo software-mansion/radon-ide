@@ -40,7 +40,7 @@ export type DependencyListener = (
 export interface DependencyManagerInterface {
   getStatus(dependencies: Dependency[]): Promise<Record<Dependency, DependencyStatus>>;
   isInstalled(dependency: Dependency): Promise<boolean>;
-  installNodeModules(): Promise<void>;
+  installNodeModules(): Promise<boolean>;
   installPods(options: InstallPodsOptions): Promise<void>;
 
   addListener(listener: DependencyListener): Promise<void>;

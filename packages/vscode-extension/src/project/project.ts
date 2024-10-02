@@ -494,11 +494,16 @@ export class Project
   }
 
   private async installNodeModules(): Promise<void> {
+    let installationSuccess = false;
     const installed = await this.dependencyManager.isInstalled("nodeModules");
     if (!installed) {
-      await this.dependencyManager.installNodeModules();
+      installationSuccess = await this.dependencyManager.installNodeModules();
     }
-    Logger.debug("Node Modules installed");
+    if (!installationSuccess) {
+      Logger.error("Node Modules installation failed");
+    } else {
+      Logger.debug("Node Modules installed");
+    }
   }
 
   //#region Select device

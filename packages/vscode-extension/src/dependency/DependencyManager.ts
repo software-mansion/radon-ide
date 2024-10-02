@@ -103,8 +103,12 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     return status[dependency].status === "installed";
   }
 
-  public async installNodeModules(): Promise<void> {
+  public async installNodeModules(): Promise<boolean> {
     const manager = await this.getPackageManager();
+    if (!manager) {
+      return false;
+    }
+
     await this.setStalePodsAsync(true);
 
     this.emitEvent("nodeModules", "installing");
@@ -116,6 +120,8 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     });
 
     this.emitEvent("nodeModules", "installed");
+
+    return true;
   }
 
   public async installPods(options: InstallPodsOptions) {
@@ -203,6 +209,9 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
   private async nodeModulesStatus() {
     const packageManager = await resolvePackageManager();
+    if (!packageManager) {
+      return "notInstalled";
+    }
 
     const installed = await isNodeModulesInstalled(packageManager);
     if (installed) {
