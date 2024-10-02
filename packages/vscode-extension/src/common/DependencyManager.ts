@@ -27,11 +27,6 @@ export type DependencyStatus = {
 
 export type DependenciesStatus = Record<Dependency, DependencyStatus>;
 
-export type InstallPodsOptions = {
-  forceCleanBuild: boolean;
-  cancelToken: CancelToken;
-};
-
 export type DependencyListener = (
   dependency: Dependency,
   installationStatus: InstallationStatus
@@ -41,7 +36,7 @@ export interface DependencyManagerInterface {
   getStatus(dependencies: Dependency[]): Promise<Record<Dependency, DependencyStatus>>;
   isInstalled(dependency: Dependency): Promise<boolean>;
   installNodeModules(): Promise<boolean>;
-  installPods(options: InstallPodsOptions): Promise<void>;
+  installPods(cancelToken: CancelToken): Promise<void>;
 
   addListener(listener: DependencyListener): Promise<void>;
   removeListener(listener: DependencyListener): Promise<void>;

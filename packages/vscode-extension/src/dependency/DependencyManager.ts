@@ -23,10 +23,10 @@ import {
   DependencyManagerInterface,
   DependencyStatus,
   InstallationStatus,
-  InstallPodsOptions,
   MinSupportedVersion,
 } from "../common/DependencyManager";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
+import { CancelToken } from "../builders/cancelToken";
 
 const STALE_PODS = "stalePods";
 
@@ -124,8 +124,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     return true;
   }
 
-  public async installPods(options: InstallPodsOptions) {
-    const { cancelToken } = options;
+  public async installPods(cancelToken: CancelToken) {
     const appRootFolder = getAppRootFolder();
     const iosDirPath = getIosSourceDir(appRootFolder);
 
@@ -237,10 +236,22 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
     const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
 
-    if (podfileLockExists && podsDirExists) {
-      return "installed";
+    if (!podfileLockExists || !podsDirExists) {
+      return "notInstalled";
     }
-    return "notInstalled";
+
+    // finally, we perform check between Podfile.lock and Pods/Manifest.lock
+    // this is what xcode does in Check Pods build phase and is used to determine
+    // if pods are up to date
+
+    // run diff command:
+    const { failed } = await command("diff Podfile.lock Pods/Manifest.lock", {
+      cwd: iosDirPath,
+      reject: false,
+      quietErrorsOnExit: true,
+    });
+
+    return failed ? "notInstalled" : "installed";
   }
 }
 
