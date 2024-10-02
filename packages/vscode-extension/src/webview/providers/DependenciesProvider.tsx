@@ -23,9 +23,9 @@ const dependencies = [
   "xcode",
   "cocoaPods",
   "nodeModules",
+  "pods",
   "reactNative",
   "expo",
-  "pods",
   "expoRouter",
   "storybook",
 ] as const;
@@ -210,6 +210,8 @@ export function dependencyDescription(dependency: Dependency) {
         info: "Whether node modules are installed",
         error: "Node modules are not installed.",
       };
+    case "pods":
+      return { info: "Whether iOS dependencies are installed.", error: "Pods are not installed." };
     case "reactNative":
       return {
         info: "Whether supported version of React Native is installed.",
@@ -220,12 +222,10 @@ export function dependencyDescription(dependency: Dependency) {
         info: "Whether supported version of Expo SDK is installed.",
         error: `Expo is not installed or it is older than supported version ${MinSupportedVersion.expo}.`,
       };
-    case "pods":
-      return { info: "Whether iOS dependencies are installed.", error: "Pods are not installed." };
     case "expoRouter":
       return {
         info: "Whether supported version of Expo Router is installed.",
-        error: `expo-router is not installed or it is older than supported version ${MinSupportedVersion.expoRouter}.`,
+        error: `expo-router is not installed.`,
       };
     case "storybook":
       return {

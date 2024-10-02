@@ -4,7 +4,6 @@ export const MinSupportedVersion = {
   reactNative: "0.71.0",
   expo: "49.0.0",
   storybook: "5.2.0",
-  expoRouter: "0.0.0",
 } as const;
 
 export type Dependency =
@@ -13,8 +12,8 @@ export type Dependency =
   | "cocoaPods"
   | "nodejs"
   | "nodeModules"
-  | "reactNative"
   | "pods"
+  | "reactNative"
   | "expo"
   | "expoRouter"
   | "storybook";
