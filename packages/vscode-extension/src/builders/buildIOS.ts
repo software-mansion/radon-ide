@@ -5,12 +5,6 @@ import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import {
-  SimulatorDeviceSet,
-  createSimulator,
-  listSimulators,
-  removeIosSimulator,
-} from "../devices/IosSimulatorDevice";
 import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
@@ -21,8 +15,6 @@ export type IOSBuildResult = {
   appPath: string;
   bundleID: string;
 };
-
-const TEMP_SIMULATOR_NAME_PREFIX = "__RNIDE_TEMP_SIM_";
 
 // Assuming users have ios folder in their project's root
 export const getIosSourceDir = (appRootFolder: string) => path.join(appRootFolder, "ios");
@@ -199,13 +191,4 @@ async function getBuildPath(
   }
 
   return `${targetBuildDir}/${executableFolderPath}`;
-}
-
-async function removeStaleTemporarySimulators() {
-  const simulators = await listSimulators(SimulatorDeviceSet.Default);
-  const removedSimulators = simulators
-    .filter(({ name }) => name.startsWith(TEMP_SIMULATOR_NAME_PREFIX))
-    .map(({ UDID }) => removeIosSimulator(UDID, SimulatorDeviceSet.Default));
-
-  await Promise.allSettled(removedSimulators);
 }
