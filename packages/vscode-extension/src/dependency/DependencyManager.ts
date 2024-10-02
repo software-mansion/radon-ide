@@ -180,9 +180,9 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   private async xcodeStatus() {
-    const isXcodebuildInstalled = await isCommandInstalled("xcodebuild -version");
-    const isXcrunInstalled = await isCommandInstalled("xcrun --version");
-    const isSimctlInstalled = await isCommandInstalled("xcrun simctl help");
+    const isXcodebuildInstalled = await testCommand("xcodebuild -version");
+    const isXcrunInstalled = await testCommand("xcrun --version");
+    const isSimctlInstalled = await testCommand("xcrun simctl help");
 
     if (isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled) {
       return "installed";
@@ -191,7 +191,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   private async cocoapodsStatus() {
-    const installed = await isCommandInstalled("pod --version");
+    const installed = await testCommand("pod --version");
 
     if (installed) {
       return "installed";
@@ -200,7 +200,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   private async nodeStatus() {
-    const installed = await isCommandInstalled("node -v");
+    const installed = await testCommand("node -v");
     if (installed) {
       return "installed";
     }
@@ -248,16 +248,15 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 }
 
-async function isCommandInstalled(cmd: string) {
+async function testCommand(cmd: string) {
   try {
     // We are not checking the stderr here, because some of the CLIs put the warnings there.
-    const { stdout } = await command(cmd, {
+    const { failed } = await command(cmd, {
       encoding: "utf8",
       quietErrorsOnExit: true,
       env: { ...process.env, LANG: "en_US.UTF-8" },
     });
-    const installed = stdout.length > 0;
-    return installed;
+    return !failed;
   } catch (_) {
     return false;
   }
@@ -294,9 +293,9 @@ function dependencyStatus(dependency: string, minVersion?: string | semver.SemVe
 }
 
 export async function checkXcodeExists() {
-  const isXcodebuildInstalled = await isCommandInstalled("xcodebuild -version");
-  const isXcrunInstalled = await isCommandInstalled("xcrun --version");
-  const isSimctlInstalled = await isCommandInstalled("xcrun simctl help");
+  const isXcodebuildInstalled = await testCommand("xcodebuild -version");
+  const isXcrunInstalled = await testCommand("xcrun --version");
+  const isSimctlInstalled = await testCommand("xcrun simctl help");
   return isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
 }
 
