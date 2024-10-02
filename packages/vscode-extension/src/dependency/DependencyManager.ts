@@ -1,391 +1,144 @@
 import fs from "fs";
 import path from "path";
-import { Webview, Disposable } from "vscode";
-import { coerce, gte } from "semver";
+import { EventEmitter } from "stream";
+import { Disposable } from "vscode";
+import semver, { SemVer } from "semver";
+import zipObject from "lodash/zipObject";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command } from "../utilities/subprocess";
-import { getAppRootFolder } from "../utilities/extensionContext";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
-import { shouldUseExpoCLI } from "../utilities/expoCli";
 import {
   isNodeModulesInstalled,
-  isPackageManagerAvailable,
   PackageManagerInfo,
   resolvePackageManager,
 } from "../utilities/packageManager";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { CancelToken } from "../builders/cancelToken";
-import { Platform } from "../utilities/platform";
+import {
+  DependenciesStatus,
+  Dependency,
+  DependencyListener,
+  DependencyManagerInterface,
+  DependencyStatus,
+  InstallationStatus,
+  InstallPodsOptions,
+  MinSupportedVersion,
+} from "../common/DependencyManager";
+import { shouldUseExpoCLI } from "../utilities/expoCli";
 
-const MIN_REACT_NATIVE_VERSION_SUPPORTED = "0.71.0";
-const MIN_EXPO_SDK_VERSION_SUPPORTED = "49.0.0";
-const MIN_STORYBOOK_VERSION_SUPPORTED = "5.2.0";
-const MIN_EXPO_ROUTER_VERSION_SUPPORTED = "0.0.0";
+const STALE_PODS = "stalePods";
 
-export class DependencyManager implements Disposable {
-  private disposables: Disposable[] = [];
+export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
-  private stalePods = true;
-
-  constructor(private readonly webview: Webview) {
-    this.setWebviewMessageListener();
-  }
+  private stalePods = extensionContext.workspaceState.get<boolean>(STALE_PODS) ?? false;
+  private eventEmitter = new EventEmitter();
+  private packageManagerInternal: PackageManagerInfo | undefined;
 
   public dispose() {
-    // Dispose of all disposables (i.e. commands) for the current webview panel
-    while (this.disposables.length) {
-      const disposable = this.disposables.pop();
-      if (disposable) {
-        disposable.dispose();
-      }
-    }
+    this.eventEmitter.removeAllListeners();
   }
 
-  private setWebviewMessageListener() {
-    Logger.debug("Setup dependency checker listeners.");
-    this.webview.onDidReceiveMessage(
-      (message: any) => {
-        const webviewCommand = message.command;
-        switch (webviewCommand) {
-          case "checkNodejsInstalled":
-            Logger.debug("Received checkNodejsInstalled command.");
-            this.checkNodejsInstalled();
-            return;
-          case "checkAndroidEmulatorInstalled":
-            Logger.debug("Received checkAndroidEmulatorInstalled command.");
-            this.checkAndroidEmulatorInstalled();
-            return;
-          case "checkReactNativeInstalled":
-            Logger.debug("Received checkReactNativeInstalled command.");
-            this.checkReactNativeInstalled();
-            return;
-          case "checkExpoInstalled":
-            Logger.debug("Received checkExpoInstalled command.");
-            this.checkExpoInstalled();
-            return;
-          case "checkNodeModulesInstalled":
-            Logger.debug("Received checkNodeModulesInstalled command.");
-            this.checkNodeModulesInstalled();
-            return;
-          case "checkExpoRouterInstalled":
-            Logger.debug("Received checkExpoRouterInstalled command.");
-            this.checkExpoRouterInstalled();
-            return;
-          case "checkStorybookInstalled":
-            Logger.debug("Received checkStorybookInstalled command.");
-            this.checkStorybookInstalled();
-            return;
-        }
-        if (Platform.OS === "macos") {
-          switch (webviewCommand) {
-            case "checkXcodeInstalled":
-              Logger.debug("Received checkXcodeInstalled command.");
-              this.checkXcodeInstalled();
-              return;
-            case "checkCocoaPodsInstalled":
-              Logger.debug("Received checkCocoaPodsInstalled command.");
-              this.checkCocoaPodsInstalled();
-              return;
-            case "checkPodsInstalled":
-              Logger.debug("Received checkPodsInstalled command.");
-              this.checkPodsInstalled();
-              return;
+  public async addListener(listener: DependencyListener) {
+    this.eventEmitter.addListener("updatedDependencyInstallationStatus", listener);
+  }
+
+  public async removeListener(listener: DependencyListener) {
+    this.eventEmitter.removeListener("updatedDependencyInstallationStatus", listener);
+  }
+
+  private emitEvent(dependency: Dependency, status: InstallationStatus) {
+    this.eventEmitter.emit("updatedDependencyInstallationStatus", dependency, status);
+  }
+
+  public async getStatus(dependencies: Dependency[]): Promise<DependenciesStatus> {
+    const statuses = await Promise.all(
+      dependencies.map(async (dependency): Promise<DependencyStatus> => {
+        switch (dependency) {
+          case "androidEmulator":
+            return { status: await this.androidEmulatorStatus(), isOptional: false };
+          case "xcode":
+            return { status: await this.xcodeStatus(), isOptional: false };
+          case "cocoaPods":
+            return { status: await this.cocoapodsStatus(), isOptional: false };
+          case "nodejs":
+            return { status: await this.nodeStatus(), isOptional: false };
+          case "nodeModules":
+            return { status: await this.nodeModulesStatus(), isOptional: false };
+          case "pods":
+            return { status: await this.podsStatus(), isOptional: !isExpoGoProject() };
+          case "reactNative": {
+            const status = dependencyStatus("react-native", MinSupportedVersion.reactNative);
+            return { status, isOptional: false };
+          }
+          case "expo": {
+            const status = dependencyStatus("expo", MinSupportedVersion.expo);
+            return { status, isOptional: !shouldUseExpoCLI() };
+          }
+          case "expoRouter": {
+            const status = dependencyStatus("expo-router");
+            return { status, isOptional: !isUsingExpoRouter() };
+          }
+          case "storybook": {
+            const packageName = "@storybook/react-native";
+            const status = dependencyStatus(packageName, MinSupportedVersion.storybook);
+            return { status, isOptional: true };
           }
         }
-      },
-      undefined,
-      this.disposables
+      })
     );
+
+    const diagnostics = zipObject(dependencies, statuses) as DependenciesStatus;
+    const dependenciesInstallStatus = zipObject(
+      dependencies,
+      statuses.map(({ status }) => status)
+    );
+    Logger.debug(`Dependencies status:\n${JSON.stringify(dependenciesInstallStatus, null, 2)}`);
+    return diagnostics;
   }
 
-  /* Node-related */
-  public async checkNodejsInstalled() {
-    const installed = await checkIfCLIInstalled("node -v");
-    const errorMessage =
-      "Node.js was not found. Make sure to [install Node.js](https://nodejs.org/en).";
-    this.webview.postMessage({
-      command: "isNodejsInstalled",
-      data: {
-        installed,
-        info: "Used for running scripts and getting dependencies.",
-        error: installed ? undefined : errorMessage,
-      },
-    });
-    Logger.debug("Nodejs installed:", installed);
-    return installed;
+  public async isInstalled(dependency: Dependency) {
+    const status = await this.getStatus([dependency]);
+    return status[dependency].status === "installed";
   }
 
-  public async checkNodeModulesInstalled() {
-    const packageManager = await resolvePackageManager();
-
-    if (!isPackageManagerAvailable(packageManager)) {
-      Logger.error(`Required package manager: ${packageManager} is not installed`);
-      throw new Error(`${packageManager} is not installed`);
+  public async installNodeModules(): Promise<boolean> {
+    const manager = await this.getPackageManager();
+    if (!manager) {
+      return false;
     }
 
-    const installed = await isNodeModulesInstalled(packageManager);
+    await this.setStalePodsAsync(true);
 
-    this.webview.postMessage({
-      command: "isNodeModulesInstalled",
-      data: {
-        installed,
-        info: "Whether node modules are installed",
-        error: undefined,
-      },
-    });
-    Logger.debug("Node Modules installed:", installed);
-    return { installed, packageManager };
-  }
+    this.emitEvent("nodeModules", "installing");
 
-  public async installNodeModules(manager: PackageManagerInfo): Promise<void> {
-    this.stalePods = true;
-
-    this.webview.postMessage({
-      command: "installingNodeModules",
-    });
-
-    const workspacePath = getAppRootFolder();
-    let installationCommand;
-
-    switch (manager.name) {
-      case "npm":
-        installationCommand = "npm install";
-        break;
-      case "yarn":
-        installationCommand = "yarn install";
-        break;
-      case "pnpm":
-        installationCommand = "pnpm install";
-        break;
-      case "bun":
-        installationCommand = "bun install";
-        break;
-    }
-
-    await command(installationCommand, {
-      cwd: workspacePath,
+    // all managers support the `install` command
+    await command(`${manager.name} install`, {
+      cwd: getAppRootFolder(),
       quietErrorsOnExit: true,
     });
 
-    this.webview.postMessage({
-      command: "isNodeModulesInstalled",
-      data: {
-        installed: true,
-        info: "Whether node modules are installed",
-        error: undefined,
-      },
-    });
+    this.emitEvent("nodeModules", "installed");
+
+    return true;
   }
 
-  /* Android-related */
-  public async checkAndroidEmulatorInstalled() {
-    const installed = await checkAndroidEmulatorExists();
-    const errorMessage =
-      "Android Emulator was not found. Make sure to [install Android Emulator](https://developer.android.com/studio/run/managing-avds).";
-    this.webview.postMessage({
-      command: "isAndroidEmulatorInstalled",
-      data: {
-        installed,
-        info: "Used for running Android apps.",
-        error: installed ? undefined : errorMessage,
-      },
-    });
-    Logger.debug("Android Emulator installed:", installed);
-    return installed;
-  }
-
-  /* iOS-related */
-  public async checkXcodeInstalled() {
-    const installed = await checkXcodeExists();
-    const errorMessage =
-      "Xcode was not found. If you are using alternative Xcode version you can find out more in troubleshooting section of our documentation. Otherwise, [Install Xcode from the Mac App Store](https://apps.apple.com/us/app/xcode/id497799835?mt=12) and have Xcode Command Line Tools enabled.";
-    this.webview.postMessage({
-      command: "isXcodeInstalled",
-      data: {
-        installed,
-        info: "Used for building and running iOS apps.",
-        error: installed ? undefined : errorMessage,
-      },
-    });
-    Logger.debug("Xcode Command Line Tools installed:", installed);
-    return installed;
-  }
-
-  public async checkCocoaPodsInstalled() {
-    const installed = await checkIfCLIInstalled("pod --version", {
-      env: { LANG: "en_US.UTF-8" },
-    });
-    const errorMessage =
-      "CocoaPods was not found. Make sure to [install CocoaPods](https://guides.cocoapods.org/using/getting-started.html).";
-    this.webview.postMessage({
-      command: "isCocoaPodsInstalled",
-      data: {
-        installed,
-        info: "Used for installing iOS dependencies.",
-        error: installed ? undefined : errorMessage,
-      },
-    });
-    Logger.debug("CocoaPods installed:", installed);
-    return installed;
-  }
-
-  public async checkReactNativeInstalled() {
-    const status = checkMinDependencyVersionInstalled(
-      "react-native",
-      MIN_REACT_NATIVE_VERSION_SUPPORTED
-    );
-
-    const error = {
-      installed: undefined,
-      not_installed: "React Native is not installed.",
-      not_supported: `Installed version of React Native does not match the minimum requirement: ${MIN_REACT_NATIVE_VERSION_SUPPORTED}.`,
-    }[status];
-
-    const installed = status === "installed";
-
-    this.webview.postMessage({
-      command: "isReactNativeInstalled",
-      data: {
-        installed,
-        info: "Whether supported version of React Native is installed.",
-        error,
-      },
-    });
-    Logger.debug(`Minimum React Native version installed:`, installed);
-    return installed;
-  }
-
-  public async checkExpoInstalled() {
-    const status = checkMinDependencyVersionInstalled("expo", MIN_EXPO_SDK_VERSION_SUPPORTED);
-
-    const error = {
-      installed: undefined,
-      not_installed: "Expo is not installed.",
-      not_supported: `Installed version of Expo does not match the minimum requirement: ${MIN_EXPO_SDK_VERSION_SUPPORTED}.`,
-    }[status];
-
-    const installed = status === "installed";
-
-    this.webview.postMessage({
-      command: "isExpoInstalled",
-      data: {
-        installed,
-        info: "Whether supported version of Expo SDK is installed.",
-        error,
-        isOptional: !shouldUseExpoCLI(),
-      },
-    });
-    Logger.debug(`Minimum Expo version installed:`, installed);
-    return installed;
-  }
-
-  private async checkIosDependenciesInstalled() {
-    if (await isExpoGoProject()) {
-      // for Expo Go projects, we never return an error here because Pods are never needed
-      return true;
-    }
-
-    if (this.stalePods) {
-      return false;
-    }
-
-    const iosDirPath = getIosSourceDir(getAppRootFolder());
-
-    Logger.debug(`Check pods in ${iosDirPath} ${getAppRootFolder()}`);
-    if (!iosDirPath) {
-      return false;
-    }
-
-    const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
-    const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
-
-    return podfileLockExists && podsDirExists;
-  }
-
-  public async checkPodsInstalled() {
-    const installed = await this.checkIosDependenciesInstalled();
-
-    this.webview.postMessage({
-      command: "isPodsInstalled",
-      data: {
-        installed,
-        info: "Whether iOS dependencies are installed.",
-        error: undefined,
-      },
-    });
-    Logger.debug("Project pods installed:", installed);
-    return installed;
-  }
-
-  public async checkExpoRouterInstalled() {
-    const status = checkMinDependencyVersionInstalled(
-      "expo-router",
-      MIN_EXPO_ROUTER_VERSION_SUPPORTED
-    );
-
-    const installed = status === "installed";
-
-    this.webview.postMessage({
-      command: "isExpoRouterInstalled",
-      data: {
-        installed,
-        info: "Whether supported version of Expo Router is installed.",
-        error: undefined,
-        isOptional: !isExpoRouterProject(),
-      },
-    });
-    Logger.debug(`Minimum Expo version installed:`, installed);
-    return installed;
-  }
-
-  public async checkStorybookInstalled() {
-    const status = checkMinDependencyVersionInstalled(
-      "@storybook/react-native",
-      MIN_STORYBOOK_VERSION_SUPPORTED
-    );
-    const installed = status === "installed";
-
-    this.webview.postMessage({
-      command: "isStorybookInstalled",
-      data: {
-        installed,
-        info: "Whether Storybook is installed.",
-        error: undefined,
-        isOptional: true,
-      },
-    });
-    Logger.debug("Storybook installed:", installed);
-    return installed;
-  }
-
-  public async installPods(
-    appRootFolder: string,
-    forceCleanBuild: boolean,
-    cancelToken: CancelToken
-  ) {
+  public async installPods(options: InstallPodsOptions) {
+    const { forceCleanBuild, cancelToken } = options;
+    const appRootFolder = getAppRootFolder();
     const iosDirPath = getIosSourceDir(appRootFolder);
 
     if (!iosDirPath) {
-      this.webview.postMessage({
-        command: "isPodsInstalled",
-        data: {
-          installed: false,
-          info: "Whether iOS dependencies are installed.",
-          error: "iOS directory does not exist",
-        },
-      });
-      throw new Error(`ios directory was not found inside the workspace.`);
+      this.emitEvent("pods", "notInstalled");
+      throw new Error("ios directory was not found inside the workspace.");
     }
 
     const commandInIosDir = (args: string) => {
+      const env = getLaunchConfiguration().env;
       return command(args, {
         cwd: iosDirPath,
-        env: {
-          ...getLaunchConfiguration().env,
-          LANG: "en_US.UTF-8",
-        },
+        env: { ...env, LANG: "en_US.UTF-8" },
       });
     };
 
@@ -397,44 +150,114 @@ export class DependencyManager implements Disposable {
       await cancelToken.adapt(commandInIosDir("pod install"));
     } catch (e) {
       Logger.error("Pods not installed", e);
-      this.webview.postMessage({
-        command: "isPodsInstalled",
-        data: {
-          installed: false,
-          info: "Whether iOS dependencies are installed.",
-          error: "Unable to install pods",
-        },
-      });
+      this.emitEvent("pods", "notInstalled");
       return;
     }
 
-    this.stalePods = false;
+    await this.setStalePodsAsync(false);
 
-    this.webview.postMessage({
-      command: "isPodsInstalled",
-      data: {
-        installed: true,
-        info: "Whether iOS dependencies are installed.",
-        error: undefined,
-      },
-    });
+    this.emitEvent("pods", "installed");
     Logger.debug("Project pods installed");
+  }
+
+  private async setStalePodsAsync(stale: boolean) {
+    this.stalePods = stale;
+    await extensionContext.workspaceState.update(STALE_PODS, stale);
+  }
+
+  private async getPackageManager() {
+    if (!this.packageManagerInternal) {
+      this.packageManagerInternal = await resolvePackageManager();
+    }
+    return this.packageManagerInternal;
+  }
+
+  private async androidEmulatorStatus() {
+    if (fs.existsSync(EMULATOR_BINARY)) {
+      return "installed";
+    }
+    return "notInstalled";
+  }
+
+  private async xcodeStatus() {
+    const isXcodebuildInstalled = await testCommand("xcodebuild -version");
+    const isXcrunInstalled = await testCommand("xcrun --version");
+    const isSimctlInstalled = await testCommand("xcrun simctl help");
+
+    if (isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled) {
+      return "installed";
+    }
+    return "notInstalled";
+  }
+
+  private async cocoapodsStatus() {
+    const installed = await testCommand("pod --version");
+
+    if (installed) {
+      return "installed";
+    }
+    return "notInstalled";
+  }
+
+  private async nodeStatus() {
+    const installed = await testCommand("node -v");
+    if (installed) {
+      return "installed";
+    }
+    return "notInstalled";
+  }
+
+  private async nodeModulesStatus() {
+    const packageManager = await resolvePackageManager();
+    if (!packageManager) {
+      return "notInstalled";
+    }
+
+    const installed = await isNodeModulesInstalled(packageManager);
+    if (installed) {
+      return "installed";
+    }
+    return "notInstalled";
+  }
+
+  private async podsStatus() {
+    if (await isExpoGoProject()) {
+      // Expo Go projects don't need pods
+      return "installed";
+    }
+
+    if (this.stalePods) {
+      return "notInstalled";
+    }
+
+    const appRootFolder = getAppRootFolder();
+    const iosDirPath = getIosSourceDir(appRootFolder);
+
+    Logger.debug(`Check pods in ${iosDirPath}`);
+    if (!iosDirPath) {
+      return "notInstalled";
+    }
+
+    const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
+    const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
+
+    if (podfileLockExists && podsDirExists) {
+      return "installed";
+    }
+    return "notInstalled";
   }
 }
 
-export async function checkIfCLIInstalled(cmd: string, options: Record<string, unknown> = {}) {
+async function testCommand(cmd: string) {
   try {
     // We are not checking the stderr here, because some of the CLIs put the warnings there.
-    const { stdout } = await command(cmd, {
+    const { failed } = await command(cmd, {
       encoding: "utf8",
       quietErrorsOnExit: true,
-      ...options,
+      env: { ...process.env, LANG: "en_US.UTF-8" },
     });
-    const result = stdout.length > 0;
-    Logger.debug(`CLI: ${cmd} ${result ? "" : "not"} installed `);
-    return result;
+    return !failed;
   } catch (_) {
-    Logger.debug(`CLI: ${cmd} not installed `);
     return false;
   }
 }
@@ -445,47 +268,48 @@ function requireNoCache(...params: Parameters<typeof require.resolve>) {
   return require(module);
 }
 
-export function checkMinDependencyVersionInstalled(dependency: string, minVersion: string) {
-  const message = `Check ${dependency} module version.`;
-
+function dependencyStatus(dependency: string, minVersion?: string | semver.SemVer) {
   try {
     const module = requireNoCache(path.join(dependency, "package.json"), {
       paths: [getAppRootFolder()],
     });
-    const dependencyVersion = coerce(module.version);
-    const minDependencyVersion = coerce(minVersion)!;
 
-    Logger.debug(message, `Version found: ${dependencyVersion}. Minimum version: ${minVersion}`);
+    if (!minVersion) {
+      return "installed";
+    }
 
-    const matches = dependencyVersion ? gte(dependencyVersion, minDependencyVersion) : false;
-    return matches ? "installed" : "not_supported";
-  } catch (error) {
-    Logger.debug(message, "Module not found.");
-    return "not_installed";
+    const version = semver.coerce(module.version);
+    minVersion = new SemVer(minVersion);
+
+    const isSupported = version ? semver.gte(version, minVersion) : false;
+    // if not supported, we treat it as not installed
+    if (isSupported) {
+      return "installed";
+    }
+  } catch (_error) {
+    // ignore if not installed
   }
+  return "notInstalled";
 }
 
 export async function checkXcodeExists() {
-  const isXcodebuildInstalled = await checkIfCLIInstalled("xcodebuild -version");
-  const isXcrunInstalled = await checkIfCLIInstalled("xcrun --version");
-  const isSimctlInstalled = await checkIfCLIInstalled("xcrun simctl help");
+  const isXcodebuildInstalled = await testCommand("xcodebuild -version");
+  const isXcrunInstalled = await testCommand("xcrun --version");
+  const isSimctlInstalled = await testCommand("xcrun simctl help");
   return isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
 }
 
-export async function checkAndroidEmulatorExists() {
-  return fs.existsSync(EMULATOR_BINARY);
-}
-
-export function isExpoRouterProject() {
+function isUsingExpoRouter() {
   // we assume that a expo router based project contain
   // the package "expo-router" in its dependencies or devDependencies
+  const appRoot = getAppRootFolder();
   try {
-    const appRoot = getAppRootFolder();
     const packageJson = requireNoCache(path.join(appRoot, "package.json"));
-    const hasExpoRouter =
-      Object.keys(packageJson.dependencies).some((dependency) => dependency === "expo-router") ||
-      Object.keys(packageJson.devDependencies).some((dependency) => dependency === "expo-router");
-    return hasExpoRouter;
+    const allDependencies = [
+      ...Object.keys(packageJson.dependencies),
+      ...Object.keys(packageJson.devDependencies),
+    ];
+    return allDependencies.includes("expo-router");
   } catch (e) {
     return false;
   }

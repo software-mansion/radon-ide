@@ -340,7 +340,7 @@ export class Project
     }
 
     Logger.debug("Installing Node Modules");
-    const installNodeModules = this.installNodeModules();
+    const waitForNodeModules = this.installNodeModules();
 
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
@@ -351,13 +351,13 @@ export class Project
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
-      [installNodeModules]
+      [waitForNodeModules]
     );
 
     Logger.debug("Checking expo router");
-    this.expoRouterInstalled = await this.dependencyManager.checkExpoRouterInstalled();
+    this.expoRouterInstalled = await this.dependencyManager.isInstalled("expoRouter");
     Logger.debug("Checking storybook");
-    this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
+    this.storybookInstalled = await this.dependencyManager.isInstalled("storybook");
   }
   //#endregion
 
@@ -494,12 +494,16 @@ export class Project
   }
 
   private async installNodeModules(): Promise<void> {
-    const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
-
-    if (!nodeModulesStatus.installed) {
-      await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
+    let installationSuccess = false;
+    const installed = await this.dependencyManager.isInstalled("nodeModules");
+    if (!installed) {
+      installationSuccess = await this.dependencyManager.installNodeModules();
     }
-    Logger.debug("Node Modules installed");
+    if (!installationSuccess) {
+      Logger.error("Node Modules installation failed");
+    } else {
+      Logger.debug("Node Modules installed");
+    }
   }
 
   //#region Select device

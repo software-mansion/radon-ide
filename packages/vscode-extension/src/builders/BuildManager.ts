@@ -79,10 +79,10 @@ export class BuildManager {
           this.buildOutputChannel,
           progressListener,
           () => {
-            return this.dependencyManager.checkPodsInstalled();
+            return this.dependencyManager.isInstalled("pods");
           },
-          (appRootFolder: string, cleanBuild: boolean, token: CancelToken) => {
-            return this.dependencyManager.installPods(appRootFolder, cleanBuild, token);
+          () => {
+            return this.dependencyManager.installPods({ forceCleanBuild, cancelToken });
           }
         );
       }
