@@ -77,7 +77,7 @@ export class BuildManager {
             Logger.info("Pods installation is missing or outdated. Installing Pods.");
             // installing pods may impact the fingerprint as new pods may be created under the project directory
             // for this reason we need to recalculate the fingerprint after installing pods
-            return this.dependencyManager.installPods(cancelToken);
+            await this.dependencyManager.installPods(cancelToken);
             newFingerprint = await generateWorkspaceFingerprint();
           }
         };
