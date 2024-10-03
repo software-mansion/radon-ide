@@ -1,6 +1,6 @@
 import path from "path";
-import { Logger } from "../Logger";
 import { createFingerprintAsync } from "@expo/fingerprint";
+import { Logger } from "../Logger";
 import { getAppRootFolder } from "./extensionContext";
 
 const IGNORE_PATHS = [
@@ -17,6 +17,6 @@ export async function generateWorkspaceFingerprint() {
   const fingerprint = await createFingerprintAsync(getAppRootFolder(), {
     ignorePaths: IGNORE_PATHS,
   });
-  Logger.log("FINGERPRINT: ----------------", fingerprint.hash, "------------------");
+  Logger.log("Workspace fingerprint", fingerprint.hash);
   return fingerprint.hash;
 }

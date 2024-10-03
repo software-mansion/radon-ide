@@ -1,27 +1,22 @@
+import path from "path";
 import { OutputChannel } from "vscode";
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import path from "path";
 import { CancelToken } from "./cancelToken";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import {
-  SimulatorDeviceSet,
-  createSimulator,
-  listSimulators,
-  removeIosSimulator,
-} from "../devices/IosSimulatorDevice";
 import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
+import { runExternalBuild } from "./customBuild";
+import { fetchEasBuild } from "./eas";
+import { getXcodebuildArch } from "../utilities/common";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
   appPath: string;
   bundleID: string;
 };
-
-const TEMP_SIMULATOR_NAME_PREFIX = "__RNIDE_TEMP_SIM_";
 
 // Assuming users have ios folder in their project's root
 export const getIosSourceDir = (appRootFolder: string) => path.join(appRootFolder, "ios");
@@ -37,7 +32,7 @@ async function getBundleID(appPath: string) {
 }
 
 function buildProject(
-  UDID: string,
+  deviceInfo: IOSDeviceInfo,
   xcodeProject: IOSProjectInfo,
   buildDir: string,
   scheme: string,
@@ -51,8 +46,13 @@ function buildProject(
     configuration,
     "-scheme",
     scheme,
-    "-destination",
-    `id=${UDID}`,
+    "-arch",
+    getXcodebuildArch(),
+    "-sdk",
+    `iphonesimulator${deviceInfo.runtimeInfo.version}`,
+    "-showBuildTimingSummary",
+    "-destination-timeout",
+    "0",
     ...(cleanBuild ? ["clean"] : []),
     "build",
   ];
@@ -76,14 +76,41 @@ export async function buildIos(
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void,
-  checkIosDependenciesInstalled: () => Promise<boolean>,
-  installPods: (
-    appRootFolder: string,
-    forceCleanBuild: boolean,
-    cancelToken: CancelToken
-  ) => Promise<void>
+  installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
-  const { ios: buildOptions } = getLaunchConfiguration();
+  const { buildScript, eas, ios: buildOptions, env } = getLaunchConfiguration();
+
+  if (buildScript?.ios && eas?.ios) {
+    throw new Error(
+      "Both custom build script and EAS build are configured for iOS. Please use only one build method."
+    );
+  }
+
+  if (buildScript?.ios) {
+    const appPath = await runExternalBuild(cancelToken, buildScript.ios, env);
+    if (!appPath) {
+      throw new Error("Failed to build iOS app using custom script.");
+    }
+
+    return {
+      appPath,
+      bundleID: await getBundleID(appPath),
+      platform: DevicePlatform.IOS,
+    };
+  }
+
+  if (eas?.ios) {
+    const appPath = await fetchEasBuild(cancelToken, eas.ios, DevicePlatform.IOS);
+    if (!appPath) {
+      throw new Error("Failed to build iOS app using EAS build.");
+    }
+
+    return {
+      appPath,
+      bundleID: await getBundleID(appPath),
+      platform: DevicePlatform.IOS,
+    };
+  }
 
   if (await isExpoGoProject()) {
     const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);
@@ -92,10 +119,7 @@ export async function buildIos(
 
   const sourceDir = getIosSourceDir(appRootFolder);
 
-  const isPodsInstalled = await checkIosDependenciesInstalled();
-  if (!isPodsInstalled) {
-    await installPods(appRootFolder, forceCleanBuild, cancelToken);
-  }
+  await installPodsIfNeeded();
 
   const xcodeProject = await findXcodeProject(appRootFolder);
 
@@ -112,30 +136,27 @@ export async function buildIos(
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
   let platformName: string | undefined;
-  const buildProcess = withTemporarySimulator(deviceInfo, (UDID) => {
-    const process = cancelToken.adapt(
-      buildProject(
-        UDID,
-        xcodeProject,
-        sourceDir,
-        scheme,
-        buildOptions?.configuration || "Debug",
-        forceCleanBuild
-      )
-    );
+  const buildProcess = cancelToken.adapt(
+    buildProject(
+      deviceInfo,
+      xcodeProject,
+      sourceDir,
+      scheme,
+      buildOptions?.configuration || "Debug",
+      forceCleanBuild
+    )
+  );
 
-    const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
-    outputChannel.clear();
-    lineReader(process).onLineRead((line) => {
-      outputChannel.appendLine(line);
-      buildIOSProgressProcessor.processLine(line);
-      // Xcode can sometimes escape `=` with a backslash or put the value in quotes
-      const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
-      if (platformNameMatch) {
-        platformName = platformNameMatch[1];
-      }
-    });
-    return process;
+  const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
+  outputChannel.clear();
+  lineReader(buildProcess).onLineRead((line) => {
+    outputChannel.appendLine(line);
+    buildIOSProgressProcessor.processLine(line);
+    // Xcode can sometimes escape `=` with a backslash or put the value in quotes
+    const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
+    if (platformNameMatch) {
+      platformName = platformNameMatch[1];
+    }
   });
 
   await buildProcess;
@@ -204,31 +225,4 @@ async function getBuildPath(
   }
 
   return `${targetBuildDir}/${executableFolderPath}`;
-}
-
-async function withTemporarySimulator<T>(
-  originalDeviceInfo: IOSDeviceInfo,
-  fn: (UDID: string) => Promise<T>
-) {
-  await removeStaleTemporarySimulators();
-
-  const { UDID } = await createSimulator(
-    TEMP_SIMULATOR_NAME_PREFIX + originalDeviceInfo.deviceIdentifier,
-    originalDeviceInfo.deviceIdentifier,
-    originalDeviceInfo.runtimeInfo,
-    SimulatorDeviceSet.Default
-  );
-  const result = await fn(UDID);
-  await removeIosSimulator(UDID, SimulatorDeviceSet.Default);
-
-  return result;
-}
-
-async function removeStaleTemporarySimulators() {
-  const simulators = await listSimulators(SimulatorDeviceSet.Default);
-  const removedSimulators = simulators
-    .filter(({ name }) => name.startsWith(TEMP_SIMULATOR_NAME_PREFIX))
-    .map(({ UDID }) => removeIosSimulator(UDID, SimulatorDeviceSet.Default));
-
-  await Promise.allSettled(removedSimulators);
 }

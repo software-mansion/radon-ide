@@ -10,7 +10,6 @@ import {
   ReloadAction,
   StartupMessage,
   TouchPoint,
-  Locale,
 } from "../common/Project";
 import { DevicePlatform } from "../common/DeviceManager";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
@@ -18,7 +17,6 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
-import { Platform } from "../utilities/platform";
 
 type StartOptions = { cleanBuild: boolean };
 
@@ -126,6 +124,7 @@ export class DeviceSession implements Disposable {
   }
 
   private async buildApp({ clean }: { clean: boolean }) {
+    const buildStartTime = Date.now();
     this.eventDelegate.onStateChange(StartupMessage.Building);
     this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
       clean,
@@ -135,6 +134,8 @@ export class DeviceSession implements Disposable {
       }, 100),
     });
     this.maybeBuildResult = await this.disposableBuild.build;
+    const buildDurationSec = (Date.now() - buildStartTime) / 1000;
+    Logger.info(`Build completed in ${buildDurationSec.toFixed(2)}s`);
   }
 
   private async installApp({ reinstall }: { reinstall: boolean }) {

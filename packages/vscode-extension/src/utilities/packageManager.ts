@@ -1,9 +1,9 @@
+import path from "path";
+import { promises as fs } from "fs";
 import { command } from "./subprocess";
-import { existsSync, promises as fs } from "fs";
-import path, { resolve } from "path";
 import { getAppRootFolder } from "./extensionContext";
-import { Logger } from "../Logger";
 import { isWorkspaceRoot } from "./common";
+import { Logger } from "../Logger";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
@@ -19,7 +19,7 @@ async function pathExists(p: string) {
   }
 }
 
-export async function resolvePackageManager(): Promise<PackageManagerInfo> {
+export async function resolvePackageManager(): Promise<PackageManagerInfo | undefined> {
   function findWorkspace(appRoot: string) {
     let currentDir = appRoot;
     let parentDir = path.resolve(currentDir, "..");
@@ -69,15 +69,14 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo> {
 
   const name = await findPackageManager(workspacePath ?? appRootPath);
 
-  return { name, workspacePath };
-}
-
-export function isPackageManagerAvailable(manager: PackageManagerInfo): boolean {
   try {
-    command(`${manager.name} --version`);
-    return true;
-  } catch {}
-  return false;
+    await command(`${name} --version`);
+  } catch (e) {
+    Logger.error(`Required package manager: ${name} is not installed`);
+    return undefined;
+  }
+
+  return { name, workspacePath };
 }
 
 async function isNpmModulesInstalled(workspacePath: string): Promise<boolean> {

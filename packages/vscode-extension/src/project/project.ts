@@ -1,11 +1,7 @@
+import { EventEmitter } from "stream";
 import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
-import { Metro, MetroDelegate } from "./metro";
-import { Devtools } from "./devtools";
-import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
-import { Logger } from "../Logger";
-import { didFingerprintChange } from "../builders/BuildManager";
-import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { DeviceInfo } from "../common/DeviceManager";
+import stripAnsi from "strip-ansi";
+import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
   AppPermissionType,
@@ -21,15 +17,19 @@ import {
   TouchPoint,
   ZoomLevelType,
 } from "../common/Project";
-import { EventEmitter } from "stream";
+import { Logger } from "../Logger";
+import { didFingerprintChange } from "../builders/BuildManager";
+import { DeviceInfo } from "../common/DeviceManager";
+import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
-import stripAnsi from "strip-ansi";
-import { minimatch } from "minimatch";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
+import { Metro, MetroDelegate } from "./metro";
+import { Devtools } from "./devtools";
+import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -339,8 +339,7 @@ export class Project
       oldMetro.dispose();
     }
 
-    Logger.debug("Installing Node Modules");
-    const installNodeModules = this.installNodeModules();
+    const waitForNodeModules = this.maybeInstallNodeModules();
 
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
@@ -351,13 +350,13 @@ export class Project
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
-      [installNodeModules]
+      [waitForNodeModules]
     );
 
     Logger.debug("Checking expo router");
-    this.expoRouterInstalled = await this.dependencyManager.checkExpoRouterInstalled();
+    this.expoRouterInstalled = await this.dependencyManager.isInstalled("expoRouter");
     Logger.debug("Checking storybook");
-    this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
+    this.storybookInstalled = await this.dependencyManager.isInstalled("storybook");
   }
   //#endregion
 
@@ -493,13 +492,16 @@ export class Project
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
 
-  private async installNodeModules(): Promise<void> {
-    const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
+  private async maybeInstallNodeModules() {
+    const installed = await this.dependencyManager.isInstalled("nodeModules");
 
-    if (!nodeModulesStatus.installed) {
-      await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
+    if (!installed) {
+      Logger.info("Installing node modules");
+      await this.dependencyManager.installNodeModules();
+      Logger.debug("Installing node modules succeeded");
+    } else {
+      Logger.debug("Node modules already installed - skipping");
     }
-    Logger.debug("Node Modules installed");
   }
 
   //#region Select device

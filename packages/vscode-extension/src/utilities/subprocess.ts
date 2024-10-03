@@ -1,8 +1,7 @@
-import { Logger } from "../Logger";
-import execa, { ExecaChildProcess } from "execa";
 import readline from "readline";
+import execa, { ExecaChildProcess } from "execa";
+import { Logger } from "../Logger";
 import { Platform } from "./platform";
-import { inc } from "semver";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
@@ -60,7 +59,7 @@ function overrideEnv<T extends execa.Options>(options?: T): T | undefined {
 }
 
 /**
- * When using this methid, the subprocess should be started with buffer: false option
+ * When using this method, the subprocess should be started with buffer: false option
  * as there's no need for allocating memory for the output that's going to be very long.
  */
 export function lineReader(childProcess: ExecaChildProcess<string>) {

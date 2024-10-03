@@ -4,7 +4,6 @@ import {
   DebugConfigurationProvider,
   ProviderResult,
   WorkspaceFolder,
-  debug,
 } from "vscode";
 
 export class DebugConfigProvider implements DebugConfigurationProvider {

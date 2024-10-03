@@ -1,18 +1,20 @@
+import fs from "fs";
+import path from "path";
+import semver from "semver";
+import { OutputChannel } from "vscode";
 import { getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
-import semver from "semver";
 import { CancelToken } from "./cancelToken";
-import path from "path";
-import fs from "fs";
-import { OutputChannel } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_PACKAGE_NAME, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
+import { runExternalBuild } from "./customBuild";
+import { fetchEasBuild } from "./eas";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
@@ -76,14 +78,48 @@ export async function buildAndroid(
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ): Promise<AndroidBuildResult> {
+  const { buildScript, eas, env, android } = getLaunchConfiguration();
+
+  if (buildScript?.android && eas?.android) {
+    throw new Error(
+      "Both custom build script and EAS build are configured for Android. Please use only one build method."
+    );
+  }
+
+  if (buildScript?.android) {
+    const apkPath = await runExternalBuild(cancelToken, buildScript.android, env);
+    if (!apkPath) {
+      throw new Error("Failed to build Android app using custom script.");
+    }
+
+    return {
+      apkPath,
+      packageName: await extractPackageName(apkPath, cancelToken),
+      platform: DevicePlatform.Android,
+    };
+  }
+
+  if (eas?.android) {
+    const apkPath = await fetchEasBuild(cancelToken, eas.android, DevicePlatform.Android);
+    if (!apkPath) {
+      throw new Error("Failed to build Android app using EAS build.");
+    }
+
+    return {
+      apkPath,
+      packageName: await extractPackageName(apkPath, cancelToken),
+      platform: DevicePlatform.Android,
+    };
+  }
+
   if (await isExpoGoProject()) {
     const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken);
     return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
   }
+
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
-  const buildOptions = getLaunchConfiguration();
-  const productFlavor = buildOptions.android?.productFlavor || "";
-  const buildType = buildOptions.android?.buildType || "debug";
+  const productFlavor = android?.productFlavor || "";
+  const buildType = android?.buildType || "debug";
   const gradleArgs = [
     "-x",
     "lint",
@@ -114,7 +150,7 @@ export async function buildAndroid(
   const buildProcess = cancelToken.adapt(
     exec("./gradlew", gradleArgs, {
       cwd: androidSourceDir,
-      env: { ...buildOptions.env, JAVA_HOME, ANDROID_HOME },
+      env: { ...env, JAVA_HOME, ANDROID_HOME },
       buffer: false,
     })
   );
@@ -126,7 +162,7 @@ export async function buildAndroid(
   });
 
   await buildProcess;
-  Logger.debug("Android build sucessful");
+  Logger.debug("Android build successful");
   const apkInfo = await getAndroidBuildPaths(appRootFolder, cancelToken, productFlavor, buildType);
   return { ...apkInfo, platform: DevicePlatform.Android };
 }
