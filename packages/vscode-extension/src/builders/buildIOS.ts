@@ -8,6 +8,8 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { IOSDeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
+import { runExternalBuild } from "./customBuild";
+import { fetchEasBuild } from "./eas";
 import { getXcodebuildArch } from "../utilities/common";
 
 export type IOSBuildResult = {
@@ -76,7 +78,39 @@ export async function buildIos(
   progressListener: (newProgress: number) => void,
   installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
-  const { ios: buildOptions } = getLaunchConfiguration();
+  const { buildScript, eas, ios: buildOptions, env } = getLaunchConfiguration();
+
+  if (buildScript?.ios && eas?.ios) {
+    throw new Error(
+      "Both custom build script and EAS build are configured for iOS. Please use only one build method."
+    );
+  }
+
+  if (buildScript?.ios) {
+    const appPath = await runExternalBuild(cancelToken, buildScript.ios, env);
+    if (!appPath) {
+      throw new Error("Failed to build iOS app using custom script.");
+    }
+
+    return {
+      appPath,
+      bundleID: await getBundleID(appPath),
+      platform: DevicePlatform.IOS,
+    };
+  }
+
+  if (eas?.ios) {
+    const appPath = await fetchEasBuild(cancelToken, eas.ios, DevicePlatform.IOS);
+    if (!appPath) {
+      throw new Error("Failed to build iOS app using EAS build.");
+    }
+
+    return {
+      appPath,
+      bundleID: await getBundleID(appPath),
+      platform: DevicePlatform.IOS,
+    };
+  }
 
   if (await isExpoGoProject()) {
     const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);

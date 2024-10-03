@@ -110,7 +110,7 @@
             "side-panel",
             "secondary-side-panel"
           ],
-          "description": "Controlls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
+          "description": "Controls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
         },
         "RadonIDE.showDeviceFrame": {
           "type": "boolean",
@@ -194,7 +194,7 @@
             "properties": {
               "appRoot": {
                 "type": "string",
-                "description": "Location of the React Native application root folder relative to the workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
+                "description": "Location of the React Native application root folder relative to the workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it fails to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
               },
               "isExpo": {
                 "type": "boolean",
@@ -207,6 +207,60 @@
               "metroConfigPath": {
                 "type": "string",
                 "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+              },
+              "buildScript": {
+                "type": "object",
+                "description": "Scripts used to build Android or iOS app or fetch them from known location. Executed as a part of building process. Should print a JSON result from `eas build` command or a filesystem path to the built app as the last line of the standard output.\nIf using EAS, it should be invoked with --json --non-interactive flags and use a profile for development, iOS additionally needs `\"ios.simulator\": true` config option in eas.json",
+                "properties": {
+                  "ios": {
+                    "type": "string",
+                    "description": "Script used to build iOS app."
+                  },
+                  "android": {
+                    "type": "string",
+                    "description": "Script used to build Android app."
+                  }
+                }
+              },
+              "eas": {
+                "type": "object",
+                "description": "Configuration for EAS build service",
+                "properties": {
+                  "android": {
+                    "type": "object",
+                    "description": "Configuration for EAS build service for Android",
+                    "properties": {
+                      "profile": {
+                        "type": "string",
+                        "description": "Profile used to build the app in EAS. Built app should be in debug version."
+                      },
+                      "buildUUID": {
+                        "type": "string",
+                        "description": "UUID of the EAS build used in `eas build:view` command."
+                      }
+                    },
+                    "required": [
+                      "profile"
+                    ]
+                  },
+                  "ios": {
+                    "type": "object",
+                    "description": "Configuration for EAS build service for iOS",
+                    "properties": {
+                      "profile": {
+                        "type": "string",
+                        "description": "Profile used to build the app in EAS. Built app should be in debug version and have '\"ios.simulator\": true' option set."
+                      },
+                      "buildUUID": {
+                        "type": "string",
+                        "description": "UUID of the EAS build used in `eas build:view` command."
+                      }
+                    },
+                    "required": [
+                      "profile"
+                    ]
+                  }
+                }
               },
               "ios": {
                 "description": "Provides a way to customize Xcode builds for iOS",
@@ -322,7 +376,7 @@
                 }
               },
               "preview": {
-                "description": "Custommize the behavior of device preview",
+                "description": "Customize the behavior of device preview",
                 "type": "object",
                 "properties": {
                   "waitForAppLaunch": {

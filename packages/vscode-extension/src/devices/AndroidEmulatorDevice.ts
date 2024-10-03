@@ -303,15 +303,20 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
     }
-    // adb install sometimes fails because we call it too early after the device is initialized.
-    // we haven't found a better way to test if device is ready and already wait for boot_completed
-    // flag in waitForEmulatorOnline. But even after that even is delivered, adb install also sometimes
-    // fails claiming it is too early. The workaround therefore is to retry install command.
-    if (forceReinstall) {
+
+    // allowNonZeroExit is set to true to not print errors when INSTALL_FAILED_UPDATE_INCOMPATIBLE occurs.
+    const installApk = (allowDowngrade: boolean) =>
+      exec(
+        ADB_PATH,
+        ["-s", this.serial!, "install", ...(allowDowngrade ? ["-d"] : []), "-r", build.apkPath],
+        { allowNonZeroExit: true }
+      );
+
+    const uninstallApp = async (packageName: string) => {
       try {
         await retry(
           () =>
-            exec(ADB_PATH, ["-s", this.serial!, "uninstall", build.packageName], {
+            exec(ADB_PATH, ["-s", this.serial!, "uninstall", packageName], {
               allowNonZeroExit: true,
             }),
           2,
@@ -320,27 +325,37 @@ export class AndroidEmulatorDevice extends DeviceBase {
       } catch (e) {
         Logger.error("Error while uninstalling will be ignored", e);
       }
+    };
+
+    // adb install sometimes fails because we call it too early after the device is initialized.
+    // we haven't found a better way to test if device is ready and already wait for boot_completed
+    // flag in waitForEmulatorOnline. But even after that even is delivered, adb install also sometimes
+    // fails claiming it is too early. The workaround therefore is to retry install command.
+    if (forceReinstall) {
+      await uninstallApp(build.packageName);
     }
 
-    const installApk = (allowDowngrade: boolean) => {
-      return exec(ADB_PATH, [
-        "-s",
-        this.serial!,
-        "install",
-        ...(allowDowngrade ? ["-d"] : []),
-        "-r",
-        build.apkPath,
-      ]);
-    };
     await retry(
-      () => installApk(false),
+      async (retryNumber) => {
+        if (retryNumber === 0) {
+          await installApk(false);
+        } else if (retryNumber === 1) {
+          // There's a chance that same emulator was used in newer version of Expo
+          // and then RN IDE was opened on older project, in which case installation
+          // will fail. We use -d flag which allows for downgrading debuggable
+          // applications (see `adb shell pm`, install command)
+          await installApk(true);
+        } else {
+          // If the app is still not installed, we try to uninstall it first to
+          // avoid "INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package <name>
+          // signatures do not match newer version; ignoring!" error. This error
+          // may come when building locally and with EAS.
+          await uninstallApp(build.packageName);
+          await installApk(true);
+        }
+      },
       2,
-      1000,
-      // there's a chance that same emulator was used in newer version of Expo
-      // and then RN IDE was opened on older project, in which case installation
-      // will fail. We use -d flag which allows for downgrading debuggable
-      // applications (see `adb shell pm`, install command)
-      () => installApk(true)
+      1000
     );
   }
 
