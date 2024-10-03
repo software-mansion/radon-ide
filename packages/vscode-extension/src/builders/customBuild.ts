@@ -5,12 +5,10 @@ import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
 import { getAppRootFolder } from "../utilities/extensionContext";
 
-export async function runExternalBuild(
-  cancelToken: CancelToken,
-  externalCommand: string,
-  env: Record<string, string> | undefined
-): Promise<string | undefined> {
-  const output = await runExternalScript(cancelToken, externalCommand, env);
+type Env = Record<string, string> | undefined;
+
+export async function runExternalBuild(cancelToken: CancelToken, buildCommand: string, env: Env) {
+  const output = await runExternalScript(buildCommand, env, cancelToken);
 
   if (!output) {
     return undefined;
@@ -19,7 +17,7 @@ export async function runExternalBuild(
   const binaryPath = output.lastLine;
   if (binaryPath && !fs.existsSync(binaryPath)) {
     Logger.error(
-      `External script: ${externalCommand} failed to output any existing app path, got: ${binaryPath}`
+      `External script: ${buildCommand} failed to output any existing app path, got: ${binaryPath}`
     );
     return undefined;
   }
@@ -27,20 +25,17 @@ export async function runExternalBuild(
   return binaryPath;
 }
 
-export async function runFingerprintScript(
-  cancelToken: CancelToken,
-  externalCommand: string,
-  env: Record<string, string> | undefined
-) {
-  return runExternalScript(cancelToken, externalCommand, env);
+export async function runFingerprintScript(externalCommand: string, env: Env) {
+  const output = await runExternalScript(externalCommand, env);
+  if (!output) {
+    return undefined;
+  }
+  return output.lastLine;
 }
 
-async function runExternalScript(
-  cancelToken: CancelToken,
-  externalCommand: string,
-  env: Record<string, string> | undefined
-) {
-  const process = cancelToken.adapt(command(externalCommand, { cwd: getAppRootFolder(), env }));
+async function runExternalScript(externalCommand: string, env: Env, cancelToken?: CancelToken) {
+  let process = command(externalCommand, { cwd: getAppRootFolder(), env });
+  process = cancelToken ? cancelToken.adapt(process) : process;
   Logger.info(`Running external script: ${externalCommand}`);
 
   let lastLine: string | undefined;

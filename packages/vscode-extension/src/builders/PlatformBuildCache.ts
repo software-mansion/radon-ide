@@ -32,21 +32,32 @@ export type BuildCacheInfo = {
 };
 
 export class PlatformBuildCache {
-  private cacheKey: string;
+  static instances: Record<DevicePlatform, PlatformBuildCache | undefined> = {
+    [DevicePlatform.Android]: undefined,
+    [DevicePlatform.IOS]: undefined,
+  };
 
-  constructor(
-    private readonly platform: DevicePlatform,
-    private readonly cancelToken: CancelToken
-  ) {
-    this.cacheKey =
-      platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+  static forPlatform(platform: DevicePlatform): PlatformBuildCache {
+    if (!this.instances[platform]) {
+      this.instances[platform] = new PlatformBuildCache(platform);
+    }
+
+    return this.instances[platform];
   }
 
-  public async storeBuild(build: BuildResult) {
-    const fingerprint = await this.calculateFingerprint();
+  private constructor(private readonly platform: DevicePlatform) {}
+
+  get cacheKey() {
+    return this.platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+  }
+
+  /**
+   * Passed fingerprint should be calculated at the time build is started.
+   */
+  public async storeBuild(buildFingerprint: string, build: BuildResult) {
     const appPath = await getAppHash(getAppPath(build));
     await extensionContext.workspaceState.update(this.cacheKey, {
-      fingerprint,
+      fingerprint: buildFingerprint,
       buildHash: appPath,
       buildResult: build,
     });
@@ -56,14 +67,13 @@ export class PlatformBuildCache {
     await extensionContext.workspaceState.update(this.cacheKey, undefined);
   }
 
-  public async getBuild() {
+  public async getBuild(currentFingerprint: string) {
     const cache = extensionContext.workspaceState.get<BuildCacheInfo>(this.cacheKey);
     if (!cache) {
       Logger.debug("No cached build found.");
       return undefined;
     }
 
-    const currentFingerprint = await this.calculateFingerprint();
     const fingerprintsMatch = cache.fingerprint === currentFingerprint;
     if (!fingerprintsMatch) {
       Logger.info(
@@ -94,7 +104,7 @@ export class PlatformBuildCache {
     }
   }
 
-  public async isCacheInvalidated() {
+  public async isCacheStale() {
     const currentFingerprint = await this.calculateFingerprint();
     const { fingerprint } =
       extensionContext.workspaceState.get<BuildCacheInfo>(this.cacheKey) ?? {};
@@ -102,7 +112,7 @@ export class PlatformBuildCache {
     return currentFingerprint !== fingerprint;
   }
 
-  private async calculateFingerprint() {
+  public async calculateFingerprint() {
     const customFingerprint = await this.calculateCustomFingerprint();
 
     if (customFingerprint) {
@@ -131,15 +141,14 @@ export class PlatformBuildCache {
     }
 
     Logger.log(`Using custom fingerprint script '${fingerprintScript}'`);
-    let { lastLine: hash } =
-      (await runFingerprintScript(this.cancelToken, fingerprintScript, env)) ?? {};
+    const fingerprint = await runFingerprintScript(fingerprintScript, env);
 
-    if (!hash) {
+    if (!fingerprint) {
       throw new Error("Failed to generate workspace fingerprint using custom script.");
     }
 
-    Logger.log("Workspace fingerprint", hash);
-    return hash;
+    Logger.log("Workspace fingerprint", fingerprint);
+    return fingerprint;
   }
 }
 

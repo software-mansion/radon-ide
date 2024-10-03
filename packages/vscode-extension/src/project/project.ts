@@ -44,7 +44,7 @@ export class Project
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
 
-  private buildCacheInvalidated: boolean;
+  private isCachedBuildStale: boolean;
 
   private expoRouterInstalled: boolean;
   private storybookInstalled: boolean;
@@ -95,12 +95,12 @@ export class Project
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.buildCacheInvalidated = false;
+    this.isCachedBuildStale = false;
     this.expoRouterInstalled = false;
     this.storybookInstalled = false;
 
-    this.fileWatcher = watchProjectFiles((cancelToken) => {
-      this.checkIfNativeChanged(cancelToken);
+    this.fileWatcher = watchProjectFiles(() => {
+      this.checkIfNativeChanged();
     });
   }
 
@@ -111,7 +111,7 @@ export class Project
 
   onBuildSuccess = (): void => {
     // reset fingerprint change flag when build finishes successfully
-    this.buildCacheInvalidated = false;
+    this.isCachedBuildStale = false;
   };
 
   onStateChange = (state: StartupMessage): void => {
@@ -288,7 +288,7 @@ export class Project
       return;
     }
 
-    if (this.buildCacheInvalidated) {
+    if (this.isCachedBuildStale) {
       await this.selectDevice(deviceInfo, false);
       return;
     }
@@ -585,22 +585,22 @@ export class Project
     }
   };
 
-  private checkIfNativeChanged = throttle(async (cancelToken: CancelToken) => {
-    if (!this.buildCacheInvalidated && this.projectState.selectedDevice) {
+  private checkIfNativeChanged = throttle(async () => {
+    if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
       // TODO: should be refactored to not create a new PlatformBuildCache
       // instance every time
       const platform = this.projectState.selectedDevice.platform;
-      const buildCache = new PlatformBuildCache(platform, cancelToken);
+      const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
 
-      if (await buildCache.isCacheInvalidated()) {
-        this.buildCacheInvalidated = true;
+      if (isCacheStale) {
+        this.isCachedBuildStale = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
   }, 300);
 }
 
-function watchProjectFiles(onChange: (cancelToken: CancelToken) => void) {
+function watchProjectFiles(onChange: () => void) {
   // VS code glob patterns don't support negation so we can't exclude
   // native build directories like android/build, android/.gradle,
   // android/app/build, or ios/build.
@@ -610,23 +610,18 @@ function watchProjectFiles(onChange: (cancelToken: CancelToken) => void) {
   // We may revisit this if better performance is needed and create
   // recursive watches ourselves by iterating through workspace directories
   // to workaround this issue.
-  const cancelToken = new CancelToken();
-  const onFileChange = () => {
-    onChange(cancelToken);
-  };
 
-  const savedFileWatcher = workspace.onDidSaveTextDocument(onFileChange);
+  const savedFileWatcher = workspace.onDidSaveTextDocument(onChange);
 
   const watcher = workspace.createFileSystemWatcher("**/*");
-  watcher.onDidChange(onFileChange);
-  watcher.onDidCreate(onFileChange);
-  watcher.onDidDelete(onFileChange);
+  watcher.onDidChange(onChange);
+  watcher.onDidCreate(onChange);
+  watcher.onDidDelete(onChange);
 
   return {
     dispose: () => {
       watcher.dispose();
       savedFileWatcher.dispose();
-      cancelToken.cancel();
     },
   };
 }

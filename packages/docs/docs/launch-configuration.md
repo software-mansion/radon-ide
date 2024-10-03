@@ -129,10 +129,12 @@ Below is an example of how the `launch.json` file could look like with android v
 Instead of letting Radon IDE build your app, you can use scripts (`buildScript` option) or [Expo
 Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it.
 
-The requirement for scripts is to output the absolute path to the built app as the
-last line of the standard output.
-If custom fingerprint script is used, it should output fingerprint as the last
-lie of the standard output. If fingerprint change between invocations, RN IDE will rebuild the project.
+The requirement for scripts is to output the absolute path to the built app as
+the last line of the standard output. If custom fingerprint script is used, it
+should output fingerprint as the last line of the standard output. When
+fingerprint changes between invocations, RN IDE will rebuild the project. The
+IDE runs fingerprint quite frequently (i.e., on every file save), so this
+process should be fast and avoid over the network communication.
 
 Both `customBuild` and `eas` are objects having `ios` and `android` optional
 keys. You can't specify one platform in both custom script and EAS build

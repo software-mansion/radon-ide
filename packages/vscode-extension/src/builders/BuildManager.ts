@@ -34,21 +34,23 @@ export class BuildManager {
     const { platform } = deviceInfo;
 
     const cancelToken = new CancelToken();
-    const buildCache = new PlatformBuildCache(platform, cancelToken);
+    const buildCache = PlatformBuildCache.forPlatform(platform);
 
     const buildApp = async () => {
-      if (!forceCleanBuild) {
-        const cachedBuild = await buildCache.getBuild();
+      const currentFingerprint = await buildCache.calculateFingerprint();
+      if (forceCleanBuild) {
+        // we reset the cache when force clean build is requested as the newly
+        // started build may end up being cancelled
+        await buildCache.clearCache();
+      } else {
+        const cachedBuild = await buildCache.getBuild(currentFingerprint);
         if (cachedBuild) {
           return cachedBuild;
         }
       }
 
-      // we reset the cache when force clean build is requested as the newly
-      // started build may end up being cancelled
-      await buildCache.clearCache();
-
       let buildResult: BuildResult;
+      let buildFingerprint = currentFingerprint;
       if (platform === DevicePlatform.Android) {
         this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
           log: true,
@@ -69,6 +71,9 @@ export class BuildManager {
           if (!podsInstalled) {
             Logger.info("Pods installation is missing or outdated. Installing Pods.");
             await this.dependencyManager.installPods(cancelToken);
+            // Installing pods may impact the fingerprint as new pods may be created under the project directory.
+            // For this reason we need to recalculate the fingerprint after installing pods.
+            buildFingerprint = await buildCache.calculateFingerprint();
           }
         };
         buildResult = await buildIos(
@@ -82,7 +87,7 @@ export class BuildManager {
         );
       }
 
-      await buildCache.storeBuild(buildResult);
+      await buildCache.storeBuild(buildFingerprint, buildResult);
 
       return buildResult;
     };
