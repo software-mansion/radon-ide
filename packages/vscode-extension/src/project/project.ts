@@ -339,8 +339,7 @@ export class Project
       oldMetro.dispose();
     }
 
-    Logger.debug("Installing Node Modules");
-    const waitForNodeModules = this.installNodeModules();
+    const waitForNodeModules = this.maybeInstallNodeModules();
 
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
@@ -493,16 +492,15 @@ export class Project
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
 
-  private async installNodeModules(): Promise<void> {
-    let installationSuccess = false;
+  private async maybeInstallNodeModules() {
     const installed = await this.dependencyManager.isInstalled("nodeModules");
+
     if (!installed) {
-      installationSuccess = await this.dependencyManager.installNodeModules();
-    }
-    if (!installationSuccess) {
-      Logger.error("Node Modules installation failed");
+      Logger.info("Installing node modules");
+      await this.dependencyManager.installNodeModules();
+      Logger.debug("Installing node modules succeeded");
     } else {
-      Logger.debug("Node Modules installed");
+      Logger.debug("Node modules already installed - skipping");
     }
   }
 

@@ -43,7 +43,7 @@ export class BuildManager {
     const cancelToken = new CancelToken();
 
     const buildApp = async () => {
-      const newFingerprint = await generateWorkspaceFingerprint();
+      let newFingerprint = await generateWorkspaceFingerprint();
       if (forceCleanBuild) {
         // we reset the cache when force clean build is requested as the newly
         // started build may end up being cancelled
@@ -71,6 +71,16 @@ export class BuildManager {
         this.buildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
           log: true,
         });
+        const installPodsIfNeeded = async () => {
+          const podsInstalled = await this.dependencyManager.isInstalled("pods");
+          if (!podsInstalled) {
+            Logger.info("Pods installation is missing or outdated. Installing Pods.");
+            // installing pods may impact the fingerprint as new pods may be created under the project directory
+            // for this reason we need to recalculate the fingerprint after installing pods
+            return this.dependencyManager.installPods(cancelToken);
+            newFingerprint = await generateWorkspaceFingerprint();
+          }
+        };
         buildResult = await buildIos(
           deviceInfo,
           getAppRootFolder(),
@@ -78,12 +88,7 @@ export class BuildManager {
           cancelToken,
           this.buildOutputChannel,
           progressListener,
-          () => {
-            return this.dependencyManager.isInstalled("pods");
-          },
-          () => {
-            return this.dependencyManager.installPods({ forceCleanBuild, cancelToken });
-          }
+          installPodsIfNeeded
         );
       }
       await storeCachedBuild(platform, {
@@ -111,6 +116,7 @@ async function loadCachedBuild(platform: DevicePlatform, newFingerprint: string)
   const cacheInfo = getCachedBuild(platform);
   const fingerprintsMatch = cacheInfo?.fingerprint === newFingerprint;
   if (!fingerprintsMatch) {
+    Logger.info("Fingerprint mismatch, cannot use cached build.");
     return undefined;
   }
 
@@ -119,13 +125,14 @@ async function loadCachedBuild(platform: DevicePlatform, newFingerprint: string)
   try {
     const builtAppExists = fs.existsSync(appPath);
     if (!builtAppExists) {
+      Logger.info("Couldn't use cached build. App artifact not found.");
       return undefined;
     }
 
     const hash = await getAppHash(appPath);
     const hashesMatch = hash === cacheInfo.buildHash;
     if (hashesMatch) {
-      Logger.log("Using existing build.");
+      Logger.info("Using cached build.");
       return build;
     }
   } catch (e) {

@@ -56,6 +56,23 @@ export function getNativeABI() {
   }
 }
 
+export enum XCODEBUILD_ARCH {
+  ARM64 = "arm64",
+  X86_64 = "x86_64",
+  I386 = "i386",
+}
+
+export function getXcodebuildArch() {
+  switch (process.arch) {
+    case "x64":
+      return XCODEBUILD_ARCH.X86_64;
+    case "ia32":
+      return XCODEBUILD_ARCH.I386;
+    default:
+      return XCODEBUILD_ARCH.ARM64;
+  }
+}
+
 export function getOldAppCachesDir() {
   return join(os.homedir(), "Library", "Caches", "com.swmansion.react-native-ide");
 }
