@@ -87,3 +87,15 @@ src="/img/docs/restart_extension.png"/>
 
 For main extension code, you can set breakpoints in vscode and use debugger normally, logs will appear in the Debug Console panel.
 Unfortunately debugging isn't available for the frontend code, however you can use vscode's builtin chrome devtools to see logs or interact with the frontend portion of the project – for this you'll need to run command "Developer: Open Webview Developer Tools" from the command palette in the Extension Host window.
+
+## Shared app template
+
+In `test-apps/` directory there is `shared/` directory with the common UI code for
+apps. To use this code in the app, use `copy.sh` script. It should use minimal
+set of dependencies, ideally nothing except react-native.
+If app uses expo-router, we additionally copy `shared/navigation/` directory
+which uses expo-router and `@expo/vector-icons`.
+
+If app wants to use this shared code, it should add an entry to .gitignore for
+shared directory under its own `src/` and run copy script. If shared code is
+updated, every app using it should rerun the copy script. 
