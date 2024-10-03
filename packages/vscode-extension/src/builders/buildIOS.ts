@@ -87,6 +87,8 @@ export async function buildIos(
   }
 
   if (customBuild?.ios?.buildScript) {
+    // We don't autoinstall Pods here to make custom build scripts more flexible
+
     const appPath = await runExternalBuild(cancelToken, customBuild.ios.buildScript, env);
     if (!appPath) {
       throw new Error("Failed to build iOS app using custom script.");
