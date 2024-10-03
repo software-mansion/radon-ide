@@ -1,11 +1,15 @@
 export type EasConfig = { profile: string; buildUUID?: string };
+export type CustomBuild = {
+  buildScript?: string;
+  fingerprintScript?: string;
+};
 
 export type LaunchConfigurationOptions = {
   appRoot?: string;
   metroConfigPath?: string;
-  buildScript?: {
-    ios?: string;
-    android?: string;
+  customBuild?: {
+    ios?: CustomBuild;
+    android?: CustomBuild;
   };
   eas?: {
     ios?: EasConfig;

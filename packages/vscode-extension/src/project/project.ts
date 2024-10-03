@@ -7,7 +7,6 @@ import {
   AppPermissionType,
   DeviceSettings,
   InspectData,
-  Locale,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -18,7 +17,6 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { Logger } from "../Logger";
-import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
@@ -30,6 +28,8 @@ import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
+import { CancelToken } from "../builders/cancelToken";
+import { PlatformBuildCache } from "../builders/PlatformBuildCache";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -44,7 +44,7 @@ export class Project
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
 
-  private detectedFingerprintChange: boolean;
+  private buildCacheInvalidated: boolean;
 
   private expoRouterInstalled: boolean;
   private storybookInstalled: boolean;
@@ -95,12 +95,12 @@ export class Project
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.detectedFingerprintChange = false;
+    this.buildCacheInvalidated = false;
     this.expoRouterInstalled = false;
     this.storybookInstalled = false;
 
-    this.fileWatcher = watchProjectFiles(() => {
-      this.checkIfNativeChanged();
+    this.fileWatcher = watchProjectFiles((cancelToken) => {
+      this.checkIfNativeChanged(cancelToken);
     });
   }
 
@@ -111,7 +111,7 @@ export class Project
 
   onBuildSuccess = (): void => {
     // reset fingerprint change flag when build finishes successfully
-    this.detectedFingerprintChange = false;
+    this.buildCacheInvalidated = false;
   };
 
   onStateChange = (state: StartupMessage): void => {
@@ -288,7 +288,7 @@ export class Project
       return;
     }
 
-    if (this.detectedFingerprintChange) {
+    if (this.buildCacheInvalidated) {
       await this.selectDevice(deviceInfo, false);
       return;
     }
@@ -585,17 +585,22 @@ export class Project
     }
   };
 
-  private checkIfNativeChanged = throttle(async () => {
-    if (!this.detectedFingerprintChange && this.projectState.selectedDevice) {
-      if (await didFingerprintChange(this.projectState.selectedDevice.platform)) {
-        this.detectedFingerprintChange = true;
+  private checkIfNativeChanged = throttle(async (cancelToken: CancelToken) => {
+    if (!this.buildCacheInvalidated && this.projectState.selectedDevice) {
+      // TODO: should be refactored to not create a new PlatformBuildCache
+      // instance every time
+      const platform = this.projectState.selectedDevice.platform;
+      const buildCache = new PlatformBuildCache(platform, cancelToken);
+
+      if (await buildCache.isCacheInvalidated()) {
+        this.buildCacheInvalidated = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
   }, 300);
 }
 
-function watchProjectFiles(onChange: () => void) {
+function watchProjectFiles(onChange: (cancelToken: CancelToken) => void) {
   // VS code glob patterns don't support negation so we can't exclude
   // native build directories like android/build, android/.gradle,
   // android/app/build, or ios/build.
@@ -605,17 +610,23 @@ function watchProjectFiles(onChange: () => void) {
   // We may revisit this if better performance is needed and create
   // recursive watches ourselves by iterating through workspace directories
   // to workaround this issue.
-  const savedFileWatcher = workspace.onDidSaveTextDocument(onChange);
+  const cancelToken = new CancelToken();
+  const onFileChange = () => {
+    onChange(cancelToken);
+  };
+
+  const savedFileWatcher = workspace.onDidSaveTextDocument(onFileChange);
 
   const watcher = workspace.createFileSystemWatcher("**/*");
-  watcher.onDidChange(onChange);
-  watcher.onDidCreate(onChange);
-  watcher.onDidDelete(onChange);
+  watcher.onDidChange(onFileChange);
+  watcher.onDidCreate(onFileChange);
+  watcher.onDidDelete(onFileChange);
 
   return {
     dispose: () => {
       watcher.dispose();
       savedFileWatcher.dispose();
+      cancelToken.cancel();
     },
   };
 }

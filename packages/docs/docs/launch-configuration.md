@@ -131,13 +131,19 @@ Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it.
 
 The requirement for scripts is to output the absolute path to the built app as the
 last line of the standard output.
+If custom fingerprint script is used, it should output fingerprint as the last
+lie of the standard output. If fingerprint change between invocations, RN IDE will rebuild the project.
 
-Both `buildScript` and `eas` are objects having `ios` and `android` optional
+Both `customBuild` and `eas` are objects having `ios` and `android` optional
 keys. You can't specify one platform in both custom script and EAS build
 options.
 
-`buildScript.ios` and `buildScript.android` are string keys, representing custom
-command used to build the app. Example below:
+`customBuild.ios` and `customBuild.android` have following structure with
+optional keys that can be used independently:
+- `buildScript` – string, specifies a command used for building.
+- `fingerprintScript` – string, specifies a command used for creating fingerprint.
+
+Example:
 ```json
 {
   "version": "0.2.0",
@@ -146,8 +152,12 @@ command used to build the app. Example below:
       "type": "radon-ide",
       "request": "launch",
       "name": "Radon IDE panel",
-      "buildScript": {
-        "android": "npm run build:ftp-fetch-android"
+      "customBuild": {
+        "android": { "buildScript": "npm run build:ftp-fetch-android" }
+        "ios": {
+          "buildScript": "npm run build:ftp-fetch-ios",
+          "fingerprintScript": "date '+%Y-%m-%d'"
+        }
       }
     }
   ]

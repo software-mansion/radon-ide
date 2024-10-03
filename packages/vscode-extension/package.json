@@ -208,17 +208,37 @@
                 "type": "string",
                 "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
               },
-              "buildScript": {
+              "customBuild": {
                 "type": "object",
-                "description": "Scripts used to build Android or iOS app or fetch them from known location. Executed as a part of building process. Should print a JSON result from `eas build` command or a filesystem path to the built app as the last line of the standard output.\nIf using EAS, it should be invoked with --json --non-interactive flags and use a profile for development, iOS additionally needs `\"ios.simulator\": true` config option in eas.json",
+                "description": "Configuration for using custom scripts for building and fingerprinting the app.",
                 "properties": {
                   "ios": {
-                    "type": "string",
-                    "description": "Script used to build iOS app."
+                    "type": "object",
+                    "description": "Configuration for iOS.",
+                    "properties": {
+                      "buildScript": {
+                        "type": "string",
+                        "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
+                      },
+                      "fingerprintScript": {
+                        "type": "string",
+                        "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
+                      }
+                    }
                   },
                   "android": {
-                    "type": "string",
-                    "description": "Script used to build Android app."
+                    "type": "object",
+                    "description": "Configuration for Android.",
+                    "properties": {
+                      "buildScript": {
+                        "type": "string",
+                        "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
+                      },
+                      "fingerprintScript": {
+                        "type": "string",
+                        "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
+                      }
+                    }
                   }
                 }
               },

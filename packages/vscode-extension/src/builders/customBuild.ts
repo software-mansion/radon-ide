@@ -27,6 +27,14 @@ export async function runExternalBuild(
   return binaryPath;
 }
 
+export async function runFingerprintScript(
+  cancelToken: CancelToken,
+  externalCommand: string,
+  env: Record<string, string> | undefined
+) {
+  return runExternalScript(cancelToken, externalCommand, env);
+}
+
 async function runExternalScript(
   cancelToken: CancelToken,
   externalCommand: string,
