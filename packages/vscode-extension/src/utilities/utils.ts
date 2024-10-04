@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import JSON5 from "json5";
 import { commands, window, env, Uri } from "vscode";
+import vscode from "vscode";
 import { Logger } from "../Logger";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
@@ -20,14 +21,15 @@ export class Utils implements UtilsInterface {
   public async getCommandsCurrentKeyBinding(commandName: string) {
     const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
     const extensionPackageJson = require(packageJsonPath);
+    const ideName = vscode.env.appName.includes("Cursor") ? "Cursor" : "Code";
     let keybindingsJsonPath;
     let keybindingsJson;
     try {
       keybindingsJsonPath = path.join(
         homedir(),
         Platform.select({
-          macos: "Library/Application Support/Code/User/keybindings.json",
-          windows: path.join("AppDat", "Roaming", "Code", "keybindings.json"),
+          macos: `Library/Application Support/${ideName}/User/keybindings.json`,
+          windows: path.join("AppDat", "Roaming", ideName, "keybindings.json"),
         })
       );
       // cannot use require because the file may contain comments
