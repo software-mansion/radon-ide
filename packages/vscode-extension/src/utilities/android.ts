@@ -7,7 +7,7 @@ export const ANDROID_HOME =
   process.env.ANDROID_HOME ??
   Platform.select({
     macos: path.join(os.homedir(), "Library/Android/sdk"),
-    windows: path.join(os.homedir(), "AppData/Local/Android/Sdk"),
+    windows: path.join(os.homedir(), "AppData\\Local\\Android\\Sdk"),
   });
 
 const ANDROID_STUDIO_PATH = Platform.select({
