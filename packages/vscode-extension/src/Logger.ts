@@ -24,8 +24,8 @@ const logger = {
   },
 
   error(message: string, ...args: any[]) {
-    if (args.length > 0 && args[0] instanceof Error) {
-      const error = args[0] as Error;
+    if (args.length > 0 && args[args.length - 1] instanceof Error) {
+      const error = args[args.length - 1] as Error;
       outputChannel.error(error, message, ...args.slice(0, -1));
     } else {
       outputChannel.error(message, ...args);
