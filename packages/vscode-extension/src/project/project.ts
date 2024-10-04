@@ -587,8 +587,6 @@ export class Project
 
   private checkIfNativeChanged = throttle(async () => {
     if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
-      // TODO: should be refactored to not create a new PlatformBuildCache
-      // instance every time
       const platform = this.projectState.selectedDevice.platform;
       const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
 
