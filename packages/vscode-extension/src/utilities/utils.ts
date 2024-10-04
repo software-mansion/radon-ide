@@ -27,7 +27,7 @@ export class Utils implements UtilsInterface {
         homedir(),
         Platform.select({
           macos: "Library/Application Support/Code/User/keybindings.json",
-          windows: "AppData\\Roaming\\Code\\User\\keybindings.json",
+          windows: path.join("AppDat", "Roaming", "Code", "keybindings.json"),
         })
       );
       // cannot use require because the file may contain comments
