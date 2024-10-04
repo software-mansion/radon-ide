@@ -92,13 +92,14 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   // this method changes device locale in two ways, firstly it modifies system_locales setting,
   // which in most cases is enough, to change locale. Unfortunately if persist.sys.locale exist
-  // it will conflict with system_locales and make device behavior unpredictable, so in that case
-  // we need to modify if as well. persist.sys.locale is added to the device when a user changes locale
-  // in the settings. Unfortunately this method does not handle all possible scenarios.
-  // If the device uses google mobile services persist.sys.locale can not be changed, as it requires a root access
+  // it will conflict with system_locales and make device behavior unpredictable. so in that case
+  // we would like to modify if as well. Unfortunately ass of right now we don't have a reliable
+  // method of doing that, because If the device uses google mobile services persist.sys.locale can not be changed,
+  // as it requires a root access persist.sys.locale is added to the device when a user changes locale
+  // in the settings.
   // TODO:  Find a way to change or remove persist.sys.locale without root access. note: removing the whole
   // data/property/persistent_properties file would also work as we persist device settings globally in Radon IDE
-  private async changeLocale(newLocale: Locale): Promise<boolean> {
+  private async changeLocale(newLocale: Locale): Promise<void> {
     const locale = newLocale.replace("_", "-");
 
     await exec(ADB_PATH, [
@@ -120,30 +121,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "persist.sys.locale",
     ]);
 
-    if (!stdout) {
-      return true;
-    }
-
-    // If persist.sys.locale exist try to set it to match the newLocale.
-    try {
-      await exec(ADB_PATH, [
-        "-s",
-        this.serial!,
-        "shell",
-        "su",
-        "0",
-        "setprop",
-        "persist.sys.locale",
-        locale,
-      ]);
-    } catch (e) {
-      // this is expected if device is using google mobile services
-      Logger.debug(
-        "CHANGE LOCALE - Device is not allowing root access, moving on without modifying persist.sys.locale"
+    if (stdout) {
+      Logger.warn(
+        "persist.sys.locale detected while changing locale. It might indicate that the user has changed locale settings in the settings application, which will prevent localization change."
       );
     }
-
-    return true;
   }
 
   async changeSettings(settings: DeviceSettings) {
