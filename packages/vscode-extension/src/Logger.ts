@@ -24,7 +24,12 @@ const logger = {
   },
 
   error(message: string, ...args: any[]) {
-    outputChannel.error(message, ...args);
+    if (args.length > 0 && args[0] instanceof Error) {
+      const error = args[0] as Error;
+      outputChannel.error(error, message, ...args.slice(0, -1));
+    } else {
+      outputChannel.error(message, ...args);
+    }
   },
 
   openOutputPanel() {
