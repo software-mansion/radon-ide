@@ -171,13 +171,10 @@ type ReplayOverlayProps = {
   replayData: RecordingData;
   time: number;
   isRewinding: boolean;
-  isLoaded: boolean;
   isPlaying: boolean;
   isEnded: boolean;
   startTime: number;
-  currentTime: number;
   setStartTime: React.Dispatch<React.SetStateAction<number>>;
-  setIsLoaded: React.Dispatch<React.SetStateAction<boolean>>;
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
   setIsEnded: React.Dispatch<React.SetStateAction<boolean>>;
   setCurrentTime: React.Dispatch<React.SetStateAction<number>>;
@@ -189,13 +186,10 @@ type ReplayOverlayProps = {
 export default function ReplayOverlay({
   time,
   startTime,
-  currentTime,
   isRewinding,
-  isLoaded,
   isPlaying,
   isEnded,
   setStartTime,
-  setIsLoaded,
   setIsPlaying,
   setIsEnded,
   setCurrentTime,
@@ -227,7 +221,6 @@ export default function ReplayOverlay({
     }
 
     function handleLoadedMetadata() {
-      setIsLoaded(true);
       setIsRewinding(true);
       const newStartTime = Math.max(0, video!.duration - INITIAL_REPLAY_LENGTH_SEC);
       setStartTime(newStartTime);
