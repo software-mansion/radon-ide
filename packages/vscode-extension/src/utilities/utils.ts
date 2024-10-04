@@ -7,6 +7,7 @@ import { Logger } from "../Logger";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsInterface } from "../common/utils";
+import { Platform } from "./platform";
 
 type KeybindingType = {
   command: string;
@@ -24,7 +25,10 @@ export class Utils implements UtilsInterface {
     try {
       keybindingsJsonPath = path.join(
         homedir(),
-        "Library/Application Support/Code/User/keybindings.json"
+        Platform.select({
+          macos: "Library/Application Support/Code/User/keybindings.json",
+          windows: "AppData\\Roaming\\Code\\User\\keybindings.json",
+        })
       );
       // cannot use require because the file may contain comments
       keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());
