@@ -78,16 +78,18 @@ export async function buildIos(
   progressListener: (newProgress: number) => void,
   installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
-  const { buildScript, eas, ios: buildOptions, env } = getLaunchConfiguration();
+  const { customBuild, eas, ios: buildOptions, env } = getLaunchConfiguration();
 
-  if (buildScript?.ios && eas?.ios) {
+  if (customBuild?.ios && eas?.ios) {
     throw new Error(
-      "Both custom build script and EAS build are configured for iOS. Please use only one build method."
+      "Both custom builds and EAS builds are configured for iOS. Please use only one build method."
     );
   }
 
-  if (buildScript?.ios) {
-    const appPath = await runExternalBuild(cancelToken, buildScript.ios, env);
+  if (customBuild?.ios?.buildCommand) {
+    // We don't autoinstall Pods here to make custom build scripts more flexible
+
+    const appPath = await runExternalBuild(cancelToken, customBuild.ios.buildCommand, env);
     if (!appPath) {
       throw new Error("Failed to build iOS app using custom script.");
     }
