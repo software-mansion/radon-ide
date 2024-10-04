@@ -28,9 +28,12 @@ export class Utils implements UtilsInterface {
       keybindingsJsonPath = path.join(
         homedir(),
         Platform.select({
-          macos: `Library/Application Support/${ideName}/User/keybindings.json`,
-          windows: path.join("AppDat", "Roaming", ideName, "keybindings.json"),
-        })
+          macos: path.join("Library", "Application Support"),
+          windows: path.join("AppDat", "Roaming"),
+        }),
+        ideName,
+        "User",
+        "keybindings.json"
       );
       // cannot use require because the file may contain comments
       keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());

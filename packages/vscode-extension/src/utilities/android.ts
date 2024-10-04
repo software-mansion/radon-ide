@@ -6,12 +6,12 @@ import { Platform } from "./platform";
 export const ANDROID_HOME =
   process.env.ANDROID_HOME ??
   Platform.select({
-    macos: path.join(os.homedir(), "Library/Android/sdk"),
+    macos: path.join(os.homedir(), "Library", "Android", "sdk"),
     windows: path.join(os.homedir(), "AppData", "Local", "Android", "Sdk"),
   });
 
 const ANDROID_STUDIO_PATH = Platform.select({
-  macos: "/Applications/Android Studio.app",
+  macos: path.join("Applications", "Android Studio.app"),
   windows: path.join("C:", "Program Files", "Android", "Android Studio"),
 });
 
@@ -27,12 +27,12 @@ function findJavaHome() {
   }
 
   const jbrPath = Platform.select({
-    macos: path.join(ANDROID_STUDIO_PATH, "Contents/jbr/Contents/Home"),
+    macos: path.join(ANDROID_STUDIO_PATH, "Contents", "jbr", "Contents", "Home"),
     windows: path.join(ANDROID_STUDIO_PATH, "jbr"),
   });
 
   const jrePath = Platform.select({
-    macos: path.join(ANDROID_STUDIO_PATH, "Contents/jre/Contents/Home"),
+    macos: path.join(ANDROID_STUDIO_PATH, "Contents", "jre", "Contents", "Home"),
     windows: path.join(ANDROID_STUDIO_PATH, "jre"),
   });
 
