@@ -18,14 +18,22 @@ import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoG
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 
-export const EMULATOR_BINARY = Platform.select({
-  macos: path.join(ANDROID_HOME, "emulator", "emulator"),
-  windows: path.join(ANDROID_HOME, "emulator", "emulator.exe"),
-});
-const ADB_PATH = Platform.select({
-  macos: path.join(ANDROID_HOME, "platform-tools", "adb"),
-  windows: path.join(ANDROID_HOME, "platform-tools", "adb.exe"),
-});
+export const EMULATOR_BINARY = path.join(
+  ANDROID_HOME,
+  "emulator",
+  Platform.select({
+    macos: "emulator",
+    windows: "emulator.exe",
+  })
+);
+const ADB_PATH = path.join(
+  ANDROID_HOME,
+  "platform-tools",
+  Platform.select({
+    macos: "adb",
+    windows: "adb.exe",
+  })
+);
 const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
