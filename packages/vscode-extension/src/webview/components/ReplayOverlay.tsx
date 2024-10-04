@@ -132,7 +132,7 @@ function LengthSelector({ startTime, videoRef, setStartTime }: LengthSelectorPro
     if (length === 0) {
       return "Full";
     }
-    return `${length}s.`;
+    return `${length}s`;
   }
 
   function onValueChange(value: string) {
