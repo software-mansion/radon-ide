@@ -211,7 +211,10 @@ export class Project
       // wait for the new device to be added to the list:
       const listener = async (newDevices: DeviceInfo[]) => {
         this.deviceManager.removeListener("devicesChanged", listener);
-        if (isEqual(newDevices, devices)) {
+        if (this.projectState.selectedDevice) {
+          // device was selected in the meantime, we don't need to do anything
+          return;
+        } else if (isEqual(newDevices, devices)) {
           // list is the same, we register listener to wait for the next change
           this.deviceManager.addListener("devicesChanged", listener);
         } else {
