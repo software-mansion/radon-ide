@@ -186,7 +186,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   // it is necessary to use SIGTERM 9 as it would take to much time otherwise and would degrade user experience
   // having said that use this function with caution only in scenarios when you are sure that no user data will be lost
-  private async resetDevice() {
+  private async forcefullyResetDevice() {
     this.emulatorProcess?.kill(9);
     await this.internalBootDevice();
   }
@@ -199,7 +199,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
     let shouldRestart = await this.changeSettings(deviceSettings);
     if (shouldRestart) {
-      await this.resetDevice();
+      await this.forcefullyResetDevice();
     }
   }
 
