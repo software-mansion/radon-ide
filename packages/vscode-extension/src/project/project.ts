@@ -7,7 +7,6 @@ import {
   AppPermissionType,
   DeviceSettings,
   InspectData,
-  Locale,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -18,7 +17,6 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { Logger } from "../Logger";
-import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
@@ -30,6 +28,8 @@ import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
+import { CancelToken } from "../builders/cancelToken";
+import { PlatformBuildCache } from "../builders/PlatformBuildCache";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -44,7 +44,7 @@ export class Project
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
 
-  private detectedFingerprintChange: boolean;
+  private isCachedBuildStale: boolean;
 
   private expoRouterInstalled: boolean;
   private storybookInstalled: boolean;
@@ -95,7 +95,7 @@ export class Project
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.detectedFingerprintChange = false;
+    this.isCachedBuildStale = false;
     this.expoRouterInstalled = false;
     this.storybookInstalled = false;
 
@@ -111,7 +111,7 @@ export class Project
 
   onBuildSuccess = (): void => {
     // reset fingerprint change flag when build finishes successfully
-    this.detectedFingerprintChange = false;
+    this.isCachedBuildStale = false;
   };
 
   onStateChange = (state: StartupMessage): void => {
@@ -288,7 +288,7 @@ export class Project
       return;
     }
 
-    if (this.detectedFingerprintChange) {
+    if (this.isCachedBuildStale) {
       await this.selectDevice(deviceInfo, false);
       return;
     }
@@ -586,9 +586,12 @@ export class Project
   };
 
   private checkIfNativeChanged = throttle(async () => {
-    if (!this.detectedFingerprintChange && this.projectState.selectedDevice) {
-      if (await didFingerprintChange(this.projectState.selectedDevice.platform)) {
-        this.detectedFingerprintChange = true;
+    if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
+      const platform = this.projectState.selectedDevice.platform;
+      const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
+
+      if (isCacheStale) {
+        this.isCachedBuildStale = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
@@ -605,6 +608,7 @@ function watchProjectFiles(onChange: () => void) {
   // We may revisit this if better performance is needed and create
   // recursive watches ourselves by iterating through workspace directories
   // to workaround this issue.
+
   const savedFileWatcher = workspace.onDidSaveTextDocument(onChange);
 
   const watcher = workspace.createFileSystemWatcher("**/*");
