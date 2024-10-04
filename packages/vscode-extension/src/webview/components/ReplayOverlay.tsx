@@ -284,14 +284,8 @@ export default function ReplayOverlay({
       <Button onClick={onClose} className="button-absolute replay-close">
         <span className="codicon codicon-chrome-close" />
       </Button>
-      <Button
-        onClick={() => utils.saveVideoRecording(replayData)}
-        className="button-absolute replay-save">
-        <span className="codicon codicon-folder-opened" /> Save
-      </Button>
 
       {!isRewinding && (
-        // <div className="phone-screen">
         <div className="replay-controls">
           <span className="replay-controls-pad" />
           <LengthSelector
@@ -321,6 +315,9 @@ export default function ReplayOverlay({
             </Button>
             <Button onClick={stepForward}>
               <span className="codicon codicon-triangle-right" />
+            </Button>
+            <Button onClick={() => utils.saveVideoRecording(replayData)}>
+              <span className="codicon codicon-folder-opened" /> Save
             </Button>
           </div>
           <span className="replay-controls-pad" />
