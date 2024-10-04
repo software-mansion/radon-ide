@@ -1,7 +1,7 @@
 export type EasConfig = { profile: string; buildUUID?: string };
 export type CustomBuild = {
-  buildScript?: string;
-  fingerprintScript?: string;
+  buildCommand?: string;
+  fingerprintCommand?: string;
 };
 
 export type LaunchConfigurationOptions = {

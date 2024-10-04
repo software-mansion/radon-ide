@@ -131,7 +131,7 @@ Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it.
 
 The requirement for scripts is to output the absolute path to the built app as
 the last line of the standard output. If custom fingerprint script is used, it
-should output fingerprint as the last line of the standard output. When
+should output fingerprint (a string identifying the build) as the last line of the standard output. When
 fingerprint changes between invocations, RN IDE will rebuild the project. The
 IDE runs fingerprint quite frequently (i.e., on every file save), so this
 process should be fast and avoid over the network communication.
@@ -142,8 +142,8 @@ options.
 
 `customBuild.ios` and `customBuild.android` have following structure with
 optional keys that can be used independently:
-- `buildScript` – string, specifies a command used for building.
-- `fingerprintScript` – string, specifies a command used for creating fingerprint.
+- `buildCommand` – string, specifies a command used for building.
+- `fingerprintCommand` – string, specifies a command used for creating fingerprint.
 
 Example:
 ```json
@@ -155,10 +155,10 @@ Example:
       "request": "launch",
       "name": "Radon IDE panel",
       "customBuild": {
-        "android": { "buildScript": "npm run build:ftp-fetch-android" }
+        "android": { "buildCommand": "npm run build:ftp-fetch-android" }
         "ios": {
-          "buildScript": "npm run build:ftp-fetch-ios",
-          "fingerprintScript": "date '+%Y-%m-%d'"
+          "buildCommand": "npm run build:ftp-fetch-ios",
+          "fingerprintCommand": "date '+%Y-%m-%d'"
         }
       }
     }

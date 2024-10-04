@@ -25,7 +25,7 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
   return binaryPath;
 }
 
-export async function runFingerprintScript(externalCommand: string, env: Env) {
+export async function runfingerprintCommand(externalCommand: string, env: Env) {
   const output = await runExternalScript(externalCommand, env);
   if (!output) {
     return undefined;

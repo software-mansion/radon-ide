@@ -7,7 +7,7 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { IOSBuildResult } from "./buildIOS";
 import { AndroidBuildResult } from "./buildAndroid";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { runFingerprintScript } from "./customBuild";
+import { runfingerprintCommand } from "./customBuild";
 import { CancelToken } from "./cancelToken";
 import { calculateMD5 } from "../utilities/common";
 import { BuildResult } from "./BuildManager";
@@ -134,14 +134,14 @@ export class PlatformBuildCache {
         [DevicePlatform.IOS]: "ios",
       } as const
     )[this.platform];
-    const fingerprintScript = customBuild?.[configPlatform]?.fingerprintScript;
+    const fingerprintCommand = customBuild?.[configPlatform]?.fingerprintCommand;
 
-    if (!fingerprintScript) {
+    if (!fingerprintCommand) {
       return undefined;
     }
 
-    Logger.log(`Using custom fingerprint script '${fingerprintScript}'`);
-    const fingerprint = await runFingerprintScript(fingerprintScript, env);
+    Logger.log(`Using custom fingerprint script '${fingerprintCommand}'`);
+    const fingerprint = await runfingerprintCommand(fingerprintCommand, env);
 
     if (!fingerprint) {
       throw new Error("Failed to generate workspace fingerprint using custom script.");

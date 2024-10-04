@@ -216,11 +216,11 @@
                     "type": "object",
                     "description": "Configuration for iOS.",
                     "properties": {
-                      "buildScript": {
+                      "buildCommand": {
                         "type": "string",
                         "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
                       },
-                      "fingerprintScript": {
+                      "fingerprintCommand": {
                         "type": "string",
                         "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
                       }
@@ -230,11 +230,11 @@
                     "type": "object",
                     "description": "Configuration for Android.",
                     "properties": {
-                      "buildScript": {
+                      "buildCommand": {
                         "type": "string",
                         "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
                       },
-                      "fingerprintScript": {
+                      "fingerprintCommand": {
                         "type": "string",
                         "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
                       }
