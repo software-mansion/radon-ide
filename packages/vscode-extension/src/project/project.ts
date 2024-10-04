@@ -207,17 +207,23 @@ export class Project
       this.updateProjectState({
         selectedDevice: undefined,
       });
-      // because devices might be outdated after xcode installation change we list them again
-      const newDeviceList = await this.deviceManager.listAllDevices();
-      if (!isEqual(newDeviceList, devices)) {
-        selectInitialDevice(newDeviceList);
-      } else {
-        const listener = async (newDevices: DeviceInfo[]) => {
-          this.deviceManager.removeListener("devicesChanged", listener);
+      // when we reach this place, it means there's no device that we can select, we
+      // wait for the new device to be added to the list:
+      const listener = async (newDevices: DeviceInfo[]) => {
+        this.deviceManager.removeListener("devicesChanged", listener);
+        if (this.projectState.selectedDevice) {
+          // device was selected in the meantime, we don't need to do anything
+          return;
+        } else if (isEqual(newDevices, devices)) {
+          // list is the same, we register listener to wait for the next change
+          this.deviceManager.addListener("devicesChanged", listener);
+        } else {
           selectInitialDevice(newDevices);
-        };
-        this.deviceManager.addListener("devicesChanged", listener);
-      }
+        }
+      };
+
+      // we trigger initial listener call with the most up to date list of devices
+      listener(await this.deviceManager.listAllDevices());
 
       return false;
     };
