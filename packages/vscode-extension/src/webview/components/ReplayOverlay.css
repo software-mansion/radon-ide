@@ -124,7 +124,6 @@
   background-color: var(--swm-replay-len-select-background);
   border-radius: 18px 18px 18px 18px;
   transform: translateY(4px);
-  z-index: 10;
 }
 
 .len-select-viewport {

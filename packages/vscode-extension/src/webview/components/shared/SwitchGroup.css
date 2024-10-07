@@ -37,10 +37,3 @@
 .switch-thumb[data-state="checked"] {
   transform: translateX(calc(var(--switch-width) - var(--thumb-size) - var(--switch-padding)));
 }
-
-.switch-group-label {
-  color: var(--swm-default-text);
-  font-size: 12px;
-  line-height: 1;
-  padding-left: 10px;
-}

@@ -56,7 +56,6 @@
   border-radius: 18px;
   padding-top: 4px;
   margin-left: calc(var(--swm-zoom-select-trigger-offset) * -1 / 2);
-  z-index: 10;
 }
 
 .zoom-select-viewport {
