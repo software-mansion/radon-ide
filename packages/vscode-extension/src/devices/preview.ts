@@ -78,7 +78,7 @@ export class Preview implements Disposable {
             const tempFileLocation = videoReadyMatch[2];
             const ext = path.extname(tempFileLocation);
             const fileName = workspace.name
-              ? `${workspace.name} RadonIDE replay${ext}`
+              ? `${workspace.name}-RadonIDE-replay${ext}`
               : `RadonIDE-replay${ext}`;
             handlers.resolve({
               url: videoReadyMatch[1],
