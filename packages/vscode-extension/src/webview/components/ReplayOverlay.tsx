@@ -294,6 +294,7 @@ export default function ReplayOverlay({
             setStartTime={handleStartTimeChange}
           />
           <Button
+            className="button-replay"
             onClick={() => {
               if (videoRef.current) {
                 if (isVideoPlaying(videoRef.current)) {
@@ -310,14 +311,26 @@ export default function ReplayOverlay({
           </Button>
           <Seekbar videoRef={videoRef} startTime={startTime} />
           <div style={{ display: "flex", flexDirection: "row" }}>
-            <Button onClick={stepBackward}>
+            <Button
+              className="button-replay"
+              onClick={stepBackward}
+              tooltip={{
+                label: "Previous frame",
+                type: "secondary",
+              }}>
               <span className="codicon codicon-triangle-left" />
             </Button>
-            <Button onClick={stepForward}>
+            <Button
+              className="button-replay"
+              onClick={stepForward}
+              tooltip={{
+                label: "Next frame",
+                type: "secondary",
+              }}>
               <span className="codicon codicon-triangle-right" />
             </Button>
-            <Button onClick={() => utils.saveVideoRecording(replayData)}>
-              <span className="codicon codicon-folder-opened" /> Save
+            <Button className="button-replay" onClick={() => utils.saveVideoRecording(replayData)}>
+              <span className="codicon codicon-save-as" /> Save
             </Button>
           </div>
           <span className="replay-controls-pad" />

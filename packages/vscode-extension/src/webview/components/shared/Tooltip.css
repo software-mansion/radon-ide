@@ -8,6 +8,7 @@
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
   box-shadow: var(--swm-backdrop-shadow);
+  z-index: 10;
 }
 
 .tooltip-primary {
