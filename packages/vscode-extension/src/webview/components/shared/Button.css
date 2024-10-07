@@ -65,9 +65,8 @@
 }
 
 .button-counter {
-  position: absolute;
+  position: relative;
   top: -5px;
-  right: -5px;
   border: 0px solid transparent;
   border-radius: 4px;
   color: var(--swm-button-counter);
