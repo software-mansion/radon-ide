@@ -5,6 +5,7 @@
   width: 100%;
   height: 100%;
   background: var(--swm-replay-overlay-backgroud);
+  background: var(--swm-replay-overlay-backgroud);
   display: flex;
   justify-content: center;
   align-items: center;
