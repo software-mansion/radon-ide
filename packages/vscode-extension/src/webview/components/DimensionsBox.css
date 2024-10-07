@@ -1,0 +1,15 @@
+.dimensions-box {
+  background-color: rgba(64, 64, 64, 1);
+  padding: 0 3px 0 3px;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.arrow {
+  background-color: rgba(64, 64, 64, 1);
+  position: absolute;
+  transform-origin: 50% 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
