@@ -18,7 +18,6 @@ import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { platform } from "os";
 
 type StartOptions = { cleanBuild: boolean };
 
