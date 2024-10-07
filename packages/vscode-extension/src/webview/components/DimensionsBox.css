@@ -1,5 +1,5 @@
 .dimensions-box {
-  background-color: rgba(64, 64, 64, 1);
+  background-color: var(--dimensions-box-background);
   padding: 0 3px 0 3px;
   position: absolute;
   display: flex;
@@ -8,7 +8,7 @@
 }
 
 .arrow {
-  background-color: rgba(64, 64, 64, 1);
+  background-color: var(--dimensions-box-background);
   position: absolute;
   transform-origin: 50% 50%;
   transform: translate(-50%, -50%) rotate(45deg);

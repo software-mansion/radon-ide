@@ -3,9 +3,9 @@ import { DeviceProperties } from "../utilities/consts";
 import "./DimensionsBox.css";
 
 const BOX_HEIGHT_FRACTION = 0.033;
-const FONT_SIZE_FRACTION = 0.8;
+const FONT_SIZE_FRACTION = 0.6;
 const BORDER_RADIUS_FRACTION = 0.15;
-const HORIZONTAL_PADDING_FRACTION = 0.15;
+const HORIZONTAL_PADDING_FRACTION = 0.3;
 const ARROW_SIZE_FRACTION = 0.4;
 
 const VERTICAL_POSITION_THRESHOLD = 0.3;

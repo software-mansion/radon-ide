@@ -125,6 +125,10 @@
   --touch-indicator-pressed-background: var(--green-light-100);
   --touch-indicator-pressed-border: var(--green-dark-120);
   --touch-indicator-pressed-shadow: 2px 2px 6px 1px rgba(0, 0, 0, 0.8);
+
+  /* Inspector */
+  --inspect-area-background: rgba(56, 172, 221, 0.85);
+  --dimensions-box-background: #404040;
 }
 
 /* Light theme */
