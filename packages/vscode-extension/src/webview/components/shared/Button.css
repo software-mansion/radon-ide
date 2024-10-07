@@ -80,3 +80,7 @@
 .button-absolute {
   position: absolute;
 }
+
+.button-replay:hover {
+  background-color: var(--swm-button-replay-hover);
+}

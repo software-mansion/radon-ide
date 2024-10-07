@@ -4,7 +4,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5),rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5));
+  background: var(--swm-replay-overlay-backgroud);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -49,14 +49,14 @@
 
 .replay-rec-indicator {
   position: absolute;
-  top: 30px;
-  left: 30px;
+  top: 33px;
+  left: 33px;
   display: flex;
   align-items: center;
   color: white;
   font-size: 200%;
   filter: blur(0.8px);
-  font-family:'Courier new', fixed;
+  font-family: "Courier new", fixed;
 }
 
 .replay-rec-dot {
@@ -68,16 +68,7 @@
 }
 
 .replay-close {
-  position: absolute;
   top: 30px;
-  right: 30px;
-}
-
-.replay-save {
-  display: flex;
-  flex-direction: row;
-  position: absolute;
-  bottom: 30px;
   right: 30px;
 }
 
@@ -94,10 +85,6 @@
 
 .replay-controls-pad {
   width: 0%;
-}
-
-.replay-controls .button:hover {
-  background-color: rgba(0, 0, 0, 0.2);
 }
 
 .len-select-trigger {
