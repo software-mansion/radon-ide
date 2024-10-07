@@ -1,6 +1,20 @@
+export type EasConfig = { profile: string; buildUUID?: string };
+export type CustomBuild = {
+  buildCommand?: string;
+  fingerprintCommand?: string;
+};
+
 export type LaunchConfigurationOptions = {
   appRoot?: string;
   metroConfigPath?: string;
+  customBuild?: {
+    ios?: CustomBuild;
+    android?: CustomBuild;
+  };
+  eas?: {
+    ios?: EasConfig;
+    android?: EasConfig;
+  };
   env?: Record<string, string>;
   ios?: {
     scheme?: string;
@@ -31,9 +45,7 @@ export type LaunchConfigUpdater = <K extends keyof LaunchConfigurationOptions>(
 
 export interface LaunchConfig {
   getConfig(): Promise<LaunchConfigurationOptions>;
-
   update: LaunchConfigUpdater;
-
   getAvailableXcodeSchemes(): Promise<string[]>;
   addListener<K extends keyof LaunchConfigEventMap>(
     eventType: K,

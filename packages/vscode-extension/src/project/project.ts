@@ -7,7 +7,6 @@ import {
   AppPermissionType,
   DeviceSettings,
   InspectData,
-  Locale,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -19,7 +18,6 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { Logger } from "../Logger";
-import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
@@ -31,6 +29,8 @@ import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
+import { CancelToken } from "../builders/cancelToken";
+import { PlatformBuildCache } from "../builders/PlatformBuildCache";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -45,7 +45,7 @@ export class Project
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
 
-  private detectedFingerprintChange: boolean;
+  private isCachedBuildStale: boolean;
 
   private expoRouterInstalled: boolean;
   private storybookInstalled: boolean;
@@ -85,7 +85,7 @@ export class Project
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.detectedFingerprintChange = false;
+    this.isCachedBuildStale = false;
     this.expoRouterInstalled = false;
     this.storybookInstalled = false;
 
@@ -101,7 +101,7 @@ export class Project
 
   onBuildSuccess = (): void => {
     // reset fingerprint change flag when build finishes successfully
-    this.detectedFingerprintChange = false;
+    this.isCachedBuildStale = false;
   };
 
   onStateChange = (state: StartupMessage): void => {
@@ -204,17 +204,23 @@ export class Project
       this.updateProjectState({
         selectedDevice: undefined,
       });
-      // because devices might be outdated after xcode installation change we list them again
-      const newDeviceList = await this.deviceManager.listAllDevices();
-      if (!isEqual(newDeviceList, devices)) {
-        selectInitialDevice(newDeviceList);
-      } else {
-        const listener = async (newDevices: DeviceInfo[]) => {
-          this.deviceManager.removeListener("devicesChanged", listener);
+      // when we reach this place, it means there's no device that we can select, we
+      // wait for the new device to be added to the list:
+      const listener = async (newDevices: DeviceInfo[]) => {
+        this.deviceManager.removeListener("devicesChanged", listener);
+        if (this.projectState.selectedDevice) {
+          // device was selected in the meantime, we don't need to do anything
+          return;
+        } else if (isEqual(newDevices, devices)) {
+          // list is the same, we register listener to wait for the next change
+          this.deviceManager.addListener("devicesChanged", listener);
+        } else {
           selectInitialDevice(newDevices);
-        };
-        this.deviceManager.addListener("devicesChanged", listener);
-      }
+        }
+      };
+
+      // we trigger initial listener call with the most up to date list of devices
+      listener(await this.deviceManager.listAllDevices());
 
       return false;
     };
@@ -285,7 +291,7 @@ export class Project
       return;
     }
 
-    if (this.detectedFingerprintChange) {
+    if (this.isCachedBuildStale) {
       await this.selectDevice(deviceInfo, false);
       return;
     }
@@ -336,8 +342,7 @@ export class Project
       oldMetro.dispose();
     }
 
-    Logger.debug("Installing Node Modules");
-    const installNodeModules = this.installNodeModules();
+    const waitForNodeModules = this.maybeInstallNodeModules();
 
     Logger.debug(`Launching devtools`);
     const waitForDevtools = this.devtools.start();
@@ -348,13 +353,13 @@ export class Project
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
-      [installNodeModules]
+      [waitForNodeModules]
     );
 
     Logger.debug("Checking expo router");
-    this.expoRouterInstalled = await this.dependencyManager.checkExpoRouterInstalled();
+    this.expoRouterInstalled = await this.dependencyManager.isInstalled("expoRouter");
     Logger.debug("Checking storybook");
-    this.storybookInstalled = await this.dependencyManager.checkStorybookInstalled();
+    this.storybookInstalled = await this.dependencyManager.isInstalled("storybook");
   }
   //#endregion
 
@@ -490,13 +495,16 @@ export class Project
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
 
-  private async installNodeModules(): Promise<void> {
-    const nodeModulesStatus = await this.dependencyManager.checkNodeModulesInstalled();
+  private async maybeInstallNodeModules() {
+    const installed = await this.dependencyManager.isInstalled("nodeModules");
 
-    if (!nodeModulesStatus.installed) {
-      await this.dependencyManager.installNodeModules(nodeModulesStatus.packageManager);
+    if (!installed) {
+      Logger.info("Installing node modules");
+      await this.dependencyManager.installNodeModules();
+      Logger.debug("Installing node modules succeeded");
+    } else {
+      Logger.debug("Node modules already installed - skipping");
     }
-    Logger.debug("Node Modules installed");
   }
 
   //#region Select device
@@ -581,9 +589,12 @@ export class Project
   };
 
   private checkIfNativeChanged = throttle(async () => {
-    if (!this.detectedFingerprintChange && this.projectState.selectedDevice) {
-      if (await didFingerprintChange(this.projectState.selectedDevice.platform)) {
-        this.detectedFingerprintChange = true;
+    if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
+      const platform = this.projectState.selectedDevice.platform;
+      const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
+
+      if (isCacheStale) {
+        this.isCachedBuildStale = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
@@ -600,6 +611,7 @@ function watchProjectFiles(onChange: () => void) {
   // We may revisit this if better performance is needed and create
   // recursive watches ourselves by iterating through workspace directories
   // to workaround this issue.
+
   const savedFileWatcher = workspace.onDidSaveTextDocument(onChange);
 
   const watcher = workspace.createFileSystemWatcher("**/*");

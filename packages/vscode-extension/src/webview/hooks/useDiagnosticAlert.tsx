@@ -40,11 +40,11 @@ const diagnosticAlert = {
   actions: <Actions />,
 };
 export function useDiagnosticAlert(platform?: DevicePlatform) {
-  const { isCommonError, isAndroidError, isIosError } = useDependencies();
-  let open = isCommonError;
-  if (platform === DevicePlatform.Android && isAndroidError) {
+  const { errors } = useDependencies();
+  let open = Boolean(errors?.common);
+  if (platform === DevicePlatform.Android && errors?.android) {
     open = true;
-  } else if (platform === DevicePlatform.IOS && isIosError) {
+  } else if (platform === DevicePlatform.IOS && errors?.ios) {
     open = true;
   }
   useToggleableAlert(open, diagnosticAlert);

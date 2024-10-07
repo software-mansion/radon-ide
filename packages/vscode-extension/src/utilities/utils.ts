@@ -3,10 +3,12 @@ import { homedir } from "node:os";
 import fs from "fs";
 import path from "path";
 import JSON5 from "json5";
+import vscode from "vscode";
 import { Logger } from "../Logger";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsInterface } from "../common/utils";
+import { Platform } from "./platform";
 import { RecordingData } from "../common/Project";
 
 type KeybindingType = {
@@ -20,12 +22,19 @@ export class Utils implements UtilsInterface {
   public async getCommandsCurrentKeyBinding(commandName: string) {
     const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
     const extensionPackageJson = require(packageJsonPath);
+    const ideName = vscode.env.appName.includes("Cursor") ? "Cursor" : "Code";
     let keybindingsJsonPath;
     let keybindingsJson;
     try {
       keybindingsJsonPath = path.join(
         homedir(),
-        "Library/Application Support/Code/User/keybindings.json"
+        Platform.select({
+          macos: path.join("Library", "Application Support"),
+          windows: path.join("AppDat", "Roaming"),
+        }),
+        ideName,
+        "User",
+        "keybindings.json"
       );
       // cannot use require because the file may contain comments
       keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());

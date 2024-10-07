@@ -2,10 +2,9 @@ import os from "os";
 import fs from "fs";
 import { createHash, Hash } from "crypto";
 import path, { join } from "path";
-import { Readable } from "stream";
 import { finished } from "stream/promises";
-import { ReadableStream } from "stream/web";
 import { workspace } from "vscode";
+import fetch from "node-fetch";
 import { Logger } from "../Logger";
 
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
@@ -54,6 +53,23 @@ export function getNativeABI() {
       return ABI.X86;
     default:
       return ABI.ARMV8;
+  }
+}
+
+export enum XCODEBUILD_ARCH {
+  ARM64 = "arm64",
+  X86_64 = "x86_64",
+  I386 = "i386",
+}
+
+export function getXcodebuildArch() {
+  switch (process.arch) {
+    case "x64":
+      return XCODEBUILD_ARCH.X86_64;
+    case "ia32":
+      return XCODEBUILD_ARCH.I386;
+    default:
+      return XCODEBUILD_ARCH.ARM64;
   }
 }
 
@@ -156,6 +172,31 @@ function isPidRunning(pid: number) {
   } catch (_e) {
     return false;
   }
+}
+
+export async function downloadBinary(url: string, destination: string) {
+  let body: NodeJS.ReadableStream;
+  let ok: boolean;
+  try {
+    const result = await fetch(url);
+    if (!result.body) {
+      return false;
+    }
+    body = result.body;
+    ok = result.ok;
+  } catch (_e) {
+    // Network error
+    return false;
+  }
+
+  if (!ok) {
+    return false;
+  }
+
+  const fileStream = fs.createWriteStream(destination, { flags: "w" });
+  await finished(body.pipe(fileStream));
+
+  return true;
 }
 
 async function calculateFileMD5(filePath: string, hash: Hash) {
