@@ -7,9 +7,11 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "copy-shared": "../shared/copy.sh bare ./shared"
   },
   "dependencies": {
+    "radon-ide": "^0.0.1",
     "react": "18.3.1",
     "react-native": "^0.76.0-rc.1"
   },

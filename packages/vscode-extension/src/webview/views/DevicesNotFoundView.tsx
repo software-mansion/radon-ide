@@ -68,7 +68,7 @@ function DevicesNotFoundView() {
   const { iOSRuntimes, androidImages, deviceManager } = useDevices();
   const [isIOSCreating, withIosCreating] = useLoadingState();
   const [isAndroidCreating, withAndroidCreating] = useLoadingState();
-  const { androidEmulatorError, iosSimulatorError } = useDependencies();
+  const { errors } = useDependencies();
   const utils = useUtils();
 
   function openCreateNewDeviceModal() {
@@ -79,8 +79,8 @@ function DevicesNotFoundView() {
   }
 
   async function createAndroidDevice() {
-    if (androidEmulatorError !== undefined) {
-      utils.showDismissableError(androidEmulatorError);
+    if (errors?.emulator) {
+      utils.showDismissableError(errors?.emulator.message);
       return;
     }
 
@@ -99,8 +99,8 @@ function DevicesNotFoundView() {
   }
 
   async function createIOSDevice() {
-    if (iosSimulatorError !== undefined) {
-      utils.showDismissableError(iosSimulatorError);
+    if (errors?.simulator) {
+      utils.showDismissableError(errors.simulator.message);
       return;
     }
 
