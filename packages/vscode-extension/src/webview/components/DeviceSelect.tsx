@@ -78,9 +78,7 @@ function renderDevices(
       <Select.Label className="device-select-label">{deviceLabel}</Select.Label>
       {devices.map((device) => (
         <RichSelectItem
-          value={device.id}
           key={device.id}
-          disabled={!device.available}
           icon={<span className="codicon codicon-device-mobile" />}
           title={device.name}
           subtitle={device.systemName}
