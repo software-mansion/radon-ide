@@ -1,13 +1,13 @@
 import path from "path";
+import fs from "fs";
 import { Disposable, Uri, workspace } from "vscode";
+import stripAnsi from "strip-ansi";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { Devtools } from "./devtools";
-import stripAnsi from "strip-ansi";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import fs from "fs";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -257,9 +257,13 @@ export class Metro implements Disposable {
       // pageId can sometimes be negative so we can't just use .split('-') here
       const matches = page.id.match(/([^-]+)-(-?\d+)/);
 
-      if (!matches) continue;
+      if (!matches) {
+        continue;
+      }
       const pageId = parseInt(matches[2]);
-      if (pageId !== -1) continue;
+      if (pageId !== -1) {
+        continue;
+      }
       //If deviceId is a number we want to pick the highest one, with expo it's never a number and we pick the latest record
       if (Number.isInteger(matches[1])) {
         const deviceId = parseInt(matches[1]);

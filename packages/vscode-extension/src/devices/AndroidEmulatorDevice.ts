@@ -1,14 +1,14 @@
-import { Preview } from "./preview";
-import { DeviceBase } from "./DeviceBase";
 import path from "path";
 import fs from "fs";
 import { EOL } from "node:os";
 import xml2js from "xml2js";
+import { v4 as uuidv4 } from "uuid";
+import { Preview } from "./preview";
+import { DeviceBase } from "./DeviceBase";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
-import { v4 as uuidv4 } from "uuid";
 import { BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
@@ -18,14 +18,22 @@ import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoG
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 
-export const EMULATOR_BINARY = Platform.select({
-  macos: path.join(ANDROID_HOME, "emulator", "emulator"),
-  windows: path.join(ANDROID_HOME, "emulator", "emulator.exe"),
-});
-const ADB_PATH = Platform.select({
-  macos: path.join(ANDROID_HOME, "platform-tools", "adb"),
-  windows: path.join(ANDROID_HOME, "platform-tools", "adb.exe"),
-});
+export const EMULATOR_BINARY = path.join(
+  ANDROID_HOME,
+  "emulator",
+  Platform.select({
+    macos: "emulator",
+    windows: "emulator.exe",
+  })
+);
+const ADB_PATH = path.join(
+  ANDROID_HOME,
+  "platform-tools",
+  Platform.select({
+    macos: "adb",
+    windows: "adb.exe",
+  })
+);
 const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
@@ -214,7 +222,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
       );
       prefs = await xml2js.parseStringPromise(stdout, { explicitArray: true });
       // test if prefs.map is an object, otherwise we just start from an empty prefs
-      if (typeof prefs.map !== "object") throw new Error("Invalid prefs file format");
+      if (typeof prefs.map !== "object") {
+        throw new Error("Invalid prefs file format");
+      }
     } catch (e) {
       // preferences file does not exists
       prefs = { map: {} };
@@ -301,15 +311,20 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
     }
-    // adb install sometimes fails because we call it too early after the device is initialized.
-    // we haven't found a better way to test if device is ready and already wait for boot_completed
-    // flag in waitForEmulatorOnline. But even after that even is delivered, adb install also sometimes
-    // fails claiming it is too early. The workaround therefore is to retry install command.
-    if (forceReinstall) {
+
+    // allowNonZeroExit is set to true to not print errors when INSTALL_FAILED_UPDATE_INCOMPATIBLE occurs.
+    const installApk = (allowDowngrade: boolean) =>
+      exec(
+        ADB_PATH,
+        ["-s", this.serial!, "install", ...(allowDowngrade ? ["-d"] : []), "-r", build.apkPath],
+        { allowNonZeroExit: true }
+      );
+
+    const uninstallApp = async (packageName: string) => {
       try {
         await retry(
           () =>
-            exec(ADB_PATH, ["-s", this.serial!, "uninstall", build.packageName], {
+            exec(ADB_PATH, ["-s", this.serial!, "uninstall", packageName], {
               allowNonZeroExit: true,
             }),
           2,
@@ -318,27 +333,37 @@ export class AndroidEmulatorDevice extends DeviceBase {
       } catch (e) {
         Logger.error("Error while uninstalling will be ignored", e);
       }
+    };
+
+    // adb install sometimes fails because we call it too early after the device is initialized.
+    // we haven't found a better way to test if device is ready and already wait for boot_completed
+    // flag in waitForEmulatorOnline. But even after that even is delivered, adb install also sometimes
+    // fails claiming it is too early. The workaround therefore is to retry install command.
+    if (forceReinstall) {
+      await uninstallApp(build.packageName);
     }
 
-    const installApk = (allowDowngrade: boolean) => {
-      return exec(ADB_PATH, [
-        "-s",
-        this.serial!,
-        "install",
-        ...(allowDowngrade ? ["-d"] : []),
-        "-r",
-        build.apkPath,
-      ]);
-    };
     await retry(
-      () => installApk(false),
+      async (retryNumber) => {
+        if (retryNumber === 0) {
+          await installApk(false);
+        } else if (retryNumber === 1) {
+          // There's a chance that same emulator was used in newer version of Expo
+          // and then RN IDE was opened on older project, in which case installation
+          // will fail. We use -d flag which allows for downgrading debuggable
+          // applications (see `adb shell pm`, install command)
+          await installApk(true);
+        } else {
+          // If the app is still not installed, we try to uninstall it first to
+          // avoid "INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package <name>
+          // signatures do not match newer version; ignoring!" error. This error
+          // may come when building locally and with EAS.
+          await uninstallApp(build.packageName);
+          await installApk(true);
+        }
+      },
       2,
-      1000,
-      // there's a chance that same emulator was used in newer version of Expo
-      // and then RN IDE was opened on older project, in which case installation
-      // will fail. We use -d flag which allows for downgrading debuggable
-      // applications (see `adb shell pm`, install command)
-      () => installApk(true)
+      1000
     );
   }
 

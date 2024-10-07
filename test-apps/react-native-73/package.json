@@ -10,7 +10,8 @@
     "test": "jest",
     "type-check": "tsc",
     "test:report": "jest --collectCoverage --coverageDirectory=\"./coverage\" --ci --reporters=default --reporters=jest-junit --coverage",
-    "pod-install": "cd ios && RCT_NEW_ARCH_ENABLED=1 bundle exec pod install && cd .."
+    "pod-install": "cd ios && RCT_NEW_ARCH_ENABLED=1 bundle exec pod install && cd ..",
+    "copy-shared": "../shared/copy.sh bare ./shared"
   },
   "dependencies": {
     "@react-native-masked-view/masked-view": "^0.3.0",
@@ -19,6 +20,7 @@
     "@tanstack/react-query": "^5.20.5",
     "i18next": "^23.8.2",
     "ky": "^1.2.0",
+    "radon-ide": "^0.0.1",
     "react": "18.2.0",
     "react-i18next": "^14.0.5",
     "react-native": "0.73.4",

@@ -1,14 +1,16 @@
-import { commands, window, env, Uri } from "vscode";
-import { Logger } from "../Logger";
 import { homedir } from "node:os";
+import fs from "fs";
 import path from "path";
 import JSON5 from "json5";
-import fs from "fs";
+import { commands, window, env, Uri } from "vscode";
+import vscode from "vscode";
+import { Logger } from "../Logger";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsInterface } from "../common/utils";
+import { Platform } from "./platform";
 
-type keybindingType = {
+type KeybindingType = {
   command: string;
   key?: string;
   mac?: string;
@@ -19,12 +21,19 @@ export class Utils implements UtilsInterface {
   public async getCommandsCurrentKeyBinding(commandName: string) {
     const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
     const extensionPackageJson = require(packageJsonPath);
+    const ideName = vscode.env.appName.includes("Cursor") ? "Cursor" : "Code";
     let keybindingsJsonPath;
     let keybindingsJson;
     try {
       keybindingsJsonPath = path.join(
         homedir(),
-        "Library/Application Support/Code/User/keybindings.json"
+        Platform.select({
+          macos: path.join("Library", "Application Support"),
+          windows: path.join("AppDat", "Roaming"),
+        }),
+        ideName,
+        "User",
+        "keybindings.json"
       );
       // cannot use require because the file may contain comments
       keybindingsJson = JSON5.parse(fs.readFileSync(keybindingsJsonPath).toString());
@@ -35,7 +44,7 @@ export class Utils implements UtilsInterface {
 
     const isRNIDECommand =
       !!extensionPackageJson.contributes.commands &&
-      !!extensionPackageJson.contributes.commands.find((command: keybindingType) => {
+      !!extensionPackageJson.contributes.commands.find((command: KeybindingType) => {
         return command.command === commandName;
       });
     if (!isRNIDECommand) {
@@ -43,7 +52,7 @@ export class Utils implements UtilsInterface {
       return undefined;
     }
 
-    const userKeybinding = keybindingsJson.find((command: keybindingType) => {
+    const userKeybinding = keybindingsJson.find((command: KeybindingType) => {
       return command.command === commandName;
     });
     if (userKeybinding) {
@@ -51,7 +60,7 @@ export class Utils implements UtilsInterface {
     }
 
     const defaultKeybinding = extensionPackageJson.contributes.keybindings.find(
-      (keybinding: keybindingType) => {
+      (keybinding: KeybindingType) => {
         return keybinding.command === commandName;
       }
     );

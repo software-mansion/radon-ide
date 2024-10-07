@@ -1,3 +1,4 @@
+import fs from "fs";
 import {
   commands,
   languages,
@@ -24,7 +25,6 @@ import {
   setExtensionContext,
 } from "./utilities/extensionContext";
 import { command, setupPathEnv } from "./utilities/subprocess";
-import fs from "fs";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
@@ -32,7 +32,6 @@ import { Project } from "./project/project";
 import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
 
-const BIN_MODIFICATION_DATE_KEY = "bin_modification_date";
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
 function handleUncaughtErrors() {

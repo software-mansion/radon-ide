@@ -1,5 +1,5 @@
-import { Disposable } from "vscode";
 import http from "http";
+import { Disposable } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
 

@@ -124,6 +124,77 @@ Below is an example of how the `launch.json` file could look like with android v
 }
 ```
 
+### Custom build settings
+
+Instead of letting Radon IDE build your app, you can use scripts (`buildScript` option) or [Expo
+Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it.
+
+The requirement for scripts is to output the absolute path to the built app as
+the last line of the standard output. If custom fingerprint script is used, it
+should output fingerprint (a string identifying the build) as the last line of the standard output. When
+fingerprint changes between invocations, RN IDE will rebuild the project. The
+IDE runs fingerprint quite frequently (i.e., on every file save), so this
+process should be fast and avoid over the network communication.
+
+Both `customBuild` and `eas` are objects having `ios` and `android` optional
+keys. You can't specify one platform in both custom script and EAS build
+options.
+
+`customBuild.ios` and `customBuild.android` have following structure with
+optional keys that can be used independently:
+- `buildCommand` – string, specifies a command used for building.
+- `fingerprintCommand` – string, specifies a command used for creating fingerprint.
+
+Example:
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "radon-ide",
+      "request": "launch",
+      "name": "Radon IDE panel",
+      "customBuild": {
+        "android": { "buildCommand": "npm run build:ftp-fetch-android" }
+        "ios": {
+          "buildCommand": "npm run build:ftp-fetch-ios",
+          "fingerprintCommand": "date '+%Y-%m-%d'"
+        }
+      }
+    }
+  ]
+}
+```
+
+`eas.ios` and `eas.android` are objects taking keys:
+- `profile` – required, used for [selecting builds](https://docs.expo.dev/build/eas-json/#development-builds) suitable for running in simulators.
+- `buildUUID` – when specified, downloads build using its UUID. It uses latest
+  build otherwise.
+
+Below is an example that replaces iOS and Android local builds with builds from EAS:
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "radon-ide",
+      "request": "launch",
+      "name": "Radon IDE panel",
+      "eas": {
+        "ios": {
+          "profile": "development",
+        },
+        "android": {
+          "profile": "development",
+          "buildUUID": "40466d0a-96fa-5d9c-80db-d055e78023bd"
+        }
+      }
+    }
+  ]
+}
+```
+
+
 ### Other settings
 
 Here, we list other attributes that can be configured using launch configuration which doesn't fit in any of the above categories:

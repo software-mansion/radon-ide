@@ -1,3 +1,4 @@
+import path from "path";
 import { DebugConfiguration } from "vscode";
 import {
   DebugSession,
@@ -25,7 +26,6 @@ import {
   CDPRemoteObject,
 } from "./cdp";
 import { VariableStore } from "./variableStore";
-import path from "path";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -98,12 +98,12 @@ export class DebugAdapter extends DebugSession {
     this.connection = new WebSocket(configuration.websocketAddress);
 
     this.connection.on("open", () => {
-      this.sendCDPMessage("FuseboxClient.setClientMetadata", {});
+      this.sendCDPMessage("FuseboxClient.setClientMetadata", {}).catch(); // ignore error as it will throw on old debugger and is not critical
       this.sendCDPMessage("Runtime.enable", {});
       this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
       this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
-      this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 });
-      this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] });
+      this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(); // ignore error as it will throw on old debugger and is not critical
+      this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(); // ignore error as it will throw on old debugger and is not critical
       this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {});
       this.sendCDPMessage("Runtime.evaluate", {
         expression: "__RNIDE_onDebuggerConnected()",
@@ -123,7 +123,11 @@ export class DebugAdapter extends DebugSession {
           messagePromise.resolve(message.result);
         } else if (message.error && messagePromise?.reject) {
           Logger.warn("CDP message error received", message.error);
-          messagePromise.reject(message.error);
+          // create an error object such that we can capture stack trace and assign
+          // all object error properties as provided by CDP
+          const error = new Error();
+          Object.assign(error, message.error);
+          messagePromise.reject(error);
         }
         return;
       }

@@ -1,3 +1,4 @@
+import { EventEmitter } from "stream";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
   IosSimulatorDevice,
@@ -23,7 +24,6 @@ import {
   IOSDeviceTypeInfo,
   AndroidSystemImageInfo,
 } from "../common/DeviceManager";
-import { EventEmitter } from "stream";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
