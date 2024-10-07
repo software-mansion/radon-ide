@@ -17,7 +17,7 @@
 }
 
 .feedback-button {
-  opacity: 0.5;
+  color: var(--swm-disabled-text);
 }
 
 .button-group-bottom {

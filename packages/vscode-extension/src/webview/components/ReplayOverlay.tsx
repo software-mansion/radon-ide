@@ -270,7 +270,7 @@ export default function ReplayOverlay({
 
   // shifting the time a bit here such that it displays the final value properly despite using Math.floor
   const timeSec = Math.floor(time - startTime + 0.05);
-  const paddedTime = timeSec.toString().padStart(2, "0");
+  const timeFormat = `${Math.floor(timeSec / 60)}:${(timeSec % 60).toString().padStart(2, "0")}`;
   return (
     <div className="replay-overlay">
       <div className="replay-corner replay-top-left" />
@@ -279,7 +279,7 @@ export default function ReplayOverlay({
       <div className="replay-corner replay-bottom-right" />
       <div className="replay-rec-indicator">
         <div className="replay-rec-dot" />
-        <span>REPLAY 0:{paddedTime}</span>
+        <span>REPLAY {timeFormat}</span>
       </div>
       <Button onClick={onClose} className="button-absolute replay-close">
         <span className="codicon codicon-chrome-close" />

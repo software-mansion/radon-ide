@@ -13,7 +13,6 @@
   transition: all 200ms 0ms ease-in-out;
   user-select: none;
   gap: 8px;
-  position: relative;
 }
 
 .button:disabled {
