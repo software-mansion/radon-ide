@@ -160,6 +160,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-device-select-rich-item-text: var(--navy-light-100);
   --swm-device-select-rich-item-subtitle: var(--navy-light-40);
   --swm-device-select-rich-item-icon: var(--navy-light-20);
+  --swm-device-select-rich-item-icon-selected: var(--navy-light-40);
 
   /* Slider */
   --swm-slider: var(--navy-light-60);
@@ -235,8 +236,8 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-device-title: var(--swm-default-text);
   --swm-device-subtitle: var(--navy-light-60);
   --swm-device-icon: var(--swm-default-text);
-  --swm-device-icon-background: var(--navy-light-10);
-  --swm-device-icon-background-selected: var(--navy-light-20);
+  --swm-device-icon-background: var(--navy-light-20);
+  --swm-device-icon-background-selected: var(--navy-light-40);
   --swm-device-delete-icon: var(--red-light-100);
   --swm-device-warning-icon: var(--yellow-light-80);
 
