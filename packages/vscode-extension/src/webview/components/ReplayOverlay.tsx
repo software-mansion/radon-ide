@@ -169,36 +169,24 @@ function LengthSelector({ startTime, videoRef, setStartTime }: LengthSelectorPro
 
 type ReplayOverlayProps = {
   replayData: RecordingData;
-  time: number;
   isRewinding: boolean;
-  isPlaying: boolean;
-  isEnded: boolean;
-  startTime: number;
-  setStartTime: React.Dispatch<React.SetStateAction<number>>;
-  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsEnded: React.Dispatch<React.SetStateAction<boolean>>;
-  setCurrentTime: React.Dispatch<React.SetStateAction<number>>;
   setIsRewinding: React.Dispatch<React.SetStateAction<boolean>>;
   videoRef: React.RefObject<HTMLVideoElement>;
   onClose: () => void;
 };
 
 export default function ReplayOverlay({
-  time,
-  startTime,
   isRewinding,
-  isPlaying,
-  isEnded,
-  setStartTime,
-  setIsPlaying,
-  setIsEnded,
-  setCurrentTime,
   setIsRewinding,
   videoRef,
   onClose,
   replayData,
 }: ReplayOverlayProps) {
   const utils = useUtils();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isEnded, setIsEnded] = useState(false);
+  const [startTime, setStartTime] = useState(0);
+  const [time, setCurrentTime] = useState(0);
 
   function stepForward() {
     if (videoRef.current) {

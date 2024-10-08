@@ -27,23 +27,11 @@ type ReplayVideoProps = {
 export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isRewinding, setIsRewinding] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isEnded, setIsEnded] = useState(false);
-  const [startTime, setStartTime] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
 
   return (
     <>
       <ReplayOverlay
-        time={currentTime}
         isRewinding={isRewinding}
-        isPlaying={isPlaying}
-        isEnded={isEnded}
-        startTime={startTime}
-        setStartTime={setStartTime}
-        setIsPlaying={setIsPlaying}
-        setIsEnded={setIsEnded}
-        setCurrentTime={setCurrentTime}
         setIsRewinding={setIsRewinding}
         videoRef={videoRef}
         onClose={onClose}
