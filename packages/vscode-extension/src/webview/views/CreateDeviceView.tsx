@@ -1,6 +1,6 @@
+import { useEffect, useRef, useState, FocusEventHandler } from "react";
 import Select from "../components/shared/Select";
 import "./CreateDeviceView.css";
-import { useEffect, useRef, useState, FocusEventHandler } from "react";
 import { useDevices } from "../providers/DevicesProvider";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
@@ -12,7 +12,6 @@ import {
 import { DevicePlatform } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform } from "../providers/UtilsProvider";
-import { values } from "lodash";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -90,6 +89,11 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           disabled: !systemImage.available,
         }));
 
+  function formatCustomName(name: string): string {
+    const singleSpaced = name.replace(/\s+/g, " ");
+    return singleSpaced.replace(/[^a-zA-Z0-9 _-]/g, "");
+  }
+
   async function createDevice() {
     if (!selectedSystemName) {
       return;
@@ -97,7 +101,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
 
     setLoading(true);
     try {
-      const customName = inputRef.current!.value;
+      const customName = formatCustomName(inputRef.current!.value).trim();
       if (devicePlatform === "ios" && Platform.OS === "macos") {
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
@@ -120,13 +124,13 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
     }
   }
 
-  const MAX_CUSTOM_NAME_LENGTH = 30;
+  const MAX_CUSTOM_NAME_LENGTH = 20; // fits to DeviceSelect.Content
 
   const handleCustomNameChange: FocusEventHandler<HTMLInputElement> = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const text = inputRef.current!.value;
-    setIsCustomNameValid(text.length <= MAX_CUSTOM_NAME_LENGTH);
+    inputRef.current!.value = formatCustomName(inputRef.current!.value);
+    setIsCustomNameValid(inputRef.current!.value.length <= MAX_CUSTOM_NAME_LENGTH);
   };
 
   return (

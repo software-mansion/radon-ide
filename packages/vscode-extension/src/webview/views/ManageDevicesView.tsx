@@ -25,6 +25,7 @@ function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
     }
   };
 
+  const deviceName = deviceInfo.customName ? deviceInfo.customName : deviceInfo.name;
   return (
     <div
       className="device-row"
@@ -44,9 +45,7 @@ function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
         )}
       </div>
       <div className="device-label">
-        <div className="device-title">
-          {isSelected ? <b>{deviceInfo.name}</b> : deviceInfo.name}
-        </div>
+        <div className="device-title">{isSelected ? <b>{deviceName}</b> : deviceName}</div>
         <div className="device-subtitle">{deviceInfo.systemName}</div>
       </div>
       <IconButton
