@@ -1,26 +1,39 @@
+:root {
+  --switch-width: 42px;
+  --switch-height: 25px;
+  --thumb-size: 21px;
+  --switch-padding: 2px;
+  --switch-transition-duration: 100ms;
+}
+
+.small-switch {
+  --switch-width: 35px;
+  --switch-height: 20px;
+  --thumb-size: 15px;
+}
+
 .switch-root {
-  width: 42px;
-  height: 25px;
+  width: var(--switch-width);
+  height: var(--switch-height);
   background-color: var(--swm-switch-root-disabled);
   border-radius: 9999px;
   position: relative;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
-
 .switch-root[data-state="checked"] {
   background-color: var(--navy-light-60);
 }
 
 .switch-thumb {
   display: block;
-  width: 21px;
-  height: 21px;
+  width: var(--thumb-size);
+  height: var(--thumb-size);
   background-color: white;
   border-radius: 9999px;
-  transition: transform 100ms;
-  transform: translateX(2px);
+  transition: transform var(--switch-transition-duration);
+  transform: translateX(var(--switch-padding));
   will-change: transform;
 }
 .switch-thumb[data-state="checked"] {
-  transform: translateX(19px);
+  transform: translateX(calc(var(--switch-width) - var(--thumb-size) - var(--switch-padding)));
 }
