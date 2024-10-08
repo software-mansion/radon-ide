@@ -11,7 +11,7 @@ export const ANDROID_HOME =
   });
 
 const ANDROID_STUDIO_PATH = Platform.select({
-  macos: path.join("Applications", "Android Studio.app"),
+  macos: "/Applications/Android Studio.app",
   windows: path.join("C:", "Program Files", "Android", "Android Studio"),
 });
 
