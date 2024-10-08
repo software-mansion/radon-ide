@@ -18,7 +18,6 @@
   display: grid;
   grid-template-columns: 32px 1fr 36px;
   align-items: center;
-  margin-bottom: 0 2px 4px 2px;
   gap: 10px;
   line-height: 1;
   height: 48px;
@@ -42,6 +41,7 @@
 .device-label {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 .device-title {
   font-size: 14px;
@@ -54,6 +54,9 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+.device-label:hover .device-subtitle {
+  white-space: normal;
 }
 .device-icon, .device-icon-selected {
   width: 32px;

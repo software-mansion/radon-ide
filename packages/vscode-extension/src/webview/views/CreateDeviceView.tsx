@@ -124,7 +124,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
     }
   }
 
-  const MAX_CUSTOM_NAME_LENGTH = 20; // fits to DeviceSelect.Content
+  const MAX_CUSTOM_NAME_LENGTH = 30;
 
   const handleCustomNameChange: FocusEventHandler<HTMLInputElement> = (
     event: React.ChangeEvent<HTMLInputElement>

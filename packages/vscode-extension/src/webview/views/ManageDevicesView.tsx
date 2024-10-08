@@ -25,7 +25,10 @@ function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
     }
   };
 
-  const deviceName = deviceInfo.customName ? deviceInfo.customName : deviceInfo.name;
+  const deviceTitle = deviceInfo.customName ? deviceInfo.customName : deviceInfo.name;
+  const deviceSubtitle = deviceInfo.customName
+    ? `${deviceInfo.name} - ${deviceInfo.systemName}`
+    : deviceInfo.systemName;
   return (
     <div
       className="device-row"
@@ -45,8 +48,8 @@ function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
         )}
       </div>
       <div className="device-label">
-        <div className="device-title">{isSelected ? <b>{deviceName}</b> : deviceName}</div>
-        <div className="device-subtitle">{deviceInfo.systemName}</div>
+        <div className="device-title">{isSelected ? <b>{deviceTitle}</b> : deviceTitle}</div>
+        <div className="device-subtitle">{deviceSubtitle}</div>
       </div>
       <IconButton
         tooltip={{
