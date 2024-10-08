@@ -90,21 +90,39 @@ Unfortunately debugging isn't available for the frontend code, however you can u
 
 ## Shared app template
 
-In `test-apps/` directory there is `shared/` directory with the common UI code for
-apps. To use this code in the app, use `copy.sh` script. It should use minimal
-set of dependencies, ideally nothing except react-native.
-If app uses expo-router, we additionally copy `shared/navigation/` directory
-which uses expo-router and `@expo/vector-icons`.
+We provide few shared components with common code across tests apps in `shared/`
+directory.
+They only depend on `react-native`. Components in `shared/navigation` additionally
+depend on `expo-router` and `expo-icons`.
 
-If app wants to use this shared code, it should add an entry to .gitignore for
-shared directory under its own `src/` and run copy script. If shared code is
-updated, every app using it should rerun the copy script.
+To use them in the app:
+1. Add npm command in test app package.json
+    - for expo-router apps: `"copy-shared": "../shared/copy.sh expo-router ./shared"`. 
+    - for RN apps: `"copy-shared": "../shared/copy.sh bare ./shared"`.
+2. Run it: `npm run copy-shared`. This copies shared components to `./shared`.
+3. For RN apps, replace `App.tsx` with the `./shared/MainScreen.tsx` component.
+    ```ts
+    import {MainScreen} from './shared/MainScreen';
 
-Shared code mainly exports `MainScreen` component and `navigation/TabLayout` component.
-First one renders a screen with testing instructions and tab layout is meant to
-replace `(tabs)` part of default expo navigation routes, with `index` and
-`explore` routes. You can replace default `index.ts` and `_layout.ts` in tabs to
-use them.
+    export default MainScreen;
+    ```
+4. For apps with expo router, replace `app/(tabs)/_layout.tsx` and
+   `app/(tabs)/index.tsx` files.
+   ```ts
+   // contents of `app/(tabs)/_layout.ts`
+   import { TabLayout } from "@/shared/navigation/TabLayout";
 
-You can also use buttons and text from shared code to create custom screens that
-match the design.
+   export default TabLayout;
+   ```
+
+   ```ts
+   // contents of `app/(tabs)/index.ts`
+   import { MainScreen } from "@/shared/MainScreen";
+
+   export default MainScreen;
+   ```
+
+  You can also used other components in `shared` (e.g. `Text`, `Button`, `useScheme`) to theme the app.
+
+`shared/copy.sh bare|expo-router DEST` script works by copying shared directory to `DEST`
+and removing `navigation` directory if `bare` argument is used.
