@@ -13,7 +13,6 @@
   transition: all 200ms 0ms ease-in-out;
   user-select: none;
   gap: 8px;
-  position: relative;
 }
 
 .button:disabled {
@@ -66,13 +65,20 @@
 }
 
 .button-counter {
-  position: absolute;
+  position: relative;
   top: -5px;
-  right: -5px;
   border: 0px solid transparent;
   border-radius: 4px;
   color: var(--swm-button-counter);
   background-color: var(--swm-button-counter-background);
   padding: 2px 4px;
   font-size: 11px;
+}
+
+.button-absolute {
+  position: absolute;
+}
+
+.button-replay:hover {
+  background-color: var(--swm-button-replay-hover);
 }

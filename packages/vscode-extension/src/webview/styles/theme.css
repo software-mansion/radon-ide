@@ -1,5 +1,7 @@
 :root {
   /* Background */
+  --background-dark-160: #14171f;
+  --background-dark-140: #181b25;
   --background-dark-120: #1c1f2b;
   --background-dark-100: #232736;
   --background-dark-90: #272b3c;
@@ -193,6 +195,8 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-button-counter: var(--off-white);
   --swm-button-counter-background: var(--navy-light-60);
 
+  --swm-button-replay-hover: var(--navy-light-transparent);
+
   /* Tooltip */
   --swm-tooltip-primary: var(--swm-default-text);
   --swm-tooltip-primary-background: var(--swm-popover-background);
@@ -263,6 +267,18 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-zoom-select-highlighted: var(--off-white);
   --swm-zoom-select-disabled-text: var(--navy-light-20);
   --swm-zoom-select-separator: var(--navy-light-40);
+
+  /* Replay */
+  --swm-replay-overlay-backgroud: linear-gradient(
+    0deg,
+    rgba(232, 232, 232, 0.9),
+    rgba(185, 185, 185, 0.9)
+  );
+
+  --swm-replay-len-select: var(--swm-default-text);
+  --swm-replay-len-select-background: var(--grey-light-60);
+  --swm-replay-len-select-hover-background: var(--navy-light-transparent);
+  --swm-replay-len-select-highlighted-background: var(--grey-light-80);
 }
 
 /* Dark theme */
@@ -331,6 +347,8 @@ body[data-vscode-theme-kind="vscode-dark"] {
 
   --swm-button-counter: var(--off-white);
   --swm-button-counter-background: var(--background-dark-40);
+
+  --swm-button-replay-hover: var(--background-dark-160);
 
   /* Tooltip */
   --swm-tooltip-primary: var(--swm-default-text);
@@ -402,4 +420,18 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-zoom-select-highlighted: var(--background-dark-60);
   --swm-zoom-select-disabled-text: var(--background-dark-60);
   --swm-zoom-select-separator: var(--background-dark-50);
+
+  /* Replay */
+  --swm-replay-overlay-backgroud: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 1),
+    rgba(0, 0, 0, 0.5),
+    rgba(0, 0, 0, 0.5),
+    rgba(0, 0, 0, 0.5),
+    rgba(0, 0, 0, 0.5)
+  );
+  --swm-replay-len-select: var(--off-white);
+  --swm-replay-len-select-background: var(--background-dark-160);
+  --swm-replay-len-select-hover-background: var(--background-dark-120);
+  --swm-replay-len-select-highlighted-background: var(--background-dark-80);
 }

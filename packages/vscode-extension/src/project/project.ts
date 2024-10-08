@@ -11,6 +11,7 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
+  RecordingData,
   ReloadAction,
   StartupMessage,
   TouchPoint,
@@ -60,19 +61,7 @@ export class Project
     selectedDevice: undefined,
   };
 
-  private deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
-    DEVICE_SETTINGS_KEY
-  ) ?? {
-    appearance: "dark",
-    contentSize: "normal",
-    location: {
-      latitude: 50.048653,
-      longitude: 19.965474,
-      isDisabled: true,
-    },
-    hasEnrolledBiometrics: false,
-    locale: "en_US",
-  };
+  private deviceSettings: DeviceSettings;
 
   constructor(
     private readonly deviceManager: DeviceManager,
@@ -89,6 +78,7 @@ export class Project
       },
       hasEnrolledBiometrics: false,
       locale: "en_US",
+      replaysEnabled: false,
     };
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
@@ -161,6 +151,13 @@ export class Project
     this.updateProjectState({ status: "running" });
   }
   //#endregion
+
+  async captureReplay(): Promise<RecordingData> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    return this.deviceSession.captureReplay();
+  }
 
   async dispatchPaste(text: string) {
     this.deviceSession?.sendPaste(text);

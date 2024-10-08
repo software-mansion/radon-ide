@@ -40,6 +40,8 @@ export class DeviceSession implements Disposable {
   private debugSession: DebugSession | undefined;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
+  private deviceSettings: DeviceSettings | undefined;
+  private isLaunching = true;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -106,6 +108,9 @@ export class DeviceSession implements Disposable {
       platform: this.device.platform,
     });
 
+    this.isLaunching = true;
+    this.device.stopReplays();
+
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
     // bundle instead.
@@ -132,6 +137,11 @@ export class DeviceSession implements Disposable {
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
+
+    this.isLaunching = false;
+    if (this.deviceSettings?.replaysEnabled) {
+      this.device.startReplays();
+    }
 
     const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
     Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
@@ -184,6 +194,7 @@ export class DeviceSession implements Disposable {
   }
 
   public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+    this.deviceSettings = deviceSettings;
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
@@ -218,6 +229,10 @@ export class DeviceSession implements Disposable {
       return this.device.resetAppPermissions(permissionType, this.maybeBuildResult);
     }
     return false;
+  }
+
+  public async captureReplay() {
+    return this.device.captureReplay();
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
@@ -272,6 +287,12 @@ export class DeviceSession implements Disposable {
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
+    this.deviceSettings = settings;
+    if (settings.replaysEnabled && !this.isLaunching) {
+      this.device.startReplays();
+    } else {
+      this.device.stopReplays();
+    }
     return this.device.changeSettings(settings);
   }
 
