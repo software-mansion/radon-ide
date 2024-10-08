@@ -455,7 +455,7 @@ async function findCustomName(filePath?: string): Promise<string> {
   try {
     const content = await fs.promises.readFile(filePath, "utf-8");
     const lines = content.split("\n");
-    for (let line of lines) {
+    for (const line of lines) {
       const [key, value] = line.split("=");
       if (key.trim() === "customName") {
         return value.trim();
