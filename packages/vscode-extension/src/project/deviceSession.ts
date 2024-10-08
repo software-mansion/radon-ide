@@ -17,6 +17,7 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 type StartOptions = { cleanBuild: boolean };
 
@@ -102,6 +103,11 @@ export class DeviceSession implements Disposable {
   }
 
   private async launchApp() {
+    const launchRequestTime = Date.now();
+    getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
+      platform: this.device.platform,
+    });
+
     this.isLaunching = true;
     this.device.stopReplays();
 
@@ -116,6 +122,17 @@ export class DeviceSession implements Disposable {
 
     Logger.debug("Will wait for app ready and for preview");
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+
+    if (shouldWaitForAppLaunch) {
+      const reportWaitingStuck = setTimeout(() => {
+        Logger.info("App is taking very long to boot up, it might be stuck");
+        getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
+          platform: this.device.platform,
+        });
+      }, 30000);
+      waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
+    }
+
     const [previewUrl] = await Promise.all([this.device.startPreview(), waitForAppReady]);
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
@@ -125,6 +142,14 @@ export class DeviceSession implements Disposable {
     if (this.deviceSettings?.replaysEnabled) {
       this.device.startReplays();
     }
+
+    const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
+    Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
+    getTelemetryReporter().sendTelemetryEvent(
+      "app:launch:completed",
+      { platform: this.device.platform },
+      { durationSec: launchDurationSec }
+    );
 
     return previewUrl;
   }
@@ -146,7 +171,14 @@ export class DeviceSession implements Disposable {
     });
     this.maybeBuildResult = await this.disposableBuild.build;
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
-    Logger.info(`Build completed in ${buildDurationSec.toFixed(2)}s`);
+    Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
+    getTelemetryReporter().sendTelemetryEvent(
+      "build:completed",
+      {
+        platform: this.device.platform,
+      },
+      { durationSec: buildDurationSec }
+    );
   }
 
   private async installApp({ reinstall }: { reinstall: boolean }) {
