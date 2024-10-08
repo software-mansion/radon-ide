@@ -98,4 +98,13 @@ which uses expo-router and `@expo/vector-icons`.
 
 If app wants to use this shared code, it should add an entry to .gitignore for
 shared directory under its own `src/` and run copy script. If shared code is
-updated, every app using it should rerun the copy script. 
+updated, every app using it should rerun the copy script.
+
+Shared code mainly exports `MainScreen` component and `navigation/TabLayout` component.
+First one renders a screen with testing instructions and tab layout is meant to
+replace `(tabs)` part of default expo navigation routes, with `index` and
+`explore` routes. You can replace default `index.ts` and `_layout.ts` in tabs to
+use them.
+
+You can also use buttons and text from shared code to create custom screens that
+match the design.
