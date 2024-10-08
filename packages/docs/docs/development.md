@@ -122,7 +122,11 @@ To use them in the app:
    export default MainScreen;
    ```
 
-  You can also used other components in `shared` (e.g. `Text`, `Button`, `useScheme`) to theme the app.
+  You can also used other components in `shared` (e.g. `Text`, `Button`,
+  `useScheme`) to theme the app.
+  
+  After updating shared components you need to copy them again by running
+  `npm run copy-shared` in every test app. 
 
 `shared/copy.sh bare|expo-router DEST` script works by copying shared directory to `DEST`
 and removing `navigation` directory if `bare` argument is used.
