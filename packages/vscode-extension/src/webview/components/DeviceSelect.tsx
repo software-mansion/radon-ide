@@ -123,12 +123,18 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
 
       <Select.Portal>
         <Select.Content className="device-select-content dropdown-menu-content" position="popper">
+          <Select.ScrollUpButton className="device-select-scroll">
+            <span className="codicon codicon-chevron-up" />
+          </Select.ScrollUpButton>
           <Select.Viewport className="device-select-viewport">
             {renderDevices(DevicePlatform.IOS, iosDevices, selectedProjectDevice)}
             {renderDevices(DevicePlatform.Android, androidDevices, selectedProjectDevice)}
             {devices.length > 0 && <Select.Separator className="device-select-separator" />}
             <SelectItem value="manage">Manage devices...</SelectItem>
           </Select.Viewport>
+          <Select.ScrollDownButton className="device-select-scroll">
+            <span className="codicon codicon-chevron-down" />
+          </Select.ScrollDownButton>
         </Select.Content>
       </Select.Portal>
     </Select.Root>
