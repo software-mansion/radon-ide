@@ -101,7 +101,7 @@ export class DeviceSession implements Disposable {
   }
 
   private async launchApp() {
-    const launchReequestTime = Date.now();
+    const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
     });
@@ -133,7 +133,7 @@ export class DeviceSession implements Disposable {
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
 
-    const launchDurationSec = (Date.now() - launchReequestTime) / 1000;
+    const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
     Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(
       "app:launch:completed",
