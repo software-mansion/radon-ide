@@ -122,7 +122,7 @@ To use them in the app:
    export default MainScreen;
    ```
 
-  You can also used other components in `shared` (e.g. `Text`, `Button`,
+  You can also use other components in `shared` (e.g. `Text`, `Button`,
   `useScheme`) to theme the app.
   
   After updating shared components you need to copy them again by running
