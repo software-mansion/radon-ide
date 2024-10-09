@@ -175,10 +175,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
     await this.changeSettings(settings);
   }
 
-  async openDevMenu() {
-    await exec(ADB_PATH, ["-s", this.serial!, "shell", "input", "keyevent", "82"]);
-  }
-
   async configureExpoDevMenu(packageName: string) {
     if (packageName === "host.exp.exponent") {
       // For expo go we are unable to change this setting as the APK is not debuggable

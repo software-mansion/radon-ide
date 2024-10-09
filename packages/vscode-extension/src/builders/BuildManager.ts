@@ -7,6 +7,7 @@ import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { getAppRootFolder } from "../utilities/extensionContext";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelToken } from "./cancelToken";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -33,6 +34,11 @@ export class BuildManager {
     const { clean: forceCleanBuild, progressListener, onSuccess } = options;
     const { platform } = deviceInfo;
 
+    getTelemetryReporter().sendTelemetryEvent("build:requested", {
+      platform,
+      type: forceCleanBuild ? "clean" : "incremental",
+    });
+
     const cancelToken = new CancelToken();
     const buildCache = PlatformBuildCache.forPlatform(platform);
 
@@ -45,9 +51,12 @@ export class BuildManager {
       } else {
         const cachedBuild = await buildCache.getBuild(currentFingerprint);
         if (cachedBuild) {
+          getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
           return cachedBuild;
         }
       }
+
+      getTelemetryReporter().sendTelemetryEvent("build:start", { platform });
 
       let buildResult: BuildResult;
       let buildFingerprint = currentFingerprint;
@@ -70,6 +79,7 @@ export class BuildManager {
           const podsInstalled = await this.dependencyManager.isInstalled("pods");
           if (!podsInstalled) {
             Logger.info("Pods installation is missing or outdated. Installing Pods.");
+            getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
             await this.dependencyManager.installPods(cancelToken);
             // Installing pods may impact the fingerprint as new pods may be created under the project directory.
             // For this reason we need to recalculate the fingerprint after installing pods.

@@ -7,12 +7,17 @@
   gap: 4px;
 }
 
+.icons-rewind:before {
+  width: 0px;
+  margin: -4px;
+}
+
 .button-group-top {
   margin-bottom: 8px;
 }
 
 .feedback-button {
-  opacity: 0.5;
+  color: var(--swm-disabled-text);
 }
 
 .button-group-bottom {
@@ -46,6 +51,11 @@
 
 .spacer {
   flex: 1;
+}
+
+.icons-container {
+  display: flex;
+  align-items: center;
 }
 
 .dropdown-separator {

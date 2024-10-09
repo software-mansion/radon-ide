@@ -43,9 +43,6 @@ const RNInternals = {
     } catch (e) {}
     throw new Error("Couldn't locate LoadingView module");
   },
-  get DevMenu() {
-    return require("react-native/Libraries/NativeModules/specs/NativeDevMenu").default;
-  },
 };
 
 function getCurrentScene() {
@@ -245,12 +242,6 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     },
     [mainContainerRef]
   );
-
-  useAgentListener(devtoolsAgent, "RNIDE_iosDevMenu", (_payload) => {
-    // this native module is present only on iOS and will crash if called
-    // on Android
-    RNInternals.DevMenu.show();
-  });
 
   useAgentListener(
     devtoolsAgent,

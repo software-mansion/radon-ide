@@ -98,12 +98,15 @@ export class DebugAdapter extends DebugSession {
     this.connection = new WebSocket(configuration.websocketAddress);
 
     this.connection.on("open", () => {
-      this.sendCDPMessage("FuseboxClient.setClientMetadata", {}).catch(); // ignore error as it will throw on old debugger and is not critical
+      // the below catch handler is used to ignore errors coming from non critical CDP messages we
+      // expect in some setups to fail
+      const ignoreError = () => {};
+      this.sendCDPMessage("FuseboxClient.setClientMetadata", {}).catch(ignoreError);
       this.sendCDPMessage("Runtime.enable", {});
       this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
       this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
-      this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(); // ignore error as it will throw on old debugger and is not critical
-      this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(); // ignore error as it will throw on old debugger and is not critical
+      this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(ignoreError);
+      this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(ignoreError);
       this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {});
       this.sendCDPMessage("Runtime.evaluate", {
         expression: "__RNIDE_onDebuggerConnected()",

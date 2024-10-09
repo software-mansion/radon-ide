@@ -17,6 +17,7 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 type StartOptions = { cleanBuild: boolean };
 
@@ -39,6 +40,8 @@ export class DeviceSession implements Disposable {
   private debugSession: DebugSession | undefined;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
+  private deviceSettings: DeviceSettings | undefined;
+  private isLaunching = true;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -89,7 +92,7 @@ export class DeviceSession implements Disposable {
       case "restartProcess":
         await this.launchApp();
         return true;
-      case "hotReload":
+      case "reloadJs":
         if (this.devtools.hasConnectedClient) {
           await this.metro.reload();
           return true;
@@ -100,6 +103,14 @@ export class DeviceSession implements Disposable {
   }
 
   private async launchApp() {
+    const launchRequestTime = Date.now();
+    getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
+      platform: this.device.platform,
+    });
+
+    this.isLaunching = true;
+    this.device.stopReplays();
+
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
     // bundle instead.
@@ -111,10 +122,35 @@ export class DeviceSession implements Disposable {
 
     Logger.debug("Will wait for app ready and for preview");
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+
+    if (shouldWaitForAppLaunch) {
+      const reportWaitingStuck = setTimeout(() => {
+        Logger.info("App is taking very long to boot up, it might be stuck");
+        getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
+          platform: this.device.platform,
+        });
+      }, 30000);
+      waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
+    }
+
     const [previewUrl] = await Promise.all([this.device.startPreview(), waitForAppReady]);
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
+
+    this.isLaunching = false;
+    if (this.deviceSettings?.replaysEnabled) {
+      this.device.startReplays();
+    }
+
+    const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
+    Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
+    getTelemetryReporter().sendTelemetryEvent(
+      "app:launch:completed",
+      { platform: this.device.platform },
+      { durationSec: launchDurationSec }
+    );
+
     return previewUrl;
   }
 
@@ -135,7 +171,14 @@ export class DeviceSession implements Disposable {
     });
     this.maybeBuildResult = await this.disposableBuild.build;
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
-    Logger.info(`Build completed in ${buildDurationSec.toFixed(2)}s`);
+    Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
+    getTelemetryReporter().sendTelemetryEvent(
+      "build:completed",
+      {
+        platform: this.device.platform,
+      },
+      { durationSec: buildDurationSec }
+    );
   }
 
   private async installApp({ reinstall }: { reinstall: boolean }) {
@@ -151,6 +194,7 @@ export class DeviceSession implements Disposable {
   }
 
   public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+    this.deviceSettings = deviceSettings;
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
@@ -187,6 +231,10 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
+  public async captureReplay() {
+    return this.device.captureReplay();
+  }
+
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
     this.device.sendTouches(touches, type);
   }
@@ -221,17 +269,7 @@ export class DeviceSession implements Disposable {
   }
 
   public async openDevMenu() {
-    // on iOS, we can load native module and dispatch dev menu show method. On
-    // Android, this native module isn't available and we need to fallback to
-    // adb to send "menu key" (code 82) to trigger code path showing the menu.
-    //
-    // We could probably unify it in the future by running metro in interactive
-    // mode and sending keys to stdin.
-    if (this.device.platform === DevicePlatform.IOS) {
-      this.devtools.send("RNIDE_iosDevMenu");
-    } else {
-      await (this.device as AndroidEmulatorDevice).openDevMenu();
-    }
+    await this.metro.openDevMenu();
   }
 
   public startPreview(previewId: string) {
@@ -239,6 +277,12 @@ export class DeviceSession implements Disposable {
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
+    this.deviceSettings = settings;
+    if (settings.replaysEnabled && !this.isLaunching) {
+      this.device.startReplays();
+    } else {
+      this.device.stopReplays();
+    }
     return this.device.changeSettings(settings);
   }
 

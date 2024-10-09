@@ -17,7 +17,7 @@ import DeviceSelect from "../components/DeviceSelect";
 import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
-import { ZoomLevelType } from "../../common/Project";
+import { RecordingData, ZoomLevelType } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 
 type LoadingComponentProps = {
@@ -42,8 +42,8 @@ function LoadingComponent({ finishedInitialLoad, devicesNotFound }: LoadingCompo
 }
 
 function PreviewView() {
-  const { projectState, project } = useProject();
-  const { reportIssue } = useUtils();
+  const { projectState, project, deviceSettings } = useProject();
+  const { reportIssue, showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [isPressing, setIsPressing] = useState(false);
@@ -56,6 +56,7 @@ function PreviewView() {
   );
   const [logCounter, setLogCounter] = useState(0);
   const [resetKey, setResetKey] = useState(0);
+  const [replayData, setReplayData] = useState<RecordingData | undefined>(undefined);
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
@@ -114,6 +115,14 @@ function PreviewView() {
     }
   };
 
+  const handleReplay = async () => {
+    try {
+      setReplayData(await project.captureReplay());
+    } catch (e) {
+      showDismissableError("Failed to capture replay");
+    }
+  };
+
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsPressing(true);
@@ -129,11 +138,27 @@ function PreviewView() {
     onMouseUp,
   };
 
+  const showReplayButton = deviceSettings.replaysEnabled;
+
   return (
     <div className="panel-view" {...touchHandlers}>
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
+        {showReplayButton && (
+          <Button
+            tooltip={{
+              label: "Replay the last few seconds of the app",
+            }}
+            onClick={handleReplay}
+            disabled={isStarting}>
+            <span className="icons-container">
+              <span className="codicon codicon-triangle-left icons-rewind" />
+              <span className="codicon codicon-triangle-left icons-rewind" />
+            </span>
+            Replay
+          </Button>
+        )}
         <Button
           counter={logCounter}
           onClick={() => {
@@ -156,6 +181,7 @@ function PreviewView() {
           </IconButton>
         </SettingsDropdown>
       </div>
+
       {selectedDevice && finishedInitialLoad ? (
         <Preview
           key={selectedDevice.id}
@@ -164,6 +190,8 @@ function PreviewView() {
           isPressing={isPressing}
           setIsPressing={setIsPressing}
           zoomLevel={zoomLevel}
+          replayData={replayData}
+          onReplayClose={() => setReplayData(undefined)}
           onZoomChanged={onZoomChanged}
         />
       ) : (

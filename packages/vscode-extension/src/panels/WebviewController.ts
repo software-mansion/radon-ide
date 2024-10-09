@@ -1,4 +1,4 @@
-import vscode, { Webview, Disposable, window, commands } from "vscode";
+import vscode, { Webview, Disposable, window, commands, Uri } from "vscode";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { Project } from "../project/project";
@@ -71,6 +71,10 @@ export class WebviewController implements Disposable {
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
     getTelemetryReporter().sendTelemetryEvent("panelOpened");
+  }
+
+  public asWebviewUri(uri: Uri) {
+    return this.webview.asWebviewUri(uri);
   }
 
   public dispose() {
@@ -146,7 +150,7 @@ export class WebviewController implements Disposable {
             this.webview.postMessage({
               command: "callResult",
               callId,
-              error,
+              error: { name: error.name, message: error.message },
             });
           });
       } else {
