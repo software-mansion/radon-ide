@@ -14,7 +14,12 @@ import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import { InspectData, InspectDataStackItem, ZoomLevelType } from "../../common/Project";
+import {
+  InspectData,
+  InspectDataStackItem,
+  RecordingData,
+  ZoomLevelType,
+} from "../../common/Project";
 import { InspectDataMenu } from "./InspectDataMenu";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
@@ -22,6 +27,7 @@ import { throttle } from "../../utilities/throttle";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import DimensionsBox from "./DimensionsBox";
+import ReplayUI from "./ReplayUI";
 
 declare module "react" {
   interface CSSProperties {
@@ -183,6 +189,8 @@ type Props = {
   setIsPressing: (isPressing: boolean) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
+  replayData: RecordingData | undefined;
+  onReplayClose: () => void;
 };
 
 interface Point {
@@ -207,6 +215,8 @@ function Preview({
   setIsPressing,
   zoomLevel,
   onZoomChanged,
+  replayData,
+  onReplayClose,
 }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
@@ -533,6 +543,7 @@ function Preview({
                   }}
                   className="phone-screen"
                 />
+                {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
                 {isMultiTouching && (
                   <div

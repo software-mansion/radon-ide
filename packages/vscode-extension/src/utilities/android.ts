@@ -6,14 +6,9 @@ import { Platform } from "./platform";
 export const ANDROID_HOME =
   process.env.ANDROID_HOME ??
   Platform.select({
-    macos: path.join(os.homedir(), "Library", "Android", "sdk"),
-    windows: path.join(os.homedir(), "AppData", "Local", "Android", "Sdk"),
+    macos: path.join(os.homedir(), "Library/Android/sdk"),
+    windows: path.join(os.homedir(), "AppData\\Local\\Android\\Sdk"),
   });
-
-const ANDROID_STUDIO_PATH = Platform.select({
-  macos: path.join("Applications", "Android Studio.app"),
-  windows: path.join("C:", "Program Files", "Android", "Android Studio"),
-});
 
 function findJavaHome() {
   // we first try to use environment variable and if it is not set, we then use java bundled with Android Studio
@@ -26,17 +21,24 @@ function findJavaHome() {
     return envJavaHome;
   }
 
+  const androidStudioPath = Platform.select({
+    macos: "/Applications/Android Studio.app",
+    windows: path.join(path.parse(os.homedir()).root, "Program Files\\Android\\Android Studio"),
+  });
+
   const jbrPath = Platform.select({
-    macos: path.join(ANDROID_STUDIO_PATH, "Contents", "jbr", "Contents", "Home"),
-    windows: path.join(ANDROID_STUDIO_PATH, "jbr"),
+    macos: path.join(androidStudioPath, "Contents/jbr/Contents/Home"),
+    windows: path.join(androidStudioPath, "jbr"),
   });
 
-  const jrePath = Platform.select({
-    macos: path.join(ANDROID_STUDIO_PATH, "Contents", "jre", "Contents", "Home"),
-    windows: path.join(ANDROID_STUDIO_PATH, "jre"),
-  });
+  if (fs.existsSync(jbrPath)) {
+    return jbrPath;
+  }
 
-  return fs.existsSync(jbrPath) ? jbrPath : jrePath;
+  return Platform.select({
+    macos: path.join(androidStudioPath, "Contents/jre/Contents/Home"),
+    windows: path.join(androidStudioPath, "jre"),
+  });
 }
 
 export const JAVA_HOME = findJavaHome();

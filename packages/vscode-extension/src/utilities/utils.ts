@@ -1,14 +1,15 @@
+import { commands, env, Uri, window, workspace } from "vscode";
 import { homedir } from "node:os";
 import fs from "fs";
 import path from "path";
 import JSON5 from "json5";
-import { commands, window, env, Uri } from "vscode";
 import vscode from "vscode";
 import { Logger } from "../Logger";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsInterface } from "../common/utils";
 import { Platform } from "./platform";
+import { RecordingData } from "../common/Project";
 
 type KeybindingType = {
   command: string;
@@ -77,6 +78,27 @@ export class Utils implements UtilsInterface {
 
   public async openFileAt(filePath: string, line0Based: number, column0Based: number) {
     openFileAtPosition(filePath, line0Based, column0Based);
+  }
+
+  public async saveVideoRecording(recordingData: RecordingData) {
+    const extension = path.extname(recordingData.tempFileLocation);
+    const defaultUri = Uri.file(
+      path.join(workspace.workspaceFolders![0].uri.fsPath, recordingData.fileName)
+    );
+    // save dialog open the location dialog, it also warns the user if the file already exists
+    let saveUri = await window.showSaveDialog({
+      defaultUri: defaultUri,
+      filters: {
+        "Video Files": [extension],
+      },
+    });
+
+    if (!saveUri) {
+      return false;
+    }
+
+    await fs.promises.copyFile(recordingData.tempFileLocation, saveUri.fsPath);
+    return true;
   }
 
   public async movePanelToNewWindow() {
