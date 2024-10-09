@@ -58,6 +58,12 @@ function useSupportedDevices() {
   ];
 }
 
+export const MAX_CUSTOM_NAME_LENGTH = 30;
+export function formatCustomName(name: string) {
+  const singleSpaced = name.replace(/\s+/g, " ");
+  return singleSpaced.replace(/[^a-zA-Z0-9 _-]/g, "");
+}
+
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [deviceName, setDeviceName] = useState<string | undefined>(undefined);
   const [devicePlatform, setDevicePlatform] = useState<"ios" | "android" | undefined>(undefined);
@@ -89,11 +95,6 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           disabled: !systemImage.available,
         }));
 
-  function formatCustomName(name: string): string {
-    const singleSpaced = name.replace(/\s+/g, " ");
-    return singleSpaced.replace(/[^a-zA-Z0-9 _-]/g, "");
-  }
-
   async function createDevice() {
     if (!selectedSystemName) {
       return;
@@ -123,8 +124,6 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
       onCreate();
     }
   }
-
-  const MAX_CUSTOM_NAME_LENGTH = 30;
 
   const handleCustomNameChange: FocusEventHandler<HTMLInputElement> = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -190,7 +189,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
       </div>
       {!isCustomNameValid && (
         <div className="submit-rejection-message">
-          Make sure that the device's custom name is no longer than {MAX_CUSTOM_NAME_LENGTH} chars.
+          Make sure that the custom name is no longer than {MAX_CUSTOM_NAME_LENGTH} chars.
         </div>
       )}
       <div className="button-panel">
