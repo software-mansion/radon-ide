@@ -65,8 +65,7 @@ export type ReloadAction =
   | "reboot" // reboots device, launch app
   | "reinstall" // force reinstall app
   | "restartProcess" // relaunch app
-  | "reloadJs" // refetch JS scripts from metro
-  | "hotReload";
+  | "reloadJs"; // refetch JS scripts from metro
 
 export type InspectDataStackItem = {
   componentName: string;

@@ -92,7 +92,7 @@ export class DeviceSession implements Disposable {
       case "restartProcess":
         await this.launchApp();
         return true;
-      case "hotReload":
+      case "reloadJs":
         if (this.devtools.hasConnectedClient) {
           await this.metro.reload();
           return true;
