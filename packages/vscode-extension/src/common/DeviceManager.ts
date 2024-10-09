@@ -71,6 +71,7 @@ export interface DeviceManagerInterface {
     customName?: string
   ): Promise<DeviceInfo>;
 
+  renameDevice(device: DeviceInfo, customName: string): Promise<void>;
   removeDevice(device: DeviceInfo): Promise<void>;
 
   listInstalledAndroidImages(): Promise<AndroidSystemImageInfo[]>;

@@ -411,6 +411,32 @@ export async function removeIosRuntimes(runtimeIDs: string[]) {
   return Promise.all(removalPromises);
 }
 
+export async function renameIosSimulator(udid: string | undefined, newCustomName: string) {
+  if (!udid) {
+    return;
+  }
+
+  const deviceSetLocation = getOrCreateDeviceSet(udid);
+  const configPath = path.join(deviceSetLocation, udid, "config.ini");
+
+  try {
+    let configContent = await fs.promises.readFile(configPath, "utf-8");
+
+    let lines = configContent.split("\n");
+    lines = lines.map((line) => {
+      if (line.startsWith("customName=")) {
+        return `customName=${newCustomName}`;
+      }
+      return line;
+    });
+    configContent = lines.join("\n");
+
+    await fs.promises.writeFile(configPath, configContent, "utf-8");
+  } catch (e) {
+    throw new Error(`Failed to rename device`);
+  }
+}
+
 export async function removeIosSimulator(udid: string | undefined, location: SimulatorDeviceSet) {
   if (!udid) {
     return;

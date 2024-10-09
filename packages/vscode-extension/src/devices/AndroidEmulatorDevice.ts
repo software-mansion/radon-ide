@@ -545,6 +545,29 @@ async function ensureOldEmulatorProcessExited(avdId: string) {
   }
 }
 
+export async function renameEmulator(avdId: string, newCustomName: string) {
+  const avdDirectory = getOrCreateAvdDirectory();
+  const avdLocation = path.join(avdDirectory, `${avdId}.avd`);
+  const configIni = path.join(avdLocation, "config.ini");
+
+  try {
+    let configContent = await fs.promises.readFile(configIni, "utf-8");
+
+    let lines = configContent.split("\n");
+    lines = lines.map((line) => {
+      if (line.startsWith("customName=")) {
+        return `customName=${newCustomName}`;
+      }
+      return line;
+    });
+    configContent = lines.join("\n");
+
+    await fs.promises.writeFile(configIni, configContent, "utf-8");
+  } catch (e) {
+    throw new Error(`Failed to rename device`);
+  }
+}
+
 export async function removeEmulator(avdId: string) {
   // ensure to kill emulator process before removing avd files used by that process
   if (Platform.OS === "windows") {
