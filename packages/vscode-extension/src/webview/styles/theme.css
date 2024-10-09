@@ -237,7 +237,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-device-subtitle: var(--navy-light-60);
   --swm-device-icon: var(--swm-default-text);
   --swm-device-icon-background: var(--navy-light-20);
-  --swm-device-icon-background-selected: var(--navy-light-40);
+  --swm-device-icon-background-selected: var(--green-light-80);
   --swm-device-delete-icon: var(--red-light-100);
   --swm-device-warning-icon: var(--yellow-light-80);
 
@@ -390,7 +390,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-device-subtitle: var(--background-dark-10);
   --swm-device-icon: var(--swm-default-text);
   --swm-device-icon-background: var(--background-dark-70);
-  --swm-device-icon-background-selected: var(--background-dark-50);
+  --swm-device-icon-background-selected: var(--green-dark-120);
   --swm-device-delete-icon: var(--red-dark-80);
   --swm-device-warning-icon: var(--yellow-dark-100);
 
