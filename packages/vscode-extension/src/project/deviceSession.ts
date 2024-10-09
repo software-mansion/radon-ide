@@ -269,17 +269,7 @@ export class DeviceSession implements Disposable {
   }
 
   public async openDevMenu() {
-    // on iOS, we can load native module and dispatch dev menu show method. On
-    // Android, this native module isn't available and we need to fallback to
-    // adb to send "menu key" (code 82) to trigger code path showing the menu.
-    //
-    // We could probably unify it in the future by running metro in interactive
-    // mode and sending keys to stdin.
-    if (this.device.platform === DevicePlatform.IOS) {
-      this.devtools.send("RNIDE_iosDevMenu");
-    } else {
-      await (this.device as AndroidEmulatorDevice).openDevMenu();
-    }
+    await this.metro.openDevMenu();
   }
 
   public startPreview(previewId: string) {
