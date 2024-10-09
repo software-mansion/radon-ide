@@ -269,7 +269,7 @@ export class DeviceSession implements Disposable {
   }
 
   public async openDevMenu() {
-    this.metro.openDevMenu();
+    await this.metro.openDevMenu();
   }
 
   public startPreview(previewId: string) {
