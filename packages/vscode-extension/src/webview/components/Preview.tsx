@@ -15,7 +15,7 @@ import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorA
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
-  InspectData,
+  Frame,
   InspectDataStackItem,
   RecordingData,
   ZoomLevelType,
@@ -255,7 +255,7 @@ function Preview({
 
   const openRebuildAlert = useNativeRebuildAlert();
 
-  const [inspectFrame, setInspectFrame] = useState<InspectData["frame"] | null>(null);
+  const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
   function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
