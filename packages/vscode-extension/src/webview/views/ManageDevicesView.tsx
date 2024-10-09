@@ -51,19 +51,25 @@ function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
         <div className="device-subtitle">{deviceSubtitle}</div>
       </div>
       <span className="device-button-group">
-        <IconButton
-          tooltip={{
-            label: "Select device.",
-            side: "bottom",
-            type: "secondary",
-          }}
-          onClick={async (e) => {
-            e.stopPropagation();
-            await handleDeviceChange();
-            closeModal();
-          }}>
-          <span className="codicon codicon-arrow-circle-right" />
-        </IconButton>
+        {!isSelected ? (
+          <IconButton
+            tooltip={{
+              label: "Select device.",
+              side: "bottom",
+              type: "secondary",
+            }}
+            onClick={async (e) => {
+              e.stopPropagation();
+              await handleDeviceChange();
+              closeModal();
+            }}>
+            <span className="codicon codicon-play" />
+          </IconButton>
+        ) : (
+          <IconButton onClick={() => {}} disabled={true}>
+            <span className="codicon codicon-blank" />
+          </IconButton>
+        )}
         <IconButton
           tooltip={{
             label: `Remove device with it's ${
