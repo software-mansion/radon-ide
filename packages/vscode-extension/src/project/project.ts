@@ -255,7 +255,7 @@ export class Project
   }
 
   private async reloadMetro() {
-    if (await this.deviceSession?.perform("hotReload")) {
+    if (await this.deviceSession?.perform("reloadJs")) {
       this.updateProjectState({ status: "running" });
     }
   }
