@@ -23,6 +23,8 @@ const dependencies = [
   "xcode",
   "cocoaPods",
   "nodeModules",
+  "ios",
+  "android",
   "pods",
   "reactNative",
   "expo",
@@ -138,7 +140,7 @@ function getErrors(statuses: Record<Dependency, DependencyStatus | undefined>) {
     hasErrors = true;
     if (!errors[errorName]) {
       const message = dependencyDescription(dependency).error;
-      errors.simulator = { message };
+      errors[errorName] = { message };
     }
   }
 
@@ -164,6 +166,10 @@ function getErrors(statuses: Record<Dependency, DependencyStatus | undefined>) {
         case "nodeModules":
           setFirstError(dependency, "common");
           break;
+        case "ios":
+          setFirstError(dependency, "ios");
+        case "android":
+          setFirstError(dependency, "android");
         default:
           break;
       }
@@ -216,6 +222,16 @@ export function dependencyDescription(dependency: Dependency) {
       return {
         info: "Whether supported version of React Native is installed.",
         error: `React Native is not installed or it is older than supported version ${MinSupportedVersion.reactNative}.`,
+      };
+    case "ios":
+      return {
+        info: "Whether ios directory exists in the project",
+        error: "Ios directory does not exist in root directory",
+      };
+    case "android":
+      return {
+        info: "Whether android directory exists in the project",
+        error: "Android directory does not exist in root directory",
       };
     case "expo":
       return {

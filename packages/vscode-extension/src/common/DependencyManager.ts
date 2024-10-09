@@ -12,6 +12,8 @@ export type Dependency =
   | "cocoaPods"
   | "nodejs"
   | "nodeModules"
+  | "android"
+  | "ios"
   | "pods"
   | "reactNative"
   | "expo"
