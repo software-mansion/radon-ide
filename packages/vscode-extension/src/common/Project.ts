@@ -67,6 +67,13 @@ export type ReloadAction =
   | "restartProcess" // relaunch app
   | "reloadJs"; // refetch JS scripts from metro
 
+export type Frame = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type InspectDataStackItem = {
   componentName: string;
   hide: boolean;
@@ -75,12 +82,7 @@ export type InspectDataStackItem = {
     line0Based: number;
     column0Based: number;
   };
-  frame: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
+  frame: Frame;
 };
 
 export type TouchPoint = {
@@ -90,12 +92,7 @@ export type TouchPoint = {
 
 export type InspectData = {
   stack: InspectDataStackItem[] | undefined;
-  frame: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
+  frame: Frame;
 };
 
 export interface ProjectEventMap {
