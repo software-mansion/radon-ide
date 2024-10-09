@@ -67,7 +67,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
           case "nodeModules":
             return { status: await this.nodeModulesStatus(), isOptional: false };
           case "pods":
-            return { status: await this.podsStatus(), isOptional: !isExpoGoProject() };
+            return { status: await this.podsStatus(), isOptional: await isExpoGoProject() };
           case "reactNative": {
             const status = dependencyStatus("react-native", MinSupportedVersion.reactNative);
             return { status, isOptional: false };
