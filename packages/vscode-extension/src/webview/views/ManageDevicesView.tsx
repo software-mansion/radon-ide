@@ -9,6 +9,7 @@ import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
+import { useModal } from "../providers/ModalProvider";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -29,12 +30,10 @@ function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
   const deviceSubtitle = deviceInfo.customName
     ? `${deviceInfo.name} - ${deviceInfo.systemName}`
     : deviceInfo.systemName;
+
+  const { closeModal } = useModal();
   return (
-    <div
-      className="device-row"
-      onClick={async () => {
-        await handleDeviceChange();
-      }}>
+    <div className="device-row">
       <div className={isSelected ? "device-icon-selected" : "device-icon"}>
         {!deviceInfo.available ? (
           <Tooltip
@@ -51,20 +50,35 @@ function DeviceRow({ deviceInfo, onDeviceDelete, isSelected }: DeviceRowProps) {
         <div className="device-title">{isSelected ? <b>{deviceTitle}</b> : deviceTitle}</div>
         <div className="device-subtitle">{deviceSubtitle}</div>
       </div>
-      <IconButton
-        tooltip={{
-          label: `Remove device with it's ${
-            deviceInfo.platform === DevicePlatform.IOS ? "runtime." : "system image."
-          }`,
-          side: "bottom",
-          type: "secondary",
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onDeviceDelete(deviceInfo);
-        }}>
-        <span className="codicon codicon-trash delete-icon" />
-      </IconButton>
+      <span className="device-button-group">
+        <IconButton
+          tooltip={{
+            label: "Select device.",
+            side: "bottom",
+            type: "secondary",
+          }}
+          onClick={async (e) => {
+            e.stopPropagation();
+            await handleDeviceChange();
+            closeModal();
+          }}>
+          <span className="codicon codicon-arrow-circle-right" />
+        </IconButton>
+        <IconButton
+          tooltip={{
+            label: `Remove device with it's ${
+              deviceInfo.platform === DevicePlatform.IOS ? "runtime." : "system image."
+            }`,
+            side: "bottom",
+            type: "secondary",
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeviceDelete(deviceInfo);
+          }}>
+          <span className="codicon codicon-trash delete-icon" />
+        </IconButton>
+      </span>
     </div>
   );
 }
