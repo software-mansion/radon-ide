@@ -447,22 +447,21 @@ async function listSimulatorsForLocation(location?: string) {
   return [];
 }
 
-async function findCustomName(filePath?: string): Promise<string> {
+async function findCustomName(filePath?: string): Promise<string | undefined> {
   if (!filePath) {
-    return "";
+    return undefined;
   }
 
   try {
     const content = await fs.promises.readFile(filePath, "utf-8");
-    const lines = content.split("\n");
-    for (const line of lines) {
-      const [key, value] = line.split("=");
-      if (key.trim() === "customName") {
-        return value.trim();
-      }
-    }
-  } catch (e) {}
-  return "";
+    return content
+      .split("\n")
+      .find((line) => line.startsWith("customName="))
+      ?.split("=")[1]
+      ?.trim();
+  } catch (e) {
+    return undefined;
+  }
 }
 
 export async function listSimulators(
@@ -492,7 +491,7 @@ export async function listSimulators(
         devices.map(async (device) => {
           const deviceDirectory = device.dataPath?.split(path.sep).slice(0, -1).join(path.sep);
           const configFilePath = deviceDirectory ? path.join(deviceDirectory, "config.ini") : "";
-          const customName = deviceDirectory ? await findCustomName(configFilePath) : "";
+          const customName = await findCustomName(configFilePath);
 
           return {
             id: `ios-${device.udid}`,

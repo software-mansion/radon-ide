@@ -11,7 +11,7 @@ export type AndroidDeviceInfo = {
   avdId: string;
   name: string;
   systemName: string;
-  customName: string;
+  customName?: string;
   available: boolean;
 };
 
@@ -21,7 +21,7 @@ export type IOSDeviceInfo = {
   UDID: string;
   name: string;
   systemName: string;
-  customName: string;
+  customName?: string;
   available: boolean;
   deviceIdentifier: string;
   runtimeInfo: IOSRuntimeInfo;

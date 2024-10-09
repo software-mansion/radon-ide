@@ -516,7 +516,7 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
         avdId,
         name: displayName,
         systemName: systemImageName ?? "Unknown",
-        customName: customName ?? "",
+        customName: customName,
         available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
       } as DeviceInfo;
     })
