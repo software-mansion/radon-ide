@@ -1,3 +1,7 @@
+import pixel9 from "../../assets/pixel_9/skin.webp";
+import pixel9mask from "../../assets/pixel_9/mask.png";
+import pixel8 from "../../assets/pixel_8/skin.webp";
+import pixel8mask from "../../assets/pixel_8/mask.png";
 import pixel7 from "../../assets/pixel_7/skin.webp";
 import pixel7mask from "../../assets/pixel_7/mask.png";
 import pixel6a from "../../assets/pixel_6a/skin.webp";
@@ -50,6 +54,30 @@ export const iOSSupportedDevices: DeviceProperties[] = [
 ] as const;
 
 export const AndroidSupportedDevices: DeviceProperties[] = [
+  {
+    name: "Google Pixel 9",
+    platform: DevicePlatform.Android,
+    screenWidth: 1080,
+    screenHeight: 2424,
+    frameWidth: 1198,
+    frameHeight: 2531,
+    offsetX: 55,
+    offsetY: 58,
+    frameImage: pixel9,
+    maskImage: pixel9mask,
+  },
+  {
+    name: "Google Pixel 8",
+    platform: DevicePlatform.Android,
+    screenWidth: 1080,
+    screenHeight: 2400,
+    frameWidth: 1187,
+    frameHeight: 2513,
+    offsetX: 49,
+    offsetY: 55,
+    frameImage: pixel8,
+    maskImage: pixel8mask,
+  },
   {
     name: "Google Pixel 7",
     platform: DevicePlatform.Android,
