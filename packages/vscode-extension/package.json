@@ -440,7 +440,6 @@
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
     "lint": "eslint src/**/*.\\{ts,tsx,js,jsx\\} && prettier --check src",
-    "lint:fix": "eslint src/**/*.\\{ts,tsx,js,jsx\\} --fix",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
