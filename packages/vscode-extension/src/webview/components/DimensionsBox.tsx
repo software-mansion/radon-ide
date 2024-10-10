@@ -20,9 +20,9 @@ type DimensionsBoxProps = {
   wrapperDivRef: React.RefObject<HTMLDivElement>;
 };
 
-type DimensionsBoxPosition = 'above' | 'below' | 'left' | 'right' | 'inside';
+type DimensionsBoxPosition = "above" | "below" | "left" | "right" | "inside";
 
-function DimensionsBox({ device, frame, wrapperDivRef } : DimensionsBoxProps) {
+function DimensionsBox({ device, frame, wrapperDivRef }: DimensionsBoxProps) {
   if (!device) {
     return;
   }
@@ -32,9 +32,11 @@ function DimensionsBox({ device, frame, wrapperDivRef } : DimensionsBoxProps) {
 
   const previewDiv = wrapperDivRef.current?.childNodes?.[0] as unknown;
 
-  if (!previewDiv || typeof previewDiv !== 'object' 
-    || !('clientHeight' in previewDiv) 
-    || typeof previewDiv.clientHeight !== 'number'
+  if (
+    !previewDiv ||
+    typeof previewDiv !== "object" ||
+    !("clientHeight" in previewDiv) ||
+    typeof previewDiv.clientHeight !== "number"
   ) {
     return;
   }
@@ -42,45 +44,50 @@ function DimensionsBox({ device, frame, wrapperDivRef } : DimensionsBoxProps) {
   const { clientHeight: previewHeight } = previewDiv;
 
   const boxPosition: DimensionsBoxPosition = (() => {
-    if (frame.y >= VERTICAL_POSITION_THRESHOLD) {return 'above';}
-    else if (frame.y + frame.height <= 1 - VERTICAL_POSITION_THRESHOLD) {return 'below';}
-    else if (frame.x + frame.width <= HORIZONTAL_POSITION_THRESHOLD) {return 'right';}
-    else if (frame.x >= 1 - HORIZONTAL_POSITION_THRESHOLD) {return 'left';}
-    return 'inside';
+    if (frame.y >= VERTICAL_POSITION_THRESHOLD) {
+      return "above";
+    } else if (frame.y + frame.height <= 1 - VERTICAL_POSITION_THRESHOLD) {
+      return "below";
+    } else if (frame.x + frame.width <= HORIZONTAL_POSITION_THRESHOLD) {
+      return "right";
+    } else if (frame.x >= 1 - HORIZONTAL_POSITION_THRESHOLD) {
+      return "left";
+    }
+    return "inside";
   })();
 
   const positionalProps = (() => {
     switch (boxPosition) {
-      case 'above': 
+      case "above":
         return {
           "--top": `${(frame.y - VERTICAL_ARROW_MARGIN) * 100}%`,
-          "--left": `${(frame.x + frame.width/2) * 100}%`,
-          "--box-transform": 'translate(-50%, -100%)'
+          "--left": `${(frame.x + frame.width / 2) * 100}%`,
+          "--box-transform": "translate(-50%, -100%)",
         };
-      case 'below':
+      case "below":
         return {
           "--top": `${(frame.y + frame.height + VERTICAL_ARROW_MARGIN) * 100}%`,
-          "--left": `${(frame.x + frame.width/2) * 100}%`,
-          "--box-transform": 'translate(-50%, 0%)'
+          "--left": `${(frame.x + frame.width / 2) * 100}%`,
+          "--box-transform": "translate(-50%, 0%)",
         };
-      case 'right':
+      case "right":
         return {
-          "--top": `${(frame.y + frame.height/2) * 100}%`,
+          "--top": `${(frame.y + frame.height / 2) * 100}%`,
           "--left": `${(frame.x + frame.width + HORIZONTAL_ARROW_MARGIN) * 100}%`,
-          "--box-transform": 'translate(0%, -50%)'
+          "--box-transform": "translate(0%, -50%)",
         };
-      case 'left':
+      case "left":
         return {
-          "--top": `${(frame.y + frame.height/2) * 100}%`,
+          "--top": `${(frame.y + frame.height / 2) * 100}%`,
           "--left": `${(frame.x - HORIZONTAL_ARROW_MARGIN) * 100}%`,
-          "--box-transform": 'translate(-100%, -50%)'
+          "--box-transform": "translate(-100%, -50%)",
         };
-      default: 
+      default:
         return {
-          "--top": `${(frame.y + frame.height/2) * 100}%`,
-          "--left": `${(frame.x + frame.width/2) * 100}%`,
-          "--box-transform": 'translate(-50%, -50%)'
-        }; 
+          "--top": `${(frame.y + frame.height / 2) * 100}%`,
+          "--left": `${(frame.x + frame.width / 2) * 100}%`,
+          "--box-transform": "translate(-50%, -50%)",
+        };
     }
   })();
 
@@ -92,17 +99,17 @@ function DimensionsBox({ device, frame, wrapperDivRef } : DimensionsBoxProps) {
     "--border-radius": `${boxHeight * BORDER_RADIUS_FRACTION}px`,
     "--horizontal-padding": `${boxHeight * HORIZONTAL_PADDING_FRACTION}px`,
     "--arrow-size": `${boxHeight * ARROW_SIZE_FRACTION}px`,
-    ...positionalProps
+    ...positionalProps,
   };
 
   return (
     <div style={cssPropertiesForDimensionsBox}>
-      { boxPosition !== 'inside' && <div className="arrow" /> }
+      {boxPosition !== "inside" && <div className="arrow" />}
       <div className="dimensions-box">
-        { width } × { height }
-      </div> 
+        {width} × {height}
+      </div>
     </div>
   );
-};
+}
 
 export default DimensionsBox;
