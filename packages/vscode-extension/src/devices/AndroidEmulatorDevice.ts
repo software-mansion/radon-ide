@@ -113,6 +113,12 @@ export class AndroidEmulatorDevice extends DeviceBase {
       locale,
     ]);
 
+    await new Promise<void>((res)=>{
+      setTimeout(()=>{
+        res()
+      }, 1000)
+    })
+
     const { stdout } = await exec(ADB_PATH, [
       "-s",
       this.serial!,
@@ -217,7 +223,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
         "-no-audio",
         "-no-boot-anim",
         "-grpc-use-token",
-        "-no-snapshot",
+        "-no-snapshot-save",
+        "-writable-system",
+        "-verbose"
       ],
       { env: { ANDROID_AVD_HOME: avdDirectory } }
     );
