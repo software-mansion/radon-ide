@@ -415,7 +415,7 @@ function Preview({
 
   useEffect(() => {
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
-    // there is an active backlog item that changes the bahaviour of context menu, so it might not be necessery
+    // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
     // in the future https://github.com/microsoft/vscode/issues/225411
     function onContextMenu(e) {
       e.stopImmediatePropagation();
