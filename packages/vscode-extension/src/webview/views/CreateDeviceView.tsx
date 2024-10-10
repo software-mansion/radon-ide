@@ -192,7 +192,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
       </div>
       {!isCustomNameValid && (
         <div className="submit-rejection-message">
-          Make sure that the custom name is no longer than {MAX_CUSTOM_NAME_LENGTH} chars.
+          Name may not be longer than {MAX_NAME_LENGTH} characters.
         </div>
       )}
       <div className="button-panel">
