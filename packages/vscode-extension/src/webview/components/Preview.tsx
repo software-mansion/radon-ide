@@ -14,12 +14,7 @@ import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import {
-  Frame,
-  InspectDataStackItem,
-  RecordingData,
-  ZoomLevelType,
-} from "../../common/Project";
+import { Frame, InspectDataStackItem, RecordingData, ZoomLevelType } from "../../common/Project";
 import { InspectDataMenu } from "./InspectDataMenu";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
@@ -589,7 +584,7 @@ function Preview({
                     />
                     <DimensionsBox
                       device={device}
-                      frame={inspectFrame} 
+                      frame={inspectFrame}
                       wrapperDivRef={wrapperDivRef}
                     />
                   </div>

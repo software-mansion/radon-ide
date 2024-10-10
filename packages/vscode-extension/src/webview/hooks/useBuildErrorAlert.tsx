@@ -5,6 +5,8 @@ import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
+import { useDependencies } from "../providers/DependenciesProvider";
+import { DevicePlatform } from "../../common/DeviceManager";
 
 function BuildErrorActions() {
   const { project } = useProject();
@@ -41,11 +43,29 @@ function BuildErrorActions() {
 
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   const { ios, xcodeSchemes } = useLaunchConfig();
+  const { dependencies } = useDependencies();
+  const { projectState } = useProject();
 
   let description = "Open build logs to find out what went wrong.";
 
   if (!ios?.scheme && xcodeSchemes.length > 1) {
     description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
+  }
+
+  if (
+    dependencies.android?.status === "notInstalled" &&
+    projectState.selectedDevice?.platform === DevicePlatform.Android
+  ) {
+    description =
+      "Your project does not have an android directory, configure custom build source, eas or use expo prebuild to generate missing files.";
+  }
+
+  if (
+    dependencies.ios?.status === "notInstalled" &&
+    projectState.selectedDevice?.platform === DevicePlatform.IOS
+  ) {
+    description =
+      "Your project does not have an ios directory, configure custom build source, eas or use expo prebuild to generate missing files.";
   }
 
   const buildErrorAlert = {
