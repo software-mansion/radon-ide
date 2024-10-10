@@ -113,12 +113,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
       locale,
     ]);
 
-    await new Promise<void>((res)=>{
-      setTimeout(()=>{
-        res()
-      }, 1000)
-    })
-
     const { stdout } = await exec(ADB_PATH, [
       "-s",
       this.serial!,
@@ -126,6 +120,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "getprop",
       "persist.sys.locale",
     ]);
+
+    // this is needed to make sure that changes will persist
+    await exec(ADB_PATH, ["shell", "sync"]);
 
     if (stdout) {
       Logger.warn(
@@ -225,7 +222,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
         "-grpc-use-token",
         "-no-snapshot-save",
         "-writable-system",
-        "-verbose"
       ],
       { env: { ANDROID_AVD_HOME: avdDirectory } }
     );
