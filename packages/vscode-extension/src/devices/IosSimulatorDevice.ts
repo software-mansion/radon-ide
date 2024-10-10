@@ -420,18 +420,19 @@ export async function renameIosSimulator(udid: string | undefined, newCustomName
   const configPath = path.join(deviceSetLocation, udid, "config.ini");
 
   try {
-    let configContent = await fs.promises.readFile(configPath, "utf-8");
+    const oldConfig = await fs.promises.readFile(configPath, "utf-8");
 
-    let lines = configContent.split("\n");
-    lines = lines.map((line) => {
-      if (line.startsWith("customName=")) {
-        return `customName=${newCustomName}`;
-      }
-      return line;
-    });
-    configContent = lines.join("\n");
+    const config = oldConfig
+      .split("\n")
+      .map((line) => {
+        if (line.startsWith("customName=")) {
+          return `customName=${newCustomName}`;
+        }
+        return line;
+      })
+      .join("\n");
 
-    await fs.promises.writeFile(configPath, configContent, "utf-8");
+    await fs.promises.writeFile(configPath, config, "utf-8");
   } catch (e) {
     throw new Error(`Failed to rename device`);
   }

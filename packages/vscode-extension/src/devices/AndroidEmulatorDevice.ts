@@ -551,18 +551,19 @@ export async function renameEmulator(avdId: string, newCustomName: string) {
   const configIni = path.join(avdLocation, "config.ini");
 
   try {
-    let configContent = await fs.promises.readFile(configIni, "utf-8");
+    const oldConfig = await fs.promises.readFile(configIni, "utf-8");
 
-    let lines = configContent.split("\n");
-    lines = lines.map((line) => {
-      if (line.startsWith("customName=")) {
-        return `customName=${newCustomName}`;
-      }
-      return line;
-    });
-    configContent = lines.join("\n");
+    const config = oldConfig
+      .split("\n")
+      .map((line) => {
+        if (line.startsWith("customName=")) {
+          return `customName=${newCustomName}`;
+        }
+        return line;
+      })
+      .join("\n");
 
-    await fs.promises.writeFile(configIni, configContent, "utf-8");
+    await fs.promises.writeFile(configIni, config, "utf-8");
   } catch (e) {
     throw new Error(`Failed to rename device`);
   }
