@@ -11,7 +11,7 @@
     "type-check": "tsc",
     "test:report": "jest --collectCoverage --coverageDirectory=\"./coverage\" --ci --reporters=default --reporters=jest-junit --coverage",
     "pod-install": "cd ios && RCT_NEW_ARCH_ENABLED=1 bundle exec pod install && cd ..",
-    "copy-shared": "../shared/copy.sh bare ./shared"
+    "copy-shared": "node ../shared/copy.js bare ./shared"
   },
   "dependencies": {
     "@react-native-masked-view/masked-view": "^0.3.0",

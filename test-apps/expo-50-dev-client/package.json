@@ -7,7 +7,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "copy-shared": "../shared/copy.sh bare ./shared"
+    "copy-shared": "node ../shared/copy.js bare ./shared"
   },
   "dependencies": {
     "@types/react": "~18.2.45",

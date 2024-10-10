@@ -7,7 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "copy-shared": "../shared/copy.sh bare ./shared"
+    "copy-shared": "node ../shared/copy.js bare ./shared" 
   },
   "dependencies": {
     "expo": "~50.0.14",
