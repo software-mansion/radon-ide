@@ -413,11 +413,16 @@ function Preview({
     }
   }
 
-  function onContextMenu(e: MouseEvent<HTMLDivElement>) {
-    e.preventDefault();
-  }
-
   useEffect(() => {
+    // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
+    // there is an active backlog item that changes the bahaviour of context menu, so it might not be necessery
+    // in the future https://github.com/microsoft/vscode/issues/225411
+    function onContextMenu(e) {
+      e.stopImmediatePropagation();
+    }
+
+    window.addEventListener("contextmenu", onContextMenu, true);
+
     function onBlurChange() {
       if (!document.hasFocus()) {
         setIsPanning(false);
@@ -426,7 +431,10 @@ function Preview({
       }
     }
     addEventListener("blur", onBlurChange, true);
-    return () => removeEventListener("blur", onBlurChange, true);
+    return () => {
+      window.removeEventListener("contextmenu", onContextMenu);
+      removeEventListener("blur", onBlurChange, true);
+    };
   }, []);
 
   useEffect(() => {
@@ -505,7 +513,6 @@ function Preview({
         onMouseUp,
         onMouseEnter,
         onMouseLeave,
-        onContextMenu,
       };
 
   const resizableProps = useResizableProps({
