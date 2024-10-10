@@ -28,6 +28,7 @@ function DiagnosticView() {
         name="androidEmulator"
         info={dependencies.androidEmulator}
       />
+      <DiagnosticItem label="Android Directory" name="android" info={dependencies.android} />
       <div className="diagnostic-section-margin" />
 
       {Platform.OS === "macos" && (
@@ -35,6 +36,7 @@ function DiagnosticView() {
           <Label>iOS</Label>
           <DiagnosticItem label="Xcode" name="xcode" info={dependencies.xcode} />
           <DiagnosticItem label="CocoaPods" name="cocoaPods" info={dependencies.cocoaPods} />
+          <DiagnosticItem label="Ios Directory" name="ios" info={dependencies.ios} />
           <div className="diagnostic-section-margin" />
         </>
       )}

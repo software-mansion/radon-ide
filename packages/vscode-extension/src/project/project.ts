@@ -255,9 +255,11 @@ export class Project
   }
 
   private async reloadMetro() {
-    if (await this.deviceSession?.perform("hotReload")) {
+    if (await this.deviceSession?.perform("reloadJs")) {
       this.updateProjectState({ status: "running" });
+      return true;
     }
+    return false;
   }
 
   public async goHome(homeUrl: string) {
@@ -302,7 +304,11 @@ export class Project
     }
 
     if (onlyReloadJSWhenPossible) {
-      return await this.reloadMetro();
+      // if reloading JS is possible, we try to do it first and exit in case of success
+      // otherwise we continue to restart using more invasive methods
+      if (await this.reloadMetro()) {
+        return;
+      }
     }
 
     // otherwise we try to restart the device session

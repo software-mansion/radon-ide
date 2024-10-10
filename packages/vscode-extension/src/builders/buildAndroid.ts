@@ -15,6 +15,7 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild } from "./eas";
+import { DependencyManager } from "../dependency/DependencyManager";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
@@ -76,7 +77,8 @@ export async function buildAndroid(
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void
+  progressListener: (newProgress: number) => void,
+  dependencyManager: DependencyManager
 ): Promise<AndroidBuildResult> {
   const { customBuild, eas, env, android } = getLaunchConfiguration();
 
@@ -115,6 +117,12 @@ export async function buildAndroid(
   if (await isExpoGoProject()) {
     const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken);
     return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
+  }
+
+  if (!(await dependencyManager.isInstalled("android"))) {
+    throw new Error(
+      "Android directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory"
+    );
   }
 
   const androidSourceDir = getAndroidSourceDir(appRootFolder);

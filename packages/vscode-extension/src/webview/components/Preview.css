@@ -75,7 +75,7 @@
 
 .inspect-area {
   position: absolute;
-  background-color: rgba(56, 172, 221, 0.85);
+  background-color: var(--inspect-area-background);
 }
 
 .phone-debug-overlay {

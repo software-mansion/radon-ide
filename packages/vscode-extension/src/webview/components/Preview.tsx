@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, ReactNode } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { Resizable } from "re-resizable";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
 import { useProject } from "../providers/ProjectProvider";
@@ -13,19 +14,14 @@ import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import {
-  InspectData,
-  InspectDataStackItem,
-  RecordingData,
-  ZoomLevelType,
-} from "../../common/Project";
+import { Frame, InspectDataStackItem, RecordingData, ZoomLevelType } from "../../common/Project";
 import { InspectDataMenu } from "./InspectDataMenu";
-import { Resizable } from "re-resizable";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
 
 declare module "react" {
@@ -254,7 +250,7 @@ function Preview({
 
   const openRebuildAlert = useNativeRebuildAlert();
 
-  const [inspectFrame, setInspectFrame] = useState<InspectData["frame"] | null>(null);
+  const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
   function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
@@ -585,6 +581,11 @@ function Preview({
                         width: `${inspectFrame.width * 100}%`,
                         height: `${inspectFrame.height * 100}%`,
                       }}
+                    />
+                    <DimensionsBox
+                      device={device}
+                      frame={inspectFrame}
+                      wrapperDivRef={wrapperDivRef}
                     />
                   </div>
                 )}

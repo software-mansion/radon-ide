@@ -69,7 +69,8 @@ export class BuildManager {
           forceCleanBuild,
           cancelToken,
           this.buildOutputChannel,
-          progressListener
+          progressListener,
+          this.dependencyManager
         );
       } else {
         this.buildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
@@ -93,6 +94,7 @@ export class BuildManager {
           cancelToken,
           this.buildOutputChannel,
           progressListener,
+          this.dependencyManager,
           installPodsIfNeeded
         );
       }

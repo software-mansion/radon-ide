@@ -11,6 +11,7 @@ import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild } from "./eas";
 import { getXcodebuildArch } from "../utilities/common";
+import { DependencyManager } from "../dependency/DependencyManager";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
@@ -76,6 +77,7 @@ export async function buildIos(
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void,
+  dependencyManager: DependencyManager,
   installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
   const { customBuild, eas, ios: buildOptions, env } = getLaunchConfiguration();
@@ -117,6 +119,12 @@ export async function buildIos(
   if (await isExpoGoProject()) {
     const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);
     return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
+  }
+
+  if (!(await dependencyManager.isInstalled("ios"))) {
+    throw new Error(
+      "Ios directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory"
+    );
   }
 
   const sourceDir = getIosSourceDir(appRootFolder);
