@@ -181,7 +181,6 @@ export class DeviceManager implements DeviceManagerInterface {
     if (device.platform === DevicePlatform.Android) {
       await renameEmulator(device.avdId, customName);
     }
-    device.customName = customName;
     await this.loadDevices();
   }
 

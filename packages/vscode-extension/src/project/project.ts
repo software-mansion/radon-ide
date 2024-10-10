@@ -490,6 +490,10 @@ export class Project
     }
   }
 
+  public updateSelectedDevice(deviceInfo: DeviceInfo) {
+    this.updateProjectState({ selectedDevice: deviceInfo });
+  }
+
   public async updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void> {
     this.updateProjectState({ previewZoom: zoom });
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);

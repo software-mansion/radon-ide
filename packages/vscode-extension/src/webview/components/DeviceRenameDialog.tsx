@@ -6,6 +6,7 @@ import Button from "./shared/Button";
 import { useModal } from "../providers/ModalProvider";
 import { formatCustomName, MAX_CUSTOM_NAME_LENGTH } from "../views/CreateDeviceView";
 import Label from "../components/shared/Label";
+import { useProject } from "../providers/ProjectProvider";
 
 function DeviceRenameDialog({
   deviceInfo,
@@ -17,6 +18,7 @@ function DeviceRenameDialog({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isCustomNameValid, setIsCustomNameValid] = useState(true);
   const { deviceManager } = useDevices();
+  const { project } = useProject();
 
   const { showHeader } = useModal();
   useEffect(() => {
@@ -67,6 +69,8 @@ function DeviceRenameDialog({
             try {
               await deviceManager.renameDevice(deviceInfo, inputRef.current!.value);
             } finally {
+              deviceInfo.customName = inputRef.current!.value;
+              project.updateSelectedDevice(deviceInfo);
               onClose();
             }
           }}>
