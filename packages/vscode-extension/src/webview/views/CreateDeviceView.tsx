@@ -163,7 +163,10 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
             disabled={!platformSelected}
             className="form-field"
             value={selectedSystemName ?? ""}
-            onChange={(newValue) => selectSystemName(newValue)}
+            onChange={(newValue) => {
+              selectSystemName(newValue);
+              inputRef.current!.value = deviceName ?? "";
+            }}
             items={systemImagesOptions}
             placeholder="Select device system image..."
           />
@@ -176,7 +179,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
       </div>
       <div className="form-row">
         <Label>
-          <span>Custom Name (optional)</span>
+          <span>Name</span>
         </Label>
         <input
           ref={inputRef}
