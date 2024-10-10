@@ -27,6 +27,7 @@ import {
 } from "../common/DependencyManager";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { CancelToken } from "../builders/cancelToken";
+import { getAndroidSourceDir } from "../builders/buildAndroid";
 
 const STALE_PODS = "stalePods";
 
@@ -67,10 +68,18 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
           case "nodeModules":
             return { status: await this.nodeModulesStatus(), isOptional: false };
           case "pods":
-            return { status: await this.podsStatus(), isOptional: !isExpoGoProject() };
+            return { status: await this.podsStatus(), isOptional: await isExpoGoProject() };
           case "reactNative": {
             const status = dependencyStatus("react-native", MinSupportedVersion.reactNative);
             return { status, isOptional: false };
+          }
+          case "android": {
+            const status = this.androidDirectoryExits() ? "installed" : "notInstalled";
+            return { status, isOptional: await areNativeDirectoriesOptional() };
+          }
+          case "ios": {
+            const status = this.iosDirectoryExits() ? "installed" : "notInstalled";
+            return { status, isOptional: await areNativeDirectoriesOptional() };
           }
           case "expo": {
             const status = dependencyStatus("expo", MinSupportedVersion.expo);
@@ -96,6 +105,24 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     );
     Logger.debug(`Dependencies status:\n${JSON.stringify(dependenciesInstallStatus, null, 2)}`);
     return diagnostics;
+  }
+
+  androidDirectoryExits() {
+    const appRootFolder = getAppRootFolder();
+    const androidDirPath = getAndroidSourceDir(appRootFolder);
+    if (fs.existsSync(androidDirPath)) {
+      return true;
+    }
+    return false;
+  }
+
+  iosDirectoryExits() {
+    const appRootFolder = getAppRootFolder();
+    const iosDirPath = getIosSourceDir(appRootFolder);
+    if (fs.existsSync(iosDirPath)) {
+      return true;
+    }
+    return false;
   }
 
   public async isInstalled(dependency: Dependency) {
@@ -320,4 +347,10 @@ function isUsingExpoRouter() {
   } catch (e) {
     return false;
   }
+}
+async function areNativeDirectoriesOptional(): Promise<boolean> {
+  const isExpoGo = await isExpoGoProject();
+  const launchConfiguration = getLaunchConfiguration();
+
+  return isExpoGo && !!launchConfiguration.eas && !!launchConfiguration.customBuild;
 }
