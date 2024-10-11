@@ -417,7 +417,7 @@ function Preview({
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
     // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
     // in the future https://github.com/microsoft/vscode/issues/225411
-    function onContextMenu(e) {
+    function onContextMenu(e: any) {
       e.stopImmediatePropagation();
     }
 
@@ -430,10 +430,10 @@ function Preview({
         setIsPressing(false);
       }
     }
-    addEventListener("blur", onBlurChange, true);
+    document.addEventListener("blur", onBlurChange, true);
     return () => {
       window.removeEventListener("contextmenu", onContextMenu);
-      removeEventListener("blur", onBlurChange, true);
+      document.removeEventListener("blur", onBlurChange, true);
     };
   }, []);
 
