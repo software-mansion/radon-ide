@@ -121,7 +121,7 @@ export async function buildAndroid(
 
   if (!(await dependencyManager.isInstalled("android"))) {
     throw new Error(
-      "Android directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory"
+      '"android" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory'
     );
   }
 
