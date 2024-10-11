@@ -4,14 +4,12 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
   DependencyManagerInterface,
   DependencyStatus,
-  InstallationStatus,
   MinSupportedVersion,
 } from "../../common/DependencyManager";
 
@@ -140,15 +138,6 @@ function getErrors(statuses: DependencyRecord) {
     });
   return hasErrors ? errors : undefined;
 }
-
-// function availableOnPlatform(dependency: Dependency) {
-//   const macosOnly = ["xcode", "cocoaPods", "pods"].includes(dependency);
-
-//   if (macosOnly) {
-//     return Platform.OS === "macos";
-//   }
-//   return true;
-// }
 
 export function dependencyDescription(dependency: Dependency) {
   switch (dependency) {

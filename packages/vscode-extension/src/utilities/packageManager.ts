@@ -4,7 +4,6 @@ import { command } from "./subprocess";
 import { getAppRootFolder } from "./extensionContext";
 import { isWorkspaceRoot } from "./common";
 import { Logger } from "../Logger";
-import { ExecaError } from "execa";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";

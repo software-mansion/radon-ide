@@ -25,6 +25,7 @@ import {
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { CancelToken } from "../builders/cancelToken";
 import { getAndroidSourceDir } from "../builders/buildAndroid";
+import { Platform } from "../utilities/platform";
 
 const STALE_PODS = "stalePods";
 
@@ -52,24 +53,22 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
   public async runAllDependencyChecks() {
     this.checkAndroidEmulatorBinaryStatus();
+    this.checkAndroidDirectoryExits();
 
-    this.checkXcodebuildCommandStatus();
-
-    this.checkPodsCommandStatus();
+    if (Platform.OS === "macos") {
+      this.checkXcodebuildCommandStatus();
+      this.checkIOSDirectoryExists();
+      this.checkPodsCommandStatus();
+      this.checkPodsInstallationStatus();
+    }
 
     this.checkNodeCommandStatus();
-
     this.checkNodeModulesInstallationStatus();
-
-    this.checkPodsInstallationStatus();
 
     this.emitEvent("reactNative", {
       status: npmPackageVersionCheck("react-native", MinSupportedVersion.reactNative),
       isOptional: false,
     });
-
-    this.checkAndroidDirectoryExits();
-    this.checkIOSDirectoryExists();
 
     this.emitEvent("expo", {
       status: npmPackageVersionCheck("expo", MinSupportedVersion.expo),
