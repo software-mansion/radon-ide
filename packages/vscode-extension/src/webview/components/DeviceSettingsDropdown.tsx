@@ -161,10 +161,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
 const LocalizationItem = () => {
   const { openModal } = useModal();
+  const { projectState } = useProject();
   return (
     <>
       <Label>Device Localization</Label>
       <DropdownMenu.Item
+        disabled={projectState.status !== "running"}
         className="dropdown-menu-item"
         onSelect={() => {
           openModal("Localization", <DeviceLocalizationView />);

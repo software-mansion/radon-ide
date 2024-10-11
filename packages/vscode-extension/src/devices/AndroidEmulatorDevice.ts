@@ -113,6 +113,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
       locale,
     ]);
 
+    // this is needed to make sure that changes will persist
+    await exec(ADB_PATH, ["-s", this.serial!, "shell", "sync"]);
+
     const { stdout } = await exec(ADB_PATH, [
       "-s",
       this.serial!,
@@ -120,9 +123,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "getprop",
       "persist.sys.locale",
     ]);
-
-    // this is needed to make sure that changes will persist
-    await exec(ADB_PATH, ["shell", "sync"]);
 
     if (stdout) {
       Logger.warn(
