@@ -4,6 +4,7 @@ import { command } from "./subprocess";
 import { getAppRootFolder } from "./extensionContext";
 import { isWorkspaceRoot } from "./common";
 import { Logger } from "../Logger";
+import { ExecaError } from "execa";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
@@ -99,14 +100,16 @@ async function isYarnModulesInstalled(workspacePath: string): Promise<boolean> {
     // that if the users shell is using the older one this function may produce false in unexpected ways but even then
     // we'll just run "yarn install" every time which is exactly what we would need to do without isYarnInstalled.
     // https://docs.npmjs.com/cli/v7/commands/npm-install
-    const { stdout, stderr } = await command("npm ls --json", {
+    const { stdout } = await command("npm ls --json", {
       cwd: workspacePath,
       quietErrorsOnExit: true,
     });
-    const parsedJson = JSON.parse(stdout);
+    const parsedOutput = JSON.parse(stdout);
 
     // because npm marks packages installed with yarn as "extraneous" we need to check if there are any other problems.
-    return parsedJson?.problems.every((problem: string) => problem.startsWith("extraneous"));
+    return (
+      parsedOutput?.problems?.every((problem: string) => problem.startsWith("extraneous")) ?? true
+    );
   } catch (e) {
     return false;
   }

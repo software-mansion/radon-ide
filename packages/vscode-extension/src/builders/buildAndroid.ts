@@ -119,7 +119,7 @@ export async function buildAndroid(
     return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
   }
 
-  if (!(await dependencyManager.isInstalled("android"))) {
+  if (!(await dependencyManager.checkAndroidDirectoryExits())) {
     throw new Error(
       '"android" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory'
     );
