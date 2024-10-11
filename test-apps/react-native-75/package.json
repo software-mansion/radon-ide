@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "copy-shared": "../shared/copy.sh bare ./shared"
+    "copy-shared": "node ../shared/copy.js bare ./shared"
   },
   "dependencies": {
     "radon-ide": "^0.0.1",
