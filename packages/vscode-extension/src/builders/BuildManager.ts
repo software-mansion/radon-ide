@@ -85,9 +85,17 @@ export class BuildManager {
         this.buildOutputChannel = iOSBuildOutputChannel;
         this.buildOutputChannel.clear();
         const installPodsIfNeeded = async () => {
-          const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
-          if (!podsInstalled) {
-            Logger.info("Pods installation is missing or outdated. Installing Pods.");
+          let installPods = forceCleanBuild;
+          if (installPods) {
+            Logger.info("Clean build requested: installing pods");
+          } else {
+            const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
+            if (!podsInstalled) {
+              Logger.info("Pods installation is missing or outdated. Installing Pods.");
+              installPods = true;
+            }
+          }
+          if (installPods) {
             getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
             await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
             // Installing pods may impact the fingerprint as new pods may be created under the project directory.
