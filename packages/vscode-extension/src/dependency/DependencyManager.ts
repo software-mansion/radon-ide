@@ -1,11 +1,11 @@
 import fs from "fs";
 import path from "path";
 import { EventEmitter } from "stream";
-import { Disposable } from "vscode";
+import { Disposable, OutputChannel } from "vscode";
 import semver, { SemVer } from "semver";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
-import { command } from "../utilities/subprocess";
+import { command, lineReader } from "../utilities/subprocess";
 import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
@@ -155,7 +155,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     return true;
   }
 
-  public async installPods(cancelToken: CancelToken) {
+  public async installPods(buildOutpuChannel: OutputChannel, cancelToken: CancelToken) {
     const appRootFolder = getAppRootFolder();
     const iosDirPath = getIosSourceDir(appRootFolder);
 
@@ -164,16 +164,15 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       throw new Error("ios directory was not found inside the workspace.");
     }
 
-    const commandInIosDir = (args: string) => {
+    try {
       const env = getLaunchConfiguration().env;
-      return command(args, {
+      const shouldUseBundle = await this.shouldUseBundleCommand();
+      const process = command(shouldUseBundle ? "bundle exec pod install" : "pod install", {
         cwd: iosDirPath,
         env: { ...env, LANG: "en_US.UTF-8" },
       });
-    };
-
-    try {
-      await cancelToken.adapt(commandInIosDir("pod install"));
+      lineReader(process).onLineRead((line) => buildOutpuChannel.appendLine(line));
+      await cancelToken.adapt(process);
     } catch (e) {
       Logger.error("Pods not installed", e);
       this.emitEvent("pods", { status: "notInstalled", isOptional: false });
@@ -219,8 +218,21 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     });
   }
 
+  private async shouldUseBundleCommand() {
+    const gemfile = path.join(getAppRootFolder(), "Gemfile");
+    try {
+      await fs.promises.access(gemfile);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   private async checkPodsCommandStatus() {
-    const installed = await testCommand("pod --version");
+    const shouldUseBundle = await this.shouldUseBundleCommand();
+    const installed = await testCommand(
+      shouldUseBundle ? "bundle exec pod --version" : "pod --version"
+    );
     this.emitEvent("cocoaPods", {
       status: installed ? "installed" : "notInstalled",
       isOptional: false,
