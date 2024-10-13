@@ -78,7 +78,7 @@ export async function buildIos(
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void,
   dependencyManager: DependencyManager,
-  requestFingerprintUpdate: () => {}
+  installPodsIfNeeded: () => {}
 ): Promise<IOSBuildResult> {
   const { customBuild, eas, ios: buildOptions, env } = getLaunchConfiguration();
 
@@ -129,7 +129,7 @@ export async function buildIos(
 
   const sourceDir = getIosSourceDir(appRootFolder);
 
-  await installPodsIfNeeded(outputChannel, cancelToken, forceCleanBuild, dependencyManager);
+  await installPodsIfNeeded();
 
   const xcodeProject = await findXcodeProject(appRootFolder);
 

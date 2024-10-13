@@ -14,13 +14,11 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
   0
 );
 
-const slowLoadingThresholdMs = 30_000;
 function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => void }) {
   const { projectState, project } = useProject();
   const [progress, setProgress] = useState(0);
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
-  const isLoadingSlowlyTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     if (projectState.startupMessage === StartupMessage.Restarting) {
@@ -47,20 +45,21 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     }
   }, [projectState]);
 
-  // Order of status and startupMessage effects must be preserved.
   useEffect(() => {
-    clearTimeout(isLoadingSlowlyTimeout.current);
-  }, [projectState.status]);
+    setIsLoadingSlowly(false);
 
-  useEffect(() => {
-    clearTimeout(isLoadingSlowlyTimeout.current);
-    // We skip reporting slow builds, this is the only most time-consuming
-    // task and times varies from project to project.
-    if (projectState.startupMessage !== StartupMessage.Building) {
-      isLoadingSlowlyTimeout.current = setTimeout(() => {
-        setIsLoadingSlowly(true);
-      }, slowLoadingThresholdMs);
+    // we show the slow loading message after 30 seconds for each phase,
+    // but for the native build phase we show it after 5 seconds.
+    let timeoutMs = 30_000;
+    if (projectState.startupMessage === StartupMessage.Building) {
+      timeoutMs = 5_000;
     }
+
+    const timeoutHandle = setTimeout(() => {
+      setIsLoadingSlowly(true);
+    }, timeoutMs);
+
+    return () => timeoutHandle && clearTimeout(timeoutHandle);
   }, [projectState.startupMessage]);
 
   function handleLoaderClick() {
@@ -83,6 +82,9 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
               isLoadingSlowly && "preview-loader-slow-progress"
             )}>
             {projectState.startupMessage}
+            {isLoadingSlowly && projectState.startupMessage === StartupMessage.Building
+              ? " (open logs)"
+              : ""}
           </StartupMessageComponent>
           {projectState.stageProgress !== undefined && (
             <div className="preview-loader-stage-progress">
