@@ -155,7 +155,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     return true;
   }
 
-  public async installPods(buildOutpuChannel: OutputChannel, cancelToken: CancelToken) {
+  public async installPods(buildOutputChannel: OutputChannel, cancelToken: CancelToken) {
     const appRootFolder = getAppRootFolder();
     const iosDirPath = getIosSourceDir(appRootFolder);
 
@@ -171,7 +171,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
         cwd: iosDirPath,
         env: { ...env, LANG: "en_US.UTF-8" },
       });
-      lineReader(process).onLineRead((line) => buildOutpuChannel.appendLine(line));
+      lineReader(process).onLineRead((line) => buildOutputChannel.appendLine(line));
       await cancelToken.adapt(process);
     } catch (e) {
       Logger.error("Pods not installed", e);
