@@ -10,10 +10,8 @@ import { makeProxy } from "../utilities/rpc";
 import {
   DependencyManagerInterface,
   DependencyStatus,
-  InstallationStatus,
   MinSupportedVersion,
 } from "../../common/DependencyManager";
-import { Platform } from "../providers/UtilsProvider";
 
 const dependencyManager = makeProxy<DependencyManagerInterface>("DependencyManager");
 
@@ -36,15 +34,16 @@ type Dependency = typeof dependencies[number];
 
 type ErrorType = "ios" | "simulator" | "emulator" | "android" | "common";
 type Errors = Partial<Record<ErrorType, { message: string }>>;
+type DependencyRecord = Partial<Record<Dependency, DependencyStatus>>;
 
 interface DependenciesContextProps {
-  dependencies: Record<Dependency, DependencyStatus | undefined>;
+  dependencies: DependencyRecord;
   errors: Errors | undefined;
   runDiagnostics: () => Promise<void>;
 }
 
 const DependenciesContext = createContext<DependenciesContextProps>({
-  dependencies: objectFromKeys<Dependency, DependencyStatus | undefined>(dependencies, undefined),
+  dependencies: {},
   errors: undefined,
   runDiagnostics: () => {
     throw new Error("Provider not initialized");
@@ -52,35 +51,23 @@ const DependenciesContext = createContext<DependenciesContextProps>({
 });
 
 export default function DependenciesProvider({ children }: PropsWithChildren) {
-  const [dependencyState, updateDependencies] = useObjectState<Dependency, DependencyStatus>(
-    dependencies
-  );
+  const [depsState, updateDepsState] = useState<DependencyRecord>({});
 
-  const runDiagnostics = useCallback(async () => {
-    const checkableDependencies = dependencies.filter(availableOnPlatform);
-    const diagnostics = await dependencyManager.getStatus(checkableDependencies);
-
-    updateDependencies(diagnostics);
+  const runDiagnostics = useCallback(() => {
+    return dependencyManager.runAllDependencyChecks();
   }, []);
 
   useEffect(() => {
-    function handleUpdatedDependency(
-      dependency: Dependency,
-      installationStatus: InstallationStatus
-    ) {
-      updateDependencies((prev) => {
-        const previousState = prev[dependency];
-        if (!previousState) {
-          throw new Error(`Dependency ${dependency} updated before it was initialized`);
-        }
+    const dependencies: DependencyRecord = {};
 
-        return { [dependency]: { ...previousState, status: installationStatus } };
-      });
+    function handleUpdatedDependency(dependency: Dependency, status: DependencyStatus) {
+      dependencies[dependency] = status;
+      updateDepsState({ ...dependencies });
     }
 
+    dependencyManager.addListener(handleUpdatedDependency);
     runDiagnostics();
 
-    dependencyManager.addListener(handleUpdatedDependency);
     return () => {
       dependencyManager.removeListener(handleUpdatedDependency);
     };
@@ -89,9 +76,9 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   return (
     <DependenciesContext.Provider
       value={{
-        dependencies: dependencyState,
+        dependencies: depsState,
         runDiagnostics,
-        errors: getErrors(dependencyState),
+        errors: getErrors(depsState),
       }}>
       {children}
     </DependenciesContext.Provider>
@@ -108,32 +95,7 @@ export function useDependencies() {
   return context;
 }
 
-function objectFromKeys<K extends string, V>(keys: readonly K[], defaultValue: V): Record<K, V> {
-  return Object.fromEntries(keys.map((key) => [key, defaultValue])) as Record<K, V>;
-}
-
-function useObjectState<K extends string, V>(keys: readonly K[]) {
-  const [state, setState] = useState(() => objectFromKeys<K, V | undefined>(keys, undefined));
-
-  function update(
-    objectOrUpdater:
-      | Partial<Record<K, V>>
-      | ((prev: Record<K, V | undefined>) => Partial<Record<K, V>>)
-  ): void {
-    const isUpdater = typeof objectOrUpdater === "function";
-    if (isUpdater) {
-      const updater = objectOrUpdater;
-      setState((prev) => ({ ...prev, ...updater(prev) }));
-    } else {
-      const object = objectOrUpdater;
-      setState((prev) => ({ ...prev, ...object }));
-    }
-  }
-
-  return [state, update] as const;
-}
-
-function getErrors(statuses: Record<Dependency, DependencyStatus | undefined>) {
+function getErrors(statuses: DependencyRecord) {
   const errors: Errors = {};
   let hasErrors = false;
   function setFirstError(dependency: Dependency, errorName: ErrorType) {
@@ -175,15 +137,6 @@ function getErrors(statuses: Record<Dependency, DependencyStatus | undefined>) {
       }
     });
   return hasErrors ? errors : undefined;
-}
-
-function availableOnPlatform(dependency: Dependency) {
-  const macosOnly = ["xcode", "cocoaPods", "pods"].includes(dependency);
-
-  if (macosOnly) {
-    return Platform.OS === "macos";
-  }
-  return true;
 }
 
 export function dependencyDescription(dependency: Dependency) {

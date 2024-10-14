@@ -44,7 +44,12 @@ export class BuildManager {
 
     const buildApp = async () => {
       const currentFingerprint = await buildCache.calculateFingerprint();
-      if (forceCleanBuild) {
+
+      // If pods are required to be installed, we ignore the cached build, we don't want clean build in this case though
+      const buildDependenciesChanged =
+        !(await this.dependencyManager.checkPodsInstallationStatus());
+
+      if (forceCleanBuild || buildDependenciesChanged) {
         // we reset the cache when force clean build is requested as the newly
         // started build may end up being cancelled
         await buildCache.clearCache();
@@ -77,7 +82,7 @@ export class BuildManager {
           log: true,
         });
         const installPodsIfNeeded = async () => {
-          const podsInstalled = await this.dependencyManager.isInstalled("pods");
+          const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
           if (!podsInstalled) {
             Logger.info("Pods installation is missing or outdated. Installing Pods.");
             getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });

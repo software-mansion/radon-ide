@@ -16,7 +16,6 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import Button from "../components/shared/Button";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
 import { RecordingData, ZoomLevelType } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 
@@ -64,8 +63,6 @@ function PreviewView() {
   const isStarting = projectState.status === "starting";
 
   const { openModal } = useModal();
-
-  useDiagnosticAlert(selectedDevice?.platform);
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"
