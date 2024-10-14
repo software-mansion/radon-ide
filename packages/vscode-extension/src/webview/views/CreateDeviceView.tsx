@@ -35,7 +35,6 @@ function useSupportedDevices() {
       prefix = "android";
     }
     return { value: prefix + item.modelName, label: item.modelName };
-    // return { value: `${prefix}:${item.modelName}:${item.deviceName}`, label: item.modelName }; // FRYTKI
   }
 
   return [
@@ -117,8 +116,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
       } else {
         const systemImage = androidImages.find((image) => image.location === selectedSystemName);
 
-        if (!systemImage || !deviceModel || !displayName) {
-          // FRYTKI  displayName ?
+        if (!systemImage || !deviceModel) {
           return;
         }
         await deviceManager.createAndroidDevice(deviceModel, displayName, systemImage);

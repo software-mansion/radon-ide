@@ -536,7 +536,6 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
       )?.name;
 
       const modelName = mapDeviceNameToModel(deviceName);
-      console.log("FRYTKI ", displayName);
       return {
         id: `android-${avdId}`,
         platform: DevicePlatform.Android,
