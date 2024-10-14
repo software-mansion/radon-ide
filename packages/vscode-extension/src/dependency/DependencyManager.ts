@@ -235,7 +235,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     );
     this.emitEvent("cocoaPods", {
       status: installed ? "installed" : "notInstalled",
-      isOptional: false,
+      isOptional: !(await projectRequiresNativeBuild()),
     });
   }
 
@@ -373,6 +373,16 @@ function appDependsOnExpoRouter() {
   }
 }
 
+/**
+ * Returns true if the project needs to be built by the IDE using the normall
+ * platform-specific tooling (xcodebuild or gralde). This is needed for us to
+ * be able to tell whether the existence of the android or ios directories
+ * is required, or if tools like cocoapods need to be available.
+ *
+ * When the project uses custom build instructions, downloads builds from EAS,
+ * or uses Expo Go, the IDE is not responsible for building the project, and hence
+ * we don't want to report missing directories or tools as errors.
+ */
 async function projectRequiresNativeBuild() {
   const launchConfiguration = getLaunchConfiguration();
   if (launchConfiguration.customBuild || launchConfiguration.eas) {

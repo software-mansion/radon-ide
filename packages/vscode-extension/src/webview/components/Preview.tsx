@@ -413,11 +413,16 @@ function Preview({
     }
   }
 
-  function onContextMenu(e: MouseEvent<HTMLDivElement>) {
-    e.preventDefault();
-  }
-
   useEffect(() => {
+    // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
+    // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
+    // in the future https://github.com/microsoft/vscode/issues/225411
+    function onContextMenu(e: any) {
+      e.stopImmediatePropagation();
+    }
+
+    window.addEventListener("contextmenu", onContextMenu, true);
+
     function onBlurChange() {
       if (!document.hasFocus()) {
         setIsPanning(false);
@@ -425,8 +430,11 @@ function Preview({
         setIsPressing(false);
       }
     }
-    addEventListener("blur", onBlurChange, true);
-    return () => removeEventListener("blur", onBlurChange, true);
+    document.addEventListener("blur", onBlurChange, true);
+    return () => {
+      window.removeEventListener("contextmenu", onContextMenu);
+      document.removeEventListener("blur", onBlurChange, true);
+    };
   }, []);
 
   useEffect(() => {
@@ -487,7 +495,7 @@ function Preview({
   }, [project, openRebuildAlert, projectStatus]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.name === projectState?.selectedDevice?.name;
+    return sd.modelName === projectState?.selectedDevice?.name;
   });
 
   const shouldPreventTouchInteraction =
@@ -505,7 +513,6 @@ function Preview({
         onMouseUp,
         onMouseEnter,
         onMouseLeave,
-        onContextMenu,
       };
 
   const resizableProps = useResizableProps({

@@ -14,4 +14,6 @@ export interface UtilsInterface {
   showDismissableError(errorMessage: string): Promise<void>;
 
   openExternalUrl(uriString: string): Promise<void>;
+
+  log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]): Promise<void>;
 }
