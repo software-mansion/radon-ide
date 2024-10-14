@@ -583,7 +583,7 @@ export async function renameEmulator(avdId: string, newDisplayName: string) {
       .split("\n")
       .map((line) => {
         if (line.startsWith("avd.ini.displayname=")) {
-          return `avd.ini.displayname==${newDisplayName}`;
+          return `avd.ini.displayname=${newDisplayName}`;
         }
         return line;
       })
