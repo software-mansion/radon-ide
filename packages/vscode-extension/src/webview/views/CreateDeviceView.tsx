@@ -143,10 +143,9 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           className="form-field"
           value={`${devicePlatform && deviceModel ? `${devicePlatform}:${deviceModel}` : ""}`}
           onChange={(newValue: string) => {
-            const [newPlatform, newDisplayName, newDeviceName] = newValue.split(":", 3);
+            const [newPlatform, newModelName] = newValue.split(":", 2);
             assertPlatform(newPlatform);
-
-            setDeviceModel(name);
+            setDeviceModel(newModelName);
             setDevicePlatform(newPlatform);
             selectSystemName(undefined);
             inputRef.current!.value = "";

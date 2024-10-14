@@ -100,7 +100,7 @@ function DevicesNotFoundView() {
         return;
       }
 
-      await deviceManager.createAndroidDevice(modelName, modelName, deviceName, newestImage);
+      await deviceManager.createAndroidDevice(modelName, deviceName, newestImage);
     });
   }
 
