@@ -393,7 +393,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 }
 
-export async function createEmulator(displayName: string, deviceName: string, systemImage: AndroidSystemImageInfo) {
+export async function createEmulator(
+  displayName: string,
+  deviceName: string,
+  systemImage: AndroidSystemImageInfo
+) {
   const avdDirectory = getOrCreateAvdDirectory();
   const avdId = uuidv4();
   const avdIni = path.join(avdDirectory, `${avdId}.ini`);

@@ -123,7 +123,9 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Label>Device Type</Label>
         <Select
           className="form-field"
-          value={`${devicePlatform && displayName ? `${devicePlatform}:${displayName}:${deviceName}` : ""}`}
+          value={`${
+            devicePlatform && displayName ? `${devicePlatform}:${displayName}:${deviceName}` : ""
+          }`}
           onChange={(newValue: string) => {
             const [newPlatform, newDisplayName, newDeviceName] = newValue.split(":", 3);
             assertPlatform(newPlatform);
