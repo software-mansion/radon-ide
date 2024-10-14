@@ -34,7 +34,7 @@ function useSupportedDevices() {
     } else {
       prefix = "android";
     }
-    return { value: `${prefix}:${item.displayName}:${item.deviceName}`, label: item.displayName };
+    return { value: `${prefix}:${item.modelName}:${item.deviceName}`, label: item.modelName };
   }
 
   return [

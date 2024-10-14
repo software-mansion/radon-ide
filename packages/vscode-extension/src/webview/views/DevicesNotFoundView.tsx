@@ -47,7 +47,7 @@ function useLoadingState() {
 }
 
 function firstRuntimeSupportedDevice(supportedDeviceTypes: IOSDeviceTypeInfo[]) {
-  return supportedDeviceTypes.find(({ name }) => name === firstIosDevice.displayName);
+  return supportedDeviceTypes.find(({ name }) => name === firstIosDevice.modelName);
 }
 
 function findNewestIosRuntime(runtimes: IOSRuntimeInfo[]) {
@@ -95,13 +95,13 @@ function DevicesNotFoundView() {
         return;
       }
 
-      const { displayName, deviceName } = firstAndroidDevice;
+      const { modelName, deviceName } = firstAndroidDevice;
 
       if (deviceName === undefined) {
         return;
       }
 
-      await deviceManager.createAndroidDevice(displayName, deviceName, newestImage);
+      await deviceManager.createAndroidDevice(modelName, deviceName, newestImage);
     });
   }
 

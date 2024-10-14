@@ -13,7 +13,7 @@ import iphoneSEmask from "../../assets/iphone_SE/mask.png";
 import { DevicePlatform } from "../../common/DeviceManager";
 
 export type DeviceProperties = {
-  displayName: string;
+  modelName: string;
   deviceName?: string; // only needed for Android to set hw.device.name in config.ini
   platform: DevicePlatform;
   screenWidth: number;
@@ -29,7 +29,7 @@ export type DeviceProperties = {
 // iOS devices names should match supportedDeviceTypes inside the runtime
 export const iOSSupportedDevices: DeviceProperties[] = [
   {
-    displayName: "iPhone 15 Pro",
+    modelName: "iPhone 15 Pro",
     platform: DevicePlatform.IOS,
     screenWidth: 1179,
     screenHeight: 2556,
@@ -41,7 +41,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     maskImage: iphone15promask,
   },
   {
-    displayName: "iPhone SE (3rd generation)",
+    modelName: "iPhone SE (3rd generation)",
     platform: DevicePlatform.IOS,
     screenWidth: 750,
     screenHeight: 1334,
@@ -56,7 +56,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
 
 export const AndroidSupportedDevices: DeviceProperties[] = [
   {
-    displayName: "Google Pixel 9",
+    modelName: "Google Pixel 9",
     deviceName: "pixel_9",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
@@ -69,7 +69,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     maskImage: pixel9mask,
   },
   {
-    displayName: "Google Pixel 8",
+    modelName: "Google Pixel 8",
     deviceName: "pixel_8",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
@@ -82,7 +82,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     maskImage: pixel8mask,
   },
   {
-    displayName: "Google Pixel 7",
+    modelName: "Google Pixel 7",
     deviceName: "pixel_7",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
@@ -95,7 +95,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     maskImage: pixel7mask,
   },
   {
-    displayName: "Google Pixel 6a",
+    modelName: "Google Pixel 6a",
     deviceName: "pixel_6a",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
