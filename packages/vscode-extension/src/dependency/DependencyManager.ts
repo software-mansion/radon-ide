@@ -3,7 +3,6 @@ import path from "path";
 import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
 import semver, { SemVer } from "semver";
-import zipObject from "lodash/zipObject";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command } from "../utilities/subprocess";
@@ -17,17 +16,16 @@ import {
 } from "../utilities/packageManager";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import {
-  DependenciesStatus,
   Dependency,
   DependencyListener,
   DependencyManagerInterface,
   DependencyStatus,
-  InstallationStatus,
   MinSupportedVersion,
 } from "../common/DependencyManager";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { CancelToken } from "../builders/cancelToken";
 import { getAndroidSourceDir } from "../builders/buildAndroid";
+import { Platform } from "../utilities/platform";
 
 const STALE_PODS = "stalePods";
 
@@ -42,92 +40,98 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async addListener(listener: DependencyListener) {
-    this.eventEmitter.addListener("updatedDependencyInstallationStatus", listener);
+    this.eventEmitter.addListener("updatedDependencyStatus", listener);
   }
 
   public async removeListener(listener: DependencyListener) {
-    this.eventEmitter.removeListener("updatedDependencyInstallationStatus", listener);
+    this.eventEmitter.removeListener("updatedDependencyStatus", listener);
   }
 
-  private emitEvent(dependency: Dependency, status: InstallationStatus) {
-    this.eventEmitter.emit("updatedDependencyInstallationStatus", dependency, status);
+  private emitEvent(dependency: Dependency, status: DependencyStatus) {
+    this.eventEmitter.emit("updatedDependencyStatus", dependency, status);
   }
 
-  public async getStatus(dependencies: Dependency[]): Promise<DependenciesStatus> {
-    const statuses = await Promise.all(
-      dependencies.map(async (dependency): Promise<DependencyStatus> => {
-        switch (dependency) {
-          case "androidEmulator":
-            return { status: await this.androidEmulatorStatus(), isOptional: false };
-          case "xcode":
-            return { status: await this.xcodeStatus(), isOptional: false };
-          case "cocoaPods":
-            return { status: await this.cocoapodsStatus(), isOptional: false };
-          case "nodejs":
-            return { status: await this.nodeStatus(), isOptional: false };
-          case "nodeModules":
-            return { status: await this.nodeModulesStatus(), isOptional: false };
-          case "pods":
-            return { status: await this.podsStatus(), isOptional: await isExpoGoProject() };
-          case "reactNative": {
-            const status = dependencyStatus("react-native", MinSupportedVersion.reactNative);
-            return { status, isOptional: false };
-          }
-          case "android": {
-            const status = this.androidDirectoryExits() ? "installed" : "notInstalled";
-            return { status, isOptional: await areNativeDirectoriesOptional() };
-          }
-          case "ios": {
-            const status = this.iosDirectoryExits() ? "installed" : "notInstalled";
-            return { status, isOptional: await areNativeDirectoriesOptional() };
-          }
-          case "expo": {
-            const status = dependencyStatus("expo", MinSupportedVersion.expo);
-            return { status, isOptional: !shouldUseExpoCLI() };
-          }
-          case "expoRouter": {
-            const status = dependencyStatus("expo-router");
-            return { status, isOptional: !isUsingExpoRouter() };
-          }
-          case "storybook": {
-            const packageName = "@storybook/react-native";
-            const status = dependencyStatus(packageName, MinSupportedVersion.storybook);
-            return { status, isOptional: true };
-          }
-        }
-      })
-    );
+  public async runAllDependencyChecks() {
+    this.checkAndroidEmulatorBinaryStatus();
+    this.checkAndroidDirectoryExits();
 
-    const diagnostics = zipObject(dependencies, statuses) as DependenciesStatus;
-    const dependenciesInstallStatus = zipObject(
-      dependencies,
-      statuses.map(({ status }) => status)
-    );
-    Logger.debug(`Dependencies status:\n${JSON.stringify(dependenciesInstallStatus, null, 2)}`);
-    return diagnostics;
+    if (Platform.OS === "macos") {
+      this.checkXcodebuildCommandStatus();
+      this.checkIOSDirectoryExists();
+      this.checkPodsCommandStatus();
+      this.checkPodsInstallationStatus();
+    }
+
+    this.checkNodeCommandStatus();
+    this.checkNodeModulesInstallationStatus();
+
+    this.emitEvent("reactNative", {
+      status: npmPackageVersionCheck("react-native", MinSupportedVersion.reactNative),
+      isOptional: false,
+    });
+
+    this.emitEvent("expo", {
+      status: npmPackageVersionCheck("expo", MinSupportedVersion.expo),
+      isOptional: !shouldUseExpoCLI(),
+    });
+
+    this.checkProjectUsesExpoRouter();
+    this.checkProjectUsesStorybook();
   }
 
-  androidDirectoryExits() {
+  public async checkAndroidDirectoryExits() {
     const appRootFolder = getAppRootFolder();
     const androidDirPath = getAndroidSourceDir(appRootFolder);
-    if (fs.existsSync(androidDirPath)) {
+
+    const isOptional = !(await projectRequiresNativeBuild());
+
+    try {
+      await fs.promises.access(androidDirPath);
+      this.emitEvent("android", { status: "installed", isOptional });
       return true;
+    } catch (e) {
+      this.emitEvent("android", { status: "notInstalled", isOptional });
+      return isOptional;
     }
-    return false;
   }
 
-  iosDirectoryExits() {
+  public async checkIOSDirectoryExists() {
     const appRootFolder = getAppRootFolder();
     const iosDirPath = getIosSourceDir(appRootFolder);
-    if (fs.existsSync(iosDirPath)) {
+
+    const isOptional = !(await projectRequiresNativeBuild());
+    try {
+      await fs.promises.access(iosDirPath);
+      this.emitEvent("ios", { status: "installed", isOptional });
       return true;
+    } catch (e) {
+      this.emitEvent("ios", { status: "notInstalled", isOptional });
+      return isOptional;
     }
-    return false;
   }
 
-  public async isInstalled(dependency: Dependency) {
-    const status = await this.getStatus([dependency]);
-    return status[dependency].status === "installed";
+  public async checkProjectUsesExpoRouter() {
+    const dependsOnExpoRouter = appDependsOnExpoRouter();
+    const hasExpoRouterInstalled = npmPackageVersionCheck("expo-router");
+
+    this.emitEvent("expoRouter", {
+      status: hasExpoRouterInstalled,
+      isOptional: !dependsOnExpoRouter,
+    });
+
+    return dependsOnExpoRouter;
+  }
+
+  public async checkProjectUsesStorybook() {
+    const hasStotybookInstalled = npmPackageVersionCheck(
+      "@storybook/react-native",
+      MinSupportedVersion.storybook
+    );
+    this.emitEvent("storybook", {
+      status: hasStotybookInstalled,
+      isOptional: true,
+    });
+    return hasStotybookInstalled;
   }
 
   public async installNodeModules(): Promise<boolean> {
@@ -138,7 +142,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
     await this.setStalePodsAsync(true);
 
-    this.emitEvent("nodeModules", "installing");
+    this.emitEvent("nodeModules", { status: "installing", isOptional: false });
 
     // all managers support the `install` command
     await command(`${manager.name} install`, {
@@ -146,7 +150,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       quietErrorsOnExit: true,
     });
 
-    this.emitEvent("nodeModules", "installed");
+    this.emitEvent("nodeModules", { status: "installed", isOptional: false });
 
     return true;
   }
@@ -156,7 +160,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     const iosDirPath = getIosSourceDir(appRootFolder);
 
     if (!iosDirPath) {
-      this.emitEvent("pods", "notInstalled");
+      this.emitEvent("pods", { status: "notInstalled", isOptional: false });
       throw new Error("ios directory was not found inside the workspace.");
     }
 
@@ -172,13 +176,13 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       await cancelToken.adapt(commandInIosDir("pod install"));
     } catch (e) {
       Logger.error("Pods not installed", e);
-      this.emitEvent("pods", "notInstalled");
+      this.emitEvent("pods", { status: "notInstalled", isOptional: false });
       return;
     }
 
     await this.setStalePodsAsync(false);
 
-    this.emitEvent("pods", "installed");
+    this.emitEvent("pods", { status: "installed", isOptional: false });
     Logger.debug("Project pods installed");
   }
 
@@ -194,77 +198,81 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     return this.packageManagerInternal;
   }
 
-  private async androidEmulatorStatus() {
-    if (fs.existsSync(EMULATOR_BINARY)) {
-      return "installed";
+  private async checkAndroidEmulatorBinaryStatus() {
+    try {
+      await fs.promises.access(EMULATOR_BINARY, fs.constants.X_OK);
+      this.emitEvent("androidEmulator", { status: "installed", isOptional: false });
+    } catch (e) {
+      this.emitEvent("androidEmulator", { status: "notInstalled", isOptional: false });
     }
-    return "notInstalled";
   }
 
-  private async xcodeStatus() {
+  private async checkXcodebuildCommandStatus() {
     const isXcodebuildInstalled = await testCommand("xcodebuild -version");
     const isXcrunInstalled = await testCommand("xcrun --version");
     const isSimctlInstalled = await testCommand("xcrun simctl help");
 
-    if (isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled) {
-      return "installed";
-    }
-    return "notInstalled";
+    const isInstalled = isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
+    this.emitEvent("xcode", {
+      status: isInstalled ? "installed" : "notInstalled",
+      isOptional: false,
+    });
   }
 
-  private async cocoapodsStatus() {
+  private async checkPodsCommandStatus() {
     const installed = await testCommand("pod --version");
-
-    if (installed) {
-      return "installed";
-    }
-    return "notInstalled";
+    this.emitEvent("cocoaPods", {
+      status: installed ? "installed" : "notInstalled",
+      isOptional: !(await projectRequiresNativeBuild()),
+    });
   }
 
-  private async nodeStatus() {
+  private async checkNodeCommandStatus() {
     const installed = await testCommand("node -v");
-    if (installed) {
-      return "installed";
-    }
-    return "notInstalled";
+    this.emitEvent("nodejs", {
+      status: installed ? "installed" : "notInstalled",
+      isOptional: false,
+    });
   }
 
-  private async nodeModulesStatus() {
+  public async checkNodeModulesInstallationStatus() {
     const packageManager = await resolvePackageManager();
     if (!packageManager) {
-      return "notInstalled";
+      this.emitEvent("nodeModules", { status: "notInstalled", isOptional: false });
+      return false;
     }
 
     const installed = await isNodeModulesInstalled(packageManager);
-    if (installed) {
-      return "installed";
-    }
-    return "notInstalled";
+    this.emitEvent("nodeModules", {
+      status: installed ? "installed" : "notInstalled",
+      isOptional: false,
+    });
+    return installed;
   }
 
-  private async podsStatus() {
-    if (await isExpoGoProject()) {
-      // Expo Go projects don't need pods
-      return "installed";
+  public async checkPodsInstallationStatus() {
+    const requiresNativeBuild = await projectRequiresNativeBuild();
+    if (!requiresNativeBuild) {
+      this.emitEvent("pods", { status: "notInstalled", isOptional: true });
+      return true;
     }
 
-    if (this.stalePods) {
-      return "notInstalled";
+    if (requiresNativeBuild && this.stalePods) {
+      this.emitEvent("pods", { status: "notInstalled", isOptional: false });
+      return false;
     }
 
     const appRootFolder = getAppRootFolder();
     const iosDirPath = getIosSourceDir(appRootFolder);
 
-    Logger.debug(`Check pods in ${iosDirPath}`);
-    if (!iosDirPath) {
-      return "notInstalled";
-    }
-
     const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
     const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
 
-    if (!podfileLockExists || !podsDirExists) {
-      return "notInstalled";
+    const podsInstallationIsPresent = podfileLockExists && podsDirExists;
+
+    if (!podsInstallationIsPresent) {
+      this.emitEvent("pods", { status: "notInstalled", isOptional: false });
+      return false;
     }
 
     // finally, we perform check between Podfile.lock and Pods/Manifest.lock
@@ -278,7 +286,11 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       quietErrorsOnExit: true,
     });
 
-    return failed ? "notInstalled" : "installed";
+    this.emitEvent("pods", {
+      status: failed ? "notInstalled" : "installed",
+      isOptional: false,
+    });
+    return !failed;
   }
 }
 
@@ -302,7 +314,7 @@ function requireNoCache(...params: Parameters<typeof require.resolve>) {
   return require(module);
 }
 
-function dependencyStatus(dependency: string, minVersion?: string | semver.SemVer) {
+function npmPackageVersionCheck(dependency: string, minVersion?: string | semver.SemVer) {
   try {
     const module = requireNoCache(path.join(dependency, "package.json"), {
       paths: [getAppRootFolder()],
@@ -333,7 +345,7 @@ export async function checkXcodeExists() {
   return isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
 }
 
-function isUsingExpoRouter() {
+function appDependsOnExpoRouter() {
   // we assume that a expo router based project contain
   // the package "expo-router" in its dependencies or devDependencies
   const appRoot = getAppRootFolder();
@@ -348,9 +360,22 @@ function isUsingExpoRouter() {
     return false;
   }
 }
-async function areNativeDirectoriesOptional(): Promise<boolean> {
-  const isExpoGo = await isExpoGoProject();
-  const launchConfiguration = getLaunchConfiguration();
 
-  return isExpoGo || !!launchConfiguration.eas || !!launchConfiguration.customBuild;
+/**
+ * Returns true if the project needs to be built by the IDE using the normall
+ * platform-specific tooling (xcodebuild or gralde). This is needed for us to
+ * be able to tell whether the existence of the android or ios directories
+ * is required, or if tools like cocoapods need to be available.
+ *
+ * When the project uses custom build instructions, downloads builds from EAS,
+ * or uses Expo Go, the IDE is not responsible for building the project, and hence
+ * we don't want to report missing directories or tools as errors.
+ */
+async function projectRequiresNativeBuild() {
+  const launchConfiguration = getLaunchConfiguration();
+  if (launchConfiguration.customBuild || launchConfiguration.eas) {
+    return false;
+  }
+
+  return !(await isExpoGoProject());
 }
