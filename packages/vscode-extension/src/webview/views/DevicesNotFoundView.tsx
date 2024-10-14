@@ -6,7 +6,7 @@ import Button from "../components/shared/Button";
 import { useModal } from "../providers/ModalProvider";
 import CreateDeviceView from "./CreateDeviceView";
 import { useDevices } from "../providers/DevicesProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../../utilities/consts";
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform, useUtils } from "../providers/UtilsProvider";

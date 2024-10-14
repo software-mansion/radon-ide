@@ -3,7 +3,7 @@ import IconButton from "./shared/IconButton";
 import * as Select from "@radix-ui/react-select";
 import "./ZoomControls.css";
 import { ZoomLevelType } from "../../common/Project";
-import { DeviceProperties } from "../utilities/consts";
+import { DeviceProperties } from "../../utilities/consts";
 
 const ZOOM_STEP = 0.05;
 const ZOOM_SELECT_NUMERIC_VALUES = [0.5, 0.6, 0.7, 0.8, 0.9, 1];

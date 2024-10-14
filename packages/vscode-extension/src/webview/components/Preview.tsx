@@ -9,7 +9,7 @@ import {
   AndroidSupportedDevices,
   DeviceProperties,
   iOSSupportedDevices,
-} from "../utilities/consts";
+} from "../../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
