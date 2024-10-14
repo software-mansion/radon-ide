@@ -45,25 +45,3 @@ global.__RNIDE_register_navigation_plugin = function (name, plugin) {
 AppRegistry.setWrapperComponentProvider((appParameters) => {
   return require("__RNIDE_lib__/wrapper.js").PreviewAppWrapper;
 });
-
-// Some apps may use AppRegistry.setWrapperComponentProvider to provide a custom wrapper component.
-// Apparenlty, this method only supports one provided per app. In order for this to work, we
-// overwrite the method to wrap the custom wrapper component with the app wrapper that IDE uses
-// from the wrapper.js file.
-const origSetWrapperComponentProvider = AppRegistry.setWrapperComponentProvider;
-AppRegistry.setWrapperComponentProvider = (provider) => {
-  console.info("RNIDE: The app is using a custom wrapper component provider");
-  origSetWrapperComponentProvider((appParameters) => {
-    const RNIDEAppWrapper = require("__RNIDE_lib__/wrapper.js").PreviewAppWrapper;
-    const CustomWrapper = provider(appParameters);
-    function WrapperComponent(props) {
-      const { children, ...rest } = props;
-      return (
-        <RNIDEAppWrapper {...rest}>
-          <CustomWrapper {...rest}>{children}</CustomWrapper>
-        </RNIDEAppWrapper>
-      );
-    }
-    return WrapperComponent;
-  });
-};
