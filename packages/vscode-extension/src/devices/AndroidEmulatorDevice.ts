@@ -17,6 +17,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { mapDeviceModelToName, mapDeviceNameToModel } from "../utilities/consts";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -390,35 +391,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async sendBiometricAuthorization(isMatch: boolean) {
     // TO DO: implement android biometric authorization
-  }
-}
-
-const androidSupportedDevices = [
-  {
-    modelName: "Google Pixel 6a",
-    deviceName: "pixel_6a",
-  },
-  {
-    modelName: "Google Pixel 7",
-    deviceName: "pixel_7",
-  },
-];
-
-function mapDeviceNameToModel(deviceName: string): string {
-  const device = androidSupportedDevices.find((d) => d.deviceName === deviceName);
-  if (device) {
-    return device.modelName;
-  } else {
-    throw new Error("Device name not recognized");
-  }
-}
-
-function mapDeviceModelToName(modelName: string): string {
-  const device = androidSupportedDevices.find((d) => d.modelName === modelName);
-  if (device) {
-    return device.deviceName;
-  } else {
-    throw new Error("Device model name not recognized");
   }
 }
 

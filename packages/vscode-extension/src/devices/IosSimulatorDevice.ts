@@ -12,6 +12,7 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
+import { mapDeviceNameToModel } from "../utilities/consts";
 
 interface SimulatorInfo {
   availability?: string;
@@ -463,26 +464,6 @@ async function listSimulatorsForLocation(location?: string) {
   return [];
 }
 
-const iOSSupportedDevices = [
-  {
-    modelName: "iPhone SE (3rd generation)",
-    typeIdentifier: "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation",
-  },
-  {
-    modelName: "iPhone 15 Pro",
-    typeIdentifier: "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
-  },
-];
-
-function mapDeviceTypeIdToModel(deviceTypeIdentifier: string): string {
-  const device = iOSSupportedDevices.find((d) => d.typeIdentifier === deviceTypeIdentifier);
-  if (device) {
-    return device.modelName;
-  } else {
-    throw new Error("DeviceTypeIdentifier not recognised");
-  }
-}
-
 export async function listSimulators(
   location: SimulatorDeviceSet = SimulatorDeviceSet.RN_IDE
 ): Promise<IOSDeviceInfo[]> {
@@ -512,7 +493,7 @@ export async function listSimulators(
             id: `ios-${device.udid}`,
             platform: DevicePlatform.IOS as const,
             UDID: device.udid,
-            modelName: mapDeviceTypeIdToModel(device.deviceTypeIdentifier),
+            modelName: mapDeviceNameToModel(device.deviceTypeIdentifier),
             systemName: runtime?.name ?? "Unknown",
             displayName: device.name,
             available: device.isAvailable ?? false,
