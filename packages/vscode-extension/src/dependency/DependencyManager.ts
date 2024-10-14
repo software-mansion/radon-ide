@@ -223,7 +223,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     const installed = await testCommand("pod --version");
     this.emitEvent("cocoaPods", {
       status: installed ? "installed" : "notInstalled",
-      isOptional: false,
+      isOptional: !(await projectRequiresNativeBuild()),
     });
   }
 
