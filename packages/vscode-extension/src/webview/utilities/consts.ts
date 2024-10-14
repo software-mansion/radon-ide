@@ -9,7 +9,7 @@ import iphoneSEmask from "../../assets/iphone_SE/mask.png";
 import { DevicePlatform } from "../../common/DeviceManager";
 
 export type DeviceProperties = {
-  name: string;
+  modelName: string;
   platform: DevicePlatform;
   screenWidth: number;
   screenHeight: number;
@@ -24,7 +24,7 @@ export type DeviceProperties = {
 // iOS devices names should match supportedDeviceTypes inside the runtime
 export const iOSSupportedDevices: DeviceProperties[] = [
   {
-    name: "iPhone 15 Pro",
+    modelName: "iPhone 15 Pro",
     platform: DevicePlatform.IOS,
     screenWidth: 1179,
     screenHeight: 2556,
@@ -36,7 +36,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     maskImage: iphone15promask,
   },
   {
-    name: "iPhone SE (3rd generation)",
+    modelName: "iPhone SE (3rd generation)",
     platform: DevicePlatform.IOS,
     screenWidth: 750,
     screenHeight: 1334,
@@ -51,7 +51,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
 
 export const AndroidSupportedDevices: DeviceProperties[] = [
   {
-    name: "Google Pixel 7",
+    modelName: "Google Pixel 7",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -63,7 +63,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     maskImage: pixel7mask,
   },
   {
-    name: "Google Pixel 6a",
+    modelName: "Google Pixel 6a",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,

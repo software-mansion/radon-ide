@@ -149,23 +149,23 @@ export class DeviceManager implements DeviceManagerInterface {
   }
 
   public async createAndroidDevice(
-    deviceName: string,
+    modelName: string,
     displayName: string,
     systemImage: AndroidSystemImageInfo
   ) {
-    const emulator = await createEmulator(deviceName, displayName, systemImage);
+    const emulator = await createEmulator(modelName, displayName, systemImage);
     await this.loadDevices(true);
     return emulator;
   }
 
   public async createIOSDevice(
-    deviceName: string,
+    modelName: string,
     displayName: string,
     deviceType: IOSDeviceTypeInfo,
     runtime: IOSRuntimeInfo
   ) {
     const simulator = await createSimulator(
-      deviceName,
+      modelName,
       displayName,
       deviceType.identifier,
       runtime,

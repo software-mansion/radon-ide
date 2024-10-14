@@ -46,7 +46,7 @@ function DeviceRenameDialog({
           className="display-name-input"
           style={isDisplayNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
           type="string"
-          defaultValue={deviceInfo.name}
+          defaultValue={deviceInfo.displayName}
           onChange={handleDisplayNameChange}
         />
         {!isDisplayNameValid && (
@@ -70,7 +70,7 @@ function DeviceRenameDialog({
             try {
               await deviceManager.renameDevice(deviceInfo, newDisplayName);
             } finally {
-              deviceInfo.name = newDisplayName;
+              deviceInfo.displayName = newDisplayName;
               project.updateSelectedDevice(deviceInfo);
               onClose();
             }

@@ -9,7 +9,7 @@ export type AndroidDeviceInfo = {
   id: string;
   platform: DevicePlatform.Android;
   avdId: string;
-  name: string;
+  modelName: string;
   systemName: string;
   displayName: string;
   available: boolean;
@@ -19,7 +19,7 @@ export type IOSDeviceInfo = {
   id: string;
   platform: DevicePlatform.IOS;
   UDID: string;
-  name: string;
+  modelName: string;
   systemName: string;
   displayName: string;
   available: boolean;
@@ -61,12 +61,12 @@ export interface DeviceManagerInterface {
   listAllDevices(): Promise<DeviceInfo[]>;
 
   createAndroidDevice(
-    deviceName: string,
+    modelName: string,
     displayName: string,
     systemImage: AndroidSystemImageInfo
   ): Promise<DeviceInfo>;
   createIOSDevice(
-    deviceName: string,
+    modelName: string,
     displayName: string,
     deviceType: IOSDeviceTypeInfo,
     runtime: IOSRuntimeInfo

@@ -463,22 +463,21 @@ async function listSimulatorsForLocation(location?: string) {
   return [];
 }
 
-function mapDeviceTypeIdentifierToName(deviceTypeIdentifier: string): string {
-  const iOSSupportedDevices = [
-    {
-      name: "iPhone 15 Pro",
-      typeIdentifier: "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
-    },
-    {
-      name: "iPhone SE (3rd generation)",
-      typeIdentifier: "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation",
-    },
-  ];
+const iOSSupportedDevices = [
+  {
+    modelName: "iPhone SE (3rd generation)",
+    typeIdentifier: "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation",
+  },
+  {
+    modelName: "iPhone 15 Pro",
+    typeIdentifier: "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
+  },
+];
 
+function mapDeviceTypeIdToModel(deviceTypeIdentifier: string): string {
   const device = iOSSupportedDevices.find((d) => d.typeIdentifier === deviceTypeIdentifier);
-
   if (device) {
-    return device.name;
+    return device.modelName;
   } else {
     throw new Error("DeviceTypeIdentifier not recognised");
   }
@@ -513,7 +512,7 @@ export async function listSimulators(
             id: `ios-${device.udid}`,
             platform: DevicePlatform.IOS as const,
             UDID: device.udid,
-            name: mapDeviceTypeIdentifierToName(device.deviceTypeIdentifier),
+            modelName: mapDeviceTypeIdToModel(device.deviceTypeIdentifier),
             systemName: runtime?.name ?? "Unknown",
             displayName: device.name,
             available: device.isAvailable ?? false,
@@ -534,7 +533,7 @@ export enum SimulatorDeviceSet {
 }
 
 export async function createSimulator(
-  deviceName: string,
+  modelName: string,
   displayName: string,
   deviceIdentifier: string,
   runtime: IOSRuntimeInfo,
@@ -562,7 +561,7 @@ export async function createSimulator(
     id: `ios-${UDID}`,
     platform: DevicePlatform.IOS,
     UDID,
-    name: deviceName,
+    modelName: modelName,
     systemName: runtime.name,
     displayName: displayName,
     available: true, // assuming if create command went through, it's available

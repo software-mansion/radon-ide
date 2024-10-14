@@ -29,8 +29,8 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
   };
 
   const deviceSubtitle =
-    deviceInfo.name !== deviceInfo.displayName
-      ? `${deviceInfo.name} - ${deviceInfo.systemName}`
+    deviceInfo.modelName !== deviceInfo.displayName
+      ? `${deviceInfo.modelName} - ${deviceInfo.systemName}`
       : deviceInfo.systemName;
 
   const { closeModal } = useModal();
@@ -120,10 +120,10 @@ function ManageDevicesView() {
   }, []);
 
   const iosDevices = devices.filter(
-    ({ platform, name }) => platform === DevicePlatform.IOS && name.length > 0
+    ({ platform, modelName }) => platform === DevicePlatform.IOS && modelName.length > 0
   );
   const androidDevices = devices.filter(
-    ({ platform, name }) => platform === DevicePlatform.Android && name.length > 0
+    ({ platform, modelName }) => platform === DevicePlatform.Android && modelName.length > 0
   );
 
   const handleDeviceRename = (device: DeviceInfo) => {

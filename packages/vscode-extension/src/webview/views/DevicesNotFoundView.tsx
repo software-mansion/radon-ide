@@ -11,8 +11,8 @@ import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 
-const firstIosDeviceName = iOSSupportedDevices[0].name;
-const firstAndroidDeviceName = AndroidSupportedDevices[0].name;
+const firstIosDeviceName = iOSSupportedDevices[0];
+const firstAndroidDeviceName = AndroidSupportedDevices[0];
 
 function getMax<T>(array: T[], predicate: (element: T, currentMax: T) => boolean): T | undefined {
   if (array.length === 0) {
@@ -46,7 +46,7 @@ function useLoadingState() {
 }
 
 function firstRuntimeSupportedDevice(supportedDeviceTypes: IOSDeviceTypeInfo[]) {
-  return supportedDeviceTypes.find(({ name }) => name === firstIosDeviceName);
+  return supportedDeviceTypes.find(({ name }) => name === firstIosDeviceName.modelName);
 }
 
 function findNewestIosRuntime(runtimes: IOSRuntimeInfo[]) {
@@ -94,8 +94,8 @@ function DevicesNotFoundView() {
       }
 
       await deviceManager.createAndroidDevice(
-        firstAndroidDeviceName,
-        firstAndroidDeviceName,
+        firstAndroidDeviceName.modelName,
+        firstAndroidDeviceName.modelName,
         newestImage
       );
     });

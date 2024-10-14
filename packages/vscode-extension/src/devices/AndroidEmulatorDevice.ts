@@ -392,8 +392,37 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 }
 
+const androidSupportedDevices = [
+  {
+    modelName: "Google Pixel 6a",
+    deviceName: "pixel_6a",
+  },
+  {
+    modelName: "Google Pixel 7",
+    deviceName: "pixel_7",
+  },
+];
+
+function mapDeviceNameToModel(deviceName: string): string {
+  const device = androidSupportedDevices.find((d) => d.deviceName === deviceName);
+  if (device) {
+    return device.modelName;
+  } else {
+    throw new Error("Device name not recognized");
+  }
+}
+
+function mapDeviceModelToName(modelName: string): string {
+  const device = androidSupportedDevices.find((d) => d.modelName === modelName);
+  if (device) {
+    return device.deviceName;
+  } else {
+    throw new Error("Device model name not recognized");
+  }
+}
+
 export async function createEmulator(
-  deviceName: string,
+  modelName: string,
   displayName: string,
   systemImage: AndroidSystemImageInfo
 ) {
@@ -434,7 +463,7 @@ export async function createEmulator(
     ["hw.dPad", "no"],
     ["hw.device.hash2", "MD5:3db3250dab5d0d93b29353040181c7e9"],
     ["hw.device.manufacturer", "Google"],
-    ["hw.device.name", deviceName],
+    ["hw.device.name", mapDeviceModelToName(modelName)],
     ["hw.gps", "yes"],
     ["hw.gpu.enabled", "yes"],
     ["hw.gpu.mode", "auto"],
@@ -464,7 +493,7 @@ export async function createEmulator(
     id: `android-${avdId}`,
     platform: DevicePlatform.Android,
     avdId,
-    name: deviceName,
+    modelName: modelName,
     systemName: systemImage.name,
     displayName: displayName,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
@@ -505,13 +534,16 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
       const systemImageName = systemImages.find(
         (image: AndroidSystemImageInfo) => image.location === systemImageDir
       )?.name;
+
+      const modelName = mapDeviceNameToModel(deviceName);
+      console.log("FRYTKI ", displayName);
       return {
         id: `android-${avdId}`,
         platform: DevicePlatform.Android,
         avdId,
-        name: deviceName,
+        modelName: modelName,
         systemName: systemImageName ?? "Unknown",
-        displayName: displayName,
+        displayName: displayName ?? modelName,
         available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
       } as DeviceInfo;
     })
@@ -601,7 +633,7 @@ async function parseAvdConfigIniFile(filePath: string) {
         break;
     }
   });
-  if (!deviceName || !systemImageDir) {
+  if (!deviceName || !systemImageDir || !displayName) {
     throw new Error(`Couldn't parse AVD ${filePath}`);
   }
 
