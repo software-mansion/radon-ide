@@ -1,6 +1,6 @@
 import "./DevicesNotFoundView.css";
-import { useCallback, useState } from "react";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { useCallback, useState } from "react";
 import SmartphoneIcon from "../components/icons/SmartphoneIcon";
 import Button from "../components/shared/Button";
 import { useModal } from "../providers/ModalProvider";
@@ -11,8 +11,8 @@ import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 
-const firstIosDeviceName = iOSSupportedDevices[0];
-const firstAndroidDeviceName = AndroidSupportedDevices[0];
+const firstIosDevice = iOSSupportedDevices[0];
+const firstAndroidDevice = AndroidSupportedDevices[0];
 
 function getMax<T>(array: T[], predicate: (element: T, currentMax: T) => boolean): T | undefined {
   if (array.length === 0) {
@@ -46,7 +46,7 @@ function useLoadingState() {
 }
 
 function firstRuntimeSupportedDevice(supportedDeviceTypes: IOSDeviceTypeInfo[]) {
-  return supportedDeviceTypes.find(({ name }) => name === firstIosDeviceName.modelName);
+  return supportedDeviceTypes.find(({ name }) => name === firstIosDevice.modelName);
 }
 
 function findNewestIosRuntime(runtimes: IOSRuntimeInfo[]) {
@@ -88,16 +88,19 @@ function DevicesNotFoundView() {
         androidImages,
         (image, currentNewestImage) => image.apiLevel > currentNewestImage.apiLevel
       );
+
       if (newestImage === undefined) {
         openCreateNewDeviceModal();
         return;
       }
 
-      await deviceManager.createAndroidDevice(
-        firstAndroidDeviceName.modelName,
-        firstAndroidDeviceName.modelName,
-        newestImage
-      );
+      const { modelName, deviceName } = firstAndroidDevice;
+
+      if (deviceName === undefined) {
+        return;
+      }
+
+      await deviceManager.createAndroidDevice(modelName, modelName, deviceName, newestImage);
     });
   }
 

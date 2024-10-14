@@ -133,6 +133,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     await ensureOldEmulatorProcessExited(this.avdId);
 
     const avdDirectory = getOrCreateAvdDirectory(this.avdId);
+
     const subprocess = exec(
       EMULATOR_BINARY,
       [
@@ -461,7 +462,6 @@ export async function createEmulator(
     ["hw.cpu.arch", getNativeQemuArch()],
     ["hw.cpu.ncore", "4"],
     ["hw.dPad", "no"],
-    ["hw.device.hash2", "MD5:3db3250dab5d0d93b29353040181c7e9"],
     ["hw.device.manufacturer", "Google"],
     ["hw.device.name", mapDeviceModelToName(modelName)],
     ["hw.gps", "yes"],

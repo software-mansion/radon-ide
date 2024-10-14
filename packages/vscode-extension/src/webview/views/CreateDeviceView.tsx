@@ -30,11 +30,12 @@ function useSupportedDevices() {
   function buildSelections(item: DeviceProperties, platform: DevicePlatform) {
     let prefix = "";
     if (platform === DevicePlatform.IOS) {
-      prefix = "ios:";
+      prefix = "ios";
     } else {
-      prefix = "android:";
+      prefix = "android";
     }
     return { value: prefix + item.modelName, label: item.modelName };
+    // return { value: `${prefix}:${item.modelName}:${item.deviceName}`, label: item.modelName }; // FRYTKI
   }
 
   return [
@@ -115,7 +116,9 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         await deviceManager.createIOSDevice(deviceModel, displayName, iOSDeviceType, runtime);
       } else {
         const systemImage = androidImages.find((image) => image.location === selectedSystemName);
-        if (!systemImage || !deviceModel) {
+
+        if (!systemImage || !deviceModel || !displayName) {
+          // FRYTKI  displayName ?
           return;
         }
         await deviceManager.createAndroidDevice(deviceModel, displayName, systemImage);
@@ -140,7 +143,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           className="form-field"
           value={`${devicePlatform && deviceModel ? `${devicePlatform}:${deviceModel}` : ""}`}
           onChange={(newValue: string) => {
-            const [newPlatform, name] = newValue.split(":", 2);
+            const [newPlatform, newDisplayName, newDeviceName] = newValue.split(":", 3);
             assertPlatform(newPlatform);
 
             setDeviceModel(name);

@@ -380,7 +380,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-select-shadow: 0 1px 10px var(--background-dark-100);
   --swm-select-disabled: var(--navy-dark-60);
   --swm-select-disabled-background: var(--background-dark-120);
-  --swm-select-content-background: var(--background-dark-80);
+  --swm-select-content-background: var(--background-dark-100);
   --swm-select-item-disabled-background: var(--background-dark-100);
   --swm-select-item-highlighted-background: var(--background-dark-60);
 

@@ -225,13 +225,13 @@ export function dependencyDescription(dependency: Dependency) {
       };
     case "ios":
       return {
-        info: "Whether ios directory exists in the project",
-        error: "Ios directory does not exist in root directory",
+        info: 'Whether "ios" directory exists in the project',
+        error: '"ios" directory does not exist in the main application directory',
       };
     case "android":
       return {
-        info: "Whether android directory exists in the project",
-        error: "Android directory does not exist in root directory",
+        info: 'Whether "android" directory exists in the project',
+        error: '"android" directory does not exist in the main application directory',
       };
     case "expo":
       return {
