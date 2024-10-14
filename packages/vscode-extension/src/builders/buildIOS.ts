@@ -158,7 +158,6 @@ export async function buildIos(
   );
 
   const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
-  outputChannel.clear();
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
     buildIOSProgressProcessor.processLine(line);

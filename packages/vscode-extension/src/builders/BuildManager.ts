@@ -1,5 +1,4 @@
 import { Disposable, OutputChannel, window } from "vscode";
-import { Logger } from "../Logger";
 import { PlatformBuildCache } from "./PlatformBuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
@@ -8,6 +7,7 @@ import { getAppRootFolder } from "../utilities/extensionContext";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelToken } from "./cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { Logger } from "../Logger";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -69,6 +69,7 @@ export class BuildManager {
         this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
           log: true,
         });
+        this.buildOutputChannel.clear();
         buildResult = await buildAndroid(
           getAppRootFolder(),
           forceCleanBuild,
@@ -78,15 +79,25 @@ export class BuildManager {
           this.dependencyManager
         );
       } else {
-        this.buildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
+        const iOSBuildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
           log: true,
         });
+        this.buildOutputChannel = iOSBuildOutputChannel;
+        this.buildOutputChannel.clear();
         const installPodsIfNeeded = async () => {
-          const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
-          if (!podsInstalled) {
-            Logger.info("Pods installation is missing or outdated. Installing Pods.");
+          let installPods = forceCleanBuild;
+          if (installPods) {
+            Logger.info("Clean build requested: installing pods");
+          } else {
+            const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
+            if (!podsInstalled) {
+              Logger.info("Pods installation is missing or outdated. Installing Pods.");
+              installPods = true;
+            }
+          }
+          if (installPods) {
             getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
-            await this.dependencyManager.installPods(cancelToken);
+            await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
             // Installing pods may impact the fingerprint as new pods may be created under the project directory.
             // For this reason we need to recalculate the fingerprint after installing pods.
             buildFingerprint = await buildCache.calculateFingerprint();
