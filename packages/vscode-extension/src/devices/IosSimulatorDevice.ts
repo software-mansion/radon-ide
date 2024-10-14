@@ -20,6 +20,7 @@ interface SimulatorInfo {
   name: string;
   udid: string;
   version?: string;
+  displayName: string;
   availabilityError?: string;
   type?: "simulator" | "device" | "catalyst";
   booted?: boolean;
@@ -411,31 +412,19 @@ export async function removeIosRuntimes(runtimeIDs: string[]) {
   return Promise.all(removalPromises);
 }
 
-export async function renameIosSimulator(udid: string | undefined, newCustomName: string) {
+export async function renameIosSimulator(udid: string | undefined, newDisplayName: string) {
   if (!udid) {
     return;
   }
 
-  const deviceSetLocation = getOrCreateDeviceSet(udid);
-  const configPath = path.join(deviceSetLocation, udid, "config.ini");
-
-  try {
-    const oldConfig = await fs.promises.readFile(configPath, "utf-8");
-
-    const config = oldConfig
-      .split("\n")
-      .map((line) => {
-        if (line.startsWith("customName=")) {
-          return `customName=${newCustomName}`;
-        }
-        return line;
-      })
-      .join("\n");
-
-    await fs.promises.writeFile(configPath, config, "utf-8");
-  } catch (e) {
-    throw new Error(`Failed to rename device`);
-  }
+  return await exec("xcrun", [
+    "simctl",
+    "--set",
+    getOrCreateDeviceSet(udid),
+    "rename",
+    udid,
+    newDisplayName,
+  ]);
 }
 
 export async function removeIosSimulator(udid: string | undefined, location: SimulatorDeviceSet) {
@@ -474,20 +463,24 @@ async function listSimulatorsForLocation(location?: string) {
   return [];
 }
 
-async function findCustomName(filePath?: string): Promise<string | undefined> {
-  if (!filePath) {
-    return undefined;
-  }
+function mapDeviceTypeIdentifierToName(deviceTypeIdentifier: string): string {
+  const iOSSupportedDevices = [
+    {
+      name: "iPhone 15 Pro",
+      typeIdentifier: "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
+    },
+    {
+      name: "iPhone SE (3rd generation)",
+      typeIdentifier: "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation",
+    },
+  ];
 
-  try {
-    const content = await fs.promises.readFile(filePath, "utf-8");
-    return content
-      .split("\n")
-      .find((line) => line.startsWith("customName="))
-      ?.split("=")[1]
-      ?.trim();
-  } catch (e) {
-    return undefined;
+  const device = iOSSupportedDevices.find((d) => d.typeIdentifier === deviceTypeIdentifier);
+
+  if (device) {
+    return device.name;
+  } else {
+    throw new Error("DeviceTypeIdentifier not recognised");
   }
 }
 
@@ -516,17 +509,13 @@ export async function listSimulators(
 
       const deviceInfos = await Promise.all(
         devices.map(async (device) => {
-          const deviceDirectory = device.dataPath?.split(path.sep).slice(0, -1).join(path.sep);
-          const configFilePath = deviceDirectory ? path.join(deviceDirectory, "config.ini") : "";
-          const customName = await findCustomName(configFilePath);
-
           return {
             id: `ios-${device.udid}`,
             platform: DevicePlatform.IOS as const,
             UDID: device.udid,
-            name: device.name,
+            name: mapDeviceTypeIdentifierToName(device.deviceTypeIdentifier),
             systemName: runtime?.name ?? "Unknown",
-            customName: customName,
+            displayName: device.name,
             available: device.isAvailable ?? false,
             deviceIdentifier: device.deviceTypeIdentifier,
             runtimeInfo: runtime!,
@@ -546,10 +535,10 @@ export enum SimulatorDeviceSet {
 
 export async function createSimulator(
   deviceName: string,
+  displayName: string,
   deviceIdentifier: string,
   runtime: IOSRuntimeInfo,
-  deviceSet: SimulatorDeviceSet,
-  customName?: string
+  deviceSet: SimulatorDeviceSet
 ) {
   Logger.debug(`Create simulator ${deviceIdentifier} with runtime ${runtime.identifier}`);
 
@@ -564,15 +553,10 @@ export async function createSimulator(
     "simctl",
     ...locationArgs,
     "create",
-    deviceName,
+    displayName,
     deviceIdentifier,
     runtime.identifier,
   ]);
-
-  const configPath = path.join(locationArgs[1], UDID, "config.ini");
-  const configData = [["customName", customName]];
-  const configContent = configData.map(([key, value]) => `${key}=${value}`).join("\n");
-  await fs.promises.writeFile(configPath, configContent, "utf-8");
 
   return {
     id: `ios-${UDID}`,
@@ -580,7 +564,7 @@ export async function createSimulator(
     UDID,
     name: deviceName,
     systemName: runtime.name,
-    customName: customName,
+    displayName: displayName,
     available: true, // assuming if create command went through, it's available
     deviceIdentifier: deviceIdentifier,
     runtimeInfo: runtime,

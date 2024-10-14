@@ -149,37 +149,38 @@ export class DeviceManager implements DeviceManagerInterface {
   }
 
   public async createAndroidDevice(
+    deviceName: string,
     displayName: string,
-    systemImage: AndroidSystemImageInfo,
-    customName?: string
+    systemImage: AndroidSystemImageInfo
   ) {
-    const emulator = await createEmulator(displayName, systemImage, customName ?? "");
+    const emulator = await createEmulator(deviceName, displayName, systemImage);
     await this.loadDevices(true);
     return emulator;
   }
 
   public async createIOSDevice(
+    deviceName: string,
+    displayName: string,
     deviceType: IOSDeviceTypeInfo,
-    runtime: IOSRuntimeInfo,
-    customName?: string
+    runtime: IOSRuntimeInfo
   ) {
     const simulator = await createSimulator(
-      deviceType.name,
+      deviceName,
+      displayName,
       deviceType.identifier,
       runtime,
-      SimulatorDeviceSet.RN_IDE,
-      customName
+      SimulatorDeviceSet.RN_IDE
     );
     await this.loadDevices(true);
     return simulator;
   }
 
-  public async renameDevice(device: DeviceInfo, customName: string) {
+  public async renameDevice(device: DeviceInfo, newDisplayName: string) {
     if (device.platform === DevicePlatform.IOS) {
-      await renameIosSimulator(device.UDID, customName);
+      await renameIosSimulator(device.UDID, newDisplayName);
     }
     if (device.platform === DevicePlatform.Android) {
-      await renameEmulator(device.avdId, customName);
+      await renameEmulator(device.avdId, newDisplayName);
     }
     await this.loadDevices();
   }

@@ -28,10 +28,10 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
     }
   };
 
-  const deviceTitle = deviceInfo.customName ? deviceInfo.customName : deviceInfo.name;
-  const deviceSubtitle = deviceInfo.customName
-    ? `${deviceInfo.name} - ${deviceInfo.systemName}`
-    : deviceInfo.systemName;
+  const deviceSubtitle =
+    deviceInfo.name !== deviceInfo.displayName
+      ? `${deviceInfo.name} - ${deviceInfo.systemName}`
+      : deviceInfo.systemName;
 
   const { closeModal } = useModal();
   return (
@@ -49,7 +49,9 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
         )}
       </div>
       <div className="device-label">
-        <div className="device-title">{isSelected ? <b>{deviceTitle}</b> : deviceTitle}</div>
+        <div className="device-title">
+          {isSelected ? <b>{deviceInfo.displayName}</b> : deviceInfo.displayName}
+        </div>
         <div className="device-subtitle">{deviceSubtitle}</div>
       </div>
       <span className="device-button-group">

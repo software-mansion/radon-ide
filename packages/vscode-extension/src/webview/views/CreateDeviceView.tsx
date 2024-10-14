@@ -58,8 +58,8 @@ function useSupportedDevices() {
   ];
 }
 
-export const MAX_CUSTOM_NAME_LENGTH = 30;
-export function formatCustomName(name: string) {
+export const MAX_DISPLAY_NAME_LENGTH = 30;
+export function formatDisplayName(name: string) {
   const singleSpaced = name.replace(/\s+/g, " ");
   return singleSpaced.replace(/[^a-zA-Z0-9 _-]/g, "");
 }
@@ -68,7 +68,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [deviceName, setDeviceName] = useState<string | undefined>(undefined);
   const [devicePlatform, setDevicePlatform] = useState<"ios" | "android" | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
-  const [isCustomNameValid, setIsCustomNameValid] = useState(true);
+  const [isDisplayNameValid, setIsDisplayNameValid] = useState(true);
   const [loading, setLoading] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -102,34 +102,34 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
 
     setLoading(true);
     try {
-      const customName = formatCustomName(inputRef.current!.value).trim();
+      const displayName = formatDisplayName(inputRef.current!.value).trim();
       if (devicePlatform === "ios" && Platform.OS === "macos") {
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;
         }
         const iOSDeviceType = runtime.supportedDeviceTypes.find(({ name }) => name === deviceName);
-        if (!iOSDeviceType) {
+        if (!iOSDeviceType || !deviceName) {
           return;
         }
-        await deviceManager.createIOSDevice(iOSDeviceType, runtime, customName);
+        await deviceManager.createIOSDevice(deviceName, displayName, iOSDeviceType, runtime);
       } else {
         const systemImage = androidImages.find((image) => image.location === selectedSystemName);
         if (!systemImage || !deviceName) {
           return;
         }
-        await deviceManager.createAndroidDevice(deviceName, systemImage, customName);
+        await deviceManager.createAndroidDevice(deviceName, displayName, systemImage);
       }
     } finally {
       onCreate();
     }
   }
 
-  const handleCustomNameChange: FocusEventHandler<HTMLInputElement> = (
+  const handleDisplayNameChange: FocusEventHandler<HTMLInputElement> = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    inputRef.current!.value = formatCustomName(inputRef.current!.value);
-    setIsCustomNameValid(inputRef.current!.value.length <= MAX_CUSTOM_NAME_LENGTH);
+    inputRef.current!.value = formatDisplayName(inputRef.current!.value);
+    setIsDisplayNameValid(inputRef.current!.value.length <= MAX_DISPLAY_NAME_LENGTH);
   };
 
   return (
@@ -147,7 +147,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
             setDevicePlatform(newPlatform);
             selectSystemName(undefined);
             inputRef.current!.value = "";
-            setIsCustomNameValid(true);
+            setIsDisplayNameValid(true);
           }}
           items={supportedDevices}
           placeholder="Choose device type..."
@@ -183,16 +183,16 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         </Label>
         <input
           ref={inputRef}
-          className="custom-name-input"
-          style={isCustomNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
+          className="display-name-input"
+          style={isDisplayNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
           type="string"
-          onChange={handleCustomNameChange}
+          onChange={handleDisplayNameChange}
           disabled={!selectedSystemName}
         />
       </div>
-      {!isCustomNameValid && (
+      {!isDisplayNameValid && (
         <div className="submit-rejection-message">
-          Name may not be longer than {MAX_NAME_LENGTH} characters.
+          Name may not be longer than {MAX_DISPLAY_NAME_LENGTH} characters.
         </div>
       )}
       <div className="button-panel">

@@ -11,7 +11,7 @@ export type AndroidDeviceInfo = {
   avdId: string;
   name: string;
   systemName: string;
-  customName?: string;
+  displayName: string;
   available: boolean;
 };
 
@@ -21,7 +21,7 @@ export type IOSDeviceInfo = {
   UDID: string;
   name: string;
   systemName: string;
-  customName?: string;
+  displayName: string;
   available: boolean;
   deviceIdentifier: string;
   runtimeInfo: IOSRuntimeInfo;
@@ -61,17 +61,18 @@ export interface DeviceManagerInterface {
   listAllDevices(): Promise<DeviceInfo[]>;
 
   createAndroidDevice(
+    deviceName: string,
     displayName: string,
-    systemImage: AndroidSystemImageInfo,
-    customName?: string
+    systemImage: AndroidSystemImageInfo
   ): Promise<DeviceInfo>;
   createIOSDevice(
+    deviceName: string,
+    displayName: string,
     deviceType: IOSDeviceTypeInfo,
-    runtime: IOSRuntimeInfo,
-    customName?: string
+    runtime: IOSRuntimeInfo
   ): Promise<DeviceInfo>;
 
-  renameDevice(device: DeviceInfo, customName: string): Promise<void>;
+  renameDevice(device: DeviceInfo, newDisplayName: string): Promise<void>;
   removeDevice(device: DeviceInfo): Promise<void>;
 
   listInstalledAndroidImages(): Promise<AndroidSystemImageInfo[]>;

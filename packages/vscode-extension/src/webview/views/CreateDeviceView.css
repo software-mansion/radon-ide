@@ -36,7 +36,7 @@
   background-color: var(--swm-separator);
 }
 
-input.custom-name-input {
+input.display-name-input {
   width: 100%;
   height: 25px;
   background-color: var(--swm-input-background);
@@ -47,7 +47,7 @@ input.custom-name-input {
   padding-left: 8px;
 }
 
-input.custom-name-input:disabled {
+input.display-name-input:disabled {
   color: var(--swm-disabled-text);
   background-color: var(--swm-select-disabled-background);
 }
