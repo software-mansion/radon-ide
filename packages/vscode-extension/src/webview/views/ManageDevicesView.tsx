@@ -82,7 +82,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
             e.stopPropagation();
             onDeviceRename(deviceInfo);
           }}>
-          <span className="codicon codicon-case-sensitive" />
+          <span className="codicon codicon-edit" />
         </IconButton>
         <IconButton
           tooltip={{
