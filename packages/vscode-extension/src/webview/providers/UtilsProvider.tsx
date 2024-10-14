@@ -21,7 +21,7 @@ const utils = makeProxy<Utils>("Utils");
 
 const UtilsContext = createContext<UtilsInterface>(utils);
 
-export default function UtilsProvider({ children }: PropsWithChildren) {
+export function UtilsProvider({ children }: PropsWithChildren) {
   return <UtilsContext.Provider value={utils}>{children}</UtilsContext.Provider>;
 }
 
@@ -32,4 +32,30 @@ export function useUtils() {
     throw new Error("useUtils must be used within a UtilsContextProvider");
   }
   return context;
+}
+
+export function installLogOverrides() {
+  function wrapConsole(methodName: "log" | "info" | "warn" | "error") {
+    const consoleMethod = console[methodName];
+    console[methodName] = (message: string, ...args: any[]) => {
+      utils.log(methodName, message, ...args);
+      consoleMethod(message, ...args);
+    };
+  }
+
+  (["log", "info", "warn", "error"] as const).forEach(wrapConsole);
+
+  // install uncaught exception handler
+  window.addEventListener("error", (event) => {
+    utils.log("error", "Uncaught exception", event.error.stack);
+    // rethrow the error to be caught by the global error handler
+    throw event.error;
+  });
+
+  // install uncaught promise rejection handler
+  window.addEventListener("unhandledrejection", (event) => {
+    utils.log("error", "Uncaught promise rejection", event.reason);
+    // rethrow the error to be caught by the global error handler
+    throw event.reason;
+  });
 }
