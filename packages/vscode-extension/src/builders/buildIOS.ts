@@ -78,7 +78,7 @@ export async function buildIos(
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void,
   dependencyManager: DependencyManager,
-  installPodsIfNeeded: () => {}
+  installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
   const { customBuild, eas, ios: buildOptions, env } = getLaunchConfiguration();
 
