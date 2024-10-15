@@ -17,6 +17,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { mapIdToModel, mapModelToId } from "./supportedDevices";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -393,35 +394,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 }
 
-const androidSupportedDevices = [
-  {
-    modelName: "Google Pixel 6a",
-    deviceName: "pixel_6a",
-  },
-  {
-    modelName: "Google Pixel 7",
-    deviceName: "pixel_7",
-  },
-];
-
-function mapDeviceNameToModel(deviceName: string): string {
-  const device = androidSupportedDevices.find((d) => d.deviceName === deviceName);
-  if (device) {
-    return device.modelName;
-  } else {
-    throw new Error("Device name not recognized");
-  }
-}
-
-function mapDeviceModelToName(modelName: string): string {
-  const device = androidSupportedDevices.find((d) => d.modelName === modelName);
-  if (device) {
-    return device.deviceName;
-  } else {
-    throw new Error("Device model name not recognized");
-  }
-}
-
 export async function createEmulator(
   modelName: string,
   displayName: string,
@@ -463,7 +435,7 @@ export async function createEmulator(
     ["hw.cpu.ncore", "4"],
     ["hw.dPad", "no"],
     ["hw.device.manufacturer", "Google"],
-    ["hw.device.name", mapDeviceModelToName(modelName)],
+    ["hw.device.name", mapModelToId(modelName)],
     ["hw.gps", "yes"],
     ["hw.gpu.enabled", "yes"],
     ["hw.gpu.mode", "auto"],
@@ -535,7 +507,7 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
         (image: AndroidSystemImageInfo) => image.location === systemImageDir
       )?.name;
 
-      const modelName = mapDeviceNameToModel(deviceName);
+      const modelName = mapIdToModel(deviceName);
       return {
         id: `android-${avdId}`,
         platform: DevicePlatform.Android,

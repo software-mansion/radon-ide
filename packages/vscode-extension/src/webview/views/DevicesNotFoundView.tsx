@@ -10,6 +10,7 @@ import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/const
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform, useUtils } from "../providers/UtilsProvider";
+import { mapModelToId } from "../../devices/supportedDevices";
 
 const firstIosDevice = iOSSupportedDevices[0];
 const firstAndroidDevice = AndroidSupportedDevices[0];
@@ -94,7 +95,8 @@ function DevicesNotFoundView() {
         return;
       }
 
-      const { modelName, deviceName } = firstAndroidDevice;
+      const { modelName } = firstAndroidDevice;
+      const deviceName = mapModelToId(modelName);
 
       if (deviceName === undefined) {
         return;

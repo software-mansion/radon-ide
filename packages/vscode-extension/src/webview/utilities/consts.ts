@@ -14,7 +14,6 @@ import { DevicePlatform } from "../../common/DeviceManager";
 
 export type DeviceProperties = {
   modelName: string;
-  deviceName?: string; // only needed for Android to set hw.device.name in config.ini
   platform: DevicePlatform;
   screenWidth: number;
   screenHeight: number;
@@ -57,7 +56,6 @@ export const iOSSupportedDevices: DeviceProperties[] = [
 export const AndroidSupportedDevices: DeviceProperties[] = [
   {
     modelName: "Google Pixel 9",
-    deviceName: "pixel_9",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2424,
@@ -70,7 +68,6 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "Google Pixel 8",
-    deviceName: "pixel_8",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -83,7 +80,6 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "Google Pixel 7",
-    deviceName: "pixel_7",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -96,7 +92,6 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "Google Pixel 6a",
-    deviceName: "pixel_6a",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
