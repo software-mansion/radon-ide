@@ -68,7 +68,15 @@ export function makeProxy<T extends object>(objectName: string) {
       return (...args: any[]) => {
         const currentCallId = `${instanceToken}:${globalCallCounter++}`;
         let argsWithCallbacks = args.map((arg) => {
-          if (typeof arg === "function") {
+          if (arg instanceof Error) {
+            return {
+              __error: {
+                name: arg.name,
+                message: arg.message,
+                stack: arg.stack,
+              },
+            };
+          } else if (typeof arg === "function") {
             maybeInitializeCallbackMessageListener();
             const callbackId =
               callbackToID.get(arg) || `${instanceToken}:${globalCallbackCounter++}`;

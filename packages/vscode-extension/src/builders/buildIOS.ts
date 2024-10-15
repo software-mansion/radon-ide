@@ -121,7 +121,7 @@ export async function buildIos(
     return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
   }
 
-  if (!(await dependencyManager.isInstalled("ios"))) {
+  if (!(await dependencyManager.checkIOSDirectoryExists())) {
     throw new Error(
       "Ios directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory"
     );
@@ -158,7 +158,6 @@ export async function buildIos(
   );
 
   const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
-  outputChannel.clear();
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
     buildIOSProgressProcessor.processLine(line);

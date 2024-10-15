@@ -47,9 +47,6 @@ export class Project
 
   private isCachedBuildStale: boolean;
 
-  private expoRouterInstalled: boolean;
-  private storybookInstalled: boolean;
-
   private fileWatcher: Disposable;
 
   private deviceSession: DeviceSession | undefined;
@@ -86,8 +83,6 @@ export class Project
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.isCachedBuildStale = false;
-    this.expoRouterInstalled = false;
-    this.storybookInstalled = false;
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
@@ -263,7 +258,7 @@ export class Project
   }
 
   public async goHome(homeUrl: string) {
-    if (this.expoRouterInstalled) {
+    if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
       await this.openNavigation(homeUrl);
     } else {
       await this.reloadMetro();
@@ -361,11 +356,6 @@ export class Project
       }, 100),
       [waitForNodeModules]
     );
-
-    Logger.debug("Checking expo router");
-    this.expoRouterInstalled = await this.dependencyManager.isInstalled("expoRouter");
-    Logger.debug("Checking storybook");
-    this.storybookInstalled = await this.dependencyManager.isInstalled("storybook");
   }
   //#endregion
 
@@ -447,7 +437,7 @@ export class Project
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
-    if (this.storybookInstalled) {
+    if (await this.dependencyManager.checkProjectUsesStorybook()) {
       this.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");
@@ -506,7 +496,7 @@ export class Project
   }
 
   private async maybeInstallNodeModules() {
-    const installed = await this.dependencyManager.isInstalled("nodeModules");
+    const installed = await this.dependencyManager.checkNodeModulesInstallationStatus();
 
     if (!installed) {
       Logger.info("Installing node modules");
