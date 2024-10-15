@@ -331,7 +331,7 @@ export class Project
     if (success) {
       this.updateProjectState({ status: "running" });
     } else {
-      window.showErrorMessage("Failed to reload, you may try another reload option", "Dismiss");
+      window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
     }
     return success;
   }
