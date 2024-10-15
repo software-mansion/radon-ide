@@ -328,8 +328,11 @@ export class Project
   public async reload(type: ReloadAction): Promise<boolean> {
     this.updateProjectState({ status: "starting" });
     const success = (await this.deviceSession?.perform(type)) ?? false;
-    // TODO(jgonet): Don't assume that success is always true
-    this.updateProjectState({ status: "running" });
+    if (success) {
+      this.updateProjectState({ status: "running" });
+    } else {
+      window.showErrorMessage("Failed to reload, you may try another reload option", "Dismiss");
+    }
     return success;
   }
 
