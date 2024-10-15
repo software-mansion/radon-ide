@@ -8,7 +8,7 @@ import {
   DeviceProperties,
   iOSSupportedDevices,
   AndroidSupportedDevices,
-} from "../../utilities/consts";
+} from "../utilities/consts";
 import { DevicePlatform } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform } from "../providers/UtilsProvider";

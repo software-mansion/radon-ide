@@ -1,5 +1,5 @@
 import { Frame } from "../../common/Project";
-import { DeviceProperties } from "../../utilities/consts";
+import { DeviceProperties } from "../utilities/consts";
 import "./DimensionsBox.css";
 
 const BOX_HEIGHT_FRACTION = 0.033;
