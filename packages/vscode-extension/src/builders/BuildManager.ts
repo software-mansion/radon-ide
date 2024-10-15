@@ -30,6 +30,19 @@ export class BuildManager {
     this.buildOutputChannel?.show();
   }
 
+  /**
+   * Returns true if some native build dependencies have change and we should perform
+   * a native build despite the fact the fingerprint indicates we don't need to.
+   * This is currently only used for the scenario when we detect that pods need
+   * to be reinstalled for iOS.
+   */
+  private async checkBuildDependenciesChanged(deviceInfo: DeviceInfo) {
+    if (deviceInfo.platform === DevicePlatform.IOS) {
+      return !(await this.dependencyManager.checkPodsInstallationStatus());
+    }
+    return false;
+  }
+
   public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {
     const { clean: forceCleanBuild, progressListener, onSuccess } = options;
     const { platform } = deviceInfo;
@@ -45,22 +58,29 @@ export class BuildManager {
     const buildApp = async () => {
       const currentFingerprint = await buildCache.calculateFingerprint();
 
-      // If pods are required to be installed, we ignore the cached build, we don't want clean build in this case though
-      const buildDependenciesChanged =
-        !(await this.dependencyManager.checkPodsInstallationStatus());
+      // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
+      const buildDependenciesChanged = await this.checkBuildDependenciesChanged(deviceInfo);
 
       if (forceCleanBuild || buildDependenciesChanged) {
         // we reset the cache when force clean build is requested as the newly
         // started build may end up being cancelled
+        Logger.log(
+          "Build cache is being invalidated",
+          forceCleanBuild ? "on request" : "due to build dependencies change"
+        );
         await buildCache.clearCache();
       } else {
         const cachedBuild = await buildCache.getBuild(currentFingerprint);
         if (cachedBuild) {
+          Logger.log("Skipping native build – using cached");
           getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
           return cachedBuild;
+        } else {
+          Logger.log("Build cache is stale");
         }
       }
 
+      Logger.log("Starting native build – no build cached, cache has been invalidated or is stale");
       getTelemetryReporter().sendTelemetryEvent("build:start", { platform });
 
       let buildResult: BuildResult;
