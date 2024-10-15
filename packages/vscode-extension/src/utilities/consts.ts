@@ -1,20 +1,20 @@
-import pixel9 from "../assets/pixel_9/skin.webp";
-import pixel9mask from "../assets/pixel_9/mask.png";
-import pixel8 from "../assets/pixel_8/skin.webp";
-import pixel8mask from "../assets/pixel_8/mask.png";
-import pixel7 from "../assets/pixel_7/skin.webp";
-import pixel7mask from "../assets/pixel_7/mask.png";
-import pixel6a from "../assets/pixel_6a/skin.webp";
-import pixel6amask from "../assets/pixel_6a/mask.png";
-import iphone15pro from "../assets/iphone_15_pro/skin.webp";
-import iphone15promask from "../assets/iphone_15_pro/mask.png";
-import iphoneSE from "../assets/iphone_SE/skin.webp";
-import iphoneSEmask from "../assets/iphone_SE/mask.png";
-import { DevicePlatform } from "../common/DeviceManager";
+import pixel9 from "../../assets/pixel_9/skin.webp";
+import pixel9mask from "../../assets/pixel_9/mask.png";
+import pixel8 from "../../assets/pixel_8/skin.webp";
+import pixel8mask from "../../assets/pixel_8/mask.png";
+import pixel7 from "../../assets/pixel_7/skin.webp";
+import pixel7mask from "../../assets/pixel_7/mask.png";
+import pixel6a from "../../assets/pixel_6a/skin.webp";
+import pixel6amask from "../../assets/pixel_6a/mask.png";
+import iphone15pro from "../../assets/iphone_15_pro/skin.webp";
+import iphone15promask from "../../assets/iphone_15_pro/mask.png";
+import iphoneSE from "../../assets/iphone_SE/skin.webp";
+import iphoneSEmask from "../../assets/iphone_SE/mask.png";
+import { DevicePlatform } from "../../common/DeviceManager";
 
 export type DeviceProperties = {
   modelName: string;
-  deviceName: string;
+  deviceName?: string; // only needed for Android to set hw.device.name in config.ini
   platform: DevicePlatform;
   screenWidth: number;
   screenHeight: number;
@@ -26,11 +26,10 @@ export type DeviceProperties = {
   maskImage: string;
 };
 
-// iOS devices names should match supportedDeviceTypes identifiers inside the runtime
+// iOS devices names should match supportedDeviceTypes inside the runtime
 export const iOSSupportedDevices: DeviceProperties[] = [
   {
     modelName: "iPhone 15 Pro",
-    deviceName: "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
     platform: DevicePlatform.IOS,
     screenWidth: 1179,
     screenHeight: 2556,
@@ -43,7 +42,6 @@ export const iOSSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "iPhone SE (3rd generation)",
-    deviceName: "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation",
     platform: DevicePlatform.IOS,
     screenWidth: 750,
     screenHeight: 1334,
@@ -56,7 +54,6 @@ export const iOSSupportedDevices: DeviceProperties[] = [
   },
 ] as const;
 
-// android devices names are used to set proper device profile on the emulator
 export const AndroidSupportedDevices: DeviceProperties[] = [
   {
     modelName: "Google Pixel 9",
@@ -111,25 +108,3 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     maskImage: pixel6amask,
   },
 ] as const;
-
-export function mapDeviceNameToModel(deviceName: string): string {
-  const device = iOSSupportedDevices
-    .concat(AndroidSupportedDevices)
-    .find((d) => d.deviceName === deviceName);
-  if (device) {
-    return device.modelName;
-  } else {
-    throw new Error("Device name not recognized");
-  }
-}
-
-export function mapDeviceModelToName(modelName: string): string {
-  const device = iOSSupportedDevices
-    .concat(AndroidSupportedDevices)
-    .find((d) => d.modelName === modelName);
-  if (device) {
-    return device.deviceName;
-  } else {
-    throw new Error("Device model name not recognized");
-  }
-}
