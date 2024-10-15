@@ -292,6 +292,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
     }
+    // terminate the app before launching, otherwise launch commands won't actually start the process which
+    // may be in a bad state
+    await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", build.packageName]);
+
     const deepLinkChoice =
       build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
