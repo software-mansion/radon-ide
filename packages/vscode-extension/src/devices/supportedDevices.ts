@@ -1,3 +1,6 @@
+// Model identifiers for new devices are sourced from 'hw.device.name'
+// in config.ini for Android and 'deviceType' in device.plist for iOS.
+
 type DeviceTypeInfo = {
   model: string;
   modelId: string;

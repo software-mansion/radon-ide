@@ -25,6 +25,7 @@ export type DeviceProperties = {
   maskImage: string;
 };
 
+// When including a new device update the `supportedDevices.ts` in extension with the model identifier.
 // iOS devices names should match supportedDeviceTypes inside the runtime
 export const iOSSupportedDevices: DeviceProperties[] = [
   {
