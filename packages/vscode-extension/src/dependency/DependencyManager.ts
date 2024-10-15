@@ -167,10 +167,14 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     try {
       const env = getLaunchConfiguration().env;
       const shouldUseBundle = await this.shouldUseBundleCommand();
-      const process = command(shouldUseBundle ? "bundle exec pod install" : "pod install", {
-        cwd: iosDirPath,
-        env: { ...env, LANG: "en_US.UTF-8" },
-      });
+      const process = command(
+        shouldUseBundle ? "bundle install && bundle exec pod install" : "pod install",
+        {
+          shell: shouldUseBundle, // when using bundle, we need shell to run multiple commands
+          cwd: iosDirPath,
+          env: { ...env, LANG: "en_US.UTF-8" },
+        }
+      );
       lineReader(process).onLineRead((line) => buildOutputChannel.appendLine(line));
       await cancelToken.adapt(process);
     } catch (e) {
