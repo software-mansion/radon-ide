@@ -11,8 +11,6 @@ import {
   StartupMessage,
   TouchPoint,
 } from "../common/Project";
-import { DevicePlatform } from "../common/DeviceManager";
-import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
@@ -94,8 +92,12 @@ export class DeviceSession implements Disposable {
         return true;
       case "reloadJs":
         if (this.devtools.hasConnectedClient) {
-          await this.metro.reload();
-          return true;
+          try {
+            await this.metro.reload();
+            return true;
+          } catch (e) {
+            Logger.error("Failed to reload JS", e);
+          }
         }
         return false;
     }
@@ -138,6 +140,7 @@ export class DeviceSession implements Disposable {
     }
 
     await Promise.all([
+      this.metro.ready(),
       this.device.startPreview().then((url) => (previewURL = url)),
       waitForAppReady,
     ]);
