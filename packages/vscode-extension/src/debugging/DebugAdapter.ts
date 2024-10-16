@@ -14,6 +14,8 @@ import {
   Source,
   StackFrame,
 } from "@vscode/debugadapter";
+import { getReactNativeVersion } from "../utilities/reactNative";
+import semver from "semver";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
@@ -83,7 +85,8 @@ export class DebugAdapter extends DebugSession {
   private absoluteProjectPath: string;
   private projectPathAlias?: string;
   private threads: Array<Thread> = [];
-  private sourceMaps: Array<[string, string, SourceMapConsumer]> = [];
+  private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
+  private lineOffset: number = 0;
 
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
@@ -150,7 +153,21 @@ export class DebugAdapter extends DebugSession {
             const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
-            this.sourceMaps.push([message.params.url, message.params.scriptId, consumer]);
+
+            // This line is here because of a problem with sourcemaps for expo projects that was addressed in
+            // this PR https://github.com/expo/expo/pull/29463, unfortunately it still requires changes to
+            // metro that were attempted here https://github.com/facebook/metro/pull/1284 we should monitor
+            // the situation in upcoming versions and if the changes are still not added bump the version below.
+            // more over offset should only be applied to the main bundle sourcemap as other files (generated during reload)
+            // do not contain the prelude causing the issue
+            const shouldApplyOffset =
+              semver.lte(getReactNativeVersion(), "0.76.0") && this.sourceMaps.length === 0;
+            this.sourceMaps.push([
+              message.params.url,
+              message.params.scriptId,
+              consumer,
+              shouldApplyOffset ? this.lineOffset : 0,
+            ]);
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
 
@@ -186,9 +203,12 @@ export class DebugAdapter extends DebugSession {
     if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP
       // the line and column numbers are 1-based
-      const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args
-        .slice(-3)
-        .map((v: any) => v.value);
+      const [lineOffset, scriptURL, generatedLineNumber1Based, generatedColumn1Based] =
+        message.params.args.slice(-4).map((v: any) => v.value);
+
+      if (this.lineOffset !== lineOffset) {
+        this.lineOffset = lineOffset;
+      }
 
       const { lineNumber1Based, columnNumber0Based, sourceURL } = this.findOriginalPosition(
         scriptURL,
@@ -196,10 +216,10 @@ export class DebugAdapter extends DebugSession {
         generatedColumn1Based - 1
       );
 
-      const variablesRefDapID = this.createVariableForOutputEvent(message.params.args.slice(0, -3));
+      const variablesRefDapID = this.createVariableForOutputEvent(message.params.args.slice(0, -4));
 
       output = new OutputEvent(
-        (await formatMessage(message.params.args.slice(0, -3))) + "\n",
+        (await formatMessage(message.params.args.slice(0, -4))) + "\n",
         typeToCategory(message.params.type)
       );
       output.body = {
@@ -264,7 +284,7 @@ export class DebugAdapter extends DebugSession {
     let sourceLine1Based = lineNumber1Based;
     let sourceColumn0Based = columnNumber0Based;
 
-    this.sourceMaps.forEach(([url, id, consumer]) => {
+    this.sourceMaps.forEach(([url, id, consumer, lineOffset]) => {
       // when we identify script by its URL we need to deal with a situation when the URL is sent with a different
       // hostname and port than the one we have registered in the source maps. The reason for that is that the request
       // that populates the source map (scriptParsed) is sent by metro, while the requests from breakpoints or logs
@@ -273,7 +293,7 @@ export class DebugAdapter extends DebugSession {
       if (id === scriptIdOrURL || compareIgnoringHost(url, scriptIdOrURL)) {
         scriptURL = url;
         const pos = consumer.originalPositionFor({
-          line: lineNumber1Based,
+          line: lineNumber1Based - lineOffset,
           column: columnNumber0Based,
         });
         if (pos.source != null) {
@@ -440,7 +460,7 @@ export class DebugAdapter extends DebugSession {
     }
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
-    this.sourceMaps.forEach(([sourceURL, scriptId, consumer]) => {
+    this.sourceMaps.forEach(([sourceURL, scriptId, consumer, lineOffset]) => {
       const sources = [];
       consumer.eachMapping((mapping) => {
         sources.push(mapping.source);
@@ -453,7 +473,7 @@ export class DebugAdapter extends DebugSession {
       });
       if (pos.line != null) {
         originalSourceURL = sourceURL;
-        position = pos;
+        position = { ...pos, line: pos.line + lineOffset };
       }
     });
     if (position.line === null) {
