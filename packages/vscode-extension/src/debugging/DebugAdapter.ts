@@ -154,12 +154,13 @@ export class DebugAdapter extends DebugSession {
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
 
-            // This line is here because of a problem with sourcemaps for expo projects that was addressed in
-            // this PR https://github.com/expo/expo/pull/29463, unfortunately it still requires changes to
-            // metro that were attempted here https://github.com/facebook/metro/pull/1284 we should monitor
-            // the situation in upcoming versions and if the changes are still not added bump the version below.
-            // more over offset should only be applied to the main bundle sourcemap as other files (generated during reload)
-            // do not contain the prelude causing the issue
+            // This line is here because of a problem with sourcemaps for expo projects,
+            // that was addressed in this PR https://github.com/expo/expo/pull/29463,
+            // unfortunately it still requires changes to metro that were attempted here
+            // https://github.com/facebook/metro/pull/1284 we should monitor the situation
+            // in upcoming versions and if the changes are still not added bump the version below.
+            // more over offset should only be applied to the main bundle sourcemap as other files
+            // (generated during reload) do not contain the prelude causing the issue
             const shouldApplyOffset =
               semver.lte(getReactNativeVersion(), "0.76.0") && this.sourceMaps.length === 0;
             this.sourceMaps.push([
