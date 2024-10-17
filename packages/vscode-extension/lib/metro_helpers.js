@@ -41,14 +41,17 @@ function adaptMetroConfig(config) {
         module.output[0].data.code = `${preludeCode};var __REACT_DEVTOOLS_PORT__=${process.env.RCT_DEVTOOLS_PORT};`;
       }
     } else if (module.path === "__env__") {
-      // this handles @expo/env plugin, which is used to expose the number of lines in the prelude. 
-      // This is used to calculate the line number offset when reporting line numbers for 
-      // console.logs, breakpoints and uncaught exceptions. The reason why this is needed, is that
+      // this handles @expo/env plugin, which is used to inject environment variables
+      // the code below instantiates a global variable __EXPO_ENV_PRELUDE_LINES__ that stores
+      // the number of lines in the prelude. This is used to calculate the line number offset
+      // when reporting line numbers from the JS runtime, breakpoints
+      // and uncaught exceptions. The reason why this is needed, is that
       // metro doesn't include __env__ prelude in the source map resulting in the source map
       // transformation getting shifted by the number of lines in the prelude.
-      const expoEnvPreludeLines = module.output[0].data.lineCount;
-      process.stdout.write(JSON.stringify({ type: "RNIDE_Expo_Env_Prelude_Lines", expoEnvPreludeLines }));
-      process.stdout.write("\n");      
+      const expoEnvCode = module.output[0].data.code;
+      if (!expoEnvCode.includes("__EXPO_ENV_PRELUDE_LINES__")) {
+        module.output[0].data.code = `${expoEnvCode};var __EXPO_ENV_PRELUDE_LINES__=${module.output[0].data.lineCount};`;
+      }
     }
     return origProcessModuleFilter(module);
   };

@@ -56,7 +56,6 @@ export class DebugSession implements Disposable {
         websocketAddress: websocketAddress,
         absoluteProjectPath: getAppRootFolder(),
         projectPathAlias: this.metro.isUsingNewDebugger ? "/[metro-project]" : undefined,
-        lineOffset: this.metro.initialBundleLineOffset,
       },
       {
         suppressDebugStatusbar: true,

@@ -47,10 +47,6 @@ type MetroEvent =
       totalFileCount: number;
     }
   | {
-      type: "RNIDE_Expo_Env_Prelude_Lines";
-      expoEnvPreludeLines: number;
-    }
-  | {
       type: "RNIDE_initialize_done";
       port: number;
     }
@@ -68,7 +64,6 @@ type MetroEvent =
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
-  private _initialBundleLineOffset = 0;
   private startPromise: Promise<void> | undefined;
   private usesNewDebugger?: Boolean;
 
@@ -83,10 +78,6 @@ export class Metro implements Disposable {
 
   public get port() {
     return this._port;
-  }
-
-  public get initialBundleLineOffset() {
-    return this._initialBundleLineOffset;
   }
 
   public dispose() {
@@ -216,12 +207,6 @@ export class Metro implements Disposable {
           }
 
           switch (event.type) {
-            case "RNIDE_Expo_Env_Prelude_Lines":
-              this._initialBundleLineOffset = event.expoEnvPreludeLines;
-              Logger.debug(
-                `Metro initial bundle offset is set to ${this._initialBundleLineOffset}`
-              );
-              break;
             case "RNIDE_initialize_done":
               this._port = event.port;
               Logger.info(`Metro started on port ${this._port}`);

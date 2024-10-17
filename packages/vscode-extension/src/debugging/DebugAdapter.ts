@@ -86,8 +86,6 @@ export class DebugAdapter extends DebugSession {
   private projectPathAlias?: string;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
-  private lineOffset: number;
-
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
 
@@ -99,7 +97,6 @@ export class DebugAdapter extends DebugSession {
     this.absoluteProjectPath = configuration.absoluteProjectPath;
     this.projectPathAlias = configuration.projectPathAlias;
     this.connection = new WebSocket(configuration.websocketAddress);
-    this.lineOffset = configuration.lineOffset;
 
     this.connection.on("open", () => {
       // the below catch handler is used to ignore errors coming from non critical CDP messages we
@@ -155,6 +152,10 @@ export class DebugAdapter extends DebugSession {
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
 
+            const sourceFile = await (await fetch(message.params.url)).text();
+            const lineOffsetRegex = /__EXPO_ENV_PRELUDE_LINES__=(\d+);/;
+            const match = sourceFile.match(lineOffsetRegex);
+            const lineOffset = Number(match ? match[1] : null);
             // This line is here because of a problem with sourcemaps for expo projects,
             // that was addressed in this PR https://github.com/expo/expo/pull/29463,
             // unfortunately it still requires changes to metro that were attempted here
@@ -164,11 +165,13 @@ export class DebugAdapter extends DebugSession {
             // (generated during reload) do not contain the prelude causing the issue
             const shouldApplyOffset =
               semver.lte(getReactNativeVersion(), "0.76.0") && this.sourceMaps.length === 0;
+            Logger.debug("Expo prelude lines were detected and an offset was set to:", lineOffset);
+
             this.sourceMaps.push([
               message.params.url,
               message.params.scriptId,
               consumer,
-              shouldApplyOffset ? this.lineOffset : 0,
+              shouldApplyOffset ? lineOffset : 0,
             ]);
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
