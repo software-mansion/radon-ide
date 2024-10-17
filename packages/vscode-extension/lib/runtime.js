@@ -25,8 +25,7 @@ function wrapConsole(consoleFunc) {
     const stack = parseErrorStack(new Error().stack);
     const expoLogIndex = stack.findIndex((frame) => frame.methodName === "__expoConsoleLog");
     const location = expoLogIndex > 0 ? stack[expoLogIndex + 1] : stack[1];
-    const lineOffset = global.__EXPO_ENV_PRELUDE_LINES__ || 0;
-    args.push(lineOffset, location.file, location.lineNumber, location.column);
+    args.push(location.file, location.lineNumber, location.column);
     return consoleFunc.apply(console, args);
   };
 }

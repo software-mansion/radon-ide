@@ -86,7 +86,7 @@ export class DebugAdapter extends DebugSession {
   private projectPathAlias?: string;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
-  private lineOffset: number = 0;
+  private lineOffset: number;
 
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
@@ -99,6 +99,7 @@ export class DebugAdapter extends DebugSession {
     this.absoluteProjectPath = configuration.absoluteProjectPath;
     this.projectPathAlias = configuration.projectPathAlias;
     this.connection = new WebSocket(configuration.websocketAddress);
+    this.lineOffset = configuration.lineOffset;
 
     this.connection.on("open", () => {
       // the below catch handler is used to ignore errors coming from non critical CDP messages we
@@ -204,12 +205,9 @@ export class DebugAdapter extends DebugSession {
     if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP
       // the line and column numbers are 1-based
-      const [lineOffset, scriptURL, generatedLineNumber1Based, generatedColumn1Based] =
-        message.params.args.slice(-4).map((v: any) => v.value);
-
-      if (this.lineOffset !== lineOffset) {
-        this.lineOffset = lineOffset;
-      }
+      const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args
+        .slice(-3)
+        .map((v: any) => v.value);
 
       const { lineNumber1Based, columnNumber0Based, sourceURL } = this.findOriginalPosition(
         scriptURL,
@@ -217,10 +215,10 @@ export class DebugAdapter extends DebugSession {
         generatedColumn1Based - 1
       );
 
-      const variablesRefDapID = this.createVariableForOutputEvent(message.params.args.slice(0, -4));
+      const variablesRefDapID = this.createVariableForOutputEvent(message.params.args.slice(0, -3));
 
       output = new OutputEvent(
-        (await formatMessage(message.params.args.slice(0, -4))) + "\n",
+        (await formatMessage(message.params.args.slice(0, -3))) + "\n",
         typeToCategory(message.params.type)
       );
       output.body = {
