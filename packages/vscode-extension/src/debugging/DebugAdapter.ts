@@ -161,8 +161,6 @@ export class DebugAdapter extends DebugSession {
             // unfortunately it still requires changes to metro that were attempted here
             // https://github.com/facebook/metro/pull/1284 we should monitor the situation
             // in upcoming versions and if the changes are still not added bump the version below.
-            // more over offset should only be applied to the main bundle sourcemap as other files
-            // (generated during reload) do not contain the prelude causing the issue
             const shouldApplyOffset = semver.lte(getReactNativeVersion(), "0.76.0");
             if (lineOffset && shouldApplyOffset) {
               Logger.debug(
