@@ -130,7 +130,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-location" />
             Set Device Location
           </DropdownMenu.Item>
-          {projectState.selectedDevice?.platform === DevicePlatform.IOS && <LocalizationItem />}
+          <LocalizationItem />
           <Label>Permissions</Label>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
@@ -180,10 +180,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
 const LocalizationItem = () => {
   const { openModal } = useModal();
+  const { projectState } = useProject();
   return (
     <>
       <Label>Device Localization</Label>
       <DropdownMenu.Item
+        disabled={projectState.status !== "running"}
         className="dropdown-menu-item"
         onSelect={() => {
           openModal("Localization", <DeviceLocalizationView />);
