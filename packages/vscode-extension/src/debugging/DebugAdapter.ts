@@ -164,7 +164,12 @@ export class DebugAdapter extends DebugSession {
             // more over offset should only be applied to the main bundle sourcemap as other files
             // (generated during reload) do not contain the prelude causing the issue
             const shouldApplyOffset = semver.lte(getReactNativeVersion(), "0.76.0");
-            Logger.debug("Expo prelude lines were detected and an offset was set to:", lineOffset);
+            if (lineOffset && shouldApplyOffset) {
+              Logger.debug(
+                "Expo prelude lines were detected and an offset was set to:",
+                lineOffset
+              );
+            }
 
             this.sourceMaps.push([
               message.params.url,
