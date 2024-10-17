@@ -17,6 +17,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { mapIdToModel, mapModelToId } from "./supportedDevices";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -398,8 +399,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
 }
 
 export async function createEmulator(
+  modelName: string,
   displayName: string,
-  deviceName: string,
   systemImage: AndroidSystemImageInfo
 ) {
   const avdDirectory = getOrCreateAvdDirectory();
@@ -438,7 +439,7 @@ export async function createEmulator(
     ["hw.cpu.ncore", "4"],
     ["hw.dPad", "no"],
     ["hw.device.manufacturer", "Google"],
-    ["hw.device.name", deviceName],
+    ["hw.device.name", mapModelToId(modelName)],
     ["hw.gps", "yes"],
     ["hw.gpu.enabled", "yes"],
     ["hw.gpu.mode", "auto"],
@@ -468,8 +469,9 @@ export async function createEmulator(
     id: `android-${avdId}`,
     platform: DevicePlatform.Android,
     avdId,
-    name: displayName,
+    modelName: modelName,
     systemName: systemImage.name,
+    displayName: displayName,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
   } as DeviceInfo;
 }
@@ -501,17 +503,22 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
   return Promise.all(
     avdIds.map(async (avdId) => {
       const avdConfigPath = path.join(avdDirectory, `${avdId}.avd`, "config.ini");
-      const { displayName, systemImageDir } = await parseAvdConfigIniFile(avdConfigPath);
+      const { deviceName, displayName, systemImageDir } = await parseAvdConfigIniFile(
+        avdConfigPath
+      );
 
       const systemImageName = systemImages.find(
         (image: AndroidSystemImageInfo) => image.location === systemImageDir
       )?.name;
+
+      const modelName = mapIdToModel(deviceName);
       return {
         id: `android-${avdId}`,
         platform: DevicePlatform.Android,
         avdId,
-        name: displayName,
+        modelName: modelName,
         systemName: systemImageName ?? "Unknown",
+        displayName: displayName ?? modelName,
         available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
       } as DeviceInfo;
     })
@@ -540,6 +547,29 @@ async function ensureOldEmulatorProcessExited(avdId: string) {
   }
 }
 
+export async function renameEmulator(avdId: string, newDisplayName: string) {
+  const avdDirectory = getOrCreateAvdDirectory();
+  const avdLocation = path.join(avdDirectory, `${avdId}.avd`);
+  const configIni = path.join(avdLocation, "config.ini");
+
+  try {
+    const oldConfig = await fs.promises.readFile(configIni, "utf-8");
+    const config = oldConfig
+      .split("\n")
+      .map((line) => {
+        if (line.startsWith("avd.ini.displayname=")) {
+          return `avd.ini.displayname=${newDisplayName}`;
+        }
+        return line;
+      })
+      .join("\n");
+
+    await fs.promises.writeFile(configIni, config, "utf-8");
+  } catch (e) {
+    throw new Error(`Failed to rename device`);
+  }
+}
+
 export async function removeEmulator(avdId: string) {
   // ensure to kill emulator process before removing avd files used by that process
   if (Platform.OS === "windows") {
@@ -561,11 +591,15 @@ export async function removeEmulator(avdId: string) {
 async function parseAvdConfigIniFile(filePath: string) {
   const content = await fs.promises.readFile(filePath, "utf-8");
 
+  let deviceName: string | undefined;
   let displayName: string | undefined;
   let systemImageDir: string | undefined;
   content.split("\n").forEach((line: string) => {
     const [key, value] = line.split("=");
     switch (key) {
+      case "hw.device.name":
+        deviceName = value;
+        break;
       case "avd.ini.displayname":
         displayName = value;
         break;
@@ -574,11 +608,11 @@ async function parseAvdConfigIniFile(filePath: string) {
         break;
     }
   });
-  if (!displayName || !systemImageDir) {
+  if (!deviceName || !systemImageDir || !displayName) {
     throw new Error(`Couldn't parse AVD ${filePath}`);
   }
 
-  return { displayName, systemImageDir };
+  return { deviceName, displayName, systemImageDir };
 }
 
 async function parseAvdIniFile(filePath: string) {
