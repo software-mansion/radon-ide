@@ -44,7 +44,8 @@ function adaptMetroConfig(config) {
       // this handles @expo/env plugin, which is used to inject environment variables
       // the code below instantiates a global variable __EXPO_ENV_PRELUDE_LINES__ that stores
       // the number of lines in the prelude. This is used to calculate the line number offset
-      // when reporting line numbers from the JS runtime. The reason why this is needed, is that
+      // when reporting line numbers from the JS runtime, breakpoints
+      // and uncaught exceptions. The reason why this is needed, is that
       // metro doesn't include __env__ prelude in the source map resulting in the source map
       // transformation getting shifted by the number of lines in the prelude.
       const expoEnvCode = module.output[0].data.code;

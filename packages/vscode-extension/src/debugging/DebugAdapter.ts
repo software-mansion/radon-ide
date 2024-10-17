@@ -14,6 +14,8 @@ import {
   Source,
   StackFrame,
 } from "@vscode/debugadapter";
+import { getReactNativeVersion } from "../utilities/reactNative";
+import semver from "semver";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
@@ -83,8 +85,7 @@ export class DebugAdapter extends DebugSession {
   private absoluteProjectPath: string;
   private projectPathAlias?: string;
   private threads: Array<Thread> = [];
-  private sourceMaps: Array<[string, string, SourceMapConsumer]> = [];
-
+  private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
 
@@ -150,7 +151,30 @@ export class DebugAdapter extends DebugSession {
             const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
-            this.sourceMaps.push([message.params.url, message.params.scriptId, consumer]);
+
+            const sourceFile = await (await fetch(message.params.url)).text();
+            const lineOffsetRegex = /__EXPO_ENV_PRELUDE_LINES__=(\d+);/;
+            const match = sourceFile.match(lineOffsetRegex);
+            const lineOffset = Number(match ? match[1] : null);
+            // This line is here because of a problem with sourcemaps for expo projects,
+            // that was addressed in this PR https://github.com/expo/expo/pull/29463,
+            // unfortunately it still requires changes to metro that were attempted here
+            // https://github.com/facebook/metro/pull/1284 we should monitor the situation
+            // in upcoming versions and if the changes are still not added bump the version below.
+            const shouldApplyOffset = semver.lte(getReactNativeVersion(), "0.76.0");
+            if (lineOffset && shouldApplyOffset) {
+              Logger.debug(
+                "Expo prelude lines were detected and an offset was set to:",
+                lineOffset
+              );
+            }
+
+            this.sourceMaps.push([
+              message.params.url,
+              message.params.scriptId,
+              consumer,
+              shouldApplyOffset ? lineOffset : 0,
+            ]);
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
 
@@ -264,7 +288,7 @@ export class DebugAdapter extends DebugSession {
     let sourceLine1Based = lineNumber1Based;
     let sourceColumn0Based = columnNumber0Based;
 
-    this.sourceMaps.forEach(([url, id, consumer]) => {
+    this.sourceMaps.forEach(([url, id, consumer, lineOffset]) => {
       // when we identify script by its URL we need to deal with a situation when the URL is sent with a different
       // hostname and port than the one we have registered in the source maps. The reason for that is that the request
       // that populates the source map (scriptParsed) is sent by metro, while the requests from breakpoints or logs
@@ -273,7 +297,7 @@ export class DebugAdapter extends DebugSession {
       if (id === scriptIdOrURL || compareIgnoringHost(url, scriptIdOrURL)) {
         scriptURL = url;
         const pos = consumer.originalPositionFor({
-          line: lineNumber1Based,
+          line: lineNumber1Based - lineOffset,
           column: columnNumber0Based,
         });
         if (pos.source != null) {
@@ -440,7 +464,7 @@ export class DebugAdapter extends DebugSession {
     }
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
-    this.sourceMaps.forEach(([sourceURL, scriptId, consumer]) => {
+    this.sourceMaps.forEach(([sourceURL, scriptId, consumer, lineOffset]) => {
       const sources = [];
       consumer.eachMapping((mapping) => {
         sources.push(mapping.source);
@@ -453,7 +477,7 @@ export class DebugAdapter extends DebugSession {
       });
       if (pos.line != null) {
         originalSourceURL = sourceURL;
-        position = pos;
+        position = { ...pos, line: pos.line + lineOffset };
       }
     });
     if (position.line === null) {
