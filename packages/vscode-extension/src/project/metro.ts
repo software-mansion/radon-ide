@@ -100,6 +100,18 @@ export class Metro implements Disposable {
       throw new Error("metro already started");
     }
     this.startPromise = this.startInternal(resetCache, progressListener, dependencies);
+    this.startPromise.then(() => {
+      // start promise is used to indicate that metro has started, however, sometimes
+      // the metro process may exit, in which case we need to update the promise to
+      // indicate an error.
+      this.subprocess
+        ?.catch(() => {
+          // ignore the error, we are only interested in the process exit
+        })
+        ?.then(() => {
+          this.startPromise = Promise.reject(new Error("Metro process exited"));
+        });
+    });
     return this.startPromise;
   }
 
