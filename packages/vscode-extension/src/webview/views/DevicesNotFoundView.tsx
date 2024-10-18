@@ -9,8 +9,8 @@ import { useDevices } from "../providers/DevicesProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
-import { vscode } from "../utilities/vscode";
 import { Platform, useUtils } from "../providers/UtilsProvider";
+import { mapModelToId } from "../../devices/supportedDevices";
 
 const firstIosDevice = iOSSupportedDevices[0];
 const firstAndroidDevice = AndroidSupportedDevices[0];
@@ -95,7 +95,8 @@ function DevicesNotFoundView() {
         return;
       }
 
-      const { modelName, deviceName } = firstAndroidDevice;
+      const { modelName } = firstAndroidDevice;
+      const deviceName = mapModelToId(modelName);
 
       if (deviceName === undefined) {
         return;
@@ -118,7 +119,12 @@ function DevicesNotFoundView() {
         return;
       }
       const iOSDeviceType = firstRuntimeSupportedDevice(newestRuntime.supportedDeviceTypes);
-      await deviceManager.createIOSDevice(iOSDeviceType!, newestRuntime);
+      await deviceManager.createIOSDevice(
+        iOSDeviceType!.name,
+        iOSDeviceType!.name,
+        iOSDeviceType!,
+        newestRuntime
+      );
     });
   }
   return (
