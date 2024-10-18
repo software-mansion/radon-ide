@@ -1,4 +1,5 @@
 import os from "os";
+import { window } from "vscode";
 
 const OS: "macos" | "windows" = (() => {
   const platform = os.platform();
@@ -8,6 +9,7 @@ const OS: "macos" | "windows" = (() => {
     case "win32":
       return "windows";
     default:
+      window.showErrorMessage("Radon IDE works only on macOS and Windows.", "Dismiss");
       throw new Error("Unsupported platform");
   }
 })();
