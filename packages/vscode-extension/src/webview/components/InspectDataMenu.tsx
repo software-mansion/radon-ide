@@ -33,12 +33,13 @@ export function InspectDataMenu({
         <DropdownMenu.Trigger />
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="context-menu-content">
-            {filteredData.map((item) => {
+            {filteredData.map((item, index) => {
               // extract file name from path:
               const fileName = item.source.fileName.split("/").pop();
               return (
                 <DropdownMenu.Item
                   className="context-menu-item"
+                  key={index}
                   onSelect={() => onSelected(item)}
                   onMouseEnter={() => onHover(item)}>
                   <code>{`<${item.componentName}>`}</code>
