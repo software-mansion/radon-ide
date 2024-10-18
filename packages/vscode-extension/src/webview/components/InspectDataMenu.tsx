@@ -26,10 +26,10 @@ export function InspectDataMenu({
         defaultOpen={true}
         open={true}
         onOpenChange={(open) => {
-          if (!open) onCancel();
+          if (!open) {
+            onCancel();
+          }
         }}>
-        {" "}
-        1
         <DropdownMenu.Trigger />
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="context-menu-content">
