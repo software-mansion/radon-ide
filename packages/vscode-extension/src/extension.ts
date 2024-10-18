@@ -63,6 +63,11 @@ export function deactivate(context: ExtensionContext): undefined {
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
+  if (Platform.OS !== "macos" && Platform.OS !== "windows") {
+    window.showErrorMessage("Radon IDE works only on macOS and Windows.", "Dismiss");
+    return;
+  }
+
   setExtensionContext(context);
   if (context.extensionMode === ExtensionMode.Development) {
     enableDevModeLogging();
