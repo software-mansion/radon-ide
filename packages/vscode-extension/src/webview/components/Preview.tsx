@@ -582,11 +582,13 @@ function Preview({
                         height: `${inspectFrame.height * 100}%`,
                       }}
                     />
-                    <DimensionsBox
-                      device={device}
-                      frame={inspectFrame}
-                      wrapperDivRef={wrapperDivRef}
-                    />
+                    {isInspecting && (
+                      <DimensionsBox
+                        device={device}
+                        frame={inspectFrame}
+                        wrapperDivRef={wrapperDivRef}
+                      />
+                    )}
                   </div>
                 )}
                 {projectStatus === "refreshing" && (
