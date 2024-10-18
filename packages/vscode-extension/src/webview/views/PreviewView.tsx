@@ -25,6 +25,7 @@ import {
   InspectStackData,
 } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -70,6 +71,10 @@ function PreviewView() {
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
   const isStarting = projectState.status === "starting";
+
+  const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
+    return sd.modelName === projectState?.selectedDevice?.name;
+  });
 
   const { openModal } = useModal();
   const { openFileAt } = useUtils();
@@ -225,6 +230,8 @@ function PreviewView() {
         <InspectDataMenu
           inspectLocation={inspectStackData.requestLocation}
           inspectStack={inspectStackData.stack}
+          device={deviceProperties}
+          frame={inspectFrame}
           onSelected={onInspectorItemSelected}
           onHover={(item) => {
             if (item.frame) {

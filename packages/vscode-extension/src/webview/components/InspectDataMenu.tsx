@@ -1,23 +1,36 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { InspectDataStackItem } from "../../common/Project";
-
+import { Frame, InspectDataStackItem } from "../../common/Project";
+import { DeviceProperties } from "../utilities/consts";
 import "./InspectDataMenu.css";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
-export function InspectDataMenu({
-  inspectLocation,
-  inspectStack,
-  onSelected,
-  onHover,
-  onCancel,
-}: {
+type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
   inspectStack: InspectDataStackItem[];
+  device?: DeviceProperties;
+  frame: Frame | null;
   onSelected: OnSelectedCallback;
   onHover: OnSelectedCallback;
   onCancel: () => void;
-}) {
+};
+
+export function InspectDataMenu({
+  inspectLocation,
+  inspectStack,
+  device,
+  frame,
+  onSelected,
+  onHover,
+  onCancel,
+}: InspectDataMenuProps) {
+  const displayDimensions = device && frame;
+  let topComponentWidth, topComponentHeight;
+  if (displayDimensions) {
+    topComponentWidth = parseFloat((frame.width * device.screenWidth).toFixed(2));
+    topComponentHeight = parseFloat((frame.height * device.screenHeight).toFixed(2));
+  }
+
   const filteredData = inspectStack.filter((item) => !item.hide);
 
   return (
@@ -33,6 +46,11 @@ export function InspectDataMenu({
         <DropdownMenu.Trigger />
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="context-menu-content">
+            {displayDimensions && (
+              <DropdownMenu.Label>
+                Dimensions: {topComponentWidth} × {topComponentHeight}
+              </DropdownMenu.Label>
+            )}
             {filteredData.map((item, index) => {
               // extract file name from path:
               const fileName = item.source.fileName.split("/").pop();
