@@ -1,44 +1,66 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { InspectDataStackItem } from "../../common/Project";
-
+import { Frame, InspectDataStackItem } from "../../common/Project";
+import { DeviceProperties } from "../utilities/consts";
 import "./InspectDataMenu.css";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
-export function InspectDataMenu({
-  inspectLocation,
-  inspectStack,
-  onSelected,
-  onHover,
-  onCancel,
-}: {
+type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
   inspectStack: InspectDataStackItem[];
+  device?: DeviceProperties;
+  frame: Frame | null;
   onSelected: OnSelectedCallback;
   onHover: OnSelectedCallback;
   onCancel: () => void;
-}) {
+};
+
+export function InspectDataMenu({
+  inspectLocation,
+  inspectStack,
+  device,
+  frame,
+  onSelected,
+  onHover,
+  onCancel,
+}: InspectDataMenuProps) {
+  const displayDimensionsText = (() => {
+    if (device && frame) {
+      const topComponentWidth = parseFloat((frame.width * device.screenWidth).toFixed(2));
+      const topComponentHeight = parseFloat((frame.height * device.screenHeight).toFixed(2));
+
+      if (topComponentWidth && topComponentHeight) {
+        return `Dimensions: ${topComponentWidth} × ${topComponentHeight}`;
+      }
+    }
+    return "Dimensions: -";
+  })();
+
   const filteredData = inspectStack.filter((item) => !item.hide);
 
   return (
-    <div style={{ right: inspectLocation.x, top: inspectLocation.y, position: "absolute" }}>
+    <div style={{ left: inspectLocation.x, top: inspectLocation.y, position: "absolute" }}>
       <DropdownMenu.Root
         defaultOpen={true}
         open={true}
         onOpenChange={(open) => {
-          if (!open) onCancel();
+          if (!open) {
+            onCancel();
+          }
         }}>
-        {" "}
-        1
         <DropdownMenu.Trigger />
         <DropdownMenu.Portal>
-          <DropdownMenu.Content className="context-menu-content">
-            {filteredData.map((item) => {
+          <DropdownMenu.Content className="dropdown-menu-content">
+            <DropdownMenu.Label className="dropdown-menu-label">
+              {displayDimensionsText}
+            </DropdownMenu.Label>
+            {filteredData.map((item, index) => {
               // extract file name from path:
               const fileName = item.source.fileName.split("/").pop();
               return (
                 <DropdownMenu.Item
-                  className="context-menu-item"
+                  className="dropdown-menu-item"
+                  key={index}
                   onSelect={() => onSelected(item)}
                   onMouseEnter={() => onHover(item)}>
                   <code>{`<${item.componentName}>`}</code>

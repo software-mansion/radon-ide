@@ -14,12 +14,17 @@ import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import { Frame, InspectDataStackItem, RecordingData, ZoomLevelType } from "../../common/Project";
-import { InspectDataMenu } from "./InspectDataMenu";
+import {
+  Frame,
+  InspectDataStackItem,
+  RecordingData,
+  ZoomLevelType,
+  InspectStackData,
+} from "../../common/Project";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { Platform, useUtils } from "../providers/UtilsProvider";
+import { Platform } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
@@ -94,9 +99,9 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
           } catch {
             // Stream connection was dropped
             if (!cancelled) {
-              const src = img.src;
+              const tempSrc = img.src;
               img.src = NO_IMAGE_DATA;
-              img.src = src;
+              img.src = tempSrc;
             }
           }
         }
@@ -172,14 +177,12 @@ function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   );
 }
 
-type InspectStackData = {
-  requestLocation: { x: number; y: number };
-  stack: InspectDataStackItem[];
-};
-
 type Props = {
   isInspecting: boolean;
-  setIsInspecting: (isInspecting: boolean) => void;
+  inspectFrame: Frame | null;
+  setInspectFrame: (inspectFrame: Frame | null) => void;
+  setInspectStackData: (inspectStackData: InspectStackData | null) => void;
+  onInspectorItemSelected: (item: InspectDataStackItem) => void;
   isPressing: boolean;
   setIsPressing: (isPressing: boolean) => void;
   zoomLevel: ZoomLevelType;
@@ -205,7 +208,10 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
 
 function Preview({
   isInspecting,
-  setIsInspecting,
+  inspectFrame,
+  setInspectFrame,
+  setInspectStackData,
+  onInspectorItemSelected,
   isPressing,
   setIsPressing,
   zoomLevel,
@@ -222,8 +228,7 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
   const workspace = useWorkspaceConfig();
-  const { projectState, project, deviceSettings } = useProject();
-  const { openFileAt } = useUtils();
+  const { projectState, project } = useProject();
 
   const isFrameDisabled = workspace.showDeviceFrame === false;
 
@@ -249,9 +254,6 @@ function Preview({
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
 
   const openRebuildAlert = useNativeRebuildAlert();
-
-  const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
-  const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
   function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
     const imgRect = previewRef.current!.getBoundingClientRect();
@@ -292,11 +294,6 @@ function Preview({
     );
   }
 
-  function onInspectorItemSelected(item: InspectDataStackItem) {
-    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
-    setIsInspecting(false);
-  }
-
   function sendInspectUnthrottled(
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
@@ -304,11 +301,7 @@ function Preview({
     if (type === "Leave") {
       return;
     }
-    const imgRect = previewRef.current!.getBoundingClientRect();
-    const x = (event.clientX - imgRect.left) / imgRect.width;
-    const y = (event.clientY - imgRect.top) / imgRect.height;
-    const clampedX = clamp(x, 0, 1);
-    const clampedY = clamp(y, 0, 1);
+    const { x: clampedX, y: clampedY } = getTouchPosition(event);
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
     project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
@@ -578,7 +571,7 @@ function Preview({
                   </div>
                 )}
 
-                {inspectFrame && (
+                {!replayData && inspectFrame && (
                   <div className="phone-screen phone-inspect-overlay">
                     <div
                       className="inspect-area"
@@ -589,11 +582,13 @@ function Preview({
                         height: `${inspectFrame.height * 100}%`,
                       }}
                     />
-                    <DimensionsBox
-                      device={device}
-                      frame={inspectFrame}
-                      wrapperDivRef={wrapperDivRef}
-                    />
+                    {isInspecting && (
+                      <DimensionsBox
+                        device={device}
+                        frame={inspectFrame}
+                        wrapperDivRef={wrapperDivRef}
+                      />
+                    )}
                   </div>
                 )}
                 {projectStatus === "refreshing" && (
@@ -638,19 +633,6 @@ function Preview({
                 )}
               </div>
               <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
-              {inspectStackData && (
-                <InspectDataMenu
-                  inspectLocation={inspectStackData.requestLocation}
-                  inspectStack={inspectStackData.stack}
-                  onSelected={onInspectorItemSelected}
-                  onHover={(item) => {
-                    if (item.frame) {
-                      setInspectFrame(item.frame);
-                    }
-                  }}
-                  onCancel={() => resetInspector()}
-                />
-              )}
             </div>
           </Resizable>
         )}
