@@ -21,7 +21,7 @@ export function InspectDataMenu({
   const filteredData = inspectStack.filter((item) => !item.hide);
 
   return (
-    <div style={{ right: inspectLocation.x, top: inspectLocation.y, position: "absolute" }}>
+    <div style={{ left: inspectLocation.x, top: inspectLocation.y, position: "absolute" }}>
       <DropdownMenu.Root
         defaultOpen={true}
         open={true}
