@@ -10,6 +10,8 @@ export class BuildAndroidProgressProcessor implements BuildProgressProcessor {
     if (!this.tasksToComplete) {
       return;
     }
+    // the 0.999 max value is here to prevent situations in which users see 100% indiction,
+    // but the build process is still takeing a couple more seconds.
     this.progressListener(Math.min(0.999, this.completedTasks / this.tasksToComplete));
   }
 
