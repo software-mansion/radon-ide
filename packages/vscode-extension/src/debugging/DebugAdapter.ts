@@ -86,6 +86,7 @@ export class DebugAdapter extends DebugSession {
   private projectPathAlias?: string;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
+  private lineOffset: number;
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
 
@@ -97,6 +98,7 @@ export class DebugAdapter extends DebugSession {
     this.absoluteProjectPath = configuration.absoluteProjectPath;
     this.projectPathAlias = configuration.projectPathAlias;
     this.connection = new WebSocket(configuration.websocketAddress);
+    this.lineOffset = configuration.lineOffset;
 
     this.connection.on("open", () => {
       // the below catch handler is used to ignore errors coming from non critical CDP messages we
@@ -152,20 +154,21 @@ export class DebugAdapter extends DebugSession {
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
 
-            const sourceFile = await (await fetch(message.params.url)).text();
-            const lineOffsetRegex = /__EXPO_ENV_PRELUDE_LINES__=(\d+);/;
-            const match = sourceFile.match(lineOffsetRegex);
-            const lineOffset = Number(match ? match[1] : null);
+            // This is a heuristic that checks if the source map should contain __env__
+            // module that is added by expo, but not reported in the source map
+            const isFileWithOffset = sourceMap.sources.includes("__prelude__");
+
             // This line is here because of a problem with sourcemaps for expo projects,
             // that was addressed in this PR https://github.com/expo/expo/pull/29463,
             // unfortunately it still requires changes to metro that were attempted here
             // https://github.com/facebook/metro/pull/1284 we should monitor the situation
             // in upcoming versions and if the changes are still not added bump the version below.
-            const shouldApplyOffset = semver.lte(getReactNativeVersion(), "0.76.0");
-            if (lineOffset && shouldApplyOffset) {
+            const shouldApplyOffset =
+              semver.lte(getReactNativeVersion(), "0.76.0") && isFileWithOffset;
+            if (this.lineOffset !== 0 && shouldApplyOffset) {
               Logger.debug(
                 "Expo prelude lines were detected and an offset was set to:",
-                lineOffset
+                this.lineOffset
               );
             }
 
@@ -173,7 +176,7 @@ export class DebugAdapter extends DebugSession {
               message.params.url,
               message.params.scriptId,
               consumer,
-              shouldApplyOffset ? lineOffset : 0,
+              shouldApplyOffset ? this.lineOffset : 0,
             ]);
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
