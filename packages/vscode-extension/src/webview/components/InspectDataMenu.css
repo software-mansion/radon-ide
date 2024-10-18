@@ -7,7 +7,7 @@
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
   box-shadow: var(--swm-backdrop-shadow);
-  max-width: calc(var(--radix-context-menu-content-available-width) - 10px);
+  max-width: calc(var(--radix-dropdown-menu-content-available-width) - 10px);
 }
 
 .context-menu-content code {
