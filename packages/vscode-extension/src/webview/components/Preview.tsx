@@ -578,7 +578,7 @@ function Preview({
                   </div>
                 )}
 
-                {inspectFrame && (
+                {!replayData && inspectFrame && (
                   <div className="phone-screen phone-inspect-overlay">
                     <div
                       className="inspect-area"
@@ -638,7 +638,7 @@ function Preview({
                 )}
               </div>
               <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
-              {inspectStackData && (
+              {!replayData && inspectStackData && (
                 <InspectDataMenu
                   inspectLocation={inspectStackData.requestLocation}
                   inspectStack={inspectStackData.stack}
