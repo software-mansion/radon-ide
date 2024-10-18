@@ -24,12 +24,17 @@ export function InspectDataMenu({
   onHover,
   onCancel,
 }: InspectDataMenuProps) {
-  const displayDimensions = device && frame;
-  let topComponentWidth, topComponentHeight;
-  if (displayDimensions) {
-    topComponentWidth = parseFloat((frame.width * device.screenWidth).toFixed(2));
-    topComponentHeight = parseFloat((frame.height * device.screenHeight).toFixed(2));
-  }
+  const displayDimensionsText = (() => {
+    if (device && frame) {
+      const topComponentWidth = parseFloat((frame.width * device.screenWidth).toFixed(2));
+      const topComponentHeight = parseFloat((frame.height * device.screenHeight).toFixed(2));
+
+      if (topComponentWidth && topComponentHeight) {
+        return `Dimensions: ${topComponentWidth} × ${topComponentHeight}`;
+      }
+    }
+    return "Dimensions: -";
+  })();
 
   const filteredData = inspectStack.filter((item) => !item.hide);
 
@@ -46,11 +51,9 @@ export function InspectDataMenu({
         <DropdownMenu.Trigger />
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="context-menu-content">
-            {displayDimensions && (
-              <DropdownMenu.Label>
-                Dimensions: {topComponentWidth} × {topComponentHeight}
-              </DropdownMenu.Label>
-            )}
+            <DropdownMenu.Label className="context-menu-label">
+              {displayDimensionsText}
+            </DropdownMenu.Label>
             {filteredData.map((item, index) => {
               // extract file name from path:
               const fileName = item.source.fileName.split("/").pop();
