@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, MouseEvent } from "react";
+import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
@@ -14,9 +15,15 @@ import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
 import { useDevices } from "../providers/DevicesProvider";
 import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
+import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { RecordingData, ZoomLevelType } from "../../common/Project";
+import {
+  RecordingData,
+  ZoomLevelType,
+  InspectDataStackItem,
+  Frame,
+  InspectStackData,
+} from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 
 type LoadingComponentProps = {
@@ -44,8 +51,10 @@ function PreviewView() {
   const { projectState, project, deviceSettings } = useProject();
   const { reportIssue, showDismissableError } = useUtils();
 
-  const [isInspecting, setIsInspecting] = useState(false);
   const [isPressing, setIsPressing] = useState(false);
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
+  const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
   const zoomLevel = projectState.previewZoom ?? "Fit";
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
@@ -63,6 +72,7 @@ function PreviewView() {
   const isStarting = projectState.status === "starting";
 
   const { openModal } = useModal();
+  const { openFileAt } = useUtils();
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"
@@ -119,6 +129,16 @@ function PreviewView() {
       showDismissableError("Failed to capture replay");
     }
   };
+
+  function onInspectorItemSelected(item: InspectDataStackItem) {
+    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    setIsInspecting(false);
+  }
+
+  function resetInspector() {
+    setInspectFrame(null);
+    setInspectStackData(null);
+  }
 
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -183,7 +203,10 @@ function PreviewView() {
         <Preview
           key={selectedDevice.id}
           isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
+          inspectFrame={inspectFrame}
+          setInspectFrame={setInspectFrame}
+          setInspectStackData={setInspectStackData}
+          onInspectorItemSelected={onInspectorItemSelected}
           isPressing={isPressing}
           setIsPressing={setIsPressing}
           zoomLevel={zoomLevel}
@@ -195,6 +218,20 @@ function PreviewView() {
         <LoadingComponent
           finishedInitialLoad={finishedInitialLoad}
           devicesNotFound={devicesNotFound}
+        />
+      )}
+
+      {!replayData && inspectStackData && (
+        <InspectDataMenu
+          inspectLocation={inspectStackData.requestLocation}
+          inspectStack={inspectStackData.stack}
+          onSelected={onInspectorItemSelected}
+          onHover={(item) => {
+            if (item.frame) {
+              setInspectFrame(item.frame);
+            }
+          }}
+          onCancel={() => resetInspector()}
         />
       )}
 
