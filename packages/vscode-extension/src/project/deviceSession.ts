@@ -92,8 +92,12 @@ export class DeviceSession implements Disposable {
         return true;
       case "reloadJs":
         if (this.devtools.hasConnectedClient) {
-          await this.metro.reload();
-          return true;
+          try {
+            await this.metro.reload();
+            return true;
+          } catch (e) {
+            Logger.error("Failed to reload JS", e);
+          }
         }
         return false;
     }
@@ -121,9 +125,13 @@ export class DeviceSession implements Disposable {
     Logger.debug("Will wait for app ready and for preview");
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
 
+    let previewURL: string | undefined;
     if (shouldWaitForAppLaunch) {
       const reportWaitingStuck = setTimeout(() => {
-        Logger.info("App is taking very long to boot up, it might be stuck");
+        Logger.info(
+          "App is taking very long to boot up, it might be stuck. Device preview URL:",
+          previewURL
+        );
         getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
           platform: this.device.platform,
         });
@@ -131,7 +139,11 @@ export class DeviceSession implements Disposable {
       waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
     }
 
-    const [previewUrl] = await Promise.all([this.device.startPreview(), waitForAppReady]);
+    await Promise.all([
+      this.metro.ready(),
+      this.device.startPreview().then((url) => (previewURL = url)),
+      waitForAppReady,
+    ]);
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
@@ -149,7 +161,7 @@ export class DeviceSession implements Disposable {
       { durationSec: launchDurationSec }
     );
 
-    return previewUrl;
+    return previewURL!;
   }
 
   private async bootDevice(deviceSettings: DeviceSettings) {

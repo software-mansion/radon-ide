@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "copy-shared": "../shared/copy.sh expo-router ./shared"
+    "copy-shared": "node ../shared/copy.js expo-router ./shared"
   },
   "jest": {
     "preset": "jest-expo"

@@ -14,12 +14,17 @@ import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import { Frame, InspectDataStackItem, RecordingData, ZoomLevelType } from "../../common/Project";
-import { InspectDataMenu } from "./InspectDataMenu";
+import {
+  Frame,
+  InspectDataStackItem,
+  RecordingData,
+  ZoomLevelType,
+  InspectStackData,
+} from "../../common/Project";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { Platform, useUtils } from "../providers/UtilsProvider";
+import { Platform } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
@@ -172,14 +177,12 @@ function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   );
 }
 
-type InspectStackData = {
-  requestLocation: { x: number; y: number };
-  stack: InspectDataStackItem[];
-};
-
 type Props = {
   isInspecting: boolean;
-  setIsInspecting: (isInspecting: boolean) => void;
+  inspectFrame: Frame | null;
+  setInspectFrame: (inspectFrame: Frame | null) => void;
+  setInspectStackData: (inspectStackData: InspectStackData | null) => void;
+  onInspectorItemSelected: (item: InspectDataStackItem) => void;
   isPressing: boolean;
   setIsPressing: (isPressing: boolean) => void;
   zoomLevel: ZoomLevelType;
@@ -205,7 +208,10 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
 
 function Preview({
   isInspecting,
-  setIsInspecting,
+  inspectFrame,
+  setInspectFrame,
+  setInspectStackData,
+  onInspectorItemSelected,
   isPressing,
   setIsPressing,
   zoomLevel,
@@ -250,9 +256,6 @@ function Preview({
 
   const openRebuildAlert = useNativeRebuildAlert();
 
-  const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
-  const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
-
   function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
     const imgRect = previewRef.current!.getBoundingClientRect();
     const x = (event.clientX - imgRect.left) / imgRect.width;
@@ -292,11 +295,6 @@ function Preview({
     );
   }
 
-  function onInspectorItemSelected(item: InspectDataStackItem) {
-    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
-    setIsInspecting(false);
-  }
-
   function sendInspectUnthrottled(
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
@@ -304,11 +302,7 @@ function Preview({
     if (type === "Leave") {
       return;
     }
-    const imgRect = previewRef.current!.getBoundingClientRect();
-    const x = (event.clientX - imgRect.left) / imgRect.width;
-    const y = (event.clientY - imgRect.top) / imgRect.height;
-    const clampedX = clamp(x, 0, 1);
-    const clampedY = clamp(y, 0, 1);
+    const { x: clampedX, y: clampedY } = getTouchPosition(event);
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
     project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
@@ -413,11 +407,16 @@ function Preview({
     }
   }
 
-  function onContextMenu(e: MouseEvent<HTMLDivElement>) {
-    e.preventDefault();
-  }
-
   useEffect(() => {
+    // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
+    // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
+    // in the future https://github.com/microsoft/vscode/issues/225411
+    function onContextMenu(e: any) {
+      e.stopImmediatePropagation();
+    }
+
+    window.addEventListener("contextmenu", onContextMenu, true);
+
     function onBlurChange() {
       if (!document.hasFocus()) {
         setIsPanning(false);
@@ -425,8 +424,11 @@ function Preview({
         setIsPressing(false);
       }
     }
-    addEventListener("blur", onBlurChange, true);
-    return () => removeEventListener("blur", onBlurChange, true);
+    document.addEventListener("blur", onBlurChange, true);
+    return () => {
+      window.removeEventListener("contextmenu", onContextMenu);
+      document.removeEventListener("blur", onBlurChange, true);
+    };
   }, []);
 
   useEffect(() => {
@@ -487,7 +489,7 @@ function Preview({
   }, [project, openRebuildAlert, projectStatus]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.name === projectState?.selectedDevice?.name;
+    return sd.modelName === projectState?.selectedDevice?.name;
   });
 
   const shouldPreventTouchInteraction =
@@ -505,7 +507,6 @@ function Preview({
         onMouseUp,
         onMouseEnter,
         onMouseLeave,
-        onContextMenu,
       };
 
   const resizableProps = useResizableProps({
@@ -571,7 +572,7 @@ function Preview({
                   </div>
                 )}
 
-                {inspectFrame && (
+                {!replayData && inspectFrame && (
                   <div className="phone-screen phone-inspect-overlay">
                     <div
                       className="inspect-area"
@@ -582,11 +583,13 @@ function Preview({
                         height: `${inspectFrame.height * 100}%`,
                       }}
                     />
-                    <DimensionsBox
-                      device={device}
-                      frame={inspectFrame}
-                      wrapperDivRef={wrapperDivRef}
-                    />
+                    {isInspecting && (
+                      <DimensionsBox
+                        device={device}
+                        frame={inspectFrame}
+                        wrapperDivRef={wrapperDivRef}
+                      />
+                    )}
                   </div>
                 )}
                 {projectStatus === "refreshing" && (
@@ -631,19 +634,6 @@ function Preview({
                 )}
               </div>
               <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
-              {inspectStackData && (
-                <InspectDataMenu
-                  inspectLocation={inspectStackData.requestLocation}
-                  inspectStack={inspectStackData.stack}
-                  onSelected={onInspectorItemSelected}
-                  onHover={(item) => {
-                    if (item.frame) {
-                      setInspectFrame(item.frame);
-                    }
-                  }}
-                  onCancel={() => resetInspector()}
-                />
-              )}
             </div>
           </Resizable>
         )}

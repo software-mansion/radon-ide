@@ -46,9 +46,6 @@ export class Project
 
   private isCachedBuildStale: boolean;
 
-  private expoRouterInstalled: boolean;
-  private storybookInstalled: boolean;
-
   private fileWatcher: Disposable;
 
   private deviceSession: DeviceSession | undefined;
@@ -85,8 +82,6 @@ export class Project
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.isCachedBuildStale = false;
-    this.expoRouterInstalled = false;
-    this.storybookInstalled = false;
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
@@ -262,7 +257,7 @@ export class Project
   }
 
   public async goHome(homeUrl: string) {
-    if (this.expoRouterInstalled) {
+    if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
       await this.openNavigation(homeUrl);
     } else {
       await this.reloadMetro();
@@ -286,32 +281,30 @@ export class Project
       startupMessage: StartupMessage.Restarting,
     });
 
+    // we first consider forceCleanBuild flag, if set we always perform a clean
+    // start of the project and select the device
     if (forceCleanBuild) {
       await this.start(true, true);
       await this.selectDevice(deviceInfo, true);
       return;
     }
 
-    if (this.isCachedBuildStale) {
-      await this.selectDevice(deviceInfo, false);
-      return;
-    }
-
-    if (restartDevice) {
-      await this.selectDevice(deviceInfo, false);
-      return;
-    }
-
-    if (onlyReloadJSWhenPossible) {
-      // if reloading JS is possible, we try to do it first and exit in case of success
-      // otherwise we continue to restart using more invasive methods
-      if (await this.reloadMetro()) {
+    // Otherwise, depending on the project state we try deviceSelection, or
+    // only relad JS if possible.
+    try {
+      if (restartDevice || this.isCachedBuildStale) {
+        await this.selectDevice(deviceInfo, false);
         return;
       }
-    }
 
-    // otherwise we try to restart the device session
-    try {
+      if (onlyReloadJSWhenPossible) {
+        // if reloading JS is possible, we try to do it first and exit in case of success
+        // otherwise we continue to restart using more invasive methods
+        if (await this.reloadMetro()) {
+          return;
+        }
+      }
+
       // we first check if the device session hasn't changed in the meantime
       if (deviceSession === this.deviceSession) {
         await this.deviceSession?.perform("restartProcess");
@@ -320,11 +313,14 @@ export class Project
         });
       }
     } catch (e) {
-      // finally in case of any errors, we restart the selected device which reboots
-      // emulator etc...
-      // we first check if the device hasn't been updated in the meantime
+      // finally in case of any errors, the last resort is performing project
+      // restart and device selection (we still avoid forcing clean builds, and
+      // only do clean build when explicitly requested).
+      // before doing anything, we check if the device hasn't been updated in the meantime
+      // which might have initiated a new session anyway
       if (deviceInfo === this.projectState.selectedDevice) {
-        await this.selectDevice(this.projectState.selectedDevice!, false);
+        await this.start(true, false);
+        await this.selectDevice(deviceInfo, false);
       }
     }
   }
@@ -332,8 +328,11 @@ export class Project
   public async reload(type: ReloadAction): Promise<boolean> {
     this.updateProjectState({ status: "starting" });
     const success = (await this.deviceSession?.perform(type)) ?? false;
-    // TODO(jgonet): Don't assume that success is always true
-    this.updateProjectState({ status: "running" });
+    if (success) {
+      this.updateProjectState({ status: "running" });
+    } else {
+      window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
+    }
     return success;
   }
 
@@ -360,11 +359,6 @@ export class Project
       }, 100),
       [waitForNodeModules]
     );
-
-    Logger.debug("Checking expo router");
-    this.expoRouterInstalled = await this.dependencyManager.isInstalled("expoRouter");
-    Logger.debug("Checking storybook");
-    this.storybookInstalled = await this.dependencyManager.isInstalled("storybook");
   }
   //#endregion
 
@@ -446,7 +440,7 @@ export class Project
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
-    if (this.storybookInstalled) {
+    if (await this.dependencyManager.checkProjectUsesStorybook()) {
       this.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");
@@ -501,7 +495,7 @@ export class Project
   }
 
   private async maybeInstallNodeModules() {
-    const installed = await this.dependencyManager.isInstalled("nodeModules");
+    const installed = await this.dependencyManager.checkNodeModulesInstallationStatus();
 
     if (!installed) {
       Logger.info("Installing node modules");

@@ -6,32 +6,38 @@ import "./InspectDataMenu.css";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
-export function InspectDataMenu({
-  inspectLocation,
-  inspectStack,
-  onSelected,
-  onHover,
-  onCancel,
-}: {
+type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
   inspectStack: InspectDataStackItem[];
+  device?: DeviceProperties;
+  frame: Frame | null;
   onSelected: OnSelectedCallback;
   onHover: OnSelectedCallback;
   onCancel: () => void;
-}) {
-  const triggerRef = useRef<HTMLDivElement>(null);
+};
+
+export function InspectDataMenu({
+  inspectLocation,
+  inspectStack,
+  device,
+  frame,
+  onSelected,
+  onHover,
+  onCancel,
+}: InspectDataMenuProps) {
+  const displayDimensionsText = (() => {
+    if (device && frame) {
+      const topComponentWidth = parseFloat((frame.width * device.screenWidth).toFixed(2));
+      const topComponentHeight = parseFloat((frame.height * device.screenHeight).toFixed(2));
+
+      if (topComponentWidth && topComponentHeight) {
+        return `Dimensions: ${topComponentWidth} × ${topComponentHeight}`;
+      }
+    }
+    return "Dimensions: -";
+  })();
+
   const filteredData = inspectStack.filter((item) => !item.hide);
-
-  useEffect(() => {
-    const event = new MouseEvent("contextmenu", {
-      bubbles: true,
-      cancelable: true,
-      clientX: inspectLocation.x, // X position
-      clientY: inspectLocation.y, // Y position
-    });
-
-    triggerRef.current?.dispatchEvent(event);
-  }, []);
 
   return (
     <ContextMenu.Root

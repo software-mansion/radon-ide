@@ -112,4 +112,8 @@ export class Utils implements UtilsInterface {
   public async openExternalUrl(uriString: string) {
     env.openExternal(Uri.parse(uriString));
   }
+
+  public async log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]) {
+    Logger[type]("[WEBVIEW LOG]", message, ...args);
+  }
 }

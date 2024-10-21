@@ -94,10 +94,12 @@ async function isYarnModulesInstalled(workspacePath: string): Promise<boolean> {
       cwd: workspacePath,
       quietErrorsOnExit: true,
     });
-    const parsedJson = JSON.parse(stdout);
+    const parsedOutput = JSON.parse(stdout);
 
     // because npm marks packages installed with yarn as "extraneous" we need to check if there are any other problems.
-    return parsedJson?.problems.every((problem: string) => problem.startsWith("extraneous"));
+    return (
+      parsedOutput?.problems?.every((problem: string) => problem.startsWith("extraneous")) ?? true
+    );
   } catch (e) {
     return false;
   }

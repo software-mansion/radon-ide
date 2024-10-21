@@ -10,8 +10,10 @@ import AlertProvider from "./providers/AlertProvider";
 import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
 
 import "./styles/theme.css";
-import UtilsProvider from "./providers/UtilsProvider";
+import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
 import LaunchConfigProvider from "./providers/LaunchConfigProvider";
+
+installLogOverrides();
 
 const container = document.getElementById("root");
 const root = createRoot(container);
