@@ -227,22 +227,26 @@ const BiometricsItem = () => {
             onSelect={() => {
               project.sendBiometricAuthorization(true);
             }}>
-            <span className="codicon codicon-layout-sidebar-left" />
-            <div className="dropdown-menu-item-content">
-              Matching ID
-              <KeybindingInfo commandName="RNIDE.performBiometricAuthorization" />
-            </div>
+            <span className="dropdown-menu-item-wraper">
+              <span className="codicon codicon-layout-sidebar-left" />
+              <div className="dropdown-menu-item-content">
+                Matching ID
+                <KeybindingInfo commandName="RNIDE.performBiometricAuthorization" />
+              </div>
+            </span>
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
               project.sendBiometricAuthorization(false);
             }}>
-            <span className="codicon codicon-layout-sidebar-left" />
-            <div className="dropdown-menu-item-content">
-              Non-Matching ID
-              <KeybindingInfo commandName="RNIDE.performFailedBiometricAuthorization" />
-            </div>
+            <span className="dropdown-menu-item-wraper">
+              <span className="codicon codicon-layout-sidebar-left" />
+              <div className="dropdown-menu-item-content">
+                Non-Matching ID
+                <KeybindingInfo commandName="RNIDE.performFailedBiometricAuthorization" />
+              </div>
+            </span>
           </DropdownMenu.Item>
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
