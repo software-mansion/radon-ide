@@ -133,6 +133,14 @@ function adaptMetroConfig(config) {
   const ReporterImpl = require("./metro_reporter");
   config.reporter = new ReporterImpl();
 
+  process.stdout.write(
+    JSON.stringify({
+      type: "RNIDE_watch_folders",
+      watchFolders: [config.projectRoot, ...config.watchFolders], // metro internally adds projectRoot as first entry to watch folders
+    })
+  );
+  process.stdout.write("\n");
+
   return config;
 }
 
