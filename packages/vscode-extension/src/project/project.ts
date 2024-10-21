@@ -451,10 +451,10 @@ export class Project
     return this.deviceSettings;
   }
 
-  public async updateDeviceSettings(settings: DeviceSettings, sendToDevice = true) {
+  public async updateDeviceSettings(settings: DeviceSettings) {
     this.deviceSettings = settings;
     extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
-    let needsRestart = await this.deviceSession?.changeDeviceSettings(settings, sendToDevice);
+    let needsRestart = await this.deviceSession?.changeDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", this.deviceSettings);
 
     if (needsRestart) {
