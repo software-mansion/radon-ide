@@ -13,9 +13,9 @@ const INITIAL_REPLAY_LENGTH_SEC = 5;
  * the rewinding speeds up over time and also takes a fixed amount of time to rewind.
  */
 function acceleratedRewind(
-  video: HTMLVideoElement,
   fromTime: number,
   toTime: number,
+  setTimeCallback: (time: number) => void,
   readyCallback: () => void
 ) {
   const rewindTimeSec = 1.6;
@@ -25,7 +25,7 @@ function acceleratedRewind(
   const acc = (vFinal - v0) / rewindTimeSec;
 
   const rewindTime = fromTime - toTime;
-  video.currentTime = fromTime;
+  setTimeCallback(fromTime);
 
   let startTimeMs: number | null = null;
   function frame(timestampMs: number) {
@@ -37,11 +37,12 @@ function acceleratedRewind(
     const progress = v0 * elapsedSec + 0.5 * acc * elapsedSec * elapsedSec;
 
     if (elapsedSec < rewindTimeSec) {
-      video.currentTime = Math.max(0, toTime + rewindTime * (1 - progress));
+      const time = Math.max(0, toTime + rewindTime * (1 - progress));
+      setTimeCallback(time);
       requestAnimationFrame(frame);
     } else {
       console.log("Fin rewind", toTime);
-      video.currentTime = toTime;
+      setTimeCallback(toTime);
       readyCallback();
     }
   }
@@ -187,6 +188,7 @@ export default function ReplayOverlay({
   const [isEnded, setIsEnded] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [time, setCurrentTime] = useState(0);
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
 
   function stepForward() {
     if (videoRef.current) {
@@ -212,10 +214,19 @@ export default function ReplayOverlay({
       setIsRewinding(true);
       const newStartTime = Math.max(0, video!.duration - INITIAL_REPLAY_LENGTH_SEC);
       setStartTime(newStartTime);
-      acceleratedRewind(video!, video!.duration, newStartTime, () => {
-        setIsRewinding(false);
-        videoRef.current!.play();
-      });
+      setMetadataLoaded(true);
+      acceleratedRewind(
+        video!.duration,
+        newStartTime,
+        (newTime: number) => {
+          setCurrentTime(newTime);
+          videoRef.current!.currentTime = newTime;
+        },
+        () => {
+          setIsRewinding(false);
+          videoRef.current!.play();
+        }
+      );
     }
 
     function handleTimeUpdate() {
@@ -265,10 +276,12 @@ export default function ReplayOverlay({
       <div className="replay-corner replay-top-right" />
       <div className="replay-corner replay-bottom-left" />
       <div className="replay-corner replay-bottom-right" />
-      <div className="replay-rec-indicator">
-        <div className="replay-rec-dot" />
-        <span>REPLAY {timeFormat}</span>
-      </div>
+      {metadataLoaded && (
+        <div className="replay-rec-indicator">
+          <div className="replay-rec-dot" />
+          <span>REPLAY {timeFormat}</span>
+        </div>
+      )}
       <Button onClick={onClose} className="button-absolute replay-close">
         <span className="codicon codicon-chrome-close" />
       </Button>

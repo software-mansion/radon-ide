@@ -29,7 +29,6 @@ import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
-import { CancelToken } from "../builders/cancelToken";
 import { PlatformBuildCache } from "../builders/PlatformBuildCache";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
@@ -282,32 +281,30 @@ export class Project
       startupMessage: StartupMessage.Restarting,
     });
 
+    // we first consider forceCleanBuild flag, if set we always perform a clean
+    // start of the project and select the device
     if (forceCleanBuild) {
       await this.start(true, true);
       await this.selectDevice(deviceInfo, true);
       return;
     }
 
-    if (this.isCachedBuildStale) {
-      await this.selectDevice(deviceInfo, false);
-      return;
-    }
-
-    if (restartDevice) {
-      await this.selectDevice(deviceInfo, false);
-      return;
-    }
-
-    if (onlyReloadJSWhenPossible) {
-      // if reloading JS is possible, we try to do it first and exit in case of success
-      // otherwise we continue to restart using more invasive methods
-      if (await this.reloadMetro()) {
+    // Otherwise, depending on the project state we try deviceSelection, or
+    // only relad JS if possible.
+    try {
+      if (restartDevice || this.isCachedBuildStale) {
+        await this.selectDevice(deviceInfo, false);
         return;
       }
-    }
 
-    // otherwise we try to restart the device session
-    try {
+      if (onlyReloadJSWhenPossible) {
+        // if reloading JS is possible, we try to do it first and exit in case of success
+        // otherwise we continue to restart using more invasive methods
+        if (await this.reloadMetro()) {
+          return;
+        }
+      }
+
       // we first check if the device session hasn't changed in the meantime
       if (deviceSession === this.deviceSession) {
         await this.deviceSession?.perform("restartProcess");
@@ -316,11 +313,14 @@ export class Project
         });
       }
     } catch (e) {
-      // finally in case of any errors, we restart the selected device which reboots
-      // emulator etc...
-      // we first check if the device hasn't been updated in the meantime
+      // finally in case of any errors, the last resort is performing project
+      // restart and device selection (we still avoid forcing clean builds, and
+      // only do clean build when explicitly requested).
+      // before doing anything, we check if the device hasn't been updated in the meantime
+      // which might have initiated a new session anyway
       if (deviceInfo === this.projectState.selectedDevice) {
-        await this.selectDevice(this.projectState.selectedDevice!, false);
+        await this.start(true, false);
+        await this.selectDevice(deviceInfo, false);
       }
     }
   }
@@ -349,10 +349,10 @@ export class Project
     const waitForNodeModules = this.maybeInstallNodeModules();
 
     Logger.debug(`Launching devtools`);
-    const waitForDevtools = this.devtools.start();
+    this.devtools.start();
 
     Logger.debug(`Launching metro`);
-    const waitForMetro = this.metro.start(
+    this.metro.start(
       forceCleanBuild,
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
