@@ -288,7 +288,9 @@ export class DeviceSession implements Disposable {
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
     const didOnlyReplaySettingsChanged =
-      this.deviceSettings?.replaysEnabled !== settings.replaysEnabled;
+      JSON.stringify(this.deviceSettings) ===
+      JSON.stringify({ ...settings, replaysEnabled: !settings.replaysEnabled });
+
     this.deviceSettings = settings;
 
     if (settings.replaysEnabled && !this.isLaunching) {
