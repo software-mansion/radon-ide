@@ -58,11 +58,11 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    const dependencies: DependencyRecord = {};
+    const newDependencies: DependencyRecord = {};
 
     function handleUpdatedDependency(dependency: Dependency, status: DependencyStatus) {
-      dependencies[dependency] = status;
-      updateDepsState({ ...dependencies });
+      newDependencies[dependency] = status;
+      updateDepsState({ ...newDependencies });
     }
 
     dependencyManager.addListener(handleUpdatedDependency);
