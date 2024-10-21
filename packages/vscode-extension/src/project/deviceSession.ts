@@ -286,14 +286,21 @@ export class DeviceSession implements Disposable {
     this.devtools.send("RNIDE_openPreview", { previewId });
   }
 
-  public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
+  public async changeDeviceSettings(
+    settings: DeviceSettings,
+    sendToDevice = true
+  ): Promise<boolean> {
     this.deviceSettings = settings;
     if (settings.replaysEnabled && !this.isLaunching) {
       this.device.startReplays();
     } else {
       this.device.stopReplays();
     }
-    return this.device.changeSettings(settings);
+
+    if (sendToDevice) {
+      return this.device.changeSettings(settings);
+    }
+    return false; // return value tells if device needs a restart
   }
 
   public focusBuildOutput() {

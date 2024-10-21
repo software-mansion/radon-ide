@@ -165,7 +165,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               className="switch-root small-switch"
               id="enable-replays"
               onCheckedChange={(checked) =>
-                project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
+                project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked }, false)
               }
               defaultChecked={deviceSettings.replaysEnabled}
               style={{ marginLeft: "5px" }}>

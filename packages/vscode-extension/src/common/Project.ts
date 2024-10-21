@@ -127,7 +127,7 @@ export interface ProjectInterface {
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
-  updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
+  updateDeviceSettings(deviceSettings: DeviceSettings, sendToDevice?: boolean): Promise<void>;
   sendBiometricAuthorization(match: boolean): Promise<void>;
 
   resumeDebugger(): Promise<void>;
