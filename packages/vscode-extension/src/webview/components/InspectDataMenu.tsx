@@ -1,7 +1,6 @@
-import * as ContextMenu from "@radix-ui/react-context-menu";
-import { useEffect, useRef } from "react";
-import { InspectDataStackItem } from "../../common/Project";
-
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Frame, InspectDataStackItem } from "../../common/Project";
+import { DeviceProperties } from "../utilities/consts";
 import "./InspectDataMenu.css";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
@@ -40,30 +39,38 @@ export function InspectDataMenu({
   const filteredData = inspectStack.filter((item) => !item.hide);
 
   return (
-    <ContextMenu.Root
-      onOpenChange={(open) => {
-        if (!open) {
-          onCancel();
-        }
-      }}>
-      <ContextMenu.Trigger ref={triggerRef} />
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="context-menu-content">
-          {filteredData.map((item) => {
-            // extract file name from path:
-            const fileName = item.source.fileName.split("/").pop();
-            return (
-              <ContextMenu.Item
-                className="context-menu-item"
-                onSelect={() => onSelected(item)}
-                onMouseEnter={() => onHover(item)}>
-                <code>{`<${item.componentName}>`}</code>
-                <div className="right-slot">{`${fileName}:${item.source.line0Based + 1}`}</div>
-              </ContextMenu.Item>
-            );
-          })}
-        </ContextMenu.Content>
-      </ContextMenu.Portal>
-    </ContextMenu.Root>
+    <div style={{ left: inspectLocation.x, top: inspectLocation.y, position: "absolute" }}>
+      <DropdownMenu.Root
+        defaultOpen={true}
+        open={true}
+        onOpenChange={(open) => {
+          if (!open) {
+            onCancel();
+          }
+        }}>
+        <DropdownMenu.Trigger />
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content className="dropdown-menu-content">
+            <DropdownMenu.Label className="dropdown-menu-label">
+              {displayDimensionsText}
+            </DropdownMenu.Label>
+            {filteredData.map((item, index) => {
+              // extract file name from path:
+              const fileName = item.source.fileName.split("/").pop();
+              return (
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  key={index}
+                  onSelect={() => onSelected(item)}
+                  onMouseEnter={() => onHover(item)}>
+                  <code>{`<${item.componentName}>`}</code>
+                  <div className="right-slot">{`${fileName}:${item.source.line0Based + 1}`}</div>
+                </DropdownMenu.Item>
+              );
+            })}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+    </div>
   );
 }
