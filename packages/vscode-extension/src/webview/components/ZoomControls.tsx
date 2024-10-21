@@ -1,9 +1,9 @@
 import { RefObject, useCallback } from "react";
-import IconButton from "./shared/IconButton";
 import * as Select from "@radix-ui/react-select";
-import "./ZoomControls.css";
+import IconButton from "./shared/IconButton";
 import { ZoomLevelType } from "../../common/Project";
 import { DeviceProperties } from "../utilities/consts";
+import "./ZoomControls.css";
 
 const ZOOM_STEP = 0.05;
 const ZOOM_SELECT_NUMERIC_VALUES = [0.5, 0.6, 0.7, 0.8, 0.9, 1];
@@ -19,7 +19,7 @@ type ZoomControlsProps = {
 const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
   const onValueChange = useCallback(
     (e: string) => {
-      if (e == "Fit") {
+      if (e === "Fit") {
         onZoomChanged("Fit");
         return;
       }
@@ -80,16 +80,6 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
   return (
     <div className="zoom-controls">
       <IconButton
-        className="zoom-out-button"
-        tooltip={{
-          label: "Zoom out",
-          side: "top",
-        }}
-        onClick={() => handleZoom(false)}>
-        <span className="codicon codicon-zoom-out" />
-      </IconButton>
-      <ZoomLevelSelect zoomLevel={zoomLevel} onZoomChanged={onZoomChanged} />
-      <IconButton
         className="zoom-in-button"
         tooltip={{
           label: "Zoom in",
@@ -97,6 +87,16 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
         }}
         onClick={() => handleZoom(true)}>
         <span className="codicon codicon-zoom-in" />
+      </IconButton>
+      <ZoomLevelSelect zoomLevel={zoomLevel} onZoomChanged={onZoomChanged} />
+      <IconButton
+        className="zoom-out-button"
+        tooltip={{
+          label: "Zoom out",
+          side: "top",
+        }}
+        onClick={() => handleZoom(false)}>
+        <span className="codicon codicon-zoom-out" />
       </IconButton>
     </div>
   );
