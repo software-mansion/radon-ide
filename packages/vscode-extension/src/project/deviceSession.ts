@@ -287,7 +287,7 @@ export class DeviceSession implements Disposable {
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
-    const onlyReplaySettingsChanged =
+    const didOnlyReplaySettingsChanged =
       this.deviceSettings?.replaysEnabled !== settings.replaysEnabled;
     this.deviceSettings = settings;
 
@@ -297,7 +297,7 @@ export class DeviceSession implements Disposable {
       this.device.stopReplays();
     }
 
-    if (onlyReplaySettingsChanged) {
+    if (didOnlyReplaySettingsChanged) {
       // return value tells if device needs a restart
       return false;
     }
