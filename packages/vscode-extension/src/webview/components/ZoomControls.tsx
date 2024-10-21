@@ -93,7 +93,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
         className="zoom-out-button"
         tooltip={{
           label: "Zoom out",
-          side: "top",
+          side: "bottom",
         }}
         onClick={() => handleZoom(false)}>
         <span className="codicon codicon-zoom-out" />
