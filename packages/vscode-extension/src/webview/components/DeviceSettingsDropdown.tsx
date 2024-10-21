@@ -18,6 +18,8 @@ import { useModal } from "../providers/ModalProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
+import { extensionContext } from "../../utilities/extensionContext";
+import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 
 const contentSizes = [
   "xsmall",
@@ -172,6 +174,13 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
+          <Label>Deep Links</Label>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
+            <span className="codicon codicon-link" />
+            Open Deep Link
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

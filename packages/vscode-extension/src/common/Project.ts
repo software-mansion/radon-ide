@@ -135,6 +135,9 @@ export interface ProjectInterface {
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
+  getDeepLinksHistory(): Promise<string[]>;
+  openDeepLink(link: string): Promise<void>;
+
   captureReplay(): Promise<RecordingData>;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;
