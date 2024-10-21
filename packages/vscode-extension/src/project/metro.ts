@@ -238,7 +238,7 @@ export class Metro implements Disposable {
               break;
             case "RNIDE_watch_folders":
               this._watchFolders = event.watchFolders;
-              Logger.info(`Captured metro watch folders: ${this._watchFolders.join(", ")}`);
+              Logger.info("Captured metro watch folders", this._watchFolders);
               break;
             case "bundle_build_failed":
               this.delegate.onBundleError();

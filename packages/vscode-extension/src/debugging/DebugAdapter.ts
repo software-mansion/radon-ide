@@ -499,7 +499,7 @@ export class DebugAdapter extends DebugSession {
 
     // the number of consumer mapping entries can be close to the number of symbols in the source file.
     // we optimize the process by collecting unique source URLs which map to actual individual source files.
-    // note: apparently despite the typings of the source-map library, mapping.source can be null
+    // note: apparently despite the TS types from the source-map library, mapping.source can be null
     const uniqueSourceMapPaths = new Set<string>();
     consumer.eachMapping((mapping) => mapping.source && uniqueSourceMapPaths.add(mapping.source));
 
