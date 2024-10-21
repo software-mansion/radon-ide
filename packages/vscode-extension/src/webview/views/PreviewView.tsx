@@ -16,8 +16,13 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
-import { RecordingData, ZoomLevelType } from "../../common/Project";
+import {
+  Frame,
+  InspectDataStackItem,
+  InspectStackData,
+  RecordingData,
+  ZoomLevelType,
+} from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 

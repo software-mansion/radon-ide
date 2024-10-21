@@ -229,7 +229,6 @@ function Preview({
 
   const workspace = useWorkspaceConfig();
   const { projectState, project } = useProject();
-  const { openFileAt } = useUtils();
 
   const isFrameDisabled = workspace.showDeviceFrame === false;
 
