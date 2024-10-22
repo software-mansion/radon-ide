@@ -46,7 +46,7 @@ type MetroEvent =
       transformedFileCount: number;
       totalFileCount: number;
     }
-  | { type: "RNIDE_expo_env_prelude_lines"; lineOffset: number }
+  | { type: "RNIDE_expo_env_prelude_lines"; lineCount: number }
   | {
       type: "RNIDE_initialize_done";
       port: number;
@@ -67,7 +67,7 @@ export class Metro implements Disposable {
   private _port = 0;
   private startPromise: Promise<void> | undefined;
   private usesNewDebugger?: Boolean;
-  private _expoPreludeLineOffset: number = 0;
+  private _expoPreludeLineCount = 0;
 
   constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
 
@@ -82,8 +82,8 @@ export class Metro implements Disposable {
     return this._port;
   }
 
-  public get expoPreludeLineOffset() {
-    return this._expoPreludeLineOffset;
+  public get expoPreludeLineCount() {
+    return this._expoPreludeLineCount;
   }
 
   public dispose() {
@@ -214,8 +214,8 @@ export class Metro implements Disposable {
 
           switch (event.type) {
             case "RNIDE_expo_env_prelude_lines":
-              this._expoPreludeLineOffset = event.lineOffset;
-              Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineOffset);
+              this._expoPreludeLineCount = event.lineCount;
+              Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineCount);
               break;
             case "RNIDE_initialize_done":
               this._port = event.port;

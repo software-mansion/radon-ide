@@ -48,7 +48,12 @@ function adaptMetroConfig(config) {
       // and uncaught exceptions. The reason why this is needed, is that
       // metro doesn't include __env__ prelude in the source map resulting in the source map
       // transformation getting shifted by the number of lines in the expo generated prelude.
-      process.stdout.write(JSON.stringify({ type: "RNIDE_expo_env_prelude_lines", lineOffset: module.output[0].data.lineCount }));
+      process.stdout.write(
+        JSON.stringify({
+          type: "RNIDE_expo_env_prelude_lines",
+          lineCount: module.output[0].data.lineCount,
+        })
+      );
       process.stdout.write("\n");
     }
     return origProcessModuleFilter(module);

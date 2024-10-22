@@ -86,7 +86,7 @@ export class DebugAdapter extends DebugSession {
   private projectPathAlias?: string;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
-  private lineOffset: number;
+  private expoPreludeLineCount: number;
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
 
@@ -98,7 +98,7 @@ export class DebugAdapter extends DebugSession {
     this.absoluteProjectPath = configuration.absoluteProjectPath;
     this.projectPathAlias = configuration.projectPathAlias;
     this.connection = new WebSocket(configuration.websocketAddress);
-    this.lineOffset = configuration.lineOffset;
+    this.expoPreludeLineCount = configuration.expoPreludeLineCount;
 
     this.connection.on("open", () => {
       // the below catch handler is used to ignore errors coming from non critical CDP messages we
@@ -154,29 +154,28 @@ export class DebugAdapter extends DebugSession {
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
 
-            // We detect when a source map for the entire bundle is loaded by checking
-            // if __env__ module is present in the sources.
-            const isFileWithOffset = sourceMap.sources.includes("__prelude__");
+            // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
+            const isMainBundle = sourceMap.sources.includes("__prelude__");
 
-            // When using expo <${PUT_VERSION_HERE}, source maps skip the prelude module which is 
-            // included in the main bundle at the start. As a result, all lines in the main bundle are shifted by
-            // the amount of lines the prelude file adds. To offset this, we use the lineOffset parameter that we pass
-            // to the source maps list that is used later on to correct line numbers when translating from generated
-            // to the original positions.
-            const shouldApplyOffset =
-              semver.lte(getReactNativeVersion(), "0.76.0") && isFileWithOffset;
-            if (this.lineOffset !== 0 && shouldApplyOffset) {
+            // Expo env plugin has a bug that causes the bundle to include so-called expo prelude module named __env__
+            // which is not present in the source map. As a result, the line numbers are shifted by the amount of lines
+            // the __env__ module adds. If we detect that main bundle is loaded, but __env__ is not there, we use the provided
+            // expoPreludeLineCount which reflects the number of lines in __env__ module to offset the line numbers in the source map.
+            const bundleContainsExpoPrelude = sourceMap.sources.includes("__env__");
+            let lineOffset = 0;
+            if (isMainBundle && !bundleContainsExpoPrelude) {
               Logger.debug(
                 "Expo prelude lines were detected and an offset was set to:",
-                this.lineOffset
+                this.expoPreludeLineCount
               );
+              lineOffset = this.expoPreludeLineCount;
             }
 
             this.sourceMaps.push([
               message.params.url,
               message.params.scriptId,
               consumer,
-              shouldApplyOffset ? this.lineOffset : 0,
+              lineOffset,
             ]);
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
