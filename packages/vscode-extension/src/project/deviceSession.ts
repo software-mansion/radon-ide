@@ -287,23 +287,12 @@ export class DeviceSession implements Disposable {
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
-    const didOnlyReplaySettingsChanged =
-      JSON.stringify(this.deviceSettings) ===
-      JSON.stringify({ ...settings, replaysEnabled: !settings.replaysEnabled });
-
     this.deviceSettings = settings;
-
     if (settings.replaysEnabled && !this.isLaunching) {
       this.device.startReplays();
     } else {
       this.device.stopReplays();
     }
-
-    if (didOnlyReplaySettingsChanged) {
-      // return value tells if device needs a restart
-      return false;
-    }
-
     return this.device.changeSettings(settings);
   }
 
