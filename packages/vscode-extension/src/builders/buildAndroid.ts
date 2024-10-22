@@ -143,7 +143,7 @@ export async function buildAndroid(
     ),
   ];
   // configureReactNativeOverrides init script is only necessary for RN versions older then 0.74.0 see comments in configureReactNativeOverrides.gradle for more details
-  if (semver.lt(await getReactNativeVersion(), "0.74.0")) {
+  if (semver.lt(getReactNativeVersion(), "0.74.0")) {
     gradleArgs.push(
       "--init-script", // configureReactNativeOverrides init script is used to patch React Android project, see comments in configureReactNativeOverrides.gradle for more details
       path.join(

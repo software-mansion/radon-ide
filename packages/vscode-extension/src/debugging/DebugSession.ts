@@ -64,6 +64,7 @@ export class DebugSession implements Disposable {
         request: "attach",
         websocketAddress: websocketAddress,
         sourceMapAliases,
+        expoPreludeLineCount: this.metro.expoPreludeLineCount,
       },
       {
         suppressDebugStatusbar: true,

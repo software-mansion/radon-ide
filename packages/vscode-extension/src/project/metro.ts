@@ -46,6 +46,7 @@ type MetroEvent =
       transformedFileCount: number;
       totalFileCount: number;
     }
+  | { type: "RNIDE_expo_env_prelude_lines"; lineCount: number }
   | {
       type: "RNIDE_initialize_done";
       port: number;
@@ -71,6 +72,7 @@ export class Metro implements Disposable {
   private _watchFolders: string[] | undefined = undefined;
   private startPromise: Promise<void> | undefined;
   private usesNewDebugger?: Boolean;
+  private _expoPreludeLineCount = 0;
 
   constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
 
@@ -90,6 +92,10 @@ export class Metro implements Disposable {
       throw new Error("Attempting to read watchFolders before metro has started");
     }
     return this._watchFolders;
+  }
+
+  public get expoPreludeLineCount() {
+    return this._expoPreludeLineCount;
   }
 
   public dispose() {
@@ -231,6 +237,10 @@ export class Metro implements Disposable {
           }
 
           switch (event.type) {
+            case "RNIDE_expo_env_prelude_lines":
+              this._expoPreludeLineCount = event.lineCount;
+              Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineCount);
+              break;
             case "RNIDE_initialize_done":
               this._port = event.port;
               Logger.info(`Metro started on port ${this._port}`);
