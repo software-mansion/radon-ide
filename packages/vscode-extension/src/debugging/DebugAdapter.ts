@@ -14,6 +14,8 @@ import {
   Source,
   StackFrame,
 } from "@vscode/debugadapter";
+import { getReactNativeVersion } from "../utilities/reactNative";
+import semver from "semver";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
@@ -83,8 +85,8 @@ export class DebugAdapter extends DebugSession {
   private absoluteProjectPath: string;
   private projectPathAlias?: string;
   private threads: Array<Thread> = [];
-  private sourceMaps: Array<[string, string, SourceMapConsumer]> = [];
-
+  private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
+  private expoPreludeLineCount: number;
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
 
@@ -96,6 +98,7 @@ export class DebugAdapter extends DebugSession {
     this.absoluteProjectPath = configuration.absoluteProjectPath;
     this.projectPathAlias = configuration.projectPathAlias;
     this.connection = new WebSocket(configuration.websocketAddress);
+    this.expoPreludeLineCount = configuration.expoPreludeLineCount;
 
     this.connection.on("open", () => {
       // the below catch handler is used to ignore errors coming from non critical CDP messages we
@@ -150,7 +153,30 @@ export class DebugAdapter extends DebugSession {
             const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
-            this.sourceMaps.push([message.params.url, message.params.scriptId, consumer]);
+
+            // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
+            const isMainBundle = sourceMap.sources.includes("__prelude__");
+
+            // Expo env plugin has a bug that causes the bundle to include so-called expo prelude module named __env__
+            // which is not present in the source map. As a result, the line numbers are shifted by the amount of lines
+            // the __env__ module adds. If we detect that main bundle is loaded, but __env__ is not there, we use the provided
+            // expoPreludeLineCount which reflects the number of lines in __env__ module to offset the line numbers in the source map.
+            const bundleContainsExpoPrelude = sourceMap.sources.includes("__env__");
+            let lineOffset = 0;
+            if (isMainBundle && !bundleContainsExpoPrelude && this.expoPreludeLineCount > 0) {
+              Logger.debug(
+                "Expo prelude lines were detected and an offset was set to:",
+                this.expoPreludeLineCount
+              );
+              lineOffset = this.expoPreludeLineCount;
+            }
+
+            this.sourceMaps.push([
+              message.params.url,
+              message.params.scriptId,
+              consumer,
+              lineOffset,
+            ]);
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
 
@@ -264,7 +290,7 @@ export class DebugAdapter extends DebugSession {
     let sourceLine1Based = lineNumber1Based;
     let sourceColumn0Based = columnNumber0Based;
 
-    this.sourceMaps.forEach(([url, id, consumer]) => {
+    this.sourceMaps.forEach(([url, id, consumer, lineOffset]) => {
       // when we identify script by its URL we need to deal with a situation when the URL is sent with a different
       // hostname and port than the one we have registered in the source maps. The reason for that is that the request
       // that populates the source map (scriptParsed) is sent by metro, while the requests from breakpoints or logs
@@ -273,7 +299,7 @@ export class DebugAdapter extends DebugSession {
       if (id === scriptIdOrURL || compareIgnoringHost(url, scriptIdOrURL)) {
         scriptURL = url;
         const pos = consumer.originalPositionFor({
-          line: lineNumber1Based,
+          line: lineNumber1Based - lineOffset,
           column: columnNumber0Based,
         });
         if (pos.source != null) {
@@ -440,7 +466,7 @@ export class DebugAdapter extends DebugSession {
     }
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
-    this.sourceMaps.forEach(([sourceURL, scriptId, consumer]) => {
+    this.sourceMaps.forEach(([sourceURL, scriptId, consumer, lineOffset]) => {
       const sources = [];
       consumer.eachMapping((mapping) => {
         sources.push(mapping.source);
@@ -453,7 +479,7 @@ export class DebugAdapter extends DebugSession {
       });
       if (pos.line != null) {
         originalSourceURL = sourceURL;
-        position = pos;
+        position = { ...pos, line: pos.line + lineOffset };
       }
     });
     if (position.line === null) {
