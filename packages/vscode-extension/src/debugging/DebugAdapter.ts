@@ -154,8 +154,8 @@ export class DebugAdapter extends DebugSession {
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
 
-            // This is a heuristic that checks if the source map should contain __env__
-            // module that is added by expo, but not reported in the source map
+            // We detect when a source map for the entire bundle is loaded by checking
+            // if __env__ module is present in the sources.
             const isFileWithOffset = sourceMap.sources.includes("__prelude__");
 
             // When using expo <${PUT_VERSION_HERE}, source maps skip the prelude module which is 
