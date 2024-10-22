@@ -158,11 +158,11 @@ export class DebugAdapter extends DebugSession {
             // module that is added by expo, but not reported in the source map
             const isFileWithOffset = sourceMap.sources.includes("__prelude__");
 
-            // This line is here because of a problem with sourcemaps for expo projects,
-            // that was addressed in this PR https://github.com/expo/expo/pull/29463,
-            // unfortunately it still requires changes to metro that were attempted here
-            // https://github.com/facebook/metro/pull/1284 we should monitor the situation
-            // in upcoming versions and if the changes are still not added bump the version below.
+            // When using expo <${PUT_VERSION_HERE}, source maps skip the prelude module which is 
+            // included in the main bundle at the start. As a result, all lines in the main bundle are shifted by
+            // the amount of lines the prelude file adds. To offset this, we use the lineOffset parameter that we pass
+            // to the source maps list that is used later on to correct line numbers when translating from generated
+            // to the original positions.
             const shouldApplyOffset =
               semver.lte(getReactNativeVersion(), "0.76.0") && isFileWithOffset;
             if (this.lineOffset !== 0 && shouldApplyOffset) {
