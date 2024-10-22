@@ -71,6 +71,7 @@ function PreviewView() {
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
   const isStarting = projectState.status === "starting";
+  const isRunning = projectState.status === "running";
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelName === projectState?.selectedDevice?.name;
@@ -194,10 +195,7 @@ function PreviewView() {
           <span slot="start" className="codicon codicon-debug-console" />
           Logs
         </Button>
-        <SettingsDropdown
-          project={project}
-          isDeviceRunning={projectState.status === "running"}
-          disabled={devicesNotFound}>
+        <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Settings", type: "primary" }}>
             <span className="codicon codicon-settings-gear" />
           </IconButton>
@@ -269,10 +267,14 @@ function PreviewView() {
         <Button className="feedback-button" onClick={() => reportIssue()}>
           {extensionVersion || "Beta"}: Report issue
         </Button>
-        <DeviceSettingsDropdown disabled={devicesNotFound}>
+        <DeviceSettingsDropdown disabled={devicesNotFound || !isRunning}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon
-              color={devicesNotFound ? "var(--swm-disabled-text)" : "var(--swm-default-text)"}
+              color={
+                devicesNotFound || !isRunning
+                  ? "var(--swm-disabled-text)"
+                  : "var(--swm-default-text)"
+              }
             />
           </IconButton>
         </DeviceSettingsDropdown>
