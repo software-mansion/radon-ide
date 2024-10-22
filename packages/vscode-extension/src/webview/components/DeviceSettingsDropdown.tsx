@@ -52,6 +52,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
   const resetOptions =
     projectState.selectedDevice?.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
+  const isDeviceRunning = projectState.status === "running";
 
   return (
     <DropdownMenu.Root>
@@ -72,20 +73,33 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                   ...deviceSettings,
                   appearance: value as DeviceSettings["appearance"],
                 });
-              }}>
+              }}
+              disabled={!isDeviceRunning}>
               <div className="radio-group-center">
-                <RadioGroup.Item className="radio-group-item" value="light" id="r1">
+                <RadioGroup.Item
+                  className="radio-group-item"
+                  value="light"
+                  id="r1"
+                  disabled={!isDeviceRunning}>
                   <RadioGroup.Indicator className="radio-group-indicator" />
                 </RadioGroup.Item>
-                <label className="radio-group-label" htmlFor="r1">
+                <label
+                  className={isDeviceRunning ? "radio-group-label" : "radio-group-label-disabled"}
+                  htmlFor="r1">
                   Light
                 </label>
               </div>
               <div className="radio-group-center">
-                <RadioGroup.Item className="radio-group-item" value="dark" id="r2">
+                <RadioGroup.Item
+                  className="radio-group-item"
+                  value="dark"
+                  id="r2"
+                  disabled={!isDeviceRunning}>
                   <RadioGroup.Indicator className="radio-group-indicator" />
                 </RadioGroup.Item>
-                <label className="radio-group-label" htmlFor="r2">
+                <label
+                  className={isDeviceRunning ? "radio-group-label" : "radio-group-label-disabled"}
+                  htmlFor="r2">
                   Dark
                 </label>
               </div>
@@ -104,21 +118,29 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     ...deviceSettings,
                     contentSize: contentSizes[value],
                   });
-                }}>
+                }}
+                disabled={!isDeviceRunning}>
                 <Slider.Track className="slider-track">
                   <Slider.Range className="slider-range" />
                 </Slider.Track>
                 <Slider.Thumb className="slider-thumb" aria-label="Text Size" />
                 <div className="slider-track-dent-container">
                   {Array.from({ length: 7 }).map((_, i) => (
-                    <div key={i} className="slider-track-dent" />
+                    <div
+                      key={i}
+                      className={
+                        isDeviceRunning ? "slider-track-dent" : "slider-track-dent-disabled"
+                      }
+                    />
                   ))}
                 </div>
               </Slider.Root>
               <span className="device-settings-large-text-indicator" />
             </div>
             <div className="device-settings-margin" />
-            {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
+            {projectState.selectedDevice?.platform === DevicePlatform.IOS && (
+              <BiometricsItem disabled={!isDeviceRunning} />
+            )}
             <DropdownMenu.Arrow className="dropdown-menu-arrow" />
           </form>
           <Label>Device location</Label>
@@ -126,14 +148,17 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             className="dropdown-menu-item"
             onSelect={() => {
               openModal("Location", <DeviceLocationView />);
-            }}>
+            }}
+            disabled={!isDeviceRunning}>
             <span className="codicon codicon-location" />
             Set Device Location
           </DropdownMenu.Item>
-          {projectState.selectedDevice?.platform === DevicePlatform.IOS && <LocalizationItem />}
+          {projectState.selectedDevice?.platform === DevicePlatform.IOS && (
+            <LocalizationItem disabled={!isDeviceRunning} />
+          )}
           <Label>Permissions</Label>
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+            <DropdownMenu.SubTrigger className="dropdown-menu-item" disabled={!isDeviceRunning}>
               <span className="codicon codicon-redo" />
               Reset Permissions
             </DropdownMenu.SubTrigger>
@@ -146,7 +171,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
                     key={index}
-                    onSelect={() => project.resetAppPermissions(option.value)}>
+                    onSelect={() => project.resetAppPermissions(option.value)}
+                    disabled={!isDeviceRunning}>
                     <span className={`codicon codicon-${option.icon}`} />
                     {option.label}
                   </DropdownMenu.Item>
@@ -160,7 +186,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <span className="codicon codicon-triangle-left icons-rewind" />
               <span className="codicon codicon-triangle-left icons-rewind" />
             </span>
-            Enable Replays
+            <label
+              className={
+                isDeviceRunning ? "dropdown-menu-item-label" : "dropdown-menu-item-label-disabled"
+              }>
+              Enable Replays
+            </label>
             <Switch.Root
               className="switch-root small-switch"
               id="enable-replays"
@@ -168,7 +199,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
               }
               defaultChecked={deviceSettings.replaysEnabled}
-              style={{ marginLeft: "5px" }}>
+              style={{ marginLeft: "5px" }}
+              disabled={!isDeviceRunning}>
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
@@ -178,7 +210,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
   );
 }
 
-const LocalizationItem = () => {
+const LocalizationItem = ({ disabled }: { disabled: boolean }) => {
   const { openModal } = useModal();
   return (
     <>
@@ -187,7 +219,8 @@ const LocalizationItem = () => {
         className="dropdown-menu-item"
         onSelect={() => {
           openModal("Localization", <DeviceLocalizationView />);
-        }}>
+        }}
+        disabled={disabled}>
         <span className="codicon codicon-globe" />
         Set Device Localization
       </DropdownMenu.Item>
@@ -195,12 +228,12 @@ const LocalizationItem = () => {
   );
 };
 
-const BiometricsItem = () => {
+const BiometricsItem = ({ disabled }: { disabled: boolean }) => {
   const { project, deviceSettings } = useProject();
 
   return (
     <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger className="dropdown-menu-item">
+      <DropdownMenu.SubTrigger className="dropdown-menu-item" disabled={disabled}>
         <span className="codicon codicon-layout" />
         Biometrics
         <span className="codicon codicon-chevron-right right-slot" />

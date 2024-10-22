@@ -59,6 +59,23 @@ button {
   gap: 5px;
 }
 
+.dropdown-menu-item-label {
+  font-size: 13px;
+  line-height: 1;
+  color: var(--swm-default-text);
+  display: flex;
+  padding: 0 6px;
+  user-select: none;
+}
+.dropdown-menu-item-label-disabled {
+  font-size: 13px;
+  line-height: 1;
+  color: var(--swm-disabled-text);
+  display: flex;
+  padding: 0 6px;
+  user-select: none;
+}
+
 .dropdown-menu-label {
   font-size: 12px;
   line-height: 25px;

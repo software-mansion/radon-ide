@@ -15,7 +15,7 @@
 .switch-root {
   width: var(--switch-width);
   height: var(--switch-height);
-  background-color: var(--swm-switch-root-disabled);
+  background-color: var(--swm-switch-root);
   border-radius: 9999px;
   position: relative;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -23,12 +23,15 @@
 .switch-root[data-state="checked"] {
   background-color: var(--navy-light-60);
 }
+.switch-root[data-disabled] {
+  background-color: var(--swm-switch-root-disabled);
+}
 
 .switch-thumb {
   display: block;
   width: var(--thumb-size);
   height: var(--thumb-size);
-  background-color: white;
+  background-color: var(--swm-switch-thumb-background);
   border-radius: 9999px;
   transition: transform var(--switch-transition-duration);
   transform: translateX(var(--switch-padding));
@@ -36,4 +39,7 @@
 }
 .switch-thumb[data-state="checked"] {
   transform: translateX(calc(var(--switch-width) - var(--thumb-size) - var(--switch-padding)));
+}
+.switch-thumb[data-disabled] {
+  background-color: var(--swm-switch-thumb-background-disabled);
 }
