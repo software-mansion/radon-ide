@@ -12,6 +12,7 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
+import { mapIdToModel } from "./supportedDevices";
 
 interface SimulatorInfo {
   availability?: string;
@@ -20,11 +21,13 @@ interface SimulatorInfo {
   name: string;
   udid: string;
   version?: string;
+  displayName: string;
   availabilityError?: string;
   type?: "simulator" | "device" | "catalyst";
   booted?: boolean;
   lastBootedAt?: string;
   deviceTypeIdentifier: string;
+  dataPath?: string;
 }
 
 interface SimulatorData {
@@ -409,6 +412,21 @@ export async function removeIosRuntimes(runtimeIDs: string[]) {
   return Promise.all(removalPromises);
 }
 
+export async function renameIosSimulator(udid: string | undefined, newDisplayName: string) {
+  if (!udid) {
+    return;
+  }
+
+  return await exec("xcrun", [
+    "simctl",
+    "--set",
+    getOrCreateDeviceSet(udid),
+    "rename",
+    udid,
+    newDisplayName,
+  ]);
+}
+
 export async function removeIosSimulator(udid: string | undefined, location: SimulatorDeviceSet) {
   if (!udid) {
     return;
@@ -464,26 +482,29 @@ export async function listSimulators(
 
   const runtimes = await getAvailableIosRuntimes();
 
-  const simulators = devicesPerRuntime
-    .map(([runtimeID, devices]) => {
+  const simulators = await Promise.all(
+    devicesPerRuntime.map(async ([runtimeID, devices]) => {
       const runtime = runtimes.find((item) => item.identifier === runtimeID);
 
-      return devices.map((device) => {
-        return {
-          id: `ios-${device.udid}`,
-          platform: DevicePlatform.IOS as const,
-          UDID: device.udid,
-          name: device.name,
-          systemName: runtime?.name ?? "Unknown",
-          available: device.isAvailable ?? false,
-          deviceIdentifier: device.deviceTypeIdentifier,
-          runtimeInfo: runtime!,
-        };
-      });
+      const deviceInfos = await Promise.all(
+        devices.map(async (device) => {
+          return {
+            id: `ios-${device.udid}`,
+            platform: DevicePlatform.IOS as const,
+            UDID: device.udid,
+            modelName: mapIdToModel(device.deviceTypeIdentifier),
+            systemName: runtime?.name ?? "Unknown",
+            displayName: device.name,
+            available: device.isAvailable ?? false,
+            deviceIdentifier: device.deviceTypeIdentifier,
+            runtimeInfo: runtime!,
+          };
+        })
+      );
+      return deviceInfos;
     })
-    .flat();
-
-  return simulators;
+  );
+  return simulators.flat();
 }
 
 export enum SimulatorDeviceSet {
@@ -492,7 +513,8 @@ export enum SimulatorDeviceSet {
 }
 
 export async function createSimulator(
-  deviceName: string,
+  modelName: string,
+  displayName: string,
   deviceIdentifier: string,
   runtime: IOSRuntimeInfo,
   deviceSet: SimulatorDeviceSet
@@ -510,7 +532,7 @@ export async function createSimulator(
     "simctl",
     ...locationArgs,
     "create",
-    deviceName,
+    displayName,
     deviceIdentifier,
     runtime.identifier,
   ]);
@@ -519,8 +541,9 @@ export async function createSimulator(
     id: `ios-${UDID}`,
     platform: DevicePlatform.IOS,
     UDID,
-    name: deviceName,
+    modelName: modelName,
     systemName: runtime.name,
+    displayName: displayName,
     available: true, // assuming if create command went through, it's available
     deviceIdentifier: deviceIdentifier,
     runtimeInfo: runtime,
