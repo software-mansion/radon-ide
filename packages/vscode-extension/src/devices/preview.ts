@@ -64,8 +64,8 @@ export class Preview implements Disposable {
           // video response format for replays looks as follows:
           // video_ready replay <HTTP_URL> <FILE_URL>
           // video_error replay <Error message>
-          const videoReadyMatch = line.match(/video_ready replay\S+ (\S+) (\S+)/);
-          const videoErrorMatch = line.match(/video_error replay\S+ (.*)/);
+          const videoReadyMatch = line.match(/video_ready replay (\S+) (\S+)/);
+          const videoErrorMatch = line.match(/video_error replay (.*)/);
 
           const handlers = this.lastReplayPromise;
           this.lastReplayPromise = undefined;
@@ -94,14 +94,12 @@ export class Preview implements Disposable {
     });
   }
 
-  static replayID = 0;
-
   public startReplays() {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
     }
-    stdin.write(`video replay_${++Preview.replayID} start -m -b 50\n`); // 50MB buffer for in-memory video
+    stdin.write(`video replay start -m -b 50\n`); // 50MB buffer for in-memory video
   }
 
   public stopReplays() {
@@ -109,7 +107,7 @@ export class Preview implements Disposable {
     if (!stdin) {
       throw new Error("sim-server process not available");
     }
-    stdin.write(`video replay_${Preview.replayID} stop\n`);
+    stdin.write(`video replay stop\n`);
   }
 
   public captureReplay() {
@@ -127,9 +125,7 @@ export class Preview implements Disposable {
       promise.then(this.lastReplayPromise.resolve, this.lastReplayPromise.reject);
     }
     this.lastReplayPromise = { resolve: resolvePromise!, reject: rejectPromise! };
-    stdin.write(`video replay_${Preview.replayID} stop\n`);
-    // immediately restart replays
-    this.startReplays();
+    stdin.write(`video replay save\n`);
     return promise;
   }
 
