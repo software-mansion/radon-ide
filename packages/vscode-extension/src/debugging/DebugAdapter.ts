@@ -163,7 +163,7 @@ export class DebugAdapter extends DebugSession {
             // expoPreludeLineCount which reflects the number of lines in __env__ module to offset the line numbers in the source map.
             const bundleContainsExpoPrelude = sourceMap.sources.includes("__env__");
             let lineOffset = 0;
-            if (isMainBundle && !bundleContainsExpoPrelude) {
+            if (isMainBundle && !bundleContainsExpoPrelude && this.expoPreludeLineCount > 0) {
               Logger.debug(
                 "Expo prelude lines were detected and an offset was set to:",
                 this.expoPreludeLineCount
