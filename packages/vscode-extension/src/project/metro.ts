@@ -52,6 +52,10 @@ type MetroEvent =
       port: number;
     }
   | {
+      type: "RNIDE_watch_folders";
+      watchFolders: string[];
+    }
+  | {
       type: "client_log";
       level: "error";
       data: [
@@ -65,6 +69,7 @@ type MetroEvent =
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
+  private _watchFolders: string[] | undefined = undefined;
   private startPromise: Promise<void> | undefined;
   private usesNewDebugger?: Boolean;
   private _expoPreludeLineCount = 0;
@@ -80,6 +85,13 @@ export class Metro implements Disposable {
 
   public get port() {
     return this._port;
+  }
+
+  public get watchFolders() {
+    if (this._watchFolders === undefined) {
+      throw new Error("Attempting to read watchFolders before metro has started");
+    }
+    return this._watchFolders;
   }
 
   public get expoPreludeLineCount() {
@@ -233,6 +245,10 @@ export class Metro implements Disposable {
               this._port = event.port;
               Logger.info(`Metro started on port ${this._port}`);
               resolve();
+              break;
+            case "RNIDE_watch_folders":
+              this._watchFolders = event.watchFolders;
+              Logger.info("Captured metro watch folders", this._watchFolders);
               break;
             case "bundle_build_failed":
               this.delegate.onBundleError();
