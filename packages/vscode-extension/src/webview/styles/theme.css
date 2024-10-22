@@ -167,11 +167,9 @@ body[data-vscode-theme-kind="vscode-light"] {
 
   /* Slider */
   --swm-slider: var(--navy-light-60);
-  --swm-slider-disabled: var(--swm-disabled-text);
 
   /* Radio group */
   --swm-radio-group-item: var(--navy-light-60);
-  --swm-radio-group-item-disabled: var(--swm-disabled-text);
 
   /* Startup message */
   --swm-startup-message: var(--off-white);
@@ -233,11 +231,9 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-select-item-highlighted-background: var(--off-white);
 
   /* Switch */
-  --swm-switch-root: var(--navy-dark-20);
+  --swm-switch-root-background: var(--white);
   --swm-switch-root-shadow: 0 0 0 1px var(--navy-light-10);
-  --swm-switch-root-disabled: var(--navy-light-20);
-  --swm-switch-thumb-background: var(--white);
-  --swm-switch-thumb-background-disabled: var(--navy-light-40);
+  --swm-switch-root-disabled: var(--navy-dark-20);
 
   /* Manage devices */
   --swm-device-title: var(--swm-default-text);
@@ -322,11 +318,9 @@ body[data-vscode-theme-kind="vscode-dark"] {
 
   /* Slider */
   --swm-slider: var(--white);
-  --swm-slider-disabled: var(--swm-disabled-text);
 
   /* Radio group */
   --swm-radio-group-item: var(--off-white);
-  --swm-radio-group-item-disabled: var(--swm-disabled-text);
 
   /* Startup message */
   --swm-startup-message: var(--off-white);
@@ -388,11 +382,9 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-select-item-highlighted-background: var(--background-dark-60);
 
   /* Switch */
-  --swm-switch-root: var(--background-dark-60);
-  --swm-switch-root-disabled: var(--background-dark-50);
+  --swm-switch-root-background: var(--background-dark-100);
   --swm-switch-root-shadow: 0 1px 10px var(--background-dark-100);
-  --swm-switch-thumb-background: var(--white);
-  --swm-switch-thumb-background-disabled: var(--background-dark-100);
+  --swm-switch-root-disabled: var(--background-dark-60);
 
   /* Manage devices */
   --swm-device-title: var(--swm-default-text);

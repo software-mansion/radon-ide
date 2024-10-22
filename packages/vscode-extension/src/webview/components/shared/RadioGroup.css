@@ -18,9 +18,6 @@ button {
 .radio-group-item:hover {
   background-color: var(--swm-radio-group-item);
 }
-.radio-group-item[data-disabled] {
-  background-color: var(--swm-radio-group-item-disabled);
-}
 
 .radio-group-indicator {
   display: flex;
@@ -41,12 +38,6 @@ button {
 
 .radio-group-label {
   color: var(--swm-default-text);
-  font-size: 12px;
-  line-height: 1;
-  padding-left: 10px;
-}
-.radio-group-label-disabled {
-  color: var(--swm-disabled-text);
   font-size: 12px;
   line-height: 1;
   padding-left: 10px;
