@@ -207,6 +207,20 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
+  public async sendPaste(text: string) {
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    const subprocess = exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "pbcopy",
+      this.deviceUDID,
+    ]);
+    subprocess.stdin?.write(text);
+    subprocess.stdin?.end();
+    await subprocess;
+  }
+
   private async changeLocale(newLocale: Locale): Promise<boolean> {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     const languageCode = newLocale.match(/([^_-]*)/)![1];
