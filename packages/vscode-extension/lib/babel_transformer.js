@@ -65,7 +65,7 @@ function transformWrapper({ filename, src, ...rest }) {
     const { version } = requireFromAppDir("expo-router/package.json");
     if (version.startsWith("2.")) {
       src = `${src};require("__RNIDE_lib__/expo_router_v2_plugin.js");`;
-    } else if (version.startsWith("3.")) {
+    } else if (version.startsWith("3.") || version.startsWith("4.")) {
       src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
     }
   } else if (
