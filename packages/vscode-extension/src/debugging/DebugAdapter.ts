@@ -107,9 +107,6 @@ export class DebugAdapter extends DebugSession {
       this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(ignoreError);
       this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(ignoreError);
       this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {}).catch(ignoreError);
-      this.sendCDPMessage("Runtime.evaluate", {
-        expression: "__RNIDE_onDebuggerConnected()",
-      });
     });
 
     this.connection.on("close", () => {
@@ -140,6 +137,9 @@ export class DebugAdapter extends DebugSession {
           const threadName = context.name;
           this.sendEvent(new ThreadEvent("started", threadId));
           this.threads.push(new Thread(threadId, threadName));
+          this.sendCDPMessage("Runtime.evaluate", {
+            expression: "__RNIDE_onDebuggerReady()",
+          });
           break;
         case "Debugger.scriptParsed":
           const sourceMapURL = message.params.sourceMapURL;
