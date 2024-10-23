@@ -50,8 +50,8 @@ export function InspectDataMenu({
         }}>
         <DropdownMenu.Trigger />
         <DropdownMenu.Portal>
-          <DropdownMenu.Content className="dropdown-menu-content">
-            <DropdownMenu.Label className="dropdown-menu-label">
+          <DropdownMenu.Content className="inspect-data-menu-content">
+            <DropdownMenu.Label className="inspect-data-menu-label">
               {displayDimensionsText}
             </DropdownMenu.Label>
             {filteredData.map((item, index) => {
@@ -59,7 +59,7 @@ export function InspectDataMenu({
               const fileName = item.source.fileName.split("/").pop();
               return (
                 <DropdownMenu.Item
-                  className="dropdown-menu-item"
+                  className="inspect-data-menu-item"
                   key={index}
                   onSelect={() => onSelected(item)}
                   onMouseEnter={() => onHover(item)}>
