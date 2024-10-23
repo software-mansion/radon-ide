@@ -203,9 +203,13 @@ export class DebugAdapter extends DebugSession {
     // some logs may baypass that, especially when printed in initialization phase, so we
     // need to detect whether the wrapper has added the stack info or not
     // We check if there are more than 3 arguments, and if the last one is a number
+    // We also check if the log is not internal to avoid exposing it as part of
+    // application logs.
     const argsLen = message.params.args.length;
     let output: OutputEvent;
-    if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
+    if (message.params.args[0].value === "__RNIDE_INTERNAL") {
+      return;
+    } else if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP
       // the line and column numbers are 1-based
       const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args

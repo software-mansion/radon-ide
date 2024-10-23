@@ -21,9 +21,9 @@ global.__RNIDE_onDebuggerReady = function () {
 };
 
 // We add log this trace to diagnose issues with loading runtime in the IDE
-// It is necessary that this call is before we override console methods, otherwise
-// this message would be visible in the debug console panel for the IDE users.
-console.log("__RNIDE_INTERNAL: react-native-ide runtime loaded");
+// The first argument is "__RNIDE_INTERNAL" so we can filter it out in 
+// debug adapter and avoid exposing as part of application logs
+console.log("__RNIDE_INTERNAL", "react-native-ide runtime loaded");
 
 function wrapConsole(consoleFunc) {
   return function (...args) {
