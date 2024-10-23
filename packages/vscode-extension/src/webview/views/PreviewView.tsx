@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, MouseEvent } from "react";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
@@ -18,11 +17,11 @@ import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
 import {
+  Frame,
+  InspectDataStackItem,
+  InspectStackData,
   RecordingData,
   ZoomLevelType,
-  InspectDataStackItem,
-  Frame,
-  InspectStackData,
 } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";

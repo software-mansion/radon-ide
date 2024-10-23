@@ -15,7 +15,7 @@ import {
 
 const dependencyManager = makeProxy<DependencyManagerInterface>("DependencyManager");
 
-const dependencies = [
+const dependenciesDomain = [
   "nodejs",
   "androidEmulator",
   "xcode",
@@ -30,7 +30,7 @@ const dependencies = [
   "storybook",
 ] as const;
 
-type Dependency = typeof dependencies[number];
+type Dependency = typeof dependenciesDomain[number];
 
 type ErrorType = "ios" | "simulator" | "emulator" | "android" | "common";
 type Errors = Partial<Record<ErrorType, { message: string }>>;
