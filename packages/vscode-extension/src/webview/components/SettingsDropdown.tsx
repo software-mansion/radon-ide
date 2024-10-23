@@ -54,11 +54,13 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             onSelect={() => {
               project.openDevMenu();
             }}>
-            <span className="codicon codicon-code" />
-            <div className="dropdown-menu-item-content">
-              Open dev menu
-              <KeybindingInfo commandName="RNIDE.openDevMenu" />
-            </div>
+            <span className="dropdown-menu-item-wraper">
+              <span className="codicon codicon-code" />
+              <div className="dropdown-menu-item-content">
+                Open dev menu
+                <KeybindingInfo commandName="RNIDE.openDevMenu" />
+              </div>
+            </span>
           </DropdownMenu.Item>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">

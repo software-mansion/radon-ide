@@ -1,14 +1,20 @@
+import { Disposable, workspace } from "vscode";
 import path from "path";
-import { Disposable } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
-import { TouchPoint } from "../common/Project";
+import { RecordingData, TouchPoint } from "../common/Project";
+
+interface ReplayPromiseHandlers {
+  resolve: (value: RecordingData) => void;
+  reject: (reason?: any) => void;
+}
 
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
   public streamURL?: string;
+  private lastReplayPromise?: ReplayPromiseHandlers;
 
   constructor(private args: string[]) {}
 
@@ -38,25 +44,89 @@ export class Preview implements Disposable {
         reject(new Error("Preview server exited without URL"));
       });
 
-      const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
-
       lineReader(subprocess).onLineRead((line, stderr) => {
         if (stderr) {
           Logger.info("sim-server:", line);
           return;
         }
 
-        const match = line.match(streamURLRegex);
+        if (line.includes("stream_ready")) {
+          const streamURLRegex = /(http:\/\/[^ ]*stream\.mjpeg)/;
+          const match = line.match(streamURLRegex);
 
-        if (match) {
-          Logger.info(`Stream ready ${match[1]}`);
+          if (match) {
+            Logger.info(`Stream ready ${match[1]}`);
 
-          this.streamURL = match[1];
-          resolve(this.streamURL);
+            this.streamURL = match[1];
+            resolve(this.streamURL);
+          }
+        } else if (line.includes("video_ready replay") || line.includes("video_error replay")) {
+          // video response format for replays looks as follows:
+          // video_ready replay <HTTP_URL> <FILE_URL>
+          // video_error replay <Error message>
+          const videoReadyMatch = line.match(/video_ready replay (\S+) (\S+)/);
+          const videoErrorMatch = line.match(/video_error replay (.*)/);
+
+          const handlers = this.lastReplayPromise;
+          this.lastReplayPromise = undefined;
+
+          if (handlers && videoReadyMatch) {
+            // match array looks as follows:
+            // [0] - full match
+            // [1] - URL or error message
+            // [2] - File URL
+            const tempFileLocation = videoReadyMatch[2];
+            const ext = path.extname(tempFileLocation);
+            const fileName = workspace.name
+              ? `${workspace.name}-RadonIDE-replay${ext}`
+              : `RadonIDE-replay${ext}`;
+            handlers.resolve({
+              url: videoReadyMatch[1],
+              tempFileLocation,
+              fileName,
+            });
+          } else if (handlers && videoErrorMatch) {
+            handlers.reject(new Error(videoErrorMatch[1]));
+          }
         }
         Logger.info("sim-server:", line);
       });
     });
+  }
+
+  public startReplays() {
+    const stdin = this.subprocess?.stdin;
+    if (!stdin) {
+      throw new Error("sim-server process not available");
+    }
+    stdin.write(`video replay start -m -b 50\n`); // 50MB buffer for in-memory video
+  }
+
+  public stopReplays() {
+    const stdin = this.subprocess?.stdin;
+    if (!stdin) {
+      throw new Error("sim-server process not available");
+    }
+    stdin.write(`video replay stop\n`);
+  }
+
+  public captureReplay() {
+    const stdin = this.subprocess?.stdin;
+    if (!stdin) {
+      throw new Error("sim-server process not available");
+    }
+    let resolvePromise: (value: RecordingData) => void;
+    let rejectPromise: (reason?: any) => void;
+    const promise = new Promise<RecordingData>((resolve, reject) => {
+      resolvePromise = resolve;
+      rejectPromise = reject;
+    });
+    if (this.lastReplayPromise) {
+      promise.then(this.lastReplayPromise.resolve, this.lastReplayPromise.reject);
+    }
+    this.lastReplayPromise = { resolve: resolvePromise!, reject: rejectPromise! };
+    stdin.write(`video replay save\n`);
+    return promise;
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {

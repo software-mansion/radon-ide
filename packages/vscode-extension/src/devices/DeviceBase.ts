@@ -43,6 +43,24 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.dispose();
   }
 
+  public stopReplays() {
+    return this.preview?.stopReplays();
+  }
+
+  public startReplays() {
+    if (!this.preview) {
+      throw new Error("Preview not started");
+    }
+    return this.preview.startReplays();
+  }
+
+  public async captureReplay() {
+    if (!this.preview) {
+      throw new Error("Preview not started");
+    }
+    return this.preview.captureReplay();
+  }
+
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
     this.preview?.sendTouches(touches, type);
   }

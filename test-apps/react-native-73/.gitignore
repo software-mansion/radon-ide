@@ -64,3 +64,6 @@ yarn-error.log
 
 # testing
 /coverage
+
+# shared is copied via copy-shared
+shared/

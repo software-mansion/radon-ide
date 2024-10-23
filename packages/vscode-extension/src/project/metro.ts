@@ -8,6 +8,7 @@ import { extensionContext, getAppRootFolder } from "../utilities/extensionContex
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import WebSocket from "ws";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -45,9 +46,14 @@ type MetroEvent =
       transformedFileCount: number;
       totalFileCount: number;
     }
+  | { type: "RNIDE_expo_env_prelude_lines"; lineCount: number }
   | {
       type: "RNIDE_initialize_done";
       port: number;
+    }
+  | {
+      type: "RNIDE_watch_folders";
+      watchFolders: string[];
     }
   | {
       type: "client_log";
@@ -63,8 +69,10 @@ type MetroEvent =
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
+  private _watchFolders: string[] | undefined = undefined;
   private startPromise: Promise<void> | undefined;
   private usesNewDebugger?: Boolean;
+  private _expoPreludeLineCount = 0;
 
   constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
 
@@ -77,6 +85,17 @@ export class Metro implements Disposable {
 
   public get port() {
     return this._port;
+  }
+
+  public get watchFolders() {
+    if (this._watchFolders === undefined) {
+      throw new Error("Attempting to read watchFolders before metro has started");
+    }
+    return this._watchFolders;
+  }
+
+  public get expoPreludeLineCount() {
+    return this._expoPreludeLineCount;
   }
 
   public dispose() {
@@ -99,6 +118,18 @@ export class Metro implements Disposable {
       throw new Error("metro already started");
     }
     this.startPromise = this.startInternal(resetCache, progressListener, dependencies);
+    this.startPromise.then(() => {
+      // start promise is used to indicate that metro has started, however, sometimes
+      // the metro process may exit, in which case we need to update the promise to
+      // indicate an error.
+      this.subprocess
+        ?.catch(() => {
+          // ignore the error, we are only interested in the process exit
+        })
+        ?.then(() => {
+          this.startPromise = Promise.reject(new Error("Metro process exited"));
+        });
+    });
     return this.startPromise;
   }
 
@@ -206,10 +237,18 @@ export class Metro implements Disposable {
           }
 
           switch (event.type) {
+            case "RNIDE_expo_env_prelude_lines":
+              this._expoPreludeLineCount = event.lineCount;
+              Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineCount);
+              break;
             case "RNIDE_initialize_done":
               this._port = event.port;
               Logger.info(`Metro started on port ${this._port}`);
               resolve();
+              break;
+            case "RNIDE_watch_folders":
+              this._watchFolders = event.watchFolders;
+              Logger.info("Captured metro watch folders", this._watchFolders);
               break;
             case "bundle_build_failed":
               this.delegate.onBundleError();
@@ -232,6 +271,22 @@ export class Metro implements Disposable {
     const appReady = this.devtools.appReady();
     await fetch(`http://localhost:${this._port}/reload`);
     await appReady;
+  }
+
+  public async openDevMenu() {
+    // to send request to open dev menu, we route it through metro process
+    // that maintains a websocket connection with the device. Specifically,
+    // /message endpoint is used to send messages to the device, and metro proxies
+    // messages between different clients connected to that endpoint.
+    // Therefore, to send the message to the device we:
+    // 1. connect to the /message endpoint over websocket
+    // 2. send specifically formatted message to open dev menu
+    const ws = new WebSocket(`ws://localhost:${this._port}/message`);
+    await new Promise((resolve) => ws.addEventListener("open", resolve));
+    ws.send(
+      JSON.stringify({ version: 2 /* protocol version, needs to be set to 2 */, method: "devMenu" })
+    );
+    ws.close();
   }
 
   public async getDebuggerURL() {

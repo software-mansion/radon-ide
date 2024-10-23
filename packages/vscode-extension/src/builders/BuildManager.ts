@@ -1,22 +1,15 @@
-import fs from "fs";
 import { Disposable, OutputChannel, window } from "vscode";
-import { Logger } from "../Logger";
-import { generateWorkspaceFingerprint } from "../utilities/fingerprint";
+import { PlatformBuildCache } from "./PlatformBuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
-import { calculateMD5 } from "../utilities/common";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import { getAppRootFolder } from "../utilities/extensionContext";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelToken } from "./cancelToken";
+import { getTelemetryReporter } from "../utilities/telemetry";
+import { Logger } from "../Logger";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
-
-type BuildCacheInfo = {
-  fingerprint: string;
-  buildHash: string;
-  buildResult: AndroidBuildResult | IOSBuildResult;
-};
 
 export interface DisposableBuild<R> extends Disposable {
   readonly build: Promise<R>;
@@ -37,48 +30,97 @@ export class BuildManager {
     this.buildOutputChannel?.show();
   }
 
+  /**
+   * Returns true if some native build dependencies have change and we should perform
+   * a native build despite the fact the fingerprint indicates we don't need to.
+   * This is currently only used for the scenario when we detect that pods need
+   * to be reinstalled for iOS.
+   */
+  private async checkBuildDependenciesChanged(deviceInfo: DeviceInfo) {
+    if (deviceInfo.platform === DevicePlatform.IOS) {
+      return !(await this.dependencyManager.checkPodsInstallationStatus());
+    }
+    return false;
+  }
+
   public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {
     const { clean: forceCleanBuild, progressListener, onSuccess } = options;
     const { platform } = deviceInfo;
+
+    getTelemetryReporter().sendTelemetryEvent("build:requested", {
+      platform,
+      type: forceCleanBuild ? "clean" : "incremental",
+    });
+
     const cancelToken = new CancelToken();
+    const buildCache = PlatformBuildCache.forPlatform(platform);
 
     const buildApp = async () => {
-      let newFingerprint = await generateWorkspaceFingerprint();
-      if (forceCleanBuild) {
+      const currentFingerprint = await buildCache.calculateFingerprint();
+
+      // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
+      const buildDependenciesChanged = await this.checkBuildDependenciesChanged(deviceInfo);
+
+      if (forceCleanBuild || buildDependenciesChanged) {
         // we reset the cache when force clean build is requested as the newly
         // started build may end up being cancelled
-        await storeCachedBuild(platform, undefined);
+        Logger.log(
+          "Build cache is being invalidated",
+          forceCleanBuild ? "on request" : "due to build dependencies change"
+        );
+        await buildCache.clearCache();
       } else {
-        const cachedBuild = await loadCachedBuild(platform, newFingerprint);
+        const cachedBuild = await buildCache.getBuild(currentFingerprint);
         if (cachedBuild) {
+          Logger.log("Skipping native build – using cached");
+          getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
           return cachedBuild;
+        } else {
+          Logger.log("Build cache is stale");
         }
       }
 
+      Logger.log("Starting native build – no build cached, cache has been invalidated or is stale");
+      getTelemetryReporter().sendTelemetryEvent("build:start", { platform });
+
       let buildResult: BuildResult;
+      let buildFingerprint = currentFingerprint;
       if (platform === DevicePlatform.Android) {
         this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
           log: true,
         });
+        this.buildOutputChannel.clear();
         buildResult = await buildAndroid(
           getAppRootFolder(),
           forceCleanBuild,
           cancelToken,
           this.buildOutputChannel,
-          progressListener
+          progressListener,
+          this.dependencyManager
         );
       } else {
-        this.buildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
+        const iOSBuildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
           log: true,
         });
+        this.buildOutputChannel = iOSBuildOutputChannel;
+        this.buildOutputChannel.clear();
         const installPodsIfNeeded = async () => {
-          const podsInstalled = await this.dependencyManager.isInstalled("pods");
-          if (!podsInstalled) {
-            Logger.info("Pods installation is missing or outdated. Installing Pods.");
-            // installing pods may impact the fingerprint as new pods may be created under the project directory
-            // for this reason we need to recalculate the fingerprint after installing pods
-            await this.dependencyManager.installPods(cancelToken);
-            newFingerprint = await generateWorkspaceFingerprint();
+          let installPods = forceCleanBuild;
+          if (installPods) {
+            Logger.info("Clean build requested: installing pods");
+          } else {
+            const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
+            if (!podsInstalled) {
+              Logger.info("Pods installation is missing or outdated. Installing Pods.");
+              installPods = true;
+            }
+          }
+          if (installPods) {
+            getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
+            await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
+            // Installing pods may impact the fingerprint as new pods may be created under the project directory.
+            // For this reason we need to recalculate the fingerprint after installing pods.
+            buildFingerprint = await buildCache.calculateFingerprint();
           }
         };
         buildResult = await buildIos(
@@ -88,14 +130,12 @@ export class BuildManager {
           cancelToken,
           this.buildOutputChannel,
           progressListener,
+          this.dependencyManager,
           installPodsIfNeeded
         );
       }
-      await storeCachedBuild(platform, {
-        fingerprint: newFingerprint,
-        buildHash: await getAppHash(getAppPath(buildResult)),
-        buildResult,
-      });
+
+      await buildCache.storeBuild(buildFingerprint, buildResult);
 
       return buildResult;
     };
@@ -110,64 +150,4 @@ export class BuildManager {
 
     return disposableBuild;
   }
-}
-
-async function loadCachedBuild(platform: DevicePlatform, newFingerprint: string) {
-  const cacheInfo = getCachedBuild(platform);
-  const fingerprintsMatch = cacheInfo?.fingerprint === newFingerprint;
-  if (!fingerprintsMatch) {
-    Logger.info("Fingerprint mismatch, cannot use cached build.");
-    return undefined;
-  }
-
-  const build = cacheInfo.buildResult;
-  const appPath = getAppPath(build);
-  try {
-    const builtAppExists = fs.existsSync(appPath);
-    if (!builtAppExists) {
-      Logger.info("Couldn't use cached build. App artifact not found.");
-      return undefined;
-    }
-
-    const hash = await getAppHash(appPath);
-    const hashesMatch = hash === cacheInfo.buildHash;
-    if (hashesMatch) {
-      Logger.info("Using cached build.");
-      return build;
-    }
-  } catch (e) {
-    // we only log the error and ignore it to allow new build to start
-    Logger.error("Error while attempting to load cached build", e);
-    return undefined;
-  }
-}
-
-export async function didFingerprintChange(platform: DevicePlatform) {
-  const newFingerprint = await generateWorkspaceFingerprint();
-  const { fingerprint } = getCachedBuild(platform) ?? {};
-
-  return newFingerprint !== fingerprint;
-}
-
-async function getAppHash(appPath: string) {
-  return (await calculateMD5(appPath)).digest("hex");
-}
-
-function getAppPath(build: BuildResult) {
-  return build.platform === DevicePlatform.Android ? build.apkPath : build.appPath;
-}
-
-const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
-const IOS_BUILD_CACHE_KEY = "ios_build_cache";
-
-async function storeCachedBuild(platform: DevicePlatform, build: BuildCacheInfo | undefined) {
-  const cacheKey =
-    platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-  await extensionContext.workspaceState.update(cacheKey, build);
-}
-
-function getCachedBuild(platform: DevicePlatform) {
-  const cacheKey =
-    platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-  return extensionContext.workspaceState.get<BuildCacheInfo>(cacheKey);
 }

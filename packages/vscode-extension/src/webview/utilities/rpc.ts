@@ -22,7 +22,10 @@ function callResultListener(event: MessageEvent) {
         window.removeEventListener("message", callResultListener);
       }
       if (event.data.error) {
-        promise.reject(event.data.error);
+        const errorData = event.data.error;
+        const error = new Error(errorData.message);
+        error.name = errorData.name;
+        promise.reject(error);
       } else {
         promise.resolve(event.data.result);
       }
@@ -65,7 +68,15 @@ export function makeProxy<T extends object>(objectName: string) {
       return (...args: any[]) => {
         const currentCallId = `${instanceToken}:${globalCallCounter++}`;
         let argsWithCallbacks = args.map((arg) => {
-          if (typeof arg === "function") {
+          if (arg instanceof Error) {
+            return {
+              __error: {
+                name: arg.name,
+                message: arg.message,
+                stack: arg.stack,
+              },
+            };
+          } else if (typeof arg === "function") {
             maybeInitializeCallbackMessageListener();
             const callbackId =
               callbackToID.get(arg) || `${instanceToken}:${globalCallbackCounter++}`;

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, ReactNode } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { Resizable } from "re-resizable";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
 import { useProject } from "../providers/ProjectProvider";
@@ -13,14 +14,20 @@ import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import { InspectData, InspectDataStackItem, ZoomLevelType } from "../../common/Project";
-import { InspectDataMenu } from "./InspectDataMenu";
-import { Resizable } from "re-resizable";
+import {
+  Frame,
+  InspectDataStackItem,
+  RecordingData,
+  ZoomLevelType,
+  InspectStackData,
+} from "../../common/Project";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { Platform, useUtils } from "../providers/UtilsProvider";
+import { Platform } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import DimensionsBox from "./DimensionsBox";
+import ReplayUI from "./ReplayUI";
 
 declare module "react" {
   interface CSSProperties {
@@ -92,9 +99,9 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
           } catch {
             // Stream connection was dropped
             if (!cancelled) {
-              const src = img.src;
+              const tempSrc = img.src;
               img.src = NO_IMAGE_DATA;
-              img.src = src;
+              img.src = tempSrc;
             }
           }
         }
@@ -170,18 +177,18 @@ function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   );
 }
 
-type InspectStackData = {
-  requestLocation: { x: number; y: number };
-  stack: InspectDataStackItem[];
-};
-
 type Props = {
   isInspecting: boolean;
-  setIsInspecting: (isInspecting: boolean) => void;
+  inspectFrame: Frame | null;
+  setInspectFrame: (inspectFrame: Frame | null) => void;
+  setInspectStackData: (inspectStackData: InspectStackData | null) => void;
+  onInspectorItemSelected: (item: InspectDataStackItem) => void;
   isPressing: boolean;
   setIsPressing: (isPressing: boolean) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
+  replayData: RecordingData | undefined;
+  onReplayClose: () => void;
 };
 
 interface Point {
@@ -201,11 +208,16 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
 
 function Preview({
   isInspecting,
-  setIsInspecting,
+  inspectFrame,
+  setInspectFrame,
+  setInspectStackData,
+  onInspectorItemSelected,
   isPressing,
   setIsPressing,
   zoomLevel,
   onZoomChanged,
+  replayData,
+  onReplayClose,
 }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
@@ -216,8 +228,7 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
   const workspace = useWorkspaceConfig();
-  const { projectState, project, deviceSettings } = useProject();
-  const { openFileAt } = useUtils();
+  const { projectState, project } = useProject();
 
   const isFrameDisabled = workspace.showDeviceFrame === false;
 
@@ -243,9 +254,6 @@ function Preview({
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
 
   const openRebuildAlert = useNativeRebuildAlert();
-
-  const [inspectFrame, setInspectFrame] = useState<InspectData["frame"] | null>(null);
-  const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
   function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
     const imgRect = previewRef.current!.getBoundingClientRect();
@@ -286,11 +294,6 @@ function Preview({
     );
   }
 
-  function onInspectorItemSelected(item: InspectDataStackItem) {
-    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
-    setIsInspecting(false);
-  }
-
   function sendInspectUnthrottled(
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
@@ -298,11 +301,7 @@ function Preview({
     if (type === "Leave") {
       return;
     }
-    const imgRect = previewRef.current!.getBoundingClientRect();
-    const x = (event.clientX - imgRect.left) / imgRect.width;
-    const y = (event.clientY - imgRect.top) / imgRect.height;
-    const clampedX = clamp(x, 0, 1);
-    const clampedY = clamp(y, 0, 1);
+    const { x: clampedX, y: clampedY } = getTouchPosition(event);
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
     project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
@@ -407,11 +406,16 @@ function Preview({
     }
   }
 
-  function onContextMenu(e: MouseEvent<HTMLDivElement>) {
-    e.preventDefault();
-  }
-
   useEffect(() => {
+    // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
+    // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
+    // in the future https://github.com/microsoft/vscode/issues/225411
+    function onContextMenu(e: any) {
+      e.stopImmediatePropagation();
+    }
+
+    window.addEventListener("contextmenu", onContextMenu, true);
+
     function onBlurChange() {
       if (!document.hasFocus()) {
         setIsPanning(false);
@@ -419,8 +423,11 @@ function Preview({
         setIsPressing(false);
       }
     }
-    addEventListener("blur", onBlurChange, true);
-    return () => removeEventListener("blur", onBlurChange, true);
+    document.addEventListener("blur", onBlurChange, true);
+    return () => {
+      window.removeEventListener("contextmenu", onContextMenu);
+      document.removeEventListener("blur", onBlurChange, true);
+    };
   }, []);
 
   useEffect(() => {
@@ -481,7 +488,7 @@ function Preview({
   }, [project, openRebuildAlert, projectStatus]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.name === projectState?.selectedDevice?.name;
+    return sd.modelName === projectState?.selectedDevice?.name;
   });
 
   const shouldPreventTouchInteraction =
@@ -499,7 +506,6 @@ function Preview({
         onMouseUp,
         onMouseEnter,
         onMouseLeave,
-        onContextMenu,
       };
 
   const resizableProps = useResizableProps({
@@ -532,6 +538,7 @@ function Preview({
                   }}
                   className="phone-screen"
                 />
+                {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
                 {isMultiTouching && (
                   <div
@@ -564,7 +571,7 @@ function Preview({
                   </div>
                 )}
 
-                {inspectFrame && (
+                {!replayData && inspectFrame && (
                   <div className="phone-screen phone-inspect-overlay">
                     <div
                       className="inspect-area"
@@ -575,6 +582,13 @@ function Preview({
                         height: `${inspectFrame.height * 100}%`,
                       }}
                     />
+                    {isInspecting && (
+                      <DimensionsBox
+                        device={device}
+                        frame={inspectFrame}
+                        wrapperDivRef={wrapperDivRef}
+                      />
+                    )}
                   </div>
                 )}
                 {projectStatus === "refreshing" && (
@@ -619,19 +633,6 @@ function Preview({
                 )}
               </div>
               <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
-              {inspectStackData && (
-                <InspectDataMenu
-                  inspectLocation={inspectStackData.requestLocation}
-                  inspectStack={inspectStackData.stack}
-                  onSelected={onInspectorItemSelected}
-                  onHover={(item) => {
-                    if (item.frame) {
-                      setInspectFrame(item.frame);
-                    }
-                  }}
-                  onCancel={() => resetInspector()}
-                />
-              )}
             </div>
           </Resizable>
         )}

@@ -6196,6 +6196,11 @@ queue@6.0.2:
   dependencies:
     inherits "~2.0.3"
 
+radon-ide@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.npmjs.org/radon-ide/-/radon-ide-0.0.1.tgz"
+  integrity sha512-I1+y/jw58SAq6fN6pijpc43QBTzmeNuDmK/zWTXPS6RlXFW1ICAdPo+UbW2BcNn11jtfDqaLiLL9Tfxge0w6Gg==
+
 range-parser@~1.2.1:
   version "1.2.1"
   resolved "https://registry.npmjs.org/range-parser/-/range-parser-1.2.1.tgz"

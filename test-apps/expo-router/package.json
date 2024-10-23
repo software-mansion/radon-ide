@@ -5,7 +5,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "storybook-generate": "sb-rn-get-stories",
-    "storybook": "STORYBOOK_ENABLED='true' expo start"
+    "storybook": "STORYBOOK_ENABLED='true' expo start",
+    "copy-shared": "node ../shared/copy.js expo-router ./shared"
   },
   "dependencies": {
     "@types/react": "~18.2.79",

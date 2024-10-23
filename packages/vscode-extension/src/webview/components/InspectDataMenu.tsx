@@ -1,61 +1,76 @@
-import * as ContextMenu from "@radix-ui/react-context-menu";
-import { InspectDataStackItem } from "../../common/Project";
-import { useEffect, useRef } from "react";
-
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Frame, InspectDataStackItem } from "../../common/Project";
+import { DeviceProperties } from "../utilities/consts";
 import "./InspectDataMenu.css";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
-export function InspectDataMenu({
-  inspectLocation,
-  inspectStack,
-  onSelected,
-  onHover,
-  onCancel,
-}: {
+type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
   inspectStack: InspectDataStackItem[];
+  device?: DeviceProperties;
+  frame: Frame | null;
   onSelected: OnSelectedCallback;
   onHover: OnSelectedCallback;
   onCancel: () => void;
-}) {
-  const triggerRef = useRef<HTMLDivElement>(null);
+};
+
+export function InspectDataMenu({
+  inspectLocation,
+  inspectStack,
+  device,
+  frame,
+  onSelected,
+  onHover,
+  onCancel,
+}: InspectDataMenuProps) {
+  const displayDimensionsText = (() => {
+    if (device && frame) {
+      const topComponentWidth = parseFloat((frame.width * device.screenWidth).toFixed(2));
+      const topComponentHeight = parseFloat((frame.height * device.screenHeight).toFixed(2));
+
+      if (topComponentWidth && topComponentHeight) {
+        return `Dimensions: ${topComponentWidth} × ${topComponentHeight}`;
+      }
+    }
+    return "Dimensions: -";
+  })();
+
   const filteredData = inspectStack.filter((item) => !item.hide);
 
-  useEffect(() => {
-    const event = new MouseEvent("contextmenu", {
-      bubbles: true,
-      cancelable: true,
-      clientX: inspectLocation.x, // X position
-      clientY: inspectLocation.y, // Y position
-    });
-
-    triggerRef.current?.dispatchEvent(event);
-  }, []);
-
   return (
-    <ContextMenu.Root
-      onOpenChange={(open) => {
-        if (!open) onCancel();
-      }}>
-      <ContextMenu.Trigger ref={triggerRef} />
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="context-menu-content">
-          {filteredData.map((item) => {
-            // extract file name from path:
-            const fileName = item.source.fileName.split("/").pop();
-            return (
-              <ContextMenu.Item
-                className="context-menu-item"
-                onSelect={() => onSelected(item)}
-                onMouseEnter={() => onHover(item)}>
-                <code>{`<${item.componentName}>`}</code>
-                <div className="right-slot">{`${fileName}:${item.source.line0Based + 1}`}</div>
-              </ContextMenu.Item>
-            );
-          })}
-        </ContextMenu.Content>
-      </ContextMenu.Portal>
-    </ContextMenu.Root>
+    <div style={{ left: inspectLocation.x, top: inspectLocation.y, position: "absolute" }}>
+      <DropdownMenu.Root
+        defaultOpen={true}
+        open={true}
+        onOpenChange={(open) => {
+          if (!open) {
+            onCancel();
+          }
+        }}>
+        <DropdownMenu.Trigger />
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content className="inspect-data-menu-content">
+            <DropdownMenu.Label className="inspect-data-menu-label">
+              {displayDimensionsText}
+            </DropdownMenu.Label>
+            {filteredData.map((item, index) => {
+              // extract file name from path:
+              const fileName = item.source.fileName.split("/").pop();
+              return (
+                <DropdownMenu.Item
+                  className="inspect-data-menu-item"
+                  key={index}
+                  onSelect={() => onSelected(item)}
+                  onMouseEnter={() => onHover(item)}>
+                  <code>{`<${item.componentName}>`}</code>
+                  <div className="right-slot">{`${fileName}:${item.source.line0Based + 1}`}</div>
+                </DropdownMenu.Item>
+              );
+            })}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+    </div>
   );
 }

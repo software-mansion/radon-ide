@@ -12,6 +12,7 @@ export type DeviceSettings = {
   };
   hasEnrolledBiometrics: boolean;
   locale: Locale;
+  replaysEnabled: boolean;
 };
 
 export type ProjectState = {
@@ -64,8 +65,14 @@ export type ReloadAction =
   | "reboot" // reboots device, launch app
   | "reinstall" // force reinstall app
   | "restartProcess" // relaunch app
-  | "reloadJs" // refetch JS scripts from metro
-  | "hotReload";
+  | "reloadJs"; // refetch JS scripts from metro
+
+export type Frame = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export type InspectDataStackItem = {
   componentName: string;
@@ -75,27 +82,22 @@ export type InspectDataStackItem = {
     line0Based: number;
     column0Based: number;
   };
-  frame: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
+  frame: Frame;
+};
+
+export type InspectStackData = {
+  requestLocation: { x: number; y: number };
+  stack: InspectDataStackItem[];
+};
+
+export type InspectData = {
+  stack: InspectDataStackItem[] | undefined;
+  frame: Frame;
 };
 
 export type TouchPoint = {
   xRatio: number;
   yRatio: number;
-};
-
-export type InspectData = {
-  stack: InspectDataStackItem[] | undefined;
-  frame: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
 };
 
 export interface ProjectEventMap {
@@ -109,6 +111,12 @@ export interface ProjectEventMap {
 export interface ProjectEventListener<T> {
   (event: T): void;
 }
+
+export type RecordingData = {
+  url: string;
+  tempFileLocation: string;
+  fileName: string;
+};
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
@@ -131,6 +139,8 @@ export interface ProjectInterface {
   openDevMenu(): Promise<void>;
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
+
+  captureReplay(): Promise<RecordingData>;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;

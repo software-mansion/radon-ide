@@ -1,0 +1,26 @@
+.dimensions-box {
+  background-color: var(--dimensions-box-background);
+  position: absolute;
+  left: var(--left);
+  top: var(--top);
+  height: var(--box-height);
+  font-size: var(--font-size);
+  border-radius: var(--border-radius);
+  padding-left: var(--horizontal-padding);
+  padding-right: var(--horizontal-padding);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  transform: var(--box-transform);
+}
+
+.arrow {
+  background-color: var(--dimensions-box-background);
+  position: absolute;
+  left: var(--left);
+  top: var(--top);
+  width: var(--arrow-size);
+  height: var(--arrow-size);
+  transform-origin: 50% 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+}

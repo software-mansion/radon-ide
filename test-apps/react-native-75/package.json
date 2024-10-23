@@ -7,9 +7,11 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "copy-shared": "node ../shared/copy.js bare ./shared"
   },
   "dependencies": {
+    "radon-ide": "^0.0.1",
     "react": "18.3.1",
     "react-native": "0.75.2",
     "react-native-biometrics": "^3.0.1"

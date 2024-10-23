@@ -1,9 +1,8 @@
-import vscode, { Webview, Disposable, window, commands } from "vscode";
+import vscode, { Webview, Disposable, window, commands, Uri } from "vscode";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { Project } from "../project/project";
 import { Logger } from "../Logger";
-import { extensionContext } from "../utilities/extensionContext";
 import { WorkspaceConfigController } from "./WorkspaceConfigController";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Utils } from "../utilities/utils";
@@ -15,10 +14,10 @@ type CallArgs = {
   method: string;
   args: unknown[];
 };
-export type WebviewEvent =
-  | {
-      command: "call";
-    } & CallArgs;
+
+export type WebviewEvent = {
+  command: "call";
+} & CallArgs;
 
 export class WebviewController implements Disposable {
   private readonly dependencyManager: DependencyManager;
@@ -73,6 +72,10 @@ export class WebviewController implements Disposable {
     getTelemetryReporter().sendTelemetryEvent("panelOpened");
   }
 
+  public asWebviewUri(uri: Uri) {
+    return this.webview.asWebviewUri(uri);
+  }
+
   public dispose() {
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
 
@@ -88,15 +91,13 @@ export class WebviewController implements Disposable {
   private setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
       (message: WebviewEvent) => {
-        const isTouchEvent = message.command === "call" && message.method === "dispatchTouches";
-        if (!isTouchEvent) {
+        // ignore dispatchTouches and log calls from being logged as "Message from webview"
+        if (message.method !== "dispatchTouches" && message.method !== "log") {
           Logger.log("Message from webview", message);
         }
 
-        switch (message.command) {
-          case "call":
-            this.handleRemoteCall(message);
-            return;
+        if (message.command === "call") {
+          this.handleRemoteCall(message);
         }
       },
       undefined,
@@ -109,27 +110,32 @@ export class WebviewController implements Disposable {
     const callableObject = this.callableObjects.get(object);
     if (callableObject && method in callableObject) {
       const argsWithCallbacks = args.map((arg: any) => {
-        if (typeof arg === "object" && arg !== null && "__callbackId" in arg) {
-          const callbackId = arg.__callbackId;
-          let callback = this.idToCallback.get(callbackId)?.deref();
-          if (!callback) {
-            callback = (...options: any[]) => {
-              this.webview.postMessage({
-                command: "callback",
-                callbackId,
-                args: options,
-              });
-            };
-            this.idToCallback.set(callbackId, new WeakRef(callback));
-            if (this.idToCallback.size > 200) {
-              Logger.warn("Too many callbacks in memory! Something is wrong!");
+        if (typeof arg === "object" && arg !== null) {
+          if ("__callbackId" in arg) {
+            const callbackId = arg.__callbackId;
+            let callback = this.idToCallback.get(callbackId)?.deref();
+            if (!callback) {
+              callback = (...options: any[]) => {
+                this.webview.postMessage({
+                  command: "callback",
+                  callbackId,
+                  args: options,
+                });
+              };
+              this.idToCallback.set(callbackId, new WeakRef(callback));
+              if (this.idToCallback.size > 200) {
+                Logger.warn("Too many callbacks in memory! Something is wrong!");
+              }
+              this.idToCallbackFinalizationRegistry.register(callback, callbackId);
             }
-            this.idToCallbackFinalizationRegistry.register(callback, callbackId);
+            return callback;
+          } else if ("__error" in arg) {
+            const error = new Error(arg.__error.message);
+            Object.assign(error, arg.__error);
+            return error;
           }
-          return callback;
-        } else {
-          return arg;
         }
+        return arg;
       });
       // @ts-ignore
       const result = callableObject[method](...argsWithCallbacks);
@@ -146,7 +152,7 @@ export class WebviewController implements Disposable {
             this.webview.postMessage({
               command: "callResult",
               callId,
-              error,
+              error: { name: error.name, message: error.message },
             });
           });
       } else {

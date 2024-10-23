@@ -15,6 +15,7 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild } from "./eas";
+import { DependencyManager } from "../dependency/DependencyManager";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
@@ -76,18 +77,19 @@ export async function buildAndroid(
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void
+  progressListener: (newProgress: number) => void,
+  dependencyManager: DependencyManager
 ): Promise<AndroidBuildResult> {
-  const { buildScript, eas, env, android } = getLaunchConfiguration();
+  const { customBuild, eas, env, android } = getLaunchConfiguration();
 
-  if (buildScript?.android && eas?.android) {
+  if (customBuild?.android && eas?.android) {
     throw new Error(
-      "Both custom build script and EAS build are configured for Android. Please use only one build method."
+      "Both custom custom builds and EAS builds are configured for Android. Please use only one build method."
     );
   }
 
-  if (buildScript?.android) {
-    const apkPath = await runExternalBuild(cancelToken, buildScript.android, env);
+  if (customBuild?.android?.buildCommand) {
+    const apkPath = await runExternalBuild(cancelToken, customBuild.android.buildCommand, env);
     if (!apkPath) {
       throw new Error("Failed to build Android app using custom script.");
     }
@@ -117,6 +119,12 @@ export async function buildAndroid(
     return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
   }
 
+  if (!(await dependencyManager.checkAndroidDirectoryExits())) {
+    throw new Error(
+      '"android" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory'
+    );
+  }
+
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const productFlavor = android?.productFlavor || "";
   const buildType = android?.buildType || "debug";
@@ -135,7 +143,7 @@ export async function buildAndroid(
     ),
   ];
   // configureReactNativeOverrides init script is only necessary for RN versions older then 0.74.0 see comments in configureReactNativeOverrides.gradle for more details
-  if (semver.lt(await getReactNativeVersion(), "0.74.0")) {
+  if (semver.lt(getReactNativeVersion(), "0.74.0")) {
     gradleArgs.push(
       "--init-script", // configureReactNativeOverrides init script is used to patch React Android project, see comments in configureReactNativeOverrides.gradle for more details
       path.join(
@@ -155,7 +163,6 @@ export async function buildAndroid(
     })
   );
   const buildAndroidProgressProcessor = new BuildAndroidProgressProcessor(progressListener);
-  outputChannel.clear();
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
     buildAndroidProgressProcessor.processLine(line);

@@ -108,7 +108,7 @@ export class DeviceManager implements DeviceManagerInterface {
 
     let shouldLoadSimulators = Platform.OS === "macos";
 
-    if (!(await checkXcodeExists())) {
+    if (shouldLoadSimulators && !(await checkXcodeExists())) {
       shouldLoadSimulators = false;
       Logger.debug("Couldn't list iOS simulators as XCode installation wasn't found");
     }
@@ -146,8 +146,12 @@ export class DeviceManager implements DeviceManagerInterface {
     }
   }
 
-  public async createAndroidDevice(displayName: string, systemImage: AndroidSystemImageInfo) {
-    const emulator = await createEmulator(displayName, systemImage);
+  public async createAndroidDevice(
+    displayName: string,
+    deviceName: string,
+    systemImage: AndroidSystemImageInfo
+  ) {
+    const emulator = await createEmulator(displayName, deviceName, systemImage);
     await this.loadDevices(true);
     return emulator;
   }

@@ -15,10 +15,9 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.19",
+  "version": "0.0.21",
   "engines": {
-    "vscode": "^1.75.0",
-    "os": "darwin"
+    "vscode": "^1.75.0"
   },
   "extensionKind": [
     "workspace"
@@ -208,17 +207,37 @@
                 "type": "string",
                 "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
               },
-              "buildScript": {
+              "customBuild": {
                 "type": "object",
-                "description": "Scripts used to build Android or iOS app or fetch them from known location. Executed as a part of building process. Should print a JSON result from `eas build` command or a filesystem path to the built app as the last line of the standard output.\nIf using EAS, it should be invoked with --json --non-interactive flags and use a profile for development, iOS additionally needs `\"ios.simulator\": true` config option in eas.json",
+                "description": "Configuration for using custom scripts for building and fingerprinting the app.",
                 "properties": {
                   "ios": {
-                    "type": "string",
-                    "description": "Script used to build iOS app."
+                    "type": "object",
+                    "description": "Configuration for iOS.",
+                    "properties": {
+                      "buildCommand": {
+                        "type": "string",
+                        "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
+                      },
+                      "fingerprintCommand": {
+                        "type": "string",
+                        "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
+                      }
+                    }
                   },
                   "android": {
-                    "type": "string",
-                    "description": "Script used to build Android app."
+                    "type": "object",
+                    "description": "Configuration for Android.",
+                    "properties": {
+                      "buildCommand": {
+                        "type": "string",
+                        "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
+                      },
+                      "fingerprintCommand": {
+                        "type": "string",
+                        "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
+                      }
+                    }
                   }
                 }
               },
@@ -414,7 +433,7 @@
     "build:expo-fingerprint": "esbuild ./node_modules/@expo/fingerprint/build/sourcer/ExpoConfigLoader.js --bundle --format=cjs --outfile=dist/ExpoConfigLoader.js --platform=node --minify",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server.sh dist Debug",
-    "build:sim-server": "bash ./scripts/build-sim-server.sh dist Release",
+    "build:sim-server": "bash ./scripts/install-sim-server-release-build.sh dist",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
     "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview",
     "watch:extension": "vite",

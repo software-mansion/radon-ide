@@ -43,9 +43,6 @@ const RNInternals = {
     } catch (e) {}
     throw new Error("Couldn't locate LoadingView module");
   },
-  get DevMenu() {
-    return require("react-native/Libraries/NativeModules/specs/NativeDevMenu").default;
-  },
 };
 
 function getCurrentScene() {
@@ -70,7 +67,7 @@ function useAgentListener(agent, eventName, listener, deps = []) {
   }, [agent, ...deps]);
 }
 
-export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
+export function AppWrapper({ children, initialProps, ..._rest }) {
   const rootTag = useContext(RootTagContext);
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
@@ -246,12 +243,6 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
     [mainContainerRef]
   );
 
-  useAgentListener(devtoolsAgent, "RNIDE_iosDevMenu", (_payload) => {
-    // this native module is present only on iOS and will crash if called
-    // on Android
-    RNInternals.DevMenu.show();
-  });
-
   useAgentListener(
     devtoolsAgent,
     "RNIDE_showStorybookStory",
@@ -308,4 +299,16 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
       {children}
     </View>
   );
+}
+
+export function createNestedAppWrapper(InnerWrapperComponent) {
+  function WrapperComponent(props) {
+    const { children, ...rest } = props;
+    return (
+      <AppWrapper {...rest}>
+        <InnerWrapperComponent {...rest}>{children}</InnerWrapperComponent>
+      </AppWrapper>
+    );
+  }
+  return WrapperComponent;
 }

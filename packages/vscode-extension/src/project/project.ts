@@ -7,18 +7,17 @@ import {
   AppPermissionType,
   DeviceSettings,
   InspectData,
-  Locale,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
+  RecordingData,
   ReloadAction,
   StartupMessage,
   TouchPoint,
   ZoomLevelType,
 } from "../common/Project";
 import { Logger } from "../Logger";
-import { didFingerprintChange } from "../builders/BuildManager";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
@@ -30,6 +29,7 @@ import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
+import { PlatformBuildCache } from "../builders/PlatformBuildCache";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -44,10 +44,7 @@ export class Project
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
 
-  private detectedFingerprintChange: boolean;
-
-  private expoRouterInstalled: boolean;
-  private storybookInstalled: boolean;
+  private isCachedBuildStale: boolean;
 
   private fileWatcher: Disposable;
 
@@ -60,19 +57,7 @@ export class Project
     selectedDevice: undefined,
   };
 
-  private deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
-    DEVICE_SETTINGS_KEY
-  ) ?? {
-    appearance: "dark",
-    contentSize: "normal",
-    location: {
-      latitude: 50.048653,
-      longitude: 19.965474,
-      isDisabled: true,
-    },
-    hasEnrolledBiometrics: false,
-    locale: "en_US",
-  };
+  private deviceSettings: DeviceSettings;
 
   constructor(
     private readonly deviceManager: DeviceManager,
@@ -89,15 +74,14 @@ export class Project
       },
       hasEnrolledBiometrics: false,
       locale: "en_US",
+      replaysEnabled: false,
     };
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.detectedFingerprintChange = false;
-    this.expoRouterInstalled = false;
-    this.storybookInstalled = false;
+    this.isCachedBuildStale = false;
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
@@ -111,7 +95,7 @@ export class Project
 
   onBuildSuccess = (): void => {
     // reset fingerprint change flag when build finishes successfully
-    this.detectedFingerprintChange = false;
+    this.isCachedBuildStale = false;
   };
 
   onStateChange = (state: StartupMessage): void => {
@@ -162,6 +146,13 @@ export class Project
   }
   //#endregion
 
+  async captureReplay(): Promise<RecordingData> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    return this.deviceSession.captureReplay();
+  }
+
   async dispatchPaste(text: string) {
     this.deviceSession?.sendPaste(text);
   }
@@ -207,17 +198,23 @@ export class Project
       this.updateProjectState({
         selectedDevice: undefined,
       });
-      // because devices might be outdated after xcode installation change we list them again
-      const newDeviceList = await this.deviceManager.listAllDevices();
-      if (!isEqual(newDeviceList, devices)) {
-        selectInitialDevice(newDeviceList);
-      } else {
-        const listener = async (newDevices: DeviceInfo[]) => {
-          this.deviceManager.removeListener("devicesChanged", listener);
+      // when we reach this place, it means there's no device that we can select, we
+      // wait for the new device to be added to the list:
+      const listener = async (newDevices: DeviceInfo[]) => {
+        this.deviceManager.removeListener("devicesChanged", listener);
+        if (this.projectState.selectedDevice) {
+          // device was selected in the meantime, we don't need to do anything
+          return;
+        } else if (isEqual(newDevices, devices)) {
+          // list is the same, we register listener to wait for the next change
+          this.deviceManager.addListener("devicesChanged", listener);
+        } else {
           selectInitialDevice(newDevices);
-        };
-        this.deviceManager.addListener("devicesChanged", listener);
-      }
+        }
+      };
+
+      // we trigger initial listener call with the most up to date list of devices
+      listener(await this.deviceManager.listAllDevices());
 
       return false;
     };
@@ -252,13 +249,15 @@ export class Project
   }
 
   private async reloadMetro() {
-    if (await this.deviceSession?.perform("hotReload")) {
+    if (await this.deviceSession?.perform("reloadJs")) {
       this.updateProjectState({ status: "running" });
+      return true;
     }
+    return false;
   }
 
   public async goHome(homeUrl: string) {
-    if (this.expoRouterInstalled) {
+    if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
       await this.openNavigation(homeUrl);
     } else {
       await this.reloadMetro();
@@ -282,28 +281,30 @@ export class Project
       startupMessage: StartupMessage.Restarting,
     });
 
+    // we first consider forceCleanBuild flag, if set we always perform a clean
+    // start of the project and select the device
     if (forceCleanBuild) {
       await this.start(true, true);
       await this.selectDevice(deviceInfo, true);
       return;
     }
 
-    if (this.detectedFingerprintChange) {
-      await this.selectDevice(deviceInfo, false);
-      return;
-    }
-
-    if (restartDevice) {
-      await this.selectDevice(deviceInfo, false);
-      return;
-    }
-
-    if (onlyReloadJSWhenPossible) {
-      return await this.reloadMetro();
-    }
-
-    // otherwise we try to restart the device session
+    // Otherwise, depending on the project state we try deviceSelection, or
+    // only relad JS if possible.
     try {
+      if (restartDevice || this.isCachedBuildStale) {
+        await this.selectDevice(deviceInfo, false);
+        return;
+      }
+
+      if (onlyReloadJSWhenPossible) {
+        // if reloading JS is possible, we try to do it first and exit in case of success
+        // otherwise we continue to restart using more invasive methods
+        if (await this.reloadMetro()) {
+          return;
+        }
+      }
+
       // we first check if the device session hasn't changed in the meantime
       if (deviceSession === this.deviceSession) {
         await this.deviceSession?.perform("restartProcess");
@@ -312,11 +313,14 @@ export class Project
         });
       }
     } catch (e) {
-      // finally in case of any errors, we restart the selected device which reboots
-      // emulator etc...
-      // we first check if the device hasn't been updated in the meantime
+      // finally in case of any errors, the last resort is performing project
+      // restart and device selection (we still avoid forcing clean builds, and
+      // only do clean build when explicitly requested).
+      // before doing anything, we check if the device hasn't been updated in the meantime
+      // which might have initiated a new session anyway
       if (deviceInfo === this.projectState.selectedDevice) {
-        await this.selectDevice(this.projectState.selectedDevice!, false);
+        await this.start(true, false);
+        await this.selectDevice(deviceInfo, false);
       }
     }
   }
@@ -324,8 +328,11 @@ export class Project
   public async reload(type: ReloadAction): Promise<boolean> {
     this.updateProjectState({ status: "starting" });
     const success = (await this.deviceSession?.perform(type)) ?? false;
-    // TODO(jgonet): Don't assume that success is always true
-    this.updateProjectState({ status: "running" });
+    if (success) {
+      this.updateProjectState({ status: "running" });
+    } else {
+      window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
+    }
     return success;
   }
 
@@ -342,21 +349,16 @@ export class Project
     const waitForNodeModules = this.maybeInstallNodeModules();
 
     Logger.debug(`Launching devtools`);
-    const waitForDevtools = this.devtools.start();
+    this.devtools.start();
 
     Logger.debug(`Launching metro`);
-    const waitForMetro = this.metro.start(
+    this.metro.start(
       forceCleanBuild,
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
       [waitForNodeModules]
     );
-
-    Logger.debug("Checking expo router");
-    this.expoRouterInstalled = await this.dependencyManager.isInstalled("expoRouter");
-    Logger.debug("Checking storybook");
-    this.storybookInstalled = await this.dependencyManager.isInstalled("storybook");
   }
   //#endregion
 
@@ -438,7 +440,7 @@ export class Project
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
-    if (this.storybookInstalled) {
+    if (await this.dependencyManager.checkProjectUsesStorybook()) {
       this.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");
@@ -493,7 +495,7 @@ export class Project
   }
 
   private async maybeInstallNodeModules() {
-    const installed = await this.dependencyManager.isInstalled("nodeModules");
+    const installed = await this.dependencyManager.checkNodeModulesInstallationStatus();
 
     if (!installed) {
       Logger.info("Installing node modules");
@@ -586,9 +588,12 @@ export class Project
   };
 
   private checkIfNativeChanged = throttle(async () => {
-    if (!this.detectedFingerprintChange && this.projectState.selectedDevice) {
-      if (await didFingerprintChange(this.projectState.selectedDevice.platform)) {
-        this.detectedFingerprintChange = true;
+    if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
+      const platform = this.projectState.selectedDevice.platform;
+      const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
+
+      if (isCacheStale) {
+        this.isCachedBuildStale = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
@@ -605,6 +610,7 @@ function watchProjectFiles(onChange: () => void) {
   // We may revisit this if better performance is needed and create
   // recursive watches ourselves by iterating through workspace directories
   // to workaround this issue.
+
   const savedFileWatcher = workspace.onDidSaveTextDocument(onChange);
 
   const watcher = workspace.createFileSystemWatcher("**/*");

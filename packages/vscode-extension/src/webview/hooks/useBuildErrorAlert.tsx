@@ -5,6 +5,8 @@ import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
+import { useDependencies } from "../providers/DependenciesProvider";
+import { DevicePlatform } from "../../common/DeviceManager";
 
 function BuildErrorActions() {
   const { project } = useProject();
@@ -41,11 +43,29 @@ function BuildErrorActions() {
 
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   const { ios, xcodeSchemes } = useLaunchConfig();
+  const { dependencies } = useDependencies();
+  const { projectState } = useProject();
 
   let description = "Open build logs to find out what went wrong.";
 
   if (!ios?.scheme && xcodeSchemes.length > 1) {
     description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
+  }
+
+  if (
+    dependencies.android?.status === "notInstalled" &&
+    projectState.selectedDevice?.platform === DevicePlatform.Android
+  ) {
+    description =
+      'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
+  }
+
+  if (
+    dependencies.ios?.status === "notInstalled" &&
+    projectState.selectedDevice?.platform === DevicePlatform.IOS
+  ) {
+    description =
+      'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
   }
 
   const buildErrorAlert = {
@@ -65,15 +85,15 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusDebugConsole();
+          project.focusExtensionLogsOutput();
         }}
-        tooltip={{ label: "Open debug console", side: "bottom" }}>
-        <span className="codicon codicon-debug-console" />
+        tooltip={{ label: "Open extension logs", side: "bottom" }}>
+        <span className="codicon codicon-output" />
       </IconButton>
       <IconButton
         type="secondary"
         onClick={() => {
-          project.reload("reloadJs");
+          project.restart(false);
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />
@@ -85,7 +105,7 @@ function BundleErrorActions() {
 const bundleErrorAlert = {
   id: "bundle-error-alert",
   title: "Bundle error",
-  description: "Open application logs to find out what went wrong.",
+  description: "Open IDE logs to find out what went wrong.",
   actions: <BundleErrorActions />,
 };
 

@@ -15,7 +15,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
       }}
       disabled={disabled}
       options={{
-        "Hot reload": () => project.reload("hotReload"),
+        "Reload JS": () => project.reload("reloadJs"),
         "Restart app process": () => project.reload("restartProcess"),
         "Reinstall app": () => project.reload("reinstall"),
         "Clean rebuild": () => project.restart(true),

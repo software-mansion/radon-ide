@@ -18,14 +18,22 @@ import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoG
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 
-export const EMULATOR_BINARY = Platform.select({
-  macos: path.join(ANDROID_HOME, "emulator", "emulator"),
-  windows: path.join(ANDROID_HOME, "emulator", "emulator.exe"),
-});
-const ADB_PATH = Platform.select({
-  macos: path.join(ANDROID_HOME, "platform-tools", "adb"),
-  windows: path.join(ANDROID_HOME, "platform-tools", "adb.exe"),
-});
+export const EMULATOR_BINARY = path.join(
+  ANDROID_HOME,
+  "emulator",
+  Platform.select({
+    macos: "emulator",
+    windows: "emulator.exe",
+  })
+);
+const ADB_PATH = path.join(
+  ANDROID_HOME,
+  "platform-tools",
+  Platform.select({
+    macos: "adb",
+    windows: "adb.exe",
+  })
+);
 const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
@@ -203,6 +211,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     await ensureOldEmulatorProcessExited(this.avdId);
 
     const avdDirectory = getOrCreateAvdDirectory(this.avdId);
+
     const subprocess = exec(
       EMULATOR_BINARY,
       [
@@ -242,10 +251,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
     });
 
     this.serial = await initPromise;
-  }
-
-  async openDevMenu() {
-    await exec(ADB_PATH, ["-s", this.serial!, "shell", "input", "keyevent", "82"]);
   }
 
   async configureExpoDevMenu(packageName: string) {
@@ -364,6 +369,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
     }
+    // terminate the app before launching, otherwise launch commands won't actually start the process which
+    // may be in a bad state
+    await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", build.packageName]);
+
     const deepLinkChoice =
       build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
@@ -465,7 +474,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 }
 
-export async function createEmulator(displayName: string, systemImage: AndroidSystemImageInfo) {
+export async function createEmulator(
+  displayName: string,
+  deviceName: string,
+  systemImage: AndroidSystemImageInfo
+) {
   const avdDirectory = getOrCreateAvdDirectory();
   const avdId = uuidv4();
   const avdIni = path.join(avdDirectory, `${avdId}.ini`);
@@ -501,9 +514,8 @@ export async function createEmulator(displayName: string, systemImage: AndroidSy
     ["hw.cpu.arch", getNativeQemuArch()],
     ["hw.cpu.ncore", "4"],
     ["hw.dPad", "no"],
-    ["hw.device.hash2", "MD5:3db3250dab5d0d93b29353040181c7e9"],
     ["hw.device.manufacturer", "Google"],
-    ["hw.device.name", "pixel_7"],
+    ["hw.device.name", deviceName],
     ["hw.gps", "yes"],
     ["hw.gpu.enabled", "yes"],
     ["hw.gpu.mode", "auto"],

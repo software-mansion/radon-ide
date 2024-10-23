@@ -278,26 +278,25 @@ export class IosSimulatorDevice extends DeviceBase {
 
   async launchWithExpoDeeplink(bundleID: string, expoDeeplink: string) {
     // For Expo dev-client and Expo Go setup, we use deeplink to launch the app. For this approach to work we do the following:
-    // 1. Add the deeplink to the scheme approval list
+    // 1. Add the deeplink to the scheme approval list via defaults
     // 2. Terminate the app if it's running
     // 3. Open the deeplink
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
     // Add the deeplink to the scheme approval list:
     const schema = new URL(expoDeeplink).protocol.slice(0, -1);
-    await exec("/usr/libexec/PlistBuddy", [
-      "-c",
-      "Clear dict",
-      "-c",
-      `Add :com.apple.CoreSimulator.CoreSimulatorBridge-->${schema} string ${bundleID}`,
-      path.join(
-        deviceSetLocation,
-        this.deviceUDID,
-        "data",
-        "Library",
-        "Preferences",
-        "com.apple.launchservices.schemeapproval.plist"
-      ),
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "spawn",
+      this.deviceUDID,
+      "defaults",
+      "write",
+      "com.apple.launchservices.schemeapproval",
+      `com.apple.CoreSimulator.CoreSimulatorBridge-->${schema}`,
+      "-string",
+      bundleID,
     ]);
 
     // Terminate the app if it's running:

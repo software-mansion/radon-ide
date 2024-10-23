@@ -1,5 +1,3 @@
-import type { CancelToken } from "../builders/cancelToken";
-
 export const MinSupportedVersion = {
   reactNative: "0.71.0",
   expo: "49.0.0",
@@ -12,6 +10,8 @@ export type Dependency =
   | "cocoaPods"
   | "nodejs"
   | "nodeModules"
+  | "android"
+  | "ios"
   | "pods"
   | "reactNative"
   | "expo"
@@ -27,16 +27,10 @@ export type DependencyStatus = {
 
 export type DependenciesStatus = Record<Dependency, DependencyStatus>;
 
-export type DependencyListener = (
-  dependency: Dependency,
-  installationStatus: InstallationStatus
-) => void;
+export type DependencyListener = (dependency: Dependency, status: DependencyStatus) => void;
 
 export interface DependencyManagerInterface {
-  getStatus(dependencies: Dependency[]): Promise<Record<Dependency, DependencyStatus>>;
-  isInstalled(dependency: Dependency): Promise<boolean>;
-  installNodeModules(): Promise<boolean>;
-  installPods(cancelToken: CancelToken): Promise<void>;
+  runAllDependencyChecks(): Promise<void>;
 
   addListener(listener: DependencyListener): Promise<void>;
   removeListener(listener: DependencyListener): Promise<void>;

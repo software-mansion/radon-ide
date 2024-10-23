@@ -11,6 +11,7 @@ import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild } from "./eas";
 import { getXcodebuildArch } from "../utilities/common";
+import { DependencyManager } from "../dependency/DependencyManager";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
@@ -76,18 +77,21 @@ export async function buildIos(
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void,
+  dependencyManager: DependencyManager,
   installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
-  const { buildScript, eas, ios: buildOptions, env } = getLaunchConfiguration();
+  const { customBuild, eas, ios: buildOptions, env } = getLaunchConfiguration();
 
-  if (buildScript?.ios && eas?.ios) {
+  if (customBuild?.ios && eas?.ios) {
     throw new Error(
-      "Both custom build script and EAS build are configured for iOS. Please use only one build method."
+      "Both custom builds and EAS builds are configured for iOS. Please use only one build method."
     );
   }
 
-  if (buildScript?.ios) {
-    const appPath = await runExternalBuild(cancelToken, buildScript.ios, env);
+  if (customBuild?.ios?.buildCommand) {
+    // We don't autoinstall Pods here to make custom build scripts more flexible
+
+    const appPath = await runExternalBuild(cancelToken, customBuild.ios.buildCommand, env);
     if (!appPath) {
       throw new Error("Failed to build iOS app using custom script.");
     }
@@ -115,6 +119,12 @@ export async function buildIos(
   if (await isExpoGoProject()) {
     const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);
     return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
+  }
+
+  if (!(await dependencyManager.checkIOSDirectoryExists())) {
+    throw new Error(
+      '"ios" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory'
+    );
   }
 
   const sourceDir = getIosSourceDir(appRootFolder);
@@ -148,7 +158,6 @@ export async function buildIos(
   );
 
   const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
-  outputChannel.clear();
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
     buildIOSProgressProcessor.processLine(line);

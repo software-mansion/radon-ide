@@ -9,7 +9,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "copy-shared": "node ../shared/copy.js expo-router ./shared"
   },
   "jest": {
     "preset": "jest-expo"
@@ -26,6 +27,7 @@
     "expo-status-bar": "~1.12.1",
     "expo-system-ui": "^3.0.4",
     "expo-web-browser": "~13.0.3",
+    "radon-ide": "^0.0.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "^0.74.1",

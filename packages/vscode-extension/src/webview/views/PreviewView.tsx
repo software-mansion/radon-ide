@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, MouseEvent } from "react";
+import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { vscode } from "../utilities/vscode";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
@@ -14,11 +15,17 @@ import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
 import { useDevices } from "../providers/DevicesProvider";
 import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
+import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { useDiagnosticAlert } from "../hooks/useDiagnosticAlert";
-import { ZoomLevelType } from "../../common/Project";
+import {
+  RecordingData,
+  ZoomLevelType,
+  InspectDataStackItem,
+  Frame,
+  InspectStackData,
+} from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -42,11 +49,13 @@ function LoadingComponent({ finishedInitialLoad, devicesNotFound }: LoadingCompo
 }
 
 function PreviewView() {
-  const { projectState, project } = useProject();
-  const { reportIssue } = useUtils();
+  const { projectState, project, deviceSettings } = useProject();
+  const { reportIssue, showDismissableError } = useUtils();
 
-  const [isInspecting, setIsInspecting] = useState(false);
   const [isPressing, setIsPressing] = useState(false);
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
+  const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
   const zoomLevel = projectState.previewZoom ?? "Fit";
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
@@ -56,15 +65,20 @@ function PreviewView() {
   );
   const [logCounter, setLogCounter] = useState(0);
   const [resetKey, setResetKey] = useState(0);
+  const [replayData, setReplayData] = useState<RecordingData | undefined>(undefined);
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
   const isStarting = projectState.status === "starting";
+  const isRunning = projectState.status === "running";
+
+  const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
+    return sd.modelName === projectState?.selectedDevice?.name;
+  });
 
   const { openModal } = useModal();
-
-  useDiagnosticAlert(selectedDevice?.platform);
+  const { openFileAt } = useUtils();
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"
@@ -114,6 +128,24 @@ function PreviewView() {
     }
   };
 
+  const handleReplay = async () => {
+    try {
+      setReplayData(await project.captureReplay());
+    } catch (e) {
+      showDismissableError("Failed to capture replay");
+    }
+  };
+
+  function onInspectorItemSelected(item: InspectDataStackItem) {
+    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    setIsInspecting(false);
+  }
+
+  function resetInspector() {
+    setInspectFrame(null);
+    setInspectStackData(null);
+  }
+
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsPressing(true);
@@ -129,11 +161,27 @@ function PreviewView() {
     onMouseUp,
   };
 
+  const showReplayButton = deviceSettings.replaysEnabled;
+
   return (
     <div className="panel-view" {...touchHandlers}>
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
+        {showReplayButton && (
+          <Button
+            tooltip={{
+              label: "Replay the last few seconds of the app",
+            }}
+            onClick={handleReplay}
+            disabled={isStarting}>
+            <span className="icons-container">
+              <span className="codicon codicon-triangle-left icons-rewind" />
+              <span className="codicon codicon-triangle-left icons-rewind" />
+            </span>
+            Replay
+          </Button>
+        )}
         <Button
           counter={logCounter}
           onClick={() => {
@@ -147,29 +195,48 @@ function PreviewView() {
           <span slot="start" className="codicon codicon-debug-console" />
           Logs
         </Button>
-        <SettingsDropdown
-          project={project}
-          isDeviceRunning={projectState.status === "running"}
-          disabled={devicesNotFound}>
+        <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Settings", type: "primary" }}>
             <span className="codicon codicon-settings-gear" />
           </IconButton>
         </SettingsDropdown>
       </div>
+
       {selectedDevice && finishedInitialLoad ? (
         <Preview
           key={selectedDevice.id}
           isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
+          inspectFrame={inspectFrame}
+          setInspectFrame={setInspectFrame}
+          setInspectStackData={setInspectStackData}
+          onInspectorItemSelected={onInspectorItemSelected}
           isPressing={isPressing}
           setIsPressing={setIsPressing}
           zoomLevel={zoomLevel}
+          replayData={replayData}
+          onReplayClose={() => setReplayData(undefined)}
           onZoomChanged={onZoomChanged}
         />
       ) : (
         <LoadingComponent
           finishedInitialLoad={finishedInitialLoad}
           devicesNotFound={devicesNotFound}
+        />
+      )}
+
+      {!replayData && inspectStackData && (
+        <InspectDataMenu
+          inspectLocation={inspectStackData.requestLocation}
+          inspectStack={inspectStackData.stack}
+          device={deviceProperties}
+          frame={inspectFrame}
+          onSelected={onInspectorItemSelected}
+          onHover={(item) => {
+            if (item.frame) {
+              setInspectFrame(item.frame);
+            }
+          }}
+          onCancel={() => resetInspector()}
         />
       )}
 
@@ -200,10 +267,14 @@ function PreviewView() {
         <Button className="feedback-button" onClick={() => reportIssue()}>
           {extensionVersion || "Beta"}: Report issue
         </Button>
-        <DeviceSettingsDropdown disabled={devicesNotFound}>
+        <DeviceSettingsDropdown disabled={devicesNotFound || !isRunning}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon
-              color={devicesNotFound ? "var(--swm-disabled-text)" : "var(--swm-default-text)"}
+              color={
+                devicesNotFound || !isRunning
+                  ? "var(--swm-disabled-text)"
+                  : "var(--swm-default-text)"
+              }
             />
           </IconButton>
         </DeviceSettingsDropdown>

@@ -20,13 +20,17 @@ global.__RNIDE_onDebuggerConnected = function () {
   global.__fbDisableExceptionsManager = true;
 };
 
+// We add log this trace to diagnose issues with loading runtime in the IDE
+// It is necessary that this call is before we override console methods, otherwise
+// this message would be visible in the debug console panel for the IDE users.
+console.log("__RNIDE_INTERNAL: react-native-ide runtime loaded");
+
 function wrapConsole(consoleFunc) {
   return function (...args) {
     const stack = parseErrorStack(new Error().stack);
     const expoLogIndex = stack.findIndex((frame) => frame.methodName === "__expoConsoleLog");
     const location = expoLogIndex > 0 ? stack[expoLogIndex + 1] : stack[1];
-    const lineOffset = global.__EXPO_ENV_PRELUDE_LINES__ || 0;
-    args.push(location.file, location.lineNumber - lineOffset, location.column);
+    args.push(location.file, location.lineNumber, location.column);
     return consoleFunc.apply(console, args);
   };
 }
@@ -43,5 +47,18 @@ global.__RNIDE_register_navigation_plugin = function (name, plugin) {
 };
 
 AppRegistry.setWrapperComponentProvider((appParameters) => {
-  return require("__RNIDE_lib__/wrapper.js").PreviewAppWrapper;
+  return require("__RNIDE_lib__/wrapper.js").AppWrapper;
 });
+
+// Some apps may use AppRegistry.setWrapperComponentProvider to provide a custom wrapper component.
+// Apparenlty, this method only supports one provided per app. In order for this to work, we
+// overwrite the method to wrap the custom wrapper component with the app wrapper that IDE uses
+// from the wrapper.js file.
+const origSetWrapperComponentProvider = AppRegistry.setWrapperComponentProvider;
+AppRegistry.setWrapperComponentProvider = (provider) => {
+  console.info("RNIDE: The app is using a custom wrapper component provider");
+  origSetWrapperComponentProvider((appParameters) => {
+    const CustomWrapper = provider(appParameters);
+    return require("__RNIDE_lib__/wrapper.js").createNestedAppWrapper(CustomWrapper);
+  });
+};
