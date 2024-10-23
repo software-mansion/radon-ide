@@ -15,7 +15,7 @@ import {
 
 const dependencyManager = makeProxy<DependencyManagerInterface>("DependencyManager");
 
-const dependencies = [
+const dependenciesDomain = [
   "nodejs",
   "androidEmulator",
   "xcode",
@@ -30,7 +30,7 @@ const dependencies = [
   "storybook",
 ] as const;
 
-type Dependency = typeof dependencies[number];
+type Dependency = typeof dependenciesDomain[number];
 
 type ErrorType = "ios" | "simulator" | "emulator" | "android" | "common";
 type Errors = Partial<Record<ErrorType, { message: string }>>;
@@ -58,11 +58,11 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    const newDependencies: DependencyRecord = {};
+    const dependencies: DependencyRecord = {};
 
     function handleUpdatedDependency(dependency: Dependency, status: DependencyStatus) {
-      newDependencies[dependency] = status;
-      updateDepsState({ ...newDependencies });
+      dependencies[dependency] = status;
+      updateDepsState({ ...dependencies });
     }
 
     dependencyManager.addListener(handleUpdatedDependency);
