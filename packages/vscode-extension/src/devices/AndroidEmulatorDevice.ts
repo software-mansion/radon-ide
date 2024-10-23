@@ -91,14 +91,17 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
 
     // if user did not use the device before it might not have system_locales property
-    // as en-US is the default locale we assume that no value is the same as en-US
+    // as en-US is the default locale, used by the system, when no setting is provided
+    // we assume that no value in stdout is the same as en-US
     if ((stdout ?? "en-US") === locale) {
       return false;
     }
     return true;
   }
 
-  /**  This method changes device locale by modifying system_locales system setting. */
+  /**
+   * This method changes device locale by modifying system_locales system setting.
+   */
   private async changeLocale(newLocale: Locale): Promise<void> {
     const locale = newLocale.replace("_", "-");
 
@@ -128,7 +131,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
     if (stdout) {
       Logger.warn(
-        "persist.sys.locale detected while changing locale. It might indicate that the user has changed locale settings in the settings application, which will prevent localization change."
+        "Updating locale will not take effect as the device has altered locale via system settings which always takes precedence over the device setting the IDE uses."
       );
     }
   }
@@ -189,9 +192,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return shouldRestart;
   }
 
-  /** This method restarts the emulator process using SIGKILL signal.
-   *  Should be used for the situations when quick reboot is necessary
-   *  and when we don't care about the emulator's process state */
+  /**
+   * This method restarts the emulator process using SIGKILL signal.
+   * Should be used for the situations when quick reboot is necessary
+   * and when we don't care about the emulator's process state
+   */
   private async forcefullyResetDevice() {
     this.emulatorProcess?.kill(9);
     await this.internalBootDevice();
