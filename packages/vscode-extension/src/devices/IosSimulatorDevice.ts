@@ -381,6 +381,21 @@ export class IosSimulatorDevice extends DeviceBase {
     return false;
   }
 
+  async sendDeepLink(link: string, build: BuildResult) {
+    if (build.platform !== DevicePlatform.IOS) {
+      throw new Error("Invalid platform");
+    }
+
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(this.deviceUDID),
+      "openurl",
+      this.deviceUDID,
+      link,
+    ]);
+  }
+
   makePreview(): Preview {
     return new Preview([
       "ios",

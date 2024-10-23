@@ -25,6 +25,7 @@ export abstract class DeviceBase implements Disposable {
     appPermission: AppPermissionType,
     buildResult: BuildResult
   ): Promise<boolean>;
+  abstract sendDeepLink(link: string, buildResult: BuildResult): Promise<void>;
 
   async acquire() {
     const acquired = await tryAcquiringLock(this.lockFilePath);
