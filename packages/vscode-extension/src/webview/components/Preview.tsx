@@ -278,11 +278,19 @@ function Preview({
 
   type MouseMove = "Move" | "Down" | "Up";
   function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+    if (replayData) {
+      return;
+    }
+
     const { x, y } = getTouchPosition(event);
     project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+    if (replayData) {
+      return;
+    }
+
     const pt = getTouchPosition(event);
     const secondPt = calculateMirroredTouchPosition(pt, anchorPoint);
     project.dispatchTouches(
@@ -451,8 +459,11 @@ function Preview({
     function keyEventHandler(e: KeyboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
-        const isKeydown = e.type === "keydown";
+        if (replayData) {
+          return;
+        }
 
+        const isKeydown = e.type === "keydown";
         const isMultitouchKeyPressed = Platform.select({
           macos: e.code === "AltLeft" || e.code === "AltRight",
           windows: e.code === "ControlLeft" || e.code === "ControlRight",
@@ -476,7 +487,7 @@ function Preview({
       document.removeEventListener("keydown", keyEventHandler);
       document.removeEventListener("keyup", keyEventHandler);
     };
-  }, [project]);
+  }, [project, replayData]);
 
   useEffect(() => {
     if (projectStatus === "running") {
@@ -540,35 +551,33 @@ function Preview({
                 />
                 {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${touchPoint.x * 100}%`,
-                      "--y": `${touchPoint.y * 100}%`,
-                      "--size": `${normalTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={isPressing} />
-                  </div>
-                )}
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${anchorPoint.x * 100}%`,
-                      "--y": `${anchorPoint.y * 100}%`,
-                      "--size": `${smallTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={false} />
-                  </div>
-                )}
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${mirroredTouchPosition.x * 100}%`,
-                      "--y": `${mirroredTouchPosition.y * 100}%`,
-                      "--size": `${normalTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={isPressing} />
-                  </div>
+                {!replayData && isMultiTouching && (
+                  <>
+                    <div
+                      style={{
+                        "--x": `${touchPoint.x * 100}%`,
+                        "--y": `${touchPoint.y * 100}%`,
+                        "--size": `${normalTouchIndicatorSize}px`,
+                      }}>
+                      <TouchPointIndicator isPressing={isPressing} />
+                    </div>
+                    <div
+                      style={{
+                        "--x": `${anchorPoint.x * 100}%`,
+                        "--y": `${anchorPoint.y * 100}%`,
+                        "--size": `${smallTouchIndicatorSize}px`,
+                      }}>
+                      <TouchPointIndicator isPressing={false} />
+                    </div>
+                    <div
+                      style={{
+                        "--x": `${mirroredTouchPosition.x * 100}%`,
+                        "--y": `${mirroredTouchPosition.y * 100}%`,
+                        "--size": `${normalTouchIndicatorSize}px`,
+                      }}>
+                      <TouchPointIndicator isPressing={isPressing} />
+                    </div>
+                  </>
                 )}
 
                 {!replayData && inspectFrame && (
