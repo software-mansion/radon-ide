@@ -90,15 +90,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return true;
   }
 
-  // this method changes device locale in two ways, firstly it modifies system_locales setting,
-  // which in most cases is enough, to change locale. Unfortunately if persist.sys.locale exist
-  // it will conflict with system_locales and make device behavior unpredictable. so in that case
-  // we would like to modify if as well. Unfortunately ass of right now we don't have a reliable
-  // method of doing that, because If the device uses google mobile services persist.sys.locale can not be changed,
-  // as it requires a root access persist.sys.locale is added to the device when a user changes locale
-  // in the settings.
-  // TODO:  Find a way to change or remove persist.sys.locale without root access. note: removing the whole
-  // data/property/persistent_properties file would also work as we persist device settings globally in Radon IDE
+  /**  This method changes device locale by modifying system_locales system setting. */
   private async changeLocale(newLocale: Locale): Promise<void> {
     const locale = newLocale.replace("_", "-");
 
@@ -116,6 +108,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // this is needed to make sure that changes will persist
     await exec(ADB_PATH, ["-s", this.serial!, "shell", "sync"]);
 
+    // TODO:  Find a way to change or remove persist.sys.locale without root access. note: removing the whole
+    // data/property/persistent_properties file would also work as we persist device settings globally in Radon IDE
     const { stdout } = await exec(ADB_PATH, [
       "-s",
       this.serial!,
@@ -187,17 +181,15 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return shouldRestart;
   }
 
-  // it is necessary to use SIGTERM 9 as it would take to much time otherwise and would degrade user experience
-  // having said that use this function with caution only in scenarios when you are sure that no user data will be lost
+  /** This method restarts the emulator process using SIGKILL signal.
+   *  Should be used for the situations when quick reboot is necessary
+   *  and when we don't care about the emulator's process state */
   private async forcefullyResetDevice() {
     this.emulatorProcess?.kill(9);
     await this.internalBootDevice();
   }
 
   async bootDevice(deviceSettings: DeviceSettings): Promise<void> {
-    // We have to initially boot the device because we use adb shell to change the devices locale
-    // alternative would be to use -change-locale option on the emulator, but that option restarts the device too
-    // the -change-locale option is not covering all cases read more about it in this.changeLocale
     await this.internalBootDevice();
 
     let shouldRestart = await this.changeSettings(deviceSettings);
