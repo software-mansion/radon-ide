@@ -203,11 +203,12 @@ export class DebugAdapter extends DebugSession {
     // some logs may baypass that, especially when printed in initialization phase, so we
     // need to detect whether the wrapper has added the stack info or not
     // We check if there are more than 3 arguments, and if the last one is a number
-    // We also check if the log is not internal to avoid exposing it as part of
-    // application logs.
+    // We filter out logs that start with __RNIDE_INTERNAL as those are messages
+    // used by IDE for tracking the app state and should not appear in the VSCode
+    // console.
     const argsLen = message.params.args.length;
     let output: OutputEvent;
-    if (message.params.args[0].value === "__RNIDE_INTERNAL") {
+    if (argsLen > 0 && message.params.args[0].value === "__RNIDE_INTERNAL") {
       return;
     } else if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP
