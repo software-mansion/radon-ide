@@ -548,35 +548,33 @@ function Preview({
                 />
                 {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${touchPoint.x * 100}%`,
-                      "--y": `${touchPoint.y * 100}%`,
-                      "--size": `${normalTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={isPressing} />
-                  </div>
-                )}
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${anchorPoint.x * 100}%`,
-                      "--y": `${anchorPoint.y * 100}%`,
-                      "--size": `${smallTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={false} />
-                  </div>
-                )}
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${mirroredTouchPosition.x * 100}%`,
-                      "--y": `${mirroredTouchPosition.y * 100}%`,
-                      "--size": `${normalTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={isPressing} />
-                  </div>
+                {!replayData && isMultiTouching && (
+                  <>
+                    <div
+                      style={{
+                        "--x": `${touchPoint.x * 100}%`,
+                        "--y": `${touchPoint.y * 100}%`,
+                        "--size": `${normalTouchIndicatorSize}px`,
+                      }}>
+                      <TouchPointIndicator isPressing={isPressing} />
+                    </div>
+                    <div
+                      style={{
+                        "--x": `${anchorPoint.x * 100}%`,
+                        "--y": `${anchorPoint.y * 100}%`,
+                        "--size": `${smallTouchIndicatorSize}px`,
+                      }}>
+                      <TouchPointIndicator isPressing={false} />
+                    </div>
+                    <div
+                      style={{
+                        "--x": `${mirroredTouchPosition.x * 100}%`,
+                        "--y": `${mirroredTouchPosition.y * 100}%`,
+                        "--size": `${normalTouchIndicatorSize}px`,
+                      }}>
+                      <TouchPointIndicator isPressing={isPressing} />
+                    </div>
+                  </>
                 )}
 
                 {!replayData && inspectFrame && (
