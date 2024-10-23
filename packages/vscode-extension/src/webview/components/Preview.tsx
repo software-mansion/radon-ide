@@ -459,8 +459,11 @@ function Preview({
     function keyEventHandler(e: KeyboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
-        const isKeydown = e.type === "keydown";
+        if (replayData) {
+          return;
+        }
 
+        const isKeydown = e.type === "keydown";
         const isMultitouchKeyPressed = Platform.select({
           macos: e.code === "AltLeft" || e.code === "AltRight",
           windows: e.code === "ControlLeft" || e.code === "ControlRight",
@@ -484,7 +487,7 @@ function Preview({
       document.removeEventListener("keydown", keyEventHandler);
       document.removeEventListener("keyup", keyEventHandler);
     };
-  }, [project]);
+  }, [project, replayData]);
 
   useEffect(() => {
     if (projectStatus === "running") {
