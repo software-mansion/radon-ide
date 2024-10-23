@@ -4,7 +4,6 @@ import {
   Disposable,
   DebugSession as VscDebugSession,
 } from "vscode";
-import { getAppRootFolder } from "../utilities/extensionContext";
 import { Metro } from "../project/metro";
 
 export type DebugSessionDelegate = {
@@ -47,6 +46,15 @@ export class DebugSession implements Disposable {
       return false;
     }
 
+    let sourceMapAliases: Array<[string, string]> = [];
+    if (this.metro.isUsingNewDebugger && this.metro.watchFolders.length > 0) {
+      // first entry in watchFolders is the project root
+      sourceMapAliases.push(["/[metro-project]/", this.metro.watchFolders[0]]);
+      this.metro.watchFolders.forEach((watchFolder, index) => {
+        sourceMapAliases.push([`/[metro-watchFolders]/${index}/`, watchFolder]);
+      });
+    }
+
     const debugStarted = await debug.startDebugging(
       undefined,
       {
@@ -54,8 +62,8 @@ export class DebugSession implements Disposable {
         name: "Radon IDE Debugger",
         request: "attach",
         websocketAddress: websocketAddress,
-        absoluteProjectPath: getAppRootFolder(),
-        projectPathAlias: this.metro.isUsingNewDebugger ? "/[metro-project]" : undefined,
+        sourceMapAliases,
+        expoPreludeLineCount: this.metro.expoPreludeLineCount,
       },
       {
         suppressDebugStatusbar: true,

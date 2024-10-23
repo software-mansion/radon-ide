@@ -123,7 +123,7 @@ export async function buildIos(
 
   if (!(await dependencyManager.checkIOSDirectoryExists())) {
     throw new Error(
-      "Ios directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory"
+      '"ios" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory'
     );
   }
 

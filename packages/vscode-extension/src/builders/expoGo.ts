@@ -73,9 +73,17 @@ export function fetchExpoLaunchDeeplink(
       }
     );
     req.on("error", (e) => {
-      // we still want to resolve on error, because the URL may not exists, in which
-      // case it serves as a mechanism for detecting non expo-dev-client setups
-      resolve();
+      if ((e as NodeJS.ErrnoException).code === "ECONNREFUSED") {
+        // if host is not reachable, we want to report an issue as it is likely
+        // related to metro process that got terminated
+        reject(new Error("Unable to reach metro server", { cause: e }));
+      } else {
+        // in case of other errors, we let the process continue as it means that
+        // the metro instance we're trying to reach is not associated with expo-go
+        // or dev-client and we should proceed launching the app using simulator
+        // or emulator controls.
+        resolve();
+      }
     });
     req.end();
   });

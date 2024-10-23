@@ -421,9 +421,9 @@ body[data-vscode-theme-kind="vscode-dark"] {
 
   /* Zoom controls */
   --swm-zoom-controls-background: var(--background-dark-70);
-  --swm-zoom-controls-button-background-hover: var(--background-dark-70);
+  --swm-zoom-controls-button-background-hover: var(--background-dark-80);
   --swm-zoom-select-trigger-text: var(--off-white);
-  --swm-zoom-select-trigger-hover: var(--background-dark-70);
+  --swm-zoom-select-trigger-hover: var(--background-dark-80);
   --swm-zoom-select-trigger-disabled: var(--background-dark-90);
   --swm-zoom-select-highlighted: var(--background-dark-60);
   --swm-zoom-select-disabled-text: var(--background-dark-60);

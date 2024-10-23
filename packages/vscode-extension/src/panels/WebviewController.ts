@@ -1,4 +1,4 @@
-import vscode, { Webview, Disposable, window, commands, Uri } from "vscode";
+import { Webview, Disposable, commands, Uri } from "vscode";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { Project } from "../project/project";

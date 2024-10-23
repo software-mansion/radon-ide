@@ -30,8 +30,7 @@ function wrapConsole(consoleFunc) {
     const stack = parseErrorStack(new Error().stack);
     const expoLogIndex = stack.findIndex((frame) => frame.methodName === "__expoConsoleLog");
     const location = expoLogIndex > 0 ? stack[expoLogIndex + 1] : stack[1];
-    const lineOffset = global.__EXPO_ENV_PRELUDE_LINES__ || 0;
-    args.push(location.file, location.lineNumber - lineOffset, location.column);
+    args.push(location.file, location.lineNumber, location.column);
     return consoleFunc.apply(console, args);
   };
 }
@@ -48,7 +47,7 @@ global.__RNIDE_register_navigation_plugin = function (name, plugin) {
 };
 
 AppRegistry.setWrapperComponentProvider((appParameters) => {
-  return require("__RNIDE_lib__/wrapper.js").PreviewAppWrapper;
+  return require("__RNIDE_lib__/wrapper.js").AppWrapper;
 });
 
 // Some apps may use AppRegistry.setWrapperComponentProvider to provide a custom wrapper component.
@@ -59,16 +58,7 @@ const origSetWrapperComponentProvider = AppRegistry.setWrapperComponentProvider;
 AppRegistry.setWrapperComponentProvider = (provider) => {
   console.info("RNIDE: The app is using a custom wrapper component provider");
   origSetWrapperComponentProvider((appParameters) => {
-    const RNIDEAppWrapper = require("__RNIDE_lib__/wrapper.js").PreviewAppWrapper;
     const CustomWrapper = provider(appParameters);
-    function WrapperComponent(props) {
-      const { children, ...rest } = props;
-      return (
-        <RNIDEAppWrapper {...rest}>
-          <CustomWrapper {...rest}>{children}</CustomWrapper>
-        </RNIDEAppWrapper>
-      );
-    }
-    return WrapperComponent;
+    return require("__RNIDE_lib__/wrapper.js").createNestedAppWrapper(CustomWrapper);
   });
 };

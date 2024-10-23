@@ -85,14 +85,19 @@ export type InspectDataStackItem = {
   frame: Frame;
 };
 
-export type TouchPoint = {
-  xRatio: number;
-  yRatio: number;
+export type InspectStackData = {
+  requestLocation: { x: number; y: number };
+  stack: InspectDataStackItem[];
 };
 
 export type InspectData = {
   stack: InspectDataStackItem[] | undefined;
   frame: Frame;
+};
+
+export type TouchPoint = {
+  xRatio: number;
+  yRatio: number;
 };
 
 export interface ProjectEventMap {

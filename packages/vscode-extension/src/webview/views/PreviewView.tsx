@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, MouseEvent } from "react";
-import { vscode } from "../utilities/vscode";
+import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
@@ -14,10 +14,17 @@ import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
 import { useDevices } from "../providers/DevicesProvider";
 import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
+import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { RecordingData, ZoomLevelType } from "../../common/Project";
+import {
+  Frame,
+  InspectDataStackItem,
+  InspectStackData,
+  RecordingData,
+  ZoomLevelType,
+} from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -44,8 +51,10 @@ function PreviewView() {
   const { projectState, project, deviceSettings } = useProject();
   const { reportIssue, showDismissableError } = useUtils();
 
-  const [isInspecting, setIsInspecting] = useState(false);
   const [isPressing, setIsPressing] = useState(false);
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
+  const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
   const zoomLevel = projectState.previewZoom ?? "Fit";
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
@@ -61,8 +70,14 @@ function PreviewView() {
   const selectedDevice = projectState?.selectedDevice;
   const devicesNotFound = projectState !== undefined && devices.length === 0;
   const isStarting = projectState.status === "starting";
+  const isRunning = projectState.status === "running";
+
+  const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
+    return sd.modelName === projectState?.selectedDevice?.name;
+  });
 
   const { openModal } = useModal();
+  const { openFileAt } = useUtils();
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"
@@ -120,6 +135,16 @@ function PreviewView() {
     }
   };
 
+  function onInspectorItemSelected(item: InspectDataStackItem) {
+    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    setIsInspecting(false);
+  }
+
+  function resetInspector() {
+    setInspectFrame(null);
+    setInspectStackData(null);
+  }
+
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsPressing(true);
@@ -169,10 +194,7 @@ function PreviewView() {
           <span slot="start" className="codicon codicon-debug-console" />
           Logs
         </Button>
-        <SettingsDropdown
-          project={project}
-          isDeviceRunning={projectState.status === "running"}
-          disabled={devicesNotFound}>
+        <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Settings", type: "primary" }}>
             <span className="codicon codicon-settings-gear" />
           </IconButton>
@@ -183,7 +205,10 @@ function PreviewView() {
         <Preview
           key={selectedDevice.id}
           isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
+          inspectFrame={inspectFrame}
+          setInspectFrame={setInspectFrame}
+          setInspectStackData={setInspectStackData}
+          onInspectorItemSelected={onInspectorItemSelected}
           isPressing={isPressing}
           setIsPressing={setIsPressing}
           zoomLevel={zoomLevel}
@@ -195,6 +220,22 @@ function PreviewView() {
         <LoadingComponent
           finishedInitialLoad={finishedInitialLoad}
           devicesNotFound={devicesNotFound}
+        />
+      )}
+
+      {!replayData && inspectStackData && (
+        <InspectDataMenu
+          inspectLocation={inspectStackData.requestLocation}
+          inspectStack={inspectStackData.stack}
+          device={deviceProperties}
+          frame={inspectFrame}
+          onSelected={onInspectorItemSelected}
+          onHover={(item) => {
+            if (item.frame) {
+              setInspectFrame(item.frame);
+            }
+          }}
+          onCancel={() => resetInspector()}
         />
       )}
 
@@ -225,10 +266,14 @@ function PreviewView() {
         <Button className="feedback-button" onClick={() => reportIssue()}>
           {extensionVersion || "Beta"}: Report issue
         </Button>
-        <DeviceSettingsDropdown disabled={devicesNotFound}>
+        <DeviceSettingsDropdown disabled={devicesNotFound || !isRunning}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon
-              color={devicesNotFound ? "var(--swm-disabled-text)" : "var(--swm-default-text)"}
+              color={
+                devicesNotFound || !isRunning
+                  ? "var(--swm-disabled-text)"
+                  : "var(--swm-default-text)"
+              }
             />
           </IconButton>
         </DeviceSettingsDropdown>

@@ -12,11 +12,11 @@
 }
 
 .zoom-controls .icon-button.zoom-out-button {
-  border-radius: 18px 18px 0 0;
+  border-radius: 0 0 18px 18px;
 }
 
 .zoom-controls .icon-button.zoom-in-button {
-  border-radius: 0 0 18px 18px;
+  border-radius: 18px 18px 0 0;
 }
 
 .zoom-controls .icon-button:hover {

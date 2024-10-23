@@ -67,7 +67,7 @@ function useAgentListener(agent, eventName, listener, deps = []) {
   }, [agent, ...deps]);
 }
 
-export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
+export function AppWrapper({ children, initialProps, ..._rest }) {
   const rootTag = useContext(RootTagContext);
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
@@ -299,4 +299,16 @@ export function PreviewAppWrapper({ children, initialProps, ..._rest }) {
       {children}
     </View>
   );
+}
+
+export function createNestedAppWrapper(InnerWrapperComponent) {
+  function WrapperComponent(props) {
+    const { children, ...rest } = props;
+    return (
+      <AppWrapper {...rest}>
+        <InnerWrapperComponent {...rest}>{children}</InnerWrapperComponent>
+      </AppWrapper>
+    );
+  }
+  return WrapperComponent;
 }

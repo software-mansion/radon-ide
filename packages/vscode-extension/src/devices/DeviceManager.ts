@@ -108,7 +108,7 @@ export class DeviceManager implements DeviceManagerInterface {
 
     let shouldLoadSimulators = Platform.OS === "macos";
 
-    if (!(await checkXcodeExists())) {
+    if (shouldLoadSimulators && !(await checkXcodeExists())) {
       shouldLoadSimulators = false;
       Logger.debug("Couldn't list iOS simulators as XCode installation wasn't found");
     }
