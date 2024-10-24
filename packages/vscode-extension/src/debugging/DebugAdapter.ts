@@ -141,6 +141,10 @@ export class DebugAdapter extends DebugSession {
         case "Debugger.scriptParsed":
           const sourceMapURL = message.params.sourceMapURL;
 
+          // there are a few scripts parsed by the debugger that are not part of
+          // the application code. The below condition makes sure that
+          // __RNIDE_onDebuggerReady() is only called when application bundle is
+          // parsed.
           if (message.params.url) {
             this.sendCDPMessage("Runtime.evaluate", {
               expression: "__RNIDE_onDebuggerReady()",
