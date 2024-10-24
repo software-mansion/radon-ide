@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     topic: "When are you planning to close the public Beta?",
-    answer: "We're aiming to close the beta in October 2024.",
+    answer: "We're aiming to close the beta in November 2024.",
   },
   {
     topic: "Why did you make the source code public?",
