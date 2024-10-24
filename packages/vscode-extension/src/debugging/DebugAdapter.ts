@@ -213,7 +213,7 @@ export class DebugAdapter extends DebugSession {
     let output: OutputEvent;
     if (argsLen > 0 && message.params.args[0].value === "__RNIDE_INTERNAL") {
       // We return here to avoid passing internal logs to the user debug console,
-      // but they will still be visible in metro log feed. 
+      // but they will still be visible in metro log feed.
       return;
     } else if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP
