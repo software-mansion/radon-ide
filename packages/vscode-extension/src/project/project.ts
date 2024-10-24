@@ -30,7 +30,6 @@ import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { PlatformBuildCache } from "../builders/PlatformBuildCache";
-import { TabPanel } from "../panels/Tabpanel";
 import { PanelLocation } from "../common/WorkspaceConfig";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
