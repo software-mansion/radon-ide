@@ -20,10 +20,17 @@ global.__RNIDE_onDebuggerReady = function () {
   global.__fbDisableExceptionsManager = true;
 };
 
+try{
+  global.__RNIDE_onRuntimeLoaded(""); // the argument is required by CDP 
+}catch(e){
+  // we ignore the error here because it means, debugger was not connected yet.
+}
+
+
 // We add log this trace to diagnose issues with loading runtime in the IDE
 // The first argument is "__RNIDE_INTERNAL" so we can filter it out in 
 // debug adapter and avoid exposing as part of application logs
-console.log("__RNIDE_INTERNAL", "react-native-ide runtime loaded");
+console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
 function wrapConsole(consoleFunc) {
   return function (...args) {
