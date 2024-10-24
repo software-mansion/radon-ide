@@ -137,27 +137,15 @@ export class DebugAdapter extends DebugSession {
           const threadName = context.name;
           this.sendEvent(new ThreadEvent("started", threadId));
           this.threads.push(new Thread(threadId, threadName));
-          this.sendCDPMessage("Runtime.evaluate", {
-            expression: "__RNIDE_onDebuggerReady()",
-          });
-          // because in the debugger shipped with RN 76 an newer execution context
-          // is created before runtime is loaded, we inject the __RNIDE_onRuntimeLoaded
-          // binding in order to alow runtime triggering __RNIDE_onDebuggerReady()
-          // after debugger was already connected.
-          this.sendCDPMessage("Runtime.addBinding", {
-            name: "__RNIDE_onRuntimeLoaded",
-          });
-
           break;
-        case "Runtime.bindingCalled":
-          if ((message.params.name = "__RNIDE_onRuntimeLoaded")) {
+        case "Debugger.scriptParsed":
+          const sourceMapURL = message.params.sourceMapURL;
+
+          if (message.params.url) {
             this.sendCDPMessage("Runtime.evaluate", {
               expression: "__RNIDE_onDebuggerReady()",
             });
           }
-          break;
-        case "Debugger.scriptParsed":
-          const sourceMapURL = message.params.sourceMapURL;
 
           if (sourceMapURL?.startsWith("data:")) {
             const base64Data = sourceMapURL.split(",")[1];

@@ -20,15 +20,6 @@ global.__RNIDE_onDebuggerReady = function () {
   global.__fbDisableExceptionsManager = true;
 };
 
-try{
-  // if debugger is already connected it will run "__RNIDE_onDebuggerReady"
-  // if not it will run "__RNIDE_onDebuggerReady" on execution context creation
-  global.__RNIDE_onRuntimeLoaded(""); // the argument is required by CDP 
-}catch(e){
-  // we ignore the error here because it means, debugger was not connected yet.
-}
-
-
 // We add log this trace to diagnose issues with loading runtime in the IDE
 // The first argument is "__RNIDE_INTERNAL" so we can filter it out in 
 // debug adapter and avoid exposing as part of application logs
