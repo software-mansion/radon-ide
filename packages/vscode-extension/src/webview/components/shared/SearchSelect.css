@@ -74,10 +74,3 @@
 .selected-match {
   background-color: var(--deep-link-history-selected-item-background);
 }
-
-.submit-button-container {
-  width: 100%;
-  margin-top: 12px;
-  display: flex;
-  justify-content: center;
-}

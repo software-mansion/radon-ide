@@ -2,12 +2,10 @@ import { useEffect, useState } from "react";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
 import { SearchSelect } from "../components/shared/SearchSelect";
-import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
 
 // TODO:
 // 2. EXPORT TO REUSABLE COMPONENT AND USE IN LOCALIZATION MODAL.
-
 export const OpenDeepLinkView = () => {
   const { project } = useProject();
   const { closeModal } = useModal();
@@ -18,6 +16,7 @@ export const OpenDeepLinkView = () => {
   useEffect(() => {
     (async () => {
       const historyFromCache = await project.getDeepLinksHistory();
+      // await new Promise<void>((res, rej) => setTimeout(() => res(), 5000));
       setHistory(historyFromCache);
     })();
   }, []);
@@ -30,11 +29,6 @@ export const OpenDeepLinkView = () => {
     await project.openDeepLink(link);
   };
 
-  // TODO: Better loading...
-  if (history === undefined) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <form
       onSubmit={(e) => {
@@ -42,10 +36,10 @@ export const OpenDeepLinkView = () => {
         openDeepLink(url);
       }}
     >
-      <Label>URL</Label>
       <SearchSelect
+        className="deep-link-search-select"
         searchPlaceholder="Input Deep Link"
-        options={history}
+        options={history ?? []}
         isLoading={history === undefined}
         onValueChange={setUrl}
       />

@@ -3,13 +3,17 @@ import './SearchSelect.css';
 import { VSCodeProgressRing } from '@vscode/webview-ui-toolkit/react';
 
 interface SearchSelectProps {
+  className?: string
   searchPlaceholder?: string
   options: string[]
   isLoading: boolean
   onValueChange: (value: string) => void
 }
 
-export const SearchSelect = ({ searchPlaceholder, options, isLoading, onValueChange }: SearchSelectProps) => {
+export const SearchSelect = ({ className, searchPlaceholder, options, isLoading, onValueChange }: SearchSelectProps) => {
+  console.log('options:', options);
+  console.log('isLoading', isLoading);
+
   const [value, setValue] = useState<string>("");
   const [query, setQuery] = useState<string>("");
   const [matches, setMatches] = useState<string[]>(options);
@@ -37,6 +41,13 @@ export const SearchSelect = ({ searchPlaceholder, options, isLoading, onValueCha
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, []);
+
+  useEffect(() => {
+    setValue("");
+    setQuery("");
+    setMatches(options);
+    setSelectedElement(undefined);
+  }, [options]);
 
   useEffect(() => {
     onValueChange(value);
@@ -88,7 +99,7 @@ export const SearchSelect = ({ searchPlaceholder, options, isLoading, onValueCha
   };
 
   return (
-    <>
+    <div className={className}>
       <div className="search-bar-wrapper">
         <span className="codicon codicon-search search-icon" />
         <input
@@ -122,6 +133,6 @@ export const SearchSelect = ({ searchPlaceholder, options, isLoading, onValueCha
             )
           )}
         </div>
-    </>
+    </div>
   );
 };
