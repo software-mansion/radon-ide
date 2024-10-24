@@ -21,6 +21,8 @@ global.__RNIDE_onDebuggerReady = function () {
 };
 
 try{
+  // if debugger is already connected it will run "__RNIDE_onDebuggerReady"
+  // if not it will run "__RNIDE_onDebuggerReady" on execution context creation
   global.__RNIDE_onRuntimeLoaded(""); // the argument is required by CDP 
 }catch(e){
   // we ignore the error here because it means, debugger was not connected yet.
