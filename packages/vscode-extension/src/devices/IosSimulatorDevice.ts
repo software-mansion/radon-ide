@@ -279,9 +279,13 @@ export class IosSimulatorDevice extends DeviceBase {
 
     const regex = /ApplicationType = User;\s*[^{}]*?\bCFBundleIdentifier = "([^"]+)/g;
 
+    const matches = [];
     let match;
     while ((match = regex.exec(stdout)) !== null) {
-      const bundleID = match[1];
+      matches.push(match[1]);
+    }
+
+    const terminateApp = async (bundleID: string) => {
       // Terminate the app if it's running:
       try {
         await exec(
@@ -292,7 +296,13 @@ export class IosSimulatorDevice extends DeviceBase {
       } catch (e) {
         // terminate will exit with non-zero code when the app wasn't running. we ignore this error
       }
-    }
+    };
+
+    await Promise.all(
+      matches.map((bundleID) => {
+        return terminateApp(bundleID);
+      })
+    );
   }
 
   async launchWithBuild(build: IOSBuildResult) {
