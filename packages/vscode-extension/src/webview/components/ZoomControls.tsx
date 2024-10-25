@@ -8,6 +8,8 @@ import "./ZoomControls.css";
 const ZOOM_STEP = 0.05;
 const ZOOM_SELECT_NUMERIC_VALUES = [0.5, 0.6, 0.7, 0.8, 0.9, 1];
 export const DEVICE_DEFAULT_SCALE = 1 / 3;
+export const MIN_FIT_ZOOM_LEVEL = 0.4;
+export const FIT_MODE_WINDOW_HEIGHT_THRESHOLD = 470;
 
 type ZoomControlsProps = {
   zoomLevel: ZoomLevelType;
