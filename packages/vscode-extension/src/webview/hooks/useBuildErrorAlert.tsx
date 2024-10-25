@@ -57,7 +57,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     projectState.selectedDevice?.platform === DevicePlatform.Android
   ) {
     description =
-      "Your project does not have an android directory, configure custom build source, eas or use expo prebuild to generate missing files.";
+      'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
   }
 
   if (
@@ -65,7 +65,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     projectState.selectedDevice?.platform === DevicePlatform.IOS
   ) {
     description =
-      "Your project does not have an ios directory, configure custom build source, eas or use expo prebuild to generate missing files.";
+      'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
   }
 
   const buildErrorAlert = {

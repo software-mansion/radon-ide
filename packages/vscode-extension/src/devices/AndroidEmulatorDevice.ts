@@ -12,7 +12,7 @@ import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
-import { AppPermissionType, DeviceSettings } from "../common/Project";
+import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
@@ -79,7 +79,71 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }, DISPOSE_TIMEOUT);
   }
 
+  private async shouldUpdateLocale(newLocale: Locale) {
+    const locale = newLocale.replace("_", "-");
+    const { stdout } = await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "settings",
+      "get",
+      "system",
+      "system_locales",
+    ]);
+
+    // if user did not use the device before it might not have system_locales property
+    // as en-US is the default locale, used by the system, when no setting is provided
+    // we assume that no value in stdout is the same as en-US
+    if ((stdout ?? "en-US") === locale) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * This method changes device locale by modifying system_locales system setting.
+   */
+  private async changeLocale(newLocale: Locale): Promise<void> {
+    const locale = newLocale.replace("_", "-");
+
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "settings",
+      "put",
+      "system",
+      "system_locales",
+      locale,
+    ]);
+
+    // this is needed to make sure that changes will persist
+    await exec(ADB_PATH, ["-s", this.serial!, "shell", "sync"]);
+
+    // TODO:  Find a way to change or remove persist.sys.locale without root access. note: removing the whole
+    // data/property/persistent_properties file would also work as we persist device settings globally in Radon IDE
+    const { stdout } = await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "getprop",
+      "persist.sys.locale",
+    ]);
+
+    if (stdout) {
+      Logger.warn(
+        "Updating locale will not take effect as the device has altered locale via system settings which always takes precedence over the device setting the IDE uses."
+      );
+    }
+  }
+
   async changeSettings(settings: DeviceSettings) {
+    let shouldRestart = false;
+    if (await this.shouldUpdateLocale(settings.locale)) {
+      shouldRestart = true;
+      await this.changeLocale(settings.locale);
+    }
+
     await exec(ADB_PATH, [
       "-s",
       this.serial!,
@@ -126,10 +190,29 @@ export class AndroidEmulatorDevice extends DeviceBase {
         settings.location.latitude.toString(),
       ]);
     }
-    return false;
+    return shouldRestart;
   }
 
-  async bootDevice(settings: DeviceSettings) {
+  /**
+   * This method restarts the emulator process using SIGKILL signal.
+   * Should be used for the situations when quick reboot is necessary
+   * and when we don't care about the emulator's process state
+   */
+  private async forcefullyResetDevice() {
+    this.emulatorProcess?.kill(9);
+    await this.internalBootDevice();
+  }
+
+  async bootDevice(deviceSettings: DeviceSettings): Promise<void> {
+    await this.internalBootDevice();
+
+    let shouldRestart = await this.changeSettings(deviceSettings);
+    if (shouldRestart) {
+      await this.forcefullyResetDevice();
+    }
+  }
+
+  async internalBootDevice() {
     // this prevents booting device with the same AVD twice
     await ensureOldEmulatorProcessExited(this.avdId);
 
@@ -145,6 +228,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
         "-no-boot-anim",
         "-grpc-use-token",
         "-no-snapshot-save",
+        "-writable-system",
       ],
       { env: { ANDROID_AVD_HOME: avdDirectory } }
     );
@@ -173,8 +257,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
     });
 
     this.serial = await initPromise;
-
-    await this.changeSettings(settings);
   }
 
   async configureExpoDevMenu(packageName: string) {

@@ -80,11 +80,10 @@ class MyBreakpoint extends Breakpoint {
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
   private connection: WebSocket;
-  private absoluteProjectPath: string;
-  private projectPathAlias?: string;
+  private sourceMapAliases?: Array<[string, string]>;
   private threads: Array<Thread> = [];
-  private sourceMaps: Array<[string, string, SourceMapConsumer]> = [];
-
+  private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
+  private expoPreludeLineCount: number;
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
 
@@ -93,9 +92,9 @@ export class DebugAdapter extends DebugSession {
 
   constructor(configuration: DebugConfiguration) {
     super();
-    this.absoluteProjectPath = configuration.absoluteProjectPath;
-    this.projectPathAlias = configuration.projectPathAlias;
+    this.sourceMapAliases = configuration.sourceMapAliases;
     this.connection = new WebSocket(configuration.websocketAddress);
+    this.expoPreludeLineCount = configuration.expoPreludeLineCount;
 
     this.connection.on("open", () => {
       // the below catch handler is used to ignore errors coming from non critical CDP messages we
@@ -107,10 +106,7 @@ export class DebugAdapter extends DebugSession {
       this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
       this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(ignoreError);
       this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(ignoreError);
-      this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {});
-      this.sendCDPMessage("Runtime.evaluate", {
-        expression: "__RNIDE_onDebuggerConnected()",
-      });
+      this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {}).catch(ignoreError);
     });
 
     this.connection.on("close", () => {
@@ -150,7 +146,36 @@ export class DebugAdapter extends DebugSession {
             const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
             const sourceMap = JSON.parse(decodedData);
             const consumer = await new SourceMapConsumer(sourceMap);
-            this.sourceMaps.push([message.params.url, message.params.scriptId, consumer]);
+
+            // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
+            const isMainBundle = sourceMap.sources.includes("__prelude__");
+
+            if (isMainBundle) {
+              this.sendCDPMessage("Runtime.evaluate", {
+                expression: "__RNIDE_onDebuggerReady()",
+              });
+            }
+
+            // Expo env plugin has a bug that causes the bundle to include so-called expo prelude module named __env__
+            // which is not present in the source map. As a result, the line numbers are shifted by the amount of lines
+            // the __env__ module adds. If we detect that main bundle is loaded, but __env__ is not there, we use the provided
+            // expoPreludeLineCount which reflects the number of lines in __env__ module to offset the line numbers in the source map.
+            const bundleContainsExpoPrelude = sourceMap.sources.includes("__env__");
+            let lineOffset = 0;
+            if (isMainBundle && !bundleContainsExpoPrelude && this.expoPreludeLineCount > 0) {
+              Logger.debug(
+                "Expo prelude lines were detected and an offset was set to:",
+                this.expoPreludeLineCount
+              );
+              lineOffset = this.expoPreludeLineCount;
+            }
+
+            this.sourceMaps.push([
+              message.params.url,
+              message.params.scriptId,
+              consumer,
+              lineOffset,
+            ]);
             this.updateBreakpointsInSource(message.params.url, consumer);
           }
 
@@ -181,9 +206,16 @@ export class DebugAdapter extends DebugSession {
     // some logs may baypass that, especially when printed in initialization phase, so we
     // need to detect whether the wrapper has added the stack info or not
     // We check if there are more than 3 arguments, and if the last one is a number
+    // We filter out logs that start with __RNIDE_INTERNAL as those are messages
+    // used by IDE for tracking the app state and should not appear in the VSCode
+    // console.
     const argsLen = message.params.args.length;
     let output: OutputEvent;
-    if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
+    if (argsLen > 0 && message.params.args[0].value === "__RNIDE_INTERNAL") {
+      // We return here to avoid passing internal logs to the user debug console,
+      // but they will still be visible in metro log feed.
+      return;
+    } else if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP
       // the line and column numbers are 1-based
       const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args
@@ -254,6 +286,30 @@ export class DebugAdapter extends DebugSession {
     ]);
   }
 
+  private toAbsoluteFilePath(sourceMapPath: string) {
+    if (this.sourceMapAliases) {
+      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
+        if (sourceMapPath.startsWith(alias)) {
+          // URL may contain ".." fragments, so we want to resolve it to a proper absolute file path
+          return path.resolve(path.join(absoluteFilePath, sourceMapPath.slice(alias.length)));
+        }
+      }
+    }
+    return sourceMapPath;
+  }
+
+  private toSourceMapFilePath(sourceAbsoluteFilePath: string) {
+    if (this.sourceMapAliases) {
+      // we return the first alias from the list
+      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
+        if (absoluteFilePath.startsWith(absoluteFilePath)) {
+          return path.join(alias, path.relative(absoluteFilePath, sourceAbsoluteFilePath));
+        }
+      }
+    }
+    return sourceAbsoluteFilePath;
+  }
+
   private findOriginalPosition(
     scriptIdOrURL: string,
     lineNumber1Based: number,
@@ -264,7 +320,7 @@ export class DebugAdapter extends DebugSession {
     let sourceLine1Based = lineNumber1Based;
     let sourceColumn0Based = columnNumber0Based;
 
-    this.sourceMaps.forEach(([url, id, consumer]) => {
+    this.sourceMaps.forEach(([url, id, consumer, lineOffset]) => {
       // when we identify script by its URL we need to deal with a situation when the URL is sent with a different
       // hostname and port than the one we have registered in the source maps. The reason for that is that the request
       // that populates the source map (scriptParsed) is sent by metro, while the requests from breakpoints or logs
@@ -273,27 +329,23 @@ export class DebugAdapter extends DebugSession {
       if (id === scriptIdOrURL || compareIgnoringHost(url, scriptIdOrURL)) {
         scriptURL = url;
         const pos = consumer.originalPositionFor({
-          line: lineNumber1Based,
+          line: lineNumber1Based - lineOffset,
           column: columnNumber0Based,
         });
-        if (pos.source != null) {
+        if (pos.source !== null) {
           sourceURL = pos.source;
         }
-        if (pos.line != null) {
+        if (pos.line !== null) {
           sourceLine1Based = pos.line;
         }
-        if (pos.column != null) {
+        if (pos.column !== null) {
           sourceColumn0Based = pos.column;
         }
       }
     });
-    if (this.projectPathAlias) {
-      // URL may contain ".." fragments, so we want to resolve it to a proper absolute file path
-      sourceURL = path.resolve(sourceURL.replace(this.projectPathAlias, this.absoluteProjectPath));
-    }
 
     return {
-      sourceURL,
+      sourceURL: this.toAbsoluteFilePath(sourceURL),
       lineNumber1Based: sourceLine1Based,
       columnNumber0Based: sourceColumn0Based,
       scriptURL,
@@ -431,29 +483,19 @@ export class DebugAdapter extends DebugSession {
   }
 
   private toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
-    let genFileName = file;
-    if (this.projectPathAlias) {
-      // we first convert the file path to be relative to project:
-      const fileRelative = path.relative(this.absoluteProjectPath, file);
-      // no we append the project path alias that represents the root of the project
-      genFileName = path.join(this.projectPathAlias, fileRelative);
-    }
+    let sourceMapFilePath = this.toSourceMapFilePath(file);
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
-    this.sourceMaps.forEach(([sourceURL, scriptId, consumer]) => {
-      const sources = [];
-      consumer.eachMapping((mapping) => {
-        sources.push(mapping.source);
-      });
+    this.sourceMaps.forEach(([sourceURL, scriptId, consumer, lineOffset]) => {
       const pos = consumer.generatedPositionFor({
-        source: genFileName,
+        source: sourceMapFilePath,
         line: lineNumber1Based,
         column: columnNumber0Based,
         bias: SourceMapConsumer.LEAST_UPPER_BOUND,
       });
-      if (pos.line != null) {
+      if (pos.line !== null) {
         originalSourceURL = sourceURL;
-        position = pos;
+        position = { ...pos, line: pos.line + lineOffset };
       }
     });
     if (position.line === null) {
@@ -489,21 +531,21 @@ export class DebugAdapter extends DebugSession {
     // this method gets called after we are informed that a new script has been parsed. If we
     // had breakpoints set in that script, we need to let the runtime know about it
 
-    const pathsToUpdate = new Set<string>();
-    consumer.eachMapping((mapping) => {
-      if (this.breakpoints.has(mapping.source)) {
-        pathsToUpdate.add(mapping.source);
-      }
-    });
+    // the number of consumer mapping entries can be close to the number of symbols in the source file.
+    // we optimize the process by collecting unique source URLs which map to actual individual source files.
+    // note: apparently despite the TS types from the source-map library, mapping.source can be null
+    const uniqueSourceMapPaths = new Set<string>();
+    consumer.eachMapping((mapping) => mapping.source && uniqueSourceMapPaths.add(mapping.source));
 
-    pathsToUpdate.forEach((pathToUpdate) => {
-      const breakpoints = this.breakpoints.get(pathToUpdate) || [];
+    uniqueSourceMapPaths.forEach((sourceMapPath) => {
+      const absoluteFilePath = this.toAbsoluteFilePath(sourceMapPath);
+      const breakpoints = this.breakpoints.get(absoluteFilePath) || [];
       breakpoints.forEach(async (bp) => {
         if (bp.verified) {
           this.sendCDPMessage("Debugger.removeBreakpoint", { breakpointId: bp.getId() });
         }
         const newId = await this.setCDPBreakpoint(
-          pathToUpdate,
+          sourceMapPath,
           this.linesStartAt1 ? bp.line : bp.line + 1,
           this.columnsStartAt1 ? (bp.column || 1) - 1 : bp.column || 0
         );

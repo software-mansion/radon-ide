@@ -99,9 +99,9 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
           } catch {
             // Stream connection was dropped
             if (!cancelled) {
-              const tempSrc = img.src;
+              const srcCopy = img.src;
               img.src = NO_IMAGE_DATA;
-              img.src = tempSrc;
+              img.src = srcCopy;
             }
           }
         }

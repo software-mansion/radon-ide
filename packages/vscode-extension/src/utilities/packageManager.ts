@@ -10,15 +10,6 @@ export type PackageManagerInfo = {
   workspacePath?: string;
 };
 
-async function pathExists(p: string) {
-  try {
-    await fs.access(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function resolvePackageManager(): Promise<PackageManagerInfo | undefined> {
   function findWorkspace(appRoot: string) {
     let currentDir = appRoot;
@@ -81,7 +72,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
 
 async function isNpmModulesInstalled(workspacePath: string): Promise<boolean> {
   try {
-    const { stdout, stderr } = await command("npm ls --json", {
+    const { stdout } = await command("npm ls --json", {
       cwd: workspacePath,
       quietErrorsOnExit: true,
     });

@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
@@ -130,7 +130,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-location" />
             Set Device Location
           </DropdownMenu.Item>
-          {projectState.selectedDevice?.platform === DevicePlatform.IOS && <LocalizationItem />}
+          <LocalizationItem />
           <Label>Permissions</Label>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
@@ -227,22 +227,26 @@ const BiometricsItem = () => {
             onSelect={() => {
               project.sendBiometricAuthorization(true);
             }}>
-            <span className="codicon codicon-layout-sidebar-left" />
-            <div className="dropdown-menu-item-content">
-              Matching ID
-              <KeybindingInfo commandName="RNIDE.performBiometricAuthorization" />
-            </div>
+            <span className="dropdown-menu-item-wraper">
+              <span className="codicon codicon-layout-sidebar-left" />
+              <div className="dropdown-menu-item-content">
+                Matching ID
+                <KeybindingInfo commandName="RNIDE.performBiometricAuthorization" />
+              </div>
+            </span>
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
               project.sendBiometricAuthorization(false);
             }}>
-            <span className="codicon codicon-layout-sidebar-left" />
-            <div className="dropdown-menu-item-content">
-              Non-Matching ID
-              <KeybindingInfo commandName="RNIDE.performFailedBiometricAuthorization" />
-            </div>
+            <span className="dropdown-menu-item-wraper">
+              <span className="codicon codicon-layout-sidebar-left" />
+              <div className="dropdown-menu-item-content">
+                Non-Matching ID
+                <KeybindingInfo commandName="RNIDE.performFailedBiometricAuthorization" />
+              </div>
+            </span>
           </DropdownMenu.Item>
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>

@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import WebSocket from "ws";
 import { Disposable, Uri, workspace } from "vscode";
 import stripAnsi from "strip-ansi";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
@@ -8,7 +9,6 @@ import { extensionContext, getAppRootFolder } from "../utilities/extensionContex
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import WebSocket from "ws";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -46,9 +46,14 @@ type MetroEvent =
       transformedFileCount: number;
       totalFileCount: number;
     }
+  | { type: "RNIDE_expo_env_prelude_lines"; lineCount: number }
   | {
       type: "RNIDE_initialize_done";
       port: number;
+    }
+  | {
+      type: "RNIDE_watch_folders";
+      watchFolders: string[];
     }
   | {
       type: "client_log";
@@ -64,8 +69,10 @@ type MetroEvent =
 export class Metro implements Disposable {
   private subprocess?: ChildProcess;
   private _port = 0;
+  private _watchFolders: string[] | undefined = undefined;
   private startPromise: Promise<void> | undefined;
   private usesNewDebugger?: Boolean;
+  private _expoPreludeLineCount = 0;
 
   constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
 
@@ -78,6 +85,17 @@ export class Metro implements Disposable {
 
   public get port() {
     return this._port;
+  }
+
+  public get watchFolders() {
+    if (this._watchFolders === undefined) {
+      throw new Error("Attempting to read watchFolders before metro has started");
+    }
+    return this._watchFolders;
+  }
+
+  public get expoPreludeLineCount() {
+    return this._expoPreludeLineCount;
   }
 
   public dispose() {
@@ -219,10 +237,18 @@ export class Metro implements Disposable {
           }
 
           switch (event.type) {
+            case "RNIDE_expo_env_prelude_lines":
+              this._expoPreludeLineCount = event.lineCount;
+              Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineCount);
+              break;
             case "RNIDE_initialize_done":
               this._port = event.port;
               Logger.info(`Metro started on port ${this._port}`);
               resolve();
+              break;
+            case "RNIDE_watch_folders":
+              this._watchFolders = event.watchFolders;
+              Logger.info("Captured metro watch folders", this._watchFolders);
               break;
             case "bundle_build_failed":
               this.delegate.onBundleError();

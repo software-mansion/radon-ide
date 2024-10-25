@@ -46,11 +46,19 @@ button {
   color: var(--swm-default-text);
 }
 
+.dropdown-menu-item-wraper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .dropdown-menu-item-content {
   display: flex;
   width: 100%;
   flex-direction: row;
   justify-content: space-between;
+  align-items: center;
+  gap: 5px;
 }
 
 .dropdown-menu-label {

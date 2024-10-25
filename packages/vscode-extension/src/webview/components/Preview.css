@@ -20,6 +20,8 @@
   aspect-ratio: var(--phone-aspect-ratio);
   max-width: 100%;
   max-height: 100%;
+  min-height: 350px;
+  align-self: start;
   /* object-fit: scale-down; */
 }
 
