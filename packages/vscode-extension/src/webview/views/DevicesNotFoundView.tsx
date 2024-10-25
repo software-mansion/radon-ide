@@ -9,7 +9,6 @@ import { useDevices } from "../providers/DevicesProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
-import { vscode } from "../utilities/vscode";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 
 const firstIosDevice = iOSSupportedDevices[0];

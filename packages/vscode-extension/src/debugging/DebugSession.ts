@@ -4,7 +4,6 @@ import {
   Disposable,
   DebugSession as VscDebugSession,
 } from "vscode";
-import { getAppRootFolder } from "../utilities/extensionContext";
 import { Metro } from "../project/metro";
 
 export type DebugSessionDelegate = {

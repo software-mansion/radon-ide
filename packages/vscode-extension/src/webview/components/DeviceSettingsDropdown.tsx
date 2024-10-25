@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
@@ -130,7 +130,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-location" />
             Set Device Location
           </DropdownMenu.Item>
-          {projectState.selectedDevice?.platform === DevicePlatform.IOS && <LocalizationItem />}
+          <LocalizationItem />
           <Label>Permissions</Label>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
