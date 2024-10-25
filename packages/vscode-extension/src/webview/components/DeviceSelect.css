@@ -123,7 +123,7 @@
   justify-content: center;
   border-radius: 16px;
   color: var(--swm-default-text);
-  background-color: var(--swm-device-icon-background);
+  background-color: var(--swm-device-select-rich-item-icon);
 }
 
 .device-select-label {
