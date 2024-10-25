@@ -1,7 +1,7 @@
 ---
 id: configuration
 title: Configuring the IDE
-sidebar_position: 4
+sidebar_position: 1
 ---
 
 On this page we only discuss configuration that aims to deal with non-standard React Native project setups.
@@ -142,10 +142,12 @@ options.
 
 `customBuild.ios` and `customBuild.android` have following structure with
 optional keys that can be used independently:
+
 - `buildCommand` – string, specifies a command used for building.
 - `fingerprintCommand` – string, specifies a command used for creating fingerprint.
 
 Example:
+
 ```json
 {
   "version": "0.2.0",
@@ -167,11 +169,13 @@ Example:
 ```
 
 `eas.ios` and `eas.android` are objects taking keys:
+
 - `profile` – required, used for [selecting builds](https://docs.expo.dev/build/eas-json/#development-builds) suitable for running in simulators.
 - `buildUUID` – when specified, downloads build using its UUID. It uses latest
   build otherwise.
 
 Below is an example that replaces iOS and Android local builds with builds from EAS:
+
 ```json
 {
   "version": "0.2.0",
@@ -182,7 +186,7 @@ Below is an example that replaces iOS and Android local builds with builds from 
       "name": "Radon IDE panel",
       "eas": {
         "ios": {
-          "profile": "development",
+          "profile": "development"
         },
         "android": {
           "profile": "development",
@@ -193,7 +197,6 @@ Below is an example that replaces iOS and Android local builds with builds from 
   ]
 }
 ```
-
 
 ### Other settings
 

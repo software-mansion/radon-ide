@@ -1,7 +1,7 @@
 ---
 id: simulators
 title: Simulator System Images
-sidebar_position: 5
+sidebar_position: 4
 ---
 
 ## Managing System Images for Simulators and Emulators

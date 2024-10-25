@@ -1,10 +1,8 @@
 ---
-id: getting-started
-title: Getting started
+id: overview
+title: Overview
 sidebar_position: 1
 ---
-
-# Getting started
 
 ## Welcome to Radon IDE Beta 🎉
 

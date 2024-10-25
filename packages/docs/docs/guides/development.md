@@ -1,7 +1,7 @@
 ---
 id: development
 title: Development
-sidebar_position: 6
+sidebar_position: 2
 ---
 
 ## Repository structure and project architecture
@@ -96,18 +96,22 @@ They only depend on `react-native`. Components in `shared/navigation` additional
 depend on `expo-router` and `expo-icons`.
 
 To use them in the app:
+
 1. Add npm command in test app package.json
-    - for expo-router apps: `"copy-shared": "../shared/copy.sh expo-router ./shared"`. 
-    - for RN apps: `"copy-shared": "../shared/copy.sh bare ./shared"`.
+   - for expo-router apps: `"copy-shared": "../shared/copy.sh expo-router ./shared"`.
+   - for RN apps: `"copy-shared": "../shared/copy.sh bare ./shared"`.
 2. Run it: `npm run copy-shared`. This copies shared components to `./shared`.
 3. For RN apps, replace `App.tsx` with the `./shared/MainScreen.tsx` component.
-    ```ts
-    import {MainScreen} from './shared/MainScreen';
 
-    export default MainScreen;
-    ```
+   ```ts
+   import { MainScreen } from "./shared/MainScreen";
+
+   export default MainScreen;
+   ```
+
 4. For apps with expo router, replace `app/(tabs)/_layout.tsx` and
    `app/(tabs)/index.tsx` files.
+
    ```ts
    // contents of `app/(tabs)/_layout.ts`
    import { TabLayout } from "@/shared/navigation/TabLayout";
@@ -122,11 +126,11 @@ To use them in the app:
    export default MainScreen;
    ```
 
-  You can also use other components in `shared` (e.g. `Text`, `Button`,
-  `useScheme`) to theme the app.
-  
-  After updating shared components you need to copy them again by running
-  `npm run copy-shared` in every test app. 
+You can also use other components in `shared` (e.g. `Text`, `Button`,
+`useScheme`) to theme the app.
+
+After updating shared components you need to copy them again by running
+`npm run copy-shared` in every test app.
 
 `shared/copy.sh bare|expo-router DEST` script works by copying shared directory to `DEST`
 and removing `navigation` directory if `bare` argument is used.
