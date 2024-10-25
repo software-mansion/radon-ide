@@ -107,9 +107,6 @@ export class DebugAdapter extends DebugSession {
       this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(ignoreError);
       this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(ignoreError);
       this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {}).catch(ignoreError);
-      this.sendCDPMessage("Runtime.evaluate", {
-        expression: "__RNIDE_onDebuggerConnected()",
-      });
     });
 
     this.connection.on("close", () => {
@@ -152,6 +149,12 @@ export class DebugAdapter extends DebugSession {
 
             // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
             const isMainBundle = sourceMap.sources.includes("__prelude__");
+
+            if (isMainBundle) {
+              this.sendCDPMessage("Runtime.evaluate", {
+                expression: "__RNIDE_onDebuggerReady()",
+              });
+            }
 
             // Expo env plugin has a bug that causes the bundle to include so-called expo prelude module named __env__
             // which is not present in the source map. As a result, the line numbers are shifted by the amount of lines
@@ -203,9 +206,16 @@ export class DebugAdapter extends DebugSession {
     // some logs may baypass that, especially when printed in initialization phase, so we
     // need to detect whether the wrapper has added the stack info or not
     // We check if there are more than 3 arguments, and if the last one is a number
+    // We filter out logs that start with __RNIDE_INTERNAL as those are messages
+    // used by IDE for tracking the app state and should not appear in the VSCode
+    // console.
     const argsLen = message.params.args.length;
     let output: OutputEvent;
-    if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
+    if (argsLen > 0 && message.params.args[0].value === "__RNIDE_INTERNAL") {
+      // We return here to avoid passing internal logs to the user debug console,
+      // but they will still be visible in metro log feed.
+      return;
+    } else if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP
       // the line and column numbers are 1-based
       const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args
