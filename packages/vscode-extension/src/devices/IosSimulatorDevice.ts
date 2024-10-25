@@ -482,29 +482,26 @@ export async function listSimulators(
 
   const runtimes = await getAvailableIosRuntimes();
 
-  const simulators = await Promise.all(
-    devicesPerRuntime.map(async ([runtimeID, devices]) => {
+  const simulators = devicesPerRuntime
+    .map(([runtimeID, devices]) => {
       const runtime = runtimes.find((item) => item.identifier === runtimeID);
 
-      const deviceInfos = await Promise.all(
-        devices.map(async (device) => {
-          return {
-            id: `ios-${device.udid}`,
-            platform: DevicePlatform.IOS as const,
-            UDID: device.udid,
-            modelName: mapIdToModel(device.deviceTypeIdentifier),
-            systemName: runtime?.name ?? "Unknown",
-            displayName: device.name,
-            available: device.isAvailable ?? false,
-            deviceIdentifier: device.deviceTypeIdentifier,
-            runtimeInfo: runtime!,
-          };
-        })
-      );
-      return deviceInfos;
+      return devices.map((device) => {
+        return {
+          id: `ios-${device.udid}`,
+          platform: DevicePlatform.IOS as const,
+          UDID: device.udid,
+          modelName: mapIdToModel(device.deviceTypeIdentifier),
+          systemName: runtime?.name ?? "Unknown",
+          displayName: device.name,
+          available: device.isAvailable ?? false,
+          deviceIdentifier: device.deviceTypeIdentifier,
+          runtimeInfo: runtime!,
+        };
+      });
     })
-  );
-  return simulators.flat();
+    .flat();
+  return simulators;
 }
 
 export enum SimulatorDeviceSet {
