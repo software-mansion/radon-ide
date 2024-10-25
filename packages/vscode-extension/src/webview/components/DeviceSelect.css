@@ -114,7 +114,8 @@
   text-overflow: ellipsis;
   width: 185px;
 }
-.device-select-rich-item-icon, .device-select-rich-item-icon-selected {
+.device-select-rich-item-icon,
+.device-select-rich-item-icon-selected {
   width: 32px;
   height: 32px;
   display: flex;

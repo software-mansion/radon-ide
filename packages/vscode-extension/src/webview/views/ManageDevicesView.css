@@ -58,7 +58,8 @@
 .device-label:hover .device-subtitle {
   white-space: normal;
 }
-.device-icon, .device-icon-selected {
+.device-icon,
+.device-icon-selected {
   width: 32px;
   height: 32px;
   display: flex;
