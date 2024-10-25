@@ -115,8 +115,7 @@
   width: 185px;
 }
 
-.device-select-rich-item-icon,
-.device-select-rich-item-icon-selected {
+.device-select-rich-item-icon {
   width: 32px;
   height: 32px;
   display: flex;
@@ -125,10 +124,6 @@
   border-radius: 16px;
   color: var(--swm-default-text);
   background-color: var(--swm-device-icon-background);
-}
-
-.device-select-rich-item-icon-selected {
-  background-color: var(--swm-device-icon-background-selected);
 }
 
 .device-select-label {
