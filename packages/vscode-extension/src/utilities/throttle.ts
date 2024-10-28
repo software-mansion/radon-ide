@@ -28,3 +28,39 @@ export function throttle<T extends AnyFn>(func: T, limitMs: number): WithForce<T
     recentArgs = args;
   } as T;
 }
+
+type AsyncFn = (...args: any[]) => Promise<any>;
+
+/**
+ * Throttles the provided async function with the following restrictions:
+ * 1) Function will never be called more than once every `limitMs` milliseconds.
+ * 2) Function will never be called concurrently.
+ * 3) If called multiple times, it is guaranteed that the last call with the final
+ *   arguments will be executed.
+ */
+export function throttleAsync<T extends AsyncFn>(func: T, limitMs: number): T {
+  let timeout: NodeJS.Timeout | null = null;
+  let recentArgs: any;
+
+  return async function (...args: any) {
+    if (!timeout) {
+      const execute = () => {
+        const currentArgs = recentArgs;
+        const result = func(...recentArgs);
+        result
+          .catch(() => {})
+          .then(() => {
+            if (recentArgs === currentArgs) {
+              timeout = null;
+              recentArgs = null;
+            } else {
+              // we use 0 timeout here to avoid potentially infinite nesting
+              setTimeout(execute, 0);
+            }
+          });
+      };
+      timeout = setTimeout(execute, limitMs);
+    }
+    recentArgs = args;
+  } as T;
+}

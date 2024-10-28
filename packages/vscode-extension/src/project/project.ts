@@ -24,7 +24,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
-import { throttle } from "../utilities/throttle";
+import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
@@ -596,7 +596,7 @@ export class Project
     }
   };
 
-  private checkIfNativeChanged = throttle(async () => {
+  private checkIfNativeChanged = throttleAsync(async () => {
     if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
       const platform = this.projectState.selectedDevice.platform;
       const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
