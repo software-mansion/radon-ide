@@ -11,6 +11,7 @@ import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
+import { mapIdToModel } from "../utilities/consts";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -28,9 +29,10 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
     }
   };
 
+  const deviceModelName = mapIdToModel(deviceInfo.modelId);
   const deviceSubtitle =
-    deviceInfo.modelName !== deviceInfo.displayName
-      ? `${deviceInfo.modelName} - ${deviceInfo.systemName}`
+    deviceModelName !== deviceInfo.displayName
+      ? `${deviceModelName} - ${deviceInfo.systemName}`
       : deviceInfo.systemName;
 
   const { closeModal } = useModal();
@@ -120,10 +122,10 @@ function ManageDevicesView() {
   }, []);
 
   const iosDevices = devices.filter(
-    ({ platform, modelName }) => platform === DevicePlatform.IOS && modelName.length > 0
+    ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
   );
   const androidDevices = devices.filter(
-    ({ platform, modelName }) => platform === DevicePlatform.Android && modelName.length > 0
+    ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
   );
 
   const handleDeviceRename = (device: DeviceInfo) => {

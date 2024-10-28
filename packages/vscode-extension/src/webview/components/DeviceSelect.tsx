@@ -104,10 +104,10 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
   const selectedProjectDevice = projectState?.selectedDevice;
 
   const iosDevices = devices.filter(
-    ({ platform, modelName }) => platform === DevicePlatform.IOS && modelName.length > 0
+    ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
   );
   const androidDevices = devices.filter(
-    ({ platform, modelName }) => platform === DevicePlatform.Android && modelName.length > 0
+    ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
   );
 
   return (

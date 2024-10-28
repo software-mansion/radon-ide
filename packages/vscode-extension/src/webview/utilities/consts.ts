@@ -14,6 +14,7 @@ import { DevicePlatform } from "../../common/DeviceManager";
 
 export type DeviceProperties = {
   modelName: string;
+  modelId: string;
   platform: DevicePlatform;
   screenWidth: number;
   screenHeight: number;
@@ -32,6 +33,7 @@ export type DeviceProperties = {
 export const iOSSupportedDevices: DeviceProperties[] = [
   {
     modelName: "iPhone 15 Pro",
+    modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
     platform: DevicePlatform.IOS,
     screenWidth: 1179,
     screenHeight: 2556,
@@ -44,6 +46,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "iPhone SE (3rd generation)",
+    modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation",
     platform: DevicePlatform.IOS,
     screenWidth: 750,
     screenHeight: 1334,
@@ -59,6 +62,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
 export const AndroidSupportedDevices: DeviceProperties[] = [
   {
     modelName: "Google Pixel 9",
+    modelId: "pixel_9",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2424,
@@ -71,6 +75,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "Google Pixel 8",
+    modelId: "pixel_8",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -83,6 +88,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "Google Pixel 7",
+    modelId: "pixel_7",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -95,6 +101,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "Google Pixel 6a",
+    modelId: "pixel_6a",
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -106,3 +113,14 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     maskImage: pixel6amask,
   },
 ] as const;
+
+export function mapIdToModel(deviceId: string): string {
+  const device = iOSSupportedDevices
+    .concat(AndroidSupportedDevices)
+    .find((d) => d.modelId === deviceId);
+  if (device) {
+    return device.modelName;
+  } else {
+    throw new Error("Device id not recognized");
+  }
+}

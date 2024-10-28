@@ -17,7 +17,6 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
-import { mapIdToModel, mapModelToId } from "./supportedDevices";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -481,7 +480,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 }
 
 export async function createEmulator(
-  modelName: string,
+  modelId: string,
   displayName: string,
   systemImage: AndroidSystemImageInfo
 ) {
@@ -521,7 +520,7 @@ export async function createEmulator(
     ["hw.cpu.ncore", "4"],
     ["hw.dPad", "no"],
     ["hw.device.manufacturer", "Google"],
-    ["hw.device.name", mapModelToId(modelName)],
+    ["hw.device.name", modelId],
     ["hw.gps", "yes"],
     ["hw.gpu.enabled", "yes"],
     ["hw.gpu.mode", "auto"],
@@ -551,7 +550,7 @@ export async function createEmulator(
     id: `android-${avdId}`,
     platform: DevicePlatform.Android,
     avdId,
-    modelName: modelName,
+    modelId: modelId,
     systemName: systemImage.name,
     displayName: displayName,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
@@ -591,14 +590,13 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
         (image: AndroidSystemImageInfo) => image.location === systemImageDir
       )?.name;
 
-      const modelName = mapIdToModel(modelId);
       return {
         id: `android-${avdId}`,
         platform: DevicePlatform.Android,
         avdId,
-        modelName: modelName,
+        modelId: modelId,
         systemName: systemImageName ?? "Unknown",
-        displayName: displayName ?? modelName,
+        displayName: displayName,
         available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
       } as DeviceInfo;
     })

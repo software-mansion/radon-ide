@@ -488,7 +488,7 @@ function Preview({
   }, [project, openRebuildAlert, projectStatus]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelName === projectState?.selectedDevice?.modelName;
+    return sd.modelId === projectState?.selectedDevice?.modelId;
   });
 
   const shouldPreventTouchInteraction =

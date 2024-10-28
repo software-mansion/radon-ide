@@ -94,8 +94,8 @@ function DevicesNotFoundView() {
         return;
       }
 
-      const { modelName } = firstAndroidDevice;
-      await deviceManager.createAndroidDevice(modelName, modelName, newestImage);
+      const { modelId, modelName } = firstAndroidDevice;
+      await deviceManager.createAndroidDevice(modelId, modelName, newestImage);
     });
   }
 
@@ -112,12 +112,7 @@ function DevicesNotFoundView() {
         return;
       }
       const iOSDeviceType = firstRuntimeSupportedDevice(newestRuntime.supportedDeviceTypes);
-      await deviceManager.createIOSDevice(
-        iOSDeviceType!.name,
-        iOSDeviceType!.name,
-        iOSDeviceType!,
-        newestRuntime
-      );
+      await deviceManager.createIOSDevice(iOSDeviceType!, iOSDeviceType!.name, newestRuntime);
     });
   }
   return (

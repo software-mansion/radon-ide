@@ -12,7 +12,6 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
-import { mapIdToModel } from "./supportedDevices";
 
 interface SimulatorInfo {
   availability?: string;
@@ -522,11 +521,10 @@ export async function listSimulators(
           id: `ios-${device.udid}`,
           platform: DevicePlatform.IOS as const,
           UDID: device.udid,
-          modelName: mapIdToModel(device.deviceTypeIdentifier),
+          modelId: device.deviceTypeIdentifier,
           systemName: runtime?.name ?? "Unknown",
           displayName: device.name,
           available: device.isAvailable ?? false,
-          deviceIdentifier: device.deviceTypeIdentifier,
           runtimeInfo: runtime!,
         };
       });
@@ -541,13 +539,12 @@ export enum SimulatorDeviceSet {
 }
 
 export async function createSimulator(
-  modelName: string,
+  modelId: string,
   displayName: string,
-  deviceIdentifier: string,
   runtime: IOSRuntimeInfo,
   deviceSet: SimulatorDeviceSet
 ) {
-  Logger.debug(`Create simulator ${deviceIdentifier} with runtime ${runtime.identifier}`);
+  Logger.debug(`Create simulator ${modelId} with runtime ${runtime.identifier}`);
 
   let locationArgs: string[] = [];
   if (deviceSet === SimulatorDeviceSet.RN_IDE) {
@@ -561,7 +558,7 @@ export async function createSimulator(
     ...locationArgs,
     "create",
     displayName,
-    deviceIdentifier,
+    modelId,
     runtime.identifier,
   ]);
 
@@ -569,11 +566,10 @@ export async function createSimulator(
     id: `ios-${UDID}`,
     platform: DevicePlatform.IOS,
     UDID,
-    modelName: modelName,
+    modelId: modelId,
     systemName: runtime.name,
     displayName: displayName,
     available: true, // assuming if create command went through, it's available
-    deviceIdentifier: deviceIdentifier,
     runtimeInfo: runtime,
   } as IOSDeviceInfo;
 }

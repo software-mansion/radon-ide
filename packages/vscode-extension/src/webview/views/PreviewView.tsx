@@ -73,7 +73,7 @@ function PreviewView() {
   const isRunning = projectState.status === "running";
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelName === projectState?.selectedDevice?.modelName;
+    return sd.modelId === projectState?.selectedDevice?.modelId;
   });
 
   const { openModal } = useModal();
