@@ -1,16 +1,22 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
-import './SearchSelect.css';
-import { VSCodeProgressRing } from '@vscode/webview-ui-toolkit/react';
+import { ReactNode, useEffect, useRef, useState } from "react";
+import "./SearchSelect.css";
+import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 
 interface SearchSelectProps {
-  className?: string
-  searchPlaceholder?: string
-  options: string[]
-  isLoading: boolean
-  onValueChange: (value: string) => void
+  className?: string;
+  searchPlaceholder?: string;
+  options: string[];
+  isLoading: boolean;
+  onValueChange: (value: string) => void;
 }
 
-export const SearchSelect = ({ className, searchPlaceholder, options, isLoading, onValueChange }: SearchSelectProps) => {
+export const SearchSelect = ({
+  className,
+  searchPlaceholder,
+  options,
+  isLoading,
+  onValueChange,
+}: SearchSelectProps) => {
   const [value, setValue] = useState<string>("");
   const [query, setQuery] = useState<string>("");
   const [matches, setMatches] = useState<string[]>(options);
@@ -22,21 +28,23 @@ export const SearchSelect = ({ className, searchPlaceholder, options, isLoading,
     inputRef.current?.focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
 
-        if (e.key === 'ArrowDown') {
-          setSelectedElement((currSelectedElement) => 
-            currSelectedElement === undefined ? 0 : currSelectedElement + 1);
+        if (e.key === "ArrowDown") {
+          setSelectedElement((currSelectedElement) =>
+            currSelectedElement === undefined ? 0 : currSelectedElement + 1
+          );
         } else {
-          setSelectedElement((currSelectedElement) => 
-            currSelectedElement === undefined ? -1 : currSelectedElement - 1);
+          setSelectedElement((currSelectedElement) =>
+            currSelectedElement === undefined ? -1 : currSelectedElement - 1
+          );
         }
       }
     };
 
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
   useEffect(() => {
@@ -60,7 +68,7 @@ export const SearchSelect = ({ className, searchPlaceholder, options, isLoading,
     } else {
       const targetDiv = document.getElementById(`match-element-${selectedElement}`);
       if (targetDiv) {
-        targetDiv.scrollIntoView({ behavior: 'smooth' });
+        targetDiv.scrollIntoView({ behavior: "smooth" });
       }
       updateValue(matches[selectedElement], false);
     }
@@ -71,7 +79,7 @@ export const SearchSelect = ({ className, searchPlaceholder, options, isLoading,
     setMatches(query ? options.filter((opt) => findMatch(opt, query) !== null) : options);
   }, [query]);
 
-  // Performs greedy left-to-right pattern matching with holes in text. 
+  // Performs greedy left-to-right pattern matching with holes in text.
   // Returns null if match not found, otherwise returns an array of segments of indices matching the pattern.
   const findMatch = (text: string, pattern: string): [number, number][] | null => {
     if (!pattern.length) {
@@ -80,10 +88,13 @@ export const SearchSelect = ({ className, searchPlaceholder, options, isLoading,
 
     let patternPosition = 0;
     const matchedRanges: [number, number][] = [];
-    
+
     Array.from(text).forEach((c, index) => {
       if (patternPosition < pattern.length && c === pattern[patternPosition]) {
-        if (matchedRanges.length !== 0 && matchedRanges[matchedRanges.length - 1][1] === index - 1) {
+        if (
+          matchedRanges.length !== 0 &&
+          matchedRanges[matchedRanges.length - 1][1] === index - 1
+        ) {
           matchedRanges[matchedRanges.length - 1][1] += 1;
         } else {
           matchedRanges.push([index, index]);
@@ -107,22 +118,23 @@ export const SearchSelect = ({ className, searchPlaceholder, options, isLoading,
       return <span>{element}</span>;
     } else {
       const spanElements = [];
-      
+
       if (matchedRanges[0][0] > 0) {
         spanElements.push(<span>{element.substring(0, matchedRanges[0][0])}</span>);
       }
 
       matchedRanges.forEach(([from, to], index) => {
-        spanElements.push(<span className="match-highlighted">{element.substring(from, to + 1)}</span>);
+        spanElements.push(
+          <span className="match-highlighted">{element.substring(from, to + 1)}</span>
+        );
         if (to + 1 < element.length) {
-          const nextFrom = (index === matchedRanges.length-1) ? element.length : matchedRanges[index+1][0]; 
-          spanElements.push(<span>{element.substring(to+1, nextFrom)}</span>);
+          const nextFrom =
+            index === matchedRanges.length - 1 ? element.length : matchedRanges[index + 1][0];
+          spanElements.push(<span>{element.substring(to + 1, nextFrom)}</span>);
         }
       });
 
-      return (
-        <>{spanElements}</>
-      );
+      return <>{spanElements}</>;
     }
   };
 
@@ -135,32 +147,29 @@ export const SearchSelect = ({ className, searchPlaceholder, options, isLoading,
           ref={inputRef}
           type="string"
           value={value}
-          placeholder={ searchPlaceholder ?? "Input to search" }
+          placeholder={searchPlaceholder ?? "Input to search"}
           onChange={(e) => updateValue(e.target.value, true)}
         />
       </div>
-        <div 
-          className="matches-container"
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          { isLoading ? <div className="loading-spinner-container"><VSCodeProgressRing /></div> : (
-            matches.length > 0 ? (
-              matches.map((element, index) => (
-                <div
-                  key={`match-element-${index}`}
-                  id={`match-element-${index}`}
-                  className={`match-option ${
-                    selectedElement === index && "selected-match"
-                  }`}
-                  onClick={() => setSelectedElement(index)}>
-                  {getOptionWithHighlight(element)}
-                </div>
-              ))
-            ) : (
-              <div className="empty-matches">no entries found</div>
-            )
-          )}
-        </div>
+      <div className="matches-container" onMouseDown={(e) => e.preventDefault()}>
+        {isLoading ? (
+          <div className="loading-spinner-container">
+            <VSCodeProgressRing />
+          </div>
+        ) : matches.length > 0 ? (
+          matches.map((element, index) => (
+            <div
+              key={`match-element-${index}`}
+              id={`match-element-${index}`}
+              className={`match-option ${selectedElement === index && "selected-match"}`}
+              onClick={() => setSelectedElement(index)}>
+              {getOptionWithHighlight(element)}
+            </div>
+          ))
+        ) : (
+          <div className="empty-matches">no entries found</div>
+        )}
+      </div>
     </div>
   );
 };

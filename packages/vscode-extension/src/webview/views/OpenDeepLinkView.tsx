@@ -3,7 +3,7 @@ import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
 import { SearchSelect } from "../components/shared/SearchSelect";
 import Button from "../components/shared/Button";
-import './OpenDeepLinkView.css';
+import "./OpenDeepLinkView.css";
 
 export const OpenDeepLinkView = () => {
   const { project } = useProject();
@@ -32,8 +32,7 @@ export const OpenDeepLinkView = () => {
       onSubmit={(e) => {
         e.preventDefault();
         openDeepLink(url);
-      }}
-    >
+      }}>
       <SearchSelect
         className="deep-link-search-select"
         searchPlaceholder="Input Deep Link"
@@ -42,11 +41,7 @@ export const OpenDeepLinkView = () => {
         onValueChange={setUrl}
       />
       <div className="submit-button-container">
-        <Button 
-          className="submit-button" 
-          type="secondary" 
-          onClick={() => openDeepLink(url)}
-        >
+        <Button className="submit-button" type="secondary" onClick={() => openDeepLink(url)}>
           Open
         </Button>
       </div>
