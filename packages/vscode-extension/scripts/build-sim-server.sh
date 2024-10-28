@@ -6,13 +6,10 @@ cd "$(dirname "$0")/.."
 # take output directory from first argument or default to out - relative to the vscode-extension package location
 output_dir="${1:-out}"
 
-# take configuration from second argument or default to Debug
-configuration=${2:-Debug}
-
 submodule_status=$(git submodule status ../simulator-server)
 
 
-if [[ $submodule_status == -* || true ]]; then # submodule is not initialized
+if [[ $submodule_status == -* ]]; then # submodule is not initialized
 
 # get version of npm module
 latest_tag=$(git describe --tags --abbrev=0)
@@ -56,7 +53,7 @@ fi
 
 # execute the build from the simulator-server package
 # the build product location is printed by the build script as the very last line
-product_path=$("../simulator-server/scripts/build.sh" "$configuration" | tail -n 1)
+product_path=$("../simulator-server/scripts/build.sh" "Debug" | tail -n 1)
 
 # Check if the build was successful
 if [[ $? -ne 0 ]]; then
