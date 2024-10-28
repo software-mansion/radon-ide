@@ -30,6 +30,7 @@ import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { PlatformBuildCache } from "../builders/PlatformBuildCache";
+import { PanelLocation } from "../common/WorkspaceConfig";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -141,7 +142,15 @@ export class Project
     } else {
       this.updateProjectState({ status: "debuggerPaused" });
     }
-    commands.executeCommand("workbench.view.debug");
+
+    // we don't want to focus on debug side panel if it means hiding Radon IDE
+    const panelLocation = workspace
+      .getConfiguration("RadonIDE")
+      .get<PanelLocation>("panelLocation");
+
+    if (panelLocation === "tab") {
+      commands.executeCommand("workbench.view.debug");
+    }
   }
 
   onDebuggerResumed() {

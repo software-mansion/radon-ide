@@ -14,7 +14,7 @@ const Pricing = () => {
         <span className={styles.highlight}>
           the Beta version doesn't require purchasing any license
         </span>{" "}
-        and it's free for everyone. We expect the Beta period to <b>end in October 2024</b> after
+        and it's free for everyone. We expect the Beta period to <b>end in November 2024</b> after
         which we will require an Individual or Team license to use the tool. However, if you'd like
         to support the development and having more input into the development process (request
         specific features or prioritize fixes for specific issues), below we offer a Supporter's
