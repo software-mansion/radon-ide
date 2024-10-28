@@ -142,13 +142,13 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Select
           className="form-field"
           value={mapModelToId(deviceModelName!)}
-          onChange={(modeId: string) => {
-            const newPlatform = modeId.startsWith("com.apple") ? "ios" : "android";
+          onChange={(modelId: string) => {
+            const newPlatform = modelId.startsWith("com.apple") ? "ios" : "android";
             assertPlatform(newPlatform);
-            setDeviceModelName(mapIdToModel(modeId));
+            setDeviceModelName(mapIdToModel(modelId));
             setDevicePlatform(newPlatform);
             selectSystemName(undefined);
-            setDeviceModelId(modeId);
+            setDeviceModelId(modelId);
             setDisplayName(undefined);
             setIsDisplayNameValid(true);
           }}
