@@ -36,23 +36,17 @@ npm install
 ### 3. Prepare simulator server build
 
 Simulator server repository is not open sourced but we have a pre-build binaries published on the GitHub releases page.
-First, you need to navigate to the [releases page on GitHub](https://github.com/software-mansion/radon-ide/releases), open the recent release, and download the sim-server file from "Assets" section (the filename contains a git hash for build consistency):
-
-<img width="825" alt="download-sim-server" src="/img/docs/download_sim_server.png"/>
-
-Next, place the downloaded file under `packages/vscode-extension/dist`.
-
-Finally, run the following script inside `packages/vscode-extension` directory:
+There's a script that fetches the latest version of the binaries from the [releases page on GitHub](https://github.com/software-mansion/radon-ide/releases) – you can run it using the following command:
 
 ```bash
 npm run build:sim-server-debug
 ```
 
-In case of any errors, please read the output of this command before proceeding.
+Note that some changes in the extension may depend on changes made to the simulator server, so you occasionally may need to re-run this script, for example when switching git branches.
 
 ### 4. Open extension project in Visual Studio Code
 
-It is necessary that you open that exact folder rather than the whole repository, as it contains project specific run configuration for launching the extension in development mode.
+It is necessary that you open exacly the main extension folder rather than the whole repository, as it contains project specific run configuration for launching the extension in development mode.
 You can do it by opening new window in Visual Studio Code and using `File > Open Folder` option, then select `packages/vscode-extension`, or if you have vscode's command line tool installed you can open it using command:
 
 ```sh
@@ -97,7 +91,7 @@ depend on `expo-router` and `expo-icons`.
 
 To use them in the app:
 1. Add npm command in test app package.json
-    - for expo-router apps: `"copy-shared": "../shared/copy.sh expo-router ./shared"`. 
+    - for expo-router apps: `"copy-shared": "../shared/copy.sh expo-router ./shared"`.
     - for RN apps: `"copy-shared": "../shared/copy.sh bare ./shared"`.
 2. Run it: `npm run copy-shared`. This copies shared components to `./shared`.
 3. For RN apps, replace `App.tsx` with the `./shared/MainScreen.tsx` component.
@@ -124,9 +118,9 @@ To use them in the app:
 
   You can also use other components in `shared` (e.g. `Text`, `Button`,
   `useScheme`) to theme the app.
-  
+
   After updating shared components you need to copy them again by running
-  `npm run copy-shared` in every test app. 
+  `npm run copy-shared` in every test app.
 
 `shared/copy.sh bare|expo-router DEST` script works by copying shared directory to `DEST`
 and removing `navigation` directory if `bare` argument is used.

@@ -34,13 +34,8 @@ mkdir -p "$output_dir"
 # Get tag of simulator-server submodule
 sim_server_tag=$(git -C ../simulator-server describe --tags)
 
-echo "Downloading sim-server binaries for tag $sim_server_tag"
+echo "Downloading simulator-server binaries for tag $sim_server_tag"
 
-# Download Mac and Windows binaries using gh CLI and place them in the correcto location
-mac_binary_path="$output_dir/sim-server"
-gh release download $sim_server_tag -R software-mansion-labs/simulator-server -p simulator-server -O "$mac_binary_path"
-chmod +x "$mac_binary_path"
-
-win_binary_path="$output_dir/sim-server-executable.exe"
-gh release download $sim_server_tag -R software-mansion-labs/simulator-server -p simulator-server.exe -O "$win_binary_path"
-chmod +x "$win_binary_path"
+# Download simulator-server binaries using gh CLI and place them in the output directory with correct file mode
+gh release download $sim_server_tag -R software-mansion-labs/simulator-server -p "simulator-server*" -D "$output_dir"
+chmod +x "$output_dir/simulator-server*"
