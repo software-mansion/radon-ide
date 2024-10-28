@@ -115,12 +115,27 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
 ] as const;
 
 export function mapIdToModel(deviceId: string): string {
-  const device = iOSSupportedDevices
-    .concat(AndroidSupportedDevices)
-    .find((d) => d.modelId === deviceId);
+  let device = iOSSupportedDevices.find((d) => d.modelId === deviceId);
+  if (!device) {
+    device = AndroidSupportedDevices.find((d) => d.modelId === deviceId);
+  }
+
   if (device) {
     return device.modelName;
   } else {
     throw new Error("Device id not recognized");
+  }
+}
+
+export function mapModelToId(modelName: string): string {
+  let device = iOSSupportedDevices.find((d) => d.modelName === modelName);
+  if (!device) {
+    device = AndroidSupportedDevices.find((d) => d.modelName === modelName);
+  }
+
+  if (device) {
+    return device.modelId;
+  } else {
+    throw new Error("Model name not recognized");
   }
 }
