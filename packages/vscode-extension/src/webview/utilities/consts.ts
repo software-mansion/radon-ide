@@ -26,8 +26,8 @@ export type DeviceProperties = {
   maskImage: string;
 };
 
-// When adding a new device, ensure to append its model identifier
-// to the supportedDevices.ts in the extension folder.
+// Model identifiers for new devices are sourced from 'hw.device.name'
+// in config.ini for Android and 'deviceType' in device.plist for iOS.
 
 // iOS devices names should match supportedDeviceTypes inside the runtime
 export const iOSSupportedDevices: DeviceProperties[] = [
