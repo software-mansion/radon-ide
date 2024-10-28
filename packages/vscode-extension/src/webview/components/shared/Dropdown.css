@@ -10,7 +10,7 @@ button {
   padding: 4px;
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity;
+  will-change: transform, opacity;
   box-shadow: var(--swm-backdrop-shadow);
   max-height: calc(var(--radix-dropdown-menu-content-available-height) - 50px);
   overflow-y: auto;
