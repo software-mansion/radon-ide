@@ -4,14 +4,7 @@ import "./CreateDeviceView.css";
 import { useDevices } from "../providers/DevicesProvider";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
-import {
-  DeviceProperties,
-  iOSSupportedDevices,
-  AndroidSupportedDevices,
-  mapModelToId,
-  mapIdToModel,
-} from "../utilities/consts";
-import { DevicePlatform } from "../../common/DeviceManager";
+import { iOSSupportedDevices, AndroidSupportedDevices, mapIdToModel } from "../utilities/consts";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform } from "../providers/UtilsProvider";
 
@@ -20,24 +13,8 @@ interface CreateDeviceViewProps {
   onCancel: () => void;
 }
 
-function assertPlatform(platform: string): asserts platform is "ios" | "android" {
-  if (!(platform === "ios" || platform === "android")) {
-    throw new Error("Invalid platform specifier");
-  }
-}
-
 function useSupportedDevices() {
   const { errors } = useDependencies();
-
-  function buildSelections(item: DeviceProperties, platform: DevicePlatform) {
-    let prefix = "";
-    if (platform === DevicePlatform.IOS) {
-      prefix = "ios";
-    } else {
-      prefix = "android";
-    }
-    return { value: `${prefix}:${item.modelName}`, label: item.modelName };
-  }
 
   return [
     Platform.select({
@@ -45,7 +22,10 @@ function useSupportedDevices() {
         ? { label: "iOS – error, check diagnostics", items: [] }
         : {
             label: "iOS",
-            items: iOSSupportedDevices.map((device) => buildSelections(device, DevicePlatform.IOS)),
+            items: iOSSupportedDevices.map((device) => ({
+              value: device.modelId,
+              label: device.modelName,
+            })),
           },
       windows: { label: "", items: [] },
     }),
@@ -53,9 +33,10 @@ function useSupportedDevices() {
       ? { label: "Android – error, check diagnostics", items: [] }
       : {
           label: "Android",
-          items: AndroidSupportedDevices.map((device) =>
-            buildSelections(device, DevicePlatform.Android)
-          ),
+          items: AndroidSupportedDevices.map((device) => ({
+            value: device.modelId,
+            label: device.modelName,
+          })),
         },
   ];
 }
@@ -141,14 +122,12 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Label>Device Type</Label>
         <Select
           className="form-field"
-          value={mapModelToId(deviceModelName!)}
+          value={deviceModelId ?? ""}
           onChange={(modelId: string) => {
-            const newPlatform = modelId.startsWith("com.apple") ? "ios" : "android";
-            assertPlatform(newPlatform);
+            setDevicePlatform(modelId.startsWith("com.apple") ? "ios" : "android");
             setDeviceModelName(mapIdToModel(modelId));
-            setDevicePlatform(newPlatform);
-            selectSystemName(undefined);
             setDeviceModelId(modelId);
+            selectSystemName(undefined);
             setDisplayName(undefined);
             setIsDisplayNameValid(true);
           }}

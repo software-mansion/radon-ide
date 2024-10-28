@@ -126,16 +126,3 @@ export function mapIdToModel(deviceId: string): string {
     throw new Error("Device id not recognized");
   }
 }
-
-export function mapModelToId(modelName: string): string {
-  let device = iOSSupportedDevices.find((d) => d.modelName === modelName);
-  if (!device) {
-    device = AndroidSupportedDevices.find((d) => d.modelName === modelName);
-  }
-
-  if (device) {
-    return device.modelId;
-  } else {
-    throw new Error("Model name not recognized");
-  }
-}
