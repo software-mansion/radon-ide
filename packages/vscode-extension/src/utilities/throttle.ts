@@ -54,8 +54,13 @@ export function throttleAsync<T extends AsyncFn>(func: T, limitMs: number): T {
               timeout = null;
               recentArgs = null;
             } else {
-              // we use 0 timeout here to avoid potentially infinite nesting
-              setTimeout(execute, 0);
+              // if new arguments were provided while the function was executing,
+              // we need to run it again to ensure the last call is executed.
+              // we use setTimeout to avoid potentially infinite recursion, and
+              // to ensure the function is not run more often than once every
+              // `limitMs` milliseconds, we schedule it to run after the provided
+              // limit.
+              setTimeout(execute, limitMs);
             }
           });
       };
