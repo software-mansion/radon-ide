@@ -4,35 +4,36 @@ title: User Interface
 sidebar_position: 4
 ---
 
+## Overview
+
 After [launching](/docs/getting-started/launching) the the Radon IDE panel the user interface should look as follows:
 
-<img width="600" src="/img/docs/ide_user_interface.png"/>
+<img width="600" src="/img/docs/ide_user_interface.png" />
 
 1. **Back button** - goes to the previous URL route in the navigation history.
 2. **Reload button** - reloads the JavaScript bundle from Metro bundler. Hovering over the reload button reveals an arrow which allows for more granular reload options like:
 
-    - *Reload JS* - reloads the JavaScript bundle from Metro bundler,
-    - *Restart app process* - closes and reopens the application,
-    - *Reinstall app* - reinstalls the application from the device,
-    - *Clean rebuild* - resets metro cache, reboots the device, and reinstalls the application.
+   - _Reload JS_ - reloads the JavaScript bundle from Metro bundler,
+   - _Restart app process_ - closes and reopens the application,
+   - _Reinstall app_ - reinstalls the application from the device,
+   - _Clean rebuild_ - resets metro cache, reboots the device, and reinstalls the application.
 
-3. **Go to main screen button** - opens the default navigation URL.
+3. **Go to main screen button** - navigates to the `/` route.
 4. **URL select** - allows to quickly visit recently used and all visited navigation URLs.
-5. **Open logs** - opens the with the application logs.
-6. **Settings** - allows to adjust the Radon IDE panel settings
+5. **Open logs** - opens the VSCode debug console.
+6. **Settings** - allows to adjust the Radon IDE panel settings.
 7. **Zoom controls** - hovering over the area reveals the zooms controls which allow to adjust how zoomed the device preview should be. You can choose one of the predefined values or use the plus and minus magnifier buttons to adjust the zoom manually.
-
-<img width="400" src="/img/docs/ide_zoom_controls.png" />
-
-8. **Device preview** - the preview of the running iOS simulator or Android emulator
-9. **Element inspector** - enabling this option and clicking on the preview opens the line of code where the highlighted component is defined.
-10. **Manage devices dropdown** - allows to create and delete devices used in the Radon IDE preview
-11. **Report issue** - opens a page in the Radon IDE GitHub repository where you can submit issue reports and suggest features
-12. **Device settings** - allows to adjust the device settings like 
+   <img width="400" src="/img/docs/ide_zoom_controls.png" />
+8. **Device preview** - the preview of the running iOS simulator or Android emulator.
+9. **Element inspector** - enabling element inspector and clicking on the preview opens the line of code where the highlighted component is defined. Right-clicking on the device preview allows you to select components directly from the React tree.
+10. **Manage devices** - allows to create, delete, and select devices currently used in the Radon IDE preview.
+    <img width="250" src="/img/docs/ide_manage_devices.png" />
+11. **Report issue** - opens a page in the Radon IDE GitHub repository where you can submit issue reports and suggest features.
+12. **Device settings** - allows to adjust the device settings like device appearance, location, permissions, and text size.
+    <img width="250" src="/img/docs/ide_device_settings.png" />
 
 ## Theme
 
-Radon IDE theme automatically changes the to the currently used theme in VSCode
+<img width="600" src="/img/docs/ide_theme.png" />
 
-Radon IDE supports both light and dark theme.
-
+Radon IDE supports both light and dark theme and automatically adjust the theme to the currently used theme type in VSCode.
