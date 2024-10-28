@@ -81,7 +81,7 @@ function renderDevices(
           value={device.id}
           key={device.id}
           icon={<span className="codicon codicon-device-mobile" />}
-          title={device.deviceName}
+          title={device.displayName}
           subtitle={device.systemName}
           disabled={!device.available}
           isSelected={device.id === selectedProjectDevice?.id}

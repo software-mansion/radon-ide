@@ -21,7 +21,7 @@ interface SimulatorInfo {
   name: string;
   udid: string;
   version?: string;
-  deviceName: string;
+  displayName: string;
   availabilityError?: string;
   type?: "simulator" | "device" | "catalyst";
   booted?: boolean;
@@ -443,7 +443,7 @@ export async function removeIosRuntimes(runtimeIDs: string[]) {
   return Promise.all(removalPromises);
 }
 
-export async function renameIosSimulator(udid: string | undefined, newDeviceName: string) {
+export async function renameIosSimulator(udid: string | undefined, newDisplayName: string) {
   if (!udid) {
     return;
   }
@@ -454,7 +454,7 @@ export async function renameIosSimulator(udid: string | undefined, newDeviceName
     getOrCreateDeviceSet(udid),
     "rename",
     udid,
-    newDeviceName,
+    newDisplayName,
   ]);
 }
 
@@ -524,7 +524,7 @@ export async function listSimulators(
           UDID: device.udid,
           modelName: mapIdToModel(device.deviceTypeIdentifier),
           systemName: runtime?.name ?? "Unknown",
-          deviceName: device.name,
+          displayName: device.name,
           available: device.isAvailable ?? false,
           deviceIdentifier: device.deviceTypeIdentifier,
           runtimeInfo: runtime!,
@@ -542,7 +542,7 @@ export enum SimulatorDeviceSet {
 
 export async function createSimulator(
   modelName: string,
-  deviceName: string,
+  displayName: string,
   deviceIdentifier: string,
   runtime: IOSRuntimeInfo,
   deviceSet: SimulatorDeviceSet
@@ -560,7 +560,7 @@ export async function createSimulator(
     "simctl",
     ...locationArgs,
     "create",
-    deviceName,
+    displayName,
     deviceIdentifier,
     runtime.identifier,
   ]);
@@ -571,7 +571,7 @@ export async function createSimulator(
     UDID,
     modelName: modelName,
     systemName: runtime.name,
-    deviceName: deviceName,
+    displayName: displayName,
     available: true, // assuming if create command went through, it's available
     deviceIdentifier: deviceIdentifier,
     runtimeInfo: runtime,

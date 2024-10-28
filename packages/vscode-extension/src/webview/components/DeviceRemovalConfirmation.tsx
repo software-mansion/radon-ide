@@ -27,7 +27,7 @@ function DeviceRemovalConfirmation({
   return (
     <div className="device-removal-wrapper">
       <h2 className="device-removal-title">
-        Are you sure you want to remove the <i>{deviceInfo.deviceName}</i> device?
+        Are you sure you want to remove the <i>{deviceInfo.displayName}</i> device?
       </h2>
       <p className="device-removal-subtitle">This action cannot be undone.</p>
       <div className="device-removal-button-group">

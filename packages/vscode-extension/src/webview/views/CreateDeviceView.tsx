@@ -59,7 +59,7 @@ function useSupportedDevices() {
 }
 
 export const MAX_DEVICE_NAME_LENGTH = 30;
-export function formatDeviceName(name: string) {
+export function formatDisplayName(name: string) {
   const singleSpaced = name.replace(/\s+/g, " ");
   return singleSpaced.replace(/[^a-zA-Z0-9 _-]/g, "");
 }
@@ -67,9 +67,9 @@ export function formatDeviceName(name: string) {
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [deviceModel, setDeviceModel] = useState<string | undefined>(undefined);
   const [devicePlatform, setDevicePlatform] = useState<"ios" | "android" | undefined>(undefined);
-  const [deviceName, setDeviceName] = useState<string | undefined>(undefined);
+  const [displayName, setDisplayName] = useState<string | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
-  const [isDeviceNameValid, setIsDeviceNameValid] = useState(true);
+  const [isDisplayNameValid, setIsDisplayNameValid] = useState(true);
   const [loading, setLoading] = useState<boolean>(false);
 
   const supportedDevices = useSupportedDevices();
@@ -80,7 +80,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   }, []);
 
   const platformSelected = !!deviceModel && !!devicePlatform;
-  const createDisabled = loading || !deviceModel || !selectedSystemName || !isDeviceNameValid;
+  const createDisabled = loading || !deviceModel || !selectedSystemName || !isDisplayNameValid;
 
   const systemImagesOptions =
     platformSelected && devicePlatform === "ios"
@@ -108,27 +108,32 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           return;
         }
         const iOSDeviceType = runtime.supportedDeviceTypes.find(({ name }) => name === deviceModel);
-        if (!iOSDeviceType || !deviceModel || !deviceName) {
+        if (!iOSDeviceType || !deviceModel || !displayName) {
           return;
         }
-        await deviceManager.createIOSDevice(deviceModel, deviceName.trim(), iOSDeviceType, runtime);
+        await deviceManager.createIOSDevice(
+          deviceModel,
+          displayName.trim(),
+          iOSDeviceType,
+          runtime
+        );
       } else {
         const systemImage = androidImages.find((image) => image.location === selectedSystemName);
 
-        if (!systemImage || !deviceModel || !deviceName) {
+        if (!systemImage || !deviceModel || !displayName) {
           return;
         }
-        await deviceManager.createAndroidDevice(deviceModel, deviceName.trim(), systemImage);
+        await deviceManager.createAndroidDevice(deviceModel, displayName.trim(), systemImage);
       }
     } finally {
       onCreate();
     }
   }
 
-  const handleDeviceNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const text = formatDeviceName(event.target.value);
-    setDeviceName(text);
-    setIsDeviceNameValid(0 < text.length && text.length <= MAX_DEVICE_NAME_LENGTH);
+  const handleDisplayNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const text = formatDisplayName(event.target.value);
+    setDisplayName(text);
+    setIsDisplayNameValid(0 < text.length && text.length <= MAX_DEVICE_NAME_LENGTH);
   };
 
   return (
@@ -144,8 +149,8 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
             setDeviceModel(newModelName);
             setDevicePlatform(newPlatform);
             selectSystemName(undefined);
-            setDeviceName("");
-            setIsDeviceNameValid(true);
+            setDisplayName("");
+            setIsDisplayNameValid(true);
           }}
           items={supportedDevices}
           placeholder="Choose device type..."
@@ -163,7 +168,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
             value={selectedSystemName ?? ""}
             onChange={(newValue) => {
               selectSystemName(newValue);
-              setDeviceName(deviceModel);
+              setDisplayName(deviceModel);
             }}
             items={systemImagesOptions}
             placeholder="Select device system image..."
@@ -180,15 +185,15 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           <span>Name</span>
         </Label>
         <input
-          value={deviceName}
+          value={displayName}
           className="device-name-input"
-          style={isDeviceNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
+          style={isDisplayNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
           type="string"
-          onChange={handleDeviceNameChange}
+          onChange={handleDisplayNameChange}
           disabled={!selectedSystemName}
         />
       </div>
-      {!isDeviceNameValid && (
+      {!isDisplayNameValid && (
         <div className="submit-rejection-message">
           Make sure that the custom name is between 1 and {MAX_DEVICE_NAME_LENGTH} characters long.
         </div>
