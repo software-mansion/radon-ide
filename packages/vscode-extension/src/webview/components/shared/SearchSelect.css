@@ -56,7 +56,6 @@
 }
 
 .empty-matches {
-  background-color: var(--deep-link-history-selected-item-background);
   width: 100%;
   height: 100%;
   display: flex;

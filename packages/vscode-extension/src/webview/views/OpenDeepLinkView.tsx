@@ -3,9 +3,8 @@ import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
 import { SearchSelect } from "../components/shared/SearchSelect";
 import Button from "../components/shared/Button";
+import './OpenDeepLinkView.css';
 
-// TODO:
-// 2. EXPORT TO REUSABLE COMPONENT AND USE IN LOCALIZATION MODAL.
 export const OpenDeepLinkView = () => {
   const { project } = useProject();
   const { closeModal } = useModal();
@@ -16,7 +15,6 @@ export const OpenDeepLinkView = () => {
   useEffect(() => {
     (async () => {
       const historyFromCache = await project.getDeepLinksHistory();
-      // await new Promise<void>((res, rej) => setTimeout(() => res(), 5000));
       setHistory(historyFromCache);
     })();
   }, []);

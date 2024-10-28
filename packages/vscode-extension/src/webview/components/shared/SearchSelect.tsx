@@ -11,9 +11,6 @@ interface SearchSelectProps {
 }
 
 export const SearchSelect = ({ className, searchPlaceholder, options, isLoading, onValueChange }: SearchSelectProps) => {
-  console.log('options:', options);
-  console.log('isLoading', isLoading);
-
   const [value, setValue] = useState<string>("");
   const [query, setQuery] = useState<string>("");
   const [matches, setMatches] = useState<string[]>(options);
@@ -53,11 +50,6 @@ export const SearchSelect = ({ className, searchPlaceholder, options, isLoading,
     onValueChange(value);
   }, [value]);
 
-  const updateValue = (newValue: string, updateQuery: boolean) => {
-    setValue(newValue);
-    updateQuery && setQuery(newValue);
-  };
-
   useEffect(() => {
     if (selectedElement === undefined) {
       return;
@@ -76,24 +68,60 @@ export const SearchSelect = ({ className, searchPlaceholder, options, isLoading,
 
   useEffect(() => {
     setSelectedElement(undefined);
-    setMatches(query ? options.filter((opt) => opt.includes(query)) : options);
+    setMatches(query ? options.filter((opt) => findMatch(opt, query) !== null) : options);
   }, [query]);
 
-  const getOptionWithHighlight = (element: string): ReactNode => {
-    const queryPosition = element.indexOf(query);
+  // Performs greedy left-to-right pattern matching with holes in text. 
+  // Returns null if match not found, otherwise returns an array of segments of indices matching the pattern.
+  const findMatch = (text: string, pattern: string): [number, number][] | null => {
+    if (!pattern.length) {
+      return [];
+    }
 
-    if (queryPosition === -1) {
+    let patternPosition = 0;
+    const matchedRanges: [number, number][] = [];
+    
+    Array.from(text).forEach((c, index) => {
+      if (patternPosition < pattern.length && c === pattern[patternPosition]) {
+        if (matchedRanges.length !== 0 && matchedRanges[matchedRanges.length - 1][1] === index - 1) {
+          matchedRanges[matchedRanges.length - 1][1] += 1;
+        } else {
+          matchedRanges.push([index, index]);
+        }
+        patternPosition++;
+      }
+    });
+
+    return patternPosition === pattern.length ? matchedRanges : null;
+  };
+
+  const updateValue = (newValue: string, updateQuery: boolean) => {
+    setValue(newValue);
+    updateQuery && setQuery(newValue);
+  };
+
+  const getOptionWithHighlight = (element: string): ReactNode => {
+    const matchedRanges = findMatch(element, query);
+
+    if (matchedRanges === null || matchedRanges.length === 0) {
       return <span>{element}</span>;
     } else {
-      const [left, right] = [queryPosition, queryPosition + query.length];
+      const spanElements = [];
+      
+      if (matchedRanges[0][0] > 0) {
+        spanElements.push(<span>{element.substring(0, matchedRanges[0][0])}</span>);
+      }
+
+      matchedRanges.forEach(([from, to], index) => {
+        spanElements.push(<span className="match-highlighted">{element.substring(from, to + 1)}</span>);
+        if (to + 1 < element.length) {
+          const nextFrom = (index === matchedRanges.length-1) ? element.length : matchedRanges[index+1][0]; 
+          spanElements.push(<span>{element.substring(to+1, nextFrom)}</span>);
+        }
+      });
+
       return (
-        <>
-          <span>
-            {element.substring(0, left)}
-            <span className="match-highlighted">{element.substring(left, right)}</span>
-            {element.substring(right)}
-          </span>
-        </>
+        <>{spanElements}</>
       );
     }
   };
