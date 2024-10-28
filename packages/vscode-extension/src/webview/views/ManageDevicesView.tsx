@@ -11,7 +11,7 @@ import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
-import { mapIdToModel } from "../utilities/consts";
+import { iOSSupportedDevices, AndroidSupportedDevices } from "../utilities/consts";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -29,7 +29,9 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
     }
   };
 
-  const deviceModelName = mapIdToModel(deviceInfo.modelId);
+  const deviceModelName = iOSSupportedDevices.concat(AndroidSupportedDevices).find((device) => {
+    return device.modelId === deviceInfo.modelId;
+  })?.modelId;
   const deviceSubtitle =
     deviceModelName !== deviceInfo.displayName
       ? `${deviceModelName} - ${deviceInfo.systemName}`

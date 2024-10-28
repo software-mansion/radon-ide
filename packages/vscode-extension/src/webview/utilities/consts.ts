@@ -113,14 +113,3 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     maskImage: pixel6amask,
   },
 ] as const;
-
-export function mapIdToModel(deviceId: string): string {
-  const device = iOSSupportedDevices
-    .concat(AndroidSupportedDevices)
-    .find((d) => d.modelId === deviceId);
-  if (device) {
-    return device.modelName;
-  } else {
-    throw new Error("Device id not recognized");
-  }
-}
