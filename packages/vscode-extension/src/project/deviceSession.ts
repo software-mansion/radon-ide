@@ -254,7 +254,7 @@ export class DeviceSession implements Disposable {
   }
 
   public sendPaste(text: string) {
-    this.device.sendPaste(text);
+    return this.device.sendPaste(text);
   }
 
   public inspectElementAt(
