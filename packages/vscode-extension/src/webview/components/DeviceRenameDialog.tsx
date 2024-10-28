@@ -15,7 +15,7 @@ function DeviceRenameDialog({
   deviceInfo: DeviceInfo;
   onClose: () => void;
 }) {
-  const [deviceName, setDeviceName] = useState<string>(deviceInfo.displayName);
+  const [deviceName, setDeviceName] = useState<string>(deviceInfo.deviceName);
   const [isDeviceNameValid, setIsDeviceNameValid] = useState(true);
   const { deviceManager } = useDevices();
   const { project } = useProject();
@@ -46,7 +46,7 @@ function DeviceRenameDialog({
           className="device-name-input"
           style={isDeviceNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
           type="string"
-          defaultValue={deviceInfo.displayName}
+          defaultValue={deviceInfo.deviceName}
           onChange={handleDeviceNameChange}
         />
         {!isDeviceNameValid && (
@@ -70,7 +70,7 @@ function DeviceRenameDialog({
             try {
               await deviceManager.renameDevice(deviceInfo, newDeviceName);
             } finally {
-              deviceInfo.displayName = newDeviceName;
+              deviceInfo.deviceName = newDeviceName;
               project.updateSelectedDevice(deviceInfo);
               onClose();
             }

@@ -482,7 +482,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
 export async function createEmulator(
   modelName: string,
-  displayName: string,
+  deviceName: string,
   systemImage: AndroidSystemImageInfo
 ) {
   const avdDirectory = getOrCreateAvdDirectory();
@@ -504,7 +504,7 @@ export async function createEmulator(
     ["AvdId", avdId],
     ["PlayStore.enabled", "true"],
     ["abi.type", getNativeABI()],
-    ["avd.ini.displayname", displayName],
+    ["avd.ini.displayname", deviceName],
     ["avd.ini.encoding", "UTF-8"],
     ["disk.dataPartition.size", "6442450944"],
     ["fastboot.chosenSnapshotFile", ""],
@@ -553,7 +553,7 @@ export async function createEmulator(
     avdId,
     modelName: modelName,
     systemName: systemImage.name,
-    displayName: displayName,
+    deviceName: deviceName,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
   } as DeviceInfo;
 }
@@ -585,22 +585,20 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
   return Promise.all(
     avdIds.map(async (avdId) => {
       const avdConfigPath = path.join(avdDirectory, `${avdId}.avd`, "config.ini");
-      const { deviceName, displayName, systemImageDir } = await parseAvdConfigIniFile(
-        avdConfigPath
-      );
+      const { deviceName, modelId, systemImageDir } = await parseAvdConfigIniFile(avdConfigPath);
 
       const systemImageName = systemImages.find(
         (image: AndroidSystemImageInfo) => image.location === systemImageDir
       )?.name;
 
-      const modelName = mapIdToModel(deviceName);
+      const modelName = mapIdToModel(modelId);
       return {
         id: `android-${avdId}`,
         platform: DevicePlatform.Android,
         avdId,
         modelName: modelName,
         systemName: systemImageName ?? "Unknown",
-        displayName: displayName ?? modelName,
+        deviceName: deviceName ?? modelName,
         available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
       } as DeviceInfo;
     })
@@ -674,27 +672,27 @@ async function parseAvdConfigIniFile(filePath: string) {
   const content = await fs.promises.readFile(filePath, "utf-8");
 
   let deviceName: string | undefined;
-  let displayName: string | undefined;
+  let modelId: string | undefined;
   let systemImageDir: string | undefined;
   content.split("\n").forEach((line: string) => {
     const [key, value] = line.split("=");
     switch (key) {
-      case "hw.device.name":
+      case "avd.ini.displayname":
         deviceName = value;
         break;
-      case "avd.ini.displayname":
-        displayName = value;
+      case "hw.device.name":
+        modelId = value;
         break;
       case "image.sysdir.1":
         systemImageDir = value.includes(ANDROID_HOME) ? value : path.join(ANDROID_HOME, value);
         break;
     }
   });
-  if (!deviceName || !systemImageDir || !displayName) {
+  if (!deviceName || !modelId || !systemImageDir) {
     throw new Error(`Couldn't parse AVD ${filePath}`);
   }
 
-  return { deviceName, displayName, systemImageDir };
+  return { deviceName, modelId, systemImageDir };
 }
 
 async function parseAvdIniFile(filePath: string) {

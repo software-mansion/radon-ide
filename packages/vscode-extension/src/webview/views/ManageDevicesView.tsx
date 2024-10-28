@@ -29,7 +29,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
   };
 
   const deviceSubtitle =
-    deviceInfo.modelName !== deviceInfo.displayName
+    deviceInfo.modelName !== deviceInfo.deviceName
       ? `${deviceInfo.modelName} - ${deviceInfo.systemName}`
       : deviceInfo.systemName;
 
@@ -50,7 +50,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
       </div>
       <div className="device-label">
         <div className="device-title">
-          {isSelected ? <b>{deviceInfo.displayName}</b> : deviceInfo.displayName}
+          {isSelected ? <b>{deviceInfo.deviceName}</b> : deviceInfo.deviceName}
         </div>
         <div className="device-subtitle">{deviceSubtitle}</div>
       </div>
