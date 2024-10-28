@@ -24,7 +24,7 @@ IDE also automatically stops at runtime exceptions showing you the exact line of
   <source src="/video/3_sztudio_debugger.mp4" type="video/mp4"/>
 </video>
 
-## URL bar (currently supports expo-router only)
+## Router integration
 
 The Radon IDE integrates with your deep-linked application allowing you to jump around the navigation structure.
 

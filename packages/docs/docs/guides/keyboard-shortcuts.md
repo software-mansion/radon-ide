@@ -1,7 +1,7 @@
 ---
 id: keyboard-shortcuts
 title: Keyboard shortcuts
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 ## Default keyboard shortcuts

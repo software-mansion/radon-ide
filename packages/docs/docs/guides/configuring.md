@@ -1,7 +1,7 @@
 ---
 id: configuration
 title: Configuring the IDE
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 On this page we only discuss configuration that aims to deal with non-standard React Native project setups.

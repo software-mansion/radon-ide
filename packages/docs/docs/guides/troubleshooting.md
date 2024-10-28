@@ -1,7 +1,7 @@
 ---
 id: troubleshooting
 title: Troubleshooting
-sidebar_position: 3
+sidebar_position: 5
 ---
 
 ## Troubleshooting issues with Radon IDE
