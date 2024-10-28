@@ -11,7 +11,7 @@
   font-size: 18px;
 }
 
-input.display-name-input {
+input.device-name-input {
   width: 100%;
   height: 25px;
   background-color: var(--swm-input-background);

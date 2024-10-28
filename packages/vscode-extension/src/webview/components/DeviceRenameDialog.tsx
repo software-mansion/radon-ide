@@ -1,10 +1,10 @@
 import "./DeviceRenameDialog.css";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { DeviceInfo } from "../../common/DeviceManager";
 import { useDevices } from "../providers/DevicesProvider";
 import Button from "./shared/Button";
 import { useModal } from "../providers/ModalProvider";
-import { formatDisplayName, MAX_DISPLAY_NAME_LENGTH } from "../views/CreateDeviceView";
+import { formatDeviceName, MAX_DEVICE_NAME_LENGTH } from "../views/CreateDeviceView";
 import Label from "../components/shared/Label";
 import { useProject } from "../providers/ProjectProvider";
 
@@ -15,8 +15,8 @@ function DeviceRenameDialog({
   deviceInfo: DeviceInfo;
   onClose: () => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isDisplayNameValid, setIsDisplayNameValid] = useState(true);
+  const [deviceName, setDeviceName] = useState<string>(deviceInfo.displayName);
+  const [isDeviceNameValid, setIsDeviceNameValid] = useState(true);
   const { deviceManager } = useDevices();
   const { project } = useProject();
 
@@ -28,10 +28,10 @@ function DeviceRenameDialog({
     };
   });
 
-  const handleDisplayNameChange = () => {
-    const displayName = inputRef.current!.value;
-    inputRef.current!.value = formatDisplayName(displayName);
-    setIsDisplayNameValid(0 < displayName.length && displayName.length <= MAX_DISPLAY_NAME_LENGTH);
+  const handleDeviceNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const text = formatDeviceName(event.target.value);
+    setDeviceName(text);
+    setIsDeviceNameValid(0 < text.length && text.length <= MAX_DEVICE_NAME_LENGTH);
   };
 
   return (
@@ -42,16 +42,16 @@ function DeviceRenameDialog({
           <span>New Name</span>
         </Label>
         <input
-          ref={inputRef}
-          className="display-name-input"
-          style={isDisplayNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
+          value={deviceName}
+          className="device-name-input"
+          style={isDeviceNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
           type="string"
           defaultValue={deviceInfo.displayName}
-          onChange={handleDisplayNameChange}
+          onChange={handleDeviceNameChange}
         />
-        {!isDisplayNameValid && (
+        {!isDeviceNameValid && (
           <div className="submit-rejection-message">
-            Make sure that the custom name is between 1 and {MAX_DISPLAY_NAME_LENGTH} characters
+            Make sure that the custom name is between 1 and {MAX_DEVICE_NAME_LENGTH} characters
             long.
           </div>
         )}
@@ -64,13 +64,13 @@ function DeviceRenameDialog({
         <Button
           className="device-rename-button"
           type="ternary"
-          disabled={!isDisplayNameValid}
+          disabled={!isDeviceNameValid}
           onClick={async () => {
-            const newDisplayName = inputRef.current!.value;
+            const newDeviceName = deviceName.trim();
             try {
-              await deviceManager.renameDevice(deviceInfo, newDisplayName);
+              await deviceManager.renameDevice(deviceInfo, newDeviceName);
             } finally {
-              deviceInfo.displayName = newDisplayName;
+              deviceInfo.displayName = newDeviceName;
               project.updateSelectedDevice(deviceInfo);
               onClose();
             }
