@@ -265,8 +265,49 @@ export class IosSimulatorDevice extends DeviceBase {
     }
   }
 
+  /**
+   * This function terminates any running applications. Might be useful when you launch a new application
+   * before terminating the previous one.
+   */
+  async terminateAnyRunningApplications() {
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    const { stdout } = await exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "listapps",
+      this.deviceUDID,
+    ]);
+
+    const regex = /ApplicationType = User;\s*[^{}]*?\bCFBundleIdentifier = "([^"]+)/g;
+
+    const matches = [];
+    let match;
+    while ((match = regex.exec(stdout)) !== null) {
+      matches.push(match[1]);
+    }
+
+    const terminateApp = async (bundleID: string) => {
+      // Terminate the app if it's running:
+      try {
+        await exec(
+          "xcrun",
+          ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, bundleID],
+          { allowNonZeroExit: true }
+        );
+      } catch (e) {
+        // terminate will exit with non-zero code when the app wasn't running. we ignore this error
+      }
+    };
+
+    await Promise.all(matches.map(terminateApp));
+  }
+
   async launchWithBuild(build: IOSBuildResult) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+
+    await this.terminateAnyRunningApplications();
+
     await exec("xcrun", [
       "simctl",
       "--set",
@@ -281,7 +322,7 @@ export class IosSimulatorDevice extends DeviceBase {
   async launchWithExpoDeeplink(bundleID: string, expoDeeplink: string) {
     // For Expo dev-client and Expo Go setup, we use deeplink to launch the app. For this approach to work we do the following:
     // 1. Add the deeplink to the scheme approval list via defaults
-    // 2. Terminate the app if it's running
+    // 2. Terminate any app if it's running
     // 3. Open the deeplink
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
@@ -301,16 +342,7 @@ export class IosSimulatorDevice extends DeviceBase {
       bundleID,
     ]);
 
-    // Terminate the app if it's running:
-    try {
-      await exec(
-        "xcrun",
-        ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, bundleID],
-        { allowNonZeroExit: true }
-      );
-    } catch (e) {
-      // terminate will exit with non-zero code when the app wasn't running. we ignore this error
-    }
+    await this.terminateAnyRunningApplications();
 
     // Use openurl to open the deeplink:
     await exec("xcrun", [
