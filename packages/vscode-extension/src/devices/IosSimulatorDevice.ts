@@ -27,7 +27,6 @@ interface SimulatorInfo {
   booted?: boolean;
   lastBootedAt?: string;
   deviceTypeIdentifier: string;
-  dataPath?: string;
 }
 
 interface SimulatorData {
