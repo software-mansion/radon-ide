@@ -47,11 +47,12 @@ input.device-name-input {
   height: 25px;
   background-color: var(--swm-input-background);
   color: var(--swm-default-text);
-  border: 1px;
+  border: 0px solid;
   border-radius: 4px;
   line-height: 1;
   box-shadow: var(--swm-input-shadow);
   padding-left: 8px;
+  box-sizing: border-box;
 }
 
 input.device-name-input:disabled {
