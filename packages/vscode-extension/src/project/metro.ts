@@ -267,7 +267,7 @@ export class Metro implements Disposable {
     return initPromise;
   }
 
-  private async sendMessageToDevice(message: "devMenu" | "reload") {
+  private async sendMessageToDevice(method: "devMenu" | "reload") {
     // we use metro's /message websocket endpoint to deliver specifically formatted
     // messages to the device.
     // Metro implements a websocket proxy that proxies messages between connected
