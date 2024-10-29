@@ -24,7 +24,7 @@ import {
   setAppRootFolder,
   setExtensionContext,
 } from "./utilities/extensionContext";
-import { command, setupPathEnv } from "./utilities/subprocess";
+import { setupPathEnv } from "./utilities/subprocess";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
