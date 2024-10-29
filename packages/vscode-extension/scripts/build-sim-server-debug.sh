@@ -69,7 +69,7 @@ mkdir -p "$output_dir"
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
     target_location="$output_dir/simulator-server-windows.exe"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    target_location="$output_dir/simulator-server-mac"
+    target_location="$output_dir/simulator-server-macos"
 else
     target_location="$output_dir/simulator-server-linux"
 fi
