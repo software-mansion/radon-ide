@@ -124,7 +124,7 @@ export interface ProjectInterface {
   restart(forceCleanBuild: boolean): Promise<void>;
   goHome(homeUrl: string): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<boolean>;
-  updateSelectedDevice(deviceInfo: DeviceInfo): void;
+  renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;

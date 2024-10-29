@@ -1,7 +1,6 @@
 import "./DeviceRenameDialog.css";
 import { useEffect, useState } from "react";
 import { DeviceInfo } from "../../common/DeviceManager";
-import { useDevices } from "../providers/DevicesProvider";
 import Button from "./shared/Button";
 import { useModal } from "../providers/ModalProvider";
 import { formatDisplayName, MAX_DEVICE_NAME_LENGTH } from "../views/CreateDeviceView";
@@ -17,7 +16,6 @@ function DeviceRenameDialog({
 }) {
   const [displayName, setDisplayName] = useState<string>(deviceInfo.displayName);
   const [isDisplayNameValid, setIsDisplayNameValid] = useState(true);
-  const { deviceManager } = useDevices();
   const { project } = useProject();
 
   const { showHeader } = useModal();
@@ -68,10 +66,8 @@ function DeviceRenameDialog({
           onClick={async () => {
             const newDisplayName = displayName.trim();
             try {
-              await deviceManager.renameDevice(deviceInfo, newDisplayName);
+              await project.renameDevice(deviceInfo, newDisplayName);
             } finally {
-              deviceInfo.displayName = newDisplayName;
-              project.updateSelectedDevice(deviceInfo);
               onClose();
             }
           }}>

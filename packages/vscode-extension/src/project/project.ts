@@ -471,6 +471,14 @@ export class Project
     }
   }
 
+  public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
+    await this.deviceManager.renameDevice(deviceInfo, newDisplayName);
+    deviceInfo.displayName = newDisplayName;
+    if (this.projectState.selectedDevice?.id === deviceInfo.id) {
+      this.updateProjectState({ selectedDevice: deviceInfo });
+    }
+  }
+
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
@@ -496,10 +504,6 @@ export class Project
     if (deviceInfo === this.projectState.selectedDevice) {
       this.updateProjectState(newState);
     }
-  }
-
-  public updateSelectedDevice(deviceInfo: DeviceInfo) {
-    this.updateProjectState({ selectedDevice: deviceInfo });
   }
 
   public async updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void> {
