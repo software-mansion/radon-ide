@@ -114,8 +114,8 @@
   text-overflow: ellipsis;
   width: 185px;
 }
-
-.device-select-rich-item-icon {
+.device-select-rich-item-icon,
+.device-select-rich-item-icon-selected {
   width: 32px;
   height: 32px;
   display: flex;
@@ -123,7 +123,10 @@
   justify-content: center;
   border-radius: 16px;
   color: var(--swm-default-text);
-  background-color: var(--swm-device-select-rich-item-icon);
+  background-color: var(--swm-device-icon-background);
+}
+.device-select-rich-item-icon-selected {
+  background-color: var(--swm-device-icon-background-selected);
 }
 
 .device-select-label {

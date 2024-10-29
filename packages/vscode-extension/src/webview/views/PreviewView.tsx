@@ -4,8 +4,6 @@ import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
 import SettingsDropdown from "../components/SettingsDropdown";
-import "./View.css";
-import "./PreviewView.css";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "./ManageDevicesView";
 import DevicesNotFoundView from "./DevicesNotFoundView";
@@ -25,6 +23,8 @@ import {
 } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
+import "./View.css";
+import "./PreviewView.css";
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -73,7 +73,7 @@ function PreviewView() {
   const isRunning = projectState.status === "running";
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelName === projectState?.selectedDevice?.name;
+    return sd.modelId === projectState?.selectedDevice?.modelId;
   });
 
   const { openModal } = useModal();
@@ -257,7 +257,7 @@ function PreviewView() {
           // @ts-ignore TODO: Fix typing
           value={selectedDevice?.id}
           // @ts-ignore TODO: Fix typing
-          label={selectedDevice?.name}
+          label={selectedDevice?.displayName}
           onValueChange={handleDeviceDropdownChange}
           disabled={devicesNotFound}
         />

@@ -471,6 +471,14 @@ export class Project
     }
   }
 
+  public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
+    await this.deviceManager.renameDevice(deviceInfo, newDisplayName);
+    deviceInfo.displayName = newDisplayName;
+    if (this.projectState.selectedDevice?.id === deviceInfo.id) {
+      this.updateProjectState({ selectedDevice: deviceInfo });
+    }
+  }
+
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
@@ -532,7 +540,7 @@ export class Project
     }
 
     if (device) {
-      Logger.log("Device selected", deviceInfo.name);
+      Logger.log("Device selected", deviceInfo.displayName);
       extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
       return device;
     }

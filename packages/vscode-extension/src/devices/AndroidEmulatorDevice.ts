@@ -480,8 +480,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
 }
 
 export async function createEmulator(
+  modelId: string,
   displayName: string,
-  deviceName: string,
   systemImage: AndroidSystemImageInfo
 ) {
   const avdDirectory = getOrCreateAvdDirectory();
@@ -520,7 +520,7 @@ export async function createEmulator(
     ["hw.cpu.ncore", "4"],
     ["hw.dPad", "no"],
     ["hw.device.manufacturer", "Google"],
-    ["hw.device.name", deviceName],
+    ["hw.device.name", modelId],
     ["hw.gps", "yes"],
     ["hw.gpu.enabled", "yes"],
     ["hw.gpu.mode", "auto"],
@@ -550,8 +550,9 @@ export async function createEmulator(
     id: `android-${avdId}`,
     platform: DevicePlatform.Android,
     avdId,
-    name: displayName,
+    modelId: modelId,
     systemName: systemImage.name,
+    displayName: displayName,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
   } as DeviceInfo;
 }
@@ -583,17 +584,19 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
   return Promise.all(
     avdIds.map(async (avdId) => {
       const avdConfigPath = path.join(avdDirectory, `${avdId}.avd`, "config.ini");
-      const { displayName, systemImageDir } = await parseAvdConfigIniFile(avdConfigPath);
+      const { displayName, modelId, systemImageDir } = await parseAvdConfigIniFile(avdConfigPath);
 
       const systemImageName = systemImages.find(
         (image: AndroidSystemImageInfo) => image.location === systemImageDir
       )?.name;
+
       return {
         id: `android-${avdId}`,
         platform: DevicePlatform.Android,
         avdId,
-        name: displayName,
+        modelId: modelId,
         systemName: systemImageName ?? "Unknown",
+        displayName: displayName,
         available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
       } as DeviceInfo;
     })
@@ -622,6 +625,29 @@ async function ensureOldEmulatorProcessExited(avdId: string) {
   }
 }
 
+export async function renameEmulator(avdId: string, newDisplayName: string) {
+  const avdDirectory = getOrCreateAvdDirectory();
+  const avdLocation = path.join(avdDirectory, `${avdId}.avd`);
+  const configIni = path.join(avdLocation, "config.ini");
+
+  try {
+    const oldConfig = await fs.promises.readFile(configIni, "utf-8");
+    const config = oldConfig
+      .split("\n")
+      .map((line) => {
+        if (line.startsWith("avd.ini.displayname=")) {
+          return `avd.ini.displayname=${newDisplayName}`;
+        }
+        return line;
+      })
+      .join("\n");
+
+    await fs.promises.writeFile(configIni, config, "utf-8");
+  } catch (e) {
+    throw new Error(`Failed to rename device`);
+  }
+}
+
 export async function removeEmulator(avdId: string) {
   // ensure to kill emulator process before removing avd files used by that process
   if (Platform.OS === "windows") {
@@ -644,6 +670,7 @@ async function parseAvdConfigIniFile(filePath: string) {
   const content = await fs.promises.readFile(filePath, "utf-8");
 
   let displayName: string | undefined;
+  let modelId: string | undefined;
   let systemImageDir: string | undefined;
   content.split("\n").forEach((line: string) => {
     const [key, value] = line.split("=");
@@ -651,16 +678,19 @@ async function parseAvdConfigIniFile(filePath: string) {
       case "avd.ini.displayname":
         displayName = value;
         break;
+      case "hw.device.name":
+        modelId = value;
+        break;
       case "image.sysdir.1":
         systemImageDir = value.includes(ANDROID_HOME) ? value : path.join(ANDROID_HOME, value);
         break;
     }
   });
-  if (!displayName || !systemImageDir) {
+  if (!displayName || !modelId || !systemImageDir) {
     throw new Error(`Couldn't parse AVD ${filePath}`);
   }
 
-  return { displayName, systemImageDir };
+  return { displayName, modelId, systemImageDir };
 }
 
 async function parseAvdIniFile(filePath: string) {

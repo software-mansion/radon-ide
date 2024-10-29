@@ -5,11 +5,10 @@ import { useDevices } from "../providers/DevicesProvider";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
 import {
-  DeviceProperties,
   iOSSupportedDevices,
   AndroidSupportedDevices,
+  DeviceProperties,
 } from "../utilities/consts";
-import { DevicePlatform } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform } from "../providers/UtilsProvider";
 
@@ -18,24 +17,8 @@ interface CreateDeviceViewProps {
   onCancel: () => void;
 }
 
-function assertPlatform(platform: string): asserts platform is "ios" | "android" {
-  if (!(platform === "ios" || platform === "android")) {
-    throw new Error("Invalid platform specifier");
-  }
-}
-
 function useSupportedDevices() {
   const { errors } = useDependencies();
-
-  function buildSelections(item: DeviceProperties, platform: DevicePlatform) {
-    let prefix = "";
-    if (platform === DevicePlatform.IOS) {
-      prefix = "ios";
-    } else {
-      prefix = "android";
-    }
-    return { value: `${prefix}:${item.modelName}:${item.deviceName}`, label: item.modelName };
-  }
 
   return [
     Platform.select({
@@ -43,7 +26,10 @@ function useSupportedDevices() {
         ? { label: "iOS – error, check diagnostics", items: [] }
         : {
             label: "iOS",
-            items: iOSSupportedDevices.map((device) => buildSelections(device, DevicePlatform.IOS)),
+            items: iOSSupportedDevices.map((device) => ({
+              value: device.modelId,
+              label: device.modelName,
+            })),
           },
       windows: { label: "", items: [] },
     }),
@@ -51,18 +37,25 @@ function useSupportedDevices() {
       ? { label: "Android – error, check diagnostics", items: [] }
       : {
           label: "Android",
-          items: AndroidSupportedDevices.map((device) =>
-            buildSelections(device, DevicePlatform.Android)
-          ),
+          items: AndroidSupportedDevices.map((device) => ({
+            value: device.modelId,
+            label: device.modelName,
+          })),
         },
   ];
 }
 
+export const MAX_DEVICE_NAME_LENGTH = 30;
+export function formatDisplayName(name: string) {
+  const singleSpaced = name.replace(/\s+/g, " ");
+  return singleSpaced.replace(/[^a-zA-Z0-9 _-]/g, "");
+}
+
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
-  const [displayName, setDisplayName] = useState<string | undefined>(undefined);
-  const [deviceName, setDeviceName] = useState<string | undefined>(undefined);
-  const [devicePlatform, setDevicePlatform] = useState<"ios" | "android" | undefined>(undefined);
-  const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
+  const [deviceProperties, setDeviceProperties] = useState<DeviceProperties | undefined>(undefined);
+  const [selectedSystemName, selectSystemName] = useState<string>("");
+  const [displayName, setDisplayName] = useState<string>("");
+  const [isDisplayNameValid, setIsDisplayNameValid] = useState(true);
   const [loading, setLoading] = useState<boolean>(false);
 
   const supportedDevices = useSupportedDevices();
@@ -72,11 +65,10 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
     reload();
   }, []);
 
-  const platformSelected = !!displayName && !!devicePlatform;
-  const createDisabled = loading || !displayName || !selectedSystemName;
+  const createDisabled = loading || !deviceProperties || !selectedSystemName || !isDisplayNameValid;
 
   const systemImagesOptions =
-    platformSelected && devicePlatform === "ios"
+    deviceProperties && deviceProperties.platform === "iOS"
       ? iOSRuntimes.map((runtime) => ({
           value: runtime.identifier,
           label: runtime.name,
@@ -89,77 +81,113 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         }));
 
   async function createDevice() {
-    if (!selectedSystemName) {
+    if (!deviceProperties || !selectedSystemName || !displayName) {
       return;
     }
 
     setLoading(true);
     try {
-      if (devicePlatform === "ios" && Platform.OS === "macos") {
+      if (deviceProperties && deviceProperties.platform === "iOS" && Platform.OS === "macos") {
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;
         }
-        const iOSDeviceType = runtime.supportedDeviceTypes.find(({ name }) => name === displayName);
+        const iOSDeviceType = runtime.supportedDeviceTypes.find(
+          ({ identifier }) => identifier === deviceProperties.modelId
+        );
         if (!iOSDeviceType) {
           return;
         }
-        await deviceManager.createIOSDevice(iOSDeviceType, runtime);
+        await deviceManager.createIOSDevice(iOSDeviceType, displayName.trim(), runtime);
       } else {
         const systemImage = androidImages.find((image) => image.location === selectedSystemName);
-        if (!systemImage || !displayName || !deviceName) {
+        if (!systemImage) {
           return;
         }
-        await deviceManager.createAndroidDevice(displayName, deviceName, systemImage);
+        await deviceManager.createAndroidDevice(
+          deviceProperties.modelId,
+          displayName.trim(),
+          systemImage
+        );
       }
     } finally {
       onCreate();
     }
   }
 
+  const handleDisplayNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const text = formatDisplayName(event.target.value);
+    setDisplayName(text);
+    setIsDisplayNameValid(0 < text.length && text.length <= MAX_DEVICE_NAME_LENGTH);
+  };
+
+  function resetSystemAndDisplayNames() {
+    selectSystemName("");
+    setDisplayName("");
+    setIsDisplayNameValid(true);
+  }
+
   return (
     <div className="edit-device-form">
       <div className="form-row">
-        <Label>Device Type</Label>
+        <Label className="form-label">Device Type</Label>
         <Select
           className="form-field"
-          value={`${
-            devicePlatform && displayName ? `${devicePlatform}:${displayName}:${deviceName}` : ""
-          }`}
-          onChange={(newValue: string) => {
-            const [newPlatform, newDisplayName, newDeviceName] = newValue.split(":", 3);
-            assertPlatform(newPlatform);
-            setDisplayName(newDisplayName);
-            setDeviceName(newDeviceName);
-            setDevicePlatform(newPlatform);
-            selectSystemName(undefined);
+          value={deviceProperties?.modelId ?? ""}
+          onChange={(modelId: string) => {
+            const deviceProps = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
+              return sd.modelId === modelId;
+            });
+            setDeviceProperties(deviceProps);
+            resetSystemAndDisplayNames();
           }}
           items={supportedDevices}
-          placeholder="Choose device type..."
+          placeholder="Select device type..."
         />
       </div>
       <div className="form-row">
-        <Label>
+        <Label className="form-label">
           <span>System image</span>
           {systemImagesOptions.length === 0 && <span className="codicon codicon-warning warning" />}
         </Label>
-        <div className="form-label" />
         {systemImagesOptions.length > 0 ? (
           <Select
-            disabled={!platformSelected}
+            disabled={!deviceProperties}
             className="form-field"
-            value={selectedSystemName ?? ""}
-            onChange={(newValue) => selectSystemName(newValue)}
+            value={selectedSystemName}
+            onChange={(newValue) => {
+              selectSystemName(newValue);
+              setDisplayName(deviceProperties?.modelName ?? "");
+            }}
             items={systemImagesOptions}
             placeholder="Select device system image..."
           />
         ) : (
           <div>
             No system images found. You can install them using{" "}
-            {devicePlatform === "ios" ? "Xcode" : "Android Studio"}.
+            {deviceProperties?.platform === "iOS" ? "Xcode" : "Android Studio"}.
           </div>
         )}
       </div>
+      <div className="form-row">
+        <Label className="form-label">
+          <span>Name</span>
+        </Label>
+        <input
+          value={displayName}
+          className="device-name-input"
+          style={isDisplayNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
+          type="string"
+          onChange={handleDisplayNameChange}
+          disabled={!selectedSystemName}
+          placeholder="Enter device name..."
+        />
+      </div>
+      {!isDisplayNameValid && (
+        <div className="submit-rejection-message">
+          Make sure that the custom name is between 1 and {MAX_DEVICE_NAME_LENGTH} characters long.
+        </div>
+      )}
       <div className="button-panel">
         <Button onClick={onCancel} type="secondary">
           Cancel
