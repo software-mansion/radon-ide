@@ -53,7 +53,7 @@ fi
 
 # execute the build from the simulator-server package
 # the build product location is printed by the build script as the very last line
-product_path=$("../simulator-server/scripts/build-extension-dev.sh" "Debug" | tail -n 1)
+product_path=$("../simulator-server/scripts/build-extension-dev.sh" | tail -n 1)
 
 # Check if the build was successful
 if [[ $? -ne 0 ]]; then
