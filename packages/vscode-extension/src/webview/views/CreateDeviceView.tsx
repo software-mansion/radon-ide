@@ -53,8 +53,8 @@ export function formatDisplayName(name: string) {
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [deviceProperties, setDeviceProperties] = useState<DeviceProperties | undefined>(undefined);
-  const [selectedSystemName, selectSystemName] = useState<string | undefined>(undefined);
-  const [displayName, setDisplayName] = useState<string | undefined>(undefined);
+  const [selectedSystemName, selectSystemName] = useState<string>("");
+  const [displayName, setDisplayName] = useState<string>("");
   const [isDisplayNameValid, setIsDisplayNameValid] = useState(true);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -122,8 +122,8 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   };
 
   function resetSystemAndDisplayNames() {
-    selectSystemName(undefined);
-    setDisplayName(undefined);
+    selectSystemName("");
+    setDisplayName("");
     setIsDisplayNameValid(true);
   }
 
@@ -142,7 +142,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
             resetSystemAndDisplayNames();
           }}
           items={supportedDevices}
-          placeholder="Choose device type..."
+          placeholder="Select device type..."
         />
       </div>
       <div className="form-row">
@@ -154,7 +154,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           <Select
             disabled={!deviceProperties}
             className="form-field"
-            value={selectedSystemName ?? ""}
+            value={selectedSystemName}
             onChange={(newValue) => {
               selectSystemName(newValue);
               setDisplayName(deviceProperties?.modelName ?? "");
@@ -180,6 +180,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           type="string"
           onChange={handleDisplayNameChange}
           disabled={!selectedSystemName}
+          placeholder="Enter device name..."
         />
       </div>
       {!isDisplayNameValid && (

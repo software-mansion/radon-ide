@@ -21,7 +21,13 @@
 }
 
 .form-field {
+  color: var(--swm-default-text);
   width: 100%;
+}
+
+.form-field:disabled {
+  color: var(--swm-select-disabled);
+  background-color: var(--swm-select-disabled-background);
 }
 
 .dropdown .listbox {
@@ -40,6 +46,7 @@ input.device-name-input {
   width: 100%;
   height: 25px;
   background-color: var(--swm-input-background);
+  color: var(--swm-default-text);
   border: 1px;
   border-radius: 4px;
   line-height: 1;
@@ -48,8 +55,11 @@ input.device-name-input {
 }
 
 input.device-name-input:disabled {
-  color: var(--swm-disabled-text);
   background-color: var(--swm-select-disabled-background);
+}
+
+input.device-name-input::placeholder {
+  color: var(--swm-select-disabled);
 }
 
 .button-panel {
