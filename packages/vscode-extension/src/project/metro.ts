@@ -280,7 +280,7 @@ export class Metro implements Disposable {
     ws.send(
       JSON.stringify({
         version: 2 /* protocol version, needs to be set to 2 */,
-        method: message,
+        method,
       })
     );
     // we disconnect immediately after sending the message as there's no need
