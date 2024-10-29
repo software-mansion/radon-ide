@@ -19,8 +19,8 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
     product_path="$output_dir/simulator-server-${latest_tag}-windows.exe"
     download_url="${download_base_url}simulator-server-windows.exe"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    product_path="$output_dir/simulator-server-${latest_tag}-mac"
-    download_url="${download_base_url}simulator-server-mac"
+    product_path="$output_dir/simulator-server-${latest_tag}-macos"
+    download_url="${download_base_url}simulator-server-macos"
 else
     product_path="$output_dir/simulator-server-${latest_tag}-linux"
     download_url="${download_base_url}simulator-server-linux"
@@ -53,7 +53,7 @@ fi
 
 # execute the build from the simulator-server package
 # the build product location is printed by the build script as the very last line
-product_path=$("../simulator-server/scripts/build.sh" "Debug" | tail -n 1)
+product_path=$("../simulator-server/scripts/build-extension-dev.sh" "Debug" | tail -n 1)
 
 # Check if the build was successful
 if [[ $? -ne 0 ]]; then
