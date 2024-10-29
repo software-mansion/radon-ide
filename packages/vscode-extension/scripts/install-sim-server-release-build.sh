@@ -38,4 +38,4 @@ echo "Downloading simulator-server binaries for tag $sim_server_tag"
 
 # Download simulator-server binaries using gh CLI and place them in the output directory with correct file mode
 gh release download $sim_server_tag -R software-mansion-labs/simulator-server -p "simulator-server*" -D "$output_dir"
-chmod +x "$output_dir/simulator-server*"
+chmod +x "$output_dir"/simulator-server*
