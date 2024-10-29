@@ -606,7 +606,7 @@ export class Project
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
-  }, 300);
+  }, 1000);
 }
 
 function watchProjectFiles(onChange: () => void) {
