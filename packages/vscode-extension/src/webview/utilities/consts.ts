@@ -115,7 +115,9 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
 ] as const;
 
 export function mapIdToModel(deviceId: string): string {
-  let device = iOSSupportedDevices.find((d) => d.modelId === deviceId) || AndroidSupportedDevices.find((d) => d.modelId === deviceId);
+  let device =
+    iOSSupportedDevices.find((d) => d.modelId === deviceId) ||
+    AndroidSupportedDevices.find((d) => d.modelId === deviceId);
 
   if (device) {
     return device.modelName;
