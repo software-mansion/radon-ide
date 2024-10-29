@@ -12,22 +12,20 @@
 }
 
 .form-label {
-  width: 100%;
-  margin-bottom: 4px;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  user-select: none;
 }
 
 .form-field {
   color: var(--swm-default-text);
   width: 100%;
+  user-select: none;
 }
 
 .form-field:disabled {
   color: var(--swm-select-disabled);
   background-color: var(--swm-select-disabled-background);
+  user-select: none;
 }
 
 .dropdown .listbox {
@@ -61,6 +59,7 @@ input.device-name-input:disabled {
 
 input.device-name-input::placeholder {
   color: var(--swm-select-disabled);
+  user-select: none;
 }
 
 .button-panel {

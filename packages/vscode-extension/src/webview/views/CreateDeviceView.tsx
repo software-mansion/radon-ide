@@ -130,7 +130,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   return (
     <div className="edit-device-form">
       <div className="form-row">
-        <Label>Device Type</Label>
+        <Label className="form-label">Device Type</Label>
         <Select
           className="form-field"
           value={deviceProperties?.modelId ?? ""}
@@ -146,7 +146,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         />
       </div>
       <div className="form-row">
-        <Label>
+        <Label className="form-label">
           <span>System image</span>
           {systemImagesOptions.length === 0 && <span className="codicon codicon-warning warning" />}
         </Label>
@@ -170,7 +170,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         )}
       </div>
       <div className="form-row">
-        <Label>
+        <Label className="form-label">
           <span>Name</span>
         </Label>
         <input
