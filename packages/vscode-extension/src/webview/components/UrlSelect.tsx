@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, useState } from "react";
 import * as Select from "@radix-ui/react-select";
 import "./UrlSelect.css";
 
@@ -29,13 +29,28 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   // component. This prefix is stripped off when the selected value is passed back
   // through onValueChange.
 
+  const [isOpen, setOpen] = useState<boolean>(false);
+
   const handleValueChange = (newSelection: string) => {
     const stripped = newSelection.replace(/^recent#/, "");
     onValueChange(stripped);
+
+    setTimeout(() => {
+      setOpen(!isOpen);
+    }, 0);
   };
 
   return (
-    <Select.Root onValueChange={handleValueChange} value={value} disabled={disabled}>
+    <Select.Root
+      onValueChange={handleValueChange}
+      value={value}
+      disabled={disabled}
+      onOpenChange={() => {
+        setTimeout(() => {
+          setOpen(!isOpen);
+        }, 0);
+      }}
+      open={isOpen}>
       <Select.Trigger className="url-select-trigger">
         <Select.Value placeholder="/" aria-label={value} />
       </Select.Trigger>

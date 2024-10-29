@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, useState } from "react";
 import * as Select from "@radix-ui/react-select";
 import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
 import "./DeviceSelect.css";
@@ -100,6 +100,8 @@ interface DeviceSelectProps {
 }
 
 function DeviceSelect({ onValueChange, devices, value, label, disabled }: DeviceSelectProps) {
+  const [isOpen, setOpen] = useState<boolean>(false);
+
   const { projectState } = useProject();
   const selectedProjectDevice = projectState?.selectedDevice;
 
@@ -111,7 +113,20 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
   );
 
   return (
-    <Select.Root onValueChange={onValueChange} value={value}>
+    <Select.Root
+      onValueChange={(newValue) => {
+        onValueChange(newValue);
+        setTimeout(() => {
+          setOpen(!isOpen);
+        }, 0);
+      }}
+      value={value}
+      onOpenChange={() => {
+        setTimeout(() => {
+          setOpen(!isOpen);
+        }, 0);
+      }}
+      open={isOpen}>
       <Select.Trigger className="device-select-trigger" disabled={disabled}>
         <Select.Value placeholder="No devices found">
           <div className="device-select-value">
