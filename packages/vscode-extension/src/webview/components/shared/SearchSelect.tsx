@@ -1,10 +1,12 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import "./SearchSelect.css";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import Label from "./Label";
 
 interface SearchSelectProps {
   className?: string;
   searchPlaceholder?: string;
+  optionsLabel?: string;
   options: string[];
   isLoading: boolean;
   onValueChange: (value: string) => void;
@@ -13,6 +15,7 @@ interface SearchSelectProps {
 export const SearchSelect = ({
   className,
   searchPlaceholder,
+  optionsLabel,
   options,
   isLoading,
   onValueChange,
@@ -141,7 +144,6 @@ export const SearchSelect = ({
   return (
     <div className={className}>
       <div className="search-bar-wrapper">
-        <span className="codicon codicon-search search-icon" />
         <input
           className="search-input"
           ref={inputRef}
@@ -151,6 +153,7 @@ export const SearchSelect = ({
           onChange={(e) => updateValue(e.target.value, true)}
         />
       </div>
+      { optionsLabel && <Label style={{ marginLeft: "2px" }}>{optionsLabel}</Label> }
       <div className="matches-container" onMouseDown={(e) => e.preventDefault()}>
         {isLoading ? (
           <div className="loading-spinner-container">

@@ -35,7 +35,8 @@ export const OpenDeepLinkView = () => {
       }}>
       <SearchSelect
         className="deep-link-search-select"
-        searchPlaceholder="Input Deep Link"
+        searchPlaceholder="Enter deep link or search history"
+        optionsLabel="Recently used links"
         options={history ?? []}
         isLoading={history === undefined}
         onValueChange={setUrl}
