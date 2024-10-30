@@ -153,7 +153,7 @@ export const SearchSelect = ({
           onChange={(e) => updateValue(e.target.value, true)}
         />
       </div>
-      { optionsLabel && <Label style={{ marginLeft: "2px" }}>{optionsLabel}</Label> }
+      {optionsLabel && <Label style={{ marginLeft: "2px" }}>{optionsLabel}</Label>}
       <div className="matches-container" onMouseDown={(e) => e.preventDefault()}>
         {isLoading ? (
           <div className="loading-spinner-container">
