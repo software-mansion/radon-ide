@@ -123,7 +123,7 @@ export class PlatformBuildCache {
     const fingerprint = await createFingerprintAsync(getAppRootFolder(), {
       ignorePaths: IGNORE_PATHS,
     });
-    Logger.debug("App folder fingerprint", fingerprint.hash);
+    Logger.log("App folder fingerprint", fingerprint.hash);
     return fingerprint.hash;
   }
 
