@@ -33,7 +33,6 @@ async function getBundleID(appPath: string) {
 }
 
 function buildProject(
-  deviceInfo: IOSDeviceInfo,
   xcodeProject: IOSProjectInfo,
   buildDir: string,
   scheme: string,
@@ -50,7 +49,7 @@ function buildProject(
     "-arch",
     getXcodebuildArch(),
     "-sdk",
-    `iphonesimulator${deviceInfo.runtimeInfo.version}`,
+    "iphonesimulator",
     "-showBuildTimingSummary",
     "-destination-timeout",
     "0",
@@ -71,7 +70,6 @@ function buildProject(
 }
 
 export async function buildIos(
-  deviceInfo: IOSDeviceInfo,
   appRootFolder: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
@@ -145,10 +143,8 @@ export async function buildIos(
   const scheme = buildOptions?.scheme || (await findXcodeScheme(xcodeProject))[0];
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
-  let platformName: string | undefined;
   const buildProcess = cancelToken.adapt(
     buildProject(
-      deviceInfo,
       xcodeProject,
       sourceDir,
       scheme,
@@ -161,23 +157,13 @@ export async function buildIos(
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
     buildIOSProgressProcessor.processLine(line);
-    // Xcode can sometimes escape `=` with a backslash or put the value in quotes
-    const platformNameMatch = /export PLATFORM_NAME\\?="?(\w+)"?$/m.exec(line);
-    if (platformNameMatch) {
-      platformName = platformNameMatch[1];
-    }
   });
 
   await buildProcess;
 
-  if (!platformName) {
-    throw new Error(`Couldn't find "PLATFORM_NAME" in xcodebuild output`);
-  }
-
   const appPath = await getBuildPath(
     xcodeProject,
     sourceDir,
-    platformName,
     scheme,
     buildOptions?.configuration || "Debug",
     cancelToken
@@ -191,7 +177,6 @@ export async function buildIos(
 async function getBuildPath(
   xcodeProject: IOSProjectInfo,
   projectDir: string,
-  platformName: string,
   scheme: string,
   configuration: string,
   cancelToken: CancelToken
@@ -212,7 +197,7 @@ async function getBuildPath(
         "-scheme",
         scheme,
         "-sdk",
-        platformName,
+        "iphonesimulator",
         "-configuration",
         configuration,
         "-showBuildSettings",

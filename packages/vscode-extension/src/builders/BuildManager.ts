@@ -124,7 +124,6 @@ export class BuildManager {
           }
         };
         buildResult = await buildIos(
-          deviceInfo,
           getAppRootFolder(),
           forceCleanBuild,
           cancelToken,
