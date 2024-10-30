@@ -211,7 +211,8 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  private pressingMetaKeys = 0; // 0 - not pressing, 1+ - how many meta keys are pressed
+  private pressingLeftMetaKey = false;
+  private pressingRightMetaKey = false;
 
   public sendKey(keyCode: number, direction: "Up" | "Down"): void {
     // iOS simulator has a buggy behavior when sending cmd+V key combination.
@@ -219,15 +220,17 @@ export class IosSimulatorDevice extends DeviceBase {
     // Other times it kicks in before the pasteboard is filled with the content
     // therefore pasting the previously compied content instead.
     // As a temporary workaround, we disable sending cmd+V as key combination
-    // entirely to prevent this bugge behavior. Users can still paste content
-    // using the context menu.
+    // entirely to prevent this buggy behavior. Users can still paste content
+    // using the context menu method as they'd do on an iOS device.
     // This is not an ideal workaround as people may still trigger cmd+v by
     // pressing V first and then cmd, but it is good enough to filter out
     // the majority of the noisy behavior since typically you press cmd first.
-    if (keyCode === LEFT_META_HID_CODE || keyCode === RIGHT_META_HID_CODE) {
-      this.pressingMetaKeys += direction === "Down" ? 1 : -1;
+    if (keyCode === LEFT_META_HID_CODE) {
+      this.pressingLeftMetaKey = direction === "Down";
+    } else if (keyCode === RIGHT_META_HID_CODE) {
+      this.pressingRightMetaKey = direction === "Down";
     }
-    if (this.pressingMetaKeys > 0 && keyCode === V_KEY_HID_CODE) {
+    if ((this.pressingLeftMetaKey || this.pressingRightMetaKey) && keyCode === V_KEY_HID_CODE) {
       // ignore sending V when meta key is pressed
     } else {
       this.preview?.sendKey(keyCode, direction);
