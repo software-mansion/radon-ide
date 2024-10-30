@@ -46,7 +46,7 @@ Note that some changes in the extension may depend on changes made to the simula
 
 ### 4. Open extension project in Visual Studio Code
 
-It is necessary that you open exacly the main extension folder rather than the whole repository, as it contains project specific run configuration for launching the extension in development mode.
+It is necessary that you open exactly the main extension folder rather than the whole repository, as it contains project specific run configuration for launching the extension in development mode.
 You can do it by opening new window in Visual Studio Code and using `File > Open Folder` option, then select `packages/vscode-extension`, or if you have vscode's command line tool installed you can open it using command:
 
 ```sh
