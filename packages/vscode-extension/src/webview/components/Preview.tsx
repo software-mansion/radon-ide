@@ -185,6 +185,8 @@ type Props = {
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
   isPressing: boolean;
   setIsPressing: (isPressing: boolean) => void;
+  isMultiTouching: boolean;
+  setIsMultiTouching: (isPressing: boolean) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
   replayData: RecordingData | undefined;
@@ -214,13 +216,14 @@ function Preview({
   onInspectorItemSelected,
   isPressing,
   setIsPressing,
+  isMultiTouching,
+  setIsMultiTouching,
   zoomLevel,
   onZoomChanged,
   replayData,
   onReplayClose,
 }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
-  const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });

@@ -52,6 +52,7 @@ function PreviewView() {
   const { reportIssue, showDismissableError } = useUtils();
 
   const [isPressing, setIsPressing] = useState(false);
+  const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
@@ -163,9 +164,16 @@ function PreviewView() {
     setIsPressing(false);
   }
 
+  function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(false);
+    setIsMultiTouching(false);
+  }
+
   const touchHandlers = {
     onMouseDown,
     onMouseUp,
+    onMouseLeave,
   };
 
   const showReplayButton = deviceSettings.replaysEnabled;
@@ -219,6 +227,8 @@ function PreviewView() {
           onInspectorItemSelected={onInspectorItemSelected}
           isPressing={isPressing}
           setIsPressing={setIsPressing}
+          isMultiTouching={isMultiTouching}
+          setIsMultiTouching={setIsMultiTouching}
           zoomLevel={zoomLevel}
           replayData={replayData}
           onReplayClose={() => setReplayData(undefined)}
