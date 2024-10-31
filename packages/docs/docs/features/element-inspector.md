@@ -12,7 +12,7 @@ To enable the element inspector, use the inspector button in the bottom-left cor
 
 To use it, first enable the inspector and simply point-and-click on the device preview. The Radon IDE will automatically open the source file with the editor cursor pointing on the line of code where the component is defined.
 
-<video autoPlay loop width="600" controls className="shadow-image">
+<video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/2_sztudio_inspect.mp4" type="video/mp4"/>
 </video>
 
