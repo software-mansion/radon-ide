@@ -18,6 +18,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
         "Reload JS": () => project.reload("reloadJs"),
         "Restart app process": () => project.reload("restartProcess"),
         "Reinstall app": () => project.reload("reinstall"),
+        "Reboot": () => project.reload("reboot"),
         "Clean rebuild": () => project.restart(true),
       }}>
       <span className="codicon codicon-refresh" />
