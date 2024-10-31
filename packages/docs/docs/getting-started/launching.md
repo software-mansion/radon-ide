@@ -26,7 +26,7 @@ Once you have it open, you can start the extension panel in one of a few ways:
 When you open the IDE panel for the first time, it'll ask you to configure Android emulator or iOS simulator.
 Depending on which platform you want to run your app on first, click one of the options available at the initial screen:
 
-<img width="650" alt="sztudio-init-screen" src="/img/docs/sztudio_init_screen.png"/>
+<img width="650" alt="sztudio-init-screen" src="/img/docs/sztudio_init_screen.png" className="shadow-image"/>
 
 You will be able to add or remove simulators later using the device menu in the left bottom corner of the panel.
 
@@ -38,7 +38,7 @@ Please follow the [simulators](./simulators.md) section to learn how to manage s
 The main extension window can be either presented as one of the editor tabs, which is the default behavior, or as a side panel (in primary or secondary side panel location).
 To change between these modes, you can either use Radon IDE section in the VSCode settings, or use the dropdown menu from the right top corner in the IDE panel:
 
-<img width="450" alt="sztudio-change-position" src="/img/docs/sztudio_change_position.png"/>
+<img width="450" alt="sztudio-change-position" src="/img/docs/sztudio_change_position.png" className="shadow-image"/>
 
 Here is how the IDE would look like when place in the side panel:
 
