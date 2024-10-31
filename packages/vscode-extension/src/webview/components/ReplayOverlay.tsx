@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, MouseEvent } from "react";
 import * as Select from "@radix-ui/react-select";
 import { RecordingData } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
@@ -274,8 +274,19 @@ export default function ReplayOverlay({
   // shifting the time a bit here such that it displays the final value properly despite using Math.floor
   const timeSec = Math.floor(time - startTime + 0.05);
   const timeFormat = `${Math.floor(timeSec / 60)}:${(timeSec % 60).toString().padStart(2, "0")}`;
+
+  function handleMouseEvents(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  const touchHandlers = {
+    onMouseDown: handleMouseEvents,
+    onMouseUp: handleMouseEvents,
+  };
+
   return (
-    <div className="replay-overlay">
+    <div className="replay-overlay" {...touchHandlers}>
       <div className="replay-corner replay-top-left" />
       <div className="replay-corner replay-top-right" />
       <div className="replay-corner replay-bottom-left" />
