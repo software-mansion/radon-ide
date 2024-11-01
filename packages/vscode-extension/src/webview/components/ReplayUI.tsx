@@ -28,16 +28,6 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isRewinding, setIsRewinding] = useState(false);
 
-  function handleMouseEvents(e: React.MouseEvent<HTMLDivElement>) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  const touchHandlers = {
-    onMouseDown: handleMouseEvents,
-    onMouseUp: handleMouseEvents,
-  };
-
   return (
     <>
       <ReplayOverlay
@@ -47,9 +37,7 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
         onClose={onClose}
         replayData={replayData}
       />
-      <div {...touchHandlers}>
-        <video ref={videoRef} src={replayData.url} className="phone-screen replay-video" />
-      </div>
+      <video ref={videoRef} src={replayData.url} className="phone-screen replay-video" />
       {isRewinding && <VHSRewind />}
     </>
   );
