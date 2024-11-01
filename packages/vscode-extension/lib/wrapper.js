@@ -1,3 +1,5 @@
+"use no memo";
+
 const { useContext, useState, useEffect, useRef, useCallback } = require("react");
 const {
   LogBox,
