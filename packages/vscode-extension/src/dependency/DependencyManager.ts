@@ -6,7 +6,7 @@ import semver, { SemVer } from "semver";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command, lineReader } from "../utilities/subprocess";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import { getAppRootFolder } from "../utilities/extensionContext";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import {
