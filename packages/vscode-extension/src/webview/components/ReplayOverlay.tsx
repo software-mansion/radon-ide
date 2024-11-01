@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, MouseEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Select from "@radix-ui/react-select";
 import { RecordingData } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
@@ -275,7 +275,7 @@ export default function ReplayOverlay({
   const timeSec = Math.floor(time - startTime + 0.05);
   const timeFormat = `${Math.floor(timeSec / 60)}:${(timeSec % 60).toString().padStart(2, "0")}`;
 
-  function handleMouseEvents(e: MouseEvent<HTMLDivElement>) {
+  function handleMouseEvents(e: React.MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     e.stopPropagation();
   }
