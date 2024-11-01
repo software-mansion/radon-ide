@@ -163,7 +163,7 @@ export class Project
   }
 
   async dispatchPaste(text: string) {
-    this.deviceSession?.sendPaste(text);
+    await this.deviceSession?.sendPaste(text);
   }
 
   onBundleError(): void {
