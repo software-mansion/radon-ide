@@ -545,11 +545,6 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
-  useEffect(() => {
-    console.log("FRYTKI press", isPressing);
-    console.log("FRYTKI isMultiTouching", isMultiTouching);
-  }, [isPressing, isMultiTouching]);
-
   return (
     <>
       <div
