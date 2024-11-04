@@ -400,8 +400,8 @@ function Preview({
         sendMultiTouch(e, "Up");
       } else {
         sendTouch(e, "Up");
-        setIsPressing(false);
       }
+      setIsPressing(false);
     }
 
     if (isInspecting) {
@@ -544,6 +544,11 @@ function Preview({
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
+
+  useEffect(() => {
+    console.log("FRYTKI press", isPressing);
+    console.log("FRYTKI isMultiTouching", isMultiTouching);
+  }, [isPressing, isMultiTouching]);
 
   return (
     <>
