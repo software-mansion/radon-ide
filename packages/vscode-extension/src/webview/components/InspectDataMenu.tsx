@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/consts";
@@ -24,6 +25,8 @@ export function InspectDataMenu({
   onHover,
   onCancel,
 }: InspectDataMenuProps) {
+  const [isSelectable, setIsSelectable] = useState(false);
+
   const displayDimensionsText = (() => {
     if (device && frame) {
       const topComponentWidth = parseFloat((frame.width * device.screenWidth).toFixed(2));
@@ -38,13 +41,28 @@ export function InspectDataMenu({
 
   const filteredData = inspectStack.filter((item) => !item.hide);
 
+  useEffect(() => {
+    const handleMouseUp = (event: MouseEvent) => {
+      if (event.button === 2) {
+        // Enables item selection only after releasing the right mouse button
+        // to prevent unintended selections when opening the menu.
+        setIsSelectable(true);
+      }
+    };
+
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
   return (
     <div style={{ left: inspectLocation.x, top: inspectLocation.y, position: "absolute" }}>
       <DropdownMenu.Root
         defaultOpen={true}
         open={true}
         onOpenChange={(open) => {
-          if (!open) {
+          if (isSelectable && !open) {
             onCancel();
           }
         }}>
@@ -61,7 +79,11 @@ export function InspectDataMenu({
                 <DropdownMenu.Item
                   className="inspect-data-menu-item"
                   key={index}
-                  onSelect={() => onSelected(item)}
+                  onSelect={() => {
+                    if (isSelectable) {
+                      onSelected(item);
+                    }
+                  }}
                   onMouseEnter={() => onHover(item)}>
                   <code>{`<${item.componentName}>`}</code>
                   <div className="right-slot">{`${fileName}:${item.source.line0Based + 1}`}</div>
