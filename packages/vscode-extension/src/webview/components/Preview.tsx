@@ -183,10 +183,6 @@ type Props = {
   setInspectFrame: (inspectFrame: Frame | null) => void;
   setInspectStackData: (inspectStackData: InspectStackData | null) => void;
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
-  isPressing: boolean;
-  setIsPressing: (isPressing: boolean) => void;
-  isMultiTouching: boolean;
-  setIsMultiTouching: (isPressing: boolean) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
   replayData: RecordingData | undefined;
@@ -214,16 +210,14 @@ function Preview({
   setInspectFrame,
   setInspectStackData,
   onInspectorItemSelected,
-  isPressing,
-  setIsPressing,
-  isMultiTouching,
-  setIsMultiTouching,
   zoomLevel,
   onZoomChanged,
   replayData,
   onReplayClose,
 }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
+  const [isPressing, setIsPressing] = useState(false);
+  const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
@@ -332,6 +326,14 @@ function Preview({
     setInspectStackData(null);
   }
 
+  const shouldPreventInputEvents =
+    debugPaused ||
+    debugException ||
+    hasBundleError ||
+    hasIncrementalBundleError ||
+    !showDevicePreview ||
+    !!replayData;
+
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isMultiTouching) {
@@ -409,14 +411,6 @@ function Preview({
     }
   }
 
-  const shouldPreventInputEvents =
-    debugPaused ||
-    debugException ||
-    hasBundleError ||
-    hasIncrementalBundleError ||
-    !showDevicePreview ||
-    !!replayData;
-
   const touchHandlers = shouldPreventInputEvents
     ? {}
     : {
@@ -425,6 +419,30 @@ function Preview({
         onMouseUp,
         onMouseEnter,
         onMouseLeave,
+      };
+
+  function onWrapperMouseDown(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(true);
+  }
+
+  function onWrapperMouseUp(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(false);
+  }
+
+  function onWrapperMouseLeave(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(false);
+    setIsMultiTouching(false);
+  }
+
+  const wrapperTouchHandlers = shouldPreventInputEvents
+    ? {}
+    : {
+        onMouseDown: onWrapperMouseDown,
+        onMouseUp: onWrapperMouseUp,
+        onMouseLeave: onWrapperMouseLeave,
       };
 
   useEffect(() => {
@@ -533,7 +551,8 @@ function Preview({
         className="phone-wrapper"
         style={cssPropertiesForDevice(device!, isFrameDisabled)}
         tabIndex={0} // allows keyboard events to be captured
-        ref={wrapperDivRef}>
+        ref={wrapperDivRef}
+        {...wrapperTouchHandlers}>
         {showDevicePreview && (
           <Resizable {...resizableProps}>
             <div className="phone-content">
