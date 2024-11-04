@@ -26,7 +26,7 @@ export class Preview implements Disposable {
     const simControllerBinary = path.join(
       extensionContext.extensionPath,
       "dist",
-      Platform.select({ macos: "sim-server-executable", windows: "sim-server-executable.exe" })
+      Platform.select({ macos: "simulator-server-macos", windows: "simulator-server-windows.exe" })
     );
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
@@ -138,7 +138,7 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write(`key ${direction} ${keyCode}\n`);
   }
 
-  public sendPaste(text: string) {
+  public async sendPaste(text: string) {
     this.subprocess?.stdin?.write(`paste ${text}\n`);
   }
 }

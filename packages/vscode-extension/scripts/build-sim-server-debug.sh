@@ -6,35 +6,41 @@ cd "$(dirname "$0")/.."
 # take output directory from first argument or default to out - relative to the vscode-extension package location
 output_dir="${1:-out}"
 
-# take configuration from second argument or default to Debug
-configuration=${2:-Debug}
-
 submodule_status=$(git submodule status ../simulator-server)
+
 
 if [[ $submodule_status == -* ]]; then # submodule is not initialized
 
-submodule_hash=$(git ls-tree HEAD ../simulator-server | awk '{print $3}')
+# get version of npm module
+latest_tag=$(git describe --tags --abbrev=0)
+download_base_url="https://github.com/software-mansion/radon-ide/releases/download/${latest_tag}/"
+
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-    product_path="$output_dir/sim-server-Release-${submodule_hash}.exe"
+    product_path="$output_dir/simulator-server-${latest_tag}-windows.exe"
+    download_url="${download_base_url}simulator-server-windows.exe"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    product_path="$output_dir/simulator-server-${latest_tag}-macos"
+    download_url="${download_base_url}simulator-server-macos"
 else
-    product_path="$output_dir/sim-server-Release-${submodule_hash}"
+    product_path="$output_dir/simulator-server-${latest_tag}-linux"
+    download_url="${download_base_url}simulator-server-linux"
 fi
 
-# if the binary is not present, print instructions to download it from releases page:
+# if the binary is not present, download it from Radon IDE releases page
 if [[ ! -f "$product_path" ]]; then
     echo "Simulator server binary not found: $product_path"
     echo ""
-    echo "Make sure to follow development setup instructions: https://ide.swmansion.com/docs/development"
-    echo "You can download the binary from the releases page on GitHub: https://github.com/software-mansion/radon-ide/releases"
+    echo "Downloading the binary from the Radon IDE releases page..."
+    echo ""
+    curl -L "$download_url" -o "$product_path" -f -# --create-dirs
+fi
+
+if [[ ! -f "$product_path" ]]; then
+    echo "Failed to download the binary. Aborting."
     exit 1
 fi
 
 else # submodule is initialized
-
-# For release builds we always make sure that submodule is up to date
-if [[ $configuration == "Release" ]]; then
-    git submodule update --init -- ../simulator-server
-fi
 
 if [[ $submodule_status == +* ]]; then # submodule is not up-to-date
     echo "Submodule has changes. Continue? [y/n]"
@@ -47,7 +53,7 @@ fi
 
 # execute the build from the simulator-server package
 # the build product location is printed by the build script as the very last line
-product_path=$("../simulator-server/scripts/build.sh" "$configuration" | tail -n 1)
+product_path=$("../simulator-server/scripts/build-extension-dev.sh" | tail -n 1)
 
 # Check if the build was successful
 if [[ $? -ne 0 ]]; then
@@ -60,17 +66,17 @@ fi # submodule check
 
 # Create the target directory if it doesn't exist
 mkdir -p "$output_dir"
-target_location="$output_dir/sim-server"
-
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then # rename to *.exe on Windows
-    mv "$product_path" "$target_location-executable.exe"
-    exit 0
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    target_location="$output_dir/simulator-server-windows.exe"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    target_location="$output_dir/simulator-server-macos"
+else
+    target_location="$output_dir/simulator-server-linux"
 fi
 
 # Check if a file was found and copy it
 if [[ -n $product_path ]]; then
-    # copy it using dd to avoid permission issues
-    dd if="$product_path" of="$target_location" 2> /dev/null
+    cp "$product_path" "$target_location"
     # add execution permissions
     chmod +x "$target_location"
 else

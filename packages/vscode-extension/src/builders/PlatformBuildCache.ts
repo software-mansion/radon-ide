@@ -112,16 +112,18 @@ export class PlatformBuildCache {
   }
 
   public async calculateFingerprint() {
+    Logger.debug("Calculating fingerprint");
     const customFingerprint = await this.calculateCustomFingerprint();
 
     if (customFingerprint) {
+      Logger.debug("Using custom fingerprint", customFingerprint);
       return customFingerprint;
     }
 
     const fingerprint = await createFingerprintAsync(getAppRootFolder(), {
       ignorePaths: IGNORE_PATHS,
     });
-    Logger.log(`Workspace fingerprint: '${fingerprint.hash}'`);
+    Logger.log("App folder fingerprint", fingerprint.hash);
     return fingerprint.hash;
   }
 

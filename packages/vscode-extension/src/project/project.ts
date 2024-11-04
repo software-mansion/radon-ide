@@ -24,7 +24,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
-import { throttle } from "../utilities/throttle";
+import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
@@ -35,6 +35,9 @@ import { PanelLocation } from "../common/WorkspaceConfig";
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
+const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
+
+const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
@@ -163,7 +166,7 @@ export class Project
   }
 
   async dispatchPaste(text: string) {
-    this.deviceSession?.sendPaste(text);
+    await this.deviceSession?.sendPaste(text);
   }
 
   onBundleError(): void {
@@ -378,6 +381,22 @@ export class Project
     }
   }
 
+  async getDeepLinksHistory() {
+    return extensionContext.workspaceState.get<string[] | undefined>(DEEP_LINKS_HISTORY_KEY) ?? [];
+  }
+
+  async openDeepLink(link: string) {
+    const history = await this.getDeepLinksHistory();
+    if (history.length === 0 || link !== history[0]) {
+      extensionContext.workspaceState.update(
+        DEEP_LINKS_HISTORY_KEY,
+        [link, ...history.filter((s) => s !== link)].slice(0, DEEP_LINKS_HISTORY_LIMIT)
+      );
+    }
+
+    this.deviceSession?.sendDeepLink(link);
+  }
+
   public async dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
     this.deviceSession?.sendTouches(touches, type);
   }
@@ -471,6 +490,14 @@ export class Project
     }
   }
 
+  public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
+    await this.deviceManager.renameDevice(deviceInfo, newDisplayName);
+    deviceInfo.displayName = newDisplayName;
+    if (this.projectState.selectedDevice?.id === deviceInfo.id) {
+      this.updateProjectState({ selectedDevice: deviceInfo });
+    }
+  }
+
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
@@ -532,7 +559,7 @@ export class Project
     }
 
     if (device) {
-      Logger.log("Device selected", deviceInfo.name);
+      Logger.log("Device selected", deviceInfo.displayName);
       extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
       return device;
     }
@@ -596,7 +623,7 @@ export class Project
     }
   };
 
-  private checkIfNativeChanged = throttle(async () => {
+  private checkIfNativeChanged = throttleAsync(async () => {
     if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
       const platform = this.projectState.selectedDevice.platform;
       const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
@@ -606,7 +633,7 @@ export class Project
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
-  }, 300);
+  }, 1000);
 }
 
 function watchProjectFiles(onChange: () => void) {

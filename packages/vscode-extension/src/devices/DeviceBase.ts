@@ -7,7 +7,7 @@ import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
 export abstract class DeviceBase implements Disposable {
-  private preview: Preview | undefined;
+  protected preview: Preview | undefined;
   private previewStartPromise: Promise<string> | undefined;
   private acquired = false;
 
@@ -25,6 +25,7 @@ export abstract class DeviceBase implements Disposable {
     appPermission: AppPermissionType,
     buildResult: BuildResult
   ): Promise<boolean>;
+  abstract sendDeepLink(link: string, buildResult: BuildResult): Promise<void>;
 
   async acquire() {
     const acquired = await tryAcquiringLock(this.lockFilePath);
@@ -69,8 +70,8 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.sendKey(keyCode, direction);
   }
 
-  public sendPaste(text: string) {
-    this.preview?.sendPaste(text);
+  public async sendPaste(text: string) {
+    return this.preview?.sendPaste(text);
   }
 
   async startPreview() {

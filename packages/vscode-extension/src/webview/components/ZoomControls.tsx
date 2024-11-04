@@ -8,6 +8,7 @@ import "./ZoomControls.css";
 const ZOOM_STEP = 0.05;
 const ZOOM_SELECT_NUMERIC_VALUES = [0.5, 0.6, 0.7, 0.8, 0.9, 1];
 export const DEVICE_DEFAULT_SCALE = 1 / 3;
+export const MIN_ZOOM_LEVEL = 0.4;
 
 type ZoomControlsProps = {
   zoomLevel: ZoomLevelType;
@@ -70,7 +71,10 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
       currentZoomLevel = zoomLevel;
     }
     // toFixed() is necessary because of floating point rounding errors
-    const newZoomLevel = +(currentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP)).toFixed(2);
+    const zoomAfterStep = currentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP);
+    const newZoomLevel = +(zoomAfterStep > MIN_ZOOM_LEVEL ? zoomAfterStep : MIN_ZOOM_LEVEL).toFixed(
+      2
+    );
 
     if (newZoomLevel >= ZOOM_STEP) {
       onZoomChanged(newZoomLevel);

@@ -28,3 +28,49 @@ export function throttle<T extends AnyFn>(func: T, limitMs: number): WithForce<T
     recentArgs = args;
   } as T;
 }
+
+type AsyncFn = (...args: any[]) => Promise<any>;
+
+/**
+ * Throttles the provided async function with the following restrictions:
+ * 1) Function will never be called more than once every `limitMs` milliseconds.
+ * 2) Function will never be called concurrently.
+ * 3) If called multiple times, it is guaranteed that the last call with the final
+ *   arguments will be executed and that the function will run *after* the last
+ *   call is made.
+ */
+export function throttleAsync<T extends AsyncFn>(func: T, limitMs: number): T {
+  let isScheduled = false;
+  let recentArgs: any;
+  let callCount = 0;
+
+  return async function (...args: any) {
+    if (!isScheduled) {
+      const execute = () => {
+        const currentCallCount = callCount;
+        const result = func(...recentArgs);
+        result
+          .catch(() => {})
+          .then(() => {
+            if (currentCallCount === callCount) {
+              isScheduled = false;
+              recentArgs = null;
+            } else {
+              // If call count has changed while the function was executing,
+              // we need to run it again to ensure we run the function with the
+              // latest arguments and after the latest call.
+              // We use setTimeout to avoid potentially infinite recursion, and
+              // to ensure the function is not run more often than once every
+              // `limitMs` milliseconds, we schedule it to run after the provided
+              // limit.
+              setTimeout(execute, limitMs);
+            }
+          });
+      };
+      isScheduled = true;
+      setTimeout(execute, limitMs);
+    }
+    recentArgs = args;
+    callCount++;
+  } as T;
+}
