@@ -28,6 +28,7 @@ export function InspectDataMenu({
   onCancel,
 }: InspectDataMenuProps) {
   const [isSelectable, setIsSelectable] = useState(false);
+  const [shouldShowAll, setShouldShowAll] = useState(false);
 
   const displayDimensionsText = (() => {
     if (device && frame) {
@@ -41,7 +42,8 @@ export function InspectDataMenu({
     return "Dimensions: -";
   })();
 
-  const filteredData = inspectStack.filter((item) => !item.hide).slice(0, MAX_INSPECT_ITEMS);
+  const filteredData = inspectStack.filter((item) => !item.hide);
+  const inspectItems = shouldShowAll ? filteredData : filteredData.slice(0, MAX_INSPECT_ITEMS);
 
   useEffect(() => {
     const handleMouseUp = (event: MouseEvent) => {
@@ -74,7 +76,7 @@ export function InspectDataMenu({
             <DropdownMenu.Label className="inspect-data-menu-label">
               {displayDimensionsText}
             </DropdownMenu.Label>
-            {filteredData.map((item, index) => {
+            {inspectItems.map((item, index) => {
               // extract file name from path:
               const fileName = item.source.fileName.split("/").pop();
               return (
@@ -82,9 +84,7 @@ export function InspectDataMenu({
                   className="inspect-data-menu-item"
                   key={index}
                   onSelect={() => {
-                    if (isSelectable) {
-                      onSelected(item);
-                    }
+                    isSelectable && onSelected(item);
                   }}
                   onMouseEnter={() => onHover(item)}>
                   <code>{`<${item.componentName}>`}</code>
@@ -92,6 +92,21 @@ export function InspectDataMenu({
                 </DropdownMenu.Item>
               );
             })}
+            {filteredData.length > MAX_INSPECT_ITEMS && !shouldShowAll && (
+              <DropdownMenu.Item
+                className="inspect-data-menu-item show-all"
+                key={"show-all"}
+                onSelect={(e) => {
+                  if (isSelectable) {
+                    setShouldShowAll(true);
+                    e.preventDefault(); // prevents the dropdown from closing
+                  }
+                }}>
+                <DropdownMenu.Label className="inspect-data-menu-label">
+                  Show all
+                </DropdownMenu.Label>
+              </DropdownMenu.Item>
+            )}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>

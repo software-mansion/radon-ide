@@ -59,3 +59,11 @@
   overflow-wrap: anywhere;
   padding-left: 10px;
 }
+
+.inspect-data-menu-item.show-all {
+  height: 15px;
+  min-height: 0;
+  padding: 3px 6px;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
