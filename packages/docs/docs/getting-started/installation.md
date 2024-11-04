@@ -8,7 +8,7 @@ sidebar_position: 2
 
 The VScode marketplace is the main way for us to distribute the extension.
 
-If you wish to build the extension from source in order to make modifications, head to the [development](./development.md) instructions instead.
+If you wish to build the extension from source in order to make modifications, head to the [development](/docs/guides/development) instructions instead.
 
 ## -sec-num- Installing the Radon IDE extension in Visual Studio Code
 

@@ -4,8 +4,8 @@ title: Launching the IDE
 sidebar_position: 3
 ---
 
-After [installing](./installation) the extension, you should be able to start using the extension by opening your React Native or Expo project as a workspace in Visual Studio Code.
-If that's not the case and you have problems getting the extension to run, please check [troubleshooting](./troubleshooting.md) guide.
+After [installing](/docs/getting-started/installation) the extension, you should be able to start using the extension by opening your React Native or Expo project as a workspace in Visual Studio Code.
+If that's not the case and you have problems getting the extension to run, please check [troubleshooting](/docs/guides/troubleshooting) guide.
 
 For a quick overview of the features the IDE provides, you can check [Radon IDE website](https://ide.swmansion.com).
 
@@ -31,7 +31,7 @@ Depending on which platform you want to run your app on first, click one of the 
 You will be able to add or remove simulators later using the device menu in the left bottom corner of the panel.
 
 In case the IDE cannot locate system images to use for the device, you will see an empty list when creating new emulator or simulator.
-Please follow the [simulators](./simulators.md) section to learn how to manage system versions of Android emulators or iOS simulators that the IDE can use.
+Please follow the [simulators](/docs/guides/simulators) section to learn how to manage system versions of Android emulators or iOS simulators that the IDE can use.
 
 ## -sec-num- Decide on the location of the IDE panel
 
