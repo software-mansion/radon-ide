@@ -6,6 +6,8 @@ import "./InspectDataMenu.css";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
+const MAX_INSPECT_ITEMS = 5;
+
 type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
   inspectStack: InspectDataStackItem[];
@@ -39,7 +41,7 @@ export function InspectDataMenu({
     return "Dimensions: -";
   })();
 
-  const filteredData = inspectStack.filter((item) => !item.hide);
+  const filteredData = inspectStack.filter((item) => !item.hide).slice(0, MAX_INSPECT_ITEMS);
 
   useEffect(() => {
     const handleMouseUp = (event: MouseEvent) => {
