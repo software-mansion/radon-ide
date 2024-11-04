@@ -35,6 +35,9 @@ import { PanelLocation } from "../common/WorkspaceConfig";
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
+const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
+
+const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
@@ -376,6 +379,22 @@ export class Project
     if (needsRestart) {
       this.restart(false, false);
     }
+  }
+
+  async getDeepLinksHistory() {
+    return extensionContext.workspaceState.get<string[] | undefined>(DEEP_LINKS_HISTORY_KEY) ?? [];
+  }
+
+  async openDeepLink(link: string) {
+    const history = await this.getDeepLinksHistory();
+    if (history.length === 0 || link !== history[0]) {
+      extensionContext.workspaceState.update(
+        DEEP_LINKS_HISTORY_KEY,
+        [link, ...history.filter((s) => s !== link)].slice(0, DEEP_LINKS_HISTORY_LIMIT)
+      );
+    }
+
+    this.deviceSession?.sendDeepLink(link);
   }
 
   public async dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
