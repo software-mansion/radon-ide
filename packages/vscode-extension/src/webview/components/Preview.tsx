@@ -409,6 +409,24 @@ function Preview({
     }
   }
 
+  const shouldPreventInputEvents =
+    debugPaused ||
+    debugException ||
+    hasBundleError ||
+    hasIncrementalBundleError ||
+    !showDevicePreview ||
+    replayData;
+
+  const touchHandlers = shouldPreventInputEvents
+    ? {}
+    : {
+        onMouseDown,
+        onMouseMove,
+        onMouseUp,
+        onMouseEnter,
+        onMouseLeave,
+      };
+
   useEffect(() => {
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
     // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
@@ -452,6 +470,10 @@ function Preview({
 
   useEffect(() => {
     function keyEventHandler(e: KeyboardEvent) {
+      if (shouldPreventInputEvents) {
+        return;
+      }
+
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
         const isKeydown = e.type === "keydown";
@@ -479,7 +501,7 @@ function Preview({
       document.removeEventListener("keydown", keyEventHandler);
       document.removeEventListener("keyup", keyEventHandler);
     };
-  }, [project]);
+  }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
     if (projectStatus === "running") {
@@ -493,23 +515,6 @@ function Preview({
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === projectState?.selectedDevice?.modelId;
   });
-
-  const shouldPreventTouchInteraction =
-    debugPaused ||
-    debugException ||
-    hasBundleError ||
-    hasIncrementalBundleError ||
-    !showDevicePreview;
-
-  const touchHandlers = shouldPreventTouchInteraction
-    ? {}
-    : {
-        onMouseDown,
-        onMouseMove,
-        onMouseUp,
-        onMouseEnter,
-        onMouseLeave,
-      };
 
   const resizableProps = useResizableProps({
     wrapperDivRef,

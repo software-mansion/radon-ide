@@ -275,24 +275,6 @@ export default function ReplayOverlay({
   const timeSec = Math.floor(time - startTime + 0.05);
   const timeFormat = `${Math.floor(timeSec / 60)}:${(timeSec % 60).toString().padStart(2, "0")}`;
 
-  useEffect(() => {
-    function handleEvents(e: MouseEvent | KeyboardEvent) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    document.addEventListener("mousedown", handleEvents, true);
-    document.addEventListener("mouseup", handleEvents, true);
-    document.addEventListener("keydown", handleEvents, true);
-    document.addEventListener("keyup", handleEvents, true);
-    return () => {
-      document.removeEventListener("mousedown", handleEvents, true);
-      document.removeEventListener("mouseup", handleEvents, true);
-      document.removeEventListener("keydown", handleEvents, true);
-      document.removeEventListener("keyup", handleEvents, true);
-    };
-  }, []);
-
   return (
     <div className="replay-overlay">
       <div className="replay-corner replay-top-left" />
