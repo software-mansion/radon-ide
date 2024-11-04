@@ -146,8 +146,21 @@ function PreviewView() {
     setInspectStackData(null);
   }
 
+  function onMouseDown(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const elementName = (e.target as Element).className;
+    if (elementName !== "phone-wrapper") {
+      return;
+    }
+    setIsPressing(true);
+  }
+
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
+    const elementName = (e.target as Element).className;
+    if (elementName !== "phone-wrapper") {
+      return;
+    }
     setIsPressing(false);
   }
 
@@ -158,6 +171,7 @@ function PreviewView() {
   }
 
   const touchHandlers = {
+    onMouseDown,
     onMouseUp,
     onMouseLeave,
   };
