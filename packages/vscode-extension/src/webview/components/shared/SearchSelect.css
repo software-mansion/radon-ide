@@ -1,0 +1,75 @@
+.search-input {
+  width: 100%;
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 4px;
+  padding: 0 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1;
+  height: 26px;
+  color: var(--swm-default-text);
+  background-color: var(--swm-select-background);
+  box-shadow: var(--swm-select-shadow);
+}
+
+.search-bar-wrapper {
+  display: flex;
+  gap: 12px;
+}
+
+.search-icon {
+  margin-top: 4px;
+}
+
+.loading-spinner-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.matches-container {
+  height: 200px;
+  overflow: auto;
+  border: 2px solid var(--deep-link-history-border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.match-option {
+  width: calc(100% - 16px);
+  max-width: calc(100% - 16px);
+  padding: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.match-option span {
+  width: 100%;
+  height: 100%;
+  word-wrap: break-word;
+}
+
+.empty-matches {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  font-style: italic;
+  color: var(--swm-disabled-text);
+}
+
+.match-highlighted {
+  color: var(--deep-link-history-query-match-color);
+}
+
+.selected-match {
+  background-color: var(--deep-link-history-selected-item-background);
+}

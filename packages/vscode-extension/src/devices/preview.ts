@@ -138,7 +138,7 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write(`key ${direction} ${keyCode}\n`);
   }
 
-  public sendPaste(text: string) {
+  public async sendPaste(text: string) {
     this.subprocess?.stdin?.write(`paste ${text}\n`);
   }
 }
