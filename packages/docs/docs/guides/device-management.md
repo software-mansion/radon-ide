@@ -8,7 +8,7 @@ Radon IDE manages its own instances of Android emulators and iOS simulators sepa
 
 You can open the manage devices modal in two ways. From the settings in the top-right corner **Settings > Manage devices...** or from the devices dropdown in the bottom-left corner of the panel.
 
-<img width="650" src="/img/docs/ide_how_to_manage_devices.png" />
+<img width="650" src="/img/docs/ide_how_to_manage_devices.png" className="shadow-image" />
 
 ## Manage devices
 

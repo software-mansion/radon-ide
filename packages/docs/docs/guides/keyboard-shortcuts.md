@@ -21,7 +21,7 @@ You can adjust the Radon IDE bindings in the [VSCode keyboard shortcut editor](h
 
 You can open this editor by going to the menu under **Code > Settings > Keyboard Shortcuts** or by using the **Preferences: Open Keyboard Shortcuts** command (⌘K ⌘S).
 
-<img width="700" src="/img/docs/ide_adjust_keybindings.png" />
+<img width="700" src="/img/docs/ide_adjust_keybindings.png" className="shadow-image" />
 
 ## Unassigned actions
 

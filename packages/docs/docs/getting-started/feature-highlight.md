@@ -45,7 +45,7 @@ The links displayed in the console are automatically linking back to your source
 
 Develop your components individually without distractions.
 
-Install `radon-ide` package and use `preview` method from it to define the components that should render in preview mode:
+Install `radon-ide` package and use `preview` function from it to define the components that should render in preview mode:
 
 ```js
 import { preview } from "radon-ide";
