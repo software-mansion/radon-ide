@@ -1,0 +1,76 @@
+---
+id: device-settings
+title: Device settings
+sidebar_position: 4
+---
+
+Radon IDE allows you to adjust various device settings right from VSCode.
+
+To open the device settings drop-down use the button on the bottom-right corner of the panel.
+
+<img width="300" src="/img/docs/ide_device_settings_button.png" className="shadow-image" />
+
+The opened device settings dropdown looks as follows:
+
+<img width="250" src="/img/docs/ide_device_settings_captioned.png" className="shadow-image" />
+
+1. **Device Appearance** - allows to change the light/dark mode.
+2. **Text Size** - a slider that allows to change the font size on the device.
+3. **Biometrics** - options to simulate biometric authorization on iOS. This option isn't available on Android. The following options are available:
+
+   <img width="250" src="/img/docs/ide_biometrics.png" className="shadow-image" />
+
+   - _Enrolled_ - whether the biometric authorization is enabled on the device,
+   - _Matching ID_ - simulates Touch ID or Face ID successfully recognizing the user,
+   - _Non-matching ID_ - simulates Touch ID or Face ID failing to recognize the user.
+
+4. **Device Location** - allows to enable location services and set static device geolocation using coordinates.
+
+<img width="450" src="/img/docs/ide_geolocation.png" className="shadow-image" />
+
+<details>
+<summary>Supported formats</summary>
+
+```
+40.123, -74.123
+40.123° N 74.123° W
+40° 7´ 22.8" N 74° 7´ 22.8" W
+40° 7.38’, -74° 7.38’
+N40°7’22.8, W74°7’22.8"
+40°7’22.8"N, 74°7’22.8"W
+40 7 22.8, -74 7 22.8
+40.123 -74.123
+40.123°,-74.123°
+144442800, -266842800
+40.123N74.123W
+4007.38N7407.38W
+40°7’22.8"N, 74°7’22.8"W
+400722.8N740722.8W
+N 40 7.38 W 74 7.38
+40:7:23N,74:7:23W
+40:7:22.8N 74:7:22.8W
+40°7’23"N 74°7’23"W
+40°7’23" -74°7’23"
+40d 7’ 23" N 74d 7’ 23" W
+40.123N 74.123W
+40° 7.38, -74° 7.38
+```
+
+</details>
+<br/>
+
+5. **Device Localization** - allows to set the device [localization](https://developer.mozilla.org/en-US/docs/Glossary/Localization). Changing the localization setting reboots the device. This option isn't available on Android.
+
+<img width="450" src="/img/docs/ide_localization.png" className="shadow-image" />
+
+6. **Permissions** - allows to reset the device privacy permissions.
+
+On iOS, you can reset all permissions, as well as reset location, photos, contacts and calendar. On Android, only resetting all permissions is supported.
+
+<img width="250" src="/img/docs/ide_permissions.png" className="shadow-image" />
+
+7. **Screen recording** - a toggle for enabling replays. After switching the `Enable Replays` toggle a `Replay` button appears in the Radon IDE panel.
+
+<img width="300" src="/img/docs/ide_replays_enabled.png" className="shadow-image" />
+
+###
