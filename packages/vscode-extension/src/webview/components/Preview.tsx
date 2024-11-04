@@ -409,7 +409,7 @@ function Preview({
     hasBundleError ||
     hasIncrementalBundleError ||
     !showDevicePreview ||
-    replayData;
+    !!replayData;
 
   const touchHandlers = shouldPreventInputEvents
     ? {}
