@@ -1,0 +1,55 @@
+---
+id: previews-and-storybook
+title: Previews and Storybook
+sidebar_position: 5
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+Previews allow you to develop components in complete isolation from the rest of your application.
+
+To use previews first, add `radon-ide` package to your project.
+
+<Tabs groupId="package-managers">
+  <TabItem value="npm" label="NPM">
+
+    npm i radon-ide
+
+  </TabItem>
+  <TabItem value="yarn" label="YARN">
+
+    yarn add radon-ide
+
+  </TabItem>
+</Tabs>
+
+The `radon-ide` package comes with a `preview` function.
+
+```js
+import { preview } from "radon-ide";
+```
+
+You call the `preview` function with a JSX component as the first argument. The function needs to be called in a `.jsx` or `.tsx` file outside of the component body.
+
+```jsx
+preview(<MyComponent param={42} />);
+```
+
+The extension will display a clickable `Open preview` button over the line with `preview` call.
+
+<img width="500" src="/img/docs/ide_previews.png" className="shadow-image" />
+
+Clicking the `Open preview` button will launch the chosen component in isolation.
+
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/6_sztudio_preview.mp4" type="video/mp4" />
+</video>
+
+You can quickly test different variants of the same component by rendering different previews based on props.
+
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_different_previews.mp4" type="video/mp4" />
+</video>
+
+You exit the preview by using the `Go to main screen` button in the top-left corner of the panel or by reloading the application.
