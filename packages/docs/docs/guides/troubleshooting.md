@@ -80,7 +80,7 @@ Here is what you can try when the extension got stuck on some errors:
 
 If you need to install an older version of an IDE, you can do so by navigating to the cogwheel menu next to the "install" button in the market place.
 
-<img width="698" alt="download-older-version" src="/img/docs/marketplace_install_older_version.png"/>
+<img width="698" alt="download-older-version" src="/img/docs/marketplace_install_older_version.png" className="shadow-image"/>
 
 ### -sec-num- Configureing Alternative Xcode Versions
 

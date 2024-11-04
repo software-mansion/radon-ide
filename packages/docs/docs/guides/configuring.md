@@ -19,10 +19,10 @@ Before you can change any of the options you'll need to create launch configurat
 
 If you have the launch configuration file you can move to the next step.
 Otherwise go to **Run and Build** panel and click **create a launch.json file**:
-<img width="400" src="/img/docs/ide_create_launch_config.png"/>
+<img width="400" src="/img/docs/ide_create_launch_config.png" className="shadow-image"/>
 
 Then, select **Radon IDE** from the dropdown:
-<img width="400" src="/img/docs/ide_launch_config_ide.png"/>
+<img width="550" src="/img/docs/ide_launch_config_ide.png" className="shadow-image"/>
 
 This will create a new file under your workspace directory: `.vscode/launch.json` – this file should be added to version control (git) as it carries configuration that is specific to your project setup rather than user specific editor settings.
 

@@ -38,7 +38,7 @@ npm install
 Simulator server repository is not open sourced but we have a pre-build binaries published on the GitHub releases page.
 First, you need to navigate to the [releases page on GitHub](https://github.com/software-mansion/radon-ide/releases), open the recent release, and download the sim-server file from "Assets" section (the filename contains a git hash for build consistency):
 
-<img width="825" alt="download-sim-server" src="/img/docs/download_sim_server.png"/>
+<img width="825" alt="download-sim-server" src="/img/docs/download_sim_server.png" className="shadow-image"/>
 
 Next, place the downloaded file under `packages/vscode-extension/dist`.
 
@@ -64,7 +64,7 @@ code packages/vscode-extension
 This can only be done from withing Visual Studio Code.
 With the extension project open, go to `Run and Debug` panel and click "Start Debugging" button next to "Run Extension" configuration:
 
-<img width="373" alt="run-and-debug" src="/img/docs/run_and_debug.png"/>
+<img width="373" alt="run-and-debug" src="/img/docs/run_and_debug.png" className="shadow-image"/>
 
 Running this configuration will result in the new vscode window being opened.
 This new window is titled "[Extension Development Host]" and is the only window that has the development version of the extension loaded – you should use it to open you React Native project, or try some of the test apps from `test-app` folder.
@@ -82,8 +82,7 @@ Frontend code is setup with hot reload, so changes made to frontend code will up
 Code changes made to the main extension, requires restarting the extension project which will result in the Extension Host window reloading.
 You can use Debug Tool Bar to restart the project:
 
-<img width="438" alt="restart-extension"
-src="/img/docs/restart_extension.png"/>
+<img width="438" alt="restart-extension" src="/img/docs/restart_extension.png" className="shadow-image"/>
 
 For main extension code, you can set breakpoints in vscode and use debugger normally, logs will appear in the Debug Console panel.
 Unfortunately debugging isn't available for the frontend code, however you can use vscode's builtin chrome devtools to see logs or interact with the frontend portion of the project – for this you'll need to run command "Developer: Open Webview Developer Tools" from the command palette in the Extension Host window.

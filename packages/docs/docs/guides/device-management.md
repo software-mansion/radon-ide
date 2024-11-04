@@ -14,7 +14,7 @@ You can open the manage devices modal in two ways. From the settings in the top-
 
 The manage devices modal lists all your current devices. Here, you can add new devices with a `+ Create new device` button and remove devices with an red delete icon on the right of the listed device.
 
-<img width="500" src="/img/docs/ide_manage_devices_modal.png" />
+<img width="500" src="/img/docs/ide_manage_devices_modal.png" className="shadow-image" />
 
 ## Create device
 
@@ -24,13 +24,13 @@ The **device type** affects the device frame shown in the Radon IDE preview. Cur
 
 The **system image** is the Android system image or iOS runtime running on the created device. In order for system images to appear in the Radon IDE, they first must be installed in Xcode or Android Studio, respectively. For more information, see [guide to Simulator System Images](/docs/guides/simulators).
 
-<img width="500" src="/img/docs/ide_add_device.png" />
+<img width="500" src="/img/docs/ide_add_device.png" className="shadow-image" />
 
 ## Remove device
 
 Clicking the delete icon in the manage devices modal will ask if you really want to delete this device. A deleted device cannot be restored. If you want to have the same device you deleted, you have to create it again.
 
-<img width="500" src="/img/docs/ide_remove_device.png" />
+<img width="500" src="/img/docs/ide_remove_device.png" className="shadow-image" />
 
 ## Switching current device
 
