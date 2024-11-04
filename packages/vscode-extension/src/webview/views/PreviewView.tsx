@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, MouseEvent } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
