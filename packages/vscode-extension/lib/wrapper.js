@@ -173,12 +173,43 @@ export function AppWrapper({ children, initialProps, ..._rest }) {
     [openPreview, closePreview, requestNavigationChange]
   );
 
+  const getInspectorDataForInstance = (node) => {
+    const renderers = Array.from(window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.values());
+
+    if (!renderers) {
+      return {};
+    }
+
+    for (const renderer of renderers) {
+      if (renderer.rendererConfig?.getInspectorDataForInstance) {
+        const data = renderer.rendererConfig.getInspectorDataForInstance(node);
+        return data ?? {};
+      }
+    }
+
+    return {};
+  };
+
   useAgentListener(
     devtoolsAgent,
     "RNIDE_inspect",
     (payload) => {
       const getInspectorDataForViewAtPoint = RNInternals.getInspectorDataForViewAtPoint;
       const { width, height } = Dimensions.get("screen");
+      const { requestStack } = payload;
+
+      const createStackElement = (
+        frame, name, source
+      ) => (
+        {
+          componentName: name,
+          source: {
+            fileName: source.fileName,
+            line0Based: source.lineNumber - 1,
+            column0Based: source.columnNumber - 1,
+          },
+          frame,
+        });
 
       getInspectorDataForViewAtPoint(
         mainContainerRef.current,
@@ -190,53 +221,47 @@ export function AppWrapper({ children, initialProps, ..._rest }) {
             x: frame.left / width,
             y: frame.top / height,
             width: frame.width / width,
-            height: frame.height / height,
+            height: frame.height / height
           };
-          let stackPromise = Promise.resolve(undefined);
-          if (payload.requestStack) {
-            stackPromise = Promise.all(
-              viewData.hierarchy.reverse().map((item) => {
-                const inspectorData = item.getInspectorData((arg) => findNodeHandle(arg));
-                const framePromise = new Promise((resolve, reject) => {
-                  try {
-                    inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
-                      resolve({
-                        x: pageX / width,
-                        y: pageY / height,
-                        width: viewWidth / width,
-                        height: viewHeight / height,
-                      });
-                    });
-                  } catch (e) {
-                    reject(e);
-                  }
-                });
-
-                return framePromise
-                  .catch(() => undefined)
-                  .then((frame) => {
-                    return inspectorData.source
-                      ? {
-                          componentName: item.name,
-                          source: {
-                            fileName: inspectorData.source.fileName,
-                            line0Based: inspectorData.source.lineNumber - 1,
-                            column0Based: inspectorData.source.columnNumber - 1,
-                          },
-                          frame,
-                        }
-                      : undefined;
-                  });
-              })
-            ).then((stack) => stack?.filter(Boolean));
-          }
-          stackPromise.then((stack) => {
+          
+          if (!requestStack) {
             devtoolsAgent._bridge.send("RNIDE_inspectData", {
               id: payload.id,
               frame: scaledFrame,
-              stack: stack,
             });
-          });
+            return;
+          }
+
+          const inspectNode = (node, stack) => {
+            // Optimization: we break after reaching fiber node corresponding to OffscreenComponent (with tag 22).
+            if (!node || node.tag === 22) {
+              devtoolsAgent._bridge.send("RNIDE_inspectData", {
+                id: payload.id,
+                frame: scaledFrame,
+                stack: Array.from(stack).filter(Boolean)
+              });
+            } else {
+              const data = getInspectorDataForInstance(node);
+              const item = data.hierarchy[data.hierarchy.length - 1];
+              const inspectorData = item.getInspectorData((arg) => findNodeHandle(arg));
+
+              inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
+                const stackElementFrame = {
+                  x: pageX / width,
+                  y: pageY / height,
+                  width: viewWidth / width,
+                  height: viewHeight / height
+                };
+
+                const element = (inspectorData.source) ? 
+                  createStackElement(stackElementFrame, item.name, inspectorData.source) : undefined;
+                
+                inspectNode(node.return, [...stack, element]);
+              });
+            }
+          };
+          
+          inspectNode(viewData.closestInstance, []);
         }
       );
     },
