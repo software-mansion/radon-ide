@@ -45,19 +45,27 @@
   color: var(--swm-disabled-text);
   pointer-events: none;
 }
-
 .inspect-data-menu-item[data-highlighted] {
   background-color: var(--swm-dropdown-item-highlighted);
-  color: var(--swm-default-text);
-  overflow-wrap: anywhere;
+  /* white-space: normal; */
+  /* overflow-wrap: anywhere; */
 }
 
 .inspect-data-menu-item .right-slot {
   color: var(--swm-device-select-rich-item-subtitle);
   font-size: 90%;
   margin-left: auto;
-  overflow-wrap: anywhere;
   padding-left: 10px;
+  max-width: 150px;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+.inspect-data-menu-item .right-slot .filename {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex-grow: 1;
 }
 
 .inspect-data-menu-item.show-all {

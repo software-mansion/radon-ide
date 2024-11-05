@@ -7,7 +7,6 @@ import "./InspectDataMenu.css";
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
 const MAX_INSPECT_ITEMS = 5;
-const MAX_FILENAME_LENGTH = 24;
 
 type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
@@ -44,18 +43,6 @@ export function InspectDataMenu({
     return "Dimensions: -";
   })();
 
-  const getEllipsedFileName = (filePath: string) => {
-    const fullFileName = filePath.split("/").pop() ?? "";
-    const lastDotIndex = fullFileName.lastIndexOf(".");
-    let name = fullFileName.substring(0, lastDotIndex);
-    const extension = fullFileName.substring(lastDotIndex);
-
-    if (fullFileName.length > MAX_FILENAME_LENGTH) {
-      name = name.substring(0, MAX_FILENAME_LENGTH - extension.length - 3) + "...";
-    }
-    return name + extension;
-  };
-
   const filteredData = inspectStack.filter((item) => !item.hide);
   const inspectItems = shouldShowAll ? filteredData : filteredData.slice(0, MAX_INSPECT_ITEMS);
 
@@ -88,7 +75,7 @@ export function InspectDataMenu({
           </DropdownMenu.Label>
           {inspectItems.map((item, index) => {
             // extract file name from path:
-            const fileName = getEllipsedFileName(item.source.fileName);
+            const fileName = item.source.fileName.split("/").pop();
             return (
               <DropdownMenu.Item
                 className="inspect-data-menu-item"
@@ -96,7 +83,10 @@ export function InspectDataMenu({
                 onSelect={() => onSelected(item)}
                 onMouseEnter={() => onHover(item)}>
                 <code>{`<${item.componentName}>`}</code>
-                <div className="right-slot">{`${fileName}:${item.source.line0Based + 1}`}</div>
+                <div className="right-slot">
+                  <span className="filename">{`${fileName}`}</span>
+                  <span>{`:${item.source.line0Based + 1}`}</span>
+                </div>
               </DropdownMenu.Item>
             );
           })}
