@@ -16,6 +16,8 @@ Enabling the screen recording option gives access to a new `Replay` button in th
 
 <img width="350" src="/img/docs/ide_replays_enabled.png" className="shadow-image" />
 
+## Using Replay
+
 Clicking on the `Replay` button rewinds the last 5 seconds of what was happening on the device preview.
 
 <video autoPlay loop width="700" controls className="shadow-image">
