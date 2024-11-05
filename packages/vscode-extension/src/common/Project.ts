@@ -13,6 +13,7 @@ export type DeviceSettings = {
   hasEnrolledBiometrics: boolean;
   locale: Locale;
   replaysEnabled: boolean;
+  showTouches: boolean;
 };
 
 export type ProjectState = {

@@ -152,6 +152,9 @@ export class DeviceSession implements Disposable {
     if (this.deviceSettings?.replaysEnabled) {
       this.device.startReplays();
     }
+    if (this.deviceSettings?.showTouches) {
+      this.device.showTouches();
+    }
 
     const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
     Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
@@ -298,6 +301,11 @@ export class DeviceSession implements Disposable {
       this.device.startReplays();
     } else {
       this.device.stopReplays();
+    }
+    if (settings.showTouches && !this.isLaunching) {
+      this.device.showTouches();
+    } else {
+      this.device.hideTouches();
     }
     return this.device.changeSettings(settings);
   }
