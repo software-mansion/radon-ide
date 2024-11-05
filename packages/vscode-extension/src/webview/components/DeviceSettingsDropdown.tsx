@@ -169,7 +169,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
               }
               defaultChecked={deviceSettings.replaysEnabled}
-              style={{ marginLeft: "5px" }}>
+              style={{ marginLeft: "auto" }}>
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
@@ -183,7 +183,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
               }
               defaultChecked={deviceSettings.showTouches}
-              style={{ marginLeft: "5px" }}>
+              style={{ marginLeft: "auto" }}>
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
