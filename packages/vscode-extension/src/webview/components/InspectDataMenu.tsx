@@ -11,6 +11,7 @@ const MAX_FILENAME_LENGTH = 24;
 
 type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
+  inspectScreenSide: "left" | "right";
   inspectStack: InspectDataStackItem[];
   device?: DeviceProperties;
   frame: Frame | null;
@@ -21,6 +22,7 @@ type InspectDataMenuProps = {
 
 export function InspectDataMenu({
   inspectLocation,
+  inspectScreenSide,
   inspectStack,
   device,
   frame,
@@ -56,6 +58,7 @@ export function InspectDataMenu({
 
   const filteredData = inspectStack.filter((item) => !item.hide);
   const inspectItems = shouldShowAll ? filteredData : filteredData.slice(0, MAX_INSPECT_ITEMS);
+  console.log("FRYTKI inspectScreenSide", inspectScreenSide);
 
   return (
     <DropdownMenu.Root
@@ -79,7 +82,7 @@ export function InspectDataMenu({
         <DropdownMenu.Content
           className="inspect-data-menu-content"
           sideOffset={5}
-          // align={"end"} // TODO START when click on left side of device, END on right sie
+          align={inspectScreenSide === "left" ? "start" : "end"}
           collisionPadding={5}>
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
@@ -109,7 +112,6 @@ export function InspectDataMenu({
               <DropdownMenu.Label className="inspect-data-menu-label">Show all</DropdownMenu.Label>
             </DropdownMenu.Item>
           )}
-          <DropdownMenu.Arrow className="inspect-data-menu-arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

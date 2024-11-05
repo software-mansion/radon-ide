@@ -67,7 +67,3 @@
   justify-content: center;
   flex-wrap: nowrap;
 }
-
-.inspect-data-menu-arrow {
-  fill: var(--swm-popover-background);
-}

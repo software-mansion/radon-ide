@@ -226,6 +226,7 @@ function PreviewView() {
       {!replayData && inspectStackData && (
         <InspectDataMenu
           inspectLocation={inspectStackData.requestLocation}
+          inspectScreenSide={inspectStackData.screenSide}
           inspectStack={inspectStackData.stack}
           device={deviceProperties}
           frame={inspectFrame}
