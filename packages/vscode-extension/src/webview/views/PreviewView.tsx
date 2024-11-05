@@ -54,6 +54,7 @@ function PreviewView() {
   const [isPressing, setIsPressing] = useState(false);
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
+  const [previewFrame, setPreviewFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
   const zoomLevel = projectState.previewZoom ?? "Fit";
   const onZoomChanged = useCallback(
@@ -162,6 +163,18 @@ function PreviewView() {
 
   const showReplayButton = deviceSettings.replaysEnabled;
 
+  const inspectScreenSide = (() => {
+    let isInspectOnLeftScreenSide = true;
+    if (!inspectStackData || !previewFrame) {
+      return "left";
+    }
+    const { x: requestX } = inspectStackData.requestLocation;
+    const { x: previewLeft, width: previewWidth } = previewFrame;
+    isInspectOnLeftScreenSide = requestX - previewLeft <= previewWidth / 2;
+
+    return isInspectOnLeftScreenSide ? "left" : "right";
+  })();
+
   return (
     <div className="panel-view" {...touchHandlers}>
       <div className="button-group-top">
@@ -207,6 +220,7 @@ function PreviewView() {
           isInspecting={isInspecting}
           inspectFrame={inspectFrame}
           setInspectFrame={setInspectFrame}
+          setPreviewFrame={setPreviewFrame}
           setInspectStackData={setInspectStackData}
           onInspectorItemSelected={onInspectorItemSelected}
           isPressing={isPressing}
@@ -222,10 +236,10 @@ function PreviewView() {
           devicesNotFound={devicesNotFound}
         />
       )}
-
       {!replayData && inspectStackData && (
         <InspectDataMenu
           inspectLocation={inspectStackData.requestLocation}
+          inspectScreenSide={inspectScreenSide}
           inspectStack={inspectStackData.stack}
           device={deviceProperties}
           frame={inspectFrame}
@@ -238,7 +252,6 @@ function PreviewView() {
           onCancel={() => resetInspector()}
         />
       )}
-
       <div className="button-group-bottom">
         <IconButton
           active={isInspecting}
