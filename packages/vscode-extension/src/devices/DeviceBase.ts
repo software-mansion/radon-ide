@@ -44,6 +44,14 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.dispose();
   }
 
+  public showTouches() {
+    return this.preview?.showTouches();
+  }
+
+  public hideTouches() {
+    return this.preview?.hideTouches();
+  }
+
   public stopReplays() {
     return this.preview?.stopReplays();
   }

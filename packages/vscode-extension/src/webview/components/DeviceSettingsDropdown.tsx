@@ -155,7 +155,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-          <Label>Screen recording</Label>
+          <Label>Screen settings</Label>
           <div className="dropdown-menu-item">
             <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
@@ -169,7 +169,21 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
               }
               defaultChecked={deviceSettings.replaysEnabled}
-              style={{ marginLeft: "5px" }}>
+              style={{ marginLeft: "auto" }}>
+              <Switch.Thumb className="switch-thumb" />
+            </Switch.Root>
+          </div>
+          <div className="dropdown-menu-item">
+            <span className="codicon codicon-record" />
+            Show Touches
+            <Switch.Root
+              className="switch-root small-switch"
+              id="enable-replays"
+              onCheckedChange={(checked) =>
+                project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
+              }
+              defaultChecked={deviceSettings.showTouches}
+              style={{ marginLeft: "auto" }}>
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
