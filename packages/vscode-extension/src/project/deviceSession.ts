@@ -17,7 +17,8 @@ import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 
-type StartOptions = { cleanBuild: boolean };
+type PreviewReadyCallback = (previewURL: string) => void;
+type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
 
 export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
@@ -104,7 +105,7 @@ export class DeviceSession implements Disposable {
     throw new Error("Not implemented " + type);
   }
 
-  private async launchApp() {
+  private async launchApp(previewReadyCallback: PreviewReadyCallback) {
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
@@ -141,7 +142,10 @@ export class DeviceSession implements Disposable {
 
     await Promise.all([
       this.metro.ready(),
-      this.device.startPreview().then((url) => (previewURL = url)),
+      this.device.startPreview().then((url) => {
+        previewURL = url;
+        previewReadyCallback(url);
+      }),
       waitForAppReady,
     ]);
     Logger.debug("App and preview ready, moving on...");
@@ -203,14 +207,17 @@ export class DeviceSession implements Disposable {
     Logger.debug("Metro & devtools ready");
   }
 
-  public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+  public async start(
+    deviceSettings: DeviceSettings,
+    { cleanBuild, previewReadyCallback }: StartOptions
+  ) {
     this.deviceSettings = deviceSettings;
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
     await this.buildApp({ clean: cleanBuild });
     await this.installApp({ reinstall: false });
-    const previewUrl = await this.launchApp();
+    const previewUrl = await this.launchApp(previewReadyCallback);
     Logger.debug("Device session started");
     return previewUrl;
   }
