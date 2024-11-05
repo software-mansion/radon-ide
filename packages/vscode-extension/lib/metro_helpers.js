@@ -23,7 +23,7 @@ function overrideModuleFromAppDir(moduleName, exports) {
   }
 }
 
-const extensionLib = process.env.REACT_NATIVE_IDE_LIB_PATH;
+const extensionLib = process.env.RADON_IDE_LIB_PATH;
 
 function adaptMetroConfig(config) {
   // We use processorModuleFilter to inject some code into the bundle prelude.
@@ -71,7 +71,7 @@ function adaptMetroConfig(config) {
   } else {
     const originalResolveRequest = config.resolver?.resolveRequest;
     if (originalResolveRequest) {
-      // Some storybook setups relie on resolveRequest being overridden
+      // Some storybook setups rely on resolveRequest being overridden
       // in order to exclude storybook files from being imported into the bundle.
       // The files are only included when STORYBOOK_ENABLED environment variable
       // is set. Apparently, we can't set that variable for the whole metro process
@@ -128,9 +128,25 @@ function adaptMetroConfig(config) {
   // that adds a preamble to one of the files loaded by React Native in initialization.
   // It also provides a way to load some integration files when apropriate libraries are requested.
   // Since the transformer is loaded by path, we pass the original transformer that it wraps via process.env
-  process.env.REACT_NATIVE_IDE_ORIG_BABEL_TRANSFORMER_PATH =
-    config.transformer.babelTransformerPath;
+  process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_PATH = config.transformer.babelTransformerPath;
   config.transformer.babelTransformerPath = path.join(extensionLib, "./babel_transformer.js");
+
+  // In development, metro may resolve dependencies for the extension lib file to the extension's node_modules
+  // folder, as it lies on the path up the directory tree.
+  // Since we don't want this, we use resolver's blockList to exclude the extension lib's node_modules folder from
+  // being considered:
+  const extensionLibNodeModules = path.resolve(path.join(extensionLib, "../node_modules"));
+  let origBlockList = [];
+  if (config.resolver.blockList) {
+    // if block list is array, we use it as original block list
+    if (Array.isArray(config.resolver.blockList)) {
+      origBlockList = config.resolver.blockList;
+    } else {
+      // otherwise we create a new array containing the original block list
+      origBlockList = [config.resolver.blockList];
+    }
+  }
+  config.resolver.blockList = [new RegExp(extensionLibNodeModules + "/.*"), ...origBlockList];
 
   // Metro reporter gets overridden when launching with packager script, hence we need
   // to pass its configuration.
@@ -144,6 +160,8 @@ function adaptMetroConfig(config) {
     })
   );
   process.stdout.write("\n");
+
+  config.cacheVersion = `RNIDE_metro_cache_version$${process.env.RADON_IDE_VERSION}$${config.cacheVersion}`;
 
   return config;
 }

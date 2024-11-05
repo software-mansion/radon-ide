@@ -197,7 +197,8 @@ export class Metro implements Disposable {
       NODE_PATH: path.join(appRootFolder, "node_modules"),
       RCT_METRO_PORT: "0",
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
-      REACT_NATIVE_IDE_LIB_PATH: libPath,
+      RADON_IDE_LIB_PATH: libPath,
+      RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
     };
     let bundlerProcess: ChildProcess;
 
