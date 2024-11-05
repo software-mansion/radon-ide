@@ -10,7 +10,6 @@ const MAX_INSPECT_ITEMS = 5;
 
 type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
-  inspectScreenSide: "left" | "right";
   inspectStack: InspectDataStackItem[];
   device?: DeviceProperties;
   frame: Frame | null;
@@ -21,7 +20,6 @@ type InspectDataMenuProps = {
 
 export function InspectDataMenu({
   inspectLocation,
-  inspectScreenSide,
   inspectStack,
   device,
   frame,
