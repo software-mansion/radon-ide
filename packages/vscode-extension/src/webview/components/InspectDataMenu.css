@@ -47,8 +47,6 @@
 }
 .inspect-data-menu-item[data-highlighted] {
   background-color: var(--swm-dropdown-item-highlighted);
-  /* white-space: normal; */
-  /* overflow-wrap: anywhere; */
 }
 
 .inspect-data-menu-item .right-slot {
@@ -63,8 +61,8 @@
 }
 .inspect-data-menu-item .right-slot .filename {
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
+  white-space: nowrap;
   flex-grow: 1;
 }
 

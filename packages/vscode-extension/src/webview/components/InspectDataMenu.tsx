@@ -75,7 +75,10 @@ export function InspectDataMenu({
           </DropdownMenu.Label>
           {inspectItems.map((item, index) => {
             // extract file name from path:
-            const fileName = item.source.fileName.split("/").pop();
+            const fullFileName = item.source.fileName.split("/").pop() ?? "";
+            const lastDotIndex = fullFileName.lastIndexOf(".");
+            const fileName = fullFileName.substring(0, lastDotIndex);
+            const fileExtension = fullFileName.substring(lastDotIndex);
             return (
               <DropdownMenu.Item
                 className="inspect-data-menu-item"
@@ -84,8 +87,8 @@ export function InspectDataMenu({
                 onMouseEnter={() => onHover(item)}>
                 <code>{`<${item.componentName}>`}</code>
                 <div className="right-slot">
-                  <span className="filename">{`${fileName}`}</span>
-                  <span>{`:${item.source.line0Based + 1}`}</span>
+                  <span className="filename">{fileName}</span>
+                  <span>{`${fileExtension}:${item.source.line0Based + 1}`}</span>
                 </div>
               </DropdownMenu.Item>
             );
