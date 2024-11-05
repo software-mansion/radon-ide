@@ -181,7 +181,6 @@ type Props = {
   isInspecting: boolean;
   inspectFrame: Frame | null;
   setInspectFrame: (inspectFrame: Frame | null) => void;
-  setPreviewFrame: (previewFrame: Frame | null) => void;
   setInspectStackData: (inspectStackData: InspectStackData | null) => void;
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
   isPressing: boolean;
@@ -211,7 +210,6 @@ function Preview({
   isInspecting,
   inspectFrame,
   setInspectFrame,
-  setPreviewFrame,
   setInspectStackData,
   onInspectorItemSelected,
   isPressing,
@@ -309,13 +307,6 @@ function Preview({
     project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
       if (requestStack && inspectData?.stack) {
         if (showInspectStackModal) {
-          const imgRect = previewRef.current!.getBoundingClientRect();
-          setPreviewFrame({
-            x: imgRect.x,
-            y: imgRect.y,
-            width: imgRect.width,
-            height: imgRect.height,
-          });
           setInspectStackData({
             requestLocation: { x: event.clientX, y: event.clientY },
             stack: inspectData.stack,

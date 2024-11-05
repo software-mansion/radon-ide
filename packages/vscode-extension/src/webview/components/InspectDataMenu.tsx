@@ -10,7 +10,6 @@ const MAX_INSPECT_ITEMS = 5;
 
 type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
-  inspectScreenSide: "left" | "right";
   inspectStack: InspectDataStackItem[];
   device?: DeviceProperties;
   frame: Frame | null;
@@ -21,7 +20,6 @@ type InspectDataMenuProps = {
 
 export function InspectDataMenu({
   inspectLocation,
-  inspectScreenSide,
   inspectStack,
   device,
   frame,
@@ -68,7 +66,6 @@ export function InspectDataMenu({
         <DropdownMenu.Content
           className="inspect-data-menu-content"
           sideOffset={5}
-          align={inspectScreenSide === "left" ? "start" : "end"}
           collisionPadding={5}>
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
