@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/consts";
@@ -27,7 +27,6 @@ export function InspectDataMenu({
   onHover,
   onCancel,
 }: InspectDataMenuProps) {
-  const [isSelectable, setIsSelectable] = useState(false);
   const [shouldShowAll, setShouldShowAll] = useState(false);
 
   const displayDimensionsText = (() => {
@@ -45,71 +44,60 @@ export function InspectDataMenu({
   const filteredData = inspectStack.filter((item) => !item.hide);
   const inspectItems = shouldShowAll ? filteredData : filteredData.slice(0, MAX_INSPECT_ITEMS);
 
-  useEffect(() => {
-    const handleMouseUp = (event: MouseEvent) => {
-      if (event.button === 2) {
-        // Enables item selection only after releasing the right mouse button
-        // to prevent unintended selections when opening the menu.
-        setIsSelectable(true);
-      }
-    };
-
-    document.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
-
   return (
-    <div style={{ left: inspectLocation.x, top: inspectLocation.y, position: "absolute" }}>
-      <DropdownMenu.Root
-        defaultOpen={true}
-        open={true}
-        onOpenChange={(open) => {
-          if (isSelectable && !open) {
-            onCancel();
-          }
-        }}>
-        <DropdownMenu.Trigger />
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content className="inspect-data-menu-content">
-            <DropdownMenu.Label className="inspect-data-menu-label">
-              {displayDimensionsText}
-            </DropdownMenu.Label>
-            {inspectItems.map((item, index) => {
-              // extract file name from path:
-              const fileName = item.source.fileName.split("/").pop();
-              return (
-                <DropdownMenu.Item
-                  className="inspect-data-menu-item"
-                  key={index}
-                  onSelect={() => {
-                    isSelectable && onSelected(item);
-                  }}
-                  onMouseEnter={() => onHover(item)}>
-                  <code>{`<${item.componentName}>`}</code>
-                  <div className="right-slot">{`${fileName}:${item.source.line0Based + 1}`}</div>
-                </DropdownMenu.Item>
-              );
-            })}
-            {filteredData.length > MAX_INSPECT_ITEMS && !shouldShowAll && (
+    <DropdownMenu.Root
+      defaultOpen={true}
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) {
+          onCancel();
+        }
+      }}>
+      <DropdownMenu.Trigger asChild>
+        <span
+          style={{
+            position: "absolute",
+            left: inspectLocation.x,
+            top: inspectLocation.y,
+            opacity: 0,
+          }}></span>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          className="inspect-data-menu-content"
+          sideOffset={5}
+          collisionPadding={5}>
+          <DropdownMenu.Label className="inspect-data-menu-label">
+            {displayDimensionsText}
+          </DropdownMenu.Label>
+          {inspectItems.map((item, index) => {
+            // extract file name from path:
+            const fileName = item.source.fileName.split("/").pop();
+            return (
               <DropdownMenu.Item
-                className="inspect-data-menu-item show-all"
-                key={"show-all"}
-                onSelect={(e) => {
-                  if (isSelectable) {
-                    setShouldShowAll(true);
-                    e.preventDefault(); // prevents the dropdown from closing
-                  }
-                }}>
-                <DropdownMenu.Label className="inspect-data-menu-label">
-                  Show all
-                </DropdownMenu.Label>
+                className="inspect-data-menu-item"
+                key={index}
+                onSelect={() => onSelected(item)}
+                onMouseEnter={() => onHover(item)}>
+                <code>{`<${item.componentName}>`}</code>
+                <div className="right-slot">{`${fileName}:${item.source.line0Based + 1}`}</div>
               </DropdownMenu.Item>
-            )}
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
-    </div>
+            );
+          })}
+          {filteredData.length > MAX_INSPECT_ITEMS && !shouldShowAll && (
+            <DropdownMenu.Item
+              className="inspect-data-menu-item show-all"
+              key={"show-all"}
+              onSelect={(e) => {
+                setShouldShowAll(true);
+                e.preventDefault(); // prevents the dropdown from closing
+              }}>
+              <DropdownMenu.Label className="inspect-data-menu-label">Show all</DropdownMenu.Label>
+            </DropdownMenu.Item>
+          )}
+          <DropdownMenu.Arrow className="inspect-data-menu-arrow" />
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
