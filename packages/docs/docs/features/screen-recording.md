@@ -37,7 +37,7 @@ On the replay overlay you have access to some functionalities like:
 5. **Next frame** - jumps forward one frame of the recording,
 6. **Save replay** - allows to save the recording.
 
-## Closing the replay overlay
+## Closing the Replay overlay
 
 You can close the overlay with a `x` button in the top-right corner of the overlay.
 
