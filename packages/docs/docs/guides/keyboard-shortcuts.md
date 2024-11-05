@@ -4,8 +4,6 @@ title: Keyboard shortcuts
 sidebar_position: 3
 ---
 
-## Default keyboard shortcuts
-
 Radon IDE lets you perform some repetitive actions through keyboard shortcuts.
 
 | Result                                 | macOS                 | Windows             |

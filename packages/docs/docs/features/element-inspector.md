@@ -6,9 +6,13 @@ sidebar_position: 1
 
 Element inspector lets you quickly jump from the device preview to the exact line of code where given component is defined.
 
+## Enabling the element inspector
+
 To enable the element inspector, use the inspector button in the bottom-left corner of the Radon IDE panel.
 
 <img width="300" src="/img/docs/ide_enable_inspector.png" className="shadow-image"/>
+
+## Using the element inspector
 
 To use it, first enable the inspector and simply point-and-click on the device preview. The Radon IDE will automatically open the source file with the editor cursor pointing on the line of code where the component is defined.
 

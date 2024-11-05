@@ -13,6 +13,8 @@ Radon IDE router integration supports both Expo Router and React Navigation proj
   <source src="/video/4_sztudio_url_bar.mp4" type="video/mp4"/>
 </video>
 
+## Using the integration
+
 The router integration consists of 3 features:
 
 <img width="300" src="/img/docs/ide_router_integration.png" className="shadow-image"/>

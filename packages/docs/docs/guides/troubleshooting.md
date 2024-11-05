@@ -82,6 +82,6 @@ If you need to install an older version of an IDE, you can do so by navigating t
 
 <img width="698" alt="download-older-version" src="/img/docs/marketplace_install_older_version.png" className="shadow-image"/>
 
-### -sec-num- Configureing Alternative Xcode Versions
+### -sec-num- Configuring Alternative Xcode Versions
 
 If you are using alternative Xcode version ( e.g. xcode-beta, ["xcodes"](https://www.xcodes.app/) ios simulators will only work if xcode-select points to the correct directory to set it up run: `xcode-select --switch ${PathToYourXCode}/Contents/Developer`

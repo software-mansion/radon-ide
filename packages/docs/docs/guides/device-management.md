@@ -10,13 +10,13 @@ You can open the manage devices modal in two ways. From the settings in the top-
 
 <img width="650" src="/img/docs/ide_how_to_manage_devices.png" className="shadow-image" />
 
-## Manage devices
+## Managing devices
 
 The manage devices modal lists all your current devices. Here, you can add new devices with a `+ Create new device` button and remove devices with an red delete icon on the right of the listed device.
 
 <img width="500" src="/img/docs/ide_manage_devices_modal.png" className="shadow-image" />
 
-## Create device
+## Creating a device
 
 Before creating the device you need to pick the **device type** and **system image**.
 
@@ -26,7 +26,7 @@ The **system image** is the Android system image or iOS runtime running on the c
 
 <img width="500" src="/img/docs/ide_add_device.png" className="shadow-image" />
 
-## Remove device
+## Removing a device
 
 Clicking the delete icon in the manage devices modal will ask if you really want to delete this device. A deleted device cannot be restored. If you want to have the same device you deleted, you have to create it again.
 

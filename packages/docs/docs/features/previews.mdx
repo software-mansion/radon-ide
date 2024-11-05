@@ -9,6 +9,8 @@ import TabItem from "@theme/TabItem";
 
 Previews allow you to develop components in complete isolation from the rest of your application.
 
+## Installing the `radon-ide` package
+
 To use previews first, add `radon-ide` package to your project.
 
 <Tabs groupId="package-managers">
@@ -24,6 +26,8 @@ To use previews first, add `radon-ide` package to your project.
   </TabItem>
 </Tabs>
 
+## Setting up `radon-ide` in code
+
 The `radon-ide` package comes with a `preview` function.
 
 ```js
@@ -35,6 +39,8 @@ You call the `preview` function with a JSX component as the first argument. The 
 ```jsx
 preview(<MyComponent param={42} />);
 ```
+
+## Opening the preview
 
 The extension will display a clickable `Open preview` button over the line with `preview` call.
 
@@ -51,5 +57,7 @@ You can quickly test different variants of the same component by rendering diffe
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_different_previews.mp4" type="video/mp4" />
 </video>
+
+## Closing the preview
 
 You exit the preview by using the `Go to main screen` button in the top-left corner of the panel or by reloading the application.
