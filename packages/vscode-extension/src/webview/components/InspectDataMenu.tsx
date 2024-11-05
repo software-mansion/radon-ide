@@ -58,7 +58,6 @@ export function InspectDataMenu({
 
   const filteredData = inspectStack.filter((item) => !item.hide);
   const inspectItems = shouldShowAll ? filteredData : filteredData.slice(0, MAX_INSPECT_ITEMS);
-  console.log("FRYTKI inspectScreenSide", inspectScreenSide);
 
   return (
     <DropdownMenu.Root
