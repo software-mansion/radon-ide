@@ -307,12 +307,6 @@ function Preview({
     project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
       if (requestStack && inspectData?.stack) {
         if (showInspectStackModal) {
-          setPreviewBoundingFrame({
-            x: imgRect.x,
-            y: imgRect.left,
-            width: imgRect.width,
-            height: imgRect.height,
-          });
           setInspectStackData({
             requestLocation: { x: event.clientX, y: event.clientY },
             stack: inspectData.stack,
