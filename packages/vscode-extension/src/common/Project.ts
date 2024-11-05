@@ -87,7 +87,6 @@ export type InspectDataStackItem = {
 
 export type InspectStackData = {
   requestLocation: { x: number; y: number };
-  screenSide: "left" | "right";
   stack: InspectDataStackItem[];
 };
 

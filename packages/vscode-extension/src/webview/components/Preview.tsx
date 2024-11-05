@@ -307,12 +307,14 @@ function Preview({
     project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
       if (requestStack && inspectData?.stack) {
         if (showInspectStackModal) {
-          const imgRect = previewRef.current!.getBoundingClientRect();
-          const isOnLeftScreenSide = event.clientX - imgRect.left <= imgRect.width / 2;
-
+          setPreviewBoundingFrame({
+            x: imgRect.x,
+            y: imgRect.left,
+            width: imgRect.width,
+            height: imgRect.height,
+          });
           setInspectStackData({
             requestLocation: { x: event.clientX, y: event.clientY },
-            screenSide: isOnLeftScreenSide ? "left" : "right",
             stack: inspectData.stack,
           });
         } else {

@@ -68,7 +68,6 @@ export function InspectDataMenu({
         <DropdownMenu.Content
           className="inspect-data-menu-content"
           sideOffset={5}
-          align={inspectScreenSide === "left" ? "start" : "end"}
           collisionPadding={5}>
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
