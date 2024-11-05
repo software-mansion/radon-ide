@@ -43,6 +43,7 @@ export function InspectDataMenu({
 
   const filteredData = inspectStack.filter((item) => !item.hide);
   const inspectItems = shouldShowAll ? filteredData : filteredData.slice(0, MAX_INSPECT_ITEMS);
+  const inspectMenuAlign = inspectLocation.x <= window.innerWidth / 2 ? "start" : "end";
 
   return (
     <DropdownMenu.Root
@@ -66,6 +67,7 @@ export function InspectDataMenu({
         <DropdownMenu.Content
           className="inspect-data-menu-content"
           sideOffset={5}
+          align={inspectMenuAlign}
           collisionPadding={5}>
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
