@@ -105,7 +105,7 @@ export class DeviceSession implements Disposable {
     throw new Error("Not implemented " + type);
   }
 
-  private async launchApp(previewReadyCallback: PreviewReadyCallback) {
+  private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
@@ -144,7 +144,7 @@ export class DeviceSession implements Disposable {
       this.metro.ready(),
       this.device.startPreview().then((url) => {
         previewURL = url;
-        previewReadyCallback(url);
+        previewReadyCallback && previewReadyCallback(url);
       }),
       waitForAppReady,
     ]);
