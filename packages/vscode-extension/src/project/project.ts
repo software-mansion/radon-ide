@@ -279,7 +279,7 @@ export class Project
 
   //#region Session lifecycle
   public async restart(
-    forceCleanBuild: boolean,
+    clean: "all" | "metro" | false,
     onlyReloadJSWhenPossible: boolean = true,
     restartDevice: boolean = false
   ) {
@@ -296,9 +296,9 @@ export class Project
 
     // we first consider forceCleanBuild flag, if set we always perform a clean
     // start of the project and select the device
-    if (forceCleanBuild) {
+    if (clean) {
       await this.start(true, true);
-      await this.selectDevice(deviceInfo, true);
+      await this.selectDevice(deviceInfo, clean === "all");
       return;
     }
 
@@ -349,7 +349,7 @@ export class Project
     return success;
   }
 
-  private async start(restart: boolean, forceCleanBuild: boolean) {
+  private async start(restart: boolean, resetMetroCache: boolean) {
     if (restart) {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
@@ -366,7 +366,7 @@ export class Project
 
     Logger.debug(`Launching metro`);
     this.metro.start(
-      forceCleanBuild,
+      resetMetroCache,
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
@@ -598,6 +598,9 @@ export class Project
 
       const previewURL = await newDeviceSession.start(this.deviceSettings, {
         cleanBuild: forceCleanBuild,
+        previewReadyCallback: (url) => {
+          this.updateProjectStateForDevice(deviceInfo, { previewURL: url });
+        },
       });
       this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
         previewURL,

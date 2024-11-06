@@ -183,8 +183,6 @@ type Props = {
   setInspectFrame: (inspectFrame: Frame | null) => void;
   setInspectStackData: (inspectStackData: InspectStackData | null) => void;
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
-  isPressing: boolean;
-  setIsPressing: (isPressing: boolean) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
   replayData: RecordingData | undefined;
@@ -212,14 +210,13 @@ function Preview({
   setInspectFrame,
   setInspectStackData,
   onInspectorItemSelected,
-  isPressing,
-  setIsPressing,
   zoomLevel,
   onZoomChanged,
   replayData,
   onReplayClose,
 }: Props) {
   const wrapperDivRef = useRef<HTMLDivElement>(null);
+  const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
@@ -329,6 +326,14 @@ function Preview({
     setInspectStackData(null);
   }
 
+  const shouldPreventInputEvents =
+    debugPaused ||
+    debugException ||
+    hasBundleError ||
+    hasIncrementalBundleError ||
+    !showDevicePreview ||
+    !!replayData;
+
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isMultiTouching) {
@@ -395,8 +400,8 @@ function Preview({
         sendMultiTouch(e, "Up");
       } else {
         sendTouch(e, "Up");
-        setIsPressing(false);
       }
+      setIsPressing(false);
     }
 
     if (isInspecting) {
@@ -405,6 +410,40 @@ function Preview({
       sendInspect(e, "Leave", true);
     }
   }
+
+  const touchHandlers = shouldPreventInputEvents
+    ? {}
+    : {
+        onMouseDown,
+        onMouseMove,
+        onMouseUp,
+        onMouseEnter,
+        onMouseLeave,
+      };
+
+  function onWrapperMouseDown(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(true);
+  }
+
+  function onWrapperMouseUp(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(false);
+  }
+
+  function onWrapperMouseLeave(e: MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsPressing(false);
+    setIsMultiTouching(false);
+  }
+
+  const wrapperTouchHandlers = shouldPreventInputEvents
+    ? {}
+    : {
+        onMouseDown: onWrapperMouseDown,
+        onMouseUp: onWrapperMouseUp,
+        onMouseLeave: onWrapperMouseLeave,
+      };
 
   useEffect(() => {
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
@@ -449,6 +488,10 @@ function Preview({
 
   useEffect(() => {
     function keyEventHandler(e: KeyboardEvent) {
+      if (shouldPreventInputEvents) {
+        return;
+      }
+
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
         const isKeydown = e.type === "keydown";
@@ -476,7 +519,7 @@ function Preview({
       document.removeEventListener("keydown", keyEventHandler);
       document.removeEventListener("keyup", keyEventHandler);
     };
-  }, [project]);
+  }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
     if (projectStatus === "running") {
@@ -490,23 +533,6 @@ function Preview({
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === projectState?.selectedDevice?.modelId;
   });
-
-  const shouldPreventTouchInteraction =
-    debugPaused ||
-    debugException ||
-    hasBundleError ||
-    hasIncrementalBundleError ||
-    !showDevicePreview;
-
-  const touchHandlers = shouldPreventTouchInteraction
-    ? {}
-    : {
-        onMouseDown,
-        onMouseMove,
-        onMouseUp,
-        onMouseEnter,
-        onMouseLeave,
-      };
 
   const resizableProps = useResizableProps({
     wrapperDivRef,
@@ -525,7 +551,8 @@ function Preview({
         className="phone-wrapper"
         style={cssPropertiesForDevice(device!, isFrameDisabled)}
         tabIndex={0} // allows keyboard events to be captured
-        ref={wrapperDivRef}>
+        ref={wrapperDivRef}
+        {...wrapperTouchHandlers}>
         {showDevicePreview && (
           <Resizable {...resizableProps}>
             <div className="phone-content">
