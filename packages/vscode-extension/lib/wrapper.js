@@ -177,8 +177,12 @@ export function AppWrapper({ children, initialProps, ..._rest }) {
     (payload) => {
       const { id, x, y, requestStack } = payload;
 
-      getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack)
-        .then((inspectorData) => {
+      getInspectorDataForCoordinates(
+        mainContainerRef, 
+        x,
+        y,
+        requestStack,
+        (inspectorData) => {
           devtoolsAgent._bridge.send("RNIDE_inspectData", {
             id,
             ...inspectorData
