@@ -131,22 +131,28 @@ function adaptMetroConfig(config) {
   process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_PATH = config.transformer.babelTransformerPath;
   config.transformer.babelTransformerPath = path.join(extensionLib, "./babel_transformer.js");
 
-  // In development, metro may resolve dependencies for the extension lib file to the extension's node_modules
+  // In extension development, metro may resolve dependencies for the extension lib files to the extension's node_modules
   // folder, as it lies on the path up the directory tree.
   // Since we don't want this, we use resolver's blockList to exclude the extension lib's node_modules folder from
   // being considered:
-  const extensionLibNodeModules = path.resolve(path.join(extensionLib, "../node_modules"));
-  let origBlockList = [];
-  if (config.resolver.blockList) {
-    // if block list is array, we use it as original block list
-    if (Array.isArray(config.resolver.blockList)) {
-      origBlockList = config.resolver.blockList;
-    } else {
-      // otherwise we create a new array containing the original block list
-      origBlockList = [config.resolver.blockList];
+  if (process.env.RADON_IDE_DEV) {
+    let origBlockList = [];
+    if (config.resolver.blockList) {
+      // if block list is array, we use it as original block list
+      if (Array.isArray(config.resolver.blockList)) {
+        origBlockList = config.resolver.blockList;
+      } else {
+        // otherwise we create a new array containing the original block list
+        origBlockList = [config.resolver.blockList];
+      }
     }
+    config.resolver.blockList = [
+      // the below regex aims to match extensionLib/../node_modules/.* paths
+      // we use resolve to get absolute path with no ".." in it
+      new RegExp(path.resolve(path.join(extensionLib, "..", "node_modules", ".*"))),
+      ...origBlockList,
+    ];
   }
-  config.resolver.blockList = [new RegExp(extensionLibNodeModules + "/.*"), ...origBlockList];
 
   // Metro reporter gets overridden when launching with packager script, hence we need
   // to pass its configuration.

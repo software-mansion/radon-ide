@@ -18,7 +18,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
         "Reload JS": () => project.reload("reloadJs"),
         "Restart app process": () => project.reload("restartProcess"),
         "Reinstall app": () => project.reload("reinstall"),
-        "Clear metro cache": () => project.restart("metro"),
+        "Clear Metro cache": () => project.restart("metro"),
         "Clean rebuild": () => project.restart("all"),
       }}>
       <span className="codicon codicon-refresh" />

@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import WebSocket from "ws";
-import { Disposable, Uri, workspace } from "vscode";
+import { Disposable, ExtensionMode, Uri, workspace } from "vscode";
 import stripAnsi from "strip-ansi";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
@@ -191,6 +191,7 @@ export class Metro implements Disposable {
     if (launchConfiguration.metroConfigPath) {
       metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
     }
+    const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
     const metroEnv = {
       ...launchConfiguration.env,
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
@@ -199,6 +200,7 @@ export class Metro implements Disposable {
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       RADON_IDE_LIB_PATH: libPath,
       RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
+      ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
     let bundlerProcess: ChildProcess;
 
