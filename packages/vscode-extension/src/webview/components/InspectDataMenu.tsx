@@ -42,7 +42,10 @@ export function InspectDataMenu({
   })();
 
   const filteredData = inspectStack.filter((item) => !item.hide);
-  const inspectItems = shouldShowAll ? filteredData : filteredData.slice(0, MAX_INSPECT_ITEMS);
+  const inspectItems =
+    shouldShowAll || filteredData.length === MAX_INSPECT_ITEMS + 1
+      ? filteredData
+      : filteredData.slice(0, MAX_INSPECT_ITEMS);
   const inspectMenuAlign = inspectLocation.x <= window.innerWidth / 2 ? "start" : "end";
 
   return (
@@ -92,7 +95,7 @@ export function InspectDataMenu({
               </DropdownMenu.Item>
             );
           })}
-          {filteredData.length > MAX_INSPECT_ITEMS && !shouldShowAll && (
+          {filteredData.length > MAX_INSPECT_ITEMS + 1 && !shouldShowAll && (
             <DropdownMenu.Item
               className="inspect-data-menu-item show-all"
               key={"show-all"}
