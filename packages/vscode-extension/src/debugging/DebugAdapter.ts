@@ -190,8 +190,19 @@ export class DebugAdapter extends DebugSession {
           this.sendEvent(new ContinuedEvent(this.threads[0].id));
           break;
         case "Runtime.executionContextsCleared":
+          // clear all existing threads, source maps, and variable store
+          const allThreads = this.threads;
+          this.threads = [];
+          this.sourceMaps = [];
           this.variableStore.clearReplVariables();
           this.variableStore.clearCDPVariables();
+
+          // send events for all threads that exited
+          allThreads.forEach((thread) => {
+            this.sendEvent(new ThreadEvent("exited", thread.id));
+          });
+
+          // send event to clear console
           this.sendEvent(new OutputEvent("\x1b[2J", "console"));
           break;
         case "Runtime.consoleAPICalled":
