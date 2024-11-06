@@ -79,3 +79,13 @@ Learn more about the [Device settings](/docs/features/device-settings).
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/7_sztudio_device_settings.mp4" type="video/mp4"/>
 </video>
+
+## Instant replays
+
+Missed a bug? At any time you can re-watch what just happened on the device. No need to manually start the recording ever again.
+
+Learn more about [Screen recording](/docs/features/screen-recording).
+
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_screen_recording.mp4" type="video/mp4"/>
+</video>
