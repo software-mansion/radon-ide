@@ -18,14 +18,14 @@ In this case lookup command called "Radon IDE: Diagnostics" – when executed i
 The extension does not currently support all types and configurations of React Native projects.
 For example, Expo Go or brownfield apps aren't supported while we are improving the compatibility of different project setups.
 Please refer to ["Who can use this"](/docs/getting-started/overview) section for more details on that.
-If your project doesn't work out of the box because of some modifications made to its setup, chances are the Radon IDE can be configured to support your modifications, please check [configuration](/docs/getting-started/launching) guide to learn more.
+If your project doesn't work out of the box because of some modifications made to its setup, chances are the Radon IDE can be configured to support your modifications, please check [configuration](/docs/guides/configuration) guide to learn more.
 
 ### -sec-num- Can extension locate your React Native project
 
 The extension supports monorepo-type of setups and you should be able to use it even if the app isn't in the root folder of your workspace.
 This setup however has some limitations because the extension can only work with a single application per workspace.
 If your monorepo contain multiple projects, you'll need to instruct the extension with the location of your main React Native or Expo application folder.
-This can be done using [launch configuration](/docs/getting-started/launching) using `appRoot` setting – please refer to [configuration guide](/docs/getting-started/launching) for more details.
+This can be done using [launch configuration](/docs/guides/configuration) using `appRoot` setting – please refer to [configuration guide](/docs/guides/configuration) for more details.
 
 ### -sec-num- List of available devices is empty
 
