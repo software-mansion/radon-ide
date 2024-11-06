@@ -1,12 +1,12 @@
+import { getInspectorDataForCoordinates } from "./inspector";
+
 const { useContext, useState, useEffect, useRef, useCallback } = require("react");
 const {
   LogBox,
   AppRegistry,
   RootTagContext,
   View,
-  Dimensions,
   Linking,
-  findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
 
@@ -24,9 +24,6 @@ const InternalImports = {
 };
 
 const RNInternals = {
-  get getInspectorDataForViewAtPoint() {
-    return require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
-  },
   get SceneTracker() {
     return require("react-native/Libraries/Utilities/SceneTracker");
   },
@@ -173,98 +170,20 @@ export function AppWrapper({ children, initialProps, ..._rest }) {
     [openPreview, closePreview, requestNavigationChange]
   );
 
-  const getInspectorDataForInstance = (node) => {
-    const renderers = Array.from(window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.values());
-
-    if (!renderers) {
-      return {};
-    }
-
-    for (const renderer of renderers) {
-      if (renderer.rendererConfig?.getInspectorDataForInstance) {
-        const data = renderer.rendererConfig.getInspectorDataForInstance(node);
-        return data ?? {};
-      }
-    }
-
-    return {};
-  };
-
   useAgentListener(
     devtoolsAgent,
     "RNIDE_inspect",
     (payload) => {
-      const getInspectorDataForViewAtPoint = RNInternals.getInspectorDataForViewAtPoint;
-      const { width, height } = Dimensions.get("screen");
-      const { requestStack } = payload;
+      const { id, x, y, requestStack } = payload;
 
-      const createStackElement = (
-        frame, name, source
-      ) => (
-        {
-          componentName: name,
-          source: {
-            fileName: source.fileName,
-            line0Based: source.lineNumber - 1,
-            column0Based: source.columnNumber - 1,
-          },
-          frame,
+      getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack)
+        .then((inspectorData) => {
+          devtoolsAgent._bridge.send("RNIDE_inspectData", {
+            id,
+            ...inspectorData
+          });
         });
-
-      getInspectorDataForViewAtPoint(
-        mainContainerRef.current,
-        payload.x * width,
-        payload.y * height,
-        (viewData) => {
-          const frame = viewData.frame;
-          const scaledFrame = {
-            x: frame.left / width,
-            y: frame.top / height,
-            width: frame.width / width,
-            height: frame.height / height
-          };
-          
-          if (!requestStack) {
-            devtoolsAgent._bridge.send("RNIDE_inspectData", {
-              id: payload.id,
-              frame: scaledFrame,
-            });
-            return;
-          }
-
-          const inspectNode = (node, stack) => {
-            // Optimization: we break after reaching fiber node corresponding to OffscreenComponent (with tag 22).
-            if (!node || node.tag === 22) {
-              devtoolsAgent._bridge.send("RNIDE_inspectData", {
-                id: payload.id,
-                frame: scaledFrame,
-                stack: Array.from(stack).filter(Boolean)
-              });
-            } else {
-              const data = getInspectorDataForInstance(node);
-              const item = data.hierarchy[data.hierarchy.length - 1];
-              const inspectorData = item.getInspectorData((arg) => findNodeHandle(arg));
-
-              inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
-                const stackElementFrame = {
-                  x: pageX / width,
-                  y: pageY / height,
-                  width: viewWidth / width,
-                  height: viewHeight / height
-                };
-
-                const element = (inspectorData.source) ? 
-                  createStackElement(stackElementFrame, item.name, inspectorData.source) : undefined;
-                
-                inspectNode(node.return, [...stack, element]);
-              });
-            }
-          };
-          
-          inspectNode(viewData.closestInstance, []);
-        }
-      );
-    },
+      },
     [mainContainerRef]
   );
 
