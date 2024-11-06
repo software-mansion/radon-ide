@@ -47,6 +47,7 @@ export function InspectDataMenu({
       ? filteredData
       : filteredData.slice(0, MAX_INSPECT_ITEMS);
   const inspectMenuAlign = inspectLocation.x <= window.innerWidth / 2 ? "start" : "end";
+  const isOverMaxItems = filteredData.length > MAX_INSPECT_ITEMS + 1;
 
   return (
     <DropdownMenu.Root
@@ -64,7 +65,8 @@ export function InspectDataMenu({
             left: inspectLocation.x,
             top: inspectLocation.y,
             opacity: 0,
-          }}></span>
+          }}
+        />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
@@ -75,7 +77,7 @@ export function InspectDataMenu({
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
           </DropdownMenu.Label>
-          {inspectItems.map((item, index) => {
+          {inspectItems.map((item) => {
             // extract file name from path:
             const fullFileName = item.source.fileName.split("/").pop() ?? "";
             const lastDotIndex = fullFileName.lastIndexOf(".");
@@ -84,7 +86,7 @@ export function InspectDataMenu({
             return (
               <DropdownMenu.Item
                 className="inspect-data-menu-item"
-                key={index}
+                key={item.source.fileName + item.source.line0Based}
                 onSelect={() => onSelected(item)}
                 onMouseEnter={() => onHover(item)}>
                 <code>{`<${item.componentName}>`}</code>
@@ -95,7 +97,7 @@ export function InspectDataMenu({
               </DropdownMenu.Item>
             );
           })}
-          {filteredData.length > MAX_INSPECT_ITEMS + 1 && !shouldShowAll && (
+          {isOverMaxItems && !shouldShowAll && (
             <DropdownMenu.Item
               className="inspect-data-menu-item show-all"
               key={"show-all"}
