@@ -132,7 +132,7 @@ Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it.
 The requirement for scripts is to output the absolute path to the built app as
 the last line of the standard output. If custom fingerprint script is used, it
 should output fingerprint (a string identifying the build) as the last line of the standard output. When
-fingerprint changes between invocations, RN IDE will rebuild the project. The
+fingerprint changes between invocations, Radon IDE will rebuild the project. The
 IDE runs fingerprint quite frequently (i.e., on every file save), so this
 process should be fast and avoid over the network communication.
 
