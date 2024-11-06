@@ -598,6 +598,9 @@ export class Project
 
       const previewURL = await newDeviceSession.start(this.deviceSettings, {
         cleanBuild: forceCleanBuild,
+        previewReadyCallback: (url) => {
+          this.updateProjectStateForDevice(deviceInfo, { previewURL: url });
+        },
       });
       this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
         previewURL,
