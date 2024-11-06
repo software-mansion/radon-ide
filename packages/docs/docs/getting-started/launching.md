@@ -4,15 +4,15 @@ title: Launching the IDE
 sidebar_position: 3
 ---
 
-After [installing](/docs/getting-started/installation) the extension, you should be able to start using the extension by opening your React Native or Expo project as a workspace in Visual Studio Code.
+After [installing](/docs/getting-started/installation) the extension, you should be able to start using it by opening your React Native or Expo project as a workspace in Visual Studio Code.
 If that's not the case and you have problems getting the extension to run, please check [troubleshooting](/docs/guides/troubleshooting) guide.
 
 For a quick overview of the features the IDE provides, you can check [Radon IDE website](https://ide.swmansion.com).
 
 ## -sec-num- Open your project in vscode and start the extension panel
 
-If your project setup is supported, there is no extra configuration that's necessary to get the project running.
-The only thing you need to do is open your React Native of Expo project as workspace in vscode (File > Open Folder... option or using `code` command with the folder name from terminal).
+If your project setup is supported, you don't need any extra configuration to get the project running.
+The only thing you need to do is open your React Native or Expo project as a workspace in VSCode (using `File > Open Folder...` option or `code <path to project's folder>` from the terminal).
 Once you have it open, you can start the extension panel in one of a few ways:
 
 1. When you open any file of your project to edit it, you can launch the extension from `Open IDE Panel` button in the editor toolbar:
@@ -46,5 +46,5 @@ Here is how the IDE would look like when place in the side panel:
 
 ## -sec-num- Wait for the project to build and run
 
-After all the above steps, you should be able to see your app building and launching in the extension device preview.
-From there, you can use the simulator normally to navigate in your app and try out some of the developer experience enhancements that the IDE provides.
+After all the above steps are completed, you should see your app building and launching in the extension device preview.
+From there, you can use the simulator normally to navigate in your app and try out the developer experience enhancements that the IDE provides.

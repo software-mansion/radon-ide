@@ -4,11 +4,11 @@ title: Debugging and logging
 sidebar_position: 2
 ---
 
-Breakpoints can be a powerful debugging tool. Thanks to Radon IDE breakpoints now work in VSCode for React Native and Expo projects without any additional setup.
+Breakpoints can be a powerful debugging tool. Thanks to Radon IDE, breakpoints work in VSCode without any additional setup for React Native and Expo projects.
 
 ## Setting a breakpoint
 
-You can set a breakpoint on any JavaScript line of code. To set a breakpoint click `Click to add a breakpoint` on the left margin of the line of code in your editor. The breakpoint will appear as a red dot next this line.
+You can set a breakpoint on any JavaScript or TypeScript line of code. To set a breakpoint, click `Click to add a breakpoint` on the left margin of the line of code in your editor. The breakpoint will appear as a red dot next to this line.
 
 <img width="400" src="/img/docs/ide_add_breakpoint.png" className="shadow-image"/>
 

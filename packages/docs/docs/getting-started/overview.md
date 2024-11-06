@@ -51,4 +51,4 @@ For troubleshooting and guide on reporting issues head to [troubleshooting](/doc
 
 ### Extension Development
 
-If you want to develop the extension and contribute updates head to [development](/docs/guides/development) section.
+If you want to develop the extension and contribute, go to the [development](/docs/guides/development) section.

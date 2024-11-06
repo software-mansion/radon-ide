@@ -19,7 +19,7 @@ Learn more about the [Element Inspector](/docs/features/element-inspector).
 
 ## Use breakpoints right in VSCode
 
-Without any additional setup the extension allows to add a breakpoints in Visual Studio Code to debug your React Native application.
+Without any additional setup, the extension allows you to add breakpoints in Visual Studio Code to debug your React Native application.
 IDE also automatically stops at runtime exceptions showing you the exact line of code where they happened.
 
 Learn more about the [Debugging and logging](/docs/features/debugging-and-logging).

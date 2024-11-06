@@ -30,7 +30,7 @@ This can be done using [launch configuration](/docs/getting-started/launching) u
 ### -sec-num- List of available devices is empty
 
 The extension relies on Android Studio to install Android emulators and on Xcode tools to manage and install iOS simulators.
-The extension can spawn new devices on its own, but it requires the system images can only be installed using Android Studio and Xcode.
+The extension can spawn new devices on its own, but it requires the system images to be installed using Android Studio and Xcode.
 Please refer to [simulators](/docs/guides/simulators) section to learn more about installing system images for different platforms.
 
 ### -sec-num- Stuck on "Waiting for app to load"
