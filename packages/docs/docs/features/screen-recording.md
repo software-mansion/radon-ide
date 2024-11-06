@@ -1,7 +1,7 @@
 ---
 id: screen-recording
 title: Screen recording
-sidebar_position: 6
+sidebar_position: 5
 ---
 
 The Radon IDE can record what's currently happens on the device preview. This proves to be extremely useful for rewinding to UI issues after they already happened. You can also granularly go through the recording frame by frame or save it as a file to your computer.
