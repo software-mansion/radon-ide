@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/consts";
@@ -7,6 +7,41 @@ import "./InspectDataMenu.css";
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
 const MAX_INSPECT_ITEMS = 5;
+
+interface InspectItemProps {
+  item: InspectDataStackItem;
+  onSelected: (item: any) => void;
+  onHover: (item: any) => void;
+}
+
+const InspectItem = React.forwardRef<HTMLDivElement, InspectItemProps>(
+  ({ item, onSelected, onHover }, forwardedRef) => {
+    const extractFileDetails = (filePath: string) => {
+      const fullFileName = filePath.split("/").pop() ?? "";
+      const lastDotIndex = fullFileName.lastIndexOf(".");
+      const fileName = fullFileName.substring(0, lastDotIndex);
+      const fileExtension = fullFileName.substring(lastDotIndex);
+      return { fileName, fileExtension };
+    };
+
+    const { fileName, fileExtension } = extractFileDetails(item.source.fileName);
+
+    return (
+      <DropdownMenu.Item
+        className="inspect-data-menu-item"
+        key={item.source.fileName + item.source.line0Based}
+        onSelect={() => onSelected(item)}
+        onMouseEnter={() => onHover(item)}
+        ref={forwardedRef}>
+        <code>{`<${item.componentName}>`}</code>
+        <div className="right-slot">
+          <span className="filename">{fileName}</span>
+          <span>{`${fileExtension}:${item.source.line0Based + 1}`}</span>
+        </div>
+      </DropdownMenu.Item>
+    );
+  }
+);
 
 type InspectDataMenuProps = {
   inspectLocation: { x: number; y: number };
@@ -77,26 +112,9 @@ export function InspectDataMenu({
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
           </DropdownMenu.Label>
-          {inspectItems.map((item) => {
-            // extract file name from path:
-            const fullFileName = item.source.fileName.split("/").pop() ?? "";
-            const lastDotIndex = fullFileName.lastIndexOf(".");
-            const fileName = fullFileName.substring(0, lastDotIndex);
-            const fileExtension = fullFileName.substring(lastDotIndex);
-            return (
-              <DropdownMenu.Item
-                className="inspect-data-menu-item"
-                key={item.source.fileName + item.source.line0Based}
-                onSelect={() => onSelected(item)}
-                onMouseEnter={() => onHover(item)}>
-                <code>{`<${item.componentName}>`}</code>
-                <div className="right-slot">
-                  <span className="filename">{fileName}</span>
-                  <span>{`${fileExtension}:${item.source.line0Based + 1}`}</span>
-                </div>
-              </DropdownMenu.Item>
-            );
-          })}
+          {inspectItems.map((item) => (
+            <InspectItem item={item} onSelected={onSelected} onHover={onHover} />
+          ))}
           {isOverMaxItems && !shouldShowAll && (
             <DropdownMenu.Item
               className="inspect-data-menu-item show-all"
