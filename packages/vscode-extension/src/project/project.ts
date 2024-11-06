@@ -79,6 +79,7 @@ export class Project
       hasEnrolledBiometrics: false,
       locale: "en_US",
       replaysEnabled: false,
+      showTouches: false,
     };
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);

@@ -28,6 +28,7 @@ const defaultDeviceSettings: DeviceSettings = {
   },
   locale: "en_US",
   replaysEnabled: false,
+  showTouches: false,
 };
 
 const ProjectContext = createContext<ProjectContextProps>({

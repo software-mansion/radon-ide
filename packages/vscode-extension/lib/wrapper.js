@@ -1,5 +1,6 @@
-import { getInspectorDataForCoordinates } from "./inspector";
+"use no memo";
 
+import { getInspectorDataForCoordinates } from "./inspector";
 const { useContext, useState, useEffect, useRef, useCallback } = require("react");
 const {
   LogBox,
