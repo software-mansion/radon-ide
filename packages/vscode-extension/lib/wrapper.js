@@ -8,7 +8,6 @@ const {
   View,
   Linking,
 } = require("react-native");
-const { getInspectorDataForCoordinates } = require("./inspector");
 const { storybookPreview } = require("./storybook_helper");
 
 const navigationPlugins = [];
@@ -21,6 +20,9 @@ let navigationHistory = new Map();
 const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
+  },
+  get getInspectorDataForCoordinates() {
+    return require("./inspector").getInspectorDataForCoordinates; 
   },
 };
 
@@ -176,8 +178,8 @@ export function AppWrapper({ children, initialProps, ..._rest }) {
     "RNIDE_inspect",
     (payload) => {
       const { id, x, y, requestStack } = payload;
-
-      getInspectorDataForCoordinates(
+      
+      InternalImports.getInspectorDataForCoordinates(
         mainContainerRef, 
         x,
         y,
