@@ -1,9 +1,5 @@
 const { Dimensions, findNodeHandle } = require("react-native");
 
-function requireGetInspectorDataForViewAtPoint() {
-  return require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
-}
-
 function getInspectorDataForInstance(node) {
   const renderers = Array.from(window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.values());
   if (!renderers) {
@@ -72,7 +68,9 @@ function traverseComponentsTreeUp(startNode) {
 };
 
 export function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
-  const getInspectorDataForViewAtPoint = requireGetInspectorDataForViewAtPoint();
+  const getInspectorDataForViewAtPoint = 
+    require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
+
   const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
 
   function scaleFrame(frame) {

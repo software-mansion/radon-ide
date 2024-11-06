@@ -1,6 +1,5 @@
 "use no memo";
 
-import { getInspectorDataForCoordinates } from "./inspector";
 const { useContext, useState, useEffect, useRef, useCallback } = require("react");
 const {
   LogBox,
@@ -9,6 +8,7 @@ const {
   View,
   Linking,
 } = require("react-native");
+const { getInspectorDataForCoordinates } = require("./inspector");
 const { storybookPreview } = require("./storybook_helper");
 
 const navigationPlugins = [];
