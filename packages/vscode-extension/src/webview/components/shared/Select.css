@@ -65,7 +65,7 @@ button {
   color: var(--swm-secondary-text);
   pointer-events: none;
 }
-.select-item[data-highlighted] {
+.select-item:hover {
   outline: none;
   background-color: var(--swm-select-item-highlighted-background);
   cursor: pointer;
