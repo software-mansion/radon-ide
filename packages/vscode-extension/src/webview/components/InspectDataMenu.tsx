@@ -10,21 +10,16 @@ const MAX_INSPECT_ITEMS = 5;
 
 interface InspectItemProps {
   item: InspectDataStackItem;
-  onSelected: (item: any) => void;
-  onHover: (item: any) => void;
+  onSelected: (item: InspectDataStackItem) => void;
+  onHover: (item: InspectDataStackItem) => void;
 }
 
 const InspectItem = React.forwardRef<HTMLDivElement, InspectItemProps>(
   ({ item, onSelected, onHover }, forwardedRef) => {
-    const extractFileDetails = (filePath: string) => {
-      const fullFileName = filePath.split("/").pop() ?? "";
-      const lastDotIndex = fullFileName.lastIndexOf(".");
-      const fileName = fullFileName.substring(0, lastDotIndex);
-      const fileExtension = fullFileName.substring(lastDotIndex);
-      return { fileName, fileExtension };
-    };
-
-    const { fileName, fileExtension } = extractFileDetails(item.source.fileName);
+    const fullFileName = item.source.fileName.split("/").pop() ?? "";
+    const lastDotIndex = fullFileName.lastIndexOf(".");
+    const fileName = fullFileName.substring(0, lastDotIndex);
+    const fileExtension = fullFileName.substring(lastDotIndex);
 
     return (
       <DropdownMenu.Item
