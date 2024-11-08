@@ -149,6 +149,7 @@ export interface ProjectInterface {
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
+  clearPressedKeys(): Promise<void>;
   dispatchPaste(text: string): Promise<void>;
   inspectElementAt(
     xRatio: number,

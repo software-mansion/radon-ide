@@ -61,6 +61,8 @@ export class Project
     selectedDevice: undefined,
   };
 
+  private pressedKeys = new Set<number>();
+
   private deviceSettings: DeviceSettings;
 
   constructor(
@@ -255,6 +257,7 @@ export class Project
 
   public dispose() {
     this.deviceSession?.dispose();
+    this.pressedKeys.clear();
     this.metro?.dispose();
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
@@ -403,7 +406,20 @@ export class Project
   }
 
   public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
+    if (direction === "Down") {
+      this.pressedKeys.add(keyCode);
+    } else {
+      this.pressedKeys.delete(keyCode);
+    }
+
     this.deviceSession?.sendKey(keyCode, direction);
+  }
+
+  public async clearPressedKeys() {
+    for (const keyCode of this.pressedKeys) {
+      this.deviceSession?.sendKey(keyCode, "Up");
+    }
+    this.pressedKeys.clear();
   }
 
   public async inspectElementAt(

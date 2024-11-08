@@ -460,6 +460,7 @@ function Preview({
         setIsPanning(false);
         setIsMultiTouching(false);
         setIsPressing(false);
+        project.clearPressedKeys();
       }
     }
     document.addEventListener("blur", onBlurChange, true);
