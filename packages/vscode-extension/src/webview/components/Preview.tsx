@@ -215,6 +215,7 @@ function Preview({
   replayData,
   onReplayClose,
 }: Props) {
+  const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>();
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
@@ -341,6 +342,7 @@ function Preview({
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isMultiTouching) {
+      setTouchPoint(getTouchPosition(e));
       isPanning && moveAnchorPoint(e);
       isPressing && sendMultiTouchForEvent(e, "Move");
     } else if (isPressing) {
@@ -348,7 +350,7 @@ function Preview({
     } else if (isInspecting) {
       sendInspect(e, "Move", false);
     }
-    setTouchPoint(getTouchPosition(e));
+    currentMousePosition.current = e;
   }
 
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
@@ -394,7 +396,8 @@ function Preview({
         sendTouch(e, "Down");
       }
     }
-    setTouchPoint(getTouchPosition(e));
+
+    currentMousePosition.current = e;
   }
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
@@ -509,10 +512,17 @@ function Preview({
           isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
           setIsMultiTouching(isKeydown);
         }
+        
+        if (isMultitouchKeyPressed && isKeydown) {
+          setAnchorPoint({ x: 0.5, y: 0.5 });
+          setTouchPoint(getTouchPosition(currentMousePosition.current!));
+          setIsMultiTouching(true);
+        }
 
         if (isMultitouchKeyPressed && !isKeydown) {
             sendMultiTouch(touchPoint, "Up");
             setIsPressing(false);
+            setIsMultiTouching(false);
         }
         
         if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
