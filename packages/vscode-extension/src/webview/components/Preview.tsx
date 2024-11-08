@@ -510,7 +510,11 @@ function Preview({
         }
 
         const hidCode = keyboardEventToHID(e);
-        project.dispatchKeyPress(hidCode, isKeydown ? "Down" : "Up");
+        if (hidCode) {
+          project.dispatchKeyPress(hidCode, isKeydown ? "Down" : "Up");
+        } else {
+          console.warn(`Unrecognized keyboard input: ${e.code}`);
+        }
       }
     }
     document.addEventListener("keydown", keyEventHandler);
