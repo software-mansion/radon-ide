@@ -1,7 +1,7 @@
 ---
 id: configuration
 title: Configuring the IDE
-sidebar_position: 4
+sidebar_position: 2
 ---
 
 On this page we only discuss configuration that aims to deal with non-standard React Native project setups.
@@ -19,10 +19,10 @@ Before you can change any of the options you'll need to create launch configurat
 
 If you have the launch configuration file you can move to the next step.
 Otherwise go to **Run and Build** panel and click **create a launch.json file**:
-<img width="400" src="/img/docs/ide_create_launch_config.png"/>
+<img width="400" src="/img/docs/ide_create_launch_config.png" className="shadow-image"/>
 
 Then, select **Radon IDE** from the dropdown:
-<img width="400" src="/img/docs/ide_launch_config_ide.png"/>
+<img width="550" src="/img/docs/ide_launch_config_ide.png" className="shadow-image"/>
 
 This will create a new file under your workspace directory: `.vscode/launch.json` – this file should be added to version control (git) as it carries configuration that is specific to your project setup rather than user specific editor settings.
 
@@ -132,7 +132,7 @@ Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it.
 The requirement for scripts is to output the absolute path to the built app as
 the last line of the standard output. If custom fingerprint script is used, it
 should output fingerprint (a string identifying the build) as the last line of the standard output. When
-fingerprint changes between invocations, RN IDE will rebuild the project. The
+fingerprint changes between invocations, Radon IDE will rebuild the project. The
 IDE runs fingerprint quite frequently (i.e., on every file save), so this
 process should be fast and avoid over the network communication.
 
@@ -142,10 +142,12 @@ options.
 
 `customBuild.ios` and `customBuild.android` have following structure with
 optional keys that can be used independently:
+
 - `buildCommand` – string, specifies a command used for building.
 - `fingerprintCommand` – string, specifies a command used for creating fingerprint.
 
 Example:
+
 ```json
 {
   "version": "0.2.0",
@@ -167,11 +169,13 @@ Example:
 ```
 
 `eas.ios` and `eas.android` are objects taking keys:
+
 - `profile` – required, used for [selecting builds](https://docs.expo.dev/build/eas-json/#development-builds) suitable for running in simulators.
 - `buildUUID` – when specified, downloads build using its UUID. It uses latest
   build otherwise.
 
 Below is an example that replaces iOS and Android local builds with builds from EAS:
+
 ```json
 {
   "version": "0.2.0",
@@ -182,7 +186,7 @@ Below is an example that replaces iOS and Android local builds with builds from 
       "name": "Radon IDE panel",
       "eas": {
         "ios": {
-          "profile": "development",
+          "profile": "development"
         },
         "android": {
           "profile": "development",
@@ -193,7 +197,6 @@ Below is an example that replaces iOS and Android local builds with builds from 
   ]
 }
 ```
-
 
 ### Other settings
 

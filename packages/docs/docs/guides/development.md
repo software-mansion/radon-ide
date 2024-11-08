@@ -1,7 +1,7 @@
 ---
 id: development
 title: Development
-sidebar_position: 6
+sidebar_position: 4
 ---
 
 ## Repository structure and project architecture
@@ -58,7 +58,7 @@ code packages/vscode-extension
 This can only be done from withing Visual Studio Code.
 With the extension project open, go to `Run and Debug` panel and click "Start Debugging" button next to "Run Extension" configuration:
 
-<img width="373" alt="run-and-debug" src="/img/docs/run_and_debug.png"/>
+<img width="373" alt="run-and-debug" src="/img/docs/run_and_debug.png" className="shadow-image"/>
 
 Running this configuration will result in the new vscode window being opened.
 This new window is titled "[Extension Development Host]" and is the only window that has the development version of the extension loaded – you should use it to open you React Native project, or try some of the test apps from `test-app` folder.
@@ -76,8 +76,7 @@ Frontend code is setup with hot reload, so changes made to frontend code will up
 Code changes made to the main extension, requires restarting the extension project which will result in the Extension Host window reloading.
 You can use Debug Tool Bar to restart the project:
 
-<img width="438" alt="restart-extension"
-src="/img/docs/restart_extension.png"/>
+<img width="438" alt="restart-extension" src="/img/docs/restart_extension.png" className="shadow-image"/>
 
 For main extension code, you can set breakpoints in vscode and use debugger normally, logs will appear in the Debug Console panel.
 Unfortunately debugging isn't available for the frontend code, however you can use vscode's builtin chrome devtools to see logs or interact with the frontend portion of the project – for this you'll need to run command "Developer: Open Webview Developer Tools" from the command palette in the Extension Host window.
@@ -90,18 +89,22 @@ They only depend on `react-native`. Components in `shared/navigation` additional
 depend on `expo-router` and `expo-icons`.
 
 To use them in the app:
+
 1. Add npm command in test app package.json
-    - for expo-router apps: `"copy-shared": "../shared/copy.sh expo-router ./shared"`.
-    - for RN apps: `"copy-shared": "../shared/copy.sh bare ./shared"`.
+   - for expo-router apps: `"copy-shared": "../shared/copy.sh expo-router ./shared"`.
+   - for RN apps: `"copy-shared": "../shared/copy.sh bare ./shared"`.
 2. Run it: `npm run copy-shared`. This copies shared components to `./shared`.
 3. For RN apps, replace `App.tsx` with the `./shared/MainScreen.tsx` component.
-    ```ts
-    import {MainScreen} from './shared/MainScreen';
 
-    export default MainScreen;
-    ```
+   ```ts
+   import { MainScreen } from "./shared/MainScreen";
+
+   export default MainScreen;
+   ```
+
 4. For apps with expo router, replace `app/(tabs)/_layout.tsx` and
    `app/(tabs)/index.tsx` files.
+
    ```ts
    // contents of `app/(tabs)/_layout.ts`
    import { TabLayout } from "@/shared/navigation/TabLayout";
@@ -116,11 +119,11 @@ To use them in the app:
    export default MainScreen;
    ```
 
-  You can also use other components in `shared` (e.g. `Text`, `Button`,
-  `useScheme`) to theme the app.
+You can also use other components in `shared` (e.g. `Text`, `Button`,
+`useScheme`) to theme the app.
 
-  After updating shared components you need to copy them again by running
-  `npm run copy-shared` in every test app.
+After updating shared components you need to copy them again by running
+`npm run copy-shared` in every test app.
 
 `shared/copy.sh bare|expo-router DEST` script works by copying shared directory to `DEST`
 and removing `navigation` directory if `bare` argument is used.
