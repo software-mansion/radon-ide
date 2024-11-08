@@ -91,7 +91,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
         <IconButton
           tooltip={{
             label: `Remove device with it's ${
-              deviceInfo.platform === DevicePlatform.IOS ? "runtime." : "system image"
+              deviceInfo.platform === DevicePlatform.IOS ? "runtime" : "system image"
             }`,
             side: "bottom",
             type: "secondary",
