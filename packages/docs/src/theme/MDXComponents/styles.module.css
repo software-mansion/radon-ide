@@ -18,7 +18,7 @@
 }
 
 .details > summary > p {
-  margin: 0;
+  margin: 0 !important;
 }
 
 /* TODO: deprecation, need to remove this after Safari will support `::marker` */
