@@ -84,17 +84,23 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
     // Elliminate lines that contain double slashes indicating a comment.
     const previewRegex = /^(?:(?!\/\/) )*preview\(\s*<\s*/gm;
     for (const match of text.matchAll(previewRegex)) {
-      // for the range, we are interested in line where the JSX tag starts, hence we check the last index
-      // of the matched regex.
-      const range = this.createRange(document, match.index + match[0].length - 1);
+      // get the line number where the last character (<) of the matched regex is located
+      const jsxOpeningTagPosition = document.positionAt(match.index + match[0].length - 1);
+      const jsxOpeningTagLine0Based = jsxOpeningTagPosition.line;
+      // for the code lens range, we use the first character as we want it to appear over the line where preview is called
+      const previewCallRange = this.createRange(document, match.index);
       const command: Command = {
         title: "Open preview",
         command: "RNIDE.showPanel",
-        arguments: [document.fileName, range.start.line + 1],
+        arguments: [
+          document.fileName,
+          jsxOpeningTagLine0Based + 1 /* RNIDE expects 1-based line number */,
+        ],
       };
-      codeLenses.push(new CodeLens(range, command));
+      codeLenses.push(new CodeLens(previewCallRange, command));
     }
   }
+
   createRange(document: TextDocument, matchIndex: number): Range {
     const position = document.positionAt(matchIndex);
     const line = document.lineAt(position.line);
