@@ -44,7 +44,6 @@ function DeviceRenameDialog({
           className="device-name-input"
           style={isDisplayNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
           type="string"
-          defaultValue={deviceInfo.displayName}
           onChange={handleDisplayNameChange}
         />
         {!isDisplayNameValid && (
