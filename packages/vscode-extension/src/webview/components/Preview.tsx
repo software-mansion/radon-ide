@@ -279,8 +279,12 @@ function Preview({
     project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
-  function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+  function sendMultiTouchForEvent(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
     const pt = getTouchPosition(event);
+    sendMultiTouch(pt, type);
+  }
+
+  function sendMultiTouch(pt: Point, type: MouseMove) {
     const secondPt = calculateMirroredTouchPosition(pt, anchorPoint);
     project.dispatchTouches(
       [
@@ -338,7 +342,7 @@ function Preview({
     e.preventDefault();
     if (isMultiTouching) {
       isPanning && moveAnchorPoint(e);
-      isPressing && sendMultiTouch(e, "Move");
+      isPressing && sendMultiTouchForEvent(e, "Move");
     } else if (isPressing) {
       sendTouch(e, "Move");
     } else if (isInspecting) {
@@ -360,7 +364,7 @@ function Preview({
       sendInspect(e, "RightButtonDown", true);
     } else if (isMultiTouching) {
       setIsPressing(true);
-      sendMultiTouch(e, "Down");
+      sendMultiTouchForEvent(e, "Down");
     } else {
       setIsPressing(true);
       sendTouch(e, "Down");
@@ -371,7 +375,7 @@ function Preview({
     e.preventDefault();
     if (isPressing) {
       if (isMultiTouching) {
-        sendMultiTouch(e, "Up");
+        sendMultiTouchForEvent(e, "Up");
       } else {
         sendTouch(e, "Up");
       }
@@ -385,7 +389,7 @@ function Preview({
 
     if (isPressing) {
       if (isMultiTouching) {
-        sendMultiTouch(e, "Down");
+        sendMultiTouchForEvent(e, "Down");
       } else {
         sendTouch(e, "Down");
       }
@@ -397,7 +401,7 @@ function Preview({
     e.preventDefault();
     if (isPressing) {
       if (isMultiTouching) {
-        sendMultiTouch(e, "Up");
+        sendMultiTouchForEvent(e, "Up");
       } else {
         sendTouch(e, "Up");
       }
@@ -503,8 +507,15 @@ function Preview({
 
         if (isMultitouchKeyPressed) {
           isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
+
           setIsMultiTouching(isKeydown);
         }
+
+        if (isMultitouchKeyPressed && !isKeydown) {
+            sendMultiTouch(touchPoint, "Up");
+            setIsPressing(false);
+        }
+        
         if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
           setIsPanning(isKeydown);
         }
