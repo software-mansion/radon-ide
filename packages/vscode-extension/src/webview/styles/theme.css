@@ -137,7 +137,8 @@
 }
 
 /* Light theme */
-body[data-vscode-theme-kind="vscode-light"] {
+body[data-vscode-theme-kind="vscode-light"],
+body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-active-item: var(--blue-dark-100);
   --swm-preview-background: var(--white);
 
@@ -294,7 +295,8 @@ body[data-vscode-theme-kind="vscode-light"] {
 }
 
 /* Dark theme */
-body[data-vscode-theme-kind="vscode-dark"] {
+body[data-vscode-theme-kind="vscode-dark"],
+body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-active-item: var(--blue-dark-100);
   --swm-preview-background: var(--background-dark-100);
 
