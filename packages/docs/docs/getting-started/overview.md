@@ -1,10 +1,8 @@
 ---
-id: getting-started
-title: Getting started
+id: overview
+title: Overview
 sidebar_position: 1
 ---
-
-# Getting started
 
 ## Welcome to Radon IDE Beta 🎉
 
@@ -12,7 +10,7 @@ Radon IDE is not a ready product (yet).
 We are hoping that together with the community we will be able to get there soon.
 We are thankful that you decided to join the beta program and help us improve this tool.
 
-### 🚧 Who can use this
+### Who can use this
 
 Radon IDE currently supports some subset of React Native projects due to a number of different setup options.
 We constantly work to improve this compatibility, and in case your project structure isn’t supported, feel free to open an issue.
@@ -25,7 +23,7 @@ Below we list high-level requirements for the projects we support at the moment:
 
 As a general rule of thumb, if your project started from Expo template or React Native community CLI template, and hasn’t diverged much in terms of build configuration, meaning that you can still run it using expo or react native CLI without additional steps, it should work with Radon IDE.
 
-### ✨ What does it do
+### What does it do
 
 Radon IDE is a VS Code extension that aims to streamline development of React Native and Expo applications.
 The current version supports developing on macOS for Android and iOS platforms, and on Windows for Android with the current list of features available:
@@ -39,18 +37,18 @@ The current version supports developing on macOS for Android and iOS platforms, 
 - Expo Router integration with browser-like URL toolbar
 - Easy access to device settings for text size and light/dark mode
 
-### 💽 Installation
+### Installation
 
-For installation instructions head to [installation](./installation.md) section.
+For installation instructions head to [installation](/docs/getting-started/installation) section.
 
-### 💻 Usage
+### Launching
 
-See [usage](./usage.md) guide on how to get started after installing the extension. You can also visit [Radon IDE](https://ide.swmansion.com) website where we highlight the most important features.
+See [launching](/docs/getting-started/launching) guide on how to get started after installing the extension. You can also visit [Radon IDE](https://ide.swmansion.com) website where we highlight the most important features.
 
-### 🐛 Troubleshooting
+### Troubleshooting
 
-For troubleshooting and guide on reporting issues head to [troubleshooting](./troubleshooting.md) section.
+For troubleshooting and guide on reporting issues head to [troubleshooting](/docs/guides/troubleshooting) section.
 
-### ⚒️ Extension Development
+### Extension Development
 
-If you want to develop the extension and contribute updates head to [development](./development.md) section.
+If you want to develop the extension and contribute, go to the [development](/docs/guides/development) section.

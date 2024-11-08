@@ -39,6 +39,11 @@ const items = [
     body: "You can adjust text size and light/dark mode right from the Radon IDE.\n\nFocus just on your app without switching between windows.",
     mediaSrc: "video/7_sztudio_device_settings.mp4",
   },
+  {
+    title: "Instant replays",
+    body: "Missed a bug? At any time you can re-watch what just happened on the device.\n\nNo need to manually start the recording ever again.",
+    mediaSrc: "video/ide_screen_recording.mp4",
+  },
 ];
 
 const Overview = () => {
