@@ -511,10 +511,10 @@ function Preview({
         }
 
         if (isMultitouchKeyPressed && !isKeydown) {
-            sendMultiTouch(touchPoint, "Up");
-            setIsPressing(false);
+          sendMultiTouch(touchPoint, "Up");
+          setIsPressing(false);
         }
-        
+
         if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
           setIsPanning(isKeydown);
         }
