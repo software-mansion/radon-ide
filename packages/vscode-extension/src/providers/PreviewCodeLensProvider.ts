@@ -80,11 +80,13 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
   }
 
   addPreviewCodeLenses(text: string, document: TextDocument, codeLenses: CodeLens[]) {
-    // Detect usage of the preview function followed by an opening parenthesis
-    // which are not preceded by double slashes indicating a comment. Detected example: preview(
-    const previewRegex = /^(?:(?!\/\/) )*\bpreview\b\s*\(/gm;
+    // Detect usage of the 'preview(' function followed by '<' character representing JSX opening tag.
+    // Elliminate lines that contain double slashes indicating a comment.
+    const previewRegex = /^(?:(?!\/\/) )*preview\(\s*<\s*/gm;
     for (const match of text.matchAll(previewRegex)) {
-      const range = this.createRange(document, match.index);
+      // for the range, we are interested in line where the JSX tag starts, hence we check the last index
+      // of the matched regex.
+      const range = this.createRange(document, match.index + match[0].length - 1);
       const command: Command = {
         title: "Open preview",
         command: "RNIDE.showPanel",
