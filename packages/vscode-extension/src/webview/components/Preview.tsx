@@ -503,29 +503,31 @@ function Preview({
         e.preventDefault();
         const isKeydown = e.type === "keydown";
 
-        const isMultitouchKeyPressed = Platform.select({
+        const isMultiTouchKey = Platform.select({
           macos: e.code === "AltLeft" || e.code === "AltRight",
           windows: e.code === "ControlLeft" || e.code === "ControlRight",
         });
 
-        if (isMultitouchKeyPressed) {
+        const isPanningKey = e.code === "ShiftLeft" || e.code === "ShiftRight";
+
+        if (isMultiTouchKey) {
           isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
           setIsMultiTouching(isKeydown);
         }
         
-        if (isMultitouchKeyPressed && isKeydown) {
+        if (isMultiTouchKey && isKeydown) {
           setAnchorPoint({ x: 0.5, y: 0.5 });
           setTouchPoint(getTouchPosition(currentMousePosition.current!));
           setIsMultiTouching(true);
         }
 
-        if (isMultitouchKeyPressed && !isKeydown) {
-            sendMultiTouch(touchPoint, "Up");
-            setIsPressing(false);
-            setIsMultiTouching(false);
+        if (isMultiTouchKey && !isKeydown) {
+          sendMultiTouch(touchPoint, "Up");
+          setIsPressing(false);
+          setIsMultiTouching(false);
         }
-        
-        if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
+
+        if (isPanningKey) {
           setIsPanning(isKeydown);
         }
 
