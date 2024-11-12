@@ -1,7 +1,7 @@
 ---
 id: troubleshooting
 title: Troubleshooting
-sidebar_position: 7
+sidebar_position: 5
 ---
 
 ## Troubleshooting issues with Radon IDE
@@ -17,21 +17,21 @@ In this case lookup command called "Radon IDE: Diagnostics" – when executed i
 
 The extension does not currently support all types and configurations of React Native projects.
 For example, Expo Go or brownfield apps aren't supported while we are improving the compatibility of different project setups.
-Please refer to ["Who can use this"](./getting-started.md) section for more details on that.
-If your project doesn't work out of the box because of some modifications made to its setup, chances are the Radon IDE can be configured to support your modifications, please check [configuration](./launch-configuration.md) guide to learn more.
+Please refer to ["Who can use this"](/docs/getting-started/overview) section for more details on that.
+If your project doesn't work out of the box because of some modifications made to its setup, chances are the Radon IDE can be configured to support your modifications, please check [configuration](/docs/guides/configuration) guide to learn more.
 
 ### -sec-num- Can extension locate your React Native project
 
 The extension supports monorepo-type of setups and you should be able to use it even if the app isn't in the root folder of your workspace.
 This setup however has some limitations because the extension can only work with a single application per workspace.
 If your monorepo contain multiple projects, you'll need to instruct the extension with the location of your main React Native or Expo application folder.
-This can be done using [launch configuration](./launch-configuration.md) using `appRoot` setting – please refer to [configuration guide](./launch-configuration.md) for more details.
+This can be done using [launch configuration](/docs/guides/configuration) using `appRoot` setting – please refer to [configuration guide](/docs/guides/configuration) for more details.
 
 ### -sec-num- List of available devices is empty
 
 The extension relies on Android Studio to install Android emulators and on Xcode tools to manage and install iOS simulators.
-The extension can spawn new devices on its own, but it requires the system images can only be installed using Android Studio and Xcode.
-Please refer to [simulators](./simulators.md) section to learn more about installing system images for different platforms.
+The extension can spawn new devices on its own, but it requires the system images to be installed using Android Studio and Xcode.
+Please refer to [simulators](/docs/guides/simulators) section to learn more about installing system images for different platforms.
 
 ### -sec-num- Stuck on "Waiting for app to load"
 
@@ -80,8 +80,8 @@ Here is what you can try when the extension got stuck on some errors:
 
 If you need to install an older version of an IDE, you can do so by navigating to the cogwheel menu next to the "install" button in the market place.
 
-<img width="698" alt="download-older-version" src="/img/docs/marketplace_install_older_version.png"/>
+<img width="698" alt="download-older-version" src="/img/docs/marketplace_install_older_version.png" className="shadow-image"/>
 
-### -sec-num- Configureing Alternative Xcode Versions
+### -sec-num- Configuring Alternative Xcode Versions
 
 If you are using alternative Xcode version ( e.g. xcode-beta, ["xcodes"](https://www.xcodes.app/) ios simulators will only work if xcode-select points to the correct directory to set it up run: `xcode-select --switch ${PathToYourXCode}/Contents/Developer`

@@ -133,8 +133,8 @@
   --ifm-toc-link-color-active: var(--swm-navy-light-100);
 
   /* Details section */
-  --swm-details-foreground: var(--swm-purple-light-20);
-  --swm-details-background: var(--swm-purple-light-100);
+  --swm-details-foreground: var(--swm-green-light-20);
+  --swm-details-background: var(--swm-green-light-100);
 
   /* Admonitions */
   --swm-admonition-color-secondary: var(--swm-navy-light-10);

@@ -181,7 +181,7 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
   );
 };
 
-export function AppWrapper({ children, initialProps, ..._rest }) {
+export function AppWrapper({ children, initialProps, fabric }) {
   const rootTag = useContext(RootTagContext);
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
@@ -214,13 +214,14 @@ export function AppWrapper({ children, initialProps, ..._rest }) {
     (previewKey) => {
       AppRegistry.runApplication(InternalImports.PREVIEW_APP_KEY, {
         rootTag,
-        initialProps: { previewKey },
+        initialProps: { ...initialProps, previewKey },
+        fabric,
       });
       const preview = global.__RNIDE_previews.get(previewKey);
       const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
       handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name });
     },
-    [rootTag, handleNavigationChange]
+    [rootTag, handleNavigationChange, initialProps, fabric]
   );
 
   const closePreview = useCallback(() => {
