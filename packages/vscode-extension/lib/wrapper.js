@@ -8,6 +8,7 @@ const {
   View,
   Linking,
 } = require("react-native");
+const { getInspectorDataForCoordinates } = require("./inspector");
 const { storybookPreview } = require("./storybook_helper");
 
 const navigationPlugins = [];
@@ -179,7 +180,9 @@ export function AppWrapper({ children, initialProps, ..._rest }) {
     (payload) => {
       const { id, x, y, requestStack } = payload;
       
-      InternalImports.getInspectorDataForCoordinates(
+      //const getInspectorDataForCoordinates = require('./inspector').getInspectorDataForCoordinates;
+      // InternalImports.getInspectorDataForCoordinates(
+      getInspectorDataForCoordinates(
         mainContainerRef, 
         x,
         y,
