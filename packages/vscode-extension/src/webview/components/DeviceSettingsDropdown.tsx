@@ -157,6 +157,20 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           </DropdownMenu.Sub>
           <Label>Screen settings</Label>
           <div className="dropdown-menu-item">
+            <span className="codicon codicon-device-camera-video" />
+            Enable Recording
+            <Switch.Root
+              className="switch-root small-switch"
+              id="enable-recording"
+              onCheckedChange={(checked) =>
+                project.updateDeviceSettings({ ...deviceSettings, recordingEnabled: checked })
+              }
+              defaultChecked={deviceSettings.recordingEnabled}
+              style={{ marginLeft: "auto" }}>
+              <Switch.Thumb className="switch-thumb" />
+            </Switch.Root>
+          </div>
+          <div className="dropdown-menu-item">
             <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
               <span className="codicon codicon-triangle-left icons-rewind" />

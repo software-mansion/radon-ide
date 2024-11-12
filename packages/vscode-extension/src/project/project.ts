@@ -78,6 +78,7 @@ export class Project
       },
       hasEnrolledBiometrics: false,
       locale: "en_US",
+      recordingEnabled: false,
       replaysEnabled: false,
       showTouches: false,
     };
