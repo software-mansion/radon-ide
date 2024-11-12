@@ -1,4 +1,13 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, ReactNode, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  MouseEvent,
+  forwardRef,
+  RefObject,
+  ReactNode,
+  useCallback,
+} from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { Resizable } from "re-resizable";
@@ -63,11 +72,11 @@ const useKeyPresses = () => {
       project.dispatchKeyPress(keyCode, "Up");
     }
     pressedKeys.current.clear();
-  },[]);
+  }, []);
 
   return {
     dispatchKeyPress,
-    clearPressedKeys
+    clearPressedKeys,
   };
 };
 
@@ -257,7 +266,7 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
-  const {dispatchKeyPress, clearPressedKeys} = useKeyPresses();
+  const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const workspace = useWorkspaceConfig();
   const { projectState, project } = useProject();
