@@ -223,10 +223,9 @@ function PreviewView() {
               <span className="codicon codicon-triangle-left icons-rewind" />
               <span className="codicon codicon-triangle-left icons-rewind" />
             </span>
-            Replay
           </Button>
         )}
-        <Button
+        <IconButton
           counter={logCounter}
           onClick={() => {
             setLogCounter(0);
@@ -237,8 +236,7 @@ function PreviewView() {
           }}
           disabled={devicesNotFound}>
           <span slot="start" className="codicon codicon-debug-console" />
-          Logs
-        </Button>
+        </IconButton>
         <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Settings", type: "primary" }}>
             <span className="codicon codicon-settings-gear" />
