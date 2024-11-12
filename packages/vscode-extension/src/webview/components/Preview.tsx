@@ -509,11 +509,6 @@ function Preview({
         });
 
         const isPanningKey = e.code === "ShiftLeft" || e.code === "ShiftRight";
-
-        if (isMultiTouchKey) {
-          isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
-          setIsMultiTouching(isKeydown);
-        }
         
         if (isMultiTouchKey && isKeydown) {
           setAnchorPoint({ x: 0.5, y: 0.5 });
