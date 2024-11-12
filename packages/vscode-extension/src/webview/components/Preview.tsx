@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, ReactNode } from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, ReactNode, useCallback } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { Resizable } from "re-resizable";
@@ -36,6 +36,40 @@ declare module "react" {
 }
 
 const HIDE_ZOOM_CONTROLS_DELAY = 2000;
+
+const useKeyPresses = () => {
+  const pressedKeys = useRef(new Set<number>());
+  const { project } = useProject();
+
+  const dispatchKeyPress = useCallback((e: KeyboardEvent) => {
+    const isKeydown = e.type === "keydown";
+    const hidCode = keyboardEventToHID(e);
+
+    if (hidCode) {
+      if (isKeydown) {
+        pressedKeys.current.add(hidCode);
+      } else {
+        pressedKeys.current.delete(hidCode);
+      }
+
+      project.dispatchKeyPress(hidCode, isKeydown ? "Down" : "Up");
+    } else {
+      console.warn(`Unrecognized keyboard input: ${e.code}`);
+    }
+  }, []);
+
+  const clearPressedKeys = useCallback(() => {
+    for (const keyCode of pressedKeys.current) {
+      project.dispatchKeyPress(keyCode, "Up");
+    }
+    pressedKeys.current.clear();
+  },[]);
+
+  return {
+    dispatchKeyPress,
+    clearPressedKeys
+  };
+};
 
 function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
   return {
@@ -223,6 +257,7 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
+  const {dispatchKeyPress, clearPressedKeys} = useKeyPresses();
 
   const workspace = useWorkspaceConfig();
   const { projectState, project } = useProject();
@@ -460,9 +495,10 @@ function Preview({
         setIsPanning(false);
         setIsMultiTouching(false);
         setIsPressing(false);
-        project.clearPressedKeys();
       }
+      clearPressedKeys();
     }
+
     document.addEventListener("blur", onBlurChange, true);
     return () => {
       window.removeEventListener("contextmenu", onContextMenu);
@@ -510,12 +546,7 @@ function Preview({
           setIsPanning(isKeydown);
         }
 
-        const hidCode = keyboardEventToHID(e);
-        if (hidCode) {
-          project.dispatchKeyPress(hidCode, isKeydown ? "Down" : "Up");
-        } else {
-          console.warn(`Unrecognized keyboard input: ${e.code}`);
-        }
+        dispatchKeyPress(e);
       }
     }
     document.addEventListener("keydown", keyEventHandler);
