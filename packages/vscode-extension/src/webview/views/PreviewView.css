@@ -75,3 +75,11 @@
 .device-select {
   min-width: 200px;
 }
+
+.button-recording-on,
+.button-recording-on:hover {
+  background-color: red;
+}
+.button-recording-off {
+  /* border-radius: 50%; */
+}

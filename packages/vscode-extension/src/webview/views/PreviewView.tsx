@@ -63,6 +63,9 @@ function PreviewView() {
   );
   const [logCounter, setLogCounter] = useState(0);
   const [resetKey, setResetKey] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  // const [recordingData, setRecordingData] = useState<RecordingData | undefined>(undefined);
   const [replayData, setReplayData] = useState<RecordingData | undefined>(undefined);
   const { devices, finishedInitialLoad } = useDevices();
 
@@ -113,6 +116,27 @@ function PreviewView() {
     };
   }, []);
 
+  const MAX_RECORDING_TIME = 10;
+  useEffect(() => {
+    if (!isRecording) {
+      setRecordingTime(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setRecordingTime((prevRecordingTime) => {
+        if (prevRecordingTime >= MAX_RECORDING_TIME - 1) {
+          clearInterval(interval);
+          handleRecordingTimeExceeded();
+          return MAX_RECORDING_TIME;
+        }
+        return prevRecordingTime + 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
       openModal("Manage Devices", <ManageDevicesView />);
@@ -125,6 +149,21 @@ function PreviewView() {
       }
     }
   };
+
+  const handleRecording = async () => {
+    try {
+      if (isRecording) {
+        // setIsRecording  // TODO recording handler
+      } else {
+        // setIsRecording  // TODO recording handler
+      }
+      setIsRecording(!isRecording);
+    } catch (e) {
+      showDismissableError("Failed to start recording");
+    }
+  };
+
+  const handleRecordingTimeExceeded = async () => {};
 
   const handleReplay = async () => {
     try {
@@ -144,6 +183,7 @@ function PreviewView() {
     setInspectStackData(null);
   }
 
+  const showRecordigngButton = deviceSettings.recordingEnabled;
   const showReplayButton = deviceSettings.replaysEnabled;
 
   return (
@@ -151,13 +191,34 @@ function PreviewView() {
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
+        {showRecordigngButton && (
+          <Button
+            className={isRecording ? "button-recording-on" : "button-recording-off"}
+            tooltip={{
+              label: isRecording ? "Stop recording" : "Start recording",
+            }}
+            onClick={handleRecording}
+            disabled={isStarting}>
+            {isRecording ? (
+              <>
+                <span className="codicon codicon-debug-stop" />
+                {recordingTime}
+              </>
+            ) : (
+              <>
+                <span className="codicon codicon-device-camera-video" />
+                Rec
+              </>
+            )}
+          </Button>
+        )}
         {showReplayButton && (
           <Button
             tooltip={{
               label: "Replay the last few seconds of the app",
             }}
             onClick={handleReplay}
-            disabled={isStarting}>
+            disabled={isStarting || isRecording}>
             <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
               <span className="codicon codicon-triangle-left icons-rewind" />
