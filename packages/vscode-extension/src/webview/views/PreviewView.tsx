@@ -25,6 +25,8 @@ import { useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import "./View.css";
 import "./PreviewView.css";
+import ReplayIcon from "../components/icons/ReplayIcon";
+import RecordingIcon from "../components/icons/RecordingIcon";
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -192,10 +194,10 @@ function PreviewView() {
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
         {showRecordigngButton && (
-          <Button
+          <IconButton
             className={isRecording ? "button-recording-on" : "button-recording-off"}
             tooltip={{
-              label: isRecording ? "Stop recording" : "Start recording",
+              label: isRecording ? "Stop screen recording" : "Start screen recording",
             }}
             onClick={handleRecording}
             disabled={isStarting}>
@@ -205,25 +207,19 @@ function PreviewView() {
                 {recordingTime}
               </>
             ) : (
-              <>
-                <span className="codicon codicon-device-camera-video" />
-                Rec
-              </>
+              <RecordingIcon />
             )}
-          </Button>
+          </IconButton>
         )}
         {showReplayButton && (
-          <Button
+          <IconButton
             tooltip={{
               label: "Replay the last few seconds of the app",
             }}
             onClick={handleReplay}
             disabled={isStarting || isRecording}>
-            <span className="icons-container">
-              <span className="codicon codicon-triangle-left icons-rewind" />
-              <span className="codicon codicon-triangle-left icons-rewind" />
-            </span>
-          </Button>
+            <ReplayIcon />
+          </IconButton>
         )}
         <IconButton
           counter={logCounter}
