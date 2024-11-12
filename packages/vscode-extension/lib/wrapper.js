@@ -4,11 +4,12 @@ const { useContext, useState, useEffect, useRef, useCallback } = require("react"
 const {
   LogBox,
   AppRegistry,
+  Dimensions,
   RootTagContext,
   View,
   Linking,
+  findNodeHandle
 } = require("react-native");
-const { getInspectorDataForCoordinates } = require("./inspector");
 const { storybookPreview } = require("./storybook_helper");
 
 const navigationPlugins = [];
@@ -21,13 +22,13 @@ let navigationHistory = new Map();
 const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
-  },
-  get getInspectorDataForCoordinates() {
-    return require("./inspector").getInspectorDataForCoordinates; 
-  },
+  }
 };
 
 const RNInternals = {
+  get getInspectorDataForViewAtPoint() {
+    return require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
+  },
   get SceneTracker() {
     return require("react-native/Libraries/Utilities/SceneTracker");
   },
@@ -67,6 +68,118 @@ function useAgentListener(agent, eventName, listener, deps = []) {
     }
   }, [agent, ...deps]);
 }
+
+function getInspectorDataForInstance(node) {
+  const renderers = Array.from(window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.values());
+  if (!renderers) {
+    return {};
+  }
+  for (const renderer of renderers) {
+    if (renderer.rendererConfig?.getInspectorDataForInstance) {
+      const data = renderer.rendererConfig.getInspectorDataForInstance(node);
+      return data ?? {};
+    }
+  }
+  return {};
+};
+
+function createStackElement(
+  frame, name, source
+) {
+  return {
+    componentName: name,
+    source: {
+      fileName: source.fileName,
+      line0Based: source.lineNumber - 1,
+      column0Based: source.columnNumber - 1,
+    },
+    frame,
+  };
+};
+
+// Returns an array of promises which resolve to elements of the components hierarchy stack.
+function traverseComponentsTreeUp(startNode) {
+  const stackPromises = [];
+  let node = startNode;
+
+  // Optimization: we break after reaching fiber node corresponding to OffscreenComponent (with tag 22).
+  // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
+  while (node && node.tag !== 22) {
+    const data = getInspectorDataForInstance(node);
+
+    data.hierarchy?.length && stackPromises.push(new Promise((resolve, reject) => {
+      const item = data.hierarchy[data.hierarchy.length - 1];
+      const inspectorData = item.getInspectorData(findNodeHandle);
+      
+      try {
+        inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
+          const stackElementFrame = {
+            x: pageX,
+            y: pageY,
+            width: viewWidth,
+            height: viewHeight
+          };
+
+          stackElement = (inspectorData.source) ? 
+            createStackElement(stackElementFrame, item.name, inspectorData.source) : undefined;
+
+          resolve(stackElement);
+        });
+      } catch (e) {
+        reject(e);
+      }
+    }));
+
+    node = node.return;
+  }
+
+  return stackPromises;
+};
+
+function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
+
+  function scaleFrame(frame) {
+    return {
+      x: frame.x / screenWidth,
+      y: frame.y / screenHeight,
+      width: frame.width / screenWidth,
+      height: frame.height / screenHeight
+    };
+  };
+
+  RNInternals.getInspectorDataForViewAtPoint(
+    mainContainerRef.current,
+    x * screenWidth,
+    y * screenHeight,
+    (viewData) => {
+      const frame = viewData.frame;
+      const scaledFrame = scaleFrame({
+        x: frame.left,
+        y: frame.top,
+        width: frame.width,
+        height: frame.height
+      });
+
+      if (!requestStack) {
+        callback({ frame: scaledFrame });
+      }
+
+      Promise.all(traverseComponentsTreeUp(viewData.closestInstance, []))
+        .then((stack) => stack.filter(Boolean))
+        .then((stack) => 
+          stack.map((stackElement) => ({
+            ...stackElement,
+            frame: scaleFrame(stackElement.frame)
+          }))
+        ).then((scaledStack) => 
+          callback({
+            frame: scaledFrame,
+            stack: scaledStack
+          }));
+      }
+  );
+};
 
 export function AppWrapper({ children, initialProps, ..._rest }) {
   const rootTag = useContext(RootTagContext);
@@ -179,9 +292,7 @@ export function AppWrapper({ children, initialProps, ..._rest }) {
     "RNIDE_inspect",
     (payload) => {
       const { id, x, y, requestStack } = payload;
-      
-      //const getInspectorDataForCoordinates = require('./inspector').getInspectorDataForCoordinates;
-      // InternalImports.getInspectorDataForCoordinates(
+
       getInspectorDataForCoordinates(
         mainContainerRef, 
         x,
