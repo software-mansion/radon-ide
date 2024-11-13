@@ -258,6 +258,7 @@ function Preview({
   replayData,
   onReplayClose,
 }: Props) {
+  const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>();
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
@@ -385,6 +386,7 @@ function Preview({
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isMultiTouching) {
+      setTouchPoint(getTouchPosition(e));
       isPanning && moveAnchorPoint(e);
       isPressing && sendMultiTouchForEvent(e, "Move");
     } else if (isPressing) {
@@ -392,7 +394,7 @@ function Preview({
     } else if (isInspecting) {
       sendInspect(e, "Move", false);
     }
-    setTouchPoint(getTouchPosition(e));
+    currentMousePosition.current = e;
   }
 
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
@@ -438,7 +440,8 @@ function Preview({
         sendTouch(e, "Down");
       }
     }
-    setTouchPoint(getTouchPosition(e));
+
+    currentMousePosition.current = e;
   }
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
@@ -546,22 +549,26 @@ function Preview({
         e.preventDefault();
         const isKeydown = e.type === "keydown";
 
-        const isMultitouchKeyPressed = Platform.select({
+        const isMultiTouchKey = Platform.select({
           macos: e.code === "AltLeft" || e.code === "AltRight",
           windows: e.code === "ControlLeft" || e.code === "ControlRight",
         });
 
-        if (isMultitouchKeyPressed) {
-          isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
-          setIsMultiTouching(isKeydown);
+        const isPanningKey = e.code === "ShiftLeft" || e.code === "ShiftRight";
+
+        if (isMultiTouchKey && isKeydown) {
+          setAnchorPoint({ x: 0.5, y: 0.5 });
+          setTouchPoint(getTouchPosition(currentMousePosition.current!));
+          setIsMultiTouching(true);
         }
 
-        if (isMultitouchKeyPressed && !isKeydown) {
+        if (isMultiTouchKey && !isKeydown) {
           sendMultiTouch(touchPoint, "Up");
           setIsPressing(false);
+          setIsMultiTouching(false);
         }
 
-        if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
+        if (isPanningKey) {
           setIsPanning(isKeydown);
         }
 
