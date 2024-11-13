@@ -16,16 +16,24 @@ export function getDevServerScriptUrl() {
 
 export function isWorkspaceRoot(dir: string) {
   const packageJsonPath = path.join(dir, "package.json");
-  let workspaces;
+  const nxJsonPath = path.join(dir, "nx.json");
+
   try {
-    workspaces = require(packageJsonPath).workspaces;
+    require(nxJsonPath);
+
+    return true;
   } catch (e) {
-    // No package.json
-    return false;
+    // No nx.json precede
   }
 
-  if (workspaces) {
-    return true;
+  try {
+    const workspaces = require(packageJsonPath).workspaces;
+    
+    if (workspaces) {
+      return true;
+    }
+  } catch (e) {
+    // No "workspace" property in package.json precede
   }
 
   return false;
