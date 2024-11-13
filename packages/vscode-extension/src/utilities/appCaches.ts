@@ -48,7 +48,7 @@ export function storeAppCache(key: string, value: string) {
     try {
       oldCaches = JSON.parse(fs.readFileSync(appCachesPath).toString());
     } catch (e) {
-      Logger.warn(`Error parsing cold caches file for app ${getAppRootFolder()}`, e);
+      Logger.warn(`Error parsing old caches file for app ${getAppRootFolder()}`, e);
       return undefined;
     }
   } else {
