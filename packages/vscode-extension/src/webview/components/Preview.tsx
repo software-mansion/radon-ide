@@ -78,7 +78,7 @@ function useKeyPresses() {
     dispatchKeyPress,
     clearPressedKeys,
   };
-};
+}
 
 function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
   return {
