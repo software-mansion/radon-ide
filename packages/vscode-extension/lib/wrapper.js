@@ -69,18 +69,17 @@ function useAgentListener(agent, eventName, listener, deps = []) {
   }, [agent, ...deps]);
 }
 
-function getInspectorDataForInstance(node) {
+function obtainGetInspectorDataForInstance() {
   const renderers = Array.from(window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.values());
   if (!renderers) {
-    return {};
+    return undefined;
   }
   for (const renderer of renderers) {
     if (renderer.rendererConfig?.getInspectorDataForInstance) {
-      const data = renderer.rendererConfig.getInspectorDataForInstance(node);
-      return data ?? {};
+      return renderer.rendererConfig.getInspectorDataForInstance;
     }
   }
-  return {};
+  return undefined;
 };
 
 function createStackElement(
@@ -99,6 +98,13 @@ function createStackElement(
 
 // Returns an array of promises which resolve to elements of the components hierarchy stack.
 function traverseComponentsTreeUp(startNode) {
+  const getInspectorDataForInstance = obtainGetInspectorDataForInstance();
+
+  if (!getInspectorDataForInstance) {
+    console.warn("Failed to obtain getInspectorDataForInstance renderer method.");
+    return [];
+  }
+
   const stackPromises = [];
   let node = startNode;
 
@@ -107,28 +113,30 @@ function traverseComponentsTreeUp(startNode) {
   while (node && node.tag !== 22) {
     const data = getInspectorDataForInstance(node);
 
-    data.hierarchy?.length && stackPromises.push(new Promise((resolve, reject) => {
-      const item = data.hierarchy[data.hierarchy.length - 1];
-      const inspectorData = item.getInspectorData(findNodeHandle);
-      
-      try {
-        inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
-          const stackElementFrame = {
-            x: pageX,
-            y: pageY,
-            width: viewWidth,
-            height: viewHeight
-          };
+    if (data.hierarchy && data.hierarchy.length > 0) {
+      stackPromises.push(new Promise((resolve, reject) => {
+        const item = data.hierarchy[data.hierarchy.length - 1];
+        const inspectorData = item.getInspectorData(findNodeHandle);
+        
+        try {
+          inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
+            const stackElementFrame = {
+              x: pageX,
+              y: pageY,
+              width: viewWidth,
+              height: viewHeight
+            };
 
-          stackElement = (inspectorData.source) ? 
-            createStackElement(stackElementFrame, item.name, inspectorData.source) : undefined;
+            stackElement = (inspectorData.source) ? 
+              createStackElement(stackElementFrame, item.name, inspectorData.source) : undefined;
 
-          resolve(stackElement);
-        });
-      } catch (e) {
-        reject(e);
-      }
-    }));
+            resolve(stackElement);
+          });
+        } catch (e) {
+          reject(e);
+        }
+      }));
+    };
 
     node = node.return;
   }
