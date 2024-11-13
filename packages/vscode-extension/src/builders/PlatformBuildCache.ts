@@ -10,7 +10,7 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { runfingerprintCommand } from "./customBuild";
 import { calculateMD5 } from "../utilities/common";
 import { BuildResult } from "./BuildManager";
-import { getAppCache, removeAppCache, setAppCache } from "../utilities/appCaches";
+import { getAppCache, removeAppCache, storeAppCache } from "../utilities/appCaches";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
@@ -54,7 +54,7 @@ export class PlatformBuildCache {
   /**
    * Passed fingerprint should be calculated at the time build is started.
    */
-  public async storeCache(buildFingerprint: string, build: BuildResult) {
+  public async storeBuild(buildFingerprint: string, build: BuildResult) {
     const appPath = await getAppHash(getAppPath(build));
 
     const cache = JSON.stringify({
@@ -63,7 +63,7 @@ export class PlatformBuildCache {
       buildResult: build,
     });
 
-    setAppCache(this.cacheKey, cache);
+    storeAppCache(this.cacheKey, cache);
   }
 
   public async clearCache() {
@@ -182,7 +182,7 @@ export function migrateOldBuildCachesToNewStorage() {
     }
 
     // the old method stored json objects instead of strings
-    setAppCache(platformKey, JSON.stringify(cache));
+    storeAppCache(platformKey, JSON.stringify(cache));
 
     // remove the old cache afterwords
     extensionContext.workspaceState.update(platformKey, undefined);

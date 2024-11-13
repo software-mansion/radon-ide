@@ -15,7 +15,7 @@ function getAppCachesPath() {
 }
 
 /**
- * This function gets app level caches from caches storage.
+ * This function gets app level caches for the provided key.
  * @param key
  * @returns the value of the cache for key
  */
@@ -36,12 +36,12 @@ export function getAppCache(key: string) {
 }
 
 /**
- * This function sets app level caches from caches storage.
+ * This function stores app level caches for the provided key.
  * @param key
  * @param value
  * @returns the new value that was set
  */
-export function setAppCache(key: string, value: string) {
+export function storeAppCache(key: string, value: string) {
   const appCachesPath = getAppCachesPath();
   let oldCaches;
   if (fs.existsSync(appCachesPath)) {
@@ -71,7 +71,7 @@ export function setAppCache(key: string, value: string) {
 }
 
 /**
- * This function removes app level caches from caches storage.
+ * This function removes app level caches for the provided key.
  * @param key
  */
 export function removeAppCache(key: string) {
