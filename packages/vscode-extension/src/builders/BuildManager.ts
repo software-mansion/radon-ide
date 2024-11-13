@@ -135,7 +135,7 @@ export class BuildManager {
         );
       }
 
-      await buildCache.storeCache(buildFingerprint, buildResult);
+      await buildCache.storeBuild(buildFingerprint, buildResult);
 
       return buildResult;
     };
