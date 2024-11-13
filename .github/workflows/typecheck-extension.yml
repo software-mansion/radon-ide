@@ -11,6 +11,10 @@ on:
       - ".github/workflows/typecheck-extension.yml"
       - "packages/vscode-extension/**"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     if: github.repository == 'software-mansion/radon-ide'
