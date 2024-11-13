@@ -118,6 +118,11 @@ function traverseComponentsTreeUp(startNode) {
         const item = data.hierarchy[data.hierarchy.length - 1];
         const inspectorData = item.getInspectorData(findNodeHandle);
         
+        if (!inspectorData.source) {
+          resolve(undefined);  
+          return;
+        }
+
         try {
           inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
             const stackElementFrame = {
@@ -127,9 +132,7 @@ function traverseComponentsTreeUp(startNode) {
               height: viewHeight
             };
 
-            stackElement = (inspectorData.source) ? 
-              createStackElement(stackElementFrame, item.name, inspectorData.source) : undefined;
-
+            const stackElement = createStackElement(stackElementFrame, item.name, inspectorData.source);
             resolve(stackElement);
           });
         } catch (e) {
@@ -171,6 +174,7 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
 
       if (!requestStack) {
         callback({ frame: scaledFrame });
+        return;
       }
 
       Promise.all(traverseComponentsTreeUp(viewData.closestInstance, []))
