@@ -122,7 +122,7 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
       </Select.Trigger>
 
       <Select.Portal>
-        <Select.Content className="device-select-content dropdown-menu-content" position="popper">
+        <Select.Content className="device-select-content" position="popper">
           <Select.ScrollUpButton className="device-select-scroll">
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>

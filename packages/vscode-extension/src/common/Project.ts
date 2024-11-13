@@ -13,6 +13,7 @@ export type DeviceSettings = {
   hasEnrolledBiometrics: boolean;
   locale: Locale;
   replaysEnabled: boolean;
+  showTouches: boolean;
 };
 
 export type ProjectState = {
@@ -121,7 +122,7 @@ export type RecordingData = {
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   reload(type: ReloadAction): Promise<boolean>;
-  restart(forceCleanBuild: boolean): Promise<void>;
+  restart(clean: "all" | "metro" | false): Promise<void>;
   goHome(homeUrl: string): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<boolean>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
@@ -140,6 +141,9 @@ export interface ProjectInterface {
   openDevMenu(): Promise<void>;
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
+
+  getDeepLinksHistory(): Promise<string[]>;
+  openDeepLink(link: string): Promise<void>;
 
   captureReplay(): Promise<RecordingData>;
 

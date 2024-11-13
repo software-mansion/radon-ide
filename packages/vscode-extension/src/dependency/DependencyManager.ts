@@ -6,7 +6,7 @@ import semver, { SemVer } from "semver";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command, lineReader } from "../utilities/subprocess";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import { getAppRootFolder } from "../utilities/extensionContext";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import {
@@ -27,11 +27,8 @@ import { CancelToken } from "../builders/cancelToken";
 import { getAndroidSourceDir } from "../builders/buildAndroid";
 import { Platform } from "../utilities/platform";
 
-const STALE_PODS = "stalePods";
-
 export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
-  private stalePods = extensionContext.workspaceState.get<boolean>(STALE_PODS) ?? false;
   private eventEmitter = new EventEmitter();
   private packageManagerInternal: PackageManagerInfo | undefined;
 
@@ -140,8 +137,6 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       return false;
     }
 
-    await this.setStalePodsAsync(true);
-
     this.emitEvent("nodeModules", { status: "installing", isOptional: false });
 
     // all managers support the `install` command
@@ -183,15 +178,8 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       return;
     }
 
-    await this.setStalePodsAsync(false);
-
     this.emitEvent("pods", { status: "installed", isOptional: false });
     Logger.debug("Project pods installed");
-  }
-
-  private async setStalePodsAsync(stale: boolean) {
-    this.stalePods = stale;
-    await extensionContext.workspaceState.update(STALE_PODS, stale);
   }
 
   private async getPackageManager() {
@@ -271,11 +259,6 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     if (!requiresNativeBuild) {
       this.emitEvent("pods", { status: "notInstalled", isOptional: true });
       return true;
-    }
-
-    if (requiresNativeBuild && this.stalePods) {
-      this.emitEvent("pods", { status: "notInstalled", isOptional: false });
-      return false;
     }
 
     const appRootFolder = getAppRootFolder();

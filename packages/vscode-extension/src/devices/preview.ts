@@ -94,6 +94,14 @@ export class Preview implements Disposable {
     });
   }
 
+  public showTouches() {
+    this.subprocess?.stdin?.write("pointer show true\n");
+  }
+
+  public hideTouches() {
+    this.subprocess?.stdin?.write("pointer show false\n");
+  }
+
   public startReplays() {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
@@ -138,7 +146,7 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write(`key ${direction} ${keyCode}\n`);
   }
 
-  public sendPaste(text: string) {
+  public async sendPaste(text: string) {
     this.subprocess?.stdin?.write(`paste ${text}\n`);
   }
 }

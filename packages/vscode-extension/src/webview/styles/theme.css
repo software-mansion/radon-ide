@@ -131,10 +131,14 @@
   /* Inspector */
   --inspect-area-background: rgba(56, 172, 221, 0.85);
   --dimensions-box-background: #404040;
+
+  /* Open Deep Link */
+  --deep-link-history-query-match-color: #c19420;
 }
 
 /* Light theme */
-body[data-vscode-theme-kind="vscode-light"] {
+body[data-vscode-theme-kind="vscode-light"],
+body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-active-item: var(--blue-dark-100);
   --swm-preview-background: var(--white);
 
@@ -284,10 +288,15 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-replay-len-select-background: var(--grey-light-60);
   --swm-replay-len-select-hover-background: var(--navy-light-transparent);
   --swm-replay-len-select-highlighted-background: var(--grey-light-80);
+
+  /* Open Deep Link */
+  --deep-link-history-border: var(--navy-light-10);
+  --deep-link-history-selected-item-background: var(--navy-light-10);
 }
 
 /* Dark theme */
-body[data-vscode-theme-kind="vscode-dark"] {
+body[data-vscode-theme-kind="vscode-dark"],
+body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-active-item: var(--blue-dark-100);
   --swm-preview-background: var(--background-dark-100);
 
@@ -439,4 +448,8 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-replay-len-select-background: var(--background-dark-160);
   --swm-replay-len-select-hover-background: var(--background-dark-120);
   --swm-replay-len-select-highlighted-background: var(--background-dark-80);
+
+  /* Open Deep Link */
+  --deep-link-history-border: var(--background-dark-100);
+  --deep-link-history-selected-item-background: var(--background-dark-100);
 }

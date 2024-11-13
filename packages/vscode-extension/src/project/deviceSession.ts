@@ -17,7 +17,8 @@ import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 
-type StartOptions = { cleanBuild: boolean };
+type PreviewReadyCallback = (previewURL: string) => void;
+type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
 
 export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
@@ -104,7 +105,7 @@ export class DeviceSession implements Disposable {
     throw new Error("Not implemented " + type);
   }
 
-  private async launchApp() {
+  private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
@@ -141,7 +142,10 @@ export class DeviceSession implements Disposable {
 
     await Promise.all([
       this.metro.ready(),
-      this.device.startPreview().then((url) => (previewURL = url)),
+      this.device.startPreview().then((url) => {
+        previewURL = url;
+        previewReadyCallback && previewReadyCallback(url);
+      }),
       waitForAppReady,
     ]);
     Logger.debug("App and preview ready, moving on...");
@@ -151,6 +155,9 @@ export class DeviceSession implements Disposable {
     this.isLaunching = false;
     if (this.deviceSettings?.replaysEnabled) {
       this.device.startReplays();
+    }
+    if (this.deviceSettings?.showTouches) {
+      this.device.showTouches();
     }
 
     const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
@@ -203,14 +210,17 @@ export class DeviceSession implements Disposable {
     Logger.debug("Metro & devtools ready");
   }
 
-  public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+  public async start(
+    deviceSettings: DeviceSettings,
+    { cleanBuild, previewReadyCallback }: StartOptions
+  ) {
     this.deviceSettings = deviceSettings;
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
     await this.buildApp({ clean: cleanBuild });
     await this.installApp({ reinstall: false });
-    const previewUrl = await this.launchApp();
+    const previewUrl = await this.launchApp(previewReadyCallback);
     Logger.debug("Device session started");
     return previewUrl;
   }
@@ -241,6 +251,12 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
+  public async sendDeepLink(link: string) {
+    if (this.maybeBuildResult) {
+      return this.device.sendDeepLink(link, this.maybeBuildResult);
+    }
+  }
+
   public async captureReplay() {
     return this.device.captureReplay();
   }
@@ -254,7 +270,7 @@ export class DeviceSession implements Disposable {
   }
 
   public sendPaste(text: string) {
-    this.device.sendPaste(text);
+    return this.device.sendPaste(text);
   }
 
   public inspectElementAt(
@@ -292,6 +308,11 @@ export class DeviceSession implements Disposable {
       this.device.startReplays();
     } else {
       this.device.stopReplays();
+    }
+    if (settings.showTouches && !this.isLaunching) {
+      this.device.showTouches();
+    } else {
+      this.device.hideTouches();
     }
     return this.device.changeSettings(settings);
   }

@@ -178,16 +178,17 @@ export class AndroidEmulatorDevice extends DeviceBase {
         "location_mode",
         "3",
       ]);
-      // note that geo fix command takes arguments: $longitude , $latitude so the order is reversed compared to most conventions
-      await exec(ADB_PATH, [
-        "-s",
-        this.serial!,
-        "emu",
-        "geo",
-        "fix",
-        settings.location.longitude.toString(),
-        settings.location.latitude.toString(),
-      ]);
+
+      // This is a work around for the problem with emu geo command not working  when passed, 0 0 coordinates
+      // when provided coordinates are close enough to 0 that the adb assumes they are 0 we pass the smallest
+      // working number instead. Moreover note that geo fix command takes arguments:
+      // $longitude , $latitude so the order is reversed compared to most conventions
+      const areCoordinatesToCloseToZero =
+        Math.abs(settings.location.latitude) < 0.00001 &&
+        Math.abs(settings.location.longitude) < 0.00001;
+      const lat = areCoordinatesToCloseToZero ? "0.00001" : settings.location.latitude.toString();
+      const long = areCoordinatesToCloseToZero ? "0.00001" : settings.location.longitude.toString();
+      await exec(ADB_PATH, ["-s", this.serial!, "emu", "geo", "fix", long, lat]);
     }
     return shouldRestart;
   }
@@ -468,6 +469,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
       build.packageName,
     ]);
     return true; // Android will terminate the process if any of the permissions were granted prior to reset-permissions call
+  }
+
+  async sendDeepLink(link: string, build: BuildResult) {
+    if (build.platform !== DevicePlatform.Android) {
+      throw new Error("Invalid platform");
+    }
+
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "am",
+      "start",
+      "-W",
+      "-a",
+      "android.intent.action.VIEW",
+      "-d",
+      link,
+      build.packageName,
+    ]);
   }
 
   makePreview(): Preview {

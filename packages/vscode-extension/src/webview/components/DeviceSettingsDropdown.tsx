@@ -18,6 +18,7 @@ import { useModal } from "../providers/ModalProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
+import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 
 const contentSizes = [
   "xsmall",
@@ -65,7 +66,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <Label>Device appearance</Label>
           <form>
             <RadioGroup.Root
-              className="dropdown-menu-content radio-group-root"
+              className="radio-group-root"
               defaultValue={deviceSettings.appearance}
               onValueChange={(value) => {
                 project.updateDeviceSettings({
@@ -154,7 +155,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-          <Label>Screen recording</Label>
+          <Label>Screen settings</Label>
           <div className="dropdown-menu-item">
             <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
@@ -168,10 +169,31 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
               }
               defaultChecked={deviceSettings.replaysEnabled}
-              style={{ marginLeft: "5px" }}>
+              style={{ marginLeft: "auto" }}>
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
+          <div className="dropdown-menu-item">
+            <span className="codicon codicon-record" />
+            Show Touches
+            <Switch.Root
+              className="switch-root small-switch"
+              id="enable-replays"
+              onCheckedChange={(checked) =>
+                project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
+              }
+              defaultChecked={deviceSettings.showTouches}
+              style={{ marginLeft: "auto" }}>
+              <Switch.Thumb className="switch-thumb" />
+            </Switch.Root>
+          </div>
+          <Label>Deep Links</Label>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
+            <span className="codicon codicon-link" />
+            Open Deep Link
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

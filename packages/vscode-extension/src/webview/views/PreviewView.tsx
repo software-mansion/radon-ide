@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, MouseEvent } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
@@ -51,7 +51,6 @@ function PreviewView() {
   const { projectState, project, deviceSettings } = useProject();
   const { reportIssue, showDismissableError } = useUtils();
 
-  const [isPressing, setIsPressing] = useState(false);
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
@@ -145,25 +144,10 @@ function PreviewView() {
     setInspectStackData(null);
   }
 
-  function onMouseDown(e: MouseEvent<HTMLDivElement>) {
-    e.preventDefault();
-    setIsPressing(true);
-  }
-
-  function onMouseUp(e: MouseEvent<HTMLDivElement>) {
-    e.preventDefault();
-    setIsPressing(false);
-  }
-
-  const touchHandlers = {
-    onMouseDown,
-    onMouseUp,
-  };
-
   const showReplayButton = deviceSettings.replaysEnabled;
 
   return (
-    <div className="panel-view" {...touchHandlers}>
+    <div className="panel-view">
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
@@ -209,8 +193,6 @@ function PreviewView() {
           setInspectFrame={setInspectFrame}
           setInspectStackData={setInspectStackData}
           onInspectorItemSelected={onInspectorItemSelected}
-          isPressing={isPressing}
-          setIsPressing={setIsPressing}
           zoomLevel={zoomLevel}
           replayData={replayData}
           onReplayClose={() => setReplayData(undefined)}

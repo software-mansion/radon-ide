@@ -13,6 +13,10 @@ import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
 
+const LEFT_META_HID_CODE = 0xe3;
+const RIGHT_META_HID_CODE = 0xe7;
+const V_KEY_HID_CODE = 0x19;
+
 interface SimulatorInfo {
   availability?: string;
   state?: string;
@@ -206,6 +210,46 @@ export class IosSimulatorDevice extends DeviceBase {
         ? "com.apple.BiometricKit_Sim.fingerTouch.match"
         : "com.apple.BiometricKit_Sim.fingerTouch.nomatch",
     ]);
+  }
+
+  private pressingLeftMetaKey = false;
+  private pressingRightMetaKey = false;
+
+  public sendKey(keyCode: number, direction: "Up" | "Down"): void {
+    // iOS simulator has a buggy behavior when sending cmd+V key combination.
+    // It sometimes triggers paste action but with a very low success rate.
+    // Other times it kicks in before the pasteboard is filled with the content
+    // therefore pasting the previously compied content instead.
+    // As a temporary workaround, we disable sending cmd+V as key combination
+    // entirely to prevent this buggy behavior. Users can still paste content
+    // using the context menu method as they'd do on an iOS device.
+    // This is not an ideal workaround as people may still trigger cmd+v by
+    // pressing V first and then cmd, but it is good enough to filter out
+    // the majority of the noisy behavior since typically you press cmd first.
+    if (keyCode === LEFT_META_HID_CODE) {
+      this.pressingLeftMetaKey = direction === "Down";
+    } else if (keyCode === RIGHT_META_HID_CODE) {
+      this.pressingRightMetaKey = direction === "Down";
+    }
+    if ((this.pressingLeftMetaKey || this.pressingRightMetaKey) && keyCode === V_KEY_HID_CODE) {
+      // ignore sending V when meta key is pressed
+    } else {
+      this.preview?.sendKey(keyCode, direction);
+    }
+  }
+
+  public async sendPaste(text: string) {
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    const subprocess = exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "pbcopy",
+      this.deviceUDID,
+    ]);
+    subprocess.stdin?.write(text);
+    subprocess.stdin?.end();
+    await subprocess;
   }
 
   private async changeLocale(newLocale: Locale): Promise<boolean> {
@@ -412,6 +456,21 @@ export class IosSimulatorDevice extends DeviceBase {
       build.bundleID,
     ]);
     return false;
+  }
+
+  async sendDeepLink(link: string, build: BuildResult) {
+    if (build.platform !== DevicePlatform.IOS) {
+      throw new Error("Invalid platform");
+    }
+
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(this.deviceUDID),
+      "openurl",
+      this.deviceUDID,
+      link,
+    ]);
   }
 
   makePreview(): Preview {

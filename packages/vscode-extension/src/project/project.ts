@@ -35,6 +35,9 @@ import { PanelLocation } from "../common/WorkspaceConfig";
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
+const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
+
+const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
@@ -76,6 +79,7 @@ export class Project
       hasEnrolledBiometrics: false,
       locale: "en_US",
       replaysEnabled: false,
+      showTouches: false,
     };
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
@@ -163,7 +167,7 @@ export class Project
   }
 
   async dispatchPaste(text: string) {
-    this.deviceSession?.sendPaste(text);
+    await this.deviceSession?.sendPaste(text);
   }
 
   onBundleError(): void {
@@ -275,7 +279,7 @@ export class Project
 
   //#region Session lifecycle
   public async restart(
-    forceCleanBuild: boolean,
+    clean: "all" | "metro" | false,
     onlyReloadJSWhenPossible: boolean = true,
     restartDevice: boolean = false
   ) {
@@ -292,9 +296,9 @@ export class Project
 
     // we first consider forceCleanBuild flag, if set we always perform a clean
     // start of the project and select the device
-    if (forceCleanBuild) {
+    if (clean) {
       await this.start(true, true);
-      await this.selectDevice(deviceInfo, true);
+      await this.selectDevice(deviceInfo, clean === "all");
       return;
     }
 
@@ -354,7 +358,7 @@ export class Project
     return success;
   }
 
-  private async start(restart: boolean, forceCleanBuild: boolean) {
+  private async start(restart: boolean, resetMetroCache: boolean) {
     if (restart) {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
@@ -371,7 +375,7 @@ export class Project
 
     Logger.debug(`Launching metro`);
     this.metro.start(
-      forceCleanBuild,
+      resetMetroCache,
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
@@ -385,6 +389,22 @@ export class Project
     if (needsRestart) {
       this.restart(false, false);
     }
+  }
+
+  async getDeepLinksHistory() {
+    return extensionContext.workspaceState.get<string[] | undefined>(DEEP_LINKS_HISTORY_KEY) ?? [];
+  }
+
+  async openDeepLink(link: string) {
+    const history = await this.getDeepLinksHistory();
+    if (history.length === 0 || link !== history[0]) {
+      extensionContext.workspaceState.update(
+        DEEP_LINKS_HISTORY_KEY,
+        [link, ...history.filter((s) => s !== link)].slice(0, DEEP_LINKS_HISTORY_LIMIT)
+      );
+    }
+
+    this.deviceSession?.sendDeepLink(link);
   }
 
   public async dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
@@ -587,6 +607,9 @@ export class Project
 
       const previewURL = await newDeviceSession.start(this.deviceSettings, {
         cleanBuild: forceCleanBuild,
+        previewReadyCallback: (url) => {
+          this.updateProjectStateForDevice(deviceInfo, { previewURL: url });
+        },
       });
       this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
         previewURL,
