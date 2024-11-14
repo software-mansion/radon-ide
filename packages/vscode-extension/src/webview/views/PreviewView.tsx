@@ -14,11 +14,7 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import {
-  InspectElement,
-  RecordingData,
-  ZoomLevelType,
-} from "../../common/Project";
+import { InspectElement, RecordingData, ZoomLevelType } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import "./View.css";
@@ -143,7 +139,7 @@ function PreviewView() {
   const inspector = useInspector({
     deviceProperties,
     onInspectElementLeftClicked: openInspectElementSourceLocation,
-    onInspectElementRightClicked: () => setIsInspectDataMenuOpen(true)
+    onInspectElementRightClicked: () => setIsInspectDataMenuOpen(true),
   });
 
   const showReplayButton = deviceSettings.replaysEnabled;

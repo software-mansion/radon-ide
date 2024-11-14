@@ -273,11 +273,7 @@ export class DeviceSession implements Disposable {
     return this.device.sendPaste(text);
   }
 
-  public inspectElementAt(
-    xRatio: number,
-    yRatio: number,
-    callback: (inspectData: any) => void
-  ) {
+  public inspectElementAt(xRatio: number, yRatio: number, callback: (inspectData: any) => void) {
     const id = this.inspectCallID++;
     const listener = (event: string, payload: any) => {
       if (event === "RNIDE_inspectData" && payload.id === id) {

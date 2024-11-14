@@ -14,10 +14,7 @@ import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import {
-  RecordingData,
-  ZoomLevelType,
-} from "../../common/Project";
+import { RecordingData, ZoomLevelType } from "../../common/Project";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { Platform } from "../providers/UtilsProvider";
@@ -499,7 +496,6 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
-
   function getPhoneInspectOverlay() {
     const { focusedElement } = inspector;
 
@@ -520,10 +516,7 @@ function Preview({
             height: `${inspectArea.height * 100}%`,
           }}
         />
-        <DimensionsBox
-          inspector={inspector}
-          wrapperDivRef={wrapperDivRef}
-        />
+        <DimensionsBox inspector={inspector} wrapperDivRef={wrapperDivRef} />
       </div>
     );
   }
@@ -581,7 +574,7 @@ function Preview({
                   </div>
                 )}
 
-                {!replayData && getPhoneInspectOverlay() }
+                {!replayData && getPhoneInspectOverlay()}
 
                 {projectStatus === "refreshing" && (
                   <div className="phone-screen phone-refreshing-overlay">

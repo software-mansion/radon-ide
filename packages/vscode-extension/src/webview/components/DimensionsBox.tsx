@@ -14,7 +14,7 @@ const VERTICAL_ARROW_MARGIN = 0.015;
 const HORIZONTAL_ARROW_MARGIN = 0.03;
 
 type DimensionsBoxProps = {
-  inspector: Inspector
+  inspector: Inspector;
   wrapperDivRef: React.RefObject<HTMLDivElement>;
 };
 
@@ -64,7 +64,7 @@ function DimensionsBox({ inspector, wrapperDivRef }: DimensionsBoxProps) {
     return "inside";
   })();
 
-  console.log('fractionalDimensionsBox boxPosition', boxPosition);
+  console.log("fractionalDimensionsBox boxPosition", boxPosition);
 
   const positionalProps = (() => {
     switch (boxPosition) {
@@ -83,7 +83,9 @@ function DimensionsBox({ inspector, wrapperDivRef }: DimensionsBoxProps) {
       case "right":
         return {
           "--top": `${(fractionalDim.top + fractionalDim.height / 2) * 100}%`,
-          "--left": `${(fractionalDim.left + fractionalDim.width + HORIZONTAL_ARROW_MARGIN) * 100}%`,
+          "--left": `${
+            (fractionalDim.left + fractionalDim.width + HORIZONTAL_ARROW_MARGIN) * 100
+          }%`,
           "--box-transform": "translate(0%, -50%)",
         };
       case "left":

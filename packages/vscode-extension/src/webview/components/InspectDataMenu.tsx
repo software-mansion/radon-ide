@@ -54,7 +54,7 @@ export function InspectDataMenu({
   const [shouldShowAll, setShouldShowAll] = useState(false);
 
   const { focusedElement, inspectData } = inspector;
-  
+
   if (!focusedElement || !inspectData?.requestLocation) {
     return;
   }

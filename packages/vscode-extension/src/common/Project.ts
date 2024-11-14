@@ -88,7 +88,7 @@ export type InspectElement = {
 
 export type InspectData = {
   requestLocation?: { x: number; y: number };
-  stack: InspectElement[]
+  stack: InspectElement[];
 };
 
 export type TouchPoint = {
