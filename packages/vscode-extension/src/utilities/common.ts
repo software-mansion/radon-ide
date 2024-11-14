@@ -28,7 +28,7 @@ export function isWorkspaceRoot(dir: string) {
 
   try {
     const workspaces = require(packageJsonPath).workspaces;
-    
+
     if (workspaces) {
       return true;
     }
