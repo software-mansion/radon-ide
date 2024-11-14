@@ -1,5 +1,4 @@
-import { Frame } from "../../common/Project";
-import { DeviceProperties } from "../utilities/consts";
+import { Inspector } from "../hooks/useInspector";
 import "./DimensionsBox.css";
 
 const BOX_HEIGHT_FRACTION = 0.033;
@@ -15,20 +14,29 @@ const VERTICAL_ARROW_MARGIN = 0.015;
 const HORIZONTAL_ARROW_MARGIN = 0.03;
 
 type DimensionsBoxProps = {
-  device?: DeviceProperties;
-  frame: Frame;
+  inspector: Inspector
   wrapperDivRef: React.RefObject<HTMLDivElement>;
 };
 
 type DimensionsBoxPosition = "above" | "below" | "left" | "right" | "inside";
 
-function DimensionsBox({ device, frame, wrapperDivRef }: DimensionsBoxProps) {
-  if (!device) {
+function DimensionsBox({ inspector, wrapperDivRef }: DimensionsBoxProps) {
+  const { focusedElement } = inspector;
+
+  if (!focusedElement) {
     return;
   }
 
-  const width = parseFloat((frame.width * device.screenWidth).toFixed(2));
-  const height = parseFloat((frame.height * device.screenHeight).toFixed(2));
+  const exactDim = inspector.getExactDimensions(focusedElement);
+
+  if (!exactDim) {
+    return;
+  }
+
+  const fractionalDim = inspector.getFractionalDimensions(focusedElement);
+
+  const width = parseFloat(exactDim.width.toFixed(2));
+  const height = parseFloat(exactDim.height.toFixed(2));
 
   const previewDiv = wrapperDivRef.current?.childNodes?.[0] as unknown;
 
@@ -44,48 +52,50 @@ function DimensionsBox({ device, frame, wrapperDivRef }: DimensionsBoxProps) {
   const { clientHeight: previewHeight } = previewDiv;
 
   const boxPosition: DimensionsBoxPosition = (() => {
-    if (frame.y >= VERTICAL_POSITION_THRESHOLD) {
+    if (fractionalDim.top >= VERTICAL_POSITION_THRESHOLD) {
       return "above";
-    } else if (frame.y + frame.height <= 1 - VERTICAL_POSITION_THRESHOLD) {
+    } else if (fractionalDim.top + fractionalDim.height <= 1 - VERTICAL_POSITION_THRESHOLD) {
       return "below";
-    } else if (frame.x + frame.width <= HORIZONTAL_POSITION_THRESHOLD) {
+    } else if (fractionalDim.left + fractionalDim.width <= HORIZONTAL_POSITION_THRESHOLD) {
       return "right";
-    } else if (frame.x >= 1 - HORIZONTAL_POSITION_THRESHOLD) {
+    } else if (fractionalDim.left >= 1 - HORIZONTAL_POSITION_THRESHOLD) {
       return "left";
     }
     return "inside";
   })();
 
+  console.log('fractionalDimensionsBox boxPosition', boxPosition);
+
   const positionalProps = (() => {
     switch (boxPosition) {
       case "above":
         return {
-          "--top": `${(frame.y - VERTICAL_ARROW_MARGIN) * 100}%`,
-          "--left": `${(frame.x + frame.width / 2) * 100}%`,
+          "--top": `${(fractionalDim.top - VERTICAL_ARROW_MARGIN) * 100}%`,
+          "--left": `${(fractionalDim.left + fractionalDim.width / 2) * 100}%`,
           "--box-transform": "translate(-50%, -100%)",
         };
       case "below":
         return {
-          "--top": `${(frame.y + frame.height + VERTICAL_ARROW_MARGIN) * 100}%`,
-          "--left": `${(frame.x + frame.width / 2) * 100}%`,
+          "--top": `${(fractionalDim.top + fractionalDim.height + VERTICAL_ARROW_MARGIN) * 100}%`,
+          "--left": `${(fractionalDim.left + fractionalDim.width / 2) * 100}%`,
           "--box-transform": "translate(-50%, 0%)",
         };
       case "right":
         return {
-          "--top": `${(frame.y + frame.height / 2) * 100}%`,
-          "--left": `${(frame.x + frame.width + HORIZONTAL_ARROW_MARGIN) * 100}%`,
+          "--top": `${(fractionalDim.top + fractionalDim.height / 2) * 100}%`,
+          "--left": `${(fractionalDim.left + fractionalDim.width + HORIZONTAL_ARROW_MARGIN) * 100}%`,
           "--box-transform": "translate(0%, -50%)",
         };
       case "left":
         return {
-          "--top": `${(frame.y + frame.height / 2) * 100}%`,
-          "--left": `${(frame.x - HORIZONTAL_ARROW_MARGIN) * 100}%`,
+          "--top": `${(fractionalDim.top + fractionalDim.height / 2) * 100}%`,
+          "--left": `${(fractionalDim.left - HORIZONTAL_ARROW_MARGIN) * 100}%`,
           "--box-transform": "translate(-100%, -50%)",
         };
       default:
         return {
-          "--top": `${(frame.y + frame.height / 2) * 100}%`,
-          "--left": `${(frame.x + frame.width / 2) * 100}%`,
+          "--top": `${(fractionalDim.top + fractionalDim.height / 2) * 100}%`,
+          "--left": `${(fractionalDim.left + fractionalDim.width / 2) * 100}%`,
           "--box-transform": "translate(-50%, -50%)",
         };
     }

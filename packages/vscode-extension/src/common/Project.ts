@@ -75,7 +75,7 @@ export type Frame = {
   height: number;
 };
 
-export type InspectDataStackItem = {
+export type InspectElement = {
   componentName: string;
   hide: boolean;
   source: {
@@ -86,14 +86,9 @@ export type InspectDataStackItem = {
   frame: Frame;
 };
 
-export type InspectStackData = {
-  requestLocation: { x: number; y: number };
-  stack: InspectDataStackItem[];
-};
-
 export type InspectData = {
-  stack: InspectDataStackItem[] | undefined;
-  frame: Frame;
+  requestLocation?: { x: number; y: number };
+  stack: InspectElement[]
 };
 
 export type TouchPoint = {
@@ -153,7 +148,6 @@ export interface ProjectInterface {
   inspectElementAt(
     xRatio: number,
     yRatio: number,
-    requestStack: boolean,
     callback: (inspectData: InspectData) => void
   ): Promise<void>;
 

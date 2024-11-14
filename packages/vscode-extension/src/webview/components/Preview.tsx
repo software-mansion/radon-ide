@@ -15,19 +15,17 @@ import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorA
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
-  Frame,
-  InspectDataStackItem,
   RecordingData,
   ZoomLevelType,
-  InspectStackData,
 } from "../../common/Project";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
-import { throttle } from "../../utilities/throttle";
 import { Platform } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
+import { Inspector } from "../hooks/useInspector";
+import { TouchPosition } from "../types";
 
 declare module "react" {
   interface CSSProperties {
@@ -178,23 +176,15 @@ function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
 }
 
 type Props = {
+  inspector: Inspector;
   isInspecting: boolean;
-  inspectFrame: Frame | null;
-  setInspectFrame: (inspectFrame: Frame | null) => void;
-  setInspectStackData: (inspectStackData: InspectStackData | null) => void;
-  onInspectorItemSelected: (item: InspectDataStackItem) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
   replayData: RecordingData | undefined;
   onReplayClose: () => void;
 };
 
-interface Point {
-  x: number;
-  y: number;
-}
-
-function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
+function calculateMirroredTouchPosition(touchPoint: TouchPosition, anchorPoint: TouchPosition) {
   const { x: pointX, y: pointY } = touchPoint;
   const { x: mirrorX, y: mirrorY } = anchorPoint;
   const mirroredPointX = 2 * mirrorX - pointX;
@@ -205,11 +195,8 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
 }
 
 function Preview({
+  inspector,
   isInspecting,
-  inspectFrame,
-  setInspectFrame,
-  setInspectStackData,
-  onInspectorItemSelected,
   zoomLevel,
   onZoomChanged,
   replayData,
@@ -219,8 +206,8 @@ function Preview({
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
-  const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
-  const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
+  const [touchPoint, setTouchPoint] = useState<TouchPosition>({ x: 0.5, y: 0.5 });
+  const [anchorPoint, setAnchorPoint] = useState<TouchPosition>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
 
@@ -291,41 +278,6 @@ function Preview({
     );
   }
 
-  function sendInspectUnthrottled(
-    event: MouseEvent<HTMLDivElement>,
-    type: MouseMove | "Leave" | "RightButtonDown"
-  ) {
-    if (type === "Leave") {
-      return;
-    }
-    const { x: clampedX, y: clampedY } = getTouchPosition(event);
-    const requestStack = type === "Down" || type === "RightButtonDown";
-    const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
-      if (requestStack && inspectData?.stack) {
-        if (showInspectStackModal) {
-          setInspectStackData({
-            requestLocation: { x: event.clientX, y: event.clientY },
-            stack: inspectData.stack,
-          });
-        } else {
-          // find first item w/o hide flag and open file
-          const firstItem = inspectData.stack.find((item) => !item.hide);
-          if (firstItem) {
-            onInspectorItemSelected(firstItem);
-          }
-        }
-      }
-      setInspectFrame(inspectData.frame);
-    });
-  }
-
-  const sendInspect = throttle(sendInspectUnthrottled, 50);
-  function resetInspector() {
-    setInspectFrame(null);
-    setInspectStackData(null);
-  }
-
   const shouldPreventInputEvents =
     debugPaused ||
     debugException ||
@@ -342,7 +294,7 @@ function Preview({
     } else if (isPressing) {
       sendTouch(e, "Move");
     } else if (isInspecting) {
-      sendInspect(e, "Move", false);
+      inspector.onMouseMove(e, getTouchPosition(e));
     }
     setTouchPoint(getTouchPosition(e));
   }
@@ -351,13 +303,11 @@ function Preview({
     e.preventDefault();
     wrapperDivRef.current!.focus();
 
-    if (isInspecting) {
-      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
-    } else if (inspectFrame) {
+    if (isInspecting || (!inspector.focusedElement && e.button === 2)) {
+      inspector.onMouseDown(e, getTouchPosition(e));
+    } else if (inspector.focusedElement) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
-      resetInspector();
-    } else if (e.button === 2) {
-      sendInspect(e, "RightButtonDown", true);
+      inspector.reset();
     } else if (isMultiTouching) {
       setIsPressing(true);
       sendMultiTouch(e, "Down");
@@ -407,7 +357,7 @@ function Preview({
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
       // and will be dispatched later on
-      sendInspect(e, "Leave", true);
+      inspector.onMouseLeave(e, getTouchPosition(e));
     }
   }
 
@@ -549,6 +499,35 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
+
+  function getPhoneInspectOverlay() {
+    const { focusedElement } = inspector;
+
+    if (!focusedElement) {
+      return;
+    }
+
+    const inspectArea = inspector.getFractionalDimensions(focusedElement);
+
+    return (
+      <div className="phone-screen phone-inspect-overlay">
+        <div
+          className="inspect-area"
+          style={{
+            left: `${inspectArea.left * 100}%`,
+            top: `${inspectArea.top * 100}%`,
+            width: `${inspectArea.width * 100}%`,
+            height: `${inspectArea.height * 100}%`,
+          }}
+        />
+        <DimensionsBox
+          inspector={inspector}
+          wrapperDivRef={wrapperDivRef}
+        />
+      </div>
+    );
+  }
+
   return (
     <>
       <div
@@ -602,26 +581,8 @@ function Preview({
                   </div>
                 )}
 
-                {!replayData && inspectFrame && (
-                  <div className="phone-screen phone-inspect-overlay">
-                    <div
-                      className="inspect-area"
-                      style={{
-                        left: `${inspectFrame.x * 100}%`,
-                        top: `${inspectFrame.y * 100}%`,
-                        width: `${inspectFrame.width * 100}%`,
-                        height: `${inspectFrame.height * 100}%`,
-                      }}
-                    />
-                    {isInspecting && (
-                      <DimensionsBox
-                        device={device}
-                        frame={inspectFrame}
-                        wrapperDivRef={wrapperDivRef}
-                      />
-                    )}
-                  </div>
-                )}
+                {!replayData && getPhoneInspectOverlay() }
+
                 {projectStatus === "refreshing" && (
                   <div className="phone-screen phone-refreshing-overlay">
                     <VSCodeProgressRing />

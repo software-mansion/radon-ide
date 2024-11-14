@@ -163,20 +163,7 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
     mainContainerRef.current,
     x * screenWidth,
     y * screenHeight,
-    (viewData) => {
-      const frame = viewData.frame;
-      const scaledFrame = scaleFrame({
-        x: frame.left,
-        y: frame.top,
-        width: frame.width,
-        height: frame.height
-      });
-
-      if (!requestStack) {
-        callback({ frame: scaledFrame });
-        return;
-      }
-
+    (viewData) =>
       Promise.all(traverseComponentsTreeUp(viewData.closestInstance, []))
         .then((stack) => stack.filter(Boolean))
         .then((stack) => 
@@ -185,11 +172,7 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
             frame: scaleFrame(stackElement.frame)
           }))
         ).then((scaledStack) => 
-          callback({
-            frame: scaledFrame,
-            stack: scaledStack
-          }));
-      }
+          callback({ stack: scaledStack }))
   );
 };
 

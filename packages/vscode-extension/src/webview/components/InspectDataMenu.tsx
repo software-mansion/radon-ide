@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Frame, InspectDataStackItem } from "../../common/Project";
-import { DeviceProperties } from "../utilities/consts";
 import "./InspectDataMenu.css";
+import { InspectElement } from "../../common/Project";
+import { Inspector } from "../hooks/useInspector";
 
-type OnSelectedCallback = (item: InspectDataStackItem) => void;
+type OnSelectedCallback = (item: InspectElement) => void;
 
 const MAX_INSPECT_ITEMS = 5;
 
 interface InspectItemProps {
-  item: InspectDataStackItem;
-  onSelected: (item: InspectDataStackItem) => void;
-  onHover: (item: InspectDataStackItem) => void;
+  item: InspectElement;
+  onSelected: (item: InspectElement) => void;
+  onHover: (item: InspectElement) => void;
 }
 
 const InspectItem = React.forwardRef<HTMLDivElement, InspectItemProps>(
@@ -39,30 +39,33 @@ const InspectItem = React.forwardRef<HTMLDivElement, InspectItemProps>(
 );
 
 type InspectDataMenuProps = {
-  inspectLocation: { x: number; y: number };
-  inspectStack: InspectDataStackItem[];
-  device?: DeviceProperties;
-  frame: Frame | null;
+  inspector: Inspector;
   onSelected: OnSelectedCallback;
   onHover: OnSelectedCallback;
   onCancel: () => void;
 };
 
 export function InspectDataMenu({
-  inspectLocation,
-  inspectStack,
-  device,
-  frame,
+  inspector,
   onSelected,
   onHover,
   onCancel,
 }: InspectDataMenuProps) {
   const [shouldShowAll, setShouldShowAll] = useState(false);
 
+  const { focusedElement, inspectData } = inspector;
+  
+  if (!focusedElement || !inspectData?.requestLocation) {
+    return;
+  }
+
+  const { requestLocation, stack } = inspectData;
+  const dim = inspector.getExactDimensions(focusedElement);
+
   const displayDimensionsText = (() => {
-    if (device && frame) {
-      const topComponentWidth = parseFloat((frame.width * device.screenWidth).toFixed(2));
-      const topComponentHeight = parseFloat((frame.height * device.screenHeight).toFixed(2));
+    if (dim) {
+      const topComponentWidth = parseFloat(dim.width.toFixed(2));
+      const topComponentHeight = parseFloat(dim.height.toFixed(2));
 
       if (topComponentWidth && topComponentHeight) {
         return `Dimensions: ${topComponentWidth} × ${topComponentHeight}`;
@@ -71,12 +74,12 @@ export function InspectDataMenu({
     return "Dimensions: -";
   })();
 
-  const filteredData = inspectStack.filter((item) => !item.hide);
-  const inspectItems =
+  const filteredData = stack.filter((item: InspectElement) => !item.hide);
+  const inspectItems: InspectElement[] =
     shouldShowAll || filteredData.length === MAX_INSPECT_ITEMS + 1
       ? filteredData
       : filteredData.slice(0, MAX_INSPECT_ITEMS);
-  const inspectMenuAlign = inspectLocation.x <= window.innerWidth / 2 ? "start" : "end";
+  const inspectMenuAlign = requestLocation.x <= window.innerWidth / 2 ? "start" : "end";
   const isOverMaxItems = filteredData.length > MAX_INSPECT_ITEMS + 1;
 
   return (
@@ -92,8 +95,8 @@ export function InspectDataMenu({
         <span
           style={{
             position: "absolute",
-            left: inspectLocation.x,
-            top: inspectLocation.y,
+            left: requestLocation.x,
+            top: requestLocation.y,
             opacity: 0,
           }}
         />

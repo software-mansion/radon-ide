@@ -15,9 +15,7 @@ import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
 import {
-  Frame,
-  InspectDataStackItem,
-  InspectStackData,
+  InspectElement,
   RecordingData,
   ZoomLevelType,
 } from "../../common/Project";
@@ -25,6 +23,7 @@ import { useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import "./View.css";
 import "./PreviewView.css";
+import { useInspector } from "../hooks/useInspector";
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -52,8 +51,8 @@ function PreviewView() {
   const { reportIssue, showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
-  const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
-  const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
+  const [isInspectDataMenuOpen, setIsInspectDataMenuOpen] = useState(false);
+
   const zoomLevel = projectState.previewZoom ?? "Fit";
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
@@ -134,15 +133,18 @@ function PreviewView() {
     }
   };
 
-  function onInspectorItemSelected(item: InspectDataStackItem) {
-    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
-    setIsInspecting(false);
+  function openInspectElementSourceLocation(item: InspectElement | undefined) {
+    if (item) {
+      openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+      setIsInspecting(false);
+    }
   }
 
-  function resetInspector() {
-    setInspectFrame(null);
-    setInspectStackData(null);
-  }
+  const inspector = useInspector({
+    deviceProperties,
+    onInspectElementLeftClicked: openInspectElementSourceLocation,
+    onInspectElementRightClicked: () => setIsInspectDataMenuOpen(true)
+  });
 
   const showReplayButton = deviceSettings.replaysEnabled;
 
@@ -188,11 +190,8 @@ function PreviewView() {
       {selectedDevice && finishedInitialLoad ? (
         <Preview
           key={selectedDevice.id}
+          inspector={inspector}
           isInspecting={isInspecting}
-          inspectFrame={inspectFrame}
-          setInspectFrame={setInspectFrame}
-          setInspectStackData={setInspectStackData}
-          onInspectorItemSelected={onInspectorItemSelected}
           zoomLevel={zoomLevel}
           replayData={replayData}
           onReplayClose={() => setReplayData(undefined)}
@@ -205,19 +204,15 @@ function PreviewView() {
         />
       )}
 
-      {!replayData && inspectStackData && (
+      {!replayData && isInspectDataMenuOpen && (
         <InspectDataMenu
-          inspectLocation={inspectStackData.requestLocation}
-          inspectStack={inspectStackData.stack}
-          device={deviceProperties}
-          frame={inspectFrame}
-          onSelected={onInspectorItemSelected}
-          onHover={(item) => {
-            if (item.frame) {
-              setInspectFrame(item.frame);
-            }
+          inspector={inspector}
+          onSelected={openInspectElementSourceLocation}
+          onHover={(item) => inspector.setFocusedElement(item)}
+          onCancel={() => {
+            setIsInspectDataMenuOpen(false);
+            inspector.reset();
           }}
-          onCancel={() => resetInspector()}
         />
       )}
 

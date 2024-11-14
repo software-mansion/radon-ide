@@ -409,12 +409,11 @@ export class Project
   public async inspectElementAt(
     xRatio: number,
     yRatio: number,
-    requestStack: boolean,
     callback: (inspectData: InspectData) => void
   ) {
-    this.deviceSession?.inspectElementAt(xRatio, yRatio, requestStack, (inspectData) => {
+    this.deviceSession?.inspectElementAt(xRatio, yRatio, (inspectData) => {
       let stack = undefined;
-      if (requestStack && inspectData?.stack) {
+      if (inspectData?.stack) {
         stack = inspectData.stack;
         const inspectorExcludePattern = workspace
           .getConfiguration("RadonIDE")
@@ -432,7 +431,7 @@ export class Project
           }
         });
       }
-      callback({ frame: inspectData.frame, stack });
+      callback({ stack });
     });
   }
 

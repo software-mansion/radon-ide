@@ -276,7 +276,6 @@ export class DeviceSession implements Disposable {
   public inspectElementAt(
     xRatio: number,
     yRatio: number,
-    requestStack: boolean,
     callback: (inspectData: any) => void
   ) {
     const id = this.inspectCallID++;
@@ -287,7 +286,7 @@ export class DeviceSession implements Disposable {
       }
     };
     this.devtools?.addListener(listener);
-    this.devtools.send("RNIDE_inspect", { x: xRatio, y: yRatio, id, requestStack });
+    this.devtools.send("RNIDE_inspect", { x: xRatio, y: yRatio, id });
   }
 
   public openNavigation(id: string) {
