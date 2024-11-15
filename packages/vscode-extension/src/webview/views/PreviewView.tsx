@@ -118,7 +118,20 @@ function PreviewView() {
     };
   }, []);
 
-  const MAX_RECORDING_TIME = 10;
+  const handleDeviceDropdownChange = async (value: string) => {
+    if (value === "manage") {
+      openModal("Manage Devices", <ManageDevicesView />);
+      return;
+    }
+    if (selectedDevice?.id !== value) {
+      const deviceInfo = devices.find((d) => d.id === value);
+      if (deviceInfo) {
+        project.selectDevice(deviceInfo);
+      }
+    }
+  };
+
+  const MAX_RECORDING_TIME = 120;
   useEffect(() => {
     if (!isRecording) {
       setRecordingTime(0);
@@ -139,33 +152,27 @@ function PreviewView() {
     return () => clearInterval(interval);
   }, [isRecording]);
 
-  const handleDeviceDropdownChange = async (value: string) => {
-    if (value === "manage") {
-      openModal("Manage Devices", <ManageDevicesView />);
-      return;
-    }
-    if (selectedDevice?.id !== value) {
-      const deviceInfo = devices.find((d) => d.id === value);
-      if (deviceInfo) {
-        project.selectDevice(deviceInfo);
-      }
-    }
-  };
-
   const handleRecording = async () => {
     try {
-      if (isRecording) {
-        // setIsRecording  // TODO recording handler
+      if (!isRecording) {
+        setIsRecording(true);
+        project.startRecording();
       } else {
-        // setIsRecording  // TODO recording handler
+        setIsRecording(false);
+        if (recordingTime > 0) {
+          console.log("FRYTKI ");
+          setReplayData(await project.captureRecording());
+        }
       }
-      setIsRecording(!isRecording);
     } catch (e) {
-      showDismissableError("Failed to start recording");
+      showDismissableError("Failed to capture recording");
     }
   };
 
-  const handleRecordingTimeExceeded = async () => {};
+  const handleRecordingTimeExceeded = async () => {
+    setIsRecording(false);
+    handleRecording();
+  };
 
   const handleReplay = async () => {
     try {
@@ -185,8 +192,11 @@ function PreviewView() {
     setInspectStackData(null);
   }
 
-  const showRecordigngButton = deviceSettings.recordingEnabled;
   const showReplayButton = deviceSettings.replaysEnabled;
+
+  const recordingTimeFormat = `${Math.floor(recordingTime / 60)}:${(recordingTime % 60)
+    .toString()
+    .padStart(2, "0")}`;
 
   return (
     <div className="panel-view">
@@ -194,7 +204,12 @@ function PreviewView() {
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
 
-
+        {isRecording && (
+          <div className="replay-rec-indicator">
+            <div className="replay-rec-dot" />
+            <span>REC {recordingTimeFormat}</span>
+          </div>
+        )}
         {
           <IconButton
             className={isRecording ? "button-recording-on" : ""}
