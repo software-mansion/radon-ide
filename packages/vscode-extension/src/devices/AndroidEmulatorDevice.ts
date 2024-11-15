@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { EOL } from "node:os";
+import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
@@ -17,6 +18,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { strftime } from "../common/date";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -49,7 +51,9 @@ interface EmulatorProcessInfo {
 export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
-
+  private nativeLogsOutputChannel: OutputChannel | undefined;
+  private nativeLogsProcess: ChildProcess | undefined;
+  
   constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
     super();
   }
@@ -71,6 +75,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
+    this.mirrorNativeLogsDispose();
     // If the emulator process does not shut down initially due to ongoing activities or processes,
     // a forced termination (kill signal) is sent after a certain timeout period.
     setTimeout(() => {
@@ -371,6 +376,55 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
+  async mirrorNativeLogsDispose() {
+    this.nativeLogsOutputChannel?.dispose();
+    this.nativeLogsProcess?.kill();
+  }
+
+  async mirrorNativeLogs(build: AndroidBuildResult) {
+    const startTime = strftime("%Y-%m-%d %H:%M:%S.000", new Date());
+
+    const extractPidFromLogcat = async () => new Promise<string>((resolve, reject) => {
+      const process = exec(ADB_PATH, [
+        "logcat",
+      ]);
+      
+      lineReader(process).onLineRead((line) => {
+        const regex = new RegExp(`Start proc ([0-9]{4}):${build.packageName}`);
+  
+        if (regex.test(line)) {
+          const groups = regex.exec(line);
+          const pid = groups?.[1];
+          process.kill();
+
+          if (pid) {
+            resolve(pid);
+          } else {
+            reject(new Error('PID not found'));
+          }
+        }
+      });
+    });
+
+    const nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (Android Native Logs)", {
+      log: true,
+    });
+
+    const pid = await extractPidFromLogcat();
+    const process = exec(ADB_PATH, [
+      "logcat",
+      "--pid",
+      pid,
+      "-T",
+      startTime,
+    ]);
+
+    lineReader(process).onLineRead(nativeLogsOutputChannel.appendLine);
+
+    this.nativeLogsOutputChannel = nativeLogsOutputChannel;
+    this.nativeLogsProcess = process;
+  }
+
   async launchApp(build: BuildResult, metroPort: number, devtoolsPort: number) {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
@@ -389,6 +443,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
       await this.configureMetroPort(build.packageName, metroPort);
       await this.launchWithBuild(build);
     }
+    this.mirrorNativeLogs(build);
   }
 
   async installApp(build: BuildResult, forceReinstall: boolean) {
