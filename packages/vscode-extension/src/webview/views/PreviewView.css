@@ -78,8 +78,6 @@
 
 .button-recording-on,
 .button-recording-on:hover {
-  background-color: red;
-}
-.button-recording-off {
-  /* border-radius: 50%; */
+  background-color: var(--swm-button-recording-on-background);
+  border-radius: 10px;
 }

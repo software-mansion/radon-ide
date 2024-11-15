@@ -193,24 +193,19 @@ function PreviewView() {
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
-        {showRecordigngButton && (
+
+
+        {
           <IconButton
-            className={isRecording ? "button-recording-on" : "button-recording-off"}
+            className={isRecording ? "button-recording-on" : ""}
             tooltip={{
               label: isRecording ? "Stop screen recording" : "Start screen recording",
             }}
             onClick={handleRecording}
             disabled={isStarting}>
-            {isRecording ? (
-              <>
-                <span className="codicon codicon-debug-stop" />
-                {recordingTime}
-              </>
-            ) : (
-              <RecordingIcon />
-            )}
+            {isRecording ? <span className="codicon codicon-debug-stop" /> : <RecordingIcon />}
           </IconButton>
-        )}
+        }
         {showReplayButton && (
           <IconButton
             tooltip={{
