@@ -57,3 +57,14 @@
   width: 24px;
   border-radius: 6px;
 }
+
+.icon-button-counter {
+  position: relative;
+  top: -5px;
+  border: 0px solid transparent;
+  border-radius: 4px;
+  color: var(--swm-button-counter);
+  background-color: var(--swm-button-counter-background);
+  padding: 2px 4px;
+  font-size: 11px;
+}

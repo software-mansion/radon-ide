@@ -46,7 +46,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
       {...rest}
       ref={ref}>
       {children}
-      {Boolean(counter) && <span className="button-counter">{counter}</span>}
+      {Boolean(counter) && <span className="icon-button-counter">{counter}</span>}
     </button>
   );
 
