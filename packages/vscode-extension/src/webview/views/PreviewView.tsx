@@ -81,7 +81,7 @@ function PreviewView() {
   });
 
   const { openModal } = useModal();
-  const { openFileAt } = useUtils();
+  const { openFileAt, saveVideoRecording } = useUtils();
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"
@@ -160,8 +160,7 @@ function PreviewView() {
       } else {
         setIsRecording(false);
         if (recordingTime > 0) {
-          console.log("FRYTKI ");
-          setReplayData(await project.captureRecording());
+          saveVideoRecording(await project.captureRecording());
         }
       }
     } catch (e) {
