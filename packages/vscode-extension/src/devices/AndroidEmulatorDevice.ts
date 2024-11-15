@@ -4,7 +4,7 @@ import { EOL } from "node:os";
 import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
-import strftime from 'strftime';
+import strftime from "strftime";
 import { Preview } from "./preview";
 import { DeviceBase } from "./DeviceBase";
 import { retry } from "../utilities/retry";
@@ -53,7 +53,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private serial: string | undefined;
   private nativeLogsOutputChannel: OutputChannel | undefined;
   private nativeLogsProcess: ChildProcess | undefined;
-  
+
   constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
     super();
   }
@@ -384,40 +384,33 @@ export class AndroidEmulatorDevice extends DeviceBase {
   async mirrorNativeLogs(build: AndroidBuildResult) {
     const startTime = strftime("%F %T.000", new Date());
 
-    const extractPidFromLogcat = async () => new Promise<string>((resolve, reject) => {
-      const process = exec(ADB_PATH, [
-        "logcat",
-      ]);
-      
-      lineReader(process).onLineRead((line) => {
-        const regex = new RegExp(`Start proc ([0-9]{4}):${build.packageName}`);
-  
-        if (regex.test(line)) {
-          const groups = regex.exec(line);
-          const pid = groups?.[1];
-          process.kill();
+    const extractPidFromLogcat = async () =>
+      new Promise<string>((resolve, reject) => {
+        const process = exec(ADB_PATH, ["logcat"]);
 
-          if (pid) {
-            resolve(pid);
-          } else {
-            reject(new Error('PID not found'));
+        lineReader(process).onLineRead((line) => {
+          const regex = new RegExp(`Start proc ([0-9]{4}):${build.packageName}`);
+
+          if (regex.test(line)) {
+            const groups = regex.exec(line);
+            const pid = groups?.[1];
+            process.kill();
+
+            if (pid) {
+              resolve(pid);
+            } else {
+              reject(new Error("PID not found"));
+            }
           }
-        }
+        });
       });
-    });
 
     const nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (Android Native Logs)", {
       log: true,
     });
 
     const pid = await extractPidFromLogcat();
-    const process = exec(ADB_PATH, [
-      "logcat",
-      "--pid",
-      pid,
-      "-T",
-      startTime,
-    ]);
+    const process = exec(ADB_PATH, ["logcat", "--pid", pid, "-T", startTime]);
 
     lineReader(process).onLineRead(nativeLogsOutputChannel.appendLine);
 
