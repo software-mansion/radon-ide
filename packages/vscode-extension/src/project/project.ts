@@ -159,6 +159,20 @@ export class Project
   }
   //#endregion
 
+  startRecording(): void {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.startRecording();
+  }
+
+  async captureRecording(): Promise<RecordingData> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    return this.deviceSession.captureRecording();
+  }
+
   async captureReplay(): Promise<RecordingData> {
     if (!this.deviceSession) {
       throw new Error("No device session available");

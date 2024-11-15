@@ -113,6 +113,7 @@ export class DeviceSession implements Disposable {
 
     this.isLaunching = true;
     this.device.stopReplays();
+    this.device.stopRecording();
 
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
@@ -257,6 +258,14 @@ export class DeviceSession implements Disposable {
     }
   }
 
+  public startRecording() {
+    return this.device.startRecording();
+  }
+
+  public async captureRecording() {
+    return this.device.captureRecording();
+  }
+
   public async captureReplay() {
     return this.device.captureReplay();
   }
@@ -307,6 +316,7 @@ export class DeviceSession implements Disposable {
     if (settings.replaysEnabled && !this.isLaunching) {
       this.device.startReplays();
     } else {
+      this.device.stopRecording();
       this.device.stopReplays();
     }
     if (settings.showTouches && !this.isLaunching) {

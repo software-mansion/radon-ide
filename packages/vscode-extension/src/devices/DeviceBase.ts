@@ -52,15 +52,33 @@ export abstract class DeviceBase implements Disposable {
     return this.preview?.hideTouches();
   }
 
-  public stopReplays() {
-    return this.preview?.stopReplays();
+  public startRecording() {
+    if (!this.preview) {
+      throw new Error("Preview not started");
+    }
+    return this.preview.startReplays("recording");
+  }
+
+  public stopRecording() {
+    return this.preview?.stopReplays("recording");
+  }
+
+  public async captureRecording() {
+    if (!this.preview) {
+      throw new Error("Preview not started");
+    }
+    return this.preview.captureRecording();
   }
 
   public startReplays() {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
-    return this.preview.startReplays();
+    return this.preview.startReplays("replay");
+  }
+
+  public stopReplays() {
+    return this.preview?.stopReplays("replay");
   }
 
   public async captureReplay() {

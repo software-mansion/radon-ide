@@ -14,6 +14,7 @@ interface ReplayPromiseHandlers {
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
   public streamURL?: string;
+  private lastRecordingPromise?: ReplayPromiseHandlers;
   private lastReplayPromise?: ReplayPromiseHandlers;
 
   constructor(private args: string[]) {}
@@ -60,33 +61,47 @@ export class Preview implements Disposable {
             this.streamURL = match[1];
             resolve(this.streamURL);
           }
-        } else if (line.includes("video_ready replay") || line.includes("video_error replay")) {
-          // video response format for replays looks as follows:
-          // video_ready replay <HTTP_URL> <FILE_URL>
-          // video_error replay <Error message>
-          const videoReadyMatch = line.match(/video_ready replay (\S+) (\S+)/);
-          const videoErrorMatch = line.match(/video_error replay (.*)/);
+        } else if (line.includes("video_ready") || line.includes("video_error")) {
+          // video response format for recordings looks as follows:
+          // video_ready <VIDEO_ID> <HTTP_URL> <FILE_URL>
+          // video_error <VIDEO_ID> <Error message>
 
-          const handlers = this.lastReplayPromise;
-          this.lastReplayPromise = undefined;
+          const videoReadyMatch = line.match(/video_ready (\S+) (\S+) (\S+)/);
+          const videoErrorMatch = line.match(/video_error (\S+) (.*)/);
+
+          const videoId = videoReadyMatch
+            ? videoReadyMatch[1]
+            : videoErrorMatch
+            ? videoErrorMatch[1]
+            : "";
+
+          let handlers;
+          if (videoId === "recording") {
+            handlers = this.lastRecordingPromise!;
+            this.lastRecordingPromise = undefined;
+          } else {
+            handlers = this.lastReplayPromise;
+            this.lastReplayPromise = undefined;
+          }
 
           if (handlers && videoReadyMatch) {
             // match array looks as follows:
             // [0] - full match
-            // [1] - URL or error message
-            // [2] - File URL
-            const tempFileLocation = videoReadyMatch[2];
+            // [1] - ID of the video
+            // [2] - URL or error message
+            // [3] - File URL
+            const tempFileLocation = videoReadyMatch[3];
             const ext = path.extname(tempFileLocation);
             const fileName = workspace.name
-              ? `${workspace.name}-RadonIDE-replay${ext}`
-              : `RadonIDE-replay${ext}`;
+              ? `${workspace.name}-RadonIDE-${videoId}${ext}`
+              : `RadonIDE-${videoId}${ext}`;
             handlers.resolve({
-              url: videoReadyMatch[1],
+              url: videoReadyMatch[2],
               tempFileLocation,
               fileName,
             });
           } else if (handlers && videoErrorMatch) {
-            handlers.reject(new Error(videoErrorMatch[1]));
+            handlers.reject(new Error(videoErrorMatch[2]));
           }
         }
         Logger.info("sim-server:", line);
@@ -102,20 +117,39 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write("pointer show false\n");
   }
 
-  public startReplays() {
+  public startReplays(videoId: string) {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
     }
-    stdin.write(`video replay start -m -b 50\n`); // 50MB buffer for in-memory video
+    stdin.write(`video ${videoId} start -m -b 50\n`); // 50MB buffer for in-memory video
   }
 
-  public stopReplays() {
+  public stopReplays(videoId: string) {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
     }
-    stdin.write(`video replay stop\n`);
+    stdin.write(`video ${videoId} stop\n`);
+  }
+
+  public captureRecording() {
+    const stdin = this.subprocess?.stdin;
+    if (!stdin) {
+      throw new Error("sim-server process not available");
+    }
+    let resolvePromise: (value: RecordingData) => void;
+    let rejectPromise: (reason?: any) => void;
+    const promise = new Promise<RecordingData>((resolve, reject) => {
+      resolvePromise = resolve;
+      rejectPromise = reject;
+    });
+    if (this.lastRecordingPromise) {
+      promise.then(this.lastRecordingPromise.resolve, this.lastRecordingPromise.reject);
+    }
+    this.lastRecordingPromise = { resolve: resolvePromise!, reject: rejectPromise! };
+    stdin.write(`video recording save\n`);
+    return promise;
   }
 
   public captureReplay() {
