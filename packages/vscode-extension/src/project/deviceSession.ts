@@ -112,7 +112,7 @@ export class DeviceSession implements Disposable {
     });
 
     this.isLaunching = true;
-    this.device.stopReplays();
+    this.device.stopVideoRecording();
     this.device.stopRecording();
 
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
@@ -155,7 +155,7 @@ export class DeviceSession implements Disposable {
 
     this.isLaunching = false;
     if (this.deviceSettings?.replaysEnabled) {
-      this.device.startReplays();
+      this.device.startVideoRecording();
     }
     if (this.deviceSettings?.showTouches) {
       this.device.showTouches();
@@ -314,10 +314,10 @@ export class DeviceSession implements Disposable {
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
     this.deviceSettings = settings;
     if (settings.replaysEnabled && !this.isLaunching) {
-      this.device.startReplays();
+      this.device.startVideoRecording();
     } else {
       this.device.stopRecording();
-      this.device.stopReplays();
+      this.device.stopVideoRecording();
     }
     if (settings.showTouches && !this.isLaunching) {
       this.device.showTouches();

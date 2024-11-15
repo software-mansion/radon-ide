@@ -6,7 +6,7 @@ import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
 import { RecordingData, TouchPoint } from "../common/Project";
 
-interface ReplayPromiseHandlers {
+interface VideoRecordingPromiseHandlers {
   resolve: (value: RecordingData) => void;
   reject: (reason?: any) => void;
 }
@@ -14,8 +14,8 @@ interface ReplayPromiseHandlers {
 export class Preview implements Disposable {
   private subprocess?: ChildProcess;
   public streamURL?: string;
-  private lastRecordingPromise?: ReplayPromiseHandlers;
-  private lastReplayPromise?: ReplayPromiseHandlers;
+  private lastRecordingPromise?: VideoRecordingPromiseHandlers;
+  private lastReplayPromise?: VideoRecordingPromiseHandlers;
 
   constructor(private args: string[]) {}
 
@@ -117,7 +117,7 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write("pointer show false\n");
   }
 
-  public startReplays(videoId: string) {
+  public startVideoRecording(videoId: string) {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -125,7 +125,7 @@ export class Preview implements Disposable {
     stdin.write(`video ${videoId} start -m -b 50\n`); // 50MB buffer for in-memory video
   }
 
-  public stopReplays(videoId: string) {
+  public stopVideoRecording(videoId: string) {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -133,7 +133,7 @@ export class Preview implements Disposable {
     stdin.write(`video ${videoId} stop\n`);
   }
 
-  public captureRecording() {
+  public captureVideoRecording(videoId: string) {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -144,30 +144,24 @@ export class Preview implements Disposable {
       resolvePromise = resolve;
       rejectPromise = reject;
     });
-    if (this.lastRecordingPromise) {
-      promise.then(this.lastRecordingPromise.resolve, this.lastRecordingPromise.reject);
-    }
-    this.lastRecordingPromise = { resolve: resolvePromise!, reject: rejectPromise! };
-    stdin.write(`video recording save\n`);
-    return promise;
-  }
 
-  public captureReplay() {
-    const stdin = this.subprocess?.stdin;
-    if (!stdin) {
-      throw new Error("sim-server process not available");
+    let lastPromise;
+    if (videoId === "recording") {
+      lastPromise = this.lastRecordingPromise;
+    } else {
+      lastPromise = this.lastReplayPromise;
     }
-    let resolvePromise: (value: RecordingData) => void;
-    let rejectPromise: (reason?: any) => void;
-    const promise = new Promise<RecordingData>((resolve, reject) => {
-      resolvePromise = resolve;
-      rejectPromise = reject;
-    });
-    if (this.lastReplayPromise) {
-      promise.then(this.lastReplayPromise.resolve, this.lastReplayPromise.reject);
+
+    if (lastPromise) {
+      promise.then(lastPromise.resolve, lastPromise.reject);
     }
-    this.lastReplayPromise = { resolve: resolvePromise!, reject: rejectPromise! };
-    stdin.write(`video replay save\n`);
+    const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
+    if (videoId === "recording") {
+      this.lastRecordingPromise = newPromiseHandler;
+    } else {
+      this.lastReplayPromise = newPromiseHandler;
+    }
+    stdin.write(`video ${videoId} save\n`);
     return promise;
   }
 
