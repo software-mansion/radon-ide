@@ -166,6 +166,13 @@ export class Project
     this.deviceSession.startRecording();
   }
 
+  stopRecording(): void {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.stopRecording();
+  }
+
   async captureRecording(): Promise<RecordingData> {
     if (!this.deviceSession) {
       throw new Error("No device session available");

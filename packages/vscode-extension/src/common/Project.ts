@@ -146,6 +146,7 @@ export interface ProjectInterface {
   openDeepLink(link: string): Promise<void>;
 
   startRecording(): void;
+  stopRecording(): void;
   captureRecording(): Promise<RecordingData>;
   captureReplay(): Promise<RecordingData>;
 

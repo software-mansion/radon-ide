@@ -131,7 +131,26 @@ function PreviewView() {
     }
   };
 
-  const MAX_RECORDING_TIME = 120;
+  const MAX_RECORDING_TIME = 300;
+
+  const handleRecording = useCallback(async () => {
+    try {
+      if (!isRecording) {
+        setIsRecording(true);
+        project.startRecording();
+      } else {
+        if (recordingTime > 0) {
+          saveVideoRecording(await project.captureRecording());
+        }
+        project.stopRecording();
+        setIsRecording(false);
+        setRecordingTime(0);
+      }
+    } catch (e) {
+      showDismissableError("Failed to capture recording");
+    }
+  }, [isRecording, recordingTime]);
+
   useEffect(() => {
     if (!isRecording) {
       setRecordingTime(0);
@@ -142,7 +161,7 @@ function PreviewView() {
       setRecordingTime((prevRecordingTime) => {
         if (prevRecordingTime >= MAX_RECORDING_TIME - 1) {
           clearInterval(interval);
-          handleRecordingTimeExceeded();
+          handleRecording();
           return MAX_RECORDING_TIME;
         }
         return prevRecordingTime + 1;
@@ -150,28 +169,7 @@ function PreviewView() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRecording]);
-
-  const handleRecording = async () => {
-    try {
-      if (!isRecording) {
-        setIsRecording(true);
-        project.startRecording();
-      } else {
-        setIsRecording(false);
-        if (recordingTime > 0) {
-          saveVideoRecording(await project.captureRecording());
-        }
-      }
-    } catch (e) {
-      showDismissableError("Failed to capture recording");
-    }
-  };
-
-  const handleRecordingTimeExceeded = async () => {
-    setIsRecording(false);
-    handleRecording();
-  };
+  }, [isRecording, handleRecording]);
 
   const handleReplay = async () => {
     try {

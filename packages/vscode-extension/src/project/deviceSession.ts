@@ -262,6 +262,10 @@ export class DeviceSession implements Disposable {
     return this.device.startRecording();
   }
 
+  public stopRecording() {
+    return this.device.stopRecording();
+  }
+
   public async captureRecording() {
     return this.device.captureRecording();
   }
