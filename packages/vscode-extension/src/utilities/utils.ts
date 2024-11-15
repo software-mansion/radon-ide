@@ -82,9 +82,18 @@ export class Utils implements UtilsInterface {
 
   public async saveVideoRecording(recordingData: RecordingData) {
     const extension = path.extname(recordingData.tempFileLocation);
-    const defaultUri = Uri.file(
-      path.join(workspace.workspaceFolders![0].uri.fsPath, recordingData.fileName)
+    const timestamp = new Date() // e.g. "2024-11-15_at_14-09-51"
+      .toISOString()
+      .replace(/T/g, "_at_")
+      .replace(/:/g, "-")
+      .slice(0, 22);
+    const baseFileName = recordingData.fileName.substring(
+      0,
+      recordingData.fileName.length - extension.length
     );
+    const newFileName = `${baseFileName}_${timestamp}${extension}`;
+    const defaultUri = Uri.file(path.join(workspace.workspaceFolders![0].uri.fsPath, newFileName));
+
     // save dialog open the location dialog, it also warns the user if the file already exists
     let saveUri = await window.showSaveDialog({
       defaultUri: defaultUri,
