@@ -67,7 +67,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <Label>Device appearance</Label>
           <form>
             <RadioGroup.Root
-              className="dropdown-menu-content radio-group-root"
+              className="radio-group-root"
               defaultValue={deviceSettings.appearance}
               onValueChange={(value) => {
                 project.updateDeviceSettings({
