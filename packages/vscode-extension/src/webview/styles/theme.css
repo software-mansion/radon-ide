@@ -363,7 +363,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-button-counter: var(--off-white);
   --swm-button-counter-background: var(--background-dark-40);
 
-  --swm-button-recording-on-background: var(--background-dark-40); 
+  --swm-button-recording-on-background: var(--background-dark-40);
   --swm-button-replay-hover: var(--background-dark-160);
 
   /* Tooltip */
