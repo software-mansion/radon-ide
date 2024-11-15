@@ -4,6 +4,7 @@ import { EOL } from "node:os";
 import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
+import strftime from 'strftime';
 import { Preview } from "./preview";
 import { DeviceBase } from "./DeviceBase";
 import { retry } from "../utilities/retry";
@@ -18,7 +19,6 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
-import { strftime } from "../common/date";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -382,7 +382,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async mirrorNativeLogs(build: AndroidBuildResult) {
-    const startTime = strftime("%Y-%m-%d %H:%M:%S.000", new Date());
+    const startTime = strftime("%F %T.000", new Date());
 
     const extractPidFromLogcat = async () => new Promise<string>((resolve, reject) => {
       const process = exec(ADB_PATH, [

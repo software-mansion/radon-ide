@@ -468,6 +468,7 @@
     "@types/react": "^18.2.45",
     "@types/semver": "^7.5.8",
     "@types/sinon": "^17.0.3",
+    "@types/strftime": "^0.9.8",
     "@types/tar": "^6.1.11",
     "@types/uuid": "^9.0.7",
     "@types/vscode": "^1.46.0",
@@ -516,5 +517,8 @@
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
     "xml2js": "^0.6.2"
+  },
+  "dependencies": {
+    "strftime": "^0.10.3"
   }
 }
