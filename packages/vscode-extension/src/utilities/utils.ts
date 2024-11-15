@@ -82,11 +82,7 @@ export class Utils implements UtilsInterface {
 
   public async saveVideoRecording(recordingData: RecordingData) {
     const extension = path.extname(recordingData.tempFileLocation);
-    const timestamp = new Date() // e.g. "2024-11-15_at_14-09-51"
-      .toISOString()
-      .replace(/T/g, "_at_")
-      .replace(/:/g, "-")
-      .slice(0, 22);
+    const timestamp = this.getTimestamp();
     const baseFileName = recordingData.fileName.substring(
       0,
       recordingData.fileName.length - extension.length
@@ -124,5 +120,12 @@ export class Utils implements UtilsInterface {
 
   public async log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]) {
     Logger[type]("[WEBVIEW LOG]", message, ...args);
+  }
+
+  private getTimestamp() {
+    // e.g. "2024-11-15_at_14-09-51"
+    const timezoneOffset = new Date().getTimezoneOffset() * 60000;
+    const localISOTime = new Date(Date.now() - timezoneOffset).toISOString().slice(0, -1);
+    return localISOTime.replace(/T/g, "_at_").replace(/:/g, "-").slice(0, 22);
   }
 }
