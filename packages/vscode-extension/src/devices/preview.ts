@@ -65,7 +65,6 @@ export class Preview implements Disposable {
           // video response format for recordings looks as follows:
           // video_ready <VIDEO_ID> <HTTP_URL> <FILE_URL>
           // video_error <VIDEO_ID> <Error message>
-
           const videoReadyMatch = line.match(/video_ready (\S+) (\S+) (\S+)/);
           const videoErrorMatch = line.match(/video_error (\S+) (.*)/);
 

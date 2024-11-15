@@ -67,7 +67,6 @@ function PreviewView() {
   const [resetKey, setResetKey] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  // const [recordingData, setRecordingData] = useState<RecordingData | undefined>(undefined);
   const [replayData, setReplayData] = useState<RecordingData | undefined>(undefined);
   const { devices, finishedInitialLoad } = useDevices();
 
