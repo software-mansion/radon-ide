@@ -60,7 +60,8 @@
 
 .icon-button-counter {
   position: relative;
-  top: -5px;
+  top: -8px;
+  left: 2px;
   border: 0px solid transparent;
   border-radius: 4px;
   color: var(--swm-button-counter);
