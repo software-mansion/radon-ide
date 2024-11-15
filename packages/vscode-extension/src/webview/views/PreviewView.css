@@ -81,3 +81,23 @@
   background-color: var(--swm-button-recording-on-background);
   border-radius: 10px;
 }
+
+.recording-rec-indicator {
+  position: absolute;
+  top: 45px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 120%;
+  filter: blur(0.6px);
+  font-family: "Courier new", fixed;
+}
+
+.recording-rec-dot {
+  width: 13px;
+  height: 13px;
+  background-color: red;
+  border-radius: 50%;
+  margin-right: 8px;
+}

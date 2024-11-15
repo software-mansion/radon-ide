@@ -202,9 +202,9 @@ function PreviewView() {
         <div className="spacer" />
 
         {isRecording && (
-          <div className="replay-rec-indicator">
-            <div className="replay-rec-dot" />
-            <span>REC {recordingTimeFormat}</span>
+          <div className="recording-rec-indicator">
+            <div className="recording-rec-dot" />
+            <span>{recordingTimeFormat}</span>
           </div>
         )}
         {
