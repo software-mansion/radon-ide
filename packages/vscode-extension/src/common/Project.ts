@@ -12,7 +12,6 @@ export type DeviceSettings = {
   };
   hasEnrolledBiometrics: boolean;
   locale: Locale;
-  recordingEnabled: boolean;
   replaysEnabled: boolean;
   showTouches: boolean;
 };
