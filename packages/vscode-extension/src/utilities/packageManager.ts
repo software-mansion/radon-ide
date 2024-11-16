@@ -37,7 +37,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
         return match ? match[1] : "npm";
       }
     } catch (e) {
-      // there might be a problem while reading package.json in which case move to looking 
+      // there might be a problem while reading package.json in which case move to looking
       // for lock files matching package managers in the workspace root
     }
 
@@ -68,8 +68,8 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     if (packageManagerCandidates) {
       return packageManagerCandidates[0];
     }
-    
-    // when no package manager were detected we default to npm 
+
+    // when no package manager were detected we default to npm
     return "npm";
   }
 
