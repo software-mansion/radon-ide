@@ -28,6 +28,19 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
   const workspacePath = findWorkspace(appRootPath);
 
   async function findPackageManager(workspace: string) {
+    try {
+      const packageManager = require(path.join(workspace, "package.json")).packageManager;
+
+      if (packageManager) {
+        // e.g. yarn@3.6.4
+        const match = packageManager.match(/^([a-zA-Z]+)@/);
+        return match ? match[1] : "npm";
+      }
+    } catch (e) {
+      // there might be a problem while reading package.json in which case move to looking 
+      // for lock files matching package managers in the workspace root
+    }
+
     const lockFiles = new Map(
       Object.entries({
         "yarn.lock": "yarn",
@@ -38,23 +51,25 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     );
 
     const files = await fs.readdir(workspace);
+    const packageManagerCandidates = [];
     for (const file of files) {
       const packageManager = lockFiles.get(file);
       if (packageManager) {
-        return packageManager;
+        packageManagerCandidates.push(packageManager);
       }
     }
-    try {
-      const packageManager = require(path.join(workspace, "package.json")).packageManager;
 
-      if (packageManager) {
-        // e.g. yarn@3.6.4
-        const match = packageManager.match(/^([a-zA-Z]+)@/);
-        return match ? match[1] : "npm";
-      }
-    } catch (e) {
-      // there might be a problem while reading package.json in which case we default to npm
+    if (packageManagerCandidates.length > 1) {
+      Logger.warn(
+        "Your workspace contains multiple package manager lock files, it might cause wrong manager to be used by the Radon IDE."
+      );
     }
+
+    if (packageManagerCandidates) {
+      return packageManagerCandidates[0];
+    }
+    
+    // when no package manager were detected we default to npm 
     return "npm";
   }
 
