@@ -26,12 +26,12 @@ For installation instructions head to [INSTALLATION](https://ide.swmansion.com/d
 
 ### 💻 Usage
 
-See [USAGE](https://ide.swmansion.com/docs/usage) guide on how to get started after installing the extension. You can also visit [Radon IDE](https://ide.swmansion.com) website where we highlight the most important features.
+See [Launching the IDE](https://ide.swmansion.com/docs/getting-started/launching) guide on how to get started after installing the extension. You can also visit [Feature highlight](https://ide.swmansion.com/docs/getting-started/feature-highlight) where we showcase the most important features.
 
 ### 🐛 Troubleshooting
 
-For troubleshooting and guide on reporting issues head to [TROUBLESHOOTING](https://ide.swmansion.com/docs/troubleshooting) section.
+For troubleshooting and guide on reporting issues head to [Troubleshooting](https://ide.swmansion.com/docs/guides/troubleshooting) section.
 
 ### ⚒️ Extension Development
 
-If you want to develop the extension and contribute updates head to [DEVELOPMENT](https://ide.swmansion.com/docs/development) section.
+If you want to develop the extension and contribute updates head to [Development](https://ide.swmansion.com/docs/guides/development) section.
