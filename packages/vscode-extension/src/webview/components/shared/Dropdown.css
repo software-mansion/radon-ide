@@ -77,6 +77,7 @@ button {
 
 .dropdown-menu-arrow {
   fill: var(--swm-popover-background);
+  height: 0;
 }
 
 .right-slot {
