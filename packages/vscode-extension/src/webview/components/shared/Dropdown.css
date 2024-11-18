@@ -12,7 +12,7 @@ button {
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
   box-shadow: var(--swm-backdrop-shadow);
-  max-height: calc(var(--radix-dropdown-menu-content-available-height) - 50px);
+  max-height: calc(var(--radix-dropdown-menu-content-available-height) - 40px);
   overflow-y: auto;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
