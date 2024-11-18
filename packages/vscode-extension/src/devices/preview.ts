@@ -116,23 +116,23 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write("pointer show false\n");
   }
 
-  public startVideoRecording(videoId: string) {
+  public startReplays(videoType: "recording" | "replay") {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
     }
-    stdin.write(`video ${videoId} start -m -b 50\n`); // 50MB buffer for in-memory video
+    stdin.write(`video ${videoType} start -m -b 50\n`); // 50MB buffer for in-memory video
   }
 
-  public stopVideoRecording(videoId: string) {
+  public stopVideoRecording(videoType: "recording" | "replay") {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
     }
-    stdin.write(`video ${videoId} stop\n`);
+    stdin.write(`video ${videoType} stop\n`);
   }
 
-  public captureVideoRecording(videoId: string) {
+  public captureVideoRecording(videoType: "recording" | "replay") {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -145,7 +145,7 @@ export class Preview implements Disposable {
     });
 
     let lastPromise;
-    if (videoId === "recording") {
+    if (videoType === "recording") {
       lastPromise = this.lastRecordingPromise;
     } else {
       lastPromise = this.lastReplayPromise;
@@ -155,12 +155,12 @@ export class Preview implements Disposable {
       promise.then(lastPromise.resolve, lastPromise.reject);
     }
     const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
-    if (videoId === "recording") {
+    if (videoType === "recording") {
       this.lastRecordingPromise = newPromiseHandler;
     } else {
       this.lastReplayPromise = newPromiseHandler;
     }
-    stdin.write(`video ${videoId} save\n`);
+    stdin.write(`video ${videoType} save\n`);
     return promise;
   }
 
