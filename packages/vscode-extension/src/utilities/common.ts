@@ -256,7 +256,7 @@ function readFileWithSize(filePath: string, from: number): Promise<{ size: numbe
   });
 }
 
-export const watchFileContent = function (filePath: string, callback: (data: string) => void) {
+export function watchFileContent (filePath: string, callback: (data: string) => void) {
   let fileEnd = 0;
 
   fs.watchFile(filePath, async (curr, prev) => {
