@@ -312,7 +312,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
 
   /* Shadows */
   --swm-focus-outline: 0 0 0 2px var(--background-dark-50);
-  --swm-backdrop-shadow: none;
+  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 
   /* Device select */
   --swm-device-select-background: var(--background-dark-80);
