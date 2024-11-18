@@ -54,7 +54,7 @@ type PrivacyServiceName =
 
 export class IosSimulatorDevice extends DeviceBase {
   private nativeLogsOutputChannel: OutputChannel | undefined;
-  
+
   constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
     super();
   }
@@ -352,13 +352,11 @@ export class IosSimulatorDevice extends DeviceBase {
 
   private getNativeLogsPath() {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    const logFile = path.join(deviceSetLocation, this.deviceUDID, "data", "radon_ide_ios_process.log");
-
-    return logFile;
+    return path.join(deviceSetLocation, this.deviceUDID, "data", "radon_ide_ios_process.log");
   }
 
   mirrorNativeLogs(logFile: string) {
-    this.nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (iOS Native Logs)", 'log');
+    this.nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (iOS Native Logs)", "log");
     this.nativeLogsOutputChannel.clear();
 
     if (fs.existsSync(logFile)) {
@@ -371,7 +369,7 @@ export class IosSimulatorDevice extends DeviceBase {
   async launchWithBuild(build: IOSBuildResult) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     const logFile = this.getNativeLogsPath();
-    
+
     await this.terminateAnyRunningApplications();
     this.mirrorNativeLogs(logFile);
 
@@ -381,7 +379,7 @@ export class IosSimulatorDevice extends DeviceBase {
       deviceSetLocation,
       "launch",
       `--stdout=${logFile}`,
-      `--stderr=${logFile}`,  
+      `--stderr=${logFile}`,
       "--terminate-running-process",
       this.deviceUDID,
       build.bundleID,
