@@ -70,14 +70,14 @@ export abstract class DeviceBase implements Disposable {
     return this.preview.captureVideoRecording("recording");
   }
 
-  public startVideoRecording() {
+  public startReplays() {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
     return this.preview.startVideoRecording("replay");
   }
 
-  public stopVideoRecording() {
+  public stopReplays() {
     return this.preview?.stopVideoRecording("replay");
   }
 
