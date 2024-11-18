@@ -154,8 +154,8 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
 
   /* Shadows */
   --swm-focus-outline: 0 0 0 2px var(--navy-light-20);
-  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-
+  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1),
+    1px -4px 6px -3px rgb(0 0 0 / 0.1);
   /* Device select */
   --swm-device-select-background: var(--navy-light-10);
   --swm-device-select-trigger-text: var(--navy-light-100);
@@ -313,8 +313,8 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
 
   /* Shadows */
   --swm-focus-outline: 0 0 0 2px var(--background-dark-50);
-  --swm-backdrop-shadow: none;
-
+  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1),
+    1px -4px 6px -3px rgb(0 0 0 / 0.1);
   /* Device select */
   --swm-device-select-background: var(--background-dark-80);
   --swm-device-select-trigger-text: var(--off-white);

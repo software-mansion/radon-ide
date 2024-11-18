@@ -3,5 +3,42 @@
     "deploymentEnabled": {
       "main": true
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/docs/getting-started",
+      "destination": "/docs/getting-started/overview",
+      "permanent": true
+    },
+    {
+      "source": "/docs/installation",
+      "destination": "/docs/getting-started/installation",
+      "permanent": true
+    },
+    {
+      "source": "/docs/usage",
+      "destination": "/docs/getting-started/launching",
+      "permanent": true
+    },
+    {
+      "source": "/docs/configuration",
+      "destination": "/docs/guides/configuration",
+      "permanent": true
+    },
+    {
+      "source": "/docs/simulators",
+      "destination": "docs/guides/simulators",
+      "permanent": true
+    },
+    {
+      "source": "docs/troubleshooting",
+      "destination": "docs/guides/troubleshooting",
+      "permanent": true
+    },
+    {
+      "source": "docs/development",
+      "destination": "docs/guides/development",
+      "permanent": true
+    }
+  ]
 }
