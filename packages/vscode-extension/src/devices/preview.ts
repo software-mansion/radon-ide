@@ -31,6 +31,32 @@ export class Preview implements Disposable {
     stdin.write(command);
   }
 
+  private handleVideoRecordingPromise(promiseType: "recording" | "replay"): Promise<RecordingData> {
+    const stdin = this.subprocess?.stdin;
+    if (!stdin) {
+      throw new Error("sim-server process not available");
+    }
+
+    let resolvePromise: (value: RecordingData) => void;
+    let rejectPromise: (reason?: any) => void;
+    const promise = new Promise<RecordingData>((resolve, reject) => {
+      resolvePromise = resolve;
+      rejectPromise = reject;
+    });
+
+    const lastPromiseKey =
+      promiseType === "recording" ? "lastRecordingPromise" : "lastReplayPromise";
+    const lastPromise = this[lastPromiseKey];
+    if (lastPromise) {
+      promise.then(lastPromise.resolve, lastPromise.reject);
+    }
+
+    const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
+    this[lastPromiseKey] = newPromiseHandler;
+    stdin.write(`video ${promiseType} save\n`);
+    return promise;
+  }
+
   async start() {
     const simControllerBinary = path.join(
       extensionContext.extensionPath,
@@ -133,25 +159,7 @@ export class Preview implements Disposable {
   }
 
   public captureRecording() {
-    const stdin = this.subprocess?.stdin;
-    if (!stdin) {
-      throw new Error("sim-server process not available");
-    }
-    let resolvePromise: (value: RecordingData) => void;
-    let rejectPromise: (reason?: any) => void;
-    const promise = new Promise<RecordingData>((resolve, reject) => {
-      resolvePromise = resolve;
-      rejectPromise = reject;
-    });
-
-    const lastPromise = this.lastRecordingPromise;
-    if (lastPromise) {
-      promise.then(lastPromise.resolve, lastPromise.reject);
-    }
-    const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
-    this.lastRecordingPromise = newPromiseHandler;
-    stdin.write(`video recording save\n`);
-    return promise;
+    return this.handleVideoRecordingPromise("recording");
   }
 
   public startReplays() {
@@ -163,25 +171,7 @@ export class Preview implements Disposable {
   }
 
   public captureReplay() {
-    const stdin = this.subprocess?.stdin;
-    if (!stdin) {
-      throw new Error("sim-server process not available");
-    }
-    let resolvePromise: (value: RecordingData) => void;
-    let rejectPromise: (reason?: any) => void;
-    const promise = new Promise<RecordingData>((resolve, reject) => {
-      resolvePromise = resolve;
-      rejectPromise = reject;
-    });
-
-    const lastPromise = this.lastReplayPromise;
-    if (lastPromise) {
-      promise.then(lastPromise.resolve, lastPromise.reject);
-    }
-    const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
-    this.lastReplayPromise = newPromiseHandler;
-    stdin.write(`video replay save\n`);
-    return promise;
+    return this.handleVideoRecordingPromise("replay");
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
