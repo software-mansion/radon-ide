@@ -63,8 +63,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       <DropdownMenu.Portal>
         <DropdownMenu.Content className="dropdown-menu-content device-settings-content">
           <h4 className="device-settings-heading">Device Settings</h4>
-          <Label>Device appearance</Label>
           <form>
+            <Label>Device appearance</Label>
             <RadioGroup.Root
               className="radio-group-root"
               defaultValue={deviceSettings.appearance}
@@ -119,7 +119,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <span className="device-settings-large-text-indicator" />
             </div>
             <div className="device-settings-margin" />
-            {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
+          </form>
+          {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
           <div className="device-settings-items-row">
             <DropdownMenu.Item
               className="dropdown-menu-item"

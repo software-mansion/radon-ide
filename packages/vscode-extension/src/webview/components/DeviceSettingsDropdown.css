@@ -4,7 +4,7 @@
 
 .device-settings-heading {
   text-align: center;
-  margin-top: 0px;
+  margin: 0 0 10px 0;
   color: var(--swm-default-text);
 }
 
@@ -40,7 +40,7 @@
 }
 
 .device-settings-margin {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .icons-container {
