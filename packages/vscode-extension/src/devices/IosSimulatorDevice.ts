@@ -1,7 +1,8 @@
 import path from "path";
 import fs from "fs";
+import { OutputChannel, window } from "vscode";
 import { ExecaError } from "execa";
-import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
+import { getAppCachesDir, getOldAppCachesDir, watchFileContent } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
@@ -52,6 +53,8 @@ type PrivacyServiceName =
   | "siri";
 
 export class IosSimulatorDevice extends DeviceBase {
+  private nativeLogsOutputChannel: OutputChannel | undefined;
+  
   constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
     super();
   }
@@ -72,6 +75,7 @@ export class IosSimulatorDevice extends DeviceBase {
 
   public dispose() {
     super.dispose();
+    this.nativeLogsOutputChannel?.dispose();
     return exec("xcrun", [
       "simctl",
       "--set",
@@ -346,16 +350,38 @@ export class IosSimulatorDevice extends DeviceBase {
     await Promise.all(matches.map(terminateApp));
   }
 
+  private getNativeLogsPath() {
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    const logFile = path.join(deviceSetLocation, this.deviceUDID, "data", "radon_ide_ios_process.log");
+
+    return logFile;
+  }
+
+  mirrorNativeLogs(logFile: string) {
+    this.nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (iOS Native Logs)", 'log');
+    this.nativeLogsOutputChannel.clear();
+
+    if (fs.existsSync(logFile)) {
+      fs.unlinkSync(logFile);
+    }
+
+    watchFileContent(logFile, this.nativeLogsOutputChannel?.append);
+  }
+
   async launchWithBuild(build: IOSBuildResult) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-
+    const logFile = this.getNativeLogsPath();
+    
     await this.terminateAnyRunningApplications();
+    this.mirrorNativeLogs(logFile);
 
     await exec("xcrun", [
       "simctl",
       "--set",
       deviceSetLocation,
       "launch",
+      `--stdout=${logFile}`,
+      `--stderr=${logFile}`,  
       "--terminate-running-process",
       this.deviceUDID,
       build.bundleID,
