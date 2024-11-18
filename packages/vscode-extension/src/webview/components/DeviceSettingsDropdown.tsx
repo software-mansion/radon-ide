@@ -63,8 +63,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       <DropdownMenu.Portal>
         <DropdownMenu.Content className="dropdown-menu-content device-settings-content">
           <h4 className="device-settings-heading">Device Settings</h4>
-          <Label>Device appearance</Label>
           <form>
+            <Label>Device appearance</Label>
             <RadioGroup.Root
               className="radio-group-root"
               defaultValue={deviceSettings.appearance}
@@ -119,24 +119,22 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <span className="device-settings-large-text-indicator" />
             </div>
             <div className="device-settings-margin" />
-            {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
-            <DropdownMenu.Arrow className="dropdown-menu-arrow" />
           </form>
-          <Label>Device location</Label>
+          {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
               openModal("Location", <DeviceLocationView />);
             }}>
             <span className="codicon codicon-location" />
-            Set Device Location
+            Location
           </DropdownMenu.Item>
           <LocalizationItem />
-          <Label>Permissions</Label>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-redo" />
               Reset Permissions
+              <span className="codicon codicon-chevron-right right-slot" />
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent
@@ -155,7 +153,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-          <Label>Screen settings</Label>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
+            <span className="codicon codicon-link" />
+            Open Deep Link
+          </DropdownMenu.Item>
           <div className="dropdown-menu-item">
             <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
@@ -187,13 +190,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
-          <Label>Deep Links</Label>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
-            <span className="codicon codicon-link" />
-            Open Deep Link
-          </DropdownMenu.Item>
+          <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -204,14 +201,13 @@ const LocalizationItem = () => {
   const { openModal } = useModal();
   return (
     <>
-      <Label>Device Localization</Label>
       <DropdownMenu.Item
         className="dropdown-menu-item"
         onSelect={() => {
           openModal("Localization", <DeviceLocalizationView />);
         }}>
         <span className="codicon codicon-globe" />
-        Set Device Localization
+        Localization
       </DropdownMenu.Item>
     </>
   );
