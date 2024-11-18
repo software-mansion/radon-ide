@@ -34,6 +34,11 @@
   color: var(--swm-default-text);
 }
 
+.device-settings-items-row {
+  display: flex;
+  justify-content: space-between;
+}
+
 .device-settings-margin {
   margin-bottom: 24px;
 }

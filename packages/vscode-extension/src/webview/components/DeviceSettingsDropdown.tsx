@@ -120,17 +120,17 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             </div>
             <div className="device-settings-margin" />
             {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
-            <DropdownMenu.Arrow className="dropdown-menu-arrow" />
-          </form>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => {
-              openModal("Location", <DeviceLocationView />);
-            }}>
-            <span className="codicon codicon-location" />
-            Set Device Location
-          </DropdownMenu.Item>
-          <LocalizationItem />
+          <div className="device-settings-items-row">
+            <DropdownMenu.Item
+              className="dropdown-menu-item"
+              onSelect={() => {
+                openModal("Location", <DeviceLocationView />);
+              }}>
+              <span className="codicon codicon-location" />
+              Set Location
+            </DropdownMenu.Item>
+            <LocalizationItem />
+          </div>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-redo" />
@@ -191,6 +191,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
+          <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -207,7 +208,7 @@ const LocalizationItem = () => {
           openModal("Localization", <DeviceLocalizationView />);
         }}>
         <span className="codicon codicon-globe" />
-        Set Device Localization
+        Set Localization
       </DropdownMenu.Item>
     </>
   );
