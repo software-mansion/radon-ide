@@ -18,12 +18,8 @@ export function isWorkspaceRoot(dir: string) {
   const packageJsonPath = path.join(dir, "package.json");
   const nxJsonPath = path.join(dir, "nx.json");
 
-  try {
-    require(nxJsonPath);
-
+  if(fs.existsSync(nxJsonPath)) {
     return true;
-  } catch (e) {
-    // No nx.json precede
   }
 
   try {
