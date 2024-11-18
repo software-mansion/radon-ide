@@ -5,8 +5,6 @@ button {
 
 .dropdown-menu-content,
 .dropdown-menu-subcontent {
-.dropdown-menu-content,
-.dropdown-menu-subcontent {
   min-width: 220px;
   background-color: var(--swm-popover-background);
   border-radius: 6px;
