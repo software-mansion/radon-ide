@@ -80,7 +80,7 @@
 .button-recording-on:hover {
   background-color: var(--swm-button-recording-on-background);
   border-radius: 10px;
-  width:auto;
+  width: auto;
   padding: 0 5px 0 8px;
 }
 
