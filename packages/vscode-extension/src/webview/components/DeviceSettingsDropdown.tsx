@@ -122,7 +122,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
             <DropdownMenu.Arrow className="dropdown-menu-arrow" />
           </form>
-          <Label>Device location</Label>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
@@ -132,7 +131,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Set Device Location
           </DropdownMenu.Item>
           <LocalizationItem />
-          <Label>Permissions</Label>
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-redo" />
@@ -155,7 +153,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-          <Label>Screen settings</Label>
           <div className="dropdown-menu-item">
             <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
@@ -187,7 +184,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
-          <Label>Deep Links</Label>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
@@ -204,7 +200,6 @@ const LocalizationItem = () => {
   const { openModal } = useModal();
   return (
     <>
-      <Label>Device Localization</Label>
       <DropdownMenu.Item
         className="dropdown-menu-item"
         onSelect={() => {
