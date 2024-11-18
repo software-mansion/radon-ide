@@ -122,6 +122,6 @@ button {
 
 @media (max-width: 460px) {
   .dropdown-menu-subcontent {
-    transform: translateX(85%) translateY(25%);
+    transform: translateX(85%) translateY(28px);
   }
 }
