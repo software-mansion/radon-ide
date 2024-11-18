@@ -154,6 +154,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
+            <span className="codicon codicon-link" />
+            Open Deep Link
+          </DropdownMenu.Item>
           <div className="dropdown-menu-item">
             <span className="icons-container">
               <span className="codicon codicon-triangle-left icons-rewind" />
@@ -185,12 +191,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
-            <span className="codicon codicon-link" />
-            Open Deep Link
-          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
