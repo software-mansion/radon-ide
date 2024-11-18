@@ -116,7 +116,7 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write("pointer show false\n");
   }
 
-  public startReplays(videoType: "recording" | "replay") {
+  public startVideoRecording(videoType: "recording" | "replay") {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
