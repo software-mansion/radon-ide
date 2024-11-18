@@ -199,13 +199,6 @@ function PreviewView() {
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
-
-        {isRecording && (
-          <div className="recording-rec-indicator">
-            <div className="recording-rec-dot" />
-            <span>{recordingTimeFormat}</span>
-          </div>
-        )}
         {
           <IconButton
             className={isRecording ? "button-recording-on" : ""}
@@ -214,7 +207,14 @@ function PreviewView() {
             }}
             onClick={handleRecording}
             disabled={isStarting}>
-            {isRecording ? <span className="codicon codicon-debug-stop" /> : <RecordingIcon />}
+            {isRecording ? (
+              <div className="recording-rec-indicator">
+                <div className="recording-rec-dot" />
+                <span>{recordingTimeFormat}</span>
+              </div>
+            ) : (
+              <RecordingIcon />
+            )}
           </IconButton>
         }
         {showReplayButton && (
