@@ -3,7 +3,8 @@ button {
   all: unset;
 }
 
-.dropdown-menu-content {
+.dropdown-menu-content,
+.dropdown-menu-subcontent {
   min-width: 220px;
   background-color: var(--swm-popover-background);
   border-radius: 6px;
@@ -17,10 +18,17 @@ button {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-.dropdown-menu-content[data-side="bottom"] {
+.dropdown-menu-subcontent {
+  max-height: calc(var(--radix-dropdown-menu-content-available-height));
+}
+
+.dropdown-menu-content[data-side="bottom"],
+.dropdown-menu-subcontent[data-side="bottom"] {
   animation-name: slideUpAndFade;
 }
-.dropdown-menu-content[data-side="top"] {
+
+.dropdown-menu-content[data-side="top"],
+.dropdown-menu-subcontent[data-side="top"] {
   animation-name: slideDownAndFade;
 }
 

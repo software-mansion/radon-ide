@@ -138,7 +138,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent
-                className="dropdown-menu-content"
+                className="dropdown-menu-subcontent"
                 sideOffset={2}
                 alignOffset={-5}>
                 {resetOptions.map((option, index) => (
@@ -225,7 +225,7 @@ const BiometricsItem = () => {
       </DropdownMenu.SubTrigger>
 
       <DropdownMenu.Portal>
-        <DropdownMenu.SubContent className="dropdown-menu-content">
+        <DropdownMenu.SubContent className="dropdown-menu-subcontent">
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
