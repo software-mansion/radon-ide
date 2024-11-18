@@ -138,10 +138,10 @@ function PreviewView() {
         setIsRecording(true);
         project.startRecording();
       } else {
+        const recordingData = await project.captureAndStopRecording();
         if (recordingTime > 0) {
-          saveVideoRecording(await project.captureRecording());
+          saveVideoRecording(recordingData);
         }
-        project.stopRecording();
         setIsRecording(false);
         setRecordingTime(0);
       }
