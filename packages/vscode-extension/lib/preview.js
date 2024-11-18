@@ -1,4 +1,5 @@
-const { AppRegistry, SafeAreaView } = require("react-native");
+const { useEffect, useState } = require("react");
+const { AppRegistry, SafeAreaView, View } = require("react-native");
 
 export const PREVIEW_APP_KEY = "RNIDE_preview";
 
@@ -9,6 +10,18 @@ export function Preview({ previewKey }) {
   if (!previewData || !previewData.component) {
     return null;
   }
+
+  // only needed to force re-render when new preview is registered
+  const [_, setDummyState] = useState(0);
+  useEffect(() => {
+    previewData.renderTrigger = () => {
+      setDummyState((s) => s + 1);
+    };
+    return () => {
+      previewData.renderTrigger = null;
+    };
+  }, [previewData]);
+
   return (
     <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       {previewData.component}
@@ -38,10 +51,18 @@ export function preview(component) {
   }
 
   const key = `preview:/${component._source.fileName}:${component._source.lineNumber}`;
+
+  const lastPreview = global.__RNIDE_previews.get(key);
+
   global.__RNIDE_previews.set(key, {
     component,
     name: getComponentName(component),
   });
+
+  // send update request to the last preview instance if it existed
+  if (lastPreview && lastPreview.renderTrigger) {
+    lastPreview.renderTrigger();
+  }
 }
 
 AppRegistry.registerComponent(PREVIEW_APP_KEY, () => Preview);
