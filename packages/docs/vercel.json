@@ -3,5 +3,22 @@
     "deploymentEnabled": {
       "main": true
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/docs/getting-started",
+      "destination": "/docs/getting-started/overview",
+      "permanent": true
+    },
+    {
+      "source": "/docs/installation",
+      "destination": "/docs/getting-started/installation",
+      "permanent": true
+    },
+    {
+      "source": "/docs/usage",
+      "destination": "/docs/getting-started/launching",
+      "permanent": true
+    }
+  ]
 }
