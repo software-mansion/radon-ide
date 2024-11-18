@@ -22,7 +22,7 @@ The current version supports developing on macOS for Android and iOS platforms w
 
 ### 💽 Installation
 
-For installation instructions head to [INSTALLATION](https://ide.swmansion.com/docs/getting-started/installation) section.
+For installation instructions head to [Installation](https://ide.swmansion.com/docs/getting-started/installation) section in the documentation.
 
 ### 💻 Usage
 
