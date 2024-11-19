@@ -357,9 +357,12 @@ export class IosSimulatorDevice extends DeviceBase {
       this.nativeLogsOutputChannel.dispose();
     }
 
-    this.nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (iOS Simulator Logs)", "log");
+    this.nativeLogsOutputChannel = window.createOutputChannel(
+      "Radon IDE (iOS Simulator Logs)",
+      "log"
+    );
     this.nativeLogsOutputChannel.clear();
-    
+
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
     const process = exec("xcrun", [
