@@ -380,7 +380,7 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
 
     this.lunchedAppCancelToken.adapt(process);
-    
+
     lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 
