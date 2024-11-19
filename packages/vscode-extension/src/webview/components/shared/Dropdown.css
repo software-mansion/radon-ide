@@ -119,3 +119,9 @@ button {
     transform: translateY(0);
   }
 }
+
+@media (max-width: 460px) {
+  .dropdown-menu-subcontent {
+    transform: translateX(85%) translateY(28px);
+  }
+}
