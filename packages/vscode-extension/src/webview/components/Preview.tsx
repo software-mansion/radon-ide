@@ -44,8 +44,8 @@ declare module "react" {
   }
 }
 
-const SHOW_ZOOM_CONTROLS_DELAY = 100;
-const HIDE_ZOOM_CONTROLS_DELAY = 300;
+const SHOW_ZOOM_CONTROLS_DELAY_MS = 100;
+const HIDE_ZOOM_CONTROLS_DELAY_MS = 300;
 
 function useKeyPresses() {
   const pressedKeys = useRef(new Set<number>());
@@ -204,14 +204,14 @@ function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
     clearTimeout(hideButtonGroupTimeout.current);
     showButtonGroupTimeout.current = setTimeout(() => {
       setIsMouseOver(true);
-    }, SHOW_ZOOM_CONTROLS_DELAY);
+    }, SHOW_ZOOM_CONTROLS_DELAY_MS);
   };
 
   const onMouseLeave = () => {
     clearTimeout(showButtonGroupTimeout.current);
     hideButtonGroupTimeout.current = setTimeout(() => {
       setIsMouseOver(false);
-    }, HIDE_ZOOM_CONTROLS_DELAY);
+    }, HIDE_ZOOM_CONTROLS_DELAY_MS);
   };
 
   return (
