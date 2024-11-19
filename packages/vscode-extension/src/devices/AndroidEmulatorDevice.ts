@@ -4,7 +4,6 @@ import { EOL } from "node:os";
 import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
-import strftime from "strftime";
 import { Preview } from "./preview";
 import { DeviceBase } from "./DeviceBase";
 import { retry } from "../utilities/retry";
