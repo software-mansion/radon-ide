@@ -378,8 +378,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async mirrorNativeLogs(build: AndroidBuildResult) {
-    const startTime = strftime("%F %T.000", new Date());
-
     const extractPidFromLogcat = async () =>
       new Promise<string>((resolve, reject) => {
         const process = exec(ADB_PATH, ["logcat"]);
@@ -401,12 +399,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
         });
       });
 
-    const nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (Android Native Logs)", {
-      log: true,
-    });
-
+    const nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (Android Emulator Logs)", 'log');
     const pid = await extractPidFromLogcat();
-    const process = exec(ADB_PATH, ["logcat", "--pid", pid, "-T", startTime]);
+    const process = exec(ADB_PATH, ["logcat", "--pid", pid]);
 
     lineReader(process).onLineRead(nativeLogsOutputChannel.appendLine);
 
