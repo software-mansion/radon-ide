@@ -105,10 +105,6 @@ export class Preview implements Disposable {
             ? videoErrorMatch[1]
             : "";
 
-          if (!this.videoRecordingPromises.has(videoId)) {
-            throw new Error(`Invalid video ID: ${videoId}`);
-          }
-
           const handlers = this.videoRecordingPromises.get(videoId);
           this.videoRecordingPromises.delete(videoId);
           if (handlers && videoReadyMatch) {
@@ -148,12 +144,10 @@ export class Preview implements Disposable {
     this.sendCommandOrThrow(`video recording start -m -b 50\n`); // 50MB buffer for in-memory video
   }
 
-  public stopRecording() {
+  public captureAndStopRecording() {
+    const recordingDataPromise = this.saveVideoWithID("recording");
     this.sendCommandOrThrow(`video recording stop\n`);
-  }
-
-  public captureRecording() {
-    return this.saveVideoWithID("recording");
+    return recordingDataPromise;
   }
 
   public startReplays() {

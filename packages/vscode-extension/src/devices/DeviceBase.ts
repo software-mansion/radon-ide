@@ -63,9 +63,7 @@ export abstract class DeviceBase implements Disposable {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
-    const recordingDataPromise = this.preview.captureRecording();
-    this.preview?.stopRecording();
-    return recordingDataPromise;
+    return this.preview.captureAndStopRecording();
   }
 
   public enableReplay() {

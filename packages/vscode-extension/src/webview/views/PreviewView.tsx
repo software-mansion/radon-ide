@@ -156,7 +156,7 @@ function PreviewView() {
       return;
     }
 
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setRecordingTime((prevRecordingTime) => {
         if (prevRecordingTime >= MAX_RECORDING_TIME_SEC - 1) {
           handleRecording();
@@ -165,6 +165,8 @@ function PreviewView() {
         return prevRecordingTime + 1;
       });
     }, 1000);
+
+    return () => clearTimeout(timer);
   }, [isRecording, handleRecording]);
 
   const handleReplay = async () => {
