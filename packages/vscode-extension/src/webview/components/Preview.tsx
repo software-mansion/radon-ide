@@ -200,14 +200,14 @@ function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   const showButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
   const hideButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
 
-  const onMouseOver = () => {
+  const onMouseEnter = () => {
+    clearTimeout(hideButtonGroupTimeout.current);
     showButtonGroupTimeout.current = setTimeout(() => {
-      clearTimeout(hideButtonGroupTimeout.current);
       setIsMouseOver(true);
     }, SHOW_ZOOM_CONTROLS_DELAY);
   };
 
-  const onMouseOut = () => {
+  const onMouseLeave = () => {
     clearTimeout(showButtonGroupTimeout.current);
     hideButtonGroupTimeout.current = setTimeout(() => {
       setIsMouseOver(false);
@@ -215,7 +215,10 @@ function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   };
 
   return (
-    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} className="button-group-left-wrapper">
+    <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className="button-group-left-wrapper">
       <div className="button-group-left-container">
         <div
           style={isMouseOver ? { transform: "translateX(0px)" } : {}}
