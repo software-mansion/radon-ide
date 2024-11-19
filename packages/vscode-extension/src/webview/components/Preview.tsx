@@ -44,7 +44,7 @@ declare module "react" {
   }
 }
 
-const HIDE_ZOOM_CONTROLS_DELAY = 2000;
+const HIDE_ZOOM_CONTROLS_DELAY = 200;
 
 function useKeyPresses() {
   const pressedKeys = useRef(new Set<number>());

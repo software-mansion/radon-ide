@@ -26,7 +26,7 @@
 
 .button-group-left {
   display: flex;
-  transition: 0.5s;
+  transition: 0.2s;
   transform: translateX(-40px);
 }
 
