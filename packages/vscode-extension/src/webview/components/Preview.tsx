@@ -44,6 +44,7 @@ declare module "react" {
   }
 }
 
+const SHOW_ZOOM_CONTROLS_DELAY = 100;
 const HIDE_ZOOM_CONTROLS_DELAY = 200;
 
 function useKeyPresses() {
@@ -196,14 +197,18 @@ type ButtonGroupLeftProps = {
 function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   const [isMouseOver, setIsMouseOver] = useState(false);
 
+  const showButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
   const hideButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
 
   const onMouseOver = () => {
-    clearTimeout(hideButtonGroupTimeout.current);
-    setIsMouseOver(true);
+    showButtonGroupTimeout.current = setTimeout(() => {
+      clearTimeout(hideButtonGroupTimeout.current);
+      setIsMouseOver(true);
+    }, SHOW_ZOOM_CONTROLS_DELAY);
   };
 
   const onMouseOut = () => {
+    clearTimeout(showButtonGroupTimeout.current);
     hideButtonGroupTimeout.current = setTimeout(() => {
       setIsMouseOver(false);
     }, HIDE_ZOOM_CONTROLS_DELAY);
