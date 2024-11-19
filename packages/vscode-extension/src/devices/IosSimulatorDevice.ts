@@ -351,8 +351,10 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async launchWithBuild(build: IOSBuildResult) {
-    await this.terminateAnyRunningApplications();
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
+    await this.terminateAnyRunningApplications();
+    
     if (this.nativeLogsOutputChannel) {
       this.nativeLogsOutputChannel.dispose();
     }
@@ -362,8 +364,6 @@ export class IosSimulatorDevice extends DeviceBase {
       "log"
     );
     this.nativeLogsOutputChannel.clear();
-
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
     const process = exec("xcrun", [
       "simctl",
