@@ -8,11 +8,15 @@ import { motion } from "motion/react";
 const StartScreen = () => {
   return (
     <section className={styles.hero}>
-      <div className={styles.heroImageContainer}>
+      <motion.div
+        className={styles.heroImageContainer}
+        initial={{ x: 16 }}
+        animate={{ x: 0 }}
+        transition={{ duration: 0.5 }}>
         <div className={styles.heroImageWrapper}>
           <img className={styles.heroImage} src={useBaseUrl("/img/hero.png")} draggable={false} />
         </div>
-      </div>
+      </motion.div>
       <div className={styles.heading}>
         <motion.div
           className={styles.poweredBy}
@@ -33,7 +37,18 @@ const StartScreen = () => {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}>
-          An <span>IDE</span> for React Native
+          {/* {"An IDE for React Native".split(" ").map((word, index) => (
+            <span key={index} className={styles.headingWord}>
+              {word}
+            </span>
+          ))} */}
+          An <span>IDE</span> for&nbsp;React Native
+          <motion.div
+            initial={{ x: 0, opacity: 0 }}
+            animate={{ opacity: [0, 1, 1, 1, 0], x: 500 }}
+            transition={{ delay: 0.8, duration: 0.8 }}
+            className={styles.headingSwoosh}
+          />
         </motion.h1>
         <motion.h2
           className={styles.subheadingLabel}

@@ -9,39 +9,35 @@
 }
 
 .headingLabel {
+  position: relative; /* needed for headingSwoosh */
   display: flex;
   flex-direction: row;
-  font-family: var(--swm-title-landing-font);
-  font-size: var(--swm-h1-font-size);
-  font-weight: 700;
   gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--swm-title-landing-font);
+  font-size: 46px;
+  font-weight: 700;
 
   line-height: 1.1;
   letter-spacing: 0;
   color: var(--swm-landing-heading);
 }
-
 .headingLabel span {
   color: var(--swm-green-light-100);
 }
 
-.betaChip {
-  background-color: var(--swm-red-light-100);
-  color: var(--swm-white);
-  font-size: 19px;
-  height: 30px;
-  border-radius: 8px;
-  padding: 4px;
-  line-height: 1.15;
-  font-weight: 500;
-  display: flex;
+.headingSwoosh {
+  position: absolute;
+  left: 0;
+  width: 50px;
+  height: 100%;
+  background: linear-gradient(70deg, transparent, var(--swm-off-white), transparent);
 }
 
 .poweredBy {
   display: flex;
   gap: 1rem;
   align-items: center;
-  /* margin: 1rem 0; */
   margin-bottom: 2rem;
 }
 .poweredBy p {
@@ -145,7 +141,7 @@
     margin-top: 4rem;
   }
   .headingLabel {
-    font-size: 48px;
+    font-size: 42px;
   }
   .subheadingLabel {
     margin: 2rem 0 3.5rem 0;
@@ -172,11 +168,11 @@
     margin-bottom: 0;
   }
   .headingLabel {
-    font-size: 26px;
+    font-size: 28px;
   }
   .subheadingLabel {
     margin: 1rem 0 2rem 0;
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .heroImageWrapper {
@@ -192,10 +188,5 @@
   }
   .headingDisclaimer svg {
     margin-top: 2px;
-  }
-  .betaChip {
-    font-size: 12px;
-    height: 20px;
-    border-radius: 4px;
   }
 }
