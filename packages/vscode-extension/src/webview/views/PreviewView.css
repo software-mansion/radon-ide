@@ -24,29 +24,6 @@
   margin-top: 8px;
 }
 
-.button-group-left {
-  display: flex;
-  transition: 0.2s;
-  transform: translateX(-40px);
-}
-
-.button-group-left-container {
-  display: flex;
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.button-group-left-wrapper {
-  position: absolute;
-  left: 0px;
-  top: 50%;
-  width: 60px;
-  height: 150px;
-  transform: translateY(-50%);
-}
-
 .bar-spacer {
   flex: 1;
   max-height: 45px;
