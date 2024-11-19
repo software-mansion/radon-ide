@@ -354,7 +354,7 @@ export class IosSimulatorDevice extends DeviceBase {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
     await this.terminateAnyRunningApplications();
-    
+
     if (this.nativeLogsOutputChannel) {
       this.nativeLogsOutputChannel.dispose();
     }
