@@ -31,9 +31,20 @@
 }
 
 .button-group-left-container {
+  display: flex;
   position: absolute;
   left: 10px;
-  display: flex;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.button-group-left-wrapper {
+  position: absolute;
+  left: 0px;
+  top: 50%;
+  width: 60px;
+  height: 150px;
+  transform: translateY(-50%);
 }
 
 .bar-spacer {

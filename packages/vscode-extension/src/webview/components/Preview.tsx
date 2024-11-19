@@ -215,11 +215,13 @@ function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   };
 
   return (
-    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} className="button-group-left-container">
-      <div
-        style={isMouseOver ? { transform: "translateX(0px)" } : {}}
-        className="button-group-left">
-        {children}
+    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} className="button-group-left-wrapper">
+      <div className="button-group-left-container">
+        <div
+          style={isMouseOver ? { transform: "translateX(0px)" } : {}}
+          className="button-group-left">
+          {children}
+        </div>
       </div>
     </div>
   );
