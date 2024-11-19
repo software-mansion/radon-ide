@@ -12,7 +12,7 @@
   display: flex;
   flex-direction: row;
   font-family: var(--swm-title-landing-font);
-  font-size: 64px;
+  font-size: var(--swm-h1-font-size);
   font-weight: 700;
   gap: 10px;
 
@@ -84,9 +84,9 @@
 
 .subheadingLabel {
   font-family: var(--swm-h2-font-size);
-  font-size: var(--swm-h2-font-size);
+  font-size: var(--swm-h3-font-size);
   font-weight: 400;
-  line-height: 1.15;
+  line-height: 1.5;
   letter-spacing: var(--swm-heading-letter-spacing-bigger);
 
   margin-top: 3rem;
