@@ -2,11 +2,11 @@ import path from "path";
 import fs from "fs";
 import { OutputChannel, window } from "vscode";
 import { ExecaError } from "execa";
-import { getAppCachesDir, getOldAppCachesDir, watchFileContent } from "../utilities/common";
+import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
-import { exec } from "../utilities/subprocess";
+import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
@@ -350,40 +350,30 @@ export class IosSimulatorDevice extends DeviceBase {
     await Promise.all(matches.map(terminateApp));
   }
 
-  private getNativeLogsPath() {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    return path.join(deviceSetLocation, this.deviceUDID, "data", "radon_ide_ios_process.log");
-  }
+  async launchWithBuild(build: IOSBuildResult) {
+    await this.terminateAnyRunningApplications();
 
-  mirrorNativeLogs(logFile: string) {
-    this.nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (iOS Native Logs)", "log");
-    this.nativeLogsOutputChannel.clear();
-
-    if (fs.existsSync(logFile)) {
-      fs.unlinkSync(logFile);
+    if (this.nativeLogsOutputChannel) {
+      this.nativeLogsOutputChannel.dispose();
     }
 
-    watchFileContent(logFile, this.nativeLogsOutputChannel?.append);
-  }
-
-  async launchWithBuild(build: IOSBuildResult) {
+    this.nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (iOS Simulator Logs)", "log");
+    this.nativeLogsOutputChannel.clear();
+    
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    const logFile = this.getNativeLogsPath();
 
-    await this.terminateAnyRunningApplications();
-    this.mirrorNativeLogs(logFile);
-
-    await exec("xcrun", [
+    const process = exec("xcrun", [
       "simctl",
       "--set",
       deviceSetLocation,
       "launch",
-      `--stdout=${logFile}`,
-      `--stderr=${logFile}`,
+      "--console",
       "--terminate-running-process",
       this.deviceUDID,
       build.bundleID,
     ]);
+
+    lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 
   async launchWithExpoDeeplink(bundleID: string, expoDeeplink: string) {

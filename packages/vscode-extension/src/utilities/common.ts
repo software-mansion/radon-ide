@@ -238,32 +238,3 @@ export async function calculateMD5(fsPath: string, hash: Hash = createHash("md5"
   }
   return hash;
 }
-
-function readFileWithSize(filePath: string, from: number): Promise<{ size: number; data: string }> {
-  return new Promise((resolve, reject) => {
-    let size = 0;
-    const chunks: Uint8Array[] = [];
-    const stream = fs.createReadStream(filePath, { start: from });
-
-    stream.on("data", function (chunk: Uint8Array) {
-      size += chunk.length;
-      chunks.push(chunk);
-    });
-
-    stream.on("error", () => reject());
-
-    stream.on("close", () => resolve({ size, data: Buffer.concat(chunks).toString() }));
-  });
-}
-
-export function watchFileContent(filePath: string, callback: (data: string) => void) {
-  let fileEnd = 0;
-
-  fs.watchFile(filePath, async (curr, prev) => {
-    if (curr.mtime > prev.mtime) {
-      const { data, size } = await readFileWithSize(filePath, fileEnd);
-      fileEnd += size;
-      callback(data);
-    }
-  });
-}
