@@ -18,13 +18,8 @@ function acceleratedRewind(
   setTimeCallback: (time: number) => void,
   readyCallback: () => void
 ) {
-  // If REPLAY_REWIND_INTRODUCE_KEY is missing in global state, we assume that the
-  // replay rewind feature has not been introduced. In this case, we use a longer
-  // rewind time to help users more easily understand the rewind feature.
-  const REPLAY_REWIND_INTRODUCE_KEY = "wasReplayRewindIntroduced";
-  const wasRewindIntroduced = localStorage.getItem(REPLAY_REWIND_INTRODUCE_KEY) ?? false;
+  const rewindTimeSec = 0.6;
 
-  const rewindTimeSec = wasRewindIntroduced ? 0.6 : 1.6;
   const v0 = 0.1;
   const vFinal = 2 / rewindTimeSec - v0;
   const acc = (vFinal - v0) / rewindTimeSec;
@@ -52,10 +47,6 @@ function acceleratedRewind(
     }
   }
   requestAnimationFrame(frame);
-
-  if (!wasRewindIntroduced) {
-    localStorage.setItem(REPLAY_REWIND_INTRODUCE_KEY, "true");
-  }
 }
 
 function isVideoPlaying(videoElement: HTMLVideoElement) {
