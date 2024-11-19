@@ -4,6 +4,7 @@ import { EOL } from "node:os";
 import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
+import strftime from "strftime";
 import { Preview } from "./preview";
 import { DeviceBase } from "./DeviceBase";
 import { retry } from "../utilities/retry";
@@ -52,7 +53,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
   private nativeLogsOutputChannel: OutputChannel | undefined;
-  private nativeLogsCancelToken = new CancelToken();
+  private nativeLogsCancelToken: CancelToken | undefined;
 
   constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
     super();
@@ -76,7 +77,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     super.dispose();
     this.emulatorProcess?.kill();
     this.nativeLogsOutputChannel?.dispose();
-    this.nativeLogsCancelToken.cancel();
+    this.nativeLogsCancelToken?.cancel();
     // If the emulator process does not shut down initially due to ongoing activities or processes,
     // a forced termination (kill signal) is sent after a certain timeout period.
     setTimeout(() => {
@@ -378,11 +379,20 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async mirrorNativeLogs(build: AndroidBuildResult) {
-    const extractPidFromLogcat = async () =>
-      new Promise<string>(async (resolve, reject) => {
+    const startTime = strftime("%F %T.000", new Date());
+
+    if (this.nativeLogsCancelToken) {
+      this.nativeLogsCancelToken.cancel();
+    }
+
+    this.nativeLogsCancelToken = new CancelToken();
+
+    const extractPidFromLogcat = async (cancelToken: CancelToken) =>
+      new Promise<string>((resolve, reject) => {
         const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
-        const process = exec(ADB_PATH, ["logcat", "-e", regexString]);
-        this.nativeLogsCancelToken.adapt(process);
+        const process = exec(ADB_PATH, ["logcat", "-e", regexString, '-T', startTime]);
+        // console.log("line ---->", ["logcat", "-e", regexString].join(" "));
+        cancelToken.adapt(process);
 
         lineReader(process).onLineRead((line) => {
           const regex = new RegExp(regexString);
@@ -400,11 +410,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
           }
         });
 
-        // We should be able to get pid immediately, if we're not getting it in 2s, then we reject to not block the app.
+        // We should be able to get pid immediately, if we're not getting it in 10s, then we reject to not run this process indefinitely.
         setTimeout(() => {
           process.kill();
           reject(new Error("Timeout while waiting for app to start to get the process PID."));
-        }, 2000);
+        }, 10000);
       });
 
     if (!this.nativeLogsOutputChannel) {
@@ -415,7 +425,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
 
     this.nativeLogsOutputChannel.clear();
-    const pid = await extractPidFromLogcat();
+    const pid = await extractPidFromLogcat(this.nativeLogsCancelToken);
     const process = exec(ADB_PATH, ["logcat", "--pid", pid]);
     this.nativeLogsCancelToken.adapt(process);
 
