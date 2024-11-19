@@ -21,7 +21,7 @@
   color: var(--swm-landing-heading);
 }
 
-.headingLabel :nth-child(2) {
+.headingLabel span {
   color: var(--swm-green-light-100);
 }
 
@@ -41,7 +41,8 @@
   display: flex;
   gap: 1rem;
   align-items: center;
-  margin: 1rem 0;
+  /* margin: 1rem 0; */
+  margin-bottom: 2rem;
 }
 .poweredBy p {
   margin: 0;
@@ -68,6 +69,16 @@
   width: 100%;
   height: auto;
   margin-bottom: -10px;
+}
+
+.logo {
+  width: 140px;
+  height: auto;
+}
+
+.swmLogoWrapper {
+  display: flex;
+  align-items: center;
 }
 
 .headingDisclaimer {

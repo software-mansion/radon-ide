@@ -14,43 +14,40 @@ const StartScreen = () => {
         </div>
       </div>
       <div className={styles.heading}>
-        <div>
-          <h1 className={styles.headingLabel}>
-            {"An IDE for React Native".split(" ").map((word, index) => (
-              <motion.span
-                key={index}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}>
-                {word}
-              </motion.span>
-            ))}
-          </h1>
-          <motion.h2
-            className={styles.subheadingLabel}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}>
-            Radon IDE is VSCode extension that turns your editor into a fully fledged IDE for React
-            Native and Expo.
-          </motion.h2>
-          <div className={styles.poweredBy}>
-            <p>by</p>
-            <a href="https://swmansion.com" target="_blank">
-              <img
-                src={useBaseUrl("/img/swm-logo.svg")}
-                alt="Software Mansion"
-                className={styles.swmLogo}
-              />
-            </a>
-          </div>
-        </div>
+        <motion.div
+          className={styles.poweredBy}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}>
+          <img src={useBaseUrl("/img/logo.svg")} alt="Radon IDE logo" className={styles.logo} />
+          <p>by</p>
+          <a href="https://swmansion.com" target="_blank" className={styles.swmLogoWrapper}>
+            <img
+              src={useBaseUrl("/img/swm-logo.svg")}
+              alt="Software Mansion"
+              className={styles.swmLogo}
+            />
+          </a>
+        </motion.div>
+        <motion.h1
+          className={styles.headingLabel}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}>
+          An <span>IDE</span> for React Native
+        </motion.h1>
+        <motion.h2
+          className={styles.subheadingLabel}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}>
+          Radon IDE is VSCode extension that turns your editor into a fully fledged IDE for React
+          Native and Expo.
+        </motion.h2>
         <div className={styles.buttonContainer}>
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.8 }}>
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}>
             <HomepageButton
               target="_blank"
               href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
@@ -58,10 +55,14 @@ const StartScreen = () => {
             />
           </motion.div>
         </div>
-        <div className={styles.headingDisclaimer}>
+        <motion.div
+          className={styles.headingDisclaimer}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}>
           <InfoIcon className={styles.headingDisclaimerIcon} />
           Works with VSCode 1.86+ and Cursor 0.32 on macOS and Windows
-        </div>
+        </motion.div>
       </div>
     </section>
   );
