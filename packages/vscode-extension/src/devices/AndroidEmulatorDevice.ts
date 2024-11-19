@@ -75,7 +75,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
-    this.mirrorNativeLogsDispose();
+    this.nativeLogsOutputChannel?.dispose();
+    this.nativeLogsProcess?.kill();
     // If the emulator process does not shut down initially due to ongoing activities or processes,
     // a forced termination (kill signal) is sent after a certain timeout period.
     setTimeout(() => {
@@ -374,11 +375,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
       "-d",
       expoDeeplink,
     ]);
-  }
-
-  async mirrorNativeLogsDispose() {
-    this.nativeLogsOutputChannel?.dispose();
-    this.nativeLogsProcess?.kill();
   }
 
   async mirrorNativeLogs(build: AndroidBuildResult) {
