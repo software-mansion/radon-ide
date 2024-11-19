@@ -390,7 +390,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     const extractPidFromLogcat = async (cancelToken: CancelToken) =>
       new Promise<string>((resolve, reject) => {
         const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
-        const process = exec(ADB_PATH, ["logcat", "-e", regexString, '-T', startTime]);
+        const process = exec(ADB_PATH, ["logcat", "-e", regexString, "-T", startTime]);
         // console.log("line ---->", ["logcat", "-e", regexString].join(" "));
         cancelToken.adapt(process);
 
