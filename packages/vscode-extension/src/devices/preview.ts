@@ -6,30 +6,17 @@ import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
 import { RecordingData, TouchPoint } from "../common/Project";
 
-type VideoRecordingPromiseType = "recording" | "replay";
-
 interface VideoRecordingPromiseHandlers {
   resolve: (value: RecordingData) => void;
   reject: (reason?: any) => void;
 }
 
 export class Preview implements Disposable {
-  private videoRecordingPromises: Map<
-    VideoRecordingPromiseType,
-    VideoRecordingPromiseHandlers | undefined
-  >;
+  private videoRecordingPromises = new Map<string, VideoRecordingPromiseHandlers>();
   private subprocess?: ChildProcess;
   public streamURL?: string;
 
-  constructor(private args: string[]) {
-    this.videoRecordingPromises = new Map<
-      VideoRecordingPromiseType,
-      VideoRecordingPromiseHandlers | undefined
-    >();
-
-    this.videoRecordingPromises.set("recording", undefined);
-    this.videoRecordingPromises.set("replay", undefined);
-  }
+  constructor(private args: string[]) {}
 
   dispose() {
     this.subprocess?.kill();
@@ -43,9 +30,7 @@ export class Preview implements Disposable {
     stdin.write(command);
   }
 
-  private handleVideoRecordingPromise(
-    promiseType: VideoRecordingPromiseType
-  ): Promise<RecordingData> {
+  private saveVideoWithID(videoId: string): Promise<RecordingData> {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -58,14 +43,14 @@ export class Preview implements Disposable {
       rejectPromise = reject;
     });
 
-    const lastPromise = this.videoRecordingPromises.get(promiseType);
+    const lastPromise = this.videoRecordingPromises.get(videoId);
     if (lastPromise) {
       promise.then(lastPromise.resolve, lastPromise.reject);
     }
 
     const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
-    this.videoRecordingPromises.set(promiseType, newPromiseHandler);
-    stdin.write(`video ${promiseType} save\n`);
+    this.videoRecordingPromises.set(videoId, newPromiseHandler);
+    stdin.write(`video ${videoId} save\n`);
     return promise;
   }
 
@@ -120,12 +105,12 @@ export class Preview implements Disposable {
             ? videoErrorMatch[1]
             : "";
 
-          if (!this.videoRecordingPromises.has(videoId as VideoRecordingPromiseType)) {
+          if (!this.videoRecordingPromises.has(videoId)) {
             throw new Error(`Invalid video ID: ${videoId}`);
           }
 
-          const handlers = this.videoRecordingPromises.get(videoId as VideoRecordingPromiseType);
-          this.videoRecordingPromises.set(videoId as VideoRecordingPromiseType, undefined);
+          const handlers = this.videoRecordingPromises.get(videoId);
+          this.videoRecordingPromises.delete(videoId);
           if (handlers && videoReadyMatch) {
             // match array looks as follows:
             // [0] - full match
@@ -168,7 +153,7 @@ export class Preview implements Disposable {
   }
 
   public captureRecording() {
-    return this.handleVideoRecordingPromise("recording");
+    return this.saveVideoWithID("recording");
   }
 
   public startReplays() {
@@ -180,7 +165,7 @@ export class Preview implements Disposable {
   }
 
   public captureReplay() {
-    return this.handleVideoRecordingPromise("replay");
+    return this.saveVideoWithID("replay");
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {

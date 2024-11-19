@@ -130,7 +130,7 @@ function PreviewView() {
     }
   };
 
-  const MAX_RECORDING_TIME = 300;
+  const MAX_RECORDING_TIME_SEC = 300;
 
   const handleRecording = useCallback(async () => {
     try {
@@ -156,18 +156,15 @@ function PreviewView() {
       return;
     }
 
-    const interval = setInterval(() => {
+    setTimeout(() => {
       setRecordingTime((prevRecordingTime) => {
-        if (prevRecordingTime >= MAX_RECORDING_TIME - 1) {
-          clearInterval(interval);
+        if (prevRecordingTime >= MAX_RECORDING_TIME_SEC - 1) {
           handleRecording();
-          return MAX_RECORDING_TIME;
+          return MAX_RECORDING_TIME_SEC;
         }
         return prevRecordingTime + 1;
       });
     }, 1000);
-
-    return () => clearInterval(interval);
   }, [isRecording, handleRecording]);
 
   const handleReplay = async () => {
