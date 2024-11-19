@@ -19,6 +19,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { CancelToken } from "../builders/cancelToken";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -52,7 +53,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
   private nativeLogsOutputChannel: OutputChannel | undefined;
-  private nativeLogsProcess: ChildProcess | undefined;
+  private nativeLogsCancelToken = new CancelToken();
 
   constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
     super();
@@ -76,7 +77,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     super.dispose();
     this.emulatorProcess?.kill();
     this.nativeLogsOutputChannel?.dispose();
-    this.nativeLogsProcess?.kill();
+    this.nativeLogsCancelToken.cancel();
     // If the emulator process does not shut down initially due to ongoing activities or processes,
     // a forced termination (kill signal) is sent after a certain timeout period.
     setTimeout(() => {
@@ -378,12 +379,13 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async mirrorNativeLogs(build: AndroidBuildResult) {
-    const extractPidFromLogcat = async () =>
-      new Promise<string>((resolve, reject) => {
-        const process = exec(ADB_PATH, ["logcat"]);
+    const extractPidFromLogcat = async () => new Promise<string>(async (resolve, reject) => {
+        const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
+        const process = exec(ADB_PATH, ["logcat", "-e", regexString]);
+        this.nativeLogsCancelToken.adapt(process);
 
         lineReader(process).onLineRead((line) => {
-          const regex = new RegExp(`Start proc ([0-9]{4}):${build.packageName}`);
+          const regex = new RegExp(regexString);
 
           if (regex.test(line)) {
             const groups = regex.exec(line);
@@ -397,16 +399,24 @@ export class AndroidEmulatorDevice extends DeviceBase {
             }
           }
         });
+
+        // We should be able to get pid immediately, if we're not getting it in 2s, then we reject to not block the app. 
+        setTimeout(() => {
+          process.kill();
+          reject(new Error("Timeout while waiting for app to start to get the process PID."));
+        }, 2000);
       });
 
-    const nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (Android Emulator Logs)", 'log');
+    if (!this.nativeLogsOutputChannel) {
+      this.nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (Android Emulator Logs)", 'log');
+    }
+
+    this.nativeLogsOutputChannel.clear();
     const pid = await extractPidFromLogcat();
     const process = exec(ADB_PATH, ["logcat", "--pid", pid]);
+    this.nativeLogsCancelToken.adapt(process);
 
-    lineReader(process).onLineRead(nativeLogsOutputChannel.appendLine);
-
-    this.nativeLogsOutputChannel = nativeLogsOutputChannel;
-    this.nativeLogsProcess = process;
+    lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 
   async launchApp(build: BuildResult, metroPort: number, devtoolsPort: number) {
@@ -416,6 +426,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // terminate the app before launching, otherwise launch commands won't actually start the process which
     // may be in a bad state
     await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", build.packageName]);
+    
+    this.mirrorNativeLogs(build);
 
     const deepLinkChoice =
       build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
@@ -427,7 +439,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
       await this.configureMetroPort(build.packageName, metroPort);
       await this.launchWithBuild(build);
     }
-    this.mirrorNativeLogs(build);
   }
 
   async installApp(build: BuildResult, forceReinstall: boolean) {
