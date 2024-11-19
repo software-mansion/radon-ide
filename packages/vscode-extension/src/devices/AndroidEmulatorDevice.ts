@@ -379,7 +379,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async mirrorNativeLogs(build: AndroidBuildResult) {
-    const extractPidFromLogcat = async () => new Promise<string>(async (resolve, reject) => {
+    const extractPidFromLogcat = async () =>
+      new Promise<string>(async (resolve, reject) => {
         const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
         const process = exec(ADB_PATH, ["logcat", "-e", regexString]);
         this.nativeLogsCancelToken.adapt(process);
@@ -400,7 +401,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
           }
         });
 
-        // We should be able to get pid immediately, if we're not getting it in 2s, then we reject to not block the app. 
+        // We should be able to get pid immediately, if we're not getting it in 2s, then we reject to not block the app.
         setTimeout(() => {
           process.kill();
           reject(new Error("Timeout while waiting for app to start to get the process PID."));
@@ -408,7 +409,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
       });
 
     if (!this.nativeLogsOutputChannel) {
-      this.nativeLogsOutputChannel = window.createOutputChannel("Radon IDE (Android Emulator Logs)", 'log');
+      this.nativeLogsOutputChannel = window.createOutputChannel(
+        "Radon IDE (Android Emulator Logs)",
+        "log"
+      );
     }
 
     this.nativeLogsOutputChannel.clear();
@@ -426,7 +430,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // terminate the app before launching, otherwise launch commands won't actually start the process which
     // may be in a bad state
     await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", build.packageName]);
-    
+
     this.mirrorNativeLogs(build);
 
     const deepLinkChoice =
