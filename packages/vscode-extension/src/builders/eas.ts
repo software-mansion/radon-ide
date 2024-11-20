@@ -66,7 +66,7 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform) {
 
   if (!build.binaryUrl.endsWith(".apk") && !build.binaryUrl.endsWith(".apex")) {
     Logger.error(
-      `EAS build artefact needs to be in .apk or .apex format to work with the Radon IDE, make sure you set up eas to use "development" profile`
+      `EAS build artifact needs to be a development build in .apk or .apex format to work with the Radon IDE, make sure you set up eas to use "development" profile`
     );
     return undefined;
   }
