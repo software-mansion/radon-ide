@@ -309,8 +309,12 @@
                   }
                 }
               },
+              "packageManager": {
+                "type": "string",
+                "description": "Package manager used for the project (eg. yarn)."
+              },
               "preview": {
-                "description": "Custommize the behavior of device preview",
+                "description": "Customize the behavior of device preview",
                 "type": "object",
                 "properties": {
                   "waitForAppLaunch": {

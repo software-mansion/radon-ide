@@ -1,14 +1,20 @@
 import path from "path";
-import { promises as fs } from "fs";
+import fs from "fs";
 import { command } from "./subprocess";
 import { getAppRootFolder } from "./extensionContext";
 import { isWorkspaceRoot } from "./common";
 import { Logger } from "../Logger";
+import { getLaunchConfiguration } from "./launchConfiguration";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
   workspacePath?: string;
 };
+
+function isPackageManager(candidate: string): boolean {
+  const packageManagers = ["npm", "yarn", "pnpm", "bun"];
+  return packageManagers.includes(candidate);
+}
 
 export async function resolvePackageManager(): Promise<PackageManagerInfo | undefined> {
   function findWorkspace(appRoot: string) {
@@ -28,6 +34,12 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
   const workspacePath = findWorkspace(appRootPath);
 
   async function findPackageManager(workspace: string) {
+    const { packageManager } = getLaunchConfiguration();
+
+    if (packageManager && isPackageManager(packageManager)) {
+      return packageManager;
+    }
+
     try {
       const packageManager = require(path.join(workspace, "package.json")).packageManager;
 
@@ -50,7 +62,19 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
       } as const)
     );
 
-    const files = await fs.readdir(workspace);
+    const getDirFilesSortedByModificationDate = async (dir: string) => {
+      const files = await fs.promises.readdir(dir);
+
+      return files
+        .map((fileName) => ({
+          name: fileName,
+          time: fs.statSync(`${dir}/${fileName}`).mtime.getTime(),
+        }))
+        .sort((a, b) => a.time - b.time)
+        .map((file) => file.name);
+    };
+
+    const files = await getDirFilesSortedByModificationDate(workspace);
     const packageManagerCandidates = [];
     for (const file of files) {
       const packageManager = lockFiles.get(file);
