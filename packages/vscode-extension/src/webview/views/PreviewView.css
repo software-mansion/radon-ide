@@ -24,18 +24,6 @@
   margin-top: 8px;
 }
 
-.button-group-left {
-  display: flex;
-  transition: 0.5s;
-  transform: translateX(-40px);
-}
-
-.button-group-left-container {
-  position: absolute;
-  left: 10px;
-  display: flex;
-}
-
 .bar-spacer {
   flex: 1;
   max-height: 45px;
@@ -74,4 +62,30 @@
 
 .device-select {
   min-width: 200px;
+}
+
+.button-recording-on,
+.button-recording-on:hover {
+  background-color: var(--swm-button-recording-on-background);
+  border-radius: 10px;
+  width: auto;
+  padding: 0 5px 0 8px;
+}
+
+.recording-rec-indicator {
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 120%;
+  filter: blur(0.4px);
+  font-family: "Courier new", fixed;
+}
+
+.recording-rec-dot {
+  width: 13px;
+  height: 13px;
+  background-color: red;
+  align-self: center;
+  border-radius: 50%;
+  margin-right: 6px;
 }

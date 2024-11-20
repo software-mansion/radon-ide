@@ -1,4 +1,13 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, ReactNode } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  MouseEvent,
+  forwardRef,
+  RefObject,
+  ReactNode,
+  useCallback,
+} from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { Resizable } from "re-resizable";
@@ -35,7 +44,42 @@ declare module "react" {
   }
 }
 
-const HIDE_ZOOM_CONTROLS_DELAY = 2000;
+const SHOW_ZOOM_CONTROLS_DELAY_MS = 100;
+const HIDE_ZOOM_CONTROLS_DELAY_MS = 200;
+
+function useKeyPresses() {
+  const pressedKeys = useRef(new Set<number>());
+  const { project } = useProject();
+
+  const dispatchKeyPress = useCallback((e: KeyboardEvent) => {
+    const isKeydown = e.type === "keydown";
+    const hidCode = keyboardEventToHID(e);
+
+    if (hidCode) {
+      if (isKeydown) {
+        pressedKeys.current.add(hidCode);
+      } else {
+        pressedKeys.current.delete(hidCode);
+      }
+
+      project.dispatchKeyPress(hidCode, isKeydown ? "Down" : "Up");
+    } else {
+      console.warn(`Unrecognized keyboard input: ${e.code}`);
+    }
+  }, []);
+
+  const clearPressedKeys = useCallback(() => {
+    for (const keyCode of pressedKeys.current) {
+      project.dispatchKeyPress(keyCode, "Up");
+    }
+    pressedKeys.current.clear();
+  }, []);
+
+  return {
+    dispatchKeyPress,
+    clearPressedKeys,
+  };
+}
 
 function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
   return {
@@ -153,25 +197,34 @@ type ButtonGroupLeftProps = {
 function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   const [isMouseOver, setIsMouseOver] = useState(false);
 
+  const showButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
   const hideButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
 
-  const onMouseOver = () => {
+  const onMouseEnter = () => {
     clearTimeout(hideButtonGroupTimeout.current);
-    setIsMouseOver(true);
+    showButtonGroupTimeout.current = setTimeout(() => {
+      setIsMouseOver(true);
+    }, SHOW_ZOOM_CONTROLS_DELAY_MS);
   };
 
-  const onMouseOut = () => {
+  const onMouseLeave = () => {
+    clearTimeout(showButtonGroupTimeout.current);
     hideButtonGroupTimeout.current = setTimeout(() => {
       setIsMouseOver(false);
-    }, HIDE_ZOOM_CONTROLS_DELAY);
+    }, HIDE_ZOOM_CONTROLS_DELAY_MS);
   };
 
   return (
-    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} className="button-group-left-container">
-      <div
-        style={isMouseOver ? { transform: "translateX(0px)" } : {}}
-        className="button-group-left">
-        {children}
+    <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className="button-group-left-wrapper">
+      <div className="button-group-left-container">
+        <div
+          style={isMouseOver ? { transform: "translateX(0px)" } : {}}
+          className="button-group-left">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -215,6 +268,7 @@ function Preview({
   replayData,
   onReplayClose,
 }: Props) {
+  const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>();
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
@@ -223,6 +277,7 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
+  const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const workspace = useWorkspaceConfig();
   const { projectState, project } = useProject();
@@ -279,8 +334,12 @@ function Preview({
     project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
-  function sendMultiTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+  function sendMultiTouchForEvent(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
     const pt = getTouchPosition(event);
+    sendMultiTouch(pt, type);
+  }
+
+  function sendMultiTouch(pt: Point, type: MouseMove) {
     const secondPt = calculateMirroredTouchPosition(pt, anchorPoint);
     project.dispatchTouches(
       [
@@ -337,14 +396,15 @@ function Preview({
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isMultiTouching) {
+      setTouchPoint(getTouchPosition(e));
       isPanning && moveAnchorPoint(e);
-      isPressing && sendMultiTouch(e, "Move");
+      isPressing && sendMultiTouchForEvent(e, "Move");
     } else if (isPressing) {
       sendTouch(e, "Move");
     } else if (isInspecting) {
       sendInspect(e, "Move", false);
     }
-    setTouchPoint(getTouchPosition(e));
+    currentMousePosition.current = e;
   }
 
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
@@ -360,7 +420,7 @@ function Preview({
       sendInspect(e, "RightButtonDown", true);
     } else if (isMultiTouching) {
       setIsPressing(true);
-      sendMultiTouch(e, "Down");
+      sendMultiTouchForEvent(e, "Down");
     } else {
       setIsPressing(true);
       sendTouch(e, "Down");
@@ -371,7 +431,7 @@ function Preview({
     e.preventDefault();
     if (isPressing) {
       if (isMultiTouching) {
-        sendMultiTouch(e, "Up");
+        sendMultiTouchForEvent(e, "Up");
       } else {
         sendTouch(e, "Up");
       }
@@ -385,19 +445,20 @@ function Preview({
 
     if (isPressing) {
       if (isMultiTouching) {
-        sendMultiTouch(e, "Down");
+        sendMultiTouchForEvent(e, "Down");
       } else {
         sendTouch(e, "Down");
       }
     }
-    setTouchPoint(getTouchPosition(e));
+
+    currentMousePosition.current = e;
   }
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isPressing) {
       if (isMultiTouching) {
-        sendMultiTouch(e, "Up");
+        sendMultiTouchForEvent(e, "Up");
       } else {
         sendTouch(e, "Up");
       }
@@ -461,7 +522,9 @@ function Preview({
         setIsMultiTouching(false);
         setIsPressing(false);
       }
+      clearPressedKeys();
     }
+
     document.addEventListener("blur", onBlurChange, true);
     return () => {
       window.removeEventListener("contextmenu", onContextMenu);
@@ -496,25 +559,30 @@ function Preview({
         e.preventDefault();
         const isKeydown = e.type === "keydown";
 
-        const isMultitouchKeyPressed = Platform.select({
+        const isMultiTouchKey = Platform.select({
           macos: e.code === "AltLeft" || e.code === "AltRight",
           windows: e.code === "ControlLeft" || e.code === "ControlRight",
         });
 
-        if (isMultitouchKeyPressed) {
-          isKeydown && setAnchorPoint({ x: 0.5, y: 0.5 });
-          setIsMultiTouching(isKeydown);
+        const isPanningKey = e.code === "ShiftLeft" || e.code === "ShiftRight";
+
+        if (isMultiTouchKey && isKeydown) {
+          setAnchorPoint({ x: 0.5, y: 0.5 });
+          setTouchPoint(getTouchPosition(currentMousePosition.current!));
+          setIsMultiTouching(true);
         }
-        if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
+
+        if (isMultiTouchKey && !isKeydown) {
+          sendMultiTouch(touchPoint, "Up");
+          setIsPressing(false);
+          setIsMultiTouching(false);
+        }
+
+        if (isPanningKey) {
           setIsPanning(isKeydown);
         }
 
-        const hidCode = keyboardEventToHID(e);
-        if (hidCode) {
-          project.dispatchKeyPress(hidCode, isKeydown ? "Down" : "Up");
-        } else {
-          console.warn(`Unrecognized keyboard input: ${e.code}`);
-        }
+        dispatchKeyPress(e);
       }
     }
     document.addEventListener("keydown", keyEventHandler);

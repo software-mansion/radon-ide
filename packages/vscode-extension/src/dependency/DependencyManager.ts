@@ -141,7 +141,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
     // all managers support the `install` command
     await command(`${manager.name} install`, {
-      cwd: getAppRootFolder(),
+      cwd: manager.workspacePath ?? getAppRootFolder(),
       quietErrorsOnExit: true,
     });
 

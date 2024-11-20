@@ -64,17 +64,6 @@
   background-color: var(--swm-button-ternary-hover);
 }
 
-.button-counter {
-  position: relative;
-  top: -5px;
-  border: 0px solid transparent;
-  border-radius: 4px;
-  color: var(--swm-button-counter);
-  background-color: var(--swm-button-counter-background);
-  padding: 2px 4px;
-  font-size: 11px;
-}
-
 .button-absolute {
   position: absolute;
 }

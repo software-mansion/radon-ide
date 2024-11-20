@@ -9,9 +9,9 @@ Radon IDE is an extension for VSCode and Cursor that turns the code editor into 
 ### ✨ What does it do
 
 Radon IDE is a VSCode and Cursor extension that aims to streamline development of React Native and Expo applications.
-The current version supports developing on macOS for Android and iOS platforms with the current list of features available:
+The current version supports developing for iOS and Android on macOS and Windows (Android only) with the current list of features available:
 
-- Managing iOS and Android simulator (for now only iPhone Pro and Pixel 7 skins are available)
+- Managing iOS and Android simulator
 - Automatically build and launch your project (keeping track of native or javascript updates automatically)
 - Integrated debugger always available – when running the project you can set breakpoints in the editor and don't need to bother with any additional configuration to get your application to stop at those breakpoints
 - Element inspector that jumps to component code
@@ -22,16 +22,16 @@ The current version supports developing on macOS for Android and iOS platforms w
 
 ### 💽 Installation
 
-For installation instructions head to [INSTALLATION](https://ide.swmansion.com/docs/getting-started/installation) section.
+For installation instructions head to [Installation](https://ide.swmansion.com/docs/getting-started/installation) section in the documentation.
 
 ### 💻 Usage
 
-See [USAGE](https://ide.swmansion.com/docs/usage) guide on how to get started after installing the extension. You can also visit [Radon IDE](https://ide.swmansion.com) website where we highlight the most important features.
+See [Launching the IDE](https://ide.swmansion.com/docs/getting-started/launching) guide on how to get started after installing the extension. You can also visit [Feature highlight](https://ide.swmansion.com/docs/getting-started/feature-highlight) where we showcase the most important features.
 
 ### 🐛 Troubleshooting
 
-For troubleshooting and guide on reporting issues head to [TROUBLESHOOTING](https://ide.swmansion.com/docs/troubleshooting) section.
+For troubleshooting and guide on reporting issues head to [Troubleshooting](https://ide.swmansion.com/docs/guides/troubleshooting) section.
 
 ### ⚒️ Extension Development
 
-If you want to develop the extension and contribute updates head to [DEVELOPMENT](https://ide.swmansion.com/docs/development) section.
+If you want to develop the extension and contribute updates head to [Development](https://ide.swmansion.com/docs/guides/development) section.
