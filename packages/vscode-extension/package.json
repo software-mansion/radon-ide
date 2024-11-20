@@ -479,7 +479,7 @@
     "@vscode/codicons": "^0.0.35",
     "@vscode/debugadapter": "^1.51.0",
     "@vscode/debugprotocol": "^1.51.0",
-    "@vscode/extension-telemetry": "^0.9.6",
+    "@vscode/extension-telemetry": "github:software-mansion-labs/vscode-extension-telemetry",
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.0",
     "@vscode/vsce": "^2.22.0",
