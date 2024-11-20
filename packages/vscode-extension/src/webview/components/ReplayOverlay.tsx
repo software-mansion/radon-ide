@@ -18,7 +18,7 @@ function acceleratedRewind(
   setTimeCallback: (time: number) => void,
   readyCallback: () => void
 ) {
-  const rewindTimeSec = 1.6;
+  const rewindTimeSec = 0.6;
 
   const v0 = 0.1;
   const vFinal = 2 / rewindTimeSec - v0;
