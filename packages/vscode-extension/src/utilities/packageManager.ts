@@ -41,11 +41,11 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     }
 
     try {
-      const packageManager = require(path.join(workspace, "package.json")).packageManager;
+      const manager = require(path.join(workspace, "package.json")).packageManager;
 
-      if (packageManager) {
+      if (manager) {
         // e.g. yarn@3.6.4
-        const match = packageManager.match(/^([a-zA-Z]+)@/);
+        const match = manager.match(/^([a-zA-Z]+)@/);
         return match ? match[1] : "npm";
       }
     } catch (e) {
@@ -77,8 +77,8 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     const files = await getDirFilesSortedByModificationDate(workspace);
     const packageManagerCandidates = [];
     for (const file of files) {
-      const packageManager = lockFiles.get(file);
-      if (packageManager) {
+      const manager = lockFiles.get(file);
+      if (manager) {
         packageManagerCandidates.push(packageManager);
       }
     }
