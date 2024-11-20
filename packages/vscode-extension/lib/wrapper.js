@@ -8,9 +8,12 @@ const {
   RootTagContext,
   View,
   Linking,
-  findNodeHandle
+  findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
+
+// https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
+const OffscreenComponentReactTag = 22;
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -22,7 +25,7 @@ let navigationHistory = new Map();
 const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
-  }
+  },
 };
 
 const RNInternals = {
@@ -69,95 +72,56 @@ function useAgentListener(agent, eventName, listener, deps = []) {
   }, [agent, ...deps]);
 }
 
-function obtainGetInspectorDataForInstance() {
+function getRendererConfig() {
   const renderers = Array.from(window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.values());
   if (!renderers) {
     return undefined;
   }
   for (const renderer of renderers) {
     if (renderer.rendererConfig?.getInspectorDataForInstance) {
-      return renderer.rendererConfig.getInspectorDataForInstance;
+      return renderer.rendererConfig;
     }
   }
   return undefined;
-};
+}
 
-function createStackElement(
-  frame, name, source
-) {
-  return {
-    componentName: name,
-    source: {
-      fileName: source.fileName,
-      line0Based: source.lineNumber - 1,
-      column0Based: source.columnNumber - 1,
-    },
-    frame,
-  };
-};
+/**
+ * Return an array of component data representing a stack of components by traversing
+ * the component hierarchy up from the startNode.
+ * Each stack entry carries the component name, source location and measure function.
+ */
+function extractComponentStack(startNode) {
+  const rendererConfig = getRendererConfig();
 
-// Returns an array of promises which resolve to elements of the components hierarchy stack.
-function traverseComponentsTreeUp(startNode) {
-  const getInspectorDataForInstance = obtainGetInspectorDataForInstance();
-
-  if (!getInspectorDataForInstance) {
-    console.warn("Failed to obtain getInspectorDataForInstance renderer method.");
+  if (!rendererConfig) {
+    console.warn("Unable to find functional renderer config.");
     return [];
   }
 
-  const stackPromises = [];
+  const componentStack = [];
   let node = startNode;
 
-  // Optimization: we break after reaching fiber node corresponding to OffscreenComponent (with tag 22).
-  // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
-  while (node && node.tag !== 22) {
-    const data = getInspectorDataForInstance(node);
+  // Optimization: we break after reaching fiber node corresponding to OffscreenComponent
+  while (node && node.tag !== OffscreenComponentReactTag) {
+    const data = rendererConfig.getInspectorDataForInstance(node);
 
-    if (data.hierarchy && data.hierarchy.length > 0) {
-      stackPromises.push(new Promise((resolve, reject) => {
-        const item = data.hierarchy[data.hierarchy.length - 1];
-        const inspectorData = item.getInspectorData(findNodeHandle);
-        
-        if (!inspectorData.source) {
-          resolve(undefined);  
-          return;
-        }
-
-        try {
-          inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
-            const stackElementFrame = {
-              x: pageX,
-              y: pageY,
-              width: viewWidth,
-              height: viewHeight
-            };
-
-            const stackElement = createStackElement(stackElementFrame, item.name, inspectorData.source);
-            resolve(stackElement);
-          });
-        } catch (e) {
-          reject(e);
-        }
-      }));
-    };
+    const item = data.hierarchy[data.hierarchy.length - 1];
+    const inspectorData = item.getInspectorData(findNodeHandle);
+    if (inspectorData.source) {
+      componentStack.push({
+        measure: inspectorData.measure,
+        name: item.name,
+        source: inspectorData.source,
+      });
+    }
 
     node = node.return;
   }
-
-  return stackPromises;
-};
+  return componentStack;
+}
 
 function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
-
-  function scaleFrame(frame) {
-    return {
-      x: frame.x / screenWidth,
-      y: frame.y / screenHeight,
-      width: frame.width / screenWidth,
-      height: frame.height / screenHeight
-    };
-  };
 
   RNInternals.getInspectorDataForViewAtPoint(
     mainContainerRef.current,
@@ -165,33 +129,55 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
     y * screenHeight,
     (viewData) => {
       const frame = viewData.frame;
-      const scaledFrame = scaleFrame({
-        x: frame.left,
-        y: frame.top,
-        width: frame.width,
-        height: frame.height
-      });
+      const scaledFrame = {
+        x: frame.left / screenWidth,
+        y: frame.top / screenHeight,
+        width: frame.width / screenWidth,
+        height: frame.height / screenHeight,
+      };
 
       if (!requestStack) {
         callback({ frame: scaledFrame });
         return;
       }
 
-      Promise.all(traverseComponentsTreeUp(viewData.closestInstance, []))
-        .then((stack) => stack.filter(Boolean))
-        .then((stack) => 
-          stack.map((stackElement) => ({
-            ...stackElement,
-            frame: scaleFrame(stackElement.frame)
-          }))
-        ).then((scaledStack) => 
-          callback({
-            frame: scaledFrame,
-            stack: scaledStack
-          }));
-      }
+      const inspectorDataStack = extractComponentStack(viewData.closestInstance);
+      Promise.all(
+        inspectorDataStack.map(
+          (inspectorData) =>
+            new Promise((res, rej) => {
+              try {
+                inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
+                  const source = inspectorData.source;
+                  res({
+                    componentName: inspectorData.name,
+                    source: {
+                      fileName: source.fileName,
+                      line0Based: source.lineNumber - 1,
+                      column0Based: source.columnNumber - 1,
+                    },
+                    frame: {
+                      x: pageX / screenWidth,
+                      y: pageY / screenHeight,
+                      width: viewWidth / screenWidth,
+                      height: viewHeight / screenHeight,
+                    },
+                  });
+                });
+              } catch (e) {
+                rej(e);
+              }
+            })
+        )
+      ).then((componentDataStack) => {
+        callback({
+          frame: scaledFrame,
+          stack: componentDataStack,
+        });
+      });
+    }
   );
-};
+}
 
 export function AppWrapper({ children, initialProps, fabric }) {
   const rootTag = useContext(RootTagContext);
@@ -306,18 +292,13 @@ export function AppWrapper({ children, initialProps, fabric }) {
     (payload) => {
       const { id, x, y, requestStack } = payload;
 
-      getInspectorDataForCoordinates(
-        mainContainerRef, 
-        x,
-        y,
-        requestStack,
-        (inspectorData) => {
-          devtoolsAgent._bridge.send("RNIDE_inspectData", {
-            id,
-            ...inspectorData
-          });
+      getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
+        devtoolsAgent._bridge.send("RNIDE_inspectData", {
+          id,
+          ...inspectorData,
         });
-      },
+      });
+    },
     [mainContainerRef]
   );
 
