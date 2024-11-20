@@ -4,7 +4,6 @@ import { command } from "./subprocess";
 import { getAppRootFolder } from "./extensionContext";
 import { isWorkspaceRoot } from "./common";
 import { Logger } from "../Logger";
-import { window } from "vscode";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
@@ -63,10 +62,6 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     if (packageManagerCandidates.length > 1) {
       Logger.warn(
         "Your workspace contains multiple package manager lock files, it might cause wrong manager to be used"
-      );
-      window.showWarningMessage(
-        "Your workspace contains multiple package manager lock files, it might cause wrong manager to be used.",
-        "dismiss"
       );
     }
 
