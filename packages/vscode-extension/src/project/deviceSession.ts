@@ -85,10 +85,12 @@ export class DeviceSession implements Disposable {
   public async perform(type: ReloadAction) {
     switch (type) {
       case "reinstall":
+        this.debugSession?.dispose();
         await this.installApp({ reinstall: true });
         await this.launchApp();
         return true;
       case "restartProcess":
+        this.debugSession?.dispose();
         await this.launchApp();
         return true;
       case "reloadJs":
