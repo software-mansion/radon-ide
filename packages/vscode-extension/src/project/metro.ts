@@ -9,6 +9,7 @@ import { extensionContext, getAppRootFolder } from "../utilities/extensionContex
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -350,11 +351,21 @@ export class Metro implements Disposable {
     // be 1, reanimated worklet runtime would get 2, etc.)
     // The most recent runtimes are listed first, so we can pick the first one with title
     // that that starts with "React Native Bridge" (which is the main runtime)
-    for (const page of listJson) {
-      if (page.reactNative && page.title.startsWith("React Native Bridge")) {
-        return page.webSocketDebuggerUrl;
+    const newDebuggerPages = listJson.filter(
+      (page) => page.reactNative && page.title.startsWith("React Native Bridge")
+    );
+    if (newDebuggerPages.length > 0) {
+      // Expo go apps would report at least two pages, first one being the Expo Go host runtime
+      // If we detect Expo Go package (using description field), we want to pick the second page
+      // otherwise we pick the first one
+      const description = newDebuggerPages[0].description;
+      const isExpoGo = description === EXPO_GO_BUNDLE_ID || description === EXPO_GO_PACKAGE_NAME;
+      if (isExpoGo && newDebuggerPages.length > 1) {
+        return newDebuggerPages[1].webSocketDebuggerUrl;
       }
+      return newDebuggerPages[0].webSocketDebuggerUrl;
     }
+    return undefined;
   }
 
   private async fetchDebuggerURL() {
