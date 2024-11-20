@@ -24,18 +24,6 @@
   margin-top: 8px;
 }
 
-.button-group-left {
-  display: flex;
-  transition: 0.5s;
-  transform: translateX(-40px);
-}
-
-.button-group-left-container {
-  position: absolute;
-  left: 10px;
-  display: flex;
-}
-
 .bar-spacer {
   flex: 1;
   max-height: 45px;

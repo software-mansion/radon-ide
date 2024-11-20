@@ -44,7 +44,8 @@ declare module "react" {
   }
 }
 
-const HIDE_ZOOM_CONTROLS_DELAY = 2000;
+const SHOW_ZOOM_CONTROLS_DELAY_MS = 100;
+const HIDE_ZOOM_CONTROLS_DELAY_MS = 200;
 
 function useKeyPresses() {
   const pressedKeys = useRef(new Set<number>());
@@ -196,25 +197,34 @@ type ButtonGroupLeftProps = {
 function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
   const [isMouseOver, setIsMouseOver] = useState(false);
 
+  const showButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
   const hideButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
 
-  const onMouseOver = () => {
+  const onMouseEnter = () => {
     clearTimeout(hideButtonGroupTimeout.current);
-    setIsMouseOver(true);
+    showButtonGroupTimeout.current = setTimeout(() => {
+      setIsMouseOver(true);
+    }, SHOW_ZOOM_CONTROLS_DELAY_MS);
   };
 
-  const onMouseOut = () => {
+  const onMouseLeave = () => {
+    clearTimeout(showButtonGroupTimeout.current);
     hideButtonGroupTimeout.current = setTimeout(() => {
       setIsMouseOver(false);
-    }, HIDE_ZOOM_CONTROLS_DELAY);
+    }, HIDE_ZOOM_CONTROLS_DELAY_MS);
   };
 
   return (
-    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} className="button-group-left-container">
-      <div
-        style={isMouseOver ? { transform: "translateX(0px)" } : {}}
-        className="button-group-left">
-        {children}
+    <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className="button-group-left-wrapper">
+      <div className="button-group-left-container">
+        <div
+          style={isMouseOver ? { transform: "translateX(0px)" } : {}}
+          className="button-group-left">
+          {children}
+        </div>
       </div>
     </div>
   );

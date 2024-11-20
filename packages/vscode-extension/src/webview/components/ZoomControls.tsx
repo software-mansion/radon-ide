@@ -29,13 +29,18 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
     [onZoomChanged]
   );
 
+  const hasTwoDecimalPrecision = zoomLevel !== "Fit" && zoomLevel.toString().length > 3;
+  const fontStretchStyle = hasTwoDecimalPrecision ? "ultra-condensed" : "semi-condensed";
+
   return (
     <Select.Root
       onValueChange={onValueChange}
       value={zoomLevel === "Fit" ? "Fit" : zoomLevel.toString()}>
       <Select.Trigger className="zoom-select-trigger" disabled={false}>
         <Select.Value>
-          <div className="zoom-select-value">{zoomLevel === "Fit" ? "Fit" : `${zoomLevel}x`}</div>
+          <div style={{ fontStretch: fontStretchStyle }} className="zoom-select-value">
+            {zoomLevel === "Fit" ? "Fit" : `${zoomLevel}x`}
+          </div>
         </Select.Value>
       </Select.Trigger>
 
