@@ -37,11 +37,6 @@ const StartScreen = () => {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}>
-          {/* {"An IDE for React Native".split(" ").map((word, index) => (
-            <span key={index} className={styles.headingWord}>
-              {word}
-            </span>
-          ))} */}
           An <span>IDE</span> for&nbsp;React Native
           <motion.div
             initial={{ x: 0, opacity: 0 }}
