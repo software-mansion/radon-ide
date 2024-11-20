@@ -116,8 +116,8 @@ export class Preview implements Disposable {
             const tempFileLocation = videoReadyMatch[3];
             const ext = path.extname(tempFileLocation);
             const fileName = workspace.name
-              ? `${workspace.name}-RadonIDE-${videoId}${ext}`
-              : `RadonIDE-${videoId}${ext}`;
+              ? `${workspace.name} ${videoId}${ext}`
+              : `${videoId}${ext}`;
             handlers.resolve({
               url: videoReadyMatch[2],
               tempFileLocation,
