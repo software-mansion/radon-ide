@@ -19,6 +19,7 @@ import { DevicePlatform } from "../../common/DeviceManager";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
+import ReplayIcon from "./icons/ReplayIcon";
 
 const contentSizes = [
   "xsmall",
@@ -160,10 +161,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Open Deep Link
           </DropdownMenu.Item>
           <div className="dropdown-menu-item">
-            <span className="icons-container">
-              <span className="codicon codicon-triangle-left icons-rewind" />
-              <span className="codicon codicon-triangle-left icons-rewind" />
-            </span>
+            <ReplayIcon />
             Enable Replays
             <Switch.Root
               className="switch-root small-switch"

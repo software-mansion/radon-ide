@@ -145,6 +145,8 @@ export interface ProjectInterface {
   getDeepLinksHistory(): Promise<string[]>;
   openDeepLink(link: string): Promise<void>;
 
+  startRecording(): void;
+  captureAndStopRecording(): Promise<RecordingData>;
   captureReplay(): Promise<RecordingData>;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;

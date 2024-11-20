@@ -7,6 +7,7 @@ export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   children: React.ReactNode;
   disabled?: boolean;
+  counter?: number;
   active?: boolean;
   type?: "primary" | "secondary";
   size?: "default" | "small";
@@ -20,6 +21,7 @@ export interface IconButtonProps {
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, ref) => {
   const {
+    counter,
     children,
     onClick,
     tooltip,
@@ -44,6 +46,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
       {...rest}
       ref={ref}>
       {children}
+      {Boolean(counter) && <span className="icon-button-counter">{counter}</span>}
     </button>
   );
 
