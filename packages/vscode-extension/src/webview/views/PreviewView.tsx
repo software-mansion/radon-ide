@@ -28,6 +28,8 @@ import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 
+const MAX_RECORDING_TIME_SEC = 10 * 60;
+
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
   devicesNotFound: boolean;
@@ -130,52 +132,54 @@ function PreviewView() {
     }
   };
 
-  const MAX_RECORDING_TIME_SEC = 300;
+  function startRecording() {
+    project.startRecording();
+    setIsRecording(true);
+  }
 
-  const handleRecording = useCallback(async () => {
+  async function stopRecording(saveVideo = true) {
     try {
-      if (!isRecording) {
-        setIsRecording(true);
-        project.startRecording();
-      } else {
-        const recordingData = await project.captureAndStopRecording();
-        if (recordingTime > 0) {
-          saveVideoRecording(recordingData);
-        }
-        setIsRecording(false);
-        setRecordingTime(0);
+      setIsRecording(false);
+      setRecordingTime(0);
+      const recordingData = await project.captureAndStopRecording();
+      if (saveVideo && recordingTime > 0) {
+        saveVideoRecording(recordingData);
       }
     } catch (e) {
       showDismissableError("Failed to capture recording");
     }
-  }, [isRecording, recordingTime]);
+  }
+
+  function toggleRecording() {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }
 
   useEffect(() => {
-    if (!isRecording) {
-      setRecordingTime(0);
-      return;
+    if (isRecording) {
+      const interval = setInterval(() => {
+        setRecordingTime((prevRecordingTime) => {
+          if (prevRecordingTime >= MAX_RECORDING_TIME_SEC - 1) {
+            stopRecording(false);
+            return 0;
+          }
+          return prevRecordingTime + 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
     }
+  }, [isRecording]);
 
-    const timer = setTimeout(() => {
-      setRecordingTime((prevRecordingTime) => {
-        if (prevRecordingTime >= MAX_RECORDING_TIME_SEC - 1) {
-          handleRecording();
-          return MAX_RECORDING_TIME_SEC;
-        }
-        return prevRecordingTime + 1;
-      });
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [isRecording, handleRecording]);
-
-  const handleReplay = async () => {
+  async function handleReplay() {
     try {
       setReplayData(await project.captureReplay());
     } catch (e) {
       showDismissableError("Failed to capture replay");
     }
-  };
+  }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
     openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
@@ -204,7 +208,7 @@ function PreviewView() {
             tooltip={{
               label: isRecording ? "Stop screen recording" : "Start screen recording",
             }}
-            onClick={handleRecording}
+            onClick={toggleRecording}
             disabled={isStarting}>
             {isRecording ? (
               <div className="recording-rec-indicator">
