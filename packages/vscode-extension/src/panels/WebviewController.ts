@@ -69,7 +69,7 @@ export class WebviewController implements Disposable {
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
-    getTelemetryReporter().sendTelemetryEvent("panelOpened");
+    getTelemetryReporter().sendTelemetryEvent("panelOpened-test20");
   }
 
   public asWebviewUri(uri: Uri) {

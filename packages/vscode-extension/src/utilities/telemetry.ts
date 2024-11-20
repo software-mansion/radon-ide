@@ -1,7 +1,7 @@
-import TelemetryReporter from "@vscode/extension-telemetry";
+import TelemetryReporter from "@software-mansion-labs/extension-telemetry";
 import { extensionContext } from "./extensionContext";
 
-const PUBLIC_INSIGHTS_KEY = "6709dbd6-92e7-40f6-be09-618db8a85ce9";
+const PUBLIC_INSIGHTS_KEY = "InstrumentationKey=6709dbd6-92e7-40f6-be09-618db8a85ce9";
 
 let reporter: TelemetryReporter | undefined;
 
