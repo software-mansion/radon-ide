@@ -30,7 +30,8 @@ function BuildErrorActions({
         onClick={() => {
           if (logsButtonDestination === "extension") {
             project.focusExtensionLogsOutput();
-            return;
+          } else {
+            project.focusBuildOutput();
           }
           project.focusBuildOutput();
         }}
