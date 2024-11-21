@@ -226,6 +226,9 @@ export class DeviceSession implements Disposable {
   }
 
   private async startDebugger() {
+    if (this.debugSession) {
+      this.debugSession.dispose();
+    }
     this.debugSession = new DebugSession(this.metro, this.debugEventDelegate);
     const started = await this.debugSession.start();
     if (started) {
