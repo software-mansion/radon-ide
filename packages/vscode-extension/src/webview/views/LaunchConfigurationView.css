@@ -8,6 +8,7 @@
   font-size: 13px;
   line-height: 1;
   height: 26px;
+  width: 100%;
   gap: 5px;
   color: var(--swm-default-text);
   background-color: var(--swm-select-background);
@@ -32,4 +33,39 @@
 
 .launch-configuration-section-margin {
   margin-bottom: 10px;
+}
+
+.app-root-change-title {
+  color: var(--swm-default-text);
+  margin-top: 0;
+}
+
+.app-root-change-subtitle {
+  color: var(--swm-secondary-text);
+  margin: 16px 0;
+}
+
+.app-root-change-button-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.app-root-change-button {
+  width: 100px;
+}
+
+.custom-app-root-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.custom-app-root-input {
+  margin-bottom: 0px;
 }
