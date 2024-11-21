@@ -15,7 +15,6 @@ import {
   StackFrame,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
-import WebSocket from "ws";
 import { NullablePosition, SourceMapConsumer } from "source-map";
 import { formatMessage } from "./logFormatting";
 import { Logger } from "../Logger";
@@ -26,14 +25,8 @@ import {
   CDPRemoteObject,
 } from "./cdp";
 import { VariableStore } from "./variableStore";
-
-type ResolveType<T = unknown> = (result: T) => void;
-type RejectType = (error: unknown) => void;
-
-interface PromiseHandlers<T = unknown> {
-  resolve: ResolveType<T>;
-  reject: RejectType;
-}
+import { MyBreakpoint } from "./MyBreakpoint";
+import { CDPCommunicator } from "./CDPCommunicator";
 
 function compareIgnoringHost(url1: string, url2: string) {
   try {
@@ -57,29 +50,10 @@ function typeToCategory(type: string) {
   }
 }
 
-class MyBreakpoint extends Breakpoint {
-  public readonly line: number;
-  public readonly column: number | undefined;
-  private _id: number | undefined;
-  constructor(verified: boolean, line: number, column?: number, source?: Source) {
-    super(verified, line, column, source);
-    this.column = column;
-    this.line = line;
-  }
-  setId(id: number): void {
-    super.setId(id);
-    this._id = id;
-  }
-  getId(): number | undefined {
-    // we cannot use `get id` here, because Breakpoint actually has a private field
-    // called id, and it'd collide with this getter making it impossible to set it
-    return this._id;
-  }
-}
-
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
-  private connection: WebSocket;
+  private CDPCommunicator: CDPCommunicator;
+  // private connection: WebSocket;
   private sourceMapAliases?: Array<[string, string]>;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
@@ -93,126 +67,94 @@ export class DebugAdapter extends DebugSession {
   constructor(configuration: DebugConfiguration) {
     super();
     this.sourceMapAliases = configuration.sourceMapAliases;
-    this.connection = new WebSocket(configuration.websocketAddress);
+    this.CDPCommunicator = new CDPCommunicator(
+      configuration.websocketAddress,
+      () => {
+        this.sendEvent(new TerminatedEvent());
+      },
+      this.handleIncomingCDPMethods
+    );
     this.expoPreludeLineCount = configuration.expoPreludeLineCount;
+  }
 
-    this.connection.on("open", () => {
-      // the below catch handler is used to ignore errors coming from non critical CDP messages we
-      // expect in some setups to fail
-      const ignoreError = () => {};
-      this.sendCDPMessage("FuseboxClient.setClientMetadata", {}).catch(ignoreError);
-      this.sendCDPMessage("Runtime.enable", {});
-      this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
-      this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
-      this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(ignoreError);
-      this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(ignoreError);
-      this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {}).catch(ignoreError);
-    });
+  private handleIncomingCDPMethods = async (message: any) => {
+    switch (message.method) {
+      case "Runtime.executionContextCreated":
+        const context = message.params.context;
+        const threadId = context.id;
+        const threadName = context.name;
+        this.sendEvent(new ThreadEvent("started", threadId));
+        this.threads.push(new Thread(threadId, threadName));
+        break;
+      case "Debugger.scriptParsed":
+        const sourceMapURL = message.params.sourceMapURL;
 
-    this.connection.on("close", () => {
-      this.sendEvent(new TerminatedEvent());
-    });
+        if (sourceMapURL?.startsWith("data:")) {
+          const base64Data = sourceMapURL.split(",")[1];
+          const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
+          const sourceMap = JSON.parse(decodedData);
+          const consumer = await new SourceMapConsumer(sourceMap);
 
-    this.connection.on("message", async (data) => {
-      const message = JSON.parse(data.toString());
-      if (message.result || message.error) {
-        const messagePromise = this.cdpMessagePromises.get(message.id);
-        this.cdpMessagePromises.delete(message.id);
-        if (message.result && messagePromise?.resolve) {
-          messagePromise.resolve(message.result);
-        } else if (message.error && messagePromise?.reject) {
-          Logger.warn("CDP message error received", message.error);
-          // create an error object such that we can capture stack trace and assign
-          // all object error properties as provided by CDP
-          const error = new Error();
-          Object.assign(error, message.error);
-          messagePromise.reject(error);
-        }
-        return;
-      }
-      switch (message.method) {
-        case "Runtime.executionContextCreated":
-          const context = message.params.context;
-          const threadId = context.id;
-          const threadName = context.name;
-          this.sendEvent(new ThreadEvent("started", threadId));
-          this.threads.push(new Thread(threadId, threadName));
-          break;
-        case "Debugger.scriptParsed":
-          const sourceMapURL = message.params.sourceMapURL;
+          // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
+          const isMainBundle = sourceMap.sources.some((source: string) =>
+            source.includes("__prelude__")
+          );
 
-          if (sourceMapURL?.startsWith("data:")) {
-            const base64Data = sourceMapURL.split(",")[1];
-            const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
-            const sourceMap = JSON.parse(decodedData);
-            const consumer = await new SourceMapConsumer(sourceMap);
-
-            // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
-            const isMainBundle = sourceMap.sources.some((source: string) =>
-              source.includes("__prelude__")
-            );
-
-            if (isMainBundle) {
-              this.sendCDPMessage("Runtime.evaluate", {
-                expression: "__RNIDE_onDebuggerReady()",
-              });
-            }
-
-            // Expo env plugin has a bug that causes the bundle to include so-called expo prelude module named __env__
-            // which is not present in the source map. As a result, the line numbers are shifted by the amount of lines
-            // the __env__ module adds. If we detect that main bundle is loaded, but __env__ is not there, we use the provided
-            // expoPreludeLineCount which reflects the number of lines in __env__ module to offset the line numbers in the source map.
-            const bundleContainsExpoPrelude = sourceMap.sources.includes("__env__");
-            let lineOffset = 0;
-            if (isMainBundle && !bundleContainsExpoPrelude && this.expoPreludeLineCount > 0) {
-              Logger.debug(
-                "Expo prelude lines were detected and an offset was set to:",
-                this.expoPreludeLineCount
-              );
-              lineOffset = this.expoPreludeLineCount;
-            }
-
-            this.sourceMaps.push([
-              message.params.url,
-              message.params.scriptId,
-              consumer,
-              lineOffset,
-            ]);
-            this.updateBreakpointsInSource(message.params.url, consumer);
+          if (isMainBundle) {
+            this.CDPCommunicator.sendCDPMessage("Runtime.evaluate", {
+              expression: "__RNIDE_onDebuggerReady()",
+            });
           }
 
-          this.sendEvent(new InitializedEvent());
-          break;
-        case "Debugger.paused":
-          this.handleDebuggerPaused(message);
-          break;
-        case "Debugger.resumed":
-          this.sendEvent(new ContinuedEvent(this.threads[0].id));
-          break;
-        case "Runtime.executionContextsCleared":
-          // clear all existing threads, source maps, and variable store
-          const allThreads = this.threads;
-          this.threads = [];
-          this.sourceMaps = [];
-          this.variableStore.clearReplVariables();
-          this.variableStore.clearCDPVariables();
+          // Expo env plugin has a bug that causes the bundle to include so-called expo prelude module named __env__
+          // which is not present in the source map. As a result, the line numbers are shifted by the amount of lines
+          // the __env__ module adds. If we detect that main bundle is loaded, but __env__ is not there, we use the provided
+          // expoPreludeLineCount which reflects the number of lines in __env__ module to offset the line numbers in the source map.
+          const bundleContainsExpoPrelude = sourceMap.sources.includes("__env__");
+          let lineOffset = 0;
+          if (isMainBundle && !bundleContainsExpoPrelude && this.expoPreludeLineCount > 0) {
+            Logger.debug(
+              "Expo prelude lines were detected and an offset was set to:",
+              this.expoPreludeLineCount
+            );
+            lineOffset = this.expoPreludeLineCount;
+          }
 
-          // send events for all threads that exited
-          allThreads.forEach((thread) => {
-            this.sendEvent(new ThreadEvent("exited", thread.id));
-          });
+          this.sourceMaps.push([message.params.url, message.params.scriptId, consumer, lineOffset]);
+          this.updateBreakpointsInSource(message.params.url, consumer);
+        }
 
-          // send event to clear console
-          this.sendEvent(new OutputEvent("\x1b[2J", "console"));
-          break;
-        case "Runtime.consoleAPICalled":
-          this.handleConsoleAPICall(message);
-          break;
-        default:
-          break;
-      }
-    });
-  }
+        this.sendEvent(new InitializedEvent());
+        break;
+      case "Debugger.paused":
+        this.handleDebuggerPaused(message);
+        break;
+      case "Debugger.resumed":
+        this.sendEvent(new ContinuedEvent(this.threads[0].id));
+        break;
+      case "Runtime.executionContextsCleared":
+        // clear all existing threads, source maps, and variable store
+        const allThreads = this.threads;
+        this.threads = [];
+        this.sourceMaps = [];
+        this.variableStore.clearReplVariables();
+        this.variableStore.clearCDPVariables();
+
+        // send events for all threads that exited
+        allThreads.forEach((thread) => {
+          this.sendEvent(new ThreadEvent("exited", thread.id));
+        });
+
+        // send event to clear console
+        this.sendEvent(new OutputEvent("\x1b[2J", "console"));
+        break;
+      case "Runtime.consoleAPICalled":
+        this.handleConsoleAPICall(message);
+        break;
+      default:
+        break;
+    }
+  };
 
   private async handleConsoleAPICall(message: any) {
     // We wrap console calls and add stack information as last three arguments, however
@@ -384,7 +326,7 @@ export class DebugAdapter extends DebugSession {
       const localScopeVariables = await this.variableStore.get(
         localScopeObjectId,
         (params: object) => {
-          return this.sendCDPMessage("Runtime.getProperties", params);
+          return this.CDPCommunicator.sendCDPMessage("Runtime.getProperties", params);
         }
       );
       const errorMessage = localScopeVariables.find((v) => v.name === "message")?.value;
@@ -394,7 +336,7 @@ export class DebugAdapter extends DebugSession {
       const stackObjectProperties = await this.variableStore.get(
         stackObjectId!,
         (params: object) => {
-          return this.sendCDPMessage("Runtime.getProperties", params);
+          return this.CDPCommunicator.sendCDPMessage("Runtime.getProperties", params);
         }
       );
 
@@ -408,7 +350,7 @@ export class DebugAdapter extends DebugSession {
             const stackObjProperties = await this.variableStore.get(
               stackObjEntry.variablesReference,
               (params: object) => {
-                return this.sendCDPMessage("Runtime.getProperties", params);
+                return this.CDPCommunicator.sendCDPMessage("Runtime.getProperties", params);
               }
             );
             const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
@@ -457,21 +399,6 @@ export class DebugAdapter extends DebugSession {
       this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id, "Yollo"));
       this.sendEvent(new Event("RNIDE_paused"));
     }
-  }
-
-  private cdpMessageId = 0;
-  private cdpMessagePromises: Map<number, PromiseHandlers> = new Map();
-
-  public async sendCDPMessage(method: string, params: object) {
-    const message = {
-      id: ++this.cdpMessageId,
-      method: method,
-      params: params,
-    };
-    this.connection.send(JSON.stringify(message));
-    return new Promise<any>((resolve, reject) => {
-      this.cdpMessagePromises.set(message.id, { resolve, reject });
-    });
   }
 
   protected initializeRequest(
@@ -524,7 +451,7 @@ export class DebugAdapter extends DebugSession {
   private async setCDPBreakpoint(file: string, line: number, column: number) {
     const generatedPos = this.toGeneratedPosition(file, line, column);
     if (generatedPos) {
-      const result = await this.sendCDPMessage("Debugger.setBreakpointByUrl", {
+      const result = await this.CDPCommunicator.sendCDPMessage("Debugger.setBreakpointByUrl", {
         // in CDP line and column numbers are 0-based
         lineNumber: generatedPos.lineNumber1Based - 1,
         url: generatedPos.source,
@@ -555,7 +482,9 @@ export class DebugAdapter extends DebugSession {
       const breakpoints = this.breakpoints.get(absoluteFilePath) || [];
       breakpoints.forEach(async (bp) => {
         if (bp.verified) {
-          this.sendCDPMessage("Debugger.removeBreakpoint", { breakpointId: bp.getId() });
+          this.CDPCommunicator.sendCDPMessage("Debugger.removeBreakpoint", {
+            breakpointId: bp.getId(),
+          });
         }
         const newId = await this.setCDPBreakpoint(
           sourceMapPath,
@@ -597,7 +526,9 @@ export class DebugAdapter extends DebugSession {
         bp.verified &&
         !breakpoints.find((newBp) => newBp.line === bp.line && newBp.column === bp.column)
       ) {
-        this.sendCDPMessage("Debugger.removeBreakpoint", { breakpointId: bp.getId() });
+        this.CDPCommunicator.sendCDPMessage("Debugger.removeBreakpoint", {
+          breakpointId: bp.getId(),
+        });
       }
     });
 
@@ -667,7 +598,7 @@ export class DebugAdapter extends DebugSession {
     response.body.variables = await this.variableStore.get(
       args.variablesReference,
       (params: object) => {
-        return this.sendCDPMessage("Runtime.getProperties", params);
+        return this.CDPCommunicator.sendCDPMessage("Runtime.getProperties", params);
       }
     );
     this.sendResponse(response);
@@ -677,7 +608,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.ContinueResponse,
     args: DebugProtocol.ContinueArguments
   ): Promise<void> {
-    await this.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
+    await this.CDPCommunicator.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
     this.sendResponse(response);
     this.sendEvent(new Event("RNIDE_continued"));
   }
@@ -686,7 +617,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.NextResponse,
     args: DebugProtocol.NextArguments
   ): Promise<void> {
-    await this.sendCDPMessage("Debugger.stepOver", {});
+    await this.CDPCommunicator.sendCDPMessage("Debugger.stepOver", {});
     this.sendResponse(response);
   }
 
@@ -694,7 +625,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.DisconnectResponse,
     args: DebugProtocol.DisconnectArguments
   ): void {
-    this.connection.close();
+    this.CDPCommunicator.closeConnection();
     this.sendResponse(response);
   }
 
@@ -702,7 +633,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.EvaluateResponse,
     args: DebugProtocol.EvaluateArguments
   ): Promise<void> {
-    const cdpResponse = await this.sendCDPMessage("Runtime.evaluate", {
+    const cdpResponse = await this.CDPCommunicator.sendCDPMessage("Runtime.evaluate", {
       expression: args.expression,
     });
     const remoteObject = cdpResponse.result;
