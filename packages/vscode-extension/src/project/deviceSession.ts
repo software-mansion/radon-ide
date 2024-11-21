@@ -150,9 +150,6 @@ export class DeviceSession implements Disposable {
     ]);
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
-    if (this.debugSession) {
-      this.debugSession.dispose();
-    }
     await this.startDebugger();
 
     this.isLaunching = false;
@@ -229,6 +226,9 @@ export class DeviceSession implements Disposable {
   }
 
   private async startDebugger() {
+    if (this.debugSession) {
+      this.debugSession.dispose();
+    }
     this.debugSession = new DebugSession(this.metro, this.debugEventDelegate);
     const started = await this.debugSession.start();
     if (started) {
