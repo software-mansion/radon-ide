@@ -1,0 +1,151 @@
+import { NullablePosition, SourceMapConsumer } from "source-map";
+import { Logger } from "../Logger";
+import path from "path";
+
+function compareIgnoringHost(url1: string, url2: string) {
+  try {
+    const firstURL = new URL(url1);
+    const secondURL = new URL(url2);
+    firstURL.hostname = secondURL.hostname = "localhost";
+    firstURL.port = secondURL.port = "8080";
+    return firstURL.href === secondURL.href;
+  } catch (e) {
+    return false;
+  }
+}
+
+export class SourceMapController {
+  private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
+
+  constructor(
+    private expoPreludeLineCount: number,
+    private sourceMapAliases?: Array<[string, string]>
+  ) {}
+
+  public clearSourceMaps() {
+    this.sourceMaps = [];
+  }
+
+  public async consumeNewSourceMap(
+    sourceMapURL: any,
+    sourceURL: string,
+    scriptId: string
+  ): Promise<{ consumer: SourceMapConsumer; isMainBundle: boolean }> {
+    const base64Data = sourceMapURL.split(",")[1];
+    const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
+    const sourceMap = JSON.parse(decodedData);
+    const consumer = await new SourceMapConsumer(sourceMap);
+
+    // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
+    const isMainBundle = sourceMap.sources.some((source: string) => source.includes("__prelude__"));
+
+    // Expo env plugin has a bug that causes the bundle to include so-called expo prelude module named __env__
+    // which is not present in the source map. As a result, the line numbers are shifted by the amount of lines
+    // the __env__ module adds. If we detect that main bundle is loaded, but __env__ is not there, we use the provided
+    // expoPreludeLineCount which reflects the number of lines in __env__ module to offset the line numbers in the source map.
+    const bundleContainsExpoPrelude = sourceMap.sources.includes("__env__");
+    let lineOffset = 0;
+    if (isMainBundle && !bundleContainsExpoPrelude && this.expoPreludeLineCount > 0) {
+      Logger.debug(
+        "Expo prelude lines were detected and an offset was set to:",
+        this.expoPreludeLineCount
+      );
+      lineOffset = this.expoPreludeLineCount;
+    }
+
+    this.sourceMaps.push([sourceURL, scriptId, consumer, lineOffset]);
+    return { consumer, isMainBundle };
+  }
+
+  public findOriginalPosition(
+    scriptIdOrURL: string,
+    lineNumber1Based: number,
+    columnNumber0Based: number
+  ) {
+    let scriptURL = "__script__";
+    let sourceURL = "__source__";
+    let sourceLine1Based = lineNumber1Based;
+    let sourceColumn0Based = columnNumber0Based;
+
+    this.sourceMaps.forEach(([url, id, consumer, lineOffset]) => {
+      // when we identify script by its URL we need to deal with a situation when the URL is sent with a different
+      // hostname and port than the one we have registered in the source maps. The reason for that is that the request
+      // that populates the source map (scriptParsed) is sent by metro, while the requests from breakpoints or logs
+      // are sent directly from the device. In different setups, specifically on Android emulator, the device uses different URLs
+      // than localhost because it has a virtual network interface. Hence we need to unify the URL:
+      if (id === scriptIdOrURL || compareIgnoringHost(url, scriptIdOrURL)) {
+        scriptURL = url;
+        const pos = consumer.originalPositionFor({
+          line: lineNumber1Based - lineOffset,
+          column: columnNumber0Based,
+        });
+        if (pos.source !== null) {
+          sourceURL = pos.source;
+        }
+        if (pos.line !== null) {
+          sourceLine1Based = pos.line;
+        }
+        if (pos.column !== null) {
+          sourceColumn0Based = pos.column;
+        }
+      }
+    });
+
+    return {
+      sourceURL: this.toAbsoluteFilePath(sourceURL),
+      lineNumber1Based: sourceLine1Based,
+      columnNumber0Based: sourceColumn0Based,
+      scriptURL,
+    };
+  }
+
+  public toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
+    let sourceMapFilePath = this.toSourceMapFilePath(file);
+    let position: NullablePosition = { line: null, column: null, lastColumn: null };
+    let originalSourceURL: string = "";
+    this.sourceMaps.forEach(([sourceURL, scriptId, consumer, lineOffset]) => {
+      const pos = consumer.generatedPositionFor({
+        source: sourceMapFilePath,
+        line: lineNumber1Based,
+        column: columnNumber0Based,
+        bias: SourceMapConsumer.LEAST_UPPER_BOUND,
+      });
+      if (pos.line !== null) {
+        originalSourceURL = sourceURL;
+        position = { ...pos, line: pos.line + lineOffset };
+      }
+    });
+    if (position.line === null) {
+      return null;
+    }
+    return {
+      source: originalSourceURL,
+      lineNumber1Based: position.line,
+      columnNumber0Based: position.column,
+    };
+  }
+
+  public toAbsoluteFilePath(sourceMapPath: string) {
+    if (this.sourceMapAliases) {
+      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
+        if (sourceMapPath.startsWith(alias)) {
+          // URL may contain ".." fragments, so we want to resolve it to a proper absolute file path
+          return path.resolve(path.join(absoluteFilePath, sourceMapPath.slice(alias.length)));
+        }
+      }
+    }
+    return sourceMapPath;
+  }
+
+  private toSourceMapFilePath(sourceAbsoluteFilePath: string) {
+    if (this.sourceMapAliases) {
+      // we return the first alias from the list
+      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
+        if (absoluteFilePath.startsWith(absoluteFilePath)) {
+          return path.join(alias, path.relative(absoluteFilePath, sourceAbsoluteFilePath));
+        }
+      }
+    }
+    return sourceAbsoluteFilePath;
+  }
+}

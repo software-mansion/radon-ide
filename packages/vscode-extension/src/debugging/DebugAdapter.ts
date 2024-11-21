@@ -27,18 +27,7 @@ import {
 import { VariableStore } from "./variableStore";
 import { MyBreakpoint } from "./MyBreakpoint";
 import { CDPCommunicator } from "./CDPCommunicator";
-
-function compareIgnoringHost(url1: string, url2: string) {
-  try {
-    const firstURL = new URL(url1);
-    const secondURL = new URL(url2);
-    firstURL.hostname = secondURL.hostname = "localhost";
-    firstURL.port = secondURL.port = "8080";
-    return firstURL.href === secondURL.href;
-  } catch (e) {
-    return false;
-  }
-}
+import { SourceMapController } from "./SourceMapsController";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -53,11 +42,8 @@ function typeToCategory(type: string) {
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
   private CDPCommunicator: CDPCommunicator;
-  // private connection: WebSocket;
-  private sourceMapAliases?: Array<[string, string]>;
+  private sourceMapController: SourceMapController;
   private threads: Array<Thread> = [];
-  private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
-  private expoPreludeLineCount: number;
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
 
@@ -66,7 +52,6 @@ export class DebugAdapter extends DebugSession {
 
   constructor(configuration: DebugConfiguration) {
     super();
-    this.sourceMapAliases = configuration.sourceMapAliases;
     this.CDPCommunicator = new CDPCommunicator(
       configuration.websocketAddress,
       () => {
@@ -74,7 +59,10 @@ export class DebugAdapter extends DebugSession {
       },
       this.handleIncomingCDPMethods
     );
-    this.expoPreludeLineCount = configuration.expoPreludeLineCount;
+    this.sourceMapController = new SourceMapController(
+      configuration.expoPreludeLineCount,
+      configuration.sourceMapAliases
+    );
   }
 
   private handleIncomingCDPMethods = async (message: any) => {
@@ -90,14 +78,10 @@ export class DebugAdapter extends DebugSession {
         const sourceMapURL = message.params.sourceMapURL;
 
         if (sourceMapURL?.startsWith("data:")) {
-          const base64Data = sourceMapURL.split(",")[1];
-          const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
-          const sourceMap = JSON.parse(decodedData);
-          const consumer = await new SourceMapConsumer(sourceMap);
-
-          // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
-          const isMainBundle = sourceMap.sources.some((source: string) =>
-            source.includes("__prelude__")
+          const { consumer, isMainBundle } = await this.sourceMapController.consumeNewSourceMap(
+            sourceMapURL,
+            message.params.url,
+            message.params.scriptId
           );
 
           if (isMainBundle) {
@@ -106,21 +90,6 @@ export class DebugAdapter extends DebugSession {
             });
           }
 
-          // Expo env plugin has a bug that causes the bundle to include so-called expo prelude module named __env__
-          // which is not present in the source map. As a result, the line numbers are shifted by the amount of lines
-          // the __env__ module adds. If we detect that main bundle is loaded, but __env__ is not there, we use the provided
-          // expoPreludeLineCount which reflects the number of lines in __env__ module to offset the line numbers in the source map.
-          const bundleContainsExpoPrelude = sourceMap.sources.includes("__env__");
-          let lineOffset = 0;
-          if (isMainBundle && !bundleContainsExpoPrelude && this.expoPreludeLineCount > 0) {
-            Logger.debug(
-              "Expo prelude lines were detected and an offset was set to:",
-              this.expoPreludeLineCount
-            );
-            lineOffset = this.expoPreludeLineCount;
-          }
-
-          this.sourceMaps.push([message.params.url, message.params.scriptId, consumer, lineOffset]);
           this.updateBreakpointsInSource(message.params.url, consumer);
         }
 
@@ -136,7 +105,7 @@ export class DebugAdapter extends DebugSession {
         // clear all existing threads, source maps, and variable store
         const allThreads = this.threads;
         this.threads = [];
-        this.sourceMaps = [];
+        this.sourceMapController.clearSourceMaps();
         this.variableStore.clearReplVariables();
         this.variableStore.clearCDPVariables();
 
@@ -177,11 +146,12 @@ export class DebugAdapter extends DebugSession {
         .slice(-3)
         .map((v: any) => v.value);
 
-      const { lineNumber1Based, columnNumber0Based, sourceURL } = this.findOriginalPosition(
-        scriptURL,
-        generatedLineNumber1Based,
-        generatedColumn1Based - 1
-      );
+      const { lineNumber1Based, columnNumber0Based, sourceURL } =
+        this.sourceMapController.findOriginalPosition(
+          scriptURL,
+          generatedLineNumber1Based,
+          generatedColumn1Based - 1
+        );
 
       const variablesRefDapID = this.createVariableForOutputEvent(message.params.args.slice(0, -3));
 
@@ -241,72 +211,6 @@ export class DebugAdapter extends DebugSession {
     ]);
   }
 
-  private toAbsoluteFilePath(sourceMapPath: string) {
-    if (this.sourceMapAliases) {
-      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
-        if (sourceMapPath.startsWith(alias)) {
-          // URL may contain ".." fragments, so we want to resolve it to a proper absolute file path
-          return path.resolve(path.join(absoluteFilePath, sourceMapPath.slice(alias.length)));
-        }
-      }
-    }
-    return sourceMapPath;
-  }
-
-  private toSourceMapFilePath(sourceAbsoluteFilePath: string) {
-    if (this.sourceMapAliases) {
-      // we return the first alias from the list
-      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
-        if (absoluteFilePath.startsWith(absoluteFilePath)) {
-          return path.join(alias, path.relative(absoluteFilePath, sourceAbsoluteFilePath));
-        }
-      }
-    }
-    return sourceAbsoluteFilePath;
-  }
-
-  private findOriginalPosition(
-    scriptIdOrURL: string,
-    lineNumber1Based: number,
-    columnNumber0Based: number
-  ) {
-    let scriptURL = "__script__";
-    let sourceURL = "__source__";
-    let sourceLine1Based = lineNumber1Based;
-    let sourceColumn0Based = columnNumber0Based;
-
-    this.sourceMaps.forEach(([url, id, consumer, lineOffset]) => {
-      // when we identify script by its URL we need to deal with a situation when the URL is sent with a different
-      // hostname and port than the one we have registered in the source maps. The reason for that is that the request
-      // that populates the source map (scriptParsed) is sent by metro, while the requests from breakpoints or logs
-      // are sent directly from the device. In different setups, specifically on Android emulator, the device uses different URLs
-      // than localhost because it has a virtual network interface. Hence we need to unify the URL:
-      if (id === scriptIdOrURL || compareIgnoringHost(url, scriptIdOrURL)) {
-        scriptURL = url;
-        const pos = consumer.originalPositionFor({
-          line: lineNumber1Based - lineOffset,
-          column: columnNumber0Based,
-        });
-        if (pos.source !== null) {
-          sourceURL = pos.source;
-        }
-        if (pos.line !== null) {
-          sourceLine1Based = pos.line;
-        }
-        if (pos.column !== null) {
-          sourceColumn0Based = pos.column;
-        }
-      }
-    });
-
-    return {
-      sourceURL: this.toAbsoluteFilePath(sourceURL),
-      lineNumber1Based: sourceLine1Based,
-      columnNumber0Based: sourceColumn0Based,
-      scriptURL,
-    };
-  }
-
   private async handleDebuggerPaused(message: any) {
     // We reset the paused* variables to lifecycle of objects references in DAP. https://microsoft.github.io/debug-adapter-protocol//overview.html#lifetime-of-objects-references
     this.pausedStackFrames = [];
@@ -362,7 +266,11 @@ export class DebugAdapter extends DebugSession {
               stackObjProperties.find((v) => v.name === "column")?.value || "0"
             );
             const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
-              this.findOriginalPosition(genUrl, genLine1Based, genColumn1Based - 1);
+              this.sourceMapController.findOriginalPosition(
+                genUrl,
+                genLine1Based,
+                genColumn1Based - 1
+              );
             stackFrames[index] = new StackFrame(
               index,
               methodName,
@@ -380,7 +288,7 @@ export class DebugAdapter extends DebugSession {
       this.pausedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
         const cdpLocation = cdpFrame.location;
         const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
-          this.findOriginalPosition(
+          this.sourceMapController.findOriginalPosition(
             cdpLocation.scriptId,
             cdpLocation.lineNumber + 1, // cdp line and column numbers are 0-based
             cdpLocation.columnNumber
@@ -422,34 +330,8 @@ export class DebugAdapter extends DebugSession {
     this.sendResponse(response);
   }
 
-  private toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
-    let sourceMapFilePath = this.toSourceMapFilePath(file);
-    let position: NullablePosition = { line: null, column: null, lastColumn: null };
-    let originalSourceURL: string = "";
-    this.sourceMaps.forEach(([sourceURL, scriptId, consumer, lineOffset]) => {
-      const pos = consumer.generatedPositionFor({
-        source: sourceMapFilePath,
-        line: lineNumber1Based,
-        column: columnNumber0Based,
-        bias: SourceMapConsumer.LEAST_UPPER_BOUND,
-      });
-      if (pos.line !== null) {
-        originalSourceURL = sourceURL;
-        position = { ...pos, line: pos.line + lineOffset };
-      }
-    });
-    if (position.line === null) {
-      return null;
-    }
-    return {
-      source: originalSourceURL,
-      lineNumber1Based: position.line,
-      columnNumber0Based: position.column,
-    };
-  }
-
   private async setCDPBreakpoint(file: string, line: number, column: number) {
-    const generatedPos = this.toGeneratedPosition(file, line, column);
+    const generatedPos = this.sourceMapController.toGeneratedPosition(file, line, column);
     if (generatedPos) {
       const result = await this.CDPCommunicator.sendCDPMessage("Debugger.setBreakpointByUrl", {
         // in CDP line and column numbers are 0-based
@@ -478,7 +360,7 @@ export class DebugAdapter extends DebugSession {
     consumer.eachMapping((mapping) => mapping.source && uniqueSourceMapPaths.add(mapping.source));
 
     uniqueSourceMapPaths.forEach((sourceMapPath) => {
-      const absoluteFilePath = this.toAbsoluteFilePath(sourceMapPath);
+      const absoluteFilePath = this.sourceMapController.toAbsoluteFilePath(sourceMapPath);
       const breakpoints = this.breakpoints.get(absoluteFilePath) || [];
       breakpoints.forEach(async (bp) => {
         if (bp.verified) {
