@@ -4,7 +4,6 @@ import { EOL } from "node:os";
 import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
-import strftime from "strftime";
 import { Preview } from "./preview";
 import { DeviceBase } from "./DeviceBase";
 import { retry } from "../utilities/retry";
@@ -379,8 +378,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async mirrorNativeLogs(build: AndroidBuildResult) {
-    const startTime = strftime("%F %T.000", new Date());
-
     if (this.nativeLogsCancelToken) {
       this.nativeLogsCancelToken.cancel();
     }
@@ -390,7 +387,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     const extractPidFromLogcat = async (cancelToken: CancelToken) =>
       new Promise<string>((resolve, reject) => {
         const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
-        const process = exec(ADB_PATH, ["logcat", "-e", regexString, "-T", startTime]);
+        const process = exec(ADB_PATH, ["logcat", "-e", regexString, "-T", "1"]);
         cancelToken.adapt(process);
 
         lineReader(process).onLineRead((line) => {
