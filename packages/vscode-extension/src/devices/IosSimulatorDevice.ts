@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { OutputChannel, window } from "vscode";
-import { ExecaError } from "execa";
+import { ExecaChildProcess, ExecaError } from "execa";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -13,7 +13,6 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
-import { CancelToken } from "../builders/cancelToken";
 
 const LEFT_META_HID_CODE = 0xe3;
 const RIGHT_META_HID_CODE = 0xe7;
@@ -55,7 +54,7 @@ type PrivacyServiceName =
 
 export class IosSimulatorDevice extends DeviceBase {
   private nativeLogsOutputChannel: OutputChannel | undefined;
-  private lunchedAppCancelToken = new CancelToken();
+  private runningAppProcess: ExecaChildProcess | undefined;
 
   constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
     super();
@@ -78,7 +77,7 @@ export class IosSimulatorDevice extends DeviceBase {
   public dispose() {
     super.dispose();
     this.nativeLogsOutputChannel?.dispose();
-    this.lunchedAppCancelToken.cancel();
+    this.runningAppProcess?.cancel();
     return exec("xcrun", [
       "simctl",
       "--set",
@@ -358,17 +357,20 @@ export class IosSimulatorDevice extends DeviceBase {
 
     await this.terminateAnyRunningApplications();
 
-    if (this.nativeLogsOutputChannel) {
-      this.nativeLogsOutputChannel.dispose();
+    if (this.runningAppProcess) {
+      this.runningAppProcess.kill(9);
     }
 
-    this.nativeLogsOutputChannel = window.createOutputChannel(
-      "Radon IDE (iOS Simulator Logs)",
-      "log"
-    );
+    if (!this.nativeLogsOutputChannel) {
+      this.nativeLogsOutputChannel = window.createOutputChannel(
+        "Radon IDE (iOS Simulator Logs)",
+        "log"
+      );
+    }
+
     this.nativeLogsOutputChannel.clear();
 
-    const process = exec("xcrun", [
+    this.runningAppProcess = exec("xcrun", [
       "simctl",
       "--set",
       deviceSetLocation,
@@ -379,9 +381,7 @@ export class IosSimulatorDevice extends DeviceBase {
       build.bundleID,
     ]);
 
-    this.lunchedAppCancelToken.adapt(process);
-
-    lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
+    lineReader(this.runningAppProcess).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 
   async launchWithExpoDeeplink(bundleID: string, expoDeeplink: string) {
