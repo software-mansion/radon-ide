@@ -1,6 +1,7 @@
 :root {
   --swm-expandable-transition: transform 200ms ease;
   --swm-logo-height: 36px;
+  --swm-sidebar-header-height: 68px;
 }
 
 table {
@@ -116,6 +117,10 @@ table thead tr {
 
 nav [class*="_sidebarFooter"] {
   display: none;
+}
+
+nav [class*="navbar-sidebar__items"] {
+  height: calc(100% - var(--swm-sidebar-header-height));
 }
 
 img + blockquote {
