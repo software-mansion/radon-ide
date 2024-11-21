@@ -1,11 +1,12 @@
 import path from "path";
 import fs from "fs";
-import { ExecaError } from "execa";
+import { OutputChannel, window } from "vscode";
+import { ExecaChildProcess, ExecaError } from "execa";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
-import { exec } from "../utilities/subprocess";
+import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
@@ -52,6 +53,9 @@ type PrivacyServiceName =
   | "siri";
 
 export class IosSimulatorDevice extends DeviceBase {
+  private nativeLogsOutputChannel: OutputChannel | undefined;
+  private runningAppProcess: ExecaChildProcess | undefined;
+
   constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
     super();
   }
@@ -72,6 +76,8 @@ export class IosSimulatorDevice extends DeviceBase {
 
   public dispose() {
     super.dispose();
+    this.nativeLogsOutputChannel?.dispose();
+    this.runningAppProcess?.cancel();
     return exec("xcrun", [
       "simctl",
       "--set",
@@ -351,15 +357,31 @@ export class IosSimulatorDevice extends DeviceBase {
 
     await this.terminateAnyRunningApplications();
 
-    await exec("xcrun", [
+    if (this.runningAppProcess) {
+      this.runningAppProcess.kill(9);
+    }
+
+    if (!this.nativeLogsOutputChannel) {
+      this.nativeLogsOutputChannel = window.createOutputChannel(
+        "Radon IDE (iOS Simulator Logs)",
+        "log"
+      );
+    }
+
+    this.nativeLogsOutputChannel.clear();
+
+    this.runningAppProcess = exec("xcrun", [
       "simctl",
       "--set",
       deviceSetLocation,
       "launch",
+      "--console",
       "--terminate-running-process",
       this.deviceUDID,
       build.bundleID,
     ]);
+
+    lineReader(this.runningAppProcess).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 
   async launchWithExpoDeeplink(bundleID: string, expoDeeplink: string) {
