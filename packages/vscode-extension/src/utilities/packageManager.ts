@@ -16,6 +16,8 @@ function isPackageManager(candidate: string): boolean {
   return packageManagers.includes(candidate);
 }
 
+const DEFAULT_PACKAGE_MANAGER = "npm";
+
 export async function resolvePackageManager(): Promise<PackageManagerInfo | undefined> {
   function findWorkspace(appRoot: string) {
     let currentDir = appRoot;
@@ -36,7 +38,13 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
   async function findPackageManager(workspace: string) {
     const { packageManager } = getLaunchConfiguration();
 
-    if (packageManager && isPackageManager(packageManager)) {
+    if (packageManager) {
+      if (!isPackageManager(packageManager)) {
+        Logger.warn(
+          `Package manager provided in launch configuration: ${packageManager} is not supported by radon IDE`
+        );
+        return;
+      }
       return packageManager;
     }
 
@@ -46,7 +54,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
       if (manager) {
         // e.g. yarn@3.6.4
         const match = manager.match(/^([a-zA-Z]+)@/);
-        return match ? match[1] : "npm";
+        return match ? match[1] : DEFAULT_PACKAGE_MANAGER;
       }
     } catch (e) {
       // there might be a problem while reading package.json in which case move to looking
@@ -94,7 +102,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     }
 
     // when no package manager were detected we default to npm
-    return "npm";
+    return DEFAULT_PACKAGE_MANAGER;
   }
 
   const name = await findPackageManager(workspacePath ?? appRootPath);
