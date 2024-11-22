@@ -163,6 +163,6 @@
 }
 
 .button-group-left-wrapper:hover .button-group-left,
-.button-group-left:has(.zoom-controls.content-open) {
+.button-group-left:has(.zoom-controls.level-select-open) {
   transform: translate(0px, 21px);
 }

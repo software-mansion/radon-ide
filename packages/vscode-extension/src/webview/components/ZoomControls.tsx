@@ -15,10 +15,10 @@ type ZoomControlsProps = {
   onZoomChanged: (zoom: ZoomLevelType) => void;
   device?: DeviceProperties;
   wrapperDivRef?: RefObject<HTMLDivElement>;
-  setIsContentOpen?: (open: boolean) => void;
+  setIsLevelSelectOpen?: (open: boolean) => void;
 };
 
-const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsContentOpen }: ZoomControlsProps) => {
+const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsLevelSelectOpen }: ZoomControlsProps) => {
   const onValueChange = useCallback(
     (e: string) => {
       if (e === "Fit") {
@@ -35,7 +35,7 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsContentOpen }: ZoomCon
 
   return (
     <Select.Root
-      onOpenChange={setIsContentOpen}
+      onOpenChange={setIsLevelSelectOpen}
       onValueChange={onValueChange}
       value={zoomLevel === "Fit" ? "Fit" : zoomLevel.toString()}>
       <Select.Trigger className="zoom-select-trigger" disabled={false}>
@@ -69,7 +69,7 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsContentOpen }: ZoomCon
 };
 
 function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomControlsProps) {
-  const [isContentOpen, setIsContentOpen] = useState(false);
+  const [isLevelSelectOpen, setIsLevelSelectOpen] = useState(false);
 
   function handleZoom(shouldIncrease: boolean) {
     let currentZoomLevel;
@@ -91,7 +91,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
   }
 
   return (
-    <div className={`zoom-controls ${isContentOpen ? "content-open" : ""}`}>
+    <div className={`zoom-controls ${isLevelSelectOpen ? "level-select-open" : ""}`}>
       <IconButton
         className="zoom-in-button"
         tooltip={{
@@ -104,7 +104,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
       <ZoomLevelSelect
         zoomLevel={zoomLevel}
         onZoomChanged={onZoomChanged}
-        setIsContentOpen={setIsContentOpen}
+        setIsLevelSelectOpen={setIsLevelSelectOpen}
       />
       <IconButton
         className="zoom-out-button"
