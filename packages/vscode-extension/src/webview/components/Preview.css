@@ -150,7 +150,6 @@
   width: 50px;
   height: 150px;
   transform: translateY(-50%);
-  transition: transform 0.3s ease 0.1s;
 }
 
 .button-group-left {
