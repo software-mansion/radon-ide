@@ -1,16 +1,16 @@
-import { SourceMapConsumer } from "source-map";
-import { CDPCommunicator } from "./CDPCommunicator";
-import { MyBreakpoint } from "./MyBreakpoint";
-import { SourceMapController } from "./SourceMapsController";
 import { Breakpoint } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
+import { SourceMapConsumer } from "source-map";
+import { MyBreakpoint } from "./MyBreakpoint";
+import { SourceMapController } from "./SourceMapsController";
+import { CDPCommunicatorInterface } from "./CDPCommunicator";
 
 export class BreakpointsController {
   private breakpoints = new Map<string, Array<MyBreakpoint>>();
 
   constructor(
     private sourceMapController: SourceMapController,
-    private CDPCommunicator: CDPCommunicator
+    private CDPCommunicator: CDPCommunicatorInterface
   ) {}
 
   public updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {

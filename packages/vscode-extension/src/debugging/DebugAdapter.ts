@@ -22,7 +22,7 @@ import {
   CDPRemoteObject,
 } from "./cdp";
 import { VariableStore } from "./variableStore";
-import { CDPCommunicator } from "./CDPCommunicator";
+import { CDPCommunicator, CDPCommunicatorInterface } from "./CDPCommunicator";
 import { SourceMapController } from "./SourceMapsController";
 import { BreakpointsController } from "./BreakpointsController";
 
@@ -39,7 +39,7 @@ function typeToCategory(type: string) {
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
 
-  private CDPCommunicator: CDPCommunicator;
+  private CDPCommunicator: CDPCommunicatorInterface;
   private sourceMapController: SourceMapController;
 
   private breakpointController: BreakpointsController;

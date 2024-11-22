@@ -1,5 +1,5 @@
 import { Breakpoint, Source } from "@vscode/debugadapter";
-import { CDPCommunicator } from "./CDPCommunicator";
+import { CDPCommunicatorInterface } from "./CDPCommunicator";
 import { SourceMapController } from "./SourceMapsController";
 import { Logger } from "../Logger";
 
@@ -11,7 +11,7 @@ export class MyBreakpoint extends Breakpoint {
   private cdpCommunicationQueue: Array<() => Promise<void>> = [];
 
   constructor(
-    private CDPCommunicator: CDPCommunicator,
+    private CDPCommunicator: CDPCommunicatorInterface,
     private sourceMapController: SourceMapController,
     verified: boolean,
     line: number,

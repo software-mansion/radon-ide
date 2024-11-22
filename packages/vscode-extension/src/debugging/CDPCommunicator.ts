@@ -9,7 +9,13 @@ type PromiseHandlers<T = unknown> = {
   reject: RejectType;
 };
 
-export class CDPCommunicator {
+export interface CDPCommunicatorInterface {
+  closeConnection(): void;
+
+  sendCDPMessage(method: string, params: object): Promise<any>;
+}
+
+export class CDPCommunicator implements CDPCommunicator {
   private connection: WebSocket;
 
   private cdpMessageId = 0;
