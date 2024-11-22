@@ -24,7 +24,8 @@ export class BreakpointsController {
     consumer.eachMapping((mapping) => mapping.source && uniqueSourceMapPaths.add(mapping.source));
 
     uniqueSourceMapPaths.forEach((sourceMapPath) => {
-      const absoluteFilePath = this.sourceMapController.toAbsoluteFilePath(sourceMapPath);
+      const absoluteFilePath =
+        this.sourceMapController.toAbsoluteFilePathFromSourceMapAlias(sourceMapPath);
       const breakpoints = this.breakpoints.get(absoluteFilePath) || [];
       breakpoints.forEach(async (bp) => {
         await bp.reset(sourceMapPath);

@@ -16,6 +16,7 @@ function compareIgnoringHost(url1: string, url2: string) {
 
 export class SourceMapController {
   private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
+  private sourceMapFilePaths: Set<string> = new Set();
 
   constructor(
     private expoPreludeLineCount: number,
@@ -24,6 +25,7 @@ export class SourceMapController {
 
   public clearSourceMaps() {
     this.sourceMaps = [];
+    this.sourceMapFilePaths.clear();
   }
 
   public async consumeNewSourceMap(
@@ -53,6 +55,10 @@ export class SourceMapController {
       lineOffset = this.expoPreludeLineCount;
     }
 
+    // add all sources from consumer to sourceMapFilePaths
+    consumer.sources.forEach((source) => {
+      this.sourceMapFilePaths.add(source);
+    });
     this.sourceMaps.push([sourceURL, scriptId, consumer, lineOffset]);
     return { consumer, isMainBundle };
   }
@@ -92,15 +98,27 @@ export class SourceMapController {
     });
 
     return {
-      sourceURL: this.toAbsoluteFilePath(sourceURL),
+      sourceURL: this.toAbsoluteFilePathFromSourceMapAlias(sourceURL),
       lineNumber1Based: sourceLine1Based,
       columnNumber0Based: sourceColumn0Based,
       scriptURL,
     };
   }
 
-  public toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
-    let sourceMapFilePath = this.toSourceMapFilePath(file);
+  public toGeneratedPosition(
+    absoluteFilePath: string,
+    lineNumber1Based: number,
+    columnNumber0Based: number
+  ) {
+    // New React Native 76 debugger uses file aliases in source maps, however, the aliases are not
+    // used in some settings (i.e. with Expo projects). For calculating the generated position, we
+    // need to use the file path that is present in source maps. We first try to check if the aliased
+    // file path is there, and if it's not, we use the original absolute file path.
+    let sourceMapAliasedFilePath = this.toSourceMapAliasedFilePath(absoluteFilePath);
+    let sourceMapFilePath = this.sourceMapFilePaths.has(sourceMapAliasedFilePath)
+      ? sourceMapAliasedFilePath
+      : absoluteFilePath;
+
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
     this.sourceMaps.forEach(([sourceURL, scriptId, consumer, lineOffset]) => {
@@ -125,7 +143,7 @@ export class SourceMapController {
     };
   }
 
-  public toAbsoluteFilePath(sourceMapPath: string) {
+  public toAbsoluteFilePathFromSourceMapAlias(sourceMapPath: string) {
     if (this.sourceMapAliases) {
       for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
         if (sourceMapPath.startsWith(alias)) {
@@ -137,7 +155,7 @@ export class SourceMapController {
     return sourceMapPath;
   }
 
-  private toSourceMapFilePath(sourceAbsoluteFilePath: string) {
+  private toSourceMapAliasedFilePath(sourceAbsoluteFilePath: string) {
     if (this.sourceMapAliases) {
       // we return the first alias from the list
       for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
