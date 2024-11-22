@@ -17,7 +17,7 @@ function isPackageManager(candidate: string): boolean {
   return packageManagers.includes(candidate);
 }
 
-async function getDirFilesSortedByModificationDate(dir: string) {
+async function listFilesSortedByModificationDate(dir: string) {
   const files = await fs.promises.readdir(dir);
 
   return files
@@ -25,7 +25,7 @@ async function getDirFilesSortedByModificationDate(dir: string) {
       name: fileName,
       time: fs.statSync(`${dir}/${fileName}`).mtime.getTime(),
     }))
-    .sort((a, b) => a.time - b.time)
+    .sort((a, b) => b.time - a.time)
     .map((file) => file.name);
 }
 
@@ -83,7 +83,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
       } as const)
     );
 
-    const files = await getDirFilesSortedByModificationDate(workspace);
+    const files = await listFilesSortedByModificationDate(workspace);
     const packageManagerCandidates = [];
     for (const file of files) {
       const manager = lockFiles.get(file);
