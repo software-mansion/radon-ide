@@ -15,10 +15,10 @@ type ZoomControlsProps = {
   onZoomChanged: (zoom: ZoomLevelType) => void;
   device?: DeviceProperties;
   wrapperDivRef?: RefObject<HTMLDivElement>;
-  setIsLevelSelectOpen?: (open: boolean) => void;
+  setIsSelectOpen?: (open: boolean) => void;
 };
 
-const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsLevelSelectOpen }: ZoomControlsProps) => {
+const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsSelectOpen }: ZoomControlsProps) => {
   const onValueChange = useCallback(
     (e: string) => {
       if (e === "Fit") {
@@ -35,7 +35,7 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsLevelSelectOpen }: Zoo
 
   return (
     <Select.Root
-      onOpenChange={setIsLevelSelectOpen}
+      onOpenChange={setIsSelectOpen}
       onValueChange={onValueChange}
       value={zoomLevel === "Fit" ? "Fit" : zoomLevel.toString()}>
       <Select.Trigger className="zoom-select-trigger" disabled={false}>
@@ -69,7 +69,7 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsLevelSelectOpen }: Zoo
 };
 
 function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomControlsProps) {
-  const [isLevelSelectOpen, setIsLevelSelectOpen] = useState(false);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   function handleZoom(shouldIncrease: boolean) {
     let currentZoomLevel;
@@ -91,7 +91,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
   }
 
   return (
-    <div className={`zoom-controls ${isLevelSelectOpen ? "level-select-open" : ""}`}>
+    <div className={`zoom-controls ${isSelectOpen ? "select-open" : ""}`}>
       <IconButton
         className="zoom-in-button"
         tooltip={{
@@ -104,7 +104,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
       <ZoomLevelSelect
         zoomLevel={zoomLevel}
         onZoomChanged={onZoomChanged}
-        setIsLevelSelectOpen={setIsLevelSelectOpen}
+        setIsSelectOpen={setIsSelectOpen}
       />
       <IconButton
         className="zoom-out-button"

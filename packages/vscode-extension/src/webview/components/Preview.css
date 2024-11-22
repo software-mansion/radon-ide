@@ -145,11 +145,10 @@
 
 .button-group-left-wrapper {
   position: absolute;
-  left: 0;
+  left: 0px;
   top: 50%;
   width: 50px;
   height: 150px;
-  overflow: visible;
   transform: translateY(-50%);
   transition: transform 0.3s ease 0.1s;
 }
@@ -163,6 +162,6 @@
 }
 
 .button-group-left-wrapper:hover .button-group-left,
-.button-group-left:has(.zoom-controls.level-select-open) {
+.button-group-left:has(.zoom-controls.select-open) {
   transform: translate(0px, 21px);
 }
