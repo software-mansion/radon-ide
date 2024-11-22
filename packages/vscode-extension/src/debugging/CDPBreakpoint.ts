@@ -54,9 +54,7 @@ export class CDPBreakpoint extends Breakpoint {
 
   private async resetCDPBreakpoint(sourceMapPath: string) {
     if (this.verified) {
-      await this.cdpSession.sendCDPMessage("Debugger.removeBreakpoint", {
-        breakpointId: this.getId(),
-      });
+      await this.deleteCDPBreakpoint();
       this.verified = false;
     }
     await this.setCDPBreakpoint(sourceMapPath);
