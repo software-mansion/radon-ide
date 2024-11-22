@@ -28,18 +28,13 @@ export class SourceMapController {
     this.sourceMapFilePaths.clear();
   }
 
-  public async consumeNewSourceMap(
-    sourceMapURL: any,
+  public async registerSourceMap(
+    sourceMap: any,
     sourceURL: string,
-    scriptId: string
-  ): Promise<{ consumer: SourceMapConsumer; isMainBundle: boolean }> {
-    const base64Data = sourceMapURL.split(",")[1];
-    const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
-    const sourceMap = JSON.parse(decodedData);
+    scriptId: string,
+    isMainBundle: boolean
+  ): Promise<SourceMapConsumer> {
     const consumer = await new SourceMapConsumer(sourceMap);
-
-    // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
-    const isMainBundle = sourceMap.sources.some((source: string) => source.includes("__prelude__"));
 
     // Expo env plugin has a bug that causes the bundle to include so-called expo prelude module named __env__
     // which is not present in the source map. As a result, the line numbers are shifted by the amount of lines
@@ -60,7 +55,7 @@ export class SourceMapController {
       this.sourceMapFilePaths.add(source);
     });
     this.sourceMaps.push([sourceURL, scriptId, consumer, lineOffset]);
-    return { consumer, isMainBundle };
+    return consumer;
   }
 
   public findOriginalPosition(

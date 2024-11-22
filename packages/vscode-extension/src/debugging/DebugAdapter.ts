@@ -22,9 +22,9 @@ import {
   CDPRemoteObject,
 } from "./cdp";
 import { VariableStore } from "./variableStore";
-import { CDPCommunicator, CDPCommunicatorInterface } from "./CDPCommunicator";
 import { SourceMapController } from "./SourceMapsController";
 import { BreakpointsController } from "./BreakpointsController";
+import { CDPSession } from "./CDPSession";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -39,10 +39,10 @@ function typeToCategory(type: string) {
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
 
-  private CDPCommunicator: CDPCommunicatorInterface;
+  private cdpSession: CDPSession;
   private sourceMapController: SourceMapController;
 
-  private breakpointController: BreakpointsController;
+  private breakpointsController: BreakpointsController;
 
   private threads: Array<Thread> = [];
   private linesStartAt1 = true;
@@ -53,12 +53,12 @@ export class DebugAdapter extends DebugSession {
 
   constructor(configuration: DebugConfiguration) {
     super();
-    this.CDPCommunicator = new CDPCommunicator(
+    this.cdpSession = new CDPSession(
       configuration.websocketAddress,
       () => {
         this.sendEvent(new TerminatedEvent());
       },
-      this.handleIncomingCDPMethods
+      this.handleIncomingCDPMethodCalls
     );
 
     this.sourceMapController = new SourceMapController(
@@ -66,13 +66,13 @@ export class DebugAdapter extends DebugSession {
       configuration.sourceMapAliases
     );
 
-    this.breakpointController = new BreakpointsController(
+    this.breakpointsController = new BreakpointsController(
       this.sourceMapController,
-      this.CDPCommunicator
+      this.cdpSession
     );
   }
 
-  private handleIncomingCDPMethods = async (message: any) => {
+  private handleIncomingCDPMethodCalls = async (message: any) => {
     switch (message.method) {
       case "Runtime.executionContextCreated":
         const context = message.params.context;
@@ -85,19 +85,29 @@ export class DebugAdapter extends DebugSession {
         const sourceMapURL = message.params.sourceMapURL;
 
         if (sourceMapURL?.startsWith("data:")) {
-          const { consumer, isMainBundle } = await this.sourceMapController.consumeNewSourceMap(
-            sourceMapURL,
+          const base64Data = sourceMapURL.split(",")[1];
+          const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
+          const sourceMap = JSON.parse(decodedData);
+
+          // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
+          const isMainBundle = sourceMap.sources.some((source: string) =>
+            source.includes("__prelude__")
+          );
+
+          const consumer = await this.sourceMapController.registerSourceMap(
+            sourceMap,
             message.params.url,
-            message.params.scriptId
+            message.params.scriptId,
+            isMainBundle
           );
 
           if (isMainBundle) {
-            this.CDPCommunicator.sendCDPMessage("Runtime.evaluate", {
+            this.cdpSession.sendCDPMessage("Runtime.evaluate", {
               expression: "__RNIDE_onDebuggerReady()",
             });
           }
 
-          this.breakpointController.updateBreakpointsInSource(message.params.url, consumer);
+          this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
         }
 
         this.sendEvent(new InitializedEvent());
@@ -237,7 +247,7 @@ export class DebugAdapter extends DebugSession {
       const localScopeVariables = await this.variableStore.get(
         localScopeObjectId,
         (params: object) => {
-          return this.CDPCommunicator.sendCDPMessage("Runtime.getProperties", params);
+          return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
         }
       );
       const errorMessage = localScopeVariables.find((v) => v.name === "message")?.value;
@@ -247,7 +257,7 @@ export class DebugAdapter extends DebugSession {
       const stackObjectProperties = await this.variableStore.get(
         stackObjectId!,
         (params: object) => {
-          return this.CDPCommunicator.sendCDPMessage("Runtime.getProperties", params);
+          return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
         }
       );
 
@@ -261,7 +271,7 @@ export class DebugAdapter extends DebugSession {
             const stackObjProperties = await this.variableStore.get(
               stackObjEntry.variablesReference,
               (params: object) => {
-                return this.CDPCommunicator.sendCDPMessage("Runtime.getProperties", params);
+                return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
               }
             );
             const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
@@ -341,7 +351,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.SetBreakpointsResponse,
     args: DebugProtocol.SetBreakpointsArguments
   ): Promise<void> {
-    const resolvedBreakpoints = await this.breakpointController.setBreakpoints(
+    const resolvedBreakpoints = await this.breakpointsController.setBreakpoints(
       args.source.path as string,
       args.breakpoints
     );
@@ -393,7 +403,7 @@ export class DebugAdapter extends DebugSession {
     response.body.variables = await this.variableStore.get(
       args.variablesReference,
       (params: object) => {
-        return this.CDPCommunicator.sendCDPMessage("Runtime.getProperties", params);
+        return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
       }
     );
     this.sendResponse(response);
@@ -403,7 +413,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.ContinueResponse,
     args: DebugProtocol.ContinueArguments
   ): Promise<void> {
-    await this.CDPCommunicator.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
+    await this.cdpSession.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
     this.sendResponse(response);
     this.sendEvent(new Event("RNIDE_continued"));
   }
@@ -412,7 +422,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.NextResponse,
     args: DebugProtocol.NextArguments
   ): Promise<void> {
-    await this.CDPCommunicator.sendCDPMessage("Debugger.stepOver", {});
+    await this.cdpSession.sendCDPMessage("Debugger.stepOver", {});
     this.sendResponse(response);
   }
 
@@ -420,7 +430,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.DisconnectResponse,
     args: DebugProtocol.DisconnectArguments
   ): void {
-    this.CDPCommunicator.closeConnection();
+    this.cdpSession.closeConnection();
     this.sendResponse(response);
   }
 
@@ -428,7 +438,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.EvaluateResponse,
     args: DebugProtocol.EvaluateArguments
   ): Promise<void> {
-    const cdpResponse = await this.CDPCommunicator.sendCDPMessage("Runtime.evaluate", {
+    const cdpResponse = await this.cdpSession.sendCDPMessage("Runtime.evaluate", {
       expression: args.expression,
     });
     const remoteObject = cdpResponse.result;

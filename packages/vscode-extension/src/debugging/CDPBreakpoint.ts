@@ -1,9 +1,9 @@
 import { Breakpoint, Source } from "@vscode/debugadapter";
-import { CDPCommunicatorInterface } from "./CDPCommunicator";
 import { SourceMapController } from "./SourceMapsController";
 import { Logger } from "../Logger";
+import { CDPSession } from "./CDPSession";
 
-export class MyBreakpoint extends Breakpoint {
+export class CDPBreakpoint extends Breakpoint {
   public readonly line: number;
   public readonly column: number | undefined;
   private _id: number | undefined;
@@ -11,7 +11,7 @@ export class MyBreakpoint extends Breakpoint {
   private cdpCommunicationQueue: Array<() => Promise<void>> = [];
 
   constructor(
-    private CDPCommunicator: CDPCommunicatorInterface,
+    private cdpSession: CDPSession,
     private sourceMapController: SourceMapController,
     verified: boolean,
     line: number,
@@ -54,7 +54,7 @@ export class MyBreakpoint extends Breakpoint {
 
   private async resetCDPBreakpoint(sourceMapPath: string) {
     if (this.verified) {
-      await this.CDPCommunicator.sendCDPMessage("Debugger.removeBreakpoint", {
+      await this.cdpSession.sendCDPMessage("Debugger.removeBreakpoint", {
         breakpointId: this.getId(),
       });
       this.verified = false;
@@ -76,7 +76,7 @@ export class MyBreakpoint extends Breakpoint {
       return;
     }
 
-    const result = await this.CDPCommunicator.sendCDPMessage("Debugger.setBreakpointByUrl", {
+    const result = await this.cdpSession.sendCDPMessage("Debugger.setBreakpointByUrl", {
       // in CDP line and column numbers are 0-based
       lineNumber: generatedPos.lineNumber1Based - 1,
       url: generatedPos.source,
@@ -90,7 +90,7 @@ export class MyBreakpoint extends Breakpoint {
   }
 
   private async deleteCDPBreakpoint() {
-    await this.CDPCommunicator.sendCDPMessage("Debugger.removeBreakpoint", {
+    await this.cdpSession.sendCDPMessage("Debugger.removeBreakpoint", {
       breakpointId: this.getId(),
     });
   }

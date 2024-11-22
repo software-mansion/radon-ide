@@ -1,17 +1,14 @@
 import { Breakpoint } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { SourceMapConsumer } from "source-map";
-import { MyBreakpoint } from "./MyBreakpoint";
+import { CDPBreakpoint } from "./CDPBreakpoint";
 import { SourceMapController } from "./SourceMapsController";
-import { CDPCommunicatorInterface } from "./CDPCommunicator";
+import { CDPSession } from "./CDPSession";
 
 export class BreakpointsController {
-  private breakpoints = new Map<string, Array<MyBreakpoint>>();
+  private breakpoints = new Map<string, Array<CDPBreakpoint>>();
 
-  constructor(
-    private sourceMapController: SourceMapController,
-    private CDPCommunicator: CDPCommunicatorInterface
-  ) {}
+  constructor(private sourceMapController: SourceMapController, private cdpSession: CDPSession) {}
 
   public updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
     // this method gets called after we are informed that a new script has been parsed. If we
@@ -46,8 +43,8 @@ export class BreakpointsController {
       if (previousBp) {
         return previousBp;
       } else {
-        return new MyBreakpoint(
-          this.CDPCommunicator,
+        return new CDPBreakpoint(
+          this.cdpSession,
           this.sourceMapController,
           false,
           bp.line,

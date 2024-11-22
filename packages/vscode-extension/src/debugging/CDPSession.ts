@@ -9,13 +9,7 @@ type PromiseHandlers<T = unknown> = {
   reject: RejectType;
 };
 
-export interface CDPCommunicatorInterface {
-  closeConnection(): void;
-
-  sendCDPMessage(method: string, params: object): Promise<any>;
-}
-
-export class CDPCommunicator implements CDPCommunicator {
+export class CDPSession {
   private connection: WebSocket;
 
   private cdpMessageId = 0;
@@ -35,7 +29,7 @@ export class CDPCommunicator implements CDPCommunicator {
     this.connection.on("message", async (data) => {
       const message = JSON.parse(data.toString());
       if (message.result || message.error) {
-        this.handleCDPMessagePromise(message);
+        this.handleCDPMessageResponse(message);
         return;
       }
       await onIncomingCDPMethod(message);
@@ -46,7 +40,6 @@ export class CDPCommunicator implements CDPCommunicator {
     // the below catch handler is used to ignore errors coming from non critical CDP messages we
     // expect in some setups to fail
     const ignoreError = () => {};
-    Logger.debug("Frytki", this);
     this.sendCDPMessage("FuseboxClient.setClientMetadata", {}).catch(ignoreError);
     this.sendCDPMessage("Runtime.enable", {});
     this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
@@ -56,7 +49,7 @@ export class CDPCommunicator implements CDPCommunicator {
     this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {}).catch(ignoreError);
   };
 
-  private handleCDPMessagePromise = (message: any) => {
+  private handleCDPMessageResponse(message: any) {
     const messagePromise = this.cdpMessagePromises.get(message.id);
     this.cdpMessagePromises.delete(message.id);
     if (message.result && messagePromise?.resolve) {
@@ -69,7 +62,7 @@ export class CDPCommunicator implements CDPCommunicator {
       Object.assign(error, message.error);
       messagePromise.reject(error);
     }
-  };
+  }
 
   public closeConnection() {
     this.connection.close();
