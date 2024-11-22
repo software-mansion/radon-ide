@@ -4,7 +4,6 @@ import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { Resizable } from "re-resizable";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
-import "./ZoomControls.css";
 import { useProject } from "../providers/ProjectProvider";
 import {
   AndroidSupportedDevices,
