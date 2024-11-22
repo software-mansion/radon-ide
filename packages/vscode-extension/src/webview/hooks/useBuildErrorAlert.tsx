@@ -8,7 +8,11 @@ import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
 
-function BuildErrorActions() {
+function BuildErrorActions({
+  logsButtonDestination,
+}: {
+  logsButtonDestination?: "build" | "extension";
+}) {
   const { project } = useProject();
   const { openModal } = useModal();
   return (
@@ -24,6 +28,11 @@ function BuildErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
+          if (logsButtonDestination === "extension") {
+            project.focusExtensionLogsOutput();
+          } else {
+            project.focusBuildOutput();
+          }
           project.focusBuildOutput();
         }}
         tooltip={{ label: "Open build logs", side: "bottom" }}>
@@ -42,11 +51,12 @@ function BuildErrorActions() {
 }
 
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
-  const { ios, xcodeSchemes } = useLaunchConfig();
+  const { ios, xcodeSchemes, eas } = useLaunchConfig();
   const { dependencies } = useDependencies();
   const { projectState } = useProject();
 
   let description = "Open build logs to find out what went wrong.";
+  let actions = <BuildErrorActions />;
 
   if (!ios?.scheme && xcodeSchemes.length > 1) {
     description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
@@ -68,11 +78,20 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
       'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
   }
 
+  const isEasBuild =
+    (!!eas?.android && projectState.selectedDevice?.platform === DevicePlatform.Android) ||
+    (!!eas?.ios && projectState.selectedDevice?.platform === DevicePlatform.IOS);
+
+  if (isEasBuild) {
+    description = "Your Project Eas build has failed, see extension logs to see what went wrong.";
+    actions = <BuildErrorActions logsButtonDestination="extension" />;
+  }
+
   const buildErrorAlert = {
     id: "build-error-alert",
     title: "Cannot run project",
     description,
-    actions: <BuildErrorActions />,
+    actions,
   };
 
   useToggleableAlert(shouldDisplayAlert, buildErrorAlert);
