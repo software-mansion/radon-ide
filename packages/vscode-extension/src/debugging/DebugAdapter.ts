@@ -1,4 +1,3 @@
-import path from "path";
 import { DebugConfiguration } from "vscode";
 import {
   DebugSession,
@@ -10,12 +9,10 @@ import {
   Thread,
   TerminatedEvent,
   ThreadEvent,
-  Breakpoint,
   Source,
   StackFrame,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
-import { NullablePosition, SourceMapConsumer } from "source-map";
 import { formatMessage } from "./logFormatting";
 import { Logger } from "../Logger";
 import {
@@ -25,9 +22,9 @@ import {
   CDPRemoteObject,
 } from "./cdp";
 import { VariableStore } from "./variableStore";
-import { MyBreakpoint } from "./MyBreakpoint";
 import { CDPCommunicator } from "./CDPCommunicator";
 import { SourceMapController } from "./SourceMapsController";
+import { BreakpointsController } from "./BreakpointsController";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -41,8 +38,12 @@ function typeToCategory(type: string) {
 
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
+
   private CDPCommunicator: CDPCommunicator;
   private sourceMapController: SourceMapController;
+
+  private breakpointController: BreakpointsController;
+
   private threads: Array<Thread> = [];
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
@@ -59,9 +60,15 @@ export class DebugAdapter extends DebugSession {
       },
       this.handleIncomingCDPMethods
     );
+
     this.sourceMapController = new SourceMapController(
       configuration.expoPreludeLineCount,
       configuration.sourceMapAliases
+    );
+
+    this.breakpointController = new BreakpointsController(
+      this.sourceMapController,
+      this.CDPCommunicator
     );
   }
 
@@ -90,7 +97,7 @@ export class DebugAdapter extends DebugSession {
             });
           }
 
-          this.updateBreakpointsInSource(message.params.url, consumer);
+          this.breakpointController.updateBreakpointsInSource(message.params.url, consumer);
         }
 
         this.sendEvent(new InitializedEvent());
@@ -330,107 +337,13 @@ export class DebugAdapter extends DebugSession {
     this.sendResponse(response);
   }
 
-  private async setCDPBreakpoint(file: string, line: number, column: number) {
-    const generatedPos = this.sourceMapController.toGeneratedPosition(file, line, column);
-    if (generatedPos) {
-      const result = await this.CDPCommunicator.sendCDPMessage("Debugger.setBreakpointByUrl", {
-        // in CDP line and column numbers are 0-based
-        lineNumber: generatedPos.lineNumber1Based - 1,
-        url: generatedPos.source,
-        columnNumber: generatedPos.columnNumber0Based,
-        condition: "",
-      });
-      if (result && result.breakpointId !== undefined) {
-        return result.breakpointId as number;
-      }
-    }
-    return null;
-  }
-
-  private breakpoints = new Map<string, Array<MyBreakpoint>>();
-
-  private updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
-    // this method gets called after we are informed that a new script has been parsed. If we
-    // had breakpoints set in that script, we need to let the runtime know about it
-
-    // the number of consumer mapping entries can be close to the number of symbols in the source file.
-    // we optimize the process by collecting unique source URLs which map to actual individual source files.
-    // note: apparently despite the TS types from the source-map library, mapping.source can be null
-    const uniqueSourceMapPaths = new Set<string>();
-    consumer.eachMapping((mapping) => mapping.source && uniqueSourceMapPaths.add(mapping.source));
-
-    uniqueSourceMapPaths.forEach((sourceMapPath) => {
-      const absoluteFilePath = this.sourceMapController.toAbsoluteFilePath(sourceMapPath);
-      const breakpoints = this.breakpoints.get(absoluteFilePath) || [];
-      breakpoints.forEach(async (bp) => {
-        if (bp.verified) {
-          this.CDPCommunicator.sendCDPMessage("Debugger.removeBreakpoint", {
-            breakpointId: bp.getId(),
-          });
-        }
-        const newId = await this.setCDPBreakpoint(
-          sourceMapPath,
-          this.linesStartAt1 ? bp.line : bp.line + 1,
-          this.columnsStartAt1 ? (bp.column || 1) - 1 : bp.column || 0
-        );
-        if (newId !== null) {
-          bp.setId(newId);
-          bp.verified = true;
-        } else {
-          bp.verified = false;
-        }
-      });
-    });
-  }
-
   protected async setBreakPointsRequest(
     response: DebugProtocol.SetBreakpointsResponse,
     args: DebugProtocol.SetBreakpointsArguments
   ): Promise<void> {
-    const sourcePath = args.source.path as string;
-
-    const previousBreakpoints = this.breakpoints.get(sourcePath) || [];
-
-    const breakpoints = (args.breakpoints || []).map((bp) => {
-      const previousBp = previousBreakpoints.find(
-        (prevBp) => prevBp.line === bp.line && prevBp.column === bp.column
-      );
-      if (previousBp) {
-        return previousBp;
-      } else {
-        return new MyBreakpoint(false, bp.line, bp.column);
-      }
-    });
-
-    // remove old breakpoints
-    previousBreakpoints.forEach((bp) => {
-      if (
-        bp.verified &&
-        !breakpoints.find((newBp) => newBp.line === bp.line && newBp.column === bp.column)
-      ) {
-        this.CDPCommunicator.sendCDPMessage("Debugger.removeBreakpoint", {
-          breakpointId: bp.getId(),
-        });
-      }
-    });
-
-    this.breakpoints.set(sourcePath, breakpoints);
-
-    const resolvedBreakpoints = await Promise.all<Breakpoint>(
-      breakpoints.map(async (bp) => {
-        if (bp.verified) {
-          return bp;
-        } else {
-          const breakpointId = await this.setCDPBreakpoint(sourcePath, bp.line, bp.column || 0);
-          if (breakpointId !== null) {
-            bp.verified = true;
-            bp.setId(breakpointId);
-            return bp;
-          } else {
-            return bp;
-          }
-        }
-      })
+    const resolvedBreakpoints = await this.breakpointController.setBreakpoints(
+      args.source.path as string,
+      args.breakpoints
     );
 
     // send back the actual breakpoint positions
