@@ -4,6 +4,7 @@ import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { Resizable } from "re-resizable";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
+import "./ZoomControls.css";
 import { useProject } from "../providers/ProjectProvider";
 import {
   AndroidSupportedDevices,
@@ -28,7 +29,6 @@ import { Platform } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
-import ButtonGroupLeft from "./ButtonGroupLeft";
 
 declare module "react" {
   interface CSSProperties {
@@ -704,14 +704,17 @@ function Preview({
           </Resizable>
         )}
       </div>
-      <ButtonGroupLeft>
-        <ZoomControls
-          zoomLevel={zoomLevel}
-          onZoomChanged={onZoomChanged}
-          device={device}
-          wrapperDivRef={wrapperDivRef}
-        />
-      </ButtonGroupLeft>
+
+      <div className="button-group-left-wrapper">
+        <div className="button-group-left">
+          <ZoomControls
+            zoomLevel={zoomLevel}
+            onZoomChanged={onZoomChanged}
+            device={device}
+            wrapperDivRef={wrapperDivRef}
+          />
+        </div>
+      </div>
     </>
   );
 }

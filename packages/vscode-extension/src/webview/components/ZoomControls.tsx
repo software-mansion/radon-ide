@@ -1,4 +1,4 @@
-import { RefObject, useCallback } from "react";
+import { RefObject, useCallback, useState } from "react";
 import * as Select from "@radix-ui/react-select";
 import IconButton from "./shared/IconButton";
 import { ZoomLevelType } from "../../common/Project";
@@ -15,9 +15,10 @@ type ZoomControlsProps = {
   onZoomChanged: (zoom: ZoomLevelType) => void;
   device?: DeviceProperties;
   wrapperDivRef?: RefObject<HTMLDivElement>;
+  setIsContentOpen?: (open: boolean) => void;
 };
 
-const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
+const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsContentOpen }: ZoomControlsProps) => {
   const onValueChange = useCallback(
     (e: string) => {
       if (e === "Fit") {
@@ -34,6 +35,7 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
 
   return (
     <Select.Root
+      onOpenChange={setIsContentOpen}
       onValueChange={onValueChange}
       value={zoomLevel === "Fit" ? "Fit" : zoomLevel.toString()}>
       <Select.Trigger className="zoom-select-trigger" disabled={false}>
@@ -67,6 +69,8 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
 };
 
 function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomControlsProps) {
+  const [isContentOpen, setIsContentOpen] = useState(false);
+
   function handleZoom(shouldIncrease: boolean) {
     let currentZoomLevel;
     if (zoomLevel === "Fit") {
@@ -87,7 +91,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
   }
 
   return (
-    <div className="zoom-controls">
+    <div className={`zoom-controls ${isContentOpen ? "content-open" : ""}`}>
       <IconButton
         className="zoom-in-button"
         tooltip={{
@@ -97,7 +101,11 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
         onClick={() => handleZoom(true)}>
         <span className="codicon codicon-zoom-in" />
       </IconButton>
-      <ZoomLevelSelect zoomLevel={zoomLevel} onZoomChanged={onZoomChanged} />
+      <ZoomLevelSelect
+        zoomLevel={zoomLevel}
+        onZoomChanged={onZoomChanged}
+        setIsContentOpen={setIsContentOpen}
+      />
       <IconButton
         className="zoom-out-button"
         tooltip={{
