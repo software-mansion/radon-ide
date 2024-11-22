@@ -311,7 +311,7 @@
               },
               "packageManager": {
                 "type": "string",
-                "description": "Package manager used for the project (eg. yarn)."
+                "description": "Package manager used for the project. Available options include: npm, yarn, pnpm, bun."
               },
               "preview": {
                 "description": "Customize the behavior of device preview",
@@ -400,7 +400,7 @@
               },
               "packageManager": {
                 "type": "string",
-                "description": "Package manager used for the project (eg. yarn)."
+                "description": "Package manager used for the project. Available options include: npm, yarn, pnpm, bun."
               },
               "preview": {
                 "description": "Customize the behavior of device preview",

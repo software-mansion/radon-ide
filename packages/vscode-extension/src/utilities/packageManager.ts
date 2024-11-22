@@ -5,6 +5,7 @@ import { getAppRootFolder } from "./extensionContext";
 import { isWorkspaceRoot } from "./common";
 import { Logger } from "../Logger";
 import { getLaunchConfiguration } from "./launchConfiguration";
+import { requireNoCache } from "./requireNoCache";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
@@ -14,6 +15,18 @@ export type PackageManagerInfo = {
 function isPackageManager(candidate: string): boolean {
   const packageManagers = ["npm", "yarn", "pnpm", "bun"];
   return packageManagers.includes(candidate);
+}
+
+async function getDirFilesSortedByModificationDate(dir: string) {
+  const files = await fs.promises.readdir(dir);
+
+  return files
+    .map((fileName) => ({
+      name: fileName,
+      time: fs.statSync(`${dir}/${fileName}`).mtime.getTime(),
+    }))
+    .sort((a, b) => a.time - b.time)
+    .map((file) => file.name);
 }
 
 const DEFAULT_PACKAGE_MANAGER = "npm";
@@ -49,7 +62,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     }
 
     try {
-      const manager = require(path.join(workspace, "package.json")).packageManager;
+      const manager = requireNoCache(path.join(workspace, "package.json")).packageManager;
 
       if (manager) {
         // e.g. yarn@3.6.4
@@ -70,18 +83,6 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
       } as const)
     );
 
-    const getDirFilesSortedByModificationDate = async (dir: string) => {
-      const files = await fs.promises.readdir(dir);
-
-      return files
-        .map((fileName) => ({
-          name: fileName,
-          time: fs.statSync(`${dir}/${fileName}`).mtime.getTime(),
-        }))
-        .sort((a, b) => a.time - b.time)
-        .map((file) => file.name);
-    };
-
     const files = await getDirFilesSortedByModificationDate(workspace);
     const packageManagerCandidates = [];
     for (const file of files) {
@@ -97,7 +98,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
       );
     }
 
-    if (packageManagerCandidates) {
+    if (packageManagerCandidates.length > 0) {
       return packageManagerCandidates[0];
     }
 
