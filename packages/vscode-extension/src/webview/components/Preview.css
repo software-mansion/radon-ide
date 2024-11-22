@@ -142,26 +142,3 @@
   border-color: var(--touch-indicator-pressed-border);
   box-shadow: var(--touch-indicator-pressed-shadow);
 }
-
-.button-group-left-wrapper {
-  position: absolute;
-  left: 0px;
-  top: 50%;
-  width: 50px;
-  height: 150px;
-  transform: translateY(-50%);
-}
-
-.button-group-left-container {
-  display: flex;
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.button-group-left {
-  display: flex;
-  transition: 0.2s;
-  transform: translateX(-40px);
-}

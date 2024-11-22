@@ -1,13 +1,4 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-  MouseEvent,
-  forwardRef,
-  RefObject,
-  ReactNode,
-  useCallback,
-} from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, useCallback } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { Resizable } from "re-resizable";
@@ -37,15 +28,13 @@ import { Platform } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
+import ButtonGroupLeft from "./ButtonGroupLeft";
 
 declare module "react" {
   interface CSSProperties {
     [key: `--${string}`]: string | number;
   }
 }
-
-const SHOW_ZOOM_CONTROLS_DELAY_MS = 100;
-const HIDE_ZOOM_CONTROLS_DELAY_MS = 200;
 
 function useKeyPresses() {
   const pressedKeys = useRef(new Set<number>());
@@ -188,46 +177,6 @@ function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
-}
-
-type ButtonGroupLeftProps = {
-  children: ReactNode;
-};
-
-function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
-  const [isMouseOver, setIsMouseOver] = useState(false);
-
-  const showButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
-  const hideButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
-
-  const onMouseEnter = () => {
-    clearTimeout(hideButtonGroupTimeout.current);
-    showButtonGroupTimeout.current = setTimeout(() => {
-      setIsMouseOver(true);
-    }, SHOW_ZOOM_CONTROLS_DELAY_MS);
-  };
-
-  const onMouseLeave = () => {
-    clearTimeout(showButtonGroupTimeout.current);
-    hideButtonGroupTimeout.current = setTimeout(() => {
-      setIsMouseOver(false);
-    }, HIDE_ZOOM_CONTROLS_DELAY_MS);
-  };
-
-  return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      className="button-group-left-wrapper">
-      <div className="button-group-left-container">
-        <div
-          style={isMouseOver ? { transform: "translateX(0px)" } : {}}
-          className="button-group-left">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 type Props = {
