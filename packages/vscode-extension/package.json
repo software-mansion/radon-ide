@@ -309,8 +309,12 @@
                   }
                 }
               },
+              "packageManager": {
+                "type": "string",
+                "description": "Package manager used for the project. Available options include: npm, yarn, pnpm, bun."
+              },
               "preview": {
-                "description": "Custommize the behavior of device preview",
+                "description": "Customize the behavior of device preview",
                 "type": "object",
                 "properties": {
                   "waitForAppLaunch": {
@@ -393,6 +397,10 @@
                     "description": "Android's build product flavor used when building with Gradle, by default no flavor is used."
                   }
                 }
+              },
+              "packageManager": {
+                "type": "string",
+                "description": "Package manager used for the project. Available options include: npm, yarn, pnpm, bun."
               },
               "preview": {
                 "description": "Customize the behavior of device preview",
