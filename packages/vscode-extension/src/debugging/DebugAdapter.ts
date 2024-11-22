@@ -83,6 +83,7 @@ export class DebugAdapter extends DebugSession {
   private sourceMapAliases?: Array<[string, string]>;
   private threads: Array<Thread> = [];
   private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
+  private sourceMapFilePaths: Set<string> = new Set();
   private expoPreludeLineCount: number;
   private linesStartAt1 = true;
   private columnsStartAt1 = true;
@@ -172,6 +173,10 @@ export class DebugAdapter extends DebugSession {
               lineOffset = this.expoPreludeLineCount;
             }
 
+            // add all sources from consumer to sourceMapFilePaths
+            consumer.sources.forEach((source) => {
+              this.sourceMapFilePaths.add(source);
+            });
             this.sourceMaps.push([
               message.params.url,
               message.params.scriptId,
@@ -194,6 +199,7 @@ export class DebugAdapter extends DebugSession {
           const allThreads = this.threads;
           this.threads = [];
           this.sourceMaps = [];
+          this.sourceMapFilePaths.clear();
           this.variableStore.clearReplVariables();
           this.variableStore.clearCDPVariables();
 
@@ -299,7 +305,7 @@ export class DebugAdapter extends DebugSession {
     ]);
   }
 
-  private toAbsoluteFilePath(sourceMapPath: string) {
+  private toAbsoluteFilePathFromSourceMapAlias(sourceMapPath: string) {
     if (this.sourceMapAliases) {
       for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
         if (sourceMapPath.startsWith(alias)) {
@@ -311,7 +317,7 @@ export class DebugAdapter extends DebugSession {
     return sourceMapPath;
   }
 
-  private toSourceMapFilePath(sourceAbsoluteFilePath: string) {
+  private toSourceMapAliasedFilePath(sourceAbsoluteFilePath: string) {
     if (this.sourceMapAliases) {
       // we return the first alias from the list
       for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
@@ -358,7 +364,7 @@ export class DebugAdapter extends DebugSession {
     });
 
     return {
-      sourceURL: this.toAbsoluteFilePath(sourceURL),
+      sourceURL: this.toAbsoluteFilePathFromSourceMapAlias(sourceURL),
       lineNumber1Based: sourceLine1Based,
       columnNumber0Based: sourceColumn0Based,
       scriptURL,
@@ -495,8 +501,20 @@ export class DebugAdapter extends DebugSession {
     this.sendResponse(response);
   }
 
-  private toGeneratedPosition(file: string, lineNumber1Based: number, columnNumber0Based: number) {
-    let sourceMapFilePath = this.toSourceMapFilePath(file);
+  private toGeneratedPosition(
+    absoluteFilePath: string,
+    lineNumber1Based: number,
+    columnNumber0Based: number
+  ) {
+    // New React Native 76 debugger uses file aliases in source maps, however, the aliases are not
+    // used in some settings (i.e. with Expo projects). For calculating the generated position, we
+    // need to use the file path that is present in source maps. We first try to check if the aliased
+    // file path is there, and if it's not, we use the original absolute file path.
+    let sourceMapAliasedFilePath = this.toSourceMapAliasedFilePath(absoluteFilePath);
+    let sourceMapFilePath = this.sourceMapFilePaths.has(sourceMapAliasedFilePath)
+      ? sourceMapAliasedFilePath
+      : absoluteFilePath;
+
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
     this.sourceMaps.forEach(([sourceURL, scriptId, consumer, lineOffset]) => {
@@ -551,7 +569,7 @@ export class DebugAdapter extends DebugSession {
     consumer.eachMapping((mapping) => mapping.source && uniqueSourceMapPaths.add(mapping.source));
 
     uniqueSourceMapPaths.forEach((sourceMapPath) => {
-      const absoluteFilePath = this.toAbsoluteFilePath(sourceMapPath);
+      const absoluteFilePath = this.toAbsoluteFilePathFromSourceMapAlias(sourceMapPath);
       const breakpoints = this.breakpoints.get(absoluteFilePath) || [];
       breakpoints.forEach(async (bp) => {
         if (bp.verified) {
