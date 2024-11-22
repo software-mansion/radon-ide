@@ -28,7 +28,6 @@ type LaunchConfigContextType = LaunchConfigurationOptions & {
 const LaunchConfigContext = createContext<LaunchConfigContextType>({
   update: () => {},
   xcodeSchemes: [],
-  eas: {},
 });
 
 export default function LaunchConfigProvider({ children }: PropsWithChildren) {
