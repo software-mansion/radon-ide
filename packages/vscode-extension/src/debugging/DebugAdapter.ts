@@ -22,7 +22,7 @@ import {
   CDPRemoteObject,
 } from "./cdp";
 import { VariableStore } from "./variableStore";
-import { SourceMapController } from "./SourceMapsController";
+import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { CDPSession } from "./CDPSession";
 
@@ -40,7 +40,7 @@ export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
 
   private cdpSession: CDPSession;
-  private sourceMapController: SourceMapController;
+  private sourceMapController: SourceMapsRegistry;
 
   private breakpointsController: BreakpointsController;
 
@@ -61,7 +61,7 @@ export class DebugAdapter extends DebugSession {
       this.handleIncomingCDPMethodCalls
     );
 
-    this.sourceMapController = new SourceMapController(
+    this.sourceMapController = new SourceMapsRegistry(
       configuration.expoPreludeLineCount,
       configuration.sourceMapAliases
     );

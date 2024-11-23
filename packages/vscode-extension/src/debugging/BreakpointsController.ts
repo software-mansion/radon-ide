@@ -2,13 +2,13 @@ import { Breakpoint } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { SourceMapConsumer } from "source-map";
 import { CDPBreakpoint } from "./CDPBreakpoint";
-import { SourceMapController } from "./SourceMapsController";
+import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { CDPSession } from "./CDPSession";
 
 export class BreakpointsController {
   private breakpoints = new Map<string, Array<CDPBreakpoint>>();
 
-  constructor(private sourceMapController: SourceMapController, private cdpSession: CDPSession) {}
+  constructor(private sourceMapController: SourceMapsRegistry, private cdpSession: CDPSession) {}
 
   public updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
     // this method gets called after we are informed that a new script has been parsed. If we

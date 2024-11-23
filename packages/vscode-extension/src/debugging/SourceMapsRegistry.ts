@@ -14,7 +14,7 @@ function compareIgnoringHost(url1: string, url2: string) {
   }
 }
 
-export class SourceMapController {
+export class SourceMapsRegistry {
   private sourceMaps: Array<[string, string, SourceMapConsumer, number]> = [];
   private sourceMapFilePaths: Set<string> = new Set();
 

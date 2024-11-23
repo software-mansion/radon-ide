@@ -1,5 +1,5 @@
 import { Breakpoint, Source } from "@vscode/debugadapter";
-import { SourceMapController } from "./SourceMapsController";
+import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
 import { CDPSession } from "./CDPSession";
 
@@ -12,7 +12,7 @@ export class CDPBreakpoint extends Breakpoint {
 
   constructor(
     private cdpSession: CDPSession,
-    private sourceMapController: SourceMapController,
+    private sourceMapController: SourceMapsRegistry,
     verified: boolean,
     line: number,
     column?: number,
