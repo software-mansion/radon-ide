@@ -343,25 +343,36 @@ export class Metro implements Disposable {
     return websocketAddress;
   }
 
+  private filterNewDebuggerPages(listJson: CDPTargetDescription[]) {
+    return listJson.filter(
+      (page) => page.reactNative && page.title.startsWith("React Native Bridge")
+    );
+  }
+
   private lookupWsAddressForNewDebugger(listJson: CDPTargetDescription[]) {
-    // in the new debugger, ids are generated in the following format: "deviceId-pageId"
+    // In the new debugger, ids are generated in the following format: "deviceId-pageId"
     // but unlike with the old debugger, deviceId is a hex string (UUID most likely)
     // that is stable between reloads.
     // Subsequent runtimes that register get incremented pageId (e.g. main runtime will
     // be 1, reanimated worklet runtime would get 2, etc.)
     // The most recent runtimes are listed first, so we can pick the first one with title
-    // that that starts with "React Native Bridge" (which is the main runtime)
-    const newDebuggerPages = listJson.filter(
-      (page) => page.reactNative && page.title.startsWith("React Native Bridge")
-    );
+    // that starts with "React Native Bridge" (which is the main runtime)
+    const newDebuggerPages = this.filterNewDebuggerPages(listJson);
     if (newDebuggerPages.length > 0) {
-      // Expo go apps would report at least two pages, first one being the Expo Go host runtime
-      // If we detect Expo Go package (using description field), we want to pick the second page
-      // otherwise we pick the first one
       const description = newDebuggerPages[0].description;
       const isExpoGo = description === EXPO_GO_BUNDLE_ID || description === EXPO_GO_PACKAGE_NAME;
-      if (isExpoGo && newDebuggerPages.length > 1) {
-        return newDebuggerPages[1].webSocketDebuggerUrl;
+      if (isExpoGo) {
+        // Expo go apps using the new debugger would report at least two pages, first one being the Expo Go
+        // host runtime.
+        // If we detect Expo Go package (using description field), we want to pick the second page
+        // otherwise we pick the first one
+        // When only one page is listed, it means that the app runtime hasn't registered yet in which case
+        // we return undefined which triggers a retry mechanism.
+        if (newDebuggerPages.length === 1) {
+          return undefined;
+        } else {
+          return newDebuggerPages[1].webSocketDebuggerUrl;
+        }
       }
       return newDebuggerPages[0].webSocketDebuggerUrl;
     }
@@ -373,16 +384,13 @@ export class Metro implements Disposable {
     const list = await fetch(`http://localhost:${this._port}/json/list`);
     const listJson = await list.json();
 
-    // we try using "new debugger" lookup first, and then switch to trying out
-    // the old debugger connection (we can tell by the page naming scheme whether
-    // it's the old or new debugger)
-    let websocketAddress = this.lookupWsAddressForNewDebugger(listJson);
-    if (websocketAddress) {
-      this.usesNewDebugger = true;
-    } else {
-      this.usesNewDebugger = false;
-      websocketAddress = this.lookupWsAddressForOldDebugger(listJson);
-    }
+    // When there are pages that are identified as belonging to the new debugger, we
+    // assume the use of the new debugger and use new debugger logic to determine the websocket address.
+    this.usesNewDebugger = this.filterNewDebuggerPages(listJson).length > 0;
+
+    let websocketAddress = this.usesNewDebugger
+      ? this.lookupWsAddressForNewDebugger(listJson)
+      : this.lookupWsAddressForOldDebugger(listJson);
 
     if (websocketAddress) {
       // Port and host in webSocketDebuggerUrl are set manually to match current metro address,
