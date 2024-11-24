@@ -152,16 +152,15 @@
   transform: translateY(-50%);
 }
 
-.button-group-left-container {
+.button-group-left {
   display: flex;
   position: absolute;
   left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+  transform: translate(-40px, 21px);
+  transition: transform 0.3s ease 0.1s;
 }
 
-.button-group-left {
-  display: flex;
-  transition: 0.2s;
-  transform: translateX(-40px);
+.button-group-left-wrapper:hover .button-group-left,
+.button-group-left:has(.zoom-controls.select-open) {
+  transform: translate(0px, 21px);
 }

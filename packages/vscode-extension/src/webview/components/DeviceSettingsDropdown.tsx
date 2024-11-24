@@ -12,6 +12,7 @@ import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
+import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { AppPermissionType, DeviceSettings } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
@@ -50,6 +51,7 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const { project, deviceSettings, projectState } = useProject();
+  const { showDeviceFrame, update } = useWorkspaceConfig();
   const { openModal } = useModal();
 
   const resetOptions =
@@ -179,11 +181,23 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Show Touches
             <Switch.Root
               className="switch-root small-switch"
-              id="enable-replays"
+              id="show-touches"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
               }
               defaultChecked={deviceSettings.showTouches}
+              style={{ marginLeft: "auto" }}>
+              <Switch.Thumb className="switch-thumb" />
+            </Switch.Root>
+          </div>
+          <div className="dropdown-menu-item">
+            <span className="codicon codicon-device-mobile" />
+            Show Device Frame
+            <Switch.Root
+              className="switch-root small-switch"
+              id="show-device-frame"
+              onCheckedChange={(checked) => update("showDeviceFrame", checked)}
+              defaultChecked={showDeviceFrame}
               style={{ marginLeft: "auto" }}>
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
