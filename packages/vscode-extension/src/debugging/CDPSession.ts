@@ -36,17 +36,19 @@ export class CDPSession {
     });
   }
 
-  private setUpDebugger = () => {
+  private setUpDebugger = async () => {
     // the below catch handler is used to ignore errors coming from non critical CDP messages we
     // expect in some setups to fail
     const ignoreError = () => {};
-    this.sendCDPMessage("FuseboxClient.setClientMetadata", {}).catch(ignoreError);
-    this.sendCDPMessage("Runtime.enable", {});
-    this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
-    this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
-    this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(ignoreError);
-    this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(ignoreError);
-    this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {}).catch(ignoreError);
+    await this.sendCDPMessage("FuseboxClient.setClientMetadata", {}).catch(ignoreError);
+    await this.sendCDPMessage("Runtime.enable", {});
+    await this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
+    await this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
+    await this.sendCDPMessage("Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(
+      ignoreError
+    );
+    await this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(ignoreError);
+    await this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {}).catch(ignoreError);
   };
 
   private handleCDPMessageResponse(message: any) {

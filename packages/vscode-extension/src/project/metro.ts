@@ -372,6 +372,9 @@ export class Metro implements Disposable {
     // query list from http://localhost:${metroPort}/json/list
     const list = await fetch(`http://localhost:${this._port}/json/list`);
     const listJson = await list.json();
+    if (listJson.length < 2) {
+      return undefined;
+    }
 
     // we try using "new debugger" lookup first, and then switch to trying out
     // the old debugger connection (we can tell by the page naming scheme whether
