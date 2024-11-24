@@ -102,12 +102,11 @@ export class DebugAdapter extends DebugSession {
             this.cdpSession.sendCDPMessage("Runtime.evaluate", {
               expression: "__RNIDE_onDebuggerReady()",
             });
+            this.sendEvent(new InitializedEvent());
           }
 
           this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
         }
-
-        this.sendEvent(new InitializedEvent());
         break;
       case "Debugger.paused":
         this.handleDebuggerPaused(message);
