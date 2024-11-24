@@ -1,6 +1,6 @@
+import path from "path";
 import { NullablePosition, SourceMapConsumer } from "source-map";
 import { Logger } from "../Logger";
-import path from "path";
 
 function compareIgnoringHost(url1: string, url2: string) {
   try {

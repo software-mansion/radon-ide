@@ -10,6 +10,10 @@ export class BreakpointsController {
 
   constructor(private sourceMapController: SourceMapsRegistry, private cdpSession: CDPSession) {}
 
+  public resetBreakpoints() {
+    this.breakpoints.clear();
+  }
+
   public updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
     // this method gets called after we are informed that a new script has been parsed. If we
     // had breakpoints set in that script, we need to let the runtime know about it
@@ -25,7 +29,7 @@ export class BreakpointsController {
         this.sourceMapController.toAbsoluteFilePathFromSourceMapAlias(sourceMapPath);
       const breakpoints = this.breakpoints.get(absoluteFilePath) || [];
       breakpoints.forEach(async (bp) => {
-        await bp.reset(sourceMapPath);
+        await bp.reset();
       });
     });
   }
@@ -46,7 +50,7 @@ export class BreakpointsController {
         return new CDPBreakpoint(
           this.cdpSession,
           this.sourceMapController,
-          false,
+          sourcePath,
           bp.line,
           bp.column
         );
@@ -67,7 +71,7 @@ export class BreakpointsController {
 
     const resolvedBreakpoints = await Promise.all<Breakpoint>(
       newBreakpoints.map(async (bp) => {
-        await bp.add(sourcePath);
+        await bp.set();
         return bp;
       })
     );

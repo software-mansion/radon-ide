@@ -40,7 +40,7 @@ export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
 
   private cdpSession: CDPSession;
-  private sourceMapController: SourceMapsRegistry;
+  private sourceMapRegistry: SourceMapsRegistry;
 
   private breakpointsController: BreakpointsController;
 
@@ -61,15 +61,12 @@ export class DebugAdapter extends DebugSession {
       this.handleIncomingCDPMethodCalls
     );
 
-    this.sourceMapController = new SourceMapsRegistry(
+    this.sourceMapRegistry = new SourceMapsRegistry(
       configuration.expoPreludeLineCount,
       configuration.sourceMapAliases
     );
 
-    this.breakpointsController = new BreakpointsController(
-      this.sourceMapController,
-      this.cdpSession
-    );
+    this.breakpointsController = new BreakpointsController(this.sourceMapRegistry, this.cdpSession);
   }
 
   private handleIncomingCDPMethodCalls = async (message: any) => {
@@ -94,7 +91,7 @@ export class DebugAdapter extends DebugSession {
             source.includes("__prelude__")
           );
 
-          const consumer = await this.sourceMapController.registerSourceMap(
+          const consumer = await this.sourceMapRegistry.registerSourceMap(
             sourceMap,
             message.params.url,
             message.params.scriptId,
@@ -122,7 +119,8 @@ export class DebugAdapter extends DebugSession {
         // clear all existing threads, source maps, and variable store
         const allThreads = this.threads;
         this.threads = [];
-        this.sourceMapController.clearSourceMaps();
+        this.sourceMapRegistry.clearSourceMaps();
+        this.breakpointsController.resetBreakpoints();
         this.variableStore.clearReplVariables();
         this.variableStore.clearCDPVariables();
 
@@ -164,7 +162,7 @@ export class DebugAdapter extends DebugSession {
         .map((v: any) => v.value);
 
       const { lineNumber1Based, columnNumber0Based, sourceURL } =
-        this.sourceMapController.findOriginalPosition(
+        this.sourceMapRegistry.findOriginalPosition(
           scriptURL,
           generatedLineNumber1Based,
           generatedColumn1Based - 1
@@ -283,7 +281,7 @@ export class DebugAdapter extends DebugSession {
               stackObjProperties.find((v) => v.name === "column")?.value || "0"
             );
             const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
-              this.sourceMapController.findOriginalPosition(
+              this.sourceMapRegistry.findOriginalPosition(
                 genUrl,
                 genLine1Based,
                 genColumn1Based - 1
@@ -305,7 +303,7 @@ export class DebugAdapter extends DebugSession {
       this.pausedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
         const cdpLocation = cdpFrame.location;
         const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
-          this.sourceMapController.findOriginalPosition(
+          this.sourceMapRegistry.findOriginalPosition(
             cdpLocation.scriptId,
             cdpLocation.lineNumber + 1, // cdp line and column numbers are 0-based
             cdpLocation.columnNumber
@@ -351,8 +349,14 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.SetBreakpointsResponse,
     args: DebugProtocol.SetBreakpointsArguments
   ): Promise<void> {
+    const sourcePath = args.source.path;
+    if (!sourcePath) {
+      this.sendResponse(response);
+      return;
+    }
+
     const resolvedBreakpoints = await this.breakpointsController.setBreakpoints(
-      args.source.path as string,
+      sourcePath,
       args.breakpoints
     );
 

@@ -1,72 +1,56 @@
-import { Breakpoint, Source } from "@vscode/debugadapter";
+import { Breakpoint } from "@vscode/debugadapter";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
-import { Logger } from "../Logger";
 import { CDPSession } from "./CDPSession";
 
+function makeDeferredTaskPromise<T>(task: () => Promise<T>) {
+  let resolve: (value: T | PromiseLike<T>) => void;
+  let reject: (reason?: any) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  const runTask = () => {
+    task().then(resolve, reject);
+  };
+  return { promise, runTask };
+}
+
+let breakpointId = 0;
+
 export class CDPBreakpoint extends Breakpoint {
-  public readonly line: number;
-  public readonly column: number | undefined;
-  private _id: number | undefined;
-  private executingQueue: boolean = false;
-  private cdpCommunicationQueue: Array<() => Promise<void>> = [];
+  private cdpId: number | undefined;
+  private lastTaskPromise = Promise.resolve();
 
   constructor(
     private cdpSession: CDPSession,
     private sourceMapController: SourceMapsRegistry,
-    verified: boolean,
-    line: number,
-    column?: number,
-    source?: Source
+    private sourcePath: string,
+    public readonly line: number,
+    public readonly column: number | undefined
   ) {
-    super(verified, line, column, source);
-    this.column = column;
-    this.line = line;
+    super(false, line, column);
   }
 
-  public async delete() {
-    return this.addTaskToQueue(async () => {
-      await this.deleteCDPBreakpoint();
-    });
+  public delete() {
+    return this.scheduleTask(this.deleteWithCDP);
   }
 
-  public reset(sourceMapPath: string) {
-    return this.addTaskToQueue(async () => {
-      await this.resetCDPBreakpoint(sourceMapPath);
-    });
+  public async reset() {
+    this.delete();
+    return this.set();
   }
 
-  public async add(sourcePath: string) {
-    return this.addTaskToQueue(async () => {
-      await this.setCDPBreakpoint(sourcePath);
-    });
+  public set() {
+    return this.scheduleTask(this.setWithCDP);
   }
 
-  public setId(id: number): void {
-    super.setId(id);
-    this._id = id;
-  }
-
-  public getId(): number | undefined {
-    // we cannot use `get id` here, because Breakpoint actually has a private field
-    // called id, and it'd collide with this getter making it impossible to set it
-    return this._id;
-  }
-
-  private async resetCDPBreakpoint(sourceMapPath: string) {
-    if (this.verified) {
-      await this.deleteCDPBreakpoint();
-      this.verified = false;
-    }
-    await this.setCDPBreakpoint(sourceMapPath);
-  }
-
-  private async setCDPBreakpoint(sourcePath: string) {
+  private setWithCDP = async () => {
     if (this.verified) {
       return;
     }
 
     const generatedPos = this.sourceMapController.toGeneratedPosition(
-      sourcePath,
+      this.sourcePath,
       this.line,
       this.column ?? 0
     );
@@ -82,52 +66,33 @@ export class CDPBreakpoint extends Breakpoint {
       condition: "",
     });
     if (result && result.breakpointId !== undefined) {
-      this.setId(result.breakpointId);
+      this.cdpId = result.breakpointId;
       this.verified = true;
+      this.setId(breakpointId++);
+    } else {
+      this.verified = false;
     }
-  }
+  };
 
-  private async deleteCDPBreakpoint() {
+  private deleteWithCDP = async () => {
     await this.cdpSession.sendCDPMessage("Debugger.removeBreakpoint", {
-      breakpointId: this.getId(),
+      breakpointId: this.cdpId,
     });
-  }
+    this.verified = false;
+  };
 
-  private executeCommunication() {
-    if (!this.executingQueue && this.cdpCommunicationQueue.length > 0) {
-      this.executingQueue = true;
-      this.executeNextTask();
-    }
-  }
-
-  private executeNextTask() {
-    if (this.cdpCommunicationQueue.length === 0) {
-      this.executingQueue = false;
-      return;
-    }
-
-    const task = this.cdpCommunicationQueue.shift();
-    task!()
-      .then(() => {
-        this.executeNextTask();
-      })
-      .catch((err) => {
-        Logger.warn("Error executing task on breakpoint:", this.getId(), err);
-        this.executeNextTask();
-      });
-  }
-
-  private async addTaskToQueue(task: () => Promise<void>) {
-    return new Promise<void>((res, rej) => {
-      this.cdpCommunicationQueue.push(() => {
-        return new Promise<void>((resolve) => {
-          task().finally(() => {
-            resolve();
-            res();
-          });
+  private async scheduleTask(task: () => Promise<void>) {
+    const { promise, runTask } = makeDeferredTaskPromise(task);
+    if (this.lastTaskPromise) {
+      this.lastTaskPromise
+        .catch(() => {}) // no-op catch hereo allow the next task to run
+        .then(() => {
+          setTimeout(runTask, 0);
         });
-      });
-      this.executeCommunication();
-    });
+    } else {
+      runTask();
+    }
+    this.lastTaskPromise = promise;
+    return promise;
   }
 }
