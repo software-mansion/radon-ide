@@ -108,7 +108,7 @@ table thead tr {
   display: flex !important;
 }
 
-[class*="plugin-pages"] [class*="navbar__toggle"] {
+[class*="colorModeToggle"] {
   display: none;
 }
 [class*="plugin-pages"] [class*="hireUsContainer"] {
@@ -153,4 +153,8 @@ div[class^="announcementBar_"] {
 video.shadow-image,
 img.shadow-image {
   margin-bottom: 32px !important;
+}
+
+[class*="DocSearch-Footer"] {
+  margin-top: 0 !important;
 }
