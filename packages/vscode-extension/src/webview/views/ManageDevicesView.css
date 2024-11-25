@@ -17,7 +17,7 @@
 .device-row {
   display: grid;
   grid-template-columns: 32px 1fr 90px;
-  width: 430px;
+  width: 410px;
   align-items: center;
   gap: 10px;
   line-height: 1;
@@ -82,8 +82,8 @@
   justify-content: center;
 }
 .device-button-group .icon-button {
-  min-width: 30px;
-  max-height: 30px;
+  width: 30px;
+  height: 30px;
 }
 
 .warning {
