@@ -11,6 +11,7 @@
   border-radius: 36px;
   color: var(--swm-button);
   transition: all 200ms 0ms ease-in-out;
+  flex-shrink: 0;
 }
 
 .icon-button:disabled {
