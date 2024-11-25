@@ -26,7 +26,6 @@ import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { Platform } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
 
 declare module "react" {
@@ -323,7 +322,7 @@ function Preview({
           }
         }
       }
-      project.showInspectOverlay(inspectData.frame);
+      project.showInspectOverlay(inspectData.frame, isInspecting);
       setInspectFrame(inspectData.frame);
     });
   }
@@ -617,18 +616,6 @@ function Preview({
                       "--size": `${normalTouchIndicatorSize}px`,
                     }}>
                     <TouchPointIndicator isPressing={isPressing} />
-                  </div>
-                )}
-
-                {!replayData && inspectFrame && (
-                  <div className="phone-screen phone-inspect-overlay">
-                    {isInspecting && (
-                      <DimensionsBox
-                        device={device}
-                        frame={inspectFrame}
-                        wrapperDivRef={wrapperDivRef}
-                      />
-                    )}
                   </div>
                 )}
                 {projectStatus === "refreshing" && (

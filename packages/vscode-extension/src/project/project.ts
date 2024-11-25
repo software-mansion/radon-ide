@@ -459,8 +459,11 @@ export class Project
     });
   }
 
-  public showInspectOverlay(frame: {x: number, y: number, width: number, height: number}): void {
-    this.deviceSession?.showInspectOverlay(frame);
+  public showInspectOverlay(
+    frame: { x: number; y: number; width: number; height: number },
+    isInspecting?: boolean
+  ): void {
+    this.deviceSession?.showInspectOverlay(frame, isInspecting);
   }
 
   public hideInspectOverlay(): void {

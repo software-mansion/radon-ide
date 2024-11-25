@@ -158,8 +158,11 @@ export interface ProjectInterface {
     requestStack: boolean,
     callback: (inspectData: InspectData) => void
   ): Promise<void>;
-  showInspectOverlay(frame: {x:number, y:number, width:number, height:number}):void;
-  hideInspectOverlay():void;
+  showInspectOverlay(
+    frame: { x: number; y: number; width: number; height: number },
+    isInspecting?: boolean
+  ): void;
+  hideInspectOverlay(): void;
 
   addListener<K extends keyof ProjectEventMap>(
     eventType: K,

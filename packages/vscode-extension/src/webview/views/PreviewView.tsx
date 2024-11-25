@@ -279,7 +279,7 @@ function PreviewView() {
           onSelected={onInspectorItemSelected}
           onHover={(item) => {
             if (item.frame) {
-              project.showInspectOverlay(item.frame);
+              project.showInspectOverlay(item.frame, isInspecting);
               setInspectFrame(item.frame);
             }
           }}
