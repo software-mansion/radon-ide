@@ -32,6 +32,8 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     className = "",
     ...rest
   } = props;
+
+  const showCounter = Boolean(counter);
   const button = (
     <button
       onClick={onClick}
@@ -45,8 +47,18 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
       )}
       {...rest}
       ref={ref}>
-      {children}
-      {Boolean(counter) && <span className="icon-button-counter">{counter}</span>}
+      <span
+        className="icon-button-icon"
+        style={{
+          transform: showCounter ? "translateX(-5px)" : "translateX(0)",
+        }}>
+        {children}
+      </span>
+      {counter !== null && (
+        <span className={classnames("icon-button-counter", showCounter && "visible")}>
+          {counter}
+        </span>
+      )}
     </button>
   );
 
