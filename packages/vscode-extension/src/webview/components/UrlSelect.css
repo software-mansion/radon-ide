@@ -98,7 +98,7 @@
   padding-bottom: 6px;
 }
 
-@media (width <= 385px) {
+@media (width <= 425px) {
   .url-select-trigger {
     min-width: 0;
   }
