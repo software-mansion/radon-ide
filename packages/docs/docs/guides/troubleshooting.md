@@ -58,7 +58,7 @@ Native builds are one of the most time consuming phases when launching your proj
 Build processes output a lot of logs on their own and hence they have separate output channels.
 When something goes wrong in the native build phase, instead of checking "Radon IDE" source in "Output Panel" as described in the previous point, select "Radon IDE (Android build)" or "Radon IDE (iOS build)" source depending on the platform you're building for.
 
-### -sec-num Accessing application process logs
+### -sec-num- Accessing application process logs
 
 In cases of native crashes on iOS or Android, it may be helpful to investigate those by checking iOS process output, or Android logcat.
 When the application is launched, Radon IDE creates a separate output channel to record logs printed by the application process.

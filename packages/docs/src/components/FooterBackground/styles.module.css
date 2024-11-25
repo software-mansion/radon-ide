@@ -26,7 +26,8 @@ footer {
 }
 
 [class*="mdx-wrapper"] footer,
-[class*="plugin-docs"] footer {
+[class*="plugin-docs"] footer,
+[class*="plugin-search-algolia"] footer {
   margin-top: 0 !important;
 }
 
