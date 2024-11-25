@@ -301,6 +301,14 @@ export class DeviceSession implements Disposable {
     this.devtools.send("RNIDE_inspect", { x: xRatio, y: yRatio, id, requestStack });
   }
 
+  public showInspectOverlay(frame: {x: number, y: number, width: number, height: number}): void {
+    this.devtools.send("RNIDE_showInspectOverlay", frame);
+  }
+
+  public hideInspectOverlay(){
+    this.devtools.send("RNIDE_hideInspectOverlay");
+  }
+
   public openNavigation(id: string) {
     this.devtools.send("RNIDE_openNavigation", { id });
   }

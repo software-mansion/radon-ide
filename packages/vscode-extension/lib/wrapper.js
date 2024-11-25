@@ -1,5 +1,7 @@
 "use no memo";
 
+import { setSourceMapRange } from "typescript";
+
 const { useContext, useState, useEffect, useRef, useCallback } = require("react");
 const {
   LogBox,
@@ -130,10 +132,10 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
     (viewData) => {
       const frame = viewData.frame;
       const scaledFrame = {
-        x: frame.left / screenWidth,
-        y: frame.top / screenHeight,
-        width: frame.width / screenWidth,
-        height: frame.height / screenHeight,
+        x: frame.left,
+        y: frame.top,
+        width: frame.width,
+        height: frame.height,
       };
 
       if (!requestStack) {
@@ -157,10 +159,10 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
                       column0Based: source.columnNumber - 1,
                     },
                     frame: {
-                      x: pageX / screenWidth,
-                      y: pageY / screenHeight,
-                      width: viewWidth / screenWidth,
-                      height: viewHeight / screenHeight,
+                      x: pageX,
+                      y: pageY,
+                      width: viewWidth,
+                      height: viewHeight,
                     },
                   });
                 });
@@ -183,6 +185,13 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const rootTag = useContext(RootTagContext);
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
+  const [showInspectOverlay, setShowInspectOverlay] = useState(false);
+  const [inspectOverlayFrame, setInspectOverlayFrame] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
   const mainContainerRef = useRef();
 
   const mountCallback = initialProps?.__RNIDE_onMount;
@@ -302,6 +311,15 @@ export function AppWrapper({ children, initialProps, fabric }) {
     [mainContainerRef]
   );
 
+  useAgentListener(devtoolsAgent, "RNIDE_showInspectOverlay", (payload) => {
+    setInspectOverlayFrame(payload);
+    setShowInspectOverlay(true);
+  });
+
+  useAgentListener(devtoolsAgent, "RNIDE_hideInspectOverlay", (payload) => {
+    setShowInspectOverlay(false);
+  });
+
   useAgentListener(
     devtoolsAgent,
     "RNIDE_showStorybookStory",
@@ -348,15 +366,28 @@ export function AppWrapper({ children, initialProps, fabric }) {
   }, [!!devtoolsAgent && hasLayout]);
 
   return (
-    <View
-      ref={mainContainerRef}
-      style={{ flex: 1 }}
-      onLayout={() => {
-        layoutCallback?.();
-        setHasLayout(true);
-      }}>
-      {children}
-    </View>
+    <>
+      <View
+        ref={mainContainerRef}
+        style={{ flex: 1, backgroundColor: "black" }}
+        onLayout={() => {
+          layoutCallback?.();
+          setHasLayout(true);
+        }}>
+        {children}
+      </View>
+      {showInspectOverlay && (
+        <View
+          style={{
+            left: inspectOverlayFrame.x,
+            top: inspectOverlayFrame.y,
+            width: inspectOverlayFrame.width,
+            height: inspectOverlayFrame.height,
+            position: "absolute",
+            backgroundColor: "rgba(56, 172, 221, 0.85)",
+          }}></View>
+      )}
+    </>
   );
 }
 

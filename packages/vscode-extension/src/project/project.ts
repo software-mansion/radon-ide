@@ -459,6 +459,14 @@ export class Project
     });
   }
 
+  public showInspectOverlay(frame: {x: number, y: number, width: number, height: number}): void {
+    this.deviceSession?.showInspectOverlay(frame);
+  }
+
+  public hideInspectOverlay(): void {
+    this.deviceSession?.hideInspectOverlay();
+  }
+
   public async resumeDebugger() {
     this.deviceSession?.resumeDebugger();
   }

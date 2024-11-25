@@ -323,12 +323,14 @@ function Preview({
           }
         }
       }
+      project.showInspectOverlay(inspectData.frame);
       setInspectFrame(inspectData.frame);
     });
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
   function resetInspector() {
+    project.hideInspectOverlay();
     setInspectFrame(null);
     setInspectStackData(null);
   }
@@ -620,15 +622,6 @@ function Preview({
 
                 {!replayData && inspectFrame && (
                   <div className="phone-screen phone-inspect-overlay">
-                    <div
-                      className="inspect-area"
-                      style={{
-                        left: `${inspectFrame.x * 100}%`,
-                        top: `${inspectFrame.y * 100}%`,
-                        width: `${inspectFrame.width * 100}%`,
-                        height: `${inspectFrame.height * 100}%`,
-                      }}
-                    />
                     {isInspecting && (
                       <DimensionsBox
                         device={device}

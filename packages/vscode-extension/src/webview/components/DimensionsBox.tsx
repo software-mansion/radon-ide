@@ -27,8 +27,8 @@ function DimensionsBox({ device, frame, wrapperDivRef }: DimensionsBoxProps) {
     return;
   }
 
-  const width = parseFloat((frame.width * device.screenWidth).toFixed(2));
-  const height = parseFloat((frame.height * device.screenHeight).toFixed(2));
+  const width = parseFloat(frame.width.toFixed(2));
+  const height = parseFloat(frame.height.toFixed(2));
 
   const previewDiv = wrapperDivRef.current?.childNodes?.[0] as unknown;
 
