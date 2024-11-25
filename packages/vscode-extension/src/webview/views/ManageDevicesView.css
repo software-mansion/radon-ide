@@ -3,11 +3,13 @@
   margin-right: 12px;
 }
 
-.container {
+.manage-devices-container {
   margin: 12px 0 0 0;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  padding-right: 5%;
+  padding-left: 2.5%;
 }
 
 .delete-icon {
@@ -98,4 +100,13 @@
 .create-button-text {
   margin-left: 4px;
   text-wrap: nowrap;
+}
+
+@media (width <= 480px) {
+  .manage-devices-container {
+    padding: 0;
+  }
+  .device-row {
+    padding: 2px 0px 2px 0px;
+  }
 }
