@@ -141,7 +141,7 @@ export class Preview implements Disposable {
   }
 
   public startRecording() {
-    this.sendCommandOrThrow(`video recording start -m -b 50\n`); // 50MB buffer for in-memory video
+    this.sendCommandOrThrow(`video recording start -b 2000\n`); // 2000MB buffer for on-disk video
   }
 
   public captureAndStopRecording() {
