@@ -98,7 +98,7 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 
   let stackItems = [];
   if (rendererConfig) {
-    // when we find renderer copnfig with getInspectorDataForInstance we use fiber node
+    // when we find renderer config with getInspectorDataForInstance we use fiber node
     // "return" property to traverse the component hierarchy
     let node = startNode;
 
