@@ -90,7 +90,7 @@ function getRendererConfig() {
  * the component hierarchy up from the startNode.
  * Each stack entry carries the component name, source location and measure function.
  * We try to use React's renderer getInspectorDataForInstance to get the details about
- * each particular component instance. Howeber, with older versions of React Native where
+ * each particular component instance. However, with older versions of React Native where
  * this method is not available, we fallback to using hierarchy provided by getInspectorDataForViewAtPoint
  */
 function extractComponentStack(startNode, viewDataHierarchy) {
