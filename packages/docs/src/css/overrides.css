@@ -108,7 +108,7 @@ table thead tr {
   display: flex !important;
 }
 
-[class*="plugin-pages"] [class*="navbar__toggle"] {
+[class*="colorModeToggle"] {
   display: none;
 }
 [class*="plugin-pages"] [class*="hireUsContainer"] {
