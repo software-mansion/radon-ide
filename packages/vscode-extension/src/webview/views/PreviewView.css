@@ -90,7 +90,7 @@
   margin-right: 6px;
 }
 
-@media (max-width: 380px) {
+@media (max-width: 385px) {
   .button-group-top,
     .button-group-bottom {
       gap: 2px;
