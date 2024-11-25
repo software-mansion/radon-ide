@@ -154,3 +154,7 @@ video.shadow-image,
 img.shadow-image {
   margin-bottom: 32px !important;
 }
+
+[class*="DocSearch-Footer"] {
+  margin-top: 0 !important;
+}
