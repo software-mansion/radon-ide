@@ -36,11 +36,41 @@
 }
 
 .devices-not-found-icon > svg {
-  width: 120px;
-  height: 120px;
+  width: 60px;
+  height: 60px;
 }
 
 .devices-not-found-button-spinner {
   width: 16px;
   height: 16px;
 }
+
+@media (min-height: 400px) {
+  .devices-not-found-icon > svg {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+@media (max-height: 500px) {
+  .devices-not-found-container {
+    transform: scale(0.6);
+  }
+
+    .devices-not-found-button-group {
+      width: 70%;
+      gap: 10px;
+    }
+}
+/* 
+@media (max-height: 600px) {
+  .devices-not-found-container {
+    transform: scale(0.7);
+  }
+}
+
+@media (max-height: 500px) {
+  .devices-not-found-container {
+    transform: scale(0.6);
+  }
+} */
