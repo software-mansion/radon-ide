@@ -92,7 +92,7 @@
 
 @media (max-width: 385px) {
   .button-group-top,
-    .button-group-bottom {
-      gap: 2px;
-    }
+  .button-group-bottom {
+    gap: 2px;
+  }
 }
