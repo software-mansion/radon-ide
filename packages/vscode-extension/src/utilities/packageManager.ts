@@ -88,7 +88,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     for (const file of files) {
       const manager = lockFiles.get(file);
       if (manager) {
-        packageManagerCandidates.push(packageManager);
+        packageManagerCandidates.push(manager);
       }
     }
 

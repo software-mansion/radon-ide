@@ -91,34 +91,42 @@ function getRendererConfig() {
  * Return an array of component data representing a stack of components by traversing
  * the component hierarchy up from the startNode.
  * Each stack entry carries the component name, source location and measure function.
+ * We try to use React's renderer getInspectorDataForInstance to get the details about
+ * each particular component instance. However, with older versions of React Native where
+ * this method is not available, we fallback to using hierarchy provided by getInspectorDataForViewAtPoint
  */
-function extractComponentStack(startNode) {
+function extractComponentStack(startNode, viewDataHierarchy) {
   const rendererConfig = getRendererConfig();
 
-  if (!rendererConfig) {
-    console.warn("Unable to find functional renderer config.");
-    return [];
+  let stackItems = [];
+  if (rendererConfig) {
+    // when we find renderer config with getInspectorDataForInstance we use fiber node
+    // "return" property to traverse the component hierarchy
+    let node = startNode;
+
+    // Optimization: we break after reaching fiber node corresponding to OffscreenComponent
+    while (node && node.tag !== OffscreenComponentReactTag) {
+      const data = rendererConfig.getInspectorDataForInstance(node);
+      const item = data.hierarchy[data.hierarchy.length - 1];
+      stackItems.push(item);
+      node = node.return;
+    }
+  } else if (viewDataHierarchy && viewDataHierarchy.length > 0) {
+    // fallback to using viewDataHierarchy
+    stackItems = viewDataHierarchy.reverse();
   }
 
   const componentStack = [];
-  let node = startNode;
-
-  // Optimization: we break after reaching fiber node corresponding to OffscreenComponent
-  while (node && node.tag !== OffscreenComponentReactTag) {
-    const data = rendererConfig.getInspectorDataForInstance(node);
-
-    const item = data.hierarchy[data.hierarchy.length - 1];
+  stackItems.forEach((item) => {
     const inspectorData = item.getInspectorData(findNodeHandle);
     if (inspectorData.source) {
       componentStack.push({
-        measure: inspectorData.measure,
         name: item.name,
         source: inspectorData.source,
+        measure: inspectorData.measure,
       });
     }
-
-    node = node.return;
-  }
+  });
   return componentStack;
 }
 
@@ -143,7 +151,10 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
         return;
       }
 
-      const inspectorDataStack = extractComponentStack(viewData.closestInstance);
+      const inspectorDataStack = extractComponentStack(
+        viewData.closestInstance,
+        viewData.hierarchy
+      );
       Promise.all(
         inspectorDataStack.map(
           (inspectorData) =>
