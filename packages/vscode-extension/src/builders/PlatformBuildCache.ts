@@ -123,7 +123,7 @@ export class PlatformBuildCache {
     const fingerprint = await createFingerprintAsync(getAppRootFolder(), {
       ignorePaths: IGNORE_PATHS,
     });
-    Logger.log("App folder fingerprint", fingerprint.hash);
+    Logger.debug("App folder fingerprint", fingerprint.hash);
     return fingerprint.hash;
   }
 
@@ -141,14 +141,14 @@ export class PlatformBuildCache {
       return undefined;
     }
 
-    Logger.log(`Using custom fingerprint script '${fingerprintCommand}'`);
+    Logger.debug(`Using custom fingerprint script '${fingerprintCommand}'`);
     const fingerprint = await runfingerprintCommand(fingerprintCommand, env);
 
     if (!fingerprint) {
       throw new Error("Failed to generate workspace fingerprint using custom script.");
     }
 
-    Logger.log("Workspace fingerprint", fingerprint);
+    Logger.debug("Workspace fingerprint", fingerprint);
     return fingerprint;
   }
 }
