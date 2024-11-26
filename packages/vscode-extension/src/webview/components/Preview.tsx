@@ -369,12 +369,7 @@ function Preview({
     e.preventDefault();
     wrapperDivRef.current!.focus();
 
-    if (isInspecting) {
-      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
-    } else if (inspectFrame) {
-      // if element is highlighted, we clear it here and ignore first click (don't send it to device)
-      resetInspector();
-    } else if (e.button === 2) {
+    if (e.button === 2) {
       sendInspect(e, "RightButtonDown", true);
     } else if (isMultiTouching) {
       setIsPressing(true);
@@ -387,6 +382,13 @@ function Preview({
 
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
+    if (isInspecting) {
+      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
+    } else if (inspectFrame) {
+      // if element is highlighted, we clear it here and ignore first click (don't send it to device)
+      resetInspector();
+    }
+
     if (isPressing) {
       if (isMultiTouching) {
         sendMultiTouchForEvent(e, "Up");
