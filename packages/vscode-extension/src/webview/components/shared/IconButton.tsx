@@ -47,13 +47,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
       )}
       {...rest}
       ref={ref}>
-      <span
-        className="icon-button-icon"
-        style={{
-          transform: showCounter ? "translateX(-5px)" : "translateX(0)",
-        }}>
-        {children}
-      </span>
+      {children}
       {counter !== null && (
         <span className={classnames("icon-button-counter", showCounter && "visible")}>
           {counter}

@@ -15,10 +15,6 @@
   flex-shrink: 0;
 }
 
-.icon-button-icon {
-  transition: transform 200ms ease-in-out;
-}
-
 .icon-button:disabled {
   cursor: default;
   pointer-events: none;
@@ -73,14 +69,14 @@
   font-size: 11px;
   position: absolute;
   top: 20%;
-  right: 0px;
+  left: 20px;
   opacity: 0;
   transform: translateY(-50%);
-  transition: right 200ms ease-in-out, opacity 200ms ease-in-out;
+  transition: left 200ms ease-in-out, opacity 200ms ease-in-out;
 }
 
 .icon-button-counter.visible {
   top: 20%;
-  right: 0px;
+  left: 25px;
   opacity: 1;
 }
