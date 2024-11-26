@@ -583,7 +583,7 @@ export class Project
     }
 
     if (device) {
-      Logger.log("Device selected", deviceInfo.displayName);
+      Logger.debug("Device selected", deviceInfo.displayName);
       extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
       return device;
     }
