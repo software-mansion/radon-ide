@@ -31,12 +31,12 @@
       "permanent": true
     },
     {
-      "source": "docs/troubleshooting",
+      "source": "/docs/troubleshooting",
       "destination": "docs/guides/troubleshooting",
       "permanent": true
     },
     {
-      "source": "docs/development",
+      "source": "/docs/development",
       "destination": "docs/guides/development",
       "permanent": true
     }
