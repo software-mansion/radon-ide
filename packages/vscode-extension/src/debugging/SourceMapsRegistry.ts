@@ -76,18 +76,22 @@ export class SourceMapsRegistry {
       // than localhost because it has a virtual network interface. Hence we need to unify the URL:
       if (id === scriptIdOrURL || compareIgnoringHost(url, scriptIdOrURL)) {
         scriptURL = url;
-        const pos = consumer.originalPositionFor({
-          line: lineNumber1Based - lineOffset,
-          column: columnNumber0Based,
-        });
-        if (pos.source !== null) {
-          sourceURL = pos.source;
-        }
-        if (pos.line !== null) {
-          sourceLine1Based = pos.line;
-        }
-        if (pos.column !== null) {
-          sourceColumn0Based = pos.column;
+        try {
+          const pos = consumer.originalPositionFor({
+            line: lineNumber1Based - lineOffset,
+            column: columnNumber0Based,
+          });
+          if (pos.source !== null) {
+            sourceURL = pos.source;
+          }
+          if (pos.line !== null) {
+            sourceLine1Based = pos.line;
+          }
+          if (pos.column !== null) {
+            sourceColumn0Based = pos.column;
+          }
+        } catch (e) {
+          Logger.error("Error while translating source map position", e);
         }
       }
     });
