@@ -218,6 +218,7 @@ function Preview({
 }: Props) {
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>();
   const wrapperDivRef = useRef<HTMLDivElement>(null);
+  const [ignoreMouseUp, setIgnoreMouseUp] = useState(false);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
@@ -364,6 +365,7 @@ function Preview({
     } else if (inspectFrame) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
       resetInspector();
+      setIgnoreMouseUp(true);
     } else if (e.button === 2) {
       sendInspect(e, "RightButtonDown", true);
     } else if (isMultiTouching) {
@@ -377,7 +379,7 @@ function Preview({
 
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isPressing) {
+    if (isPressing && !inspectFrame && !ignoreMouseUp) {
       if (isMultiTouching) {
         sendMultiTouchForEvent(e, "Up");
       } else {
@@ -385,6 +387,7 @@ function Preview({
       }
       setIsPressing(false);
     }
+    setIgnoreMouseUp(false);
   }
 
   function onMouseEnter(e: MouseEvent<HTMLDivElement>) {
@@ -404,7 +407,7 @@ function Preview({
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isPressing) {
+    if (isPressing && !inspectFrame) {
       if (isMultiTouching) {
         sendMultiTouchForEvent(e, "Up");
       } else {
