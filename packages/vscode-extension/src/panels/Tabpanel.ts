@@ -60,12 +60,7 @@ export class TabPanel implements Disposable {
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
     if (TabPanel.currentPanel) {
       // If the webview panel already exists reveal it
-      const activeRNIDEColumn =
-        window.tabGroups.all.find(
-          (group) =>
-            group.activeTab?.label === "React Native IDE" || group.activeTab?.label === "Radon IDE"
-        )?.viewColumn ?? ViewColumn.Beside;
-      TabPanel.currentPanel._panel.reveal(activeRNIDEColumn);
+      TabPanel.currentPanel._panel.reveal();
     } else {
       // If a webview panel does not already exist create and show a new one
 
