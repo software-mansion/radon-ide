@@ -218,7 +218,6 @@ function Preview({
 }: Props) {
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>();
   const wrapperDivRef = useRef<HTMLDivElement>(null);
-  const [ignoreMouseUp, setIgnoreMouseUp] = useState(false);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
@@ -279,6 +278,10 @@ function Preview({
 
   type MouseMove = "Move" | "Down" | "Up";
   function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
+    if (shouldPreventFromSendingTouch) {
+      return;
+    }
+
     const { x, y } = getTouchPosition(event);
     project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
@@ -289,6 +292,10 @@ function Preview({
   }
 
   function sendMultiTouch(pt: Point, type: MouseMove) {
+    if (shouldPreventFromSendingTouch) {
+      return;
+    }
+
     const secondPt = calculateMirroredTouchPosition(pt, anchorPoint);
     project.dispatchTouches(
       [
@@ -342,6 +349,8 @@ function Preview({
     !showDevicePreview ||
     !!replayData;
 
+  const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
+
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isMultiTouching) {
@@ -365,7 +374,6 @@ function Preview({
     } else if (inspectFrame) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
       resetInspector();
-      setIgnoreMouseUp(true);
     } else if (e.button === 2) {
       sendInspect(e, "RightButtonDown", true);
     } else if (isMultiTouching) {
@@ -379,7 +387,7 @@ function Preview({
 
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isPressing && !inspectFrame && !ignoreMouseUp) {
+    if (isPressing) {
       if (isMultiTouching) {
         sendMultiTouchForEvent(e, "Up");
       } else {
@@ -387,7 +395,6 @@ function Preview({
       }
       setIsPressing(false);
     }
-    setIgnoreMouseUp(false);
   }
 
   function onMouseEnter(e: MouseEvent<HTMLDivElement>) {
@@ -407,7 +414,7 @@ function Preview({
 
   function onMouseLeave(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isPressing && !inspectFrame) {
+    if (isPressing) {
       if (isMultiTouching) {
         sendMultiTouchForEvent(e, "Up");
       } else {
