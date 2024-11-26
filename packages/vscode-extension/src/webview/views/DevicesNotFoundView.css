@@ -45,7 +45,7 @@
   height: 16px;
 }
 
-@media (max-height: 500px) {
+@media (max-height: 510px) {
   .devices-not-found-title {
     margin: 10px;
   }
