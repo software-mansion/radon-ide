@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import classnames from "classnames";
 import "./IconButton.css";
 import Tooltip from "./Tooltip";
@@ -32,6 +32,13 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     className = "",
     ...rest
   } = props;
+  const [displayCounter, setDisplayCounter] = useState(counter);
+
+  useEffect(() => {
+    if (counter !== 0) {
+      setDisplayCounter(counter);
+    }
+  }, [counter]);
 
   const showCounter = Boolean(counter);
   const button = (
@@ -50,7 +57,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
       {children}
       {counter !== null && (
         <span className={classnames("icon-button-counter", showCounter && "visible")}>
-          {counter}
+          {displayCounter}
         </span>
       )}
     </button>
