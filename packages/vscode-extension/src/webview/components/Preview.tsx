@@ -180,6 +180,7 @@ function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
 
 type Props = {
   isInspecting: boolean;
+  setIsInspecting: (isInspecting: boolean) => void;
   inspectFrame: Frame | null;
   setInspectFrame: (inspectFrame: Frame | null) => void;
   setInspectStackData: (inspectStackData: InspectStackData | null) => void;
@@ -207,6 +208,7 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
 
 function Preview({
   isInspecting,
+  setIsInspecting,
   inspectFrame,
   setInspectFrame,
   setInspectStackData,
@@ -349,7 +351,7 @@ function Preview({
     !showDevicePreview ||
     !!replayData;
 
-  const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
+  const shouldPreventFromSendingTouch = !!inspectFrame;
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -369,31 +371,29 @@ function Preview({
     e.preventDefault();
     wrapperDivRef.current!.focus();
 
-    if (shouldPreventFromSendingTouch) {
-      return;
-    }
-
-    if (e.button === 2) {
-      sendInspect(e, "RightButtonDown", true);
-    } else if (isMultiTouching) {
-      setIsPressing(true);
-      sendMultiTouchForEvent(e, "Down");
-    } else {
-      setIsPressing(true);
-      sendTouch(e, "Down");
+    if (isInspecting) {
+      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
+    } else if (!inspectFrame) {
+      if (e.button === 2) {
+        sendInspect(e, "RightButtonDown", true);
+      } else if (isMultiTouching) {
+        setIsPressing(true);
+        sendMultiTouchForEvent(e, "Down");
+      } else {
+        setIsPressing(true);
+        sendTouch(e, "Down");
+      }
     }
   }
 
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isInspecting) {
-      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
-    } else if (inspectFrame) {
+      setIsInspecting(false);
+    } else if (!isInspecting && inspectFrame) {
       // if element is highlighted, we clear it here and ignore first click (don't send it to device)
       resetInspector();
-    }
-
-    if (isPressing) {
+    } else if (isPressing) {
       if (isMultiTouching) {
         sendMultiTouchForEvent(e, "Up");
       } else {
@@ -583,6 +583,8 @@ function Preview({
 
   return (
     <>
+      {isInspecting ? "T" : "N"}
+      {!!inspectFrame ? "T" : "N"}
       <div
         className="phone-wrapper"
         style={cssPropertiesForDevice(device!, isFrameDisabled)}
