@@ -91,7 +91,7 @@ export class SourceMapsRegistry {
             sourceColumn0Based = pos.column;
           }
         } catch (e) {
-          Logger.error("Error while looking for original position in source map:", e);
+          Logger.error("Error while translating source map position", e);
         }
       }
     });
