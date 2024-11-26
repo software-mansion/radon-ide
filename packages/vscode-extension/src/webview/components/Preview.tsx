@@ -369,6 +369,10 @@ function Preview({
     e.preventDefault();
     wrapperDivRef.current!.focus();
 
+    if (shouldPreventFromSendingTouch) {
+      return;
+    }
+
     if (e.button === 2) {
       sendInspect(e, "RightButtonDown", true);
     } else if (isMultiTouching) {
