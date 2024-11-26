@@ -351,7 +351,7 @@ function Preview({
     !showDevicePreview ||
     !!replayData;
 
-  const shouldPreventFromSendingTouch = !!inspectFrame;
+  const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -583,8 +583,6 @@ function Preview({
 
   return (
     <>
-      {isInspecting ? "T" : "N"}
-      {!!inspectFrame ? "T" : "N"}
       <div
         className="phone-wrapper"
         style={cssPropertiesForDevice(device!, isFrameDisabled)}
