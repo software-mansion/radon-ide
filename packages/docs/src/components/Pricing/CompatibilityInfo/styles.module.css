@@ -1,0 +1,12 @@
+.compatibilityInfoWrapper {
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  background-color: var(--swm-off-white);
+  text-wrap: balance;
+}
+
+.compatibilityInfo {
+  margin: 0;
+  font-size: 18px;
+}

@@ -34,12 +34,14 @@ table thead tr {
   display: table;
   width: 100%;
   white-space: nowrap;
+  table-layout: fixed;
 }
 
 .compatibility td {
   padding: 0;
   border: transparent 2px solid;
   background: var(--ifm-background-color);
+  text-align: center;
 }
 
 .compatibility th {
