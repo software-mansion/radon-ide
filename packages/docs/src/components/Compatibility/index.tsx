@@ -1,5 +1,5 @@
-import React from 'react';
-import styles from './styles.module.css';
+import React from "react";
+import styles from "./styles.module.css";
 
 export function Yes() {
   return <div className={styles.supported}>yes</div>;
@@ -7,6 +7,10 @@ export function Yes() {
 
 export function No() {
   return <div className={styles.notSupported}>no</div>;
+}
+
+export function Maybe({ label = "Maybe" }: { label: string }) {
+  return <div className={styles.maybe}>{label}</div>;
 }
 
 interface VersionProps {

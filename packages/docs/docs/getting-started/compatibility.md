@@ -4,7 +4,7 @@ title: Compatibility
 sidebar_position: 6
 ---
 
-import { Yes, No, Version, Spacer } from "@site/src/components/Compatibility";
+import { Yes, No, Maybe, Version, Spacer } from "@site/src/components/Compatibility";
 
 # Compatibility
 
@@ -68,14 +68,14 @@ Due to the complexity and a non-standard nature of the brownfield development th
 
 <div className="compatibility">
 
-|           | iOS    | Android |
-| --------- | ------ | ------- |
-| macOS     | <Yes/> | <Yes/>  |
-| Windows\* | <No/>  | <Yes/>  |
-| Linux     | <No/>  | <No/>   |
+|         | iOS    | Android                  |
+| ------- | ------ | ------------------------ |
+| macOS   | <Yes/> | <Yes/>                   |
+| Windows | <No/>  | <Maybe label="In Beta"/> |
+| Linux   | <No/>  | <No/>                    |
 
 </div>
-*Support for running Radon IDE on Windows is experimental.
+You can use Radon IDE on Windows using free Beta license.
 <br/>
 <br/>
 
