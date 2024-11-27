@@ -433,37 +433,41 @@ export class Project
     xRatio: number,
     yRatio: number,
     requestStack: boolean,
+    showDimensionsBox: boolean,
     callback: (inspectData: InspectData) => void
   ) {
-    this.deviceSession?.inspectElementAt(xRatio, yRatio, requestStack, (inspectData) => {
-      let stack = undefined;
-      if (requestStack && inspectData?.stack) {
-        stack = inspectData.stack;
-        const inspectorExcludePattern = workspace
-          .getConfiguration("RadonIDE")
-          .get("inspectorExcludePattern") as string | undefined;
-        const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
-        function testInspectorExcludeGlobPattern(filename: string) {
-          return patterns?.some((pattern) => minimatch(filename, pattern));
-        }
-        stack.forEach((item: any) => {
-          item.hide = false;
-          if (!isAppSourceFile(item.source.fileName)) {
-            item.hide = true;
-          } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
-            item.hide = true;
+    this.deviceSession?.inspectElementAt(
+      xRatio,
+      yRatio,
+      requestStack,
+      showDimensionsBox,
+      (inspectData) => {
+        let stack = undefined;
+        if (requestStack && inspectData?.stack) {
+          stack = inspectData.stack;
+          const inspectorExcludePattern = workspace
+            .getConfiguration("RadonIDE")
+            .get("inspectorExcludePattern") as string | undefined;
+          const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
+          function testInspectorExcludeGlobPattern(filename: string) {
+            return patterns?.some((pattern) => minimatch(filename, pattern));
           }
-        });
+          stack.forEach((item: any) => {
+            item.hide = false;
+            if (!isAppSourceFile(item.source.fileName)) {
+              item.hide = true;
+            } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
+              item.hide = true;
+            }
+          });
+        }
+        callback({ frame: inspectData.frame, stack });
       }
-      callback({ frame: inspectData.frame, stack });
-    });
+    );
   }
 
-  public showInspectOverlay(
-    frame: { x: number; y: number; width: number; height: number },
-    isInspecting?: boolean
-  ): void {
-    this.deviceSession?.showInspectOverlay(frame, isInspecting);
+  public showInspectOverlay(frame: { x: number; y: number; width: number; height: number }): void {
+    this.deviceSession?.showInspectOverlay(frame);
   }
 
   public hideInspectOverlay(): void {

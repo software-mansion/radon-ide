@@ -307,7 +307,8 @@ function Preview({
     const { x: clampedX, y: clampedY } = getTouchPosition(event);
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
+    const showDimensionsBox = !showInspectStackModal && isInspecting;
+    project.inspectElementAt(clampedX, clampedY, requestStack, showDimensionsBox, (inspectData) => {
       if (requestStack && inspectData?.stack) {
         if (showInspectStackModal) {
           setInspectStackData({
@@ -322,7 +323,6 @@ function Preview({
           }
         }
       }
-      project.showInspectOverlay(inspectData.frame, isInspecting);
       setInspectFrame(inspectData.frame);
     });
   }

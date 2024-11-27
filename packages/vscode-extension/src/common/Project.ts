@@ -156,6 +156,7 @@ export interface ProjectInterface {
     xRatio: number,
     yRatio: number,
     requestStack: boolean,
+    isInspecting: boolean,
     callback: (inspectData: InspectData) => void
   ): Promise<void>;
   showInspectOverlay(
