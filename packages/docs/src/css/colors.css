@@ -275,6 +275,7 @@
   /* Compatibility table */
   --swm-compatibility-supported-background: var(--swm-green-light-80);
   --swm-compatibility-not-supported-background: var(--swm-red-light-80);
+  --swm-compatibility-maybe-background: var(--swm-blue-light-80);
   --swm-compatibility-text-color: var(--swm-white);
 }
 

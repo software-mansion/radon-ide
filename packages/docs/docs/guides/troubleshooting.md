@@ -16,8 +16,8 @@ In this case lookup command called "Radon IDE: Diagnostics" – when executed i
 ### -sec-num- Is your project setup supported?
 
 The extension does not currently support all types and configurations of React Native projects.
-For example, Expo Go or brownfield apps aren't supported while we are improving the compatibility of different project setups.
-Please refer to ["Who can use this"](/docs/getting-started/overview) section for more details on that.
+For example, brownfield apps aren't supported while we are improving the compatibility of different project setups.
+Please refer to [Compatibility](/docs/getting-started/compatibility) section for more details on that.
 If your project doesn't work out of the box because of some modifications made to its setup, chances are the Radon IDE can be configured to support your modifications, please check [configuration](/docs/guides/configuration) guide to learn more.
 
 ### -sec-num- Can extension locate your React Native project
