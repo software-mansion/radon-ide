@@ -4,6 +4,7 @@ import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
 import Motivation from "../Motivation";
 import SupporterPlan from "./SupporterPlan";
+import { CompatibilityInfo } from "./CompatibilityInfo";
 
 const Pricing = () => {
   return (
@@ -39,6 +40,7 @@ const Pricing = () => {
         If you want to help the development of Radon IDE, affect the prioritization of features and
         get better support, you can buy our Supporter's License.
       </p>
+      <CompatibilityInfo />
       <Motivation />
       <FAQ />
     </div>
