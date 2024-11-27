@@ -75,9 +75,12 @@ export class CDPBreakpoint extends Breakpoint {
   };
 
   private deleteWithCDP = async () => {
-    await this.cdpSession.sendCDPMessage("Debugger.removeBreakpoint", {
-      breakpointId: this.cdpId,
-    });
+    if (this.cdpId !== undefined && this.verified) {
+      await this.cdpSession.sendCDPMessage("Debugger.removeBreakpoint", {
+        breakpointId: this.cdpId,
+      });
+    }
+    this.cdpId = undefined;
     this.verified = false;
   };
 

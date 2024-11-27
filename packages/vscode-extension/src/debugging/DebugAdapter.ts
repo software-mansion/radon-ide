@@ -66,7 +66,11 @@ export class DebugAdapter extends DebugSession {
       configuration.sourceMapAliases
     );
 
-    this.breakpointsController = new BreakpointsController(this.sourceMapRegistry, this.cdpSession);
+    this.breakpointsController = new BreakpointsController(
+      this.sourceMapRegistry,
+      this.cdpSession,
+      configuration.breakpointsAreRemovedOnContextCleared
+    );
   }
 
   private handleIncomingCDPMethodCalls = async (message: any) => {
@@ -119,7 +123,7 @@ export class DebugAdapter extends DebugSession {
         const allThreads = this.threads;
         this.threads = [];
         this.sourceMapRegistry.clearSourceMaps();
-        this.breakpointsController.resetBreakpoints();
+        this.breakpointsController.onContextCleared();
         this.variableStore.clearReplVariables();
         this.variableStore.clearCDPVariables();
 
