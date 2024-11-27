@@ -8,7 +8,9 @@ import { Yes, No, Maybe, Version, Spacer } from "@site/src/components/Compatibil
 
 # Compatibility
 
-The following compatibility page assumes you are using the newest version of Radon IDE.
+This page lists different React Native application setups that are officially supported by the most recent version of Radon IDE.
+If your setup is not included, it may still work or work with limited functionality.
+In a such case, you can still Radon IDE but we also recommend [submitting an issue](https://github.com/software-mansion/radon-ide/issues/new/choose) describing your setup, such that we can improve compatibility and consider it as a setup that is officially supported.
 
 ## Supported editors
 
