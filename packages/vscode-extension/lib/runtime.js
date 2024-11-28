@@ -25,7 +25,7 @@ global.__RNIDE_onDebuggerReady = function () {
 // debug adapter and avoid exposing as part of application logs
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
-function getLogWrappersCount(stack) {
+function getFrameShiftForLogs(stack) {
   const hasSentryLogWrapper = () => Boolean(global.__SENTRY__) ? 1 : 0;
   
   const hasExpoWrapper = () => {
@@ -40,17 +40,15 @@ function getLogWrappersCount(stack) {
   ];
 
   // We start with 1 because, because first one is our wrapper
-  const wrappersCount = knownWrappers.reduce((count, wrapper) => {
+  return knownWrappers.reduce((count, wrapper) => {
     return wrapper() + count;
   }, 1);
-  
-  return wrappersCount;
 }
 
 function wrapConsole(consoleFunc) {
   return function (...args) {
     const stack = parseErrorStack(new Error().stack);
-    const wrappersShift = getLogWrappersCount(stack);
+    const wrappersShift = getFrameShiftForLogs(stack);
     const location = stack[wrappersShift];
     args.push(location.file, location.lineNumber, location.column);
     return consoleFunc.apply(console, args);
