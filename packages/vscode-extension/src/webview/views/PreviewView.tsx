@@ -65,7 +65,7 @@ function ActivateLicenseButton() {
 
 function PreviewView() {
   const { projectState, project, deviceSettings, isLicenseActivated } = useProject();
-  const { reportIssue, showDismissableError } = useUtils();
+  const { showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);

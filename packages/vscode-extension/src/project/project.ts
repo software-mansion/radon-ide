@@ -32,7 +32,7 @@ import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { PlatformBuildCache } from "../builders/PlatformBuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
-import { activateDevice, getLicenseToken, removeLicenseToken } from "../utilities/license";
+import { activateDevice, getLicenseToken } from "../utilities/license";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -499,7 +499,6 @@ export class Project
   }
 
   public async isLicenseActivated() {
-    // await removeLicenseToken();
     return !!(await getLicenseToken());
   }
 

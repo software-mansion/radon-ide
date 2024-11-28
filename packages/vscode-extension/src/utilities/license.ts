@@ -3,7 +3,6 @@ import { extensionContext } from "./extensionContext";
 import path from "path";
 import { Platform } from "./platform";
 import { exec } from "./subprocess";
-import { Logger } from "../Logger";
 
 const TOKEN_KEY = "token_key";
 const BASE_CUSTOMER_PORTAL_URL = "https://portal.ide.swmansion.com/";
@@ -16,8 +15,6 @@ export async function activateDevice(licenseKey: string, username: string) {
     licenseKey,
   };
 
-  Logger.debug("Frytki", body, url);
-
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -26,13 +23,11 @@ export async function activateDevice(licenseKey: string, username: string) {
     body: JSON.stringify(body),
   });
 
-  Logger.debug("Frytki", response.status, await response.json());
-
   let newToken;
 
   if (response.ok) {
-    const body = await response.json();
-    newToken = body.token as string;
+    const responseBody = await response.json();
+    newToken = responseBody.token as string;
     extensionContext.secrets.store(TOKEN_KEY, newToken ?? "");
     return true;
   }
@@ -50,12 +45,7 @@ async function generateDeviceFingerprint() {
   return stdout;
 }
 
-export async function removeLicenseToken() {
-  await extensionContext.secrets.delete(TOKEN_KEY);
-}
-
 export async function getLicenseToken() {
   const token = await extensionContext.secrets.get(TOKEN_KEY);
-  Logger.debug("Frytki", token);
   return token;
 }

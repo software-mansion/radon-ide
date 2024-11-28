@@ -22,7 +22,7 @@ interface SettingsDropdownProps {
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
-  const { movePanelToNewWindow } = useUtils();
+  const { movePanelToNewWindow, reportIssue } = useUtils();
 
   return (
     <DropdownMenu.Root>
@@ -132,6 +132,16 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             Launch configuration...
           </DropdownMenu.Item>
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => {
+              reportIssue();
+            }}>
+            <span className="dropdown-menu-item-wraper">
+              <span className="codicon codicon-report" />
+              <div className="dropdown-menu-item-content">Report Issue</div>
+            </span>
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

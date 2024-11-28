@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import "./ActivateLicenseView.css";
-import { activateDevice } from "../../utilities/license";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
