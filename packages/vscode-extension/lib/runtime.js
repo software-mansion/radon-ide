@@ -25,15 +25,38 @@ global.__RNIDE_onDebuggerReady = function () {
 // debug adapter and avoid exposing as part of application logs
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
+function getLogWrappersCount(stack) {
+  const hasSentryLogWrapper = () => Boolean(global.__SENTRY__) ? 1 : 0;
+  
+  const hasExpoWrapper = () => {
+    const expoLogIndex = stack.findIndex((frame) => frame.methodName === "__expoConsoleLog");
+
+    return Math.max(0, expoLogIndex);
+  };
+
+  const knownWrappers = [
+    hasSentryLogWrapper,
+    hasExpoWrapper,
+  ];
+
+  // We start with 1 because, because first one is our wrapper
+  const wrappersCount = knownWrappers.reduce((count, wrapper) => {
+    return wrapper() + count;
+  }, 1);
+  
+  return wrappersCount;
+}
+
 function wrapConsole(consoleFunc) {
   return function (...args) {
     const stack = parseErrorStack(new Error().stack);
-    const expoLogIndex = stack.findIndex((frame) => frame.methodName === "__expoConsoleLog");
-    const location = expoLogIndex > 0 ? stack[expoLogIndex + 1] : stack[1];
+    const wrappersShift = getLogWrappersCount(stack);
+    const location = stack[wrappersShift];
     args.push(location.file, location.lineNumber, location.column);
     return consoleFunc.apply(console, args);
   };
 }
+
 console.log = wrapConsole(console.log);
 console.warn = wrapConsole(console.warn);
 console.error = wrapConsole(console.error);
