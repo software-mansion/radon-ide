@@ -512,6 +512,7 @@
     "re-resizable": "^6.9.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hook-form": "^7.53.2",
     "rollup": "^4.18.1",
     "semver": "^7.6.2",
     "sinon": "^18.0.0",
@@ -524,8 +525,5 @@
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
     "xml2js": "^0.6.2"
-  },
-  "dependencies": {
-    "react-hook-form": "^7.53.2"
   }
 }
