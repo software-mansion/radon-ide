@@ -24,6 +24,7 @@ export class SourceMapsRegistry {
   ) {}
 
   public clearSourceMaps() {
+    this.sourceMaps.forEach(([_, __, consumer]) => consumer.destroy());
     this.sourceMaps = [];
     this.sourceMapFilePaths.clear();
   }
