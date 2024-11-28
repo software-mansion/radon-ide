@@ -91,7 +91,7 @@ export class SourceMapsRegistry {
             sourceColumn0Based = pos.column;
           }
         } catch (e) {
-          Logger.error("Error while translating source map position", e);
+          Logger.error("Error while translating source map to file position", e);
         }
       }
     });
@@ -121,15 +121,19 @@ export class SourceMapsRegistry {
     let position: NullablePosition = { line: null, column: null, lastColumn: null };
     let originalSourceURL: string = "";
     this.sourceMaps.forEach(([sourceURL, scriptId, consumer, lineOffset]) => {
-      const pos = consumer.generatedPositionFor({
-        source: sourceMapFilePath,
-        line: lineNumber1Based,
-        column: columnNumber0Based,
-        bias: SourceMapConsumer.LEAST_UPPER_BOUND,
-      });
-      if (pos.line !== null) {
-        originalSourceURL = sourceURL;
-        position = { ...pos, line: pos.line + lineOffset };
+      try {
+        const pos = consumer.generatedPositionFor({
+          source: sourceMapFilePath,
+          line: lineNumber1Based,
+          column: columnNumber0Based,
+          bias: SourceMapConsumer.LEAST_UPPER_BOUND,
+        });
+        if (pos.line !== null) {
+          originalSourceURL = sourceURL;
+          position = { ...pos, line: pos.line + lineOffset };
+        }
+      } catch (e) {
+        Logger.error("Error while translating file to source map position", e);
       }
     });
     if (position.line === null) {
