@@ -8,6 +8,7 @@ interface ProjectContextProps {
   projectState: ProjectState;
   deviceSettings: DeviceSettings;
   project: ProjectInterface;
+  isLicenseActivated: boolean;
 }
 
 const defaultProjectState: ProjectState = {
@@ -35,11 +36,13 @@ const ProjectContext = createContext<ProjectContextProps>({
   projectState: defaultProjectState,
   deviceSettings: defaultDeviceSettings,
   project,
+  isLicenseActivated: false,
 });
 
 export default function ProjectProvider({ children }: PropsWithChildren) {
   const [projectState, setProjectState] = useState<ProjectState>(defaultProjectState);
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(defaultDeviceSettings);
+  const [isLicenseActivated, setIsLicenseActivated] = useState(true);
 
   useEffect(() => {
     project.getProjectState().then(setProjectState);
@@ -48,14 +51,18 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     project.getDeviceSettings().then(setDeviceSettings);
     project.addListener("deviceSettingsChanged", setDeviceSettings);
 
+    project.isLicenseActivated().then(setIsLicenseActivated);
+    project.addListener("licenseActivationChanged", setIsLicenseActivated);
+
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
       project.removeListener("deviceSettingsChanged", setDeviceSettings);
+      project.removeListener("licenseActivationChanged", setIsLicenseActivated);
     };
   }, []);
 
   return (
-    <ProjectContext.Provider value={{ projectState, deviceSettings, project }}>
+    <ProjectContext.Provider value={{ projectState, deviceSettings, project, isLicenseActivated }}>
       {children}
     </ProjectContext.Provider>
   );

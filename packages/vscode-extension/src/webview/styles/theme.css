@@ -143,6 +143,8 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-preview-background: var(--white);
 
   --swm-default-text: var(--navy-light-100);
+  --swm-highlighted-text: var(--navy-light-40);
+  --swm-error-color: var(--red-light-100);
   --swm-secondary-text: var(--navy-light-60);
   --swm-disabled-text: var(--navy-light-20);
 
@@ -302,6 +304,8 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-preview-background: var(--background-dark-100);
 
   --swm-default-text: var(--off-white);
+  --swm-highlighted-text: black;
+  --swm-error-color: var(--red-dark-100);
   --swm-secondary-text: var(--background-dark-10);
   --swm-disabled-text: var(--background-dark-40);
 

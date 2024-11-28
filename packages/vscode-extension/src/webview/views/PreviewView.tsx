@@ -27,6 +27,7 @@ import "./View.css";
 import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
+import { ActivateLicenseView } from "./ActivateLicenseView";
 
 const MAX_RECORDING_TIME_SEC = 10 * 60;
 
@@ -51,8 +52,19 @@ function LoadingComponent({ finishedInitialLoad, devicesNotFound }: LoadingCompo
   );
 }
 
+function ActivateLicenseButton() {
+  const { openModal } = useModal();
+  return (
+    <Button
+      className="activate-license-button"
+      onClick={() => openModal("Activate License", <ActivateLicenseView />)}>
+      Activate License
+    </Button>
+  );
+}
+
 function PreviewView() {
-  const { projectState, project, deviceSettings } = useProject();
+  const { projectState, project, deviceSettings, isLicenseActivated } = useProject();
   const { reportIssue, showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
@@ -83,10 +95,6 @@ function PreviewView() {
 
   const { openModal } = useModal();
   const { openFileAt, saveVideoRecording } = useUtils();
-
-  const extensionVersion = document.querySelector<HTMLMetaElement>(
-    "meta[name='radon-ide-version']"
-  )?.content;
 
   useEffect(() => {
     function incrementLogCounter() {
@@ -309,9 +317,7 @@ function PreviewView() {
         />
 
         <div className="spacer" />
-        <Button className="feedback-button" onClick={() => reportIssue()}>
-          {extensionVersion || "Beta"}: Report issue
-        </Button>
+        {!isLicenseActivated && <ActivateLicenseButton />}
         <DeviceSettingsDropdown disabled={devicesNotFound || !isRunning}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon
