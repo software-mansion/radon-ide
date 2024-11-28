@@ -5,6 +5,7 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
+  ActivateDeviceResult,
   AppPermissionType,
   DeviceSettings,
   InspectData,
@@ -492,13 +493,13 @@ export class Project
   public async activateLicense(activationKey: string) {
     const computerName = os.hostname();
     const activated = await activateDevice(activationKey, computerName);
-    if (activated) {
+    if (activated === ActivateDeviceResult.succeeded) {
       this.eventEmitter.emit("licenseActivationChanged", true);
     }
     return activated;
   }
 
-  public async isLicenseActivated() {
+  public async hasActiveLicense() {
     return !!(await getLicenseToken());
   }
 

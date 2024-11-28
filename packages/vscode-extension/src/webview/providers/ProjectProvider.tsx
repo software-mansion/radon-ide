@@ -8,7 +8,7 @@ interface ProjectContextProps {
   projectState: ProjectState;
   deviceSettings: DeviceSettings;
   project: ProjectInterface;
-  isLicenseActivated: boolean;
+  hasActiveLicense: boolean;
 }
 
 const defaultProjectState: ProjectState = {
@@ -36,13 +36,13 @@ const ProjectContext = createContext<ProjectContextProps>({
   projectState: defaultProjectState,
   deviceSettings: defaultDeviceSettings,
   project,
-  isLicenseActivated: false,
+  hasActiveLicense: false,
 });
 
 export default function ProjectProvider({ children }: PropsWithChildren) {
   const [projectState, setProjectState] = useState<ProjectState>(defaultProjectState);
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(defaultDeviceSettings);
-  const [isLicenseActivated, setIsLicenseActivated] = useState(true);
+  const [hasActiveLicense, setHasActiveLicense] = useState(true);
 
   useEffect(() => {
     project.getProjectState().then(setProjectState);
@@ -51,18 +51,18 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     project.getDeviceSettings().then(setDeviceSettings);
     project.addListener("deviceSettingsChanged", setDeviceSettings);
 
-    project.isLicenseActivated().then(setIsLicenseActivated);
-    project.addListener("licenseActivationChanged", setIsLicenseActivated);
+    project.hasActiveLicense().then(setHasActiveLicense);
+    project.addListener("licenseActivationChanged", setHasActiveLicense);
 
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
       project.removeListener("deviceSettingsChanged", setDeviceSettings);
-      project.removeListener("licenseActivationChanged", setIsLicenseActivated);
+      project.removeListener("licenseActivationChanged", setHasActiveLicense);
     };
   }, []);
 
   return (
-    <ProjectContext.Provider value={{ projectState, deviceSettings, project, isLicenseActivated }}>
+    <ProjectContext.Provider value={{ projectState, deviceSettings, project, hasActiveLicense }}>
       {children}
     </ProjectContext.Provider>
   );

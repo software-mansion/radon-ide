@@ -64,7 +64,7 @@ function ActivateLicenseButton() {
 }
 
 function PreviewView() {
-  const { projectState, project, deviceSettings, isLicenseActivated } = useProject();
+  const { projectState, project, deviceSettings, hasActiveLicense } = useProject();
   const { showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
@@ -317,7 +317,7 @@ function PreviewView() {
         />
 
         <div className="spacer" />
-        {!isLicenseActivated && <ActivateLicenseButton />}
+        {!hasActiveLicense && <ActivateLicenseButton />}
         <DeviceSettingsDropdown disabled={devicesNotFound || !isRunning}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon

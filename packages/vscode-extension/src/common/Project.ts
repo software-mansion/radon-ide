@@ -101,6 +101,12 @@ export type TouchPoint = {
   yRatio: number;
 };
 
+export enum ActivateDeviceResult {
+  succeeded,
+  notEnoughSeats,
+  unableToVerify,
+}
+
 export interface ProjectEventMap {
   log: { type: string };
   projectStateChanged: ProjectState;
@@ -141,8 +147,8 @@ export interface ProjectInterface {
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
 
-  activateLicense(activationKey: string): Promise<boolean>;
-  isLicenseActivated(): Promise<boolean>;
+  activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
+  hasActiveLicense(): Promise<boolean>;
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 

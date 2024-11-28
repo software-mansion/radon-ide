@@ -92,4 +92,16 @@
 
 .activate-license-button {
   color: var(--swm-error-color);
+  animation: ping 2s ease-out infinite;
+}
+@keyframes ping {
+  0% {
+    border: 0px solid transparent;
+  }
+  50% {
+    border: 1px solid var(--swm-error-color);
+  }
+  100% {
+    border: 0px solid transparent;
+  }
 }

@@ -1,10 +1,9 @@
 import path from "path";
 import { Disposable, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
-import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
-import { Platform } from "../utilities/platform";
 import { RecordingData, TouchPoint } from "../common/Project";
+import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 
 interface VideoRecordingPromiseHandlers {
   resolve: (value: RecordingData) => void;
@@ -55,11 +54,7 @@ export class Preview implements Disposable {
   }
 
   async start() {
-    const simControllerBinary = path.join(
-      extensionContext.extensionPath,
-      "dist",
-      Platform.select({ macos: "simulator-server-macos", windows: "simulator-server-windows.exe" })
-    );
+    const simControllerBinary = simulatorServerBinary();
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
 

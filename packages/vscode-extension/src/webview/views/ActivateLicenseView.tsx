@@ -5,6 +5,7 @@ import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
+import { ActivateDeviceResult } from "../../common/Project";
 
 export function ActivateLicenseView() {
   const { project } = useProject();
@@ -14,6 +15,7 @@ export function ActivateLicenseView() {
   const [isLoading, setIsLoading] = useState(false);
   const [disableSubmit, setDisableSubmit] = useState(true);
   const [wasRejected, setWasRejected] = useState(false);
+  const [wasEnoughSeats, setWasEnoughSeats] = useState(true);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -22,10 +24,13 @@ export function ActivateLicenseView() {
 
     const activationPromise = project.activateLicense(data?.target[0].value);
 
-    activationPromise.then((success) => {
-      if (success) {
+    activationPromise.then((activationResult) => {
+      if (activationResult === ActivateDeviceResult.succeeded) {
         closeModal();
       } else {
+        if (activationResult === ActivateDeviceResult.notEnoughSeats) {
+          setWasEnoughSeats(false);
+        }
         setWasRejected(true);
       }
       setIsLoading(false);
@@ -45,26 +50,39 @@ export function ActivateLicenseView() {
   return (
     <form className="container" onSubmit={handleSubmit(onSubmit)}>
       <div className="info-row">
-        {wasRejected ? (
-          <div className="error-text">
-            Unable to verify the key. Please ensure your license key is correct. You can find a
-            license activation manual{" "}
-            <a
-              href="https://ide.swmansion.com/docs/guides/activation-manual"
-              target="_blank"
-              rel="noopener noreferrer">
+        {!wasRejected && (
+          <div className="info-text">
+            You can find your license key on the Radon IDE customer portal (
+            <a href="https://portal.ide.swmansion.com/" target="_blank" rel="noopener noreferrer">
+              link
+            </a>
+            ) If you don't have a license, you can purchase it{" "}
+            <a href="https://ide.swmansion.com/pricing" target="_blank" rel="noopener noreferrer">
               here
             </a>
             .
           </div>
-        ) : (
-          <div className="info-text">
-            Your license should be available in the customer portal, or shared to you by your
-            company administration. If you don't have a license you can{" "}
+        )}
+        {wasRejected && wasEnoughSeats && (
+          <div className="error-text">
+            Unable to verify the key. Please ensure your license key is correct. Check this{" "}
+            <a
+              href="https://ide.swmansion.com/docs/guides/activation-manual"
+              target="_blank"
+              rel="noopener noreferrer">
+              link
+            </a>{" "}
+            for instructions.
+          </div>
+        )}
+        {!wasEnoughSeats && (
+          <div className="error-text">
+            Your organization does not any available seats left, you can purchase more on the Radon
+            IDE customer portal (
             <a href="https://portal.ide.swmansion.com/" target="_blank" rel="noopener noreferrer">
-              get it here
+              link
             </a>
-            .
+            ).
           </div>
         )}
       </div>
@@ -81,7 +99,7 @@ export function ActivateLicenseView() {
           <VSCodeProgressRing />
         ) : (
           <Button type="secondary" disabled={disableSubmit}>
-            Submit
+            Activate
           </Button>
         )}
       </div>
