@@ -19,7 +19,7 @@
 .device-row {
   display: grid;
   grid-template-columns: 32px 1fr 90px;
-  width: 410px;
+  min-width: 250px;
   align-items: center;
   gap: 10px;
   line-height: 1;
@@ -51,6 +51,9 @@
   font-size: 14px;
   color: var(--swm-device-title);
   margin-bottom: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .device-subtitle {
   font-size: 12px;
