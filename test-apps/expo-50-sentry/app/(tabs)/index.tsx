@@ -10,8 +10,9 @@ export default function TabOneScreen() {
       <Text style={styles.title}>Tab One</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       <EditScreenInfo path="app/(tabs)/index.tsx" />
-      <Button title='Try!' onPress={ () => { Sentry.captureException(new Error('First error')) }}/>
-      <Button title='Try!' onPress={ () => { console.log("ELO") }}/>
+      <Button title='Try!' onPress={ () => { Sentry.captureException(new Error('Error')) }}/>
+      <Button title='Try!' onPress={ () => { throw new Error('Expect Unexpected') }}/>
+      <Button title='Try!' onPress={ () => { console.log("Log") }}/>
     </View>
   );
 }
