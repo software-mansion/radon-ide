@@ -1,9 +1,11 @@
 import { EventEmitter } from "stream";
+import os from "os";
 import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
+  ActivateDeviceResult,
   AppPermissionType,
   DeviceSettings,
   InspectData,
@@ -31,6 +33,7 @@ import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { PlatformBuildCache } from "../builders/PlatformBuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
+import { activateDevice, getLicenseToken } from "../utilities/license";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -485,6 +488,19 @@ export class Project
 
   public async openDevMenu() {
     await this.deviceSession?.openDevMenu();
+  }
+
+  public async activateLicense(activationKey: string) {
+    const computerName = os.hostname();
+    const activated = await activateDevice(activationKey, computerName);
+    if (activated === ActivateDeviceResult.succeeded) {
+      this.eventEmitter.emit("licenseActivationChanged", true);
+    }
+    return activated;
+  }
+
+  public async hasActiveLicense() {
+    return !!(await getLicenseToken());
   }
 
   public startPreview(appKey: string) {

@@ -101,10 +101,19 @@ export type TouchPoint = {
   yRatio: number;
 };
 
+export enum ActivateDeviceResult {
+  succeeded,
+  notEnoughSeats,
+  keyVerificationFailed,
+  unableToVerify,
+  connectionFailed,
+}
+
 export interface ProjectEventMap {
   log: { type: string };
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
+  licenseActivationChanged: boolean;
   navigationChanged: { displayName: string; id: string };
   needsNativeRebuild: void;
 }
@@ -139,6 +148,9 @@ export interface ProjectInterface {
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
+
+  activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
+  hasActiveLicense(): Promise<boolean>;
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
