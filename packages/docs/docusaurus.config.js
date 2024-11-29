@@ -78,25 +78,10 @@ const config = {
         style: "light",
         links: [
           {
-            to: "/privacy-policy",
-            label: "Privacy Policy",
+            to: "/legal/privacy-policy",
+            label: "Privacy",
           },
-          {
-            to: "/terms-of-use",
-            label: "Terms of Use",
-          },
-          {
-            to: "/refund-policy",
-            label: "Refund Policy",
-          },
-          {
-            to: "/purchase-terms",
-            label: "Purchase Terms",
-          },
-          {
-            to: "/supporter-terms",
-            label: "Supporter's License Terms",
-          },
+          { to: "/legal", label: "Legal" },
         ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },
