@@ -1,5 +1,6 @@
 .container {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   align-items: left;
 }
@@ -9,7 +10,8 @@
   background-color: var(--swm-input-background);
   color: var(--swm-default-text);
   width: 100%;
-  padding: 7px;
+  padding-top: 7px;
+  padding-bottom: 7px;
   border: 1px;
   text-align: center;
   font-size: 18px;
@@ -20,8 +22,6 @@
 
 .info-row {
   width: 100%;
-
-  padding-right: 8px;
   padding-bottom: 20px;
   flex: 1;
   align-items: left;
