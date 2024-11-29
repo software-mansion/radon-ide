@@ -142,3 +142,25 @@
   border-color: var(--touch-indicator-pressed-border);
   box-shadow: var(--touch-indicator-pressed-shadow);
 }
+
+.button-group-left-wrapper {
+  position: absolute;
+  left: 0px;
+  top: 50%;
+  width: 50px;
+  height: 150px;
+  transform: translateY(-50%);
+}
+
+.button-group-left {
+  display: flex;
+  position: absolute;
+  left: 10px;
+  transform: translate(-40px, 21px);
+  transition: transform 0.3s ease 0.1s;
+}
+
+.button-group-left-wrapper:hover .button-group-left,
+.button-group-left:has(.zoom-controls.select-open) {
+  transform: translate(0px, 21px);
+}

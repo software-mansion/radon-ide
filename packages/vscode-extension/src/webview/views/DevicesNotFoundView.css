@@ -44,3 +44,23 @@
   width: 16px;
   height: 16px;
 }
+
+@media (max-height: 510px) {
+  .devices-not-found-title {
+    margin: 10px;
+  }
+  .devices-not-found-subtitle {
+    margin: 20px;
+  }
+  .devices-not-found-icon {
+    padding: 12px;
+  }
+  .devices-not-found-icon > svg {
+    width: 60px;
+    height: 60px;
+  }
+  .devices-not-found-button-group {
+    width: 70%;
+    gap: 10px;
+  }
+}

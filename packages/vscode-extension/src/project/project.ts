@@ -159,6 +159,20 @@ export class Project
   }
   //#endregion
 
+  startRecording(): void {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.startRecording();
+  }
+
+  async captureAndStopRecording(): Promise<RecordingData> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    return this.deviceSession.captureAndStopRecording();
+  }
+
   async captureReplay(): Promise<RecordingData> {
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -340,6 +354,15 @@ export class Project
 
   public async reload(type: ReloadAction): Promise<boolean> {
     this.updateProjectState({ status: "starting" });
+
+    // this action needs to be handled outside of device session as it resets the device session itself
+    if (type === "reboot") {
+      const deviceInfo = this.projectState.selectedDevice!;
+      await this.start(true, false);
+      await this.selectDevice(deviceInfo);
+      return true;
+    }
+
     const success = (await this.deviceSession?.perform(type)) ?? false;
     if (success) {
       this.updateProjectState({ status: "running" });
@@ -560,7 +583,7 @@ export class Project
     }
 
     if (device) {
-      Logger.log("Device selected", deviceInfo.displayName);
+      Logger.debug("Device selected", deviceInfo.displayName);
       extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
       return device;
     }

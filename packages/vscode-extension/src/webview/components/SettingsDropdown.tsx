@@ -70,7 +70,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent
-                className="dropdown-menu-content"
+                className="dropdown-menu-subcontent"
                 sideOffset={2}
                 alignOffset={-5}>
                 <DropdownMenu.Item

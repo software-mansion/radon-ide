@@ -10,7 +10,7 @@ export default function NavbarWrapper(props) {
   return (
     <>
       <Navbar
-        isAlgoliaActive={false}
+        isAlgoliaActive={true}
         isThemeSwitcherShown={false}
         heroImages={heroImages}
         {...props}

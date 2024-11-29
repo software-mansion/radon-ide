@@ -99,6 +99,11 @@ const config = {
           content: "U0xic78Z5DjD9r0wrxOYQrLZPuSF_DZidnZeXPR4D0k",
         },
       ],
+      algolia: {
+        appId: "ZEU39T59G7",
+        apiKey: "66a6ddfb41ef3a82ef2035614e307b1f",
+        indexName: "ide-swmansion",
+      },
     }),
 };
 

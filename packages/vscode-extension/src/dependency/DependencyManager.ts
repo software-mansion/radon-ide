@@ -26,6 +26,7 @@ import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { CancelToken } from "../builders/cancelToken";
 import { getAndroidSourceDir } from "../builders/buildAndroid";
 import { Platform } from "../utilities/platform";
+import { requireNoCache } from "../utilities/requireNoCache";
 
 export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
@@ -141,7 +142,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
     // all managers support the `install` command
     await command(`${manager.name} install`, {
-      cwd: getAppRootFolder(),
+      cwd: manager.workspacePath ?? getAppRootFolder(),
       quietErrorsOnExit: true,
     });
 
@@ -305,12 +306,6 @@ async function testCommand(cmd: string) {
   } catch (_) {
     return false;
   }
-}
-
-function requireNoCache(...params: Parameters<typeof require.resolve>) {
-  const module = require.resolve(...params);
-  delete require.cache[module];
-  return require(module);
 }
 
 function npmPackageVersionCheck(dependency: string, minVersion?: string | semver.SemVer) {

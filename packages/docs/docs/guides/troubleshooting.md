@@ -16,8 +16,8 @@ In this case lookup command called "Radon IDE: Diagnostics" – when executed i
 ### -sec-num- Is your project setup supported?
 
 The extension does not currently support all types and configurations of React Native projects.
-For example, Expo Go or brownfield apps aren't supported while we are improving the compatibility of different project setups.
-Please refer to ["Who can use this"](/docs/getting-started/overview) section for more details on that.
+For example, brownfield apps aren't supported while we are improving the compatibility of different project setups.
+Please refer to [Compatibility](/docs/getting-started/compatibility) section for more details on that.
 If your project doesn't work out of the box because of some modifications made to its setup, chances are the Radon IDE can be configured to support your modifications, please check [configuration](/docs/guides/configuration) guide to learn more.
 
 ### -sec-num- Can extension locate your React Native project
@@ -57,6 +57,14 @@ As a consequence you may see a lot of unnecessary messages in the log output, bu
 Native builds are one of the most time consuming phases when launching your project.
 Build processes output a lot of logs on their own and hence they have separate output channels.
 When something goes wrong in the native build phase, instead of checking "Radon IDE" source in "Output Panel" as described in the previous point, select "Radon IDE (Android build)" or "Radon IDE (iOS build)" source depending on the platform you're building for.
+
+### -sec-num- Accessing application process logs
+
+In cases of native crashes on iOS or Android, it may be helpful to investigate those by checking iOS process output, or Android logcat.
+When the application is launched, Radon IDE creates a separate output channel to record logs printed by the application process.
+In order to see it, you can go to "Output" panel and select "Radon IDE (iOS Simulator Logs)" for logs from your iOS application process or "Radon IDE (Android Emulator Logs)" to see android's logcat entries associated with your app.
+
+Note: iOS Simulator Logs currently doesn't work on Expo Go and Expo Dev Client projects.
 
 ### -sec-num- Fresh installation in VSCode / Cursor
 

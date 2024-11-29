@@ -6,7 +6,6 @@ interface ButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   type?: "primary" | "secondary" | "ternary" | "submit";
   disabled?: boolean;
-  counter?: number;
   active?: boolean;
   children: React.ReactNode;
   tooltip?: {
@@ -19,7 +18,6 @@ interface ButtonProps {
 }
 
 function Button({
-  counter,
   children,
   onClick,
   className,
@@ -42,7 +40,6 @@ function Button({
         className
       )}>
       {children}
-      {Boolean(counter) && <span className="button-counter">{counter}</span>}
     </button>
   );
   if (!tooltip) {

@@ -23,11 +23,12 @@
   margin-bottom: 5px;
 }
 
-.container {
-  flex: 1;
-
+.launch-configuration-container {
+  display: flex;
+  flex-direction: column;
   padding-right: 5%;
   padding-left: 2.5%;
+  margin: 12px 0 0 0;
 }
 
 .launch-configuration-section-margin {

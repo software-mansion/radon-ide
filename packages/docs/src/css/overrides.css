@@ -1,6 +1,7 @@
 :root {
   --swm-expandable-transition: transform 200ms ease;
   --swm-logo-height: 36px;
+  --swm-sidebar-header-height: 68px;
 }
 
 table {
@@ -33,12 +34,14 @@ table thead tr {
   display: table;
   width: 100%;
   white-space: nowrap;
+  table-layout: fixed;
 }
 
 .compatibility td {
   padding: 0;
   border: transparent 2px solid;
   background: var(--ifm-background-color);
+  text-align: center;
 }
 
 .compatibility th {
@@ -107,7 +110,7 @@ table thead tr {
   display: flex !important;
 }
 
-[class*="plugin-pages"] [class*="navbar__toggle"] {
+[class*="colorModeToggle"] {
   display: none;
 }
 [class*="plugin-pages"] [class*="hireUsContainer"] {
@@ -116,6 +119,10 @@ table thead tr {
 
 nav [class*="_sidebarFooter"] {
   display: none;
+}
+
+nav [class*="navbar-sidebar__items"] {
+  height: calc(100% - var(--swm-sidebar-header-height));
 }
 
 img + blockquote {
@@ -148,4 +155,8 @@ div[class^="announcementBar_"] {
 video.shadow-image,
 img.shadow-image {
   margin-bottom: 32px !important;
+}
+
+[class*="DocSearch-Footer"] {
+  margin-top: 0 !important;
 }

@@ -18,10 +18,12 @@ Below we list high-level requirements for the projects we support at the moment:
 
 - Radon IDE works with [VS Code](https://code.visualstudio.com/) and [Cursor](https://cursor.sh/) on macOS and Windows.
 - With Radon IDE you can only run iOS and Android applications. If your project supports other platforms, you should be able to use the IDE but only for launching the Android and iOS part of your project.
-- We support only recent version of React Native (0.71 onwards) as well as Expo SDK 49+
+- We support only recent version of React Native (0.73 onwards) as well as Expo SDK 50+
 - Brownfield-type projects are currently not supported (projects that are primarily native apps with React Native used on some screens)
 
 As a general rule of thumb, if your project started from Expo template or React Native community CLI template, and hasn’t diverged much in terms of build configuration, meaning that you can still run it using expo or react native CLI without additional steps, it should work with Radon IDE.
+
+For full compatibility table head to [Compatibility](/docs/getting-started/compatibility) documentation section.
 
 ### What does it do
 

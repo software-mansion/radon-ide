@@ -64,7 +64,7 @@ export class BuildManager {
       if (forceCleanBuild || buildDependenciesChanged) {
         // we reset the cache when force clean build is requested as the newly
         // started build may end up being cancelled
-        Logger.log(
+        Logger.debug(
           "Build cache is being invalidated",
           forceCleanBuild ? "on request" : "due to build dependencies change"
         );
@@ -72,15 +72,17 @@ export class BuildManager {
       } else {
         const cachedBuild = await buildCache.getBuild(currentFingerprint);
         if (cachedBuild) {
-          Logger.log("Skipping native build – using cached");
+          Logger.debug("Skipping native build – using cached");
           getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
           return cachedBuild;
         } else {
-          Logger.log("Build cache is stale");
+          Logger.debug("Build cache is stale");
         }
       }
 
-      Logger.log("Starting native build – no build cached, cache has been invalidated or is stale");
+      Logger.debug(
+        "Starting native build – no build cached, cache has been invalidated or is stale"
+      );
       getTelemetryReporter().sendTelemetryEvent("build:start", { platform });
 
       let buildResult: BuildResult;

@@ -98,7 +98,13 @@
   padding-bottom: 6px;
 }
 
-@media (width <= 350px) {
+@media (width <= 425px) {
+  .url-select-trigger {
+    min-width: 80px;
+  }
+}
+
+@media (width <= 385px) {
   .url-select-trigger {
     min-width: 0;
   }

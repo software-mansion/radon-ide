@@ -15,7 +15,7 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.22",
+  "version": "0.0.25",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -309,8 +309,12 @@
                   }
                 }
               },
+              "packageManager": {
+                "type": "string",
+                "description": "Package manager used for the project. Available options include: npm, yarn, pnpm, bun."
+              },
               "preview": {
-                "description": "Custommize the behavior of device preview",
+                "description": "Customize the behavior of device preview",
                 "type": "object",
                 "properties": {
                   "waitForAppLaunch": {
@@ -393,6 +397,10 @@
                     "description": "Android's build product flavor used when building with Gradle, by default no flavor is used."
                   }
                 }
+              },
+              "packageManager": {
+                "type": "string",
+                "description": "Package manager used for the project. Available options include: npm, yarn, pnpm, bun."
               },
               "preview": {
                 "description": "Customize the behavior of device preview",
@@ -479,7 +487,7 @@
     "@vscode/codicons": "^0.0.35",
     "@vscode/debugadapter": "^1.51.0",
     "@vscode/debugprotocol": "^1.51.0",
-    "@vscode/extension-telemetry": "^0.9.6",
+    "@vscode/extension-telemetry": "github:software-mansion-labs/vscode-extension-telemetry",
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.0",
     "@vscode/vsce": "^2.22.0",

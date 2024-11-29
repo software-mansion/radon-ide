@@ -3,11 +3,13 @@
   margin-right: 12px;
 }
 
-.container {
+.manage-devices-container {
   margin: 12px 0 0 0;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  padding-right: 5%;
+  padding-left: 2.5%;
 }
 
 .delete-icon {
@@ -17,7 +19,7 @@
 .device-row {
   display: grid;
   grid-template-columns: 32px 1fr 90px;
-  width: 430px;
+  min-width: 250px;
   align-items: center;
   gap: 10px;
   line-height: 1;
@@ -49,6 +51,9 @@
   font-size: 14px;
   color: var(--swm-device-title);
   margin-bottom: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .device-subtitle {
   font-size: 12px;
@@ -82,8 +87,8 @@
   justify-content: center;
 }
 .device-button-group .icon-button {
-  min-width: 30px;
-  max-height: 30px;
+  width: 30px;
+  height: 30px;
 }
 
 .warning {
@@ -98,4 +103,13 @@
 .create-button-text {
   margin-left: 4px;
   text-wrap: nowrap;
+}
+
+@media (width <= 480px) {
+  .manage-devices-container {
+    padding: 0;
+  }
+  .device-row {
+    padding: 2px 0px 2px 0px;
+  }
 }

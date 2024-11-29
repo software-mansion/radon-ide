@@ -1,14 +1,35 @@
 import path from "path";
-import { promises as fs } from "fs";
+import fs from "fs";
 import { command } from "./subprocess";
 import { getAppRootFolder } from "./extensionContext";
 import { isWorkspaceRoot } from "./common";
 import { Logger } from "../Logger";
+import { getLaunchConfiguration } from "./launchConfiguration";
+import { requireNoCache } from "./requireNoCache";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
   workspacePath?: string;
 };
+
+function isPackageManager(candidate: string): boolean {
+  const packageManagers = ["npm", "yarn", "pnpm", "bun"];
+  return packageManagers.includes(candidate);
+}
+
+async function listFilesSortedByModificationDate(dir: string) {
+  const files = await fs.promises.readdir(dir);
+
+  return files
+    .map((fileName) => ({
+      name: fileName,
+      time: fs.statSync(`${dir}/${fileName}`).mtime.getTime(),
+    }))
+    .sort((a, b) => b.time - a.time)
+    .map((file) => file.name);
+}
+
+const DEFAULT_PACKAGE_MANAGER = "npm";
 
 export async function resolvePackageManager(): Promise<PackageManagerInfo | undefined> {
   function findWorkspace(appRoot: string) {
@@ -28,6 +49,31 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
   const workspacePath = findWorkspace(appRootPath);
 
   async function findPackageManager(workspace: string) {
+    const { packageManager } = getLaunchConfiguration();
+
+    if (packageManager) {
+      if (!isPackageManager(packageManager)) {
+        Logger.warn(
+          `Package manager provided in launch configuration: ${packageManager} is not supported by radon IDE`
+        );
+        return;
+      }
+      return packageManager;
+    }
+
+    try {
+      const manager = requireNoCache(path.join(workspace, "package.json")).packageManager;
+
+      if (manager) {
+        // e.g. yarn@3.6.4
+        const match = manager.match(/^([a-zA-Z]+)@/);
+        return match ? match[1] : DEFAULT_PACKAGE_MANAGER;
+      }
+    } catch (e) {
+      // there might be a problem while reading package.json in which case move to looking
+      // for lock files matching package managers in the workspace root
+    }
+
     const lockFiles = new Map(
       Object.entries({
         "yarn.lock": "yarn",
@@ -37,25 +83,27 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
       } as const)
     );
 
-    const files = await fs.readdir(workspace);
+    const files = await listFilesSortedByModificationDate(workspace);
+    const packageManagerCandidates = [];
     for (const file of files) {
-      const packageManager = lockFiles.get(file);
-      if (packageManager) {
-        return packageManager;
+      const manager = lockFiles.get(file);
+      if (manager) {
+        packageManagerCandidates.push(manager);
       }
     }
-    try {
-      const packageManager = require(path.join(workspace, "package.json")).packageManager;
 
-      if (packageManager) {
-        // e.g. yarn@3.6.4
-        const match = packageManager.match(/^([a-zA-Z]+)@/);
-        return match ? match[1] : "npm";
-      }
-    } catch (e) {
-      // there might be a problem while reading package.json in which case we default to npm
+    if (packageManagerCandidates.length > 1) {
+      Logger.warn(
+        "Your workspace contains multiple package manager lock files, it might cause wrong manager to be used"
+      );
     }
-    return "npm";
+
+    if (packageManagerCandidates.length > 0) {
+      return packageManagerCandidates[0];
+    }
+
+    // when no package manager were detected we default to npm
+    return DEFAULT_PACKAGE_MANAGER;
   }
 
   const name = await findPackageManager(workspacePath ?? appRootPath);
