@@ -1,5 +1,5 @@
 .plan__name {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -34,9 +34,9 @@
 }
 
 .plan__tagline {
-  margin-top: 4px;
-  margin-bottom: 24px;
-  font-size: 16px;
+  margin-top: 8px;
+  margin-bottom: 32px;
+  font-size: 18px;
   color: var(--swm-navy-light-60);
 }
 

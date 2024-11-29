@@ -4,6 +4,16 @@
   gap: 24px;
 }
 
+.headingLabel {
+  margin-top: 60px;
+  text-align: center;
+}
+
+.subheadlingLabel {
+  text-align: center;
+  font-weight: normal;
+}
+
 .highlight {
   text-decoration: underline;
 }
