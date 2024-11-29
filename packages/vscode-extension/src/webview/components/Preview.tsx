@@ -220,6 +220,7 @@ function Preview({
 }: Props) {
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>();
   const wrapperDivRef = useRef<HTMLDivElement>(null);
+  const [shouldPreventFromSendingTouch, setShouldPreventFromSendingTouch] = useState(false);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
@@ -351,18 +352,16 @@ function Preview({
     !showDevicePreview ||
     !!replayData;
 
-  const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
-
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isMultiTouching) {
+    if (isInspecting) {
+      sendInspect(e, "Move", false);
+    } else if (isMultiTouching) {
       setTouchPoint(getTouchPosition(e));
       isPanning && moveAnchorPoint(e);
       isPressing && sendMultiTouchForEvent(e, "Move");
     } else if (isPressing) {
       sendTouch(e, "Move");
-    } else if (isInspecting) {
-      sendInspect(e, "Move", false);
     }
     currentMousePosition.current = e;
   }
@@ -375,6 +374,9 @@ function Preview({
       sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
     } else if (!inspectFrame) {
       if (e.button === 2) {
+        // to avoid sending touch after onWrapperMouseDown sets isPressing to true and before
+        // inspectFrame changes to true, we need to set shouldPreventFromSendingTouch
+        setShouldPreventFromSendingTouch(true);
         sendInspect(e, "RightButtonDown", true);
       } else if (isMultiTouching) {
         setIsPressing(true);
@@ -469,6 +471,10 @@ function Preview({
         onMouseUp: onWrapperMouseUp,
         onMouseLeave: onWrapperMouseLeave,
       };
+
+  useEffect(() => {
+    setShouldPreventFromSendingTouch(isInspecting || !!inspectFrame);
+  }, [isInspecting, inspectFrame]);
 
   useEffect(() => {
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
