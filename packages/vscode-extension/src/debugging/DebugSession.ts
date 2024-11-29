@@ -47,7 +47,8 @@ export class DebugSession implements Disposable {
     }
 
     let sourceMapAliases: Array<[string, string]> = [];
-    if (this.metro.isUsingNewDebugger && this.metro.watchFolders.length > 0) {
+    const isUsingNewDebugger = this.metro.isUsingNewDebugger;
+    if (isUsingNewDebugger && this.metro.watchFolders.length > 0) {
       // first entry in watchFolders is the project root
       sourceMapAliases.push(["/[metro-project]/", this.metro.watchFolders[0]]);
       this.metro.watchFolders.forEach((watchFolder, index) => {
@@ -64,6 +65,7 @@ export class DebugSession implements Disposable {
         websocketAddress: websocketAddress,
         sourceMapAliases,
         expoPreludeLineCount: this.metro.expoPreludeLineCount,
+        breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
       },
       {
         suppressDebugStatusbar: true,
