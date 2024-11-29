@@ -27,17 +27,42 @@
     },
     {
       "source": "/docs/simulators",
-      "destination": "docs/guides/simulators",
+      "destination": "/docs/guides/simulators",
       "permanent": true
     },
     {
       "source": "/docs/troubleshooting",
-      "destination": "docs/guides/troubleshooting",
+      "destination": "/docs/guides/troubleshooting",
       "permanent": true
     },
     {
       "source": "/docs/development",
-      "destination": "docs/guides/development",
+      "destination": "/docs/guides/development",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/legal/privacy-policy",
+      "permanent": true
+    },
+    {
+      "source": "/terms-of-use",
+      "destination": "/legal/early-terms-of-use",
+      "permanent": true
+    },
+    {
+      "source": "/refund-policy",
+      "destination": "/legal/refund-policy",
+      "permanent": true
+    },
+    {
+      "source": "/purchase-terms",
+      "destination": "/legal/purchase-terms",
+      "permanent": true
+    },
+    {
+      "source": "/supporter-terms",
+      "destination": "/legal/supporter-terms",
       "permanent": true
     }
   ]
