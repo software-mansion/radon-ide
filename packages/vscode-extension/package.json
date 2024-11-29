@@ -7,6 +7,7 @@
     "Programming Languages"
   ],
   "icon": "assets/logo.png",
+  "pricing": "Trial",
   "activationEvents": [
     "workspaceContains:node_modules/react-native",
     "workspaceContains:app.json",
@@ -15,14 +16,15 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.25",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.75.0"
   },
   "extensionKind": [
     "workspace"
   ],
-  "license": "SEE LICENSE IN LICENSE.txt",
+  "homepage": "https://ide.swmansion.com",
+  "license": "https://ide.swmansion.com/legal",
   "repository": {
     "type": "git",
     "url": "https://github.com/software-mansion/radon-ide"
