@@ -1,7 +1,7 @@
 ---
 id: development
 title: Development
-sidebar_position: 4
+sidebar_position: 5
 ---
 
 ## Repository structure and project architecture
