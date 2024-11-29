@@ -31,14 +31,14 @@ export async function activateDevice(
     });
   } catch (e) {
     Logger.warn("Creating license token with license key failed", e);
-    return ActivateDeviceResult.unableToVerify;
+    return ActivateDeviceResult.connectionFailed;
   }
 
   const responseBody = await response.json();
 
   if (response.ok) {
     const newToken = responseBody.token as string;
-    extensionContext.secrets.store(TOKEN_KEY, newToken ?? "");
+    await extensionContext.secrets.store(TOKEN_KEY, newToken ?? "");
     return ActivateDeviceResult.succeeded;
   }
 

@@ -105,6 +105,7 @@ export enum ActivateDeviceResult {
   succeeded,
   notEnoughSeats,
   unableToVerify,
+  connectionFailed,
 }
 
 export interface ProjectEventMap {

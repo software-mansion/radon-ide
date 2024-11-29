@@ -14,8 +14,9 @@ export function ActivateLicenseView() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [disableSubmit, setDisableSubmit] = useState(true);
-  const [wasRejected, setWasRejected] = useState(false);
-  const [wasEnoughSeats, setWasEnoughSeats] = useState(true);
+  const [activateDeviceResult, setActivateDeviceResult] = useState<ActivateDeviceResult | null>(
+    null
+  );
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -28,10 +29,7 @@ export function ActivateLicenseView() {
       if (activationResult === ActivateDeviceResult.succeeded) {
         closeModal();
       } else {
-        if (activationResult === ActivateDeviceResult.notEnoughSeats) {
-          setWasEnoughSeats(false);
-        }
-        setWasRejected(true);
+        setActivateDeviceResult(activationResult);
       }
       setIsLoading(false);
     });
@@ -50,7 +48,7 @@ export function ActivateLicenseView() {
   return (
     <form className="container" onSubmit={handleSubmit(onSubmit)}>
       <div className="info-row">
-        {!wasRejected && (
+        {!activateDeviceResult && (
           <div className="info-text">
             You can find your license key on the Radon IDE customer portal (
             <a href="https://portal.ide.swmansion.com/" target="_blank" rel="noopener noreferrer">
@@ -63,7 +61,7 @@ export function ActivateLicenseView() {
             .
           </div>
         )}
-        {wasRejected && wasEnoughSeats && (
+        {activateDeviceResult === ActivateDeviceResult.unableToVerify && (
           <div className="error-text">
             Unable to verify the key. Please ensure your license key is correct. Check this{" "}
             <a
@@ -75,14 +73,19 @@ export function ActivateLicenseView() {
             for instructions.
           </div>
         )}
-        {!wasEnoughSeats && (
+        {activateDeviceResult === ActivateDeviceResult.notEnoughSeats && (
           <div className="error-text">
-            Your organization does not any available seats left, you can purchase more on the Radon
-            IDE customer portal (
+            Your organization does not have any available seats left, you can purchase more on the
+            Radon IDE customer portal (
             <a href="https://portal.ide.swmansion.com/" target="_blank" rel="noopener noreferrer">
               link
             </a>
             ).
+          </div>
+        )}
+        {activateDeviceResult === ActivateDeviceResult.connectionFailed && (
+          <div className="error-text">
+            We ware unable to register your device due to the connection failing.
           </div>
         )}
       </div>
