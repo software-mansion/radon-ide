@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import "./ActivateLicenseView.css";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
@@ -63,14 +62,30 @@ export function ActivateLicenseView() {
         )}
         {activateDeviceResult === ActivateDeviceResult.unableToVerify && (
           <div className="error-text">
-            Unable to verify the key. Please ensure your license key is correct. Check this{" "}
+            We were unable to verify the license key at this point. Please consult the{" "}
             <a
               href="https://ide.swmansion.com/docs/guides/activation-manual"
               target="_blank"
               rel="noopener noreferrer">
-              link
+              license activation instructions
             </a>{" "}
-            for instructions.
+            and try again once you check the provided key is valid.
+          </div>
+        )}
+        {activateDeviceResult === ActivateDeviceResult.keyVerificationFailed && (
+          <div className="error-text">
+            Provided key is not a valid license key. You can find your key on the{" "}
+            <a href="https://portal.ide.swmansion.com/" target="_blank" rel="noopener noreferrer">
+              Radon IDE customer portal
+            </a>
+            . Please follow the{" "}
+            <a
+              href="https://ide.swmansion.com/docs/guides/activation-manual"
+              target="_blank"
+              rel="noopener noreferrer">
+              license activation instructions
+            </a>{" "}
+            if you need further assistance.
           </div>
         )}
         {activateDeviceResult === ActivateDeviceResult.notEnoughSeats && (
@@ -85,7 +100,14 @@ export function ActivateLicenseView() {
         )}
         {activateDeviceResult === ActivateDeviceResult.connectionFailed && (
           <div className="error-text">
-            We ware unable to register your device due to the connection failing.
+            Activating license key requires a network connection. Make sure you are connected and
+            try activating the key again. In case of any issues please consult our
+            <a
+              href="https://ide.swmansion.com/docs/guides/activation-manual"
+              target="_blank"
+              rel="noopener noreferrer">
+              license activation instructions
+            </a>
           </div>
         )}
       </div>
@@ -98,13 +120,9 @@ export function ActivateLicenseView() {
         placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
       />
       <div className="submit-row">
-        {isLoading ? (
-          <VSCodeProgressRing />
-        ) : (
-          <Button type="secondary" disabled={disableSubmit}>
-            Activate
-          </Button>
-        )}
+        <Button type="secondary" disabled={disableSubmit || isLoading}>
+          Activate
+        </Button>
       </div>
     </form>
   );

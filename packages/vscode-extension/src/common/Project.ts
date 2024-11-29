@@ -104,6 +104,7 @@ export type TouchPoint = {
 export enum ActivateDeviceResult {
   succeeded,
   notEnoughSeats,
+  keyVerificationFailed,
   unableToVerify,
   connectionFailed,
 }

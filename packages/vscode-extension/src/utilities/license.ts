@@ -5,7 +5,7 @@ import { Logger } from "../Logger";
 import { simulatorServerBinary } from "./simulatorServerBinary";
 import { ActivateDeviceResult } from "../common/Project";
 
-const TOKEN_KEY = "token_key";
+const TOKEN_KEY = "RNIDE_license_token_key";
 const BASE_CUSTOMER_PORTAL_URL = "https://portal.ide.swmansion.com/";
 
 export async function activateDevice(
@@ -40,6 +40,13 @@ export async function activateDevice(
     const newToken = responseBody.token as string;
     await extensionContext.secrets.store(TOKEN_KEY, newToken ?? "");
     return ActivateDeviceResult.succeeded;
+  }
+
+  if (
+    response.status === 404 &&
+    responseBody.error.startsWith("Could not find a subscription associated with license key")
+  ) {
+    return ActivateDeviceResult.keyVerificationFailed;
   }
 
   if (
