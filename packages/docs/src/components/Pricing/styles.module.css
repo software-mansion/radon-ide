@@ -7,11 +7,14 @@
 .headingLabel {
   margin-top: 60px;
   text-align: center;
+  text-wrap: balance;
 }
 
 .subheadlingLabel {
   text-align: center;
   font-weight: normal;
+  text-wrap: balance;
+  margin-bottom: 20px;
 }
 
 .highlight {
