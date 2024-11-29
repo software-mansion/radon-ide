@@ -3,7 +3,7 @@ import path from "path";
 import semver from "semver";
 import { OutputChannel } from "vscode";
 import { getNativeABI } from "../utilities/common";
-import { ANDROID_HOME, JAVA_HOME } from "../utilities/android";
+import { ANDROID_HOME, findJavaHome } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
@@ -155,10 +155,11 @@ export async function buildAndroid(
     );
   }
   Logger.debug("Starting Android build");
+  const JAVA_HOME = await findJavaHome();
   const buildProcess = cancelToken.adapt(
     exec("./gradlew", gradleArgs, {
       cwd: androidSourceDir,
-      env: { ...env, JAVA_HOME, ANDROID_HOME },
+      env: { JAVA_HOME, ANDROID_HOME, ...env },
       buffer: false,
     })
   );
