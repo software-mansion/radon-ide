@@ -25,31 +25,41 @@ global.__RNIDE_onDebuggerReady = function () {
 // debug adapter and avoid exposing as part of application logs
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
-function getFrameShiftForLogs(stack) {
-  const hasSentryLogWrapper = () => Boolean(global.__SENTRY__) ? 1 : 0;
-  
-  const hasExpoWrapper = () => {
-    const expoLogIndex = stack.findIndex((frame) => frame.methodName === "__expoConsoleLog");
-
-    return Math.max(0, expoLogIndex);
-  };
-
-  const knownWrappers = [
-    hasSentryLogWrapper,
-    hasExpoWrapper,
-  ];
-
-  // We start with 1 because, because first one is our wrapper
-  return knownWrappers.reduce((count, wrapper) => {
-    return wrapper() + count;
-  }, 1);
-}
-
+// To get the proper stack frame, so we can display link to the source code
+// we need to skip wrappers (like wrapConsole below or for example Sentry wrapper)
+// Otherwise, the stack frame would point to the wrapper and not the actual source code
+// To do that, each time we run console.log again in runWrapper, and then compare
+// first frames to find the offset. It needs to happen each time, as we don't know 
+// when other wrappers are set 
 function wrapConsole(consoleFunc) {
+  let initializationStack = [];
+  let stackOffset = 1; // default offset is 1, because the first frame is the wrapConsole function
+  let sendInitialLog = false;
+
   return function (...args) {
     const stack = parseErrorStack(new Error().stack);
-    const wrappersShift = getFrameShiftForLogs(stack);
-    const location = stack[wrappersShift];
+
+    // Getting source maps from recursive console.log call
+    if (sendInitialLog) {
+      sendInitialLog = false;
+
+      for (let i = 0; i < Math.min(stack.length, initializationStack.length); i++) {
+        const diffLine = stack[i].lineNumber !== initializationStack[i].lineNumber;
+        const diffColumn = stack[i].column !== initializationStack[i].column;
+
+        if (diffLine || diffColumn) {
+          stackOffset = i;
+          break;
+        }
+      }
+      return;
+    }
+
+    initializationStack = stack;
+    sendInitialLog = true;
+    console.log(); // Recursive dummy console.log to get the source maps
+
+    const location = stack[stackOffset];
     args.push(location.file, location.lineNumber, location.column);
     return consoleFunc.apply(console, args);
   };
