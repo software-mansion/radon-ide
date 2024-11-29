@@ -355,14 +355,14 @@ function Preview({
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isMultiTouching) {
+    if (isInspecting) {
+      sendInspect(e, "Move", false);
+    } else if (isMultiTouching) {
       setTouchPoint(getTouchPosition(e));
       isPanning && moveAnchorPoint(e);
       isPressing && sendMultiTouchForEvent(e, "Move");
     } else if (isPressing) {
       sendTouch(e, "Move");
-    } else if (isInspecting) {
-      sendInspect(e, "Move", false);
     }
     currentMousePosition.current = e;
   }
@@ -448,7 +448,9 @@ function Preview({
 
   function onWrapperMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    setIsPressing(true);
+    if (e.button !== 2) {
+      setIsPressing(true);
+    }
   }
 
   function onWrapperMouseUp(e: MouseEvent<HTMLDivElement>) {
