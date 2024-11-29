@@ -90,12 +90,11 @@ export function ActivateLicenseView() {
         )}
         {activateDeviceResult === ActivateDeviceResult.notEnoughSeats && (
           <div className="error-text">
-            Your organization does not have any available seats left, you can purchase more on the
-            Radon IDE customer portal (
+            Your license does not have any available seats. Log to the{" "}
             <a href="https://portal.ide.swmansion.com/" target="_blank" rel="noopener noreferrer">
-              link
-            </a>
-            ).
+              Radon IDE customer portal
+            </a>{" "}
+            to manage seats assigned to the license seats or purchase additional seats.
           </div>
         )}
         {activateDeviceResult === ActivateDeviceResult.connectionFailed && (
