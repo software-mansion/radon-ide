@@ -164,7 +164,7 @@ function ManageDevicesView() {
   }
 
   return (
-    <div className="container">
+    <div className="manage-devices-container">
       {iosDevices.length > 0 && (
         <>
           <Label>iOS Devices</Label>

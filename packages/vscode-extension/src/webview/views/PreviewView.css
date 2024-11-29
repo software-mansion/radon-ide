@@ -89,3 +89,10 @@
   border-radius: 50%;
   margin-right: 6px;
 }
+
+@media (max-width: 385px) {
+  .button-group-top,
+  .button-group-bottom {
+    gap: 2px;
+  }
+}
