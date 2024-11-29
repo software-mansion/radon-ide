@@ -13,8 +13,18 @@ export async function activateDevice(
   username: string
 ): Promise<ActivateDeviceResult> {
   const url = new URL("/api/create-token", BASE_CUSTOMER_PORTAL_URL);
+
+  let deviceFingerprint;
+
+  try {
+    deviceFingerprint = await generateDeviceFingerprint();
+  } catch (e) {
+    Logger.error("Error generating device fingerprint", e);
+    return ActivateDeviceResult.unableToVerify;
+  }
+
   const body = {
-    fingerprint: await generateDeviceFingerprint(),
+    fingerprint: deviceFingerprint,
     name: username,
     licenseKey,
   };
