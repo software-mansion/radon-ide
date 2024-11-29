@@ -155,11 +155,11 @@ export async function buildAndroid(
     );
   }
   Logger.debug("Starting Android build");
-  const JAVA_HOME = await findJavaHome(env);
+  const JAVA_HOME = await findJavaHome();
   const buildProcess = cancelToken.adapt(
     exec("./gradlew", gradleArgs, {
       cwd: androidSourceDir,
-      env: { ...env, JAVA_HOME, ANDROID_HOME },
+      env: { JAVA_HOME, ANDROID_HOME, ...env },
       buffer: false,
     })
   );

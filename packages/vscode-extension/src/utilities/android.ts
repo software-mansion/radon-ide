@@ -11,7 +11,7 @@ export const ANDROID_HOME =
     windows: path.join(os.homedir(), "AppData\\Local\\Android\\Sdk"),
   });
 
-export async function findJavaHome(env?: Record<string, string>) {
+export async function findJavaHome() {
   // When java is available in the PATH, we return undefined as android tooling doesn't
   // require JAVA_HOME variable to be set in that case. However, when JAVA_HOME is provided
   // it takes precedence over the java in the PATH. Finally, when JAVA_HOME is not set, and
@@ -20,7 +20,7 @@ export async function findJavaHome(env?: Record<string, string>) {
   // where the first one is used in newer distributions and the second one in older ones.
 
   // 1) we check JAVA_HOME from the provided env object or from process.env
-  const envJavaHome = env?.JAVA_HOME || process.env.JAVA_HOME;
+  const envJavaHome = process.env.JAVA_HOME;
   if (envJavaHome && fs.existsSync(envJavaHome)) {
     return envJavaHome;
   }
