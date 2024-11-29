@@ -64,7 +64,11 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform) {
 
   const build = maxBy(builds, "completedAt")!;
 
-  if (!build.binaryUrl.endsWith(".apk") && !build.binaryUrl.endsWith(".apex")) {
+  if (
+    platform === DevicePlatform.Android &&
+    !build.binaryUrl.endsWith(".apk") &&
+    !build.binaryUrl.endsWith(".apex")
+  ) {
     Logger.error(
       `EAS build artifact needs to be a development build in .apk or .apex format to work with the Radon IDE, make sure you set up eas to use "development" profile`
     );
