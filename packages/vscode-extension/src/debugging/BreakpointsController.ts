@@ -8,10 +8,29 @@ import { CDPSession } from "./CDPSession";
 export class BreakpointsController {
   private breakpoints = new Map<string, Array<CDPBreakpoint>>();
 
-  constructor(private sourceMapController: SourceMapsRegistry, private cdpSession: CDPSession) {}
+  constructor(
+    private sourceMapController: SourceMapsRegistry,
+    private cdpSession: CDPSession,
+    private breakpointsAreRemovedOnContextCleared: boolean
+  ) {}
 
-  public resetBreakpoints() {
-    this.breakpoints.clear();
+  public onContextCleared() {
+    // When execution context is cleared (JS reloads), the old RN debugger would forget
+    // all the breakpoints that were previously set. This leads to the situation, when
+    // we may get breakpoint IDs misaligned. Because of that, when we execute CDPBreakpoint.reset
+    // to update the breakpoint, we may attempt to delete a different breakpoint or we'd just fail to
+    // delete it altogehter if that breakpoint hasn't been yet set in the new execution context.
+    // In that scenario, it is better to clear all the breakpints we'd previously set as we'd get a
+    // request from DAP to set them again when the new context is ready (we send InitializeRequest).
+    //
+    // On the other hand, we can't reset the breakpoints with the new debugger. If we do that,
+    // the breakpoints that are set in between reloads will be set twice with CDP. There is no
+    // API in CDP that'd allow us to query for the existing breakpoints, so we rely on the fact
+    // that ths breakpoints are maintained including the IDs that we got when we set them.
+    if (this.breakpointsAreRemovedOnContextCleared) {
+      // we forget all the breakpoints when the context is cleared
+      this.breakpoints.clear();
+    }
   }
 
   public updateBreakpointsInSource(sourceURL: string, consumer: SourceMapConsumer) {
