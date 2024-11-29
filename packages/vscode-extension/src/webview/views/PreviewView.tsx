@@ -21,7 +21,7 @@ import {
   RecordingData,
   ZoomLevelType,
 } from "../../common/Project";
-import { useUtils } from "../providers/UtilsProvider";
+import { Platform, useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import "./View.css";
 import "./PreviewView.css";
@@ -317,7 +317,7 @@ function PreviewView() {
         />
 
         <div className="spacer" />
-        {!hasActiveLicense && <ActivateLicenseButton />}
+        {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
         <DeviceSettingsDropdown disabled={devicesNotFound || !isRunning}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon
