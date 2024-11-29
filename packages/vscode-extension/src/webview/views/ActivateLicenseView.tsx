@@ -49,11 +49,11 @@ export function ActivateLicenseView() {
       <div className="info-row">
         {!activateDeviceResult && (
           <div className="info-text">
-            You can find your license key on the Radon IDE customer portal (
+            You can find your license key on the{" "}
             <a href="https://portal.ide.swmansion.com/" target="_blank" rel="noopener noreferrer">
-              link
+              Radon IDE customer portal
             </a>
-            ) If you don't have a license, you can purchase it{" "}
+            . If you don't have a license, you can purchase it{" "}
             <a href="https://ide.swmansion.com/pricing" target="_blank" rel="noopener noreferrer">
               here
             </a>
