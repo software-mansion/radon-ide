@@ -42,6 +42,8 @@ const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
+const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
+
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
 {
@@ -676,7 +678,7 @@ export class Project
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
-  }, 1000);
+  }, FINGERPRINT_THROTTLE_MS);
 }
 
 function watchProjectFiles(onChange: () => void) {
