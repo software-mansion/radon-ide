@@ -387,7 +387,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     const extractPidFromLogcat = async (cancelToken: CancelToken) =>
       new Promise<string>((resolve, reject) => {
         const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
-        const process = exec(ADB_PATH, ["logcat", "-e", regexString, "-T", "1"]);
+        const process = exec(ADB_PATH, ["-s", this.serial!, "logcat", "-e", regexString, "-T", "1"]);
         cancelToken.adapt(process);
 
         lineReader(process).onLineRead((line) => {
@@ -422,7 +422,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
     this.nativeLogsOutputChannel.clear();
     const pid = await extractPidFromLogcat(this.nativeLogsCancelToken);
-    const process = exec(ADB_PATH, ["logcat", "--pid", pid]);
+    const process = exec(ADB_PATH, ["-s", this.serial!, "logcat", "--pid", pid]);
     this.nativeLogsCancelToken.adapt(process);
 
     lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
