@@ -2,6 +2,7 @@ import path from "path";
 import os from "os";
 import fs from "fs";
 import { Platform } from "./platform";
+import { command } from "./subprocess";
 
 export const ANDROID_HOME =
   process.env.ANDROID_HOME ??
@@ -10,15 +11,26 @@ export const ANDROID_HOME =
     windows: path.join(os.homedir(), "AppData\\Local\\Android\\Sdk"),
   });
 
-function findJavaHome() {
-  // we first try to use environment variable and if it is not set, we then use java bundled with Android Studio
-  // if exists in newer distributions java is placed under Contents/jbr/Contents/Home and with some
-  // older (but still recent ones) it is under Contents/jre/Contents/Home we check if the first path
-  // exists and if not we try the second one
+export async function findJavaHome(env?: Record<string, string>) {
+  // When java is available in the PATH, we return undefined as android tooling doesn't
+  // require JAVA_HOME variable to be set in that case. However, when JAVA_HOME is provided
+  // it takes precedence over the java in the PATH. Finally, when JAVA_HOME is not set, and
+  // java is not available in the PATH, we try to use the bundled java with Android Studio.
+  // For that we check two possible locations: Contents/jbr/Contents/Home and Contents/jre/Contents/Home
+  // where the first one is used in newer distributions and the second one in older ones.
 
-  const envJavaHome = process.env.JAVA_HOME;
+  // 1) we check JAVA_HOME from the provided env object or from process.env
+  const envJavaHome = env?.JAVA_HOME || process.env.JAVA_HOME;
   if (envJavaHome && fs.existsSync(envJavaHome)) {
     return envJavaHome;
+  }
+
+  // 2) we check whether java is available in the PATH
+  const result = await command("java -version", {
+    quietErrorsOnExit: true,
+  });
+  if (result.exitCode === 0) {
+    return undefined;
   }
 
   const androidStudioPath = Platform.select({
@@ -40,5 +52,3 @@ function findJavaHome() {
     windows: path.join(androidStudioPath, "jre"),
   });
 }
-
-export const JAVA_HOME = findJavaHome();
