@@ -8,7 +8,7 @@ On this page we discuss how to activate, purchase and manage your Radon IDE lice
 
 ## Getting your license key
 
-### Logging in to customer portal
+### Logging in to the Radon IDE customer portal
 
 All your needs related to licenses are addressed in the [customer portal](https://portal.ide.swmansion.com/). You can log in by providing an email
 you used to purchase the license. We'll send a magic link to the provided address that will allow you to log in.
