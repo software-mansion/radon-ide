@@ -8,18 +8,21 @@ import { CompatibilityInfo } from "./CompatibilityInfo";
 const Pricing = () => {
   return (
     <div className={styles.container}>
-      <h1 className={styles.headingLabel}>The best developer experience, for the best price.</h1>
+      <h1 className={styles.headingLabel}>Get the best developer experience in React Native.</h1>
       <h3 className={styles.subheadlingLabel}>
-        Choose a plan that works for your needs. Pay monthly or yearly, and cancel anytime.
+        Choose a plan that works for your needs. Pay monthly for flexibility or yearly for the best
+        price.
       </h3>
       <div className={styles.wrapper}>
         <PricingPlansList />
       </div>
       <CompatibilityInfo />
       <p>
-        Radon IDE on Windows is in Beta and{" "}
-        <span className={styles.highlight}>doesn't require making any purchase</span>. You can use
-        Radon IDE on Windows with a free Beta license.
+        Windows users can use beta version of Radon IDE for Windows which is available under{" "}
+        <a href="https://ide.swmansion.com/legal" target="_blank" className={styles.highlight}>
+          free beta license
+        </a>
+        .
       </p>
       <Motivation />
       <FAQ />
