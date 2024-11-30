@@ -18,8 +18,8 @@
 .toggleSwitch {
   position: relative;
   display: inline-block;
-  width: 42px;
-  height: 22px;
+  width: 58px;
+  height: 28px;
   cursor: pointer;
 }
 
@@ -43,9 +43,9 @@
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 16px;
-  height: 16px;
-  background-color: var(--swm-off-white);
+  width: 22px;
+  height: 22px;
+  background-color: var(--swm-white);
   border-radius: 50%;
   transition: transform 0.2s ease-in-out;
   transform: translateX(0px);
@@ -74,7 +74,7 @@
 
 .toggleSwitch input[type="checkbox"]:not(:checked) + .toggleSwitchBackground .toggleSwitchHandle {
   transition: transform 0.2s ease-in-out;
-  transform: translateX(20px);
+  transform: translateX(30px);
 }
 
 .plan_pay_annually {
