@@ -38,4 +38,4 @@ To activate your device click **Activate License** button in Radon IDE. It will 
 
 In the **Manage subscription** page you can click on **Manage seats** to increase or decrease their number. The only restriction is that if you want to decrease the number of seats below the number of currently registered devices, you need to remove them first.
 
-<img width="400" src="/img/docs/customer_portal_manage_subscription.png" className="shadow-image"/>
+<img width="550" src="/img/docs/customer_portal_manage_subscription.png" className="shadow-image"/>
