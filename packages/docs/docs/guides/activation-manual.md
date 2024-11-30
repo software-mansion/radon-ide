@@ -18,7 +18,7 @@ you used to purchase the license. We'll send a magic link to the provided addres
 ### Retrieving your license key 
 
 Once you are logged in to the customer portal, you can get your license key on the **Manage subscription** page by clicking on the tree-dot menu and either coping the key to the clipboard, 
-or revealing it and coping it your self. 
+or revealing it and coping it yourself. 
 
 <img width="400" src="/img/docs/customer_portal_retrieve_license.png" className="shadow-image"/>
 
