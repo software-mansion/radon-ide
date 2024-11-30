@@ -1,7 +1,7 @@
 ---
 id: keyboard-shortcuts
 title: Keyboard shortcuts
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 Radon IDE lets you perform some repetitive actions through keyboard shortcuts.
