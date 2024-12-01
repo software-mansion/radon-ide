@@ -61,7 +61,7 @@ export function preview(component) {
 
   // send update request to the last preview instance if it existed
   if (lastPreview && lastPreview.renderTrigger) {
-    lastPreview.renderTrigger();
+    setTimeout(lastPreview.renderTrigger, 0);
   }
 }
 
