@@ -7,7 +7,7 @@
   "redirects": [
     {
       "source": "/docs/getting-started",
-      "destination": "/docs/getting-started/overview",
+      "destination": "/docs/category/getting-started",
       "permanent": true
     },
     {
