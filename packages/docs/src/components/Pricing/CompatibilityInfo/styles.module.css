@@ -3,6 +3,8 @@
   gap: 24px;
   padding: 24px;
   background-color: var(--swm-off-white);
+  align-items: center;
+  justify-content: space-between;
   text-wrap: balance;
 }
 
