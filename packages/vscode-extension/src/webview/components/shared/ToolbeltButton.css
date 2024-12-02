@@ -36,8 +36,15 @@
   background-color: var(--swm-button-hover);
 }
 
-.toolbelt-button-select-trigger[data-state="open"] {
-  /* border-radius: 0 0 18px 18px; */
+.toolbelt-button-select-trigger-value {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 .toolbelt-button-select-trigger[data-disabled] {
@@ -50,20 +57,10 @@
   background-color: var(--swm-popover-background);
   border-radius: 6px;
   padding: 4px;
-  animation-duration: 400ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
   box-shadow: var(--swm-backdrop-shadow);
   max-height: calc(var(--radix-dropdown-menu-content-available-height) - 40px);
   overflow-y: auto;
-}
-
-.toolbelt-button-select-content[data-side="bottom"] {
-  animation-name: slideUpAndFade;
-}
-
-.toolbelt-button-select-content[data-side="top"] {
-  animation-name: slideDownAndFade;
 }
 
 .toolbelt-button-select-item {
@@ -77,28 +74,4 @@
 
 .toolbelt-button-icon {
   margin-right: 8px;
-}
-
-@keyframes slideUpAndFade {
-  from {
-    opacity: 0;
-    transform: translateY(3px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDownAndFade {
-  from {
-    opacity: 0;
-    transform: translateY(-3px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }

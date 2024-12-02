@@ -208,15 +208,54 @@ function PreviewView() {
 
 
     const toolbeltOptions: ToolbeltOption[] = [
-      { value: "tool1", label: "tool1", icon: <span className="codicon codicon-settings-gear" /> },
+      {
+        label: "tool1",
+        button: (
+          <IconButton
+            onClick={() => {
+            }}
+            tooltip={{
+              label: "Open logs panel",
+            }}
+            disabled={devicesNotFound}>
+            <span slot="start" className="codicon codicon-debug-console" />
+          </IconButton>
+        ),
+        icon: <span className="codicon codicon-settings-gear" />,
+      },
     ];
+
+        // const toolbeltOptions: ToolbeltOption[] = [
+        //   {
+        //     value: "tool1",
+        //     label: "tool1",
+        //     icon: (
+        //       <IconButton
+        //         className={isRecording ? "button-recording-on" : ""}
+        //         tooltip={{
+        //           label: isRecording ? "Stop screen recording" : "Start screen recording",
+        //         }}
+        //         onClick={toggleRecording}
+        //         disabled={isStarting}>
+        //         {isRecording ? (
+        //           <div className="recording-rec-indicator">
+        //             <div className="recording-rec-dot" />
+        //             <span>{recordingTimeFormat}</span>
+        //           </div>
+        //         ) : (
+        //           <RecordingIcon />
+        //         )}
+        //       </IconButton>
+        //     ),
+        //   },
+        // ];
 
   return (
     <div className="panel-view">
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
-        {<ToolbeltButton options={toolbeltOptions} onSelect={() => {}} />}
+        {<ToolbeltButton options={toolbeltOptions} disabled={false}/>}
         {
           <IconButton
             className={isRecording ? "button-recording-on" : ""}
