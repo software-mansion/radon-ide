@@ -26,7 +26,7 @@ Once you purchase your license, you can follow our [License Activation Guide](ht
 
 ### ✨ What does it do
 
-Radon IDE aims to work with all sorts of React Native and Expo projects (see [project compatibility]() page for details), and without any extra configuration, will build and launch your projects, providing an integrated simulator preview right in the editor and enabling a set of integrations that can accelerate the development process, including but not limited to:
+Radon IDE aims to work with all sorts of React Native and Expo projects (see [project compatibility](https://ide.swmansion.com/docs/getting-started/compatibility) page for details), and without any extra configuration, will build and launch your projects, providing an integrated simulator preview right in the editor and enabling a set of integrations that can accelerate the development process, including but not limited to:
 
 ### Element inspector with component hierarchy
 
