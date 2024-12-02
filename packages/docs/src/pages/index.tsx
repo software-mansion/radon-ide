@@ -24,8 +24,8 @@ export default function Home(): JSX.Element {
       <div className={styles.preventfulContainer}>
         <div className={styles.container}>
           <Hero />
-          <Disclaimer />
-          <LicenseBanner />
+          {/* <Disclaimer /> */}
+          {/* <LicenseBanner /> */}
           {/* <LearnMoreHero /> */}
           {/* <Installation /> */}
           <Overview />

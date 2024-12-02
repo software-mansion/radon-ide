@@ -28,6 +28,15 @@
   margin: 0;
 }
 
+.itemLabel {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+
+  color: var(--swm-green-light-100);
+}
+
 @media (max-width: 996px) {
   .description {
     margin-bottom: 0.5rem;
