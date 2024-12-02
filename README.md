@@ -9,9 +9,9 @@ Radon IDE is an extension for VSCode and Cursor that turns the code editor into 
 ### ✨ What does it do
 
 Radon IDE is a VSCode and Cursor extension that aims to streamline development of React Native and Expo applications.
-The current version supports developing on macOS for Android and iOS platforms with the current list of features available:
+The current version supports developing for iOS and Android on macOS and Windows (Android only) with the current list of features available:
 
-- Managing iOS and Android simulator (for now only iPhone Pro and Pixel 7 skins are available)
+- Managing iOS and Android simulator
 - Automatically build and launch your project (keeping track of native or javascript updates automatically)
 - Integrated debugger always available – when running the project you can set breakpoints in the editor and don't need to bother with any additional configuration to get your application to stop at those breakpoints
 - Element inspector that jumps to component code

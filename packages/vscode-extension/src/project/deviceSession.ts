@@ -112,7 +112,7 @@ export class DeviceSession implements Disposable {
     });
 
     this.isLaunching = true;
-    this.device.stopReplays();
+    this.device.disableReplays();
 
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
@@ -154,7 +154,7 @@ export class DeviceSession implements Disposable {
 
     this.isLaunching = false;
     if (this.deviceSettings?.replaysEnabled) {
-      this.device.startReplays();
+      this.device.enableReplay();
     }
     if (this.deviceSettings?.showTouches) {
       this.device.showTouches();
@@ -226,6 +226,9 @@ export class DeviceSession implements Disposable {
   }
 
   private async startDebugger() {
+    if (this.debugSession) {
+      this.debugSession.dispose();
+    }
     this.debugSession = new DebugSession(this.metro, this.debugEventDelegate);
     const started = await this.debugSession.start();
     if (started) {
@@ -255,6 +258,14 @@ export class DeviceSession implements Disposable {
     if (this.maybeBuildResult) {
       return this.device.sendDeepLink(link, this.maybeBuildResult);
     }
+  }
+
+  public startRecording() {
+    return this.device.startRecording();
+  }
+
+  public async captureAndStopRecording() {
+    return this.device.captureAndStopRecording();
   }
 
   public async captureReplay() {
@@ -305,9 +316,9 @@ export class DeviceSession implements Disposable {
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
     this.deviceSettings = settings;
     if (settings.replaysEnabled && !this.isLaunching) {
-      this.device.startReplays();
+      this.device.enableReplay();
     } else {
-      this.device.stopReplays();
+      this.device.disableReplays();
     }
     if (settings.showTouches && !this.isLaunching) {
       this.device.showTouches();

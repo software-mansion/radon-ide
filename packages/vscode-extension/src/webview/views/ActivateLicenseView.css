@@ -1,0 +1,51 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: left;
+}
+
+.license-input {
+  flex: 1;
+  background-color: var(--swm-input-background);
+  color: var(--swm-default-text);
+  width: 100%;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  border: 1px;
+  text-align: center;
+  font-size: 18px;
+  border-radius: 4px;
+  line-height: 1;
+  box-shadow: var(--swm-input-shadow);
+}
+
+.info-row {
+  width: 100%;
+  padding-bottom: 20px;
+  flex: 1;
+  align-items: left;
+}
+
+.submit-row {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.error-text {
+  color: var(--swm-error-color);
+  font-size: 14px;
+}
+
+.info-text {
+  font-size: 14px;
+  color: var(--swm-default-text);
+}
+
+.info-text a,
+.error-text a {
+  color: var(--swm-default-text);
+  text-decoration: underline;
+}

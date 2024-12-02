@@ -56,6 +56,7 @@ button {
 
 .dropdown-menu-item-wraper {
   display: flex;
+  width: 100%;
   align-items: center;
   gap: 5px;
 }
@@ -117,5 +118,11 @@ button {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 460px) {
+  .dropdown-menu-subcontent {
+    transform: translateX(85%) translateY(28px);
   }
 }

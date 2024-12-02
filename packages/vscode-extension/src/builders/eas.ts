@@ -64,6 +64,17 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform) {
 
   const build = maxBy(builds, "completedAt")!;
 
+  if (
+    platform === DevicePlatform.Android &&
+    !build.binaryUrl.endsWith(".apk") &&
+    !build.binaryUrl.endsWith(".apex")
+  ) {
+    Logger.error(
+      `EAS build artifact needs to be a development build in .apk or .apex format to work with the Radon IDE, make sure you set up eas to use "development" profile`
+    );
+    return undefined;
+  }
+
   Logger.debug(`Using EAS build artifact with ID ${build.id}.`);
   return build;
 }
@@ -80,7 +91,10 @@ async function downloadAppFromEas(
   const { id, binaryUrl } = build;
 
   const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-eas-build-"));
-  const binaryPath = path.join(tmpDirectory, id);
+  const binaryPath =
+    platform === DevicePlatform.Android
+      ? path.join(tmpDirectory, `${id}.apk`)
+      : path.join(tmpDirectory, id);
 
   const success = await downloadBinary(binaryUrl, binaryPath);
   if (!success) {

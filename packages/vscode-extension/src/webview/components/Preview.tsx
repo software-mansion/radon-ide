@@ -1,13 +1,4 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-  MouseEvent,
-  forwardRef,
-  RefObject,
-  ReactNode,
-  useCallback,
-} from "react";
+import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, useCallback } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { Resizable } from "re-resizable";
@@ -43,8 +34,6 @@ declare module "react" {
     [key: `--${string}`]: string | number;
   }
 }
-
-const HIDE_ZOOM_CONTROLS_DELAY = 2000;
 
 function useKeyPresses() {
   const pressedKeys = useRef(new Set<number>());
@@ -187,37 +176,6 @@ function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
-}
-
-type ButtonGroupLeftProps = {
-  children: ReactNode;
-};
-
-function ButtonGroupLeft({ children }: ButtonGroupLeftProps) {
-  const [isMouseOver, setIsMouseOver] = useState(false);
-
-  const hideButtonGroupTimeout = useRef<NodeJS.Timeout | undefined>();
-
-  const onMouseOver = () => {
-    clearTimeout(hideButtonGroupTimeout.current);
-    setIsMouseOver(true);
-  };
-
-  const onMouseOut = () => {
-    hideButtonGroupTimeout.current = setTimeout(() => {
-      setIsMouseOver(false);
-    }, HIDE_ZOOM_CONTROLS_DELAY);
-  };
-
-  return (
-    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} className="button-group-left-container">
-      <div
-        style={isMouseOver ? { transform: "translateX(0px)" } : {}}
-        className="button-group-left">
-        {children}
-      </div>
-    </div>
-  );
 }
 
 type Props = {
@@ -745,14 +703,17 @@ function Preview({
           </Resizable>
         )}
       </div>
-      <ButtonGroupLeft>
-        <ZoomControls
-          zoomLevel={zoomLevel}
-          onZoomChanged={onZoomChanged}
-          device={device}
-          wrapperDivRef={wrapperDivRef}
-        />
-      </ButtonGroupLeft>
+
+      <div className="button-group-left-wrapper">
+        <div className="button-group-left">
+          <ZoomControls
+            zoomLevel={zoomLevel}
+            onZoomChanged={onZoomChanged}
+            device={device}
+            wrapperDivRef={wrapperDivRef}
+          />
+        </div>
+      </div>
     </>
   );
 }

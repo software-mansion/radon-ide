@@ -1,9 +1,11 @@
 import { EventEmitter } from "stream";
+import os from "os";
 import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
+  ActivateDeviceResult,
   AppPermissionType,
   DeviceSettings,
   InspectData,
@@ -31,6 +33,7 @@ import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { PlatformBuildCache } from "../builders/PlatformBuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
+import { activateDevice, getLicenseToken } from "../utilities/license";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -38,6 +41,8 @@ const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
 const DEEP_LINKS_HISTORY_LIMIT = 50;
+
+const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
@@ -158,6 +163,20 @@ export class Project
     this.updateProjectState({ status: "running" });
   }
   //#endregion
+
+  startRecording(): void {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.startRecording();
+  }
+
+  async captureAndStopRecording(): Promise<RecordingData> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    return this.deviceSession.captureAndStopRecording();
+  }
 
   async captureReplay(): Promise<RecordingData> {
     if (!this.deviceSession) {
@@ -340,6 +359,15 @@ export class Project
 
   public async reload(type: ReloadAction): Promise<boolean> {
     this.updateProjectState({ status: "starting" });
+
+    // this action needs to be handled outside of device session as it resets the device session itself
+    if (type === "reboot") {
+      const deviceInfo = this.projectState.selectedDevice!;
+      await this.start(true, false);
+      await this.selectDevice(deviceInfo);
+      return true;
+    }
+
     const success = (await this.deviceSession?.perform(type)) ?? false;
     if (success) {
       this.updateProjectState({ status: "running" });
@@ -464,6 +492,19 @@ export class Project
     await this.deviceSession?.openDevMenu();
   }
 
+  public async activateLicense(activationKey: string) {
+    const computerName = os.hostname();
+    const activated = await activateDevice(activationKey, computerName);
+    if (activated === ActivateDeviceResult.succeeded) {
+      this.eventEmitter.emit("licenseActivationChanged", true);
+    }
+    return activated;
+  }
+
+  public async hasActiveLicense() {
+    return !!(await getLicenseToken());
+  }
+
   public startPreview(appKey: string) {
     this.deviceSession?.startPreview(appKey);
   }
@@ -560,7 +601,7 @@ export class Project
     }
 
     if (device) {
-      Logger.log("Device selected", deviceInfo.displayName);
+      Logger.debug("Device selected", deviceInfo.displayName);
       extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
       return device;
     }
@@ -637,7 +678,7 @@ export class Project
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
-  }, 1000);
+  }, FINGERPRINT_THROTTLE_MS);
 }
 
 function watchProjectFiles(onChange: () => void) {

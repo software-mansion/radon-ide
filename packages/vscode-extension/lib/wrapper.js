@@ -4,13 +4,16 @@ const { useContext, useState, useEffect, useRef, useCallback } = require("react"
 const {
   LogBox,
   AppRegistry,
+  Dimensions,
   RootTagContext,
   View,
-  Dimensions,
   Linking,
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
+
+// https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
+const OffscreenComponentReactTag = 22;
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -67,6 +70,124 @@ function useAgentListener(agent, eventName, listener, deps = []) {
       };
     }
   }, [agent, ...deps]);
+}
+
+function getRendererConfig() {
+  const renderers = Array.from(window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.values());
+  if (!renderers) {
+    return undefined;
+  }
+  for (const renderer of renderers) {
+    if (renderer.rendererConfig?.getInspectorDataForInstance) {
+      return renderer.rendererConfig;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Return an array of component data representing a stack of components by traversing
+ * the component hierarchy up from the startNode.
+ * Each stack entry carries the component name, source location and measure function.
+ * We try to use React's renderer getInspectorDataForInstance to get the details about
+ * each particular component instance. However, with older versions of React Native where
+ * this method is not available, we fallback to using hierarchy provided by getInspectorDataForViewAtPoint
+ */
+function extractComponentStack(startNode, viewDataHierarchy) {
+  const rendererConfig = getRendererConfig();
+
+  let stackItems = [];
+  if (rendererConfig) {
+    // when we find renderer config with getInspectorDataForInstance we use fiber node
+    // "return" property to traverse the component hierarchy
+    let node = startNode;
+
+    // Optimization: we break after reaching fiber node corresponding to OffscreenComponent
+    while (node && node.tag !== OffscreenComponentReactTag) {
+      const data = rendererConfig.getInspectorDataForInstance(node);
+      const item = data.hierarchy[data.hierarchy.length - 1];
+      stackItems.push(item);
+      node = node.return;
+    }
+  } else if (viewDataHierarchy && viewDataHierarchy.length > 0) {
+    // fallback to using viewDataHierarchy
+    stackItems = viewDataHierarchy.reverse();
+  }
+
+  const componentStack = [];
+  stackItems.forEach((item) => {
+    const inspectorData = item.getInspectorData(findNodeHandle);
+    if (inspectorData.source) {
+      componentStack.push({
+        name: item.name,
+        source: inspectorData.source,
+        measure: inspectorData.measure,
+      });
+    }
+  });
+  return componentStack;
+}
+
+function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
+
+  RNInternals.getInspectorDataForViewAtPoint(
+    mainContainerRef.current,
+    x * screenWidth,
+    y * screenHeight,
+    (viewData) => {
+      const frame = viewData.frame;
+      const scaledFrame = {
+        x: frame.left / screenWidth,
+        y: frame.top / screenHeight,
+        width: frame.width / screenWidth,
+        height: frame.height / screenHeight,
+      };
+
+      if (!requestStack) {
+        callback({ frame: scaledFrame });
+        return;
+      }
+
+      const inspectorDataStack = extractComponentStack(
+        viewData.closestInstance,
+        viewData.hierarchy
+      );
+      Promise.all(
+        inspectorDataStack.map(
+          (inspectorData) =>
+            new Promise((res, rej) => {
+              try {
+                inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
+                  const source = inspectorData.source;
+                  res({
+                    componentName: inspectorData.name,
+                    source: {
+                      fileName: source.fileName,
+                      line0Based: source.lineNumber - 1,
+                      column0Based: source.columnNumber - 1,
+                    },
+                    frame: {
+                      x: pageX / screenWidth,
+                      y: pageY / screenHeight,
+                      width: viewWidth / screenWidth,
+                      height: viewHeight / screenHeight,
+                    },
+                  });
+                });
+              } catch (e) {
+                rej(e);
+              }
+            })
+        )
+      ).then((componentDataStack) => {
+        callback({
+          frame: scaledFrame,
+          stack: componentDataStack,
+        });
+      });
+    }
+  );
 }
 
 export function AppWrapper({ children, initialProps, fabric }) {
@@ -180,68 +301,14 @@ export function AppWrapper({ children, initialProps, fabric }) {
     devtoolsAgent,
     "RNIDE_inspect",
     (payload) => {
-      const getInspectorDataForViewAtPoint = RNInternals.getInspectorDataForViewAtPoint;
-      const { width, height } = Dimensions.get("screen");
+      const { id, x, y, requestStack } = payload;
 
-      getInspectorDataForViewAtPoint(
-        mainContainerRef.current,
-        payload.x * width,
-        payload.y * height,
-        (viewData) => {
-          const frame = viewData.frame;
-          const scaledFrame = {
-            x: frame.left / width,
-            y: frame.top / height,
-            width: frame.width / width,
-            height: frame.height / height,
-          };
-          let stackPromise = Promise.resolve(undefined);
-          if (payload.requestStack) {
-            stackPromise = Promise.all(
-              viewData.hierarchy.reverse().map((item) => {
-                const inspectorData = item.getInspectorData((arg) => findNodeHandle(arg));
-                const framePromise = new Promise((resolve, reject) => {
-                  try {
-                    inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
-                      resolve({
-                        x: pageX / width,
-                        y: pageY / height,
-                        width: viewWidth / width,
-                        height: viewHeight / height,
-                      });
-                    });
-                  } catch (e) {
-                    reject(e);
-                  }
-                });
-
-                return framePromise
-                  .catch(() => undefined)
-                  .then((frame) => {
-                    return inspectorData.source
-                      ? {
-                          componentName: item.name,
-                          source: {
-                            fileName: inspectorData.source.fileName,
-                            line0Based: inspectorData.source.lineNumber - 1,
-                            column0Based: inspectorData.source.columnNumber - 1,
-                          },
-                          frame,
-                        }
-                      : undefined;
-                  });
-              })
-            ).then((stack) => stack?.filter(Boolean));
-          }
-          stackPromise.then((stack) => {
-            devtoolsAgent._bridge.send("RNIDE_inspectData", {
-              id: payload.id,
-              frame: scaledFrame,
-              stack: stack,
-            });
-          });
-        }
-      );
+      getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
+        devtoolsAgent._bridge.send("RNIDE_inspectData", {
+          id,
+          ...inspectorData,
+        });
+      });
     },
     [mainContainerRef]
   );

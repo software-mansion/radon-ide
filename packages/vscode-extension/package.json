@@ -7,6 +7,7 @@
     "Programming Languages"
   ],
   "icon": "assets/logo.png",
+  "pricing": "Trial",
   "activationEvents": [
     "workspaceContains:node_modules/react-native",
     "workspaceContains:app.json",
@@ -15,14 +16,15 @@
     "workspaceContains:app.config.js",
     "workspaceContains:app.config.ts"
   ],
-  "version": "0.0.22",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.75.0"
   },
   "extensionKind": [
     "workspace"
   ],
-  "license": "SEE LICENSE IN LICENSE.txt",
+  "homepage": "https://ide.swmansion.com",
+  "license": "https://ide.swmansion.com/legal",
   "repository": {
     "type": "git",
     "url": "https://github.com/software-mansion/radon-ide"
@@ -309,8 +311,12 @@
                   }
                 }
               },
+              "packageManager": {
+                "type": "string",
+                "description": "Package manager used for the project. Available options include: npm, yarn, pnpm, bun."
+              },
               "preview": {
-                "description": "Custommize the behavior of device preview",
+                "description": "Customize the behavior of device preview",
                 "type": "object",
                 "properties": {
                   "waitForAppLaunch": {
@@ -393,6 +399,10 @@
                     "description": "Android's build product flavor used when building with Gradle, by default no flavor is used."
                   }
                 }
+              },
+              "packageManager": {
+                "type": "string",
+                "description": "Package manager used for the project. Available options include: npm, yarn, pnpm, bun."
               },
               "preview": {
                 "description": "Customize the behavior of device preview",
@@ -479,7 +489,7 @@
     "@vscode/codicons": "^0.0.35",
     "@vscode/debugadapter": "^1.51.0",
     "@vscode/debugprotocol": "^1.51.0",
-    "@vscode/extension-telemetry": "^0.9.6",
+    "@vscode/extension-telemetry": "github:software-mansion-labs/vscode-extension-telemetry",
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.0",
     "@vscode/vsce": "^2.22.0",
@@ -504,6 +514,7 @@
     "re-resizable": "^6.9.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hook-form": "^7.53.2",
     "rollup": "^4.18.1",
     "semver": "^7.6.2",
     "sinon": "^18.0.0",

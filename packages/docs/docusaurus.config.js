@@ -78,25 +78,10 @@ const config = {
         style: "light",
         links: [
           {
-            to: "/privacy-policy",
-            label: "Privacy Policy",
+            to: "/legal/privacy-policy",
+            label: "Privacy",
           },
-          {
-            to: "/terms-of-use",
-            label: "Terms of Use",
-          },
-          {
-            to: "/refund-policy",
-            label: "Refund Policy",
-          },
-          {
-            to: "/purchase-terms",
-            label: "Purchase Terms",
-          },
-          {
-            to: "/supporter-terms",
-            label: "Supporter's License Terms",
-          },
+          { to: "/legal", label: "Legal" },
         ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },
@@ -114,6 +99,11 @@ const config = {
           content: "U0xic78Z5DjD9r0wrxOYQrLZPuSF_DZidnZeXPR4D0k",
         },
       ],
+      algolia: {
+        appId: "ZEU39T59G7",
+        apiKey: "66a6ddfb41ef3a82ef2035614e307b1f",
+        indexName: "ide-swmansion",
+      },
     }),
 };
 

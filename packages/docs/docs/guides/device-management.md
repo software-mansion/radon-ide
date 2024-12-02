@@ -1,7 +1,7 @@
 ---
 id: device-management
 title: Device management
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 Radon IDE manages its own instances of Android emulators and iOS simulators separately from the ones you normally create with Xcode or Android Studio. Thanks to this architecture, you can easily add, update and remove devices you no longer need directly from the Radon IDE panel.

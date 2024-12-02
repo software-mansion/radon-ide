@@ -79,7 +79,7 @@ function IosConfiguration({ scheme, configuration, update, xcodeSchemes }: iosCo
   availableXcodeSchemes.push({ value: "Auto", label: "Auto" });
 
   return (
-    <div className="container">
+    <div className="launch-configuration-container">
       <div className="setting-description">Scheme:</div>
       <Select
         value={scheme ?? "Auto"}
@@ -126,7 +126,7 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
   };
 
   return (
-    <div className="container">
+    <div className="launch-configuration-container">
       <div className="setting-description">Build Type:</div>
       <input
         ref={buildTypeInputRef}
@@ -164,7 +164,7 @@ function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
   };
 
   return (
-    <div className="container">
+    <div className="launch-configuration-container">
       <div className="setting-description">App Root:</div>
       <input
         ref={appRootInputRef}
@@ -194,7 +194,7 @@ function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConf
   };
 
   return (
-    <div className="container">
+    <div className="launch-configuration-container">
       <div className="setting-description">Metro Config Path:</div>
       <input
         ref={metroPathInputRef}
@@ -230,7 +230,7 @@ function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
   };
 
   return (
-    <div className="container">
+    <div className="launch-configuration-container">
       <div className="setting-description">Is Expo:</div>
       <Select
         value={isExpo?.toString() ?? "Auto"}

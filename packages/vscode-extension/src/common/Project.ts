@@ -101,10 +101,19 @@ export type TouchPoint = {
   yRatio: number;
 };
 
+export enum ActivateDeviceResult {
+  succeeded,
+  notEnoughSeats,
+  keyVerificationFailed,
+  unableToVerify,
+  connectionFailed,
+}
+
 export interface ProjectEventMap {
   log: { type: string };
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
+  licenseActivationChanged: boolean;
   navigationChanged: { displayName: string; id: string };
   needsNativeRebuild: void;
 }
@@ -140,11 +149,16 @@ export interface ProjectInterface {
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
 
+  activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
+  hasActiveLicense(): Promise<boolean>;
+
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
   getDeepLinksHistory(): Promise<string[]>;
   openDeepLink(link: string): Promise<void>;
 
+  startRecording(): void;
+  captureAndStopRecording(): Promise<RecordingData>;
   captureReplay(): Promise<RecordingData>;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;

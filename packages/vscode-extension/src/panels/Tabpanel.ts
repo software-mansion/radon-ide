@@ -60,7 +60,7 @@ export class TabPanel implements Disposable {
   public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
     if (TabPanel.currentPanel) {
       // If the webview panel already exists reveal it
-      TabPanel.currentPanel._panel.reveal(ViewColumn.Beside);
+      TabPanel.currentPanel._panel.reveal();
     } else {
       // If a webview panel does not already exist create and show a new one
 

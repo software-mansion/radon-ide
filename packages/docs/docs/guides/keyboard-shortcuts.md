@@ -1,14 +1,13 @@
 ---
 id: keyboard-shortcuts
 title: Keyboard shortcuts
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 Radon IDE lets you perform some repetitive actions through keyboard shortcuts.
 
 | Result                                 | macOS                 | Windows             |
 | -------------------------------------- | --------------------- | ------------------- |
-| Close panel with confirmation          | Command + W           | Control + W         |
 | Open developer menu                    | Command + Control + Z | Control + Alt + Z   |
 | Perform biometric authorization        | Command + Shift + M   | Control + Shift + M |
 | Perform failed biometric authorization | Command + Shift + N   | Control + Shift + N |

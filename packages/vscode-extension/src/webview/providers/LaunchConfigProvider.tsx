@@ -8,6 +8,7 @@ import {
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
+  EasConfig,
   LaunchConfig,
   LaunchConfigUpdater,
   LaunchConfigurationOptions,
@@ -18,6 +19,10 @@ const launchConfig = makeProxy<LaunchConfig>("LaunchConfig");
 type LaunchConfigContextType = LaunchConfigurationOptions & {
   update: LaunchConfigUpdater;
   xcodeSchemes: string[];
+  eas?: {
+    ios?: EasConfig;
+    android?: EasConfig;
+  };
 };
 
 const LaunchConfigContext = createContext<LaunchConfigContextType>({

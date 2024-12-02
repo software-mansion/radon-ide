@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { EOL } from "node:os";
+import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
@@ -17,6 +18,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { CancelToken } from "../builders/cancelToken";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -49,6 +51,8 @@ interface EmulatorProcessInfo {
 export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
+  private nativeLogsOutputChannel: OutputChannel | undefined;
+  private nativeLogsCancelToken: CancelToken | undefined;
 
   constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
     super();
@@ -71,6 +75,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
+    this.nativeLogsOutputChannel?.dispose();
+    this.nativeLogsCancelToken?.cancel();
     // If the emulator process does not shut down initially due to ongoing activities or processes,
     // a forced termination (kill signal) is sent after a certain timeout period.
     setTimeout(() => {
@@ -371,6 +377,65 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
+  async mirrorNativeLogs(build: AndroidBuildResult) {
+    if (this.nativeLogsCancelToken) {
+      this.nativeLogsCancelToken.cancel();
+    }
+
+    this.nativeLogsCancelToken = new CancelToken();
+
+    const extractPidFromLogcat = async (cancelToken: CancelToken) =>
+      new Promise<string>((resolve, reject) => {
+        const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
+        const process = exec(ADB_PATH, [
+          "-s",
+          this.serial!,
+          "logcat",
+          "-e",
+          regexString,
+          "-T",
+          "1",
+        ]);
+        cancelToken.adapt(process);
+
+        lineReader(process).onLineRead((line) => {
+          const regex = new RegExp(regexString);
+
+          if (regex.test(line)) {
+            const groups = regex.exec(line);
+            const pid = groups?.[1];
+            process.kill();
+
+            if (pid) {
+              resolve(pid);
+            } else {
+              reject(new Error("PID not found"));
+            }
+          }
+        });
+
+        // We should be able to get pid immediately, if we're not getting it in 10s, then we reject to not run this process indefinitely.
+        setTimeout(() => {
+          process.kill();
+          reject(new Error("Timeout while waiting for app to start to get the process PID."));
+        }, 10000);
+      });
+
+    if (!this.nativeLogsOutputChannel) {
+      this.nativeLogsOutputChannel = window.createOutputChannel(
+        "Radon IDE (Android Emulator Logs)",
+        "log"
+      );
+    }
+
+    this.nativeLogsOutputChannel.clear();
+    const pid = await extractPidFromLogcat(this.nativeLogsCancelToken);
+    const process = exec(ADB_PATH, ["-s", this.serial!, "logcat", "--pid", pid]);
+    this.nativeLogsCancelToken.adapt(process);
+
+    lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
+  }
+
   async launchApp(build: BuildResult, metroPort: number, devtoolsPort: number) {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
@@ -378,6 +443,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // terminate the app before launching, otherwise launch commands won't actually start the process which
     // may be in a bad state
     await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", build.packageName]);
+
+    this.mirrorNativeLogs(build);
 
     const deepLinkChoice =
       build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";

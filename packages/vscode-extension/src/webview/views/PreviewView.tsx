@@ -21,10 +21,15 @@ import {
   RecordingData,
   ZoomLevelType,
 } from "../../common/Project";
-import { useUtils } from "../providers/UtilsProvider";
+import { Platform, useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import "./View.css";
 import "./PreviewView.css";
+import ReplayIcon from "../components/icons/ReplayIcon";
+import RecordingIcon from "../components/icons/RecordingIcon";
+import { ActivateLicenseView } from "./ActivateLicenseView";
+
+const MAX_RECORDING_TIME_SEC = 10 * 60;
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -47,9 +52,20 @@ function LoadingComponent({ finishedInitialLoad, devicesNotFound }: LoadingCompo
   );
 }
 
+function ActivateLicenseButton() {
+  const { openModal } = useModal();
+  return (
+    <Button
+      className="activate-license-button"
+      onClick={() => openModal("Activate License", <ActivateLicenseView />)}>
+      Activate License
+    </Button>
+  );
+}
+
 function PreviewView() {
-  const { projectState, project, deviceSettings } = useProject();
-  const { reportIssue, showDismissableError } = useUtils();
+  const { projectState, project, deviceSettings, hasActiveLicense } = useProject();
+  const { showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -63,6 +79,8 @@ function PreviewView() {
   );
   const [logCounter, setLogCounter] = useState(0);
   const [resetKey, setResetKey] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const [replayData, setReplayData] = useState<RecordingData | undefined>(undefined);
   const { devices, finishedInitialLoad } = useDevices();
 
@@ -76,11 +94,7 @@ function PreviewView() {
   });
 
   const { openModal } = useModal();
-  const { openFileAt } = useUtils();
-
-  const extensionVersion = document.querySelector<HTMLMetaElement>(
-    "meta[name='radon-ide-version']"
-  )?.content;
+  const { openFileAt, saveVideoRecording } = useUtils();
 
   useEffect(() => {
     function incrementLogCounter() {
@@ -126,13 +140,54 @@ function PreviewView() {
     }
   };
 
-  const handleReplay = async () => {
+  function startRecording() {
+    project.startRecording();
+    setIsRecording(true);
+  }
+
+  async function stopRecording(saveVideo = true) {
+    try {
+      setIsRecording(false);
+      setRecordingTime(0);
+      const recordingData = await project.captureAndStopRecording();
+      if (saveVideo && recordingTime > 0) {
+        saveVideoRecording(recordingData);
+      }
+    } catch (e) {
+      showDismissableError("Failed to capture recording");
+    }
+  }
+
+  function toggleRecording() {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }
+
+  useEffect(() => {
+    if (isRecording) {
+      const interval = setInterval(() => {
+        setRecordingTime((prevRecordingTime) => {
+          if (prevRecordingTime >= MAX_RECORDING_TIME_SEC - 1) {
+            stopRecording(false);
+            return 0;
+          }
+          return prevRecordingTime + 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isRecording]);
+
+  async function handleReplay() {
     try {
       setReplayData(await project.captureReplay());
     } catch (e) {
       showDismissableError("Failed to capture replay");
     }
-  };
+  }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
     openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
@@ -146,26 +201,44 @@ function PreviewView() {
 
   const showReplayButton = deviceSettings.replaysEnabled;
 
+  const recordingTimeFormat = `${Math.floor(recordingTime / 60)}:${(recordingTime % 60)
+    .toString()
+    .padStart(2, "0")}`;
+
   return (
     <div className="panel-view">
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
+        {
+          <IconButton
+            className={isRecording ? "button-recording-on" : ""}
+            tooltip={{
+              label: isRecording ? "Stop screen recording" : "Start screen recording",
+            }}
+            onClick={toggleRecording}
+            disabled={isStarting}>
+            {isRecording ? (
+              <div className="recording-rec-indicator">
+                <div className="recording-rec-dot" />
+                <span>{recordingTimeFormat}</span>
+              </div>
+            ) : (
+              <RecordingIcon />
+            )}
+          </IconButton>
+        }
         {showReplayButton && (
-          <Button
+          <IconButton
             tooltip={{
               label: "Replay the last few seconds of the app",
             }}
             onClick={handleReplay}
-            disabled={isStarting}>
-            <span className="icons-container">
-              <span className="codicon codicon-triangle-left icons-rewind" />
-              <span className="codicon codicon-triangle-left icons-rewind" />
-            </span>
-            Replay
-          </Button>
+            disabled={isStarting || isRecording}>
+            <ReplayIcon />
+          </IconButton>
         )}
-        <Button
+        <IconButton
           counter={logCounter}
           onClick={() => {
             setLogCounter(0);
@@ -176,8 +249,7 @@ function PreviewView() {
           }}
           disabled={devicesNotFound}>
           <span slot="start" className="codicon codicon-debug-console" />
-          Logs
-        </Button>
+        </IconButton>
         <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={devicesNotFound}>
           <IconButton tooltip={{ label: "Settings", type: "primary" }}>
             <span className="codicon codicon-settings-gear" />
@@ -245,9 +317,7 @@ function PreviewView() {
         />
 
         <div className="spacer" />
-        <Button className="feedback-button" onClick={() => reportIssue()}>
-          {extensionVersion || "Beta"}: Report issue
-        </Button>
+        {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
         <DeviceSettingsDropdown disabled={devicesNotFound || !isRunning}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon

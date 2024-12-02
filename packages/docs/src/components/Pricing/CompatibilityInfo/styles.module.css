@@ -1,0 +1,14 @@
+.compatibilityInfoWrapper {
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  background-color: var(--swm-off-white);
+  align-items: center;
+  justify-content: space-between;
+  text-wrap: balance;
+}
+
+.compatibilityInfo {
+  margin: 0;
+  font-size: 18px;
+}

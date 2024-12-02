@@ -1,0 +1,48 @@
+.container {
+  width: 60%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  /* dirty fix for our absolutely positioned footer :grief: */
+  margin-bottom: 250px;
+}
+
+.preventfulContainer {
+  overflow: hidden;
+}
+
+.card {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 2rem;
+  border: 2px solid var(--swm-navy-light-40);
+}
+
+.card div {
+  font-size: 20px;
+}
+.card .button {
+  text-decoration: underline;
+}
+
+@media (max-width: 1920px) {
+  .container {
+    width: 65%;
+  }
+}
+
+@media (max-width: 1440px) {
+  .container {
+    width: 75%;
+  }
+}
+
+@media (max-width: 996px) {
+  .container {
+    width: 85%;
+  }
+}
