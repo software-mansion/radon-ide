@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 8px;
   align-items: left;
+  margin: 0 2px 2px 0;
 }
 
 .license-input {
