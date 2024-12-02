@@ -31,17 +31,13 @@ Radon IDE aims to work with all sorts of React Native and Expo projects (see [pr
 ### Element inspector with component hierarchy
 
 <div align="center">
-<video autoPlay loop width="600" controls>
-  <source src="packages/docs/static/video/ide_element_inspector.mp4" type="video/mp4"/>
-</video>
+<img width="600" src="packages/docs/static/video/ide_element_inspector.gif"/>
 </div>
 
 ### Debugger integrated with source code
 
 <div align="center">
-<video autoPlay loop width="600" controls>
-  <source src="packages/docs/static/video/3_sztudio_debugger.mp4" type="video/mp4"/>
-</video>
+<img width="600" src="packages/docs/static/video/3_sztudio_debugger.gif"/>
 </div>
 
 ### Logging console with jump-to-source functionality
@@ -59,17 +55,13 @@ Radon IDE aims to work with all sorts of React Native and Expo projects (see [pr
 ### Screen recording and screen replays
 
 <div align="center">
-<video autoPlay loop width="600" controls>
-  <source src="packages/docs/static/video/ide_screen_recording.mp4" type="video/mp4"/>
-</video>
+<img width="600" src="packages/docs/static/video/ide_screen_recording.gif"/>
 </div>
 
 ### Component preview functionality
 
 <div align="center">
-<video autoPlay loop width="600" controls>
-  <source src="packages/docs/static/video/ide_different_previews.mp4" type="video/mp4"/>
-</video>
+<img width="600" src="packages/docs/static/video/ide_different_previews.gif"/>
 </div>
 
 Visit the [Feature Highlights](https://ide.swmansion.com/docs/getting-started/feature-highlight) documentation page, where we showcase the most important features of the extension.
