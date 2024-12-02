@@ -12,3 +12,15 @@
   margin: 0;
   font-size: 18px;
 }
+
+@media (max-width: 768px) {
+  .compatibilityInfoWrapper {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .compatibilityInfo {
+    font-size: 16px;
+  }
+}
