@@ -2,13 +2,13 @@
 
 # [Radon IDE](https://ide.swmansion.com)
 
-[Radon IDE](https://ide.swmansion.com) is an extension for VSCode and Cursor that turns your code editors into a fully-featured IDE for developing React Native and Expo apps.
+[Radon IDE](https://ide.swmansion.com) is an extension for VSCode and Cursor that turns your code editors into fully-featured IDEs for developing React Native and Expo apps.
 
 ### 💽 Installation and Usage
 
 You can install Radon IDE with VSCode using the **Install** button on our [VSCode Marketplace page](https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide).
 
-You can also install it directly from the **Extension** tab in VSCode or Cursor.
+You can also install it directly from the **Extensions** tab in VSCode or Cursor.
 First, open your editor, navigate to the **Extensions** tab, and search for `Radon IDE`. Then, use the **Install** button to install it:
 
 ![Installation guide for VSCode](packages/docs/static/img/docs/ide_install_vscode.png)
@@ -19,14 +19,14 @@ Once you have the IDE installed, you can check our [Getting Started Guide](https
 
 ### 💼 License
 
-Radon IDE is available under commercial license that can be purchased on our website: [ide.swmansion.com](https://ide.swmansion.com/pricing).
+Radon IDE is available under a commercial license that can be purchased on our website: [ide.swmansion.com](https://ide.swmansion.com/pricing).
 You can use our Free Trial License to evaluate whether the extension works for your project and use cases.
 
-Once you purchase your license, you can follow our [License Activation Guide](https://ide.swmansion.com/docs/guides/activation-manual) to activate it in using the IDE Panel in VScode or Cursor.
+Once you purchase your license, you can follow our [License Activation Guide](https://ide.swmansion.com/docs/guides/activation-manual) to activate it using the IDE Panel in VSCode or Cursor.
 
 ### ✨ What does it do
 
-Radon IDE aims to work with all sorts of React Native and Expo project (see [project compatibility]() page for details), and without any extra configuration will build and launch your project providing an integrated simulator preview right in the editor and enabling a set of integrations that can accelerate the development process including, but not limited to:
+Radon IDE aims to work with all sorts of React Native and Expo projects (see [project compatibility]() page for details), and without any extra configuration, will build and launch your projects, providing an integrated simulator preview right in the editor and enabling a set of integrations that can accelerate the development process, including but not limited to:
 
 ### Element inspector with component hierarchy
 
@@ -50,7 +50,7 @@ Radon IDE aims to work with all sorts of React Native and Expo project (see [pro
 <img width="600" src="packages/docs/static/img/docs/ide_jump_from_logs.png"/>
 </div>
 
-### Device settings adjustments for theme, text size, location, system language and more...
+### Device settings adjustments for theme, text size, location, system language, and more...
 
 <div align="center">
 <img width="600" src="packages/docs/static/img/docs/ide_device_settings_1_0.png"/>
@@ -72,19 +72,19 @@ Radon IDE aims to work with all sorts of React Native and Expo project (see [pro
 </video>
 </div>
 
-Visit [Feature Highlights](https://ide.swmansion.com/docs/getting-started/feature-highlight) documentation page, where we showcase the most important features of the extension.
+Visit the [Feature Highlights](https://ide.swmansion.com/docs/getting-started/feature-highlight) documentation page, where we showcase the most important features of the extension.
 
 ### 🐛 Troubleshooting
 
-For troubleshooting and guide on reporting issues please visit our [Troubleshooting Docs](https://ide.swmansion.com/docs/guides/troubleshooting).
+For troubleshooting and a guide on reporting issues, please visit our [Troubleshooting Docs](https://ide.swmansion.com/docs/guides/troubleshooting).
 
 ### ⚒️ Extension Development
 
-If you want to develop the extension and contribute updates head to [Development Guide](https://ide.swmansion.com/docs/guides/development).
+If you want to develop the extension and contribute updates, head to the [Development Guide](https://ide.swmansion.com/docs/guides/development).
 
 ### 🔗 Links
 
-Visit [Radon IDE website](https://ide.swmansion.com).
+Visit the [Radon IDE website](https://ide.swmansion.com).
 
 Radon IDE is built by [Software Mansion](https://swmansion.com)
 
