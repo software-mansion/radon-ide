@@ -25,9 +25,7 @@ export function ActivateLicenseView() {
     const activationPromise = project.activateLicense(data?.target[0].value);
 
     activationPromise.then((activationResult) => {
-      if (activationResult === ActivateDeviceResult.succeeded) {
-        closeModal();
-      } else {
+      if (activationResult !== ActivateDeviceResult.succeeded) {
         setActivateDeviceResult(activationResult);
       }
       setIsLoading(false);
