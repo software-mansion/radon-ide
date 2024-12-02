@@ -14,6 +14,7 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
+import ToolbeltButton, { ToolbeltOption } from "../components/shared/ToolbeltButton";
 import {
   Frame,
   InspectDataStackItem,
@@ -205,11 +206,17 @@ function PreviewView() {
     .toString()
     .padStart(2, "0")}`;
 
+
+    const toolbeltOptions: ToolbeltOption[] = [
+      { value: "tool1", label: "tool1", icon: <span className="codicon codicon-settings-gear" /> },
+    ];
+
   return (
     <div className="panel-view">
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
+        {<ToolbeltButton options={toolbeltOptions} onSelect={() => {}} />}
         {
           <IconButton
             className={isRecording ? "button-recording-on" : ""}
