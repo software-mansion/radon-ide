@@ -91,7 +91,7 @@ const config = {
       },
       announcementBar: {
         id: `product-hunt-launch-banner`,
-        content: `🎉  Radon IDE just launched on Product Hunt! <a href="https://www.producthunt.com/posts/radon-ide" target="_blank">Let's go!</a>`,
+        content: `🎉  Radon IDE just launched on Product Hunt! <a href="https://www.producthunt.com/posts/radon-ide" target="_blank">Upvote!</a>`,
       },
       metadata: [
         {
