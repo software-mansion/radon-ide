@@ -89,10 +89,10 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
-      // announcementBar: {
-      //   id: `supporter-license-banner`,
-      //   content: `Supporter's License is now available! <a href="https://ide.swmansion.com/pricing">Learn more</a>`,
-      // },
+      announcementBar: {
+        id: `product-hunt-launch-banner`,
+        content: `🎉  Radon IDE just launched on Product Hunt! <a href="https://www.producthunt.com/posts/radon-ide" target="_blank">Upvote!</a>`,
+      },
       metadata: [
         {
           name: "google-site-verification",
