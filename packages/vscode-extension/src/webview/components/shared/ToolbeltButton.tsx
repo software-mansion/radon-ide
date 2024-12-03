@@ -64,3 +64,50 @@ function ToolbeltButton({
 }
 
 export default ToolbeltButton;
+
+// EXAMPLE USAGE (WITH RECORDING AND SCREENSHOTS TOOLS):
+/*
+        {
+          <ToolbeltButton
+            options={[
+              {
+                label: "Record",
+                component: (
+                  <IconButton
+                    className={isRecording ? "button-recording-on" : ""}
+                    tooltip={{
+                      label: isRecording ? "Stop screen recording" : "Start screen recording",
+                    }}
+                    onClick={toggleRecording}>
+                    {isRecording ? (
+                      <div className="recording-rec-indicator">
+                        <div className="recording-rec-dot" />
+                        <span>{recordingTimeFormat}</span>
+                      </div>
+                    ) : (
+                      <RecordingIcon />
+                    )}
+                  </IconButton>
+                ),
+                dropdownIcon: <RecordingIcon />,
+                keybinding: <KeybindingInfo commandName="RNIDE.openDevMenu" />, // TODO add shortcuts
+              },
+              {
+                label: "Screenshot",
+                component: (
+                  <IconButton
+                    tooltip={{
+                      label: "Take screenshot",
+                    }}
+                    onClick={() => {}}>
+                    <span slot="start" className="codicon codicon-device-camera" />
+                  </IconButton>
+                ),
+                dropdownIcon: <span slot="start" className="codicon codicon-device-camera" />,
+                keybinding: <KeybindingInfo commandName="RNIDE.openDevMenu" />, // TODO add shortcuts
+              },
+            ]}
+            disabled={devicesNotFound || isStarting}
+          />;
+        }
+        */
