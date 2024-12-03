@@ -14,7 +14,7 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import ToolbeltButton, { ToolbeltOption } from "../components/shared/ToolbeltButton";
+import ToolbeltButton from "../components/shared/ToolbeltButton";
 import {
   Frame,
   InspectDataStackItem,
@@ -29,6 +29,7 @@ import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
+import { KeybindingInfo } from "../components/shared/KeybindingInfo";
 
 const MAX_RECORDING_TIME_SEC = 10 * 60;
 
@@ -206,56 +207,56 @@ function PreviewView() {
     .toString()
     .padStart(2, "0")}`;
 
-
-    const toolbeltOptions: ToolbeltOption[] = [
-      {
-        label: "tool1",
-        button: (
-          <IconButton
-            onClick={() => {
-            }}
-            tooltip={{
-              label: "Open logs panel",
-            }}
-            disabled={devicesNotFound}>
-            <span slot="start" className="codicon codicon-debug-console" />
-          </IconButton>
-        ),
-        icon: <span className="codicon codicon-settings-gear" />,
-      },
-    ];
-
-        // const toolbeltOptions: ToolbeltOption[] = [
-        //   {
-        //     value: "tool1",
-        //     label: "tool1",
-        //     icon: (
-        //       <IconButton
-        //         className={isRecording ? "button-recording-on" : ""}
-        //         tooltip={{
-        //           label: isRecording ? "Stop screen recording" : "Start screen recording",
-        //         }}
-        //         onClick={toggleRecording}
-        //         disabled={isStarting}>
-        //         {isRecording ? (
-        //           <div className="recording-rec-indicator">
-        //             <div className="recording-rec-dot" />
-        //             <span>{recordingTimeFormat}</span>
-        //           </div>
-        //         ) : (
-        //           <RecordingIcon />
-        //         )}
-        //       </IconButton>
-        //     ),
-        //   },
-        // ];
-
   return (
     <div className="panel-view">
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
-        {<ToolbeltButton options={toolbeltOptions} disabled={false}/>}
+        {
+          <ToolbeltButton
+            options={[
+              {
+                label: "Record",
+                component: (
+                  <IconButton
+                    className={isRecording ? "button-recording-on" : ""}
+                    tooltip={{
+                      label: isRecording ? "Stop screen recording" : "Start screen recording",
+                    }}
+                    onClick={toggleRecording}>
+                    {isRecording ? (
+                      <div className="recording-rec-indicator">
+                        <div className="recording-rec-dot" />
+                        <span>{recordingTimeFormat}</span>
+                      </div>
+                    ) : (
+                      <RecordingIcon />
+                    )}
+                  </IconButton>
+                ),
+                dropdownIcon: <RecordingIcon />,
+                keybinding: <KeybindingInfo commandName="RNIDE.openDevMenu" />,
+              },
+              {
+                label: "Screenshot",
+                component: (
+                  <IconButton
+                    tooltip={{
+                      label: "Take screenshot",
+                    }}
+                    onClick={() => {
+                      console.log("FRYTKI screenshot");
+                    }}>
+                    <span slot="start" className="codicon codicon-device-camera" />
+                  </IconButton>
+                ),
+                dropdownIcon: <span slot="start" className="codicon codicon-device-camera" />,
+                keybinding: <KeybindingInfo commandName="RNIDE.openDevMenu" />,
+              },
+            ]}
+            disabled={devicesNotFound || isStarting}
+          />
+        }
         {
           <IconButton
             className={isRecording ? "button-recording-on" : ""}

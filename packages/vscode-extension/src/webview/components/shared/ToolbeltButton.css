@@ -7,10 +7,10 @@
 
 .toolbelt-button-main-button {
   cursor: pointer;
-  height: 80%;
+  height: 28px;
   display: flex;
   align-items: center;
-  padding: 5px;
+  padding: 5px 0px;
   background: none;
   border: 0px solid transparent;
   border-radius: 10px 0px 0px 10px;
@@ -25,53 +25,56 @@
   transform: scale(0.9);
 }
 
-.toolbelt-button-select-trigger {
+.toolbelt-button-dropdown-trigger {
   cursor: default;
   height: 100%;
   background: none;
   border: 0px solid transparent;
   border-radius: 0px 10px 10px 0px;
 }
-.toolbelt-button-select-trigger:hover {
+.toolbelt-button-dropdown-trigger:hover {
   background-color: var(--swm-button-hover);
 }
-
-.toolbelt-button-select-trigger-value {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
-
-.toolbelt-button-select-trigger[data-disabled] {
-  background-color: var(--swm-device-select-trigger-disabled);
+.toolbelt-button-dropdown-trigger[data-disabled] {
   color: var(--swm-secondary-text);
   pointer-events: none;
 }
+.toolbelt-button-dropdown-trigger[data-state="open"] {
+  background: var(--swm-dropdown-item-highlighted);
+  border-radius: 0px 10px 0px 0px;
+}
 
-.toolbelt-button-select-content {
-  background-color: var(--swm-popover-background);
-  border-radius: 6px;
-  padding: 4px;
-  will-change: transform, opacity;
+.toolbelt-button-dropdown-content {
+  background: var(--swm-popover-background);
+  border-radius: 7px 0px 7px 7px;
+  padding: 5px;
   box-shadow: var(--swm-backdrop-shadow);
   max-height: calc(var(--radix-dropdown-menu-content-available-height) - 40px);
+  min-width: 150px;
   overflow-y: auto;
 }
 
-.toolbelt-button-select-item {
-  padding: 10px;
-  cursor: pointer;
+.toolbelt-button-dropdown-item-wraper {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
 }
 
-.toolbelt-button-select-item:hover {
-  background-color: var(--swm-button-hover);
+.toolbelt-button-dropdown-item-wraper:hover {
+  background-color: var(--swm-dropdown-item-highlighted);
+  outline: none;
 }
 
-.toolbelt-button-icon {
-  margin-right: 8px;
+.toolbelt-button-dropdown-item-content {
+  color: var(--swm-default-text);
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  height: 28px;
+  width: 100%;
+  gap: 5px;
 }
