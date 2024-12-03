@@ -11,9 +11,9 @@ It is useful to understand this architecture a bit more before contributing, so 
 
 1. Main vscode extension code – this is the entry point for the extension that is booted up in a separate process by vscode. The code resides under `packages/vscode-extension` with the main entry point being `packages/vscode-extension/src/extension.ts` file. The extension code is responsible for orchestrating all actions with external process such as launching builds, as well as handling communication between the frontend and vscode APIs.
 2. Extension frontend – this is a web application written in React. Since it shares some code with the main extension it resides in the same location – `packages/vscode-extension`, but most of its code is located under `packages/vscode-extension/src/webview`. Vscode launches the frontend portion using iframe, which enforces some limitations on what the frontend app can do (i.e. can't launch external processes directly). For this reason, most of the logic relies on calling to the main extension.
-3. Simulator server – this code lives [in a separate repository](https://github.com/software-mansion-labs/simulator-server) which isn't open source yet. It implements a server application that communicates with iOS simulator and Android emulator processes. The server is controlled from the main extension code which communicates with it via standard input/output. Currently simulator server is distributed as prebuilt binary.
+3. Simulator server – this code lives [in a separate repository](https://github.com/software-mansion-labs/simulator-server) which isn't open source. It implements a server application that communicates with iOS simulator and Android emulator processes. The server is controlled from the main extension code which communicates with it via standard input/output. Currently simulator server is distributed as prebuilt binary.
 4. NPM package radon-ide – this package defines interface for the preview functionality which allows for components to be developed in isolation. Its code is placed under `packages/radon-ide`.
-5. Test applications from `test-apps` folder serve a purpose of verifying the IDE works properly under different setups.
+5. Test applications – live in separate [radon-ide-test-apps](https://github.com/software-mansion-labs/radon-ide-test-apps) repo – serve a purpose of verifying the IDE works properly under different setups.
 
 ## Development setup
 
@@ -61,7 +61,7 @@ With the extension project open, go to `Run and Debug` panel and click "Start De
 <img width="373" alt="run-and-debug" src="/img/docs/run_and_debug.png" className="shadow-image"/>
 
 Running this configuration will result in the new vscode window being opened.
-This new window is titled "[Extension Development Host]" and is the only window that has the development version of the extension loaded – you should use it to open you React Native project, or try some of the test apps from `test-app` folder.
+This new window is titled "[Extension Development Host]" and is the only window that has the development version of the extension loaded – you should use it to open your React Native project, or try some of the test apps from [radon-ide-test-apps](https://github.com/software-mansion-labs/radon-ide-test-apps) repo.
 
 <img width="896" alt="extension-host-title" src="/img/docs/extension_host_title.png"/>
 
@@ -80,50 +80,3 @@ You can use Debug Tool Bar to restart the project:
 
 For main extension code, you can set breakpoints in vscode and use debugger normally, logs will appear in the Debug Console panel.
 Unfortunately debugging isn't available for the frontend code, however you can use vscode's builtin chrome devtools to see logs or interact with the frontend portion of the project – for this you'll need to run command "Developer: Open Webview Developer Tools" from the command palette in the Extension Host window.
-
-## Shared app template
-
-We provide few shared components with common code across tests apps in `shared/`
-directory.
-They only depend on `react-native`. Components in `shared/navigation` additionally
-depend on `expo-router` and `expo-icons`.
-
-To use them in the app:
-
-1. Add npm command in test app package.json
-   - for expo-router apps: `"copy-shared": "../shared/copy.sh expo-router ./shared"`.
-   - for RN apps: `"copy-shared": "../shared/copy.sh bare ./shared"`.
-2. Run it: `npm run copy-shared`. This copies shared components to `./shared`.
-3. For RN apps, replace `App.tsx` with the `./shared/MainScreen.tsx` component.
-
-   ```ts
-   import { MainScreen } from "./shared/MainScreen";
-
-   export default MainScreen;
-   ```
-
-4. For apps with expo router, replace `app/(tabs)/_layout.tsx` and
-   `app/(tabs)/index.tsx` files.
-
-   ```ts
-   // contents of `app/(tabs)/_layout.ts`
-   import { TabLayout } from "@/shared/navigation/TabLayout";
-
-   export default TabLayout;
-   ```
-
-   ```ts
-   // contents of `app/(tabs)/index.ts`
-   import { MainScreen } from "@/shared/MainScreen";
-
-   export default MainScreen;
-   ```
-
-You can also use other components in `shared` (e.g. `Text`, `Button`,
-`useScheme`) to theme the app.
-
-After updating shared components you need to copy them again by running
-`npm run copy-shared` in every test app.
-
-`shared/copy.sh bare|expo-router DEST` script works by copying shared directory to `DEST`
-and removing `navigation` directory if `bare` argument is used.
