@@ -11,6 +11,11 @@
       "permanent": true
     },
     {
+      "source": "/docs/getting-started/overview",
+      "destination": "/docs/category/getting-started",
+      "permanent": true
+    },
+    {
       "source": "/docs/installation",
       "destination": "/docs/getting-started/installation",
       "permanent": true
