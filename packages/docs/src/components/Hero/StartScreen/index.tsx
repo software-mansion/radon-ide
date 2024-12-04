@@ -4,8 +4,13 @@ import useBaseUrl from "@docusaurus/useBaseUrl";
 import HomepageButton from "@site/src/components/HomepageButton";
 import InfoIcon from "@site/static/img/info-circle.svg";
 import { motion } from "motion/react";
+import { track } from "@vercel/analytics";
 
 const StartScreen = () => {
+  const handleDownloadClick = () => {
+    track("Download");
+  };
+
   return (
     <section className={styles.hero}>
       <motion.div
@@ -62,6 +67,7 @@ const StartScreen = () => {
               target="_blank"
               href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
               title="Download from VSCode marketplace"
+              onClick={handleDownloadClick}
             />
           </motion.div>
         </div>

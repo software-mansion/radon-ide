@@ -1,8 +1,12 @@
 import React from "react";
 import styles from "./styles.module.css";
 import HomepageButton, { BorderStyling, ButtonStyling } from "../../HomepageButton";
+import { track } from "@vercel/analytics";
 
 export function CompatibilityInfo() {
+  const handleCompatibilityClick = () => {
+    track("See compatibility");
+  };
   return (
     <div className={styles.compatibilityInfoWrapper}>
       <p className={styles.compatibilityInfo}>
@@ -14,6 +18,7 @@ export function CompatibilityInfo() {
         title="See&nbsp;compatibility"
         backgroundStyling={ButtonStyling.TO_WHITE}
         borderStyling={BorderStyling.NAVY}
+        onClick={handleCompatibilityClick}
       />
     </div>
   );

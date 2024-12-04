@@ -4,6 +4,7 @@ import usePaddle from "@site/src/hooks/usePaddle";
 import pricing from "../PricingCard/pricing.module.css";
 import Button from "../../Button";
 import PricingCard from "../PricingCard";
+import { track } from "@vercel/analytics";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -48,6 +49,10 @@ const PricingPlansList = () => {
   );
 
   const openIndividualCheckout = () => {
+    track("Open checkout", {
+      product: "Radon IDE Individual",
+      period: isMonthly ? "monthly" : "yearly",
+    });
     paddle?.Checkout.open({
       items: [
         {
@@ -58,6 +63,10 @@ const PricingPlansList = () => {
     });
   };
   const openBusinessCheckout = () => {
+    track("Open checkout", {
+      product: "Radon IDE Business",
+      period: isMonthly ? "monthly" : "yearly",
+    });
     paddle?.Checkout.open({
       items: [
         { priceId: isMonthly ? BUSINESS_MONTHLY_PRICE_ID : BUSINESS_YEARLY_PRICE_ID, quantity: 1 },
