@@ -7,7 +7,7 @@ const faqs = [
   {
     topic: "What is Radon IDE?",
     answer:
-      "Radon IDE is a Visual Studio Code extension that aims to simplify the development of React Native applications.",
+      "Radon IDE is Visual Studio Code and Cursor extension that turns your editors into a fully fledged IDEs for React Native and Expo.",
   },
   {
     topic: "Can I use it on Windows or Linux?",
@@ -16,22 +16,26 @@ const faqs = [
   },
   {
     topic: "How much does it cost?",
-    answer: `Radon IDE is free to use during the Beta period. We're working on a sustainable licensing model for the project.<br/><br/>
-    100% of the money earned will be used to fund the React Native open source efforts at Software Mansion and the further developments of the Radon IDE.<br/><br/>
+    answer: `Check out the <a href="https://ide.swmansion.com/pricing" target="_blank">pricing</a> page.<br/><br/>
+    100% of the money earned are used to fund the React Native open source efforts at Software Mansion and the further developments of the Radon IDE.<br/><br/>
     `,
   },
   {
-    topic: "Do you offer a student discount?",
-    answer: `Yes! Radon IDE is free for students learning at accredited educational institutions. Only for non-commercial purposes.`,
+    topic: "How do I activate my license?",
+    answer: `You activate the product by providing a license key in the extension panel.<br/><br/>
+    See the <a href="https://ide.swmansion.com/docs/guides/activation-manual" target="_blank">License Activation</a> page for a step-by-step guide.<br/><br/>
+    `,
   },
   {
-    topic: "When are you planning to close the public Beta?",
-    answer: "We're aiming to close the beta in November 2024.",
+    topic: "How can I get the license key?",
+    answer: `You should receive your license key in an e-mail after you make a purchase. <br/><br/>
+    Alternatively, you can get your license key from the <a href="https://portal.ide.swmansion.com/" target="_blank">Radon IDE Portal</a>. See the <a href="https://ide.swmansion.com/docs/guides/activation-manual">License Activation</a> guide for more details.<br/><br/>
+    `,
   },
   {
     topic: "Why did you make the source code public?",
     answer:
-      "We are well aware there are an infinite number of ways of setting up your React Native project. With access to the code you can adjust the Radon IDE to make it run with your codebase.",
+      "We are well aware there are an infinite number of ways of setting up a React Native project. With access to the code you can adjust the Radon IDE to make it run with your codebase.",
   },
   {
     topic: "What's up with the code license for Radon IDE?",
@@ -44,13 +48,8 @@ It's okay to modify the code to run in your project and to fix bugs. However, do
       "At this moment WebStorm is not supported.<br/><br/>As the adoption for the extension grows we might add a support for WebStorm in the future.",
   },
   {
-    topic: "How does the Supporter's license discount work?",
-    answer:
-      "For every month your Supporter's license is active, you receive a 50% discount on the Individual or Team license. For example, if you have been a Supporter for 2 months, you will receive a 50% discount on an Individual or Team license for 2 months.",
-  },
-  {
     topic: "How do I cancel the subscription?",
-    answer: `You can cancel your subscription at any time. To do so, click the "cancel your subscription" link in the email you received after purchase or visit <a href="https://paddle.net" target="_blank">paddle.net</a> to manage your subscription. If you have problems canceling your subscription, please contact us at <a href="mailto:ide@swmansion.com">ide@swmansion.com</a>.`,
+    answer: `You can cancel your subscription at any time. To do so, click the "cancel your subscription" link in the email you received after purchase or visit our <a href="https://portal.ide.swmansion.com" target="_blank">Radon IDE Portal</a> to manage your subscription. If you have problems canceling your subscription, please contact us at <a href="mailto:ide@swmansion.com">ide@swmansion.com</a>.`,
   },
 ];
 
