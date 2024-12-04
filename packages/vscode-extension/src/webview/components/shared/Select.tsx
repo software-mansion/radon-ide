@@ -49,7 +49,7 @@ function Select({ value, onChange, items, placeholder, className, disabled }: Se
     <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
       <RadixSelect.Trigger
         className={classnames("select-trigger", className, disabled && "select-trigger-disabled")}>
-        <RadixSelect.Value style={{ color: "red" }} placeholder={placeholder} />
+        <RadixSelect.Value placeholder={placeholder} />
         <RadixSelect.Icon className="select-icon">
           <span className="codicon codicon-chevron-down" />
         </RadixSelect.Icon>
