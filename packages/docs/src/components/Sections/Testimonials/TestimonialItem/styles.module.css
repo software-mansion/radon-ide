@@ -1,0 +1,32 @@
+.testimonial {
+  display: block;
+  padding: 24px;
+  background-color: var(--swm-off-white);
+}
+
+.testimonial:hover {
+  background-color: var(--swm-navy-light-10);
+  text-decoration: none;
+}
+
+.testimonialAvatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin-bottom: 20px;
+}
+
+.testimonialAuthor {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.authorWrapper {
+  display: flex;
+  gap: 12px;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+}
