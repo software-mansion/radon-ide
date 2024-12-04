@@ -6,7 +6,7 @@ const eventCallback = (event) => {
   const { name, data } = event;
   const { items } = data;
   const [item] = items;
-  const payload = { name: item.price_name, interval: item.billing_cycle.interval };
+  const payload = { priceName: item.price_name, interval: item.billing_cycle.interval };
 
   switch (name) {
     case "checkout.loaded":
