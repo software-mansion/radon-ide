@@ -145,6 +145,10 @@ div[class^="announcementBar_"] {
     font-size: 15px;
     height: 32px;
   }
+
+  .compatibility table {
+    table-layout: auto;
+  }
 }
 
 .shadow-image {
