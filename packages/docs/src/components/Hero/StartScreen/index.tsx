@@ -55,7 +55,7 @@ const StartScreen = () => {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}>
-          Radon IDE is VSCode extension that turns your editor into a fully fledged IDE for React
+          Radon IDE is a VSCode and Cursor extension that turns your editor into a fully featured IDE for React
           Native and Expo.
         </motion.h2>
         <div className={styles.buttonContainer}>
