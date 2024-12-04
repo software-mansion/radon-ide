@@ -3,20 +3,29 @@ import { PropsWithChildren, ReactNode, forwardRef } from "react";
 import classnames from "classnames";
 import "./Select.css";
 
-const SelectItem = forwardRef<HTMLDivElement, PropsWithChildren<RadixSelect.SelectItemProps>>(
-  ({ children, ...props }, forwardedRef) => {
-    return (
-      <RadixSelect.Item className="select-item" {...props} ref={forwardedRef}>
-        <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
-        <RadixSelect.ItemIndicator className="select-item-indicator">
-          <span className="codicon codicon-check" />
-        </RadixSelect.ItemIndicator>
-      </RadixSelect.Item>
-    );
-  }
-);
+const SelectItem = forwardRef<
+  HTMLDivElement,
+  PropsWithChildren<RadixSelect.SelectItemProps & { marked?: boolean }>
+>(({ children, ...props }, forwardedRef) => {
+  return (
+    <RadixSelect.Item
+      className={classnames("select-item", props.marked ? "select-item-marked" : undefined)}
+      {...props}
+      ref={forwardedRef}>
+      <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
+      <RadixSelect.ItemIndicator className="select-item-indicator">
+        <span className="codicon codicon-check" />
+      </RadixSelect.ItemIndicator>
+    </RadixSelect.Item>
+  );
+});
 
-type SelectItemType = { value: string; label: string | ReactNode; disabled?: boolean };
+type SelectItemType = {
+  value: string;
+  label: string | ReactNode;
+  disabled?: boolean;
+  marked?: boolean;
+};
 
 type SelectGroupType = { items: SelectItemType[]; label: string | ReactNode };
 
@@ -40,7 +49,7 @@ function Select({ value, onChange, items, placeholder, className, disabled }: Se
     <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
       <RadixSelect.Trigger
         className={classnames("select-trigger", className, disabled && "select-trigger-disabled")}>
-        <RadixSelect.Value placeholder={placeholder} />
+        <RadixSelect.Value style={{ color: "red" }} placeholder={placeholder} />
         <RadixSelect.Icon className="select-icon">
           <span className="codicon codicon-chevron-down" />
         </RadixSelect.Icon>
@@ -59,13 +68,18 @@ function Select({ value, onChange, items, placeholder, className, disabled }: Se
                     <SelectItem
                       key={selectItem.value}
                       disabled={selectItem.disabled}
+                      marked={selectItem.marked}
                       value={selectItem.value}>
                       {selectItem.label}
                     </SelectItem>
                   ))}
                 </RadixSelect.Group>
               ) : (
-                <SelectItem key={item.value} disabled={item.disabled} value={item.value}>
+                <SelectItem
+                  key={item.value}
+                  disabled={item.disabled}
+                  value={item.value}
+                  marked={item.marked}>
                   {item.label}
                 </SelectItem>
               )
