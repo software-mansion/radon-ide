@@ -9,12 +9,12 @@
   "icon": "assets/logo.png",
   "pricing": "Trial",
   "activationEvents": [
-    "workspaceContains:node_modules/react-native",
-    "workspaceContains:app.json",
-    "workspaceContains:metro.config.js",
-    "workspaceContains:metro.config.ts",
-    "workspaceContains:app.config.js",
-    "workspaceContains:app.config.ts"
+    "workspaceContains:**/node_modules/react-native",
+    "workspaceContains:**/app.json",
+    "workspaceContains:**/metro.config.js",
+    "workspaceContains:**/metro.config.ts",
+    "workspaceContains:**/app.config.js",
+    "workspaceContains:**/app.config.ts"
   ],
   "version": "1.0.0",
   "engines": {
