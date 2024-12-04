@@ -31,13 +31,13 @@ Radon IDE aims to work with all sorts of React Native and Expo projects (see [pr
 ### Element inspector with component hierarchy
 
 <div align="center">
-<img width="600" src="packages/docs/static/video/ide_element_inspector.gif"/>
+<video src="https://github.com/user-attachments/assets/0f9d36b9-1843-4ae6-99b4-e633bea0b032" width="600" />
 </div>
 
 ### Debugger integrated with source code
 
 <div align="center">
-<img width="600" src="packages/docs/static/video/3_sztudio_debugger.gif"/>
+<video src="https://github.com/user-attachments/assets/6a08c375-1a40-40c3-bc95-d6ce6c1cda10" width="600" />
 </div>
 
 ### Logging console with jump-to-source functionality
@@ -55,13 +55,13 @@ Radon IDE aims to work with all sorts of React Native and Expo projects (see [pr
 ### Screen recording and screen replays
 
 <div align="center">
-<img width="600" src="packages/docs/static/video/ide_screen_recording.gif"/>
+<video src="https://github.com/user-attachments/assets/5b31d461-5d2a-4e85-a1a1-ba0e2c5d41f3" width="600" />
 </div>
 
 ### Component preview functionality
 
 <div align="center">
-<img width="600" src="packages/docs/static/video/ide_different_previews.gif"/>
+<video src="https://github.com/user-attachments/assets/e5c91548-3f75-4008-9cad-5fd4fdeadb9f" width="600" />
 </div>
 
 Visit the [Feature Highlights](https://ide.swmansion.com/docs/getting-started/feature-highlight) documentation page, where we showcase the most important features of the extension.
