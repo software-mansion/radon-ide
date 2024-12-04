@@ -7,8 +7,8 @@ import { motion } from "motion/react";
 import { track } from "@vercel/analytics";
 
 const StartScreen = () => {
-  const handleDownloadClick = () => {
-    track("Download");
+  const handleCTAClick = () => {
+    track("Main CTA");
   };
 
   return (
@@ -67,7 +67,7 @@ const StartScreen = () => {
               target="_blank"
               href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
               title="Download from VSCode marketplace"
-              onClick={handleDownloadClick}
+              onClick={handleCTAClick}
             />
           </motion.div>
         </div>

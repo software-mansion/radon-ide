@@ -4,8 +4,8 @@ import HomepageButton from "@site/src/components/HomepageButton";
 import { track } from "@vercel/analytics";
 
 const LearnMoreFooter = () => {
-  const handleSeeVideoClick = () => {
-    track("See video");
+  const handleBottomCTAClick = () => {
+    track("Bottom CTA");
   };
 
   return (
@@ -18,7 +18,7 @@ const LearnMoreFooter = () => {
           target="_blank"
           href="https://www.youtube.com/watch?v=HWGssA55oNc"
           title="See the video"
-          onClick={handleSeeVideoClick}
+          onClick={handleBottomCTAClick}
         />
       </div>
     </section>
