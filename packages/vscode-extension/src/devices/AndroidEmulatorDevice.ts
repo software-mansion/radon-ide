@@ -26,6 +26,7 @@ export const EMULATOR_BINARY = path.join(
   Platform.select({
     macos: "emulator",
     windows: "emulator.exe",
+    linux: "emulator",
   })
 );
 const ADB_PATH = path.join(
@@ -34,6 +35,7 @@ const ADB_PATH = path.join(
   Platform.select({
     macos: "adb",
     windows: "adb.exe",
+    linux: "adb",
   })
 );
 const DISPOSE_TIMEOUT = 9000;
@@ -697,8 +699,9 @@ async function ensureOldEmulatorProcessExited(avdId: string) {
     macos: "ps",
     windows:
       'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Csv -NoTypeInformation"',
+    linux: "ps",
   });
-  const args = Platform.select({ macos: ["-Ao", "pid,command"], windows: [] });
+  const args = Platform.select({ macos: ["-Ao", "pid,command"], windows: [], linux: ["-Ao", "pid,command"] });
   const subprocess = exec(command, args);
   const regexpPattern = new RegExp(`(\\d+).*qemu.*-avd ${avdId}`);
   lineReader(subprocess).onLineRead(async (line) => {

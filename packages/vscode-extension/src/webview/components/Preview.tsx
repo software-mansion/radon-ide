@@ -510,6 +510,7 @@ function Preview({
         const isMultiTouchKey = Platform.select({
           macos: e.code === "AltLeft" || e.code === "AltRight",
           windows: e.code === "ControlLeft" || e.code === "ControlRight",
+          linux: e.code === "ControlLeft" || e.code === "ControlRight",
         });
 
         const isPanningKey = e.code === "ShiftLeft" || e.code === "ShiftRight";
