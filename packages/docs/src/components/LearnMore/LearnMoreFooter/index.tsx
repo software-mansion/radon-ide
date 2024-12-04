@@ -1,8 +1,13 @@
 import React from "react";
 import styles from "./styles.module.css";
 import HomepageButton from "@site/src/components/HomepageButton";
+import { track } from "@vercel/analytics";
 
 const LearnMoreFooter = () => {
+  const handleBottomCTAClick = () => {
+    track("Bottom CTA");
+  };
+
   return (
     <section>
       <div className={styles.learnMoreSectionFooter}>
@@ -13,6 +18,7 @@ const LearnMoreFooter = () => {
           target="_blank"
           href="https://www.youtube.com/watch?v=HWGssA55oNc"
           title="See the video"
+          onClick={handleBottomCTAClick}
         />
       </div>
     </section>
