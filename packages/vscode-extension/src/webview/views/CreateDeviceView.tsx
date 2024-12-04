@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import classNames from "classnames";
 import Select from "../components/shared/Select";
 import "./CreateDeviceView.css";
 import { useDevices } from "../providers/DevicesProvider";
@@ -11,7 +12,6 @@ import {
 } from "../utilities/consts";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform } from "../providers/UtilsProvider";
-import classNames from "classnames";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -51,8 +51,6 @@ export function formatDisplayName(name: string) {
   const singleSpaced = name.replace(/\s+/g, " ");
   return singleSpaced.replace(/[^a-zA-Z0-9 _-]/g, "");
 }
-
-const min_supported_version_for_device = {};
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [deviceProperties, setDeviceProperties] = useState<DeviceProperties | undefined>(undefined);
