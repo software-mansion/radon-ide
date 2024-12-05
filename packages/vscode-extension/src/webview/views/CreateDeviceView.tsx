@@ -188,8 +188,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           <div className="incompatible-system-warning">
             <span className="codicon codicon-warning warning" />{" "}
             <div>
-              System image you've chosen was released before selected device, which might cause some
-              issues.
+              This system image is not compatible with the selected device.
             </div>
           </div>
         )}
