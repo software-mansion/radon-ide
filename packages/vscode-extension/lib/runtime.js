@@ -25,7 +25,6 @@ global.__RNIDE_onDebuggerReady = function () {
 // debug adapter and avoid exposing as part of application logs
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
-// To get the proper stack frame, so we can display link to the source code
 const sampleSize = 5;
 let samples = 0;
 let initializationStack = [];
