@@ -187,9 +187,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         {!isSystemCompatible && (
           <div className="incompatible-system-warning">
             <span className="codicon codicon-warning warning" />{" "}
-            <div>
-              This system image is not compatible with the selected device.
-            </div>
+            <div>This system image is not compatible with the selected device.</div>
           </div>
         )}
       </div>
