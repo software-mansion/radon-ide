@@ -39,7 +39,7 @@ function wrapConsole(consoleFunc) {
     // we need to skip wrappers (like wrapConsole below or for example Sentry wrapper)
     // Otherwise, the stack frame would point to the wrapper and not the actual source code
     // To do that, we run console.log again in runWrapper, and then compare
-    // first frames to find the offset. We sample that $sampleSize to fix 
+    // first frames to find the offset. We sample that $sampleSize to 
     // cover the case when offset changes at the beginning, if that happens, we extend
     // sample "time" just to make sure we have the correct offset
     if (samples < sampleSize) {
