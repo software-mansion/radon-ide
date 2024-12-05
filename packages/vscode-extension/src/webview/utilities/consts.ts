@@ -24,6 +24,7 @@ export type DeviceProperties = {
   offsetY: number;
   frameImage: string;
   maskImage: string;
+  minimumAndroidApiLevel?: number;
 };
 
 // Model identifiers for new devices are sourced from 'hw.device.name'
@@ -63,6 +64,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   {
     modelName: "Google Pixel 9",
     modelId: "pixel_9",
+    minimumAndroidApiLevel: 35,
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2424,
@@ -76,6 +78,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   {
     modelName: "Google Pixel 8",
     modelId: "pixel_8",
+    minimumAndroidApiLevel: 34,
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -89,6 +92,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   {
     modelName: "Google Pixel 7",
     modelId: "pixel_7",
+    minimumAndroidApiLevel: 33,
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -102,6 +106,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   {
     modelName: "Google Pixel 6a",
     modelId: "pixel_6a",
+    minimumAndroidApiLevel: 32,
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,

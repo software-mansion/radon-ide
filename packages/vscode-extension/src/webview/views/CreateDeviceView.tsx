@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import classNames from "classnames";
 import Select from "../components/shared/Select";
 import "./CreateDeviceView.css";
 import { useDevices } from "../providers/DevicesProvider";
@@ -54,6 +55,7 @@ export function formatDisplayName(name: string) {
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [deviceProperties, setDeviceProperties] = useState<DeviceProperties | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string>("");
+  const [isSystemCompatible, setIsSystemCompatible] = useState(true);
   const [displayName, setDisplayName] = useState<string>("");
   const [isDisplayNameValid, setIsDisplayNameValid] = useState(true);
   const [loading, setLoading] = useState<boolean>(false);
@@ -73,11 +75,16 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           value: runtime.identifier,
           label: runtime.name,
           disabled: !runtime.available,
+          marked: false,
         }))
       : androidImages.map((systemImage) => ({
           value: systemImage.location,
           label: systemImage.name,
           disabled: !systemImage.available,
+          marked: !!(
+            deviceProperties?.minimumAndroidApiLevel &&
+            deviceProperties.minimumAndroidApiLevel > systemImage.apiLevel
+          ),
         }));
 
   async function createDevice() {
@@ -125,6 +132,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
     selectSystemName("");
     setDisplayName("");
     setIsDisplayNameValid(true);
+    setIsSystemCompatible(true);
   }
 
   return (
@@ -153,9 +161,17 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         {systemImagesOptions.length > 0 ? (
           <Select
             disabled={!deviceProperties}
-            className="form-field"
+            className={classNames(
+              "form-field",
+              isSystemCompatible ? undefined : "form-filed-marked"
+            )}
             value={selectedSystemName}
             onChange={(newValue) => {
+              setIsSystemCompatible(
+                !systemImagesOptions.find((option) => {
+                  return option.value === newValue;
+                })?.marked
+              );
               selectSystemName(newValue);
               setDisplayName(deviceProperties?.modelName ?? "");
             }}
@@ -166,6 +182,12 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           <div>
             No system images found. You can install them using{" "}
             {deviceProperties?.platform === "iOS" ? "Xcode" : "Android Studio"}.
+          </div>
+        )}
+        {!isSystemCompatible && (
+          <div className="incompatible-system-warning">
+            <span className="codicon codicon-warning warning" />{" "}
+            <div>This system image is not compatible with the selected device.</div>
           </div>
         )}
       </div>
