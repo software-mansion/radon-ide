@@ -26,38 +26,49 @@ global.__RNIDE_onDebuggerReady = function () {
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
 // To get the proper stack frame, so we can display link to the source code
-// we need to skip wrappers (like wrapConsole below or for example Sentry wrapper)
-// Otherwise, the stack frame would point to the wrapper and not the actual source code
-// To do that, each time we run console.log again in runWrapper, and then compare
-// first frames to find the offset. It needs to happen each time, as we don't know 
-// when other wrappers are set 
-function wrapConsole(consoleFunc) {
-  let initializationStack = [];
-  let stackOffset = 1; // default offset is 1, because the first frame is the wrapConsole function
-  let sendInitialLog = false;
+const sampleSize = 5;
+let samples = 0;
+let initializationStack = [];
+let stackOffset = 1; // default offset is 1, because the first frame is the wrapConsole function
+let sendInitialLog = false;
 
+function wrapConsole(consoleFunc) {
   return function (...args) {
     const stack = parseErrorStack(new Error().stack);
 
-    // Getting source maps from recursive console.log call
-    if (sendInitialLog) {
-      sendInitialLog = false;
+    // To get the proper stack frame, so we can display link to the source code
+    // we need to skip wrappers (like wrapConsole below or for example Sentry wrapper)
+    // Otherwise, the stack frame would point to the wrapper and not the actual source code
+    // To do that, we run console.log again in runWrapper, and then compare
+    // first frames to find the offset. We sample that $sampleSize to fix 
+    // cover the case when offset changes at the beginning, if that happens, we extend
+    // sample "time" just to make sure we have the correct offset
+    if (samples < sampleSize) {
+      if (sendInitialLog) {
+        sendInitialLog = false;
 
-      for (let i = 0; i < Math.min(stack.length, initializationStack.length); i++) {
-        const diffLine = stack[i].lineNumber !== initializationStack[i].lineNumber;
-        const diffColumn = stack[i].column !== initializationStack[i].column;
+        for (let i = 0; i < Math.min(stack.length, initializationStack.length); i++) {
+          const diffLine = stack[i].lineNumber !== initializationStack[i].lineNumber;
+          const diffColumn = stack[i].column !== initializationStack[i].column;
 
-        if (diffLine || diffColumn) {
-          stackOffset = i;
-          break;
+          if (diffLine || diffColumn) {
+            // Repeat the sampling when stackOffset changes
+            if (i !== stackOffset) {
+              samples = 0;
+            }
+
+            stackOffset = i;
+            break;
+          }
         }
+        return;
       }
-      return;
-    }
 
-    initializationStack = stack;
-    sendInitialLog = true;
-    console.log(); // Recursive dummy console.log to get the source maps
+      initializationStack = stack;
+      sendInitialLog = true;
+      console.log(); // Recursive dummy console.log to get the source maps
+      samples++;
+    }
 
     const location = stack[stackOffset];
     args.push(location.file, location.lineNumber, location.column);
