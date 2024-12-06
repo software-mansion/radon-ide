@@ -31,6 +31,7 @@ import { getLaunchConfiguration } from "./utilities/launchConfiguration";
 import { Project } from "./project/project";
 import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
+import { migrateOldBuildCachesToNewStorage } from "./builders/PlatformBuildCache";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -233,6 +234,9 @@ export async function activate(context: ExtensionContext) {
   if (!appRoot) {
     return;
   }
+
+  // we migrate it here because it requires appRoot
+  migrateOldBuildCachesToNewStorage();
 
   if (Platform.OS === "macos") {
     try {

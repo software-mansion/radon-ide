@@ -98,6 +98,14 @@ export function getOrCreateAppDownloadsDir() {
   return downloadsDirLocation;
 }
 
+export function getOrCreateAppsCachesDir() {
+  const buildCachesDirLocation = join(getAppCachesDir(), "appsCaches");
+  if (!fs.existsSync(buildCachesDirLocation)) {
+    fs.mkdirSync(buildCachesDirLocation, { recursive: true });
+  }
+  return buildCachesDirLocation;
+}
+
 export function isDeviceIOS(deviceId: string) {
   return deviceId.startsWith("ios");
 }
