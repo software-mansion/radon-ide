@@ -16,11 +16,19 @@
   font-weight: 700;
   font-size: 24px;
   margin-bottom: 0;
+  text-wrap: balance;
+  text-align: center;
 }
 
 @media (max-width: 996px) {
   .learnMoreSectionFooter {
     gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .learnMoreSectionFooter p {
+    text-align: left;
   }
 }
 
