@@ -15,6 +15,7 @@ const StartScreen = () => {
 
   const handleDialogOpen = () => {
     dialogRef.current?.showModal();
+    track("Secondary CTA");
   };
 
   const handleDialogClose = () => {
@@ -23,22 +24,6 @@ const StartScreen = () => {
 
   return (
     <>
-      <dialog ref={dialogRef} onClick={handleDialogClose}>
-        <button onClick={handleDialogClose} className={styles.dialogCloseButton}>
-          <CloseIcon />
-        </button>
-        <iframe
-          className={styles.responsiveIframe}
-          width="1280"
-          height="720"
-          src="https://www.youtube.com/embed/07Un9EfE8D4?si=h1-7o5e3StOjRZf8"
-          title="YouTube video player"
-          // @ts-ignore it's a valid attribute & type, typescript is wrong
-          allowFullScreen="0"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"></iframe>
-      </dialog>
       <section className={styles.hero}>
         <motion.div
           className={styles.heroImageContainer}
@@ -113,6 +98,23 @@ const StartScreen = () => {
           </motion.div>
         </div>
       </section>
+      <dialog ref={dialogRef} onClick={handleDialogClose}>
+        <button onClick={handleDialogClose} className={styles.dialogCloseButton}>
+          <CloseIcon />
+        </button>
+        <iframe
+          className={styles.responsiveIframe}
+          width="1280"
+          height="720"
+          loading="lazy"
+          src="https://www.youtube.com/embed/07Un9EfE8D4?si=h1-7o5e3StOjRZf8"
+          title="YouTube video player"
+          // @ts-ignore it's a valid attribute & type, typescript is wrong
+          allowFullScreen="0"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </dialog>
     </>
   );
 };

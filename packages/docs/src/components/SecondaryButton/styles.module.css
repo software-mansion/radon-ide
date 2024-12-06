@@ -23,3 +23,10 @@
     width: 100%;
   }
 }
+
+@media (max-width: 768px) {
+  .secondaryButton {
+    height: 100%;
+    font-size: 18px;
+  }
+}
