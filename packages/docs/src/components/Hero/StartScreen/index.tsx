@@ -9,17 +9,28 @@ import CloseIcon from "../../CloseIcon";
 
 const StartScreen = () => {
   const dialogRef = React.useRef<HTMLDialogElement>(null);
+  // i need the state to have the iframe unmouted when the dialog is closed to prevent google to track the video
+  // and unnecessarily load a heavy iframe
+  const [isOpen, setOpen] = React.useState(false);
+  React.useEffect(() => {
+    if (dialogRef.current?.open && !isOpen) {
+      dialogRef.current?.close();
+    } else if (!dialogRef.current?.open && isOpen) {
+      dialogRef.current?.showModal();
+    }
+  }, [isOpen]);
+
   const handleCTAClick = () => {
     track("Main CTA");
   };
 
   const handleDialogOpen = () => {
-    dialogRef.current?.showModal();
     track("Secondary CTA");
+    setOpen(true);
   };
 
   const handleDialogClose = () => {
-    dialogRef.current?.close();
+    setOpen(false);
   };
 
   return (
@@ -98,23 +109,25 @@ const StartScreen = () => {
           </motion.div>
         </div>
       </section>
-      <dialog ref={dialogRef} onClick={handleDialogClose}>
-        <button onClick={handleDialogClose} className={styles.dialogCloseButton}>
-          <CloseIcon />
-        </button>
-        <iframe
-          className={styles.responsiveIframe}
-          width="1280"
-          height="720"
-          loading="lazy"
-          src="https://www.youtube.com/embed/07Un9EfE8D4?si=h1-7o5e3StOjRZf8"
-          title="YouTube video player"
-          // @ts-ignore it's a valid attribute & type, typescript is wrong
-          allowFullScreen="0"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"></iframe>
-      </dialog>
+      {isOpen && (
+        <dialog ref={dialogRef} onClick={handleDialogClose}>
+          <button onClick={handleDialogClose} className={styles.dialogCloseButton}>
+            <CloseIcon />
+          </button>
+          <iframe
+            className={styles.responsiveIframe}
+            width="1280"
+            height="720"
+            loading="lazy"
+            src="https://www.youtube.com/embed/07Un9EfE8D4?si=h1-7o5e3StOjRZf8"
+            title="YouTube video player"
+            // @ts-ignore it's a valid attribute & type, typescript is wrong
+            allowFullScreen="1"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </dialog>
+      )}
     </>
   );
 };

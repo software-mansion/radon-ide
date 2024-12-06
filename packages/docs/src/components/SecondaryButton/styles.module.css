@@ -16,6 +16,12 @@
   border: 1px solid var(--swm-navy-light-100);
   background-color: transparent;
   color: var(--swm-navy-light-100);
+  transition: all 0.3s;
+}
+
+.secondaryButton:hover {
+  background-color: var(--swm-navy-light-100);
+  color: var(--swm-white);
 }
 
 @media (max-width: 996px) {
