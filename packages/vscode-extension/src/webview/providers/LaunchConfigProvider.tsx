@@ -13,6 +13,7 @@ import {
   LaunchConfigUpdater,
   LaunchConfigurationOptions,
 } from "../../common/LaunchConfig";
+import { Platform } from "./UtilsProvider";
 
 const launchConfig = makeProxy<LaunchConfig>("LaunchConfig");
 
@@ -38,7 +39,9 @@ export default function LaunchConfigProvider({ children }: PropsWithChildren) {
     launchConfig.getConfig().then(setConfig);
     launchConfig.addListener("launchConfigChange", setConfig);
 
-    launchConfig.getAvailableXcodeSchemes().then(setXcodeSchemes);
+    if (Platform.OS === "macos") {
+      launchConfig.getAvailableXcodeSchemes().then(setXcodeSchemes);
+    }
 
     return () => {
       launchConfig.removeListener("launchConfigChange", setConfig);
