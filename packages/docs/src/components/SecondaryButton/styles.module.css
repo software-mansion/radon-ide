@@ -1,0 +1,25 @@
+.secondaryButton {
+  height: 60px;
+  padding: 1rem 1.5rem;
+
+  font-weight: 500;
+  font-size: 20px;
+
+  cursor: pointer;
+
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+
+  text-wrap: balance;
+  border: 1px solid var(--swm-navy-light-100);
+  background-color: transparent;
+  color: var(--swm-navy-light-100);
+}
+
+@media (max-width: 996px) {
+  .secondaryButton {
+    width: 100%;
+  }
+}

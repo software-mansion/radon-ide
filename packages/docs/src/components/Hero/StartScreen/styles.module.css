@@ -78,11 +78,12 @@
 }
 
 .headingDisclaimer {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   font-size: 16px;
   font-weight: 400;
   display: flex;
   align-items: center;
+  color: var(--swm-navy-light-60);
 }
 
 .headingDisclaimerIcon {
@@ -106,6 +107,7 @@
 .buttonContainer {
   display: flex;
   justify-content: flex-start;
+  gap: 1rem;
 }
 
 @media (min-width: 2920px) {
@@ -189,4 +191,81 @@
   .headingDisclaimer svg {
     margin-top: 2px;
   }
+
+  .buttonContainer {
+    flex-direction: column;
+  }
+}
+
+/*   Open state of the dialog  */
+dialog[open] {
+  opacity: 1;
+}
+
+/*   Closed state of the dialog   */
+dialog {
+  overflow: hidden;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 8px;
+  max-width: 1280px;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(0px);
+  transition: all 0.3s allow-discrete;
+  padding: 2rem;
+}
+
+dialog iframe {
+  border-radius: 8px;
+}
+
+/*   Before-open state  */
+/* Needs to be after the previous dialog[open] rule to take effect,
+    as the specificity is the same */
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+}
+
+/* Transition the :backdrop when the dialog modal is promoted to the top layer */
+dialog::backdrop {
+  background-color: rgb(0 0 0 / 0%);
+  transition: all 0.3s allow-discrete;
+  user-select: none;
+}
+
+dialog[open]::backdrop {
+  background-color: rgb(0 0 0 / 25%);
+}
+
+/* This starting-style rule cannot be nested inside the above selector
+because the nesting selector cannot represent pseudo-elements. */
+
+@starting-style {
+  dialog[open]::backdrop {
+    background-color: rgb(0 0 0 / 0%);
+  }
+}
+
+.responsiveIframe {
+  aspect-ratio: 16 / 9;
+  height: 100%;
+  width: 100%;
+}
+
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.dialogCloseButton {
+  position: absolute;
+  padding: 5px;
+  top: 0;
+  right: 0px;
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
 }
