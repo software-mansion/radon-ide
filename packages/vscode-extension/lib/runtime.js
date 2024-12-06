@@ -25,9 +25,27 @@ global.__RNIDE_onDebuggerReady = function () {
 // debug adapter and avoid exposing as part of application logs
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
-const sampleSize = 5;
-let sampleCount = 0;
 let stackOffset = 1; // default offset is 1, because the first frame is the wrapConsole function
+let logRef = null;
+let errorRef = null;
+let warnRef = null;
+let infoRef = null;
+
+function isConsoleRefChanged() {
+  return (
+    logRef !== console.log ||
+    errorRef !== console.error ||
+    warnRef !== console.warn ||
+    infoRef !== console.info
+  );
+}
+
+function updateConsoleRefs() {
+  logRef = console.log;
+  warnRef = console.warn;
+  errorRef = console.error;
+  infoRef = console.info;
+}
 
 function wrapConsole(consoleFunc) {
   let initializationStack = [];
@@ -40,10 +58,8 @@ function wrapConsole(consoleFunc) {
     // we need to skip wrappers (like wrapConsole below or for example Sentry wrapper)
     // Otherwise, the stack frame would point to the wrapper and not the actual source code
     // To do that, we run console.log again in runWrapper, and then compare
-    // first frames to find the offset. We sample that $sampleSize to 
-    // cover the case when offset changes at the beginning, if that happens, we extend
-    // sample "time" just to make sure we have the correct offset
-    if (sampleCount < sampleSize) {
+    // first frames to find the offset. We do that when ant of console ref changes
+    if (isConsoleRefChanged()) {
       if (sendInitialLog) {
         sendInitialLog = false;
 
@@ -61,13 +77,14 @@ function wrapConsole(consoleFunc) {
             break;
           }
         }
+
+        updateConsoleRefs();
         return;
       }
 
       initializationStack = stack;
       sendInitialLog = true;
       console.log(); // Recursive dummy console.log to get the source maps
-      sampleCount++;
     }
 
     const location = stack[stackOffset];
