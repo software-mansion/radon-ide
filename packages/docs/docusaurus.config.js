@@ -89,10 +89,10 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
-      announcementBar: {
-        id: `product-hunt-launch-banner`,
-        content: `🎉  Radon IDE just launched on Product Hunt! <a href="https://www.producthunt.com/posts/radon-ide" target="_blank">Upvote!</a>`,
-      },
+      // announcementBar: {
+      //   id: `product-hunt-launch-banner`,
+      //   content: `🎉  Radon IDE just launched on Product Hunt! <a href="https://www.producthunt.com/posts/radon-ide" target="_blank">Upvote!</a>`,
+      // },
       metadata: [
         {
           name: "google-site-verification",
