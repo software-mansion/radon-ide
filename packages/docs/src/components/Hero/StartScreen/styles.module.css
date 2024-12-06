@@ -207,7 +207,7 @@ dialog {
   overflow: hidden;
   box-sizing: border-box;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   max-width: 1280px;
   width: 100%;
   opacity: 0;
