@@ -126,7 +126,7 @@ Below is an example of how the `launch.json` file could look like with android v
 
 ### Custom build settings
 
-Instead of letting Radon IDE build your app, you can use scripts (`buildScript` option) or [Expo
+Instead of letting Radon IDE build your app, you can use scripts (`customBuild` option) or [Expo
 Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it.
 
 The requirement for scripts is to output the absolute path to the built app as
