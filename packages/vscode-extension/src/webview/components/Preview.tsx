@@ -26,7 +26,6 @@ import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { Platform } from "../providers/UtilsProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
 
 declare module "react" {
@@ -308,7 +307,8 @@ function Preview({
     const { x: clampedX, y: clampedY } = getTouchPosition(event);
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
+    const showDimensionsBox = !showInspectStackModal && isInspecting;
+    project.inspectElementAt(clampedX, clampedY, requestStack, showDimensionsBox, (inspectData) => {
       if (requestStack && inspectData?.stack) {
         if (showInspectStackModal) {
           setInspectStackData({
@@ -329,6 +329,7 @@ function Preview({
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
   function resetInspector() {
+    project.hideInspectOverlay();
     setInspectFrame(null);
     setInspectStackData(null);
   }
@@ -615,27 +616,6 @@ function Preview({
                       "--size": `${normalTouchIndicatorSize}px`,
                     }}>
                     <TouchPointIndicator isPressing={isPressing} />
-                  </div>
-                )}
-
-                {!replayData && inspectFrame && (
-                  <div className="phone-screen phone-inspect-overlay">
-                    <div
-                      className="inspect-area"
-                      style={{
-                        left: `${inspectFrame.x * 100}%`,
-                        top: `${inspectFrame.y * 100}%`,
-                        width: `${inspectFrame.width * 100}%`,
-                        height: `${inspectFrame.height * 100}%`,
-                      }}
-                    />
-                    {isInspecting && (
-                      <DimensionsBox
-                        device={device}
-                        frame={inspectFrame}
-                        wrapperDivRef={wrapperDivRef}
-                      />
-                    )}
                   </div>
                 )}
                 {projectStatus === "refreshing" && (
