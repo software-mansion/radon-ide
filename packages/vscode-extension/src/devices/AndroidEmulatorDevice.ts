@@ -701,7 +701,11 @@ async function ensureOldEmulatorProcessExited(avdId: string) {
       'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Csv -NoTypeInformation"',
     linux: "ps",
   });
-  const args = Platform.select({ macos: ["-Ao", "pid,command"], windows: [], linux: ["-Ao", "pid,command"] });
+  const args = Platform.select({
+    macos: ["-Ao", "pid,command"],
+    windows: [],
+    linux: ["-Ao", "pid,command"],
+  });
   const subprocess = exec(command, args);
   const regexpPattern = new RegExp(`(\\d+).*qemu.*-avd ${avdId}`);
   lineReader(subprocess).onLineRead(async (line) => {
