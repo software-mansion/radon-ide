@@ -9,6 +9,7 @@ export const ANDROID_HOME =
   Platform.select({
     macos: path.join(os.homedir(), "Library/Android/sdk"),
     windows: path.join(os.homedir(), "AppData\\Local\\Android\\Sdk"),
+    linux: path.join(os.homedir(), "Android/Sdk"),
   });
 
 export async function findJavaHome() {
@@ -36,11 +37,13 @@ export async function findJavaHome() {
   const androidStudioPath = Platform.select({
     macos: "/Applications/Android Studio.app",
     windows: path.join(path.parse(os.homedir()).root, "Program Files\\Android\\Android Studio"),
+    linux: "/usr/local/android-studio",
   });
 
   const jbrPath = Platform.select({
     macos: path.join(androidStudioPath, "Contents/jbr/Contents/Home"),
     windows: path.join(androidStudioPath, "jbr"),
+    linux: path.join(androidStudioPath, "jbr"),
   });
 
   if (fs.existsSync(jbrPath)) {
@@ -50,5 +53,8 @@ export async function findJavaHome() {
   return Platform.select({
     macos: path.join(androidStudioPath, "Contents/jre/Contents/Home"),
     windows: path.join(androidStudioPath, "jre"),
+    // Returning undefined as the Android Studio directory on Linux
+    // might not include a jre directory, preferring jbr instead
+    linux: undefined,
   });
 }
