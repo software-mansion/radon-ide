@@ -4,6 +4,10 @@
   background-color: var(--swm-off-white);
 }
 
+.testimonial + .testimonial {
+  margin-top: 1rem;
+}
+
 .testimonial:hover {
   background-color: var(--swm-navy-light-10);
   text-decoration: none;
