@@ -31,6 +31,7 @@ export class Utils implements UtilsInterface {
         Platform.select({
           macos: path.join("Library", "Application Support"),
           windows: path.join("AppDat", "Roaming"),
+          linux: path.join(".config"),
         }),
         ideName,
         "User",
@@ -91,6 +92,7 @@ export class Utils implements UtilsInterface {
     const defaultFolder = Platform.select({
       macos: path.join(homedir(), "Desktop"),
       windows: homedir(),
+      linux: homedir(),
     });
     const defaultUri = Uri.file(path.join(defaultFolder, newFileName));
 

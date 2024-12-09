@@ -6,13 +6,13 @@ import { UtilsInterface } from "../../common/utils";
 declare global {
   interface Window {
     // set in generateWebviewContent()
-    RNIDE_hostOS: "macos" | "windows";
+    RNIDE_hostOS: "macos" | "windows" | "linux";
   }
 }
 
 export const Platform = {
   OS: window.RNIDE_hostOS,
-  select: <R, T>(obj: { macos: R; windows: T }) => {
+  select: <R, T>(obj: { macos: R; windows: T; linux: T }) => {
     return obj[Platform.OS];
   },
 };
