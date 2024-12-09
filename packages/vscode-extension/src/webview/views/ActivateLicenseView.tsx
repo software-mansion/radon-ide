@@ -25,11 +25,7 @@ export function ActivateLicenseView() {
     const activationPromise = project.activateLicense(data?.target[0].value);
 
     activationPromise.then((activationResult) => {
-      if (activationResult === ActivateDeviceResult.succeeded) {
-        closeModal();
-      } else {
-        setActivateDeviceResult(activationResult);
-      }
+      setActivateDeviceResult(activationResult);
       setIsLoading(false);
     });
   };
@@ -47,7 +43,7 @@ export function ActivateLicenseView() {
   return (
     <form className="container" onSubmit={handleSubmit(onSubmit)}>
       <div className="info-row">
-        {!activateDeviceResult && (
+        {activateDeviceResult === null && (
           <div className="info-text">
             You can find your license key on the{" "}
             <a href="https://portal.ide.swmansion.com/" target="_blank" rel="noopener noreferrer">
@@ -109,19 +105,30 @@ export function ActivateLicenseView() {
             </a>
           </div>
         )}
+        {activateDeviceResult === ActivateDeviceResult.succeeded && (
+          <div className="info-text">Your license has been successfully activated.</div>
+        )}
       </div>
-      <input
-        {...register("licenseKey")}
-        ref={inputRef}
-        className="license-input"
-        type="text"
-        onChange={onChange}
-        placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
-      />
+      {activateDeviceResult !== ActivateDeviceResult.succeeded && (
+        <input
+          {...register("licenseKey")}
+          ref={inputRef}
+          className="license-input"
+          type="text"
+          onChange={onChange}
+          placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+        />
+      )}
       <div className="submit-row">
-        <Button type="secondary" disabled={disableSubmit || isLoading}>
-          Activate
-        </Button>
+        {activateDeviceResult !== ActivateDeviceResult.succeeded ? (
+          <Button type="secondary" disabled={disableSubmit || isLoading}>
+            Activate
+          </Button>
+        ) : (
+          <Button type="secondary" onClick={closeModal}>
+            Ok
+          </Button>
+        )}
       </div>
     </form>
   );
