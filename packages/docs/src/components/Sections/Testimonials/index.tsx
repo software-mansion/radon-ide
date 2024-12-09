@@ -106,7 +106,7 @@ export default function Testimonials() {
         <h1 className={styles.testimonialsHeading}>What engineers have to say?</h1>
         <div className={styles.testimonialsContainer}>
           {data.map((testimonial) => (
-            <TestimonialItem testimonial={testimonial} key={testimonial.id} />
+            <TestimonialItem testimonial={testimonial} key={testimonial.handle} />
           ))}
         </div>
       </div>
