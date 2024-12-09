@@ -152,7 +152,7 @@ export function dependencyDescription(dependency: Dependency) {
       return {
         info: "Used for managing project dependencies and scripts.",
         error:
-          "Package manager was not found. Make sure to install the package manager used in the project.",
+          "Package manager not found or uninstalled. Make sure to install the package manager used in the project.",
       };
     case "androidEmulator":
       return {
