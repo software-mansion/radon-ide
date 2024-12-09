@@ -79,7 +79,7 @@
 @media (max-width: 996px) {
   .item {
     flex-direction: column !important;
-    gap: 3rem;
+    gap: 1.5rem;
   }
   .overview {
     gap: 3rem;
@@ -104,7 +104,7 @@
   }
 }
 
-@media (max-width: 390px) {
+@media (max-width: 430px) {
   .overviewHeading {
     font-size: 36px;
     margin-top: 0;

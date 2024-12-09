@@ -30,3 +30,9 @@
   margin: 0;
   margin-top: 36px;
 }
+
+@media (max-width: 430px) {
+  .wrapper {
+    max-width: 100%;
+  }
+}
