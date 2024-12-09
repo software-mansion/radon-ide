@@ -18,6 +18,11 @@ const StartScreen = () => {
     } else if (!dialogRef.current?.open && isOpen) {
       dialogRef.current?.showModal();
     }
+
+    dialogRef.current?.addEventListener("close", handleDialogClose);
+    return () => {
+      dialogRef.current?.removeEventListener("close", handleDialogClose);
+    };
   }, [isOpen]);
 
   const handleCTAClick = () => {
