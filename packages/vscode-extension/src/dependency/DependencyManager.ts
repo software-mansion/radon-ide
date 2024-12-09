@@ -61,6 +61,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     }
 
     this.checkNodeCommandStatus();
+    this.checkPackageManagerInstallationStatus();
     this.checkNodeModulesInstallationStatus();
 
     this.emitEvent("reactNative", {
@@ -133,16 +134,16 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async installNodeModules(): Promise<boolean> {
-    const manager = await this.getPackageManager();
-    if (!manager) {
+    const packageManager = await this.getPackageManager();
+    if (!packageManager) {
       return false;
     }
 
     this.emitEvent("nodeModules", { status: "installing", isOptional: false });
 
-    // all managers support the `install` command
-    await command(`${manager.name} install`, {
-      cwd: manager.workspacePath ?? getAppRootFolder(),
+    // all package managers support the `install` command
+    await command(`${packageManager.name} install`, {
+      cwd: packageManager.workspacePath ?? getAppRootFolder(),
       quietErrorsOnExit: true,
     });
 
@@ -240,8 +241,20 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     });
   }
 
+  private async checkPackageManagerInstallationStatus() {
+    // the resolvePackageManager function in getPackageManager checks
+    // if a package manager is installed and otherwise returns undefined
+    const packageManager = await this.getPackageManager();
+    this.emitEvent("packageManager", {
+      status: packageManager ? "installed" : "notInstalled",
+      isOptional: false,
+      details: packageManager?.name,
+    });
+    return packageManager;
+  }
+
   public async checkNodeModulesInstallationStatus() {
-    const packageManager = await resolvePackageManager();
+    const packageManager = await this.getPackageManager();
     if (!packageManager) {
       this.emitEvent("nodeModules", { status: "notInstalled", isOptional: false });
       return false;

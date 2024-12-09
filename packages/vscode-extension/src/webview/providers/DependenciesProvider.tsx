@@ -17,6 +17,7 @@ const dependencyManager = makeProxy<DependencyManagerInterface>("DependencyManag
 
 const dependenciesDomain = [
   "nodejs",
+  "packageManager",
   "androidEmulator",
   "xcode",
   "cocoaPods",
@@ -125,6 +126,7 @@ function getErrors(statuses: DependencyRecord) {
           setFirstError(dependency, "emulator");
           break;
         case "nodejs":
+        case "packageManager":
         case "nodeModules":
           setFirstError(dependency, "common");
           break;
@@ -145,6 +147,12 @@ export function dependencyDescription(dependency: Dependency) {
       return {
         info: "Used for running scripts and getting dependencies.",
         error: "Node.js was not found. Make sure to [install Node.js](https://nodejs.org/en).",
+      };
+    case "packageManager":
+      return {
+        info: "Used for managing project dependencies and scripts.",
+        error:
+          "Package manager not found or uninstalled. Make sure to install the package manager used in the project.",
       };
     case "androidEmulator":
       return {

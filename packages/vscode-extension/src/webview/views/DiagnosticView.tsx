@@ -19,6 +19,11 @@ function DiagnosticView() {
     <div className="diagnostic-container">
       <Label>Common</Label>
       <DiagnosticItem label="Node.js" name="nodejs" info={dependencies.nodejs} />
+      <DiagnosticItem
+        label={`Package manager`}
+        name="packageManager"
+        info={dependencies.packageManager}
+      />
       <DiagnosticItem label="Node Modules" name="nodeModules" info={dependencies.nodeModules} />
       <div className="diagnostic-section-margin" />
 
@@ -94,11 +99,13 @@ function DiagnosticItem({ label, name, info, action }: DiagnosticItemProps) {
     description = messages.info;
   }
 
+  const details = info?.details ? `: ${info?.details}` : "";
+
   return (
     <div className="diagnostic-item-wrapper">
       <div className="diagnostic-item">
         <div className="diagnostic-icon">{icon}</div>
-        <p className="diagnostic-item-text">{label}</p>
+        <p className="diagnostic-item-text">{`${label}${details}`}</p>
         {description && (
           <Tooltip label={description} type="secondary" instant>
             <span className="diagnostic-item-info-icon codicon codicon-info" />
