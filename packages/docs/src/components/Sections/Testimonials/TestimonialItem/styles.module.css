@@ -17,13 +17,31 @@
 }
 
 .testimonialAuthor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   font-weight: bold;
   font-size: 18px;
 }
 
 .authorWrapper {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  width: 100%;
+}
+
+.testimonialAuthor {
+  margin-bottom: 0;
+}
+
+.testimonialHandle {
+  color: var(--swm-navy-light-60);
+}
+
+.row {
+  display: flex;
+  gap: 8px;
 }
 
 .icon {

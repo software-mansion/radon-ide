@@ -17,14 +17,18 @@ const icons = {
 export default function TestimonialItem({ testimonial }: Props) {
   return (
     <a href={testimonial.link} target="_blank" rel="noreferrer" className={styles.testimonial}>
-      <div className={styles.authorWrapper}>
+      <div className={styles.row}>
         <img
           src={testimonial.avatar}
           alt={testimonial.author}
           className={styles.testimonialAvatar}
         />
-        <p className={styles.testimonialAuthor}>{testimonial.author}</p>
-        <img src={icons[testimonial.type]} className={styles.icon} />
+        <div className={styles.authorWrapper}>
+          <p className={styles.testimonialAuthor}>
+            {testimonial.author} <img src={icons[testimonial.type]} className={styles.icon} />
+          </p>
+          <p className={styles.testimonialHandle}>{testimonial.handle}</p>
+        </div>
       </div>
       <p dangerouslySetInnerHTML={{ __html: testimonial.body }} />
     </a>
