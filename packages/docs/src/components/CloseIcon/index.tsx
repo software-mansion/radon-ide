@@ -1,7 +1,13 @@
 import * as React from "react";
 export default function CloseIcon(props) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={28} height={28} fill="none" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={16}
+      height={16}
+      fill="none"
+      viewBox="0 0 24 24"
+      {...props}>
       <path
         stroke="#001A72"
         strokeLinecap="round"

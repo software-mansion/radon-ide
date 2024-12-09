@@ -207,17 +207,12 @@ dialog {
   overflow: hidden;
   box-sizing: border-box;
   border: none;
-  border-radius: 12px;
   max-width: 1280px;
   width: 100%;
   opacity: 0;
   transform: translateY(0px);
   transition: all 0.3s allow-discrete;
   padding: 2rem;
-}
-
-dialog iframe {
-  border-radius: 8px;
 }
 
 /*   Before-open state  */
@@ -262,9 +257,11 @@ html:has(dialog[open]) {
 
 .dialogCloseButton {
   position: absolute;
-  padding: 5px;
-  top: 0;
-  right: 0px;
+  padding: 6px;
+  height: 32px;
+  width: 32px;
+  top: 3px;
+  right: 3px;
   cursor: pointer;
   background-color: transparent;
   border: none;
