@@ -12,12 +12,12 @@ const LearnMoreFooter = () => {
     <section>
       <div className={styles.learnMoreSectionFooter}>
         <div>
-          <p>Learn more about the Radon IDE features announced at App.js 2024</p>
+          <p>Hundreds of engineers are building better apps with Radon IDE right now.</p>
         </div>
         <HomepageButton
           target="_blank"
-          href="https://www.youtube.com/watch?v=HWGssA55oNc"
-          title="See the video"
+          href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
+          title="Try Radon IDE free"
           onClick={handleBottomCTAClick}
         />
       </div>

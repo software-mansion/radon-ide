@@ -65,10 +65,15 @@ button {
   color: var(--swm-secondary-text);
   pointer-events: none;
 }
+
 .select-item:hover {
   outline: none;
   background-color: var(--swm-select-item-highlighted-background);
   cursor: pointer;
+}
+
+.select-item-marked {
+  color: var(--swm-marked-text);
 }
 
 .select-label {

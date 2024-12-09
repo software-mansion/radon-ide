@@ -1,0 +1,26 @@
+.linkButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  text-decoration-line: underline;
+  text-underline-offset: 5px;
+  font-size: 18px;
+}
+
+.linkButton svg {
+  transition: transform 0.3s;
+}
+
+.linkButton:hover svg {
+  transform: translateX(5px);
+}
+
+.linkButtonArrow {
+  stroke: var(--swm-landing-button-navy);
+}
+
+.linkButtonWrapper {
+  display: flex;
+  max-height: 32px;
+}

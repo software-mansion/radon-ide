@@ -63,7 +63,7 @@
   }
 }
 
-@media (max-width: 390px) {
+@media (max-width: 430px) {
   .faqMain {
     margin-bottom: 3rem;
   }
@@ -71,6 +71,6 @@
     font-size: 24px;
   }
   .faqSubheading {
-    font-size: 20px;
+    font-size: 18px;
   }
 }
