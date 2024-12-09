@@ -83,6 +83,7 @@
   justify-content: center;
   grid-template-columns: 1fr auto 1fr;
   gap: 10px;
+  font-weight: 500;
 }
 
 .plan_pay_annually p {
