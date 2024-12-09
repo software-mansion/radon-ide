@@ -110,7 +110,7 @@ const StartScreen = () => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}>
-            Free 30-day trial. No credit card required.
+            Free 30-day trial. No sign up or credit card required.
           </motion.div>
         </div>
       </section>
