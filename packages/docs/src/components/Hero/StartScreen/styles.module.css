@@ -131,7 +131,7 @@
 
 @media (max-width: 2400px) {
   .heroImageWrapper {
-    transform: translateX(55%) translateY(5%);
+    transform: translateX(60%) translateY(5%);
   }
 }
 
