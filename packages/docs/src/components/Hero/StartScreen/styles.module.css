@@ -165,7 +165,7 @@
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 430px) {
   .hero {
     margin-bottom: 0;
   }
@@ -178,12 +178,12 @@
   }
 
   .heroImageWrapper {
-    border-width: 1rem;
-    border-radius: 2rem;
+    border-width: 8px;
+    border-radius: 16px;
   }
   .heroImage {
-    border-width: 0.5rem;
-    border-radius: 1rem;
+    border-width: 4px;
+    border-radius: 8px;
   }
   .headingDisclaimer {
     align-items: flex-start;

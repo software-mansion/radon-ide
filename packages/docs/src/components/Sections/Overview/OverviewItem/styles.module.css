@@ -45,13 +45,12 @@
   }
   .media video {
     border-width: 1.5rem !important;
-    border-style: solid;
   }
 }
 
-@media (max-width: 390px) {
+@media (max-width: 430px) {
   .media video {
-    border-width: 1rem !important;
+    border-width: 10px !important;
   }
   .itemTitle {
     margin-bottom: 1rem;
