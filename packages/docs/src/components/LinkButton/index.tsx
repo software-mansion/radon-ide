@@ -11,11 +11,11 @@ interface Props {
 
 export default function LinkButton({ title, href, onClick }: Props) {
   return (
-    <span>
+    <div className={styles.linkButtonWrapper}>
       <a href={href} target="_blank" className={styles.linkButton} onClick={onClick}>
         {title}
         <ArrowRight className={styles.linkButtonArrow} />
       </a>
-    </span>
+    </div>
   );
 }

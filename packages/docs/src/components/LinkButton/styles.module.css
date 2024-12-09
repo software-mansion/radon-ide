@@ -19,3 +19,8 @@
 .linkButtonArrow {
   stroke: var(--swm-landing-button-navy);
 }
+
+.linkButtonWrapper {
+  display: flex;
+  max-height: 32px;
+}
