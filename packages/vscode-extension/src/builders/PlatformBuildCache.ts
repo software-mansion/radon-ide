@@ -10,6 +10,7 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { runfingerprintCommand } from "./customBuild";
 import { calculateMD5 } from "../utilities/common";
 import { BuildResult } from "./BuildManager";
+import { getAppCache, removeAppCache, storeAppCache } from "../utilities/appCaches";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
@@ -55,19 +56,32 @@ export class PlatformBuildCache {
    */
   public async storeBuild(buildFingerprint: string, build: BuildResult) {
     const appPath = await getAppHash(getAppPath(build));
-    await extensionContext.workspaceState.update(this.cacheKey, {
+
+    const cache = JSON.stringify({
       fingerprint: buildFingerprint,
       buildHash: appPath,
       buildResult: build,
     });
+
+    storeAppCache(this.cacheKey, cache);
   }
 
   public async clearCache() {
-    await extensionContext.workspaceState.update(this.cacheKey, undefined);
+    removeAppCache(this.cacheKey);
+  }
+
+  public getCache() {
+    const buildCache = getAppCache(this.cacheKey);
+    if (!buildCache) {
+      return undefined;
+    }
+
+    return JSON.parse(buildCache);
   }
 
   public async getBuild(currentFingerprint: string) {
-    const cache = extensionContext.workspaceState.get<BuildCacheInfo>(this.cacheKey);
+    const cache: BuildCacheInfo | undefined = this.getCache();
+
     if (!cache) {
       Logger.debug("No cached build found.");
       return undefined;
@@ -105,8 +119,7 @@ export class PlatformBuildCache {
 
   public async isCacheStale() {
     const currentFingerprint = await this.calculateFingerprint();
-    const { fingerprint } =
-      extensionContext.workspaceState.get<BuildCacheInfo>(this.cacheKey) ?? {};
+    const { fingerprint } = this.getCache() ?? {};
 
     return currentFingerprint !== fingerprint;
   }
@@ -159,4 +172,21 @@ function getAppPath(build: BuildResult) {
 
 async function getAppHash(appPath: string) {
   return (await calculateMD5(appPath)).digest("hex");
+}
+
+export function migrateOldBuildCachesToNewStorage() {
+  const platformKeys = [ANDROID_BUILD_CACHE_KEY, IOS_BUILD_CACHE_KEY];
+
+  platformKeys.forEach((platformKey) => {
+    const cache = extensionContext.workspaceState.get<BuildCacheInfo>(platformKey);
+    if (!cache) {
+      return;
+    }
+
+    // the old method stored json objects instead of strings
+    storeAppCache(platformKey, JSON.stringify(cache));
+
+    // remove the old cache afterwords
+    extensionContext.workspaceState.update(platformKey, undefined);
+  });
 }
