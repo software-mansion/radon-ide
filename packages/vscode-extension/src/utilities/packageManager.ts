@@ -124,8 +124,13 @@ async function isNpmModulesInstalled(workspacePath: string): Promise<boolean> {
       cwd: workspacePath,
       quietErrorsOnExit: true,
     });
-    const parsedJson = JSON.parse(stdout);
-    return parsedJson.problems ? false : true;
+    const parsedOutput = JSON.parse(stdout);
+
+    if (!parsedOutput || Object.keys(parsedOutput).length === 0) {
+      return false;
+    }
+
+    return parsedOutput.problems ? false : true;
   } catch (e) {
     return false;
   }
@@ -143,6 +148,10 @@ async function isYarnModulesInstalled(workspacePath: string): Promise<boolean> {
       quietErrorsOnExit: true,
     });
     const parsedOutput = JSON.parse(stdout);
+
+    if (!parsedOutput || Object.keys(parsedOutput).length === 0) {
+      return false;
+    }
 
     // because npm marks packages installed with yarn as "extraneous" we need to check if there are any other problems.
     return (
