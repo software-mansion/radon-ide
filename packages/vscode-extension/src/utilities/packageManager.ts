@@ -153,9 +153,34 @@ async function isYarnModulesInstalled(workspacePath: string): Promise<boolean> {
   }
 }
 
-async function isPnpmModulesInstalled(): Promise<boolean> {
-  // TODO: add pnpm support
-  return false;
+async function isPnpmModulesInstalled(workspacePath: string): Promise<boolean> {
+  try {
+    const { stdout } = await command("pnpm ls --json", {
+      cwd: workspacePath,
+      quietErrorsOnExit: true,
+    });
+    const packages = JSON.parse(stdout);
+
+    if (packages && packages.length === 0) {
+      return false;
+    }
+
+    for (const pkg of packages) {
+      if (!pkg || !pkg.dependencies || Object.keys(pkg.dependencies).length === 0) {
+        return false;
+      }
+
+      for (const depInfo of Object.values<{ version: string }>(pkg.dependencies)) {
+        if (!depInfo || !depInfo.version) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 async function isBunModulesInstalled(): Promise<boolean> {
@@ -171,7 +196,7 @@ export async function isNodeModulesInstalled(manager: PackageManagerInfo): Promi
     case "yarn":
       return await isYarnModulesInstalled(workspacePath);
     case "pnpm":
-      return await isPnpmModulesInstalled();
+      return await isPnpmModulesInstalled(workspacePath);
     case "bun":
       return await isBunModulesInstalled();
   }
