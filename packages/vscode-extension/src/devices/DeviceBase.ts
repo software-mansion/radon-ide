@@ -5,7 +5,6 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, TouchPoint } from "../common/Project";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
-import { Logger } from "../Logger";
 
 export abstract class DeviceBase implements Disposable {
   protected preview: Preview | undefined;

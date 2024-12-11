@@ -559,6 +559,10 @@ export class Project
       case SimServerLicenseValidationResult.Expired:
         return await refresh();
       case SimServerLicenseValidationResult.FingerprintMismatch:
+        window.showWarningMessage(
+          "It looks like you your license token is assigned for different device, please activate your device."
+        );
+        await removeLicense();
         return false;
       case SimServerLicenseValidationResult.Corrupted:
         window.showWarningMessage(
