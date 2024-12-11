@@ -3,10 +3,22 @@ import { extensionContext } from "./extensionContext";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
 import { simulatorServerBinary } from "./simulatorServerBinary";
-import { ActivateDeviceResult } from "../common/Project";
+import { ActivateDeviceResult, RefreshLicenseTokenResult } from "../common/Project";
 
 const TOKEN_KEY = "RNIDE_license_token_key";
 const BASE_CUSTOMER_PORTAL_URL = "https://portal.ide.swmansion.com/";
+
+export enum ServerResponseStatusCode {
+  success = "S001",
+  badRequest = "E001",
+  noSubscription = "E002",
+  allSeatTaken = "E003",
+  seatRemoved = "E004",
+  licenseExpired = "E005",
+  licenseCancelled = "E006",
+  noProductForSubscription = "E007",
+  internalError = "E101",
+}
 
 export async function activateDevice(
   licenseKey: string,
@@ -52,27 +64,58 @@ export async function activateDevice(
     return ActivateDeviceResult.succeeded;
   }
 
-  if (
-    response.status === 404 &&
-    responseBody.error.startsWith("Could not find a subscription associated with license key")
-  ) {
-    return ActivateDeviceResult.keyVerificationFailed;
+  switch (responseBody.code) {
+    case ServerResponseStatusCode.noSubscription:
+      return ActivateDeviceResult.keyVerificationFailed;
+    case ServerResponseStatusCode.allSeatTaken:
+      return ActivateDeviceResult.notEnoughSeats;
+    case ServerResponseStatusCode.badRequest:
+    default:
+      return ActivateDeviceResult.unableToVerify;
   }
-
-  if (
-    response.status === 400 &&
-    responseBody.error.startsWith("All seats for a license with a key")
-  ) {
-    return ActivateDeviceResult.notEnoughSeats;
-  }
-
-  return ActivateDeviceResult.unableToVerify;
 }
 
-async function generateDeviceFingerprint() {
-  const simControllerBinary = simulatorServerBinary();
-  const { stdout } = await exec(simControllerBinary, ["fingerprint"]);
-  return stdout;
+export async function refreshToken(token: string) {
+  const url = new URL("/api/refresh-token", BASE_CUSTOMER_PORTAL_URL);
+
+  const body = {
+    token: token,
+  };
+
+  let response;
+
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    Logger.warn("Refreshing license token failed", e);
+    return RefreshLicenseTokenResult.connectionFailed;
+  }
+
+  const responseBody = await response.json();
+
+  if (response.ok) {
+    const newToken = responseBody.token as string;
+    await extensionContext.secrets.store(TOKEN_KEY, newToken ?? "");
+    return RefreshLicenseTokenResult.succeeded;
+  }
+
+  switch (responseBody.code) {
+    case ServerResponseStatusCode.seatRemoved:
+      return RefreshLicenseTokenResult.seatRemoved;
+    case ServerResponseStatusCode.licenseExpired:
+      return RefreshLicenseTokenResult.licenseExpired;
+    case ServerResponseStatusCode.licenseCancelled:
+      return RefreshLicenseTokenResult.licenseCanceled;
+    case ServerResponseStatusCode.badRequest:
+    default:
+      return RefreshLicenseTokenResult.unableToVerify;
+  }
 }
 
 export async function removeLicense() {
@@ -82,4 +125,10 @@ export async function removeLicense() {
 export async function getLicenseToken() {
   const token = await extensionContext.secrets.get(TOKEN_KEY);
   return token;
+}
+
+async function generateDeviceFingerprint() {
+  const simControllerBinary = simulatorServerBinary();
+  const { stdout } = await exec(simControllerBinary, ["fingerprint"]);
+  return stdout;
 }

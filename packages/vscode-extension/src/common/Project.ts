@@ -109,6 +109,15 @@ export enum ActivateDeviceResult {
   connectionFailed,
 }
 
+export enum RefreshLicenseTokenResult {
+  succeeded,
+  licenseExpired,
+  licenseCanceled,
+  unableToVerify,
+  seatRemoved,
+  connectionFailed,
+}
+
 export interface ProjectEventMap {
   log: { type: string };
   projectStateChanged: ProjectState;

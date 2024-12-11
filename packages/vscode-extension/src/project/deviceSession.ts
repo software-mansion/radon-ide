@@ -225,6 +225,10 @@ export class DeviceSession implements Disposable {
     return previewUrl;
   }
 
+  public async checkLicense(token: string) {
+    return this.device.checkLicense(token);
+  }
+
   private async startDebugger() {
     if (this.debugSession) {
       this.debugSession.dispose();
