@@ -292,6 +292,82 @@ export class Metro implements Disposable {
     ws.close();
   }
 
+  private async evaluateJsFromCdp(
+    webSocketDebuggerUrl: string,
+    source: string,
+    timeoutMs: number = 2000
+  ): Promise<string | undefined> {
+    const REQUEST_ID = 0;
+    let timeoutHandle: NodeJS.Timeout;
+
+    const wsUrl = new URL(webSocketDebuggerUrl);
+    wsUrl.hostname = "localhost";
+    wsUrl.port = String(this._port);
+
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const ws = new WebSocket(wsUrl);
+
+      timeoutHandle = setTimeout(() => {
+        Logger.debug(`[evaluateJsFromCdpAsync] Request timeout from ${wsUrl.toString()}`);
+        reject(new Error("Request timeout"));
+        settled = true;
+        ws.close();
+      }, timeoutMs);
+
+      ws.on("open", () => {
+        ws.send(
+          JSON.stringify({
+            id: REQUEST_ID,
+            method: "Runtime.evaluate",
+            params: { expression: source },
+          })
+        );
+      });
+
+      ws.on("error", (e) => {
+        Logger.debug(`[evaluateJsFromCdpAsync] Failed to connect ${wsUrl.toString()}`, e);
+        reject(e);
+        settled = true;
+        clearTimeout(timeoutHandle);
+        ws.close();
+      });
+
+      ws.on("close", () => {
+        if (!settled) {
+          reject(new Error("WebSocket closed before response was received."));
+          clearTimeout(timeoutHandle);
+        }
+      });
+
+      ws.on("message", (data) => {
+        Logger.debug(
+          `[evaluateJsFromCdpAsync] message received from ${wsUrl.toString()}: ${data.toString()}`
+        );
+        try {
+          const response = JSON.parse(data.toString());
+          if (response.id === REQUEST_ID) {
+            if (response.error) {
+              reject(new Error(response.error.message));
+            } else if (response.result.result.type === "string") {
+              resolve(response.result.result.value);
+            } else {
+              resolve(undefined);
+            }
+            settled = true;
+            clearTimeout(timeoutHandle);
+            ws.close();
+          }
+        } catch (e) {
+          reject(e);
+          settled = true;
+          clearTimeout(timeoutHandle);
+          ws.close();
+        }
+      });
+    });
+  }
+
   public async reload() {
     await this.sendMessageToDevice("reload");
   }
@@ -349,7 +425,20 @@ export class Metro implements Disposable {
     );
   }
 
-  private lookupWsAddressForNewDebugger(listJson: CDPTargetDescription[]) {
+  private async isExpoHostRuntime(webSocketDebuggerUrl: string) {
+    const HIDE_FROM_INSPECTOR_ENV = "globalThis.__expo_hide_from_inspector__";
+    try {
+      const result = await this.evaluateJsFromCdp(webSocketDebuggerUrl, HIDE_FROM_INSPECTOR_ENV);
+      if (result !== undefined) {
+        return true;
+      }
+    } catch (e) {
+      return false;
+    }
+    return false;
+  }
+
+  private async lookupWsAddressForNewDebugger(listJson: CDPTargetDescription[]) {
     // In the new debugger, ids are generated in the following format: "deviceId-pageId"
     // but unlike with the old debugger, deviceId is a hex string (UUID most likely)
     // that is stable between reloads.
@@ -362,17 +451,21 @@ export class Metro implements Disposable {
       const description = newDebuggerPages[0].description;
       const isExpoGo = description === EXPO_GO_BUNDLE_ID || description === EXPO_GO_PACKAGE_NAME;
       if (isExpoGo) {
-        // Expo go apps using the new debugger would report at least two pages, first one being the Expo Go
-        // host runtime.
-        // If we detect Expo Go package (using description field), we want to pick the second page
-        // otherwise we pick the first one
-        // When only one page is listed, it means that the app runtime hasn't registered yet in which case
-        // we return undefined which triggers a retry mechanism.
-        if (newDebuggerPages.length === 1) {
-          return undefined;
-        } else {
-          return newDebuggerPages[1].webSocketDebuggerUrl;
+        // Expo go apps using the new debugger could report more then one page,
+        // if it exist the first one being the Expo Go host runtime.
+        // more over expo go on android has a bug causing newDebuggerPages
+        // from previously run applications to leek if the host application
+        // was not stopped.
+        // to solve both issues we check if the runtime is part of
+        // the host application process and select the last one that
+        // is not. To perform this check we use expo host functionality
+        // introduced in https://github.com/expo/expo/pull/32322/files
+        for (const newDebuggerPage of newDebuggerPages.reverse()) {
+          if (!(await this.isExpoHostRuntime(newDebuggerPage.webSocketDebuggerUrl))) {
+            return newDebuggerPage.webSocketDebuggerUrl;
+          }
         }
+        return undefined;
       }
       return newDebuggerPages[0].webSocketDebuggerUrl;
     }
@@ -389,7 +482,7 @@ export class Metro implements Disposable {
     this.usesNewDebugger = this.filterNewDebuggerPages(listJson).length > 0;
 
     let websocketAddress = this.usesNewDebugger
-      ? this.lookupWsAddressForNewDebugger(listJson)
+      ? await this.lookupWsAddressForNewDebugger(listJson)
       : this.lookupWsAddressForOldDebugger(listJson);
 
     if (websocketAddress) {
