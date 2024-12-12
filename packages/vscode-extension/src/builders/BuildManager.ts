@@ -1,5 +1,5 @@
 import { Disposable, OutputChannel, window } from "vscode";
-import { PlatformBuildCache } from "./PlatformBuildCache";
+import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
@@ -53,7 +53,7 @@ export class BuildManager {
     });
 
     const cancelToken = new CancelToken();
-    const buildCache = PlatformBuildCache.forPlatform(platform);
+    const buildCache = new BuildCache(platform, getAppRootFolder());
 
     const buildApp = async () => {
       const currentFingerprint = await buildCache.calculateFingerprint();

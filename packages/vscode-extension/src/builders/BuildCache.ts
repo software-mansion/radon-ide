@@ -30,24 +30,15 @@ export type BuildCacheInfo = {
   buildResult: AndroidBuildResult | IOSBuildResult;
 };
 
-export class PlatformBuildCache {
-  static instances: Record<DevicePlatform, PlatformBuildCache | undefined> = {
-    [DevicePlatform.Android]: undefined,
-    [DevicePlatform.IOS]: undefined,
-  };
-
-  static forPlatform(platform: DevicePlatform): PlatformBuildCache {
-    if (!this.instances[platform]) {
-      this.instances[platform] = new PlatformBuildCache(platform);
-    }
-
-    return this.instances[platform];
-  }
-
-  private constructor(private readonly platform: DevicePlatform) {}
+export class BuildCache {
+  constructor(private readonly platform: DevicePlatform, private readonly appRoot: string) {}
 
   get cacheKey() {
-    return this.platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+    const platformKey = this.platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+    const appRoot = this.appRoot;
+    const res =appRoot+platformKey
+    Logger.debug("Frytki", res);
+    return res
   }
 
   /**
@@ -55,7 +46,7 @@ export class PlatformBuildCache {
    */
   public async storeBuild(buildFingerprint: string, build: BuildResult) {
     const appPath = await getAppHash(getAppPath(build));
-    await extensionContext.workspaceState.update(this.cacheKey, {
+    await extensionContext.globalState.update(this.cacheKey, {
       fingerprint: buildFingerprint,
       buildHash: appPath,
       buildResult: build,
@@ -63,11 +54,11 @@ export class PlatformBuildCache {
   }
 
   public async clearCache() {
-    await extensionContext.workspaceState.update(this.cacheKey, undefined);
+    await extensionContext.globalState.update(this.cacheKey, undefined);
   }
 
   public async getBuild(currentFingerprint: string) {
-    const cache = extensionContext.workspaceState.get<BuildCacheInfo>(this.cacheKey);
+    const cache = extensionContext.globalState.get<BuildCacheInfo>(this.cacheKey);
     if (!cache) {
       Logger.debug("No cached build found.");
       return undefined;
@@ -106,7 +97,7 @@ export class PlatformBuildCache {
   public async isCacheStale() {
     const currentFingerprint = await this.calculateFingerprint();
     const { fingerprint } =
-      extensionContext.workspaceState.get<BuildCacheInfo>(this.cacheKey) ?? {};
+      extensionContext.globalState.get<BuildCacheInfo>(this.cacheKey) ?? {};
 
     return currentFingerprint !== fingerprint;
   }
@@ -145,10 +136,10 @@ export class PlatformBuildCache {
     const fingerprint = await runfingerprintCommand(fingerprintCommand, env);
 
     if (!fingerprint) {
-      throw new Error("Failed to generate workspace fingerprint using custom script.");
+      throw new Error("Failed to generate application fingerprint using custom script.");
     }
 
-    Logger.debug("Workspace fingerprint", fingerprint);
+    Logger.debug("Application fingerprint", fingerprint);
     return fingerprint;
   }
 }
@@ -159,4 +150,21 @@ function getAppPath(build: BuildResult) {
 
 async function getAppHash(appPath: string) {
   return (await calculateMD5(appPath)).digest("hex");
+}
+
+export function migrateOldBuildCachesToNewStorage() {
+  const platformKeys = [ANDROID_BUILD_CACHE_KEY, IOS_BUILD_CACHE_KEY];
+  const appRoot = getAppRootFolder();
+
+  platformKeys.forEach((platformKey) => {
+    const cache = extensionContext.workspaceState.get<BuildCacheInfo>(platformKey);
+    if (!cache) {
+      return;
+    }
+
+    extensionContext.globalState.update(appRoot+platformKey, cache);
+
+    // remove the old cache afterwords
+    extensionContext.workspaceState.update(platformKey, undefined);
+  });
 }
