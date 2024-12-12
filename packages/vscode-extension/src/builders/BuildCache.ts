@@ -34,11 +34,10 @@ export class BuildCache {
   constructor(private readonly platform: DevicePlatform, private readonly appRoot: string) {}
 
   get cacheKey() {
-    const platformKey = this.platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+    const platformKey =
+      this.platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
     const appRoot = this.appRoot;
-    const res =appRoot+platformKey
-    Logger.debug("Frytki", res);
-    return res
+    return appRoot + platformKey;
   }
 
   /**
@@ -96,8 +95,7 @@ export class BuildCache {
 
   public async isCacheStale() {
     const currentFingerprint = await this.calculateFingerprint();
-    const { fingerprint } =
-      extensionContext.globalState.get<BuildCacheInfo>(this.cacheKey) ?? {};
+    const { fingerprint } = extensionContext.globalState.get<BuildCacheInfo>(this.cacheKey) ?? {};
 
     return currentFingerprint !== fingerprint;
   }
@@ -162,7 +160,7 @@ export function migrateOldBuildCachesToNewStorage() {
       return;
     }
 
-    extensionContext.globalState.update(appRoot+platformKey, cache);
+    extensionContext.globalState.update(appRoot + platformKey, cache);
 
     // remove the old cache afterwords
     extensionContext.workspaceState.update(platformKey, undefined);
