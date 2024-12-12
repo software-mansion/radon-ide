@@ -15,7 +15,11 @@ import {
 import { DebugProtocol } from "@vscode/debugprotocol";
 import Cdp from "vscode-js-debug/src/cdp/api";
 import { AnyObject } from "vscode-js-debug/src/adapter/objectPreview/betterTypes";
-import { messageFormatters, previewAsObject, previewRemoteObject } from "vscode-js-debug/src/adapter/objectPreview";
+import {
+  messageFormatters,
+  previewAsObject,
+  previewRemoteObject,
+} from "vscode-js-debug/src/adapter/objectPreview";
 import { formatMessage as externalFormatMessage } from "vscode-js-debug/src/adapter/messageFormat";
 import { PreviewContextType } from "vscode-js-debug/src/adapter/objectPreview/contexts";
 import { Logger } from "../Logger";
@@ -149,15 +153,13 @@ export class DebugAdapter extends DebugSession {
   };
 
   // Based on https://github.com/microsoft/vscode-js-debug/blob/3be255753c458f231e32c9ef5c60090236780060/src/adapter/console/textualMessage.ts#L83
-  async formatDefaultString (
-    args: ReadonlyArray<Cdp.Runtime.RemoteObject>,
-  ) {
-    const useMessageFormat = args.length > 1 && args[0].type === 'string';
+  async formatDefaultString(args: ReadonlyArray<Cdp.Runtime.RemoteObject>) {
+    const useMessageFormat = args.length > 1 && args[0].type === "string";
     const formatResult = useMessageFormat
       ? externalFormatMessage(args[0].value, args.slice(1) as AnyObject[], messageFormatters)
-      : externalFormatMessage('', args as AnyObject[], messageFormatters);
+      : externalFormatMessage("", args as AnyObject[], messageFormatters);
 
-    const output = formatResult.result + '\n';
+    const output = formatResult.result + "\n";
 
     if (formatResult.usedAllSubs && !args.some(previewAsObject)) {
       return { output };
@@ -166,7 +168,7 @@ export class DebugAdapter extends DebugSession {
 
       return { output, variablesReference: outputVar };
     }
-  };
+  }
 
   private async handleConsoleAPICall(message: any) {
     // We wrap console calls and add stack information as last three arguments, however
@@ -199,11 +201,8 @@ export class DebugAdapter extends DebugSession {
 
       const formattedOutput = await this.formatDefaultString(message.params.args.slice(0, -3));
 
-      output = new OutputEvent(
-        formattedOutput.output,
-        typeToCategory(message.params.type)
-      );
-      
+      output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
+
       output.body = {
         ...formattedOutput,
         //@ts-ignore source, line, column and group are valid fields
@@ -211,17 +210,13 @@ export class DebugAdapter extends DebugSession {
         line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
         column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
       };
-      
     } else {
       const variablesRefDapID = this.createVariableForOutputEvent(message.params.args);
 
       const formattedOutput = await this.formatDefaultString(message.params.args);
 
-      output = new OutputEvent(
-        formattedOutput.output,
-        typeToCategory(message.params.type)
-      );
-      
+      output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
+
       output.body = {
         ...formattedOutput,
         //@ts-ignore source, line, column and group are valid fields
@@ -441,15 +436,15 @@ export class DebugAdapter extends DebugSession {
   ): Promise<void> {
     response.body = response.body || {};
     response.body.variables = [];
-    
+
     if (args.filter === "indexed") {
-      const stringified = '' + getArraySlots;
+      const stringified = "" + getArraySlots;
 
       try {
         const partialValue = await this.cdpSession.sendCDPMessage("Runtime.callFunctionOn", {
           functionDeclaration: stringified,
           objectId: this.variableStore.convertDAPObjectIdToCDP(args.variablesReference),
-          arguments: [args.start, args.count].map(value => ({ value })),
+          arguments: [args.start, args.count].map((value) => ({ value })),
         });
 
         const properties = await this.variableStore.get(
@@ -460,8 +455,8 @@ export class DebugAdapter extends DebugSession {
         );
 
         response.body.variables = properties;
-      } catch(e) {
-        Logger.error('[CDP] Failed to retrieve array partially', e);
+      } catch (e) {
+        Logger.error("[CDP] Failed to retrieve array partially", e);
       }
     }
 
@@ -474,7 +469,6 @@ export class DebugAdapter extends DebugSession {
       );
     }
 
-    
     this.sendResponse(response);
   }
 

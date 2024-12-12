@@ -64,7 +64,7 @@ export class VariableStore {
               variablesReference,
               // We split into 100 chunks, so no need to do it for less than 100 items
               indexedVariables: length > 100 ? length : undefined,
-              namedVariables: length > 100 ? 1 : undefined
+              namedVariables: length > 100 ? 1 : undefined,
             };
           }
 

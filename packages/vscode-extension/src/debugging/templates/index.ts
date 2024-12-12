@@ -1,1 +1,1 @@
-export { default } from'./getArraySlots';
+export { default } from "./getArraySlots";
