@@ -30,6 +30,7 @@ import { AnyObject } from "vscode-js-debug/src/adapter/objectPreview/betterTypes
 import { messageFormatters, previewAsObject, previewRemoteObject } from "vscode-js-debug/src/adapter/objectPreview";
 import { formatMessage as externalFormatMessage } from "vscode-js-debug/src/adapter/messageFormat";
 import { PreviewContextType } from "vscode-js-debug/src/adapter/objectPreview/contexts";
+import { getSourceSuffix } from "vscode-js-debug/src/adapter/templates";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -540,12 +541,19 @@ export class DebugAdapter extends DebugSession {
     args: DebugProtocol.VariablesArguments
   ): Promise<void> {
     response.body = response.body || {};
-    response.body.variables = await this.variableStore.get(
-      args.variablesReference,
-      (params: object) => {
-        return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
-      }
-    );
+    response.body.variables = [];
+    
+    if (args.filter !== "indexed" && args.filter !== "named") {
+      response.body.variables = await this.variableStore.get(
+        args.variablesReference,
+        (params: object) => {
+          return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
+        }
+      );
+    }
+
+    console.log('args', args);
+    console.log('response', response);
 
     if (args.filter === "indexed") {
       const fn = function(
@@ -572,21 +580,23 @@ export class DebugAdapter extends DebugSession {
       //   + stringified.slice(endIndex);
       try {
         const partialValue = await this.cdpSession.sendCDPMessage("Runtime.callFunctionOn", {
-          objectId: args.variablesReference.toString(),
-          functionDeclaration: stringified.replaceAll("\n", ""),
+          functionDeclaration: stringified,
+          objectId: this.variableStore.convertDAPObjectIdToCDP(args.variablesReference),
           arguments: [args.start, args.count].map(value => ({ value })),
         });
 
         console.log('partialValue', partialValue);
         const cdpValue = this.variableStore.adaptCDPObjectId(partialValue.result.objectId);
 
-        response.body.variables = await this.variableStore.get(
+        const properties = await this.variableStore.get(
           cdpValue,
           (params: object) => {
             return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
           }
         );
 
+
+        response.body.variables = properties;
 
         this.sendResponse(response);
 

@@ -140,7 +140,7 @@ export class VariableStore {
     return dapObjectID;
   }
 
-  private convertDAPObjectIdToCDP(dapObjectID: number) {
+  public convertDAPObjectIdToCDP(dapObjectID: number) {
     return this.DAPtoCDPObjectIdMap.get(dapObjectID);
   }
 }
