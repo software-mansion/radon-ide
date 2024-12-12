@@ -25,6 +25,12 @@ import { VariableStore } from "./variableStore";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { CDPSession } from "./CDPSession";
+import Cdp from "vscode-js-debug/src/cdp/api";
+import { AnyObject } from "vscode-js-debug/src/adapter/objectPreview/betterTypes";
+import { messageFormatters, previewAsObject, previewRemoteObject } from "vscode-js-debug/src/adapter/objectPreview";
+import { formatMessage as externalFormatMessage } from "vscode-js-debug/src/adapter/messageFormat";
+import { PreviewContextType } from "vscode-js-debug/src/adapter/objectPreview/contexts";
+import { getSourceSuffix } from "vscode-js-debug/src/adapter/templates";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -143,7 +149,64 @@ export class DebugAdapter extends DebugSession {
     }
   };
 
+  async formatDefaultString (
+    // thread: Thread,
+    args: ReadonlyArray<Cdp.Runtime.RemoteObject>,
+  ) {
+    const useMessageFormat = args.length > 1 && args[0].type === 'string';
+    const formatResult = useMessageFormat
+      ? externalFormatMessage(args[0].value, args.slice(1) as AnyObject[], messageFormatters)
+      : externalFormatMessage('', args as AnyObject[], messageFormatters);
+
+    const output = formatResult.result + '\n';
+
+    if (formatResult.usedAllSubs && !args.some(previewAsObject)) {
+      return { output };
+    } else {
+      return await this.formatComplexStringOutput(output, args);
+    }
+  };
+
+  async formatComplexStringOutput (
+    // thread: Thread,
+    output: string,
+    args: ReadonlyArray<Cdp.Runtime.RemoteObject>,
+  ) {
+    const outputVar = await this.createVariableForOutputEvent(args as CDPRemoteObject[]);
+
+    return { output, variablesReference: outputVar };
+  };
+
+
   private async handleConsoleAPICall(message: any) {
+    const string = 'string';
+    const object = { key: 'value', key2: 'value2' };
+    const set = new Set([1, 2, 3, 3]);
+    const array100 = new Array(100).fill(0).map((_, i) => i);
+    const array1000 = new Array(1000).fill(0).map((_, i) => i);
+    const int = 1;
+    const float = 1.1;
+    const func = function() {};
+    const anonymousFunc = () => {};
+
+
+    // console.log(string);
+    // console.log(object);
+    // console.log(set);
+    // console.log(array100);
+    // console.log(array1000);
+    // console.log(int);
+    // console.log(float);
+    // console.log(func);
+    // console.log(anonymousFunc);
+    // console.log(string, object, set,
+    //   array100,
+    //   array1000,
+    //   int,
+    //   float,
+    //   func,
+    //   anonymousFunc);
+
     // We wrap console calls and add stack information as last three arguments, however
     // some logs may baypass that, especially when printed in initialization phase, so we
     // need to detect whether the wrapper has added the stack info or not
@@ -153,6 +216,7 @@ export class DebugAdapter extends DebugSession {
     // console.
     const argsLen = message.params.args.length;
     let output: OutputEvent;
+
     if (argsLen > 0 && message.params.args[0].value === "__RNIDE_INTERNAL") {
       // We return here to avoid passing internal logs to the user debug console,
       // but they will still be visible in metro log feed.
@@ -171,20 +235,38 @@ export class DebugAdapter extends DebugSession {
           generatedColumn1Based - 1
         );
 
-      const variablesRefDapID = this.createVariableForOutputEvent(message.params.args.slice(0, -3));
+      const testOutput = await this.formatDefaultString(message.params.args.slice(0, -3));
 
       output = new OutputEvent(
-        (await formatMessage(message.params.args.slice(0, -3))) + "\n",
+        // (await formatMessage(message.params.args.slice(0, -3))) + "\n",
+        testOutput.output,
         typeToCategory(message.params.type)
       );
+      
+      // Old method to compare
+      // output = new OutputEvent(
+      //   (await formatMessage(message.params.args.slice(0, -3))) + "\n",
+      //   typeToCategory(message.params.type)
+      // );
+      // output.body = {
+      //   ...output.body,
+      //   //@ts-ignore source, line, column and group are valid fields
+      //   source: new Source(sourceURL, sourceURL),
+      //   line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+      //   column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
+      //   variablesReference: variablesRefDapID,
+      // };   
+      
+      // this.sendEvent(output);
+      
       output.body = {
-        ...output.body,
+        ...testOutput,
         //@ts-ignore source, line, column and group are valid fields
         source: new Source(sourceURL, sourceURL),
         line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
         column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
-        variablesReference: variablesRefDapID,
       };
+      
     } else {
       const variablesRefDapID = this.createVariableForOutputEvent(message.params.args);
 
@@ -204,21 +286,73 @@ export class DebugAdapter extends DebugSession {
     );
   }
 
-  private createVariableForOutputEvent(args: CDPRemoteObject[]) {
-    // we create empty object that is needed for DAP OutputEvent to display
-    // collapsed args properly, the object references the array of args array
-    const argsObjectDapID = this.variableStore.pushReplVariable(
-      args.map((arg: CDPRemoteObject, index: number) => {
+  private async createVariableForOutputEvent(args: CDPRemoteObject[]) {
+    const prepareVariables = await Promise.all(
+      args.map(async (arg: CDPRemoteObject, index: number) => {
+        // if (arg.type === "object") {
+        //   if (arg?.subtype === "array") {
+        //     const match = String(arg.description).match(/\(([0-9]+)\)/);
+        //     const length = match ? +match[1] : 0;
+
+        //     // if (length < 100) {
+        //     //   arg.description = previewRemoteObject(arg, PreviewContextType.PropertyValue);
+        //     //   arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
+
+        //     //   return [{ name: `arg${index}`, value: arg }];
+        //     // }
+
+        //     // const stackObjectProperties = await this.variableStore.getProperties(
+        //     //   this.variableStore.adaptCDPObjectId(arg.objectId),
+        //     //   (params: object) => {
+        //     //     const response = this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
+        //     //     return response;
+        //     //   }
+        //     // );
+
+        //     // console.log("LOG PROPERTIES -> ", stackObjectProperties);
+
+        //     // const chunkSize = 100;
+        //     // const chunks = [];
+        //     // for (let i = 0; i < length; i += chunkSize) {
+        //     //     const chunk = stackObjectProperties.slice(i, i + chunkSize);
+        //     //     // do whatever
+        //     //     const chunkVariablesObjectDapID = this.variableStore.pushReplVariable(chunk.map(value => ({
+        //     //       value: value.value,
+        //     //       name: value.name,
+        //     //     })));
+                
+        //     //     chunks.push({
+        //     //       name: `[${i}..${i + chunkSize - 1}]`,
+        //     //       value: {
+        //     //         type: "object",
+        //     //         objectId: chunkVariablesObjectDapID.toString(),
+        //     //         description: '',
+        //     //       },
+        //     //     });
+        //     // }
+            
+        //     arg.description = previewRemoteObject(arg, PreviewContextType.PropertyValue);
+        //     arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
+        //     return { name: `arg${index}`, value: arg, indexedVariables: length > 100 ? length : undefined,
+        //     namedVariables: length > 100 ? 1 : undefined};
+        //   }
+        // }
+
         if (arg.type === "object") {
+          arg.description = previewRemoteObject(arg, PreviewContextType.PropertyValue);
           arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
         }
+
         return { name: `arg${index}`, value: arg };
       })
     );
+    // we create empty object that is needed for DAP OutputEvent to display
+    // collapsed args properly, the object references the array of args array
+    const argsObjectDapID = this.variableStore.pushReplVariable(prepareVariables);
 
     return this.variableStore.pushReplVariable([
       {
-        name: "",
+        name: "<unnamed>",
         value: {
           type: "object",
           objectId: argsObjectDapID.toString(),
@@ -413,6 +547,40 @@ export class DebugAdapter extends DebugSession {
         return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
       }
     );
+
+    if (args.filter === "indexed") {
+      const fn = function(
+        this: unknown[],
+        start: number,
+        count: number,
+      ) {
+        const result = {};
+        const from = start === -1 ? 0 : start;
+        const to = count === -1 ? this.length : start + count;
+        for (let i = from; i < to && i < this.length; ++i) {
+          const descriptor = Object.getOwnPropertyDescriptor(this, i);
+          if (descriptor) {
+            Object.defineProperty(result, i, descriptor);
+          }
+        }
+
+        return result;
+      };      
+      let stringified = '' + fn;
+      const endIndex = stringified.lastIndexOf('}');
+      stringified = stringified.slice(0, endIndex) + getSourceSuffix(undefined)
+        + stringified.slice(endIndex);
+
+      const partialValue = await this.cdpSession.sendCDPMessage("Runtime.callFunctionOn", {
+        objectId: args.variablesReference,
+        functionDeclaration: stringified.replaceAll('\n', ''),
+        arguments: [args.start, args.count],
+      });
+
+      console.log('partialValue', partialValue);
+    }
+
+    
     this.sendResponse(response);
   }
 

@@ -13,6 +13,27 @@ export class VariableStore {
   private CDPtoDAPObjectIdMap: Map<string, number> = new Map();
   private DAPtoCDPObjectIdMap: Map<number, string> = new Map();
 
+
+  public async getProperties(
+    id: number,
+    fetchProperties: (params: object) => Promise<any>,
+  ) {
+    let properties: CDPPropertyDescriptor[];
+    if (this.DAPtoCDPObjectIdMap.has(id)) {
+      const cdpObjectId = this.convertDAPObjectIdToCDP(id);
+      properties = (
+        await fetchProperties({
+          objectId: cdpObjectId,
+          ownProperties: true,
+        })
+      ).result as CDPPropertyDescriptor[];
+    } else {
+      properties = this.replVariables.get(id) as CDPPropertyDescriptor[];
+    }
+
+    return properties;
+  }
+
   /**
    * If exist it returns a local variables if not it tries to fetch them from cdp.
    * @param id VariableId.
@@ -51,6 +72,21 @@ export class VariableStore {
           } else {
             variablesReference = Number(prop.value.objectId);
           }
+
+          if (prop.value.subtype === "array") {
+            const match = String(prop.value.description).match(/\(([0-9]+)\)/);
+            const length = match ? +match[1] : 0;
+
+            return {
+              name: prop.name,
+              value,
+              type: "object",
+              variablesReference,
+              indexedVariables: length > 100 ? length : undefined,
+              namedVariables: length > 100 ? 1 : undefined
+            };
+          }
+
           return {
             name: prop.name,
             value,
