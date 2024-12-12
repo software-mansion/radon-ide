@@ -13,7 +13,11 @@ import {
   StackFrame,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
-import { formatMessage } from "./logFormatting";
+import Cdp from "vscode-js-debug/src/cdp/api";
+import { AnyObject } from "vscode-js-debug/src/adapter/objectPreview/betterTypes";
+import { messageFormatters, previewAsObject, previewRemoteObject } from "vscode-js-debug/src/adapter/objectPreview";
+import { formatMessage as externalFormatMessage } from "vscode-js-debug/src/adapter/messageFormat";
+import { PreviewContextType } from "vscode-js-debug/src/adapter/objectPreview/contexts";
 import { Logger } from "../Logger";
 import {
   inferDAPScopePresentationHintFromCDPType,
@@ -25,11 +29,6 @@ import { VariableStore } from "./variableStore";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { CDPSession } from "./CDPSession";
-import Cdp from "vscode-js-debug/src/cdp/api";
-import { AnyObject } from "vscode-js-debug/src/adapter/objectPreview/betterTypes";
-import { messageFormatters, previewAsObject, previewRemoteObject } from "vscode-js-debug/src/adapter/objectPreview";
-import { formatMessage as externalFormatMessage } from "vscode-js-debug/src/adapter/messageFormat";
-import { PreviewContextType } from "vscode-js-debug/src/adapter/objectPreview/contexts";
 import getArraySlots from "./templates";
 
 function typeToCategory(type: string) {
@@ -198,15 +197,15 @@ export class DebugAdapter extends DebugSession {
           generatedColumn1Based - 1
         );
 
-      const testOutput = await this.formatDefaultString(message.params.args.slice(0, -3));
+      const formattedOutput = await this.formatDefaultString(message.params.args.slice(0, -3));
 
       output = new OutputEvent(
-        testOutput.output,
+        formattedOutput.output,
         typeToCategory(message.params.type)
       );
       
       output.body = {
-        ...testOutput,
+        ...formattedOutput,
         //@ts-ignore source, line, column and group are valid fields
         source: new Source(sourceURL, sourceURL),
         line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
@@ -216,12 +215,15 @@ export class DebugAdapter extends DebugSession {
     } else {
       const variablesRefDapID = this.createVariableForOutputEvent(message.params.args);
 
+      const formattedOutput = await this.formatDefaultString(message.params.args);
+
       output = new OutputEvent(
-        (await formatMessage(message.params.args)) + "\n",
+        formattedOutput.output,
         typeToCategory(message.params.type)
       );
+      
       output.body = {
-        ...output.body,
+        ...formattedOutput,
         //@ts-ignore source, line, column and group are valid fields
         variablesReference: variablesRefDapID,
       };
