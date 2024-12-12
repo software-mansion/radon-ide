@@ -30,7 +30,6 @@ import { AnyObject } from "vscode-js-debug/src/adapter/objectPreview/betterTypes
 import { messageFormatters, previewAsObject, previewRemoteObject } from "vscode-js-debug/src/adapter/objectPreview";
 import { formatMessage as externalFormatMessage } from "vscode-js-debug/src/adapter/messageFormat";
 import { PreviewContextType } from "vscode-js-debug/src/adapter/objectPreview/contexts";
-import { getSourceSuffix } from "vscode-js-debug/src/adapter/templates";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -566,18 +565,35 @@ export class DebugAdapter extends DebugSession {
 
         return result;
       };      
+
       let stringified = '' + fn;
-      const endIndex = stringified.lastIndexOf('}');
-      stringified = stringified.slice(0, endIndex) + getSourceSuffix(undefined)
-        + stringified.slice(endIndex);
+      // const endIndex = stringified.lastIndexOf('}');
+      // stringified = stringified.slice(0, endIndex) + getSourceSuffix(undefined)
+      //   + stringified.slice(endIndex);
+      try {
+        const partialValue = await this.cdpSession.sendCDPMessage("Runtime.callFunctionOn", {
+          objectId: args.variablesReference.toString(),
+          functionDeclaration: stringified.replaceAll("\n", ""),
+          arguments: [args.start, args.count].map(value => ({ value })),
+        });
 
-      const partialValue = await this.cdpSession.sendCDPMessage("Runtime.callFunctionOn", {
-        objectId: args.variablesReference,
-        functionDeclaration: stringified.replaceAll('\n', ''),
-        arguments: [args.start, args.count],
-      });
+        console.log('partialValue', partialValue);
+        const cdpValue = this.variableStore.adaptCDPObjectId(partialValue.result.objectId);
 
-      console.log('partialValue', partialValue);
+        response.body.variables = await this.variableStore.get(
+          cdpValue,
+          (params: object) => {
+            return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
+          }
+        );
+
+
+        this.sendResponse(response);
+
+        return;
+      } catch(e) {
+        console.log('error', e);
+      }
     }
 
     
