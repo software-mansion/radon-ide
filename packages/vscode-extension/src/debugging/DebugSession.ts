@@ -36,7 +36,13 @@ export class DebugSession implements Disposable {
   }
 
   public dispose() {
-    this.session && debug.stopDebugging(this.session);
+    let sessionExists = false;
+    try {
+      sessionExists = Boolean(this.session);
+    } catch {
+      // ignore errors as we are only interested if the session exists
+    }
+    sessionExists && debug.stopDebugging(this.session);
     this.debugEventsListener.dispose();
   }
 

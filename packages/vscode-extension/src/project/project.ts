@@ -358,7 +358,7 @@ export class Project
   }
 
   public async reload(type: ReloadAction): Promise<boolean> {
-    this.updateProjectState({ status: "starting" });
+    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
 
     // this action needs to be handled outside of device session as it resets the device session itself
     if (type === "reboot") {
