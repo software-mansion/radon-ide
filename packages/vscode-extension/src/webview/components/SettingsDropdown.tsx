@@ -11,6 +11,7 @@ import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
+import Feedback from "./Feedback";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -141,6 +142,13 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <span className="codicon codicon-report" />
               <div className="dropdown-menu-item-content">Report Issue</div>
             </span>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item className="dropdown-menu-item">
+            <span className="codicon codicon-feedback" />
+            <div className="dropdown-menu-item-content">
+              Send feedback
+              <Feedback />
+            </div>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

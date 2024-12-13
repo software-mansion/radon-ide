@@ -1,0 +1,37 @@
+.feedback {
+  display: flex;
+  gap: 2px;
+}
+
+.feedback-button {
+  width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+
+.feedback-button:hover {
+  cursor: pointer;
+}
+
+.feedback-button-positive {
+  color: var(--green-light-80);
+  border: 1px solid var(--green-light-80);
+}
+
+.feedback-button-positive:hover {
+  background-color: var(--green-light-80);
+  color: var(--white);
+}
+
+.feedback-button-negative {
+  color: var(--red-light-80);
+  border: 1px solid var(--red-light-80);
+}
+
+.feedback-button-negative:hover {
+  background-color: var(--red-light-80);
+  color: var(--white);
+}
