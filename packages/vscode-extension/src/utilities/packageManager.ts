@@ -155,6 +155,8 @@ async function isYarnModulesInstalled(workspacePath: string): Promise<boolean> {
 
 async function isPnpmModulesInstalled(workspacePath: string): Promise<boolean> {
   try {
+    // we use pnpm's ls method for checking dependencies, which returns list of all
+    // packages that are installed along with their version info
     const { stdout } = await command("pnpm ls --json", {
       cwd: workspacePath,
       quietErrorsOnExit: true,
@@ -165,6 +167,7 @@ async function isPnpmModulesInstalled(workspacePath: string): Promise<boolean> {
       return false;
     }
 
+    // check whether each package has dependencies with a valid versions
     for (const pkg of packages) {
       if (!pkg || !pkg.dependencies || Object.keys(pkg.dependencies).length === 0) {
         return false;
