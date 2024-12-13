@@ -433,7 +433,7 @@ export class Metro implements Disposable {
         return true;
       }
     } catch (e) {
-      return false;
+      // we ignore errors as they wer already logged by the evaluateJsFromCdp method
     }
     return false;
   }
