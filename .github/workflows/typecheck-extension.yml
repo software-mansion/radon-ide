@@ -25,6 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - uses: actions/checkout@v4
+        with:
+          repository: software-mansion-labs/vscode-js-debug
+          path: packages/vscode-js-debug
+
       - name: Setup node
         uses: actions/setup-node@v4
         with:
