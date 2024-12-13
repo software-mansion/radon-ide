@@ -33,11 +33,10 @@ export type BuildCacheInfo = {
 export class BuildCache {
   constructor(private readonly platform: DevicePlatform, private readonly appRoot: string) {}
 
-  get cacheKey() {
-    const platformKey =
+  private get cacheKey() {
+    const keyPrefix =
       this.platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-    const appRoot = this.appRoot;
-    return appRoot + platformKey;
+    return `${keyPrefix}:{this.appRoot}`;
   }
 
   /**
