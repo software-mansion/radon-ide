@@ -298,7 +298,6 @@ export class Metro implements Disposable {
     timeoutMs: number = 2000
   ): Promise<string | undefined> {
     const REQUEST_ID = 0;
-    let timeoutHandle: NodeJS.Timeout;
 
     const wsUrl = new URL(webSocketDebuggerUrl);
     wsUrl.hostname = "localhost";
@@ -308,12 +307,18 @@ export class Metro implements Disposable {
       let settled = false;
       const ws = new WebSocket(wsUrl);
 
-      timeoutHandle = setTimeout(() => {
+      const timeoutHandle = setTimeout(() => {
         Logger.debug(`[evaluateJsFromCdpAsync] Request timeout from ${wsUrl.toString()}`);
         reject(new Error("Request timeout"));
         settled = true;
         ws.close();
       }, timeoutMs);
+
+      const settleConnection = () => {
+        settled = true;
+        clearTimeout(timeoutHandle);
+        ws.close();
+      };
 
       ws.on("open", () => {
         ws.send(
@@ -328,9 +333,7 @@ export class Metro implements Disposable {
       ws.on("error", (e) => {
         Logger.debug(`[evaluateJsFromCdpAsync] Failed to connect ${wsUrl.toString()}`, e);
         reject(e);
-        settled = true;
-        clearTimeout(timeoutHandle);
-        ws.close();
+        settleConnection();
       });
 
       ws.on("close", () => {
@@ -354,15 +357,11 @@ export class Metro implements Disposable {
             } else {
               resolve(undefined);
             }
-            settled = true;
-            clearTimeout(timeoutHandle);
-            ws.close();
+            settleConnection();
           }
         } catch (e) {
           reject(e);
-          settled = true;
-          clearTimeout(timeoutHandle);
-          ws.close();
+          settleConnection();
         }
       });
     });
