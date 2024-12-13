@@ -17,8 +17,11 @@ function useRouterPluginMainHook({ onNavigationChange }) {
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
 
-  const displayParams = new URLSearchParams(params).toString();
-  const displayName = `${pathname}${displayParams ? `?${displayParams}` : ''}`;
+  const filteredParams = params ?? {};
+  delete filteredParams.__EXPO_ROUTER_key;
+
+  const displayParams = new URLSearchParams(filteredParams).toString();
+  const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
 
   useEffect(() => {
     onNavigationChange({
