@@ -176,7 +176,7 @@ async function isPnpmModulesInstalled(workspacePath: string): Promise<boolean> {
       return false;
     }
 
-    // check whether each package has dependencies with a valid versions
+    // check whether each package has dependencies with a valid versions to prevent issues
     for (const pkg of packages) {
       if (!pkg || !pkg.dependencies || Object.keys(pkg.dependencies).length === 0) {
         return false;
