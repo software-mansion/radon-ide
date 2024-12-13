@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WORKING_DIRECTORY: packages/vscode-extension
+      SUBMODULE_DIRECTORY: packages/vscode-js-debug
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,6 +37,10 @@ jobs:
           node-version: 20
           cache: "npm"
           cache-dependency-path: packages/vscode-extension/package-lock.json
+
+      - name: Install submodule node dependencies
+        working-directory: ${{ env.SUBMODULE_DIRECTORY }}
+        run: npm i
 
       - name: Install node dependencies
         working-directory: ${{ env.WORKING_DIRECTORY }}
