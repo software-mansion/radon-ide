@@ -21,23 +21,66 @@ global.__RNIDE_onDebuggerReady = function () {
 };
 
 // We add log this trace to diagnose issues with loading runtime in the IDE
-// The first argument is "__RNIDE_INTERNAL" so we can filter it out in 
+// The first argument is "__RNIDE_INTERNAL" so we can filter it out in
 // debug adapter and avoid exposing as part of application logs
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
-function wrapConsole(consoleFunc) {
+function calculateStackOffset(stack, reentryStack) {
+  for (let i = 0; i < Math.min(stack.length, reentryStack.length); i++) {
+    const diffLine = stack[i].lineNumber !== reentryStack[i].lineNumber;
+    const diffColumn = stack[i].column !== reentryStack[i].column;
+
+    if (diffLine || diffColumn) {
+      return i;
+    }
+  }
+
+  return 0;
+}
+
+function wrapConsole(logFunctionKey) {
+  let currentLogFunc = null;
+
+  const origLogObject = console;
+  const origLogFunc = console[logFunctionKey];
+
+  let stackOffset = 1; // default offset is 1, because the first frame is the wrapConsole function
+
+  let logFunctionReentryStack = null;
+  let logFunctionReentryFlag = false;
+
   return function (...args) {
     const stack = parseErrorStack(new Error().stack);
-    const expoLogIndex = stack.findIndex((frame) => frame.methodName === "__expoConsoleLog");
-    const location = expoLogIndex > 0 ? stack[expoLogIndex + 1] : stack[1];
+
+    // To get the proper stack frame, so we can display link to the source code
+    // we need to skip wrappers (like wrapConsole below or for example Sentry wrapper)
+    // Otherwise, the stack frame would point to the wrapper and not the actual source code
+    // To do that, we run console.log again in wrapper, and then compare
+    // first frames to find the offset. We do that when ant of console ref changes
+    if (logFunctionReentryFlag) {
+      logFunctionReentryStack = stack;
+      return;
+    }
+
+    if (currentLogFunc !== console[logFunctionKey]) {
+      // when the console function has changed, we need to update the offset
+      logFunctionReentryFlag = true;
+      console[logFunctionKey]();
+      logFunctionReentryFlag = false;
+      stackOffset = calculateStackOffset(stack, logFunctionReentryStack);
+      currentLogFunc = console[logFunctionKey];
+    }
+
+    const location = stack[stackOffset];
     args.push(location.file, location.lineNumber, location.column);
-    return consoleFunc.apply(console, args);
+    return origLogFunc.apply(origLogObject, args);
   };
 }
-console.log = wrapConsole(console.log);
-console.warn = wrapConsole(console.warn);
-console.error = wrapConsole(console.error);
-console.info = wrapConsole(console.info);
+
+console.log = wrapConsole("log");
+console.warn = wrapConsole("warn");
+console.error = wrapConsole("error");
+console.info = wrapConsole("info");
 
 // This variable can be used by external integrations to detect if they are running in the IDE
 global.__RNIDE_enabled = true;
