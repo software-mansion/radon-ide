@@ -21,7 +21,6 @@ import {
   previewRemoteObject,
 } from "vscode-js-debug/out/adapter/objectPreview";
 import { formatMessage } from "vscode-js-debug/out/adapter/messageFormat";
-import { PreviewContextType } from "vscode-js-debug/out/adapter/objectPreview/contexts";
 import { Logger } from "../Logger";
 import {
   inferDAPScopePresentationHintFromCDPType,
@@ -233,7 +232,7 @@ export class DebugAdapter extends DebugSession {
     const prepareVariables = await Promise.all(
       args.map(async (arg: CDPRemoteObject, index: number) => {
         if (arg.type === "object") {
-          arg.description = previewRemoteObject(arg, PreviewContextType.PropertyValue);
+          arg.description = previewRemoteObject(arg, "propertyValue");
           arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
         }
 
