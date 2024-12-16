@@ -47,7 +47,14 @@ const StartScreen = () => {
           animate={{ x: 0 }}
           transition={{ duration: 0.5 }}>
           <div className={styles.heroImageWrapper}>
-            <img className={styles.heroImage} src={useBaseUrl("/img/hero.png")} draggable={false} />
+            <img
+              className={styles.heroImage}
+              src={useBaseUrl("/img/hero.webp")}
+              alt="Radon IDE in action"
+              width={1678}
+              height={1025}
+              draggable={false}
+            />
           </div>
         </motion.div>
         <div className={styles.heading}>
