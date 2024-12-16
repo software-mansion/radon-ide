@@ -3,7 +3,7 @@ import "./Feedback.css";
 import classNames from "classnames";
 import { useUtils } from "../providers/UtilsProvider";
 
-type Sentiment = "positive" | "negative";
+export type Sentiment = "positive" | "negative";
 
 export default function Feedback() {
   const { sendTelemetry } = useUtils();

@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import Button from "../components/shared/Button";
-import { FeedbackButton } from "../components/Feedback";
+import { FeedbackButton, Sentiment } from "../components/Feedback";
 import "./FeedbackView.css";
 import { useModal } from "../providers/ModalProvider";
 import { useUtils } from "../providers/UtilsProvider";
 
-const CLOSE_MODAL_AFTER = 2200;
+const CLOSE_MODAL_AFTER = 2400;
 
 function FeedbackView() {
-  const [sentiment, setSentiment] = useState<"positive" | "negative" | undefined>();
+  const [sentiment, setSentiment] = useState<Sentiment | undefined>();
   const [isFeedbackSent, setFeedbackSent] = useState(false);
   const { closeModal, showHeader } = useModal();
   const { register, handleSubmit } = useForm();
@@ -23,19 +23,20 @@ function FeedbackView() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isFeedbackSent) {
+    if (isFeedbackSent) {
+      const timer = setTimeout(() => {
         closeModal();
         showHeader(true);
-      }
-    }, CLOSE_MODAL_AFTER);
-
-    return () => clearTimeout(timer);
+      }, CLOSE_MODAL_AFTER);
+      return () => clearTimeout(timer);
+    }
   }, [isFeedbackSent]);
 
-  return isFeedbackSent ? (
-    <p className="feedback-thank-you">Thank you for your feedback!</p>
-  ) : (
+  if (isFeedbackSent) {
+    return <p className="feedback-thank-you">Thank you for your feedback!</p>;
+  }
+
+  return (
     <form className="container" onSubmit={handleSubmit(onSubmit)}>
       <div className="feedback-buttons-container">
         <div className="feedback-button-wrapper">
