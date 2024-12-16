@@ -21,26 +21,33 @@ global.__RNIDE_onDebuggerReady = function () {
 };
 
 // We add log this trace to diagnose issues with loading runtime in the IDE
-// The first argument is "__RNIDE_INTERNAL" so we can filter it out in 
+// The first argument is "__RNIDE_INTERNAL" so we can filter it out in
 // debug adapter and avoid exposing as part of application logs
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
-let consoleRefs = {};
+function calculateStackOffset(stack, reentryStack) {
+  for (let i = 0; i < Math.min(stack.length, reentryStack.length); i++) {
+    const diffLine = stack[i].lineNumber !== reentryStack[i].lineNumber;
+    const diffColumn = stack[i].column !== reentryStack[i].column;
+
+    if (diffLine || diffColumn) {
+      return i;
+    }
+  }
+
+  return 0;
+}
 
 function wrapConsole(logFunctionKey) {
-  consoleRefs[logFunctionKey] = null;
-  const logFunction = console[logFunctionKey];
+  let currentLogFunc = null;
+
+  const origLogObject = console;
+  const origLogFunc = console[logFunctionKey];
+
   let stackOffset = 1; // default offset is 1, because the first frame is the wrapConsole function
+
   let logFunctionReentryStack = null;
   let logFunctionReentryFlag = false;
-
-  function isConsoleRefChanged() {
-    return consoleRefs[logFunctionKey] !== console[logFunctionKey];
-  }
-  
-  function updateConsoleRefs() {
-    consoleRefs[logFunctionKey] = console[logFunctionKey];
-  }
 
   return function (...args) {
     const stack = parseErrorStack(new Error().stack);
@@ -55,34 +62,25 @@ function wrapConsole(logFunctionKey) {
       return;
     }
 
-    if (isConsoleRefChanged()) {
+    if (currentLogFunc !== console[logFunctionKey]) {
+      // when the console function is change, we need to update the offset
       logFunctionReentryFlag = true;
       console[logFunctionKey]();
       logFunctionReentryFlag = false;
-
-      for (let i = 0; i < Math.min(stack.length, logFunctionReentryStack.length); i++) {
-        const diffLine = stack[i].lineNumber !== logFunctionReentryStack[i].lineNumber;
-        const diffColumn = stack[i].column !== logFunctionReentryStack[i].column;
-
-        if (diffLine || diffColumn) {
-          stackOffset = i;
-          break;
-        }
-      }
-
-      updateConsoleRefs();
+      stackOffset = calculateStackOffset(stack, logFunctionReentryStack);
+      currentLogFunc = console[logFunctionKey];
     }
 
     const location = stack[stackOffset];
     args.push(location.file, location.lineNumber, location.column);
-    return logFunction.apply(console, args);
+    return origLogFunc.apply(origLogObject, args);
   };
 }
 
-console.log = wrapConsole('log');
-console.warn = wrapConsole('warn');
-console.error = wrapConsole('error');
-console.info = wrapConsole('info');
+console.log = wrapConsole("log");
+console.warn = wrapConsole("warn");
+console.error = wrapConsole("error");
+console.info = wrapConsole("info");
 
 // This variable can be used by external integrations to detect if they are running in the IDE
 global.__RNIDE_enabled = true;
