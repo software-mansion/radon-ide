@@ -165,8 +165,8 @@
   transform: translate(0px, 21px);
 }
 
-@media (width <= 450px) {
-  .phone-content {
+@media (width <=415px) {
+  .phone-wrapper {
     overflow: hidden;
   }
 }
