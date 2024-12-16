@@ -9,9 +9,10 @@ interface Props {
   title: string;
   body: string;
   mediaSrc?: string;
+  placeholderSrc?: string;
 }
 
-const OverviewItem = ({ label, title, body, mediaSrc }: Props) => {
+const OverviewItem = ({ label, title, body, mediaSrc, placeholderSrc }: Props) => {
   const handleButtonClick = () => {
     track("Overview CTA", { section: label });
   };
@@ -30,10 +31,12 @@ const OverviewItem = ({ label, title, body, mediaSrc }: Props) => {
       <InView triggerOnce>
         {({ inView, ref }) => (
           <div className={styles.media} ref={ref}>
-            {inView && (
-              <video autoPlay loop muted playsInline>
+            {inView ? (
+              <video autoPlay loop muted playsInline poster={placeholderSrc}>
                 <source src={mediaSrc} type="video/mp4" />
               </video>
+            ) : (
+              <img src={placeholderSrc} alt={title} fetchPriority="high" />
             )}
           </div>
         )}
