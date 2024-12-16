@@ -3,7 +3,7 @@
   display: flex;
   justify-content: safe center;
   align-items: safe center;
-  overflow: auto;
+  overflow: hidden;
   width: 100%;
   position: relative;
   user-select: none;
