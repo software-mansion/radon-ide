@@ -191,7 +191,6 @@ function PreviewView() {
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
     openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
-    setIsInspecting(false);
   }
 
   function resetInspector() {
@@ -261,6 +260,7 @@ function PreviewView() {
         <Preview
           key={selectedDevice.id}
           isInspecting={isInspecting}
+          setIsInspecting={setIsInspecting}
           inspectFrame={inspectFrame}
           setInspectFrame={setInspectFrame}
           setInspectStackData={setInspectStackData}

@@ -28,6 +28,10 @@
   user-select: none;
 }
 
+.form-filed-marked {
+  color: var(--swm-marked-text);
+}
+
 .dropdown .listbox {
   max-height: 300px !important;
   overflow-y: scroll;
@@ -38,6 +42,15 @@
   margin: 4px 0px;
   height: 1px;
   background-color: var(--swm-separator);
+}
+
+.incompatible-system-warning {
+  display: flex;
+  width: 100%;
+  padding: 10px;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
 }
 
 input.device-name-input {

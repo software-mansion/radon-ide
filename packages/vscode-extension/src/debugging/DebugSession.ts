@@ -36,7 +36,7 @@ export class DebugSession implements Disposable {
   }
 
   public dispose() {
-    this.session && debug.stopDebugging(this.session);
+    this.vscSession && debug.stopDebugging(this.vscSession);
     this.debugEventsListener.dispose();
   }
 

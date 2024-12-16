@@ -31,6 +31,7 @@ import { getLaunchConfiguration } from "./utilities/launchConfiguration";
 import { Project } from "./project/project";
 import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
+import { migrateOldBuildCachesToNewStorage } from "./builders/BuildCache";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -63,8 +64,8 @@ export function deactivate(context: ExtensionContext): undefined {
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
-  if (Platform.OS !== "macos" && Platform.OS !== "windows") {
-    window.showErrorMessage("Radon IDE works only on macOS and Windows.", "Dismiss");
+  if (Platform.OS !== "macos" && Platform.OS !== "windows" && Platform.OS !== "linux") {
+    window.showErrorMessage("Radon IDE works only on macOS, Windows and Linux.", "Dismiss");
     return;
   }
 
@@ -73,7 +74,7 @@ export async function activate(context: ExtensionContext) {
     enableDevModeLogging();
   }
 
-  migrateOldConfiguration();
+  await migrateOldConfiguration();
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
@@ -244,6 +245,9 @@ export async function activate(context: ExtensionContext) {
       );
     }
   }
+
+  // this needs to be run after app root is set
+  migrateOldBuildCachesToNewStorage();
 
   extensionActivated();
 }

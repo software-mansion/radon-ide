@@ -1,6 +1,7 @@
 .item {
   display: block;
   height: 100%;
+  max-width: 420px;
 }
 
 .plan__container {

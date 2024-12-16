@@ -23,7 +23,7 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { extensionContext } from "../utilities/extensionContext";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
@@ -32,7 +32,7 @@ import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
-import { PlatformBuildCache } from "../builders/PlatformBuildCache";
+import { BuildCache } from "../builders/BuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import { activateDevice, getLicenseToken, refreshToken, removeLicense } from "../utilities/license";
 import { isMoreThan24HoursAgo } from "../utilities/timeComparisons";
@@ -362,7 +362,7 @@ export class Project
   }
 
   public async reload(type: ReloadAction): Promise<boolean> {
-    this.updateProjectState({ status: "starting" });
+    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
 
     // this action needs to be handled outside of device session as it resets the device session itself
     if (type === "reboot") {
@@ -705,6 +705,7 @@ export class Project
         this.devtools,
         this.metro,
         this.dependencyManager,
+        new BuildCache(device.platform, getAppRootFolder()),
         this,
         this
       );
@@ -745,9 +746,8 @@ export class Project
   };
 
   private checkIfNativeChanged = throttleAsync(async () => {
-    if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
-      const platform = this.projectState.selectedDevice.platform;
-      const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
+    if (!this.isCachedBuildStale && this.deviceSession) {
+      const isCacheStale = await this.deviceSession.buildCache.isCacheStale();
 
       if (isCacheStale) {
         this.isCachedBuildStale = true;
