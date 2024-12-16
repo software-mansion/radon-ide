@@ -46,11 +46,12 @@
 }
 
 .feedback-report-issue {
-  color: var(--swm-default-text);
+  line-height: 1.5;
+  color: var(--swm-secondary-text);
 }
 
 .feedback-report-issue a {
-  color: var(--swm-secondary-text);
+  color: var(--swm-default-text);
 }
 
 .feedback-report-issue a:hover {

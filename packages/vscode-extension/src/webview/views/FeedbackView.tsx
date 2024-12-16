@@ -65,7 +65,7 @@ function FeedbackView() {
         rows={5}
       />
       <p className="feedback-report-issue">
-        Have a problem?{" "}
+        We don't include any details about the project, your setup or the logs. Have a problem?{" "}
         <a
           href="https://github.com/software-mansion/radon-ide/issues/new/choose"
           target="_blank"
