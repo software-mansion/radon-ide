@@ -49,8 +49,23 @@
   color: var(--swm-default-text);
 }
 
+.feedback-report-issue a {
+  color: var(--swm-secondary-text);
+}
+
+.feedback-report-issue a:hover {
+  text-decoration: underline;
+}
+
 .feedback-row {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.feedback-thank-you {
+  color: var(--swm-default-text);
+  font-weight: 500;
+  font-size: 18px;
+  text-align: center;
 }

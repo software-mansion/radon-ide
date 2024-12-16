@@ -12,8 +12,10 @@
   border-radius: 3px;
 }
 
-.feedback-button:hover span {
-  color: var(--swm-popover-background);
+.feedback-button:hover span,
+.feedback-button-positive-active span,
+.feedback-button-negative-active span {
+  color: var(--swm-popover-background) !important;
 }
 
 .feedback-button:hover {
@@ -38,7 +40,8 @@
   color: var(--green-light-80);
 }
 
-.feedback-button-positive:hover {
+.feedback-button-positive:hover,
+.feedback-button-positive-active {
   background-color: var(--green-light-80);
 }
 
@@ -50,6 +53,7 @@
   color: var(--red-light-80);
 }
 
-.feedback-button-negative:hover {
+.feedback-button-negative:hover,
+.feedback-button-negative-active {
   background-color: var(--red-light-80);
 }

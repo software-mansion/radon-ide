@@ -25,16 +25,24 @@ type FeedbackButtonProps = {
   sentiment: Sentiment;
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   type?: "small" | "large";
+  isActive?: boolean;
 };
 
-export function FeedbackButton({ sentiment, onClick, type = "small" }: FeedbackButtonProps) {
+export function FeedbackButton({
+  sentiment,
+  onClick,
+  type = "small",
+  isActive,
+}: FeedbackButtonProps) {
   if (sentiment === "positive") {
     return (
       <button
         className={classNames(
           "feedback-button feedback-button-positive",
+          isActive && "feedback-button-positive-active",
           type === "large" && "feedback-button-large"
         )}
+        type="button"
         onClick={onClick}>
         <span className="codicon codicon-thumbsup" />
       </button>
@@ -45,8 +53,10 @@ export function FeedbackButton({ sentiment, onClick, type = "small" }: FeedbackB
     <button
       className={classNames(
         "feedback-button feedback-button-negative",
+        isActive && "feedback-button-negative-active",
         type === "large" && "feedback-button-large"
       )}
+      type="button"
       onClick={onClick}>
       <span className="codicon codicon-thumbsdown" />
     </button>
