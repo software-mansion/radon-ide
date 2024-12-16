@@ -161,11 +161,10 @@ export async function migrateOldBuildCachesToNewStorage() {
       const oldKey =
         platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
       const cache = extensionContext.workspaceState.get<BuildCacheInfo>(oldKey);
-      if (!cache) {
-        return;
+      if (cache) {
+        await extensionContext.globalState.update(makeCacheKey(platform, appRoot), cache);
+        await extensionContext.workspaceState.update(oldKey, undefined);
       }
-      await extensionContext.globalState.update(makeCacheKey(platform, appRoot), cache);
-      await extensionContext.workspaceState.update(oldKey, undefined);
     }
   } catch (e) {
     // we ignore all potential errors in this phase as it isn't critical and it is
