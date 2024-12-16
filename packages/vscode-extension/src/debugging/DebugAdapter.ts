@@ -12,16 +12,16 @@ import {
   Source,
   StackFrame,
 } from "@vscode/debugadapter";
-import { DebugProtocol } from "@vscode/debugprotocol";
-import Cdp from "vscode-js-debug/src/cdp/api";
-import { AnyObject } from "vscode-js-debug/src/adapter/objectPreview/betterTypes";
+import { DebugProtocol } from "@vscode/debugprotocol"; 
+import {Cdp} from "vscode-js-debug/out/cdp/index";
+import { AnyObject } from "vscode-js-debug/out/adapter/objectPreview/betterTypes";
 import {
   messageFormatters,
   previewAsObject,
   previewRemoteObject,
-} from "vscode-js-debug/src/adapter/objectPreview";
-import { formatMessage as externalFormatMessage } from "vscode-js-debug/src/adapter/messageFormat";
-import { PreviewContextType } from "vscode-js-debug/src/adapter/objectPreview/contexts";
+} from "vscode-js-debug/out/adapter/objectPreview";
+import { formatMessage } from "vscode-js-debug/out/adapter/messageFormat";
+import { PreviewContextType } from "vscode-js-debug/out/adapter/objectPreview/contexts";
 import { Logger } from "../Logger";
 import {
   inferDAPScopePresentationHintFromCDPType,
@@ -156,8 +156,8 @@ export class DebugAdapter extends DebugSession {
   async formatDefaultString(args: ReadonlyArray<Cdp.Runtime.RemoteObject>) {
     const useMessageFormat = args.length > 1 && args[0].type === "string";
     const formatResult = useMessageFormat
-      ? externalFormatMessage(args[0].value, args.slice(1) as AnyObject[], messageFormatters)
-      : externalFormatMessage("", args as AnyObject[], messageFormatters);
+      ? formatMessage(args[0].value, args.slice(1) as AnyObject[], messageFormatters)
+      : formatMessage("", args as AnyObject[], messageFormatters);
 
     const output = formatResult.result + "\n";
 

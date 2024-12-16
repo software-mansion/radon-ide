@@ -38,10 +38,6 @@ jobs:
           cache: "npm"
           cache-dependency-path: packages/vscode-extension/package-lock.json
 
-      - name: Install submodule node dependencies
-        working-directory: ${{ env.SUBMODULE_DIRECTORY }}
-        run: npm i
-
       - name: Install node dependencies
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npm i
