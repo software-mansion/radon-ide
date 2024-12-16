@@ -1,10 +1,10 @@
 .feedback {
   display: flex;
-  gap: 2px;
+  gap: 4px;
 }
 
 .feedback-button {
-  width: 24px;
+  width: 26px;
   height: 20px;
   display: flex;
   align-items: center;
