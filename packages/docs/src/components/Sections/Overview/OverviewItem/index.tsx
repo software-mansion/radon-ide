@@ -18,7 +18,7 @@ const OverviewItem = ({ label, title, body, mediaSrc }: Props) => {
     <>
       <section className={styles.description}>
         <p className={styles.itemLabel}>{label}</p>
-        <h2 className={styles.itemTitle}>{title}</h2>
+        <h3 className={styles.itemTitle}>{title}</h3>
         <p className={styles.itemBody}>{body}</p>
         <LinkButton
           title="Get started for free"

@@ -62,7 +62,7 @@ const Overview = () => {
         <Elipse isSmall className={styles.elipse} />
       </div>
       <div className={styles.overview}>
-        <h1 className={styles.overviewHeading}>How it works?</h1>
+        <h2 className={styles.overviewHeading}>How it works?</h2>
         <div className={styles.overviewItemsContainer}>
           {items.map((item, idx) => (
             <div key={idx} className={styles.item}>
