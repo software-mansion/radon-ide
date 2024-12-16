@@ -63,7 +63,7 @@ function wrapConsole(logFunctionKey) {
     }
 
     if (currentLogFunc !== console[logFunctionKey]) {
-      // when the console function is change, we need to update the offset
+      // when the console function has changed, we need to update the offset
       logFunctionReentryFlag = true;
       console[logFunctionKey]();
       logFunctionReentryFlag = false;
