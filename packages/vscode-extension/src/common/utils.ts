@@ -1,3 +1,4 @@
+import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import { RecordingData } from "./Project";
 
 export interface UtilsInterface {
@@ -16,4 +17,6 @@ export interface UtilsInterface {
   openExternalUrl(uriString: string): Promise<void>;
 
   log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]): Promise<void>;
+
+  sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;
 }

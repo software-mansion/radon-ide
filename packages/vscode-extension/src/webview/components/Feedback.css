@@ -12,8 +12,21 @@
   border-radius: 3px;
 }
 
+.feedback-button:hover span {
+  color: var(--swm-popover-background);
+}
+
 .feedback-button:hover {
   cursor: pointer;
+}
+
+.feedback-button-large {
+  width: 64px;
+  height: 46px;
+}
+
+.feedback-button-large span {
+  font-size: 24px !important;
 }
 
 .feedback-button-positive {
@@ -21,17 +34,22 @@
   border: 1px solid var(--green-light-80);
 }
 
+.feedback-button-positive span {
+  color: var(--green-light-80);
+}
+
 .feedback-button-positive:hover {
   background-color: var(--green-light-80);
-  color: var(--white);
 }
 
 .feedback-button-negative {
-  color: var(--red-light-80);
   border: 1px solid var(--red-light-80);
+}
+
+.feedback-button-negative span {
+  color: var(--red-light-80);
 }
 
 .feedback-button-negative:hover {
   background-color: var(--red-light-80);
-  color: var(--white);
 }

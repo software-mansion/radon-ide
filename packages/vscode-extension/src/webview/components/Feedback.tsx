@@ -1,39 +1,54 @@
 import { MouseEvent } from "react";
 import "./Feedback.css";
-import { getTelemetryReporter } from "../../utilities/telemetry";
+import classNames from "classnames";
+import { useUtils } from "../providers/UtilsProvider";
 
-function Feedback() {
+type Sentiment = "positive" | "negative";
+
+export default function Feedback() {
+  const { sendTelemetry } = useUtils();
+
+  const handleFeedback = (event: MouseEvent<HTMLButtonElement>, sentiment: Sentiment) => {
+    event.preventDefault();
+    sendTelemetry(`feedback:${sentiment}`);
+  };
+
   return (
     <div className="feedback">
-      <FeedbackButton sentiment="positive" />
-      <FeedbackButton sentiment="negative" />
+      <FeedbackButton sentiment="positive" onClick={(e) => handleFeedback(e, "positive")} />
+      <FeedbackButton sentiment="negative" onClick={(e) => handleFeedback(e, "negative")} />
     </div>
   );
 }
 
 type FeedbackButtonProps = {
-  sentiment: "positive" | "negative";
+  sentiment: Sentiment;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
+  type?: "small" | "large";
 };
 
-export function FeedbackButton({ sentiment }: FeedbackButtonProps) {
-  const handleFeedback = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    getTelemetryReporter().sendTelemetryEvent(`feedback:${sentiment}`);
-  };
-
+export function FeedbackButton({ sentiment, onClick, type = "small" }: FeedbackButtonProps) {
   if (sentiment === "positive") {
     return (
-      <button className="feedback-button feedback-button-positive" onClick={handleFeedback}>
+      <button
+        className={classNames(
+          "feedback-button feedback-button-positive",
+          type === "large" && "feedback-button-large"
+        )}
+        onClick={onClick}>
         <span className="codicon codicon-thumbsup" />
       </button>
     );
   }
 
   return (
-    <button className="feedback-button feedback-button-negative" onClick={handleFeedback}>
+    <button
+      className={classNames(
+        "feedback-button feedback-button-negative",
+        type === "large" && "feedback-button-large"
+      )}
+      onClick={onClick}>
       <span className="codicon codicon-thumbsdown" />
     </button>
   );
 }
-
-export default Feedback;

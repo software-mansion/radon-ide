@@ -12,6 +12,7 @@ import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import Feedback from "./Feedback";
+import FeedbackView from "../views/FeedbackView";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -143,7 +144,11 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <div className="dropdown-menu-item-content">Report Issue</div>
             </span>
           </DropdownMenu.Item>
-          <DropdownMenu.Item className="dropdown-menu-item">
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => {
+              openModal("Do you enjoy using Radon IDE today?", <FeedbackView />);
+            }}>
             <span className="codicon codicon-feedback" />
             <div className="dropdown-menu-item-content">
               Send feedback

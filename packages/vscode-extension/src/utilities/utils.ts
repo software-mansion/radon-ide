@@ -4,12 +4,14 @@ import path from "path";
 import { commands, env, Uri, window } from "vscode";
 import JSON5 from "json5";
 import vscode from "vscode";
+import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import { Logger } from "../Logger";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsInterface } from "../common/utils";
 import { Platform } from "./platform";
 import { RecordingData } from "../common/Project";
+import { getTelemetryReporter } from "./telemetry";
 
 type KeybindingType = {
   command: string;
@@ -141,5 +143,9 @@ export class Utils implements UtilsInterface {
 
     // Combine into the desired format
     return `${year}-${month}-${day} ${hours}.${minutes}.${seconds}`;
+  }
+
+  public async sendTelemetry(eventName: string, properties?: TelemetryEventProperties) {
+    getTelemetryReporter().sendTelemetryEvent(eventName, properties);
   }
 }
