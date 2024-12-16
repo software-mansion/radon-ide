@@ -3,7 +3,7 @@
   display: flex;
   justify-content: safe center;
   align-items: safe center;
-  overflow: auto;
+  overflow: hidden;
   width: 100%;
   position: relative;
   user-select: none;
@@ -163,10 +163,4 @@
 .button-group-left-wrapper:hover .button-group-left,
 .button-group-left:has(.zoom-controls.select-open) {
   transform: translate(0px, 21px);
-}
-
-@media (width <=415px) {
-  .phone-wrapper {
-    overflow: hidden;
-  }
 }
