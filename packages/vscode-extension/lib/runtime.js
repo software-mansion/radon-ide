@@ -25,14 +25,11 @@ global.__RNIDE_onDebuggerReady = function () {
 // debug adapter and avoid exposing as part of application logs
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
-let consoleRefs = {
-  log: null,
-  warn: null,
-  error: null,
-  info: null,
-};
+let consoleRefs = {};
 
-function wrapConsole(logFunction, logFunctionKey) {
+function wrapConsole(logFunctionKey) {
+  consoleRefs[logFunctionKey] = null;
+  const logFunction = console[logFunctionKey];
   let stackOffset = 1; // default offset is 1, because the first frame is the wrapConsole function
   let logFunctionReentryStack = null;
   let logFunctionReentryFlag = false;
@@ -82,10 +79,10 @@ function wrapConsole(logFunction, logFunctionKey) {
   };
 }
 
-console.log = wrapConsole(console.log, 'log');
-console.warn = wrapConsole(console.warn, 'warn');
-console.error = wrapConsole(console.error, 'error');
-console.info = wrapConsole(console.info, 'info');
+console.log = wrapConsole('log');
+console.warn = wrapConsole('warn');
+console.error = wrapConsole('error');
+console.info = wrapConsole('info');
 
 // This variable can be used by external integrations to detect if they are running in the IDE
 global.__RNIDE_enabled = true;
