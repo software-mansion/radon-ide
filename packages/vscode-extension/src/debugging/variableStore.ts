@@ -30,7 +30,6 @@ export class VariableStore {
         await fetchProperties({
           objectId: cdpObjectId,
           ownProperties: true,
-          generatePreview: true,
         })
       ).result as CDPPropertyDescriptor[];
       isCDPObject = true;
