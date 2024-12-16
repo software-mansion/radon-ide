@@ -21,15 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WORKING_DIRECTORY: packages/vscode-extension
-      SUBMODULE_DIRECTORY: packages/vscode-js-debug
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - uses: actions/checkout@v4
-        with:
-          repository: software-mansion-labs/vscode-js-debug
-          path: packages/vscode-js-debug
 
       - name: Setup node
         uses: actions/setup-node@v4
