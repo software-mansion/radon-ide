@@ -74,7 +74,7 @@ export async function activate(context: ExtensionContext) {
     enableDevModeLogging();
   }
 
-  migrateOldConfiguration();
+  await migrateOldConfiguration();
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 

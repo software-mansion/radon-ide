@@ -30,13 +30,17 @@ export type BuildCacheInfo = {
   buildResult: AndroidBuildResult | IOSBuildResult;
 };
 
-export class BuildCache {
-  constructor(private readonly platform: DevicePlatform, private readonly appRoot: string) {}
+function makeCacheKey(platform: DevicePlatform, appRoot: string) {
+  const keyPrefix =
+    platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+  return `${keyPrefix}:${appRoot}`;
+}
 
-  private get cacheKey() {
-    const keyPrefix =
-      this.platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-    return `${keyPrefix}:{this.appRoot}`;
+export class BuildCache {
+  private readonly cacheKey: string;
+
+  constructor(private readonly platform: DevicePlatform, private readonly appRoot: string) {
+    this.cacheKey = makeCacheKey(platform, appRoot);
   }
 
   /**
@@ -149,19 +153,23 @@ async function getAppHash(appPath: string) {
   return (await calculateMD5(appPath)).digest("hex");
 }
 
-export function migrateOldBuildCachesToNewStorage() {
-  const platformKeys = [ANDROID_BUILD_CACHE_KEY, IOS_BUILD_CACHE_KEY];
-  const appRoot = getAppRootFolder();
+export async function migrateOldBuildCachesToNewStorage() {
+  try {
+    const appRoot = getAppRootFolder();
 
-  platformKeys.forEach((platformKey) => {
-    const cache = extensionContext.workspaceState.get<BuildCacheInfo>(platformKey);
-    if (!cache) {
-      return;
+    for (const platform of [DevicePlatform.Android, DevicePlatform.IOS]) {
+      const oldKey =
+        platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+      const cache = extensionContext.workspaceState.get<BuildCacheInfo>(oldKey);
+      if (!cache) {
+        return;
+      }
+      await extensionContext.globalState.update(makeCacheKey(platform, appRoot), cache);
+      await extensionContext.workspaceState.update(oldKey, undefined);
     }
-
-    extensionContext.globalState.update(appRoot + platformKey, cache);
-
-    // remove the old cache afterwards
-    extensionContext.workspaceState.update(platformKey, undefined);
-  });
+  } catch (e) {
+    // we ignore all potential errors in this phase as it isn't critical and it is
+    // better to not block the extension from starting in case of any issues when
+    // migrating the caches
+  }
 }
