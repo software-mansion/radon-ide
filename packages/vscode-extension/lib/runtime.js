@@ -25,31 +25,25 @@ global.__RNIDE_onDebuggerReady = function () {
 // debug adapter and avoid exposing as part of application logs
 console.log("__RNIDE_INTERNAL", "radon-ide runtime loaded");
 
-let stackOffset = 1; // default offset is 1, because the first frame is the wrapConsole function
-let logRef = null;
-let errorRef = null;
-let warnRef = null;
-let infoRef = null;
+let consoleRefs = {
+  log: null,
+  warn: null,
+  error: null,
+  info: null,
+};
 
-function isConsoleRefChanged() {
-  return (
-    logRef !== console.log ||
-    errorRef !== console.error ||
-    warnRef !== console.warn ||
-    infoRef !== console.info
-  );
-}
+function wrapConsole(logFunction, logFunctionKey) {
+  let stackOffset = 1; // default offset is 1, because the first frame is the wrapConsole function
+  let logFunctionReentryStack = null;
+  let logFunctionReentryFlag = false;
 
-function updateConsoleRefs() {
-  logRef = console.log;
-  warnRef = console.warn;
-  errorRef = console.error;
-  infoRef = console.info;
-}
-
-function wrapConsole(consoleFunc) {
-  let initializationStack = [];
-  let sendInitialLog = false;
+  function isConsoleRefChanged() {
+    return consoleRefs[logFunctionKey] !== console[logFunctionKey];
+  }
+  
+  function updateConsoleRefs() {
+    consoleRefs[logFunctionKey] = console[logFunctionKey];
+  }
 
   return function (...args) {
     const stack = parseErrorStack(new Error().stack);
@@ -57,46 +51,41 @@ function wrapConsole(consoleFunc) {
     // To get the proper stack frame, so we can display link to the source code
     // we need to skip wrappers (like wrapConsole below or for example Sentry wrapper)
     // Otherwise, the stack frame would point to the wrapper and not the actual source code
-    // To do that, we run console.log again in runWrapper, and then compare
+    // To do that, we run console.log again in wrapper, and then compare
     // first frames to find the offset. We do that when ant of console ref changes
+    if (logFunctionReentryFlag) {
+      logFunctionReentryStack = stack;
+      return;
+    }
+
     if (isConsoleRefChanged()) {
-      if (sendInitialLog) {
-        sendInitialLog = false;
+      logFunctionReentryFlag = true;
+      console[logFunctionKey]();
+      logFunctionReentryFlag = false;
 
-        for (let i = 0; i < Math.min(stack.length, initializationStack.length); i++) {
-          const diffLine = stack[i].lineNumber !== initializationStack[i].lineNumber;
-          const diffColumn = stack[i].column !== initializationStack[i].column;
+      for (let i = 0; i < Math.min(stack.length, logFunctionReentryStack.length); i++) {
+        const diffLine = stack[i].lineNumber !== logFunctionReentryStack[i].lineNumber;
+        const diffColumn = stack[i].column !== logFunctionReentryStack[i].column;
 
-          if (diffLine || diffColumn) {
-            // Repeat the sampling when stackOffset changes
-            if (i !== stackOffset) {
-              sampleCount = 0;
-            }
-
-            stackOffset = i;
-            break;
-          }
+        if (diffLine || diffColumn) {
+          stackOffset = i;
+          break;
         }
-
-        updateConsoleRefs();
-        return;
       }
 
-      initializationStack = stack;
-      sendInitialLog = true;
-      console.log(); // Recursive dummy console.log to get the source maps
+      updateConsoleRefs();
     }
 
     const location = stack[stackOffset];
     args.push(location.file, location.lineNumber, location.column);
-    return consoleFunc.apply(console, args);
+    return logFunction.apply(console, args);
   };
 }
 
-console.log = wrapConsole(console.log);
-console.warn = wrapConsole(console.warn);
-console.error = wrapConsole(console.error);
-console.info = wrapConsole(console.info);
+console.log = wrapConsole(console.log, 'log');
+console.warn = wrapConsole(console.warn, 'warn');
+console.error = wrapConsole(console.error, 'error');
+console.info = wrapConsole(console.info, 'info');
 
 // This variable can be used by external integrations to detect if they are running in the IDE
 global.__RNIDE_enabled = true;
