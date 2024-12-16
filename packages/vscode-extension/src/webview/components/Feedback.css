@@ -10,6 +10,15 @@
   align-items: center;
   justify-content: center;
   border-radius: 3px;
+  transition: all 250ms 0ms ease-in-out;
+}
+
+.feedback-button:active {
+  transform: scale(0.94);
+}
+
+.feedback-button-large:active {
+  transform: scale(0.96);
 }
 
 .feedback-button:hover span,
@@ -56,4 +65,12 @@
 .feedback-button-negative:hover,
 .feedback-button-negative-active {
   background-color: var(--red-light-80);
+}
+
+.feedback-prompt {
+  cursor: pointer;
+  font-size: 12px;
+}
+.feedback-prompt:hover {
+  text-decoration: underline;
 }

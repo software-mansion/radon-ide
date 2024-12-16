@@ -1,4 +1,4 @@
-import { MouseEvent } from "react";
+import { MouseEvent, useState } from "react";
 import "./Feedback.css";
 import classNames from "classnames";
 import { useUtils } from "../providers/UtilsProvider";
@@ -7,16 +7,26 @@ export type Sentiment = "positive" | "negative";
 
 export default function Feedback() {
   const { sendTelemetry } = useUtils();
+  const [sentiment, setSentiment] = useState<Sentiment | undefined>();
 
-  const handleFeedback = (event: MouseEvent<HTMLButtonElement>, sentiment: Sentiment) => {
+  const handleFeedback = (event: MouseEvent<HTMLButtonElement>, pickedSentiment: Sentiment) => {
     event.preventDefault();
-    sendTelemetry(`feedback:${sentiment}`);
+    sendTelemetry(`feedback:${pickedSentiment}`);
+    setSentiment(pickedSentiment);
   };
 
   return (
     <div className="feedback">
-      <FeedbackButton sentiment="positive" onClick={(e) => handleFeedback(e, "positive")} />
-      <FeedbackButton sentiment="negative" onClick={(e) => handleFeedback(e, "negative")} />
+      {Boolean(sentiment) ? (
+        <p className="feedback-prompt">
+          {sentiment === "positive" ? "What went well?" : "Tell us more"}
+        </p>
+      ) : (
+        <>
+          <FeedbackButton sentiment="positive" onClick={(e) => handleFeedback(e, "positive")} />
+          <FeedbackButton sentiment="negative" onClick={(e) => handleFeedback(e, "negative")} />
+        </>
+      )}
     </div>
   );
 }
