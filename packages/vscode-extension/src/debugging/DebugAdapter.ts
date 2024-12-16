@@ -12,8 +12,8 @@ import {
   Source,
   StackFrame,
 } from "@vscode/debugadapter";
-import { DebugProtocol } from "@vscode/debugprotocol"; 
-import {Cdp} from "vscode-js-debug/out/cdp/index";
+import { DebugProtocol } from "@vscode/debugprotocol";
+import { Cdp } from "vscode-js-debug/out/cdp/index";
 import { AnyObject } from "vscode-js-debug/out/adapter/objectPreview/betterTypes";
 import {
   messageFormatters,
