@@ -49,7 +49,8 @@
 }
 
 @media (max-width: 430px) {
-  .media video {
+  .media video,
+  .media img {
     border-width: 10px !important;
   }
   .itemTitle {
