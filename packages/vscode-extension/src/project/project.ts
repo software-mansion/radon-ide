@@ -632,6 +632,7 @@ export class Project
         this.devtools,
         this.metro,
         this.dependencyManager,
+        new BuildCache(device.platform, getAppRootFolder()),
         this,
         this
       );
@@ -669,10 +670,8 @@ export class Project
   };
 
   private checkIfNativeChanged = throttleAsync(async () => {
-    if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
-      const platform = this.projectState.selectedDevice.platform;
-      const buildCache = new BuildCache(platform, getAppRootFolder());
-      const isCacheStale = await buildCache.isCacheStale();
+    if (!this.isCachedBuildStale && this.deviceSession) {
+      const isCacheStale = await this.deviceSession.buildCache.isCacheStale();
 
       if (isCacheStale) {
         this.isCachedBuildStale = true;

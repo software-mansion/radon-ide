@@ -161,7 +161,7 @@ export function migrateOldBuildCachesToNewStorage() {
 
     extensionContext.globalState.update(appRoot + platformKey, cache);
 
-    // remove the old cache afterwords
+    // remove the old cache afterwards
     extensionContext.workspaceState.update(platformKey, undefined);
   });
 }
