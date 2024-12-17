@@ -4,34 +4,24 @@ import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { RecordingData, TouchPoint } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
+import { watchLicenseTokenChange, getLicenseToken } from "../utilities/license";
 
 interface VideoRecordingPromiseHandlers {
   resolve: (value: RecordingData) => void;
   reject: (reason?: any) => void;
 }
 
-interface LicenseCheckPromiseHandler {
-  resolve: (value: SimServerLicenseValidationResult) => void;
-  reject: (reason?: SimServerLicenseValidationResult) => void;
-}
-
-export enum SimServerLicenseValidationResult {
-  Success,
-  Corrupted,
-  Expired,
-  FingerprintMismatch,
-}
-
 export class Preview implements Disposable {
   private videoRecordingPromises = new Map<string, VideoRecordingPromiseHandlers>();
-  private lastLicenseCheckPromise: LicenseCheckPromiseHandler | undefined;
   private subprocess?: ChildProcess;
+  private tokenChangeListener?: Disposable;
   public streamURL?: string;
 
   constructor(private args: string[]) {}
 
   dispose() {
     this.subprocess?.kill();
+    this.tokenChangeListener?.dispose();
   }
 
   private sendCommandOrThrow(command: string) {
@@ -40,30 +30,6 @@ export class Preview implements Disposable {
       throw new Error("sim-server process not available");
     }
     stdin.write(command);
-  }
-
-  public checkLicense(token: string): Promise<SimServerLicenseValidationResult> {
-    const stdin = this.subprocess?.stdin;
-    if (!stdin) {
-      throw new Error("sim-server process not available");
-    }
-
-    let resolvePromise: (value: SimServerLicenseValidationResult) => void;
-    let rejectPromise: (reason?: any) => void;
-    const promise = new Promise<SimServerLicenseValidationResult>((resolve, reject) => {
-      resolvePromise = resolve;
-      rejectPromise = reject;
-    });
-
-    const lastPromise = this.lastLicenseCheckPromise;
-    if (lastPromise) {
-      promise.then(lastPromise.resolve, lastPromise.reject);
-    }
-
-    const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
-    this.lastLicenseCheckPromise = newPromiseHandler;
-    stdin.write(`token ${token}\n`);
-    return promise;
   }
 
   private saveVideoWithID(videoId: string): Promise<RecordingData> {
@@ -99,6 +65,12 @@ export class Preview implements Disposable {
       buffer: false,
     });
     this.subprocess = subprocess;
+
+    this.tokenChangeListener = watchLicenseTokenChange((token) => {
+      if (token) {
+        this.sendCommandOrThrow(`token ${token}\n`);
+      }
+    });
 
     return new Promise<string>((resolve, reject) => {
       subprocess.catch(reject).then(() => {
@@ -158,26 +130,6 @@ export class Preview implements Disposable {
           } else if (handlers && videoErrorMatch) {
             handlers.reject(new Error(videoErrorMatch[2]));
           }
-        } else if (line.includes("token_valid") || line.includes("token_invalid")) {
-          if (line.includes("token_valid")) {
-            this.lastLicenseCheckPromise?.resolve(SimServerLicenseValidationResult.Success);
-            this.lastLicenseCheckPromise = undefined;
-          }
-          const failureReason = line.split(" ", 2)[1];
-
-          let result;
-
-          switch (failureReason) {
-            case "expired":
-              result = SimServerLicenseValidationResult.Expired;
-            case "fingerprint_mismatch":
-              result = SimServerLicenseValidationResult.FingerprintMismatch;
-            case "corrupted":
-            default:
-              result = SimServerLicenseValidationResult.Corrupted;
-          }
-          this.lastLicenseCheckPromise?.resolve(result);
-          this.lastLicenseCheckPromise = undefined;
         }
         Logger.info("sim-server:", line);
       });

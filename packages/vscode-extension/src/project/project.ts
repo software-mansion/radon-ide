@@ -14,7 +14,6 @@ import {
   ProjectInterface,
   ProjectState,
   RecordingData,
-  RefreshLicenseTokenResult,
   ReloadAction,
   StartupMessage,
   TouchPoint,
@@ -34,15 +33,17 @@ import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { BuildCache } from "../builders/BuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
-import { activateDevice, getLicenseToken, refreshToken, removeLicense } from "../utilities/license";
-import { isMoreThan24HoursAgo } from "../utilities/timeComparisons";
-import { SimServerLicenseValidationResult } from "../devices/preview";
+import {
+  activateDevice,
+  watchLicenseTokenChange,
+  getLicenseToken,
+  refreshTokenPeriodically,
+} from "../utilities/license";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
-const LAST_TOKEN_REFRESH_TIMESTAMP_KEY = "last_token_refresh_timestamp";
 
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
@@ -60,6 +61,8 @@ export class Project
   private isCachedBuildStale: boolean;
 
   private fileWatcher: Disposable;
+  private licenseWatcher: Disposable;
+  private licenseUpdater: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -99,6 +102,11 @@ export class Project
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
+    });
+    this.licenseUpdater = refreshTokenPeriodically();
+    this.licenseWatcher = watchLicenseTokenChange(async () => {
+      const hasActiveLicense = await this.hasActiveLicense();
+      this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
     });
   }
 
@@ -282,6 +290,8 @@ export class Project
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.fileWatcher.dispose();
+    this.licenseWatcher.dispose();
+    this.licenseUpdater.dispose();
   }
 
   private async reloadMetro() {
@@ -499,79 +509,7 @@ export class Project
   public async activateLicense(activationKey: string) {
     const computerName = os.hostname();
     const activated = await activateDevice(activationKey, computerName);
-    if (activated === ActivateDeviceResult.succeeded) {
-      this.eventEmitter.emit("licenseActivationChanged", true);
-    }
     return activated;
-  }
-
-  private async checkOrRefreshLicense() {
-    const oldToken = await getLicenseToken();
-    if (!oldToken) {
-      return false;
-    }
-
-    const refresh = async () => {
-      const res = await refreshToken(oldToken);
-      switch (res) {
-        case RefreshLicenseTokenResult.succeeded:
-          extensionContext.globalState.update(LAST_TOKEN_REFRESH_TIMESTAMP_KEY, new Date());
-          return true;
-        case RefreshLicenseTokenResult.connectionFailed:
-          return false;
-        case RefreshLicenseTokenResult.licenseCanceled:
-          window.showInformationMessage(
-            "It looks like you have cancelled your subscription, to renew it visit customer portal, or contact your administration."
-          );
-          await removeLicense();
-          return false;
-        case RefreshLicenseTokenResult.licenseExpired:
-          window.showWarningMessage(
-            "It looks like you your license has expired, to renew it visit customer portal, or contact your administration."
-          );
-          await removeLicense();
-          return false;
-        case RefreshLicenseTokenResult.seatRemoved:
-          await removeLicense();
-          return false;
-        case RefreshLicenseTokenResult.unableToVerify:
-          return false;
-      }
-    };
-
-    const lastRefresh = extensionContext.globalState.get<Date>(LAST_TOKEN_REFRESH_TIMESTAMP_KEY);
-
-    if (!lastRefresh || isMoreThan24HoursAgo(lastRefresh)) {
-      const result = await refresh();
-      if (!result) {
-        return false;
-      }
-    }
-
-    const result = await this.deviceSession?.checkLicense(oldToken);
-    if (result === undefined) {
-      return false;
-    }
-
-    switch (result) {
-      case SimServerLicenseValidationResult.Success:
-        return true;
-      case SimServerLicenseValidationResult.Expired:
-        return await refresh();
-      case SimServerLicenseValidationResult.FingerprintMismatch:
-        window.showWarningMessage(
-          "It looks like you your license token is assigned for different device, please activate your device."
-        );
-        await removeLicense();
-        return false;
-      case SimServerLicenseValidationResult.Corrupted:
-        window.showWarningMessage(
-          "It looks like you your license token is corrupted, please activate your device."
-        );
-        await removeLicense();
-      default:
-        return false;
-    }
   }
 
   public async hasActiveLicense() {
@@ -721,9 +659,6 @@ export class Project
         previewURL,
         status: "running",
       });
-
-      // This needs to be triggered here as we need to ensure that the simulator service was booted
-      this.checkOrRefreshLicense();
     } catch (e) {
       Logger.error("Couldn't start device session", e);
 
