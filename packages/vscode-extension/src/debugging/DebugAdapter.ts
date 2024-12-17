@@ -229,16 +229,23 @@ export class DebugAdapter extends DebugSession {
   }
 
   private async createVariableForOutputEvent(args: CDPRemoteObject[]) {
-    const prepareVariables = await Promise.all(
+    const prepareVariables = (await Promise.all(
       args.map(async (arg: CDPRemoteObject, index: number) => {
-        if (arg.type === "object") {
-          arg.description = previewRemoteObject(arg, "propertyValue");
-          arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
+         // Don't create variables for primitive types, we do it here
+         // instead of .filter to keep indexes consistent
+        if (arg.type !== "object" && arg.type !== "function") {
+          return null;
         }
 
+        arg.description = previewRemoteObject(arg, "propertyValue");
+
+        if (arg.type === "object") {
+          arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
+        }
         return { name: `arg${index}`, value: arg };
       })
-    );
+    )).filter(value => value !== null);
+
     // we create empty object that is needed for DAP OutputEvent to display
     // collapsed args properly, the object references the array of args array
     const argsObjectDapID = this.variableStore.pushReplVariable(prepareVariables);
