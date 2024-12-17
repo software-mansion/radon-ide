@@ -451,7 +451,14 @@ export class DebugAdapter extends DebugSession {
     response.body = response.body || {};
     response.body.variables = [];
 
-    if (args.filter === "indexed") {
+    if (args.filter !== "indexed" && args.filter !== "named") {
+      response.body.variables = await this.variableStore.get(
+        args.variablesReference,
+        (params: object) => {
+          return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
+        }
+      );
+    } else if (args.filter === "indexed") {
       const stringified = "" + getArraySlots;
 
       try {
@@ -472,15 +479,11 @@ export class DebugAdapter extends DebugSession {
       } catch (e) {
         Logger.error("[CDP] Failed to retrieve array partially", e);
       }
-    }
-
-    if (args.filter !== "indexed" && args.filter !== "named") {
-      response.body.variables = await this.variableStore.get(
-        args.variablesReference,
-        (params: object) => {
-          return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
-        }
-      );
+    } else if (args.filter === "named") {
+      // We do nothing for named variables. We set 'named' and 'indexed' only for arrays in variableStore
+      // so the 'named' here means "display chunks" (which I is handled by Debugger). If we'd get the properties
+      // here we would get all indexed properties even when passing `nonIndexedPropertiesOnly: true` param
+      // to Runtime.getProperties. I assume that this property just does not work yet as it's marked as experimental.
     }
 
     this.sendResponse(response);
