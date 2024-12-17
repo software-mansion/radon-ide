@@ -250,6 +250,11 @@ export class DebugAdapter extends DebugSession {
     // collapsed args properly, the object references the array of args array
     const argsObjectDapID = this.variableStore.pushReplVariable(prepareVariables);
 
+    // If originally there was only one argument, we don't want to display named arguments
+    if (args.length === 1) {
+      return argsObjectDapID;
+    }
+
     return this.variableStore.pushReplVariable([
       {
         name: "<unnamed>",
