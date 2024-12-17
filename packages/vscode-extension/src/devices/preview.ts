@@ -4,6 +4,7 @@ import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { RecordingData, TouchPoint } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
+import { watchLicenseTokenChange } from "../utilities/license";
 
 interface VideoRecordingPromiseHandlers {
   resolve: (value: RecordingData) => void;
@@ -13,12 +14,14 @@ interface VideoRecordingPromiseHandlers {
 export class Preview implements Disposable {
   private videoRecordingPromises = new Map<string, VideoRecordingPromiseHandlers>();
   private subprocess?: ChildProcess;
+  private tokenChangeListener?: Disposable;
   public streamURL?: string;
 
   constructor(private args: string[]) {}
 
   dispose() {
     this.subprocess?.kill();
+    this.tokenChangeListener?.dispose();
   }
 
   private sendCommandOrThrow(command: string) {
@@ -62,6 +65,12 @@ export class Preview implements Disposable {
       buffer: false,
     });
     this.subprocess = subprocess;
+
+    this.tokenChangeListener = watchLicenseTokenChange((token) => {
+      if (token) {
+        this.sendCommandOrThrow(`token ${token}\n`);
+      }
+    });
 
     return new Promise<string>((resolve, reject) => {
       subprocess.catch(reject).then(() => {

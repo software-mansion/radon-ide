@@ -5,7 +5,6 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
-  ActivateDeviceResult,
   AppPermissionType,
   DeviceSettings,
   InspectData,
@@ -33,7 +32,12 @@ import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
 import { BuildCache } from "../builders/BuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
-import { activateDevice, getLicenseToken } from "../utilities/license";
+import {
+  activateDevice,
+  watchLicenseTokenChange,
+  getLicenseToken,
+  refreshTokenPeriodically,
+} from "../utilities/license";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -56,6 +60,8 @@ export class Project
   private isCachedBuildStale: boolean;
 
   private fileWatcher: Disposable;
+  private licenseWatcher: Disposable;
+  private licenseUpdater: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -95,6 +101,11 @@ export class Project
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
+    });
+    this.licenseUpdater = refreshTokenPeriodically();
+    this.licenseWatcher = watchLicenseTokenChange(async () => {
+      const hasActiveLicense = await this.hasActiveLicense();
+      this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
     });
   }
 
@@ -278,6 +289,8 @@ export class Project
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.fileWatcher.dispose();
+    this.licenseWatcher.dispose();
+    this.licenseUpdater.dispose();
   }
 
   private async reloadMetro() {
@@ -495,9 +508,6 @@ export class Project
   public async activateLicense(activationKey: string) {
     const computerName = os.hostname();
     const activated = await activateDevice(activationKey, computerName);
-    if (activated === ActivateDeviceResult.succeeded) {
-      this.eventEmitter.emit("licenseActivationChanged", true);
-    }
     return activated;
   }
 
