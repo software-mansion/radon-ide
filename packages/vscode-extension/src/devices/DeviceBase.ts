@@ -96,10 +96,6 @@ export abstract class DeviceBase implements Disposable {
     return this.preview?.sendPaste(text);
   }
 
-  public async checkLicense(token: string) {
-    return this.preview?.checkLicense(token);
-  }
-
   async startPreview() {
     if (!this.previewStartPromise) {
       this.preview = this.makePreview();
