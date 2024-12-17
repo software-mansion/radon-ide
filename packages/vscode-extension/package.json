@@ -452,9 +452,11 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
-    "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test"
+    "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test",
+    "preinstall": "cd ../vscode-js-debug && git submodule update && npm install && npm exec tsc"
   },
   "devDependencies": {
+    "vscode-js-debug": "file:../vscode-js-debug",
     "@babel/preset-react": "^7.23.3",
     "@expo/fingerprint": "^0.10.3",
     "@expo/package-manager": "^1.1.2",

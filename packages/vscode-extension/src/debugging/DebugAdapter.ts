@@ -13,7 +13,14 @@ import {
   StackFrame,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
-import { formatMessage } from "./logFormatting";
+import { Cdp } from "vscode-js-debug/out/cdp/index";
+import { AnyObject } from "vscode-js-debug/out/adapter/objectPreview/betterTypes";
+import {
+  messageFormatters,
+  previewAsObject,
+  previewRemoteObject,
+} from "vscode-js-debug/out/adapter/objectPreview";
+import { formatMessage } from "vscode-js-debug/out/adapter/messageFormat";
 import { Logger } from "../Logger";
 import {
   inferDAPScopePresentationHintFromCDPType,
@@ -25,6 +32,7 @@ import { VariableStore } from "./variableStore";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { CDPSession } from "./CDPSession";
+import getArraySlots from "./templates/getArraySlots";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -143,6 +151,25 @@ export class DebugAdapter extends DebugSession {
     }
   };
 
+  // Based on https://github.com/microsoft/vscode-js-debug/blob/3be255753c458f231e32c9ef5c60090236780060/src/adapter/console/textualMessage.ts#L83
+  // We use that to format and truncate console.log messages
+  async formatDefaultString(args: ReadonlyArray<Cdp.Runtime.RemoteObject>) {
+    const useMessageFormat = args.length > 1 && args[0].type === "string";
+    const formatResult = useMessageFormat
+      ? formatMessage(args[0].value, args.slice(1) as AnyObject[], messageFormatters)
+      : formatMessage("", args as AnyObject[], messageFormatters);
+
+    const output = formatResult.result + "\n";
+
+    if (formatResult.usedAllSubs && !args.some(previewAsObject)) {
+      return { output };
+    } else {
+      const outputVar = await this.createVariableForOutputEvent(args as CDPRemoteObject[]);
+
+      return { output, variablesReference: outputVar };
+    }
+  }
+
   private async handleConsoleAPICall(message: any) {
     // We wrap console calls and add stack information as last three arguments, however
     // some logs may baypass that, especially when printed in initialization phase, so we
@@ -153,6 +180,7 @@ export class DebugAdapter extends DebugSession {
     // console.
     const argsLen = message.params.args.length;
     let output: OutputEvent;
+
     if (argsLen > 0 && message.params.args[0].value === "__RNIDE_INTERNAL") {
       // We return here to avoid passing internal logs to the user debug console,
       // but they will still be visible in metro log feed.
@@ -171,29 +199,26 @@ export class DebugAdapter extends DebugSession {
           generatedColumn1Based - 1
         );
 
-      const variablesRefDapID = this.createVariableForOutputEvent(message.params.args.slice(0, -3));
+      const formattedOutput = await this.formatDefaultString(message.params.args.slice(0, -3));
 
-      output = new OutputEvent(
-        (await formatMessage(message.params.args.slice(0, -3))) + "\n",
-        typeToCategory(message.params.type)
-      );
+      output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
+
       output.body = {
-        ...output.body,
+        ...formattedOutput,
         //@ts-ignore source, line, column and group are valid fields
         source: new Source(sourceURL, sourceURL),
         line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
         column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
-        variablesReference: variablesRefDapID,
       };
     } else {
       const variablesRefDapID = this.createVariableForOutputEvent(message.params.args);
 
-      output = new OutputEvent(
-        (await formatMessage(message.params.args)) + "\n",
-        typeToCategory(message.params.type)
-      );
+      const formattedOutput = await this.formatDefaultString(message.params.args);
+
+      output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
+
       output.body = {
-        ...output.body,
+        ...formattedOutput,
         //@ts-ignore source, line, column and group are valid fields
         variablesReference: variablesRefDapID,
       };
@@ -204,21 +229,38 @@ export class DebugAdapter extends DebugSession {
     );
   }
 
-  private createVariableForOutputEvent(args: CDPRemoteObject[]) {
+  private async createVariableForOutputEvent(args: CDPRemoteObject[]) {
+    const prepareVariables = (
+      await Promise.all(
+        args.map(async (arg: CDPRemoteObject, index: number) => {
+          // Don't create variables for primitive types, we do it here
+          // instead of .filter to keep indexes consistent
+          if (arg.type !== "object" && arg.type !== "function") {
+            return null;
+          }
+
+          arg.description = previewRemoteObject(arg, "propertyValue");
+
+          if (arg.type === "object") {
+            arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
+          }
+          return { name: `arg${index}`, value: arg };
+        })
+      )
+    ).filter((value) => value !== null);
+
     // we create empty object that is needed for DAP OutputEvent to display
     // collapsed args properly, the object references the array of args array
-    const argsObjectDapID = this.variableStore.pushReplVariable(
-      args.map((arg: CDPRemoteObject, index: number) => {
-        if (arg.type === "object") {
-          arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
-        }
-        return { name: `arg${index}`, value: arg };
-      })
-    );
+    const argsObjectDapID = this.variableStore.pushReplVariable(prepareVariables);
+
+    // If originally there was only one argument, we don't want to display named arguments
+    if (args.length === 1) {
+      return argsObjectDapID;
+    }
 
     return this.variableStore.pushReplVariable([
       {
-        name: "",
+        name: "<unnamed>",
         value: {
           type: "object",
           objectId: argsObjectDapID.toString(),
@@ -407,12 +449,43 @@ export class DebugAdapter extends DebugSession {
     args: DebugProtocol.VariablesArguments
   ): Promise<void> {
     response.body = response.body || {};
-    response.body.variables = await this.variableStore.get(
-      args.variablesReference,
-      (params: object) => {
-        return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
+    response.body.variables = [];
+
+    if (args.filter !== "indexed" && args.filter !== "named") {
+      response.body.variables = await this.variableStore.get(
+        args.variablesReference,
+        (params: object) => {
+          return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
+        }
+      );
+    } else if (args.filter === "indexed") {
+      const stringified = "" + getArraySlots;
+
+      try {
+        const partialValue = await this.cdpSession.sendCDPMessage("Runtime.callFunctionOn", {
+          functionDeclaration: stringified,
+          objectId: this.variableStore.convertDAPObjectIdToCDP(args.variablesReference),
+          arguments: [args.start, args.count].map((value) => ({ value })),
+        });
+
+        const properties = await this.variableStore.get(
+          this.variableStore.adaptCDPObjectId(partialValue.result.objectId),
+          (params: object) => {
+            return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
+          }
+        );
+
+        response.body.variables = properties;
+      } catch (e) {
+        Logger.error("[CDP] Failed to retrieve array partially", e);
       }
-    );
+    } else if (args.filter === "named") {
+      // We do nothing for named variables. We set 'named' and 'indexed' only for arrays in variableStore
+      // so the 'named' here means "display chunks" (which is handled by Debugger). If we'd get the properties
+      // here we would get all indexed properties even when passing `nonIndexedPropertiesOnly: true` param
+      // to Runtime.getProperties. I assume that this property just does not work yet as it's marked as experimental.
+    }
+
     this.sendResponse(response);
   }
 
