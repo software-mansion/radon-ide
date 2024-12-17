@@ -3,7 +3,8 @@
   justify-content: center;
 }
 
-.media video {
+.media video,
+.media img {
   width: 100%;
   border-style: solid;
 }
@@ -43,13 +44,15 @@
   .itemTitle {
     font-size: 24px;
   }
-  .media video {
+  .media video,
+  .media img {
     border-width: 1.5rem !important;
   }
 }
 
 @media (max-width: 430px) {
-  .media video {
+  .media video,
+  .media img {
     border-width: 10px !important;
   }
   .itemTitle {

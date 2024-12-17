@@ -16,6 +16,7 @@ import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { BuildCache } from "../builders/BuildCache";
 
 type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
@@ -54,10 +55,11 @@ export class DeviceSession implements Disposable {
     private readonly devtools: Devtools,
     private readonly metro: Metro,
     readonly dependencyManager: DependencyManager,
+    readonly buildCache: BuildCache,
     private readonly debugEventDelegate: DebugSessionDelegate,
     private readonly eventDelegate: EventDelegate
   ) {
-    this.buildManager = new BuildManager(dependencyManager);
+    this.buildManager = new BuildManager(dependencyManager, buildCache);
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "RNIDE_appReady":

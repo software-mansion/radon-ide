@@ -22,7 +22,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
   useEffect(() => {
     if (projectState.startupMessage === StartupMessage.Restarting) {
-      setProgress(100);
+      setProgress(0);
     } else {
       const currentIndex = StartupStageWeight.findIndex(
         (item) => item.StartupMessage === projectState.startupMessage
