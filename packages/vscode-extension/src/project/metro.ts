@@ -398,7 +398,7 @@ export class Metro implements Disposable {
         // Expo go apps using the new debugger could report more then one page,
         // if it exist the first one being the Expo Go host runtime.
         // more over expo go on android has a bug causing newDebuggerPages
-        // from previously run applications to leek if the host application
+        // from previously run applications to leak if the host application
         // was not stopped.
         // to solve both issues we check if the runtime is part of
         // the host application process and select the last one that
