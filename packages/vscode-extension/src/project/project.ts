@@ -5,7 +5,6 @@ import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
-  ActivateDeviceResult,
   AppPermissionType,
   DeviceSettings,
   InspectData,

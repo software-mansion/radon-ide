@@ -1,11 +1,9 @@
-import fetch from "node-fetch";
+import fetch, { Response } from "node-fetch";
 import { extensionContext } from "./extensionContext";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
 import { simulatorServerBinary } from "./simulatorServerBinary";
-import { ActivateDeviceResult, RefreshLicenseTokenResult } from "../common/Project";
-import { Response } from "node-fetch";
-import { error } from "console";
+import { ActivateDeviceResult } from "../common/Project";
 import { throttleAsync } from "./throttle";
 
 const TOKEN_KEY = "RNIDE_license_token_key";

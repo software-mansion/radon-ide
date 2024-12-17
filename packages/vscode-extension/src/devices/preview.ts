@@ -4,7 +4,7 @@ import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { RecordingData, TouchPoint } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
-import { watchLicenseTokenChange, getLicenseToken } from "../utilities/license";
+import { watchLicenseTokenChange } from "../utilities/license";
 
 interface VideoRecordingPromiseHandlers {
   resolve: (value: RecordingData) => void;
