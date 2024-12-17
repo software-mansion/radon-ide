@@ -481,7 +481,7 @@ export class DebugAdapter extends DebugSession {
       }
     } else if (args.filter === "named") {
       // We do nothing for named variables. We set 'named' and 'indexed' only for arrays in variableStore
-      // so the 'named' here means "display chunks" (which I is handled by Debugger). If we'd get the properties
+      // so the 'named' here means "display chunks" (which is handled by Debugger). If we'd get the properties
       // here we would get all indexed properties even when passing `nonIndexedPropertiesOnly: true` param
       // to Runtime.getProperties. I assume that this property just does not work yet as it's marked as experimental.
     }
