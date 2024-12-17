@@ -1,7 +1,7 @@
 import WebSocket from "ws";
 import { Logger } from "../Logger";
 
-export async function evaluateJsFromCdp(
+export async function connectCDPAndEval(
   webSocketDebuggerUrl: string,
   source: string,
   timeoutMs: number = 2000
@@ -13,7 +13,6 @@ export async function evaluateJsFromCdp(
     const ws = new WebSocket(webSocketDebuggerUrl);
 
     const timeoutHandle = setTimeout(() => {
-      Logger.debug(`[evaluateJsFromCdpAsync] Request timeout from ${webSocketDebuggerUrl}`);
       reject(new Error("Request timeout"));
       settled = true;
       ws.close();
@@ -36,7 +35,6 @@ export async function evaluateJsFromCdp(
     });
 
     ws.on("error", (e) => {
-      Logger.debug(`[evaluateJsFromCdpAsync] Failed to connect ${webSocketDebuggerUrl}`, e);
       reject(e);
       settleConnection();
     });

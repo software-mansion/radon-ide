@@ -10,7 +10,7 @@ import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
-import { evaluateJsFromCdp } from "../utilities/evaluateJsFromCdp";
+import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -293,18 +293,6 @@ export class Metro implements Disposable {
     ws.close();
   }
 
-  private async evaluateJsFromCdp(
-    webSocketDebuggerUrl: string,
-    source: string,
-    timeoutMs: number = 2000
-  ): Promise<string | undefined> {
-    const wsUrl = new URL(webSocketDebuggerUrl);
-    wsUrl.hostname = "localhost";
-    wsUrl.port = String(this._port);
-
-    return evaluateJsFromCdp(wsUrl.toString(), source);
-  }
-
   public async reload() {
     await this.sendMessageToDevice("reload");
   }
@@ -362,17 +350,36 @@ export class Metro implements Disposable {
     );
   }
 
-  private async isExpoHostRuntime(webSocketDebuggerUrl: string) {
-    const HIDE_FROM_INSPECTOR_ENV = "globalThis.__expo_hide_from_inspector__";
+  private async isActiveExpoGoAppRuntime(webSocketDebuggerUrl: string) {
+    // This method checks for a global variable that is set in the expo host runtime.
+    // We expect this variable to not be present in the main app runtime.
+    const HIDE_FROM_INSPECTOR_ENV = "(globalThis.__expo_hide_from_inspector__ || 'runtime')";
     try {
-      const result = await this.evaluateJsFromCdp(webSocketDebuggerUrl, HIDE_FROM_INSPECTOR_ENV);
-      if (result !== undefined) {
+      const result = await connectCDPAndEval(webSocketDebuggerUrl, HIDE_FROM_INSPECTOR_ENV);
+      if (result === "runtime") {
         return true;
       }
     } catch (e) {
-      // we ignore errors as they wer already logged by the evaluateJsFromCdp method
+      Logger.warn(
+        "Error checking expo go runtime",
+        webSocketDebuggerUrl,
+        "(this could be stale/inactive runtime)",
+        e
+      );
     }
     return false;
+  }
+
+  private fixupWebSocketDebuggerUrl(websocketAddress: string) {
+    // CDP websocket addresses come from metro and in some configurations they
+    // still use the default port instead of the ephemeral port that we force metro to use.
+    // We override the port and host to match the current metro address.
+    const websocketDebuggerUrl = new URL(websocketAddress);
+    // replace port number with metro port number:
+    websocketDebuggerUrl.port = this._port.toString();
+    // replace host with localhost:
+    websocketDebuggerUrl.host = "localhost";
+    return websocketDebuggerUrl.toString();
   }
 
   private async lookupWsAddressForNewDebugger(listJson: CDPTargetDescription[]) {
@@ -398,7 +405,7 @@ export class Metro implements Disposable {
         // is not. To perform this check we use expo host functionality
         // introduced in https://github.com/expo/expo/pull/32322/files
         for (const newDebuggerPage of newDebuggerPages.reverse()) {
-          if (!(await this.isExpoHostRuntime(newDebuggerPage.webSocketDebuggerUrl))) {
+          if (await this.isActiveExpoGoAppRuntime(newDebuggerPage.webSocketDebuggerUrl)) {
             return newDebuggerPage.webSocketDebuggerUrl;
           }
         }
@@ -414,6 +421,11 @@ export class Metro implements Disposable {
     const list = await fetch(`http://localhost:${this._port}/json/list`);
     const listJson = await list.json();
 
+    // fixup websocket addresses on the list
+    for (const page of listJson) {
+      page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+    }
+
     // When there are pages that are identified as belonging to the new debugger, we
     // assume the use of the new debugger and use new debugger logic to determine the websocket address.
     this.usesNewDebugger = this.filterNewDebuggerPages(listJson).length > 0;
@@ -422,18 +434,7 @@ export class Metro implements Disposable {
       ? await this.lookupWsAddressForNewDebugger(listJson)
       : this.lookupWsAddressForOldDebugger(listJson);
 
-    if (websocketAddress) {
-      // Port and host in webSocketDebuggerUrl are set manually to match current metro address,
-      // because we always know what the correct one is and some versions of RN are sending out wrong port (0 or 8081)
-      const websocketDebuggerUrl = new URL(websocketAddress);
-      // replace port number with metro port number:
-      websocketDebuggerUrl.port = this._port.toString();
-      // replace host with localhost:
-      websocketDebuggerUrl.host = "localhost";
-      return websocketDebuggerUrl.toString();
-    }
-
-    return undefined;
+    return websocketAddress;
   }
 }
 
