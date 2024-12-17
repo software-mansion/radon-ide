@@ -124,6 +124,10 @@
     "Description": "Gujarati"
   },
   {
+    "localeIdentifier": "he_IL",
+    "Description": "Hebrew (Israel)"
+  },
+  {
     "localeIdentifier": "hi_IN",
     "Description": "Hindi (India)"
   },
