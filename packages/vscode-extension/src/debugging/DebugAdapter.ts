@@ -32,7 +32,7 @@ import { VariableStore } from "./variableStore";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { CDPSession } from "./CDPSession";
-import getArraySlots from "./templates";
+import getArraySlots from "./templates/getArraySlots";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -152,6 +152,7 @@ export class DebugAdapter extends DebugSession {
   };
 
   // Based on https://github.com/microsoft/vscode-js-debug/blob/3be255753c458f231e32c9ef5c60090236780060/src/adapter/console/textualMessage.ts#L83
+  // We use that to format and truncate console.log messages
   async formatDefaultString(args: ReadonlyArray<Cdp.Runtime.RemoteObject>) {
     const useMessageFormat = args.length > 1 && args[0].type === "string";
     const formatResult = useMessageFormat
