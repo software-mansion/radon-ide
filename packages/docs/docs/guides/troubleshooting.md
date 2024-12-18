@@ -7,7 +7,7 @@ sidebar_position: 6
 ## Troubleshooting issues with Radon IDE
 
 When you encounter issues with using Radon IDE they usually are related to the local installation or problems that are specific to the project.
-If you are trying to open Radom IDE on your existing project for the first time and it doesn't work, we first recommend testing Radon on some other project / possibly new app created with `npx create-expo-app` to help isolate potential issues with the installation on your computer.
+If you are trying to open Radon IDE on your existing project for the first time and it doesn't work, we first recommend testing Radon on some other project / possibly new app created with `npx create-expo-app` to help isolate potential issues with the installation on your computer.
 
 Below, we outline some ways that may help you self-diagnose and hopefully resolve issues you may encounter when using the Radon IDE extension.
 
