@@ -11,8 +11,7 @@ import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import Feedback from "./Feedback";
-import FeedbackView from "../views/FeedbackView";
+import { SendFeedbackItem } from "./SendFeedbackItem";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -24,7 +23,8 @@ interface SettingsDropdownProps {
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
-  const { movePanelToNewWindow, reportIssue } = useUtils();
+  const { movePanelToNewWindow, reportIssue } = useUtils().utils;
+  const telemetryEnabled = useUtils().telemetryEnabled;
 
   return (
     <DropdownMenu.Root>
@@ -144,17 +144,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <div className="dropdown-menu-item-content">Report Issue</div>
             </span>
           </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => {
-              openModal("Do you enjoy using Radon IDE today?", <FeedbackView />);
-            }}>
-            <span className="codicon codicon-feedback" />
-            <div className="dropdown-menu-item-content">
-              Send feedback
-              <Feedback />
-            </div>
-          </DropdownMenu.Item>
+          {telemetryEnabled && <SendFeedbackItem />}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

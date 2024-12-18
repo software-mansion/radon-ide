@@ -1,4 +1,5 @@
 import { homedir } from "node:os";
+import { EventEmitter } from "stream";
 import fs from "fs";
 import path from "path";
 import { commands, env, Uri, window } from "vscode";
@@ -8,7 +9,7 @@ import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import { Logger } from "../Logger";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
-import { UtilsInterface } from "../common/utils";
+import { UtilsEventListener, UtilsEventMap, UtilsInterface } from "../common/utils";
 import { Platform } from "./platform";
 import { RecordingData } from "../common/Project";
 import { getTelemetryReporter } from "./telemetry";
@@ -21,6 +22,14 @@ type KeybindingType = {
 };
 
 export class Utils implements UtilsInterface {
+  private eventEmitter = new EventEmitter();
+
+  constructor() {
+    vscode.env.onDidChangeTelemetryEnabled((telemetryEnabled) => {
+      this.eventEmitter.emit("telemetryEnabledChanged", telemetryEnabled);
+    });
+  }
+
   public async getCommandsCurrentKeyBinding(commandName: string) {
     const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
     const extensionPackageJson = require(packageJsonPath);
@@ -147,5 +156,22 @@ export class Utils implements UtilsInterface {
 
   public async sendTelemetry(eventName: string, properties?: TelemetryEventProperties) {
     getTelemetryReporter().sendTelemetryEvent(eventName, properties);
+  }
+
+  public async isTelemetryEnabled() {
+    return vscode.env.isTelemetryEnabled;
+  }
+
+  async addListener<K extends keyof UtilsEventMap>(
+    eventType: K,
+    listener: UtilsEventListener<UtilsEventMap[K]>
+  ) {
+    this.eventEmitter.addListener(eventType, listener);
+  }
+  async removeListener<K extends keyof UtilsEventMap>(
+    eventType: K,
+    listener: UtilsEventListener<UtilsEventMap[K]>
+  ) {
+    this.eventEmitter.removeListener(eventType, listener);
   }
 }

@@ -1,13 +1,16 @@
-import { MouseEvent, useState } from "react";
+import { Dispatch, MouseEvent, SetStateAction } from "react";
 import "./Feedback.css";
 import classNames from "classnames";
 import { useUtils } from "../providers/UtilsProvider";
+import { Sentiment } from "./SendFeedbackItem";
 
-export type Sentiment = "positive" | "negative";
+type FeedbackProps = {
+  sentiment: Sentiment | undefined;
+  setSentiment: Dispatch<SetStateAction<Sentiment | undefined>>;
+};
 
-export default function Feedback() {
-  const { sendTelemetry } = useUtils();
-  const [sentiment, setSentiment] = useState<Sentiment | undefined>();
+export function Feedback({ sentiment, setSentiment }: FeedbackProps) {
+  const { sendTelemetry } = useUtils().utils;
 
   const handleFeedback = (event: MouseEvent<HTMLButtonElement>, pickedSentiment: Sentiment) => {
     event.preventDefault();

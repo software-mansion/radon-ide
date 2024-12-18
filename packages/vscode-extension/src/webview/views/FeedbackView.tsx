@@ -1,19 +1,24 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import Button from "../components/shared/Button";
-import { FeedbackButton, Sentiment } from "../components/Feedback";
+import { FeedbackButton } from "../components/Feedback";
 import "./FeedbackView.css";
 import { useModal } from "../providers/ModalProvider";
 import { useUtils } from "../providers/UtilsProvider";
+import { Sentiment } from "../components/SendFeedbackItem";
 
 const CLOSE_MODAL_AFTER = 2400;
 
-function FeedbackView() {
-  const [sentiment, setSentiment] = useState<Sentiment | undefined>();
+type FeedbackViewProps = {
+  sentiment: Sentiment | undefined;
+  setSentiment: Dispatch<SetStateAction<Sentiment | undefined>>;
+};
+
+function FeedbackView({ sentiment, setSentiment }: FeedbackViewProps) {
   const [isFeedbackSent, setFeedbackSent] = useState(false);
   const { closeModal, showHeader } = useModal();
   const { register, handleSubmit } = useForm();
-  const { sendTelemetry } = useUtils();
+  const { sendTelemetry } = useUtils().utils;
 
   const onSubmit: SubmitHandler<FieldValues> = (e) => {
     const { message } = e;
