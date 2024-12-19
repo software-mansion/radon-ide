@@ -140,7 +140,6 @@
 body[data-vscode-theme-kind="vscode-light"],
 body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-active-item: var(--blue-dark-100);
-  --swm-preview-background: var(--white);
 
   --swm-default-text: var(--navy-light-100);
   --swm-marked-text: var(--yellow-dark-120);
@@ -302,7 +301,6 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
 body[data-vscode-theme-kind="vscode-dark"],
 body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-active-item: var(--blue-dark-100);
-  --swm-preview-background: var(--background-dark-100);
 
   --swm-default-text: var(--off-white);
   --swm-marked-text: var(--yellow-dark-100);
