@@ -1,8 +1,8 @@
+import fs from "fs";
 import { commands, ExtensionContext, Uri, workspace, window } from "vscode";
 import { Logger } from "../Logger";
 import { findFilesInWorkspace, isWorkspaceRoot } from "./common";
 import { getLaunchConfiguration } from "./launchConfiguration";
-import fs from "fs";
 import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 let _extensionContext: ExtensionContext | null = null;

@@ -1,3 +1,4 @@
+import path from "path";
 import { EventEmitter } from "stream";
 import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
 import {
@@ -15,7 +16,6 @@ import {
 import { findXcodeProject, findXcodeScheme } from "../utilities/xcode";
 import { Logger } from "../Logger";
 import { getIosSourceDir } from "../builders/buildIOS";
-import path from "path";
 
 const CUSTOM_APPLICATION_ROOTS_KEY = "custom_application_roots_key";
 

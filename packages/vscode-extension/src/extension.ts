@@ -1,11 +1,9 @@
-import fs from "fs";
 import {
   commands,
   languages,
   debug,
   window,
   workspace,
-  Uri,
   ExtensionContext,
   ExtensionMode,
   ConfigurationChangeEvent,
