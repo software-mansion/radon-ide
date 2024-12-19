@@ -41,7 +41,7 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
 
       if (newConfig.showDeviceFrame !== this.config.showDeviceFrame) {
         getTelemetryReporter().sendTelemetryEvent(
-          "workspace-configuration:panel-location-changed",
+          "workspace-configuration:show-device-frame-changed",
           { showDeviceFrame: String(newConfig.showDeviceFrame) }
         );
       }

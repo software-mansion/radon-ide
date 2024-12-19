@@ -140,7 +140,6 @@ export async function buildIos(
   await installPodsIfNeeded();
 
   const xcodeProject = await findXcodeProject(appRootFolder);
-  ``;
 
   if (!xcodeProject) {
     throw new Error(`Could not find Xcode project files in "${sourceDir}" folder`);
