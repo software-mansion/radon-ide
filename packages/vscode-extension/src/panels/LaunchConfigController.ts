@@ -25,27 +25,6 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
   private configListener: Disposable;
 
   constructor() {
-    // const getCurrentConfig = (): LaunchConfigurationOptions => {
-    //   const launchConfiguration = workspace.getConfiguration(
-    //     "launch",
-    //     workspace.workspaceFolders![0].uri
-    //   );
-
-    //   const configurations = launchConfiguration.get<Array<Record<string, any>>>("configurations")!;
-
-    //   const RNIDEConfiguration = configurations.find(
-    //     ({ type }) => type === "react-native-ide" || type === "radon-ide" // for compatibility we want to support old configuration type name
-    //   );
-
-    //   if (!RNIDEConfiguration) {
-    //     return {};
-    //   }
-
-     // const { android, appRoot, ios, isExpo, metroConfigPath, env, eas } = RNIDEConfiguration;
-
-      //return { android, appRoot, ios, isExpo, metroConfigPath, env, eas };
-    //};
-
     this.config = getCurrentLaunchConfig();
 
     this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {

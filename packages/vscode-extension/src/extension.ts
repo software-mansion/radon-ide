@@ -254,7 +254,7 @@ export async function activate(context: ExtensionContext) {
         await setupAppRoot();
 
         // restart here
-        Project.currentProject?.restart(true, false, true);
+        Project.currentProject?.reload("reboot");
       }
     })
   );
