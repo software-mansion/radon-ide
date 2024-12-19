@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { mkdtemp} from "fs/promises";
+import { mkdtemp } from "fs/promises";
 import { Logger } from "../Logger";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
@@ -10,7 +10,7 @@ import { extractTarApp } from "./utils";
 
 type Env = Record<string, string> | undefined;
 
-const EXPO_LOCAL_BUILD_PATH_REGEX = new RegExp('You can find the build artifacts in (.*)');
+const EXPO_LOCAL_BUILD_PATH_REGEX = new RegExp("You can find the build artifacts in (.*)");
 
 export async function runExternalBuild(cancelToken: CancelToken, buildCommand: string, env: Env) {
   const output = await runExternalScript(buildCommand, env, cancelToken);
@@ -22,7 +22,7 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
   let binaryPath = output.lastLine;
 
   // We test if the output of the command matches eas build output.
-  // If it does we extract the bath to binary. 
+  // If it does we extract the bath to binary.
   if (EXPO_LOCAL_BUILD_PATH_REGEX.test(output.lastLine)) {
     const groups = EXPO_LOCAL_BUILD_PATH_REGEX.exec(output.lastLine);
     if (groups?.[1]) {
@@ -37,7 +37,7 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
     return undefined;
   }
 
-  const shouldExtractArchive = binaryPath.endsWith('.tar.gz');
+  const shouldExtractArchive = binaryPath.endsWith(".tar.gz");
   if (!shouldExtractArchive) {
     return binaryPath;
   }

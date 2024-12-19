@@ -1,6 +1,6 @@
 import path from "path";
 import os from "os";
-import { mkdtemp} from "fs/promises";
+import { mkdtemp } from "fs/promises";
 import maxBy from "lodash/maxBy";
 
 import { DevicePlatform } from "../common/DeviceManager";
