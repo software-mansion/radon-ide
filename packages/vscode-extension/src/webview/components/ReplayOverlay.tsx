@@ -187,7 +187,7 @@ export default function ReplayOverlay({
   onClose,
   replayData,
 }: ReplayOverlayProps) {
-  const utils = useUtils();
+  const { utils } = useUtils();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [startTime, setStartTime] = useState(0);

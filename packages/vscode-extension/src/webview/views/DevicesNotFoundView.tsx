@@ -68,7 +68,7 @@ function DevicesNotFoundView() {
   const [isIOSCreating, withIosCreating] = useLoadingState();
   const [isAndroidCreating, withAndroidCreating] = useLoadingState();
   const { errors } = useDependencies();
-  const utils = useUtils();
+  const { utils } = useUtils();
 
   function openCreateNewDeviceModal() {
     openModal(

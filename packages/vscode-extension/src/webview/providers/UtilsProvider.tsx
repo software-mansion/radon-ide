@@ -1,4 +1,4 @@
-import { PropsWithChildren, useContext, createContext } from "react";
+import { PropsWithChildren, useContext, createContext, useState, useEffect } from "react";
 import { makeProxy } from "../utilities/rpc";
 import { Utils } from "../../utilities/utils";
 import { UtilsInterface } from "../../common/utils";
@@ -17,12 +17,30 @@ export const Platform = {
   },
 };
 
+type UtilsContextProps = {
+  utils: UtilsInterface;
+  telemetryEnabled: boolean;
+};
+
 const utils = makeProxy<Utils>("Utils");
 
-const UtilsContext = createContext<UtilsInterface>(utils);
+const UtilsContext = createContext<UtilsContextProps>({ utils, telemetryEnabled: false });
 
 export function UtilsProvider({ children }: PropsWithChildren) {
-  return <UtilsContext.Provider value={utils}>{children}</UtilsContext.Provider>;
+  const [telemetryEnabled, setTelemetryEnabled] = useState(false);
+
+  useEffect(() => {
+    utils.isTelemetryEnabled().then(setTelemetryEnabled);
+    utils.addListener("telemetryEnabledChanged", setTelemetryEnabled);
+
+    return () => {
+      utils.removeListener("telemetryEnabledChanged", setTelemetryEnabled);
+    };
+  }, []);
+
+  return (
+    <UtilsContext.Provider value={{ utils, telemetryEnabled }}>{children}</UtilsContext.Provider>
+  );
 }
 
 export function useUtils() {
