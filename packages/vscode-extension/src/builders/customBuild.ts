@@ -1,9 +1,12 @@
 import path from "path";
 import fs from "fs";
+import os from "os";
+import { mkdtemp} from "fs/promises";
 import { Logger } from "../Logger";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
 import { getAppRootFolder } from "../utilities/extensionContext";
+import { extractTarApp } from "./utils";
 
 type Env = Record<string, string> | undefined;
 
@@ -34,7 +37,14 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
     return undefined;
   }
 
-  return binaryPath;
+  const shouldExtractArchive = binaryPath.endsWith('.tar.gz');
+  if (!shouldExtractArchive) {
+    return binaryPath;
+  }
+
+  const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-custom-build-"));
+
+  return await extractTarApp(binaryPath, tmpDirectory, cancelToken);
 }
 
 export async function runfingerprintCommand(externalCommand: string, env: Env) {
