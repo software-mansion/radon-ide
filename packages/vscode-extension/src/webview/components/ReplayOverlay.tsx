@@ -18,7 +18,7 @@ function acceleratedRewind(
   setTimeCallback: (time: number) => void,
   readyCallback: () => void
 ) {
-  const rewindTimeSec = 1.6;
+  const rewindTimeSec = 0.6;
 
   const v0 = 0.1;
   const vFinal = 2 / rewindTimeSec - v0;
@@ -274,6 +274,7 @@ export default function ReplayOverlay({
   // shifting the time a bit here such that it displays the final value properly despite using Math.floor
   const timeSec = Math.floor(time - startTime + 0.05);
   const timeFormat = `${Math.floor(timeSec / 60)}:${(timeSec % 60).toString().padStart(2, "0")}`;
+
   return (
     <div className="replay-overlay">
       <div className="replay-corner replay-top-left" />

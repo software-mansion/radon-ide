@@ -13,6 +13,7 @@ export type DeviceSettings = {
   hasEnrolledBiometrics: boolean;
   locale: Locale;
   replaysEnabled: boolean;
+  showTouches: boolean;
 };
 
 export type ProjectState = {
@@ -100,10 +101,19 @@ export type TouchPoint = {
   yRatio: number;
 };
 
+export enum ActivateDeviceResult {
+  succeeded,
+  notEnoughSeats,
+  keyVerificationFailed,
+  unableToVerify,
+  connectionFailed,
+}
+
 export interface ProjectEventMap {
   log: { type: string };
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
+  licenseActivationChanged: boolean;
   navigationChanged: { displayName: string; id: string };
   needsNativeRebuild: void;
 }
@@ -121,9 +131,10 @@ export type RecordingData = {
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   reload(type: ReloadAction): Promise<boolean>;
-  restart(forceCleanBuild: boolean): Promise<void>;
+  restart(clean: "all" | "metro" | false): Promise<void>;
   goHome(homeUrl: string): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo): Promise<boolean>;
+  renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
@@ -138,8 +149,16 @@ export interface ProjectInterface {
   openNavigation(navigationItemID: string): Promise<void>;
   openDevMenu(): Promise<void>;
 
+  activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
+  hasActiveLicense(): Promise<boolean>;
+
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
+  getDeepLinksHistory(): Promise<string[]>;
+  openDeepLink(link: string): Promise<void>;
+
+  startRecording(): void;
+  captureAndStopRecording(): Promise<RecordingData>;
   captureReplay(): Promise<RecordingData>;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;

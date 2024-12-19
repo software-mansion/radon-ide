@@ -9,6 +9,7 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import {
   AddCustomApplicationRoot,
+  EasConfig,
   LaunchConfig,
   LaunchConfigUpdater,
   LaunchConfigurationOptions,
@@ -21,6 +22,10 @@ type LaunchConfigContextType = LaunchConfigurationOptions & {
   xcodeSchemes: string[];
   applicationRoots: string[];
   addCustomApplicationRoot: AddCustomApplicationRoot;
+  eas?: {
+    ios?: EasConfig;
+    android?: EasConfig;
+  };
 };
 
 const LaunchConfigContext = createContext<LaunchConfigContextType>({

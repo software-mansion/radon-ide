@@ -41,10 +41,10 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
     //     return {};
     //   }
 
-    //   const { android, appRoot, ios, isExpo, metroConfigPath, env } = RNIDEConfiguration;
+     // const { android, appRoot, ios, isExpo, metroConfigPath, env, eas } = RNIDEConfiguration;
 
-    //   return { android, appRoot, ios, isExpo, metroConfigPath, env };
-    // };
+      //return { android, appRoot, ios, isExpo, metroConfigPath, env, eas };
+    //};
 
     this.config = getCurrentLaunchConfig();
 

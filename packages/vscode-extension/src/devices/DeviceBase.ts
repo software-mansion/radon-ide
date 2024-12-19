@@ -7,7 +7,7 @@ import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
 export abstract class DeviceBase implements Disposable {
-  private preview: Preview | undefined;
+  protected preview: Preview | undefined;
   private previewStartPromise: Promise<string> | undefined;
   private acquired = false;
 
@@ -25,6 +25,7 @@ export abstract class DeviceBase implements Disposable {
     appPermission: AppPermissionType,
     buildResult: BuildResult
   ): Promise<boolean>;
+  abstract sendDeepLink(link: string, buildResult: BuildResult): Promise<void>;
 
   async acquire() {
     const acquired = await tryAcquiringLock(this.lockFilePath);
@@ -43,15 +44,37 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.dispose();
   }
 
-  public stopReplays() {
-    return this.preview?.stopReplays();
+  public showTouches() {
+    return this.preview?.showTouches();
   }
 
-  public startReplays() {
+  public hideTouches() {
+    return this.preview?.hideTouches();
+  }
+
+  public startRecording() {
+    if (!this.preview) {
+      throw new Error("Preview not started");
+    }
+    return this.preview.startRecording();
+  }
+
+  public async captureAndStopRecording() {
+    if (!this.preview) {
+      throw new Error("Preview not started");
+    }
+    return this.preview.captureAndStopRecording();
+  }
+
+  public enableReplay() {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
     return this.preview.startReplays();
+  }
+
+  public disableReplays() {
+    return this.preview?.stopReplays();
   }
 
   public async captureReplay() {
@@ -69,8 +92,8 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.sendKey(keyCode, direction);
   }
 
-  public sendPaste(text: string) {
-    this.preview?.sendPaste(text);
+  public async sendPaste(text: string) {
+    return this.preview?.sendPaste(text);
   }
 
   async startPreview() {

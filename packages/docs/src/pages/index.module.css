@@ -44,3 +44,10 @@
     padding: 2rem;
   }
 }
+
+@media (max-width: 430px) {
+  .container {
+    width: 90%;
+    gap: 3rem;
+  }
+}

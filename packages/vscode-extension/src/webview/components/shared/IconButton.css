@@ -1,5 +1,6 @@
 .icon-button {
   text-align: center;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11,6 +12,7 @@
   border-radius: 36px;
   color: var(--swm-button);
   transition: all 200ms 0ms ease-in-out;
+  flex-shrink: 0;
 }
 
 .icon-button:disabled {
@@ -56,4 +58,25 @@
   height: 24px;
   width: 24px;
   border-radius: 6px;
+}
+
+.icon-button-counter {
+  border: 0px solid transparent;
+  border-radius: 4px;
+  color: var(--swm-button-counter);
+  background-color: var(--swm-button-counter-background);
+  padding: 2px 4px;
+  font-size: 11px;
+  position: absolute;
+  top: 20%;
+  left: 20px;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: left 200ms ease-in-out, opacity 200ms ease-in-out;
+}
+
+.icon-button-counter.visible {
+  top: 20%;
+  left: 25px;
+  opacity: 1;
 }

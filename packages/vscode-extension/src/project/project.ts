@@ -1,4 +1,5 @@
 import { EventEmitter } from "stream";
+import os from "os";
 import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
@@ -20,20 +21,32 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { extensionContext } from "../utilities/extensionContext";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
-import { throttle } from "../utilities/throttle";
+import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
-import { PlatformBuildCache } from "../builders/PlatformBuildCache";
+import { BuildCache } from "../builders/BuildCache";
+import { PanelLocation } from "../common/WorkspaceConfig";
+import {
+  activateDevice,
+  watchLicenseTokenChange,
+  getLicenseToken,
+  refreshTokenPeriodically,
+} from "../utilities/license";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
+const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
+
+const DEEP_LINKS_HISTORY_LIMIT = 50;
+
+const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
@@ -47,6 +60,8 @@ export class Project
   private isCachedBuildStale: boolean;
 
   private fileWatcher: Disposable;
+  private licenseWatcher: Disposable;
+  private licenseUpdater: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -75,6 +90,7 @@ export class Project
       hasEnrolledBiometrics: false,
       locale: "en_US",
       replaysEnabled: false,
+      showTouches: false,
     };
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
@@ -85,6 +101,11 @@ export class Project
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
+    });
+    this.licenseUpdater = refreshTokenPeriodically();
+    this.licenseWatcher = watchLicenseTokenChange(async () => {
+      const hasActiveLicense = await this.hasActiveLicense();
+      this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
     });
   }
 
@@ -138,13 +159,35 @@ export class Project
     } else {
       this.updateProjectState({ status: "debuggerPaused" });
     }
-    commands.executeCommand("workbench.view.debug");
+
+    // we don't want to focus on debug side panel if it means hiding Radon IDE
+    const panelLocation = workspace
+      .getConfiguration("RadonIDE")
+      .get<PanelLocation>("panelLocation");
+
+    if (panelLocation === "tab") {
+      commands.executeCommand("workbench.view.debug");
+    }
   }
 
   onDebuggerResumed() {
     this.updateProjectState({ status: "running" });
   }
   //#endregion
+
+  startRecording(): void {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.startRecording();
+  }
+
+  async captureAndStopRecording(): Promise<RecordingData> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    return this.deviceSession.captureAndStopRecording();
+  }
 
   async captureReplay(): Promise<RecordingData> {
     if (!this.deviceSession) {
@@ -154,7 +197,7 @@ export class Project
   }
 
   async dispatchPaste(text: string) {
-    this.deviceSession?.sendPaste(text);
+    await this.deviceSession?.sendPaste(text);
   }
 
   onBundleError(): void {
@@ -246,6 +289,8 @@ export class Project
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.fileWatcher.dispose();
+    this.licenseWatcher.dispose();
+    this.licenseUpdater.dispose();
   }
 
   private async reloadMetro() {
@@ -266,7 +311,7 @@ export class Project
 
   //#region Session lifecycle
   public async restart(
-    forceCleanBuild: boolean,
+    clean: "all" | "metro" | false,
     onlyReloadJSWhenPossible: boolean = true,
     restartDevice: boolean = false
   ) {
@@ -283,9 +328,9 @@ export class Project
 
     // we first consider forceCleanBuild flag, if set we always perform a clean
     // start of the project and select the device
-    if (forceCleanBuild) {
+    if (clean) {
       await this.start(true, true);
-      await this.selectDevice(deviceInfo, true);
+      await this.selectDevice(deviceInfo, clean === "all");
       return;
     }
 
@@ -326,7 +371,16 @@ export class Project
   }
 
   public async reload(type: ReloadAction): Promise<boolean> {
-    this.updateProjectState({ status: "starting" });
+    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
+
+    // this action needs to be handled outside of device session as it resets the device session itself
+    if (type === "reboot") {
+      const deviceInfo = this.projectState.selectedDevice!;
+      await this.start(true, false);
+      await this.selectDevice(deviceInfo);
+      return true;
+    }
+
     const success = (await this.deviceSession?.perform(type)) ?? false;
     if (success) {
       this.updateProjectState({ status: "running" });
@@ -336,7 +390,7 @@ export class Project
     return success;
   }
 
-  private async start(restart: boolean, forceCleanBuild: boolean) {
+  private async start(restart: boolean, resetMetroCache: boolean) {
     if (restart) {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
@@ -353,7 +407,7 @@ export class Project
 
     Logger.debug(`Launching metro`);
     this.metro.start(
-      forceCleanBuild,
+      resetMetroCache,
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
@@ -367,6 +421,22 @@ export class Project
     if (needsRestart) {
       this.restart(false, false);
     }
+  }
+
+  async getDeepLinksHistory() {
+    return extensionContext.workspaceState.get<string[] | undefined>(DEEP_LINKS_HISTORY_KEY) ?? [];
+  }
+
+  async openDeepLink(link: string) {
+    const history = await this.getDeepLinksHistory();
+    if (history.length === 0 || link !== history[0]) {
+      extensionContext.workspaceState.update(
+        DEEP_LINKS_HISTORY_KEY,
+        [link, ...history.filter((s) => s !== link)].slice(0, DEEP_LINKS_HISTORY_LIMIT)
+      );
+    }
+
+    this.deviceSession?.sendDeepLink(link);
   }
 
   public async dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
@@ -435,6 +505,16 @@ export class Project
     await this.deviceSession?.openDevMenu();
   }
 
+  public async activateLicense(activationKey: string) {
+    const computerName = os.hostname();
+    const activated = await activateDevice(activationKey, computerName);
+    return activated;
+  }
+
+  public async hasActiveLicense() {
+    return !!(await getLicenseToken());
+  }
+
   public startPreview(appKey: string) {
     this.deviceSession?.startPreview(appKey);
   }
@@ -459,6 +539,14 @@ export class Project
 
     if (needsRestart) {
       await this.restart(false, false, true);
+    }
+  }
+
+  public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
+    await this.deviceManager.renameDevice(deviceInfo, newDisplayName);
+    deviceInfo.displayName = newDisplayName;
+    if (this.projectState.selectedDevice?.id === deviceInfo.id) {
+      this.updateProjectState({ selectedDevice: deviceInfo });
     }
   }
 
@@ -523,7 +611,7 @@ export class Project
     }
 
     if (device) {
-      Logger.log("Device selected", deviceInfo.name);
+      Logger.debug("Device selected", deviceInfo.displayName);
       extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
       return device;
     }
@@ -554,6 +642,7 @@ export class Project
         this.devtools,
         this.metro,
         this.dependencyManager,
+        new BuildCache(device.platform, getAppRootFolder()),
         this,
         this
       );
@@ -561,6 +650,9 @@ export class Project
 
       const previewURL = await newDeviceSession.start(this.deviceSettings, {
         cleanBuild: forceCleanBuild,
+        previewReadyCallback: (url) => {
+          this.updateProjectStateForDevice(deviceInfo, { previewURL: url });
+        },
       });
       this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
         previewURL,
@@ -587,17 +679,16 @@ export class Project
     }
   };
 
-  private checkIfNativeChanged = throttle(async () => {
-    if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
-      const platform = this.projectState.selectedDevice.platform;
-      const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
+  private checkIfNativeChanged = throttleAsync(async () => {
+    if (!this.isCachedBuildStale && this.deviceSession) {
+      const isCacheStale = await this.deviceSession.buildCache.isCacheStale();
 
       if (isCacheStale) {
         this.isCachedBuildStale = true;
         this.eventEmitter.emit("needsNativeRebuild");
       }
     }
-  }, 300);
+  }, FINGERPRINT_THROTTLE_MS);
 }
 
 function watchProjectFiles(onChange: () => void) {

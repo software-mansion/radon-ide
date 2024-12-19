@@ -14,7 +14,7 @@ import { DevicePlatform } from "../../common/DeviceManager";
 
 export type DeviceProperties = {
   modelName: string;
-  deviceName?: string; // only needed for Android to set hw.device.name in config.ini
+  modelId: string;
   platform: DevicePlatform;
   screenWidth: number;
   screenHeight: number;
@@ -24,12 +24,17 @@ export type DeviceProperties = {
   offsetY: number;
   frameImage: string;
   maskImage: string;
+  minimumAndroidApiLevel?: number;
 };
+
+// Model identifiers for new devices are sourced from 'hw.device.name'
+// in config.ini for Android and 'deviceType' in device.plist for iOS.
 
 // iOS devices names should match supportedDeviceTypes inside the runtime
 export const iOSSupportedDevices: DeviceProperties[] = [
   {
     modelName: "iPhone 15 Pro",
+    modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
     platform: DevicePlatform.IOS,
     screenWidth: 1179,
     screenHeight: 2556,
@@ -42,6 +47,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "iPhone SE (3rd generation)",
+    modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation",
     platform: DevicePlatform.IOS,
     screenWidth: 750,
     screenHeight: 1334,
@@ -57,7 +63,8 @@ export const iOSSupportedDevices: DeviceProperties[] = [
 export const AndroidSupportedDevices: DeviceProperties[] = [
   {
     modelName: "Google Pixel 9",
-    deviceName: "pixel_9",
+    modelId: "pixel_9",
+    minimumAndroidApiLevel: 35,
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2424,
@@ -70,7 +77,8 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "Google Pixel 8",
-    deviceName: "pixel_8",
+    modelId: "pixel_8",
+    minimumAndroidApiLevel: 34,
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -83,7 +91,8 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "Google Pixel 7",
-    deviceName: "pixel_7",
+    modelId: "pixel_7",
+    minimumAndroidApiLevel: 33,
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -96,7 +105,8 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
   {
     modelName: "Google Pixel 6a",
-    deviceName: "pixel_6a",
+    modelId: "pixel_6a",
+    minimumAndroidApiLevel: 32,
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
@@ -108,3 +118,15 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     maskImage: pixel6amask,
   },
 ] as const;
+
+export function mapIdToModel(deviceId: string): string {
+  let device =
+    iOSSupportedDevices.find((d) => d.modelId === deviceId) ||
+    AndroidSupportedDevices.find((d) => d.modelId === deviceId);
+
+  if (device) {
+    return device.modelName;
+  } else {
+    throw new Error("Device id not recognized");
+  }
+}

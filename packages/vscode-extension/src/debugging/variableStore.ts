@@ -51,6 +51,22 @@ export class VariableStore {
           } else {
             variablesReference = Number(prop.value.objectId);
           }
+
+          if (prop.value.subtype === "array") {
+            const match = String(prop.value.description).match(/\(([0-9]+)\)/);
+            const length = match ? +match[1] : 0;
+
+            return {
+              name: prop.name,
+              value,
+              type: "object",
+              variablesReference,
+              // We split into 100 chunks, so no need to do it for less than 100 items
+              indexedVariables: length > 100 ? length : undefined,
+              namedVariables: length > 100 ? 1 : undefined,
+            };
+          }
+
           return {
             name: prop.name,
             value,
@@ -103,7 +119,7 @@ export class VariableStore {
     return dapObjectID;
   }
 
-  private convertDAPObjectIdToCDP(dapObjectID: number) {
+  public convertDAPObjectIdToCDP(dapObjectID: number) {
     return this.DAPtoCDPObjectIdMap.get(dapObjectID);
   }
 }

@@ -3,11 +3,13 @@
   margin-right: 12px;
 }
 
-.container {
-  margin: 12px 0;
+.manage-devices-container {
+  margin: 12px 0 0 0;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  padding-right: 5%;
+  padding-left: 2.5%;
 }
 
 .delete-icon {
@@ -16,13 +18,21 @@
 
 .device-row {
   display: grid;
-  grid-template-columns: 32px 1fr 32px;
+  grid-template-columns: 32px 1fr 90px;
+  min-width: 250px;
   align-items: center;
-  margin-bottom: 0 2px 4px 2px;
   gap: 10px;
   line-height: 1;
   height: 48px;
+  padding: 2px 6px 2px 2px;
+  border-radius: 6px;
 }
+
+.device-row:hover {
+  outline: none;
+  background-color: var(--swm-device-select-highlighted);
+}
+
 .device-label-row {
   display: flex;
   flex-grow: 1;
@@ -33,11 +43,17 @@
 .device-label {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  margin-left: 6px;
+  cursor: default;
 }
 .device-title {
   font-size: 14px;
   color: var(--swm-device-title);
   margin-bottom: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .device-subtitle {
   font-size: 12px;
@@ -46,15 +62,33 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.device-icon {
+.device-label:hover .device-subtitle {
+  white-space: normal;
+}
+.device-icon,
+.device-icon-selected {
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 16px;
+  margin-left: 6px;
   color: var(--swm-device-icon);
   background-color: var(--swm-device-icon-background);
+}
+.device-icon-selected {
+  color: var(--swm-device-icon);
+  background-color: var(--swm-device-icon-background-selected);
+}
+.device-button-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.device-button-group .icon-button {
+  width: 30px;
+  height: 30px;
 }
 
 .warning {
@@ -63,9 +97,19 @@
 
 .create-button {
   margin: 16px auto 0;
+  margin-bottom: 2px;
 }
 
 .create-button-text {
   margin-left: 4px;
   text-wrap: nowrap;
+}
+
+@media (width <= 480px) {
+  .manage-devices-container {
+    padding: 0;
+  }
+  .device-row {
+    padding: 2px 0px 2px 0px;
+  }
 }

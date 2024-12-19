@@ -1,17 +1,22 @@
 import path from "path";
 import fs from "fs";
-import { ExecaError } from "execa";
+import { OutputChannel, window } from "vscode";
+import { ExecaChildProcess, ExecaError } from "execa";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
 import { Logger } from "../Logger";
-import { exec } from "../utilities/subprocess";
+import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
+
+const LEFT_META_HID_CODE = 0xe3;
+const RIGHT_META_HID_CODE = 0xe7;
+const V_KEY_HID_CODE = 0x19;
 
 interface SimulatorInfo {
   availability?: string;
@@ -20,6 +25,7 @@ interface SimulatorInfo {
   name: string;
   udid: string;
   version?: string;
+  displayName: string;
   availabilityError?: string;
   type?: "simulator" | "device" | "catalyst";
   booted?: boolean;
@@ -47,6 +53,9 @@ type PrivacyServiceName =
   | "siri";
 
 export class IosSimulatorDevice extends DeviceBase {
+  private nativeLogsOutputChannel: OutputChannel | undefined;
+  private runningAppProcess: ExecaChildProcess | undefined;
+
   constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
     super();
   }
@@ -67,6 +76,8 @@ export class IosSimulatorDevice extends DeviceBase {
 
   public dispose() {
     super.dispose();
+    this.nativeLogsOutputChannel?.dispose();
+    this.runningAppProcess?.cancel();
     return exec("xcrun", [
       "simctl",
       "--set",
@@ -207,6 +218,46 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
+  private pressingLeftMetaKey = false;
+  private pressingRightMetaKey = false;
+
+  public sendKey(keyCode: number, direction: "Up" | "Down"): void {
+    // iOS simulator has a buggy behavior when sending cmd+V key combination.
+    // It sometimes triggers paste action but with a very low success rate.
+    // Other times it kicks in before the pasteboard is filled with the content
+    // therefore pasting the previously compied content instead.
+    // As a temporary workaround, we disable sending cmd+V as key combination
+    // entirely to prevent this buggy behavior. Users can still paste content
+    // using the context menu method as they'd do on an iOS device.
+    // This is not an ideal workaround as people may still trigger cmd+v by
+    // pressing V first and then cmd, but it is good enough to filter out
+    // the majority of the noisy behavior since typically you press cmd first.
+    if (keyCode === LEFT_META_HID_CODE) {
+      this.pressingLeftMetaKey = direction === "Down";
+    } else if (keyCode === RIGHT_META_HID_CODE) {
+      this.pressingRightMetaKey = direction === "Down";
+    }
+    if ((this.pressingLeftMetaKey || this.pressingRightMetaKey) && keyCode === V_KEY_HID_CODE) {
+      // ignore sending V when meta key is pressed
+    } else {
+      this.preview?.sendKey(keyCode, direction);
+    }
+  }
+
+  public async sendPaste(text: string) {
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    const subprocess = exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "pbcopy",
+      this.deviceUDID,
+    ]);
+    subprocess.stdin?.write(text);
+    subprocess.stdin?.end();
+    await subprocess;
+  }
+
   private async changeLocale(newLocale: Locale): Promise<boolean> {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     const languageCode = newLocale.match(/([^_-]*)/)![1];
@@ -263,23 +314,80 @@ export class IosSimulatorDevice extends DeviceBase {
     }
   }
 
+  /**
+   * This function terminates any running applications. Might be useful when you launch a new application
+   * before terminating the previous one.
+   */
+  async terminateAnyRunningApplications() {
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    const { stdout } = await exec("xcrun", [
+      "simctl",
+      "--set",
+      deviceSetLocation,
+      "listapps",
+      this.deviceUDID,
+    ]);
+
+    const regex = /ApplicationType = User;\s*[^{}]*?\bCFBundleIdentifier = "([^"]+)/g;
+
+    const matches = [];
+    let match;
+    while ((match = regex.exec(stdout)) !== null) {
+      matches.push(match[1]);
+    }
+
+    const terminateApp = async (bundleID: string) => {
+      // Terminate the app if it's running:
+      try {
+        await exec(
+          "xcrun",
+          ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, bundleID],
+          { allowNonZeroExit: true }
+        );
+      } catch (e) {
+        // terminate will exit with non-zero code when the app wasn't running. we ignore this error
+      }
+    };
+
+    await Promise.all(matches.map(terminateApp));
+  }
+
   async launchWithBuild(build: IOSBuildResult) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    await exec("xcrun", [
+
+    await this.terminateAnyRunningApplications();
+
+    if (this.runningAppProcess) {
+      this.runningAppProcess.kill(9);
+    }
+
+    if (!this.nativeLogsOutputChannel) {
+      this.nativeLogsOutputChannel = window.createOutputChannel(
+        "Radon IDE (iOS Simulator Logs)",
+        "log"
+      );
+    }
+
+    this.nativeLogsOutputChannel.clear();
+
+    this.runningAppProcess = exec("xcrun", [
       "simctl",
       "--set",
       deviceSetLocation,
       "launch",
+      "--console",
       "--terminate-running-process",
       this.deviceUDID,
       build.bundleID,
     ]);
+
+    lineReader(this.runningAppProcess).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 
   async launchWithExpoDeeplink(bundleID: string, expoDeeplink: string) {
     // For Expo dev-client and Expo Go setup, we use deeplink to launch the app. For this approach to work we do the following:
     // 1. Add the deeplink to the scheme approval list via defaults
-    // 2. Terminate the app if it's running
+    // 2. Terminate any app if it's running
     // 3. Open the deeplink
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
@@ -299,16 +407,7 @@ export class IosSimulatorDevice extends DeviceBase {
       bundleID,
     ]);
 
-    // Terminate the app if it's running:
-    try {
-      await exec(
-        "xcrun",
-        ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, bundleID],
-        { allowNonZeroExit: true }
-      );
-    } catch (e) {
-      // terminate will exit with non-zero code when the app wasn't running. we ignore this error
-    }
+    await this.terminateAnyRunningApplications();
 
     // Use openurl to open the deeplink:
     await exec("xcrun", [
@@ -381,6 +480,21 @@ export class IosSimulatorDevice extends DeviceBase {
     return false;
   }
 
+  async sendDeepLink(link: string, build: BuildResult) {
+    if (build.platform !== DevicePlatform.IOS) {
+      throw new Error("Invalid platform");
+    }
+
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(this.deviceUDID),
+      "openurl",
+      this.deviceUDID,
+      link,
+    ]);
+  }
+
   makePreview(): Preview {
     return new Preview([
       "ios",
@@ -407,6 +521,21 @@ export async function removeIosRuntimes(runtimeIDs: string[]) {
     return exec("xcrun", ["simctl", "runtime", "delete", runtimeID], {});
   });
   return Promise.all(removalPromises);
+}
+
+export async function renameIosSimulator(udid: string | undefined, newDisplayName: string) {
+  if (!udid) {
+    return;
+  }
+
+  return await exec("xcrun", [
+    "simctl",
+    "--set",
+    getOrCreateDeviceSet(udid),
+    "rename",
+    udid,
+    newDisplayName,
+  ]);
 }
 
 export async function removeIosSimulator(udid: string | undefined, location: SimulatorDeviceSet) {
@@ -473,16 +602,15 @@ export async function listSimulators(
           id: `ios-${device.udid}`,
           platform: DevicePlatform.IOS as const,
           UDID: device.udid,
-          name: device.name,
+          modelId: device.deviceTypeIdentifier,
           systemName: runtime?.name ?? "Unknown",
+          displayName: device.name,
           available: device.isAvailable ?? false,
-          deviceIdentifier: device.deviceTypeIdentifier,
           runtimeInfo: runtime!,
         };
       });
     })
     .flat();
-
   return simulators;
 }
 
@@ -492,12 +620,12 @@ export enum SimulatorDeviceSet {
 }
 
 export async function createSimulator(
-  deviceName: string,
-  deviceIdentifier: string,
+  modelId: string,
+  displayName: string,
   runtime: IOSRuntimeInfo,
   deviceSet: SimulatorDeviceSet
 ) {
-  Logger.debug(`Create simulator ${deviceIdentifier} with runtime ${runtime.identifier}`);
+  Logger.debug(`Create simulator ${modelId} with runtime ${runtime.identifier}`);
 
   let locationArgs: string[] = [];
   if (deviceSet === SimulatorDeviceSet.RN_IDE) {
@@ -510,8 +638,8 @@ export async function createSimulator(
     "simctl",
     ...locationArgs,
     "create",
-    deviceName,
-    deviceIdentifier,
+    displayName,
+    modelId,
     runtime.identifier,
   ]);
 
@@ -519,10 +647,10 @@ export async function createSimulator(
     id: `ios-${UDID}`,
     platform: DevicePlatform.IOS,
     UDID,
-    name: deviceName,
+    modelId: modelId,
     systemName: runtime.name,
+    displayName: displayName,
     available: true, // assuming if create command went through, it's available
-    deviceIdentifier: deviceIdentifier,
     runtimeInfo: runtime,
   } as IOSDeviceInfo;
 }

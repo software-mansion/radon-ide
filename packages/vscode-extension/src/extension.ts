@@ -26,11 +26,12 @@ import {
   getCurrentLaunchConfig,
   setExtensionContext,
 } from "./utilities/extensionContext";
-import { command, setupPathEnv } from "./utilities/subprocess";
+import { setupPathEnv } from "./utilities/subprocess";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { Project } from "./project/project";
 import { Platform } from "./utilities/platform";
+import { migrateOldBuildCachesToNewStorage } from "./builders/BuildCache";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -63,8 +64,8 @@ export function deactivate(context: ExtensionContext): undefined {
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
-  if (Platform.OS !== "macos" && Platform.OS !== "windows") {
-    window.showErrorMessage("Radon IDE works only on macOS and Windows.", "Dismiss");
+  if (Platform.OS !== "macos" && Platform.OS !== "windows" && Platform.OS !== "linux") {
+    window.showErrorMessage("Radon IDE works only on macOS, Windows and Linux.", "Dismiss");
     return;
   }
 
@@ -73,16 +74,8 @@ export async function activate(context: ExtensionContext) {
     enableDevModeLogging();
   }
 
-  migrateOldConfiguration();
+  await migrateOldConfiguration();
 
-  if (Platform.OS === "macos") {
-    try {
-      await fixMacosBinary(context);
-    } catch (error) {
-      Logger.error("Error when processing simulator-server binaries", error);
-      // we let the activation continue, as otherwise the diagnostics command would fail
-    }
-  }
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
   async function showIDEPanel(fileName?: string, lineNumber?: number) {
@@ -268,6 +261,9 @@ export async function activate(context: ExtensionContext) {
 
   await setupAppRoot();
 
+  // this needs to be run after app root is set
+  migrateOldBuildCachesToNewStorage();
+
   extensionActivated();
 }
 
@@ -348,25 +344,4 @@ function migrateOldConfiguration() {
   } catch (e) {
     Logger.error("Error when migrating old configuration", e);
   }
-}
-
-async function fixMacosBinary(context: ExtensionContext) {
-  // MacOS prevents binary files from being executed when downloaded from the internet.
-  // It requires notarization ticket to be available in the package where the binary was distributed
-  // with. Apparently Apple does not allow for individual binary files to be notarized and only .app/.pkg and .dmg
-  // files are allowed. To prevent the binary from being quarantined, we clone using byte-copy (with dd). This way the
-  // quarantine attribute is removed. We try to do it only when the binary has been modified or for the new installation,
-  // we detect that based on the modification date of the binary file.
-  const buildBinPath = Uri.file(context.asAbsolutePath("dist/sim-server"));
-  const exeBinPath = Uri.file(context.asAbsolutePath("dist/sim-server-executable"));
-
-  // if build and exe binaries don't match, we need to clone the build binary – we always want the exe one to the exact
-  // copy of the build binary:
-  try {
-    await command(`diff -q ${buildBinPath.fsPath} ${exeBinPath.fsPath}`);
-  } catch (error) {
-    // if binaries are different, diff will return non-zero code and we will land in catch clouse
-    await command(`dd if=${buildBinPath.fsPath} of=${exeBinPath.fsPath}`);
-  }
-  await fs.promises.chmod(exeBinPath.fsPath, 0o755);
 }

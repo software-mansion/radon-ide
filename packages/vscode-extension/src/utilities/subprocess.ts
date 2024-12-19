@@ -93,7 +93,7 @@ export function exec(
   const subprocess = execa(
     name,
     args,
-    Platform.select({ macos: overrideEnv(options), windows: options })
+    Platform.select({ macos: overrideEnv(options), windows: options, linux: options })
   );
   const allowNonZeroExit = options?.allowNonZeroExit;
   async function printErrorsOnExit() {
@@ -122,7 +122,7 @@ export function execSync(name: string, args?: string[], options?: execa.SyncOpti
   const result = execa.sync(
     name,
     args,
-    Platform.select({ macos: overrideEnv(options), windows: options })
+    Platform.select({ macos: overrideEnv(options), windows: options, linux: options })
   );
   if (result.stderr) {
     Logger.debug("Subprocess", name, args?.join(" "), "produced error output:", result.stderr);
@@ -136,7 +136,7 @@ export function command(
 ) {
   const subprocess = execa.command(
     commandWithArgs,
-    Platform.select({ macos: overrideEnv(options), windows: options })
+    Platform.select({ macos: overrideEnv(options), windows: options, linux: options })
   );
   async function printErrorsOnExit() {
     try {

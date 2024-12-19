@@ -14,7 +14,7 @@ function Actions({ closeAlert }: Props) {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.restart(true);
+          project.restart("all");
           closeAlert();
         }}
         tooltip={{ label: "Rebuild", side: "bottom" }}>

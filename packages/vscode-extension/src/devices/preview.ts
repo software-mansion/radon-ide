@@ -1,33 +1,63 @@
 import path from "path";
 import { Disposable, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
-import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
-import { Platform } from "../utilities/platform";
 import { RecordingData, TouchPoint } from "../common/Project";
+import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
+import { watchLicenseTokenChange } from "../utilities/license";
 
-interface ReplayPromiseHandlers {
+interface VideoRecordingPromiseHandlers {
   resolve: (value: RecordingData) => void;
   reject: (reason?: any) => void;
 }
 
 export class Preview implements Disposable {
+  private videoRecordingPromises = new Map<string, VideoRecordingPromiseHandlers>();
   private subprocess?: ChildProcess;
+  private tokenChangeListener?: Disposable;
   public streamURL?: string;
-  private lastReplayPromise?: ReplayPromiseHandlers;
 
   constructor(private args: string[]) {}
 
   dispose() {
     this.subprocess?.kill();
+    this.tokenChangeListener?.dispose();
+  }
+
+  private sendCommandOrThrow(command: string) {
+    const stdin = this.subprocess?.stdin;
+    if (!stdin) {
+      throw new Error("sim-server process not available");
+    }
+    stdin.write(command);
+  }
+
+  private saveVideoWithID(videoId: string): Promise<RecordingData> {
+    const stdin = this.subprocess?.stdin;
+    if (!stdin) {
+      throw new Error("sim-server process not available");
+    }
+
+    let resolvePromise: (value: RecordingData) => void;
+    let rejectPromise: (reason?: any) => void;
+    const promise = new Promise<RecordingData>((resolve, reject) => {
+      resolvePromise = resolve;
+      rejectPromise = reject;
+    });
+
+    const lastPromise = this.videoRecordingPromises.get(videoId);
+    if (lastPromise) {
+      promise.then(lastPromise.resolve, lastPromise.reject);
+    }
+
+    const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
+    this.videoRecordingPromises.set(videoId, newPromiseHandler);
+    stdin.write(`video ${videoId} save\n`);
+    return promise;
   }
 
   async start() {
-    const simControllerBinary = path.join(
-      extensionContext.extensionPath,
-      "dist",
-      Platform.select({ macos: "sim-server-executable", windows: "sim-server-executable.exe" })
-    );
+    const simControllerBinary = simulatorServerBinary();
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
 
@@ -35,6 +65,12 @@ export class Preview implements Disposable {
       buffer: false,
     });
     this.subprocess = subprocess;
+
+    this.tokenChangeListener = watchLicenseTokenChange((token) => {
+      if (token) {
+        this.sendCommandOrThrow(`token ${token}\n`);
+      }
+    });
 
     return new Promise<string>((resolve, reject) => {
       subprocess.catch(reject).then(() => {
@@ -60,33 +96,39 @@ export class Preview implements Disposable {
             this.streamURL = match[1];
             resolve(this.streamURL);
           }
-        } else if (line.includes("video_ready replay") || line.includes("video_error replay")) {
-          // video response format for replays looks as follows:
-          // video_ready replay <HTTP_URL> <FILE_URL>
-          // video_error replay <Error message>
-          const videoReadyMatch = line.match(/video_ready replay (\S+) (\S+)/);
-          const videoErrorMatch = line.match(/video_error replay (.*)/);
+        } else if (line.includes("video_ready") || line.includes("video_error")) {
+          // video response format for recordings looks as follows:
+          // video_ready <VIDEO_ID> <HTTP_URL> <FILE_URL>
+          // video_error <VIDEO_ID> <Error message>
+          const videoReadyMatch = line.match(/video_ready (\S+) (\S+) (\S+)/);
+          const videoErrorMatch = line.match(/video_error (\S+) (.*)/);
 
-          const handlers = this.lastReplayPromise;
-          this.lastReplayPromise = undefined;
+          const videoId = videoReadyMatch
+            ? videoReadyMatch[1]
+            : videoErrorMatch
+            ? videoErrorMatch[1]
+            : "";
 
+          const handlers = this.videoRecordingPromises.get(videoId);
+          this.videoRecordingPromises.delete(videoId);
           if (handlers && videoReadyMatch) {
             // match array looks as follows:
             // [0] - full match
-            // [1] - URL or error message
-            // [2] - File URL
-            const tempFileLocation = videoReadyMatch[2];
+            // [1] - ID of the video
+            // [2] - URL or error message
+            // [3] - File URL
+            const tempFileLocation = videoReadyMatch[3];
             const ext = path.extname(tempFileLocation);
             const fileName = workspace.name
-              ? `${workspace.name}-RadonIDE-replay${ext}`
-              : `RadonIDE-replay${ext}`;
+              ? `${workspace.name} ${videoId}${ext}`
+              : `${videoId}${ext}`;
             handlers.resolve({
-              url: videoReadyMatch[1],
+              url: videoReadyMatch[2],
               tempFileLocation,
               fileName,
             });
           } else if (handlers && videoErrorMatch) {
-            handlers.reject(new Error(videoErrorMatch[1]));
+            handlers.reject(new Error(videoErrorMatch[2]));
           }
         }
         Logger.info("sim-server:", line);
@@ -94,39 +136,34 @@ export class Preview implements Disposable {
     });
   }
 
+  public showTouches() {
+    this.subprocess?.stdin?.write("pointer show true\n");
+  }
+
+  public hideTouches() {
+    this.subprocess?.stdin?.write("pointer show false\n");
+  }
+
+  public startRecording() {
+    this.sendCommandOrThrow(`video recording start -b 2000\n`); // 2000MB buffer for on-disk video
+  }
+
+  public captureAndStopRecording() {
+    const recordingDataPromise = this.saveVideoWithID("recording");
+    this.sendCommandOrThrow(`video recording stop\n`);
+    return recordingDataPromise;
+  }
+
   public startReplays() {
-    const stdin = this.subprocess?.stdin;
-    if (!stdin) {
-      throw new Error("sim-server process not available");
-    }
-    stdin.write(`video replay start -m -b 50\n`); // 50MB buffer for in-memory video
+    this.sendCommandOrThrow(`video replay start -m -b 50\n`); // 50MB buffer for in-memory video
   }
 
   public stopReplays() {
-    const stdin = this.subprocess?.stdin;
-    if (!stdin) {
-      throw new Error("sim-server process not available");
-    }
-    stdin.write(`video replay stop\n`);
+    this.sendCommandOrThrow(`video replay stop\n`);
   }
 
   public captureReplay() {
-    const stdin = this.subprocess?.stdin;
-    if (!stdin) {
-      throw new Error("sim-server process not available");
-    }
-    let resolvePromise: (value: RecordingData) => void;
-    let rejectPromise: (reason?: any) => void;
-    const promise = new Promise<RecordingData>((resolve, reject) => {
-      resolvePromise = resolve;
-      rejectPromise = reject;
-    });
-    if (this.lastReplayPromise) {
-      promise.then(this.lastReplayPromise.resolve, this.lastReplayPromise.reject);
-    }
-    this.lastReplayPromise = { resolve: resolvePromise!, reject: rejectPromise! };
-    stdin.write(`video replay save\n`);
-    return promise;
+    return this.saveVideoWithID("replay");
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
@@ -138,7 +175,7 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write(`key ${direction} ${keyCode}\n`);
   }
 
-  public sendPaste(text: string) {
+  public async sendPaste(text: string) {
     this.subprocess?.stdin?.write(`paste ${text}\n`);
   }
 }

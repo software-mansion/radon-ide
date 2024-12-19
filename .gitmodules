@@ -1,3 +1,6 @@
 [submodule "packages/simulator-server"]
 	path = packages/simulator-server
 	url = git@github.com:software-mansion-labs/simulator-server.git
+[submodule "packages/vscode-js-debug"]
+	path = packages/vscode-js-debug
+	url = git@github.com:software-mansion-labs/vscode-js-debug.git

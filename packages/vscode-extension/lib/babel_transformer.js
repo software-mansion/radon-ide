@@ -1,4 +1,4 @@
-const ORIGINAL_TRANSFORMER_PATH = process.env.REACT_NATIVE_IDE_ORIG_BABEL_TRANSFORMER_PATH;
+const ORIGINAL_TRANSFORMER_PATH = process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_PATH;
 const path = require("path");
 const { requireFromAppDir, overrideModuleFromAppDir } = require("./metro_helpers");
 

@@ -16,8 +16,10 @@ import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { BuildCache } from "../builders/BuildCache";
 
-type StartOptions = { cleanBuild: boolean };
+type PreviewReadyCallback = (previewURL: string) => void;
+type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
 
 export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
@@ -53,10 +55,11 @@ export class DeviceSession implements Disposable {
     private readonly devtools: Devtools,
     private readonly metro: Metro,
     readonly dependencyManager: DependencyManager,
+    readonly buildCache: BuildCache,
     private readonly debugEventDelegate: DebugSessionDelegate,
     private readonly eventDelegate: EventDelegate
   ) {
-    this.buildManager = new BuildManager(dependencyManager);
+    this.buildManager = new BuildManager(dependencyManager, buildCache);
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "RNIDE_appReady":
@@ -104,14 +107,14 @@ export class DeviceSession implements Disposable {
     throw new Error("Not implemented " + type);
   }
 
-  private async launchApp() {
+  private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
     });
 
     this.isLaunching = true;
-    this.device.stopReplays();
+    this.device.disableReplays();
 
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
@@ -141,7 +144,10 @@ export class DeviceSession implements Disposable {
 
     await Promise.all([
       this.metro.ready(),
-      this.device.startPreview().then((url) => (previewURL = url)),
+      this.device.startPreview().then((url) => {
+        previewURL = url;
+        previewReadyCallback && previewReadyCallback(url);
+      }),
       waitForAppReady,
     ]);
     Logger.debug("App and preview ready, moving on...");
@@ -150,7 +156,10 @@ export class DeviceSession implements Disposable {
 
     this.isLaunching = false;
     if (this.deviceSettings?.replaysEnabled) {
-      this.device.startReplays();
+      this.device.enableReplay();
+    }
+    if (this.deviceSettings?.showTouches) {
+      this.device.showTouches();
     }
 
     const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
@@ -203,19 +212,25 @@ export class DeviceSession implements Disposable {
     Logger.debug("Metro & devtools ready");
   }
 
-  public async start(deviceSettings: DeviceSettings, { cleanBuild }: StartOptions) {
+  public async start(
+    deviceSettings: DeviceSettings,
+    { cleanBuild, previewReadyCallback }: StartOptions
+  ) {
     this.deviceSettings = deviceSettings;
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
     await this.buildApp({ clean: cleanBuild });
     await this.installApp({ reinstall: false });
-    const previewUrl = await this.launchApp();
+    const previewUrl = await this.launchApp(previewReadyCallback);
     Logger.debug("Device session started");
     return previewUrl;
   }
 
   private async startDebugger() {
+    if (this.debugSession) {
+      this.debugSession.dispose();
+    }
     this.debugSession = new DebugSession(this.metro, this.debugEventDelegate);
     const started = await this.debugSession.start();
     if (started) {
@@ -241,6 +256,20 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
+  public async sendDeepLink(link: string) {
+    if (this.maybeBuildResult) {
+      return this.device.sendDeepLink(link, this.maybeBuildResult);
+    }
+  }
+
+  public startRecording() {
+    return this.device.startRecording();
+  }
+
+  public async captureAndStopRecording() {
+    return this.device.captureAndStopRecording();
+  }
+
   public async captureReplay() {
     return this.device.captureReplay();
   }
@@ -254,7 +283,7 @@ export class DeviceSession implements Disposable {
   }
 
   public sendPaste(text: string) {
-    this.device.sendPaste(text);
+    return this.device.sendPaste(text);
   }
 
   public inspectElementAt(
@@ -289,9 +318,14 @@ export class DeviceSession implements Disposable {
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
     this.deviceSettings = settings;
     if (settings.replaysEnabled && !this.isLaunching) {
-      this.device.startReplays();
+      this.device.enableReplay();
     } else {
-      this.device.stopReplays();
+      this.device.disableReplays();
+    }
+    if (settings.showTouches && !this.isLaunching) {
+      this.device.showTouches();
+    } else {
+      this.device.hideTouches();
     }
     return this.device.changeSettings(settings);
   }

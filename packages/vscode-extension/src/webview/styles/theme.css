@@ -131,14 +131,21 @@
   /* Inspector */
   --inspect-area-background: rgba(56, 172, 221, 0.85);
   --dimensions-box-background: #404040;
+
+  /* Open Deep Link */
+  --deep-link-history-query-match-color: #c19420;
 }
 
 /* Light theme */
-body[data-vscode-theme-kind="vscode-light"] {
+body[data-vscode-theme-kind="vscode-light"],
+body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-active-item: var(--blue-dark-100);
   --swm-preview-background: var(--white);
 
   --swm-default-text: var(--navy-light-100);
+  --swm-marked-text: var(--yellow-dark-120);
+  --swm-highlighted-text: var(--navy-light-40);
+  --swm-error-color: var(--red-light-100);
   --swm-secondary-text: var(--navy-light-60);
   --swm-disabled-text: var(--navy-light-20);
 
@@ -150,8 +157,8 @@ body[data-vscode-theme-kind="vscode-light"] {
 
   /* Shadows */
   --swm-focus-outline: 0 0 0 2px var(--navy-light-20);
-  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-
+  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1),
+    1px -4px 6px -3px rgb(0 0 0 / 0.1);
   /* Device select */
   --swm-device-select-background: var(--navy-light-10);
   --swm-device-select-trigger-text: var(--navy-light-100);
@@ -164,6 +171,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-device-select-rich-item-text: var(--navy-light-100);
   --swm-device-select-rich-item-subtitle: var(--navy-light-40);
   --swm-device-select-rich-item-icon: var(--navy-light-20);
+  --swm-device-select-rich-item-icon-selected: var(--navy-light-40);
 
   /* Slider */
   --swm-slider: var(--navy-light-60);
@@ -199,6 +207,7 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-button-counter: var(--off-white);
   --swm-button-counter-background: var(--navy-light-60);
 
+  --swm-button-recording-on-background: var(--navy-light-60);
   --swm-button-replay-hover: var(--navy-light-transparent);
 
   /* Tooltip */
@@ -239,7 +248,8 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-device-title: var(--swm-default-text);
   --swm-device-subtitle: var(--navy-light-60);
   --swm-device-icon: var(--swm-default-text);
-  --swm-device-icon-background: var(--navy-light-10);
+  --swm-device-icon-background: var(--navy-light-20);
+  --swm-device-icon-background-selected: var(--green-light-80);
   --swm-device-delete-icon: var(--red-light-100);
   --swm-device-warning-icon: var(--yellow-light-80);
 
@@ -282,14 +292,22 @@ body[data-vscode-theme-kind="vscode-light"] {
   --swm-replay-len-select-background: var(--grey-light-60);
   --swm-replay-len-select-hover-background: var(--navy-light-transparent);
   --swm-replay-len-select-highlighted-background: var(--grey-light-80);
+
+  /* Open Deep Link */
+  --deep-link-history-border: var(--navy-light-10);
+  --deep-link-history-selected-item-background: var(--navy-light-10);
 }
 
 /* Dark theme */
-body[data-vscode-theme-kind="vscode-dark"] {
+body[data-vscode-theme-kind="vscode-dark"],
+body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-active-item: var(--blue-dark-100);
   --swm-preview-background: var(--background-dark-100);
 
   --swm-default-text: var(--off-white);
+  --swm-marked-text: var(--yellow-dark-100);
+  --swm-highlighted-text: black;
+  --swm-error-color: var(--red-dark-100);
   --swm-secondary-text: var(--background-dark-10);
   --swm-disabled-text: var(--background-dark-40);
 
@@ -301,8 +319,8 @@ body[data-vscode-theme-kind="vscode-dark"] {
 
   /* Shadows */
   --swm-focus-outline: 0 0 0 2px var(--background-dark-50);
-  --swm-backdrop-shadow: none;
-
+  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1),
+    1px -4px 6px -3px rgb(0 0 0 / 0.1);
   /* Device select */
   --swm-device-select-background: var(--background-dark-80);
   --swm-device-select-trigger-text: var(--off-white);
@@ -315,6 +333,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-device-select-rich-item-text: var(--off-white);
   --swm-device-select-rich-item-subtitle: var(--background-dark-10);
   --swm-device-select-rich-item-icon: var(--background-dark-70);
+  --swm-device-select-rich-item-icon-selected: var(--background-dark-50);
 
   /* Slider */
   --swm-slider: var(--white);
@@ -350,6 +369,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-button-counter: var(--off-white);
   --swm-button-counter-background: var(--background-dark-40);
 
+  --swm-button-recording-on-background: var(--background-dark-40);
   --swm-button-replay-hover: var(--background-dark-160);
 
   /* Tooltip */
@@ -391,6 +411,7 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-device-subtitle: var(--background-dark-10);
   --swm-device-icon: var(--swm-default-text);
   --swm-device-icon-background: var(--background-dark-70);
+  --swm-device-icon-background-selected: var(--green-dark-120);
   --swm-device-delete-icon: var(--red-dark-80);
   --swm-device-warning-icon: var(--yellow-dark-100);
 
@@ -435,4 +456,8 @@ body[data-vscode-theme-kind="vscode-dark"] {
   --swm-replay-len-select-background: var(--background-dark-160);
   --swm-replay-len-select-hover-background: var(--background-dark-120);
   --swm-replay-len-select-highlighted-background: var(--background-dark-80);
+
+  /* Open Deep Link */
+  --deep-link-history-border: var(--background-dark-100);
+  --deep-link-history-selected-item-background: var(--background-dark-100);
 }

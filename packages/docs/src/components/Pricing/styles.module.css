@@ -4,6 +4,19 @@
   gap: 24px;
 }
 
+.headingLabel {
+  margin-top: 60px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.subheadlingLabel {
+  text-align: center;
+  font-weight: normal;
+  text-wrap: balance;
+  margin-bottom: 20px;
+}
+
 .highlight {
   text-decoration: underline;
 }
@@ -16,4 +29,10 @@
 .disclaimer {
   margin: 0;
   margin-top: 36px;
+}
+
+@media (max-width: 430px) {
+  .wrapper {
+    max-width: 100%;
+  }
 }

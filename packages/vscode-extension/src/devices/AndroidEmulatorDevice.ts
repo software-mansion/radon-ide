@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { EOL } from "node:os";
+import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
@@ -17,6 +18,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { CancelToken } from "../builders/cancelToken";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -24,6 +26,7 @@ export const EMULATOR_BINARY = path.join(
   Platform.select({
     macos: "emulator",
     windows: "emulator.exe",
+    linux: "emulator",
   })
 );
 const ADB_PATH = path.join(
@@ -32,6 +35,7 @@ const ADB_PATH = path.join(
   Platform.select({
     macos: "adb",
     windows: "adb.exe",
+    linux: "adb",
   })
 );
 const DISPOSE_TIMEOUT = 9000;
@@ -49,6 +53,8 @@ interface EmulatorProcessInfo {
 export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
+  private nativeLogsOutputChannel: OutputChannel | undefined;
+  private nativeLogsCancelToken: CancelToken | undefined;
 
   constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
     super();
@@ -71,6 +77,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
+    this.nativeLogsOutputChannel?.dispose();
+    this.nativeLogsCancelToken?.cancel();
     // If the emulator process does not shut down initially due to ongoing activities or processes,
     // a forced termination (kill signal) is sent after a certain timeout period.
     setTimeout(() => {
@@ -178,16 +186,17 @@ export class AndroidEmulatorDevice extends DeviceBase {
         "location_mode",
         "3",
       ]);
-      // note that geo fix command takes arguments: $longitude , $latitude so the order is reversed compared to most conventions
-      await exec(ADB_PATH, [
-        "-s",
-        this.serial!,
-        "emu",
-        "geo",
-        "fix",
-        settings.location.longitude.toString(),
-        settings.location.latitude.toString(),
-      ]);
+
+      // This is a work around for the problem with emu geo command not working  when passed, 0 0 coordinates
+      // when provided coordinates are close enough to 0 that the adb assumes they are 0 we pass the smallest
+      // working number instead. Moreover note that geo fix command takes arguments:
+      // $longitude , $latitude so the order is reversed compared to most conventions
+      const areCoordinatesToCloseToZero =
+        Math.abs(settings.location.latitude) < 0.00001 &&
+        Math.abs(settings.location.longitude) < 0.00001;
+      const lat = areCoordinatesToCloseToZero ? "0.00001" : settings.location.latitude.toString();
+      const long = areCoordinatesToCloseToZero ? "0.00001" : settings.location.longitude.toString();
+      await exec(ADB_PATH, ["-s", this.serial!, "emu", "geo", "fix", long, lat]);
     }
     return shouldRestart;
   }
@@ -370,6 +379,65 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
+  async mirrorNativeLogs(build: AndroidBuildResult) {
+    if (this.nativeLogsCancelToken) {
+      this.nativeLogsCancelToken.cancel();
+    }
+
+    this.nativeLogsCancelToken = new CancelToken();
+
+    const extractPidFromLogcat = async (cancelToken: CancelToken) =>
+      new Promise<string>((resolve, reject) => {
+        const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
+        const process = exec(ADB_PATH, [
+          "-s",
+          this.serial!,
+          "logcat",
+          "-e",
+          regexString,
+          "-T",
+          "1",
+        ]);
+        cancelToken.adapt(process);
+
+        lineReader(process).onLineRead((line) => {
+          const regex = new RegExp(regexString);
+
+          if (regex.test(line)) {
+            const groups = regex.exec(line);
+            const pid = groups?.[1];
+            process.kill();
+
+            if (pid) {
+              resolve(pid);
+            } else {
+              reject(new Error("PID not found"));
+            }
+          }
+        });
+
+        // We should be able to get pid immediately, if we're not getting it in 10s, then we reject to not run this process indefinitely.
+        setTimeout(() => {
+          process.kill();
+          reject(new Error("Timeout while waiting for app to start to get the process PID."));
+        }, 10000);
+      });
+
+    if (!this.nativeLogsOutputChannel) {
+      this.nativeLogsOutputChannel = window.createOutputChannel(
+        "Radon IDE (Android Emulator Logs)",
+        "log"
+      );
+    }
+
+    this.nativeLogsOutputChannel.clear();
+    const pid = await extractPidFromLogcat(this.nativeLogsCancelToken);
+    const process = exec(ADB_PATH, ["-s", this.serial!, "logcat", "--pid", pid]);
+    this.nativeLogsCancelToken.adapt(process);
+
+    lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
+  }
+
   async launchApp(build: BuildResult, metroPort: number, devtoolsPort: number) {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
@@ -377,6 +445,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // terminate the app before launching, otherwise launch commands won't actually start the process which
     // may be in a bad state
     await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", build.packageName]);
+
+    this.mirrorNativeLogs(build);
 
     const deepLinkChoice =
       build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
@@ -470,6 +540,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return true; // Android will terminate the process if any of the permissions were granted prior to reset-permissions call
   }
 
+  async sendDeepLink(link: string, build: BuildResult) {
+    if (build.platform !== DevicePlatform.Android) {
+      throw new Error("Invalid platform");
+    }
+
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "am",
+      "start",
+      "-W",
+      "-a",
+      "android.intent.action.VIEW",
+      "-d",
+      link,
+      build.packageName,
+    ]);
+  }
+
   makePreview(): Preview {
     return new Preview(["android", "--id", this.serial!]);
   }
@@ -480,8 +570,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
 }
 
 export async function createEmulator(
+  modelId: string,
   displayName: string,
-  deviceName: string,
   systemImage: AndroidSystemImageInfo
 ) {
   const avdDirectory = getOrCreateAvdDirectory();
@@ -520,7 +610,7 @@ export async function createEmulator(
     ["hw.cpu.ncore", "4"],
     ["hw.dPad", "no"],
     ["hw.device.manufacturer", "Google"],
-    ["hw.device.name", deviceName],
+    ["hw.device.name", modelId],
     ["hw.gps", "yes"],
     ["hw.gpu.enabled", "yes"],
     ["hw.gpu.mode", "auto"],
@@ -550,8 +640,9 @@ export async function createEmulator(
     id: `android-${avdId}`,
     platform: DevicePlatform.Android,
     avdId,
-    name: displayName,
+    modelId: modelId,
     systemName: systemImage.name,
+    displayName: displayName,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
   } as DeviceInfo;
 }
@@ -583,17 +674,19 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
   return Promise.all(
     avdIds.map(async (avdId) => {
       const avdConfigPath = path.join(avdDirectory, `${avdId}.avd`, "config.ini");
-      const { displayName, systemImageDir } = await parseAvdConfigIniFile(avdConfigPath);
+      const { displayName, modelId, systemImageDir } = await parseAvdConfigIniFile(avdConfigPath);
 
       const systemImageName = systemImages.find(
         (image: AndroidSystemImageInfo) => image.location === systemImageDir
       )?.name;
+
       return {
         id: `android-${avdId}`,
         platform: DevicePlatform.Android,
         avdId,
-        name: displayName,
+        modelId: modelId,
         systemName: systemImageName ?? "Unknown",
+        displayName: displayName,
         available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
       } as DeviceInfo;
     })
@@ -606,8 +699,13 @@ async function ensureOldEmulatorProcessExited(avdId: string) {
     macos: "ps",
     windows:
       'powershell.exe "Get-WmiObject Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Csv -NoTypeInformation"',
+    linux: "ps",
   });
-  const args = Platform.select({ macos: ["-Ao", "pid,command"], windows: [] });
+  const args = Platform.select({
+    macos: ["-Ao", "pid,command"],
+    windows: [],
+    linux: ["-Ao", "pid,command"],
+  });
   const subprocess = exec(command, args);
   const regexpPattern = new RegExp(`(\\d+).*qemu.*-avd ${avdId}`);
   lineReader(subprocess).onLineRead(async (line) => {
@@ -619,6 +717,29 @@ async function ensureOldEmulatorProcessExited(avdId: string) {
   await subprocess;
   if (runningPid) {
     process.kill(Number(runningPid), 9);
+  }
+}
+
+export async function renameEmulator(avdId: string, newDisplayName: string) {
+  const avdDirectory = getOrCreateAvdDirectory();
+  const avdLocation = path.join(avdDirectory, `${avdId}.avd`);
+  const configIni = path.join(avdLocation, "config.ini");
+
+  try {
+    const oldConfig = await fs.promises.readFile(configIni, "utf-8");
+    const config = oldConfig
+      .split("\n")
+      .map((line) => {
+        if (line.startsWith("avd.ini.displayname=")) {
+          return `avd.ini.displayname=${newDisplayName}`;
+        }
+        return line;
+      })
+      .join("\n");
+
+    await fs.promises.writeFile(configIni, config, "utf-8");
+  } catch (e) {
+    throw new Error(`Failed to rename device`);
   }
 }
 
@@ -644,6 +765,7 @@ async function parseAvdConfigIniFile(filePath: string) {
   const content = await fs.promises.readFile(filePath, "utf-8");
 
   let displayName: string | undefined;
+  let modelId: string | undefined;
   let systemImageDir: string | undefined;
   content.split("\n").forEach((line: string) => {
     const [key, value] = line.split("=");
@@ -651,16 +773,19 @@ async function parseAvdConfigIniFile(filePath: string) {
       case "avd.ini.displayname":
         displayName = value;
         break;
+      case "hw.device.name":
+        modelId = value;
+        break;
       case "image.sysdir.1":
         systemImageDir = value.includes(ANDROID_HOME) ? value : path.join(ANDROID_HOME, value);
         break;
     }
   });
-  if (!displayName || !systemImageDir) {
+  if (!displayName || !modelId || !systemImageDir) {
     throw new Error(`Couldn't parse AVD ${filePath}`);
   }
 
-  return { displayName, systemImageDir };
+  return { displayName, modelId, systemImageDir };
 }
 
 async function parseAvdIniFile(filePath: string) {

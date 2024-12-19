@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import WebSocket from "ws";
-import { Disposable, Uri, workspace } from "vscode";
+import { Disposable, ExtensionMode, Uri, workspace } from "vscode";
 import stripAnsi from "strip-ansi";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
@@ -9,6 +9,8 @@ import { extensionContext, getAppRootFolder } from "../utilities/extensionContex
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
+import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -191,13 +193,16 @@ export class Metro implements Disposable {
     if (launchConfiguration.metroConfigPath) {
       metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
     }
+    const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
     const metroEnv = {
       ...launchConfiguration.env,
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
       NODE_PATH: path.join(appRootFolder, "node_modules"),
       RCT_METRO_PORT: "0",
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
-      REACT_NATIVE_IDE_LIB_PATH: libPath,
+      RADON_IDE_LIB_PATH: libPath,
+      RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
+      ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
     let bundlerProcess: ChildProcess;
 
@@ -267,26 +272,33 @@ export class Metro implements Disposable {
     return initPromise;
   }
 
-  public async reload() {
-    const appReady = this.devtools.appReady();
-    await fetch(`http://localhost:${this._port}/reload`);
-    await appReady;
-  }
-
-  public async openDevMenu() {
-    // to send request to open dev menu, we route it through metro process
-    // that maintains a websocket connection with the device. Specifically,
-    // /message endpoint is used to send messages to the device, and metro proxies
-    // messages between different clients connected to that endpoint.
-    // Therefore, to send the message to the device we:
-    // 1. connect to the /message endpoint over websocket
-    // 2. send specifically formatted message to open dev menu
+  private async sendMessageToDevice(method: "devMenu" | "reload") {
+    // we use metro's /message websocket endpoint to deliver specifically formatted
+    // messages to the device.
+    // Metro implements a websocket proxy that proxies messages between connected
+    // clients. This is a mechanism used by the CLI to deliver messages for things
+    // like reload or open dev menu.
+    // The message format is a JSON object with a "method" field that specifies
+    // the action, and version field with the protocol version (currently 2).
     const ws = new WebSocket(`ws://localhost:${this._port}/message`);
     await new Promise((resolve) => ws.addEventListener("open", resolve));
     ws.send(
-      JSON.stringify({ version: 2 /* protocol version, needs to be set to 2 */, method: "devMenu" })
+      JSON.stringify({
+        version: 2 /* protocol version, needs to be set to 2 */,
+        method,
+      })
     );
+    // we disconnect immediately after sending the message as there's no need
+    // to keep the connection open since we use it on rare occations.
     ws.close();
+  }
+
+  public async reload() {
+    await this.sendMessageToDevice("reload");
+  }
+
+  public async openDevMenu() {
+    await this.sendMessageToDevice("devMenu");
   }
 
   public async getDebuggerURL() {
@@ -332,19 +344,76 @@ export class Metro implements Disposable {
     return websocketAddress;
   }
 
-  private lookupWsAddressForNewDebugger(listJson: CDPTargetDescription[]) {
-    // in the new debugger, ids are generated in the following format: "deviceId-pageId"
+  private filterNewDebuggerPages(listJson: CDPTargetDescription[]) {
+    return listJson.filter(
+      (page) => page.reactNative && page.title.startsWith("React Native Bridge")
+    );
+  }
+
+  private async isActiveExpoGoAppRuntime(webSocketDebuggerUrl: string) {
+    // This method checks for a global variable that is set in the expo host runtime.
+    // We expect this variable to not be present in the main app runtime.
+    const HIDE_FROM_INSPECTOR_ENV = "(globalThis.__expo_hide_from_inspector__ || 'runtime')";
+    try {
+      const result = await connectCDPAndEval(webSocketDebuggerUrl, HIDE_FROM_INSPECTOR_ENV);
+      if (result === "runtime") {
+        return true;
+      }
+    } catch (e) {
+      Logger.warn(
+        "Error checking expo go runtime",
+        webSocketDebuggerUrl,
+        "(this could be stale/inactive runtime)",
+        e
+      );
+    }
+    return false;
+  }
+
+  private fixupWebSocketDebuggerUrl(websocketAddress: string) {
+    // CDP websocket addresses come from metro and in some configurations they
+    // still use the default port instead of the ephemeral port that we force metro to use.
+    // We override the port and host to match the current metro address.
+    const websocketDebuggerUrl = new URL(websocketAddress);
+    // replace port number with metro port number:
+    websocketDebuggerUrl.port = this._port.toString();
+    // replace host with localhost:
+    websocketDebuggerUrl.host = "localhost";
+    return websocketDebuggerUrl.toString();
+  }
+
+  private async lookupWsAddressForNewDebugger(listJson: CDPTargetDescription[]) {
+    // In the new debugger, ids are generated in the following format: "deviceId-pageId"
     // but unlike with the old debugger, deviceId is a hex string (UUID most likely)
     // that is stable between reloads.
     // Subsequent runtimes that register get incremented pageId (e.g. main runtime will
     // be 1, reanimated worklet runtime would get 2, etc.)
     // The most recent runtimes are listed first, so we can pick the first one with title
-    // that that starts with "React Native Bridge" (which is the main runtime)
-    for (const page of listJson) {
-      if (page.reactNative && page.title.startsWith("React Native Bridge")) {
-        return page.webSocketDebuggerUrl;
+    // that starts with "React Native Bridge" (which is the main runtime)
+    const newDebuggerPages = this.filterNewDebuggerPages(listJson);
+    if (newDebuggerPages.length > 0) {
+      const description = newDebuggerPages[0].description;
+      const isExpoGo = description === EXPO_GO_BUNDLE_ID || description === EXPO_GO_PACKAGE_NAME;
+      if (isExpoGo) {
+        // Expo go apps using the new debugger could report more then one page,
+        // if it exist the first one being the Expo Go host runtime.
+        // more over expo go on android has a bug causing newDebuggerPages
+        // from previously run applications to leak if the host application
+        // was not stopped.
+        // to solve both issues we check if the runtime is part of
+        // the host application process and select the last one that
+        // is not. To perform this check we use expo host functionality
+        // introduced in https://github.com/expo/expo/pull/32322/files
+        for (const newDebuggerPage of newDebuggerPages.reverse()) {
+          if (await this.isActiveExpoGoAppRuntime(newDebuggerPage.webSocketDebuggerUrl)) {
+            return newDebuggerPage.webSocketDebuggerUrl;
+          }
+        }
+        return undefined;
       }
+      return newDebuggerPages[0].webSocketDebuggerUrl;
     }
+    return undefined;
   }
 
   private async fetchDebuggerURL() {
@@ -352,29 +421,20 @@ export class Metro implements Disposable {
     const list = await fetch(`http://localhost:${this._port}/json/list`);
     const listJson = await list.json();
 
-    // we try using "new debugger" lookup first, and then switch to trying out
-    // the old debugger connection (we can tell by the page naming scheme whether
-    // it's the old or new debugger)
-    let websocketAddress = this.lookupWsAddressForNewDebugger(listJson);
-    if (websocketAddress) {
-      this.usesNewDebugger = true;
-    } else {
-      this.usesNewDebugger = false;
-      websocketAddress = this.lookupWsAddressForOldDebugger(listJson);
+    // fixup websocket addresses on the list
+    for (const page of listJson) {
+      page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
     }
 
-    if (websocketAddress) {
-      // Port and host in webSocketDebuggerUrl are set manually to match current metro address,
-      // because we always know what the correct one is and some versions of RN are sending out wrong port (0 or 8081)
-      const websocketDebuggerUrl = new URL(websocketAddress);
-      // replace port number with metro port number:
-      websocketDebuggerUrl.port = this._port.toString();
-      // replace host with localhost:
-      websocketDebuggerUrl.host = "localhost";
-      return websocketDebuggerUrl.toString();
-    }
+    // When there are pages that are identified as belonging to the new debugger, we
+    // assume the use of the new debugger and use new debugger logic to determine the websocket address.
+    this.usesNewDebugger = this.filterNewDebuggerPages(listJson).length > 0;
 
-    return undefined;
+    let websocketAddress = this.usesNewDebugger
+      ? await this.lookupWsAddressForNewDebugger(listJson)
+      : this.lookupWsAddressForOldDebugger(listJson);
+
+    return websocketAddress;
   }
 }
 

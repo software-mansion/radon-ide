@@ -11,6 +11,10 @@ on:
       - ".github/workflows/typecheck-extension.yml"
       - "packages/vscode-extension/**"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     if: github.repository == 'software-mansion/radon-ide'
@@ -20,6 +24,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: software-mansion-labs/vscode-js-debug
+          path: packages/vscode-js-debug
 
       - name: Setup node
         uses: actions/setup-node@v4

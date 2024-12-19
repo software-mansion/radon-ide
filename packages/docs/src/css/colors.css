@@ -133,8 +133,8 @@
   --ifm-toc-link-color-active: var(--swm-navy-light-100);
 
   /* Details section */
-  --swm-details-foreground: var(--swm-purple-light-20);
-  --swm-details-background: var(--swm-purple-light-100);
+  --swm-details-foreground: var(--swm-green-light-20);
+  --swm-details-background: var(--swm-green-light-100);
 
   /* Admonitions */
   --swm-admonition-color-secondary: var(--swm-navy-light-10);
@@ -275,6 +275,7 @@
   /* Compatibility table */
   --swm-compatibility-supported-background: var(--swm-green-light-80);
   --swm-compatibility-not-supported-background: var(--swm-red-light-80);
+  --swm-compatibility-maybe-background: var(--swm-blue-light-80);
   --swm-compatibility-text-color: var(--swm-white);
 }
 

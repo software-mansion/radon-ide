@@ -25,6 +25,7 @@ export type LaunchConfigurationOptions = {
     buildType?: string;
     productFlavor?: string;
   };
+  packageManager?: string;
   preview?: {
     waitForAppLaunch?: boolean;
   };

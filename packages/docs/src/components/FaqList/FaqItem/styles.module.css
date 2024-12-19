@@ -65,3 +65,15 @@
 .faqItemExpanded {
   background-color: var(--swm-green-light-60);
 }
+
+@media (max-width: 430px) {
+  .question,
+  .answer {
+    font-size: 16px;
+  }
+
+  .faqItemQuestion,
+  .answer {
+    padding: 10px 16px;
+  }
+}

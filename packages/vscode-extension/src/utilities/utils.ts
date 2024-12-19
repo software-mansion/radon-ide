@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import fs from "fs";
 import path from "path";
-import { commands, env, Uri, window, workspace } from "vscode";
+import { commands, env, Uri, window } from "vscode";
 import JSON5 from "json5";
 import vscode from "vscode";
 import { Logger } from "../Logger";
@@ -31,6 +31,7 @@ export class Utils implements UtilsInterface {
         Platform.select({
           macos: path.join("Library", "Application Support"),
           windows: path.join("AppDat", "Roaming"),
+          linux: path.join(".config"),
         }),
         ideName,
         "User",
@@ -82,9 +83,19 @@ export class Utils implements UtilsInterface {
 
   public async saveVideoRecording(recordingData: RecordingData) {
     const extension = path.extname(recordingData.tempFileLocation);
-    const defaultUri = Uri.file(
-      path.join(workspace.workspaceFolders![0].uri.fsPath, recordingData.fileName)
+    const timestamp = this.getTimestamp();
+    const baseFileName = recordingData.fileName.substring(
+      0,
+      recordingData.fileName.length - extension.length
     );
+    const newFileName = `${baseFileName} ${timestamp}${extension}`;
+    const defaultFolder = Platform.select({
+      macos: path.join(homedir(), "Desktop"),
+      windows: homedir(),
+      linux: homedir(),
+    });
+    const defaultUri = Uri.file(path.join(defaultFolder, newFileName));
+
     // save dialog open the location dialog, it also warns the user if the file already exists
     let saveUri = await window.showSaveDialog({
       defaultUri: defaultUri,
@@ -115,5 +126,20 @@ export class Utils implements UtilsInterface {
 
   public async log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]) {
     Logger[type]("[WEBVIEW LOG]", message, ...args);
+  }
+
+  private getTimestamp() {
+    // e.g. "2024-11-19 at 12.08.09"
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed, so add 1
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+
+    // Combine into the desired format
+    return `${year}-${month}-${day} ${hours}.${minutes}.${seconds}`;
   }
 }

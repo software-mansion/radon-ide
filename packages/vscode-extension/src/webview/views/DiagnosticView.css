@@ -1,5 +1,5 @@
 .diagnostic-container {
-  margin: 12px 15px 0 10px;
+  margin: 12px 15px 2px 10px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;

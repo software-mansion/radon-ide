@@ -1,4 +1,4 @@
-import { RefObject, useCallback } from "react";
+import { RefObject, useCallback, useState } from "react";
 import * as Select from "@radix-ui/react-select";
 import IconButton from "./shared/IconButton";
 import { ZoomLevelType } from "../../common/Project";
@@ -8,15 +8,17 @@ import "./ZoomControls.css";
 const ZOOM_STEP = 0.05;
 const ZOOM_SELECT_NUMERIC_VALUES = [0.5, 0.6, 0.7, 0.8, 0.9, 1];
 export const DEVICE_DEFAULT_SCALE = 1 / 3;
+export const MIN_ZOOM_LEVEL = 0.4;
 
 type ZoomControlsProps = {
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoom: ZoomLevelType) => void;
   device?: DeviceProperties;
   wrapperDivRef?: RefObject<HTMLDivElement>;
+  setIsSelectOpen?: (open: boolean) => void;
 };
 
-const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
+const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsSelectOpen }: ZoomControlsProps) => {
   const onValueChange = useCallback(
     (e: string) => {
       if (e === "Fit") {
@@ -28,13 +30,19 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
     [onZoomChanged]
   );
 
+  const hasTwoDecimalPrecision = zoomLevel !== "Fit" && zoomLevel.toString().length > 3;
+  const fontStretchStyle = hasTwoDecimalPrecision ? "ultra-condensed" : "semi-condensed";
+
   return (
     <Select.Root
+      onOpenChange={setIsSelectOpen}
       onValueChange={onValueChange}
       value={zoomLevel === "Fit" ? "Fit" : zoomLevel.toString()}>
       <Select.Trigger className="zoom-select-trigger" disabled={false}>
         <Select.Value>
-          <div className="zoom-select-value">{zoomLevel === "Fit" ? "Fit" : `${zoomLevel}x`}</div>
+          <div style={{ fontStretch: fontStretchStyle }} className="zoom-select-value">
+            {zoomLevel === "Fit" ? "Fit" : `${zoomLevel}x`}
+          </div>
         </Select.Value>
       </Select.Trigger>
 
@@ -61,6 +69,8 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged }: ZoomControlsProps) => {
 };
 
 function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomControlsProps) {
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+
   function handleZoom(shouldIncrease: boolean) {
     let currentZoomLevel;
     if (zoomLevel === "Fit") {
@@ -70,7 +80,10 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
       currentZoomLevel = zoomLevel;
     }
     // toFixed() is necessary because of floating point rounding errors
-    const newZoomLevel = +(currentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP)).toFixed(2);
+    const zoomAfterStep = currentZoomLevel + (shouldIncrease ? ZOOM_STEP : -ZOOM_STEP);
+    const newZoomLevel = +(zoomAfterStep > MIN_ZOOM_LEVEL ? zoomAfterStep : MIN_ZOOM_LEVEL).toFixed(
+      2
+    );
 
     if (newZoomLevel >= ZOOM_STEP) {
       onZoomChanged(newZoomLevel);
@@ -78,7 +91,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
   }
 
   return (
-    <div className="zoom-controls">
+    <div className={`zoom-controls ${isSelectOpen ? "select-open" : ""}`}>
       <IconButton
         className="zoom-in-button"
         tooltip={{
@@ -88,7 +101,11 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
         onClick={() => handleZoom(true)}>
         <span className="codicon codicon-zoom-in" />
       </IconButton>
-      <ZoomLevelSelect zoomLevel={zoomLevel} onZoomChanged={onZoomChanged} />
+      <ZoomLevelSelect
+        zoomLevel={zoomLevel}
+        onZoomChanged={onZoomChanged}
+        setIsSelectOpen={setIsSelectOpen}
+      />
       <IconButton
         className="zoom-out-button"
         tooltip={{

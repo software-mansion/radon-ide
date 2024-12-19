@@ -23,6 +23,7 @@ const HomepageButton: React.FC<{
   backgroundStyling?: string;
   borderStyling?: string;
   enlarged?: boolean;
+  onClick?: () => void;
 }> = ({
   title,
   subtitle,
@@ -30,9 +31,10 @@ const HomepageButton: React.FC<{
   target = "_self",
   backgroundStyling = ButtonStyling.TO_TRANSPARENT,
   borderStyling = BorderStyling.PURPLE,
+  onClick,
 }) => {
   return (
-    <a href={href} target={target} className={styles.homepageButtonLink}>
+    <a href={href} target={target} className={styles.homepageButtonLink} onClick={onClick}>
       <div
         className={clsx(
           styles.homepageButton,
