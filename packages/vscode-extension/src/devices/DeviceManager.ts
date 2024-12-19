@@ -30,6 +30,7 @@ import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
 import { checkXcodeExists } from "../dependency/DependencyManager";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
@@ -153,6 +154,11 @@ export class DeviceManager implements DeviceManagerInterface {
     displayName: string,
     systemImage: AndroidSystemImageInfo
   ) {
+    getTelemetryReporter().sendTelemetryEvent("device-manager:create-device", {
+      platform: DevicePlatform.Android,
+      systemName: String(systemImage.apiLevel),
+    });
+
     const emulator = await createEmulator(modelId, displayName, systemImage);
     await this.loadDevices(true);
     return emulator;
@@ -163,6 +169,11 @@ export class DeviceManager implements DeviceManagerInterface {
     displayName: string,
     runtime: IOSRuntimeInfo
   ) {
+    getTelemetryReporter().sendTelemetryEvent("device-manager:create-device", {
+      platform: DevicePlatform.IOS,
+      systemName: String(runtime.version),
+    });
+
     const simulator = await createSimulator(
       deviceType.identifier,
       displayName,
@@ -184,6 +195,11 @@ export class DeviceManager implements DeviceManagerInterface {
   }
 
   public async removeDevice(device: DeviceInfo) {
+    getTelemetryReporter().sendTelemetryEvent("device-manager:remove-device", {
+      platform: device.platform,
+      systemName: String(device.systemName),
+    });
+
     if (device.platform === DevicePlatform.IOS) {
       await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
     }

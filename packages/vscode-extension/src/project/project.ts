@@ -1,6 +1,7 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
+import _ from "lodash";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
@@ -38,6 +39,7 @@ import {
   getLicenseToken,
   refreshTokenPeriodically,
 } from "../utilities/license";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -176,6 +178,9 @@ export class Project
   //#endregion
 
   startRecording(): void {
+    getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
@@ -183,6 +188,9 @@ export class Project
   }
 
   async captureAndStopRecording(): Promise<RecordingData> {
+    getTelemetryReporter().sendTelemetryEvent("recording:capture-and-stop-recording", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
@@ -190,6 +198,9 @@ export class Project
   }
 
   async captureReplay(): Promise<RecordingData> {
+    getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
@@ -302,6 +313,10 @@ export class Project
   }
 
   public async goHome(homeUrl: string) {
+    getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
+
     if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
       await this.openNavigation(homeUrl);
     } else {
@@ -315,6 +330,10 @@ export class Project
     onlyReloadJSWhenPossible: boolean = true,
     restartDevice: boolean = false
   ) {
+    getTelemetryReporter().sendTelemetryEvent("url-bar:restart-requested", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
+
     // we save device info and device session at the start such that we can
     // check if they weren't updated in the meantime while we await for restart
     // procedures
@@ -372,6 +391,11 @@ export class Project
 
   public async reload(type: ReloadAction): Promise<boolean> {
     this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
+
+    getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
+      platform: this.projectState.selectedDevice?.platform,
+      method: type,
+    });
 
     // this action needs to be handled outside of device session as it resets the device session itself
     if (type === "reboot") {
@@ -532,6 +556,15 @@ export class Project
   }
 
   public async updateDeviceSettings(settings: DeviceSettings) {
+    const changedSettings = (Object.keys(settings) as Array<keyof DeviceSettings>).filter(
+      (settingKey) => {
+        return !_.isEqual(settings[settingKey], this.deviceSettings[settingKey]);
+      }
+    );
+    getTelemetryReporter().sendTelemetryEvent("device-settings:update-device-settings", {
+      platform: this.projectState.selectedDevice?.platform,
+      changedSetting: JSON.stringify(changedSettings),
+    });
     this.deviceSettings = settings;
     extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
     let needsRestart = await this.deviceSession?.changeDeviceSettings(settings);

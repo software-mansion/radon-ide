@@ -16,6 +16,7 @@ import { getReactNativeVersion } from "../utilities/reactNative";
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild } from "./eas";
 import { DependencyManager } from "../dependency/DependencyManager";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
@@ -89,6 +90,9 @@ export async function buildAndroid(
   }
 
   if (customBuild?.android?.buildCommand) {
+    getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
+      platform: DevicePlatform.Android,
+    });
     const apkPath = await runExternalBuild(cancelToken, customBuild.android.buildCommand, env);
     if (!apkPath) {
       throw new Error("Failed to build Android app using custom script.");
@@ -102,6 +106,9 @@ export async function buildAndroid(
   }
 
   if (eas?.android) {
+    getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
+      platform: DevicePlatform.Android,
+    });
     const apkPath = await fetchEasBuild(cancelToken, eas.android, DevicePlatform.Android);
     if (!apkPath) {
       throw new Error("Failed to build Android app using EAS build.");
@@ -115,6 +122,9 @@ export async function buildAndroid(
   }
 
   if (await isExpoGoProject()) {
+    getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
+      platform: DevicePlatform.Android,
+    });
     const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken);
     return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
   }
