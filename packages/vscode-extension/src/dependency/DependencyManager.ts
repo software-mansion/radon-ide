@@ -27,6 +27,8 @@ import { CancelToken } from "../builders/cancelToken";
 import { getAndroidSourceDir } from "../builders/buildAndroid";
 import { Platform } from "../utilities/platform";
 import { requireNoCache } from "../utilities/requireNoCache";
+import { getTelemetryReporter } from "../utilities/telemetry";
+import { DevicePlatform } from "../common/DeviceManager";
 
 export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
@@ -176,6 +178,9 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       await cancelToken.adapt(process);
     } catch (e) {
       Logger.error("Pods not installed", e);
+      getTelemetryReporter().sendTelemetryEvent("build:pod-install-failed", {
+        platform: DevicePlatform.IOS,
+      });
       this.emitEvent("pods", { status: "notInstalled", isOptional: false });
       return;
     }
