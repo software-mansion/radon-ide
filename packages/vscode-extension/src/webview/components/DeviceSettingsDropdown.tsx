@@ -103,7 +103,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 defaultValue={[contentSizes.indexOf(deviceSettings.contentSize)]}
                 max={6}
                 step={1}
-                onValueChange={([value]) => {
+                onValueCommit={([value]) => {
                   project.updateDeviceSettings({
                     ...deviceSettings,
                     contentSize: contentSizes[value],
