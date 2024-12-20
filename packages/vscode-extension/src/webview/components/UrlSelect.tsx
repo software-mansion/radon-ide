@@ -15,6 +15,7 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
 );
 
 interface UrlSelectProps {
+  key: number;
   value: string;
   onValueChange: (newValue: string) => void;
   recentItems: UrlItem[];
@@ -22,7 +23,7 @@ interface UrlSelectProps {
   disabled?: boolean;
 }
 
-function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
+function UrlSelect({ onValueChange, recentItems, items, key, value, disabled }: UrlSelectProps) {
   // We use two lists for URL selection: one with recently used URLs and another
   // with all available URLs. Since recentItems is a subset of items, each recentItems's
   // value is prefixed to differentiate their origins when presented in the Select
@@ -35,7 +36,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   };
 
   return (
-    <Select.Root onValueChange={handleValueChange} value={value} disabled={disabled}>
+    <Select.Root onValueChange={handleValueChange} key={key} value={value} disabled={disabled}>
       <Select.Trigger className="url-select-trigger">
         <Select.Value placeholder="/" aria-label={value} />
       </Select.Trigger>

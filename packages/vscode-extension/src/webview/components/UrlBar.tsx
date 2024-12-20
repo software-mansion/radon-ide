@@ -39,6 +39,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const [urlList, setUrlList] = useState<UrlItem[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
+  const [urlSelectKey, setUrlSelectKey] = useState<number>(0);
+  const [urlSelectValue, setUrlSelectValue] = useState<string>(urlList[0]?.id);
 
   useEffect(() => {
     function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {
@@ -78,7 +80,9 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   }, [recentUrlList, urlHistory, backNavigationPath]);
 
   const sortedUrlList = useMemo(() => {
-    return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
+    const sorted = [...urlList].sort((a, b) => a.name.localeCompare(b.name));
+    setUrlSelectValue(urlList[0]?.id);
+    return sorted;
   }, [urlList]);
 
   const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
@@ -105,6 +109,12 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
       <IconButton
         onClick={() => {
           project.goHome("/{}");
+          if (!isExpoRouterProject) {
+            // this sets the trigger value of UrlSelect to a placeholder,
+            // forcing the Radix Select component to fully re-render
+            setUrlSelectKey(urlSelectKey + 1);
+            setUrlSelectValue("");
+          }
         }}
         tooltip={{
           label: "Go to main screen",
@@ -119,7 +129,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         }}
         recentItems={recentUrlList}
         items={sortedUrlList}
-        value={urlList[0]?.id}
+        key={urlSelectKey}
+        value={urlSelectValue}
         disabled={disabled || urlList.length < (isExpoRouterProject ? 2 : 1)}
       />
     </>
