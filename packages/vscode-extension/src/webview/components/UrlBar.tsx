@@ -28,7 +28,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 }
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
-  const { project } = useProject();
+  const { project, projectState } = useProject();
 
   const MAX_URL_HISTORY_SIZE = 20;
   const MAX_RECENT_URL_SIZE = 5;
@@ -79,6 +79,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
     return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
   }, [urlList]);
 
+  const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
+
   return (
     <>
       <IconButton
@@ -86,7 +88,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabled || urlHistory.length < 2}
+        disabled={disabledAlsoWhenStarting || urlHistory.length < 2}
         onClick={() => {
           setUrlHistory((prevUrlHistory) => {
             const newUrlHistory = prevUrlHistory.slice(1);
@@ -106,7 +108,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go to main screen",
           side: "bottom",
         }}
-        disabled={disabled}>
+        disabled={disabledAlsoWhenStarting}>
         <span className="codicon codicon-home" />
       </IconButton>
       <UrlSelect
@@ -116,7 +118,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         recentItems={recentUrlList}
         items={sortedUrlList}
         value={urlList[0]?.id}
-        disabled={disabled || urlList.length < 2}
+        disabled={disabledAlsoWhenStarting || urlList.length < 2}
       />
     </>
   );
