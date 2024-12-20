@@ -1,4 +1,4 @@
-import { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
+import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from "react";
 import { useUtils } from "./UtilsProvider";
 
 type TelemetryContextProps = { telemetryEnabled: boolean };
@@ -18,9 +18,9 @@ export function TelemetryProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
-  return (
-    <TelemetryContext.Provider value={{ telemetryEnabled }}>{children}</TelemetryContext.Provider>
-  );
+  const contextValue = useMemo(() => ({ telemetryEnabled }), [telemetryEnabled]);
+
+  return <TelemetryContext.Provider value={contextValue}>{children}</TelemetryContext.Provider>;
 }
 
 export function useTelemetry() {
