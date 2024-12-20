@@ -37,7 +37,7 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
     );
   }
 
-  public static showView(context: ExtensionContext, fileName?: string, lineNumber?: number) {
+  public static showView() {
     if (SidePanelViewProvider.currentProvider) {
       commands.executeCommand(`${SidePanelViewProvider.viewType}.focus`);
       if (workspace.getConfiguration("RadonIDE").get("panelLocation") === "secondary-side-panel") {
@@ -46,12 +46,6 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
     } else {
       Logger.error("SidepanelViewProvider does not exist.");
       return;
-    }
-
-    if (fileName !== undefined && lineNumber !== undefined) {
-      SidePanelViewProvider.currentProvider.webviewController.project.startPreview(
-        `preview:/${fileName}:${lineNumber}`
-      );
     }
   }
 
