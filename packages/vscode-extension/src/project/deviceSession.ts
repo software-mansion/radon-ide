@@ -61,7 +61,6 @@ export class DeviceSession implements Disposable {
   ) {
     this.buildManager = new BuildManager(dependencyManager, buildCache);
     this.devtools.addListener((event, payload) => {
-      event === "RNIDE_navigationChanged" && console.log("FRYTKI RNIDE_navigationChanged devtools");
       switch (event) {
         case "RNIDE_appReady":
           Logger.debug("App ready");
@@ -314,10 +313,6 @@ export class DeviceSession implements Disposable {
 
   public startPreview(previewId: string) {
     this.devtools.send("RNIDE_openPreview", { previewId });
-  }
-
-  public closePreview() {
-    this.devtools.send("RNIDE_closePreview", {});
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {

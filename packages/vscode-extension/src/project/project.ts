@@ -321,12 +321,6 @@ export class Project
       await this.openNavigation(homeUrl);
     } else {
       await this.reloadMetro();
-
-      // this sets "/" as a current route in UrlBar
-      this.eventEmitter.emit("navigationChanged", {
-        displayName: "/",
-        id: "/{}",
-      });
     }
   }
 
@@ -443,17 +437,6 @@ export class Project
       }, 100),
       [waitForNodeModules]
     );
-
-    // if (!(await this.dependencyManager.checkProjectUsesExpoRouter())) {
-    //   // if this is not a project using expo router we have to register home path to urlbar manually
-    //   console.log("FRYTKI register home path to urlbar manually");
-    //   this.eventEmitter.emit("navigationChanged", {
-    //     displayName: "/",
-    //     id: "/{}",
-    //   });
-    // } else {
-    //   console.log("FRYTKI rExpoRoute");
-    // }
   }
   //#endregion
 

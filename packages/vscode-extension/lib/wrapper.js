@@ -54,22 +54,10 @@ function getCurrentScene() {
   return RNInternals.SceneTracker.getActiveScene().name;
 }
 
-function emptyNavigationHook({ onNavigationChange }) {
-  useEffect(() => {
-    console.log("FRYTKI onNavigationChange empty");
-    onNavigationChange({
-      name: "/",
-      pathname: "",
-      params: "",
-      id: "/{}",
-    });
-  }, []);
-
+function emptyNavigationHook() {
   return {
     getCurrentNavigationDescriptor: () => undefined,
-    requestNavigationChange: (navigationDescriptor) => {
-      console.log("FRYTKI requestNavigationChange empty ", navigationDescriptor);
-    },
+    requestNavigationChange: () => {},
   };
 }
 
@@ -218,7 +206,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const handleNavigationChange = useCallback(
     (navigationDescriptor) => {
       navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
-      console.log("FRYTKI RNIDE_navigationChanged");
       devtoolsAgent?._bridge.send("RNIDE_navigationChanged", {
         displayName: navigationDescriptor.name,
         id: navigationDescriptor.id,
@@ -242,7 +229,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
       const preview = global.__RNIDE_previews.get(previewKey);
       const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
       handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name });
-      console.log("FRYTKI preivew; 1");
     },
     [rootTag, handleNavigationChange, initialProps, fabric]
   );
@@ -252,14 +238,8 @@ export function AppWrapper({ children, initialProps, fabric }) {
     const closePreviewPromise = new Promise((resolve) => {
       closePromiseResolve = resolve;
     });
-
-    const registerAppName = AppRegistry.getAppKeys().filter(
-      (key) => key !== "RNIDE_preview" && key !== "LogBox"
-    )[0];
-    console.log("FRYTKI getAppKeys", registerAppName);
-
     if (getCurrentScene() === InternalImports.PREVIEW_APP_KEY) {
-      AppRegistry.runApplication(registerAppName ?? "main", {
+      AppRegistry.runApplication("main", {
         rootTag,
         initialProps: {
           __RNIDE_onLayout: closePromiseResolve,
@@ -316,19 +296,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
     },
     [openPreview, closePreview, requestNavigationChange]
   );
-
-  // useAgentListener(
-  //   devtoolsAgent,
-  //   "RNIDE_goHome",
-  //   (payload) => {
-  //     console.log("FRYTKI getAppKeys", AppRegistry.getAppKeys());
-  //     // const navigationDescriptor = navigationHistory.get(payload.id);
-  //     // closePreview().then(() => {
-  //     //   navigationDescriptor && requestNavigationChange(navigationDescriptor);
-  //     // });
-  //   },
-  //   [openPreview, closePreview, requestNavigationChange]
-  // );
 
   useAgentListener(
     devtoolsAgent,
