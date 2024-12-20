@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
@@ -74,15 +75,16 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  const contextValue = useMemo(() => {
+    return {
+      dependencies: depsState,
+      runDiagnostics,
+      errors: getErrors(depsState),
+    };
+  }, [depsState, runDiagnostics, getErrors]);
+
   return (
-    <DependenciesContext.Provider
-      value={{
-        dependencies: depsState,
-        runDiagnostics,
-        errors: getErrors(depsState),
-      }}>
-      {children}
-    </DependenciesContext.Provider>
+    <DependenciesContext.Provider value={contextValue}>{children}</DependenciesContext.Provider>
   );
 }
 

@@ -5,6 +5,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
@@ -57,10 +58,12 @@ export default function LaunchConfigProvider({ children }: PropsWithChildren) {
     [config, setConfig]
   );
 
+  const contextValue = useMemo(() => {
+    return { ...config, update, xcodeSchemes };
+  }, [config, update, xcodeSchemes]);
+
   return (
-    <LaunchConfigContext.Provider value={{ ...config, update, xcodeSchemes }}>
-      {children}
-    </LaunchConfigContext.Provider>
+    <LaunchConfigContext.Provider value={contextValue}>{children}</LaunchConfigContext.Provider>
   );
 }
 

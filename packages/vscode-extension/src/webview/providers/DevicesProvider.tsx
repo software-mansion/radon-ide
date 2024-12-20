@@ -5,6 +5,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
@@ -64,19 +65,18 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
-  return (
-    <DevicesContext.Provider
-      value={{
-        devices,
-        finishedInitialLoad,
-        androidImages,
-        iOSRuntimes,
-        reload,
-        deviceManager: DeviceManager,
-      }}>
-      {children}
-    </DevicesContext.Provider>
-  );
+  const contextValue = useMemo(() => {
+    return {
+      devices,
+      finishedInitialLoad,
+      androidImages,
+      iOSRuntimes,
+      reload,
+      deviceManager: DeviceManager,
+    };
+  }, [devices, finishedInitialLoad, androidImages, iOSRuntimes, reload, DeviceManager]);
+
+  return <DevicesContext.Provider value={contextValue}>{children}</DevicesContext.Provider>;
 }
 
 export function useDevices() {
