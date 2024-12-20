@@ -316,15 +316,15 @@ export class DeviceSession implements Disposable {
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
-    if (this.deviceSettings?.replaysEnabled !== settings.replaysEnabled) {
-      if (settings.replaysEnabled && !this.isLaunching) {
+    if (this.deviceSettings?.replaysEnabled !== settings.replaysEnabled && !this.isLaunching) {
+      if (settings.replaysEnabled) {
         this.device.enableReplay();
       } else {
         this.device.disableReplays();
       }
     }
-    if (this.deviceSettings?.showTouches !== settings.showTouches) {
-      if (settings.showTouches && !this.isLaunching) {
+    if (this.deviceSettings?.showTouches !== settings.showTouches && !this.isLaunching) {
+      if (settings.showTouches) {
         this.device.showTouches();
       } else {
         this.device.hideTouches();
