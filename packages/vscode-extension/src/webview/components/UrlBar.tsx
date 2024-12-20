@@ -29,7 +29,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 }
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
-  const { project } = useProject();
+  const { project, projectState } = useProject();
   const { dependencies } = useDependencies();
 
   const MAX_URL_HISTORY_SIZE = 20;
@@ -85,6 +85,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
     return sorted;
   }, [urlList]);
 
+  const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
   const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
 
   return (
@@ -94,7 +95,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabled || !isExpoRouterProject || urlHistory.length < 2}
+        disabled={disabledAlsoWhenStarting || !isExpoRouterProject || urlHistory.length < 2}
         onClick={() => {
           setUrlHistory((prevUrlHistory) => {
             const newUrlHistory = prevUrlHistory.slice(1);
@@ -120,7 +121,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go to main screen",
           side: "bottom",
         }}
-        disabled={disabled}>
+        disabled={disabledAlsoWhenStarting}>
         <span className="codicon codicon-home" />
       </IconButton>
       <UrlSelect
@@ -131,7 +132,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         items={sortedUrlList}
         key={urlSelectKey}
         value={urlSelectValue}
-        disabled={disabled || urlList.length < (isExpoRouterProject ? 2 : 1)}
+        disabled={disabledAlsoWhenStarting || urlList.length < (isExpoRouterProject ? 2 : 1)}
       />
     </>
   );
