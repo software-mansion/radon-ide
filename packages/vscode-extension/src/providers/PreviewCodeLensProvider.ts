@@ -91,7 +91,7 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
       const previewCallRange = this.createRange(document, match.index);
       const command: Command = {
         title: "Open preview",
-        command: "RNIDE.showPanel",
+        command: "RNIDE.showInlinePreview",
         arguments: [
           document.fileName,
           jsxOpeningTagLine0Based + 1 /* RNIDE expects 1-based line number */,
