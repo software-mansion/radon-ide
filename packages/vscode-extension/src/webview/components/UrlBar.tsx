@@ -3,6 +3,7 @@ import { useProject } from "../providers/ProjectProvider";
 import UrlSelect, { UrlItem } from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
+import { useDependencies } from "../providers/DependenciesProvider";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
   const { project } = useProject();
@@ -29,6 +30,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
   const { project } = useProject();
+  const { dependencies } = useDependencies();
 
   const MAX_URL_HISTORY_SIZE = 20;
   const MAX_RECENT_URL_SIZE = 5;
@@ -79,6 +81,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
     return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
   }, [urlList]);
 
+  const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
+
   return (
     <>
       <IconButton
@@ -86,7 +90,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabled || urlHistory.length < 2}
+        disabled={disabled || !isExpoRouterProject || urlHistory.length < 2}
         onClick={() => {
           setUrlHistory((prevUrlHistory) => {
             const newUrlHistory = prevUrlHistory.slice(1);
@@ -116,7 +120,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         recentItems={recentUrlList}
         items={sortedUrlList}
         value={urlList[0]?.id}
-        disabled={disabled || urlList.length < 2}
+        disabled={disabled || urlList.length < (isExpoRouterProject ? 2 : 1)}
       />
     </>
   );
