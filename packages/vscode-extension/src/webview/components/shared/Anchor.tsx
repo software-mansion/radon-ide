@@ -7,7 +7,7 @@ interface AnchorProps {
 }
 
 function Anchor({ url, children, onClick }: AnchorProps) {
-  const { utils } = useUtils();
+  const utils = useUtils();
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     utils.openExternalUrl(url);
