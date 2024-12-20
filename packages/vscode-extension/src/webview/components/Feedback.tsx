@@ -10,7 +10,7 @@ type FeedbackProps = {
 };
 
 export function Feedback({ sentiment, setSentiment }: FeedbackProps) {
-  const { sendTelemetry } = useUtils().utils;
+  const { sendTelemetry } = useUtils();
 
   const handleFeedback = (event: MouseEvent<HTMLButtonElement>, pickedSentiment: Sentiment) => {
     event.preventDefault();

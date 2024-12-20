@@ -8,7 +8,7 @@ import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
-import { useUtils } from "../providers/UtilsProvider";
+import { useTelemetry, useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { SendFeedbackItem } from "./SendFeedbackItem";
@@ -23,8 +23,8 @@ interface SettingsDropdownProps {
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
-  const { movePanelToNewWindow, reportIssue } = useUtils().utils;
-  const telemetryEnabled = useUtils().telemetryEnabled;
+  const { movePanelToNewWindow, reportIssue } = useUtils();
+  const { telemetryEnabled } = useTelemetry();
 
   return (
     <DropdownMenu.Root>

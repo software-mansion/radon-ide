@@ -23,7 +23,7 @@ function translateToUnicode(symbol: string) {
 }
 
 export const KeybindingInfo = ({ commandName }: KeybindingInfoProps) => {
-  const { getCommandsCurrentKeyBinding } = useUtils().utils;
+  const { getCommandsCurrentKeyBinding } = useUtils();
   const [keybinding, setKeybinding] = useState<string[]>([]);
 
   useEffect(() => {

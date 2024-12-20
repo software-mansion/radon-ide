@@ -17,7 +17,7 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
   const [isFeedbackSent, setFeedbackSent] = useState(false);
   const { closeModal, showHeader } = useModal();
   const { register, handleSubmit } = useForm();
-  const { sendTelemetry } = useUtils().utils;
+  const { sendTelemetry } = useUtils();
   const [sentiment, setSentiment] = useState(initialSentiment);
 
   const onSubmit: SubmitHandler<FieldValues> = (e) => {

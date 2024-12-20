@@ -65,7 +65,7 @@ function ActivateLicenseButton() {
 
 function PreviewView() {
   const { projectState, project, deviceSettings, hasActiveLicense } = useProject();
-  const { showDismissableError } = useUtils().utils;
+  const { showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -94,7 +94,7 @@ function PreviewView() {
   });
 
   const { openModal } = useModal();
-  const { openFileAt, saveVideoRecording } = useUtils().utils;
+  const { openFileAt, saveVideoRecording } = useUtils();
 
   useEffect(() => {
     function incrementLogCounter() {

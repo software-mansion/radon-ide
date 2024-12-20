@@ -17,16 +17,30 @@ export const Platform = {
   },
 };
 
-type UtilsContextProps = {
-  utils: UtilsInterface;
-  telemetryEnabled: boolean;
-};
+type UtilsContextProps = UtilsInterface;
 
 const utils = makeProxy<Utils>("Utils");
 
-const UtilsContext = createContext<UtilsContextProps>({ utils, telemetryEnabled: false });
+const UtilsContext = createContext<UtilsContextProps>(utils);
 
 export function UtilsProvider({ children }: PropsWithChildren) {
+  return <UtilsContext.Provider value={utils}>{children}</UtilsContext.Provider>;
+}
+
+export function useUtils() {
+  const context = useContext(UtilsContext);
+
+  if (context === undefined) {
+    throw new Error("useUtils must be used within a UtilsContextProvider");
+  }
+  return context;
+}
+
+type TelemetryContextProps = { telemetryEnabled: boolean };
+
+const TelemetryContext = createContext<TelemetryContextProps>({ telemetryEnabled: false });
+
+export function TelemetryProvider({ children }: PropsWithChildren) {
   const [telemetryEnabled, setTelemetryEnabled] = useState(false);
 
   useEffect(() => {
@@ -39,15 +53,15 @@ export function UtilsProvider({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <UtilsContext.Provider value={{ utils, telemetryEnabled }}>{children}</UtilsContext.Provider>
+    <TelemetryContext.Provider value={{ telemetryEnabled }}>{children}</TelemetryContext.Provider>
   );
 }
 
-export function useUtils() {
-  const context = useContext(UtilsContext);
+export function useTelemetry() {
+  const context = useContext(TelemetryContext);
 
   if (context === undefined) {
-    throw new Error("useUtils must be used within a UtilsContextProvider");
+    throw new Error("useUtils must be used within a TelemetryContextProvider");
   }
   return context;
 }
