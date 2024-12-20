@@ -1,0 +1,76 @@
+.feedback {
+  display: flex;
+  gap: 4px;
+}
+
+.feedback-button {
+  width: 26px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: all 250ms 0ms ease-in-out;
+}
+
+.feedback-button:active {
+  transform: scale(0.94);
+}
+
+.feedback-button-large:active {
+  transform: scale(0.96);
+}
+
+.feedback-button:hover span,
+.feedback-button-positive-active span,
+.feedback-button-negative-active span {
+  color: var(--swm-popover-background) !important;
+}
+
+.feedback-button:hover {
+  cursor: pointer;
+}
+
+.feedback-button-large {
+  width: 64px;
+  height: 46px;
+}
+
+.feedback-button-large span {
+  font-size: 24px !important;
+}
+
+.feedback-button-positive {
+  color: var(--green-light-80);
+  border: 1px solid var(--green-light-80);
+}
+
+.feedback-button-positive span {
+  color: var(--green-light-80);
+}
+
+.feedback-button-positive:hover,
+.feedback-button-positive-active {
+  background-color: var(--green-light-80);
+}
+
+.feedback-button-negative {
+  border: 1px solid var(--red-light-80);
+}
+
+.feedback-button-negative span {
+  color: var(--red-light-80);
+}
+
+.feedback-button-negative:hover,
+.feedback-button-negative-active {
+  background-color: var(--red-light-80);
+}
+
+.feedback-prompt {
+  cursor: pointer;
+  font-size: 12px;
+}
+.feedback-prompt:hover {
+  text-decoration: underline;
+}

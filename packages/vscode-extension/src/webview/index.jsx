@@ -11,6 +11,7 @@ import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
 
 import "./styles/theme.css";
 import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
+import { TelemetryProvider } from "./providers/TelemetryProvider";
 import LaunchConfigProvider from "./providers/LaunchConfigProvider";
 
 installLogOverrides();
@@ -22,19 +23,21 @@ root.render(
   <React.StrictMode>
     <ProjectProvider>
       <UtilsProvider>
-        <WorkspaceConfigProvider>
-          <LaunchConfigProvider>
-            <DevicesProvider>
-              <DependenciesProvider>
-                <ModalProvider>
-                  <AlertProvider>
-                    <App />
-                  </AlertProvider>
-                </ModalProvider>
-              </DependenciesProvider>
-            </DevicesProvider>
-          </LaunchConfigProvider>
-        </WorkspaceConfigProvider>
+        <TelemetryProvider>
+          <WorkspaceConfigProvider>
+            <LaunchConfigProvider>
+              <DevicesProvider>
+                <DependenciesProvider>
+                  <ModalProvider>
+                    <AlertProvider>
+                      <App />
+                    </AlertProvider>
+                  </ModalProvider>
+                </DependenciesProvider>
+              </DevicesProvider>
+            </LaunchConfigProvider>
+          </WorkspaceConfigProvider>
+        </TelemetryProvider>
       </UtilsProvider>
     </ProjectProvider>
   </React.StrictMode>
