@@ -18,7 +18,7 @@ export function SendFeedbackItem() {
       onSelect={() => {
         openModal(
           "Do you enjoy using Radon IDE today?",
-          <FeedbackView sentiment={sentiment} setSentiment={setSentiment} />
+          <FeedbackView initialSentiment={sentiment} />
         );
       }}>
       <span className="codicon codicon-feedback" />
