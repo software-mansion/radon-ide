@@ -207,7 +207,7 @@ function PreviewView() {
   return (
     <div className="panel-view">
       <div className="button-group-top">
-        <UrlBar key={resetKey} disabled={devicesNotFound} />
+        <UrlBar key={resetKey} disabled={devicesNotFound || isStarting} />
         <div className="spacer" />
         {
           <IconButton
