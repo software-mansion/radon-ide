@@ -10,7 +10,8 @@ import AlertProvider from "./providers/AlertProvider";
 import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
 
 import "./styles/theme.css";
-import { TelemetryProvider, UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
+import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
+import { TelemetryProvider } from "./providers/TelemetryProvider";
 import LaunchConfigProvider from "./providers/LaunchConfigProvider";
 
 installLogOverrides();

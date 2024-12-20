@@ -8,10 +8,11 @@ import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
-import { useTelemetry, useUtils } from "../providers/UtilsProvider";
+import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { SendFeedbackItem } from "./SendFeedbackItem";
+import { useTelemetry } from "../providers/TelemetryProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
