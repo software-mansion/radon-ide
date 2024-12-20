@@ -6,11 +6,12 @@ import "./IconButtonWithOptions.css";
 
 interface IconButtonWithOptions extends IconButtonProps {
   options: Record<string, () => void>;
+  disabled?: boolean;
 }
 
 export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWithOptions>(
   (props, ref) => {
-    const { options, children, ...iconButtonProps } = props;
+    const { options, disabled, children, ...iconButtonProps } = props;
 
     const [dropdownTriggerVisible, setDropdownTriggerVisible] = useState(false);
 
@@ -23,16 +24,16 @@ export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWit
         onMouseLeave={() => {
           setDropdownTriggerVisible(false);
         }}>
-        <IconButton ref={ref} {...iconButtonProps}>
+        <IconButton ref={ref} disabled={disabled} {...iconButtonProps}>
           {children}
         </IconButton>
         <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
+          <DropdownMenu.Trigger asChild disabled={disabled}>
             {
               <div
                 className={classNames(
                   "dropdown-arrow codicon codicon-triangle-down",
-                  !dropdownTriggerVisible && "dropdown-arrow-hide"
+                  (!dropdownTriggerVisible || disabled) && "dropdown-arrow-hide"
                 )}
               />
             }
