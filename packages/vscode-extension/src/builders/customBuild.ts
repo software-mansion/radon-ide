@@ -1,11 +1,16 @@
 import path from "path";
 import fs from "fs";
+import os from "os";
+import { mkdtemp } from "fs/promises";
 import { Logger } from "../Logger";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
 import { getAppRootFolder } from "../utilities/extensionContext";
+import { extractTarApp } from "./utils";
 
 type Env = Record<string, string> | undefined;
+
+const EXPO_LOCAL_BUILD_PATH_REGEX = new RegExp("You can find the build artifacts in (.*)");
 
 export async function runExternalBuild(cancelToken: CancelToken, buildCommand: string, env: Env) {
   const output = await runExternalScript(buildCommand, env, cancelToken);
@@ -14,7 +19,17 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
     return undefined;
   }
 
-  const binaryPath = output.lastLine;
+  let binaryPath = output.lastLine;
+
+  // We test if the output of the command matches eas build output.
+  // If it does we extract the bath to binary.
+  if (EXPO_LOCAL_BUILD_PATH_REGEX.test(output.lastLine)) {
+    const groups = EXPO_LOCAL_BUILD_PATH_REGEX.exec(output.lastLine);
+    if (groups?.[1]) {
+      binaryPath = groups[1];
+    }
+  }
+
   if (binaryPath && !fs.existsSync(binaryPath)) {
     Logger.error(
       `External script: ${buildCommand} failed to output any existing app path, got: ${binaryPath}`
@@ -22,7 +37,14 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
     return undefined;
   }
 
-  return binaryPath;
+  const shouldExtractArchive = binaryPath.endsWith(".tar.gz");
+  if (!shouldExtractArchive) {
+    return binaryPath;
+  }
+
+  const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-custom-build-"));
+
+  return await extractTarApp(binaryPath, tmpDirectory, cancelToken);
 }
 
 export async function runfingerprintCommand(externalCommand: string, env: Env) {
