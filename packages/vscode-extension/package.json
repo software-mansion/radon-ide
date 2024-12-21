@@ -113,6 +113,16 @@
           ],
           "description": "Controls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
         },
+        "RadonIDE.themeType": {
+          "type": "string",
+          "scope": "window",
+          "default": "vscode",
+          "enum": [
+            "vscode",
+            "built-in"
+          ],
+          "description": "Controls the theme of the IDE panel. If you encounter any issues, please report them. And set this to 'built-in' to use the built-in theme."
+        },
         "RadonIDE.showDeviceFrame": {
           "type": "boolean",
           "scope": "window",
@@ -452,7 +462,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
-    "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test",
+    "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test",  
     "preinstall": "cd ../vscode-js-debug && git submodule update --init && npm install && npm exec tsc"
   },
   "devDependencies": {
