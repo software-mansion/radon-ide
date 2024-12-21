@@ -6,11 +6,13 @@ const {
   AppRegistry,
   Dimensions,
   RootTagContext,
+  Text,
   View,
   Linking,
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
+const { DimensionsBox } = require("./components/DimensionsBox").default;
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
@@ -25,7 +27,7 @@ let navigationHistory = new Map();
 const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
-  },
+  }
 };
 
 const RNInternals = {
@@ -138,10 +140,10 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
     (viewData) => {
       const frame = viewData.frame;
       const scaledFrame = {
-        x: frame.left / screenWidth,
-        y: frame.top / screenHeight,
-        width: frame.width / screenWidth,
-        height: frame.height / screenHeight,
+        x: frame.left,
+        y: frame.top,
+        width: frame.width,
+        height: frame.height,
       };
 
       if (!requestStack) {
@@ -168,10 +170,10 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
                       column0Based: source.columnNumber - 1,
                     },
                     frame: {
-                      x: pageX / screenWidth,
-                      y: pageY / screenHeight,
-                      width: viewWidth / screenWidth,
-                      height: viewHeight / screenHeight,
+                      x: pageX,
+                      y: pageY,
+                      width: viewWidth,
+                      height: viewHeight,
                     },
                   });
                 });
@@ -194,6 +196,14 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const rootTag = useContext(RootTagContext);
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
+  const [showInspectOverlay, setShowInspectOverlay] = useState(false);
+  const [showDimensionsBox, setShowDimensionsBox] = useState(false);
+  const [inspectOverlayFrame, setInspectOverlayFrame] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
   const mainContainerRef = useRef();
 
   const mountCallback = initialProps?.__RNIDE_onMount;
@@ -301,17 +311,31 @@ export function AppWrapper({ children, initialProps, fabric }) {
     devtoolsAgent,
     "RNIDE_inspect",
     (payload) => {
-      const { id, x, y, requestStack } = payload;
+      const { id, x, y, requestStack, showDimensionsBox } = payload;
 
       getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
         devtoolsAgent._bridge.send("RNIDE_inspectData", {
           id,
           ...inspectorData,
         });
+        setInspectOverlayFrame(inspectorData.frame);
+        setShowDimensionsBox(showDimensionsBox);
+        setShowInspectOverlay(true);
       });
     },
     [mainContainerRef]
   );
+
+  useAgentListener(devtoolsAgent, "RNIDE_showInspectOverlay", (payload) => {
+    const { x, y, width, height } = payload;
+    setInspectOverlayFrame({ x, y, height, width });
+    setShowInspectOverlay(true);
+  });
+
+  useAgentListener(devtoolsAgent, "RNIDE_hideInspectOverlay", (payload) => {
+    setShowInspectOverlay(false);
+    setShowDimensionsBox(false);
+  });
 
   useAgentListener(
     devtoolsAgent,
@@ -359,15 +383,29 @@ export function AppWrapper({ children, initialProps, fabric }) {
   }, [!!devtoolsAgent && hasLayout]);
 
   return (
-    <View
-      ref={mainContainerRef}
-      style={{ flex: 1 }}
-      onLayout={() => {
-        layoutCallback?.();
-        setHasLayout(true);
-      }}>
-      {children}
-    </View>
+    <>
+      <View
+        ref={mainContainerRef}
+        style={{ flex: 1, backgroundColor: "black" }}
+        onLayout={() => {
+          layoutCallback?.();
+          setHasLayout(true);
+        }}>
+        {children}
+      </View>
+      {showInspectOverlay && (
+        <View
+          style={{
+            left: inspectOverlayFrame.x,
+            top: inspectOverlayFrame.y,
+            width: inspectOverlayFrame.width,
+            height: inspectOverlayFrame.height,
+            position: "absolute",
+            backgroundColor: "rgba(56, 172, 221, 0.85)",
+          }}></View>
+      )}
+      {showInspectOverlay && showDimensionsBox && <DimensionsBox frame={inspectOverlayFrame} />}
+    </>
   );
 }
 

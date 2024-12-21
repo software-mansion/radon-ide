@@ -194,6 +194,7 @@ function PreviewView() {
   }
 
   function resetInspector() {
+    project.hideInspectOverlay();
     setInspectFrame(null);
     setInspectStackData(null);
   }
@@ -286,6 +287,7 @@ function PreviewView() {
           onSelected={onInspectorItemSelected}
           onHover={(item) => {
             if (item.frame) {
+              project.showInspectOverlay(item.frame);
               setInspectFrame(item.frame);
             }
           }}

@@ -290,6 +290,7 @@ export class DeviceSession implements Disposable {
     xRatio: number,
     yRatio: number,
     requestStack: boolean,
+    showDimensionsBox: boolean,
     callback: (inspectData: any) => void
   ) {
     const id = this.inspectCallID++;
@@ -300,7 +301,21 @@ export class DeviceSession implements Disposable {
       }
     };
     this.devtools?.addListener(listener);
-    this.devtools.send("RNIDE_inspect", { x: xRatio, y: yRatio, id, requestStack });
+    this.devtools.send("RNIDE_inspect", {
+      x: xRatio,
+      y: yRatio,
+      id,
+      requestStack,
+      showDimensionsBox,
+    });
+  }
+
+  public showInspectOverlay(frame: { x: number; y: number; width: number; height: number }): void {
+    this.devtools.send("RNIDE_showInspectOverlay", frame);
+  }
+
+  public hideInspectOverlay() {
+    this.devtools.send("RNIDE_hideInspectOverlay");
   }
 
   public openNavigation(id: string) {
