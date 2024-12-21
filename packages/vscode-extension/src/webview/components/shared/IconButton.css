@@ -10,7 +10,7 @@
   background: none;
   border: 0px solid transparent;
   border-radius: var(--swm-button-size);
-  color: var(--swm-button);
+  color: var(--swm-icon-button);
   transition: all 200ms 0ms ease-in-out;
   flex-shrink: 0;
 }
@@ -22,12 +22,13 @@
 }
 
 .icon-button:hover {
-  background-color: var(--swm-button-hover);
+  color: var(--swm-icon-button-hover);
+  background-color: var(--swm-icon-button-hover-background);
 }
 
 .icon-button:active {
-  color: var(--swm-button-active);
-  background-color: var(--swm-button-active-background);
+  color: var(--swm-icon-button-active);
+  background-color: var(--swm-icon-button-active-background);
   transform: scale(0.9);
 }
 

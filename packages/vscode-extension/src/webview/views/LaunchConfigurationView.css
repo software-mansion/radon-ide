@@ -10,9 +10,14 @@
   height: 26px;
   gap: 5px;
   color: var(--swm-default-text);
-  background-color: var(--swm-select-background);
+  background-color: var(--swm-input-background);
   box-shadow: var(--swm-select-shadow);
+  border: 1px solid var(--swm-input-border);
   margin-bottom: 5px;
+}
+
+.input-configuration:focus{
+  outline-color: var(--swm-focus-outline-color);;
 }
 
 .scheme {

@@ -35,7 +35,7 @@
 .matches-container {
   height: 200px;
   overflow: auto;
-  border: 2px solid var(--deep-link-history-border);
+  border: 2px solid var(--swm-button-background);
   border-radius: 4px;
   display: flex;
   flex-direction: column;

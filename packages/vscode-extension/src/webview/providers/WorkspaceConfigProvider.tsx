@@ -19,21 +19,29 @@ type WorkspaceConfigContextType = WorkspaceConfigProps & {
 const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
   panelLocation: "tab",
   showDeviceFrame: true,
-  update: () => {},
+  update: () => { },
+  themeType: 'vscode',
 });
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<WorkspaceConfigProps>({
     panelLocation: "tab",
     showDeviceFrame: true,
+    themeType: 'vscode',
   });
 
   useEffect(() => {
-    workspaceConfig.getConfig().then(setConfig);
-    workspaceConfig.addListener("configChange", setConfig);
+    function watchConfigChange(e: WorkspaceConfigProps) {
+      document.body.setAttribute("data-use-code-theme", `${e.themeType === "vscode"}`);
+
+      setConfig(e);
+    }
+
+    workspaceConfig.getConfig().then(watchConfigChange);
+    workspaceConfig.addListener("configChange", watchConfigChange);
 
     return () => {
-      workspaceConfig.removeListener("configChange", setConfig);
+      workspaceConfig.removeListener("configChange", watchConfigChange);
     };
   }, []);
 
