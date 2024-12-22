@@ -5,6 +5,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import { WorkspaceConfig, WorkspaceConfigProps } from "../../common/WorkspaceConfig";
@@ -49,8 +50,12 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
     [config, setConfig]
   );
 
+  const contextValue = useMemo(() => {
+    return { ...config, update };
+  }, [config, update]);
+
   return (
-    <WorkspaceConfigContext.Provider value={{ ...config, update }}>
+    <WorkspaceConfigContext.Provider value={contextValue}>
       {children}
     </WorkspaceConfigContext.Provider>
   );
