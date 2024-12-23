@@ -70,9 +70,18 @@ export class ToolsManager implements Disposable {
     };
   }
 
-  public async updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean) {
+  public updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean) {
     this.toolsSettings[toolName] = enabled;
     extensionContext.workspaceState.update(TOOLS_SETTINGS_KEY, this.toolsSettings);
     this.handleStateChange();
+  }
+
+  public openTool(toolName: string) {
+    if (
+      this.toolsSettings[toolName as keyof ToolsState] &&
+      this.availableExpoDevPlugins.has(toolName)
+    ) {
+      commands.executeCommand(`RadonIDE.ExpoDevToolsReactQuery.view.focus`);
+    }
   }
 }

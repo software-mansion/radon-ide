@@ -148,6 +148,7 @@ export interface ProjectInterface {
 
   getToolsState(): Promise<ToolsState>;
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
+  openTool(toolName: string): Promise<void>;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;

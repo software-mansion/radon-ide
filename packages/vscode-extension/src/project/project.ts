@@ -592,6 +592,10 @@ export class Project
     await this.toolsManager.updateToolEnabledState(toolName, enabled);
   }
 
+  public async openTool(toolName: string) {
+    this.toolsManager.openTool(toolName);
+  }
+
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
     await this.deviceManager.renameDevice(deviceInfo, newDisplayName);
     deviceInfo.displayName = newDisplayName;
