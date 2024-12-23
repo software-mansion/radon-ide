@@ -116,6 +116,9 @@ export interface ProjectEventMap {
   licenseActivationChanged: boolean;
   navigationChanged: { displayName: string; id: string };
   needsNativeRebuild: void;
+  replayDataCreated: RecordingData;
+  recordingDataCreated: RecordingData;
+  isRecordingChanged: boolean;
 }
 
 export interface ProjectEventListener<T> {
@@ -158,8 +161,8 @@ export interface ProjectInterface {
   openDeepLink(link: string): Promise<void>;
 
   startRecording(): void;
-  captureAndStopRecording(): Promise<RecordingData>;
-  captureReplay(): Promise<RecordingData>;
+  captureAndStopRecording(): void;
+  captureReplay(): void;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
