@@ -152,6 +152,9 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));
   context.subscriptions.push(commands.registerCommand("RNIDE.startRecording", startRecording));
   context.subscriptions.push(commands.registerCommand("RNIDE.captureRecording", captureRecording));
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.captureScreenshot", captureScreenshot)
+  );
 
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
     registeredCommandDisposable.dispose(); // must dispose to avoid endless loops
@@ -422,6 +425,10 @@ async function startRecording() {
 
 async function captureRecording() {
   Project.currentProject?.captureAndStopRecording();
+}
+
+async function captureScreenshot() {
+  Project.currentProject?.captureScreenshot();
 }
 
 async function diagnoseWorkspaceStructure() {

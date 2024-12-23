@@ -92,6 +92,12 @@
         "title": "Capture Recording",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.captureScreenshot",
+        "title": "Capture Screenshot",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -130,6 +136,11 @@
         "command": "RNIDE.captureRecording",
         "key": "ctrl+shift+T",
         "mac": "cmd+shift+T"
+      },
+      {
+        "command": "RNIDE.captureScreenshot",
+        "key": "ctrl+shift+A",
+        "mac": "cmd+shift+A"
       }
     ],
     "configuration": {
