@@ -8,6 +8,7 @@ import { isEqual } from "lodash";
 import {
   AppPermissionType,
   DeviceSettings,
+  ToolsState,
   InspectData,
   ProjectEventListener,
   ProjectEventMap,
@@ -40,8 +41,10 @@ import {
   refreshTokenPeriodically,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { ToolsManager } from "./tools";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
+
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -56,7 +59,8 @@ export class Project
   public static currentProject: Project | undefined;
 
   private metro: Metro;
-  private devtools = new Devtools();
+  private devtools: Devtools;
+  private toolsManager: ToolsManager;
   private eventEmitter = new EventEmitter();
 
   private isCachedBuildStale: boolean;
@@ -94,7 +98,9 @@ export class Project
       replaysEnabled: false,
       showTouches: false,
     };
+
     this.devtools = new Devtools();
+    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
     this.metro = new Metro(this.devtools, this);
     this.start(false, false);
     this.trySelectingInitialDevice();
@@ -419,6 +425,7 @@ export class Project
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
       this.devtools = new Devtools();
+      this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
       this.metro = new Metro(this.devtools, this);
       oldDevtools.dispose();
       oldMetro.dispose();
@@ -573,6 +580,14 @@ export class Project
     if (needsRestart) {
       await this.restart(false, false, true);
     }
+  }
+
+  public async getToolsState() {
+    return this.toolsManager.getToolsState();
+  }
+
+  public async updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean) {
+    await this.toolsManager.updateToolEnabledState(toolName, enabled);
   }
 
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {

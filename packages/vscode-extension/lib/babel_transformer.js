@@ -73,6 +73,8 @@ function transformWrapper({ filename, src, ...rest }) {
     isTransforming("node_modules/radon-ide/index.js")
   ) {
     src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
+  } else if (isTransforming("node_modules/@dev-plugins/react-query/build/index.js")) {
+    src = `${src}\nrequire("__RNIDE_lib__/dev_tools_plugin.js").register("@dev-plugins/react-query");`;
   } else if (
     isTransforming(
       "node_modules/react-native/Libraries/Renderer/implementations/ReactFabric-dev.js"

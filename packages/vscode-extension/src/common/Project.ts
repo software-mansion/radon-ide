@@ -16,6 +16,10 @@ export type DeviceSettings = {
   showTouches: boolean;
 };
 
+export type ToolsState = {
+  "@dev-tools/react-query": { available: boolean; enabled: boolean };
+};
+
 export type ProjectState = {
   status:
     | "starting"
@@ -113,6 +117,7 @@ export interface ProjectEventMap {
   log: { type: string };
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
+  toolsStateChanged: ToolsState;
   licenseActivationChanged: boolean;
   navigationChanged: { displayName: string; id: string };
   needsNativeRebuild: void;
@@ -140,6 +145,9 @@ export interface ProjectInterface {
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
   sendBiometricAuthorization(match: boolean): Promise<void>;
+
+  getToolsState(): Promise<ToolsState>;
+  updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
