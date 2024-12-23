@@ -363,11 +363,11 @@ export function AppWrapper({ children, initialProps, fabric }) {
         navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
       });
       devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
-        plugins: expoDevPlugins.values(),
+        plugins: Array.from(expoDevPlugins.values()),
       });
       expoDevPluginsChanged = () => {
         devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
-          plugins: expoDevPlugins.values(),
+          plugins: Array.from(expoDevPlugins.values()),
         });
       };
       return () => {

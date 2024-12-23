@@ -100,8 +100,8 @@ export class Project
     };
 
     this.devtools = new Devtools();
-    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
     this.metro = new Metro(this.devtools, this);
+    this.toolsManager = new ToolsManager(this.devtools, this.metro, this.eventEmitter);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -424,9 +424,11 @@ export class Project
     if (restart) {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
+      const oldToolsManager = this.toolsManager;
       this.devtools = new Devtools();
-      this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
       this.metro = new Metro(this.devtools, this);
+      this.toolsManager = new ToolsManager(this.devtools, this.metro, this.eventEmitter);
+      oldToolsManager.dispose();
       oldDevtools.dispose();
       oldMetro.dispose();
     }

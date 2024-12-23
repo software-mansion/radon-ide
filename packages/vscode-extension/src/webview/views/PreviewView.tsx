@@ -28,6 +28,7 @@ import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
+import ToolsDropdown from "../components/ToolsDropdown";
 
 const MAX_RECORDING_TIME_SEC = 10 * 60;
 
@@ -209,6 +210,11 @@ function PreviewView() {
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
+        <ToolsDropdown>
+          <IconButton tooltip={{ label: "Tools", type: "primary" }}>
+            <span className="codicon codicon-tools" />
+          </IconButton>
+        </ToolsDropdown>
         {
           <IconButton
             className={isRecording ? "button-recording-on" : ""}

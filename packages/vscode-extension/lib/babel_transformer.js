@@ -74,7 +74,7 @@ function transformWrapper({ filename, src, ...rest }) {
   ) {
     src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
   } else if (isTransforming("node_modules/@dev-plugins/react-query/build/index.js")) {
-    src = `${src}\nrequire("__RNIDE_lib__/dev_tools_plugin.js").register("@dev-plugins/react-query");`;
+    src = `${src}\nrequire("__RNIDE_lib__/expo_dev_plugins.js").register("@dev-plugins/react-query");`;
   } else if (
     isTransforming(
       "node_modules/react-native/Libraries/Renderer/implementations/ReactFabric-dev.js"
@@ -100,7 +100,12 @@ function transformWrapper({ filename, src, ...rest }) {
     // is experimental as it has some performance implications and may be removed in future versions.
     //
     const { version } = requireFromAppDir("react-native/package.json");
-    if (version.startsWith("0.74") || version.startsWith("0.75") || version.startsWith("0.76") || version.startsWith("0.77")) {
+    if (
+      version.startsWith("0.74") ||
+      version.startsWith("0.75") ||
+      version.startsWith("0.76") ||
+      version.startsWith("0.77")
+    ) {
       const rendererFileName = filename.split(path.sep).pop();
       src = `module.exports = require("__RNIDE_lib__/rn-renderer/${rendererFileName}");`;
     }
