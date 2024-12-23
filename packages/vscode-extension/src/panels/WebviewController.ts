@@ -44,13 +44,13 @@ export class WebviewController implements Disposable {
 
     this.dependencyManager = new DependencyManager();
 
+    this.utils = new Utils();
+
     this.deviceManager = new DeviceManager();
-    this.project = new Project(this.deviceManager, this.dependencyManager);
+    this.project = new Project(this.deviceManager, this.dependencyManager, this.utils);
 
     this.workspaceConfig = new WorkspaceConfigController();
     this.launchConfig = new LaunchConfigController();
-
-    this.utils = new Utils();
 
     this.disposables.push(
       this.dependencyManager,

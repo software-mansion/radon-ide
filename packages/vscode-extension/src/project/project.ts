@@ -39,7 +39,7 @@ import {
   refreshTokenPeriodically,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { Utils } from "../utilities/utils";
+import { UtilsInterface } from "../common/utils";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -80,7 +80,8 @@ export class Project
 
   constructor(
     private readonly deviceManager: DeviceManager,
-    private readonly dependencyManager: DependencyManager
+    private readonly dependencyManager: DependencyManager,
+    private readonly utils: UtilsInterface
   ) {
     Project.currentProject = this;
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
@@ -218,8 +219,7 @@ export class Project
 
   async captureAndStopRecording() {
     const recording = await this.stopRecording();
-    const utils = new Utils();
-    await utils.saveMultimedia(recording);
+    await this.utils.saveMultimedia(recording);
   }
 
   async captureReplay() {
@@ -242,8 +242,7 @@ export class Project
     }
 
     const screenshot = await this.deviceSession.captureScreenshot();
-    const utils = new Utils();
-    await utils.saveMultimedia(screenshot);
+    await this.utils.saveMultimedia(screenshot);
   }
 
   //#endregion
