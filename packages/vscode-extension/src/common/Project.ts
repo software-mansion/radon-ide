@@ -17,7 +17,7 @@ export type DeviceSettings = {
 };
 
 export type ToolsState = {
-  "@dev-tools/react-query": { available: boolean; enabled: boolean };
+  "@dev-plugins/react-query"?: { available: boolean; enabled: boolean };
 };
 
 export type ProjectState = {

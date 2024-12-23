@@ -1,12 +1,13 @@
 import { PropsWithChildren, useContext, createContext, useState, useEffect } from "react";
 import { makeProxy } from "../utilities/rpc";
-import { DeviceSettings, ProjectInterface, ProjectState } from "../../common/Project";
+import { DeviceSettings, ProjectInterface, ProjectState, ToolsState } from "../../common/Project";
 
 const project = makeProxy<ProjectInterface>("Project");
 
 interface ProjectContextProps {
   projectState: ProjectState;
   deviceSettings: DeviceSettings;
+  toolsState: ToolsState;
   project: ProjectInterface;
   hasActiveLicense: boolean;
 }
@@ -35,6 +36,7 @@ const defaultDeviceSettings: DeviceSettings = {
 const ProjectContext = createContext<ProjectContextProps>({
   projectState: defaultProjectState,
   deviceSettings: defaultDeviceSettings,
+  toolsState: {},
   project,
   hasActiveLicense: false,
 });
@@ -42,6 +44,7 @@ const ProjectContext = createContext<ProjectContextProps>({
 export default function ProjectProvider({ children }: PropsWithChildren) {
   const [projectState, setProjectState] = useState<ProjectState>(defaultProjectState);
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(defaultDeviceSettings);
+  const [toolsState, setToolsState] = useState<ToolsState>({});
   const [hasActiveLicense, setHasActiveLicense] = useState(true);
 
   useEffect(() => {
@@ -54,15 +57,20 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     project.hasActiveLicense().then(setHasActiveLicense);
     project.addListener("licenseActivationChanged", setHasActiveLicense);
 
+    project.getToolsState().then(setToolsState);
+    project.addListener("toolsStateChanged", setToolsState);
+
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
       project.removeListener("deviceSettingsChanged", setDeviceSettings);
       project.removeListener("licenseActivationChanged", setHasActiveLicense);
+      project.removeListener("toolsStateChanged", setToolsState);
     };
   }, []);
 
   return (
-    <ProjectContext.Provider value={{ projectState, deviceSettings, project, hasActiveLicense }}>
+    <ProjectContext.Provider
+      value={{ projectState, toolsState, deviceSettings, project, hasActiveLicense }}>
       {children}
     </ProjectContext.Provider>
   );
