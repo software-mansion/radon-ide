@@ -22,6 +22,7 @@ import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
+import ScreenshotIcon from "../components/icons/ScreenshotIcon";
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -93,7 +94,7 @@ function PreviewView() {
   });
 
   const { openModal } = useModal();
-  const { openFileAt, saveVideoRecording } = useUtils();
+  const { openFileAt, saveMultimedia } = useUtils();
 
   useEffect(() => {
     function incrementLogCounter() {
@@ -129,7 +130,7 @@ function PreviewView() {
   useEffect(() => {
     if (recordingData) {
       try {
-        saveVideoRecording(recordingData);
+        saveMultimedia(recordingData);
       } catch (e) {
         showDismissableError("Failed to capture recording");
       }
@@ -138,13 +139,9 @@ function PreviewView() {
 
   useEffect(() => {
     if (isRecording) {
-      const interval = setInterval(
-        () => {
-          setRecordingTime((prevRecordingTime) => prevRecordingTime + 1);
-        },
-
-        1000
-      );
+      const interval = setInterval(() => {
+        setRecordingTime((prevRecordingTime) => prevRecordingTime + 1);
+      }, 1000);
       return () => {
         setRecordingTime(0);
         clearInterval(interval);
@@ -191,6 +188,10 @@ function PreviewView() {
     } catch (e) {
       showDismissableError("Failed to capture replay");
     }
+  }
+
+  async function captureScreenshot() {
+    project.captureScreenshot();
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
@@ -241,6 +242,14 @@ function PreviewView() {
             <ReplayIcon />
           </IconButton>
         )}
+        <IconButton
+          tooltip={{
+            label: "Capture a screenshot of the app",
+          }}
+          onClick={captureScreenshot}
+          disabled={isStarting}>
+          <ScreenshotIcon />
+        </IconButton>
         <IconButton
           counter={logCounter}
           onClick={() => {

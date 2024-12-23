@@ -274,6 +274,10 @@ export class DeviceSession implements Disposable {
     return this.device.captureReplay();
   }
 
+  public async captureScreenshot() {
+    return this.device.captureScreenshot();
+  }
+
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
     this.device.sendTouches(touches, type);
   }
