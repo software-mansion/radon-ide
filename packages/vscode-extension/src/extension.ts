@@ -149,6 +149,10 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.showStorybookStory", showStorybookStory)
   );
 
+  context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));
+  context.subscriptions.push(commands.registerCommand("RNIDE.startRecording", startRecording));
+  context.subscriptions.push(commands.registerCommand("RNIDE.captureRecording", captureRecording));
+
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
     registeredCommandDisposable.dispose(); // must dispose to avoid endless loops
 
@@ -406,6 +410,18 @@ async function performBiometricAuthorization() {
 
 async function performFailedBiometricAuthorization() {
   Project.currentProject?.sendBiometricAuthorization(false);
+}
+
+async function captureReplay() {
+  Project.currentProject?.captureReplay();
+}
+
+async function startRecording() {
+  Project.currentProject?.startRecording();
+}
+
+async function captureRecording() {
+  Project.currentProject?.captureAndStopRecording();
 }
 
 async function diagnoseWorkspaceStructure() {

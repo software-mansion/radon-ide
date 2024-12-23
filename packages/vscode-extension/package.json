@@ -74,6 +74,24 @@
         "title": "Perform Failed Biometric Authorization",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.captureReplay",
+        "title": "Capture Replay",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.startRecording",
+        "title": "Start Recording",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.captureRecording",
+        "title": "Capture Recording",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -97,6 +115,21 @@
         "command": "RNIDE.performFailedBiometricAuthorization",
         "key": "ctrl+shift+N",
         "mac": "cmd+shift+N"
+      },
+      {
+        "command": "RNIDE.captureReplay",
+        "key": "ctrl+shift+R",
+        "mac": "cmd+shift+R"
+      },
+      {
+        "command": "RNIDE.startRecording",
+        "key": "ctrl+shift+E",
+        "mac": "cmd+shift+E"
+      },
+      {
+        "command": "RNIDE.captureRecording",
+        "key": "ctrl+shift+T",
+        "mac": "cmd+shift+T"
       }
     ],
     "configuration": {
