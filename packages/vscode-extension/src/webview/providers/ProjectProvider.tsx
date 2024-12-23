@@ -11,9 +11,9 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import {
   DeviceSettings,
+  MultimediaData,
   ProjectInterface,
   ProjectState,
-  RecordingData,
 } from "../../common/Project";
 
 const project = makeProxy<ProjectInterface>("Project");
@@ -23,9 +23,8 @@ interface ProjectContextProps {
   deviceSettings: DeviceSettings;
   project: ProjectInterface;
   hasActiveLicense: boolean;
-  replayData: RecordingData | undefined;
-  setReplayData: Dispatch<SetStateAction<RecordingData | undefined>>;
-  recordingData: RecordingData | undefined;
+  replayData: MultimediaData | undefined;
+  setReplayData: Dispatch<SetStateAction<MultimediaData | undefined>>;
   isRecording: boolean;
 }
 
@@ -57,7 +56,6 @@ const ProjectContext = createContext<ProjectContextProps>({
   hasActiveLicense: false,
   replayData: undefined,
   setReplayData: () => {},
-  recordingData: undefined,
   isRecording: false,
 });
 
@@ -66,8 +64,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(defaultDeviceSettings);
   const [hasActiveLicense, setHasActiveLicense] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
-  const [replayData, setReplayData] = useState<RecordingData | undefined>(undefined);
-  const [recordingData, setRecordingData] = useState<RecordingData | undefined>(undefined);
+  const [replayData, setReplayData] = useState<MultimediaData | undefined>(undefined);
 
   useEffect(() => {
     project.getProjectState().then(setProjectState);
@@ -80,7 +77,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     project.addListener("licenseActivationChanged", setHasActiveLicense);
 
     project.addListener("isRecordingChanged", setIsRecording);
-    project.addListener("recordingDataCreated", setRecordingData);
     project.addListener("replayDataCreated", setReplayData);
 
     return () => {
@@ -98,7 +94,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
       hasActiveLicense,
       replayData,
       setReplayData,
-      recordingData,
       isRecording,
     };
   }, [
@@ -108,7 +103,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     hasActiveLicense,
     replayData,
     setReplayData,
-    recordingData,
     isRecording,
   ]);
 

@@ -218,7 +218,8 @@ export class Project
 
   async captureAndStopRecording() {
     const recording = await this.stopRecording();
-    this.eventEmitter.emit("recordingDataCreated", recording);
+    const utils = new Utils();
+    await utils.saveMultimedia(recording);
   }
 
   async captureReplay() {

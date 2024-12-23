@@ -64,7 +64,6 @@ function PreviewView() {
     hasActiveLicense,
     replayData,
     isRecording,
-    recordingData,
     setReplayData,
   } = useProject();
   const { showDismissableError } = useUtils();
@@ -94,7 +93,7 @@ function PreviewView() {
   });
 
   const { openModal } = useModal();
-  const { openFileAt, saveMultimedia } = useUtils();
+  const { openFileAt } = useUtils();
 
   useEffect(() => {
     function incrementLogCounter() {
@@ -126,16 +125,6 @@ function PreviewView() {
       document.removeEventListener("keydown", disableInspectorOnEscape, false);
     };
   }, []);
-
-  useEffect(() => {
-    if (recordingData) {
-      try {
-        saveMultimedia(recordingData);
-      } catch (e) {
-        showDismissableError("Failed to capture recording");
-      }
-    }
-  }, [recordingData]);
 
   useEffect(() => {
     if (isRecording) {
