@@ -39,6 +39,7 @@ import {
   refreshTokenPeriodically,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { Utils } from "../utilities/utils";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -178,7 +179,7 @@ export class Project
   }
   //#endregion
 
-  //#region Recording
+  //#region Recordings and screenshots
 
   private recordingTime = 0;
   private recordingInterval: NodeJS.Timeout | undefined = undefined;
@@ -229,6 +230,19 @@ export class Project
     }
     const replay = await this.deviceSession.captureReplay();
     this.eventEmitter.emit("replayDataCreated", replay);
+  }
+
+  async captureScreenshot() {
+    getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+
+    const screenshot = await this.deviceSession.captureScreenshot();
+    const utils = new Utils();
+    await utils.saveMultimedia(screenshot);
   }
 
   //#endregion
