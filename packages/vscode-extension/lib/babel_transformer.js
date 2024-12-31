@@ -75,6 +75,8 @@ function transformWrapper({ filename, src, ...rest }) {
     src = `${src};preview = require("__RNIDE_lib__/preview.js").preview;`;
   } else if (isTransforming("node_modules/@dev-plugins/react-query/build/index.js")) {
     src = `require("__RNIDE_lib__/expo_dev_plugins.js").register("@dev-plugins/react-query");${src}`;
+  } else if (isTransforming("node_modules/@dev-plugins/react-native-mmkv/build/index.js")) {
+    src = `require("__RNIDE_lib__/expo_dev_plugins.js").register("@dev-plugins/react-native-mmkv");${src}`;
   } else if (isTransforming("node_modules/redux-devtools-expo-dev-plugin/build/index.js")) {
     src = `require("__RNIDE_lib__/expo_dev_plugins.js").register("redux-devtools-expo-dev-plugin");${src}`;
   } else if (
