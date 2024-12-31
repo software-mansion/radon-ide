@@ -17,7 +17,7 @@ export type DeviceSettings = {
 };
 
 export type ToolsState = {
-  "@dev-plugins/react-query"?: { available: boolean; enabled: boolean };
+  [key: string]: { enabled: boolean; label: string };
 };
 
 export type ProjectState = {
@@ -148,7 +148,7 @@ export interface ProjectInterface {
 
   getToolsState(): Promise<ToolsState>;
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
-  openTool(toolName: string): Promise<void>;
+  openTool(toolName: keyof ToolsState): Promise<void>;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;

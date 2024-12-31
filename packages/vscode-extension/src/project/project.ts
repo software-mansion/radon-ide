@@ -41,7 +41,7 @@ import {
   refreshTokenPeriodically,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { ToolsManager } from "./tools";
+import { ToolKey, ToolsManager } from "./tools";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -58,9 +58,10 @@ export class Project
 {
   public static currentProject: Project | undefined;
 
-  private metro: Metro;
+  public metro: Metro;
+  public toolsManager: ToolsManager;
+
   private devtools: Devtools;
-  private toolsManager: ToolsManager;
   private eventEmitter = new EventEmitter();
 
   private isCachedBuildStale: boolean;
@@ -101,7 +102,7 @@ export class Project
 
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
-    this.toolsManager = new ToolsManager(this.devtools, this.metro, this.eventEmitter);
+    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -427,7 +428,7 @@ export class Project
       const oldToolsManager = this.toolsManager;
       this.devtools = new Devtools();
       this.metro = new Metro(this.devtools, this);
-      this.toolsManager = new ToolsManager(this.devtools, this.metro, this.eventEmitter);
+      this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
       oldToolsManager.dispose();
       oldDevtools.dispose();
       oldMetro.dispose();
@@ -588,12 +589,12 @@ export class Project
     return this.toolsManager.getToolsState();
   }
 
-  public async updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean) {
+  public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
     await this.toolsManager.updateToolEnabledState(toolName, enabled);
   }
 
-  public async openTool(toolName: string) {
-    this.toolsManager.openTool(toolName);
+  public async openTool(toolName: ToolKey) {
+    await this.toolsManager.openTool(toolName);
   }
 
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
