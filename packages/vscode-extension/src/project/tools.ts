@@ -2,86 +2,94 @@ import { Devtools } from "./devtools";
 import { extensionContext } from "../utilities/extensionContext";
 import { ToolsState } from "../common/Project";
 import { EventEmitter } from "stream";
-import { ExpoDevPluginWebviewProvider } from "../tools/ExpoDevPluginWebviewProvider";
-import { commands, Disposable, window } from "vscode";
-import { Metro } from "./metro";
+import { Disposable } from "vscode";
+import {
+  createExpoDevPluginTools,
+  ExpoDevPluginToolName,
+} from "../plugins/expo-dev-plugins/expo-dev-plugins";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
-type ToolsSettings = {
-  "@dev-plugins/react-query": boolean;
-};
+export type ToolKey = ExpoDevPluginToolName;
+
+export interface ToolPlugin extends Disposable {
+  id: ToolKey;
+  label: string;
+  available: boolean;
+  activate(): void;
+  deactivate(): void;
+  openTool(): void;
+}
 
 export class ToolsManager implements Disposable {
-  private toolsSettings: ToolsSettings;
-  private availableExpoDevPlugins: Set<string> = new Set();
-  private subscriptions: Disposable[] = [];
+  private toolsSettings: Partial<Record<ToolKey, boolean>> = {};
+  private plugins: Map<ToolKey, ToolPlugin> = new Map();
+  private activePlugins: Set<ToolPlugin> = new Set();
 
   public constructor(
-    devtools: Devtools,
-    private metro: Metro,
+    public readonly devtools: Devtools,
     private readonly eventEmitter: EventEmitter
   ) {
-    this.toolsSettings = Object.assign(
-      {
-        "@dev-plugins/react-query": false,
-      },
-      extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY)
-    );
-    devtools.addListener((event, payload) => {
-      if (event === "RNIDE_expoDevPluginsChanged") {
-        // payload.plugins is a list of expo dev plugin names
-        this.availableExpoDevPlugins = new Set(payload.plugins);
-        this.handleStateChange();
-      }
-    });
+    this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
+
+    for (const plugin of createExpoDevPluginTools(this)) {
+      this.plugins.set(plugin.id, plugin);
+    }
+
     this.handleStateChange();
   }
 
   dispose() {
-    this.subscriptions.forEach((s) => s.dispose());
+    this.activePlugins.forEach((plugin) => plugin.deactivate());
+    this.activePlugins.clear();
+    this.plugins.forEach((plugin) => plugin.dispose());
   }
 
-  private handleStateChange() {
-    this.eventEmitter.emit("toolsStateChanged", this.getToolsState());
-
-    if (
-      this.toolsSettings["@dev-plugins/react-query"] &&
-      this.availableExpoDevPlugins.has("@dev-plugins/react-query")
-    ) {
-      commands.executeCommand("setContext", "RNIDE.ExpoDevToolsReactQuery.available", true);
-      this.subscriptions.push(
-        window.registerWebviewViewProvider(
-          "RadonIDE.ExpoDevToolsReactQuery.view",
-          new ExpoDevPluginWebviewProvider("@dev-plugins/react-query", this.metro),
-          { webviewOptions: { retainContextWhenHidden: true } }
-        )
-      );
-      commands.executeCommand("RadonIDE.ExpoDevToolsReactQuery.view.focus");
+  public handleStateChange() {
+    for (const plugin of this.plugins.values()) {
+      if (plugin.available) {
+        const enabled = this.toolsSettings[plugin.id] || false;
+        const active = this.activePlugins.has(plugin);
+        if (active !== enabled) {
+          if (enabled) {
+            plugin.activate();
+            this.activePlugins.add(plugin);
+          } else {
+            plugin.deactivate();
+            this.activePlugins.delete(plugin);
+          }
+        }
+      }
     }
+
+    this.eventEmitter.emit("toolsStateChanged", this.getToolsState());
   }
 
   public getToolsState(): ToolsState {
-    return {
-      "@dev-plugins/react-query": {
-        enabled: this.toolsSettings["@dev-plugins/react-query"],
-        available: this.availableExpoDevPlugins.has("@dev-plugins/react-query"),
-      },
-    };
+    const toolsState: ToolsState = {};
+    for (const [id, plugin] of this.plugins) {
+      if (plugin.available) {
+        toolsState[id] = {
+          label: plugin.label,
+          enabled: this.toolsSettings[id] || false,
+        };
+      }
+    }
+    return toolsState;
   }
 
-  public updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean) {
-    this.toolsSettings[toolName] = enabled;
-    extensionContext.workspaceState.update(TOOLS_SETTINGS_KEY, this.toolsSettings);
-    this.handleStateChange();
+  public updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
+    if (this.plugins.has(toolName)) {
+      this.toolsSettings[toolName] = enabled;
+      extensionContext.workspaceState.update(TOOLS_SETTINGS_KEY, this.toolsSettings);
+      this.handleStateChange();
+    }
   }
 
-  public openTool(toolName: string) {
-    if (
-      this.toolsSettings[toolName as keyof ToolsState] &&
-      this.availableExpoDevPlugins.has(toolName)
-    ) {
-      commands.executeCommand(`RadonIDE.ExpoDevToolsReactQuery.view.focus`);
+  public openTool(toolName: ToolKey) {
+    const plugin = this.plugins.get(toolName);
+    if (plugin && this.toolsSettings[toolName] && this.activePlugins.has(plugin)) {
+      plugin.openTool();
     }
   }
 }
