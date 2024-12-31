@@ -48,7 +48,12 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
         key={key}
         label={tool.label}
         checked={tool.enabled}
-        onCheckedChange={(checked) => project.updateToolEnabledState(key, checked)}
+        onCheckedChange={async (checked) => {
+          await project.updateToolEnabledState(key, checked);
+          if (checked) {
+            project.openTool(key);
+          }
+        }}
         onSelect={() => project.openTool(key)}
       />
     );
