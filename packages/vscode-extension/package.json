@@ -142,6 +142,11 @@
           "icon": "assets/logo.svg"
         },
         {
+          "id": "RadonIDEToolExpoDevPluginMMKV",
+          "title": "MMKV",
+          "icon": "assets/logo.svg"
+        },
+        {
           "id": "RadonIDEToolExpoDevPluginReduxDevTools",
           "title": "Redux",
           "icon": "assets/logo.svg"
@@ -163,6 +168,14 @@
           "id": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.view",
           "name": "",
           "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available"
+        }
+      ],
+      "RadonIDEToolExpoDevPluginMMKV": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ExpoDevPlugin.MMKV.view",
+          "name": "",
+          "when": "RNIDE.Tool.ExpoDevPlugin.MMKV.available"
         }
       ],
       "RadonIDEToolExpoDevPluginReduxDevTools": [

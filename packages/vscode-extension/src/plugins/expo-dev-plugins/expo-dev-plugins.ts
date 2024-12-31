@@ -3,7 +3,10 @@ import { ExpoDevPluginWebviewProvider } from "./ExpoDevPluginWebviewProvider";
 import { ToolPlugin, ToolsManager } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 
-export type ExpoDevPluginToolName = "@dev-plugins/react-query" | "redux-devtools-expo-dev-plugin";
+export type ExpoDevPluginToolName =
+  | "@dev-plugins/react-query"
+  | "@dev-plugins/react-native-mmkv"
+  | "redux-devtools-expo-dev-plugin";
 
 type ExpoDevPluginInfo = {
   viewIdPrefix: string;
@@ -15,6 +18,10 @@ const ExpoDevPluginToolMap: Record<ExpoDevPluginToolName, ExpoDevPluginInfo> = {
   "@dev-plugins/react-query": {
     label: "React Query",
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.ReactQuery",
+  },
+  "@dev-plugins/react-native-mmkv": {
+    label: "MMKV",
+    viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.MMKV",
   },
   "redux-devtools-expo-dev-plugin": {
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools",
