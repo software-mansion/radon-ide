@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FormEventHandler } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Switch from "@radix-ui/react-switch";
 
@@ -7,6 +7,7 @@ import "./shared/SwitchGroup.css";
 import "./ToolsDropdown.css";
 
 import { useProject } from "../providers/ProjectProvider";
+import IconButton from "./shared/IconButton";
 
 function DevToolCheckbox({
   label,
@@ -22,6 +23,11 @@ function DevToolCheckbox({
   return (
     <div className="dropdown-menu-item">
       {label}
+      {checked && (
+        <IconButton onClick={onSelect}>
+          <span className="codicon codicon-link-external" />
+        </IconButton>
+      )}
       <Switch.Root
         className="switch-root small-switch"
         onCheckedChange={onCheckedChange}
@@ -42,12 +48,8 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
         key={key}
         label={tool.label}
         checked={tool.enabled}
-        onCheckedChange={async (checked) => {
-          await project.updateToolEnabledState(key, checked);
-          if (checked) {
-            project.openTool(key);
-          }
-        }}
+        onCheckedChange={(checked) => project.updateToolEnabledState(key, checked)}
+        onSelect={() => project.openTool(key)}
       />
     );
   });
@@ -59,7 +61,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content className="dropdown-menu-content device-settings-content">
-          <h4 className="device-settings-heading">Dev tools</h4>
+          <h4 className="device-settings-heading">Tools</h4>
           {toolEntries}
           {toolEntries.length === 0 && (
             <div className="tools-empty-message">
