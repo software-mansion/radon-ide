@@ -244,12 +244,13 @@ export function AppWrapper({ children, initialProps, fabric }) {
         initialProps: {
           __RNIDE_onLayout: closePromiseResolve,
         },
+        fabric,
       });
     } else {
       closePromiseResolve();
     }
     return closePreviewPromise;
-  }, [rootTag]);
+  }, [rootTag, fabric]);
 
   const showStorybookStory = useCallback(
     async (componentTitle, storyName) => {
