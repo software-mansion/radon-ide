@@ -110,8 +110,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         onClick={() => {
           project.goHome("/{}");
           if (!isExpoRouterProject) {
-            // this sets the trigger value of UrlSelect to a placeholder,
-            setUrlSelectValue("");
+            setUrlSelectValue(""); // sets UrlSelect trigger to a placeholder
           }
         }}
         tooltip={{
