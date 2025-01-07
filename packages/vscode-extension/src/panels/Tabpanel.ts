@@ -13,6 +13,7 @@ import {
 import { extensionContext } from "../utilities/extensionContext";
 import { generateWebviewContent } from "./webviewContentGenerator";
 import { WebviewController } from "./WebviewController";
+import { IDE } from "../project/ide";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -87,9 +88,7 @@ export class TabPanel implements Disposable {
     }
 
     if (fileName !== undefined && lineNumber !== undefined) {
-      TabPanel.currentPanel.webviewController.project.startPreview(
-        `preview:/${fileName}:${lineNumber}`
-      );
+      IDE.getOrCreateInstance(context).project.startPreview(`preview:/${fileName}:${lineNumber}`);
     }
   }
 
