@@ -68,20 +68,11 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
-<<<<<<< HEAD
   const contextValue = useMemo(() => {
-    return { projectState, deviceSettings, project, hasActiveLicense };
-  }, [projectState, deviceSettings, project, hasActiveLicense]);
+    return { projectState, deviceSettings, project, hasActiveLicense, toolsState };
+  }, [projectState, deviceSettings, project, hasActiveLicense, toolsState]);
 
   return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;
-=======
-  return (
-    <ProjectContext.Provider
-      value={{ projectState, toolsState, deviceSettings, project, hasActiveLicense }}>
-      {children}
-    </ProjectContext.Provider>
-  );
->>>>>>> 027692ca (Moar stuff)
 }
 
 export function useProject() {
