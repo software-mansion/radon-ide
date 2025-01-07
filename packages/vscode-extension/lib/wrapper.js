@@ -244,6 +244,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
         initialProps: {
           __RNIDE_onLayout: closePromiseResolve,
         },
+        fabric,
       });
     } else {
       closePromiseResolve();
