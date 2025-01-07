@@ -1,4 +1,4 @@
-import { PropsWithChildren, useContext, createContext, useState, useEffect } from "react";
+import { PropsWithChildren, useContext, createContext, useState, useEffect, useMemo } from "react";
 import { makeProxy } from "../utilities/rpc";
 import { DeviceSettings, ProjectInterface, ProjectState } from "../../common/Project";
 
@@ -61,11 +61,11 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
-  return (
-    <ProjectContext.Provider value={{ projectState, deviceSettings, project, hasActiveLicense }}>
-      {children}
-    </ProjectContext.Provider>
-  );
+  const contextValue = useMemo(() => {
+    return { projectState, deviceSettings, project, hasActiveLicense };
+  }, [projectState, deviceSettings, project, hasActiveLicense]);
+
+  return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;
 }
 
 export function useProject() {
