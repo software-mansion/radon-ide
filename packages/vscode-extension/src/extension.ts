@@ -32,6 +32,7 @@ import { Project } from "./project/project";
 import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
 import { migrateOldBuildCachesToNewStorage } from "./builders/BuildCache";
+import { NetworkDevtoolsWebviewProvider } from "./plugins/network/NetworkDevtoolsWebviewProvider";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -118,6 +119,14 @@ export async function activate(context: ExtensionContext) {
     commands.executeCommand("RNIDE.openPanel");
     Project.currentProject?.showStorybookStory(componentTitle, storyName);
   }
+
+  context.subscriptions.push(
+    window.registerWebviewViewProvider(
+      `RNIDE.Tool.Network.view`,
+      new NetworkDevtoolsWebviewProvider(extensionContext),
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
 
   context.subscriptions.push(
     window.registerWebviewViewProvider(

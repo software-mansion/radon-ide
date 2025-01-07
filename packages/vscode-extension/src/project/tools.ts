@@ -2,15 +2,16 @@ import { Devtools } from "./devtools";
 import { extensionContext } from "../utilities/extensionContext";
 import { ToolsState } from "../common/Project";
 import { EventEmitter } from "stream";
-import { Disposable } from "vscode";
+import { commands, Disposable } from "vscode";
 import {
   createExpoDevPluginTools,
   ExpoDevPluginToolName,
 } from "../plugins/expo-dev-plugins/expo-dev-plugins";
+import { NetworkPlugin, NetworkPluginToolName } from "../plugins/network/network-plugin";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
-export type ToolKey = ExpoDevPluginToolName;
+export type ToolKey = ExpoDevPluginToolName | NetworkPluginToolName;
 
 export interface ToolPlugin extends Disposable {
   id: ToolKey;
@@ -36,7 +37,13 @@ export class ToolsManager implements Disposable {
       this.plugins.set(plugin.id, plugin);
     }
 
+    this.plugins.set("network", new NetworkPlugin(devtools));
+
     this.handleStateChange();
+  }
+
+  public getPlugin(toolName: ToolKey): ToolPlugin | undefined {
+    return this.plugins.get(toolName);
   }
 
   dispose() {

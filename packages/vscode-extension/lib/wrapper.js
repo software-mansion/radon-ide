@@ -11,6 +11,7 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
+const { enableNetworkInspect } = require("./network");
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
@@ -327,6 +328,15 @@ export function AppWrapper({ children, initialProps, fabric }) {
       showStorybookStory(payload.componentTitle, payload.storyName);
     },
     [showStorybookStory]
+  );
+
+  useAgentListener(
+    devtoolsAgent,
+    "RNIDE_enableNetworkInspect",
+    (payload) => {
+      enableNetworkInspect(devtoolsAgent, payload);
+    },
+    []
   );
 
   useEffect(() => {

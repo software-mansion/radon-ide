@@ -150,6 +150,11 @@
           "id": "RadonIDEToolExpoDevPluginReduxDevTools",
           "title": "Redux",
           "icon": "assets/logo.svg"
+        },
+        {
+          "id": "RadonIDEToolNetwork",
+          "title": "Network",
+          "icon": "assets/logo.svg"
         }
       ]
     },
@@ -184,6 +189,14 @@
           "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
           "name": "",
           "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available"
+        }
+      ],
+      "RadonIDEToolNetwork": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.Network.view",
+          "name": "",
+          "when": "RNIDE.Tool.Network.available"
         }
       ]
     },
