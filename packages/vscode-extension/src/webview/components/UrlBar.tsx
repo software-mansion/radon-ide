@@ -39,7 +39,6 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const [urlList, setUrlList] = useState<UrlItem[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
-  const [urlSelectKey, setUrlSelectKey] = useState<number>(0);
   const [urlSelectValue, setUrlSelectValue] = useState<string>(urlList[0]?.id);
 
   useEffect(() => {
@@ -112,8 +111,6 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           project.goHome("/{}");
           if (!isExpoRouterProject) {
             // this sets the trigger value of UrlSelect to a placeholder,
-            // forcing the Radix Select component to fully re-render
-            setUrlSelectKey(urlSelectKey + 1);
             setUrlSelectValue("");
           }
         }}
@@ -130,7 +127,6 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         }}
         recentItems={recentUrlList}
         items={sortedUrlList}
-        key={urlSelectKey}
         value={urlSelectValue}
         disabled={disabledAlsoWhenStarting || urlList.length < (isExpoRouterProject ? 2 : 1)}
       />
