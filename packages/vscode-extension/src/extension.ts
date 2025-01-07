@@ -122,7 +122,7 @@ export async function activate(context: ExtensionContext) {
   async function showInlinePreview(fileName: string, lineNumber: number) {
     commands.executeCommand("RNIDE.openPanel");
     if (Project.currentProject) {
-      Project.currentProject.startPreview(`preview:/${fileName}:${lineNumber}`);
+      Project.currentProject.openComponentPreview(fileName, lineNumber);
     } else {
       window.showWarningMessage("Wait for app to load before lunching preview. ", "Dismiss");
     }

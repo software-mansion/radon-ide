@@ -311,8 +311,21 @@ export class DeviceSession implements Disposable {
     await this.metro.openDevMenu();
   }
 
-  public startPreview(previewId: string) {
+  public async startPreview(previewId: string) {
     this.devtools.send("RNIDE_openPreview", { previewId });
+    return new Promise<void>((res, rej) => {
+      let listener = (event: string, payload: any) => {
+        if (event === "RNIDE_openPreviewResult" && payload.previewId === previewId) {
+          this.devtools?.removeListener(listener);
+          if (payload.error) {
+            rej(payload.error);
+          } else {
+            res();
+          }
+        }
+      };
+      this.devtools.addListener(listener);
+    });
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
