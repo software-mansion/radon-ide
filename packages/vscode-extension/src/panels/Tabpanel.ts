@@ -57,7 +57,7 @@ export class TabPanel implements Disposable {
     });
   }
 
-  public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
+  public static render(context: ExtensionContext) {
     if (TabPanel.currentPanel) {
       // If the webview panel already exists reveal it
       TabPanel.currentPanel._panel.reveal();
@@ -84,12 +84,6 @@ export class TabPanel implements Disposable {
       context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
 
       commands.executeCommand("workbench.action.lockEditorGroup");
-    }
-
-    if (fileName !== undefined && lineNumber !== undefined) {
-      TabPanel.currentPanel.webviewController.project.startPreview(
-        `preview:/${fileName}:${lineNumber}`
-      );
     }
   }
 
