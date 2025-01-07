@@ -250,7 +250,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
       closePromiseResolve();
     }
     return closePreviewPromise;
-  }, [rootTag]);
+  }, [rootTag, fabric]);
 
   const showStorybookStory = useCallback(
     async (componentTitle, storyName) => {
