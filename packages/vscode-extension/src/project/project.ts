@@ -540,7 +540,7 @@ export class Project
     try {
       const deviceSession = this.deviceSession;
       if (!deviceSession || !deviceSession.isAppLaunched) {
-        window.showWarningMessage("Wait for app to load before lunching preview.", "Dismiss");
+        window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
         return;
       }
       await deviceSession.startPreview(`preview:/${fileName}:${lineNumber1Based}`);

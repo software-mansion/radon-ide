@@ -117,12 +117,22 @@ export async function activate(context: ExtensionContext) {
 
   async function showStorybookStory(componentTitle: string, storyName: string) {
     commands.executeCommand("RNIDE.openPanel");
-    IDE.getInstanceIfExists()?.project.showStorybookStory(componentTitle, storyName);
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.showStorybookStory(componentTitle, storyName);
+    } else {
+      window.showWarningMessage("Wait for the app to load before launching storybook.", "Dismiss");
+    }
   }
 
   async function showInlinePreview(fileName: string, lineNumber: number) {
     commands.executeCommand("RNIDE.openPanel");
-    IDE.getInstanceIfExists()?.project.openComponentPreview(fileName, lineNumber);
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.openComponentPreview(fileName, lineNumber);
+    } else {
+      window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
+    }
   }
 
   context.subscriptions.push(
