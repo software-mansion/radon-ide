@@ -539,8 +539,15 @@ export class Project
     return !!(await getLicenseToken());
   }
 
-  public startPreview(appKey: string) {
-    this.deviceSession?.startPreview(appKey);
+  public async openComponentPreview(fileName: string, lineNumber1Based: number) {
+    try {
+      await this.deviceSession?.startPreview(`preview:/${fileName}:${lineNumber1Based}`);
+    } catch (e) {
+      const relativeFileName = workspace.asRelativePath(fileName, false);
+      const message = `Failed to open component preview. Currently previews only work for files loaded by the main application bundle. Make sure that ${relativeFileName} is loaded by your application code.`;
+      Logger.error(message);
+      window.showErrorMessage(message, "Dismiss");
+    }
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
