@@ -11,6 +11,11 @@ interface MultimediaPromiseHandlers {
   reject: (reason?: any) => void;
 }
 
+enum MultimediaType {
+  Video = "video",
+  Screenshot = "screenshot",
+}
+
 export class Preview implements Disposable {
   private multimediaPromises = new Map<string, MultimediaPromiseHandlers>();
   private subprocess?: ChildProcess;
@@ -32,7 +37,7 @@ export class Preview implements Disposable {
     stdin.write(command);
   }
 
-  private saveMultimediaWithID(type: "video" | "screenshot", id: string): Promise<MultimediaData> {
+  private saveMultimediaWithID(type: MultimediaType, id: string): Promise<MultimediaData> {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -156,7 +161,7 @@ export class Preview implements Disposable {
   }
 
   public captureAndStopRecording() {
-    const recordingDataPromise = this.saveMultimediaWithID("video", "recording");
+    const recordingDataPromise = this.saveMultimediaWithID(MultimediaType.Video, "recording");
     this.sendCommandOrThrow(`video recording stop\n`);
     return recordingDataPromise;
   }
@@ -170,11 +175,11 @@ export class Preview implements Disposable {
   }
 
   public captureReplay() {
-    return this.saveMultimediaWithID("video", "replay");
+    return this.saveMultimediaWithID(MultimediaType.Video, "replay");
   }
 
   public captureScreenShot() {
-    return this.saveMultimediaWithID("screenshot", "screenshot");
+    return this.saveMultimediaWithID(MultimediaType.Screenshot, "screenshot");
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {

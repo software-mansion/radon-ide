@@ -150,8 +150,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));
-  context.subscriptions.push(commands.registerCommand("RNIDE.startRecording", startRecording));
-  context.subscriptions.push(commands.registerCommand("RNIDE.captureRecording", captureRecording));
+  context.subscriptions.push(commands.registerCommand("RNIDE.toggleRecording", toggleRecording));
   context.subscriptions.push(
     commands.registerCommand("RNIDE.captureScreenshot", captureScreenshot)
   );
@@ -419,12 +418,8 @@ async function captureReplay() {
   Project.currentProject?.captureReplay();
 }
 
-async function startRecording() {
-  Project.currentProject?.startRecording();
-}
-
-async function captureRecording() {
-  Project.currentProject?.captureAndStopRecording();
+async function toggleRecording() {
+  Project.currentProject?.toggleRecording();
 }
 
 async function captureScreenshot() {

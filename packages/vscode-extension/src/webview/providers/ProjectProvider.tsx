@@ -76,7 +76,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     project.hasActiveLicense().then(setHasActiveLicense);
     project.addListener("licenseActivationChanged", setHasActiveLicense);
 
-    project.addListener("isRecordingChanged", setIsRecording);
+    project.addListener("isRecording", setIsRecording);
     project.addListener("replayDataCreated", setReplayData);
 
     return () => {

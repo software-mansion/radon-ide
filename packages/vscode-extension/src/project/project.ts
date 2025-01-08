@@ -182,8 +182,7 @@ export class Project
 
   //#region Recordings and screenshots
 
-  private recordingTime = 0;
-  private recordingInterval: NodeJS.Timeout | undefined = undefined;
+  private recordingTimeout: NodeJS.Timeout | undefined = undefined;
 
   startRecording(): void {
     getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
@@ -193,19 +192,15 @@ export class Project
       throw new Error("No device session available");
     }
     this.deviceSession.startRecording();
-    this.eventEmitter.emit("isRecordingChanged", true);
+    this.eventEmitter.emit("isRecording", true);
 
-    this.recordingInterval = setInterval(() => {
-      this.recordingTime += 1;
-      if (this.recordingTime >= MAX_RECORDING_TIME_SEC) {
-        this.stopRecording();
-      }
-    }, 1000);
+    this.recordingTimeout = setTimeout(() => {
+      this.stopRecording();
+    }, MAX_RECORDING_TIME_SEC * 1000);
   }
 
   private async stopRecording() {
-    clearInterval(this.recordingInterval);
-    this.recordingTime = 0;
+    clearTimeout(this.recordingTimeout);
 
     getTelemetryReporter().sendTelemetryEvent("recording:stop-recording", {
       platform: this.projectState.selectedDevice?.platform,
@@ -213,13 +208,21 @@ export class Project
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    this.eventEmitter.emit("isRecordingChanged", false);
+    this.eventEmitter.emit("isRecording", false);
     return this.deviceSession.captureAndStopRecording();
   }
 
   async captureAndStopRecording() {
     const recording = await this.stopRecording();
     await this.utils.saveMultimedia(recording);
+  }
+
+  async toggleRecording() {
+    if (this.recordingTimeout) {
+      this.captureAndStopRecording();
+    } else {
+      this.startRecording();
+    }
   }
 
   async captureReplay() {

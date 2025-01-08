@@ -82,14 +82,8 @@
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       },
       {
-        "command": "RNIDE.startRecording",
-        "title": "Start Recording",
-        "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
-      },
-      {
-        "command": "RNIDE.captureRecording",
-        "title": "Capture Recording",
+        "command": "RNIDE.toggleRecording",
+        "title": "Toggle Recording",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       },
@@ -128,14 +122,9 @@
         "mac": "cmd+shift+R"
       },
       {
-        "command": "RNIDE.startRecording",
+        "command": "RNIDE.toggleRecording",
         "key": "ctrl+shift+E",
         "mac": "cmd+shift+E"
-      },
-      {
-        "command": "RNIDE.captureRecording",
-        "key": "ctrl+shift+T",
-        "mac": "cmd+shift+T"
       },
       {
         "command": "RNIDE.captureScreenshot",

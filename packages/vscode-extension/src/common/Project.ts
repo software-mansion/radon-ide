@@ -117,7 +117,7 @@ export interface ProjectEventMap {
   navigationChanged: { displayName: string; id: string };
   needsNativeRebuild: void;
   replayDataCreated: MultimediaData;
-  isRecordingChanged: boolean;
+  isRecording: boolean;
 }
 
 export interface ProjectEventListener<T> {
