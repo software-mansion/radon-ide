@@ -28,7 +28,6 @@ import { setupPathEnv } from "./utilities/subprocess";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
-import { Project } from "./project/project";
 import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
 import { migrateOldBuildCachesToNewStorage } from "./builders/BuildCache";
@@ -57,6 +56,7 @@ function handleUncaughtErrors() {
 export function deactivate(context: ExtensionContext): undefined {
   TabPanel.currentPanel?.dispose();
   SidePanelViewProvider.currentProvider?.dispose();
+  IDE.getInstanceIfExists()?.dispose();
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", false);
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
   return undefined;
@@ -117,12 +117,12 @@ export async function activate(context: ExtensionContext) {
 
   async function showStorybookStory(componentTitle: string, storyName: string) {
     commands.executeCommand("RNIDE.openPanel");
-    IDE.getOrCreateInstance(extensionContext).project.showStorybookStory(componentTitle, storyName);
+    IDE.getInstanceIfExists()?.project.showStorybookStory(componentTitle, storyName);
   }
 
   async function showInlinePreview(fileName: string, lineNumber: number) {
     commands.executeCommand("RNIDE.openPanel");
-    IDE.getOrCreateInstance(extensionContext).project.openComponentPreview(fileName, lineNumber);
+    IDE.getInstanceIfExists()?.project.openComponentPreview(fileName, lineNumber);
   }
 
   context.subscriptions.push(
@@ -406,15 +406,15 @@ async function findAppRootFolder() {
 }
 
 async function openDevMenu() {
-  IDE.getOrCreateInstance(extensionContext).project.openDevMenu();
+  IDE.getInstanceIfExists()?.project.openDevMenu();
 }
 
 async function performBiometricAuthorization() {
-  IDE.getOrCreateInstance(extensionContext).project.sendBiometricAuthorization(true);
+  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
 }
 
 async function performFailedBiometricAuthorization() {
-  IDE.getOrCreateInstance(extensionContext).project.sendBiometricAuthorization(false);
+  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
 }
 
 async function diagnoseWorkspaceStructure() {
