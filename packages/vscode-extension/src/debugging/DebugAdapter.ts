@@ -115,7 +115,7 @@ export class DebugAdapter extends DebugSession {
         if (!sourceMap) {
           break;
         }
-        
+
         // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
         const isMainBundle = sourceMap.sources.some((source: string) =>
           source.includes("__prelude__")
