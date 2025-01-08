@@ -2,7 +2,6 @@ import { Webview, Disposable, commands, Uri } from "vscode";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
-import { extensionContext } from "../utilities/extensionContext";
 import { disposeAll } from "../utilities/disposables";
 
 type CallArgs = {

@@ -1,4 +1,4 @@
-import { Disposable, ExtensionContext } from "vscode";
+import { Disposable } from "vscode";
 import { Project } from "./project";
 import { DeviceManager } from "../devices/DeviceManager";
 import { DependencyManager } from "../dependency/DependencyManager";
