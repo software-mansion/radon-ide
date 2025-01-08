@@ -32,6 +32,7 @@ import { Project } from "./project/project";
 import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
 import { migrateOldBuildCachesToNewStorage } from "./builders/BuildCache";
+import { IDE } from "./project/ide";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -116,16 +117,12 @@ export async function activate(context: ExtensionContext) {
 
   async function showStorybookStory(componentTitle: string, storyName: string) {
     commands.executeCommand("RNIDE.openPanel");
-    Project.currentProject?.showStorybookStory(componentTitle, storyName);
+    IDE.getOrCreateInstance(extensionContext).project.showStorybookStory(componentTitle, storyName);
   }
 
   async function showInlinePreview(fileName: string, lineNumber: number) {
     commands.executeCommand("RNIDE.openPanel");
-    if (Project.currentProject) {
-      Project.currentProject.openComponentPreview(fileName, lineNumber);
-    } else {
-      window.showWarningMessage("Wait for app to load before lunching preview. ", "Dismiss");
-    }
+    IDE.getOrCreateInstance(extensionContext).project.openComponentPreview(fileName, lineNumber);
   }
 
   context.subscriptions.push(
@@ -409,15 +406,15 @@ async function findAppRootFolder() {
 }
 
 async function openDevMenu() {
-  Project.currentProject?.openDevMenu();
+  IDE.getOrCreateInstance(extensionContext).project.openDevMenu();
 }
 
 async function performBiometricAuthorization() {
-  Project.currentProject?.sendBiometricAuthorization(true);
+  IDE.getOrCreateInstance(extensionContext).project.sendBiometricAuthorization(true);
 }
 
 async function performFailedBiometricAuthorization() {
-  Project.currentProject?.sendBiometricAuthorization(false);
+  IDE.getOrCreateInstance(extensionContext).project.sendBiometricAuthorization(false);
 }
 
 async function diagnoseWorkspaceStructure() {

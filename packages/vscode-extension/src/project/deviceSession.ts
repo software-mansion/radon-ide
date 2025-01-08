@@ -50,6 +50,10 @@ export class DeviceSession implements Disposable {
     return this.maybeBuildResult;
   }
 
+  public get isAppLaunched() {
+    return !this.isLaunching;
+  }
+
   constructor(
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
