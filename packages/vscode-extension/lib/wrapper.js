@@ -221,12 +221,18 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   const openPreview = useCallback(
     (previewKey) => {
+      const preview = global.__RNIDE_previews.get(previewKey);
+      if (!preview) {
+        console.error(
+          "Requested preview has not been registered. Currently previews only work for files loaded by the main application bundle."
+        );
+        throw new Error("Preview not found");
+      }
       AppRegistry.runApplication(InternalImports.PREVIEW_APP_KEY, {
         rootTag,
         initialProps: { ...initialProps, previewKey },
         fabric,
       });
-      const preview = global.__RNIDE_previews.get(previewKey);
       const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
       handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name });
     },
@@ -264,7 +270,12 @@ export function AppWrapper({ children, initialProps, fabric }) {
     devtoolsAgent,
     "RNIDE_openPreview",
     (payload) => {
-      openPreview(payload.previewId);
+      try {
+        openPreview(payload.previewId);
+        devtoolsAgent._bridge.send("RNIDE_openPreviewResult", payload);
+      } catch (e) {
+        devtoolsAgent._bridge.send("RNIDE_openPreviewResult", { ...payload, error: true });
+      }
     },
     [openPreview]
   );
