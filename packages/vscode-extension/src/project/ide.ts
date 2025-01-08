@@ -7,6 +7,7 @@ import { LaunchConfigController } from "../panels/LaunchConfigController";
 import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
+import { disposeAll } from "../utilities/disposables";
 
 export class IDE implements Disposable {
   private static instance: IDE | null = null;
@@ -51,7 +52,7 @@ export class IDE implements Disposable {
       }
       Logger.debug("Disposing IDE instance");
       this.disposed = true;
-      this.disposables.forEach((d) => d.dispose());
+      disposeAll(this.disposables);
     }
   }
 

@@ -3,6 +3,7 @@ import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { extensionContext } from "../utilities/extensionContext";
+import { disposeAll } from "../utilities/disposables";
 
 type CallArgs = {
   callId: string;
@@ -30,7 +31,6 @@ export class WebviewController implements Disposable {
   private readonly ide = IDE.attach();
 
   constructor(private webview: Webview) {
-    console.log("Webview controller is created");
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
@@ -53,7 +53,7 @@ export class WebviewController implements Disposable {
 
   public dispose() {
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
-    this.disposables.forEach((d) => d.dispose());
+    disposeAll(this.disposables);
     this.ide.detach();
   }
 
