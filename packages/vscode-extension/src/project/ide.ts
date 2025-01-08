@@ -6,6 +6,7 @@ import { WorkspaceConfigController } from "../panels/WorkspaceConfigController";
 import { LaunchConfigController } from "../panels/LaunchConfigController";
 import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
+import { Logger } from "../Logger";
 
 export class IDE implements Disposable {
   private static instance: IDE | null = null;
@@ -43,11 +44,12 @@ export class IDE implements Disposable {
   dispose() {
     if (!this.disposed) {
       if (this.attachSemaphore > 0) {
-        console.error("IDE is being disposed while still attached");
+        Logger.error("IDE is being disposed while still attached");
       }
       if (IDE.instance === this) {
         IDE.instance = null;
       }
+      Logger.debug("Disposing IDE instance");
       this.disposed = true;
       this.disposables.forEach((d) => d.dispose());
     }
