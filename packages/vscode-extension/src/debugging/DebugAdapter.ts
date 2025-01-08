@@ -93,32 +93,49 @@ export class DebugAdapter extends DebugSession {
       case "Debugger.scriptParsed":
         const sourceMapURL = message.params.sourceMapURL;
 
+        if (!sourceMapURL) {
+          break;
+        }
+
+        let sourceMap;
+
         if (sourceMapURL?.startsWith("data:")) {
           const base64Data = sourceMapURL.split(",")[1];
           const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
-          const sourceMap = JSON.parse(decodedData);
-
-          // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
-          const isMainBundle = sourceMap.sources.some((source: string) =>
-            source.includes("__prelude__")
-          );
-
-          const consumer = await this.sourceMapRegistry.registerSourceMap(
-            sourceMap,
-            message.params.url,
-            message.params.scriptId,
-            isMainBundle
-          );
-
-          if (isMainBundle) {
-            this.cdpSession.sendCDPMessage("Runtime.evaluate", {
-              expression: "__RNIDE_onDebuggerReady()",
-            });
-            this.sendEvent(new InitializedEvent());
+          sourceMap = JSON.parse(decodedData);
+        } else {
+          try {
+            const sourceMapResponse = await fetch(sourceMapURL);
+            sourceMap = await sourceMapResponse.json();
+          } catch {
+            Logger.debug(`Failed to successfully fetch source map from: ${sourceMapURL}`);
           }
-
-          this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
         }
+
+        if (!sourceMap) {
+          break;
+        }
+        
+        // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
+        const isMainBundle = sourceMap.sources.some((source: string) =>
+          source.includes("__prelude__")
+        );
+
+        const consumer = await this.sourceMapRegistry.registerSourceMap(
+          sourceMap,
+          message.params.url,
+          message.params.scriptId,
+          isMainBundle
+        );
+
+        if (isMainBundle) {
+          this.cdpSession.sendCDPMessage("Runtime.evaluate", {
+            expression: "__RNIDE_onDebuggerReady()",
+          });
+          this.sendEvent(new InitializedEvent());
+        }
+
+        this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
         break;
       case "Debugger.paused":
         this.handleDebuggerPaused(message);
