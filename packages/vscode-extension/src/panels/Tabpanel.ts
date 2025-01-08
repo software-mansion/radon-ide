@@ -13,7 +13,6 @@ import {
 import { extensionContext } from "../utilities/extensionContext";
 import { generateWebviewContent } from "./webviewContentGenerator";
 import { WebviewController } from "./WebviewController";
-import { IDE } from "../project/ide";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -58,7 +57,7 @@ export class TabPanel implements Disposable {
     });
   }
 
-  public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
+  public static render(context: ExtensionContext) {
     if (TabPanel.currentPanel) {
       // If the webview panel already exists reveal it
       TabPanel.currentPanel._panel.reveal();
@@ -85,10 +84,6 @@ export class TabPanel implements Disposable {
       context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
 
       commands.executeCommand("workbench.action.lockEditorGroup");
-    }
-
-    if (fileName !== undefined && lineNumber !== undefined) {
-      IDE.getOrCreateInstance(context).project.startPreview(`preview:/${fileName}:${lineNumber}`);
     }
   }
 

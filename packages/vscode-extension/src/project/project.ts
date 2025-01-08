@@ -53,8 +53,6 @@ const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
 {
-  public static currentProject: Project | undefined;
-
   private metro: Metro;
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
@@ -80,7 +78,6 @@ export class Project
     private readonly deviceManager: DeviceManager,
     private readonly dependencyManager: DependencyManager
   ) {
-    Project.currentProject = this;
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
       appearance: "dark",
       contentSize: "normal",

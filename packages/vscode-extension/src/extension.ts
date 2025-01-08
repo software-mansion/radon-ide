@@ -78,7 +78,7 @@ export async function activate(context: ExtensionContext) {
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
-  async function showIDEPanel(fileName?: string, lineNumber?: number) {
+  async function showIDEPanel() {
     await commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
     const panelLocation = workspace
@@ -86,9 +86,9 @@ export async function activate(context: ExtensionContext) {
       .get<PanelLocation>("panelLocation");
 
     if (panelLocation !== "tab") {
-      SidePanelViewProvider.showView(context, fileName, lineNumber);
+      SidePanelViewProvider.showView();
     } else {
-      TabPanel.render(context, fileName, lineNumber);
+      TabPanel.render(context);
     }
   }
 
@@ -119,6 +119,15 @@ export async function activate(context: ExtensionContext) {
     Project.currentProject?.showStorybookStory(componentTitle, storyName);
   }
 
+  async function showInlinePreview(fileName: string, lineNumber: number) {
+    commands.executeCommand("RNIDE.openPanel");
+    if (Project.currentProject) {
+      Project.currentProject.startPreview(`preview:/${fileName}:${lineNumber}`);
+    } else {
+      window.showWarningMessage("Wait for app to load before lunching preview. ", "Dismiss");
+    }
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -147,6 +156,9 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showStorybookStory", showStorybookStory)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.showInlinePreview", showInlinePreview)
   );
 
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
