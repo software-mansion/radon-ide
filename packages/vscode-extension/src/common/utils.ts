@@ -1,5 +1,5 @@
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
-import { RecordingData } from "./Project";
+import { MultimediaData } from "./Project";
 
 export interface UtilsEventListener<T> {
   (event: T): void;
@@ -16,7 +16,7 @@ export interface UtilsInterface {
 
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
 
-  saveVideoRecording(recordingData: RecordingData): Promise<boolean>;
+  saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
 
   movePanelToNewWindow(): Promise<void>;
 

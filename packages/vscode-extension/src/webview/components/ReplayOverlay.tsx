@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as Select from "@radix-ui/react-select";
-import { RecordingData } from "../../common/Project";
+import { MultimediaData } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 import "./ReplayOverlay.css";
 import Button from "./shared/Button";
@@ -173,7 +173,7 @@ function LengthSelector({ startTime, videoRef, setStartTime }: LengthSelectorPro
 }
 
 type ReplayOverlayProps = {
-  replayData: RecordingData;
+  replayData: MultimediaData;
   isRewinding: boolean;
   setIsRewinding: React.Dispatch<React.SetStateAction<boolean>>;
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -335,7 +335,7 @@ export default function ReplayOverlay({
               }}>
               <span className="codicon codicon-triangle-right" />
             </Button>
-            <Button className="button-replay" onClick={() => utils.saveVideoRecording(replayData)}>
+            <Button className="button-replay" onClick={() => utils.saveMultimedia(replayData)}>
               <span className="codicon codicon-save-as" /> Save
             </Button>
           </div>
