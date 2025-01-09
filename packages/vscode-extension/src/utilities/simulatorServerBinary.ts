@@ -6,6 +6,10 @@ export function simulatorServerBinary() {
   return path.join(
     extensionContext.extensionPath,
     "dist",
-    Platform.select({ macos: "simulator-server-macos", windows: "simulator-server-windows.exe" })
+    Platform.select({
+      macos: "simulator-server-macos",
+      windows: "simulator-server-windows.exe",
+      linux: "simulator-server-linux",
+    })
   );
 }

@@ -13,14 +13,15 @@ import {
 import { extensionContext } from "../utilities/extensionContext";
 import { generateWebviewContent } from "./webviewContentGenerator";
 import { WebviewController } from "./WebviewController";
+import { disposeAll } from "../utilities/disposables";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
 export class TabPanel implements Disposable {
   public static currentPanel: TabPanel | undefined;
   private readonly _panel: WebviewPanel;
+  private disposables: Disposable[] = [];
   private webviewController: WebviewController;
-  private changeViewStateDisposable: Disposable;
 
   private constructor(panel: WebviewPanel, context: ExtensionContext) {
     this._panel = panel;
@@ -30,13 +31,15 @@ export class TabPanel implements Disposable {
 
     commands.executeCommand("setContext", "RNIDE.isTabPanelFocused", this._panel.active);
 
-    this.changeViewStateDisposable = this._panel.onDidChangeViewState((e) => {
-      commands.executeCommand("setContext", "RNIDE.isTabPanelFocused", this._panel.active);
-    });
+    this._panel.onDidChangeViewState(
+      (e) => {
+        commands.executeCommand("setContext", "RNIDE.isTabPanelFocused", this._panel.active);
+      },
+      this,
+      this.disposables
+    );
 
-    this._panel.onDidDispose(() => {
-      this.dispose();
-    });
+    this._panel.onDidDispose(this.dispose, this, this.disposables);
 
     // Set the HTML content for the webview panel
     this._panel.webview.html = generateWebviewContent(
@@ -46,18 +49,23 @@ export class TabPanel implements Disposable {
     );
 
     this.webviewController = new WebviewController(this._panel.webview);
+    this.disposables.push(this._panel, this.webviewController);
 
-    workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-      if (!event.affectsConfiguration("RadonIDE")) {
-        return;
-      }
-      if (workspace.getConfiguration("RadonIDE").get("panelLocation") !== "tab") {
-        this.dispose();
-      }
-    });
+    workspace.onDidChangeConfiguration(
+      (event: ConfigurationChangeEvent) => {
+        if (!event.affectsConfiguration("RadonIDE")) {
+          return;
+        }
+        if (workspace.getConfiguration("RadonIDE").get("panelLocation") !== "tab") {
+          this.dispose();
+        }
+      },
+      this,
+      this.disposables
+    );
   }
 
-  public static render(context: ExtensionContext, fileName?: string, lineNumber?: number) {
+  public static render(context: ExtensionContext) {
     if (TabPanel.currentPanel) {
       // If the webview panel already exists reveal it
       TabPanel.currentPanel._panel.reveal();
@@ -85,12 +93,6 @@ export class TabPanel implements Disposable {
 
       commands.executeCommand("workbench.action.lockEditorGroup");
     }
-
-    if (fileName !== undefined && lineNumber !== undefined) {
-      TabPanel.currentPanel.webviewController.project.startPreview(
-        `preview:/${fileName}:${lineNumber}`
-      );
-    }
   }
 
   public dispose() {
@@ -99,15 +101,10 @@ export class TabPanel implements Disposable {
     // key in this case to prevent extension from automatically opening the panel next time they open the editor
     extensionContext.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, undefined);
 
-    this.changeViewStateDisposable.dispose();
     commands.executeCommand("setContext", "RNIDE.isTabPanelFocused", false);
 
     TabPanel.currentPanel = undefined;
 
-    // Dispose of the current webview panel
-    this._panel.dispose();
-
-    //dispose of current webwiew dependencies
-    this.webviewController.dispose();
+    disposeAll(this.disposables);
   }
 }

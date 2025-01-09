@@ -1,12 +1,8 @@
 import { Webview, Disposable, commands, Uri } from "vscode";
-import { DependencyManager } from "../dependency/DependencyManager";
-import { DeviceManager } from "../devices/DeviceManager";
-import { Project } from "../project/project";
 import { Logger } from "../Logger";
-import { WorkspaceConfigController } from "./WorkspaceConfigController";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { Utils } from "../utilities/utils";
-import { LaunchConfigController } from "./LaunchConfigController";
+import { IDE } from "../project/ide";
+import { disposeAll } from "../utilities/disposables";
 
 type CallArgs = {
   callId: string;
@@ -20,12 +16,6 @@ export type WebviewEvent = {
 } & CallArgs;
 
 export class WebviewController implements Disposable {
-  private readonly dependencyManager: DependencyManager;
-  private readonly deviceManager: DeviceManager;
-  public readonly project: Project;
-  public readonly workspaceConfig: WorkspaceConfigController;
-  public readonly launchConfig: LaunchConfigController;
-  public readonly utils: Utils;
   private disposables: Disposable[] = [];
   private idToCallback: Map<string, WeakRef<any>> = new Map();
   private idToCallbackFinalizationRegistry = new FinalizationRegistry((callbackId: string) => {
@@ -37,35 +27,19 @@ export class WebviewController implements Disposable {
   });
 
   private readonly callableObjects: Map<string, object>;
+  private readonly ide = IDE.attach();
 
   constructor(private webview: Webview) {
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
-    this.dependencyManager = new DependencyManager();
-
-    this.deviceManager = new DeviceManager();
-    this.project = new Project(this.deviceManager, this.dependencyManager);
-
-    this.workspaceConfig = new WorkspaceConfigController();
-    this.launchConfig = new LaunchConfigController();
-
-    this.utils = new Utils();
-
-    this.disposables.push(
-      this.dependencyManager,
-      this.project,
-      this.workspaceConfig,
-      this.launchConfig
-    );
-
     this.callableObjects = new Map([
-      ["DeviceManager", this.deviceManager as object],
-      ["DependencyManager", this.dependencyManager as object],
-      ["Project", this.project as object],
-      ["WorkspaceConfig", this.workspaceConfig as object],
-      ["LaunchConfig", this.launchConfig as object],
-      ["Utils", this.utils as object],
+      ["DeviceManager", this.ide.deviceManager as object],
+      ["DependencyManager", this.ide.dependencyManager as object],
+      ["Project", this.ide.project as object],
+      ["WorkspaceConfig", this.ide.workspaceConfigController as object],
+      ["LaunchConfig", this.ide.launchConfig as object],
+      ["Utils", this.ide.utils as object],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
@@ -78,14 +52,8 @@ export class WebviewController implements Disposable {
 
   public dispose() {
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
-
-    // Dispose of all disposables (i.e. commands) for the current webview
-    while (this.disposables.length) {
-      const disposable = this.disposables.pop();
-      if (disposable) {
-        disposable.dispose();
-      }
-    }
+    disposeAll(this.disposables);
+    this.ide.detach();
   }
 
   private setWebviewMessageListener(webview: Webview) {

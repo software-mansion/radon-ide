@@ -16,7 +16,7 @@
     "workspaceContains:**/app.config.js",
     "workspaceContains:**/app.config.ts"
   ],
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -74,6 +74,24 @@
         "title": "Perform Failed Biometric Authorization",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.captureReplay",
+        "title": "Capture Replay",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.toggleRecording",
+        "title": "Toggle Recording",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.captureScreenshot",
+        "title": "Capture Screenshot",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -97,6 +115,21 @@
         "command": "RNIDE.performFailedBiometricAuthorization",
         "key": "ctrl+shift+N",
         "mac": "cmd+shift+N"
+      },
+      {
+        "command": "RNIDE.captureReplay",
+        "key": "ctrl+shift+R",
+        "mac": "cmd+shift+R"
+      },
+      {
+        "command": "RNIDE.toggleRecording",
+        "key": "ctrl+shift+E",
+        "mac": "cmd+shift+E"
+      },
+      {
+        "command": "RNIDE.captureScreenshot",
+        "key": "ctrl+shift+A",
+        "mac": "cmd+shift+A"
       }
     ],
     "configuration": {
@@ -452,9 +485,11 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
-    "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test"
+    "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test",
+    "preinstall": "cd ../vscode-js-debug && git submodule update --init && npm install && npm exec tsc"
   },
   "devDependencies": {
+    "vscode-js-debug": "file:../vscode-js-debug",
     "@babel/preset-react": "^7.23.3",
     "@expo/fingerprint": "^0.10.3",
     "@expo/package-manager": "^1.1.2",

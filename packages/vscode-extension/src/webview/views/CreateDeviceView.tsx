@@ -33,6 +33,7 @@ function useSupportedDevices() {
             })),
           },
       windows: { label: "", items: [] },
+      linux: { label: "", items: [] },
     }),
     errors?.emulator
       ? { label: "Android – error, check diagnostics", items: [] }

@@ -9,6 +9,7 @@ export type Dependency =
   | "xcode"
   | "cocoaPods"
   | "nodejs"
+  | "packageManager"
   | "nodeModules"
   | "android"
   | "ios"
@@ -23,6 +24,7 @@ export type InstallationStatus = "installed" | "notInstalled" | "installing";
 export type DependencyStatus = {
   status: InstallationStatus;
   isOptional: boolean;
+  details?: string;
 };
 
 export type DependenciesStatus = Record<Dependency, DependencyStatus>;

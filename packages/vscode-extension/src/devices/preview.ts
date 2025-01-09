@@ -2,23 +2,31 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { RecordingData, TouchPoint } from "../common/Project";
+import { MultimediaData, TouchPoint } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
+import { watchLicenseTokenChange } from "../utilities/license";
 
-interface VideoRecordingPromiseHandlers {
-  resolve: (value: RecordingData) => void;
+interface MultimediaPromiseHandlers {
+  resolve: (value: MultimediaData) => void;
   reject: (reason?: any) => void;
 }
 
+enum MultimediaType {
+  Video = "video",
+  Screenshot = "screenshot",
+}
+
 export class Preview implements Disposable {
-  private videoRecordingPromises = new Map<string, VideoRecordingPromiseHandlers>();
+  private multimediaPromises = new Map<string, MultimediaPromiseHandlers>();
   private subprocess?: ChildProcess;
+  private tokenChangeListener?: Disposable;
   public streamURL?: string;
 
   constructor(private args: string[]) {}
 
   dispose() {
     this.subprocess?.kill();
+    this.tokenChangeListener?.dispose();
   }
 
   private sendCommandOrThrow(command: string) {
@@ -29,27 +37,27 @@ export class Preview implements Disposable {
     stdin.write(command);
   }
 
-  private saveVideoWithID(videoId: string): Promise<RecordingData> {
+  private saveMultimediaWithID(type: MultimediaType, id: string): Promise<MultimediaData> {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
     }
 
-    let resolvePromise: (value: RecordingData) => void;
+    let resolvePromise: (value: MultimediaData) => void;
     let rejectPromise: (reason?: any) => void;
-    const promise = new Promise<RecordingData>((resolve, reject) => {
+    const promise = new Promise<MultimediaData>((resolve, reject) => {
       resolvePromise = resolve;
       rejectPromise = reject;
     });
 
-    const lastPromise = this.videoRecordingPromises.get(videoId);
+    const lastPromise = this.multimediaPromises.get(id);
     if (lastPromise) {
       promise.then(lastPromise.resolve, lastPromise.reject);
     }
 
     const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
-    this.videoRecordingPromises.set(videoId, newPromiseHandler);
-    stdin.write(`video ${videoId} save\n`);
+    this.multimediaPromises.set(id, newPromiseHandler);
+    stdin.write(`${type} ${id} ${type === "video" ? "save" : ""}\n`);
     return promise;
   }
 
@@ -62,6 +70,12 @@ export class Preview implements Disposable {
       buffer: false,
     });
     this.subprocess = subprocess;
+
+    this.tokenChangeListener = watchLicenseTokenChange((token) => {
+      if (token) {
+        this.sendCommandOrThrow(`token ${token}\n`);
+      }
+    });
 
     return new Promise<string>((resolve, reject) => {
       subprocess.catch(reject).then(() => {
@@ -87,39 +101,46 @@ export class Preview implements Disposable {
             this.streamURL = match[1];
             resolve(this.streamURL);
           }
-        } else if (line.includes("video_ready") || line.includes("video_error")) {
-          // video response format for recordings looks as follows:
+        } else if (
+          line.includes("video_ready") ||
+          line.includes("video_error") ||
+          line.includes("screenshot_ready") ||
+          line.includes("screenshot_error")
+        ) {
+          // multimedia response format for recordings and screenshots looks as follows:
           // video_ready <VIDEO_ID> <HTTP_URL> <FILE_URL>
           // video_error <VIDEO_ID> <Error message>
-          const videoReadyMatch = line.match(/video_ready (\S+) (\S+) (\S+)/);
-          const videoErrorMatch = line.match(/video_error (\S+) (.*)/);
+          // screenshot_ready <id> <url> <local-path>
+          // screenshot_error <id> <reason>
+          const multimediaReadyMatch = line.match(
+            /(video_ready|screenshot_ready) (\S+) (\S+) (\S+)/
+          );
+          const multimediaErrorMatch = line.match(/(video_error|screenshot_error) (\S+) (.*)/);
 
-          const videoId = videoReadyMatch
-            ? videoReadyMatch[1]
-            : videoErrorMatch
-            ? videoErrorMatch[1]
+          const id = multimediaReadyMatch
+            ? multimediaReadyMatch[2]
+            : multimediaErrorMatch
+            ? multimediaErrorMatch[2]
             : "";
 
-          const handlers = this.videoRecordingPromises.get(videoId);
-          this.videoRecordingPromises.delete(videoId);
-          if (handlers && videoReadyMatch) {
+          const handlers = this.multimediaPromises.get(id);
+          this.multimediaPromises.delete(id);
+          if (handlers && multimediaReadyMatch) {
             // match array looks as follows:
             // [0] - full match
-            // [1] - ID of the video
+            // [1] - ID of the multimedia
             // [2] - URL or error message
             // [3] - File URL
-            const tempFileLocation = videoReadyMatch[3];
+            const tempFileLocation = multimediaReadyMatch[4];
             const ext = path.extname(tempFileLocation);
-            const fileName = workspace.name
-              ? `${workspace.name} ${videoId}${ext}`
-              : `${videoId}${ext}`;
+            const fileName = workspace.name ? `${workspace.name} ${id}${ext}` : `${id}${ext}`;
             handlers.resolve({
-              url: videoReadyMatch[2],
+              url: multimediaReadyMatch[3],
               tempFileLocation,
               fileName,
             });
-          } else if (handlers && videoErrorMatch) {
-            handlers.reject(new Error(videoErrorMatch[2]));
+          } else if (handlers && multimediaErrorMatch) {
+            handlers.reject(new Error(multimediaErrorMatch[3]));
           }
         }
         Logger.info("sim-server:", line);
@@ -140,7 +161,7 @@ export class Preview implements Disposable {
   }
 
   public captureAndStopRecording() {
-    const recordingDataPromise = this.saveVideoWithID("recording");
+    const recordingDataPromise = this.saveMultimediaWithID(MultimediaType.Video, "recording");
     this.sendCommandOrThrow(`video recording stop\n`);
     return recordingDataPromise;
   }
@@ -154,7 +175,11 @@ export class Preview implements Disposable {
   }
 
   public captureReplay() {
-    return this.saveVideoWithID("replay");
+    return this.saveMultimediaWithID(MultimediaType.Video, "replay");
+  }
+
+  public captureScreenShot() {
+    return this.saveMultimediaWithID(MultimediaType.Screenshot, "screenshot");
   }
 
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {

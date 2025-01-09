@@ -1,11 +1,11 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
+import _ from "lodash";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
-  ActivateDeviceResult,
   AppPermissionType,
   DeviceSettings,
   InspectData,
@@ -13,7 +13,6 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
-  RecordingData,
   ReloadAction,
   StartupMessage,
   TouchPoint,
@@ -22,7 +21,7 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { extensionContext } from "../utilities/extensionContext";
+import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
@@ -31,9 +30,16 @@ import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
-import { PlatformBuildCache } from "../builders/PlatformBuildCache";
+import { BuildCache } from "../builders/BuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
-import { activateDevice, getLicenseToken } from "../utilities/license";
+import {
+  activateDevice,
+  watchLicenseTokenChange,
+  getLicenseToken,
+  refreshTokenPeriodically,
+} from "../utilities/license";
+import { getTelemetryReporter } from "../utilities/telemetry";
+import { UtilsInterface } from "../common/utils";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -44,11 +50,11 @@ const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 
+const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
+
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
 {
-  public static currentProject: Project | undefined;
-
   private metro: Metro;
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
@@ -56,6 +62,8 @@ export class Project
   private isCachedBuildStale: boolean;
 
   private fileWatcher: Disposable;
+  private licenseWatcher: Disposable;
+  private licenseUpdater: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -70,9 +78,9 @@ export class Project
 
   constructor(
     private readonly deviceManager: DeviceManager,
-    private readonly dependencyManager: DependencyManager
+    private readonly dependencyManager: DependencyManager,
+    private readonly utils: UtilsInterface
   ) {
-    Project.currentProject = this;
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
       appearance: "dark",
       contentSize: "normal",
@@ -95,6 +103,11 @@ export class Project
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
+    });
+    this.licenseUpdater = refreshTokenPeriodically();
+    this.licenseWatcher = watchLicenseTokenChange(async () => {
+      const hasActiveLicense = await this.hasActiveLicense();
+      this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
     });
   }
 
@@ -164,26 +177,75 @@ export class Project
   }
   //#endregion
 
+  //#region Recordings and screenshots
+
+  private recordingTimeout: NodeJS.Timeout | undefined = undefined;
+
   startRecording(): void {
+    getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
     this.deviceSession.startRecording();
+    this.eventEmitter.emit("isRecording", true);
+
+    this.recordingTimeout = setTimeout(() => {
+      this.stopRecording();
+    }, MAX_RECORDING_TIME_SEC * 1000);
   }
 
-  async captureAndStopRecording(): Promise<RecordingData> {
+  private async stopRecording() {
+    clearTimeout(this.recordingTimeout);
+
+    getTelemetryReporter().sendTelemetryEvent("recording:stop-recording", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
+    this.eventEmitter.emit("isRecording", false);
     return this.deviceSession.captureAndStopRecording();
   }
 
-  async captureReplay(): Promise<RecordingData> {
+  async captureAndStopRecording() {
+    const recording = await this.stopRecording();
+    await this.utils.saveMultimedia(recording);
+  }
+
+  async toggleRecording() {
+    if (this.recordingTimeout) {
+      this.captureAndStopRecording();
+    } else {
+      this.startRecording();
+    }
+  }
+
+  async captureReplay() {
+    getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    return this.deviceSession.captureReplay();
+    const replay = await this.deviceSession.captureReplay();
+    this.eventEmitter.emit("replayDataCreated", replay);
   }
+
+  async captureScreenshot() {
+    getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+
+    const screenshot = await this.deviceSession.captureScreenshot();
+    await this.utils.saveMultimedia(screenshot);
+  }
+
+  //#endregion
 
   async dispatchPaste(text: string) {
     await this.deviceSession?.sendPaste(text);
@@ -278,6 +340,8 @@ export class Project
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.fileWatcher.dispose();
+    this.licenseWatcher.dispose();
+    this.licenseUpdater.dispose();
   }
 
   private async reloadMetro() {
@@ -289,6 +353,10 @@ export class Project
   }
 
   public async goHome(homeUrl: string) {
+    getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
+
     if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
       await this.openNavigation(homeUrl);
     } else {
@@ -302,6 +370,10 @@ export class Project
     onlyReloadJSWhenPossible: boolean = true,
     restartDevice: boolean = false
   ) {
+    getTelemetryReporter().sendTelemetryEvent("url-bar:restart-requested", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
+
     // we save device info and device session at the start such that we can
     // check if they weren't updated in the meantime while we await for restart
     // procedures
@@ -358,7 +430,12 @@ export class Project
   }
 
   public async reload(type: ReloadAction): Promise<boolean> {
-    this.updateProjectState({ status: "starting" });
+    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
+
+    getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
+      platform: this.projectState.selectedDevice?.platform,
+      method: type,
+    });
 
     // this action needs to be handled outside of device session as it resets the device session itself
     if (type === "reboot") {
@@ -495,9 +572,6 @@ export class Project
   public async activateLicense(activationKey: string) {
     const computerName = os.hostname();
     const activated = await activateDevice(activationKey, computerName);
-    if (activated === ActivateDeviceResult.succeeded) {
-      this.eventEmitter.emit("licenseActivationChanged", true);
-    }
     return activated;
   }
 
@@ -505,8 +579,20 @@ export class Project
     return !!(await getLicenseToken());
   }
 
-  public startPreview(appKey: string) {
-    this.deviceSession?.startPreview(appKey);
+  public async openComponentPreview(fileName: string, lineNumber1Based: number) {
+    try {
+      const deviceSession = this.deviceSession;
+      if (!deviceSession || !deviceSession.isAppLaunched) {
+        window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
+        return;
+      }
+      await deviceSession.startPreview(`preview:/${fileName}:${lineNumber1Based}`);
+    } catch (e) {
+      const relativeFileName = workspace.asRelativePath(fileName, false);
+      const message = `Failed to open component preview. Currently previews only work for files loaded by the main application bundle. Make sure that ${relativeFileName} is loaded by your application code.`;
+      Logger.error(message);
+      window.showErrorMessage(message, "Dismiss");
+    }
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
@@ -522,6 +608,15 @@ export class Project
   }
 
   public async updateDeviceSettings(settings: DeviceSettings) {
+    const changedSettings = (Object.keys(settings) as Array<keyof DeviceSettings>).filter(
+      (settingKey) => {
+        return !_.isEqual(settings[settingKey], this.deviceSettings[settingKey]);
+      }
+    );
+    getTelemetryReporter().sendTelemetryEvent("device-settings:update-device-settings", {
+      platform: this.projectState.selectedDevice?.platform,
+      changedSetting: JSON.stringify(changedSettings),
+    });
     this.deviceSettings = settings;
     extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
     let needsRestart = await this.deviceSession?.changeDeviceSettings(settings);
@@ -632,6 +727,7 @@ export class Project
         this.devtools,
         this.metro,
         this.dependencyManager,
+        new BuildCache(device.platform, getAppRootFolder()),
         this,
         this
       );
@@ -669,9 +765,8 @@ export class Project
   };
 
   private checkIfNativeChanged = throttleAsync(async () => {
-    if (!this.isCachedBuildStale && this.projectState.selectedDevice) {
-      const platform = this.projectState.selectedDevice.platform;
-      const isCacheStale = await PlatformBuildCache.forPlatform(platform).isCacheStale();
+    if (!this.isCachedBuildStale && this.deviceSession) {
+      const isCacheStale = await this.deviceSession.buildCache.isCacheStale();
 
       if (isCacheStale) {
         this.isCachedBuildStale = true;

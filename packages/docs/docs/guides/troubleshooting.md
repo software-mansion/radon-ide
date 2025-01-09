@@ -6,6 +6,9 @@ sidebar_position: 6
 
 ## Troubleshooting issues with Radon IDE
 
+When you encounter issues with using Radon IDE they usually are related to the local installation or problems that are specific to the project.
+If you are trying to open Radon IDE on your existing project for the first time and it doesn't work, we first recommend testing Radon on some other project / possibly new app created with `npx create-expo-app` to help isolate potential issues with the installation on your computer.
+
 Below, we outline some ways that may help you self-diagnose and hopefully resolve issues you may encounter when using the Radon IDE extension.
 
 ### -sec-num- Project setup diagnostics commands
@@ -79,7 +82,9 @@ If you'd like to perform a clean installation, you can delete both of those fold
 
 Here is what you can try when the extension got stuck on some errors:
 
-- Try "Clean rebuild" option from the cog-wheel menu in the upper right corner of the extension panel
+- Try using different ways of rebuilding the app – there are several options available under the menu that you can open by hovering the reload button:
+  <img width="698" alt="download-older-version" src="/img/docs/reload_options.png" className="shadow-image"/>
+- Specifically, "Clean rebuild" option will trigger a full clean rebuild of your project.
 - Try closing and reopening extension panel
 - Check whether you can build and run app without the extension (using `expo` or `react-native-cli`)
 - Try restarting vscode ¯\\\_(ツ)\_/¯

@@ -17,8 +17,9 @@ export function getDevServerScriptUrl() {
 export function isWorkspaceRoot(dir: string) {
   const packageJsonPath = path.join(dir, "package.json");
   const nxJsonPath = path.join(dir, "nx.json");
+  const pnpmWorkspaceYamlPath = path.join(dir, "pnpm-workspace.yaml");
 
-  if (fs.existsSync(nxJsonPath)) {
+  if (fs.existsSync(nxJsonPath) || fs.existsSync(pnpmWorkspaceYamlPath)) {
     return true;
   }
 

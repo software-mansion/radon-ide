@@ -14,6 +14,7 @@ export type CDPRemoteObject =
     }
   | {
       type: "object";
+      subtype?: "array";
       objectId: string;
       className: string;
       description?: string;

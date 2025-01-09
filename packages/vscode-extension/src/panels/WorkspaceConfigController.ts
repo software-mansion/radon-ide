@@ -7,6 +7,7 @@ import {
   WorkspaceConfigEventMap,
   WorkspaceConfigEventListener,
 } from "../common/WorkspaceConfig";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
   private config: WorkspaceConfigProps;
@@ -25,10 +26,27 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
         return;
       }
       const config = workspace.getConfiguration("RadonIDE");
-      this.config = {
+
+      const newConfig = {
         panelLocation: config.get<PanelLocation>("panelLocation")!,
         showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
       };
+
+      if (newConfig.panelLocation !== this.config.panelLocation) {
+        getTelemetryReporter().sendTelemetryEvent(
+          "workspace-configuration:panel-location-changed",
+          { newPanelLocation: newConfig.panelLocation }
+        );
+      }
+
+      if (newConfig.showDeviceFrame !== this.config.showDeviceFrame) {
+        getTelemetryReporter().sendTelemetryEvent(
+          "workspace-configuration:show-device-frame-changed",
+          { showDeviceFrame: String(newConfig.showDeviceFrame) }
+        );
+      }
+
+      this.config = newConfig;
       this.eventEmitter.emit("configChange", this.config);
     });
   }
