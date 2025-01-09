@@ -8,6 +8,7 @@ import {
 } from "vscode";
 import { IDE } from "../../project/ide";
 import { ExpoDevPluginToolName } from "./expo-dev-plugins";
+import { Logger } from "../../Logger";
 
 function generateWebviewContent(pluginName: ExpoDevPluginToolName, metroPort: number): string {
   const iframeURL = `http://localhost:${metroPort}/_expo/plugins/${pluginName}`;
@@ -37,21 +38,13 @@ export class ExpoDevPluginWebviewProvider implements WebviewViewProvider {
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, "dist")],
     };
 
-    const project = IDE.getOrCreateInstance(this.context).project;
-    let metroPort: number | undefined;
-
-    const projectStateListener = () => {
-      let currentMetroPort = project.metro.port;
-      if (currentMetroPort && metroPort !== currentMetroPort) {
-        metroPort = currentMetroPort;
-        webviewView.webview.html = generateWebviewContent(this.pluginName, metroPort);
-      }
-    };
-    webviewView.onDidDispose(() => {
-      project.removeListener("projectStateChanged", projectStateListener);
-    });
-
-    project.addListener("projectStateChanged", projectStateListener);
-    project.getProjectState().then(projectStateListener);
+    const metroPort = IDE.getInstanceIfExists()?.project.metro.port;
+    if (!metroPort) {
+      Logger.error(
+        "Metro port is unknown while expected to be set, the devtools panel cannot be opened."
+      );
+    } else {
+      webviewView.webview.html = generateWebviewContent(this.pluginName, metroPort);
+    }
   }
 }
