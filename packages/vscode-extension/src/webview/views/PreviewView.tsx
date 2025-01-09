@@ -22,7 +22,6 @@ import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
-import ScreenshotIcon from "../components/icons/ScreenshotIcon";
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -237,7 +236,7 @@ function PreviewView() {
           }}
           onClick={captureScreenshot}
           disabled={isStarting}>
-          <ScreenshotIcon />
+          <span slot="start" className="codicon codicon-device-camera" />
         </IconButton>
         <IconButton
           counter={logCounter}
