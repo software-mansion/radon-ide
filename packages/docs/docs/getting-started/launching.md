@@ -35,10 +35,14 @@ Please follow the [simulators](/docs/guides/simulators) section to learn how to 
 
 ## -sec-num- Decide on the location of the IDE panel
 
-The main extension window can be either presented as one of the editor tabs, which is the default behavior, or as a side panel (in primary or secondary side panel location).
+The main extension panel can be presented as one of the editor tabs (which is the default behavior), in a standalone editor window, or as a side panel (in primary or secondary side panel location).
 To change between these modes, you can either use Radon IDE section in the VSCode settings, or use the dropdown menu from the right top corner in the IDE panel:
 
-<img width="450" alt="sztudio-change-position" src="/img/docs/sztudio_change_position.png" className="shadow-image"/>
+<img width="450" alt="sztudio-change-position" src="/img/docs/ide_change_panel_location.png" className="shadow-image"/>
+
+**IMPORTANT:**
+Due to window management limitations of the VSCode extension API, the IDE can only show option to move panel to a "New Window" when it is displaed as a editor tab.
+Similarily, there is no way to programmatically switch between primary and secondary side panels, so you need to position the IDE panel on your own by dragging it by its icon between side panel's tab bars.
 
 Here is how the IDE would look like when place in the side panel:
 
