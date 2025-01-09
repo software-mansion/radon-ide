@@ -13,7 +13,6 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
-  RecordingData,
   ReloadAction,
   StartupMessage,
   TouchPoint,
@@ -40,6 +39,7 @@ import {
   refreshTokenPeriodically,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { UtilsInterface } from "../common/utils";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -49,6 +49,8 @@ const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
+
+const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
@@ -78,7 +80,8 @@ export class Project
 
   constructor(
     private readonly deviceManager: DeviceManager,
-    private readonly dependencyManager: DependencyManager
+    private readonly dependencyManager: DependencyManager,
+    private readonly utils: UtilsInterface
   ) {
     Project.currentProject = this;
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
@@ -177,6 +180,10 @@ export class Project
   }
   //#endregion
 
+  //#region Recordings and screenshots
+
+  private recordingTimeout: NodeJS.Timeout | undefined = undefined;
+
   startRecording(): void {
     getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
       platform: this.projectState.selectedDevice?.platform,
@@ -185,27 +192,63 @@ export class Project
       throw new Error("No device session available");
     }
     this.deviceSession.startRecording();
+    this.eventEmitter.emit("isRecording", true);
+
+    this.recordingTimeout = setTimeout(() => {
+      this.stopRecording();
+    }, MAX_RECORDING_TIME_SEC * 1000);
   }
 
-  async captureAndStopRecording(): Promise<RecordingData> {
-    getTelemetryReporter().sendTelemetryEvent("recording:capture-and-stop-recording", {
+  private async stopRecording() {
+    clearTimeout(this.recordingTimeout);
+
+    getTelemetryReporter().sendTelemetryEvent("recording:stop-recording", {
       platform: this.projectState.selectedDevice?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
+    this.eventEmitter.emit("isRecording", false);
     return this.deviceSession.captureAndStopRecording();
   }
 
-  async captureReplay(): Promise<RecordingData> {
+  async captureAndStopRecording() {
+    const recording = await this.stopRecording();
+    await this.utils.saveMultimedia(recording);
+  }
+
+  async toggleRecording() {
+    if (this.recordingTimeout) {
+      this.captureAndStopRecording();
+    } else {
+      this.startRecording();
+    }
+  }
+
+  async captureReplay() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
       platform: this.projectState.selectedDevice?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    return this.deviceSession.captureReplay();
+    const replay = await this.deviceSession.captureReplay();
+    this.eventEmitter.emit("replayDataCreated", replay);
   }
+
+  async captureScreenshot() {
+    getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+
+    const screenshot = await this.deviceSession.captureScreenshot();
+    await this.utils.saveMultimedia(screenshot);
+  }
+
+  //#endregion
 
   async dispatchPaste(text: string) {
     await this.deviceSession?.sendPaste(text);

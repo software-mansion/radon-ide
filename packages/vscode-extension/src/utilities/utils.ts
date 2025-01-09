@@ -11,7 +11,7 @@ import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsEventListener, UtilsEventMap, UtilsInterface } from "../common/utils";
 import { Platform } from "./platform";
-import { RecordingData } from "../common/Project";
+import { MultimediaData } from "../common/Project";
 import { getTelemetryReporter } from "./telemetry";
 
 type KeybindingType = {
@@ -92,12 +92,12 @@ export class Utils implements UtilsInterface {
     openFileAtPosition(filePath, line0Based, column0Based);
   }
 
-  public async saveVideoRecording(recordingData: RecordingData) {
-    const extension = path.extname(recordingData.tempFileLocation);
+  public async saveMultimedia(multimediaData: MultimediaData) {
+    const extension = path.extname(multimediaData.tempFileLocation);
     const timestamp = this.getTimestamp();
-    const baseFileName = recordingData.fileName.substring(
+    const baseFileName = multimediaData.fileName.substring(
       0,
-      recordingData.fileName.length - extension.length
+      multimediaData.fileName.length - extension.length
     );
     const newFileName = `${baseFileName} ${timestamp}${extension}`;
     const defaultFolder = Platform.select({
@@ -119,7 +119,7 @@ export class Utils implements UtilsInterface {
       return false;
     }
 
-    await fs.promises.copyFile(recordingData.tempFileLocation, saveUri.fsPath);
+    await fs.promises.copyFile(multimediaData.tempFileLocation, saveUri.fsPath);
     return true;
   }
 

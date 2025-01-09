@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import "./ReplayUI.css";
 import ReplayOverlay from "./ReplayOverlay";
-import { RecordingData } from "../../common/Project";
+import { MultimediaData } from "../../common/Project";
 
 function VHSRewind() {
   return (
@@ -20,7 +20,7 @@ function VHSRewind() {
 }
 
 type ReplayVideoProps = {
-  replayData: RecordingData;
+  replayData: MultimediaData;
   onClose: () => void;
 };
 
