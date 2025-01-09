@@ -97,32 +97,32 @@ export class DebugAdapter extends DebugSession {
           break;
         }
 
-        let sourceMap;
+        let sourceMapData;
 
         if (sourceMapURL?.startsWith("data:")) {
           const base64Data = sourceMapURL.split(",")[1];
           const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
-          sourceMap = JSON.parse(decodedData);
+          sourceMapData = JSON.parse(decodedData);
         } else {
           try {
             const sourceMapResponse = await fetch(sourceMapURL);
-            sourceMap = await sourceMapResponse.json();
+            sourceMapData = await sourceMapResponse.json();
           } catch {
-            Logger.debug(`Failed to successfully fetch source map from: ${sourceMapURL}`);
+            Logger.debug(`Failed to fetch source map from: ${sourceMapURL}`);
           }
         }
 
-        if (!sourceMap) {
+        if (!sourceMapData) {
           break;
         }
 
         // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
-        const isMainBundle = sourceMap.sources.some((source: string) =>
+        const isMainBundle = sourceMapData.sources.some((source: string) =>
           source.includes("__prelude__")
         );
 
         const consumer = await this.sourceMapRegistry.registerSourceMap(
-          sourceMap,
+          sourceMapData,
           message.params.url,
           message.params.scriptId,
           isMainBundle
