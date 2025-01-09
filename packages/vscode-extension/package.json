@@ -488,7 +488,7 @@
     "build:tests": "tsc --project tsconfig.test.json",
     "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test",
     "preinstall": "cd ../vscode-js-debug && git submodule update --init && npm install && npm exec tsc",
-    "postinstall": "npm run build:dist && npm run generate:third-party-notice"
+    "postinstall": "npm run build:extension && npm run build:webview && npm run generate:third-party-notice"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
