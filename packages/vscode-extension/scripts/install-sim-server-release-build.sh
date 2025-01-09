@@ -36,6 +36,19 @@ sim_server_tag=$(git -C ../simulator-server describe --tags)
 
 echo "Downloading simulator-server binaries for tag $sim_server_tag"
 
+echo "Setting permissions and removing existing files if necessary..."
+for file in "$output_dir"/simulator-server*; do
+    if [ -f "$file" ]; then
+        echo "Removing existing file $file"
+        rm -f "$file"
+    fi
+done
+
 # Download simulator-server binaries using gh CLI and place them in the output directory with correct file mode
 gh release download $sim_server_tag -R software-mansion-labs/simulator-server -p "simulator-server*" -D "$output_dir"
 chmod +x "$output_dir"/simulator-server*
+
+
+
+echo "Operation completed successfully."
+

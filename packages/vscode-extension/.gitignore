@@ -3,3 +3,4 @@ dist/
 node_modules/
 *.vsix
 .vscode-test
+third-party-licenses/
