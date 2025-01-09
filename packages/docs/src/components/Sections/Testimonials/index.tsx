@@ -103,7 +103,7 @@ export default function Testimonials() {
   return (
     <section>
       <div className={styles.testimonials}>
-        <h1 className={styles.testimonialsHeading}>What engineers have to say?</h1>
+        <h2 className={styles.testimonialsHeading}>What engineers have to say?</h2>
         <div className={styles.testimonialsContainer}>
           {data.map((testimonial) => (
             <TestimonialItem testimonial={testimonial} key={testimonial.handle} />
