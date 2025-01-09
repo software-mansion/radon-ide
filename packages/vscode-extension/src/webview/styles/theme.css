@@ -347,6 +347,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
 
   /* Button */
   --swm-button: var(--swm-default-text);
+  --swm-button-size: 30px;
   --swm-button-disabled: var(--swm-disabled-text);
   --swm-button-hover: var(--background-dark-80);
 
