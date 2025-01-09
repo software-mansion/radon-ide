@@ -434,15 +434,15 @@ async function performFailedBiometricAuthorization() {
 }
 
 async function captureReplay() {
-  Project.currentProject?.captureReplay();
+  IDE.getInstanceIfExists()?.project.captureReplay();
 }
 
 async function toggleRecording() {
-  Project.currentProject?.toggleRecording();
+  IDE.getInstanceIfExists()?.project.toggleRecording();
 }
 
 async function captureScreenshot() {
-  Project.currentProject?.captureScreenshot();
+  IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
 async function diagnoseWorkspaceStructure() {

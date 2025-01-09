@@ -27,10 +27,10 @@ export class IDE implements Disposable {
   constructor() {
     this.deviceManager = new DeviceManager();
     this.dependencyManager = new DependencyManager();
-    this.project = new Project(this.deviceManager, this.dependencyManager);
+    this.utils = new Utils();
+    this.project = new Project(this.deviceManager, this.dependencyManager, this.utils);
     this.workspaceConfigController = new WorkspaceConfigController();
     this.launchConfig = new LaunchConfigController();
-    this.utils = new Utils();
 
     this.disposables.push(
       this.dependencyManager,
