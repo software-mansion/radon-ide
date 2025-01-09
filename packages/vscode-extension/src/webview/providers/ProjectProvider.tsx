@@ -9,16 +9,13 @@ import {
   useMemo,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
-<<<<<<< HEAD
-import { DeviceSettings, ProjectInterface, ProjectState, ToolsState } from "../../common/Project";
-=======
 import {
   DeviceSettings,
   MultimediaData,
   ProjectInterface,
   ProjectState,
+  ToolsState,
 } from "../../common/Project";
->>>>>>> kmagiera/ideclass
 
 const project = makeProxy<ProjectInterface>("Project");
 
