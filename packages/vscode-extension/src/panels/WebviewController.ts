@@ -2,7 +2,7 @@ import { Webview, Disposable, commands, Uri } from "vscode";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
-import { extensionContext } from "../utilities/extensionContext";
+import { disposeAll } from "../utilities/disposables";
 
 type CallArgs = {
   callId: string;
@@ -27,19 +27,19 @@ export class WebviewController implements Disposable {
   });
 
   private readonly callableObjects: Map<string, object>;
+  private readonly ide = IDE.attach();
 
   constructor(private webview: Webview) {
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
-    const ide = IDE.getOrCreateInstance(extensionContext);
     this.callableObjects = new Map([
-      ["DeviceManager", ide.deviceManager as object],
-      ["DependencyManager", ide.dependencyManager as object],
-      ["Project", ide.project as object],
-      ["WorkspaceConfig", ide.workspaceConfigController as object],
-      ["LaunchConfig", ide.launchConfig as object],
-      ["Utils", ide.utils as object],
+      ["DeviceManager", this.ide.deviceManager as object],
+      ["DependencyManager", this.ide.dependencyManager as object],
+      ["Project", this.ide.project as object],
+      ["WorkspaceConfig", this.ide.workspaceConfigController as object],
+      ["LaunchConfig", this.ide.launchConfig as object],
+      ["Utils", this.ide.utils as object],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
@@ -52,14 +52,8 @@ export class WebviewController implements Disposable {
 
   public dispose() {
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
-
-    // Dispose of all disposables (i.e. commands) for the current webview
-    while (this.disposables.length) {
-      const disposable = this.disposables.pop();
-      if (disposable) {
-        disposable.dispose();
-      }
-    }
+    disposeAll(this.disposables);
+    this.ide.detach();
   }
 
   private setWebviewMessageListener(webview: Webview) {

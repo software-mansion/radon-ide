@@ -17,9 +17,9 @@ import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
   Frame,
   InspectDataStackItem,
-  RecordingData,
   ZoomLevelType,
   InspectStackData,
+  MultimediaData,
 } from "../../common/Project";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
@@ -187,7 +187,7 @@ type Props = {
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
-  replayData: RecordingData | undefined;
+  replayData: MultimediaData | undefined;
   onReplayClose: () => void;
 };
 
