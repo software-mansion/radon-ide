@@ -1,4 +1,4 @@
-import React, { FormEventHandler } from "react";
+import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Switch from "@radix-ui/react-switch";
 
