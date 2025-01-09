@@ -13,6 +13,7 @@ import FAQ from "@site/src/components/Sections/FAQ";
 
 import usePaddle from "@site/src/hooks/usePaddle";
 import styles from "./index.module.css";
+import Testimonials from "../components/Sections/Testimonials";
 
 export default function Home(): JSX.Element {
   // We need to initialize on the landing coz Paddle redirects here when the user wants to change the card info, there's no way to change it
@@ -29,6 +30,7 @@ export default function Home(): JSX.Element {
           {/* <LearnMoreHero /> */}
           {/* <Installation /> */}
           <Overview />
+          <Testimonials />
           <FAQ />
           <LearnMoreFooter />
         </div>
