@@ -2,7 +2,7 @@ import * as esbuild from "esbuild";
 import esbuildPluginLicense from "esbuild-plugin-license";
 import fs from "fs";
 
-const licensesDir = "third-party-licenses";
+const licensesDir = "dist/third-party-licenses";
 
 // Ensure the license directory exists
 if (!fs.existsSync(licensesDir)) {
@@ -13,7 +13,7 @@ const licensePluginConfiguration = {
   thirdParty: {
     includePrivate: false,
     output: {
-      file: "third-party-licenses/extension-third-party.json",
+      file: "dist/third-party-licenses/extension-third-party.json",
       // Template function that can be defined to customize report output
       template(dependencies) {
         const result = {

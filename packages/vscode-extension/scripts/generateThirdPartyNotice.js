@@ -1,8 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const directoryPath = "third-party-licenses";
-const outputFile = "THIRDPARTYNOTICE.json";
+const directoryPath = "dist/third-party-licenses";
+const outputFile = "dist/THIRDPARTYNOTICE.json";
 
 function readJsonFiles() {
   return fs.promises
