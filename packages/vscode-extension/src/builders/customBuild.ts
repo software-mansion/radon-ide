@@ -10,7 +10,8 @@ import { extractTarApp } from "./utils";
 
 type Env = Record<string, string> | undefined;
 
-const EXPO_LOCAL_BUILD_PATH_REGEX = new RegExp("You can find the build artifacts in (.*)");
+// Extracts all paths from the last line, both Unix and Windows format
+const BUILD_PATH_REGEX = /(\/.*?\.\S*)|([a-zA-Z]:\\.*?\.\S*)/g;
 
 export async function runExternalBuild(cancelToken: CancelToken, buildCommand: string, env: Env) {
   const output = await runExternalScript(buildCommand, env, cancelToken);
@@ -21,13 +22,10 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
 
   let binaryPath = output.lastLine;
 
-  // We test if the output of the command matches eas build output.
-  // If it does we extract the bath to binary.
-  if (EXPO_LOCAL_BUILD_PATH_REGEX.test(output.lastLine)) {
-    const groups = EXPO_LOCAL_BUILD_PATH_REGEX.exec(output.lastLine);
-    if (groups?.[1]) {
-      binaryPath = groups[1];
-    }
+  // We run regex to extract paths from the first line and we take the first one
+  const groups = output.lastLine.match(BUILD_PATH_REGEX);
+  if (groups?.[0]) {
+    binaryPath = groups[0];
   }
 
   if (binaryPath && !fs.existsSync(binaryPath)) {
