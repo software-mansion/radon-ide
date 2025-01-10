@@ -20,6 +20,13 @@ export function registerNavigationPlugin(name, plugin) {
   navigationPlugins.push({ name, plugin });
 }
 
+const expoDevPlugins = new Set();
+let expoDevPluginsChanged = undefined;
+export function registerExpoDevPlugin(name) {
+  expoDevPlugins.add(name);
+  expoDevPluginsChanged?.();
+}
+
 let navigationHistory = new Map();
 
 const InternalImports = {
@@ -367,6 +374,17 @@ export function AppWrapper({ children, initialProps, fabric }) {
         appKey,
         navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
       });
+      devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
+        plugins: Array.from(expoDevPlugins.values()),
+      });
+      expoDevPluginsChanged = () => {
+        devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
+          plugins: Array.from(expoDevPlugins.values()),
+        });
+      };
+      return () => {
+        devtoolsPluginsChanged = undefined;
+      };
     }
   }, [!!devtoolsAgent && hasLayout]);
 
