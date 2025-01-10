@@ -79,6 +79,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
         "yarn.lock": "yarn",
         "package-lock.json": "npm",
         "pnpm-lock.yaml": "pnpm",
+        "bun.lock": "bun",
         "bun.lockb": "bun",
       } as const)
     );
