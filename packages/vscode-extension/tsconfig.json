@@ -16,6 +16,7 @@
   "exclude": [
     "node_modules/**/*",
     "lib/**/*",
+    "scripts/**/*",
     "out/**/*",
     "dist/**/*",
     ".vscode-test",
