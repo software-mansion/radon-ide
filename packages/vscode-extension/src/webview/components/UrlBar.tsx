@@ -3,6 +3,7 @@ import { useProject } from "../providers/ProjectProvider";
 import UrlSelect, { UrlItem } from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
+import { useDependencies } from "../providers/DependenciesProvider";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
   const { project } = useProject();
@@ -29,6 +30,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
   const { project, projectState } = useProject();
+  const { dependencies } = useDependencies();
 
   const MAX_URL_HISTORY_SIZE = 20;
   const MAX_RECENT_URL_SIZE = 5;
@@ -37,6 +39,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const [urlList, setUrlList] = useState<UrlItem[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
+  const [urlSelectValue, setUrlSelectValue] = useState<string>(urlList[0]?.id);
 
   useEffect(() => {
     function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {
@@ -76,10 +79,13 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   }, [recentUrlList, urlHistory, backNavigationPath]);
 
   const sortedUrlList = useMemo(() => {
-    return [...urlList].sort((a, b) => a.name.localeCompare(b.name));
+    const sorted = [...urlList].sort((a, b) => a.name.localeCompare(b.name));
+    setUrlSelectValue(urlList[0]?.id);
+    return sorted;
   }, [urlList]);
 
   const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
+  const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
 
   return (
     <>
@@ -88,7 +94,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabledAlsoWhenStarting || urlHistory.length < 2}
+        disabled={disabledAlsoWhenStarting || !isExpoRouterProject || urlHistory.length < 2}
         onClick={() => {
           setUrlHistory((prevUrlHistory) => {
             const newUrlHistory = prevUrlHistory.slice(1);
@@ -103,6 +109,9 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
       <IconButton
         onClick={() => {
           project.goHome("/{}");
+          if (!isExpoRouterProject) {
+            setUrlSelectValue(""); // sets UrlSelect trigger to a placeholder
+          }
         }}
         tooltip={{
           label: "Go to main screen",
@@ -117,8 +126,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         }}
         recentItems={recentUrlList}
         items={sortedUrlList}
-        value={urlList[0]?.id}
-        disabled={disabledAlsoWhenStarting || urlList.length < 2}
+        value={urlSelectValue}
+        disabled={disabledAlsoWhenStarting || urlList.length < (isExpoRouterProject ? 2 : 1)}
       />
     </>
   );
