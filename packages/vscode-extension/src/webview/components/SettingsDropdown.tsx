@@ -34,7 +34,9 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="dropdown-menu-content">
+        <DropdownMenu.Content
+          className="dropdown-menu-content"
+          onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
