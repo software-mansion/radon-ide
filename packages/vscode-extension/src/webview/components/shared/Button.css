@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  height: 36px;
+  height: var(--swm-button-size);
   padding: 0 12px;
   background: none;
   border: 0px solid transparent;

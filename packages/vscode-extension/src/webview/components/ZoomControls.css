@@ -31,7 +31,7 @@
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
-  height: 36px;
+  height: var(--swm-button-size);
   border: 0px solid transparent;
   gap: 5px;
   background-color: var(--swm-zoom-controls-background);

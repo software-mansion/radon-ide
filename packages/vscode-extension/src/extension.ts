@@ -28,10 +28,10 @@ import { setupPathEnv } from "./utilities/subprocess";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
-import { Project } from "./project/project";
 import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
 import { migrateOldBuildCachesToNewStorage } from "./builders/BuildCache";
+import { IDE } from "./project/ide";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -56,6 +56,7 @@ function handleUncaughtErrors() {
 export function deactivate(context: ExtensionContext): undefined {
   TabPanel.currentPanel?.dispose();
   SidePanelViewProvider.currentProvider?.dispose();
+  IDE.getInstanceIfExists()?.dispose();
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", false);
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
   return undefined;
@@ -116,15 +117,21 @@ export async function activate(context: ExtensionContext) {
 
   async function showStorybookStory(componentTitle: string, storyName: string) {
     commands.executeCommand("RNIDE.openPanel");
-    Project.currentProject?.showStorybookStory(componentTitle, storyName);
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.showStorybookStory(componentTitle, storyName);
+    } else {
+      window.showWarningMessage("Wait for the app to load before launching storybook.", "Dismiss");
+    }
   }
 
   async function showInlinePreview(fileName: string, lineNumber: number) {
     commands.executeCommand("RNIDE.openPanel");
-    if (Project.currentProject) {
-      Project.currentProject.openComponentPreview(fileName, lineNumber);
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.openComponentPreview(fileName, lineNumber);
     } else {
-      window.showWarningMessage("Wait for app to load before lunching preview. ", "Dismiss");
+      window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
     }
   }
 
@@ -415,27 +422,27 @@ async function findAppRootFolder() {
 }
 
 async function openDevMenu() {
-  Project.currentProject?.openDevMenu();
+  IDE.getInstanceIfExists()?.project.openDevMenu();
 }
 
 async function performBiometricAuthorization() {
-  Project.currentProject?.sendBiometricAuthorization(true);
+  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
 }
 
 async function performFailedBiometricAuthorization() {
-  Project.currentProject?.sendBiometricAuthorization(false);
+  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
 }
 
 async function captureReplay() {
-  Project.currentProject?.captureReplay();
+  IDE.getInstanceIfExists()?.project.captureReplay();
 }
 
 async function toggleRecording() {
-  Project.currentProject?.toggleRecording();
+  IDE.getInstanceIfExists()?.project.toggleRecording();
 }
 
 async function captureScreenshot() {
-  Project.currentProject?.captureScreenshot();
+  IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
 async function diagnoseWorkspaceStructure() {
