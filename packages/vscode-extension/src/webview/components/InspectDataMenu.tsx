@@ -65,7 +65,7 @@ export function InspectDataMenu({
       const topComponentHeight = parseFloat((frame.height * device.screenHeight).toFixed(2));
 
       if (topComponentWidth && topComponentHeight) {
-        return `Dimensions: ${topComponentWidth}×${topComponentHeight}`;
+        return `Dimensions: ${topComponentWidth}\u00A0×\u00A0${topComponentHeight}`;
       }
     }
     return "Dimensions: -";
