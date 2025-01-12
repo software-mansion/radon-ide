@@ -608,8 +608,6 @@ body[data-use-code-theme="true"] {
   --swm-select-background: var(--vscode-input-background);
   --swm-select-disabled-background: var(--vscode-list-inactiveSelectionBackground);
 
-
-
   /* Input */
   --swm-input-background: var(--vscode-input-background);
   --swm-input-border: var(--vscode-input-border);

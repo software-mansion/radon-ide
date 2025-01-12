@@ -72,7 +72,7 @@
 }
 
 .localeTile:hover {
-  background-color: var(--swm-scrollbar-hover);
+  background-color: var(--swm-url-select-highlighted-background);
 }
 
 .localization-container {
