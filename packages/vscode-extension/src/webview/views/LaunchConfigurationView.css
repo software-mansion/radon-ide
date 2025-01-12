@@ -1,24 +1,4 @@
-.input-configuration {
-  display: inline-flex;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: 4px;
-  padding: 0 8px;
-  font-size: 13px;
-  line-height: 1;
-  height: 26px;
-  gap: 5px;
-  color: var(--swm-default-text);
-  background-color: var(--swm-input-background);
-  box-shadow: var(--swm-select-shadow);
-  border: 1px solid var(--swm-input-border);
-  margin-bottom: 5px;
-}
 
-.input-configuration:focus{
-  outline-color: var(--swm-focus-outline-color);;
-}
 
 .scheme {
   margin-bottom: 5px;

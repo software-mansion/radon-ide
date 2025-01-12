@@ -606,10 +606,14 @@ body[data-use-code-theme="true"] {
   --swm-select-item-highlighted-background: var(--vscode-list-hoverBackground);
   --swm-select-border: var(--vscode-input-border);
   --swm-select-background: var(--vscode-input-background);
+  --swm-select-disabled-background: var(--vscode-list-inactiveSelectionBackground);
+
+
 
   /* Input */
   --swm-input-background: var(--vscode-input-background);
   --swm-input-border: var(--vscode-input-border);
+  --swm-input-disabled-background: var(--vscode-list-inactiveSelectionBackground);
 
 
   --swm-focus-outline-color: var(--vscode-focusBorder);

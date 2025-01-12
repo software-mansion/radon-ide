@@ -128,3 +128,9 @@
   margin-bottom: 12px;
   margin-top: 15px;
 }
+
+/* avoid cutting off horizontally  */
+input{
+  margin-left: 0.25rem !important;
+  margin-right: 0.25rem !important;
+}

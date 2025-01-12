@@ -1,0 +1,28 @@
+input {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 4px;
+  padding: 0 8px;
+  font-size: 13px;
+  line-height: 1;
+  height: 26px;
+  gap: 5px;
+  color: var(--swm-default-text);
+  background-color: var(--swm-input-background);
+  box-shadow: var(--swm-select-shadow);
+  outline: 1px solid var(--swm-input-border);
+  margin-bottom: 5px;
+}
+
+input:focus{
+  outline-color: var(--swm-focus-outline-color);;
+}
+
+input:disabled {
+  background-color: var(--swm-input-disabled-background);
+}
+input[data-error="true"] {
+  outline-color: var(--swm-error-color);
+}

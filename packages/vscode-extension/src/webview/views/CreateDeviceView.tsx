@@ -12,6 +12,7 @@ import {
 } from "../utilities/consts";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform } from "../providers/UtilsProvider";
+import { Input } from "../components/shared/Input";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -196,10 +197,10 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Label className="form-label">
           <span>Name</span>
         </Label>
-        <input
+        <Input
           value={displayName}
           className="device-name-input"
-          style={isDisplayNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
+          data-error={!isDisplayNameValid}
           type="string"
           onChange={handleDisplayNameChange}
           disabled={!selectedSystemName}
