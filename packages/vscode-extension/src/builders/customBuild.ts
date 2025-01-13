@@ -15,7 +15,12 @@ type Env = Record<string, string> | undefined;
 // Extracts all paths from the last line, both Unix and Windows format
 const BUILD_PATH_REGEX = /(\/.*?\.\S*)|([a-zA-Z]:\\.*?\.\S*)/g;
 
-export async function runExternalBuild(cancelToken: CancelToken, buildCommand: string, env: Env, platform: DevicePlatform) {
+export async function runExternalBuild(
+  cancelToken: CancelToken,
+  buildCommand: string,
+  env: Env,
+  platform: DevicePlatform
+) {
   const output = await runExternalScript(buildCommand, env, cancelToken);
 
   if (!output) {
@@ -41,25 +46,21 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
   if (shouldExtractArchive) {
     const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-custom-build-"));
     const extractedFile = await extractTarApp(binaryPath, tmpDirectory, cancelToken, platform);
-  
+
     Logger.info(`External script: ${buildCommand} output app path: ${binaryPath}`);
     return extractedFile;
   }
 
   if (platform === DevicePlatform.Android && !isApkFile(binaryPath)) {
-    Logger.error(
-      `External script: ${buildCommand} failed to output .apk file, got: ${binaryPath}`
-    );
+    Logger.error(`External script: ${buildCommand} failed to output .apk file, got: ${binaryPath}`);
     return undefined;
   }
 
   if (platform === DevicePlatform.IOS && !isAppFile(binaryPath)) {
-    Logger.error(
-      `External script: ${buildCommand} failed to output .app file, got: ${binaryPath}`
-    );
+    Logger.error(`External script: ${buildCommand} failed to output .app file, got: ${binaryPath}`);
     return undefined;
   }
-  
+
   Logger.info(`External script: ${buildCommand} output app path: ${binaryPath}`);
   return binaryPath;
 }

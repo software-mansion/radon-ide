@@ -29,9 +29,15 @@ export async function extractTarApp(
   }
 
   // assuming that the archive contains only one app file
-  const appName = (await readdir(pathToExtract)).find(platform === DevicePlatform.Android ? isApkFile : isAppFile);
+  const appName = (await readdir(pathToExtract)).find(
+    platform === DevicePlatform.Android ? isApkFile : isAppFile
+  );
   if (!appName) {
-    Logger.error(`Failed to find the ${platform === DevicePlatform.Android ? '.apk' : '.app'} file in extracted archive '${binaryPath}'.`);
+    Logger.error(
+      `Failed to find the ${
+        platform === DevicePlatform.Android ? ".apk" : ".app"
+      } file in extracted archive '${binaryPath}'.`
+    );
     return undefined;
   }
 

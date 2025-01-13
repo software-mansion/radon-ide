@@ -93,7 +93,12 @@ export async function buildAndroid(
     getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
       platform: DevicePlatform.Android,
     });
-    const apkPath = await runExternalBuild(cancelToken, customBuild.android.buildCommand, env, DevicePlatform.Android);
+    const apkPath = await runExternalBuild(
+      cancelToken,
+      customBuild.android.buildCommand,
+      env,
+      DevicePlatform.Android
+    );
     if (!apkPath) {
       throw new Error("Failed to build Android app using custom script.");
     }
