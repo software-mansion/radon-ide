@@ -89,7 +89,7 @@ export async function buildAndroid(
   }
 
   if (customBuild?.android?.buildCommand) {
-    const apkPath = await runExternalBuild(cancelToken, customBuild.android.buildCommand, env);
+    const apkPath = await runExternalBuild(cancelToken, customBuild.android.buildCommand, env, DevicePlatform.Android);
     if (!apkPath) {
       throw new Error("Failed to build Android app using custom script.");
     }

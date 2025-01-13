@@ -6,14 +6,16 @@ import { Logger } from "../Logger";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
 import { getAppRootFolder } from "../utilities/extensionContext";
-import { extractTarApp } from "./utils";
+import { extractTarApp, isApkFile, isAppFile } from "./utils";
+import { DevicePlatform } from "../common/DeviceManager";
+import { Platform } from "../utilities/platform";
 
 type Env = Record<string, string> | undefined;
 
 // Extracts all paths from the last line, both Unix and Windows format
 const BUILD_PATH_REGEX = /(\/.*?\.\S*)|([a-zA-Z]:\\.*?\.\S*)/g;
 
-export async function runExternalBuild(cancelToken: CancelToken, buildCommand: string, env: Env) {
+export async function runExternalBuild(cancelToken: CancelToken, buildCommand: string, env: Env, platform: DevicePlatform) {
   const output = await runExternalScript(buildCommand, env, cancelToken);
 
   if (!output) {
@@ -36,13 +38,30 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
   }
 
   const shouldExtractArchive = binaryPath.endsWith(".tar.gz");
-  if (!shouldExtractArchive) {
-    return binaryPath;
+  if (shouldExtractArchive) {
+    const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-custom-build-"));
+    const extractedFile = await extractTarApp(binaryPath, tmpDirectory, cancelToken, platform);
+  
+    Logger.info(`External script: ${buildCommand} output app path: ${binaryPath}`);
+    return extractedFile;
   }
 
-  const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-custom-build-"));
+  if (platform === DevicePlatform.Android && !isApkFile(binaryPath)) {
+    Logger.error(
+      `External script: ${buildCommand} failed to output .apk file, got: ${binaryPath}`
+    );
+    return undefined;
+  }
 
-  return await extractTarApp(binaryPath, tmpDirectory, cancelToken);
+  if (platform === DevicePlatform.IOS && !isAppFile(binaryPath)) {
+    Logger.error(
+      `External script: ${buildCommand} failed to output .app file, got: ${binaryPath}`
+    );
+    return undefined;
+  }
+  
+  Logger.info(`External script: ${buildCommand} output app path: ${binaryPath}`);
+  return binaryPath;
 }
 
 export async function runfingerprintCommand(externalCommand: string, env: Env) {

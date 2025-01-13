@@ -3,15 +3,21 @@ import path from "path";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
+import { DevicePlatform } from "../common/DeviceManager";
 
-function isAppFile(name: string) {
+export function isAppFile(name: string) {
   return name.endsWith(".app");
+}
+
+export function isApkFile(name: string) {
+  return name.endsWith(".apk");
 }
 
 export async function extractTarApp(
   binaryPath: string,
   pathToExtract: string,
-  cancelToken: CancelToken
+  cancelToken: CancelToken,
+  platform: DevicePlatform
 ) {
   const { failed } = await cancelToken.adapt(
     tarCommand({ archivePath: binaryPath, extractDir: pathToExtract })
@@ -22,10 +28,10 @@ export async function extractTarApp(
     return undefined;
   }
 
-  // assuming that the archive contains only one .app file
-  const appName = (await readdir(pathToExtract)).find(isAppFile);
+  // assuming that the archive contains only one app file
+  const appName = (await readdir(pathToExtract)).find(platform === DevicePlatform.Android ? isApkFile : isAppFile);
   if (!appName) {
-    Logger.error(`Failed to find .app in extracted archive '${binaryPath}'.`);
+    Logger.error(`Failed to find the ${platform === DevicePlatform.Android ? '.apk' : '.app'} file in extracted archive '${binaryPath}'.`);
     return undefined;
   }
 
