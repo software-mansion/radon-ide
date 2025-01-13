@@ -5,17 +5,12 @@ const directoryPath = "dist/third-party-licenses";
 const outputFile = "dist/THIRDPARTYNOTICE.json";
 
 function readJsonFiles() {
-  return fs.promises
-    .readdir(directoryPath, { withFileTypes: true })
-    .then((entries) => {
-      const filePromises = entries
-        .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
-        .map((entry) => fs.promises.readFile(path.join(directoryPath, entry.name), "utf8"));
-      return Promise.all(filePromises);
-    })
-    .then((files) => {
-      return files.map((file) => JSON.parse(file));
-    });
+  return fs.promises.readdir(directoryPath, { withFileTypes: true }).then((entries) => {
+    const filePromises = entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
+      .map((entry) => require(path.join("..", directoryPath, entry.name)));
+    return Promise.all(filePromises);
+  });
 }
 
 function mergeLibraries(dataArrays) {

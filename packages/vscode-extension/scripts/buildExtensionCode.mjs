@@ -4,18 +4,23 @@ import fs from "fs";
 
 const [mode] = process.argv.slice(2);
 
+let buildConfig = {
+  entryPoints: ["./src/extension.ts"],
+  bundle: true,
+  outfile: "./dist/extension.js",
+  external: ["vscode"],
+  format: "cjs",
+  platform: "node",
+};
+
 // build extension code
 if (mode === "debug") {
-  await esbuild.build({
-    entryPoints: ["./src/extension.ts"],
-    bundle: true,
-    outfile: "./dist/extension.js",
-    external: ["vscode"],
-    format: "cjs",
-    platform: "node",
+  buildConfig = {
+    ...buildConfig,
     sourcemap: true,
-  });
-} else if (mode === "prod") {
+  };
+}
+if (mode === "production") {
   const licensesDir = "dist/third-party-licenses";
 
   // Ensure the license directory exists
@@ -54,20 +59,14 @@ if (mode === "debug") {
     },
   };
 
-  await esbuild.build({
-    entryPoints: ["./src/extension.ts"],
-    bundle: true,
-    outfile: "./dist/extension.js",
+  buildConfig = {
+    ...buildConfig,
     plugins: [esbuildPluginLicense(licensePluginConfiguration)],
-    external: ["vscode"],
-    format: "cjs",
-    platform: "node",
     minify: true,
-  });
-} else {
-  console.error("The `prod` or `debug` must be provided as an argument");
-  process.exit(1);
+  };
 }
+
+await esbuild.build(buildConfig);
 
 // add mapping to dist
 const sourceMapMappingsPath = "node_modules/source-map/lib/mappings.wasm";
