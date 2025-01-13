@@ -172,7 +172,7 @@
         {
           "id": "RadonIDEToolExpoDevPluginReactQuery",
           "title": "React Query",
-          "icon": "assets/mmkv.svg"
+          "icon": "assets/react-query.svg"
         },
         {
           "id": "RadonIDEToolExpoDevPluginMMKV",
