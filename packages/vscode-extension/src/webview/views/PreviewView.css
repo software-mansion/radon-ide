@@ -3,17 +3,13 @@
   display: flex;
   align-items: center;
   width: 100%;
-  margin: 10px;
+  margin: 8px;
   gap: 4px;
 }
 
 .icons-rewind:before {
   width: 0px;
   margin: -4px;
-}
-
-.button-group-top {
-  margin-bottom: 8px;
 }
 
 .feedback-button {

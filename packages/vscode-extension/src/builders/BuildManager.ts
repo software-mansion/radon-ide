@@ -1,5 +1,5 @@
 import { Disposable, OutputChannel, window } from "vscode";
-import { PlatformBuildCache } from "./PlatformBuildCache";
+import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
@@ -22,7 +22,10 @@ type BuildOptions = {
 };
 
 export class BuildManager {
-  constructor(private readonly dependencyManager: DependencyManager) {}
+  constructor(
+    private readonly dependencyManager: DependencyManager,
+    private readonly buildCache: BuildCache
+  ) {}
 
   private buildOutputChannel: OutputChannel | undefined;
 
@@ -53,10 +56,9 @@ export class BuildManager {
     });
 
     const cancelToken = new CancelToken();
-    const buildCache = PlatformBuildCache.forPlatform(platform);
 
     const buildApp = async () => {
-      const currentFingerprint = await buildCache.calculateFingerprint();
+      const currentFingerprint = await this.buildCache.calculateFingerprint();
 
       // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
       const buildDependenciesChanged = await this.checkBuildDependenciesChanged(deviceInfo);
@@ -68,9 +70,9 @@ export class BuildManager {
           "Build cache is being invalidated",
           forceCleanBuild ? "on request" : "due to build dependencies change"
         );
-        await buildCache.clearCache();
+        await this.buildCache.clearCache();
       } else {
-        const cachedBuild = await buildCache.getBuild(currentFingerprint);
+        const cachedBuild = await this.buildCache.getBuild(currentFingerprint);
         if (cachedBuild) {
           Logger.debug("Skipping native build – using cached");
           getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
@@ -122,7 +124,7 @@ export class BuildManager {
             await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
             // Installing pods may impact the fingerprint as new pods may be created under the project directory.
             // For this reason we need to recalculate the fingerprint after installing pods.
-            buildFingerprint = await buildCache.calculateFingerprint();
+            buildFingerprint = await this.buildCache.calculateFingerprint();
           }
         };
         buildResult = await buildIos(
@@ -136,7 +138,7 @@ export class BuildManager {
         );
       }
 
-      await buildCache.storeBuild(buildFingerprint, buildResult);
+      await this.buildCache.storeBuild(buildFingerprint, buildResult);
 
       return buildResult;
     };

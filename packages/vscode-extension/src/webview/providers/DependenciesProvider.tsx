@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
@@ -17,6 +18,7 @@ const dependencyManager = makeProxy<DependencyManagerInterface>("DependencyManag
 
 const dependenciesDomain = [
   "nodejs",
+  "packageManager",
   "androidEmulator",
   "xcode",
   "cocoaPods",
@@ -73,15 +75,16 @@ export default function DependenciesProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  const contextValue = useMemo(() => {
+    return {
+      dependencies: depsState,
+      runDiagnostics,
+      errors: getErrors(depsState),
+    };
+  }, [depsState, runDiagnostics, getErrors]);
+
   return (
-    <DependenciesContext.Provider
-      value={{
-        dependencies: depsState,
-        runDiagnostics,
-        errors: getErrors(depsState),
-      }}>
-      {children}
-    </DependenciesContext.Provider>
+    <DependenciesContext.Provider value={contextValue}>{children}</DependenciesContext.Provider>
   );
 }
 
@@ -125,6 +128,7 @@ function getErrors(statuses: DependencyRecord) {
           setFirstError(dependency, "emulator");
           break;
         case "nodejs":
+        case "packageManager":
         case "nodeModules":
           setFirstError(dependency, "common");
           break;
@@ -145,6 +149,12 @@ export function dependencyDescription(dependency: Dependency) {
       return {
         info: "Used for running scripts and getting dependencies.",
         error: "Node.js was not found. Make sure to [install Node.js](https://nodejs.org/en).",
+      };
+    case "packageManager":
+      return {
+        info: "Used for managing project dependencies and scripts.",
+        error:
+          "Package manager not found or uninstalled. Make sure to install the package manager used in the project.",
       };
     case "androidEmulator":
       return {

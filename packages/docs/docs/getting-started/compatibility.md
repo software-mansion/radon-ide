@@ -54,7 +54,7 @@ If your project doesn't work out-of-the-box because of modifications made in the
 
 | Nx     | yarn workspaces | npm workspaces | pnpm workspaces |
 | ------ | --------------- | -------------- | --------------- |
-| <Yes/> | <Yes/>          | <No/>          | <No/>           |
+| <Yes/> | <Yes/>          | <No/>          | <Yes/>           |
 
 </div>
 

@@ -28,9 +28,10 @@ import { setupPathEnv } from "./utilities/subprocess";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { getLaunchConfiguration } from "./utilities/launchConfiguration";
-import { Project } from "./project/project";
 import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
+import { migrateOldBuildCachesToNewStorage } from "./builders/BuildCache";
+import { IDE } from "./project/ide";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -55,6 +56,7 @@ function handleUncaughtErrors() {
 export function deactivate(context: ExtensionContext): undefined {
   TabPanel.currentPanel?.dispose();
   SidePanelViewProvider.currentProvider?.dispose();
+  IDE.getInstanceIfExists()?.dispose();
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", false);
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
   return undefined;
@@ -63,8 +65,8 @@ export function deactivate(context: ExtensionContext): undefined {
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
 
-  if (Platform.OS !== "macos" && Platform.OS !== "windows") {
-    window.showErrorMessage("Radon IDE works only on macOS and Windows.", "Dismiss");
+  if (Platform.OS !== "macos" && Platform.OS !== "windows" && Platform.OS !== "linux") {
+    window.showErrorMessage("Radon IDE works only on macOS, Windows and Linux.", "Dismiss");
     return;
   }
 
@@ -73,11 +75,11 @@ export async function activate(context: ExtensionContext) {
     enableDevModeLogging();
   }
 
-  migrateOldConfiguration();
+  await migrateOldConfiguration();
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
-  async function showIDEPanel(fileName?: string, lineNumber?: number) {
+  async function showIDEPanel() {
     await commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
     const panelLocation = workspace
@@ -85,9 +87,9 @@ export async function activate(context: ExtensionContext) {
       .get<PanelLocation>("panelLocation");
 
     if (panelLocation !== "tab") {
-      SidePanelViewProvider.showView(context, fileName, lineNumber);
+      SidePanelViewProvider.showView();
     } else {
-      TabPanel.render(context, fileName, lineNumber);
+      TabPanel.render(context);
     }
   }
 
@@ -115,7 +117,22 @@ export async function activate(context: ExtensionContext) {
 
   async function showStorybookStory(componentTitle: string, storyName: string) {
     commands.executeCommand("RNIDE.openPanel");
-    Project.currentProject?.showStorybookStory(componentTitle, storyName);
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.showStorybookStory(componentTitle, storyName);
+    } else {
+      window.showWarningMessage("Wait for the app to load before launching storybook.", "Dismiss");
+    }
+  }
+
+  async function showInlinePreview(fileName: string, lineNumber: number) {
+    commands.executeCommand("RNIDE.openPanel");
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.openComponentPreview(fileName, lineNumber);
+    } else {
+      window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
+    }
   }
 
   context.subscriptions.push(
@@ -146,6 +163,15 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showStorybookStory", showStorybookStory)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.showInlinePreview", showInlinePreview)
+  );
+
+  context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));
+  context.subscriptions.push(commands.registerCommand("RNIDE.toggleRecording", toggleRecording));
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.captureScreenshot", captureScreenshot)
   );
 
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
@@ -244,6 +270,9 @@ export async function activate(context: ExtensionContext) {
       );
     }
   }
+
+  // this needs to be run after app root is set
+  migrateOldBuildCachesToNewStorage();
 
   extensionActivated();
 }
@@ -393,15 +422,27 @@ async function findAppRootFolder() {
 }
 
 async function openDevMenu() {
-  Project.currentProject?.openDevMenu();
+  IDE.getInstanceIfExists()?.project.openDevMenu();
 }
 
 async function performBiometricAuthorization() {
-  Project.currentProject?.sendBiometricAuthorization(true);
+  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
 }
 
 async function performFailedBiometricAuthorization() {
-  Project.currentProject?.sendBiometricAuthorization(false);
+  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
+}
+
+async function captureReplay() {
+  IDE.getInstanceIfExists()?.project.captureReplay();
+}
+
+async function toggleRecording() {
+  IDE.getInstanceIfExists()?.project.toggleRecording();
+}
+
+async function captureScreenshot() {
+  IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
 async function diagnoseWorkspaceStructure() {

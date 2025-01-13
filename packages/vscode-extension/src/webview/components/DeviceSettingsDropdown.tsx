@@ -64,7 +64,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="dropdown-menu-content device-settings-content">
+        <DropdownMenu.Content
+          className="dropdown-menu-content device-settings-content"
+          onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
           <form>
             <Label>Device appearance</Label>
@@ -103,7 +105,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 defaultValue={[contentSizes.indexOf(deviceSettings.contentSize)]}
                 max={6}
                 step={1}
-                onValueChange={([value]) => {
+                onValueCommit={([value]) => {
                   project.updateDeviceSettings({
                     ...deviceSettings,
                     contentSize: contentSizes[value],

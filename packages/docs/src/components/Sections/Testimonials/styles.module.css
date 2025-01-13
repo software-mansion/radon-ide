@@ -1,0 +1,9 @@
+.testimonialsContainer {
+  columns: 20rem;
+  gap: 24px;
+  counter-reset: grid;
+}
+
+.testimonialsHeading {
+  margin-bottom: 32px;
+}

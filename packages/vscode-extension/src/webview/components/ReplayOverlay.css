@@ -96,7 +96,7 @@
   line-height: 1;
   overflow: hidden;
   cursor: pointer;
-  height: 36px;
+  height: var(--swm-button-size);
   border: 0px solid transparent;
   border-radius: 18px;
   gap: 5px;

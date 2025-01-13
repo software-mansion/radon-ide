@@ -12,6 +12,7 @@ import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild } from "./eas";
 import { getXcodebuildArch } from "../utilities/common";
 import { DependencyManager } from "../dependency/DependencyManager";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
@@ -87,6 +88,9 @@ export async function buildIos(
   }
 
   if (customBuild?.ios?.buildCommand) {
+    getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
+      platform: DevicePlatform.IOS,
+    });
     // We don't autoinstall Pods here to make custom build scripts more flexible
 
     const appPath = await runExternalBuild(cancelToken, customBuild.ios.buildCommand, env, DevicePlatform.IOS);
@@ -102,6 +106,9 @@ export async function buildIos(
   }
 
   if (eas?.ios) {
+    getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
+      platform: DevicePlatform.IOS,
+    });
     const appPath = await fetchEasBuild(cancelToken, eas.ios, DevicePlatform.IOS);
     if (!appPath) {
       throw new Error("Failed to build iOS app using EAS build.");
@@ -115,6 +122,9 @@ export async function buildIos(
   }
 
   if (await isExpoGoProject()) {
+    getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
+      platform: DevicePlatform.IOS,
+    });
     const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);
     return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
   }

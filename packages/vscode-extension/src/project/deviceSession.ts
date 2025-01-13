@@ -16,6 +16,7 @@ import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { BuildCache } from "../builders/BuildCache";
 
 type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
@@ -49,15 +50,20 @@ export class DeviceSession implements Disposable {
     return this.maybeBuildResult;
   }
 
+  public get isAppLaunched() {
+    return !this.isLaunching;
+  }
+
   constructor(
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
     private readonly metro: Metro,
     readonly dependencyManager: DependencyManager,
+    readonly buildCache: BuildCache,
     private readonly debugEventDelegate: DebugSessionDelegate,
     private readonly eventDelegate: EventDelegate
   ) {
-    this.buildManager = new BuildManager(dependencyManager);
+    this.buildManager = new BuildManager(dependencyManager, buildCache);
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "RNIDE_appReady":
@@ -272,6 +278,10 @@ export class DeviceSession implements Disposable {
     return this.device.captureReplay();
   }
 
+  public async captureScreenshot() {
+    return this.device.captureScreenshot();
+  }
+
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
     this.device.sendTouches(touches, type);
   }
@@ -309,22 +319,39 @@ export class DeviceSession implements Disposable {
     await this.metro.openDevMenu();
   }
 
-  public startPreview(previewId: string) {
+  public async startPreview(previewId: string) {
     this.devtools.send("RNIDE_openPreview", { previewId });
+    return new Promise<void>((res, rej) => {
+      let listener = (event: string, payload: any) => {
+        if (event === "RNIDE_openPreviewResult" && payload.previewId === previewId) {
+          this.devtools?.removeListener(listener);
+          if (payload.error) {
+            rej(payload.error);
+          } else {
+            res();
+          }
+        }
+      };
+      this.devtools.addListener(listener);
+    });
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
+    if (this.deviceSettings?.replaysEnabled !== settings.replaysEnabled && !this.isLaunching) {
+      if (settings.replaysEnabled) {
+        this.device.enableReplay();
+      } else {
+        this.device.disableReplays();
+      }
+    }
+    if (this.deviceSettings?.showTouches !== settings.showTouches && !this.isLaunching) {
+      if (settings.showTouches) {
+        this.device.showTouches();
+      } else {
+        this.device.hideTouches();
+      }
+    }
     this.deviceSettings = settings;
-    if (settings.replaysEnabled && !this.isLaunching) {
-      this.device.enableReplay();
-    } else {
-      this.device.disableReplays();
-    }
-    if (settings.showTouches && !this.isLaunching) {
-      this.device.showTouches();
-    } else {
-      this.device.hideTouches();
-    }
     return this.device.changeSettings(settings);
   }
 

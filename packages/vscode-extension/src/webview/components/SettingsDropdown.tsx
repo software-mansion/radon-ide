@@ -11,6 +11,8 @@ import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
+import { SendFeedbackItem } from "./SendFeedbackItem";
+import { useTelemetry } from "../providers/TelemetryProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -23,6 +25,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
   const { panelLocation, update } = useWorkspaceConfig();
   const { openModal } = useModal();
   const { movePanelToNewWindow, reportIssue } = useUtils();
+  const { telemetryEnabled } = useTelemetry();
 
   return (
     <DropdownMenu.Root>
@@ -31,7 +34,9 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="dropdown-menu-content">
+        <DropdownMenu.Content
+          className="dropdown-menu-content"
+          onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
@@ -142,6 +147,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <div className="dropdown-menu-item-content">Report Issue</div>
             </span>
           </DropdownMenu.Item>
+          {telemetryEnabled && <SendFeedbackItem />}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
