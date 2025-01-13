@@ -172,17 +172,17 @@
         {
           "id": "RadonIDEToolExpoDevPluginReactQuery",
           "title": "React Query",
-          "icon": "assets/logo.svg"
+          "icon": "assets/mmkv.svg"
         },
         {
           "id": "RadonIDEToolExpoDevPluginMMKV",
           "title": "MMKV",
-          "icon": "assets/logo.svg"
+          "icon": "assets/mmkv.svg"
         },
         {
           "id": "RadonIDEToolExpoDevPluginReduxDevTools",
           "title": "Redux",
-          "icon": "assets/logo.svg"
+          "icon": "assets/redux.svg"
         }
       ]
     },
