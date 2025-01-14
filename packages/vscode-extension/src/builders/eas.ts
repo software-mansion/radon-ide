@@ -1,15 +1,15 @@
 import path from "path";
 import os from "os";
-import { mkdtemp, readdir } from "fs/promises";
+import { mkdtemp } from "fs/promises";
 import maxBy from "lodash/maxBy";
 
 import { DevicePlatform } from "../common/DeviceManager";
 import { EasConfig } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
-import { exec } from "../utilities/subprocess";
 import { downloadBinary } from "../utilities/common";
 import { EASBuild, listEasBuilds, viewEasBuild } from "./easCommand";
+import { extractTarApp } from "./utils";
 
 export async function fetchEasBuild(
   cancelToken: CancelToken,
@@ -84,10 +84,6 @@ async function downloadAppFromEas(
   platform: DevicePlatform,
   cancelToken: CancelToken
 ) {
-  function isAppFile(name: string) {
-    return name.endsWith(".app");
-  }
-
   const { id, binaryUrl } = build;
 
   const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-eas-build-"));
@@ -107,27 +103,5 @@ async function downloadAppFromEas(
     return binaryPath;
   }
 
-  const { failed } = await cancelToken.adapt(
-    tarCommand({ archivePath: binaryPath, extractDir: tmpDirectory })
-  );
-  if (failed) {
-    Logger.error(`Failed to extract archive '${binaryPath}' to '${tmpDirectory}'.`);
-    return undefined;
-  }
-
-  // assuming that the archive contains only one .app file
-  const appName = (await readdir(tmpDirectory)).find(isAppFile);
-  if (!appName) {
-    Logger.error(`Failed to find .app in extracted archive '${binaryPath}'.`);
-    return undefined;
-  }
-
-  const appPath = path.join(tmpDirectory, appName);
-  Logger.debug(`Extracted app archive to '${appPath}'.`);
-  return appPath;
-}
-
-type TarCommandArgs = { archivePath: string; extractDir: string };
-function tarCommand({ archivePath, extractDir }: TarCommandArgs) {
-  return exec("tar", ["-xf", archivePath, "-C", extractDir]);
+  return await extractTarApp(binaryPath, tmpDirectory, cancelToken, DevicePlatform.IOS);
 }
