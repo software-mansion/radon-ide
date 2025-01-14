@@ -383,7 +383,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
         });
       };
       return () => {
-        devtoolsPluginsChanged = undefined;
+        expoDevPluginsChanged = undefined;
       };
     }
   }, [!!devtoolsAgent && hasLayout]);
