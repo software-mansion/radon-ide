@@ -4,35 +4,14 @@ import fs from "fs";
 
 const [mode] = process.argv.slice(2);
 
-let buildConfig = {
-  entryPoints: ["./src/extension.ts"],
-  bundle: true,
-  outfile: "./dist/extension.js",
-  external: ["vscode"],
-  format: "cjs",
-  platform: "node",
-};
+const plugins = [];
 
-// build extension code
-if (mode === "debug") {
-  buildConfig = {
-    ...buildConfig,
-    sourcemap: true,
-  };
-}
 if (mode === "production") {
-  const licensesDir = "dist/third-party-licenses";
-
-  // Ensure the license directory exists
-  if (!fs.existsSync(licensesDir)) {
-    fs.mkdirSync(licensesDir);
-  }
-
   const licensePluginConfiguration = {
     thirdParty: {
       includePrivate: false,
       output: {
-        file: "dist/third-party-licenses/extension-third-party.json",
+        file: "./dist/extension-NOTICES.json",
         // Template function that can be defined to customize report output
         template(dependencies) {
           const result = {
@@ -59,12 +38,20 @@ if (mode === "production") {
     },
   };
 
-  buildConfig = {
-    ...buildConfig,
-    plugins: [esbuildPluginLicense(licensePluginConfiguration)],
-    minify: true,
-  };
+  plugins.push(esbuildPluginLicense(licensePluginConfiguration));
 }
+
+// build extension code
+let buildConfig = {
+  entryPoints: ["./src/extension.ts"],
+  bundle: true,
+  outfile: "./dist/extension.js",
+  external: ["vscode"],
+  format: "cjs",
+  platform: "node",
+  plugins,
+  sourcemap: mode === "debug",
+};
 
 await esbuild.build(buildConfig);
 

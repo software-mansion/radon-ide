@@ -36,22 +36,9 @@ sim_server_tag=$(git -C ../simulator-server describe --tags)
 
 echo "Downloading simulator-server binaries for tag $sim_server_tag"
 
-echo "Removing existing simulator-server binaries if necessary..."
-rm -f $output_dir/simulator-server*
-
 # Download simulator-server binaries using gh CLI and place them in the output directory with correct file mode
-gh release download $sim_server_tag -R software-mansion-labs/simulator-server -p "simulator-server*" -D "$output_dir"
+gh release download $sim_server_tag --clobber -R software-mansion-labs/simulator-server -p "simulator-server*" -D "$output_dir"
 chmod +x "$output_dir"/simulator-server*
 
-echo "Looking for THIRDPARTY.json in: $output_dir/third-party-licenses"
-if [ -f "$output_dir/third-party-licenses/THIRDPARTY.json" ]; then
-    echo "Removing existing file $output_dir/third-party-licenses/THIRDPARTY.json"
-    rm -f "$output_dir/third-party-licenses/THIRDPARTY.json"
-else
-    echo "THIRDPARTY.json does not exist."
-fi
-
-gh release download $sim_server_tag -R software-mansion-labs/simulator-server -p "THIRDPARTY.json" -D "$output_dir"/"third-party-licenses"
-
-echo "Operation completed successfully."
-
+# Download Third Party Notices file for simulator-server
+gh release download $sim_server_tag --clobber -R software-mansion-labs/simulator-server -p "THIRDPARTY.json" -O "$output_dir/simulator-server-NOTICES.json"

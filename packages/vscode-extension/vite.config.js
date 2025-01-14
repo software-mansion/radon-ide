@@ -12,7 +12,7 @@ export default defineConfig({
       thirdParty: {
         includePrivate: false,
         output: {
-          file: path.join(__dirname, "dist", "third-party-licenses", "webview-third-party.json"),
+          file: path.join(__dirname, "dist/webview-NOTICES.json"),
           encoding: "utf-8", // Default is utf-8.
           // Template function that can be defined to customize report output
           template(dependencies) {
