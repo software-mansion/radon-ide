@@ -2,17 +2,10 @@ import { Frame } from "../../common/Project";
 import { DeviceProperties } from "../utilities/consts";
 import "./DimensionsBox.css";
 
-const BOX_HEIGHT_FRACTION = 0.033;
-const FONT_SIZE_FRACTION = 0.6;
-const BORDER_RADIUS_FRACTION = 0.15;
-const HORIZONTAL_PADDING_FRACTION = 0.3;
-const ARROW_SIZE_FRACTION = 0.4;
-
 const VERTICAL_POSITION_THRESHOLD = 0.3;
 const HORIZONTAL_POSITION_THRESHOLD = 0.5;
 
-const VERTICAL_ARROW_MARGIN = 0.015;
-const HORIZONTAL_ARROW_MARGIN = 0.03;
+const ARROW_SIZE = 8;
 
 type DimensionsBoxProps = {
   device?: DeviceProperties;
@@ -41,8 +34,6 @@ function DimensionsBox({ device, frame, wrapperDivRef }: DimensionsBoxProps) {
     return;
   }
 
-  const { clientHeight: previewHeight } = previewDiv;
-
   const boxPosition: DimensionsBoxPosition = (() => {
     if (frame.y >= VERTICAL_POSITION_THRESHOLD) {
       return "above";
@@ -60,45 +51,44 @@ function DimensionsBox({ device, frame, wrapperDivRef }: DimensionsBoxProps) {
     switch (boxPosition) {
       case "above":
         return {
-          "--top": `${(frame.y - VERTICAL_ARROW_MARGIN) * 100}%`,
+          "--top": `${(frame.y) * 100}%`,
           "--left": `${(frame.x + frame.width / 2) * 100}%`,
           "--box-transform": "translate(-50%, -100%)",
+          "--margin": `-${ARROW_SIZE/2}px 0 0 0`,
         };
       case "below":
         return {
-          "--top": `${(frame.y + frame.height + VERTICAL_ARROW_MARGIN) * 100}%`,
+          "--top": `${(frame.y + frame.height) * 100}%`,
           "--left": `${(frame.x + frame.width / 2) * 100}%`,
           "--box-transform": "translate(-50%, 0%)",
+          "--margin": `${ARROW_SIZE/2}px 0 0 0`,
         };
       case "right":
         return {
           "--top": `${(frame.y + frame.height / 2) * 100}%`,
-          "--left": `${(frame.x + frame.width + HORIZONTAL_ARROW_MARGIN) * 100}%`,
+          "--left": `${(frame.x + frame.width) * 100}%`,
           "--box-transform": "translate(0%, -50%)",
+          "--margin": `0 0 0 ${ARROW_SIZE/2}px`,
         };
       case "left":
         return {
           "--top": `${(frame.y + frame.height / 2) * 100}%`,
-          "--left": `${(frame.x - HORIZONTAL_ARROW_MARGIN) * 100}%`,
+          "--left": `${frame.x * 100}%`,
           "--box-transform": "translate(-100%, -50%)",
+          "--margin": `0 0 0 -${ARROW_SIZE/2}px`,
         };
       default:
         return {
           "--top": `${(frame.y + frame.height / 2) * 100}%`,
           "--left": `${(frame.x + frame.width / 2) * 100}%`,
           "--box-transform": "translate(-50%, -50%)",
+          "--margin": `0 0 0 0`,
         };
     }
   })();
 
-  const boxHeight = previewHeight * BOX_HEIGHT_FRACTION;
-
   const cssPropertiesForDimensionsBox = {
-    "--box-height": `${boxHeight}px`,
-    "--font-size": `${boxHeight * FONT_SIZE_FRACTION}px`,
-    "--border-radius": `${boxHeight * BORDER_RADIUS_FRACTION}px`,
-    "--horizontal-padding": `${boxHeight * HORIZONTAL_PADDING_FRACTION}px`,
-    "--arrow-size": `${boxHeight * ARROW_SIZE_FRACTION}px`,
+    "--arrow-size": `${ARROW_SIZE}px`,
     ...positionalProps,
   };
 
