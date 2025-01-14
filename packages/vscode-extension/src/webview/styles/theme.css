@@ -134,6 +134,9 @@
 
   /* Open Deep Link */
   --deep-link-history-query-match-color: #c19420;
+
+  /* Size constants */
+  --swm-button-size: 30px;
 }
 
 /* Light theme */

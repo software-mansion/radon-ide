@@ -64,7 +64,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="dropdown-menu-content device-settings-content">
+        <DropdownMenu.Content
+          className="dropdown-menu-content device-settings-content"
+          onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
           <form>
             <Label>Device appearance</Label>
