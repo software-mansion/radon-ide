@@ -5,7 +5,6 @@ import { Platform } from "./platform";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
-
 async function getPathEnv(appRoot: string) {
   // We run an interactive shell session to make sure that tool managers (nvm,
   // asdf, mise, etc.) are loaded and PATH is set correctly. Mise in
