@@ -66,6 +66,22 @@ const keyToHID = {
   AltRight: 230,
   MetaLeft: 227,
   MetaRight: 231,
+  NumpadSubtract: 86,
+  NumpadMultiply: 85,
+  NumpadDivide: 84,
+  NumpadAdd: 87,
+  NumpadEnter: 88,
+  Numpad1: 89,
+  Numpad2: 90,
+  Numpad3: 91,
+  Numpad4: 92,
+  Numpad5: 93,
+  Numpad6: 94,
+  Numpad7: 95,
+  Numpad8: 96,
+  Numpad9: 97,
+  Numpad0: 98,
+  NumpadDecimal: 99,
 };
 
 export function keyboardEventToHID(event) {
