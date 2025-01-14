@@ -22,6 +22,7 @@ import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
+import ToolsDropdown from "../components/ToolsDropdown";
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -191,7 +192,7 @@ function PreviewView() {
     setInspectStackData(null);
   }
 
-  const showReplayButton = deviceSettings.replaysEnabled;
+  const showReplayButton = deviceSettings.replaysEnabled && !isRecording;
 
   const recordingTimeFormat = `${Math.floor(recordingTime / 60)}:${(recordingTime % 60)
     .toString()
@@ -202,31 +203,34 @@ function PreviewView() {
       <div className="button-group-top">
         <UrlBar key={resetKey} disabled={devicesNotFound} />
         <div className="spacer" />
-        {
-          <IconButton
-            className={isRecording ? "button-recording-on" : ""}
-            tooltip={{
-              label: isRecording ? "Stop screen recording" : "Start screen recording",
-            }}
-            onClick={toggleRecording}
-            disabled={isStarting}>
-            {isRecording ? (
-              <div className="recording-rec-indicator">
-                <div className="recording-rec-dot" />
-                <span>{recordingTimeFormat}</span>
-              </div>
-            ) : (
-              <RecordingIcon />
-            )}
+        <ToolsDropdown disabled={devicesNotFound || !isRunning}>
+          <IconButton tooltip={{ label: "Tools", type: "primary" }}>
+            <span className="codicon codicon-tools" />
           </IconButton>
-        }
+        </ToolsDropdown>
+        <IconButton
+          className={isRecording ? "button-recording-on" : ""}
+          tooltip={{
+            label: isRecording ? "Stop screen recording" : "Start screen recording",
+          }}
+          onClick={toggleRecording}
+          disabled={isStarting}>
+          {isRecording ? (
+            <div className="recording-rec-indicator">
+              <div className="recording-rec-dot" />
+              <span>{recordingTimeFormat}</span>
+            </div>
+          ) : (
+            <RecordingIcon />
+          )}
+        </IconButton>
         {showReplayButton && (
           <IconButton
             tooltip={{
               label: "Replay the last few seconds of the app",
             }}
             onClick={handleReplay}
-            disabled={isStarting || isRecording}>
+            disabled={isStarting}>
             <ReplayIcon />
           </IconButton>
         )}

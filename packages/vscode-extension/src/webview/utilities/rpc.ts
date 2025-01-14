@@ -1,4 +1,4 @@
-import { vscode } from "../utilities/vscode";
+import { vscode } from "./vscode";
 
 let globalCallCounter = 1;
 

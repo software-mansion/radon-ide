@@ -167,6 +167,23 @@
           "title": "Radon IDE",
           "icon": "assets/logo.svg"
         }
+      ],
+      "panel": [
+        {
+          "id": "RadonIDEToolExpoDevPluginReactQuery",
+          "title": "React Query",
+          "icon": "assets/react-query.svg"
+        },
+        {
+          "id": "RadonIDEToolExpoDevPluginMMKV",
+          "title": "MMKV",
+          "icon": "assets/mmkv.svg"
+        },
+        {
+          "id": "RadonIDEToolExpoDevPluginReduxDevTools",
+          "title": "Redux",
+          "icon": "assets/redux.svg"
+        }
       ]
     },
     "views": {
@@ -175,7 +192,31 @@
           "type": "webview",
           "id": "RadonIDE.view",
           "name": "",
-          "when": "config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
+          "when": "RNIDE.extensionIsActive && config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
+        }
+      ],
+      "RadonIDEToolExpoDevPluginReactQuery": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.view",
+          "name": "",
+          "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available && RNIDE.panelIsOpen"
+        }
+      ],
+      "RadonIDEToolExpoDevPluginMMKV": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ExpoDevPlugin.MMKV.view",
+          "name": "",
+          "when": "RNIDE.Tool.ExpoDevPlugin.MMKV.available && RNIDE.panelIsOpen"
+        }
+      ],
+      "RadonIDEToolExpoDevPluginReduxDevTools": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
+          "name": "",
+          "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ]
     },
