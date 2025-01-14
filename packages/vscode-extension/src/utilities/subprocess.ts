@@ -15,9 +15,17 @@ async function getPathEnv(appRoot: string) {
   // versions based on directory in most managers).
 
   // Fish, bash, and zsh all support -i and -c flags.
+  const RNIDE_PATH_DELIMITER = "{RNIDE_PATH_DELIMITER}";
+
   const shellPath = process.env.SHELL ?? "/bin/zsh";
-  const { stdout: path } = await execa(shellPath, ["-i", "-c", `cd "${appRoot}" && echo "$PATH"`]);
-  return path.trim();
+  const { stdout } = await execa(shellPath, [
+    "-i",
+    "-c",
+    `cd "${appRoot}" && echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`,
+  ]);
+  const path = stdout.split(RNIDE_PATH_DELIMITER)[1].trim();
+  Logger.debug("Obtained PATH environment variable:", path);
+  return path;
 }
 
 let pathEnv: string | undefined;
