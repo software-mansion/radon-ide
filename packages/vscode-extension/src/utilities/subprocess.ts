@@ -23,7 +23,9 @@ async function getPathEnv(appRoot: string) {
     "-c",
     `cd "${appRoot}" && echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`,
   ]);
-  return stdout.split(RNIDE_PATH_DELIMITER)[1].trim();
+  const path = stdout.split(RNIDE_PATH_DELIMITER)[1].trim();
+  Logger.debug("Obtained PATH environment variable:", path);
+  return path;
 }
 
 let pathEnv: string | undefined;
