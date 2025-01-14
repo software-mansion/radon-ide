@@ -51,7 +51,7 @@ function DimensionsBox({ device, frame, wrapperDivRef }: DimensionsBoxProps) {
     switch (boxPosition) {
       case "above":
         return {
-          "--top": `${(frame.y) * 100}%`,
+          "--top": `${frame.y * 100}%`,
           "--left": `${(frame.x + frame.width / 2) * 100}%`,
           "--box-transform": "translate(-50%, -100%)",
           "--margin": `-${ARROW_SIZE}px 0 0 0`,
