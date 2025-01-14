@@ -16,7 +16,7 @@ function generateWebviewContent(pluginName: ExpoDevPluginToolName, metroPort: nu
     <!DOCTYPE html>
     <html style="height: 100%;">
       <head/>
-      <body style="height: 100%;">
+      <body style="height: 100%; overflow:hidden">
         <iframe src="${iframeURL}" style="width: 100%; height: 100%; border: none;"/>
       </body>
     </html>
