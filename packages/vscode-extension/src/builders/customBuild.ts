@@ -8,7 +8,6 @@ import { CancelToken } from "./cancelToken";
 import { getAppRootFolder } from "../utilities/extensionContext";
 import { extractTarApp, isApkFile, isAppFile } from "./utils";
 import { DevicePlatform } from "../common/DeviceManager";
-import { Platform } from "../utilities/platform";
 
 type Env = Record<string, string> | undefined;
 
