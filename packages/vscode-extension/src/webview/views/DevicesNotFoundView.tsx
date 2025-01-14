@@ -64,7 +64,6 @@ function findNewestIosRuntime(runtimes: IOSRuntimeInfo[]) {
 
 function DevicesNotFoundView() {
   const { openModal, closeModal } = useModal();
-  const [isCreating, setIsCreating] = useState(false);
   const { iOSRuntimes, androidImages, deviceManager } = useDevices();
   const [isIOSCreating, withIosCreating] = useLoadingState();
   const [isAndroidCreating, withAndroidCreating] = useLoadingState();
