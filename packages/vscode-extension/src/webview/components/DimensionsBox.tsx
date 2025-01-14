@@ -54,28 +54,28 @@ function DimensionsBox({ device, frame, wrapperDivRef }: DimensionsBoxProps) {
           "--top": `${(frame.y) * 100}%`,
           "--left": `${(frame.x + frame.width / 2) * 100}%`,
           "--box-transform": "translate(-50%, -100%)",
-          "--margin": `-${ARROW_SIZE/2}px 0 0 0`,
+          "--margin": `-${ARROW_SIZE}px 0 0 0`,
         };
       case "below":
         return {
           "--top": `${(frame.y + frame.height) * 100}%`,
           "--left": `${(frame.x + frame.width / 2) * 100}%`,
           "--box-transform": "translate(-50%, 0%)",
-          "--margin": `${ARROW_SIZE/2}px 0 0 0`,
+          "--margin": `${ARROW_SIZE}px 0 0 0`,
         };
       case "right":
         return {
           "--top": `${(frame.y + frame.height / 2) * 100}%`,
           "--left": `${(frame.x + frame.width) * 100}%`,
           "--box-transform": "translate(0%, -50%)",
-          "--margin": `0 0 0 ${ARROW_SIZE/2}px`,
+          "--margin": `0 0 0 ${ARROW_SIZE}px`,
         };
       case "left":
         return {
           "--top": `${(frame.y + frame.height / 2) * 100}%`,
           "--left": `${frame.x * 100}%`,
           "--box-transform": "translate(-100%, -50%)",
-          "--margin": `0 0 0 -${ARROW_SIZE/2}px`,
+          "--margin": `0 0 0 -${ARROW_SIZE}px`,
         };
       default:
         return {
