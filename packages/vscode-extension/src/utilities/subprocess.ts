@@ -5,7 +5,6 @@ import { Platform } from "./platform";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
-const PRE_PATH_TOKEN = "{RNIDE_PRE_PATH}";
 
 async function getPathEnv(appRoot: string) {
   // We run an interactive shell session to make sure that tool managers (nvm,
@@ -17,13 +16,15 @@ async function getPathEnv(appRoot: string) {
   // versions based on directory in most managers).
 
   // Fish, bash, and zsh all support -i and -c flags.
+  const RNIDE_PATH_DELIMITER = "{RNIDE_PATH_DELIMITER}";
+
   const shellPath = process.env.SHELL ?? "/bin/zsh";
-  const { stdout: path } = await execa(shellPath, [
+  const { stdout } = await execa(shellPath, [
     "-i",
     "-c",
-    `cd "${appRoot}" && echo "${PRE_PATH_TOKEN}$PATH${PRE_PATH_TOKEN}"`,
+    `cd "${appRoot}" && echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`,
   ]);
-  return path.split(PRE_PATH_TOKEN)[1].trim();
+  return stdout.split(RNIDE_PATH_DELIMITER)[1].trim();
 }
 
 let pathEnv: string | undefined;
