@@ -1,5 +1,5 @@
 export type PanelLocation = "tab" | "side-panel" | "secondary-side-panel";
-export type ThemeType = 'vscode' | 'built-in';
+export type ThemeType = "vscode" | "built-in";
 
 export type WorkspaceConfigProps = {
   panelLocation: PanelLocation;

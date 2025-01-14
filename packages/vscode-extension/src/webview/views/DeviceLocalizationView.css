@@ -130,7 +130,7 @@
 }
 
 /* avoid cutting off horizontally  */
-input{
+input {
   margin-left: 0.25rem !important;
   margin-right: 0.25rem !important;
 }

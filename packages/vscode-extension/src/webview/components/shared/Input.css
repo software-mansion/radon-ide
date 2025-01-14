@@ -16,8 +16,8 @@ input {
   margin-bottom: 5px;
 }
 
-input:focus{
-  outline-color: var(--swm-focus-outline-color);;
+input:focus {
+  outline-color: var(--swm-focus-outline-color);
 }
 
 input:disabled {

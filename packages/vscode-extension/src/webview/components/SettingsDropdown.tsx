@@ -160,15 +160,17 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 alignOffset={-5}>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => update("themeType", 'vscode')}>
+                  onSelect={() => update("themeType", "vscode")}>
                   VScode theme
-                  {themeType === 'vscode' && <span className="codicon codicon-check right-slot" />}
+                  {themeType === "vscode" && <span className="codicon codicon-check right-slot" />}
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => update("themeType", 'built-in')}>
+                  onSelect={() => update("themeType", "built-in")}>
                   Built in theme
-                  {themeType === 'built-in' && <span className="codicon codicon-check right-slot" />}
+                  {themeType === "built-in" && (
+                    <span className="codicon codicon-check right-slot" />
+                  )}
                 </DropdownMenu.Item>
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>

@@ -19,15 +19,15 @@ type WorkspaceConfigContextType = WorkspaceConfigProps & {
 const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
   panelLocation: "tab",
   showDeviceFrame: true,
-  update: () => { },
-  themeType: 'vscode',
+  update: () => {},
+  themeType: "vscode",
 });
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<WorkspaceConfigProps>({
     panelLocation: "tab",
     showDeviceFrame: true,
-    themeType: 'vscode',
+    themeType: "vscode",
   });
 
   useEffect(() => {

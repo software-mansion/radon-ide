@@ -142,7 +142,6 @@
 /* Light theme */
 body[data-vscode-theme-kind="vscode-light"],
 body[data-vscode-theme-kind="vscode-high-contrast-light"] {
-
   --swm-active-item: var(--blue-dark-100);
   --swm-preview-background: var(--white);
 
@@ -250,7 +249,6 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-input-background: var(--white);
   --swm-input-border: var(--navy-light-40);
 
-
   /* Switch */
   --swm-switch-root-background: var(--navy-light-10);
   --swm-switch-root-shadow: 0 0 0 1px var(--navy-light-10);
@@ -316,8 +314,6 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
 /* Dark theme */
 body[data-vscode-theme-kind="vscode-dark"],
 body[data-vscode-theme-kind="vscode-high-contrast"] {
-
-  
   --swm-active-item: var(--blue-dark-100);
   --swm-preview-background: var(--background-dark-100);
 
@@ -420,7 +416,6 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-select-item-disabled-background: var(--background-dark-100);
   --swm-select-item-highlighted-background: var(--background-dark-60);
 
-
   --swm-focus-outline-color: var(--navy-dark-10);
 
   /* Input */
@@ -428,13 +423,11 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-select-border: var(--navy-dark-40);
   --swm-input-border: var(--navy-dark-40);
 
-
   /* Switch */
   --swm-switch-root-background: var(--background-dark-100);
   --swm-switch-root-shadow: 0 1px 10px var(--background-dark-100);
   --swm-switch-root-disabled: var(--background-dark-60);
   --swm-switch-root-background-checked: var(--background-dark-20);
-
 
   /* Manage devices */
   --swm-device-title: var(--swm-default-text);
@@ -490,7 +483,6 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   /* Open Deep Link */
   --deep-link-history-border: var(--background-dark-100);
   --deep-link-history-selected-item-background: var(--background-dark-100);
-
 
   --swm-radio-group-indicator: var(--background-dark-10);
 }
@@ -613,7 +605,6 @@ body[data-use-code-theme="true"] {
   --swm-input-border: var(--vscode-input-border);
   --swm-input-disabled-background: var(--vscode-list-inactiveSelectionBackground);
 
-
   --swm-focus-outline-color: var(--vscode-focusBorder);
 
   /* Switch */
@@ -621,7 +612,6 @@ body[data-use-code-theme="true"] {
   --swm-switch-root-shadow: 0 0 0 1px var(--vscode-input-border);
   --swm-switch-root-disabled: var(--vscode-toolbar-hoverBackground);
   --swm-switch-root-background-checked: var(--swm-button-background);
-
 
   /* Manage devices */
   --swm-device-title: var(--vscode-foreground);
