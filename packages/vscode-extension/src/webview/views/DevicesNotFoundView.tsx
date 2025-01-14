@@ -79,7 +79,6 @@ function DevicesNotFoundView() {
   }
 
   async function createAndroidDevice() {
-    setIsCreating(true);
     if (errors?.emulator) {
       utils.showDismissableError(errors?.emulator.message);
       return;
@@ -99,11 +98,9 @@ function DevicesNotFoundView() {
       const { modelId, modelName } = firstAndroidDevice;
       await deviceManager.createAndroidDevice(modelId, modelName, newestImage);
     });
-    setIsCreating(false);
   }
 
   async function createIOSDevice() {
-    setIsCreating(true);
     if (errors?.simulator) {
       utils.showDismissableError(errors.simulator.message);
       return;
@@ -118,7 +115,6 @@ function DevicesNotFoundView() {
       const iOSDeviceType = firstRuntimeSupportedDevice(newestRuntime.supportedDeviceTypes);
       await deviceManager.createIOSDevice(iOSDeviceType!, iOSDeviceType!.name, newestRuntime);
     });
-    setIsCreating(false);
   }
   return (
     <div className="devices-not-found-container">
@@ -132,7 +128,7 @@ function DevicesNotFoundView() {
       <div className="devices-not-found-button-group">
         {Platform.OS === "macos" && (
           <Button
-            disabled={isCreating}
+            disabled={isIOSCreating}
             type="ternary"
             className="devices-not-found-quick-action"
             onClick={createIOSDevice}>
@@ -142,7 +138,7 @@ function DevicesNotFoundView() {
         )}
 
         <Button
-          disabled={isCreating}
+          disabled={isAndroidCreating}
           type="ternary"
           className="devices-not-found-quick-action"
           onClick={createAndroidDevice}>
