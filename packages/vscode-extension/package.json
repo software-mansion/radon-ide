@@ -200,7 +200,7 @@
           "type": "webview",
           "id": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.view",
           "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available"
+          "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolExpoDevPluginMMKV": [
@@ -208,7 +208,7 @@
           "type": "webview",
           "id": "RNIDE.Tool.ExpoDevPlugin.MMKV.view",
           "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.MMKV.available"
+          "when": "RNIDE.Tool.ExpoDevPlugin.MMKV.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolExpoDevPluginReduxDevTools": [
@@ -216,7 +216,7 @@
           "type": "webview",
           "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
           "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available"
+          "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ]
     },
