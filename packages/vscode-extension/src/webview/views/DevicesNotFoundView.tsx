@@ -127,6 +127,7 @@ function DevicesNotFoundView() {
       <div className="devices-not-found-button-group">
         {Platform.OS === "macos" && (
           <Button
+            disabled={isIOSCreating}
             type="ternary"
             className="devices-not-found-quick-action"
             onClick={createIOSDevice}>
@@ -136,6 +137,7 @@ function DevicesNotFoundView() {
         )}
 
         <Button
+          disabled={isAndroidCreating}
           type="ternary"
           className="devices-not-found-quick-action"
           onClick={createAndroidDevice}>
