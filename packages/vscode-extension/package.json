@@ -602,6 +602,7 @@
     "vscode-js-debug": "file:../vscode-js-debug",
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "tar": "^7.4.3"
   }
 }

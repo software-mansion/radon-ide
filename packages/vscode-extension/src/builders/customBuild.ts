@@ -44,7 +44,7 @@ export async function runExternalBuild(
   const shouldExtractArchive = binaryPath.endsWith(".tar.gz");
   if (shouldExtractArchive) {
     const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-custom-build-"));
-    const extractedFile = await extractTarApp(binaryPath, tmpDirectory, cancelToken, platform);
+    const extractedFile = await extractTarApp(binaryPath, tmpDirectory, platform);
 
     Logger.info(`External script: ${buildCommand} output app path: ${binaryPath}`);
     return extractedFile;
