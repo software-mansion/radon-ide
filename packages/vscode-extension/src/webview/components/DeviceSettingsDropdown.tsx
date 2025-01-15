@@ -21,6 +21,7 @@ import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import ReplayIcon from "./icons/ReplayIcon";
+import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
 const contentSizes = [
   "xsmall",
@@ -58,7 +59,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
     projectState.selectedDevice?.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
 
   return (
-    <DropdownMenu.Root>
+    <DropdownMenuRoot>
       <DropdownMenu.Trigger asChild disabled={disabled}>
         {children}
       </DropdownMenu.Trigger>
@@ -207,7 +208,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    </DropdownMenuRoot>
   );
 }
 

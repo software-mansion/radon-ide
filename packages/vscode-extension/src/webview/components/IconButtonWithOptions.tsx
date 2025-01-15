@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import classNames from "classnames";
 import IconButton, { IconButtonProps } from "./shared/IconButton";
 import "./IconButtonWithOptions.css";
+import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
 interface IconButtonWithOptions extends IconButtonProps {
   options: Record<string, () => void>;
@@ -27,7 +28,7 @@ export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWit
         <IconButton ref={ref} disabled={disabled} {...iconButtonProps}>
           {children}
         </IconButton>
-        <DropdownMenu.Root>
+        <DropdownMenuRoot>
           <DropdownMenu.Trigger asChild disabled={disabled}>
             {
               <div
@@ -47,7 +48,7 @@ export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWit
               ))}
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
-        </DropdownMenu.Root>
+        </DropdownMenuRoot>
       </div>
     );
   }
