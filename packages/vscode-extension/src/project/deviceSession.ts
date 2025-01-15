@@ -95,7 +95,10 @@ export class DeviceSession implements Disposable {
         await this.launchApp();
         return true;
       case "restartProcess":
-        await this.launchApp();
+        const launchSuccess = await this.launchApp();
+        if (!launchSuccess) {
+          return false;
+        }
         return true;
       case "reloadJs":
         if (this.devtools.hasConnectedClient) {
@@ -111,49 +114,64 @@ export class DeviceSession implements Disposable {
     throw new Error("Not implemented " + type);
   }
 
+  private lastLaunchReject: ((reason?: any) => void) | undefined;
+
   private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
+    this.lastLaunchReject && this.lastLaunchReject();
     const launchRequestTime = Date.now();
-    getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
-      platform: this.device.platform,
-    });
-
-    this.isLaunching = true;
-    this.device.disableReplays();
-
-    // FIXME: Windows getting stuck waiting for the promise to resolve. This
-    // seems like a problem with app connecting to Metro and using embedded
-    // bundle instead.
-    const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
-    const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
-
-    this.eventDelegate.onStateChange(StartupMessage.Launching);
-    await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
-
-    Logger.debug("Will wait for app ready and for preview");
-    this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
-
     let previewURL: string | undefined;
-    if (shouldWaitForAppLaunch) {
-      const reportWaitingStuck = setTimeout(() => {
-        Logger.info(
-          "App is taking very long to boot up, it might be stuck. Device preview URL:",
-          previewURL
-        );
-        getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
+    try {
+      await new Promise<void>(async (res, rej) => {
+        this.lastLaunchReject = rej;
+
+        getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
           platform: this.device.platform,
         });
-      }, 30000);
-      waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
+        this.isLaunching = true;
+        this.device.disableReplays();
+
+        // FIXME: Windows getting stuck waiting for the promise to resolve. This
+        // seems like a problem with app connecting to Metro and using embedded
+        // bundle instead.
+        const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
+        const waitForAppReady = shouldWaitForAppLaunch
+          ? this.devtools.appReady()
+          : Promise.resolve();
+
+        this.eventDelegate.onStateChange(StartupMessage.Launching);
+        await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
+
+        Logger.debug("Will wait for app ready and for preview");
+        this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+
+        if (shouldWaitForAppLaunch) {
+          const reportWaitingStuck = setTimeout(() => {
+            Logger.info(
+              "App is taking very long to boot up, it might be stuck. Device preview URL:",
+              previewURL
+            );
+            getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
+              platform: this.device.platform,
+            });
+          }, 30000);
+          waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
+        }
+
+        await Promise.all([
+          this.metro.ready(),
+          this.device.startPreview().then((url) => {
+            previewURL = url;
+            previewReadyCallback && previewReadyCallback(url);
+          }),
+          waitForAppReady,
+        ]);
+
+        res();
+      });
+    } catch {
+      return undefined;
     }
 
-    await Promise.all([
-      this.metro.ready(),
-      this.device.startPreview().then((url) => {
-        previewURL = url;
-        previewReadyCallback && previewReadyCallback(url);
-      }),
-      waitForAppReady,
-    ]);
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
