@@ -127,18 +127,20 @@ Below is an example of how the `launch.json` file could look like with android v
 ### Custom build settings
 
 Instead of letting Radon IDE build your app, you can use scripts (`customBuild` option) or [Expo
-Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it.
+Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it. Both `customBuild` and `eas` are objects having `ios` and `android` optional
+keys. You can't specify one platform in both custom script and EAS build
+options.
+
+#### Using `customBuild`
 
 The requirement for scripts is to output the absolute path to the built app as
-the last line of the standard output. If custom fingerprint script is used, it
+the last line of the standard output. If multiple paths are provided, just the first one is used. The path should point to `.app`, `.apk` (for iOS and Android consecutively), or `.tar.gz` archive, which must contain one of the previous.  
+
+If custom fingerprint script is used, it
 should output fingerprint (a string identifying the build) as the last line of the standard output. When
 fingerprint changes between invocations, Radon IDE will rebuild the project. The
 IDE runs fingerprint quite frequently (i.e., on every file save), so this
 process should be fast and avoid over the network communication.
-
-Both `customBuild` and `eas` are objects having `ios` and `android` optional
-keys. You can't specify one platform in both custom script and EAS build
-options.
 
 `customBuild.ios` and `customBuild.android` have following structure with
 optional keys that can be used independently:
@@ -167,6 +169,31 @@ Example:
   ]
 }
 ```
+
+Example with EAS local build:
+
+```json
+{
+   "version": "0.2.0",
+   "configurations": [
+      {
+         "type": "radon-ide",
+         "request": "launch",
+         "name": "Radon IDE panel",
+         "customBuild": {
+            "ios": {
+               "buildCommand": "npx eas build --platform ios --profile development --local --non-interactive",
+            },
+            "android": {
+               "buildCommand": "npx eas build --platform android --profile development --local --non-interactive",
+            }
+         }
+      }
+   ]
+}
+```
+
+#### Using `eas`
 
 `eas.ios` and `eas.android` are objects taking keys:
 
