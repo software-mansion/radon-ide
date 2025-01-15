@@ -3,3 +3,6 @@ dist/
 node_modules/
 *.vsix
 .vscode-test
+
+# ThirdPartyNotices are only needed in distribution package (vsix file)
+ThirdPartyNotices.json

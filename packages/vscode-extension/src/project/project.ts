@@ -39,9 +39,11 @@ import {
   refreshTokenPeriodically,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
+
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -55,7 +57,8 @@ const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
 {
-  private metro: Metro;
+  public metro: Metro;
+  public toolsManager: ToolsManager;
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
 
@@ -94,8 +97,10 @@ export class Project
       replaysEnabled: false,
       showTouches: false,
     };
+
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
+    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -458,8 +463,11 @@ export class Project
     if (restart) {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
+      const oldToolsManager = this.toolsManager;
       this.devtools = new Devtools();
       this.metro = new Metro(this.devtools, this);
+      this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
+      oldToolsManager.dispose();
       oldDevtools.dispose();
       oldMetro.dispose();
     }
@@ -625,6 +633,18 @@ export class Project
     if (needsRestart) {
       await this.restart(false, false, true);
     }
+  }
+
+  public async getToolsState() {
+    return this.toolsManager.getToolsState();
+  }
+
+  public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
+    await this.toolsManager.updateToolEnabledState(toolName, enabled);
+  }
+
+  public async openTool(toolName: ToolKey) {
+    await this.toolsManager.openTool(toolName);
   }
 
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {

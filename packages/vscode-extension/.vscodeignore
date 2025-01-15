@@ -9,3 +9,4 @@ dist/tests/**
 !assets/**
 !LICENSE.txt
 !README.md
+!ThirdPartyNotices.json
