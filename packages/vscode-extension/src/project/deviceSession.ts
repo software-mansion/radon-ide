@@ -124,7 +124,6 @@ export class DeviceSession implements Disposable {
     this.lastLaunchCancelToken = launchCancelToken;
 
     const launchRequestTime = Date.now();
-    let previewURL: string | undefined;
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
     });
@@ -146,6 +145,7 @@ export class DeviceSession implements Disposable {
     Logger.debug("Will wait for app ready and for preview");
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
 
+    let previewURL: string | undefined;
     if (shouldWaitForAppLaunch) {
       const reportWaitingStuck = setTimeout(() => {
         Logger.info(
