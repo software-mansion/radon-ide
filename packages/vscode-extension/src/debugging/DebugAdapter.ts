@@ -342,7 +342,7 @@ export class DebugAdapter extends DebugSession {
             const genColumn1Based = parseInt(
               stackObjProperties.find((v) => v.name === "column")?.value || "0"
             );
-            const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
+            const { sourceURL, lineNumber1Based, columnNumber0Based } =
               this.sourceMapRegistry.findOriginalPosition(
                 genUrl,
                 genLine1Based,
