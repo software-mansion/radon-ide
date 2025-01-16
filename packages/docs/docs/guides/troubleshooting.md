@@ -47,7 +47,7 @@ Sometimes the app gets blocked by some system dialog that we don't have a way to
 
 In order to access Radon IDE extension logs you need to open "Output Panel" with the default shortcut ⇧⌘U or by using a command named "Developer: Show Logs..." from the command palette.
 On the "Output Panel", select "Radon IDE" as the source.
-In order to share the logs with others you can use "Open Output in Editor" option available from the Output Panel toolbar. In case of build failures or native crashes see [Accessing build logs](/docs/guides/troubleshooting#7-accessing-build-logs) or [Accessing application process logs](/docs/guides/troubleshooting#8-accessing-application-process-logs).
+In order to share the logs with others you can use "Open Output in Editor" option available from the Output Panel toolbar. In case of build failures or native crashes, see [Accessing build logs](/docs/guides/troubleshooting#7-accessing-build-logs) or [Accessing application process logs](/docs/guides/troubleshooting#8-accessing-application-process-logs).
 
 :::info
 In pre-release versions, the extension is configured to do a lot of verbose logging despite a different log level you may have set in your vscode's settings.
