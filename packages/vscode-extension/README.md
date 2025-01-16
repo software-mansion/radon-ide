@@ -25,13 +25,13 @@ Radon IDE aims to work with all sorts of React Native and Expo projects (see [pr
 ### Logging console with jump-to-source functionality
 
 <div align="center">
-<img width="600" src="../../packages/docs/static/img/docs/ide_jump_from_logs.png"/>
+<img width="600" src="https://github.com/software-mansion/radon-ide/raw/main/packages/docs/static/img/docs/ide_jump_from_logs.png"/>
 </div>
 
 ### Device settings adjustments for theme, text size, location, system language, and more...
 
 <div align="center">
-<img width="600" src="../../packages/docs/static/img/docs/ide_device_settings_1_0.png"/>
+<img width="600" src="https://github.com/software-mansion/radon-ide/raw/main/packages/docs/static/img/docs/ide_device_settings_1_0.png"/>
 </div>
 
 ### Screen recording and screen replays
