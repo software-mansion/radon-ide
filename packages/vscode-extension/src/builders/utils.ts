@@ -18,7 +18,7 @@ export async function extractTarApp(
   platform: DevicePlatform
 ) {
   try {
-    await tarCommand({ archivePath: binaryPath, extractDir: pathToExtract });
+    await tarCommand(binaryPath, pathToExtract);
 
     // assuming that the archive contains only one app file
     const appName = (await readdir(pathToExtract)).find(
@@ -42,8 +42,7 @@ export async function extractTarApp(
   }
 }
 
-type TarCommandArgs = { archivePath: string; extractDir: string };
-function tarCommand({ archivePath, extractDir }: TarCommandArgs) {
+function tarCommand(archivePath: string, extractDir: string) {
   return tar.x({
     f: archivePath,
     C: extractDir,
