@@ -52,6 +52,18 @@ You can clear the console by right-clicking inside the logs panel and choosing t
 
 <img width="450" src="/img/docs/ide_clear_console.png" className="shadow-image"/>
 
+## Native logs 
+
+Radon IDE keeps track of your app's native logs. You can access them by going to `OUTPUT > Radon IDE (Android Emulator Logs)` or `OUTPUT > Radon IDE (iOS Simulator Logs)`.
+
+<img width="400" src="/img/docs/ide_native_logs.png" className="shadow-image"/>
+
+## Build logs 
+
+Radon IDE keeps track of your app's build logs. You can access them by going to `OUTPUT > Radon IDE (iOS build)` or `OUTPUT > Radon IDE (Android build)`.
+
+<img width="400" src="/img/docs/ide_build_logs.png" className="shadow-image"/>
+
 ## Handling runtime errors
 
 Whenever a runtime error occurs in JavaScript code, the Radon IDE displays an error overlay and highlights the exact line of code where the error occurred.
