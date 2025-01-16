@@ -103,5 +103,5 @@ async function downloadAppFromEas(
     return binaryPath;
   }
 
-  return await extractTarApp(binaryPath, tmpDirectory, cancelToken, DevicePlatform.IOS);
+  return await extractTarApp(binaryPath, tmpDirectory, DevicePlatform.IOS);
 }
