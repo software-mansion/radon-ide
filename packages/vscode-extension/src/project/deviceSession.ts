@@ -17,6 +17,7 @@ import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildCache } from "../builders/BuildCache";
+import { CancelToken } from "../builders/cancelToken";
 
 type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
@@ -95,8 +96,8 @@ export class DeviceSession implements Disposable {
         await this.launchApp();
         return true;
       case "restartProcess":
-        const launchSuccess = await this.launchApp();
-        if (!launchSuccess) {
+        const launchSucceeded = await this.launchApp();
+        if (!launchSucceeded) {
           return false;
         }
         return true;
@@ -114,67 +115,68 @@ export class DeviceSession implements Disposable {
     throw new Error("Not implemented " + type);
   }
 
-  private lastLaunchReject: ((reason?: any) => void) | undefined;
+  private lastLaunchCancelToken: CancelToken | undefined;
 
   private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
-    this.lastLaunchReject && this.lastLaunchReject();
+    this.lastLaunchCancelToken && this.lastLaunchCancelToken.cancel();
+
+    const launchCancelToken = new CancelToken();
+    this.lastLaunchCancelToken = launchCancelToken;
+
     const launchRequestTime = Date.now();
     let previewURL: string | undefined;
-    try {
-      await new Promise<void>(async (res, rej) => {
-        this.lastLaunchReject = rej;
+    getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
+      platform: this.device.platform,
+    });
+    this.isLaunching = true;
+    this.device.disableReplays();
 
-        getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
+    // FIXME: Windows getting stuck waiting for the promise to resolve. This
+    // seems like a problem with app connecting to Metro and using embedded
+    // bundle instead.
+    const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
+    const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
+
+    this.eventDelegate.onStateChange(StartupMessage.Launching);
+    await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
+    if (launchCancelToken.cancelled) {
+      return undefined;
+    }
+
+    Logger.debug("Will wait for app ready and for preview");
+    this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+
+    if (shouldWaitForAppLaunch) {
+      const reportWaitingStuck = setTimeout(() => {
+        Logger.info(
+          "App is taking very long to boot up, it might be stuck. Device preview URL:",
+          previewURL
+        );
+        getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
           platform: this.device.platform,
         });
-        this.isLaunching = true;
-        this.device.disableReplays();
+      }, 30000);
+      waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
+    }
 
-        // FIXME: Windows getting stuck waiting for the promise to resolve. This
-        // seems like a problem with app connecting to Metro and using embedded
-        // bundle instead.
-        const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
-        const waitForAppReady = shouldWaitForAppLaunch
-          ? this.devtools.appReady()
-          : Promise.resolve();
-
-        this.eventDelegate.onStateChange(StartupMessage.Launching);
-        await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
-
-        Logger.debug("Will wait for app ready and for preview");
-        this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
-
-        if (shouldWaitForAppLaunch) {
-          const reportWaitingStuck = setTimeout(() => {
-            Logger.info(
-              "App is taking very long to boot up, it might be stuck. Device preview URL:",
-              previewURL
-            );
-            getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
-              platform: this.device.platform,
-            });
-          }, 30000);
-          waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
-        }
-
-        await Promise.all([
-          this.metro.ready(),
-          this.device.startPreview().then((url) => {
-            previewURL = url;
-            previewReadyCallback && previewReadyCallback(url);
-          }),
-          waitForAppReady,
-        ]);
-
-        res();
-      });
-    } catch {
+    await Promise.all([
+      this.metro.ready(),
+      this.device.startPreview().then((url) => {
+        previewURL = url;
+        previewReadyCallback && previewReadyCallback(url);
+      }),
+      waitForAppReady,
+    ]);
+    if (launchCancelToken.cancelled) {
       return undefined;
     }
 
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
+    if (launchCancelToken.cancelled) {
+      return undefined;
+    }
 
     this.isLaunching = false;
     if (this.deviceSettings?.replaysEnabled) {
