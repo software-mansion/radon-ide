@@ -351,7 +351,7 @@ export class DebugAdapter extends DebugSession {
             stackFrames[index] = new StackFrame(
               index,
               methodName,
-              sourceURL ? new Source(scriptURL, sourceURL) : undefined,
+              sourceURL ? new Source(sourceURL, sourceURL) : undefined,
               this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
               this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
             );
@@ -364,7 +364,7 @@ export class DebugAdapter extends DebugSession {
     } else {
       this.pausedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
         const cdpLocation = cdpFrame.location;
-        const { sourceURL, lineNumber1Based, columnNumber0Based, scriptURL } =
+        const { sourceURL, lineNumber1Based, columnNumber0Based } =
           this.sourceMapRegistry.findOriginalPosition(
             cdpLocation.scriptId,
             cdpLocation.lineNumber + 1, // cdp line and column numbers are 0-based
@@ -373,7 +373,7 @@ export class DebugAdapter extends DebugSession {
         return new StackFrame(
           index,
           cdpFrame.functionName,
-          sourceURL ? new Source(scriptURL, sourceURL) : undefined,
+          sourceURL ? new Source(sourceURL, sourceURL) : undefined,
           this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
           this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
         );
