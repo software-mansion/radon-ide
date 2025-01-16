@@ -348,9 +348,9 @@ export function AppWrapper({ children, initialProps, fabric }) {
       LoadingView.showMessage = (message) => {
         devtoolsAgent._bridge.send("RNIDE_fastRefreshStarted");
       };
-      const oldHide = LoadingView.hide;
+      const originalHide = LoadingView.hide;
       LoadingView.hide = () => {
-        oldHide();
+        originalHide();
         devtoolsAgent._bridge.send("RNIDE_fastRefreshComplete");
       };
     }
