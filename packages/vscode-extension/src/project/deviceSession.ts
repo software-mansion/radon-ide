@@ -17,6 +17,7 @@ import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildCache } from "../builders/BuildCache";
+import { CancelToken } from "../builders/cancelToken";
 
 type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
@@ -95,7 +96,10 @@ export class DeviceSession implements Disposable {
         await this.launchApp();
         return true;
       case "restartProcess":
-        await this.launchApp();
+        const launchSucceeded = await this.launchApp();
+        if (!launchSucceeded) {
+          return false;
+        }
         return true;
       case "reloadJs":
         if (this.devtools.hasConnectedClient) {
@@ -111,12 +115,18 @@ export class DeviceSession implements Disposable {
     throw new Error("Not implemented " + type);
   }
 
+  private launchAppCancelToken: CancelToken | undefined;
+
   private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
+    this.launchAppCancelToken && this.launchAppCancelToken.cancel();
+
+    const launchCancelToken = new CancelToken();
+    this.launchAppCancelToken = launchCancelToken;
+
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
     });
-
     this.isLaunching = true;
     this.device.disableReplays();
 
@@ -128,6 +138,9 @@ export class DeviceSession implements Disposable {
 
     this.eventDelegate.onStateChange(StartupMessage.Launching);
     await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
+    if (launchCancelToken.cancelled) {
+      return undefined;
+    }
 
     Logger.debug("Will wait for app ready and for preview");
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
@@ -154,9 +167,16 @@ export class DeviceSession implements Disposable {
       }),
       waitForAppReady,
     ]);
+    if (launchCancelToken.cancelled) {
+      return undefined;
+    }
+
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.startDebugger();
+    if (launchCancelToken.cancelled) {
+      return undefined;
+    }
 
     this.isLaunching = false;
     if (this.deviceSettings?.replaysEnabled) {

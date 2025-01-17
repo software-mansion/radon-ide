@@ -416,10 +416,12 @@ export class Project
 
       // we first check if the device session hasn't changed in the meantime
       if (deviceSession === this.deviceSession) {
-        await this.deviceSession?.perform("restartProcess");
-        this.updateProjectStateForDevice(deviceInfo, {
-          status: "running",
-        });
+        const restartSucceeded = await this.deviceSession?.perform("restartProcess");
+        if (restartSucceeded) {
+          this.updateProjectStateForDevice(deviceInfo, {
+            status: "running",
+          });
+        }
       }
     } catch (e) {
       // finally in case of any errors, the last resort is performing project
