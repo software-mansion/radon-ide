@@ -15,9 +15,7 @@ export function DropdownMenuRoot({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <DropdownMenu.Root
-      open={open}
-      onOpenChange={setOpen}>
+    <DropdownMenu.Root open={open} onOpenChange={setOpen}>
       {children}
     </DropdownMenu.Root>
   );
