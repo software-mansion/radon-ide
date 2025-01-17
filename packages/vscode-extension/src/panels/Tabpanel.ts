@@ -10,7 +10,7 @@ import {
   Disposable,
 } from "vscode";
 
-import { extensionContext } from "../utilities/extensionContext";
+import { AppRootFolder, extensionContext } from "../utilities/extensionContext";
 import { generateWebviewContent } from "./webviewContentGenerator";
 import { WebviewController } from "./WebviewController";
 import { disposeAll } from "../utilities/disposables";
@@ -23,7 +23,11 @@ export class TabPanel implements Disposable {
   private disposables: Disposable[] = [];
   private webviewController: WebviewController;
 
-  private constructor(panel: WebviewPanel, context: ExtensionContext) {
+  private constructor(
+    panel: WebviewPanel,
+    context: ExtensionContext,
+    appRootFolder: AppRootFolder
+  ) {
     this._panel = panel;
     this._panel.iconPath = Uri.joinPath(context.extensionUri, "assets", "logo.svg");
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
@@ -48,7 +52,7 @@ export class TabPanel implements Disposable {
       extensionContext.extensionUri
     );
 
-    this.webviewController = new WebviewController(this._panel.webview);
+    this.webviewController = new WebviewController(this._panel.webview, appRootFolder);
     this.disposables.push(this._panel, this.webviewController);
 
     workspace.onDidChangeConfiguration(
@@ -65,7 +69,7 @@ export class TabPanel implements Disposable {
     );
   }
 
-  public static render(context: ExtensionContext) {
+  public static render(context: ExtensionContext, appRootFolder: AppRootFolder) {
     if (TabPanel.currentPanel) {
       // If the webview panel already exists reveal it
       TabPanel.currentPanel._panel.reveal();
@@ -88,7 +92,7 @@ export class TabPanel implements Disposable {
           retainContextWhenHidden: true,
         }
       );
-      TabPanel.currentPanel = new TabPanel(panel, context);
+      TabPanel.currentPanel = new TabPanel(panel, context, appRootFolder);
       context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
 
       commands.executeCommand("workbench.action.lockEditorGroup");

@@ -14,9 +14,10 @@ import { extractTarApp } from "./utils";
 export async function fetchEasBuild(
   cancelToken: CancelToken,
   config: EasConfig,
-  platform: DevicePlatform
+  platform: DevicePlatform,
+  appRoot: string
 ): Promise<string | undefined> {
-  const build = await fetchBuild(config, platform);
+  const build = await fetchBuild(config, platform, appRoot);
   if (!build) {
     return undefined;
   }
@@ -30,9 +31,9 @@ export async function fetchEasBuild(
   return easBinaryPath;
 }
 
-async function fetchBuild(config: EasConfig, platform: DevicePlatform) {
+async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: string) {
   if (config.buildUUID) {
-    const build = await viewEasBuild(config.buildUUID, platform);
+    const build = await viewEasBuild(config.buildUUID, platform, appRoot);
     if (!build) {
       Logger.error(
         `Failed to find EAS build artifact with ID ${config.buildUUID} for platform ${platform}.`
@@ -48,7 +49,7 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform) {
     return build;
   }
 
-  const builds = await listEasBuilds(platform, config.profile);
+  const builds = await listEasBuilds(platform, config.profile, appRoot);
   if (!builds || builds.length === 0) {
     Logger.error(
       `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile. If you're building iOS app, make sure you set '"ios.simulator": true' option in eas.json.`
