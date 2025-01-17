@@ -13,6 +13,7 @@ import "./shared/SwitchGroup.css";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { SendFeedbackItem } from "./SendFeedbackItem";
 import { useTelemetry } from "../providers/TelemetryProvider";
+import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -28,7 +29,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
   const { telemetryEnabled } = useTelemetry();
 
   return (
-    <DropdownMenu.Root>
+    <DropdownMenuRoot>
       <DropdownMenu.Trigger asChild disabled={disabled}>
         {children}
       </DropdownMenu.Trigger>
@@ -150,7 +151,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           {telemetryEnabled && <SendFeedbackItem />}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    </DropdownMenuRoot>
   );
 }
 
