@@ -9,8 +9,12 @@ Radon IDE lets you perform some repetitive actions through keyboard shortcuts.
 | Result                                 | macOS                 | Windows             |
 | -------------------------------------- | --------------------- | ------------------- |
 | Open developer menu                    | Command + Control + Z | Control + Alt + Z   |
+| Capture replay                         | Command + Shift + R   | Control + Shift + R |
+| Toggle recording                       | Command + Shift + E   | Control + Shift + E |
+| Capture screenshot                     | Command + Shift + A   | Control + Shift + A |
 | Perform biometric authorization        | Command + Shift + M   | Control + Shift + M |
 | Perform failed biometric authorization | Command + Shift + N   | Control + Shift + N |
+| Close IDE Panel with confirmation      | Command + W           | Control + W         |
 
 ## Customize shortcuts
 
@@ -24,8 +28,9 @@ You can open this editor by going to the menu under **Code > Settings > Keyboard
 
 Some Radon IDE actions were left without a default keyboard shortcut. You can assign key bindings to them as you see fit.
 
-- Open IDE Panel
-- Show IDE Panel
-- Close IDE Panel
-- Focus on View
-- Diagnostics
+| Command         | Description                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| Open IDE Panel  | When no IDE panel exists this command creates a new one.                                        |
+| Show IDE Panel  | Focuses on existing IDE panel.                                                                  |
+| Close IDE Panel | Closes existing IDE panel.                                                                      |
+| Diagnostics     | When extension was not activated even tho it should have this command performs diagnostics why. |
