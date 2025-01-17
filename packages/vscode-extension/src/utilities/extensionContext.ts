@@ -24,7 +24,7 @@ export class AppRootFolder {
   private appRoot: string | null = null;
   private onChangeAppRootListeners: Array<() => void> = [];
 
-  addChangeAppRootListener(listener: () => void): Disposable {
+  onChangeAppRoot(listener: () => void): Disposable {
     this.onChangeAppRootListeners.push(listener);
     return {
       dispose: () => {

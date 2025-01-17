@@ -118,7 +118,7 @@ export class Project
       })
     );
     this.disposables.push(
-      appRootFolder.addChangeAppRootListener(() => {
+      appRootFolder.onChangeAppRoot(() => {
         this.reload("reboot");
       })
     );
