@@ -115,13 +115,13 @@ export class DeviceSession implements Disposable {
     throw new Error("Not implemented " + type);
   }
 
-  private lastLaunchCancelToken: CancelToken | undefined;
+  private launchAppCancelToken: CancelToken | undefined;
 
   private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
-    this.lastLaunchCancelToken && this.lastLaunchCancelToken.cancel();
+    this.launchAppCancelToken && this.launchAppCancelToken.cancel();
 
     const launchCancelToken = new CancelToken();
-    this.lastLaunchCancelToken = launchCancelToken;
+    this.launchAppCancelToken = launchCancelToken;
 
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
