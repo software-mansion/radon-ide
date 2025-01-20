@@ -20,17 +20,7 @@
 
 input.coordinate {
   flex: 1;
-  text-align: center;
-  height: 42px;
-  align-self: right;
   margin-right: 5px; /* Add margin-right for padding between input and select */
-  background-color: var(--swm-input-background);
-  border: 1px;
-  border-radius: 4px;
-  font-size: 18px;
-  line-height: 1;
-  box-shadow: var(--swm-input-shadow);
-  padding: 0 6px;
 }
 
 input.coordinate:disabled {

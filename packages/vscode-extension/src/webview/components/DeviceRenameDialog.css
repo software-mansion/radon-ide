@@ -13,13 +13,8 @@
 
 input.device-name-input {
   width: 100%;
-  height: 25px;
-  background-color: var(--swm-input-background);
-  border: 1px;
-  border-radius: 4px;
-  line-height: 1;
-  box-shadow: var(--swm-input-shadow);
   margin-bottom: 15px;
+  margin-left: 0.25rem !important;
 }
 
 .device-rename-button-group {

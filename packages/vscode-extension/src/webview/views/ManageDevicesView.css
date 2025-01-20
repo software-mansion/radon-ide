@@ -78,7 +78,7 @@
   background-color: var(--swm-device-icon-background);
 }
 .device-icon-selected {
-  color: var(--swm-device-icon);
+  color: var(--swm-device-icon-selected);
   background-color: var(--swm-device-icon-background-selected);
 }
 .device-button-group {
