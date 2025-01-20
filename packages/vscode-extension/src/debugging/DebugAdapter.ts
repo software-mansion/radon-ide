@@ -228,7 +228,7 @@ export class DebugAdapter extends DebugSession {
         column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
       };
     } else {
-      const variablesRefDapID = this.createVariableForOutputEvent(message.params.args);
+      const variablesRefDapID = await this.createVariableForOutputEvent(message.params.args);
 
       const formattedOutput = await this.formatDefaultString(message.params.args);
 

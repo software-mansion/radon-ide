@@ -72,7 +72,7 @@ function wrapConsole(logFunctionKey) {
     }
 
     const location = stack[stackOffset];
-    args.push(location.file, location.lineNumber, location.column);
+    location &&  args.push(location.file, location.lineNumber, location.column);
     return origLogFunc.apply(origLogObject, args);
   };
 }
