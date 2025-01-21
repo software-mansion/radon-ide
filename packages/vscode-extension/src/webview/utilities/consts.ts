@@ -8,6 +8,8 @@ import pixel6a from "../../assets/pixel_6a/skin.webp";
 import pixel6amask from "../../assets/pixel_6a/mask.png";
 import iphone15pro from "../../assets/iphone_15_pro/skin.webp";
 import iphone15promask from "../../assets/iphone_15_pro/mask.png";
+import iphone15probezel from "../../assets/iphone_15_pro/bezel.png";
+import iphone15proscreen from "../../assets/iphone_15_pro/screen.png";
 import iphoneSE from "../../assets/iphone_SE/skin.webp";
 import iphoneSEmask from "../../assets/iphone_SE/mask.png";
 import { DevicePlatform } from "../../common/DeviceManager";
@@ -36,7 +38,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     modelName: "iPhone 15 Pro",
     modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
     platform: DevicePlatform.IOS,
-    screenWidth: 1179,
+    screenWidth: 1178,
     screenHeight: 2556,
     frameWidth: 1285,
     frameHeight: 2663,
@@ -44,6 +46,23 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     offsetY: 55,
     frameImage: iphone15pro,
     maskImage: iphone15promask,
+    screenImage: iphone15proscreen,
+    frameImage: iphone15pro,
+    bezelImage: iphone15probezel,
+    bezel: {
+      width: 1195,
+      height: 2570,
+      offsetX: 8.5,
+      offsetY: 7,    
+      image: iphone15probezel,
+    },
+    frame: {
+      width: 1285,
+      height: 2663,
+      offsetX: 55,
+      offsetY: 55,
+      image: iphone15promask,
+    }
   },
   {
     modelName: "iPhone SE (3rd generation)",

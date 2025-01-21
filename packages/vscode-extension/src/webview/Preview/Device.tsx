@@ -22,8 +22,9 @@ export default function Device({
    return (
       <Resizable {...resizableProps}>
          <div className="phone-content">
-            {children}
             <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
+            <img src={device.screenImage} className="phone-screen-background" />
+            {children}
          </div>
       </Resizable>
    );

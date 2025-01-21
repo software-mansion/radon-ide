@@ -38,21 +38,16 @@ declare module "react" {
 }
 
 function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
+  const frame = frameDisabled ? device.bezel : device.frame;
+
   return {
-    "--phone-screen-height": `${
-      frameDisabled ? 100 : (device.screenHeight / device.frameHeight) * 100
-    }%`,
-    "--phone-screen-width": `${
-      frameDisabled ? 100 : (device.screenWidth / device.frameWidth) * 100
-    }%`,
-    "--phone-aspect-ratio": `${
-      frameDisabled
-        ? device.screenWidth / device.screenHeight
-        : device.frameWidth / device.frameHeight
-    }`,
-    "--phone-top": `${frameDisabled ? 0 : (device.offsetY / device.frameHeight) * 100}%`,
-    "--phone-left": `${frameDisabled ? 0 : (device.offsetX / device.frameWidth) * 100}%`,
-    "--phone-mask-image": `url(${device.maskImage})`,
+    "--phone-screen-height": `${(device.screenHeight / frame.height) * 100}%`,
+    "--phone-screen-width": `${(device.screenWidth / frame.width) * 100}%`,
+    "--phone-aspect-ratio": `${frame.width / frame.height}`,
+    "--phone-top": `${(frame.offsetY / frame.height) * 100}%`,
+    "--phone-left": `${(frame.offsetX / frame.width) * 100}%`,
+    "--phone-mask-image": `url(${frame.image})`,
+    "--bezel-mask-image": `url(${device.bezelImage})`,
   } as const;
 }
 

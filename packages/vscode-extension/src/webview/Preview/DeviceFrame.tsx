@@ -12,14 +12,19 @@ function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
     return null;
   }
 
+  if (isFrameDisabled) {
+      return (
+         <div 
+            className="phone-bezel"
+         />
+      );
+  }
+
   return (
-    <img
-      src={device.frameImage}
-      className="phone-frame"
-      style={{
-        opacity: isFrameDisabled ? 0 : 1,
-      }}
-    />
+      <img
+         src={device.frameImage}
+         className="phone-frame"
+      />
   );
 }
 
