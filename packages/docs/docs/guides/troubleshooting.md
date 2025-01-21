@@ -108,5 +108,4 @@ If you are using alternative Xcode version ( e.g. xcode-beta, ["xcodes"](https:/
 Radon IDE supports a wide range of themes, but it's not possible to support all of them.
 If you're using a theme that doesn't look good with Radon IDE, please open an issue on the [Radon IDE GitHub repository](https://github.com/software-mansion/radon-ide/issues/new/choose) and we'll try to fix it. Menawhile you can use built-in themes. Radon IDE comes with dedicated light and dark themes.
 
-<img width="698" alt="change-theme-type" src="/img/docs/change-theme-type.png" className="shadow-image"/>
-
+<img width="698" alt="change-theme-type" src="/img/docs/change_theme_type.png" className="shadow-image"/>
