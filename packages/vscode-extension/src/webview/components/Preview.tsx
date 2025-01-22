@@ -38,7 +38,7 @@ declare module "react" {
 }
 
 function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
-  const frame = frameDisabled ? device.bezel : device.frame;
+  const frame = frameDisabled ? device.bezel : device.skin;
 
   return {
     "--phone-screen-height": `${(device.screenHeight / frame.height) * 100}%`,
@@ -47,7 +47,7 @@ function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean
     "--phone-top": `${(frame.offsetY / frame.height) * 100}%`,
     "--phone-left": `${(frame.offsetX / frame.width) * 100}%`,
     "--phone-mask-image": `url(${device.maskImage})`,
-    "--bezel-mask-image": `url(${frame.image})`,
+    "--phone-frame-image": `url(${frame.image})`,
   } as const;
 }
 

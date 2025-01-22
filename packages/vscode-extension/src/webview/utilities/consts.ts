@@ -30,19 +30,26 @@ import iphoneSEscreen from "../../assets/iphone_SE/screen.png";
 
 import { DevicePlatform } from "../../common/DeviceManager";
 
+type DevicePropertiesFrame = {
+  type: "mask" | "skin";
+  width: number;
+  height: number;
+  offsetX: number;
+  offsetY: number;
+  image: string;
+};
+
 export type DeviceProperties = {
   modelName: string;
   modelId: string;
   platform: DevicePlatform;
   screenWidth: number;
   screenHeight: number;
-  frameWidth: number;
-  frameHeight: number;
-  offsetX: number;
-  offsetY: number;
-  frameImage: string;
   maskImage: string;
+  screenImage: string;
   minimumAndroidApiLevel?: number;
+  bezel: DevicePropertiesFrame;
+  skin: DevicePropertiesFrame;
 };
 
 // Model identifiers for new devices are sourced from 'hw.device.name'
@@ -56,22 +63,18 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.IOS,
     screenWidth: 1178,
     screenHeight: 2556,
-    frameWidth: 1285,
-    frameHeight: 2661,
-    offsetX: 55,
-    offsetY: 55,
-    frameImage: iphone15pro,
     maskImage: iphone15promask,
     screenImage: iphone15proscreen,
-    bezelImage: iphone15probezel,
     bezel: {
+      type: "mask",
       width: 1186,
       height: 2564,
       offsetX: 4,
       offsetY: 4,    
       image: iphone15probezel,
     },
-    frame: {
+    skin: {
+      type: "skin",
       width: 1285,
       height: 2663,
       offsetX: 55,
@@ -85,22 +88,18 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.IOS,
     screenWidth: 750,
     screenHeight: 1334,
-    frameWidth: 874,
-    frameHeight: 1780,
-    offsetX: 62,
-    offsetY: 222,
-    frameImage: iphoneSE,
     maskImage: iphoneSEmask,
-    screenImage: iphone15proscreen,
-    bezelImage: iphone15probezel,
+    screenImage: iphoneSEscreen,
     bezel: {
+      type: "mask",
       width: 758,
       height: 1342,
       offsetX: 4,
       offsetY: 4,    
       image: iphoneSEbezel,
     },
-    frame: {
+    skin: {
+      type: "skin",
       width: 874,
       height: 1780,
       offsetX: 62,
@@ -118,27 +117,23 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2424,
-    frameWidth: 1198,
-    frameHeight: 2531,
-    offsetX: 55,
-    offsetY: 58,
-    frameImage: pixel9,
     maskImage: pixel9mask,
     screenImage: pixel9screen,
-    bezelImage: pixel9bezel,
-    frame: {
-      width: 1198,
-      height: 2531,
-      offsetX: 55,
-      offsetY: 58,
-      image: pixel9,
-    },
     bezel: {
+      type: "mask",
       width: 1088,
       height: 2432,
       offsetX: 4,
       offsetY: 4,
       image: pixel9bezel,
+    },
+    skin: {
+      type: "skin",
+      width: 1198,
+      height: 2531,
+      offsetX: 55,
+      offsetY: 58,
+      image: pixel9,
     }
   },
   {
@@ -148,28 +143,24 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
-    frameWidth: 1187,
-    frameHeight: 2513,
-    offsetX: 49,
-    offsetY: 55,
-    frameImage: pixel8,
     maskImage: pixel8mask,
     screenImage: pixel8screen,
-    bezelImage: pixel8bezel,
-    frame: {
+    bezel: {
+      type: "mask",
+      width: 1088,
+      height: 2408,
+      offsetX: 4,
+      offsetY: 4,
+      image: pixel8bezel,
+    },
+    skin: {
+      type: "skin",
       width: 1187,
       height: 2513,
       offsetX: 49,
       offsetY: 55,
       image: pixel8,
     },
-    bezel: {
-      width: 1088,
-      height: 2408,
-      offsetX: 4,
-      offsetY: 4,
-      image: pixel8bezel,
-    }
   },
   {
     modelName: "Google Pixel 7",
@@ -178,27 +169,23 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
-    frameWidth: 1200,
-    frameHeight: 2541,
-    offsetX: 59,
-    offsetY: 58,
-    frameImage: pixel7,
     maskImage: pixel7mask,
     screenImage: pixel7screen,
-    bezelImage: pixel7bezel,
-    frame: {
-      width: 1187,
-      height: 2513,
-      offsetX: 49,
-      offsetY: 55,
-      image: pixel7,
-    },
     bezel: {
+      type: "mask",
       width: 1088,
       height: 2408,
       offsetX: 4,
       offsetY: 4,
       image: pixel7bezel,
+    },
+    skin: {
+      type: "skin",
+      width: 1187,
+      height: 2513,
+      offsetX: 49,
+      offsetY: 55,
+      image: pixel7,
     }
   },
   {
@@ -208,28 +195,24 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
-    frameWidth: 1207,
-    frameHeight: 2555,
-    offsetX: 57,
-    offsetY: 69,
-    frameImage: pixel6a,
     maskImage: pixel6amask,
     screenImage: pixel6ascreen,
-    bezelImage: pixel6abezel,
-    frame: {
+    bezel: {
+      type: "mask",
+      width: 1088,
+      height: 2408,
+      offsetX: 4,
+      offsetY: 4,
+      image: pixel6abezel,
+    },
+    skin: {
+      type: "skin",
       width: 1187,
       height: 2513,
       offsetX: 49,
       offsetY: 55,
       image: pixel6a,
     },
-    bezel: {
-      width: 1088,
-      height: 2408,
-      offsetX: 4,
-      offsetY: 4,
-      image: pixel6abezel,
-    }
   },
 ] as const;
 

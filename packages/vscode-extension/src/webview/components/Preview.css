@@ -69,15 +69,14 @@
 }
 
 .phone-bezel {
-  -webkit-mask-image: var(--bezel-mask-image);
-  mask-image: var(--bezel-mask-image);
+  -webkit-mask-image: var(--phone-frame-image);
+  mask-image: var(--phone-frame-image);
   -webkit-mask-size: cover;
   mask-size: cover;
   background-color: var(--swm-separator);
   position: absolute;
   width: 100%;
   height: 100%;
-  /* user-select: none; */
 }
 
 .phone-frame {
