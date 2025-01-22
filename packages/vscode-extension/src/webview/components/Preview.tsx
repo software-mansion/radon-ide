@@ -46,8 +46,8 @@ function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean
     "--phone-aspect-ratio": `${frame.width / frame.height}`,
     "--phone-top": `${(frame.offsetY / frame.height) * 100}%`,
     "--phone-left": `${(frame.offsetX / frame.width) * 100}%`,
-    "--phone-mask-image": `url(${frame.image})`,
-    "--bezel-mask-image": `url(${device.bezelImage})`,
+    "--phone-mask-image": `url(${device.maskImage})`,
+    "--bezel-mask-image": `url(${frame.image})`,
   } as const;
 }
 

@@ -73,7 +73,7 @@
   mask-image: var(--bezel-mask-image);
   -webkit-mask-size: cover;
   mask-size: cover;
-  background-color: #f0f;
+  background-color: var(--swm-separator);
   position: absolute;
   width: 100%;
   height: 100%;
