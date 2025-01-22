@@ -30,7 +30,7 @@ import iphoneSEscreen from "../../assets/iphone_SE/screen.png";
 
 import { DevicePlatform } from "../../common/DeviceManager";
 
-type DevicePropertiesFrame = {
+export type DevicePropertiesFrame = {
   type: "mask" | "skin";
   width: number;
   height: number;

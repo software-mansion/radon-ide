@@ -75,7 +75,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
     let currentZoomLevel;
     if (zoomLevel === "Fit") {
       currentZoomLevel =
-        ((wrapperDivRef!.current!.offsetHeight / device!.frameHeight) * 1) / DEVICE_DEFAULT_SCALE;
+        ((wrapperDivRef!.current!.offsetHeight / device!.bezel.height) * 1) / DEVICE_DEFAULT_SCALE;
     } else {
       currentZoomLevel = zoomLevel;
     }

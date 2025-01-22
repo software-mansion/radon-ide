@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect, MouseEvent } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { Resizable } from "re-resizable";
 import "./Preview.css";
 import { useProject } from "../providers/ProjectProvider";
 import {
   AndroidSupportedDevices,
-  DeviceProperties,
   iOSSupportedDevices,
 } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
@@ -24,32 +22,12 @@ import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { Platform } from "../providers/UtilsProvider";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 
-declare module "react" {
-  interface CSSProperties {
-    [key: `--${string}`]: string | number;
-  }
-}
-
-function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
-  const frame = frameDisabled ? device.bezel : device.skin;
-
-  return {
-    "--phone-screen-height": `${(device.screenHeight / frame.height) * 100}%`,
-    "--phone-screen-width": `${(device.screenWidth / frame.width) * 100}%`,
-    "--phone-aspect-ratio": `${frame.width / frame.height}`,
-    "--phone-top": `${(frame.offsetY / frame.height) * 100}%`,
-    "--phone-left": `${(frame.offsetX / frame.width) * 100}%`,
-    "--phone-mask-image": `url(${device.maskImage})`,
-    "--phone-frame-image": `url(${frame.image})`,
-  } as const;
-}
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -106,10 +84,7 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const workspace = useWorkspaceConfig();
   const { projectState, project } = useProject();
-
-  const isFrameDisabled = workspace.showDeviceFrame === false;
 
   const projectStatus = projectState.status;
 
@@ -465,7 +440,6 @@ function Preview({
     <>
       <div
         className="phone-wrapper"
-        style={cssPropertiesForDevice(device!, isFrameDisabled)}
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>

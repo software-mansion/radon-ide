@@ -35,7 +35,7 @@ export function useResizableProps({
         setMaxWidth("100%");
         return;
       }
-      setPhoneHeight(device.frameHeight * zoomLevel * DEVICE_DEFAULT_SCALE + delta);
+      setPhoneHeight(device.bezel.height * zoomLevel * DEVICE_DEFAULT_SCALE + delta);
       setMaxWidth(undefined);
     },
     [wrapperDivRef, zoomLevel]
