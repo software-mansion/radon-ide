@@ -1,6 +1,4 @@
-import {
-  DeviceProperties,
-} from "../utilities/consts";
+import { DeviceProperties } from "../utilities/consts";
 
 type DeviceFrameProps = {
   device: DeviceProperties | undefined;

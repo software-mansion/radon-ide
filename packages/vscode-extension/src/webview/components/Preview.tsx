@@ -590,7 +590,7 @@ function Preview({
         )}
         {hasBuildError && (
           <Device device={device!} resizableProps={resizableProps}>
-              <div className="phone-sized extension-error-screen" />
+            <div className="phone-sized extension-error-screen" />
           </Device>
         )}
       </div>
