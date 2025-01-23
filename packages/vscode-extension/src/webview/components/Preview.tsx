@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, MouseEvent } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { Resizable } from "re-resizable";
 import "./Preview.css";
 import { useProject } from "../providers/ProjectProvider";
 import {
