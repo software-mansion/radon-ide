@@ -3,7 +3,7 @@ import { Resizable, ResizableProps } from "re-resizable";
 import DeviceFrame from "./DeviceFrame";
 
 import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/consts";
-import { useWorkspaceConfig } from "../../providers/WorkspaceConfigProvider";
+import { useDeviceFrame } from "./hooks";
 
 declare module "react" {
   interface CSSProperties {
@@ -29,9 +29,7 @@ function cssPropertiesForDevice(device: DeviceProperties, frame: DevicePropertie
 }
 
 export default function Device({ device, resizableProps, children }: DeviceProps) {
-  const workspace = useWorkspaceConfig();
-  const isFrameDisabled = workspace.showDeviceFrame === false;
-  const frame = isFrameDisabled ? device.bezel : device.skin;
+  const frame = useDeviceFrame(device);
 
   return (
     <Resizable {...resizableProps}>
