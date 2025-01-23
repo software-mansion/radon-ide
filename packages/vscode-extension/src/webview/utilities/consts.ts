@@ -70,7 +70,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
       width: 1186,
       height: 2564,
       offsetX: 4,
-      offsetY: 4,    
+      offsetY: 4,
       image: iphone15probezel,
     },
     skin: {
@@ -80,7 +80,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
       offsetX: 55,
       offsetY: 55,
       image: iphone15pro,
-    }
+    },
   },
   {
     modelName: "iPhone SE (3rd generation)",
@@ -95,7 +95,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
       width: 758,
       height: 1342,
       offsetX: 4,
-      offsetY: 4,    
+      offsetY: 4,
       image: iphoneSEbezel,
     },
     skin: {
@@ -134,7 +134,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
       offsetX: 55,
       offsetY: 58,
       image: pixel9,
-    }
+    },
   },
   {
     modelName: "Google Pixel 8",
@@ -186,7 +186,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
       offsetX: 49,
       offsetY: 55,
       image: pixel7,
-    }
+    },
   },
   {
     modelName: "Google Pixel 6a",

@@ -1,3 +1,3 @@
-import {default as Device} from './Device';
+import { default as Device } from "./Device";
 
 export default Device;

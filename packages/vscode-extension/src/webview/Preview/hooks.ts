@@ -2,7 +2,6 @@ import { useRef, useCallback } from "react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import { useProject } from "../providers/ProjectProvider";
 
-
 export function useKeyPresses() {
   const pressedKeys = useRef(new Set<number>());
   const { project } = useProject();

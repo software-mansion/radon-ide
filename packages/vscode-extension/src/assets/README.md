@@ -26,13 +26,13 @@ And then invert it by:
 
 ### iOS screen masks
 
-Open 
+Open
 
-`/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/DeviceTypes/{deviceType}/Contents/Resources/{WEIRD_HASH}.pdf` 
+`/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/DeviceTypes/{deviceType}/Contents/Resources/{WEIRD_HASH}.pdf`
 
-And export it with 72 DPI. 
+And export it with 72 DPI.
 
-In `Profile.plist` you can find `chromeIdentifier` that points later to iOS frame. In this file you can find also `mainScreenHeight` and `mainScreenWidth`. 
+In `Profile.plist` you can find `chromeIdentifier` that points later to iOS frame. In this file you can find also `mainScreenHeight` and `mainScreenWidth`.
 
 Make sure mask matches screen width and height and there is no gap on the edge.
 

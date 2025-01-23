@@ -3,10 +3,7 @@ import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./Preview.css";
 import { useProject } from "../providers/ProjectProvider";
-import {
-  AndroidSupportedDevices,
-  iOSSupportedDevices,
-} from "../utilities/consts";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
@@ -27,7 +24,6 @@ import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
-
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -560,7 +556,7 @@ function Preview({
         )}
         {hasBuildError && (
           <Device device={device!} resizableProps={resizableProps}>
-              <div className="phone-sized extension-error-screen" />
+            <div className="phone-sized extension-error-screen" />
           </Device>
         )}
       </div>
