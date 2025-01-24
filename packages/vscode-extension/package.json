@@ -151,6 +151,16 @@
           ],
           "description": "Controls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
         },
+        "RadonIDE.themeType": {
+          "type": "string",
+          "scope": "window",
+          "default": "vscode",
+          "enum": [
+            "vscode",
+            "built-in"
+          ],
+          "description": "Controls the theme of the IDE panel. If you encounter any issues, please report them. And set this to 'built-in' to use the built-in theme."
+        },
         "RadonIDE.showDeviceFrame": {
           "type": "boolean",
           "scope": "window",

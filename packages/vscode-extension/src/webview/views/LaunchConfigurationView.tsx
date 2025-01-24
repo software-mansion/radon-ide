@@ -5,6 +5,7 @@ import Label from "../components/shared/Label";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { LaunchConfigUpdater } from "../../common/LaunchConfig";
 import Select from "../components/shared/Select";
+import { Input } from "../components/shared/Input";
 
 function LaunchConfigurationView() {
   const { android, appRoot, ios, isExpo, metroConfigPath, update, xcodeSchemes } =
@@ -88,7 +89,7 @@ function IosConfiguration({ scheme, configuration, update, xcodeSchemes }: iosCo
         className="scheme"
       />
       <div className="setting-description">Configuration:</div>
-      <input
+      <Input
         ref={configurationInputRef}
         className="input-configuration"
         type="string"
@@ -128,17 +129,15 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
   return (
     <div className="launch-configuration-container">
       <div className="setting-description">Build Type:</div>
-      <input
+      <Input
         ref={buildTypeInputRef}
-        className="input-configuration"
         type="string"
         defaultValue={buildType ?? "Auto"}
         onBlur={onBuildTypeBlur}
       />
       <div className="setting-description">Product Flavor:</div>
-      <input
+      <Input
         ref={productFlavorInputRef}
-        className="input-configuration"
         type="string"
         defaultValue={productFlavor ?? "Auto"}
         onBlur={onProductFlavorBlur}
@@ -166,7 +165,7 @@ function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
   return (
     <div className="launch-configuration-container">
       <div className="setting-description">App Root:</div>
-      <input
+      <Input
         ref={appRootInputRef}
         className="input-configuration"
         type="string"
@@ -196,7 +195,7 @@ function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConf
   return (
     <div className="launch-configuration-container">
       <div className="setting-description">Metro Config Path:</div>
-      <input
+      <Input
         ref={metroPathInputRef}
         className="input-configuration"
         type="string"

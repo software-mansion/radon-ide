@@ -5,6 +5,7 @@ import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
 import { ActivateDeviceResult } from "../../common/Project";
+import { Input } from "../components/shared/Input";
 
 export function ActivateLicenseView() {
   const { project } = useProject();
@@ -110,7 +111,7 @@ export function ActivateLicenseView() {
         )}
       </div>
       {activateDeviceResult !== ActivateDeviceResult.succeeded && (
-        <input
+        <Input
           {...register("licenseKey")}
           ref={inputRef}
           className="license-input"

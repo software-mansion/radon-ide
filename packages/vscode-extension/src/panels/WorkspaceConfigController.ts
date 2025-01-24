@@ -6,6 +6,7 @@ import {
   WorkspaceConfigProps,
   WorkspaceConfigEventMap,
   WorkspaceConfigEventListener,
+  ThemeType,
 } from "../common/WorkspaceConfig";
 import { getTelemetryReporter } from "../utilities/telemetry";
 
@@ -19,6 +20,7 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
     this.config = {
       panelLocation: configuration.get<PanelLocation>("panelLocation")!,
       showDeviceFrame: configuration.get<boolean>("showDeviceFrame")!,
+      themeType: configuration.get<ThemeType>("themeType")!,
     };
 
     this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
@@ -30,6 +32,7 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
       const newConfig = {
         panelLocation: config.get<PanelLocation>("panelLocation")!,
         showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
+        themeType: config.get<ThemeType>("themeType")!,
       };
 
       if (newConfig.panelLocation !== this.config.panelLocation) {

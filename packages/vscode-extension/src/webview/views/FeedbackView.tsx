@@ -6,6 +6,7 @@ import "./FeedbackView.css";
 import { useModal } from "../providers/ModalProvider";
 import { useUtils } from "../providers/UtilsProvider";
 import { Sentiment } from "../components/SendFeedbackItem";
+import { Textarea } from "../components/shared/Textarea";
 
 const CLOSE_MODAL_AFTER = 2400;
 
@@ -63,7 +64,7 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
           <span className="feedback-button-label">Not really...</span>
         </div>
       </div>
-      <textarea
+      <Textarea
         {...register("message")}
         className="feedback-textarea"
         placeholder="Tell us why (optional)"
