@@ -32,7 +32,7 @@ Open
 
 `/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/DeviceTypes/{deviceType}/Contents/Resources/{WEIRD_HASH}.pdf`
 
-And export it with 72 DPI. 72 DPI should produce the same size as `width` and `height` stated in `Profile.plist`. 
+And export it with 72 DPI. 72 DPI should produce the same size as `width` and `height` stated in `Profile.plist`.
 
 In `Profile.plist` you can find `chromeIdentifier` that points later to iOS frame. In this file you can find also `mainScreenHeight` and `mainScreenWidth`.
 
@@ -44,8 +44,7 @@ Open `/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Lib
 
 Where `{device}` is taken from `.plist` file mentioned above.
 
-Open in preview and export with 216 DPI. 216 DPI should produce rasterized skin with the size corresponding to the size of the mask.  
-
+Open in preview and export with 216 DPI. 216 DPI should produce rasterized skin with the size corresponding to the size of the mask.
 
 # Adding screen.png and bezel.png
 
