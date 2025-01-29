@@ -11,9 +11,17 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
+const { devToolsEnhancer } = require('./redux_devtools');
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
+
+const useReduxDevTools = (devtoolsAgent) => {
+  useEffect(() => {
+    devToolsEnhancer.devtoolsAgent = devtoolsAgent;
+  }, [devtoolsAgent]);
+};
+
 
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
@@ -225,6 +233,8 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const { requestNavigationChange } = useNavigationMainHook({
     onNavigationChange: handleNavigationChange,
   });
+
+  useReduxDevTools(devtoolsAgent);
 
   const openPreview = useCallback(
     (previewKey) => {

@@ -198,6 +198,11 @@
           "id": "RadonIDEToolExpoDevPluginReduxDevTools",
           "title": "Redux",
           "icon": "assets/redux.svg"
+        },
+        {
+          "id": "RadonIDEToolReduxDevTools",
+          "title": "Redux",
+          "icon": "assets/redux.svg"
         }
       ]
     },
@@ -232,6 +237,14 @@
           "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
           "name": "",
           "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available && RNIDE.panelIsOpen"
+        }
+      ],
+      "RadonIDEToolReduxDevTools": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ReduxDevTools.view",
+          "name": "",
+          "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ]
     },
