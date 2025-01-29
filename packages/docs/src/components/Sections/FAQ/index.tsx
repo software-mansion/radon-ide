@@ -21,6 +21,11 @@ const faqs = [
     `,
   },
   {
+    topic: "Do you offer a free trial?",
+    answer: `Yes! You can try the Radon IDE for 30 days. No sign up or card details needed.<br/><br/>
+    You can simply download and run the extension from VSCode Marketplace. See our short <a href="http://ide.swmansion.com/docs/getting-started/installation#installing-the-radon-ide-extension" target="_blank">installation guide</a> on how to install the extension in VSCode and Cursor.`,
+  },
+  {
     topic: "How do I activate my license?",
     answer: `You activate the product by providing a license key in the extension panel.<br/><br/>
     See the <a href="https://ide.swmansion.com/docs/guides/activation-manual" target="_blank">License Activation</a> page for a step-by-step guide.<br/><br/>
