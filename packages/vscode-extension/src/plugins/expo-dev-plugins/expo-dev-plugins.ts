@@ -16,16 +16,16 @@ type ExpoDevPluginInfo = {
 // Define the map of plugins using the string union type
 const ExpoDevPluginToolMap: Record<ExpoDevPluginToolName, ExpoDevPluginInfo> = {
   "@dev-plugins/react-query": {
-    label: "React Query",
+    label: "React Query DevPlugin",
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.ReactQuery",
   },
   "@dev-plugins/react-native-mmkv": {
-    label: "MMKV",
+    label: "MMKV DevPlugin",
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.MMKV",
   },
   "redux-devtools-expo-dev-plugin": {
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools",
-    label: "Redux DevTools",
+    label: "Redux DevTools DevPlugin",
   },
 };
 
