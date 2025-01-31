@@ -70,7 +70,7 @@ export class CDPSession {
     this.connection.close();
   }
 
-  public async sendCDPMessage(method: string, params: object) {
+  public async sendCDPMessage(method: string, params: object, timeoutMs?: number) {
     const message = {
       id: ++this.cdpMessageId,
       method: method,
@@ -78,7 +78,21 @@ export class CDPSession {
     };
     this.connection.send(JSON.stringify(message));
     return new Promise<any>((resolve, reject) => {
-      this.cdpMessagePromises.set(message.id, { resolve, reject });
+      let timeout: NodeJS.Timeout;
+      if (timeoutMs) {
+        timeout = setTimeout(() => {
+          this.cdpMessagePromises.delete(message.id);
+          reject(new Error("Cdp did not respond before timeout"));
+        }, timeoutMs);
+      }
+
+      this.cdpMessagePromises.set(message.id, {
+        resolve: (e: any) => {
+          timeout && clearTimeout(timeout);
+          resolve(e);
+        },
+        reject,
+      });
     });
   }
 }
