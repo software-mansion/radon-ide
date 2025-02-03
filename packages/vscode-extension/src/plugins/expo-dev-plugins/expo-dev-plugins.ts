@@ -29,7 +29,6 @@ const ExpoDevPluginToolMap: Record<ExpoDevPluginToolName, ExpoDevPluginInfo> = {
   },
 };
 
-
 let initialzed = false;
 function initializeExpoDevPluginIfNeeded() {
   if (initialzed) {

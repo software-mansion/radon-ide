@@ -18,46 +18,44 @@ function initializeReduxDevPlugin() {
   const webviewProvider = new ReduxDevToolsPluginWebviewProvider(extensionContext);
 
   extensionContext.subscriptions.push(
-   window.registerWebviewViewProvider(
-     `${REDUX_PLUGIN_PREFIX}.view`,
-     webviewProvider,
-     { webviewOptions: { retainContextWhenHidden: true } }
-   )
- );
+    window.registerWebviewViewProvider(`${REDUX_PLUGIN_PREFIX}.view`, webviewProvider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    })
+  );
 
- return webviewProvider;
+  return webviewProvider;
 }
 
 export const createReduxDevtools = (devtools: Devtools): ToolPlugin => {
-   const webViewProvider = initializeReduxDevPlugin();
+  const webViewProvider = initializeReduxDevPlugin();
 
-   webViewProvider?.setListener((webview) => {
-      devtools.addListener((event, payload) => {
-         webview.webview.postMessage({ 
-            scope: event, 
-            data: payload
-         });
+  webViewProvider?.setListener((webview) => {
+    devtools.addListener((event, payload) => {
+      webview.webview.postMessage({
+        scope: event,
+        data: payload,
       });
+    });
 
-      webview.webview.onDidReceiveMessage((message) => {
-         const {scope, ...data} = message;
-         devtools.send(scope, data);
-      });
-   });
+    webview.webview.onDidReceiveMessage((message) => {
+      const { scope, ...data } = message;
+      devtools.send(scope, data);
+    });
+  });
 
-   return {
-      id: REDUX_PLUGIN_ID,
-      label: "Redux DevTools",
-      available: true,
-      activate: () => {
-         commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
-      },
-      deactivate: () => {
-         commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
-      },
-      openTool: () => {
-         commands.executeCommand(`${REDUX_PLUGIN_PREFIX}.view.focus`);
-      },
-      dispose: () => {},
-   };
+  return {
+    id: REDUX_PLUGIN_ID,
+    label: "Redux DevTools",
+    available: true,
+    activate: () => {
+      commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
+    },
+    deactivate: () => {
+      commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
+    },
+    openTool: () => {
+      commands.executeCommand(`${REDUX_PLUGIN_PREFIX}.view.focus`);
+    },
+    dispose: () => {},
+  };
 };

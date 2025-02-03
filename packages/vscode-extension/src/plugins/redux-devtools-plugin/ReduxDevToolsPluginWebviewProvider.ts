@@ -16,7 +16,7 @@ function generateWebviewContent(
   extensionUri: Uri
 ): string {
   const baseUri = getUri(webview, extensionUri, ["dist/plugins/redux"]);
-   
+
   return /*html*/ `
     <!DOCTYPE html>
       <html lang="en">
@@ -74,7 +74,7 @@ export class ReduxDevToolsPluginWebviewProvider implements WebviewViewProvider {
     webviewView: WebviewView,
     context: WebviewViewResolveContext,
     token: CancellationToken
-  ): void {    
+  ): void {
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, "dist")],
@@ -88,8 +88,8 @@ export class ReduxDevToolsPluginWebviewProvider implements WebviewViewProvider {
 
     this.cb?.(webviewView);
   }
-  
+
   setListener(cb: (webview: WebviewView) => void) {
     this.cb = cb;
-  };
+  }
 }
