@@ -44,10 +44,8 @@ class RNIDEProxyClient {
   };
 
   addMessageListener = (type, listener) => {
-    console.log('RNIDEProxyClient add message listener 1');
     const currentListeners = this.listeners.get(type) || [];
     this.listeners.set(type, [...currentListeners, listener]);
-    console.log('RNIDEProxyClient add message listener 2', type, this.listeners.get(type));
   };
 
   removeMessageListener = (type, listener) => {

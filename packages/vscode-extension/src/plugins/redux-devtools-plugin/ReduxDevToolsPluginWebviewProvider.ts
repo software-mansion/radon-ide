@@ -10,26 +10,14 @@ import {
 import { extensionContext } from "../../utilities/extensionContext";
 import { getUri } from "../../utilities/getUri";
 
-
-// <meta http-equiv="Content-Security-Policy"
-//               content="default-src 'none';
-//                       img-src vscode-resource: http: https: data:;
-//                       media-src vscode-resource: http: https:;
-//                       style-src ${webview.cspSource} 'unsafe-inline';
-//                       script-src 'nonce-${nonce}';
-//                       font-src vscode-resource: https:;" />
-
 function generateWebviewContent(
   context: ExtensionContext,
   webview: Webview,
   extensionUri: Uri
 ): string {
   const baseUri = getUri(webview, extensionUri, ["dist/plugins/redux"]);
-   // const baseUri = Uri.joinPath(extensionUri, "dist/plugins/redux");
-
-// const nonce = getNonce();
    
-return /*html*/ `
+  return /*html*/ `
     <!DOCTYPE html>
       <html lang="en">
         <head>
@@ -74,7 +62,6 @@ return /*html*/ `
         <script src="./redux/js/AppEntry-9f5185ef27313606ee5279432a7a2e89.js" defer></script>
       </body>
       </html>
-
   `;
 }
 
