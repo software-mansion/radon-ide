@@ -48,6 +48,7 @@ export interface LaunchConfig {
   getConfig(): Promise<LaunchConfigurationOptions>;
   update: LaunchConfigUpdater;
   getAvailableXcodeSchemes(): Promise<string[]>;
+  getAvailableEasProfiles(): Promise<string[]>;
   addListener<K extends keyof LaunchConfigEventMap>(
     eventType: K,
     listener: LaunchConfigEventListener<LaunchConfigEventMap[K]>

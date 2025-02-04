@@ -3,13 +3,22 @@ import "./LaunchConfigurationView.css";
 import { useRef } from "react";
 import Label from "../components/shared/Label";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
-import { LaunchConfigUpdater } from "../../common/LaunchConfig";
+import { LaunchConfigUpdater, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import Select from "../components/shared/Select";
 import { Input } from "../components/shared/Input";
 
 function LaunchConfigurationView() {
-  const { android, appRoot, ios, isExpo, metroConfigPath, update, xcodeSchemes } =
-    useLaunchConfig();
+  const {
+    android,
+    appRoot,
+    ios,
+    eas,
+    isExpo,
+    metroConfigPath,
+    update,
+    xcodeSchemes,
+    easBuildProfiles,
+  } = useLaunchConfig();
 
   return (
     <>
@@ -44,6 +53,26 @@ function LaunchConfigurationView() {
       <IsExpoConfiguration isExpo={isExpo} update={update} />
 
       <div className="launch-configuration-section-margin" />
+
+      {easBuildProfiles.length > 0 && (
+        <>
+          <Label>eas Build</Label>
+          <EasBuildConfiguration
+            platform="ios"
+            eas={eas}
+            update={update}
+            easBuildProfiles={easBuildProfiles}
+          />
+          <EasBuildConfiguration
+            platform="android"
+            eas={eas}
+            update={update}
+            easBuildProfiles={easBuildProfiles}
+          />
+
+          <div className="launch-configuration-section-margin" />
+        </>
+      )}
     </>
   );
 }
@@ -237,6 +266,95 @@ function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
         items={options}
         className="scheme"
       />
+    </div>
+  );
+}
+
+type EasConfig = NonNullable<LaunchConfigurationOptions["eas"]>;
+type EasPlatform = keyof EasConfig;
+
+function prettyPlatformName(platform: EasPlatform): string {
+  switch (platform) {
+    case "ios":
+      return "iOS";
+    case "android":
+      return "Android";
+  }
+}
+
+interface easBuildConfigurationProps {
+  eas?: EasConfig;
+  platform: EasPlatform;
+  update: LaunchConfigUpdater;
+  easBuildProfiles: string[];
+}
+
+function EasBuildConfiguration({
+  eas,
+  platform,
+  update,
+  easBuildProfiles,
+}: easBuildConfigurationProps) {
+  const DISABLED = "Disabled" as const;
+
+  const profile = eas?.[platform]?.profile;
+  const buildUUID = eas?.[platform]?.buildUUID;
+
+  const buildUUIDInputRef = useRef<HTMLInputElement>(null);
+
+  const onSchemeChange = (newProfile: string) => {
+    if (newProfile === DISABLED) {
+      let newEasConfig: EasConfig | undefined = { ...eas, [platform]: undefined };
+      update("eas", newEasConfig);
+      return;
+    }
+
+    const newBuildUUID = buildUUIDInputRef.current?.value || undefined;
+
+    update("eas", {
+      ...eas,
+      [platform]: { profile: newProfile, buildUUID: newBuildUUID },
+    });
+  };
+
+  const onBuildUUIDInputBlur = () => {
+    let newBuildUUID = buildUUIDInputRef.current?.value || undefined;
+    const platformConfig = eas?.[platform];
+    if (platformConfig === undefined) {
+      return;
+    }
+    const newPlatformConfig = { ...platformConfig, buildUUID: newBuildUUID };
+    update("eas", { ...eas, [platform]: newPlatformConfig });
+  };
+
+  const availableEasBuildProfiles = easBuildProfiles.map((buildProfile) => {
+    return { value: buildProfile, label: buildProfile };
+  });
+
+  availableEasBuildProfiles.push({ value: DISABLED, label: DISABLED });
+
+  return (
+    <div className="launch-configuration-container">
+      <div className="setting-description">{prettyPlatformName(platform)} Build Profile:</div>
+      <Select
+        value={profile ?? DISABLED}
+        onChange={onSchemeChange}
+        items={availableEasBuildProfiles}
+        className="scheme"
+      />
+      {profile !== undefined && (
+        <>
+          <div className="setting-description">{prettyPlatformName(platform)} Build UUID:</div>
+          <Input
+            ref={buildUUIDInputRef}
+            className="input-configuration"
+            type="string"
+            defaultValue={buildUUID ?? ""}
+            placeholder="Auto (the latest available build will be used)"
+            onBlur={onBuildUUIDInputBlur}
+          />
+        </>
+      )}
     </div>
   );
 }

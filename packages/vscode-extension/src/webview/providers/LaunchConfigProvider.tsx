@@ -20,6 +20,7 @@ const launchConfig = makeProxy<LaunchConfig>("LaunchConfig");
 type LaunchConfigContextType = LaunchConfigurationOptions & {
   update: LaunchConfigUpdater;
   xcodeSchemes: string[];
+  easBuildProfiles: string[];
   eas?: {
     ios?: EasConfig;
     android?: EasConfig;
@@ -29,17 +30,20 @@ type LaunchConfigContextType = LaunchConfigurationOptions & {
 const LaunchConfigContext = createContext<LaunchConfigContextType>({
   update: () => {},
   xcodeSchemes: [],
+  easBuildProfiles: [],
 });
 
 export default function LaunchConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<LaunchConfigurationOptions>({});
   const [xcodeSchemes, setXcodeSchemes] = useState<string[]>([]);
+  const [easBuildProfiles, setEasBuildProfiles] = useState<string[]>([]);
 
   useEffect(() => {
     launchConfig.getConfig().then(setConfig);
     launchConfig.addListener("launchConfigChange", setConfig);
 
     launchConfig.getAvailableXcodeSchemes().then(setXcodeSchemes);
+    launchConfig.getAvailableEasProfiles().then(setEasBuildProfiles);
 
     return () => {
       launchConfig.removeListener("launchConfigChange", setConfig);
@@ -59,8 +63,8 @@ export default function LaunchConfigProvider({ children }: PropsWithChildren) {
   );
 
   const contextValue = useMemo(() => {
-    return { ...config, update, xcodeSchemes };
-  }, [config, update, xcodeSchemes]);
+    return { ...config, update, xcodeSchemes, easBuildProfiles };
+  }, [config, update, xcodeSchemes, easBuildProfiles]);
 
   return (
     <LaunchConfigContext.Provider value={contextValue}>{children}</LaunchConfigContext.Provider>
