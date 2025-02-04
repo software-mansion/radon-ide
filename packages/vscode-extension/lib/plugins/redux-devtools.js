@@ -1,5 +1,5 @@
 const { useEffect } = require("react");
-const {createComposeWithDevTools} = require('./redux-devtools-expo-dev-plugin');
+const {createComposeWithDevTools} = require('./external/redux-devtools-expo-dev-plugin');
 
 class RNIDEProxyClient {
   scope;
@@ -61,6 +61,10 @@ class RNIDEProxyClient {
 }
 
 let proxyClient = null;
+
+export const isProxyClientReady = () => proxyClient !== null;
+
+export const clearProxyClient = () => proxyClient = null;
 
 export const createRNIDEProxyClientAsync = async () => {
   if (proxyClient !== null) {

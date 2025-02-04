@@ -39,7 +39,7 @@ export class ToolsManager implements Disposable {
     for (const plugin of createExpoDevPluginTools(this)) {
       this.plugins.set(plugin.id, plugin);
     }
-    const reduxPlugin = createReduxDevtools(devtools);
+    const reduxPlugin = createReduxDevtools(this);
     this.plugins.set(reduxPlugin.id, reduxPlugin);
 
     this.handleStateChange();

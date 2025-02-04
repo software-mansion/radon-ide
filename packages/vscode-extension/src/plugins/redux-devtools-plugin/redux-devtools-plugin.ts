@@ -1,8 +1,7 @@
 import { commands, window } from "vscode";
-import { ToolPlugin } from "../../project/tools";
+import { ToolPlugin, ToolsManager } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
-import { Devtools } from "../../project/devtools";
 
 export const REDUX_PLUGIN_ID = "RNIDE-redux-devtools";
 const REDUX_PLUGIN_PREFIX = "RNIDE.Tool.ReduxDevTools";
@@ -26,36 +25,67 @@ function initializeReduxDevPlugin() {
   return webviewProvider;
 }
 
-export const createReduxDevtools = (devtools: Devtools): ToolPlugin => {
+export const createReduxDevtools = (toolsManager: ToolsManager): ToolPlugin => {
   const webViewProvider = initializeReduxDevPlugin();
 
+  function devtoolsListener(event: string, payload: any) {
+    if (event === "RNIDE_pluginsChanged") {
+      const availablePlugins = new Set(payload.plugins);
+      plugin.available = availablePlugins.has(plugin.id);;
+      toolsManager.handleStateChange();
+    }
+  }
+  
+  let proxyDevtoolsListener: null | ((event: string, payload: any)=> void) = null;
   webViewProvider?.setListener((webview) => {
-    devtools.addListener((event, payload) => {
-      webview.webview.postMessage({
-        scope: event,
-        data: payload,
-      });
-    });
+    proxyDevtoolsListener = (event: string, payload: any) => {
+      if (event === REDUX_PLUGIN_ID) {
+        webview.webview.postMessage({
+          scope: event,
+          data: payload,
+        });
+      }
+    };
+    
+    toolsManager.devtools.addListener(proxyDevtoolsListener);
 
     webview.webview.onDidReceiveMessage((message) => {
       const { scope, ...data } = message;
-      devtools.send(scope, data);
+      toolsManager.devtools.send(scope, data);
     });
   });
 
-  return {
+  let disposed = false;
+  function dispose() {
+    if (!disposed) {
+      if (proxyDevtoolsListener) {
+        toolsManager.devtools.removeListener(devtoolsListener);
+      }
+
+      toolsManager.devtools.removeListener(devtoolsListener);
+      disposed = false;
+    }
+  }
+
+  const plugin: ToolPlugin = {
     id: REDUX_PLUGIN_ID,
     label: "Redux DevTools",
-    available: true,
-    activate: () => {
+    available: false,
+    activate() {
       commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
     },
-    deactivate: () => {
+    deactivate() {
       commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
     },
-    openTool: () => {
+    openTool() {
       commands.executeCommand(`${REDUX_PLUGIN_PREFIX}.view.focus`);
     },
-    dispose: () => {},
+    dispose,
   };
+
+  // Listen for events passed via devtools that indicate which plugins are loaded
+  // by the app.
+  toolsManager.devtools.addListener(devtoolsListener);
+  
+  return plugin;
 };
