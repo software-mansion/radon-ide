@@ -31,12 +31,12 @@ export const createReduxDevtools = (toolsManager: ToolsManager): ToolPlugin => {
   function devtoolsListener(event: string, payload: any) {
     if (event === "RNIDE_pluginsChanged") {
       const availablePlugins = new Set(payload.plugins);
-      plugin.available = availablePlugins.has(plugin.id);;
+      plugin.available = availablePlugins.has(plugin.id);
       toolsManager.handleStateChange();
     }
   }
-  
-  let proxyDevtoolsListener: null | ((event: string, payload: any)=> void) = null;
+
+  let proxyDevtoolsListener: null | ((event: string, payload: any) => void) = null;
   webViewProvider?.setListener((webview) => {
     proxyDevtoolsListener = (event: string, payload: any) => {
       if (event === REDUX_PLUGIN_ID) {
@@ -46,7 +46,7 @@ export const createReduxDevtools = (toolsManager: ToolsManager): ToolPlugin => {
         });
       }
     };
-    
+
     toolsManager.devtools.addListener(proxyDevtoolsListener);
 
     webview.webview.onDidReceiveMessage((message) => {
@@ -86,6 +86,6 @@ export const createReduxDevtools = (toolsManager: ToolsManager): ToolPlugin => {
   // Listen for events passed via devtools that indicate which plugins are loaded
   // by the app.
   toolsManager.devtools.addListener(devtoolsListener);
-  
+
   return plugin;
 };
