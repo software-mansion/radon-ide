@@ -15,18 +15,22 @@ import { getNonce } from "../../utilities/getNonce";
 const PATH = "plugins_dist/redux/";
 
 const prepareWebviewCSS = (files: string[]) => {
-  return files.map((file) => {
-    return /*html*/ `
+  return files
+    .map((file) => {
+      return /*html*/ `
       <link rel="preload" href="${file}" as="style">
       <link rel="stylesheet" href="${file}">
     `;
-  }).join("\n");
+    })
+    .join("\n");
 };
 
 const prepareWebviewJS = (files: string[], nonce: string) => {
-  return files.map((file) => {
-    return /*html*/ `<script src="${file}" nonce="${nonce}" defer></script>`;
-  }).join("\n");
+  return files
+    .map((file) => {
+      return /*html*/ `<script src="${file}" nonce="${nonce}" defer></script>`;
+    })
+    .join("\n");
 };
 
 function generateWebviewContent(
@@ -36,9 +40,13 @@ function generateWebviewContent(
 ): string {
   const nonce = getNonce();
   const baseUri = getUri(webview, extensionUri, [PATH]);
-  const files = fs.readdirSync(baseUri.path, {recursive: true});
-  const cssFiles = files.filter((file) => typeof file === 'string').filter((file) => file.endsWith(".css"));
-  const jsFiles = files.filter((file) => typeof file === 'string').filter((file) => file.endsWith(".js"));
+  const files = fs.readdirSync(baseUri.path, { recursive: true });
+  const cssFiles = files
+    .filter((file) => typeof file === "string")
+    .filter((file) => file.endsWith(".css"));
+  const jsFiles = files
+    .filter((file) => typeof file === "string")
+    .filter((file) => file.endsWith(".js"));
   const cssImports = prepareWebviewCSS(cssFiles);
   const jsImports = prepareWebviewJS(jsFiles, nonce);
 
