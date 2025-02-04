@@ -27,7 +27,7 @@ echo "Installing submodule dependencies"
 cd ../$submodule
 npm install # Install submodule
 
-# echo "Building webui"
+echo "Building webui"
 
 npm run web:export 
 
