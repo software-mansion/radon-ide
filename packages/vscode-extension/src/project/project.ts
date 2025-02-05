@@ -8,7 +8,6 @@ import { isEqual } from "lodash";
 import {
   AppPermissionType,
   DeviceSettings,
-  ToolsState,
   InspectData,
   ProjectEventListener,
   ProjectEventMap,

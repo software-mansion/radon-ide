@@ -1,9 +1,8 @@
+import http, { Server } from "http";
 import { commands, Disposable } from "vscode";
+import { WebSocketServer, WebSocket } from "ws";
 import { Devtools } from "../../project/devtools";
 import { ToolKey, ToolPlugin } from "../../project/tools";
-import { WebSocketServer, WebSocket } from "ws";
-import http, { Server } from "http";
-import { resolve } from "path";
 
 export type NetworkPluginToolName = "network";
 
