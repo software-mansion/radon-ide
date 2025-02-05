@@ -318,42 +318,45 @@ function EasBuildConfiguration({
   const buildUUIDInputRef = useRef<HTMLInputElement>(null);
   const customBuildProfileInputRef = useRef<HTMLInputElement>(null);
 
-  const onSchemeChange = (newProfile: string) => {
+  const updateEasConfig = (configUpdate: Partial<EasConfig>) => {
+    const currentPlaftormConfig = eas?.[platform] ?? {};
+    const newPlatformConfig = Object.fromEntries(
+      Object.entries({ ...currentPlaftormConfig, ...configUpdate }).filter(([_k, v]) => !!v)
+    );
+    if ("profile" in newPlatformConfig) {
+      update("eas", { ...eas, [platform]: newPlatformConfig });
+    } else {
+      update("eas", { ...eas, [platform]: undefined });
+    }
+  };
+
+  const updateProfile = (newProfile: string | undefined) => {
+    const newBuildUUID = buildUUIDInputRef.current?.value || undefined;
+    updateEasConfig({ profile: newProfile, buildUUID: newBuildUUID });
+  };
+
+  const onProfileSelectionChange = (newProfile: string) => {
     setSelectedProfile(newProfile);
 
     if (newProfile === DISABLED) {
-      const newEasConfig: EasBuildConfig = { ...eas, [platform]: undefined };
-      update("eas", newEasConfig);
+      updateEasConfig({ profile: undefined, buildUUID: undefined });
       return;
     }
 
     if (newProfile === CUSTOM) {
       newProfile = customBuildProfileInputRef.current?.value ?? profile ?? "";
     }
-
-    const newBuildUUID = buildUUIDInputRef.current?.value || undefined;
-
-    update("eas", {
-      ...eas,
-      [platform]: { profile: newProfile, buildUUID: newBuildUUID },
-    });
+    updateProfile(newProfile);
   };
 
   const onCustomBuildProfileInputBlur = () => {
     const newCustomProfile = customBuildProfileInputRef.current?.value ?? "";
-    const platformConfig = eas?.[platform];
-    const newPlatformConfig = { ...platformConfig, profile: newCustomProfile };
-    update("eas", { ...eas, [platform]: newPlatformConfig });
+    updateProfile(newCustomProfile);
   };
 
   const onBuildUUIDInputBlur = () => {
     const newBuildUUID = buildUUIDInputRef.current?.value || undefined;
-    const platformConfig = eas?.[platform];
-    if (platformConfig === undefined) {
-      return;
-    }
-    const newPlatformConfig = { ...platformConfig, buildUUID: newBuildUUID };
-    update("eas", { ...eas, [platform]: newPlatformConfig });
+    updateEasConfig({ buildUUID: newBuildUUID });
   };
 
   const availableEasBuildProfiles = easBuildProfiles.map((buildProfile) => {
@@ -368,7 +371,7 @@ function EasBuildConfiguration({
       <div className="setting-description">{prettyPlatformName(platform)} Build Profile:</div>
       <Select
         value={selectedProfile}
-        onChange={onSchemeChange}
+        onChange={onProfileSelectionChange}
         items={availableEasBuildProfiles}
         className="scheme"
       />
