@@ -1,9 +1,13 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Label from "../components/shared/Label";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
-import { LaunchConfigUpdater, LaunchConfigurationOptions } from "../../common/LaunchConfig";
+import {
+  EasConfig,
+  LaunchConfigUpdater,
+  LaunchConfigurationOptions,
+} from "../../common/LaunchConfig";
 import Select from "../components/shared/Select";
 import { Input } from "../components/shared/Input";
 
@@ -270,8 +274,8 @@ function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
   );
 }
 
-type EasConfig = NonNullable<LaunchConfigurationOptions["eas"]>;
-type EasPlatform = keyof EasConfig;
+type EasBuildConfig = NonNullable<LaunchConfigurationOptions["eas"]>;
+type EasPlatform = keyof EasBuildConfig;
 
 function prettyPlatformName(platform: EasPlatform): string {
   switch (platform) {
@@ -283,7 +287,7 @@ function prettyPlatformName(platform: EasPlatform): string {
 }
 
 interface easBuildConfigurationProps {
-  eas?: EasConfig;
+  eas?: EasBuildConfig;
   platform: EasPlatform;
   update: LaunchConfigUpdater;
   easBuildProfiles: string[];
@@ -296,17 +300,35 @@ function EasBuildConfiguration({
   easBuildProfiles,
 }: easBuildConfigurationProps) {
   const DISABLED = "Disabled" as const;
+  const CUSTOM = "Custom" as const;
 
   const profile = eas?.[platform]?.profile;
   const buildUUID = eas?.[platform]?.buildUUID;
 
+  const [selectedProfile, setSelectedProfile] = useState<string>(() => {
+    if (profile === undefined) {
+      return DISABLED;
+    }
+    if (!easBuildProfiles.includes(profile)) {
+      return CUSTOM;
+    }
+    return profile;
+  });
+
   const buildUUIDInputRef = useRef<HTMLInputElement>(null);
+  const customBuildProfileInputRef = useRef<HTMLInputElement>(null);
 
   const onSchemeChange = (newProfile: string) => {
+    setSelectedProfile(newProfile);
+
     if (newProfile === DISABLED) {
-      const newEasConfig: EasConfig | undefined = { ...eas, [platform]: undefined };
+      const newEasConfig: EasBuildConfig = { ...eas, [platform]: undefined };
       update("eas", newEasConfig);
       return;
+    }
+
+    if (newProfile === CUSTOM) {
+      newProfile = customBuildProfileInputRef.current?.value ?? profile ?? "";
     }
 
     const newBuildUUID = buildUUIDInputRef.current?.value || undefined;
@@ -315,6 +337,13 @@ function EasBuildConfiguration({
       ...eas,
       [platform]: { profile: newProfile, buildUUID: newBuildUUID },
     });
+  };
+
+  const onCustomBuildProfileInputBlur = () => {
+    const newCustomProfile = customBuildProfileInputRef.current?.value ?? "";
+    const platformConfig = eas?.[platform];
+    const newPlatformConfig = { ...platformConfig, profile: newCustomProfile };
+    update("eas", { ...eas, [platform]: newPlatformConfig });
   };
 
   const onBuildUUIDInputBlur = () => {
@@ -332,17 +361,33 @@ function EasBuildConfiguration({
   });
 
   availableEasBuildProfiles.push({ value: DISABLED, label: DISABLED });
+  availableEasBuildProfiles.push({ value: CUSTOM, label: CUSTOM });
 
   return (
     <div className="launch-configuration-container">
       <div className="setting-description">{prettyPlatformName(platform)} Build Profile:</div>
       <Select
-        value={profile ?? DISABLED}
+        value={selectedProfile}
         onChange={onSchemeChange}
         items={availableEasBuildProfiles}
         className="scheme"
       />
-      {profile !== undefined && (
+      {selectedProfile === CUSTOM && (
+        <>
+          <div className="setting-description">
+            {prettyPlatformName(platform)} Custom Build Profile:
+          </div>
+          <Input
+            ref={customBuildProfileInputRef}
+            className="input-configuration"
+            type="string"
+            defaultValue={profile ?? ""}
+            placeholder="Enter the build profile to be used"
+            onBlur={onCustomBuildProfileInputBlur}
+          />
+        </>
+      )}
+      {selectedProfile !== DISABLED && (
         <>
           <div className="setting-description">{prettyPlatformName(platform)} Build UUID:</div>
           <Input
