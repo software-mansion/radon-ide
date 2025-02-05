@@ -1,4 +1,4 @@
-import React, { FormEventHandler } from "react";
+import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Switch from "@radix-ui/react-switch";
 
@@ -8,6 +8,7 @@ import "./ToolsDropdown.css";
 
 import { useProject } from "../providers/ProjectProvider";
 import IconButton from "./shared/IconButton";
+import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
 function DevToolCheckbox({
   label,
@@ -60,7 +61,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
   });
 
   return (
-    <DropdownMenu.Root>
+    <DropdownMenuRoot>
       <DropdownMenu.Trigger asChild disabled={disabled}>
         {children}
       </DropdownMenu.Trigger>
@@ -78,7 +79,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    </DropdownMenuRoot>
   );
 }
 

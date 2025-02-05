@@ -1,15 +1,9 @@
-import { useState, useRef, useEffect, MouseEvent, forwardRef, RefObject, useCallback } from "react";
+import { useState, useRef, useEffect, MouseEvent } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
-import { Resizable } from "re-resizable";
-import { keyboardEventToHID } from "../utilities/keyMapping";
 import "./Preview.css";
 import { useProject } from "../providers/ProjectProvider";
-import {
-  AndroidSupportedDevices,
-  DeviceProperties,
-  iOSSupportedDevices,
-} from "../utilities/consts";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
 import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
@@ -17,162 +11,19 @@ import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
   Frame,
   InspectDataStackItem,
-  RecordingData,
   ZoomLevelType,
   InspectStackData,
+  MultimediaData,
 } from "../../common/Project";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { Platform } from "../providers/UtilsProvider";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
-
-declare module "react" {
-  interface CSSProperties {
-    [key: `--${string}`]: string | number;
-  }
-}
-
-function useKeyPresses() {
-  const pressedKeys = useRef(new Set<number>());
-  const { project } = useProject();
-
-  const dispatchKeyPress = useCallback((e: KeyboardEvent) => {
-    const isKeydown = e.type === "keydown";
-    const hidCode = keyboardEventToHID(e);
-
-    if (hidCode) {
-      if (isKeydown) {
-        pressedKeys.current.add(hidCode);
-      } else {
-        pressedKeys.current.delete(hidCode);
-      }
-
-      project.dispatchKeyPress(hidCode, isKeydown ? "Down" : "Up");
-    } else {
-      console.warn(`Unrecognized keyboard input: ${e.code}`);
-    }
-  }, []);
-
-  const clearPressedKeys = useCallback(() => {
-    for (const keyCode of pressedKeys.current) {
-      project.dispatchKeyPress(keyCode, "Up");
-    }
-    pressedKeys.current.clear();
-  }, []);
-
-  return {
-    dispatchKeyPress,
-    clearPressedKeys,
-  };
-}
-
-function cssPropertiesForDevice(device: DeviceProperties, frameDisabled: boolean) {
-  return {
-    "--phone-screen-height": `${
-      frameDisabled ? 100 : (device.screenHeight / device.frameHeight) * 100
-    }%`,
-    "--phone-screen-width": `${
-      frameDisabled ? 100 : (device.screenWidth / device.frameWidth) * 100
-    }%`,
-    "--phone-aspect-ratio": `${
-      frameDisabled
-        ? device.screenWidth / device.screenHeight
-        : device.frameWidth / device.frameHeight
-    }`,
-    "--phone-top": `${frameDisabled ? 0 : (device.offsetY / device.frameHeight) * 100}%`,
-    "--phone-left": `${frameDisabled ? 0 : (device.offsetX / device.frameWidth) * 100}%`,
-    "--phone-mask-image": `url(${device.maskImage})`,
-  } as const;
-}
-
-const NO_IMAGE_DATA = "data:,";
-
-const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageElement>>(
-  (props, ref) => {
-    const { src, ...rest } = props;
-
-    // The below effect implements the main logic of this component. The primary
-    // reason we can't just use img tag with src directly, is that with mjpeg streams
-    // the img, after being removed from the hierarchy, will keep the connection open.
-    // As a consequence, after several reloads, we will end up maintaining multiple
-    // open streams which causes the UI to lag.
-    // To avoid this, we manually control src attribute of the img tag and reset it
-    // when the src by changing first to an empty string. We also set empty src when
-    // the component is unmounted.
-    useEffect(() => {
-      const img = (ref as RefObject<HTMLImageElement>).current;
-      if (!img) {
-        return;
-      }
-      img.src = NO_IMAGE_DATA;
-      img.src = src || NO_IMAGE_DATA;
-      return () => {
-        img.src = NO_IMAGE_DATA;
-      };
-    }, [ref, src]);
-
-    // The sole purpose of the below effect is to periodically call `decode` on the image
-    // in order to detect when the stream connection is dropped. There seem to be no better
-    // way to handle it apart from this. When `decode` fails, we reset the image source to
-    // trigger a new connection.
-    useEffect(() => {
-      let timer: NodeJS.Timeout;
-
-      let cancelled = false;
-      async function checkIfImageLoaded() {
-        const img = (ref as RefObject<HTMLImageElement>).current;
-        if (img?.src) {
-          try {
-            // waits until image is ready to be displayed
-            await img.decode();
-          } catch {
-            // Stream connection was dropped
-            if (!cancelled) {
-              const srcCopy = img.src;
-              img.src = NO_IMAGE_DATA;
-              img.src = srcCopy;
-            }
-          }
-        }
-        if (!cancelled) {
-          timer = setTimeout(checkIfImageLoaded, 2_000);
-        }
-      }
-      checkIfImageLoaded();
-
-      return () => {
-        cancelled = true;
-        clearTimeout(timer);
-      };
-    }, [ref]);
-
-    return <img ref={ref} {...rest} />;
-  }
-);
-
-type DeviceFrameProps = {
-  device: DeviceProperties | undefined;
-  isFrameDisabled: boolean;
-};
-
-function DeviceFrame({ device, isFrameDisabled }: DeviceFrameProps) {
-  if (!device) {
-    return null;
-  }
-
-  return (
-    <img
-      src={device.frameImage}
-      className="phone-frame"
-      style={{
-        opacity: isFrameDisabled ? 0 : 1,
-      }}
-    />
-  );
-}
+import MjpegImg from "../Preview/MjpegImg";
+import { useKeyPresses } from "../Preview/hooks";
+import Device from "../Preview/Device";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -187,7 +38,7 @@ type Props = {
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
-  replayData: RecordingData | undefined;
+  replayData: MultimediaData | undefined;
   onReplayClose: () => void;
 };
 
@@ -229,10 +80,7 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const workspace = useWorkspaceConfig();
   const { projectState, project } = useProject();
-
-  const isFrameDisabled = workspace.showDeviceFrame === false;
 
   const projectStatus = projectState.status;
 
@@ -588,138 +436,128 @@ function Preview({
     <>
       <div
         className="phone-wrapper"
-        style={cssPropertiesForDevice(device!, isFrameDisabled)}
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
-          <Resizable {...resizableProps}>
-            <div className="phone-content">
-              <div className="touch-area" {...touchHandlers}>
-                <MjpegImg
-                  src={previewURL}
-                  ref={previewRef}
+          <Device device={device!} resizableProps={resizableProps}>
+            <div className="touch-area" {...touchHandlers}>
+              <MjpegImg
+                src={previewURL}
+                ref={previewRef}
+                style={{
+                  cursor: isInspecting ? "crosshair" : "default",
+                }}
+                className="phone-screen"
+              />
+              {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
+
+              {isMultiTouching && (
+                <div
                   style={{
-                    cursor: isInspecting ? "crosshair" : "default",
-                  }}
-                  className="phone-screen"
-                />
-                {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
+                    "--x": `${touchPoint.x * 100}%`,
+                    "--y": `${touchPoint.y * 100}%`,
+                    "--size": `${normalTouchIndicatorSize}px`,
+                  }}>
+                  <TouchPointIndicator isPressing={isPressing} />
+                </div>
+              )}
+              {isMultiTouching && (
+                <div
+                  style={{
+                    "--x": `${anchorPoint.x * 100}%`,
+                    "--y": `${anchorPoint.y * 100}%`,
+                    "--size": `${smallTouchIndicatorSize}px`,
+                  }}>
+                  <TouchPointIndicator isPressing={false} />
+                </div>
+              )}
+              {isMultiTouching && (
+                <div
+                  style={{
+                    "--x": `${mirroredTouchPosition.x * 100}%`,
+                    "--y": `${mirroredTouchPosition.y * 100}%`,
+                    "--size": `${normalTouchIndicatorSize}px`,
+                  }}>
+                  <TouchPointIndicator isPressing={isPressing} />
+                </div>
+              )}
 
-                {isMultiTouching && (
+              {!replayData && inspectFrame && (
+                <div className="phone-screen phone-inspect-overlay">
                   <div
+                    className="inspect-area"
                     style={{
-                      "--x": `${touchPoint.x * 100}%`,
-                      "--y": `${touchPoint.y * 100}%`,
-                      "--size": `${normalTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={isPressing} />
-                  </div>
-                )}
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${anchorPoint.x * 100}%`,
-                      "--y": `${anchorPoint.y * 100}%`,
-                      "--size": `${smallTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={false} />
-                  </div>
-                )}
-                {isMultiTouching && (
-                  <div
-                    style={{
-                      "--x": `${mirroredTouchPosition.x * 100}%`,
-                      "--y": `${mirroredTouchPosition.y * 100}%`,
-                      "--size": `${normalTouchIndicatorSize}px`,
-                    }}>
-                    <TouchPointIndicator isPressing={isPressing} />
-                  </div>
-                )}
-
-                {!replayData && inspectFrame && (
-                  <div className="phone-screen phone-inspect-overlay">
-                    <div
-                      className="inspect-area"
-                      style={{
-                        left: `${inspectFrame.x * 100}%`,
-                        top: `${inspectFrame.y * 100}%`,
-                        width: `${inspectFrame.width * 100}%`,
-                        height: `${inspectFrame.height * 100}%`,
-                      }}
+                      left: `${inspectFrame.x * 100}%`,
+                      top: `${inspectFrame.y * 100}%`,
+                      width: `${inspectFrame.width * 100}%`,
+                      height: `${inspectFrame.height * 100}%`,
+                    }}
+                  />
+                  {isInspecting && (
+                    <DimensionsBox
+                      device={device}
+                      frame={inspectFrame}
+                      wrapperDivRef={wrapperDivRef}
                     />
-                    {isInspecting && (
-                      <DimensionsBox
-                        device={device}
-                        frame={inspectFrame}
-                        wrapperDivRef={wrapperDivRef}
-                      />
-                    )}
-                  </div>
-                )}
-                {projectStatus === "refreshing" && (
-                  <div className="phone-screen phone-refreshing-overlay">
-                    <VSCodeProgressRing />
-                    <div>Refreshing...</div>
-                  </div>
-                )}
-                {debugPaused && (
-                  <div className="phone-screen phone-debug-overlay">
-                    <Debugger />
-                  </div>
-                )}
-                {debugException && (
-                  <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                    <button className="uncaught-button" onClick={() => project.resumeDebugger()}>
-                      Uncaught exception&nbsp;
-                      <span className="codicon codicon-debug-continue" />
-                    </button>
-                  </div>
-                )}
-                {/* TODO: Add different label in case of bundle/incremental bundle error */}
-                {hasBundleError && (
-                  <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                    <button
-                      className="uncaught-button"
-                      onClick={() => {
-                        project.restart(false);
-                      }}>
-                      Bundle error&nbsp;
-                      <span className="codicon codicon-refresh" />
-                    </button>
-                  </div>
-                )}
-                {hasIncrementalBundleError && (
-                  <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                    <button className="uncaught-button" onClick={() => project.restart(false)}>
-                      Bundle error&nbsp;
-                      <span className="codicon codicon-refresh" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
+                  )}
+                </div>
+              )}
+              {projectStatus === "refreshing" && (
+                <div className="phone-screen phone-refreshing-overlay">
+                  <VSCodeProgressRing />
+                  <div>Refreshing...</div>
+                </div>
+              )}
+              {debugPaused && (
+                <div className="phone-screen phone-debug-overlay">
+                  <Debugger />
+                </div>
+              )}
+              {debugException && (
+                <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                  <button className="uncaught-button" onClick={() => project.resumeDebugger()}>
+                    Uncaught exception&nbsp;
+                    <span className="codicon codicon-debug-continue" />
+                  </button>
+                </div>
+              )}
+              {/* TODO: Add different label in case of bundle/incremental bundle error */}
+              {hasBundleError && (
+                <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                  <button
+                    className="uncaught-button"
+                    onClick={() => {
+                      project.restart(false);
+                    }}>
+                    Bundle error&nbsp;
+                    <span className="codicon codicon-refresh" />
+                  </button>
+                </div>
+              )}
+              {hasIncrementalBundleError && (
+                <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                  <button className="uncaught-button" onClick={() => project.restart(false)}>
+                    Bundle error&nbsp;
+                    <span className="codicon codicon-refresh" />
+                  </button>
+                </div>
+              )}
             </div>
-          </Resizable>
+          </Device>
         )}
         {!showDevicePreview && !hasBuildError && (
-          <Resizable {...resizableProps}>
-            <div className="phone-content">
-              <div className="phone-sized phone-content-loading-background" />
-              <div className="phone-sized phone-content-loading ">
-                <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
-              </div>
-              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
+          <Device device={device!} resizableProps={resizableProps}>
+            <div className="phone-sized phone-content-loading-background" />
+            <div className="phone-sized phone-content-loading ">
+              <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
             </div>
-          </Resizable>
+          </Device>
         )}
         {hasBuildError && (
-          <Resizable {...resizableProps}>
-            <div className="phone-content">
-              <div className="phone-sized extension-error-screen" />
-              <DeviceFrame device={device} isFrameDisabled={isFrameDisabled} />
-            </div>
-          </Resizable>
+          <Device device={device!} resizableProps={resizableProps}>
+            <div className="phone-sized extension-error-screen" />
+          </Device>
         )}
       </div>
 

@@ -1,20 +1,39 @@
 import path from "path";
 import fs from "fs";
+import os from "os";
+import { mkdtemp } from "fs/promises";
 import { Logger } from "../Logger";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
 import { getAppRootFolder } from "../utilities/extensionContext";
+import { extractTarApp, isApkFile, isAppFile } from "./utils";
+import { DevicePlatform } from "../common/DeviceManager";
 
 type Env = Record<string, string> | undefined;
 
-export async function runExternalBuild(cancelToken: CancelToken, buildCommand: string, env: Env) {
+// Extracts all paths from the last line, both Unix and Windows format
+const BUILD_PATH_REGEX = /(\/.*?\.\S*)|([a-zA-Z]:\\.*?\.\S*)/g;
+
+export async function runExternalBuild(
+  cancelToken: CancelToken,
+  buildCommand: string,
+  env: Env,
+  platform: DevicePlatform
+) {
   const output = await runExternalScript(buildCommand, env, cancelToken);
 
   if (!output) {
     return undefined;
   }
 
-  const binaryPath = output.lastLine;
+  let binaryPath = output.lastLine;
+
+  // We run regex to extract paths from the first line and we take the first one
+  const groups = output.lastLine.match(BUILD_PATH_REGEX);
+  if (groups?.[0]) {
+    binaryPath = groups[0];
+  }
+
   if (binaryPath && !fs.existsSync(binaryPath)) {
     Logger.error(
       `External script: ${buildCommand} failed to output any existing app path, got: ${binaryPath}`
@@ -22,6 +41,26 @@ export async function runExternalBuild(cancelToken: CancelToken, buildCommand: s
     return undefined;
   }
 
+  const shouldExtractArchive = binaryPath.endsWith(".tar.gz");
+  if (shouldExtractArchive) {
+    const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-custom-build-"));
+    const extractedFile = await extractTarApp(binaryPath, tmpDirectory, platform);
+
+    Logger.info(`External script: ${buildCommand} output app path: ${binaryPath}`);
+    return extractedFile;
+  }
+
+  if (platform === DevicePlatform.Android && !isApkFile(binaryPath)) {
+    Logger.error(`External script: ${buildCommand} failed to output .apk file, got: ${binaryPath}`);
+    return undefined;
+  }
+
+  if (platform === DevicePlatform.IOS && !isAppFile(binaryPath)) {
+    Logger.error(`External script: ${buildCommand} failed to output .app file, got: ${binaryPath}`);
+    return undefined;
+  }
+
+  Logger.info(`External script: ${buildCommand} output app path: ${binaryPath}`);
   return binaryPath;
 }
 

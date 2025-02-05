@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useEffect, useState } from "react";
+import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "../components/shared/Alert";
 
 interface AlertType {
@@ -46,8 +46,12 @@ export default function AlertProvider({ children }: { children: React.ReactNode 
 
   const topAlert = getTopAlert(alerts);
 
+  const contextValue = useMemo(() => {
+    return { openAlert, isOpen, closeAlert };
+  }, [openAlert, isOpen, closeAlert]);
+
   return (
-    <AlertContext.Provider value={{ openAlert, isOpen, closeAlert }}>
+    <AlertContext.Provider value={contextValue}>
       {children}
       <Alert
         open={Boolean(topAlert?.id)}

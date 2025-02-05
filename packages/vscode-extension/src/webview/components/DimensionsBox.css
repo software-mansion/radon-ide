@@ -3,15 +3,16 @@
   position: absolute;
   left: var(--left);
   top: var(--top);
-  height: var(--box-height);
-  font-size: var(--font-size);
-  border-radius: var(--border-radius);
-  padding-left: var(--horizontal-padding);
-  padding-right: var(--horizontal-padding);
+  height: 18px;
+  font-size: 10px;
+  border-radius: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
   display: flex;
   align-items: center;
   white-space: nowrap;
   transform: var(--box-transform);
+  margin: var(--margin);
 }
 
 .arrow {
@@ -23,4 +24,5 @@
   height: var(--arrow-size);
   transform-origin: 50% 50%;
   transform: translate(-50%, -50%) rotate(45deg);
+  margin: var(--margin);
 }

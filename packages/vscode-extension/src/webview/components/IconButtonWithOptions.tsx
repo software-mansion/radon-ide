@@ -3,14 +3,16 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import classNames from "classnames";
 import IconButton, { IconButtonProps } from "./shared/IconButton";
 import "./IconButtonWithOptions.css";
+import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
 interface IconButtonWithOptions extends IconButtonProps {
   options: Record<string, () => void>;
+  disabled?: boolean;
 }
 
 export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWithOptions>(
   (props, ref) => {
-    const { options, children, ...iconButtonProps } = props;
+    const { options, disabled, children, ...iconButtonProps } = props;
 
     const [dropdownTriggerVisible, setDropdownTriggerVisible] = useState(false);
 
@@ -23,16 +25,16 @@ export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWit
         onMouseLeave={() => {
           setDropdownTriggerVisible(false);
         }}>
-        <IconButton ref={ref} {...iconButtonProps}>
+        <IconButton ref={ref} disabled={disabled} {...iconButtonProps}>
           {children}
         </IconButton>
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
+        <DropdownMenuRoot>
+          <DropdownMenu.Trigger asChild disabled={disabled}>
             {
               <div
                 className={classNames(
                   "dropdown-arrow codicon codicon-triangle-down",
-                  !dropdownTriggerVisible && "dropdown-arrow-hide"
+                  (!dropdownTriggerVisible || disabled) && "dropdown-arrow-hide"
                 )}
               />
             }
@@ -46,7 +48,7 @@ export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWit
               ))}
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
-        </DropdownMenu.Root>
+        </DropdownMenuRoot>
       </div>
     );
   }

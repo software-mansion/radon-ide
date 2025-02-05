@@ -1,8 +1,8 @@
+import { EventEmitter } from "stream";
+import { Disposable } from "vscode";
 import { Devtools } from "./devtools";
 import { extensionContext } from "../utilities/extensionContext";
 import { ToolsState } from "../common/Project";
-import { EventEmitter } from "stream";
-import { commands, Disposable } from "vscode";
 import {
   createExpoDevPluginTools,
   ExpoDevPluginToolName,

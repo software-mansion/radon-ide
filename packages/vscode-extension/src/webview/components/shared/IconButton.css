@@ -5,12 +5,12 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  height: 36px;
-  width: 36px;
+  height: var(--swm-button-size);
+  width: var(--swm-button-size);
   background: none;
   border: 0px solid transparent;
-  border-radius: 36px;
-  color: var(--swm-button);
+  border-radius: var(--swm-button-size);
+  color: var(--swm-icon-button);
   transition: all 200ms 0ms ease-in-out;
   flex-shrink: 0;
 }
@@ -22,12 +22,13 @@
 }
 
 .icon-button:hover {
-  background-color: var(--swm-button-hover);
+  color: var(--swm-icon-button-hover);
+  background-color: var(--swm-icon-button-hover-background);
 }
 
 .icon-button:active {
-  color: var(--swm-button-active);
-  background-color: var(--swm-button-active-background);
+  color: var(--swm-icon-button-active);
+  background-color: var(--swm-icon-button-active-background);
   transform: scale(0.9);
 }
 
@@ -66,7 +67,7 @@
   color: var(--swm-button-counter);
   background-color: var(--swm-button-counter-background);
   padding: 2px 4px;
-  font-size: 11px;
+  font-size: 10px;
   position: absolute;
   top: 20%;
   left: 20px;
@@ -77,6 +78,5 @@
 
 .icon-button-counter.visible {
   top: 20%;
-  left: 25px;
   opacity: 1;
 }

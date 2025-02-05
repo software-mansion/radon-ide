@@ -5,6 +5,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import { WorkspaceConfig, WorkspaceConfigProps } from "../../common/WorkspaceConfig";
@@ -19,20 +20,28 @@ const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
   panelLocation: "tab",
   showDeviceFrame: true,
   update: () => {},
+  themeType: "vscode",
 });
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<WorkspaceConfigProps>({
     panelLocation: "tab",
     showDeviceFrame: true,
+    themeType: "vscode",
   });
 
   useEffect(() => {
-    workspaceConfig.getConfig().then(setConfig);
-    workspaceConfig.addListener("configChange", setConfig);
+    function watchConfigChange(e: WorkspaceConfigProps) {
+      document.body.setAttribute("data-use-code-theme", `${e.themeType === "vscode"}`);
+
+      setConfig(e);
+    }
+
+    workspaceConfig.getConfig().then(watchConfigChange);
+    workspaceConfig.addListener("configChange", watchConfigChange);
 
     return () => {
-      workspaceConfig.removeListener("configChange", setConfig);
+      workspaceConfig.removeListener("configChange", watchConfigChange);
     };
   }, []);
 
@@ -49,8 +58,12 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
     [config, setConfig]
   );
 
+  const contextValue = useMemo(() => {
+    return { ...config, update };
+  }, [config, update]);
+
   return (
-    <WorkspaceConfigContext.Provider value={{ ...config, update }}>
+    <WorkspaceConfigContext.Provider value={contextValue}>
       {children}
     </WorkspaceConfigContext.Provider>
   );

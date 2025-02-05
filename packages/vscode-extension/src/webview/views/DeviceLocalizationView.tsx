@@ -7,6 +7,7 @@ import localesList from "../utilities/localeList.json";
 import { Locale } from "../../common/Project";
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
+import { Input } from "../components/shared/Input";
 
 type LocaleWithDescription = { localeIdentifier: Locale; Description: string };
 
@@ -37,7 +38,7 @@ export function DeviceLocalizationView() {
   return (
     <div className="localization-container">
       <div className="search-bar">
-        <input
+        <Input
           ref={inputRef}
           className="search-input"
           type="string"

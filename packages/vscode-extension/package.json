@@ -4,7 +4,12 @@
   "description": "Extension turning VSCode into a full-featured IDE for React Native and Expo",
   "publisher": "swmansion",
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Debuggers"
+  ],
+  "keywords": [
+    "react-native",
+    "expo"
   ],
   "icon": "assets/logo.png",
   "pricing": "Trial",
@@ -16,7 +21,7 @@
     "workspaceContains:**/app.config.js",
     "workspaceContains:**/app.config.ts"
   ],
-  "version": "1.1.0",
+  "version": "1.2.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -74,6 +79,24 @@
         "title": "Perform Failed Biometric Authorization",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.captureReplay",
+        "title": "Capture Replay",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.toggleRecording",
+        "title": "Toggle Recording",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.captureScreenshot",
+        "title": "Capture Screenshot",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -97,6 +120,21 @@
         "command": "RNIDE.performFailedBiometricAuthorization",
         "key": "ctrl+shift+N",
         "mac": "cmd+shift+N"
+      },
+      {
+        "command": "RNIDE.captureReplay",
+        "key": "ctrl+shift+R",
+        "mac": "cmd+shift+R"
+      },
+      {
+        "command": "RNIDE.toggleRecording",
+        "key": "ctrl+shift+E",
+        "mac": "cmd+shift+E"
+      },
+      {
+        "command": "RNIDE.captureScreenshot",
+        "key": "ctrl+shift+A",
+        "mac": "cmd+shift+A"
       }
     ],
     "configuration": {
@@ -112,6 +150,16 @@
             "secondary-side-panel"
           ],
           "description": "Controls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
+        },
+        "RadonIDE.themeType": {
+          "type": "string",
+          "scope": "window",
+          "default": "vscode",
+          "enum": [
+            "vscode",
+            "built-in"
+          ],
+          "description": "Controls the theme of the IDE panel. If you encounter any issues, please report them. And set this to 'built-in' to use the built-in theme."
         },
         "RadonIDE.showDeviceFrame": {
           "type": "boolean",
@@ -139,17 +187,17 @@
         {
           "id": "RadonIDEToolExpoDevPluginReactQuery",
           "title": "React Query",
-          "icon": "assets/logo.svg"
+          "icon": "assets/react-query.svg"
         },
         {
           "id": "RadonIDEToolExpoDevPluginMMKV",
           "title": "MMKV",
-          "icon": "assets/logo.svg"
+          "icon": "assets/mmkv.svg"
         },
         {
           "id": "RadonIDEToolExpoDevPluginReduxDevTools",
           "title": "Redux",
-          "icon": "assets/logo.svg"
+          "icon": "assets/redux.svg"
         },
         {
           "id": "RadonIDEToolNetwork",
@@ -172,7 +220,7 @@
           "type": "webview",
           "id": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.view",
           "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available"
+          "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolExpoDevPluginMMKV": [
@@ -180,7 +228,7 @@
           "type": "webview",
           "id": "RNIDE.Tool.ExpoDevPlugin.MMKV.view",
           "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.MMKV.available"
+          "when": "RNIDE.Tool.ExpoDevPlugin.MMKV.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolExpoDevPluginReduxDevTools": [
@@ -188,7 +236,7 @@
           "type": "webview",
           "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
           "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available"
+          "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolNetwork": [
@@ -491,27 +539,24 @@
     "vscode:package": "vsce package",
     "vscode:prepublish": "npm run package",
     "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
-    "build:extension-debug": "npm run build:extension-code-debug && npm run build:expo-fingerprint && npm run build:chrome-devtools-ui",
-    "build:extension": "npm run build:extension-code && npm run build:expo-fingerprint && npm run build:chrome-devtools-ui",
-    "build:extension-code-debug": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap && cp ./node_modules/source-map/lib/mappings.wasm dist/.",
-    "build:extension-code": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --minify && cp ./node_modules/source-map/lib/mappings.wasm dist/.",
-    "build:expo-fingerprint": "esbuild ./node_modules/@expo/fingerprint/build/sourcer/ExpoConfigLoader.js --bundle --format=cjs --outfile=dist/ExpoConfigLoader.js --platform=node --minify",
+    "build:extension-debug": "node ./scripts/buildExtensionCode.mjs debug && npm run build:chrome-devtools-ui",
+    "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:chrome-devtools-ui",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
     "build:sim-server": "bash ./scripts/install-sim-server-release-build.sh dist",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
-    "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview",
+    "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview && npm run build:third-party-notice",
+    "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
     "lint": "eslint src/**/*.\\{ts,tsx,js,jsx\\} && prettier --check src",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
-    "test": "npm run build:extension-code && npm run build:webview && npm run build:tests && vscode-test",
-    "preinstall": "cd ../vscode-js-debug && git submodule update --init && npm install && npm exec tsc"
+    "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
+    "preinstall": "cd ../vscode-js-debug && git submodule update --init ./ && npm install && npm exec tsc"
   },
   "devDependencies": {
-    "vscode-js-debug": "file:../vscode-js-debug",
     "@babel/preset-react": "^7.23.3",
     "@expo/fingerprint": "^0.10.3",
     "@expo/package-manager": "^1.1.2",
@@ -556,6 +601,7 @@
     "classnames": "^2.5.1",
     "coordinate-parser": "^1.0.7",
     "esbuild": "^0.19.9",
+    "esbuild-plugin-license": "^1.2.3",
     "eslint": "^7.19.0",
     "eslint-import-resolver-typescript": "^3.6.3",
     "eslint-plugin-import": "^2.30.0",
@@ -573,6 +619,7 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.53.2",
     "rollup": "^4.18.1",
+    "rollup-plugin-license": "^3.5.3",
     "semver": "^7.6.2",
     "sinon": "^18.0.0",
     "source-map": "^0.8.0-beta.0",
@@ -581,8 +628,10 @@
     "url-loader": "^4.1.1",
     "uuid": "^9.0.1",
     "vite": "^5.0.8",
+    "vscode-js-debug": "file:../vscode-js-debug",
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "tar": "^7.4.3"
   }
 }

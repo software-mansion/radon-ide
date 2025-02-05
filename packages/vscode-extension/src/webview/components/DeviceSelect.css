@@ -11,11 +11,11 @@
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
-  height: 36px;
+  height: var(--swm-button-size);
   border: 0px solid transparent;
   border-radius: 18px;
   gap: 5px;
-  background-color: var(--swm-device-select-background);
+  background-color: var(--swm-device-select-trigger);
   color: var(--swm-device-select-trigger-text);
   user-select: none;
   width: var(--swm-device-select-width);
@@ -48,6 +48,7 @@
   border-radius: 18px 18px 0 0;
   padding-top: 4px;
   max-height: var(--radix-select-content-available-height);
+  box-shadow: var(--swm-backdrop-shadow);
 }
 
 .device-select-viewport {
@@ -127,6 +128,7 @@
 }
 .device-select-rich-item-icon-selected {
   background-color: var(--swm-device-icon-background-selected);
+  color: var(--swm-device-icon-selected);
 }
 
 .device-select-label {

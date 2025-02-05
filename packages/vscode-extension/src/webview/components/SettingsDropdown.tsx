@@ -11,6 +11,9 @@ import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
+import { SendFeedbackItem } from "./SendFeedbackItem";
+import { useTelemetry } from "../providers/TelemetryProvider";
+import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -20,18 +23,21 @@ interface SettingsDropdownProps {
 }
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
-  const { panelLocation, update } = useWorkspaceConfig();
+  const { panelLocation, themeType, update } = useWorkspaceConfig();
   const { openModal } = useModal();
   const { movePanelToNewWindow, reportIssue } = useUtils();
+  const { telemetryEnabled } = useTelemetry();
 
   return (
-    <DropdownMenu.Root>
+    <DropdownMenuRoot>
       <DropdownMenu.Trigger asChild disabled={disabled}>
         {children}
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="dropdown-menu-content">
+        <DropdownMenu.Content
+          className="dropdown-menu-content"
+          onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
@@ -142,9 +148,38 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <div className="dropdown-menu-item-content">Report Issue</div>
             </span>
           </DropdownMenu.Item>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+              <span className="codicon codicon-layout" />
+              Theme
+              <span className="codicon codicon-chevron-right right-slot" />
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent
+                className="dropdown-menu-subcontent"
+                sideOffset={2}
+                alignOffset={-5}>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => update("themeType", "vscode")}>
+                  VScode theme
+                  {themeType === "vscode" && <span className="codicon codicon-check right-slot" />}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => update("themeType", "built-in")}>
+                  Built in theme
+                  {themeType === "built-in" && (
+                    <span className="codicon codicon-check right-slot" />
+                  )}
+                </DropdownMenu.Item>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
+          {telemetryEnabled && <SendFeedbackItem />}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    </DropdownMenuRoot>
   );
 }
 

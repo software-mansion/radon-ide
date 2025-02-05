@@ -14,6 +14,7 @@ button {
   height: 26px;
   gap: 5px;
   color: var(--swm-default-text);
+  border: 1px solid var(--swm-select-border);
   background-color: var(--swm-select-background);
   cursor: pointer;
   box-shadow: var(--swm-select-shadow);

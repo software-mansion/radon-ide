@@ -1,4 +1,4 @@
-import { commands, Disposable, ExtensionContext, window } from "vscode";
+import { commands, window } from "vscode";
 import { ExpoDevPluginWebviewProvider } from "./ExpoDevPluginWebviewProvider";
 import { ToolPlugin, ToolsManager } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";

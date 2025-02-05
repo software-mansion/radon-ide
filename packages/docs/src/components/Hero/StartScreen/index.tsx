@@ -109,7 +109,7 @@ const StartScreen = () => {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}>
-              <SecondaryButton title="View demo" onClick={handleDialogOpen} />
+              <SecondaryButton title="Watch demo" onClick={handleDialogOpen} />
             </motion.div>
           </div>
           <motion.div

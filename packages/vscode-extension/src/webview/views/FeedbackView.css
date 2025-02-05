@@ -1,0 +1,68 @@
+.feedback-textarea {
+  flex: 1;
+  height: auto;
+  padding: 8px;
+  margin: 0 4px;
+  border-radius: 4px;
+  line-height: 1.5;
+  box-shadow: var(--swm-input-shadow);
+  font-family: var(--font-family);
+  resize: none;
+}
+
+.feedback-textarea::placeholder {
+  color: var(--swm-secondary-text);
+}
+
+.feedback-buttons-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.feedback-button-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.feedback-button-label {
+  color: var(--swm-default-text);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.feedback-label-optional {
+  color: var(--swm-secondary-text);
+  font-weight: normal;
+  margin-left: 0;
+}
+
+.feedback-report-issue {
+  line-height: 1.5;
+  color: var(--swm-secondary-text);
+}
+
+.feedback-report-issue a {
+  color: var(--swm-default-text);
+}
+
+.feedback-report-issue a:hover {
+  text-decoration: underline;
+}
+
+.feedback-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.feedback-thank-you {
+  color: var(--swm-default-text);
+  font-weight: 500;
+  font-size: 18px;
+  text-align: center;
+}

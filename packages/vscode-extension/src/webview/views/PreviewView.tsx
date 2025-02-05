@@ -14,13 +14,7 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import {
-  Frame,
-  InspectDataStackItem,
-  InspectStackData,
-  RecordingData,
-  ZoomLevelType,
-} from "../../common/Project";
+import { Frame, InspectDataStackItem, InspectStackData, ZoomLevelType } from "../../common/Project";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import "./View.css";
@@ -29,8 +23,6 @@ import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
-
-const MAX_RECORDING_TIME_SEC = 10 * 60;
 
 type LoadingComponentProps = {
   finishedInitialLoad: boolean;
@@ -65,7 +57,15 @@ function ActivateLicenseButton() {
 }
 
 function PreviewView() {
-  const { projectState, project, deviceSettings, hasActiveLicense } = useProject();
+  const {
+    projectState,
+    project,
+    deviceSettings,
+    hasActiveLicense,
+    replayData,
+    isRecording,
+    setReplayData,
+  } = useProject();
   const { showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
@@ -80,9 +80,7 @@ function PreviewView() {
   );
   const [logCounter, setLogCounter] = useState(0);
   const [resetKey, setResetKey] = useState(0);
-  const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [replayData, setReplayData] = useState<RecordingData | undefined>(undefined);
   const { devices, finishedInitialLoad } = useDevices();
 
   const selectedDevice = projectState?.selectedDevice;
@@ -95,7 +93,7 @@ function PreviewView() {
   });
 
   const { openModal } = useModal();
-  const { openFileAt, saveVideoRecording } = useUtils();
+  const { openFileAt } = useUtils();
 
   useEffect(() => {
     function incrementLogCounter() {
@@ -128,6 +126,18 @@ function PreviewView() {
     };
   }, []);
 
+  useEffect(() => {
+    if (isRecording) {
+      const interval = setInterval(() => {
+        setRecordingTime((prevRecordingTime) => prevRecordingTime + 1);
+      }, 1000);
+      return () => {
+        setRecordingTime(0);
+        clearInterval(interval);
+      };
+    }
+  }, [isRecording]);
+
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
       openModal("Manage Devices", <ManageDevicesView />);
@@ -143,17 +153,11 @@ function PreviewView() {
 
   function startRecording() {
     project.startRecording();
-    setIsRecording(true);
   }
 
-  async function stopRecording(saveVideo = true) {
+  async function stopRecording() {
     try {
-      setIsRecording(false);
-      setRecordingTime(0);
-      const recordingData = await project.captureAndStopRecording();
-      if (saveVideo && recordingTime > 0) {
-        saveVideoRecording(recordingData);
-      }
+      project.captureAndStopRecording();
     } catch (e) {
       showDismissableError("Failed to capture recording");
     }
@@ -167,27 +171,16 @@ function PreviewView() {
     }
   }
 
-  useEffect(() => {
-    if (isRecording) {
-      const interval = setInterval(() => {
-        setRecordingTime((prevRecordingTime) => {
-          if (prevRecordingTime >= MAX_RECORDING_TIME_SEC - 1) {
-            stopRecording(false);
-            return 0;
-          }
-          return prevRecordingTime + 1;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isRecording]);
-
   async function handleReplay() {
     try {
-      setReplayData(await project.captureReplay());
+      await project.captureReplay();
     } catch (e) {
       showDismissableError("Failed to capture replay");
     }
+  }
+
+  async function captureScreenshot() {
+    project.captureScreenshot();
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
@@ -241,6 +234,14 @@ function PreviewView() {
             <ReplayIcon />
           </IconButton>
         )}
+        <IconButton
+          tooltip={{
+            label: "Capture a screenshot of the app",
+          }}
+          onClick={captureScreenshot}
+          disabled={isStarting}>
+          <span slot="start" className="codicon codicon-device-camera" />
+        </IconButton>
         <IconButton
           counter={logCounter}
           onClick={() => {

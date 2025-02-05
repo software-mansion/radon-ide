@@ -345,7 +345,12 @@ export class Metro implements Disposable {
   }
 
   private filterNewDebuggerPages(listJson: CDPTargetDescription[]) {
-    return listJson.filter((page) => page.reactNative);
+    return listJson.filter(
+      (page) =>
+        page.reactNative &&
+        (page.title.startsWith("React Native Bridge") ||
+          page.description.endsWith("[C++ connection]"))
+    );
   }
 
   private async isActiveExpoGoAppRuntime(webSocketDebuggerUrl: string) {

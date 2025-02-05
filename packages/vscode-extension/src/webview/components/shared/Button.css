@@ -4,12 +4,13 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  height: 36px;
+  height: var(--swm-button-size);
   padding: 0 12px;
   background: none;
   border: 0px solid transparent;
   border-radius: 10px;
   color: var(--swm-button);
+  background-color: var(--swm-button-background);
   transition: all 200ms 0ms ease-in-out;
   user-select: none;
   gap: 8px;

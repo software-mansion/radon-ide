@@ -1,6 +1,6 @@
 .alert-dialog-content {
   background-color: var(--swm-popover-background);
-  border-radius: 36px;
+  border-radius: var(--swm-button-size);
   display: grid;
   grid-template-columns: 50px 1fr min-content;
   gap: 4px;

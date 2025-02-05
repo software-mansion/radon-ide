@@ -6,6 +6,7 @@ import { useModal } from "../providers/ModalProvider";
 import { formatDisplayName, MAX_DEVICE_NAME_LENGTH } from "../views/CreateDeviceView";
 import Label from "../components/shared/Label";
 import { useProject } from "../providers/ProjectProvider";
+import { Input } from "./shared/Input";
 
 function DeviceRenameDialog({
   deviceInfo,
@@ -39,10 +40,10 @@ function DeviceRenameDialog({
         <Label>
           <span>New Name</span>
         </Label>
-        <input
+        <Input
           value={displayName}
           className="device-name-input"
-          style={isDisplayNameValid ? {} : { border: "1px solid var(--red-light-100)" }}
+          data-error={!isDisplayNameValid}
           type="string"
           onChange={handleDisplayNameChange}
         />
