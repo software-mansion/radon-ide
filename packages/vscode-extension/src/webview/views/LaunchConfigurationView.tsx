@@ -56,7 +56,7 @@ function LaunchConfigurationView() {
 
       {easBuildProfiles.length > 0 && (
         <>
-          <Label>eas Build</Label>
+          <Label>EAS Build</Label>
           <EasBuildConfiguration
             platform="ios"
             eas={eas}
@@ -304,7 +304,7 @@ function EasBuildConfiguration({
 
   const onSchemeChange = (newProfile: string) => {
     if (newProfile === DISABLED) {
-      let newEasConfig: EasConfig | undefined = { ...eas, [platform]: undefined };
+      const newEasConfig: EasConfig | undefined = { ...eas, [platform]: undefined };
       update("eas", newEasConfig);
       return;
     }
@@ -318,7 +318,7 @@ function EasBuildConfiguration({
   };
 
   const onBuildUUIDInputBlur = () => {
-    let newBuildUUID = buildUUIDInputRef.current?.value || undefined;
+    const newBuildUUID = buildUUIDInputRef.current?.value || undefined;
     const platformConfig = eas?.[platform];
     if (platformConfig === undefined) {
       return;
