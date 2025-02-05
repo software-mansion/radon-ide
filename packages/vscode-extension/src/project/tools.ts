@@ -42,10 +42,6 @@ export class ToolsManager implements Disposable {
     this.handleStateChange();
   }
 
-  public getPlugin(toolName: ToolKey): ToolPlugin | undefined {
-    return this.plugins.get(toolName);
-  }
-
   dispose() {
     this.activePlugins.forEach((plugin) => plugin.deactivate());
     this.activePlugins.clear();
