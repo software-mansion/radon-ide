@@ -83,7 +83,12 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     (!!eas?.ios && projectState.selectedDevice?.platform === DevicePlatform.IOS);
 
   if (isEasBuild) {
-    description = "Your Project Eas build has failed, see extension logs to see what went wrong.";
+    if (dependencies.easCli?.status === "notInstalled") {
+      description =
+        "Your project uses EAS build, but eas-cli is not installed. Install it and run the build again.";
+    } else {
+      description = "Your project EAS build has failed, see extension logs to see what went wrong.";
+    }
     actions = <BuildErrorActions logsButtonDestination="extension" />;
   }
 

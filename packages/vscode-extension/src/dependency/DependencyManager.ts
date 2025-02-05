@@ -29,6 +29,7 @@ import { Platform } from "../utilities/platform";
 import { requireNoCache } from "../utilities/requireNoCache";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { DevicePlatform } from "../common/DeviceManager";
+import { isEasCliInstalled } from "../builders/easCommand";
 
 export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
@@ -78,6 +79,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
     this.checkProjectUsesExpoRouter();
     this.checkProjectUsesStorybook();
+    this.checkEasCliInstallationStatus();
   }
 
   public async checkAndroidDirectoryExits() {
@@ -309,6 +311,15 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       isOptional: false,
     });
     return !failed;
+  }
+
+  public async checkEasCliInstallationStatus() {
+    const installed = await isEasCliInstalled();
+    this.emitEvent("easCli", {
+      status: installed ? "installed" : "notInstalled",
+      isOptional: true,
+    });
+    return;
   }
 }
 
