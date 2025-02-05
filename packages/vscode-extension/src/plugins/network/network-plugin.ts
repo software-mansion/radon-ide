@@ -20,8 +20,8 @@ class NetworkCDPWebsocketBackend implements Disposable {
 
       ws.on("message", (message) => {
         try {
-          const payload = JSON.parse(message);
-          const response = { id: message.id, result: {} };
+          const payload = JSON.parse(message.toString());
+          const response = { id: payload.id, result: {} };
           ws.send(JSON.stringify(response));
         } catch (err) {
           console.error("Network CDP invalid message format:", err);

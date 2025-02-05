@@ -48,8 +48,6 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
         url: xhr._url,
         method: xhr._method,
         headers: xhr._headers,
-        // postData: data.data,
-        // hasPostData: !!data.data,
       },
       type: "XHR",
       initiator: {
