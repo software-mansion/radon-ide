@@ -14,13 +14,14 @@ import {
   LaunchConfigUpdater,
   LaunchConfigurationOptions,
 } from "../../common/LaunchConfig";
+import { EasBuildConfig } from "../../common/EasConfig";
 
 const launchConfig = makeProxy<LaunchConfig>("LaunchConfig");
 
 type LaunchConfigContextType = LaunchConfigurationOptions & {
   update: LaunchConfigUpdater;
   xcodeSchemes: string[];
-  easBuildProfiles: string[];
+  easBuildProfiles: EasBuildConfig;
   eas?: {
     ios?: EasConfig;
     android?: EasConfig;
@@ -30,13 +31,13 @@ type LaunchConfigContextType = LaunchConfigurationOptions & {
 const LaunchConfigContext = createContext<LaunchConfigContextType>({
   update: () => {},
   xcodeSchemes: [],
-  easBuildProfiles: [],
+  easBuildProfiles: {},
 });
 
 export default function LaunchConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<LaunchConfigurationOptions>({});
   const [xcodeSchemes, setXcodeSchemes] = useState<string[]>([]);
-  const [easBuildProfiles, setEasBuildProfiles] = useState<string[]>([]);
+  const [easBuildProfiles, setEasBuildProfiles] = useState<EasBuildConfig>({});
 
   useEffect(() => {
     launchConfig.getConfig().then(setConfig);

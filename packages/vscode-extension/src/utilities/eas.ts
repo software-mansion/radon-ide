@@ -1,20 +1,5 @@
 import { RelativePattern, Uri, workspace } from "vscode";
-
-export interface EasConfig {
-  build?: EasBuildConfig;
-}
-
-export type EasBuildConfig = {
-  [key: string]: EasBuildProfile;
-};
-
-export interface EasBuildProfile {}
-
-function isEasConfig(obj: unknown): obj is EasConfig {
-  return (
-    typeof obj === "object" && obj !== null && !("build" in obj && typeof obj.build !== "object")
-  );
-}
+import { EasConfig, isEasConfig } from "../common/EasConfig";
 
 export async function readEasConfig(appRootFolder: string | Uri): Promise<EasConfig | null> {
   const easConfigUri = await workspace.findFiles(

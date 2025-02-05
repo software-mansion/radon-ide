@@ -10,6 +10,7 @@ import {
 } from "../../common/LaunchConfig";
 import Select from "../components/shared/Select";
 import { Input } from "../components/shared/Input";
+import { EasBuildConfig } from "../../common/EasConfig";
 
 function LaunchConfigurationView() {
   const {
@@ -58,7 +59,7 @@ function LaunchConfigurationView() {
 
       <div className="launch-configuration-section-margin" />
 
-      {easBuildProfiles.length > 0 && (
+      {!!easBuildProfiles && (
         <>
           <Label>EAS Build</Label>
           <EasBuildConfiguration
@@ -274,8 +275,8 @@ function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
   );
 }
 
-type EasBuildConfig = NonNullable<LaunchConfigurationOptions["eas"]>;
-type EasPlatform = keyof EasBuildConfig;
+type EasLaunchConfig = NonNullable<LaunchConfigurationOptions["eas"]>;
+type EasPlatform = keyof EasLaunchConfig;
 
 function prettyPlatformName(platform: EasPlatform): string {
   switch (platform) {
@@ -287,10 +288,10 @@ function prettyPlatformName(platform: EasPlatform): string {
 }
 
 interface easBuildConfigurationProps {
-  eas?: EasBuildConfig;
+  eas?: EasLaunchConfig;
   platform: EasPlatform;
   update: LaunchConfigUpdater;
-  easBuildProfiles: string[];
+  easBuildProfiles: EasBuildConfig;
 }
 
 function EasBuildConfiguration({
@@ -309,7 +310,7 @@ function EasBuildConfiguration({
     if (profile === undefined) {
       return DISABLED;
     }
-    if (!easBuildProfiles.includes(profile)) {
+    if (!(profile in easBuildProfiles)) {
       return CUSTOM;
     }
     return profile;
@@ -359,12 +360,17 @@ function EasBuildConfiguration({
     updateEasConfig({ buildUUID: newBuildUUID });
   };
 
-  const availableEasBuildProfiles = easBuildProfiles.map((buildProfile) => {
-    return { value: buildProfile, label: buildProfile };
-  });
+  const availableEasBuildProfiles = Object.entries(easBuildProfiles).map(
+    ([buildProfile, config]) => {
+      const canRunInSimulator =
+        config.distribution === "internal" &&
+        (platform !== "ios" || config.ios?.simulator === true);
+      return { value: buildProfile, label: buildProfile, disabled: !canRunInSimulator };
+    }
+  );
 
-  availableEasBuildProfiles.push({ value: DISABLED, label: DISABLED });
-  availableEasBuildProfiles.push({ value: CUSTOM, label: CUSTOM });
+  availableEasBuildProfiles.push({ value: DISABLED, label: DISABLED, disabled: false });
+  availableEasBuildProfiles.push({ value: CUSTOM, label: CUSTOM, disabled: false });
 
   return (
     <div className="launch-configuration-container">

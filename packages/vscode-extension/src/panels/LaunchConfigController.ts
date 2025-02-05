@@ -11,6 +11,7 @@ import { findXcodeProject, findXcodeScheme } from "../utilities/xcode";
 import { Logger } from "../Logger";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { readEasConfig } from "../utilities/eas";
+import { EasBuildConfig } from "../common/EasConfig";
 
 export class LaunchConfigController implements Disposable, LaunchConfig {
   private config: LaunchConfigurationOptions;
@@ -108,11 +109,11 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
     return await findXcodeScheme(xcodeProject);
   }
 
-  async getAvailableEasProfiles(): Promise<string[]> {
+  async getAvailableEasProfiles(): Promise<EasBuildConfig> {
     const appRootFolder = getAppRootFolder();
     const easConfig = await readEasConfig(appRootFolder);
     const easBuildConfig = easConfig?.build ?? {};
-    return Object.keys(easBuildConfig);
+    return easBuildConfig;
   }
 
   async addListener<K extends keyof LaunchConfigEventMap>(
