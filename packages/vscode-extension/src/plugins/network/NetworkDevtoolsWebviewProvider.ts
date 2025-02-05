@@ -23,8 +23,8 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
       localResourceRoots: [baseUri],
     };
 
-    const project = IDE.getOrCreateInstance(this.context).project;
-    const wsPort = (project.toolsManager.getPlugin("network") as NetworkPlugin)?.websocketPort;
+    const project = IDE.getInstanceIfExists()?.project;
+    const wsPort = (project?.toolsManager.getPlugin("network") as NetworkPlugin)?.websocketPort;
     if (!wsPort) {
       throw new Error("Couldn't retrieve websocket port from network plugin");
     }
