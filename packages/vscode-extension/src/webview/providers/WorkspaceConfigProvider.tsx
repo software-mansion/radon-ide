@@ -66,7 +66,7 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
   if (!initialized) {
     return null;
   }
-  
+
   return (
     <WorkspaceConfigContext.Provider value={contextValue}>
       {children}

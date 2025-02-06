@@ -25,17 +25,17 @@ root.render(
       <ProjectProvider>
         <UtilsProvider>
           <TelemetryProvider>
-              <LaunchConfigProvider>
-                <DevicesProvider>
-                  <DependenciesProvider>
-                    <ModalProvider>
-                      <AlertProvider>
-                        <App />
-                      </AlertProvider>
-                    </ModalProvider>
-                  </DependenciesProvider>
-                </DevicesProvider>
-              </LaunchConfigProvider>
+            <LaunchConfigProvider>
+              <DevicesProvider>
+                <DependenciesProvider>
+                  <ModalProvider>
+                    <AlertProvider>
+                      <App />
+                    </AlertProvider>
+                  </ModalProvider>
+                </DependenciesProvider>
+              </DevicesProvider>
+            </LaunchConfigProvider>
           </TelemetryProvider>
         </UtilsProvider>
       </ProjectProvider>
