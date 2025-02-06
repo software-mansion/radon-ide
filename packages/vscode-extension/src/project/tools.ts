@@ -11,10 +11,11 @@ import {
   REDUX_PLUGIN_ID,
   createReduxDevtools,
 } from "../plugins/redux-devtools-plugin/redux-devtools-plugin";
+import { REACT_QUERY_PLUGIN_ID, createREACT_QUERYDevtools } from "../plugins/react-query-devtools-plugin/react-query-devtools-plugin";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
-export type ToolKey = ExpoDevPluginToolName | typeof REDUX_PLUGIN_ID;
+export type ToolKey = ExpoDevPluginToolName | typeof REDUX_PLUGIN_ID | typeof REACT_QUERY_PLUGIN_ID;
 
 export interface ToolPlugin extends Disposable {
   id: ToolKey;
@@ -41,6 +42,9 @@ export class ToolsManager implements Disposable {
     }
     const reduxPlugin = createReduxDevtools(this);
     this.plugins.set(reduxPlugin.id, reduxPlugin);
+    
+    const reactQueryPlugin = createREACT_QUERYDevtools(this);
+    this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 
     this.handleStateChange();
   }

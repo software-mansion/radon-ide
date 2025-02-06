@@ -12,6 +12,7 @@ const {
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
 const { useReduxDevTools, isProxyClientReady, clearProxyClient } = require("./plugins/redux-devtools");
+const { useReactQueryDevTools } = require("./plugins/react-query-devtools");
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
@@ -205,6 +206,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const mainContainerRef = useRef();
   
   useReduxDevTools(devtoolsAgent);
+  useReactQueryDevTools(devtoolsAgent);
 
   const mountCallback = initialProps?.__RNIDE_onMount;
   useEffect(() => {

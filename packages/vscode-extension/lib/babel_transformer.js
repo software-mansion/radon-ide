@@ -57,6 +57,8 @@ function transformWrapper({ filename, src, ...rest }) {
     return filename.endsWith(path.normalize(unixPath));
   }
 
+  // console.log("---> filename", filename);
+
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
   if (isTransforming("node_modules/react-native/Libraries/Core/InitializeCore.js")) {
     src = `${src};require("__RNIDE_lib__/runtime.js");`;
@@ -113,6 +115,8 @@ function transformWrapper({ filename, src, ...rest }) {
       const rendererFileName = filename.split(path.sep).pop();
       src = `module.exports = require("__RNIDE_lib__/rn-renderer/${rendererFileName}");`;
     }
+  } else if (isTransforming("node_modules/@tanstack/query-core/build/legacy/queryClient.cjs")) {
+    src = src.replace('mount() {', 'mount() { global.__RNIDE_REACT_QUERY_CLIENT_INIT__?.(this);');
   }
 
   return transform({ filename, src, ...rest });

@@ -1,64 +1,6 @@
 const { useEffect } = require("react");
 const {createComposeWithDevTools} = require('./external/redux-devtools-expo-dev-plugin');
-
-class RNIDEProxyClient {
-  scope;
-  listeners = new Map();
-  devtoolsAgent = undefined; 
-
-  constructor(scope) {
-    this.scope = scope;
-  }
-
-  handleMessages= (data) =>{
-    const listeners = this.listeners.get(data.type) || [];
-    listeners.forEach((listener) => listener(data.data));
-  };
-
-  setDevtoolsAgent = (agent) =>  {
-    if (!agent) {
-      return;
-    }
-    this.devtoolsAgent = agent;
-    this.devtoolsAgent._bridge.addListener(this.scope, this.handleMessages);
-  };
-
-  clearDevToolsAgent = () => {
-    if (!this.devtoolsAgent) {
-      return;
-    }
-
-    this.devtoolsAgent._bridge.removeListener(this.scope, this.handleMessages);
-    this.devtoolsAgent = undefined;
-  };
-
-  sendMessage = (type, data) => {
-    if (!this.devtoolsAgent) {
-      return;
-    }
-
-    this.devtoolsAgent._bridge.send(this.scope, {
-      type,
-      data,
-    });
-  };
-
-  addMessageListener = (type, listener) => {
-    const currentListeners = this.listeners.get(type) || [];
-    this.listeners.set(type, [...currentListeners, listener]);
-  };
-
-  removeMessageListener = (type, listener) => {
-    const currentListeners = this.listeners.get(type) || [];
-    const filteredListeners = currentListeners.filter((l) => l !== listener);
-    this.listeners.set(type, filteredListeners);
-  };
-
-  closeAsync = () => {
-    this.clearDevToolsAgent();
-    this.listeners.clear();
-  };
-}
+const {RNIDEProxyClient} = require('./utils');
 
 let proxyClient = null;
 
@@ -68,7 +10,7 @@ export const clearProxyClient = () => proxyClient = null;
 
 export const createRNIDEProxyClientAsync = async () => {
   if (proxyClient !== null) {
-    return ProxyClient;
+    return proxyClient;
   }
   
   proxyClient = new RNIDEProxyClient('RNIDE-redux-devtools');

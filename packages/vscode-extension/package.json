@@ -203,6 +203,11 @@
           "id": "RadonIDEToolReduxDevTools",
           "title": "Redux",
           "icon": "assets/redux.svg"
+        },
+        {
+          "id": "RadonIDEToolReactQueryDevTools",
+          "title": "React Query",
+          "icon": "assets/react-query.svg"
         }
       ]
     },
@@ -245,6 +250,14 @@
           "id": "RNIDE.Tool.ReduxDevTools.view",
           "name": "",
           "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
+        }
+      ],
+      "RadonIDEToolReactQueryDevTools": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ReactQueryDevTools.view",
+          "name": "",
+          "when": "RNIDE.Tool.ReactQueryDevTools.available && RNIDE.panelIsOpen"
         }
       ]
     },
