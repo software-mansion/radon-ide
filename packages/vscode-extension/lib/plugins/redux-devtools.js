@@ -15,7 +15,7 @@ class RNIDEAppExtensionProxy {
     listeners.forEach((listener) => listener(data.data));
   };
 
-  setDevtoolsAgent = (agent) =>  {
+  setDevtoolsAgent(agent)  {
     if (!agent) {
       return;
     }
@@ -23,7 +23,7 @@ class RNIDEAppExtensionProxy {
     this.devtoolsAgent._bridge.addListener(this.scope, this.handleMessages);
   };
 
-  clearDevToolsAgent = () => {
+  clearDevToolsAgent() {
     if (!this.devtoolsAgent) {
       return;
     }
@@ -32,7 +32,7 @@ class RNIDEAppExtensionProxy {
     this.devtoolsAgent = undefined;
   };
 
-  sendMessage = (type, data) => {
+  sendMessage(type, data) {
     if (!this.devtoolsAgent) {
       return;
     }
@@ -43,18 +43,18 @@ class RNIDEAppExtensionProxy {
     });
   };
 
-  addMessageListener = (type, listener) => {
+  addMessageListener(type, listener) {
     const currentListeners = this.listeners.get(type) || [];
     this.listeners.set(type, [...currentListeners, listener]);
   };
 
-  removeMessageListener = (type, listener) => {
+  removeMessageListener(type, listener) {
     const currentListeners = this.listeners.get(type) || [];
     const filteredListeners = currentListeners.filter((l) => l !== listener);
     this.listeners.set(type, filteredListeners);
   };
 
-  closeAsync = () => {
+  closeAsync() {
     this.clearDevToolsAgent();
     this.listeners.clear();
   };
@@ -80,9 +80,11 @@ window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = createComposeWithDevTools(createRN
 
 export const useReduxDevTools = (devtoolsAgent) => {
   useEffect(() => {
-    proxyClient?.setDevtoolsAgent(devtoolsAgent);
+    const clear = proxyClient?.setDevtoolsAgent(devtoolsAgent);
 
     return () => {
+      console.log("CLEAR", clear);
+      clear?.();
       proxyClient?.clearDevToolsAgent();
     };
   }, [devtoolsAgent]);
