@@ -85,7 +85,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   if (isEasBuild) {
     if (dependencies.easCli?.status === "notInstalled") {
       description =
-        "Your project uses EAS build, but eas-cli is not installed. Install it and run the build again.";
+        "Your project uses EAS build, but eas-cli is not installed. Install it and reload the app.";
     } else {
       description = "Your project EAS build has failed, see extension logs to see what went wrong.";
     }
