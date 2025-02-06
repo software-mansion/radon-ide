@@ -10,7 +10,7 @@ class RNIDEAppExtensionProxy {
     this.scope = scope;
   }
 
-  handleMessages= (data) =>{
+  handleMessages = (data) => {
     const listeners = this.listeners.get(data.type) || [];
     listeners.forEach((listener) => listener(data.data));
   };
