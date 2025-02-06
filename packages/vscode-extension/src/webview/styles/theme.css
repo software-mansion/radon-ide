@@ -636,7 +636,7 @@ body[data-use-code-theme="true"] {
   --swm-url-select-separator: var(--vscode-dropdown-border);
 
   /* Debugger */
-  --swm-debugger-label: var(--vscode-foreground);
+  --swm-debugger-label: var(--off-white);
   --swm-debugger-button-group: var(--vscode-foreground);
   --swm-debugger-button-group-background: var(--vscode-dropdown-background);
   --swm-debugger-button-group-border: 1px solid var(--vscode-dropdown-border);
