@@ -1,6 +1,6 @@
 import { EventEmitter } from "stream";
 import os from "os";
-import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
+import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import _ from "lodash";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
@@ -253,7 +253,14 @@ export class Project
   //#endregion
 
   async dispatchPaste(text: string) {
-    await this.deviceSession?.sendPaste(text);
+    await this.deviceSession?.sendClipboard(text);
+  }
+
+  async dispatchCopy() {
+    const text = await this.deviceSession?.getClipboard();
+    if (text) {
+      env.clipboard.writeText(text);
+    }
   }
 
   onBundleError(): void {

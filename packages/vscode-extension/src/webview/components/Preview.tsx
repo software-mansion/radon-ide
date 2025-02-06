@@ -347,19 +347,24 @@ function Preview({
   }, []);
 
   useEffect(() => {
-    function dispatchPaste(e: ClipboardEvent) {
+    function synchronizeClipboard(e: ClipboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
 
         const text = e.clipboardData?.getData("text");
         if (text) {
           project.dispatchPaste(text);
+        } else {
+          project.dispatchCopy();
         }
       }
     }
-    addEventListener("paste", dispatchPaste);
+
+    addEventListener("paste", synchronizeClipboard);
+    addEventListener("copy", synchronizeClipboard);
     return () => {
-      removeEventListener("paste", dispatchPaste);
+      removeEventListener("paste", synchronizeClipboard);
+      removeEventListener("copy", synchronizeClipboard);
     };
   }, [project]);
 

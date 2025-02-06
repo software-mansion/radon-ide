@@ -191,7 +191,9 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write(`key ${direction} ${keyCode}\n`);
   }
 
-  public async sendPaste(text: string) {
-    this.subprocess?.stdin?.write(`paste ${text}\n`);
+  public sendClipboard(text: string) {
+    // This is bad, but prevents simulator server going crazy with multiline pastes
+    // If we want to support multiline pastes we need to change the communication protocol
+    this.subprocess?.stdin?.write(`paste ${text.replace(/(?:\r\n|\r|\n)/g, " ")}\n`);
   }
 }
