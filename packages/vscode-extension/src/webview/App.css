@@ -5,7 +5,14 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+}
+
+body[data-use-code-theme] #root {
   background-color: var(--swm-preview-background);
+}
+
+body[data-use-code-theme=""] #root {
+  background-color: inherit;
 }
 
 main {
