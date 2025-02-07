@@ -11,7 +11,6 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
-const { enableNetworkInspect } = require("./network");
 const { useReduxDevTools, isReduxDevToolsReady } = require("./plugins/redux-devtools");
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
@@ -34,6 +33,9 @@ let navigationHistory = new Map();
 const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
+  },
+  get enableNetworkInspect() {
+    return require("./network").enableNetworkInspect;
   },
 };
 
@@ -349,7 +351,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     devtoolsAgent,
     "RNIDE_enableNetworkInspect",
     (payload) => {
-      enableNetworkInspect(devtoolsAgent, payload);
+      InternalImports.enableNetworkInspect(devtoolsAgent, payload);
     },
     []
   );
@@ -398,9 +400,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
         });
       };
       devtoolsAgent._bridge.send("RNIDE_pluginsChanged", {
-        plugins: [
-          isReduxDevToolsReady() && "RNIDE-redux-devtools",
-        ].filter(Boolean),
+        plugins: [isReduxDevToolsReady() && "RNIDE-redux-devtools"].filter(Boolean),
       });
       return () => {
         expoDevPluginsChanged = undefined;
