@@ -210,6 +210,7 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
 
   --swm-button-counter: var(--off-white);
   --swm-button-counter-background: var(--navy-light-60);
+  --swm-button-counter-border: var(--navy-light-60);
 
   --swm-button-recording-on-background: var(--navy-light-60);
   --swm-button-replay-hover: var(--navy-light-transparent);
@@ -383,6 +384,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
 
   --swm-button-counter: var(--off-white);
   --swm-button-counter-background: var(--background-dark-40);
+  --swm-button-counter-border: var(--background-dark-40);
 
   --swm-button-recording-on-background: var(--background-dark-40);
   --swm-button-replay-hover: var(--background-dark-160);
@@ -564,8 +566,9 @@ body[data-use-code-theme="true"] {
   --swm-button-ternary-background: var(--vscode-button-background);
   --swm-button-ternary-hover: var(--vscode-button-hoverBackground);
 
-  --swm-button-counter: var(--vscode-input-background);
-  --swm-button-counter-background: var(--vscode-input-foreground);
+  --swm-button-counter: var(--vscode-badge-foreground);
+  --swm-button-counter-background: var(--vscode-badge-background);
+  --swm-button-counter-border: var(--vscode-contrastBorder);
 
   --swm-button-recording-on-background: var(--navy-light-60);
   --swm-button-replay-hover: var(--navy-light-transparent);
