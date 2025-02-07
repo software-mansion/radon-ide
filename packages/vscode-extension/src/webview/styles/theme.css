@@ -564,8 +564,8 @@ body[data-use-code-theme="true"] {
   --swm-button-ternary-background: var(--vscode-button-background);
   --swm-button-ternary-hover: var(--vscode-button-hoverBackground);
 
-  --swm-button-counter: var(--vscode-button-foreground);
-  --swm-button-counter-background: var(--vscode-list-inactiveSelectionBackground);
+  --swm-button-counter: var(--vscode-input-background);
+  --swm-button-counter-background: var(--vscode-input-foreground);
 
   --swm-button-recording-on-background: var(--navy-light-60);
   --swm-button-replay-hover: var(--navy-light-transparent);
