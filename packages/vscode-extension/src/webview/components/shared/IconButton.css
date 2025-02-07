@@ -66,6 +66,7 @@
   border-radius: 4px;
   color: var(--swm-button-counter);
   background-color: var(--swm-button-counter-background);
+  border: 1px solid var(--swm-button-counter-border);
   padding: 2px 4px;
   font-size: 10px;
   position: absolute;
