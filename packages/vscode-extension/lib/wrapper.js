@@ -11,6 +11,7 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
+const { useReduxDevTools, isReduxDevToolsReady } = require("./plugins/redux-devtools");
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
@@ -202,6 +203,8 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
+  
+  useReduxDevTools(devtoolsAgent);
 
   const mountCallback = initialProps?.__RNIDE_onMount;
   useEffect(() => {
@@ -384,6 +387,11 @@ export function AppWrapper({ children, initialProps, fabric }) {
           plugins: Array.from(expoDevPlugins.values()),
         });
       };
+      devtoolsAgent._bridge.send("RNIDE_pluginsChanged", {
+        plugins: [
+          isReduxDevToolsReady() && "RNIDE-redux-devtools",
+        ].filter(Boolean),
+      });
       return () => {
         expoDevPluginsChanged = undefined;
       };

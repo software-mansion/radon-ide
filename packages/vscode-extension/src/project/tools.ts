@@ -7,10 +7,14 @@ import {
   createExpoDevPluginTools,
   ExpoDevPluginToolName,
 } from "../plugins/expo-dev-plugins/expo-dev-plugins";
+import {
+  REDUX_PLUGIN_ID,
+  createReduxDevtools,
+} from "../plugins/redux-devtools-plugin/redux-devtools-plugin";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
-export type ToolKey = ExpoDevPluginToolName;
+export type ToolKey = ExpoDevPluginToolName | typeof REDUX_PLUGIN_ID;
 
 export interface ToolPlugin extends Disposable {
   id: ToolKey;
@@ -35,6 +39,8 @@ export class ToolsManager implements Disposable {
     for (const plugin of createExpoDevPluginTools(this)) {
       this.plugins.set(plugin.id, plugin);
     }
+    const reduxPlugin = createReduxDevtools(this);
+    this.plugins.set(reduxPlugin.id, reduxPlugin);
 
     this.handleStateChange();
   }
