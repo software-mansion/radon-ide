@@ -24,7 +24,6 @@ const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
 });
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
-  const [initialized, setInitialized] = useState(false);
   const [config, setConfig] = useState<WorkspaceConfigProps>({
     panelLocation: "tab",
     showDeviceFrame: true,
@@ -34,7 +33,6 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
   useEffect(() => {
     function watchConfigChange(e: WorkspaceConfigProps) {
       document.body.setAttribute("data-use-code-theme", `${e.themeType === "vscode"}`);
-      setInitialized(true);
       setConfig(e);
     }
 
@@ -62,10 +60,6 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
   const contextValue = useMemo(() => {
     return { ...config, update };
   }, [config, update]);
-
-  if (!initialized) {
-    return null;
-  }
 
   return (
     <WorkspaceConfigContext.Provider value={contextValue}>
