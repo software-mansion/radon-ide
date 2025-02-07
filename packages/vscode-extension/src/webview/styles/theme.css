@@ -566,8 +566,8 @@ body[data-use-code-theme="true"] {
   --swm-button-ternary-background: var(--vscode-button-background);
   --swm-button-ternary-hover: var(--vscode-button-hoverBackground);
 
-  --swm-button-counter: var(--vscode-badge-foreground);
-  --swm-button-counter-background: var(--vscode-badge-background);
+  --swm-button-counter: var(--vscode-activityBarBadge-foreground);
+  --swm-button-counter-background: var(--vscode-activityBarBadge-background);
   --swm-button-counter-border: var(--vscode-contrastBorder);
 
   --swm-button-recording-on-background: var(--navy-light-60);
