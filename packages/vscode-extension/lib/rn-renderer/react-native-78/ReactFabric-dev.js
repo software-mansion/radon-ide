@@ -17,6 +17,52 @@ __DEV__ &&
         "The current renderer does not support mutation. This error is likely caused by a bug in React. Please file an issue."
       );
     }
+    function createHierarchy(fiberHierarchy) {
+      return fiberHierarchy.map(function (fiber$jscomp$0) {
+        return {
+          name: getComponentNameFromType(fiber$jscomp$0.type),
+          getInspectorData: function () {
+            var inspectData = {
+              props: getHostProps(fiber$jscomp$0),
+              measure: function (callback) {
+                var hostFiber = findCurrentHostFiber(fiber$jscomp$0);
+                if (
+                  (hostFiber =
+                    null != hostFiber &&
+                    null !== hostFiber.stateNode &&
+                    hostFiber.stateNode.node)
+                )
+                  nativeFabricUIManager.measure(hostFiber, callback);
+                else {
+                  hostFiber = ReactNativePrivateInterface.UIManager;
+                  var JSCompiler_temp_const = hostFiber.measure,
+                    JSCompiler_inline_result;
+                  a: {
+                    for (var fiber = fiber$jscomp$0; fiber; ) {
+                      null !== fiber.stateNode &&
+                        5 === fiber.tag &&
+                        (JSCompiler_inline_result = findNodeHandle(
+                          fiber.stateNode
+                        ));
+                      if (JSCompiler_inline_result) break a;
+                      fiber = fiber.child;
+                    }
+                    JSCompiler_inline_result = null;
+                  }
+                  return JSCompiler_temp_const.call(
+                    hostFiber,
+                    JSCompiler_inline_result,
+                    callback
+                  );
+                }
+              }
+            };
+            inspectData.source = fiber$jscomp$0._source;
+            return inspectData;
+          }
+        };
+      });
+    }
     function findHook(fiber, id) {
       for (fiber = fiber.memoizedState; null !== fiber && 0 < id; )
         (fiber = fiber.next), id--;
@@ -383,27 +429,6 @@ __DEV__ &&
       "function" === typeof fn && componentFrameCache.set(fn, sampleLines);
       return sampleLines;
     }
-    function formatOwnerStack(error) {
-      var prevPrepareStackTrace = Error.prepareStackTrace;
-      Error.prepareStackTrace = void 0;
-      error = error.stack;
-      Error.prepareStackTrace = prevPrepareStackTrace;
-      error.startsWith("Error: react-stack-top-frame\n") &&
-        (error = error.slice(29));
-      prevPrepareStackTrace = error.indexOf("\n");
-      -1 !== prevPrepareStackTrace &&
-        (error = error.slice(prevPrepareStackTrace + 1));
-      prevPrepareStackTrace = error.indexOf("react-stack-bottom-frame");
-      -1 !== prevPrepareStackTrace &&
-        (prevPrepareStackTrace = error.lastIndexOf(
-          "\n",
-          prevPrepareStackTrace
-        ));
-      if (-1 !== prevPrepareStackTrace)
-        error = error.slice(0, prevPrepareStackTrace);
-      else return "";
-      return error;
-    }
     function describeFiber(fiber) {
       switch (fiber.tag) {
         case 26:
@@ -453,11 +478,6 @@ __DEV__ &&
       } catch (x) {
         return "\nError generating stack: " + x.message + "\n" + x.stack;
       }
-    }
-    function describeFunctionComponentFrameWithoutLineNumber(fn) {
-      return (fn = fn ? fn.displayName || fn.name : "")
-        ? describeBuiltInComponentFrame(fn)
-        : "";
     }
     function getComponentNameFromType(type) {
       if (null == type) return null;
@@ -582,61 +602,7 @@ __DEV__ &&
       return null;
     }
     function getCurrentFiberStackInDev() {
-      if (null === current) return "";
-      var workInProgress = current;
-      try {
-        var info = "";
-        6 === workInProgress.tag && (workInProgress = workInProgress.return);
-        switch (workInProgress.tag) {
-          case 26:
-          case 27:
-          case 5:
-            info += describeBuiltInComponentFrame(workInProgress.type);
-            break;
-          case 13:
-            info += describeBuiltInComponentFrame("Suspense");
-            break;
-          case 19:
-            info += describeBuiltInComponentFrame("SuspenseList");
-            break;
-          case 0:
-          case 15:
-          case 1:
-            workInProgress._debugOwner ||
-              "" !== info ||
-              (info += describeFunctionComponentFrameWithoutLineNumber(
-                workInProgress.type
-              ));
-            break;
-          case 11:
-            workInProgress._debugOwner ||
-              "" !== info ||
-              (info += describeFunctionComponentFrameWithoutLineNumber(
-                workInProgress.type.render
-              ));
-        }
-        for (; workInProgress; )
-          if ("number" === typeof workInProgress.tag) {
-            var fiber = workInProgress;
-            workInProgress = fiber._debugOwner;
-            var debugStack = fiber._debugStack;
-            workInProgress &&
-              debugStack &&
-              ("string" !== typeof debugStack &&
-                (fiber._debugStack = debugStack = formatOwnerStack(debugStack)),
-              "" !== debugStack && (info += "\n" + debugStack));
-          } else if (null != workInProgress.debugStack) {
-            var ownerStack = workInProgress.debugStack;
-            (workInProgress = workInProgress.owner) &&
-              ownerStack &&
-              (info += "\n" + formatOwnerStack(ownerStack));
-          } else break;
-        var JSCompiler_inline_result = info;
-      } catch (x) {
-        JSCompiler_inline_result =
-          "\nError generating stack: " + x.message + "\n" + x.stack;
-      }
-      return JSCompiler_inline_result;
+      return null === current ? "" : getStackByFiberInDevAndProd(current);
     }
     function runWithFiberInDEV(fiber, callback, arg0, arg1, arg2, arg3, arg4) {
       var previousFiber = current;
@@ -645,11 +611,7 @@ __DEV__ &&
       isRendering = !1;
       current = fiber;
       try {
-        return null !== fiber && fiber._debugTask
-          ? fiber._debugTask.run(
-              callback.bind(null, arg0, arg1, arg2, arg3, arg4)
-            )
-          : callback(arg0, arg1, arg2, arg3, arg4);
+        return callback(arg0, arg1, arg2, arg3, arg4);
       } finally {
         current = previousFiber;
       }
@@ -1436,30 +1398,11 @@ __DEV__ &&
             var i = 0;
             i < dispatchListeners.length && !e.isPropagationStopped();
             i++
-          ) {
-            var listener = dispatchListeners[i],
-              instance = dispatchInstances[i];
-            null !== instance
-              ? runWithFiberInDEV(
-                  instance,
-                  executeDispatch,
-                  e,
-                  listener,
-                  instance
-                )
-              : executeDispatch(e, listener, instance);
-          }
+          )
+            executeDispatch(e, dispatchListeners[i], dispatchInstances[i]);
         else
           dispatchListeners &&
-            (null !== dispatchInstances
-              ? runWithFiberInDEV(
-                  dispatchInstances,
-                  executeDispatch,
-                  e,
-                  dispatchListeners,
-                  dispatchInstances
-                )
-              : executeDispatch(e, dispatchListeners, dispatchInstances));
+            executeDispatch(e, dispatchListeners, dispatchInstances);
         e._dispatchListeners = null;
         e._dispatchInstances = null;
         e.isPersistent() || e.constructor.release(e);
@@ -2037,6 +1980,24 @@ __DEV__ &&
         childFiber = childFiber.return;
       }
       return !1;
+    }
+    function bindToConsole(methodName, args, badgeName) {
+      var offset = 0;
+      switch (methodName) {
+        case "dir":
+        case "dirxml":
+        case "groupEnd":
+        case "table":
+          return bind.apply(console[methodName], [console].concat(args));
+        case "assert":
+          offset = 1;
+      }
+      args = args.slice(0);
+      "string" === typeof args[offset]
+        ? args.splice(offset, 1, "[%s] " + args[offset], " " + badgeName + " ")
+        : args.splice(offset, 0, "[%s] ", " " + badgeName + " ");
+      args.unshift(console);
+      return bind.apply(console[methodName], args);
     }
     function createCursor(defaultValue) {
       return { current: defaultValue };
@@ -3558,7 +3519,6 @@ __DEV__ &&
             )),
             (current.return = returnFiber),
             (current._debugOwner = returnFiber),
-            (current._debugTask = returnFiber._debugTask),
             (current._debugInfo = currentDebugInfo),
             current
           );
@@ -3633,7 +3593,6 @@ __DEV__ &&
             )),
             (current.return = returnFiber),
             (current._debugOwner = returnFiber),
-            (current._debugTask = returnFiber._debugTask),
             (current._debugInfo = currentDebugInfo),
             current
           );
@@ -3656,7 +3615,6 @@ __DEV__ &&
             )),
             (newChild.return = returnFiber),
             (newChild._debugOwner = returnFiber),
-            (newChild._debugTask = returnFiber._debugTask),
             (newChild._debugInfo = currentDebugInfo),
             newChild
           );
@@ -3704,7 +3662,6 @@ __DEV__ &&
               )),
               (lanes.return = returnFiber),
               (lanes._debugOwner = returnFiber),
-              (lanes._debugTask = returnFiber._debugTask),
               (returnFiber = pushDebugInfo(newChild._debugInfo)),
               (lanes._debugInfo = currentDebugInfo),
               (currentDebugInfo = returnFiber),
@@ -4234,7 +4191,6 @@ __DEV__ &&
                     )),
                     (lanes.return = returnFiber),
                     (lanes._debugOwner = returnFiber),
-                    (lanes._debugTask = returnFiber._debugTask),
                     (lanes._debugInfo = currentDebugInfo),
                     validateFragmentProps(newChild, lanes, returnFiber),
                     (returnFiber = lanes))
@@ -4401,7 +4357,6 @@ __DEV__ &&
                 )),
                 (lanes.return = returnFiber),
                 (lanes._debugOwner = returnFiber),
-                (lanes._debugTask = returnFiber._debugTask),
                 (lanes._debugInfo = currentDebugInfo),
                 (returnFiber = lanes)),
             placeSingleChild(returnFiber)
@@ -4438,12 +4393,10 @@ __DEV__ &&
           fiber.return = returnFiber;
           var debugInfo = (fiber._debugInfo = currentDebugInfo);
           fiber._debugOwner = returnFiber._debugOwner;
-          fiber._debugTask = returnFiber._debugTask;
           if (null != debugInfo)
             for (var i = debugInfo.length - 1; 0 <= i; i--)
               if ("string" === typeof debugInfo[i].stack) {
                 fiber._debugOwner = debugInfo[i];
-                fiber._debugTask = debugInfo[i].debugTask;
                 break;
               }
           return fiber;
@@ -6429,6 +6382,64 @@ __DEV__ &&
       }
       return newProps;
     }
+    function defaultOnUncaughtError(error, errorInfo) {
+      reportGlobalError(error);
+      error = componentName
+        ? "An error occurred in the <" + componentName + "> component."
+        : "An error occurred in one of your React components.";
+      var prevGetCurrentStack = ReactSharedInternals.getCurrentStack,
+        componentStack =
+          null != errorInfo.componentStack ? errorInfo.componentStack : "";
+      ReactSharedInternals.getCurrentStack = function () {
+        return componentStack;
+      };
+      try {
+        warn(
+          "%s\n\n%s\n",
+          error,
+          "Consider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries."
+        );
+      } finally {
+        ReactSharedInternals.getCurrentStack = prevGetCurrentStack;
+      }
+    }
+    function defaultOnCaughtError(error$1, errorInfo) {
+      var componentNameMessage = componentName
+          ? "The above error occurred in the <" + componentName + "> component."
+          : "The above error occurred in one of your React components.",
+        recreateMessage =
+          "React will try to recreate this component tree from scratch using the error boundary you provided, " +
+          ((errorBoundaryName || "Anonymous") + "."),
+        prevGetCurrentStack = ReactSharedInternals.getCurrentStack,
+        componentStack =
+          null != errorInfo.componentStack ? errorInfo.componentStack : "";
+      ReactSharedInternals.getCurrentStack = function () {
+        return componentStack;
+      };
+      try {
+        "object" === typeof error$1 &&
+        null !== error$1 &&
+        "string" === typeof error$1.environmentName
+          ? bindToConsole(
+              "error",
+              [
+                "%o\n\n%s\n\n%s\n",
+                error$1,
+                componentNameMessage,
+                recreateMessage
+              ],
+              error$1.environmentName
+            )()
+          : error$jscomp$0(
+              "%o\n\n%s\n\n%s\n",
+              error$1,
+              componentNameMessage,
+              recreateMessage
+            );
+      } finally {
+        ReactSharedInternals.getCurrentStack = prevGetCurrentStack;
+      }
+    }
     function defaultOnRecoverableError(error) {
       reportGlobalError(error);
     }
@@ -8114,8 +8125,6 @@ __DEV__ &&
           workInProgress.mode,
           workInProgress.lanes
         );
-        renderLanes._debugStack = workInProgress._debugStack;
-        renderLanes._debugTask = workInProgress._debugTask;
         var returnFiber = workInProgress.return;
         if (null === returnFiber) throw Error("Cannot swap the root fiber.");
         current.alternate = null;
@@ -13083,12 +13092,7 @@ __DEV__ &&
       this.actualDuration = -0;
       this.actualStartTime = -1.1;
       this.treeBaseDuration = this.selfBaseDuration = -0;
-      this._debugTask =
-        this._debugStack =
-        this._debugOwner =
-        this._debugInfo =
-        this._source=
-          null;
+      this._source = this._debugOwner = this._debugInfo = null;
       this._debugNeedsRemount = !1;
       this._debugHookTypes = null;
       hasBadMapPolyfill ||
@@ -13112,8 +13116,7 @@ __DEV__ &&
           (workInProgress.type = current.type),
           (workInProgress.stateNode = current.stateNode),
           (workInProgress._debugOwner = current._debugOwner),
-          (workInProgress._debugStack = current._debugStack),
-          (workInProgress._debugTask = current._debugTask),
+          (workInProgress._source = current._source),
           (workInProgress._debugHookTypes = current._debugHookTypes),
           (workInProgress.alternate = current),
           (current.alternate = workInProgress))
@@ -13334,16 +13337,10 @@ __DEV__ &&
         lanes
       );
       mode._debugOwner = element._owner;
-      mode._debugStack = element._debugStack;
-      mode._debugTask = element._debugTask;
-      element._source && (mode._source = element._source);
-      if(element._source?.fileName?.includes("Main")){
-        console.log("HEJHEJ",element._source);
-      }
+      mode._source = element._source;
       return mode;
     }
     function createFiberFromFragment(elements, mode, lanes, key) {
-
       elements = createFiber(7, elements, key, mode);
       elements.lanes = lanes;
       return elements;
@@ -13655,51 +13652,6 @@ __DEV__ &&
         internalInstanceHandle.stateNode.node
       );
     }
-    function createHierarchy(fiberHierarchy) {
-      return fiberHierarchy.map(function (fiber$jscomp$0) {
-        return {
-          name: getComponentNameFromType(fiber$jscomp$0.type),
-          getInspectorData: function () {
-            return {
-              source: fiber$jscomp$0._source,
-              props: getHostProps(fiber$jscomp$0),
-              measure: function (callback) {
-                var hostFiber = findCurrentHostFiber(fiber$jscomp$0);
-                if (
-                  (hostFiber =
-                    null != hostFiber &&
-                    null !== hostFiber.stateNode &&
-                    hostFiber.stateNode.node)
-                )
-                  nativeFabricUIManager.measure(hostFiber, callback);
-                else {
-                  hostFiber = ReactNativePrivateInterface.UIManager;
-                  var JSCompiler_temp_const = hostFiber.measure,
-                    JSCompiler_inline_result;
-                  a: {
-                    for (var fiber = fiber$jscomp$0; fiber; ) {
-                      null !== fiber.stateNode &&
-                        5 === fiber.tag &&
-                        (JSCompiler_inline_result = findNodeHandle(
-                          fiber.stateNode
-                        ));
-                      if (JSCompiler_inline_result) break a;
-                      fiber = fiber.child;
-                    }
-                    JSCompiler_inline_result = null;
-                  }
-                  return JSCompiler_temp_const.call(
-                    hostFiber,
-                    JSCompiler_inline_result,
-                    callback
-                  );
-                }
-              }
-            };
-          }
-        };
-      });
-    }
     function getHostProps(fiber) {
       return (fiber = findCurrentHostFiber(fiber))
         ? fiber.memoizedProps || emptyObject
@@ -13831,57 +13783,16 @@ __DEV__ &&
           error: error,
           componentStack:
             null != errorInfo.componentStack ? errorInfo.componentStack : ""
-        }) &&
-        (reportGlobalError(error),
-        warn(
-          "%s\n\n%s\n",
-          componentName
-            ? "An error occurred in the <" + componentName + "> component."
-            : "An error occurred in one of your React components.",
-          "Consider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries."
-        ));
+        }) && defaultOnUncaughtError(error, errorInfo);
     }
     function nativeOnCaughtError(error, errorInfo) {
-      if (
-        !1 !==
+      !1 !==
         ReactNativePrivateInterface.ReactFiberErrorDialog.showErrorDialog({
           errorBoundary: errorInfo.errorBoundary,
           error: error,
           componentStack:
             null != errorInfo.componentStack ? errorInfo.componentStack : ""
-        })
-      ) {
-        var componentNameMessage = componentName
-            ? "The above error occurred in the <" +
-              componentName +
-              "> component."
-            : "The above error occurred in one of your React components.",
-          recreateMessage =
-            "React will try to recreate this component tree from scratch using the error boundary you provided, " +
-            ((errorBoundaryName || "Anonymous") + ".");
-        "object" === typeof error &&
-        null !== error &&
-        "string" === typeof error.environmentName
-          ? ((errorInfo = error.environmentName),
-            (error = [
-              "%o\n\n%s\n\n%s\n",
-              error,
-              componentNameMessage,
-              recreateMessage
-            ].slice(0)),
-            "string" === typeof error[0]
-              ? error.splice(0, 1, "[%s] " + error[0], " " + errorInfo + " ")
-              : error.splice(0, 0, "[%s] ", " " + errorInfo + " "),
-            error.unshift(console),
-            (error = bind.apply(console.error, error)),
-            error())
-          : error$jscomp$0(
-              "%o\n\n%s\n\n%s\n",
-              error,
-              componentNameMessage,
-              recreateMessage
-            );
-      }
+        }) && defaultOnCaughtError(error, errorInfo);
     }
     "undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ &&
       "function" ===
