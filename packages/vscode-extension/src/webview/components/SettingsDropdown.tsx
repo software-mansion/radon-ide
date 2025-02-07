@@ -162,13 +162,13 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
                   onSelect={() => update("themeType", "vscode")}>
-                  VScode theme
+                  Match editor theme
                   {themeType === "vscode" && <span className="codicon codicon-check right-slot" />}
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
                   onSelect={() => update("themeType", "built-in")}>
-                  Built in theme
+                  Use Radon IDE theme
                   {themeType === "built-in" && (
                     <span className="codicon codicon-check right-slot" />
                   )}
