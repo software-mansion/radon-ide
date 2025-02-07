@@ -249,7 +249,7 @@
           "type": "webview",
           "id": "RNIDE.Tool.Network.view",
           "name": "",
-          "when": "RNIDE.Tool.Network.available"
+          "when": "RNIDE.Tool.Network.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolReduxDevTools": [

@@ -21,11 +21,11 @@ export function registerNavigationPlugin(name, plugin) {
   navigationPlugins.push({ name, plugin });
 }
 
-const expoDevPlugins = new Set();
-let expoDevPluginsChanged = undefined;
-export function registerExpoDevPlugin(name) {
-  expoDevPlugins.add(name);
-  expoDevPluginsChanged?.();
+const devtoolPlugins = new Set(["network"]);
+let devtoolPluginsChanged = undefined;
+export function registerDevtoolPlugin(name) {
+  devtoolPlugins.add(name);
+  devtoolPluginsChanged?.();
 }
 
 let navigationHistory = new Map();
@@ -391,19 +391,16 @@ export function AppWrapper({ children, initialProps, fabric }) {
         appKey,
         navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
       });
-      devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
-        plugins: Array.from(expoDevPlugins.values()),
+      devtoolsAgent._bridge.send("RNIDE_devtoolPluginsChanged", {
+        plugins: Array.from(devtoolPlugins.values()),
       });
-      expoDevPluginsChanged = () => {
-        devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
-          plugins: Array.from(expoDevPlugins.values()),
+      devtoolPluginsChanged = () => {
+        devtoolsAgent._bridge.send("RNIDE_devtoolPluginsChanged", {
+          plugins: Array.from(devtoolPlugins.values()),
         });
       };
-      devtoolsAgent._bridge.send("RNIDE_pluginsChanged", {
-        plugins: [isReduxDevToolsReady() && "RNIDE-redux-devtools"].filter(Boolean),
-      });
       return () => {
-        expoDevPluginsChanged = undefined;
+        devtoolPluginsChanged = undefined;
       };
     }
   }, [!!devtoolsAgent && hasLayout]);

@@ -17,7 +17,7 @@ function mimeTypeFromResponseType(responseType) {
 export function enableNetworkInspect(devtoolsAgent, payload) {
   const XHRInterceptor = require("react-native/Libraries/Network/XHRInterceptor");
 
-  const loaderId = "xhr-interceprot";
+  const loaderId = "xhr-interceptor";
 
   if (!payload.enable) {
     XHRInterceptor.disableInterception();

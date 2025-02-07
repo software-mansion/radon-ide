@@ -1,5 +1,5 @@
 import http, { Server } from "http";
-import { commands, Disposable } from "vscode";
+import { commands, Disposable, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Devtools } from "../../project/devtools";
 import { ToolKey, ToolPlugin } from "../../project/tools";
@@ -67,10 +67,10 @@ class NetworkCDPWebsocketBackend implements Disposable {
 export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = "network";
   public readonly label = "Network";
-  public readonly available = true;
+
+  public available = false;
 
   private readonly websocketBackend = new NetworkCDPWebsocketBackend();
-  private active = false;
 
   constructor(private readonly devtools: Devtools) {}
 
@@ -79,12 +79,7 @@ export class NetworkPlugin implements ToolPlugin {
   }
 
   activate(): void {
-    this.active = true;
-    this.devtools.appReady().then(async () => {
-      if (!this.active) {
-        return;
-      }
-      await this.websocketBackend.start();
+    this.websocketBackend.start().then(() => {
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
       this.devtools.addListener(this.devtoolsListener);
       this.devtools.send("RNIDE_enableNetworkInspect", { enable: true });
@@ -100,7 +95,6 @@ export class NetworkPlugin implements ToolPlugin {
   };
 
   deactivate(): void {
-    this.active = false;
     this.devtools.removeListener(this.devtoolsListener);
     this.devtools.send("RNIDE_enableNetworkInspect", { enable: false });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
