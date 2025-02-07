@@ -461,6 +461,32 @@ export class DebugAdapter extends DebugSession {
     this.sendResponse(response);
   }
 
+  protected async sourceRequest(
+    response: DebugProtocol.Response & {
+      body: {
+        sourceURL: string;
+        lineNumber1Based: number;
+        columnNumber0Based: number;
+        scriptURL: string;
+      };
+    },
+    args: DebugProtocol.SourceArguments & {
+      fileName: string;
+      line0Based: number;
+      column0Based: number;
+    },
+    request?: DebugProtocol.Request
+  ) {
+    response.body = {
+      ...this.sourceMapRegistry.findOriginalPosition(
+        args.fileName,
+        args.line0Based,
+        args.column0Based
+      ),
+    };
+    this.sendResponse(response);
+  }
+
   protected async variablesRequest(
     response: DebugProtocol.VariablesResponse,
     args: DebugProtocol.VariablesArguments
