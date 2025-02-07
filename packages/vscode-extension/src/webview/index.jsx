@@ -21,10 +21,10 @@ const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    <WorkspaceConfigProvider>
-      <ProjectProvider>
-        <UtilsProvider>
-          <TelemetryProvider>
+    <ProjectProvider>
+      <UtilsProvider>
+        <TelemetryProvider>
+          <WorkspaceConfigProvider>
             <LaunchConfigProvider>
               <DevicesProvider>
                 <DependenciesProvider>
@@ -36,9 +36,9 @@ root.render(
                 </DependenciesProvider>
               </DevicesProvider>
             </LaunchConfigProvider>
-          </TelemetryProvider>
-        </UtilsProvider>
-      </ProjectProvider>
-    </WorkspaceConfigProvider>
+          </WorkspaceConfigProvider>
+        </TelemetryProvider>
+      </UtilsProvider>
+    </ProjectProvider>
   </React.StrictMode>
 );
