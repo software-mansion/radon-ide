@@ -7,3 +7,6 @@
 [submodule "packages/chrome-devtools-ui"]
 	path = packages/chrome-devtools-ui
 	url = git@github.com:software-mansion-labs/chrome-devtools-ui.git
+[submodule "packages/redux-devtools-expo-dev-plugin"]
+	path = packages/redux-devtools-expo-dev-plugin
+	url = git@github.com:software-mansion-labs/redux-devtools-expo-dev-plugin.git

@@ -203,6 +203,11 @@
           "id": "RadonIDEToolNetwork",
           "title": "Network",
           "icon": "assets/logo.svg"
+        },
+        {
+          "id": "RadonIDEToolReduxDevTools",
+          "title": "Redux",
+          "icon": "assets/redux.svg"
         }
       ]
     },
@@ -245,6 +250,14 @@
           "id": "RNIDE.Tool.Network.view",
           "name": "",
           "when": "RNIDE.Tool.Network.available"
+        }
+      ],
+      "RadonIDEToolReduxDevTools": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ReduxDevTools.view",
+          "name": "",
+          "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ]
     },
@@ -553,6 +566,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
+    "build:plugins": "bash ./scripts/install-dev-plugins.sh",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
     "preinstall": "cd ../vscode-js-debug && git submodule update --init ./ && npm install && npm exec tsc"
   },
