@@ -53,6 +53,15 @@ type EASBuildJson = {
   isForIosSimulator: false;
 };
 
+export async function isEasCliInstalled() {
+  try {
+    await exec("eas", ["--version"], { cwd: getAppRootFolder() });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function listEasBuilds(platform: DevicePlatform, profile: string) {
   const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
 
