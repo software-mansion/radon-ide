@@ -192,8 +192,7 @@ export class Preview implements Disposable {
   }
 
   public sendClipboard(text: string) {
-    // This is bad, but prevents simulator server going crazy with multiline pastes
-    // If we want to support multiline pastes we need to change the communication protocol
-    this.subprocess?.stdin?.write(`paste ${text.replace(/(?:\r\n|\r|\n)/g, " ")}\n`);
+    // We use markers for start and end of the paste to handle multi-line pastes
+    this.subprocess?.stdin?.write(`paste START-SIMSERVER-PASTE>>>${text}<<<END-SIMSERVER-PASTE\n`);
   }
 }
