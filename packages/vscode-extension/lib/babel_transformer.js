@@ -117,8 +117,7 @@ function transformWrapper({ filename, src, ...rest }) {
       src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-78/${rendererFileName}");`;
     }
   } else if (
-    isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js") ||
-    isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.production.js")
+    isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js")
   ) {
     const { version } = requireFromAppDir("react-native/package.json");
     const jsxRuntimeFileName = filename.split(path.sep).pop();
