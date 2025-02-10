@@ -89,7 +89,7 @@ global.__RNIDE_register_navigation_plugin = function (name, plugin) {
   require("__RNIDE_lib__/wrapper.js").registerNavigationPlugin(name, plugin);
 };
 
-global.__RNIDE_register_expo_dev_plugin = function (name) {
+global.__RNIDE_register_dev_plugin = function (name) {
   require("__RNIDE_lib__/wrapper.js").registerDevtoolPlugin(name);
 };
 
