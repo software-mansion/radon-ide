@@ -20,7 +20,7 @@ export function registerNavigationPlugin(name, plugin) {
   navigationPlugins.push({ name, plugin });
 }
 
-const devtoolPlugins = new Set(["network"]);
+const devtoolPlugins = new Set();
 let devtoolPluginsChanged = undefined;
 export function registerDevtoolPlugin(name) {
   devtoolPlugins.add(name);
@@ -32,9 +32,6 @@ let navigationHistory = new Map();
 const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
-  },
-  get enableNetworkInspect() {
-    return require("./network").enableNetworkInspect;
   },
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
