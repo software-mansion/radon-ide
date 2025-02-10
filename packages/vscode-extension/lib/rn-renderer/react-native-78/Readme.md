@@ -1,6 +1,6 @@
 ### How to generate?
 
-Renderers in this folder were generated from code on [this branch](https://github.com/software-mansion-labs/react-radon-ide/tree/EnableSourceInspectingRN78). To generate it your self use the fallowing command: 
+Renderers in this folder were generated from code in [this commit](https://github.com/software-mansion-labs/react-radon-ide/commit/387096b52ea3b8e757e58af6177f29c8eb496edf). To generate it your self use the fallowing command: 
 
 `yarn build react-native --type RN_OSS_DEV`
 
