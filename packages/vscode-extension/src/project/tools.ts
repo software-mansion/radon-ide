@@ -43,11 +43,8 @@ export class ToolsManager implements Disposable {
     const reduxPlugin = createReduxDevtools(this);
     this.plugins.set(reduxPlugin.id, reduxPlugin);
 
-<<<<<<< HEAD
     this.plugins.set("network", new NetworkPlugin(devtools));
 
-=======
->>>>>>> kmagiera/plugins-refactor
     devtools.addListener(this.devtoolsListener);
     this.handleStateChange();
   }
