@@ -26,7 +26,7 @@ function readResponseBodyContent(xhr) {
     return Promise.resolve(xhr.responseText);
   }
   if (responseType === "blob") {
-    const contentType = xhr.getResponseHeader("Content-Type");
+    const contentType = xhr.getResponseHeader("Content-Type") || "";
     if (contentType.startsWith("text/") || contentType.startsWith("application/json")) {
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -90,7 +90,6 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
     sendCDPMessage("Network.requestWillBeSent", {
       requestId: requestId,
       loaderId,
-      documentURL: "http://ide.swmansion.com",
       timestamp: sendTime / 1000,
       wallTime: Math.floor(Date.now() / 1000),
       request: {
@@ -104,9 +103,25 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
       },
     });
 
-    xhr.addEventListener("abort", (event) => {});
+    xhr.addEventListener("abort", (event) => {
+      sendCDPMessage("Network.loadingFailed", {
+        requestId: requestId,
+        timestamp: Date.now() / 1000,
+        type: "XHR",
+        errorText: "Aborted",
+        canceled: true,
+      });
+    });
 
-    xhr.addEventListener("error", (event) => {});
+    xhr.addEventListener("error", (event) => {
+      sendCDPMessage("Network.loadingFailed", {
+        requestId: requestId,
+        timestamp: Date.now() / 1000,
+        type: "XHR",
+        errorText: "Failed",
+        cancelled: false,
+      });
+    });
 
     xhr.addEventListener("load", (event) => {
       sendCDPMessage("Network.responseReceived", {
@@ -128,7 +143,7 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
       sendCDPMessage("Network.loadingFinished", {
         requestId: requestId,
         timestamp: Date.now() / 1000,
-        encodedDataLength: xhr._response.length,
+        encodedDataLength: xhr._response.size || xhr._response.length, // when response is blob, we use size, and length otherwise
       });
     });
   }
