@@ -348,15 +348,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
     [showStorybookStory]
   );
 
-  useAgentListener(
-    devtoolsAgent,
-    "RNIDE_enableNetworkInspect",
-    (payload) => {
-      InternalImports.enableNetworkInspect(devtoolsAgent, payload);
-    },
-    []
-  );
-
   useEffect(() => {
     if (devtoolsAgent) {
       LogBox.uninstall();
