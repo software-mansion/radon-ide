@@ -36,19 +36,41 @@ export class ToolsManager implements Disposable {
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
 
-    for (const plugin of createExpoDevPluginTools(this)) {
+    for (const plugin of createExpoDevPluginTools()) {
       this.plugins.set(plugin.id, plugin);
     }
     const reduxPlugin = createReduxDevtools(this);
     this.plugins.set(reduxPlugin.id, reduxPlugin);
 
+    devtools.addListener(this.devtoolsListener);
     this.handleStateChange();
+  }
+
+  private devtoolsListener = (event: string, payload: any) => {
+    if (event === "RNIDE_devtoolPluginsChanged") {
+      // payload.plugins is a list of expo dev plugin names
+      const availablePlugins = new Set(payload.plugins);
+      let changed = false;
+      this.plugins.forEach((plugin) => {
+        if (!plugin.available && availablePlugins.has(plugin.id)) {
+          changed = true;
+          plugin.available = true;
+        }
+      });
+      // notify tools manager that the state of requested plugins has changed
+      changed && this.handleStateChange();
+    }
+  };
+
+  public getPlugin(toolName: ToolKey): ToolPlugin | undefined {
+    return this.plugins.get(toolName);
   }
 
   dispose() {
     this.activePlugins.forEach((plugin) => plugin.deactivate());
     this.activePlugins.clear();
     this.plugins.forEach((plugin) => plugin.dispose());
+    this.devtools.removeListener(this.devtoolsListener);
   }
 
   public handleStateChange() {

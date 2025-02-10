@@ -1,13 +1,18 @@
-const { useEffect } = require("react");
-const {createComposeWithDevTools} = require('./external/redux-devtools-expo-dev-plugin');
+const { createComposeWithDevTools } = require("./external/redux-devtools-expo-dev-plugin");
 
 class RNIDEAppExtensionProxy {
   scope;
   listeners = new Map();
-  devtoolsAgent = undefined; 
+  devtoolsAgent = undefined;
 
   constructor(scope) {
     this.scope = scope;
+    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    if (hook.reactDevtoolsAgent) {
+      this.setDevtoolsAgent(hook.reactDevtoolsAgent);
+    } else {
+      hook.on("react-devtools", this.setDevtoolsAgent);
+    }
   }
 
   handleMessages = (data) => {
@@ -15,22 +20,25 @@ class RNIDEAppExtensionProxy {
     listeners.forEach((listener) => listener(data.data));
   };
 
-  setDevtoolsAgent(agent)  {
+  setDevtoolsAgent = (agent) => {
     if (!agent) {
       return;
     }
+    this.clearDevToolsAgent();
     this.devtoolsAgent = agent;
     this.devtoolsAgent._bridge.addListener(this.scope, this.handleMessages);
   };
 
   clearDevToolsAgent() {
+    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    hook.off("react-devtools", this.setDevtoolsAgent);
+
     if (!this.devtoolsAgent) {
       return;
     }
-
     this.devtoolsAgent._bridge.removeListener(this.scope, this.handleMessages);
     this.devtoolsAgent = undefined;
-  };
+  }
 
   sendMessage(type, data) {
     if (!this.devtoolsAgent) {
@@ -41,51 +49,27 @@ class RNIDEAppExtensionProxy {
       type,
       data,
     });
-  };
+  }
 
   addMessageListener(type, listener) {
     const currentListeners = this.listeners.get(type) || [];
     this.listeners.set(type, [...currentListeners, listener]);
-  };
+  }
 
   removeMessageListener(type, listener) {
     const currentListeners = this.listeners.get(type) || [];
     const filteredListeners = currentListeners.filter((l) => l !== listener);
     this.listeners.set(type, filteredListeners);
-  };
+  }
 
   closeAsync() {
     this.clearDevToolsAgent();
     this.listeners.clear();
-  };
+  }
 }
 
-let proxyClient = null;
-let reduxDevToolsReady = false;
-
-export const isReduxDevToolsReady = () => reduxDevToolsReady;
-
-export const createRNIDEProxyClientAsync = async () => {
-  if (proxyClient !== null) {
-    return proxyClient;
-  }
-  
-  reduxDevToolsReady = true;
-  proxyClient = new RNIDEAppExtensionProxy('RNIDE-redux-devtools');
-
-  return proxyClient;
-};
-
-window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = createComposeWithDevTools(createRNIDEProxyClientAsync);
-
-export const useReduxDevTools = (devtoolsAgent) => {
-  useEffect(() => {
-    const clear = proxyClient?.setDevtoolsAgent(devtoolsAgent);
-
-    return () => {
-      console.log("CLEAR", clear);
-      clear?.();
-      proxyClient?.clearDevToolsAgent();
-    };
-  }, [devtoolsAgent]);
+export const compose = (...args) => {
+  global.__RNIDE_register_dev_plugin && global.__RNIDE_register_dev_plugin("RNIDE-redux-devtools");
+  const proxyClient = new RNIDEAppExtensionProxy("RNIDE-redux-devtools");
+  return createComposeWithDevTools(() => proxyClient)(...args);
 };

@@ -11,7 +11,6 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
-const { useReduxDevTools, isReduxDevToolsReady } = require("./plugins/redux-devtools");
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
@@ -21,11 +20,11 @@ export function registerNavigationPlugin(name, plugin) {
   navigationPlugins.push({ name, plugin });
 }
 
-const expoDevPlugins = new Set();
-let expoDevPluginsChanged = undefined;
-export function registerExpoDevPlugin(name) {
-  expoDevPlugins.add(name);
-  expoDevPluginsChanged?.();
+const devtoolPlugins = new Set();
+let devtoolPluginsChanged = undefined;
+export function registerDevtoolPlugin(name) {
+  devtoolPlugins.add(name);
+  devtoolPluginsChanged?.();
 }
 
 let navigationHistory = new Map();
@@ -34,6 +33,13 @@ const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
   },
+  get reduxDevtoolsExtensionCompose() {
+    return require("./plugins/redux-devtools").compose;
+  },
+};
+
+window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
+  return InternalImports.reduxDevtoolsExtensionCompose(...args);
 };
 
 const RNInternals = {
@@ -203,8 +209,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
-  
-  useReduxDevTools(devtoolsAgent);
 
   const mountCallback = initialProps?.__RNIDE_onMount;
   useEffect(() => {
@@ -379,21 +383,16 @@ export function AppWrapper({ children, initialProps, fabric }) {
         appKey,
         navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
       });
-      devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
-        plugins: Array.from(expoDevPlugins.values()),
+      devtoolsAgent._bridge.send("RNIDE_devtoolPluginsChanged", {
+        plugins: Array.from(devtoolPlugins.values()),
       });
-      expoDevPluginsChanged = () => {
-        devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
-          plugins: Array.from(expoDevPlugins.values()),
+      devtoolPluginsChanged = () => {
+        devtoolsAgent._bridge.send("RNIDE_devtoolPluginsChanged", {
+          plugins: Array.from(devtoolPlugins.values()),
         });
       };
-      devtoolsAgent._bridge.send("RNIDE_pluginsChanged", {
-        plugins: [
-          isReduxDevToolsReady() && "RNIDE-redux-devtools",
-        ].filter(Boolean),
-      });
       return () => {
-        expoDevPluginsChanged = undefined;
+        devtoolPluginsChanged = undefined;
       };
     }
   }, [!!devtoolsAgent && hasLayout]);
