@@ -72,7 +72,7 @@ function wrapConsole(logFunctionKey) {
     }
 
     const location = stack[stackOffset];
-    location &&  args.push(location.file, location.lineNumber, location.column);
+    location && args.push(location.file, location.lineNumber, location.column);
     return origLogFunc.apply(origLogObject, args);
   };
 }
@@ -89,8 +89,8 @@ global.__RNIDE_register_navigation_plugin = function (name, plugin) {
   require("__RNIDE_lib__/wrapper.js").registerNavigationPlugin(name, plugin);
 };
 
-global.__RNIDE_register_expo_dev_plugin = function (name) {
-  require("__RNIDE_lib__/wrapper.js").registerExpoDevPlugin(name);
+global.__RNIDE_register_dev_plugin = function (name) {
+  require("__RNIDE_lib__/wrapper.js").registerDevtoolPlugin(name);
 };
 
 AppRegistry.setWrapperComponentProvider((appParameters) => {
