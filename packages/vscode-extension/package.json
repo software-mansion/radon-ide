@@ -200,6 +200,11 @@
           "icon": "assets/redux.svg"
         },
         {
+          "id": "RadonIDEToolNetwork",
+          "title": "Network",
+          "icon": "assets/network.svg"
+        },
+        {
           "id": "RadonIDEToolReduxDevTools",
           "title": "Redux",
           "icon": "assets/redux.svg"
@@ -237,6 +242,14 @@
           "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
           "name": "",
           "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available && RNIDE.panelIsOpen"
+        }
+      ],
+      "RadonIDEToolNetwork": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.Network.view",
+          "name": "",
+          "when": "RNIDE.Tool.Network.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolReduxDevTools": [
@@ -538,8 +551,9 @@
   "scripts": {
     "vscode:package": "vsce package",
     "vscode:prepublish": "npm run package",
-    "build:extension-debug": "node ./scripts/buildExtensionCode.mjs debug",
-    "build:extension": "node ./scripts/buildExtensionCode.mjs production",
+    "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
+    "build:extension-debug": "node ./scripts/buildExtensionCode.mjs debug && npm run build:chrome-devtools-ui",
+    "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:chrome-devtools-ui",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
     "build:sim-server": "bash ./scripts/install-sim-server-release-build.sh dist",
