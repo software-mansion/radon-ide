@@ -1,10 +1,27 @@
 import http, { Server } from "http";
-import { commands, Disposable } from "vscode";
+import { commands, Disposable, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Devtools } from "../../project/devtools";
 import { ToolKey, ToolPlugin } from "../../project/tools";
+import { extensionContext } from "../../utilities/extensionContext";
+import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
 
-export type NetworkPluginToolName = "network";
+export const NETWORK_PLUGIN_ID = "network";
+
+let initialzed = false;
+function initialize() {
+  if (initialzed) {
+    return;
+  }
+  initialzed = true;
+  extensionContext.subscriptions.push(
+    window.registerWebviewViewProvider(
+      `RNIDE.Tool.Network.view`,
+      new NetworkDevtoolsWebviewProvider(extensionContext),
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
+}
 
 class NetworkCDPWebsocketBackend implements Disposable {
   private server: Server;
@@ -71,7 +88,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
 }
 
 export class NetworkPlugin implements ToolPlugin {
-  public readonly id: ToolKey = "network";
+  public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
 
   public available = false;
@@ -80,6 +97,7 @@ export class NetworkPlugin implements ToolPlugin {
 
   constructor(private readonly devtools: Devtools) {
     this.websocketBackend = new NetworkCDPWebsocketBackend(devtools);
+    initialize();
   }
 
   public get websocketPort() {
@@ -112,5 +130,7 @@ export class NetworkPlugin implements ToolPlugin {
     commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
   }
 
-  dispose() {}
+  dispose() {
+    this.devtools.removeListener(this.devtoolsListener);
+  }
 }
