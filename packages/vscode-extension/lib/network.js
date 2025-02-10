@@ -5,6 +5,7 @@ function mimeTypeFromResponseType(responseType) {
     case "base64":
       return "application/octet-stream";
     case "text":
+    case "":
       return "text/plain";
     case "json":
       return "application/json";
@@ -14,10 +15,37 @@ function mimeTypeFromResponseType(responseType) {
   return undefined;
 }
 
+function readResponseBodyContent(xhr) {
+  if (!xhr && !xhr._cachedResponse) {
+    // if response was accessed it is cached and we can use it
+    // otherwise we don't want to read it here to avoid potential side effects
+    return Promise.resolve(undefined);
+  }
+  const responseType = xhr.responseType;
+  if (responseType === "" || responseType === "text") {
+    return Promise.resolve(xhr.responseText);
+  }
+  if (responseType === "blob") {
+    const contentType = xhr.getResponseHeader("Content-Type");
+    if (contentType.startsWith("text/") || contentType.startsWith("application/json")) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve(reader.result);
+        };
+        reader.readAsText(xhr.response);
+      });
+    }
+  }
+  // don't want to read binary data here
+  return Promise.resolve(undefined);
+}
+
 export function enableNetworkInspect(devtoolsAgent, payload) {
   const XHRInterceptor = require("react-native/Libraries/Network/XHRInterceptor");
 
   const loaderId = "xhr-interceptor";
+  const xhrsMap = new Map();
 
   if (!payload.enable) {
     XHRInterceptor.disableInterception();
@@ -27,9 +55,30 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
   const requestIdPrefix = Math.random().toString(36).slice(2);
   let requestIdCounter = 0;
 
+  devtoolsAgent._bridge.addListener("RNIDE_networkInspectorCDPRequest", (message) => {
+    if (
+      message.method === "Network.getResponseBody" &&
+      message.params.requestId.startsWith(requestIdPrefix)
+    ) {
+      const requestId = message.params.requestId;
+      const xhr = xhrsMap.get(requestId)?.deref();
+      readResponseBodyContent(xhr).then((body) => {
+        devtoolsAgent._bridge.send(
+          "RNIDE_networkInspectorCDPMessage",
+          JSON.stringify({
+            id: message.id,
+            result: { body },
+          })
+        );
+      });
+    }
+  });
+
   function sendCallback(data, xhr) {
     const requestId = `${requestIdPrefix}-${requestIdCounter++}`;
     const sendTime = Date.now();
+
+    xhrsMap.set(requestId, new WeakRef(xhr));
 
     function sendCDPMessage(method, params) {
       devtoolsAgent._bridge.send(

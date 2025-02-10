@@ -10,7 +10,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
   private server: Server;
   private sessions: Set<WebSocket> = new Set();
 
-  constructor() {
+  constructor(private readonly devtools: Devtools) {
     this.server = http.createServer(() => {});
     const wss = new WebSocketServer({ server: this.server });
 
@@ -20,8 +20,14 @@ class NetworkCDPWebsocketBackend implements Disposable {
       ws.on("message", (message) => {
         try {
           const payload = JSON.parse(message.toString());
-          const response = { id: payload.id, result: {} };
-          ws.send(JSON.stringify(response));
+          if (payload.method === "Network.getResponseBody") {
+            // forward message to devtools
+            this.devtools.send("RNIDE_networkInspectorCDPRequest", payload);
+          } else if (payload.id) {
+            // send empty response otherwise
+            const response = { id: payload.id, result: {} };
+            ws.send(JSON.stringify(response));
+          }
         } catch (err) {
           console.error("Network CDP invalid message format:", err);
         }
@@ -70,9 +76,11 @@ export class NetworkPlugin implements ToolPlugin {
 
   public available = false;
 
-  private readonly websocketBackend = new NetworkCDPWebsocketBackend();
+  private readonly websocketBackend;
 
-  constructor(private readonly devtools: Devtools) {}
+  constructor(private readonly devtools: Devtools) {
+    this.websocketBackend = new NetworkCDPWebsocketBackend(devtools);
+  }
 
   public get websocketPort() {
     return this.websocketBackend.port;
