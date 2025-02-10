@@ -41,6 +41,7 @@ export class CDPSession {
     // expect in some setups to fail
     const ignoreError = () => {};
     await this.sendCDPMessage("FuseboxClient.setClientMetadata", {}).catch(ignoreError);
+    await this.sendCDPMessage("ReactNativeApplication.enable", {}).catch(ignoreError);
     await this.sendCDPMessage("Runtime.enable", {});
     await this.sendCDPMessage("Debugger.enable", { maxScriptsCacheSize: 100000000 });
     await this.sendCDPMessage("Debugger.setPauseOnExceptions", { state: "none" });
