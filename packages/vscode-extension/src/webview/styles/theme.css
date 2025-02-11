@@ -494,7 +494,7 @@ body[data-use-code-theme="true"] {
   --deep-link-history-query-match-color: var(--swm-button-background);
 
   --swm-active-item: var(--vscode-list-activeSelectionForeground);
-  --swm-preview-background: var(--vscode-editor-background);
+  --swm-preview-background: none;
 
   --swm-default-text: var(--vscode-foreground);
   --swm-marked-text: var(--vscode-editor-findMatchHighlightBackground);
