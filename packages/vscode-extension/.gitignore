@@ -4,8 +4,5 @@ node_modules/
 *.vsix
 .vscode-test
 
-# External are build in separate folder and copied when building extension
-lib/plugins/external/
-
 # ThirdPartyNotices are only needed in distribution package (vsix file)
 ThirdPartyNotices.json
