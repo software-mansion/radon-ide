@@ -40,6 +40,7 @@ export class WebviewController implements Disposable {
       ["WorkspaceConfig", this.ide.workspaceConfigController as object],
       ["LaunchConfig", this.ide.launchConfig as object],
       ["Utils", this.ide.utils as object],
+      ["Scan", this.ide.project.scan as object],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
