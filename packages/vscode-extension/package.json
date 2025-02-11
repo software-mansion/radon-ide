@@ -538,7 +538,7 @@
   "scripts": {
     "vscode:package": "vsce package",
     "vscode:prepublish": "npm run package",
-    "build:redux-devtools-plugin": "rm -rf lib/plugins/external/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/external/redux-devtools-expo-dev-plugin.js",
+    "build:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
     "build:redux-devtools": "npm run build:redux-devtools-plugin && npm run build:redux-devtools-ui",
     "build:extension-debug": "node ./scripts/buildExtensionCode.mjs debug && npm run build:redux-devtools",

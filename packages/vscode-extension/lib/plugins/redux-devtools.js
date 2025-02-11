@@ -1,4 +1,4 @@
-const { createComposeWithDevTools } = require("./external/redux-devtools-expo-dev-plugin");
+const { createComposeWithDevTools } = require("./third-party/redux-devtools-expo-dev-plugin");
 
 class RNIDEAppExtensionProxy {
   scope;
