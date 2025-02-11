@@ -712,5 +712,8 @@
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
     "xml2js": "^0.6.2"
+  },
+  "dependencies": {
+    "react-scan": "file:../../../react-scan/packages/scan/react-scan-0.1.21.tgz"
   }
 }

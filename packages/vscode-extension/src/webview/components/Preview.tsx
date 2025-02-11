@@ -474,6 +474,36 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
+  useEffect(() => {
+    const phoneWrapper = previewRef.current;
+    if (!phoneWrapper || !device) {
+      return;
+    }
+    const innerWidth = phoneWrapper.clientWidth;
+    const innerHeight = phoneWrapper.clientHeight;
+    const width = device.screenWidth;
+    const height = device.screenHeight;
+
+    const host = getCanvasEl(innerWidth, innerHeight, width, height);
+    if (!host) {
+      return;
+    }
+    host.style.position = "absolute";
+    host.style.left = "7px";
+
+    phoneWrapper.parentElement?.appendChild(host);
+    const blueprintListener: ScanEventListener<ScanEventMap["rendersReported"]> = ({
+      blueprintOutlines,
+    }) => {
+      blueprintOutlines.forEach(([fiberId, blueprint]) => registerOutlines(fiberId, blueprint));
+    };
+    Scan.addEventListener("rendersReported", blueprintListener);
+    return () => {
+      Scan.removeEventListener("rendersReported", blueprintListener);
+      host?.remove();
+    };
+  }, [previewRef.current?.clientWidth, previewRef.current?.clientHeight, device]);
+
   return (
     <>
       <div
