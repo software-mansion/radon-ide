@@ -7,6 +7,7 @@ import {
   createExpoDevPluginTools,
   ExpoDevPluginToolName,
 } from "../plugins/expo-dev-plugins/expo-dev-plugins";
+import { NetworkPlugin, NETWORK_PLUGIN_ID } from "../plugins/network/network-plugin";
 import {
   REDUX_PLUGIN_ID,
   createReduxDevtools,
@@ -14,7 +15,7 @@ import {
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
-export type ToolKey = ExpoDevPluginToolName | typeof REDUX_PLUGIN_ID;
+export type ToolKey = ExpoDevPluginToolName | typeof NETWORK_PLUGIN_ID | typeof REDUX_PLUGIN_ID;
 
 export interface ToolPlugin extends Disposable {
   id: ToolKey;
@@ -39,8 +40,9 @@ export class ToolsManager implements Disposable {
     for (const plugin of createExpoDevPluginTools()) {
       this.plugins.set(plugin.id, plugin);
     }
-    const reduxPlugin = createReduxDevtools(this);
-    this.plugins.set(reduxPlugin.id, reduxPlugin);
+
+    this.plugins.set(REDUX_PLUGIN_ID, createReduxDevtools(this));
+    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(devtools));
 
     devtools.addListener(this.devtoolsListener);
     this.handleStateChange();
