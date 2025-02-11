@@ -1,3 +1,6 @@
+// Describes the shape of the `eas.json` config file's content.
+// Currently, we only include the parts of the object we care about.
+// See https://docs.expo.dev/eas/json/ for details.
 export interface EasConfig {
   build?: EasBuildConfig;
 }
