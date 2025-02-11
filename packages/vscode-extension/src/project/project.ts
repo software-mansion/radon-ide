@@ -1,6 +1,14 @@
 import { EventEmitter } from "stream";
 import os from "os";
-import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
+import {
+  env,
+  Disposable,
+  commands,
+  workspace,
+  window,
+  DebugSessionCustomEvent,
+  ProgressLocation,
+} from "vscode";
 import _ from "lodash";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
@@ -252,14 +260,30 @@ export class Project
 
   //#endregion
 
+  async showToast(message: string, timeout: number) {
+    // VSCode doesn't support auto hiding notifications, so we use a workaround with progress
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        cancellable: false,
+      },
+      async (progress) => {
+        progress.report({ message, increment: 100 });
+        await new Promise((resolve) => setTimeout(resolve, timeout));
+      }
+    );
+  }
+
   async dispatchPaste(text: string) {
     await this.deviceSession?.sendClipboard(text);
+    await this.showToast("Pasted to device clipboard", 2000);
   }
 
   async dispatchCopy() {
     const text = await this.deviceSession?.getClipboard();
     if (text) {
       env.clipboard.writeText(text);
+      await this.showToast("Copied from device clipboard", 2000);
     }
   }
 
