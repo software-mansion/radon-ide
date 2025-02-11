@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
+import { getCanvasEl, registerOutlines } from "react-scan";
+import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
@@ -28,6 +30,10 @@ import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
+import { makeProxy } from "../utilities/rpc";
+import { ScanEventListener, ScanEventMap, ScanInterface } from "../../common/Scan";
+
+const Scan = makeProxy<ScanInterface>("Scan");
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -472,6 +478,36 @@ function Preview({
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
+
+  useEffect(() => {
+    const phoneWrapper = previewRef.current;
+    if (!phoneWrapper || !device) {
+      return;
+    }
+    const innerWidth = phoneWrapper.clientWidth;
+    const innerHeight = phoneWrapper.clientHeight;
+    const width = device.screenWidth;
+    const height = device.screenHeight;
+
+    const host = getCanvasEl(innerWidth, innerHeight, width, height);
+    if (!host) {
+      return;
+    }
+    host.style.position = 'absolute';
+    host.style.left = "7px";
+
+    phoneWrapper.parentElement?.appendChild(host);
+    const blueprintListener: ScanEventListener<ScanEventMap["rendersReported"]> = ({
+      blueprintOutlines,
+    }) => {
+      blueprintOutlines.forEach(([fiberId, blueprint]) => registerOutlines(fiberId, blueprint));
+    };
+    Scan.addEventListener("rendersReported", blueprintListener);
+    return () => {
+      Scan.removeEventListener("rendersReported", blueprintListener);
+      host?.remove();
+    };
+  }, [previewRef.current?.clientWidth, previewRef.current?.clientHeight, device]);
 
   return (
     <>

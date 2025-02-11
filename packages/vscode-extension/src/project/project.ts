@@ -41,6 +41,7 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
+import { Scan } from "../scan/scan";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -59,6 +60,7 @@ export class Project
 {
   public metro: Metro;
   public toolsManager: ToolsManager;
+  public scan: Scan;
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
 
@@ -102,6 +104,7 @@ export class Project
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
     this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
+    this.scan = new Scan(this.devtools);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -355,6 +358,7 @@ export class Project
     this.deviceSession?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
+    this.scan.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.fileWatcher.dispose();
     this.licenseWatcher.dispose();
