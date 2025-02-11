@@ -41,6 +41,30 @@ function readResponseBodyContent(xhr) {
   return Promise.resolve(undefined);
 }
 
+// WeakRef support is only available on the new architecture. We keep XHR objects
+// as WeakRefs to avoid leaking potentially large response data objects. We need
+// to keep them around in case the network inspector wants to acess this data.
+// By using WeakRefs we give a way to access that within a sensible time period
+// which seems like a better tradeof than keeping all request data around forever.
+// When WeakRef isn't supported, unless the response data is accessed, we will never
+// cleanup the reference. The below fake implementation of weak reference drops
+// the ref after specified timeout.
+const XHR_REF_TIMEOUT_MS = 3 * 60 * 1000; // 3 mins
+class FakeWeakRef {
+  constructor(obj) {
+    this.obj = obj;
+    this.timeout = setTimeout(() => this.obj = undefined, XHR_REF_TIMEOUT_MS)
+  }
+  deref() {
+    // timeout captures this and hence may extend the time the reference is kept.
+    // we clear it here as in the code below we drop the weak ref immediately after dereferencing.
+    clearTimeout(this.timeout);
+    return this.obj;
+  }
+}
+
+const WeakRefImpl = typeof WeakRef !== "undefined" ? WeakRef : FakeWeakRef;
+
 export function enableNetworkInspect(devtoolsAgent, payload) {
   const XHRInterceptor = require("react-native/Libraries/Network/XHRInterceptor");
 
@@ -62,6 +86,10 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
     ) {
       const requestId = message.params.requestId;
       const xhr = xhrsMap.get(requestId)?.deref();
+      // typically with devtools UI, each request details will be fetched at most once.
+      // we can safely delete the record once the request data is retrieved.
+      xhrsMap.delete(requestId);
+
       readResponseBodyContent(xhr).then((body) => {
         devtoolsAgent._bridge.send(
           "RNIDE_networkInspectorCDPMessage",
@@ -78,7 +106,7 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
     const requestId = `${requestIdPrefix}-${requestIdCounter++}`;
     const sendTime = Date.now();
 
-    xhrsMap.set(requestId, new WeakRef(xhr));
+    xhrsMap.set(requestId, new WeakRefImpl(xhr));
 
     function sendCDPMessage(method, params) {
       devtoolsAgent._bridge.send(
