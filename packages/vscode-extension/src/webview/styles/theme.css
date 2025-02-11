@@ -294,9 +294,11 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-zoom-select-separator: var(--navy-light-40);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(0deg,
-      rgba(232, 232, 232, 0.9),
-      rgba(185, 185, 185, 0.9));
+  --swm-replay-overlay-backgroud: linear-gradient(
+    0deg,
+    rgba(232, 232, 232, 0.9),
+    rgba(185, 185, 185, 0.9)
+  );
 
   --swm-replay-len-select: var(--swm-default-text);
   --swm-replay-len-select-background: var(--grey-light-60);
@@ -467,12 +469,14 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-zoom-select-separator: var(--background-dark-50);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(0deg,
-      rgba(0, 0, 0, 1),
-      rgba(0, 0, 0, 0.5),
-      rgba(0, 0, 0, 0.5),
-      rgba(0, 0, 0, 0.5),
-      rgba(0, 0, 0, 0.5));
+  --swm-replay-overlay-backgroud: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 1),
+    rgba(0, 0, 0, 0.5),
+    rgba(0, 0, 0, 0.5),
+    rgba(0, 0, 0, 0.5),
+    rgba(0, 0, 0, 0.5)
+  );
   --swm-replay-len-select: var(--off-white);
   --swm-replay-len-select-background: var(--background-dark-160);
   --swm-replay-len-select-hover-background: var(--background-dark-120);
@@ -651,9 +655,11 @@ body[data-use-code-theme="true"] {
   --swm-zoom-select-separator: var(--vscode-dropdown-border);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(0deg,
-      rgba(232, 232, 232, 0.9),
-      rgba(185, 185, 185, 0.9));
+  --swm-replay-overlay-backgroud: linear-gradient(
+    0deg,
+    rgba(232, 232, 232, 0.9),
+    rgba(185, 185, 185, 0.9)
+  );
 
   --swm-replay-len-select: var(--swm-default-text);
   --swm-replay-len-select-background: var(--grey-light-60);
