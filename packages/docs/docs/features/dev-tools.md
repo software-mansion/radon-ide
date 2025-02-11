@@ -42,12 +42,15 @@ Once enabled you will be able to use the official Redux UI (same one as the Redu
 
 ## Redux (via Expo Devtools Plugin)
 
-In order to set it up, follow the instructions from [this Expo guide on Redux Devtool Plugin](https://docs.expo.dev/debugging/devtools-plugins/#redux).
+We recommend that you use the built-in Redux dev tool as described in the above section which requires no extra setup.
+However, if your workflow rely on using Expo CLI and you need to have the [Expo Redux Devtool Plugin](https://docs.expo.dev/debugging/devtools-plugins/#redux) setup in your project, IDE will automatically detect that and will use the Redux devtools via the installed plugin.
+There should be no difference as far as functionality in each of those options, so it is only a matter of convinience.
 
 <img width="700" src="/img/docs/ide_devtools_expo_redux.png" className="shadow-image" />
 
 ## React Query (via Expo Devtools Plugin)
 
+React Query plugin only works when installed and configured via the Expo Plugin.
 Follow the setup instructions from [React Query Expo Devtool Plugin website](https://docs.expo.dev/debugging/devtools-plugins/#react-query).
 
 <img width="700" src="/img/docs/ide_devtools_expo_reactquery.png" className="shadow-image" />
