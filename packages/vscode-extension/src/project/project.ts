@@ -261,8 +261,9 @@ export class Project
     const text = await this.deviceSession?.getClipboard();
     if (text) {
       env.clipboard.writeText(text);
-      await this.utils.showToast("Copied from device clipboard", 2000);
     }
+    // For consistency between iOS and Android, we always display toast message
+    await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
   onBundleError(): void {
