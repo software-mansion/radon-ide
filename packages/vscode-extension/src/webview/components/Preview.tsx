@@ -326,8 +326,6 @@ function Preview({
 
   function onWrapperMouseWheel(e: WheelEvent<HTMLDivElement>) {
     e.preventDefault();
-    setIsPressing(false);
-    setIsMultiTouching(false);
   }
 
   const wrapperTouchHandlers = shouldPreventInputEvents
