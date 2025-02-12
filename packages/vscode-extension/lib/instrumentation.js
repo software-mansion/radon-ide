@@ -12,7 +12,12 @@ const { getFabricUIManager } = require("react-native/Libraries/ReactNative/Fabri
 const { Dimensions } = require("react-native");
 const FabricUIManager = getFabricUIManager();
 
-async function onRender(fibers, reportRenders) {
+let options = {
+  isEnabled: false,
+  reportRenders: () => {},
+};
+
+async function onRender(fibers) {
   const blueprintMap = new Map();
   for (const fiber of fibers) {
     if (!isCompositeFiber(fiber)) {
@@ -58,14 +63,17 @@ async function onRender(fibers, reportRenders) {
       blueprint.count++;
     }
   }
-  reportRenders(Array.from(blueprintMap.entries()));
+  options.reportRenders(Array.from(blueprintMap.entries()));
 }
 
 const isValidFiber = (_fiber) => {
   return true;
 };
 
-function onCommitFiberRoot(_rendererID, root, reportRenders) {
+function onCommitFiberRoot(_rendererID, root) {
+  if (!options.isEnabled) {
+    return;
+  }
   const renderedFibers = [];
   traverseRenderedFibers(root.current, (fiber, _phase) => {
     const type = getType(fiber.type);
@@ -79,11 +87,17 @@ function onCommitFiberRoot(_rendererID, root, reportRenders) {
 
     renderedFibers.push(fiber);
   });
-  onRender(renderedFibers, reportRenders);
+  onRender(renderedFibers);
 }
 
-export const enableInstrumentation = (reportRenders) => {
+// eslint-disable-next-line @typescript-eslint/no-shadow
+export const enableInstrumentation = (options) => {
+  setInstrumentationOptions(options);
   instrument({
-    onCommitFiberRoot: (rendererID, root) => onCommitFiberRoot(rendererID, root, reportRenders),
+    onCommitFiberRoot: (rendererID, root) => onCommitFiberRoot(rendererID, root),
   });
+};
+
+export const setInstrumentationOptions = (partialOptions) => {
+  options = { ...options, ...partialOptions };
 };
