@@ -5,7 +5,11 @@ import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
-import { useBootErrorAlert, useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
+import {
+  useBootErrorAlert,
+  useBuildErrorAlert,
+  useBundleErrorAlert,
+} from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
@@ -99,7 +103,8 @@ function Preview({
       ? false
       : !projectState || projectState.status === "starting";
   const showDevicePreview =
-    projectState?.previewURL && (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
+    projectState?.previewURL &&
+    (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
   useBuildErrorAlert(hasBuildError);
   useBootErrorAlert(hasBootError);
@@ -125,7 +130,10 @@ function Preview({
     anchorY += newPointY - prevPointY;
     anchorX = clamp(anchorX, 0, 1);
     anchorY = clamp(anchorY, 0, 1);
-    setAnchorPoint({ x: anchorX, y: anchorY });
+    setAnchorPoint({
+      x: anchorX,
+      y: anchorY,
+    });
   }
 
   type MouseMove = "Move" | "Down" | "Up";
@@ -152,7 +160,10 @@ function Preview({
     project.dispatchTouches(
       [
         { xRatio: pt.x, yRatio: pt.y },
-        { xRatio: secondPt.x, yRatio: secondPt.y },
+        {
+          xRatio: secondPt.x,
+          yRatio: secondPt.y,
+        },
       ],
       type
     );
@@ -172,7 +183,10 @@ function Preview({
       if (requestStack && inspectData?.stack) {
         if (showInspectStackModal) {
           setInspectStackData({
-            requestLocation: { x: event.clientX, y: event.clientY },
+            requestLocation: {
+              x: event.clientX,
+              y: event.clientY,
+            },
             stack: inspectData.stack,
           });
         } else {
@@ -299,14 +313,14 @@ function Preview({
   const touchHandlers = shouldPreventInputEvents
     ? {}
     : {
-      onMouseDown,
-      onMouseMove,
-      onMouseUp,
-      onMouseEnter,
-      onMouseLeave,
-      // one wheel scrub can generate multiple events, so we debounce it better experience
-      onWheel: debounce(onWheel, 100),
-    };
+        onMouseDown,
+        onMouseMove,
+        onMouseUp,
+        onMouseEnter,
+        onMouseLeave,
+        // one wheel scrub can generate multiple events, so we debounce it better experience
+        onWheel: debounce(onWheel, 100),
+      };
 
   function onWrapperMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -333,11 +347,11 @@ function Preview({
   const wrapperTouchHandlers = shouldPreventInputEvents
     ? {}
     : {
-      onMouseDown: onWrapperMouseDown,
-      onMouseUp: onWrapperMouseUp,
-      onWheel: onWrapperMouseWheel,
-      onMouseLeave: onWrapperMouseLeave,
-    };
+        onMouseDown: onWrapperMouseDown,
+        onMouseUp: onWrapperMouseUp,
+        onWheel: onWrapperMouseWheel,
+        onMouseLeave: onWrapperMouseLeave,
+      };
 
   useEffect(() => {
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
@@ -406,7 +420,10 @@ function Preview({
         const isPanningKey = e.code === "ShiftLeft" || e.code === "ShiftRight";
 
         if (isMultiTouchKey && isKeydown) {
-          setAnchorPoint({ x: 0.5, y: 0.5 });
+          setAnchorPoint({
+            x: 0.5,
+            y: 0.5,
+          });
           setTouchPoint(getTouchPosition(currentMousePosition.current!));
           setIsMultiTouching(true);
         }

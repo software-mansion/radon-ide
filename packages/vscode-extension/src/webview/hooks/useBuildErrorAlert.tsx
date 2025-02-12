@@ -122,7 +122,8 @@ export function useBootErrorAlert(shouldDisplayAlert: boolean) {
   useToggleableAlert(shouldDisplayAlert, {
     id: "boot-error-alert",
     title: "Couldn't start selected device",
-    description: "Perhaps the device runtime is not installed or your computer has run out of space. Open IDE logs to find out what went wrong.",
+    description:
+      "Perhaps the device runtime is not installed or your computer has run out of space. Open IDE logs to find out what went wrong.",
     actions: <BootErrorActions />,
   });
 }
