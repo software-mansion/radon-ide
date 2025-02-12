@@ -29,7 +29,7 @@ import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
-import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
+import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
 import { BuildCache } from "../builders/BuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
@@ -717,6 +717,13 @@ export class Project
 
   //#region Select device
   private async selectDeviceOnly(deviceInfo: DeviceInfo) {
+    if (!deviceInfo.available) {
+      window.showErrorMessage(
+        "Selected device is not available. Perhaps the device runtime is not installed. Please select another device.",
+        "Dismiss"
+      );
+      return undefined;
+    }
     let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
     try {
       device = await this.deviceManager.acquireDevice(deviceInfo);
@@ -785,7 +792,11 @@ export class Project
       const isSelected = this.projectState.selectedDevice === deviceInfo;
       const isNewSession = this.deviceSession === newDeviceSession;
       if (isSelected && isNewSession) {
-        this.updateProjectState({ status: "buildError" });
+        if (e instanceof DeviceBootError) {
+          this.updateProjectState({ status: "bootError" });
+        } else {
+          this.updateProjectState({ status: "buildError" });
+        }
       }
     }
     return true;

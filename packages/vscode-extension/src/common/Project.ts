@@ -25,6 +25,7 @@ export type ProjectState = {
     | "starting"
     | "running"
     | "buildError"
+    | "bootError"
     | "runtimeError"
     | "bundleError"
     | "incrementalBundleError"

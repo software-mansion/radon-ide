@@ -102,6 +102,31 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   useToggleableAlert(shouldDisplayAlert, buildErrorAlert);
 }
 
+function BootErrorActions() {
+  const { project } = useProject();
+  return (
+    <>
+      <IconButton
+        type="secondary"
+        onClick={() => {
+          project.focusExtensionLogsOutput();
+        }}
+        tooltip={{ label: "Open IDE logs", side: "bottom" }}>
+        <span className="codicon codicon-output" />
+      </IconButton>
+    </>
+  );
+}
+
+export function useBootErrorAlert(shouldDisplayAlert: boolean) {
+  useToggleableAlert(shouldDisplayAlert, {
+    id: "boot-error-alert",
+    title: "Couldn't start selected device",
+    description: "Perhaps the device runtime is not installed or your computer has run out of space. Open IDE logs to find out what went wrong.",
+    actions: <BootErrorActions />,
+  });
+}
+
 function BundleErrorActions() {
   const { project } = useProject();
   return (

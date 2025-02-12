@@ -5,7 +5,7 @@ import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
-import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
+import { useBootErrorAlert, useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
@@ -85,6 +85,7 @@ function Preview({
   const projectStatus = projectState.status;
 
   const hasBuildError = projectStatus === "buildError";
+  const hasBootError = projectStatus === "bootError";
   const hasIncrementalBundleError = projectStatus === "incrementalBundleError";
   const hasBundleError = projectStatus === "bundleError";
 
@@ -98,9 +99,10 @@ function Preview({
       ? false
       : !projectState || projectState.status === "starting";
   const showDevicePreview =
-    projectState?.previewURL && (showPreviewRequested || (!isStarting && !hasBuildError));
+    projectState?.previewURL && (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
   useBuildErrorAlert(hasBuildError);
+  useBootErrorAlert(hasBootError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
 
   const openRebuildAlert = useNativeRebuildAlert();
@@ -297,14 +299,14 @@ function Preview({
   const touchHandlers = shouldPreventInputEvents
     ? {}
     : {
-        onMouseDown,
-        onMouseMove,
-        onMouseUp,
-        onMouseEnter,
-        onMouseLeave,
-        // one wheel scrub can generate multiple events, so we debounce it better experience
-        onWheel: debounce(onWheel, 100),
-      };
+      onMouseDown,
+      onMouseMove,
+      onMouseUp,
+      onMouseEnter,
+      onMouseLeave,
+      // one wheel scrub can generate multiple events, so we debounce it better experience
+      onWheel: debounce(onWheel, 100),
+    };
 
   function onWrapperMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -331,11 +333,11 @@ function Preview({
   const wrapperTouchHandlers = shouldPreventInputEvents
     ? {}
     : {
-        onMouseDown: onWrapperMouseDown,
-        onMouseUp: onWrapperMouseUp,
-        onWheel: onWrapperMouseWheel,
-        onMouseLeave: onWrapperMouseLeave,
-      };
+      onMouseDown: onWrapperMouseDown,
+      onMouseUp: onWrapperMouseUp,
+      onWheel: onWrapperMouseWheel,
+      onMouseLeave: onWrapperMouseLeave,
+    };
 
   useEffect(() => {
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
@@ -568,7 +570,7 @@ function Preview({
             </div>
           </Device>
         )}
-        {!showDevicePreview && !hasBuildError && (
+        {!showDevicePreview && !hasBuildError && !hasBootError && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
@@ -576,7 +578,7 @@ function Preview({
             </div>
           </Device>
         )}
-        {hasBuildError && (
+        {(hasBuildError || hasBootError) && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized extension-error-screen" />
           </Device>
