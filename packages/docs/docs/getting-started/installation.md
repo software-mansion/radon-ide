@@ -13,9 +13,9 @@ If you wish to build the extension from source in order to make modifications, h
 ## -sec-num- Installing the Radon IDE extension from marketplace
 
 Search for `Radon IDE` on the extension page or use the following link depending on the editor you use:
- - [VSCode](vscode:extension/swmansion.react-native-ide)
- - [Cursor](cursor:extension/swmansion.react-native-ide)
- - [Windsurf](windsurf:extension/swmansion.react-native-ide)
+ - <a target="_self" href="vscode:extension/swmansion.react-native-ide">VSCode</a>
+ - <a target="_self" href="cursor:extension/swmansion.react-native-ide">Cursor</a>
+ - <a target="_self" href="windsurf:extension/swmansion.react-native-ide">Windsurf</a>
 
 Then click **Install** button to install the extension:
 
