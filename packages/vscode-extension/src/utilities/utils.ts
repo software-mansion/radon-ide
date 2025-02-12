@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import { EventEmitter } from "stream";
 import fs from "fs";
 import path from "path";
-import { commands, env, Uri, window } from "vscode";
+import { commands, env, ProgressLocation, Uri, window } from "vscode";
 import JSON5 from "json5";
 import vscode from "vscode";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
@@ -173,5 +173,19 @@ export class Utils implements UtilsInterface {
     listener: UtilsEventListener<UtilsEventMap[K]>
   ) {
     this.eventEmitter.removeListener(eventType, listener);
+  }
+
+  async showToast(message: string, timeout: number) {
+    // VSCode doesn't support auto hiding notifications, so we use a workaround with progress
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        cancellable: false,
+      },
+      async (progress) => {
+        progress.report({ message, increment: 100 });
+        await new Promise((resolve) => setTimeout(resolve, timeout));
+      }
+    );
   }
 }
