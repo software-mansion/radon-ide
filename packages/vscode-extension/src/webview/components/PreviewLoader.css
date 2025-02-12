@@ -3,6 +3,20 @@
   cursor: pointer;
 }
 
+.preview-loader-center-pad {
+  flex: 1;
+}
+
+.preview-loader-waiting-actions {
+  position: relative;
+  bottom: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  align-items: stretch;
+}
+
 .preview-loader-button-group {
   display: flex;
   justify-content: space-between;
