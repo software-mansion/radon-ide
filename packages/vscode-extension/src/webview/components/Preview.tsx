@@ -28,6 +28,14 @@ import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
+import { makeProxy } from "../utilities/rpc";
+import {
+  RenderOutlinesEventListener,
+  RenderOutlinesEventMap,
+  RenderOutlinesInterface,
+} from "../../common/RenderOutlines";
+
+const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -492,14 +500,14 @@ function Preview({
     host.style.left = "7px";
 
     phoneWrapper.parentElement?.appendChild(host);
-    const blueprintListener: ScanEventListener<ScanEventMap["rendersReported"]> = ({
-      blueprintOutlines,
-    }) => {
+    const blueprintListener: RenderOutlinesEventListener<
+      RenderOutlinesEventMap["rendersReported"]
+    > = ({ blueprintOutlines }) => {
       blueprintOutlines.forEach(([fiberId, blueprint]) => registerOutlines(fiberId, blueprint));
     };
-    Scan.addEventListener("rendersReported", blueprintListener);
+    RenderOutlines.addEventListener("rendersReported", blueprintListener);
     return () => {
-      Scan.removeEventListener("rendersReported", blueprintListener);
+      RenderOutlines.removeEventListener("rendersReported", blueprintListener);
       host?.remove();
     };
   }, [previewRef.current?.clientWidth, previewRef.current?.clientHeight, device]);

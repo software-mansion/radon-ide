@@ -42,6 +42,9 @@ const InternalImports = {
   get enableInstrumentation() {
     return require("./instrumentation").enableInstrumentation;
   },
+  get setInstrumentationOptions() {
+    return require("./instrumentation").setInstrumentationOptions;
+  },
 };
 
 window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
@@ -411,10 +414,22 @@ export function AppWrapper({ children, initialProps, fabric }) {
   }, [!!devtoolsAgent && hasLayout]);
 
   useEffect(() => {
-    InternalImports.enableInstrumentation((blueprintOutlines) => {
-      devtoolsAgent._bridge.send("RNIDE_rendersReported", { blueprintOutlines });
+    InternalImports.enableInstrumentation({
+      reportRenders: (blueprintOutlines) => {
+        devtoolsAgent._bridge.send("RNIDE_rendersReported", { blueprintOutlines });
+      },
     });
   }, [devtoolsAgent]);
+  
+  // TODO: get initial options when the app starts
+  useAgentListener(
+    devtoolsAgent,
+    "RNIDE_setInstrumentationOptions",
+    (payload) => {
+      InternalImports.setInstrumentationOptions(payload);
+    },
+    []
+  );
 
   return (
     <View
