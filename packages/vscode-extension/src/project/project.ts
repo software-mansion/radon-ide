@@ -357,6 +357,7 @@ export class Project
     this.fileWatcher.dispose();
     this.licenseWatcher.dispose();
     this.licenseUpdater.dispose();
+    this.toolsManager.dispose();
   }
 
   private async reloadMetro() {
