@@ -6,14 +6,8 @@
 
 ### 💽 Installation and Usage
 
-You can install Radon IDE with VSCode using the **Install** button on our [VSCode Marketplace page](https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide).
-
-You can also install it directly from the **Extensions** tab in VSCode or Cursor.
-First, open your editor, navigate to the **Extensions** tab, and search for `Radon IDE`. Then, use the **Install** button to install it:
-
-![Installation guide for VSCode](packages/docs/static/img/docs/ide_install_vscode.png)
-
-For more installation options, you can [visit our installation guide](https://ide.swmansion.com/docs/getting-started/installation).
+You can install Radon IDE by opening the extension marketplace link for <a target="_self" href="vscode:extension/swmansion.react-native-ide">VSCode</a>, <a target="_self" href="cursor:extension/swmansion.react-native-ide">Cursor</a>, or <a target="_self" href="windsurf:extension/swmansion.react-native-ide">Windsurf</a>.
+Use the **Install** button there, or [follow our installation guide](https://ide.swmansion.com/docs/getting-started/installation) for more information.
 
 Once you have the IDE installed, you can check our [Getting Started Guide](https://ide.swmansion.com/docs/getting-started/launching) on how to launch and start using the extension.
 
