@@ -12,7 +12,7 @@ const faqs = [
   {
     topic: "Can I use it on Windows or Linux?",
     answer:
-      `Due to limited capacity support for Linux and Windows is considered as "Beta". Because of that we don't distribute Windows or Linux build via marketplace and you have to <a href="https://ide.swmansion.com/docs/getting-started/installation" target="_blank">follow manual installation instructions</a>. Note that since Windows and Linux support is in beta, you don't have to purchase a license to use Radon IDE on those platforms but you can use it under the free Beta license.`
+      `Due to limited capacity support for Linux and Windows is considered as "Beta". Because of that we don't distribute Windows or Linux builds via VSCode marketplace and you have to <a href="https://ide.swmansion.com/docs/getting-started/installation" target="_blank">follow manual installation instructions</a>. Note that since Windows and Linux support is in beta, you don't have to purchase a license to use Radon IDE on those platforms but you can use it under the free Beta license.`
   },
   {
     topic: "How much does it cost?",
