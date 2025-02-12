@@ -523,12 +523,16 @@ export class Project
     this.deviceSession?.sendDeepLink(link);
   }
 
-  public async dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+  public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
     this.deviceSession?.sendTouches(touches, type);
   }
 
-  public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
+  public dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
     this.deviceSession?.sendKey(keyCode, direction);
+  }
+
+  public dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number) {
+    this.deviceSession?.sendWheel(point, deltaX, deltaY);
   }
 
   public async inspectElementAt(

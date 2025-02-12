@@ -173,8 +173,9 @@ export interface ProjectInterface {
   captureReplay(): void;
   captureScreenshot(): void;
 
-  dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): Promise<void>;
-  dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): Promise<void>;
+  dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
+  dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;
+  dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
   inspectElementAt(

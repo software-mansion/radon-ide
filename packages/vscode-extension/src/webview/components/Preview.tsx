@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, MouseEvent } from "react";
-import clamp from "lodash/clamp";
+import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./Preview.css";
+import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
@@ -215,6 +215,16 @@ function Preview({
     currentMousePosition.current = e;
   }
 
+  function onWheel(e: WheelEvent<HTMLDivElement>) {
+    if (shouldPreventFromSendingTouch) {
+      return;
+    }
+
+    const { x, y } = getTouchPosition(e);
+
+    project.dispatchWheel({ xRatio: x, yRatio: y }, e.deltaX, e.deltaY);
+  }
+
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     wrapperDivRef.current!.focus();
@@ -292,6 +302,8 @@ function Preview({
         onMouseUp,
         onMouseEnter,
         onMouseLeave,
+        // one wheel scrub can generate multiple events, so we debounce it better experience
+        onWheel: debounce(onWheel, 100),
       };
 
   function onWrapperMouseDown(e: MouseEvent<HTMLDivElement>) {
@@ -312,11 +324,16 @@ function Preview({
     setIsMultiTouching(false);
   }
 
+  function onWrapperMouseWheel(e: WheelEvent<HTMLDivElement>) {
+    e.preventDefault();
+  }
+
   const wrapperTouchHandlers = shouldPreventInputEvents
     ? {}
     : {
         onMouseDown: onWrapperMouseDown,
         onMouseUp: onWrapperMouseUp,
+        onWheel: onWrapperMouseWheel,
         onMouseLeave: onWrapperMouseLeave,
       };
 

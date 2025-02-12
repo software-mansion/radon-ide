@@ -195,4 +195,29 @@ export class Preview implements Disposable {
     // We use markers for start and end of the paste to handle multi-line pastes
     this.subprocess?.stdin?.write(`paste START-SIMSERVER-PASTE>>>${text}<<<END-SIMSERVER-PASTE\n`);
   }
+
+  public sendWheel(point: TouchPoint, deltaX: number, deltaY: number) {
+    this.subprocess?.stdin?.write(
+      `wheel ${point.xRatio},${point.yRatio} --dx ${this.normalizeWheel(
+        deltaX
+      )} --dy ${this.normalizeWheel(deltaY)}\n`
+    );
+  }
+
+  /*
+  Positive delta values mean scrolling down/right, negative values mean scrolling up/left.
+  We normalize deltas to 3-7 range (depending on the magnitude) for a better scrolling experience,
+  as the incoming values can vary from 4 to 400 and more.
+  */
+  normalizeWheel(delta: number) {
+    const longWheelThreshold = 150;
+    const mediumWheelThreshold = 50;
+    const absoluteDelta = Math.abs(delta);
+
+    const multiplier =
+      absoluteDelta > longWheelThreshold ? 7 : absoluteDelta > mediumWheelThreshold ? 5 : 3;
+
+    // We're negating the return value for the scroll to reflect the wheel direction
+    return -Math.sign(delta) * multiplier;
+  }
 }
