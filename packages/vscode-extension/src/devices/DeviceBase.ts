@@ -137,6 +137,10 @@ export abstract class DeviceBase implements Disposable {
     return this.preview?.sendClipboard(text);
   }
 
+  public sendWheel(point: TouchPoint, deltaX: number, deltaY: number) {
+    this.preview?.sendWheel(point, deltaX, deltaY);
+  }
+
   async startPreview() {
     if (!this.previewStartPromise) {
       this.preview = this.makePreview();

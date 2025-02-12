@@ -318,6 +318,10 @@ export class DeviceSession implements Disposable {
     return this.device.getClipboard();
   }
 
+  public sendWheel(point: TouchPoint, deltaX: number, deltaY: number) {
+    this.device.sendWheel(point, deltaX, deltaY);
+  }
+
   public inspectElementAt(
     xRatio: number,
     yRatio: number,
