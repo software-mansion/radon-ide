@@ -73,13 +73,10 @@ Due to the complexity and a non-standard nature of the brownfield development th
 |         | iOS    | Android                  |
 | ------- | ------ | ------------------------ |
 | macOS   | <Yes/> | <Yes/>                   |
+| Linux   | <No/>  | <Yes/>                   |
 | Windows | <No/>  | <Maybe label="In Beta"/> |
-| Linux   | <No/>  | <No/>                    |
 
 </div>
 You can use Radon IDE on Windows using free Beta license.
 <br/>
 <br/>
-
-While running Radon IDE on Linux is technically possible, we do not have enough development capacity to add it.
-If you want to contribute the support for Linux please consult [this issue](https://github.com/software-mansion/radon-ide/issues/688).
