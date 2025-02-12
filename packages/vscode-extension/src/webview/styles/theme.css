@@ -210,6 +210,7 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
 
   --swm-button-counter: var(--off-white);
   --swm-button-counter-background: var(--navy-light-60);
+  --swm-button-counter-border: var(--navy-light-60);
 
   --swm-button-recording-on-background: var(--navy-light-60);
   --swm-button-replay-hover: var(--navy-light-transparent);
@@ -383,6 +384,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
 
   --swm-button-counter: var(--off-white);
   --swm-button-counter-background: var(--background-dark-40);
+  --swm-button-counter-border: var(--background-dark-40);
 
   --swm-button-recording-on-background: var(--background-dark-40);
   --swm-button-replay-hover: var(--background-dark-160);
@@ -492,7 +494,7 @@ body[data-use-code-theme="true"] {
   --deep-link-history-query-match-color: var(--swm-button-background);
 
   --swm-active-item: var(--vscode-list-activeSelectionForeground);
-  --swm-preview-background: var(--vscode-editor-background);
+  --swm-preview-background: none;
 
   --swm-default-text: var(--vscode-foreground);
   --swm-marked-text: var(--vscode-editor-findMatchHighlightBackground);
@@ -564,8 +566,9 @@ body[data-use-code-theme="true"] {
   --swm-button-ternary-background: var(--vscode-button-background);
   --swm-button-ternary-hover: var(--vscode-button-hoverBackground);
 
-  --swm-button-counter: var(--vscode-button-foreground);
-  --swm-button-counter-background: var(--vscode-list-inactiveSelectionBackground);
+  --swm-button-counter: var(--vscode-activityBarBadge-foreground);
+  --swm-button-counter-background: var(--vscode-activityBarBadge-background);
+  --swm-button-counter-border: var(--vscode-contrastBorder);
 
   --swm-button-recording-on-background: var(--navy-light-60);
   --swm-button-replay-hover: var(--navy-light-transparent);
@@ -637,9 +640,9 @@ body[data-use-code-theme="true"] {
 
   /* Debugger */
   --swm-debugger-label: var(--off-white);
-  --swm-debugger-button-group: var(--white);
-  --swm-debugger-button-group-background: var(--navy-light-20);
-  --swm-debugger-button-group-border: 1px solid var(--navy-light-40);
+  --swm-debugger-button-group: var(--vscode-foreground);
+  --swm-debugger-button-group-background: var(--vscode-dropdown-background);
+  --swm-debugger-button-group-border: 1px solid var(--vscode-dropdown-border);
 
   /* Zoom controls */
   --swm-zoom-controls-background: var(--vscode-menu-background);

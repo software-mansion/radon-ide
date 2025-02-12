@@ -106,14 +106,25 @@ function transformWrapper({ filename, src, ...rest }) {
     // is experimental as it has some performance implications and may be removed in future versions.
     //
     const { version } = requireFromAppDir("react-native/package.json");
+    const rendererFileName = filename.split(path.sep).pop();
     if (
       version.startsWith("0.74") ||
       version.startsWith("0.75") ||
       version.startsWith("0.76") ||
       version.startsWith("0.77")
     ) {
-      const rendererFileName = filename.split(path.sep).pop();
-      src = `module.exports = require("__RNIDE_lib__/rn-renderer/${rendererFileName}");`;
+      src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-74-77/${rendererFileName}");`;
+    }
+    if (version.startsWith("0.78")) {
+      src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-78/${rendererFileName}");`;
+    }
+  } else if (
+    isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js")
+  ) {
+    const { version } = requireFromAppDir("react-native/package.json");
+    const jsxRuntimeFileName = filename.split(path.sep).pop();
+    if (version.startsWith("0.78")) {
+      src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78/${jsxRuntimeFileName}");`;
     }
   } else if (isTransforming("node_modules/@tanstack/query-core/build/legacy/queryClient.cjs")) {
     src = src.replace('mount() {', 'mount() { global.__RNIDE_REACT_QUERY_CLIENT_INIT__?.(this);');

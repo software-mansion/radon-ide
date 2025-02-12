@@ -57,6 +57,7 @@ function DiagnosticView() {
       <Label>Other</Label>
       <DiagnosticItem label="Expo Router" name="expoRouter" info={dependencies.expoRouter} />
       <DiagnosticItem label="Storybook" name="storybook" info={dependencies.storybook} />
+      <DiagnosticItem label="eas-cli" name="easCli" info={dependencies.easCli} />
       <div className="diagnostic-section-margin" />
 
       <div className="diagnostic-button-container">

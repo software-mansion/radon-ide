@@ -3,6 +3,7 @@ import { CSSProperties, useCallback, useEffect, useState } from "react";
 import { DeviceProperties } from "../utilities/consts";
 import { ZoomLevelType } from "../../common/Project";
 import { DEVICE_DEFAULT_SCALE } from "../components/ZoomControls";
+import { useDeviceFrame } from "../Preview/Device/hooks";
 
 type UseResizableProps = {
   wrapperDivRef: React.RefObject<HTMLDivElement>;
@@ -23,6 +24,7 @@ export function useResizableProps({
   setZoomLevel,
   device,
 }: UseResizableProps) {
+  const frame = useDeviceFrame(device);
   const [phoneHeight, setPhoneHeight] = useState<PhoneHeight>(0);
 
   const [maxWidth, setMaxWidth] = useState<"100%" | undefined>(undefined);
@@ -35,7 +37,7 @@ export function useResizableProps({
         setMaxWidth("100%");
         return;
       }
-      setPhoneHeight(device.frameHeight * zoomLevel * DEVICE_DEFAULT_SCALE + delta);
+      setPhoneHeight(frame.height * zoomLevel * DEVICE_DEFAULT_SCALE + delta);
       setMaxWidth(undefined);
     },
     [wrapperDivRef, zoomLevel]

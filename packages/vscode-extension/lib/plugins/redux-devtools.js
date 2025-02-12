@@ -1,31 +1,75 @@
-const { useEffect } = require("react");
-const {createComposeWithDevTools} = require('./external/redux-devtools-expo-dev-plugin');
-const {RNIDEProxyClient} = require('./utils');
+const { createComposeWithDevTools } = require("./third-party/redux-devtools-expo-dev-plugin");
 
-let proxyClient = null;
+class RNIDEAppExtensionProxy {
+  scope;
+  listeners = new Map();
+  devtoolsAgent = undefined;
 
-export const isProxyClientReady = () => proxyClient !== null;
-
-export const clearProxyClient = () => proxyClient = null;
-
-export const createRNIDEProxyClientAsync = async () => {
-  if (proxyClient !== null) {
-    return proxyClient;
+  constructor(scope) {
+    this.scope = scope;
+    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    if (hook.reactDevtoolsAgent) {
+      this.setDevtoolsAgent(hook.reactDevtoolsAgent);
+    } else {
+      hook.on("react-devtools", this.setDevtoolsAgent);
+    }
   }
-  
-  proxyClient = new RNIDEProxyClient('RNIDE-redux-devtools');
 
-  return proxyClient;
-};
+  handleMessages = (data) => {
+    const listeners = this.listeners.get(data.type) || [];
+    listeners.forEach((listener) => listener(data.data));
+  };
 
-window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = createComposeWithDevTools(createRNIDEProxyClientAsync);
+  setDevtoolsAgent = (agent) => {
+    if (!agent) {
+      return;
+    }
+    this.clearDevToolsAgent();
+    this.devtoolsAgent = agent;
+    this.devtoolsAgent._bridge.addListener(this.scope, this.handleMessages);
+  };
 
-export const useReduxDevTools = (devtoolsAgent) => {
-  useEffect(() => {
-    proxyClient?.setDevtoolsAgent(devtoolsAgent);
+  clearDevToolsAgent() {
+    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    hook.off("react-devtools", this.setDevtoolsAgent);
 
-    return () => {
-      proxyClient?.clearDevToolsAgent();
-    };
-  }, [devtoolsAgent]);
+    if (!this.devtoolsAgent) {
+      return;
+    }
+    this.devtoolsAgent._bridge.removeListener(this.scope, this.handleMessages);
+    this.devtoolsAgent = undefined;
+  }
+
+  sendMessage(type, data) {
+    if (!this.devtoolsAgent) {
+      return;
+    }
+
+    this.devtoolsAgent._bridge.send(this.scope, {
+      type,
+      data,
+    });
+  }
+
+  addMessageListener(type, listener) {
+    const currentListeners = this.listeners.get(type) || [];
+    this.listeners.set(type, [...currentListeners, listener]);
+  }
+
+  removeMessageListener(type, listener) {
+    const currentListeners = this.listeners.get(type) || [];
+    const filteredListeners = currentListeners.filter((l) => l !== listener);
+    this.listeners.set(type, filteredListeners);
+  }
+
+  closeAsync() {
+    this.clearDevToolsAgent();
+    this.listeners.clear();
+  }
+}
+
+export const compose = (...args) => {
+  global.__RNIDE_register_dev_plugin && global.__RNIDE_register_dev_plugin("RNIDE-redux-devtools");
+  const proxyClient = new RNIDEAppExtensionProxy("RNIDE-redux-devtools");
+  return createComposeWithDevTools(() => proxyClient)(...args);
 };

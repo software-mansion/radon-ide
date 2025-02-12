@@ -11,6 +11,7 @@ import {
   ThreadEvent,
   Source,
   StackFrame,
+  Variable,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { Cdp } from "vscode-js-debug/out/cdp/index";
@@ -43,6 +44,10 @@ function typeToCategory(type: string) {
       return "stdout";
   }
 }
+
+const RETRIEVE_VARIABLE_TIMEOUT_MS = 3000;
+
+const ERROR_RESPONSE_FAIL_TO_RETRIEVE_VARIABLE_ID = 4000;
 
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
@@ -304,22 +309,34 @@ export class DebugAdapter extends DebugSession {
         (scope: any) => scope.type === "local"
       )?.object?.objectId;
       const localScopeObjectId = this.variableStore.adaptCDPObjectId(localScopeCDPObjectId);
-      const localScopeVariables = await this.variableStore.get(
-        localScopeObjectId,
-        (params: object) => {
-          return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
-        }
-      );
+      let localScopeVariables: Variable[] = [];
+      try {
+        localScopeVariables = await this.variableStore.get(localScopeObjectId, (params: object) => {
+          return this.cdpSession.sendCDPMessage(
+            "Runtime.getProperties",
+            params,
+            RETRIEVE_VARIABLE_TIMEOUT_MS
+          );
+        });
+      } catch (e) {
+        Logger.error("[Debug Adapter] Failed to retrieve localScopeVariables", e);
+      }
       const errorMessage = localScopeVariables.find((v) => v.name === "message")?.value;
       const isFatal = localScopeVariables.find((v) => v.name === "isFatal")?.value;
       const stackObjectId = localScopeVariables.find((v) => v.name === "stack")?.variablesReference;
 
-      const stackObjectProperties = await this.variableStore.get(
-        stackObjectId!,
-        (params: object) => {
-          return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
-        }
-      );
+      let stackObjectProperties: Variable[] = [];
+      try {
+        stackObjectProperties = await this.variableStore.get(stackObjectId!, (params: object) => {
+          return this.cdpSession.sendCDPMessage(
+            "Runtime.getProperties",
+            params,
+            RETRIEVE_VARIABLE_TIMEOUT_MS
+          );
+        });
+      } catch (e) {
+        Logger.error("[Debug Adapter] Failed to retrieve stackObjectProperties", e);
+      }
 
       const stackFrames: Array<StackFrame> = [];
       // Unfortunately we can't get proper scope chanins here, because the debugger doesn't really stop at the frame where exception is thrown
@@ -328,12 +345,21 @@ export class DebugAdapter extends DebugSession {
           // we process entry with numerical names
           if (stackObjEntry.name.match(/^\d+$/)) {
             const index = parseInt(stackObjEntry.name, 10);
-            const stackObjProperties = await this.variableStore.get(
-              stackObjEntry.variablesReference,
-              (params: object) => {
-                return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
-              }
-            );
+            let stackObjProperties: Variable[] = [];
+            try {
+              stackObjProperties = await this.variableStore.get(
+                stackObjEntry.variablesReference,
+                (params: object) => {
+                  return this.cdpSession.sendCDPMessage(
+                    "Runtime.getProperties",
+                    params,
+                    RETRIEVE_VARIABLE_TIMEOUT_MS
+                  );
+                }
+              );
+            } catch (e) {
+              Logger.error("[Debug Adapter] Failed to retrieve stackObjProperties", e);
+            }
             const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
             const genUrl = stackObjProperties.find((v) => v.name === "file")?.value || "";
             const genLine1Based = parseInt(
@@ -462,23 +488,27 @@ export class DebugAdapter extends DebugSession {
   }
 
   protected async variablesRequest(
-    response: DebugProtocol.VariablesResponse,
+    response: DebugProtocol.Response,
     args: DebugProtocol.VariablesArguments
   ): Promise<void> {
     response.body = response.body || {};
     response.body.variables = [];
 
-    if (args.filter !== "indexed" && args.filter !== "named") {
-      response.body.variables = await this.variableStore.get(
-        args.variablesReference,
-        (params: object) => {
-          return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
-        }
-      );
-    } else if (args.filter === "indexed") {
-      const stringified = "" + getArraySlots;
+    try {
+      if (args.filter !== "indexed" && args.filter !== "named") {
+        response.body.variables = await this.variableStore.get(
+          args.variablesReference,
+          (params: object) => {
+            return this.cdpSession.sendCDPMessage(
+              "Runtime.getProperties",
+              params,
+              RETRIEVE_VARIABLE_TIMEOUT_MS
+            );
+          }
+        );
+      } else if (args.filter === "indexed") {
+        const stringified = "" + getArraySlots;
 
-      try {
         const partialValue = await this.cdpSession.sendCDPMessage("Runtime.callFunctionOn", {
           functionDeclaration: stringified,
           objectId: this.variableStore.convertDAPObjectIdToCDP(args.variablesReference),
@@ -488,19 +518,28 @@ export class DebugAdapter extends DebugSession {
         const properties = await this.variableStore.get(
           this.variableStore.adaptCDPObjectId(partialValue.result.objectId),
           (params: object) => {
-            return this.cdpSession.sendCDPMessage("Runtime.getProperties", params);
+            return this.cdpSession.sendCDPMessage(
+              "Runtime.getProperties",
+              params,
+              RETRIEVE_VARIABLE_TIMEOUT_MS
+            );
           }
         );
 
         response.body.variables = properties;
-      } catch (e) {
-        Logger.error("[CDP] Failed to retrieve array partially", e);
+      } else if (args.filter === "named") {
+        // We do nothing for named variables. We set 'named' and 'indexed' only for arrays in variableStore
+        // so the 'named' here means "display chunks" (which is handled by Debugger). If we'd get the properties
+        // here we would get all indexed properties even when passing `nonIndexedPropertiesOnly: true` param
+        // to Runtime.getProperties. I assume that this property just does not work yet as it's marked as experimental.
       }
-    } else if (args.filter === "named") {
-      // We do nothing for named variables. We set 'named' and 'indexed' only for arrays in variableStore
-      // so the 'named' here means "display chunks" (which is handled by Debugger). If we'd get the properties
-      // here we would get all indexed properties even when passing `nonIndexedPropertiesOnly: true` param
-      // to Runtime.getProperties. I assume that this property just does not work yet as it's marked as experimental.
+    } catch (e) {
+      Logger.error("[CDP] Failed to retrieve variable", e);
+      response.success = false;
+      response.body.error = {
+        id: ERROR_RESPONSE_FAIL_TO_RETRIEVE_VARIABLE_ID,
+        format: "Failed to retrieve variable",
+      };
     }
 
     this.sendResponse(response);

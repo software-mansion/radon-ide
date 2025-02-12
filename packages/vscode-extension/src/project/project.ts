@@ -1,6 +1,6 @@
 import { EventEmitter } from "stream";
 import os from "os";
-import { Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
+import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import _ from "lodash";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
@@ -253,7 +253,17 @@ export class Project
   //#endregion
 
   async dispatchPaste(text: string) {
-    await this.deviceSession?.sendPaste(text);
+    await this.deviceSession?.sendClipboard(text);
+    await this.utils.showToast("Pasted to device clipboard", 2000);
+  }
+
+  async dispatchCopy() {
+    const text = await this.deviceSession?.getClipboard();
+    if (text) {
+      env.clipboard.writeText(text);
+    }
+    // For consistency between iOS and Android, we always display toast message
+    await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
   onBundleError(): void {
@@ -513,12 +523,16 @@ export class Project
     this.deviceSession?.sendDeepLink(link);
   }
 
-  public async dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+  public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
     this.deviceSession?.sendTouches(touches, type);
   }
 
-  public async dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
+  public dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
     this.deviceSession?.sendKey(keyCode, direction);
+  }
+
+  public dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number) {
+    this.deviceSession?.sendWheel(point, deltaX, deltaY);
   }
 
   public async inspectElementAt(

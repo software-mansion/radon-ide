@@ -8,7 +8,7 @@ import { EasConfig } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
 import { downloadBinary } from "../utilities/common";
-import { EASBuild, listEasBuilds, viewEasBuild } from "./easCommand";
+import { EASBuild, isEasCliInstalled, listEasBuilds, viewEasBuild } from "./easCommand";
 import { extractTarApp } from "./utils";
 
 export async function fetchEasBuild(
@@ -16,6 +16,12 @@ export async function fetchEasBuild(
   config: EasConfig,
   platform: DevicePlatform
 ): Promise<string | undefined> {
+  if (!(await isEasCliInstalled())) {
+    throw new Error(
+      "Failed to build iOS app using EAS build. Check if eas-cli is installed and available in PATH."
+    );
+  }
+
   const build = await fetchBuild(config, platform);
   if (!build) {
     return undefined;

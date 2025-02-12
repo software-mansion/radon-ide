@@ -565,7 +565,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   async sendBiometricAuthorization(isMatch: boolean) {
-    // TO DO: implement android biometric authorization
+    // TODO: implement android biometric authorization
+  }
+
+  async getClipboard() {
+    // No need to copy clipboard, Android Emulator syncs it for us whenever a user clicks on 'Copy'
   }
 }
 

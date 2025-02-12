@@ -33,7 +33,6 @@ export default function WorkspaceConfigProvider({ children }: PropsWithChildren)
   useEffect(() => {
     function watchConfigChange(e: WorkspaceConfigProps) {
       document.body.setAttribute("data-use-code-theme", `${e.themeType === "vscode"}`);
-
       setConfig(e);
     }
 
