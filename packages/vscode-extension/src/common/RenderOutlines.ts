@@ -7,7 +7,7 @@ interface Measurement {
   pageY: number;
 }
 
-export interface ScanEventListener<T> {
+export interface RenderOutlinesEventListener<T> {
   (event: T): void;
 }
 
@@ -20,19 +20,19 @@ export interface BlueprintOutline {
 
 export type BlueprintEntry = [number, BlueprintOutline];
 
-export interface ScanEventMap {
+export interface RenderOutlinesEventMap {
   rendersReported: {
     blueprintOutlines: BlueprintEntry[];
   };
 }
 
-export interface ScanInterface {
-  addEventListener<K extends keyof ScanEventMap>(
+export interface RenderOutlinesInterface {
+  addEventListener<K extends keyof RenderOutlinesEventMap>(
     type: K,
-    listener: ScanEventListener<ScanEventMap[K]>
+    listener: RenderOutlinesEventListener<RenderOutlinesEventMap[K]>
   ): void;
-  removeEventListener<K extends keyof ScanEventMap>(
+  removeEventListener<K extends keyof RenderOutlinesEventMap>(
     type: K,
-    listener: ScanEventListener<ScanEventMap[K]>
+    listener: RenderOutlinesEventListener<RenderOutlinesEventMap[K]>
   ): void;
 }
