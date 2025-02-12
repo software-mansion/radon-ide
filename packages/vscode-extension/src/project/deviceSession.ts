@@ -12,7 +12,7 @@ import {
   TouchPoint,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
+import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -38,7 +38,7 @@ export type EventDelegate = {
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
-  private debugSession: DebugSession | undefined;
+  private debugSession: DebugSession;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
   private deviceSettings: DeviceSettings | undefined;
@@ -81,6 +81,12 @@ export class DeviceSession implements Disposable {
           break;
       }
     });
+
+    // we create a and start debug session here to be able to leverage the functionality of debug console
+    // the session is not connected to the debugger here yet and that step can only happen,
+    // after app is running.
+    this.debugSession = new DebugSession(this.debugEventDelegate);
+    this.debugSession.startDebugSession();
   }
 
   public dispose() {
@@ -90,12 +96,20 @@ export class DeviceSession implements Disposable {
   }
 
   public async perform(type: ReloadAction) {
+    const clearDebugContext = async () => {
+      // clears the previous debug session to avoid any conflicts
+      await this.debugSession.stopDebugSession();
+      await this.debugSession.startDebugSession();
+    };
+
     switch (type) {
       case "reinstall":
+        await clearDebugContext();
         await this.installApp({ reinstall: true });
         await this.launchApp();
         return true;
       case "restartProcess":
+        await clearDebugContext();
         const launchSucceeded = await this.launchApp();
         if (!launchSucceeded) {
           return false;
@@ -173,7 +187,7 @@ export class DeviceSession implements Disposable {
 
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
-    await this.startDebugger();
+    await this.connectDebugger();
     if (launchCancelToken.cancelled) {
       return undefined;
     }
@@ -251,18 +265,19 @@ export class DeviceSession implements Disposable {
     return previewUrl;
   }
 
-  private async startDebugger() {
-    if (this.debugSession) {
-      this.debugSession.dispose();
-    }
-    this.debugSession = new DebugSession(this.metro, this.debugEventDelegate);
-    const started = await this.debugSession.start();
-    if (started) {
+  private async connectDebugger() {
+    const connected = await this.debugSession.connectToApplication(this.metro);
+
+    if (connected) {
       // TODO(jgonet): Right now, we ignore start failure
       Logger.debug("Connected to debugger, moving on...");
     } else {
       Logger.error("Couldn't connect to debugger");
     }
+  }
+
+  public pauseDebugger(message: string, source?: DebugSource) {
+    this.debugSession?.pauseDebugger(message, source);
   }
 
   public resumeDebugger() {
@@ -271,6 +286,10 @@ export class DeviceSession implements Disposable {
 
   public stepOverDebugger() {
     this.debugSession?.stepOverDebugger();
+  }
+
+  public async sendDebugConsoleLog(message: string, source: DebugSource) {
+    await this.debugSession?.sendDebugConsoleLog(message, source);
   }
 
   public async resetAppPermissions(permissionType: AppPermissionType) {

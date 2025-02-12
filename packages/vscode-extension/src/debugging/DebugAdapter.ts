@@ -34,6 +34,7 @@ import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { CDPSession } from "./CDPSession";
 import getArraySlots from "./templates/getArraySlots";
+import { DebugSource } from "./DebugSession";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -45,6 +46,13 @@ function typeToCategory(type: string) {
   }
 }
 
+export type CDPConfiguration = {
+  websocketAddress: string;
+  expoPreludeLineCount: number;
+  sourceMapAliases: [string, string][];
+  breakpointsAreRemovedOnContextCleared: boolean;
+};
+
 const RETRIEVE_VARIABLE_TIMEOUT_MS = 3000;
 
 const ERROR_RESPONSE_FAIL_TO_RETRIEVE_VARIABLE_ID = 4000;
@@ -52,10 +60,10 @@ const ERROR_RESPONSE_FAIL_TO_RETRIEVE_VARIABLE_ID = 4000;
 export class DebugAdapter extends DebugSession {
   private variableStore: VariableStore = new VariableStore();
 
-  private cdpSession: CDPSession;
-  private sourceMapRegistry: SourceMapsRegistry;
+  private cdpSession: CDPSession | undefined;
+  private sourceMapRegistry: SourceMapsRegistry | undefined;
 
-  private breakpointsController: BreakpointsController;
+  private breakpointsController: BreakpointsController | undefined;
 
   private threads: Array<Thread> = [];
   private linesStartAt1 = true;
@@ -66,8 +74,11 @@ export class DebugAdapter extends DebugSession {
 
   constructor(configuration: DebugConfiguration) {
     super();
+  }
+
+  private connectDebugger(cdpConfiguration: CDPConfiguration) {
     this.cdpSession = new CDPSession(
-      configuration.websocketAddress,
+      cdpConfiguration.websocketAddress,
       () => {
         this.sendEvent(new TerminatedEvent());
       },
@@ -75,14 +86,14 @@ export class DebugAdapter extends DebugSession {
     );
 
     this.sourceMapRegistry = new SourceMapsRegistry(
-      configuration.expoPreludeLineCount,
-      configuration.sourceMapAliases
+      cdpConfiguration.expoPreludeLineCount,
+      cdpConfiguration.sourceMapAliases
     );
 
     this.breakpointsController = new BreakpointsController(
       this.sourceMapRegistry,
       this.cdpSession,
-      configuration.breakpointsAreRemovedOnContextCleared
+      cdpConfiguration.breakpointsAreRemovedOnContextCleared
     );
   }
 
@@ -126,7 +137,7 @@ export class DebugAdapter extends DebugSession {
           source.includes("__prelude__")
         );
 
-        const consumer = await this.sourceMapRegistry.registerSourceMap(
+        const consumer = await this.sourceMapRegistry!.registerSourceMap(
           sourceMapData,
           message.params.url,
           message.params.scriptId,
@@ -134,13 +145,13 @@ export class DebugAdapter extends DebugSession {
         );
 
         if (isMainBundle) {
-          this.cdpSession.sendCDPMessage("Runtime.evaluate", {
+          this.cdpSession!.sendCDPMessage("Runtime.evaluate", {
             expression: "__RNIDE_onDebuggerReady()",
           });
           this.sendEvent(new InitializedEvent());
         }
 
-        this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
+        this.breakpointsController!.updateBreakpointsInSource(message.params.url, consumer);
         break;
       case "Debugger.paused":
         this.handleDebuggerPaused(message);
@@ -152,8 +163,8 @@ export class DebugAdapter extends DebugSession {
         // clear all existing threads, source maps, and variable store
         const allThreads = this.threads;
         this.threads = [];
-        this.sourceMapRegistry.clearSourceMaps();
-        this.breakpointsController.onContextCleared();
+        this.sourceMapRegistry!.clearSourceMaps();
+        this.breakpointsController!.onContextCleared();
         this.variableStore.clearReplVariables();
         this.variableStore.clearCDPVariables();
 
@@ -172,6 +183,20 @@ export class DebugAdapter extends DebugSession {
         break;
     }
   };
+
+  logCustomMessage(message: string, source?: DebugSource) {
+    const output = new OutputEvent(message);
+    if (source) {
+      output.body = {
+        output: message,
+        //@ts-ignore source, line, column and group are valid fields
+        source: new Source(source.filename, source.filename),
+        line: source.line1based,
+        column: source.column0based,
+      };
+    }
+    this.sendEvent(output);
+  }
 
   // Based on https://github.com/microsoft/vscode-js-debug/blob/3be255753c458f231e32c9ef5c60090236780060/src/adapter/console/textualMessage.ts#L83
   // We use that to format and truncate console.log messages
@@ -215,7 +240,7 @@ export class DebugAdapter extends DebugSession {
         .map((v: any) => v.value);
 
       const { lineNumber1Based, columnNumber0Based, sourceURL } =
-        this.sourceMapRegistry.findOriginalPosition(
+        this.sourceMapRegistry!.findOriginalPosition(
           scriptURL,
           generatedLineNumber1Based,
           generatedColumn1Based - 1
@@ -312,7 +337,7 @@ export class DebugAdapter extends DebugSession {
       let localScopeVariables: Variable[] = [];
       try {
         localScopeVariables = await this.variableStore.get(localScopeObjectId, (params: object) => {
-          return this.cdpSession.sendCDPMessage(
+          return this.cdpSession!.sendCDPMessage(
             "Runtime.getProperties",
             params,
             RETRIEVE_VARIABLE_TIMEOUT_MS
@@ -328,7 +353,7 @@ export class DebugAdapter extends DebugSession {
       let stackObjectProperties: Variable[] = [];
       try {
         stackObjectProperties = await this.variableStore.get(stackObjectId!, (params: object) => {
-          return this.cdpSession.sendCDPMessage(
+          return this.cdpSession!.sendCDPMessage(
             "Runtime.getProperties",
             params,
             RETRIEVE_VARIABLE_TIMEOUT_MS
@@ -350,7 +375,7 @@ export class DebugAdapter extends DebugSession {
               stackObjProperties = await this.variableStore.get(
                 stackObjEntry.variablesReference,
                 (params: object) => {
-                  return this.cdpSession.sendCDPMessage(
+                  return this.cdpSession!.sendCDPMessage(
                     "Runtime.getProperties",
                     params,
                     RETRIEVE_VARIABLE_TIMEOUT_MS
@@ -369,7 +394,7 @@ export class DebugAdapter extends DebugSession {
               stackObjProperties.find((v) => v.name === "column")?.value || "0"
             );
             const { sourceURL, lineNumber1Based, columnNumber0Based } =
-              this.sourceMapRegistry.findOriginalPosition(
+              this.sourceMapRegistry!.findOriginalPosition(
                 genUrl,
                 genLine1Based,
                 genColumn1Based - 1
@@ -391,7 +416,7 @@ export class DebugAdapter extends DebugSession {
       this.pausedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
         const cdpLocation = cdpFrame.location;
         const { sourceURL, lineNumber1Based, columnNumber0Based } =
-          this.sourceMapRegistry.findOriginalPosition(
+          this.sourceMapRegistry!.findOriginalPosition(
             cdpLocation.scriptId,
             cdpLocation.lineNumber + 1, // cdp line and column numbers are 0-based
             cdpLocation.columnNumber
@@ -443,7 +468,7 @@ export class DebugAdapter extends DebugSession {
       return;
     }
 
-    const resolvedBreakpoints = await this.breakpointsController.setBreakpoints(
+    const resolvedBreakpoints = await this.breakpointsController!.setBreakpoints(
       sourcePath,
       args.breakpoints
     );
@@ -499,7 +524,7 @@ export class DebugAdapter extends DebugSession {
         response.body.variables = await this.variableStore.get(
           args.variablesReference,
           (params: object) => {
-            return this.cdpSession.sendCDPMessage(
+            return this.cdpSession!.sendCDPMessage(
               "Runtime.getProperties",
               params,
               RETRIEVE_VARIABLE_TIMEOUT_MS
@@ -509,7 +534,7 @@ export class DebugAdapter extends DebugSession {
       } else if (args.filter === "indexed") {
         const stringified = "" + getArraySlots;
 
-        const partialValue = await this.cdpSession.sendCDPMessage("Runtime.callFunctionOn", {
+        const partialValue = await this.cdpSession!.sendCDPMessage("Runtime.callFunctionOn", {
           functionDeclaration: stringified,
           objectId: this.variableStore.convertDAPObjectIdToCDP(args.variablesReference),
           arguments: [args.start, args.count].map((value) => ({ value })),
@@ -518,7 +543,7 @@ export class DebugAdapter extends DebugSession {
         const properties = await this.variableStore.get(
           this.variableStore.adaptCDPObjectId(partialValue.result.objectId),
           (params: object) => {
-            return this.cdpSession.sendCDPMessage(
+            return this.cdpSession!.sendCDPMessage(
               "Runtime.getProperties",
               params,
               RETRIEVE_VARIABLE_TIMEOUT_MS
@@ -549,16 +574,35 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.ContinueResponse,
     args: DebugProtocol.ContinueArguments
   ): Promise<void> {
-    await this.cdpSession.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
+    await this.cdpSession!.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
     this.sendResponse(response);
     this.sendEvent(new Event("RNIDE_continued"));
+  }
+
+  protected pauseRequest(
+    response: DebugProtocol.PauseResponse,
+    args: DebugProtocol.PauseArguments & { source?: DebugSource; message: string },
+    request?: DebugProtocol.Request
+  ): void {
+    const stackFrames = [
+      new StackFrame(
+        0,
+        args.message,
+        args.source?.filename ? new Source(args.source.filename, args.source.filename) : undefined,
+        args.source?.line1based,
+        args.source?.column0based
+      ),
+    ];
+    this.pausedStackFrames = stackFrames;
+    this.sendEvent(new StoppedEvent("exception", this.threads[0].id, args.message));
+    this.sendResponse(response);
   }
 
   protected async nextRequest(
     response: DebugProtocol.NextResponse,
     args: DebugProtocol.NextArguments
   ): Promise<void> {
-    await this.cdpSession.sendCDPMessage("Debugger.stepOver", {});
+    await this.cdpSession!.sendCDPMessage("Debugger.stepOver", {});
     this.sendResponse(response);
   }
 
@@ -566,7 +610,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.DisconnectResponse,
     args: DebugProtocol.DisconnectArguments
   ): void {
-    this.cdpSession.closeConnection();
+    this.cdpSession!.closeConnection();
     this.sendResponse(response);
   }
 
@@ -574,7 +618,7 @@ export class DebugAdapter extends DebugSession {
     response: DebugProtocol.EvaluateResponse,
     args: DebugProtocol.EvaluateArguments
   ): Promise<void> {
-    const cdpResponse = await this.cdpSession.sendCDPMessage("Runtime.evaluate", {
+    const cdpResponse = await this.cdpSession!.sendCDPMessage("Runtime.evaluate", {
       expression: args.expression,
     });
     const remoteObject = cdpResponse.result;
@@ -597,6 +641,16 @@ export class DebugAdapter extends DebugSession {
     args: any,
     request?: DebugProtocol.Request | undefined
   ): void {
-    Logger.debug(`Custom req ${command} ${args}`);
+    switch (command) {
+      case "RNIDE_connect_cdp_debugger":
+        this.connectDebugger(args);
+        break;
+      case "RNIDE_log_message":
+        this.logCustomMessage(args.message, args.source);
+        break;
+      default:
+        Logger.debug(`Custom req ${command} ${args}`);
+    }
+    this.sendResponse(response);
   }
 }

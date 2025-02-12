@@ -2,7 +2,6 @@ import { EventEmitter } from "stream";
 import os from "os";
 import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import _ from "lodash";
-import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
@@ -26,7 +25,7 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle, throttleAsync } from "../utilities/throttle";
-import { DebugSessionDelegate } from "../debugging/DebugSession";
+import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
@@ -270,8 +269,16 @@ export class Project
     this.updateProjectState({ status: "bundleError" });
   }
 
-  onIncrementalBundleError(message: string, _errorModulePath: string): void {
-    Logger.error(stripAnsi(message));
+  async onIncrementalBundleError(
+    message: string,
+    source: DebugSource,
+    _errorModulePath: string
+  ): Promise<void> {
+    await this.deviceSession?.sendDebugConsoleLog(message, source);
+    this.focusDebugConsole();
+    // we need to simulate debugger pause here to force focus on the error source
+    this.deviceSession?.pauseDebugger(message, source);
+    Logger.error(message);
     // if bundle build failed, we don't want to change the status
     // incrementalBundleError status should be set only when bundleError status is not set
     if (this.projectState.status === "bundleError") {
