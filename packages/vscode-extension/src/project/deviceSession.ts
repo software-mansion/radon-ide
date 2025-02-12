@@ -310,8 +310,12 @@ export class DeviceSession implements Disposable {
     this.device.sendKey(keyCode, direction);
   }
 
-  public sendPaste(text: string) {
-    return this.device.sendPaste(text);
+  public sendClipboard(text: string) {
+    return this.device.sendClipboard(text);
+  }
+
+  public async getClipboard() {
+    return this.device.getClipboard();
   }
 
   public inspectElementAt(
