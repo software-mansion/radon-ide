@@ -1,4 +1,4 @@
-import { useEffect,  useRef } from "react";
+import { useEffect, useRef } from "react";
 import { CanvasOutlineRenderer } from "react-scan";
 import {
   RenderOutlinesEventListener,
@@ -31,7 +31,7 @@ function RenderOutlinesOverlay() {
     }
 
     const dpr = getDpr();
-    const size = { width: hostRef.current.clientWidth, height: host.clientHeight };
+    let size = { width: hostRef.current.clientWidth, height: host.clientHeight };
 
     outlineRendererRef.current ??= new CanvasOutlineRenderer(canvasEl, size, dpr);
 
@@ -64,8 +64,16 @@ function RenderOutlinesOverlay() {
     };
     RenderOutlines.addEventListener("rendersReported", blueprintListener);
 
+    const resizeObserver = new ResizeObserver(() => {
+      const { width, height } = host.getBoundingClientRect();
+      size = { width, height };
+      outlineRenderer.resize(size);
+    });
+    resizeObserver.observe(host);
+
     return () => {
       RenderOutlines.removeEventListener("rendersReported", blueprintListener);
+      resizeObserver.disconnect();
     };
   }, [hostRef.current, canvasRef.current]);
 
