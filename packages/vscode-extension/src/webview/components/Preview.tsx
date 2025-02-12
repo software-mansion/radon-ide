@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
 import { getCanvasEl, registerOutlines } from "react-scan";
+import { useState, useRef, useEffect, MouseEvent } from "react";
 import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./Preview.css";
@@ -30,10 +31,7 @@ import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
-import { makeProxy } from "../utilities/rpc";
-import { RenderOutlinesEventListener, RenderOutlinesEventMap, RenderOutlinesInterface } from "../../common/RenderOutlines";
-
-const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
+import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -479,36 +477,6 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
-  useEffect(() => {
-    const phoneWrapper = previewRef.current;
-    if (!phoneWrapper || !device) {
-      return;
-    }
-    const innerWidth = phoneWrapper.clientWidth;
-    const innerHeight = phoneWrapper.clientHeight;
-    const width = device.screenWidth;
-    const height = device.screenHeight;
-
-    const host = getCanvasEl(innerWidth, innerHeight, width, height);
-    if (!host) {
-      return;
-    }
-    host.style.position = 'absolute';
-    host.style.left = "7px";
-
-    phoneWrapper.parentElement?.appendChild(host);
-    const blueprintListener: RenderOutlinesEventListener<RenderOutlinesEventMap["rendersReported"]> = ({
-      blueprintOutlines,
-    }) => {
-      blueprintOutlines.forEach(([fiberId, blueprint]) => registerOutlines(fiberId, blueprint));
-    };
-    RenderOutlines.addEventListener("rendersReported", blueprintListener);
-    return () => {
-      RenderOutlines.removeEventListener("rendersReported", blueprintListener);
-      host?.remove();
-    };
-  }, [previewRef.current?.clientWidth, previewRef.current?.clientHeight, device]);
-
   return (
     <>
       <div
@@ -527,6 +495,7 @@ function Preview({
                 }}
                 className="phone-screen"
               />
+              <RenderOutlinesOverlay />
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
               {isMultiTouching && (
