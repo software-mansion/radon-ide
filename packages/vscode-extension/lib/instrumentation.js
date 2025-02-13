@@ -9,14 +9,52 @@ const {
   traverseRenderedFibers,
 } = require("__RNIDE_lib__/bippy");
 const { getFabricUIManager } = require("react-native/Libraries/ReactNative/FabricUIManager.js");
-const { Dimensions, StatusBar, UIManager } = require("react-native");
+const { Dimensions, StatusBar, UIManager, Platform } = require("react-native");
 const FabricUIManager = getFabricUIManager();
+
+const CORE_COMPONENT_NAMES = new Set([
+  "ActivityIndicator",
+  "Button",
+  "DrawerLayoutAndroid",
+  "FlatList",
+  "Image",
+  "Modal",
+  "Pressable",
+  "RefreshControl",
+  "SafeAreaView",
+  "SafeAreaView",
+  "ScrollView",
+  "SectionList",
+  "Switch",
+  "Text",
+  "TextInput",
+  "TouchableHighlight",
+  "TouchableNativeFeedback",
+  "TouchableOpacity",
+  "TouchableWithoutFeedback",
+  "View",
+  "VirtualizedList",
+]);
 
 let inited = false;
 let options = {
   isEnabled: false,
   reportRenders: () => {},
+  componentBlocklist: CORE_COMPONENT_NAMES,
 };
+
+const ANIMATED_COMPONENT_REGEX = /Animated\((.*)\)/;
+function stripAnimatedFromComponentName(name) {
+  const matches = ANIMATED_COMPONENT_REGEX.exec(name);
+  return matches ? matches[1] : null;
+}
+
+function shouldHideComponent(name) {
+  const stripped = stripAnimatedFromComponentName(name);
+  return (
+    options.componentBlocklist.has(name) || (stripped && options.componentBlocklist.has(stripped))
+  );
+}
 
 function getWindowRect() {
   if (Platform.OS === "android") {
@@ -48,7 +86,7 @@ async function onRender(fibers) {
       continue;
     }
     const name = typeof fiber.type === "string" ? fiber.type : getDisplayName(fiber);
-    if (!name) {
+    if (!name || shouldHideComponent(name)) {
       continue;
     }
     const blueprint = blueprintMap.get(fiber);
@@ -72,7 +110,10 @@ async function onRender(fibers) {
           if (FabricUIManager) {
             FabricUIManager.measureInWindow(hostFiber.stateNode.node, resolveMeasurements);
           } else {
-            UIManager.measureInWindow(hostFiber.stateNode.canonical.nativeTag, resolveMeasurements);
+            // NOTE: we need to delay until the next frame to obtain the post-render measurements
+            setTimeout(() => {
+              UIManager.measureInWindow(hostFiber.stateNode._nativeTag, resolveMeasurements);
+            });
           }
         });
       })
@@ -121,7 +162,10 @@ function onCommitFiberRoot(_rendererID, root) {
 }
 
 export const setInstrumentationOptions = (partialOptions) => {
-  options = { ...options, ...partialOptions };
+  const componentBlocklist = partialOptions.componentBlocklist
+    ? new Set(partialOptions.componentBlocklist)
+    : options.componentBlocklist;
+  options = { ...options, componentBlocklist, ...partialOptions };
   if (!inited) {
     inited = true;
     instrument({

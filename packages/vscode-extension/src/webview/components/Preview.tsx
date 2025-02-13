@@ -1,7 +1,4 @@
 import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
-import { getCanvasEl, registerOutlines } from "react-scan";
-import { useState, useRef, useEffect, MouseEvent } from "react";
-import clamp from "lodash/clamp";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
