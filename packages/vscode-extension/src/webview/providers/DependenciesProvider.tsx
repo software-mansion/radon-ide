@@ -30,6 +30,7 @@ const dependenciesDomain = [
   "expo",
   "expoRouter",
   "storybook",
+  "easCli",
 ] as const;
 
 type Dependency = typeof dependenciesDomain[number];
@@ -210,6 +211,11 @@ export function dependencyDescription(dependency: Dependency) {
       return {
         info: "Whether Storybook is installed.",
         error: "Storybook is not installed.",
+      };
+    case "easCli":
+      return {
+        info: "Whether eas-cli is installed.",
+        error: "eas-cli is not installed.",
       };
   }
 }

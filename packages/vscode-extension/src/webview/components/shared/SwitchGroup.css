@@ -15,13 +15,13 @@
 .switch-root {
   width: var(--switch-width);
   height: var(--switch-height);
-  background-color: var(--swm-switch-root-disabled);
+  background-color: var(--swm-switch-root-background);
   border-radius: 9999px;
   position: relative;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 .switch-root[data-state="checked"] {
-  background-color: var(--navy-light-60);
+  background-color: var(--swm-switch-root-background-checked);
 }
 
 .switch-thumb {

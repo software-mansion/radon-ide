@@ -22,6 +22,7 @@
     ".vscode-test",
     "webpack.config.js",
     ".vscode-test",
-    "vite.config.js"
+    "vite.config.js",
+    "plugins_dist/**/*"
   ]
 }

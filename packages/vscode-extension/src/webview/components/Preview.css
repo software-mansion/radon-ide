@@ -34,6 +34,14 @@
   user-select: none;
 }
 
+.phone-screen-background {
+  position: absolute;
+  width: calc(var(--phone-screen-width));
+  height: var(--phone-screen-height);
+  top: var(--phone-top);
+  left: calc(var(--phone-left));
+}
+
 .phone-sized {
   position: absolute;
   width: calc(var(--phone-screen-width));
@@ -58,6 +66,18 @@
   -webkit-mask-size: cover;
   mask-size: cover;
   user-select: none;
+}
+
+.phone-bezel-image {
+  opacity: 0;
+}
+
+.phone-bezel {
+  -webkit-mask-image: var(--phone-frame-image);
+  mask-image: var(--phone-frame-image);
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  background-color: var(--swm-separator);
 }
 
 .phone-frame {

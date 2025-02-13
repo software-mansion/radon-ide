@@ -1,4 +1,4 @@
-import { ExtensionContext, ExtensionMode, Webview, Uri } from "vscode";
+import { ExtensionContext, ExtensionMode, Webview, Uri, workspace } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { Platform } from "../utilities/platform";
@@ -21,6 +21,8 @@ export function generateWebviewContent(
   webview: Webview,
   extensionUri: Uri
 ) {
+  const config = workspace.getConfiguration("RadonIDE");
+  const useCodeTheme = config.get("themeType") === "vscode";
   const IS_DEV = context.extensionMode === ExtensionMode.Development;
 
   // The JS file from the React build output
@@ -59,7 +61,7 @@ export function generateWebviewContent(
         <link rel="stylesheet" type="text/css" href="webview.css" />`
         }
       </head>
-      <body>
+      <body data-use-code-theme="${useCodeTheme}">
         <div id="root"></div>
         <script nonce="${nonce}">window.RNIDE_hostOS = "${Platform.OS}";</script>
         <script type="module" nonce="${nonce}" src="${scriptUri}" />

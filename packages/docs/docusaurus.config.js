@@ -77,11 +77,9 @@ const config = {
       footer: {
         style: "light",
         links: [
-          {
-            to: "/legal/privacy-policy",
-            label: "Privacy",
-          },
+          { to: "/legal/privacy-policy", label: "Privacy" },
           { to: "/legal", label: "Legal" },
+          { to: "https://portal.ide.swmansion.com/", label: "Customer Portal" },
         ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },

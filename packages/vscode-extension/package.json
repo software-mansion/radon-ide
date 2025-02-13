@@ -21,7 +21,7 @@
     "workspaceContains:**/app.config.js",
     "workspaceContains:**/app.config.ts"
   ],
-  "version": "1.2.0",
+  "version": "1.3.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -151,6 +151,16 @@
           ],
           "description": "Controls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
         },
+        "RadonIDE.themeType": {
+          "type": "string",
+          "scope": "window",
+          "default": "vscode",
+          "enum": [
+            "vscode",
+            "built-in"
+          ],
+          "description": "Controls the theme of the IDE panel. If you encounter any issues, please report them. And set this to 'built-in' to use the built-in theme."
+        },
         "RadonIDE.showDeviceFrame": {
           "type": "boolean",
           "scope": "window",
@@ -188,6 +198,16 @@
           "id": "RadonIDEToolExpoDevPluginReduxDevTools",
           "title": "Redux",
           "icon": "assets/redux.svg"
+        },
+        {
+          "id": "RadonIDEToolNetwork",
+          "title": "Network",
+          "icon": "assets/network.svg"
+        },
+        {
+          "id": "RadonIDEToolReduxDevTools",
+          "title": "Redux",
+          "icon": "assets/redux.svg"
         }
       ]
     },
@@ -222,6 +242,22 @@
           "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
           "name": "",
           "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available && RNIDE.panelIsOpen"
+        }
+      ],
+      "RadonIDEToolNetwork": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.Network.view",
+          "name": "",
+          "when": "RNIDE.Tool.Network.available && RNIDE.panelIsOpen"
+        }
+      ],
+      "RadonIDEToolReduxDevTools": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ReduxDevTools.view",
+          "name": "",
+          "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ]
     },
@@ -515,20 +551,25 @@
   "scripts": {
     "vscode:package": "vsce package",
     "vscode:prepublish": "npm run package",
-    "build:extension-debug": "node ./scripts/buildExtensionCode.mjs debug",
-    "build:extension": "node ./scripts/buildExtensionCode.mjs production",
+    "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
+    "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
+    "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
+    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui",
+    "build:extension-debug": "node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
+    "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
     "build:sim-server": "bash ./scripts/install-sim-server-release-build.sh dist",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
     "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview && npm run build:third-party-notice",
-    "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
+    "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
     "lint": "eslint src/**/*.\\{ts,tsx,js,jsx\\} && prettier --check src",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
+    "build:plugins": "bash ./scripts/install-dev-plugins.sh",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
     "preinstall": "cd ../vscode-js-debug && git submodule update --init ./ && npm install && npm exec tsc"
   },

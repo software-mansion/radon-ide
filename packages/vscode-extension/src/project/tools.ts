@@ -7,10 +7,15 @@ import {
   createExpoDevPluginTools,
   ExpoDevPluginToolName,
 } from "../plugins/expo-dev-plugins/expo-dev-plugins";
+import { NetworkPlugin, NETWORK_PLUGIN_ID } from "../plugins/network/network-plugin";
+import {
+  REDUX_PLUGIN_ID,
+  createReduxDevtools,
+} from "../plugins/redux-devtools-plugin/redux-devtools-plugin";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
-export type ToolKey = ExpoDevPluginToolName;
+export type ToolKey = ExpoDevPluginToolName | typeof NETWORK_PLUGIN_ID | typeof REDUX_PLUGIN_ID;
 
 export interface ToolPlugin extends Disposable {
   id: ToolKey;
@@ -32,17 +37,42 @@ export class ToolsManager implements Disposable {
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
 
-    for (const plugin of createExpoDevPluginTools(this)) {
+    for (const plugin of createExpoDevPluginTools()) {
       this.plugins.set(plugin.id, plugin);
     }
 
+    this.plugins.set(REDUX_PLUGIN_ID, createReduxDevtools(this));
+    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(devtools));
+
+    devtools.addListener(this.devtoolsListener);
     this.handleStateChange();
+  }
+
+  private devtoolsListener = (event: string, payload: any) => {
+    if (event === "RNIDE_devtoolPluginsChanged") {
+      // payload.plugins is a list of expo dev plugin names
+      const availablePlugins = new Set(payload.plugins);
+      let changed = false;
+      this.plugins.forEach((plugin) => {
+        if (!plugin.available && availablePlugins.has(plugin.id)) {
+          changed = true;
+          plugin.available = true;
+        }
+      });
+      // notify tools manager that the state of requested plugins has changed
+      changed && this.handleStateChange();
+    }
+  };
+
+  public getPlugin(toolName: ToolKey): ToolPlugin | undefined {
+    return this.plugins.get(toolName);
   }
 
   dispose() {
     this.activePlugins.forEach((plugin) => plugin.deactivate());
     this.activePlugins.clear();
     this.plugins.forEach((plugin) => plugin.dispose());
+    this.devtools.removeListener(this.devtoolsListener);
   }
 
   public handleStateChange() {

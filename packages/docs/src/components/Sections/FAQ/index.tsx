@@ -12,13 +12,18 @@ const faqs = [
   {
     topic: "Can I use it on Windows or Linux?",
     answer:
-      "You can use the IDE with VSCode and Cursor to develop React Native apps for Android and iOS on macOS. Since version 0.0.18 we added experimental support for Windows that is compatible with VSCode and allows for developing apps for Android. Support for Linux is not yet available.",
+      `Due to limited capacity support for Linux and Windows is considered as "Beta". Because of that we don't distribute Windows or Linux builds via VSCode marketplace and you have to <a href="https://ide.swmansion.com/docs/getting-started/installation" target="_blank">follow manual installation instructions</a>. Note that since Windows and Linux support is in beta, you don't have to purchase a license to use Radon IDE on those platforms but you can use it under the free Beta license.`
   },
   {
     topic: "How much does it cost?",
     answer: `Check out the <a href="https://ide.swmansion.com/pricing" target="_blank">pricing</a> page.<br/><br/>
     100% of the money earned are used to fund the React Native open source efforts at Software Mansion and the further developments of the Radon IDE.<br/><br/>
     `,
+  },
+  {
+    topic: "Do you offer a free trial?",
+    answer: `Yes! You can try the Radon IDE for 30 days. No sign up or card details needed.<br/><br/>
+    You can simply download and run the extension from VSCode Marketplace. See our short <a href="http://ide.swmansion.com/docs/getting-started/installation#installing-the-radon-ide-extension" target="_blank">installation guide</a> on how to install the extension in VSCode and Cursor.`,
   },
   {
     topic: "How do I activate my license?",

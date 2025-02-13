@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import "./SearchSelect.css";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import Label from "./Label";
+import { Input } from "./Input";
 
 interface SearchSelectProps {
   className?: string;
@@ -144,7 +145,7 @@ export const SearchSelect = ({
   return (
     <div className={className}>
       <div className="search-bar-wrapper">
-        <input
+        <Input
           className="search-input"
           ref={inputRef}
           type="string"

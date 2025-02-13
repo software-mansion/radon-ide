@@ -20,11 +20,11 @@ export function registerNavigationPlugin(name, plugin) {
   navigationPlugins.push({ name, plugin });
 }
 
-const expoDevPlugins = new Set();
-let expoDevPluginsChanged = undefined;
-export function registerExpoDevPlugin(name) {
-  expoDevPlugins.add(name);
-  expoDevPluginsChanged?.();
+const devtoolPlugins = new Set(["network"]);
+let devtoolPluginsChanged = undefined;
+export function registerDevtoolPlugin(name) {
+  devtoolPlugins.add(name);
+  devtoolPluginsChanged?.();
 }
 
 let navigationHistory = new Map();
@@ -33,6 +33,16 @@ const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
   },
+  get enableNetworkInspect() {
+    return require("./network").enableNetworkInspect;
+  },
+  get reduxDevtoolsExtensionCompose() {
+    return require("./plugins/redux-devtools").compose;
+  },
+};
+
+window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
+  return InternalImports.reduxDevtoolsExtensionCompose(...args);
 };
 
 const RNInternals = {
@@ -341,6 +351,15 @@ export function AppWrapper({ children, initialProps, fabric }) {
     [showStorybookStory]
   );
 
+  useAgentListener(
+    devtoolsAgent,
+    "RNIDE_enableNetworkInspect",
+    (payload) => {
+      InternalImports.enableNetworkInspect(devtoolsAgent, payload);
+    },
+    []
+  );
+
   useEffect(() => {
     if (devtoolsAgent) {
       LogBox.uninstall();
@@ -376,16 +395,16 @@ export function AppWrapper({ children, initialProps, fabric }) {
         appKey,
         navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
       });
-      devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
-        plugins: Array.from(expoDevPlugins.values()),
+      devtoolsAgent._bridge.send("RNIDE_devtoolPluginsChanged", {
+        plugins: Array.from(devtoolPlugins.values()),
       });
-      expoDevPluginsChanged = () => {
-        devtoolsAgent._bridge.send("RNIDE_expoDevPluginsChanged", {
-          plugins: Array.from(expoDevPlugins.values()),
+      devtoolPluginsChanged = () => {
+        devtoolsAgent._bridge.send("RNIDE_devtoolPluginsChanged", {
+          plugins: Array.from(devtoolPlugins.values()),
         });
       };
       return () => {
-        expoDevPluginsChanged = undefined;
+        devtoolPluginsChanged = undefined;
       };
     }
   }, [!!devtoolsAgent && hasLayout]);

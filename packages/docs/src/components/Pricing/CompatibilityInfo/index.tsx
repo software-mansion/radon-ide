@@ -7,11 +7,22 @@ export function CompatibilityInfo() {
   const handleCompatibilityClick = () => {
     track("See compatibility");
   };
+  const handleTryOutClick = () => {
+    track("[Pricing] Try out");
+  };
   return (
     <div className={styles.compatibilityInfoWrapper}>
       <p className={styles.compatibilityInfo}>
-        Before making a purchase make sure to consult the compatibility page to see whether your
-        project is officially supported by Radon IDE.
+        You can{" "}
+        <a
+          href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
+          className={styles.link}
+          target="_blank"
+          onClick={handleTryOutClick}>
+          try out Radon IDE
+        </a>{" "}
+        for 30 days before making a purchase. Also, consult the compatibility page to see whether
+        your project is officially supported by Radon IDE.
       </p>
       <HomepageButton
         href="/docs/getting-started/compatibility"

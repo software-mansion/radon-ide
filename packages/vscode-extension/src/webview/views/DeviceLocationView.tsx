@@ -7,6 +7,7 @@ import { useProject } from "../providers/ProjectProvider";
 import Label from "../components/shared/Label";
 import Tooltip from "../components/shared/Tooltip";
 import { throttle } from "../../utilities/throttle";
+import { Input } from "../components/shared/Input";
 
 const CoordinateInfo = () => {
   return (
@@ -131,10 +132,10 @@ export function DeviceLocationView() {
       </div>
       <label className="latitude">
         <div className="picker">
-          <input
+          <Input
             ref={inputRef}
             className="coordinate"
-            style={isCoordinateValid ? {} : { border: "1px solid var(--red-light-100)" }}
+            data-error={!isCoordinateValid}
             type="string"
             defaultValue={formatLocation(
               deviceSettings.location.latitude,

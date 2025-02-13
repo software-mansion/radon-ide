@@ -1,11 +1,8 @@
 .feedback-textarea {
   flex: 1;
-  background-color: var(--swm-input-background);
-  color: var(--swm-default-text);
   height: auto;
   padding: 8px;
   margin: 0 4px;
-  border: 1px;
   border-radius: 4px;
   line-height: 1.5;
   box-shadow: var(--swm-input-shadow);

@@ -22,20 +22,30 @@ And then invert it by:
 
 - cmd + i (Image > Adjustments > Inverse)
 
+Make sure mask matches screen width and height and there is no gap on the edge.
+
 ## iOS
-
-### iOS frames
-
-`/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/DeviceKit/Chrome/`
 
 ### iOS screen masks
 
-`/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/DeviceTypes/`
+Open
 
-### iPhone screen dimensions
+`/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/DeviceTypes/{deviceType}/Contents/Resources/{WEIRD_HASH}.pdf`
 
-https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications
+And export it with 72 DPI. 72 DPI should produce the same size as `width` and `height` stated in `Profile.plist`.
 
-### How to prepare an iOS mask
+In `Profile.plist` you can find `chromeIdentifier` that points later to iOS frame. In this file you can find also `mainScreenHeight` and `mainScreenWidth`.
 
-Apple provides masks as vector `.pdf` files. You need to convert the .pdf file to .png in case of a mask and .webp in case of a frame.
+Make sure mask matches screen width and height and there is no gap on the edge.
+
+### iOS frames
+
+Open `/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/DeviceKit/Chrome/{device}/Contents/Resources/PhoneComposite.pdf`
+
+Where `{device}` is taken from `.plist` file mentioned above.
+
+Open in preview and export with 216 DPI. 216 DPI should produce rasterized skin with the size corresponding to the size of the mask.
+
+# Adding screen.png and bezel.png
+
+To make screen.png just remove notches if there are any, and for `bezel.png` extend the screen by `4px` on each side and create an outline with radius `4px`.

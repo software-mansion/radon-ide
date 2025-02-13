@@ -39,4 +39,6 @@ export interface UtilsInterface {
     eventType: K,
     listener: UtilsEventListener<UtilsEventMap[K]>
   ): Promise<void>;
+
+  showToast(message: string, timeout: number): Promise<void>;
 }

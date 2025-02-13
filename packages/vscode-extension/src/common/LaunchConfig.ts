@@ -1,3 +1,5 @@
+import { EasBuildConfig } from "./EasConfig";
+
 export type EasConfig = { profile: string; buildUUID?: string };
 export type CustomBuild = {
   buildCommand?: string;
@@ -53,6 +55,7 @@ export interface LaunchConfig {
   addCustomApplicationRoot: AddCustomApplicationRoot;
   getAvailableXcodeSchemes(): Promise<string[]>;
   getAvailableApplicationRoots(): Promise<string[]>;
+  getAvailableEasProfiles(): Promise<EasBuildConfig>;
   addListener<K extends keyof LaunchConfigEventMap>(
     eventType: K,
     listener: LaunchConfigEventListener<LaunchConfigEventMap[K]>

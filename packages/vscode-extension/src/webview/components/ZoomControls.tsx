@@ -4,6 +4,7 @@ import IconButton from "./shared/IconButton";
 import { ZoomLevelType } from "../../common/Project";
 import { DeviceProperties } from "../utilities/consts";
 import "./ZoomControls.css";
+import { useDeviceFrame } from "../Preview/Device/hooks";
 
 const ZOOM_STEP = 0.05;
 const ZOOM_SELECT_NUMERIC_VALUES = [0.5, 0.6, 0.7, 0.8, 0.9, 1];
@@ -69,13 +70,14 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsSelectOpen }: ZoomCont
 };
 
 function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomControlsProps) {
+  const frame = useDeviceFrame(device!);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   function handleZoom(shouldIncrease: boolean) {
     let currentZoomLevel;
     if (zoomLevel === "Fit") {
       currentZoomLevel =
-        ((wrapperDivRef!.current!.offsetHeight / device!.frameHeight) * 1) / DEVICE_DEFAULT_SCALE;
+        ((wrapperDivRef!.current!.offsetHeight / frame.height) * 1) / DEVICE_DEFAULT_SCALE;
     } else {
       currentZoomLevel = zoomLevel;
     }

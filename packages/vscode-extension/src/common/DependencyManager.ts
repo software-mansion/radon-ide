@@ -17,7 +17,8 @@ export type Dependency =
   | "reactNative"
   | "expo"
   | "expoRouter"
-  | "storybook";
+  | "storybook"
+  | "easCli";
 
 export type InstallationStatus = "installed" | "notInstalled" | "installing";
 

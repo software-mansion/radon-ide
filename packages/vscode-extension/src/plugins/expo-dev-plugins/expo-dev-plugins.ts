@@ -1,6 +1,6 @@
 import { commands, window } from "vscode";
 import { ExpoDevPluginWebviewProvider } from "./ExpoDevPluginWebviewProvider";
-import { ToolPlugin, ToolsManager } from "../../project/tools";
+import { ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 
 export type ExpoDevPluginToolName =
@@ -16,16 +16,16 @@ type ExpoDevPluginInfo = {
 // Define the map of plugins using the string union type
 const ExpoDevPluginToolMap: Record<ExpoDevPluginToolName, ExpoDevPluginInfo> = {
   "@dev-plugins/react-query": {
-    label: "React Query",
+    label: "React Query DevPlugin",
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.ReactQuery",
   },
   "@dev-plugins/react-native-mmkv": {
-    label: "MMKV",
+    label: "MMKV DevPlugin",
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.MMKV",
   },
   "redux-devtools-expo-dev-plugin": {
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools",
-    label: "Redux DevTools",
+    label: "Redux DevTools DevPlugin",
   },
 };
 
@@ -47,29 +47,10 @@ function initializeExpoDevPluginIfNeeded() {
   }
 }
 
-export function createExpoDevPluginTools(toolsManager: ToolsManager): ToolPlugin[] {
+export function createExpoDevPluginTools(): ToolPlugin[] {
   initializeExpoDevPluginIfNeeded();
 
   const plugins: ToolPlugin[] = [];
-
-  function devtoolsListener(event: string, payload: any) {
-    if (event === "RNIDE_expoDevPluginsChanged") {
-      // payload.plugins is a list of expo dev plugin names
-      const availablePlugins = new Set(payload.plugins);
-      for (const plugin of plugins) {
-        plugin.available = availablePlugins.has(plugin.id);
-      }
-      // notify tools manager that the state of requested plugins has changed
-      toolsManager.handleStateChange();
-    }
-  }
-  let disposed = false;
-  function dispose() {
-    if (!disposed) {
-      toolsManager.devtools.removeListener(devtoolsListener);
-      disposed = false;
-    }
-  }
 
   for (const [id, pluginInfo] of Object.entries(ExpoDevPluginToolMap)) {
     plugins.push({
@@ -85,13 +66,9 @@ export function createExpoDevPluginTools(toolsManager: ToolsManager): ToolPlugin
       openTool() {
         commands.executeCommand(`${pluginInfo.viewIdPrefix}.view.focus`);
       },
-      dispose,
+      dispose() {},
     });
   }
-
-  // Listen for events passed via devtools that indicate which plugins are loaded
-  // by the app.
-  toolsManager.devtools.addListener(devtoolsListener);
 
   return plugins;
 }
