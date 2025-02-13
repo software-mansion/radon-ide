@@ -9,16 +9,40 @@ const {
   traverseRenderedFibers,
 } = require("__RNIDE_lib__/bippy");
 const { getFabricUIManager } = require("react-native/Libraries/ReactNative/FabricUIManager.js");
-const { Dimensions } = require("react-native");
+const { Dimensions, StatusBar, UIManager } = require("react-native");
 const FabricUIManager = getFabricUIManager();
 
+let inited = false;
 let options = {
   isEnabled: false,
   reportRenders: () => {},
 };
 
+function getWindowRect() {
+  if (Platform.OS === "android") {
+    const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
+    const statusBarHeight = StatusBar.currentHeight || 0;
+    return {
+      x: 0,
+      y: statusBarHeight,
+      width: screenWidth,
+      height: screenHeight,
+    };
+  } else {
+    const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
+    return {
+      x: 0,
+      y: 0,
+      width: windowWidth,
+      height: windowHeight,
+    };
+  }
+}
+
 async function onRender(fibers) {
   const blueprintMap = new Map();
+  const { x: windowX, y: windowY, width: windowWidth, height: windowHeight } = getWindowRect();
+
   for (const fiber of fibers) {
     if (!isCompositeFiber(fiber)) {
       continue;
@@ -30,12 +54,13 @@ async function onRender(fibers) {
     const blueprint = blueprintMap.get(fiber);
     const nearestFibers = getNearestHostFibers(fiber);
     const didCommit = didFiberCommit(fiber);
-    const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
 
     const measurements = await Promise.all(
       nearestFibers.map((hostFiber) => {
         return new Promise((resolve) => {
-          FabricUIManager.measureInWindow(hostFiber.stateNode.node, (x, y, width, height) => {
+          const resolveMeasurements = (x, y, width, height) => {
+            x += windowX;
+            y += windowY;
             // NOTE: we send values as % of the window size
             // to avoid having to account for display/window scale
             x /= windowWidth;
@@ -43,7 +68,12 @@ async function onRender(fibers) {
             width /= windowWidth;
             height /= windowHeight;
             resolve({ x, y, width, height });
-          });
+          };
+          if (FabricUIManager) {
+            FabricUIManager.measureInWindow(hostFiber.stateNode.node, resolveMeasurements);
+          } else {
+            UIManager.measureInWindow(hostFiber.stateNode.canonical.nativeTag, resolveMeasurements);
+          }
         });
       })
     );
@@ -90,14 +120,12 @@ function onCommitFiberRoot(_rendererID, root) {
   onRender(renderedFibers);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-shadow
-export const enableInstrumentation = (options) => {
-  setInstrumentationOptions(options);
-  instrument({
-    onCommitFiberRoot: (rendererID, root) => onCommitFiberRoot(rendererID, root),
-  });
-};
-
 export const setInstrumentationOptions = (partialOptions) => {
   options = { ...options, ...partialOptions };
+  if (!inited) {
+    inited = true;
+    instrument({
+      onCommitFiberRoot: (rendererID, root) => onCommitFiberRoot(rendererID, root),
+    });
+  }
 };

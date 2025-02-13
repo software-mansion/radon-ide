@@ -39,9 +39,6 @@ const InternalImports = {
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
   },
-  get enableInstrumentation() {
-    return require("./instrumentation").enableInstrumentation;
-  },
   get setInstrumentationOptions() {
     return require("./instrumentation").setInstrumentationOptions;
   },
@@ -414,7 +411,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
   }, [!!devtoolsAgent && hasLayout]);
 
   useEffect(() => {
-    InternalImports.enableInstrumentation({
+    InternalImports.setInstrumentationOptions({
       reportRenders: (blueprintOutlines) => {
         devtoolsAgent._bridge.send("RNIDE_rendersReported", { blueprintOutlines });
       },
