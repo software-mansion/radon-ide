@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { CanvasOutlineRenderer } from "react-scan";
+import { CanvasOutlineRenderer, OutlineRenderer, WorkerOutlineRenderer } from "react-scan";
 import {
   RenderOutlinesEventListener,
   RenderOutlinesEventMap,
@@ -20,6 +20,11 @@ interface Rect {
   height: number;
 }
 
+interface Size {
+  width: number;
+  height: number;
+}
+
 function mergeRects(lhs: Rect, rhs: Rect): Rect {
   const minX = Math.min(lhs.x, rhs.x);
   const minY = Math.min(lhs.y, rhs.y);
@@ -33,38 +38,40 @@ function mergeRects(lhs: Rect, rhs: Rect): Rect {
   };
 }
 
+function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: number) {
+  try {
+    return new WorkerOutlineRenderer(canvas, size, dpr);
+  } catch {
+    return new CanvasOutlineRenderer(canvas, size, dpr);
+  }
+}
+
 function RenderOutlinesOverlay() {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scheduledOutlines = useRef<Parameters<CanvasOutlineRenderer["renderOutlines"]>[0]>([]);
-  const outlineRendererRef = useRef<CanvasOutlineRenderer | null>(null);
+  const outlineRendererRef = useRef<OutlineRenderer | null>(null);
 
   useEffect(() => {
     const host = hostRef.current;
-    if (!host) {
-      return;
-    }
-
     const canvasEl = canvasRef.current;
-    if (!canvasEl) {
+    if (!host || !canvasEl) {
       return;
     }
 
     const dpr = getDpr();
     let size = { width: hostRef.current.clientWidth, height: host.clientHeight };
 
-    outlineRendererRef.current ??= new CanvasOutlineRenderer(canvasEl, size, dpr);
-
+    outlineRendererRef.current ??= createOutlineRenderer(canvasEl, size, dpr);
     const outlineRenderer = outlineRendererRef.current;
 
     const blueprintListener: RenderOutlinesEventListener<
       RenderOutlinesEventMap["rendersReported"]
     > = ({ blueprintOutlines }) => {
-      blueprintOutlines.forEach(([fiberId, blueprint]) => {
+      const outlines = blueprintOutlines.flatMap(([fiberId, blueprint]) => {
         const horizontalScale = size.width * dpr;
         const verticalScale = size.height * dpr;
         if (blueprint.elements.length === 0) {
-          return;
+          return [];
         }
         const boundingRect = blueprint.elements.reduce(mergeRects);
         const outline = {
@@ -77,14 +84,9 @@ function RenderOutlinesOverlay() {
           height: boundingRect.height * verticalScale,
           didCommit: blueprint.didCommit,
         };
-        scheduledOutlines.current.push(outline);
-        if (scheduledOutlines.current.length === 1) {
-          setTimeout(() => {
-            outlineRenderer.renderOutlines(scheduledOutlines.current);
-            scheduledOutlines.current = [];
-          });
-        }
+        return [outline];
       });
+      outlineRenderer.renderOutlines(outlines);
     };
     RenderOutlines.addEventListener("rendersReported", blueprintListener);
 
