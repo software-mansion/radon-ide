@@ -326,7 +326,8 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkEasCliInstallationStatus() {
-    const installed = await isEasCliInstalled();
+    const appRoot = this.appRootFolder.getAppRoot();
+    const installed = await isEasCliInstalled(appRoot);
     this.emitEvent("easCli", {
       status: installed ? "installed" : "notInstalled",
       isOptional: true,

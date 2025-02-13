@@ -129,8 +129,8 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
   }
 
   async getAvailableEasProfiles(): Promise<EasBuildConfig> {
-    const appRootFolder = getAppRootFolder();
-    const easConfig = await readEasConfig(appRootFolder);
+    const appRoot = this.appRootFolder.getAppRoot();
+    const easConfig = await readEasConfig(appRoot);
     const easBuildConfig = easConfig?.build ?? {};
     return easBuildConfig;
   }
