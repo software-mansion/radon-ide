@@ -8,10 +8,14 @@ export const RENDER_OUTLINES_PLUGIN_ID = "RNIDE-render-outlines";
 
 export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface, Disposable {
   private eventEmitter = new EventEmitter();
+  private isEnabled = false;
 
   private devToolsListener = (event: string, payload: any): void => {
     if (event === "RNIDE_rendersReported") {
       this.eventEmitter.emit("rendersReported", payload);
+    }
+    if (event === "RNIDE_queryInstrumentationOptions") {
+      this.devtools.send("RNIDE_setInstrumentationOptions", { isEnabled: this.isEnabled });
     }
   };
 
@@ -38,6 +42,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   }
 
   setEnabled(isEnabled: boolean) {
+    this.isEnabled = isEnabled;
     this.devtools.send("RNIDE_setInstrumentationOptions", { isEnabled });
   }
 
