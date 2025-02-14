@@ -546,6 +546,48 @@
           }
         ]
       }
+    ],
+    "walkthroughs": [
+      {
+        "id": "radon-ide",
+        "title": "Get Started with Radon IDE",
+        "description": "A full featured IDE for React Native and Expo",
+        "steps": [
+          {
+            "id": "open-rn-expo-project",
+            "title": "Open React Native or Expo project",
+            "description": "",
+            "media": {
+              "image": "media/rocket.svg",
+              "altText": "Radon Rocket"
+            }
+          },
+          {
+            "id": "open-radon-ide-panel",
+            "title": "Open Radon IDE Panel",
+            "description": "\n[Open Radon IDE Panel](command:RNIDE.openPanel)",
+            "media": {
+              "markdown": "media/open-ide-panel.md"
+            }
+          },
+          {
+            "id": "create-new-device",
+            "title": "Create New Device",
+            "description": "\n[Open Radon IDE Panel](command:RNIDE.openPanel)",
+            "media": {
+              "markdown": "media/create-new-device.md"
+            }
+          },
+          {
+            "id": "explore-features",
+            "title": "Explore features",
+            "description": "\n[Open Radon IDE Panel](command:RNIDE.openPanel)",
+            "media": {
+              "markdown": "media/explore-features.md"
+            }
+          }
+        ]
+      }
     ]
   },
   "scripts": {
