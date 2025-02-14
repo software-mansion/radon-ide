@@ -35,6 +35,7 @@ const defaultProjectState: ProjectState = {
   previewURL: undefined,
   selectedDevice: undefined,
   previewZoom: undefined,
+  initialized: false,
 };
 
 const defaultDeviceSettings: DeviceSettings = {

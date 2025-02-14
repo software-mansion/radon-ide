@@ -5,7 +5,11 @@ import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
 import PreviewLoader from "./PreviewLoader";
-import { useBuildErrorAlert, useBundleErrorAlert } from "../hooks/useBuildErrorAlert";
+import {
+  useBootErrorAlert,
+  useBuildErrorAlert,
+  useBundleErrorAlert,
+} from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
@@ -85,6 +89,7 @@ function Preview({
   const projectStatus = projectState.status;
 
   const hasBuildError = projectStatus === "buildError";
+  const hasBootError = projectStatus === "bootError";
   const hasIncrementalBundleError = projectStatus === "incrementalBundleError";
   const hasBundleError = projectStatus === "bundleError";
 
@@ -98,9 +103,11 @@ function Preview({
       ? false
       : !projectState || projectState.status === "starting";
   const showDevicePreview =
-    projectState?.previewURL && (showPreviewRequested || (!isStarting && !hasBuildError));
+    projectState?.previewURL &&
+    (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
   useBuildErrorAlert(hasBuildError);
+  useBootErrorAlert(hasBootError);
   useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
 
   const openRebuildAlert = useNativeRebuildAlert();
@@ -123,7 +130,10 @@ function Preview({
     anchorY += newPointY - prevPointY;
     anchorX = clamp(anchorX, 0, 1);
     anchorY = clamp(anchorY, 0, 1);
-    setAnchorPoint({ x: anchorX, y: anchorY });
+    setAnchorPoint({
+      x: anchorX,
+      y: anchorY,
+    });
   }
 
   type MouseMove = "Move" | "Down" | "Up";
@@ -150,7 +160,10 @@ function Preview({
     project.dispatchTouches(
       [
         { xRatio: pt.x, yRatio: pt.y },
-        { xRatio: secondPt.x, yRatio: secondPt.y },
+        {
+          xRatio: secondPt.x,
+          yRatio: secondPt.y,
+        },
       ],
       type
     );
@@ -170,7 +183,10 @@ function Preview({
       if (requestStack && inspectData?.stack) {
         if (showInspectStackModal) {
           setInspectStackData({
-            requestLocation: { x: event.clientX, y: event.clientY },
+            requestLocation: {
+              x: event.clientX,
+              y: event.clientY,
+            },
             stack: inspectData.stack,
           });
         } else {
@@ -404,7 +420,10 @@ function Preview({
         const isPanningKey = e.code === "ShiftLeft" || e.code === "ShiftRight";
 
         if (isMultiTouchKey && isKeydown) {
-          setAnchorPoint({ x: 0.5, y: 0.5 });
+          setAnchorPoint({
+            x: 0.5,
+            y: 0.5,
+          });
           setTouchPoint(getTouchPosition(currentMousePosition.current!));
           setIsMultiTouching(true);
         }
@@ -568,7 +587,7 @@ function Preview({
             </div>
           </Device>
         )}
-        {!showDevicePreview && !hasBuildError && (
+        {!showDevicePreview && !hasBuildError && !hasBootError && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
@@ -576,7 +595,7 @@ function Preview({
             </div>
           </Device>
         )}
-        {hasBuildError && (
+        {(hasBuildError || hasBootError) && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized extension-error-screen" />
           </Device>

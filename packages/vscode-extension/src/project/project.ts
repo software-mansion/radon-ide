@@ -29,7 +29,7 @@ import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
-import { AppEvent, DeviceSession, EventDelegate } from "./deviceSession";
+import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
 import { BuildCache } from "../builders/BuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
@@ -75,6 +75,7 @@ export class Project
     previewURL: undefined,
     previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
     selectedDevice: undefined,
+    initialized: false,
   };
 
   private deviceSettings: DeviceSettings;
@@ -306,6 +307,7 @@ export class Project
       // device selection is cleared in the project state:
       this.updateProjectState({
         selectedDevice: undefined,
+        initialized: true, // when no device can be selected, we consider the project initialized
       });
       // when we reach this place, it means there's no device that we can select, we
       // wait for the new device to be added to the list:
@@ -718,6 +720,13 @@ export class Project
 
   //#region Select device
   private async selectDeviceOnly(deviceInfo: DeviceInfo) {
+    if (!deviceInfo.available) {
+      window.showErrorMessage(
+        "Selected device is not available. Perhaps the system image it uses is not installed. Please select another device.",
+        "Dismiss"
+      );
+      return undefined;
+    }
     let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
     try {
       device = await this.deviceManager.acquireDevice(deviceInfo);
@@ -752,6 +761,7 @@ export class Project
 
     this.updateProjectState({
       selectedDevice: deviceInfo,
+      initialized: true,
       status: "starting",
       startupMessage: StartupMessage.InitializingDevice,
       previewURL: undefined,
@@ -786,7 +796,11 @@ export class Project
       const isSelected = this.projectState.selectedDevice === deviceInfo;
       const isNewSession = this.deviceSession === newDeviceSession;
       if (isSelected && isNewSession) {
-        this.updateProjectState({ status: "buildError" });
+        if (e instanceof DeviceBootError) {
+          this.updateProjectState({ status: "bootError" });
+        } else {
+          this.updateProjectState({ status: "buildError" });
+        }
       }
     }
     return true;
