@@ -15,15 +15,18 @@ const FabricUIManager = getFabricUIManager();
 const CORE_COMPONENT_NAMES = new Set([
   "ActivityIndicator",
   "Button",
+  "CellRenderer",
   "DrawerLayoutAndroid",
   "FlatList",
   "Image",
+  "ItemWithSeparator",
   "Modal",
   "Pressable",
   "RefreshControl",
   "SafeAreaView",
   "SafeAreaView",
   "ScrollView",
+  "ScrollViewStickyHeader",
   "SectionList",
   "Switch",
   "Text",
@@ -34,6 +37,8 @@ const CORE_COMPONENT_NAMES = new Set([
   "TouchableWithoutFeedback",
   "View",
   "VirtualizedList",
+  "VirtualizedListContextProvider",
+  "VirtualizedListCellContextProvider",
 ]);
 
 let inited = false;
