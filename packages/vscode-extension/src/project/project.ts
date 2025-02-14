@@ -719,7 +719,7 @@ export class Project
   private async selectDeviceOnly(deviceInfo: DeviceInfo) {
     if (!deviceInfo.available) {
       window.showErrorMessage(
-        "Selected device is not available. Perhaps the device runtime is not installed. Please select another device.",
+        "Selected device is not available. Perhaps the system image it uses is not installed. Please select another device.",
         "Dismiss"
       );
       return undefined;
