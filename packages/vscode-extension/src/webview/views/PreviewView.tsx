@@ -5,7 +5,6 @@ import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
 import SettingsDropdown from "../components/SettingsDropdown";
 import { useModal } from "../providers/ModalProvider";
-import ManageDevicesView from "./ManageDevicesView";
 import NoDeviceView from "./NoDeviceView";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
@@ -72,7 +71,6 @@ function PreviewView() {
     return sd.modelId === projectState?.selectedDevice?.modelId;
   });
 
-  const { openModal } = useModal();
   const { openFileAt } = useUtils();
 
   useEffect(() => {
