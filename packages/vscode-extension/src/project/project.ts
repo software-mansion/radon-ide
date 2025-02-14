@@ -75,6 +75,7 @@ export class Project
     previewURL: undefined,
     previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
     selectedDevice: undefined,
+    initialized: false,
   };
 
   private deviceSettings: DeviceSettings;
@@ -306,6 +307,7 @@ export class Project
       // device selection is cleared in the project state:
       this.updateProjectState({
         selectedDevice: undefined,
+        initialized: true, // when no device can be selected, we consider the project initialized
       });
       // when we reach this place, it means there's no device that we can select, we
       // wait for the new device to be added to the list:
@@ -758,6 +760,7 @@ export class Project
 
     this.updateProjectState({
       selectedDevice: deviceInfo,
+      initialized: true,
       status: "starting",
       startupMessage: StartupMessage.InitializingDevice,
       previewURL: undefined,

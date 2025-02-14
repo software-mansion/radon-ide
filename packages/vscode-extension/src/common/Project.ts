@@ -35,6 +35,7 @@ export type ProjectState = {
   stageProgress?: number;
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
+  initialized: boolean;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
 };
 

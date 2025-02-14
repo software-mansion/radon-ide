@@ -6,7 +6,7 @@ import UrlBar from "../components/UrlBar";
 import SettingsDropdown from "../components/SettingsDropdown";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "./ManageDevicesView";
-import DevicesNotFoundView from "./DevicesNotFoundView";
+import NoDeviceView from "./NoDeviceView";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
 import { useDevices } from "../providers/DevicesProvider";
@@ -23,27 +23,6 @@ import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
-
-type LoadingComponentProps = {
-  finishedInitialLoad: boolean;
-  devicesNotFound: boolean;
-};
-
-function LoadingComponent({ finishedInitialLoad, devicesNotFound }: LoadingComponentProps) {
-  if (!finishedInitialLoad) {
-    return (
-      <div className="missing-device-filler">
-        <VSCodeProgressRing />
-      </div>
-    );
-  }
-
-  return (
-    <div className="missing-device-filler">
-      {devicesNotFound ? <DevicesNotFoundView /> : <VSCodeProgressRing />}
-    </div>
-  );
-}
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -81,10 +60,11 @@ function PreviewView() {
   const [logCounter, setLogCounter] = useState(0);
   const [resetKey, setResetKey] = useState(0);
   const [recordingTime, setRecordingTime] = useState(0);
-  const { devices, finishedInitialLoad } = useDevices();
+  const { devices } = useDevices();
 
-  const selectedDevice = projectState?.selectedDevice;
-  const devicesNotFound = projectState !== undefined && devices.length === 0;
+  const initialized = projectState.initialized;
+  const selectedDevice = projectState.selectedDevice;
+  const hasNoDevices = projectState !== undefined && devices.length === 0;
   const isStarting = projectState.status === "starting";
   const isRunning = projectState.status === "running";
 
@@ -138,19 +118,6 @@ function PreviewView() {
     }
   }, [isRecording]);
 
-  const handleDeviceDropdownChange = async (value: string) => {
-    if (value === "manage") {
-      openModal("Manage Devices", <ManageDevicesView />);
-      return;
-    }
-    if (selectedDevice?.id !== value) {
-      const deviceInfo = devices.find((d) => d.id === value);
-      if (deviceInfo) {
-        project.selectDevice(deviceInfo);
-      }
-    }
-  };
-
   function startRecording() {
     project.startRecording();
   }
@@ -201,9 +168,9 @@ function PreviewView() {
   return (
     <div className="panel-view">
       <div className="button-group-top">
-        <UrlBar key={resetKey} disabled={devicesNotFound} />
+        <UrlBar key={resetKey} disabled={hasNoDevices} />
         <div className="spacer" />
-        <ToolsDropdown disabled={devicesNotFound || !isRunning}>
+        <ToolsDropdown disabled={hasNoDevices || !isRunning}>
           <IconButton tooltip={{ label: "Tools", type: "primary" }}>
             <span className="codicon codicon-tools" />
           </IconButton>
@@ -251,17 +218,17 @@ function PreviewView() {
           tooltip={{
             label: "Open logs panel",
           }}
-          disabled={devicesNotFound}>
+          disabled={hasNoDevices}>
           <span slot="start" className="codicon codicon-debug-console" />
         </IconButton>
-        <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={devicesNotFound}>
+        <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={hasNoDevices}>
           <IconButton tooltip={{ label: "Settings", type: "primary" }}>
             <span className="codicon codicon-settings-gear" />
           </IconButton>
         </SettingsDropdown>
       </div>
 
-      {selectedDevice && finishedInitialLoad ? (
+      {selectedDevice && initialized ? (
         <Preview
           key={selectedDevice.id}
           isInspecting={isInspecting}
@@ -276,10 +243,9 @@ function PreviewView() {
           onZoomChanged={onZoomChanged}
         />
       ) : (
-        <LoadingComponent
-          finishedInitialLoad={finishedInitialLoad}
-          devicesNotFound={devicesNotFound}
-        />
+        <div className="missing-device-filler">
+          {initialized ? <NoDeviceView hasNoDevices={hasNoDevices} /> : <VSCodeProgressRing />}
+        </div>
       )}
 
       {!replayData && inspectStackData && (
@@ -305,31 +271,21 @@ function PreviewView() {
             label: "Select an element to inspect it",
           }}
           onClick={() => setIsInspecting(!isInspecting)}
-          disabled={devicesNotFound}>
+          disabled={hasNoDevices}>
           <span className="codicon codicon-inspect" />
         </IconButton>
 
         <span className="group-separator" />
 
-        <DeviceSelect
-          devices={devices}
-          // @ts-ignore TODO: Fix typing
-          value={selectedDevice?.id}
-          // @ts-ignore TODO: Fix typing
-          label={selectedDevice?.displayName}
-          onValueChange={handleDeviceDropdownChange}
-          disabled={devicesNotFound}
-        />
+        <DeviceSelect />
 
         <div className="spacer" />
         {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
-        <DeviceSettingsDropdown disabled={devicesNotFound || !isRunning}>
+        <DeviceSettingsDropdown disabled={hasNoDevices || !isRunning}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon
               color={
-                devicesNotFound || !isRunning
-                  ? "var(--swm-disabled-text)"
-                  : "var(--swm-default-text)"
+                hasNoDevices || !isRunning ? "var(--swm-disabled-text)" : "var(--swm-default-text)"
               }
             />
           </IconButton>
