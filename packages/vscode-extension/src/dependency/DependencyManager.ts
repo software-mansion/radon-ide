@@ -6,7 +6,7 @@ import semver, { SemVer } from "semver";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { command, lineReader } from "../utilities/subprocess";
-import { getAppRootFolder } from "../utilities/extensionContext";
+import { AppRootFolder } from "../utilities/extensionContext";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import {
@@ -32,6 +32,7 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { isEasCliInstalled } from "../builders/easCommand";
 
 export class DependencyManager implements Disposable, DependencyManagerInterface {
+  constructor(private readonly appRootFolder: AppRootFolder) {}
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
   private eventEmitter = new EventEmitter();
   private packageManagerInternal: PackageManagerInfo | undefined;
@@ -53,6 +54,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async runAllDependencyChecks() {
+    const appRoot = this.appRootFolder.getAppRoot();
     this.checkAndroidEmulatorBinaryStatus();
     this.checkAndroidDirectoryExits();
 
@@ -68,13 +70,13 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     this.checkNodeModulesInstallationStatus();
 
     this.emitEvent("reactNative", {
-      status: npmPackageVersionCheck("react-native", MinSupportedVersion.reactNative),
+      status: npmPackageVersionCheck("react-native", appRoot, MinSupportedVersion.reactNative),
       isOptional: false,
     });
 
     this.emitEvent("expo", {
-      status: npmPackageVersionCheck("expo", MinSupportedVersion.expo),
-      isOptional: !shouldUseExpoCLI(),
+      status: npmPackageVersionCheck("expo", appRoot, MinSupportedVersion.expo),
+      isOptional: !shouldUseExpoCLI(appRoot),
     });
 
     this.checkProjectUsesExpoRouter();
@@ -83,10 +85,10 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkAndroidDirectoryExits() {
-    const appRootFolder = getAppRootFolder();
-    const androidDirPath = getAndroidSourceDir(appRootFolder);
+    const appRoot = this.appRootFolder.getAppRoot();
+    const androidDirPath = getAndroidSourceDir(appRoot);
 
-    const isOptional = !(await projectRequiresNativeBuild());
+    const isOptional = !(await projectRequiresNativeBuild(appRoot));
 
     try {
       await fs.promises.access(androidDirPath);
@@ -99,10 +101,10 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkIOSDirectoryExists() {
-    const appRootFolder = getAppRootFolder();
-    const iosDirPath = getIosSourceDir(appRootFolder);
+    const appRoot = this.appRootFolder.getAppRoot();
+    const iosDirPath = getIosSourceDir(appRoot);
 
-    const isOptional = !(await projectRequiresNativeBuild());
+    const isOptional = !(await projectRequiresNativeBuild(appRoot));
     try {
       await fs.promises.access(iosDirPath);
       this.emitEvent("ios", { status: "installed", isOptional });
@@ -114,8 +116,9 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkProjectUsesExpoRouter() {
-    const dependsOnExpoRouter = appDependsOnExpoRouter();
-    const hasExpoRouterInstalled = npmPackageVersionCheck("expo-router");
+    const appRoot = this.appRootFolder.getAppRoot();
+    const dependsOnExpoRouter = appDependsOnExpoRouter(appRoot);
+    const hasExpoRouterInstalled = npmPackageVersionCheck("expo-router", appRoot);
 
     this.emitEvent("expoRouter", {
       status: hasExpoRouterInstalled,
@@ -126,8 +129,11 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkProjectUsesStorybook() {
+    const appRoot = this.appRootFolder.getAppRoot();
     const hasStotybookInstalled = npmPackageVersionCheck(
       "@storybook/react-native",
+
+      appRoot,
       MinSupportedVersion.storybook
     );
     this.emitEvent("storybook", {
@@ -138,7 +144,8 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async installNodeModules(): Promise<boolean> {
-    const packageManager = await this.getPackageManager();
+    const appRoot = this.appRootFolder.getAppRoot();
+    const packageManager = await this.getPackageManager(appRoot);
     if (!packageManager) {
       return false;
     }
@@ -147,7 +154,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
     // all package managers support the `install` command
     await command(`${packageManager.name} install`, {
-      cwd: packageManager.workspacePath ?? getAppRootFolder(),
+      cwd: packageManager.workspacePath ?? appRoot,
       quietErrorsOnExit: true,
     });
 
@@ -157,8 +164,8 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async installPods(buildOutputChannel: OutputChannel, cancelToken: CancelToken) {
-    const appRootFolder = getAppRootFolder();
-    const iosDirPath = getIosSourceDir(appRootFolder);
+    const appRoot = this.appRootFolder.getAppRoot();
+    const iosDirPath = getIosSourceDir(appRoot);
 
     if (!iosDirPath) {
       this.emitEvent("pods", { status: "notInstalled", isOptional: false });
@@ -191,9 +198,9 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     Logger.debug("Project pods installed");
   }
 
-  private async getPackageManager() {
+  private async getPackageManager(appRoot: string) {
     if (!this.packageManagerInternal) {
-      this.packageManagerInternal = await resolvePackageManager();
+      this.packageManagerInternal = await resolvePackageManager(appRoot);
     }
     return this.packageManagerInternal;
   }
@@ -220,7 +227,8 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   private async shouldUseBundleCommand() {
-    const gemfile = path.join(getAppRootFolder(), "Gemfile");
+    const appRoot = this.appRootFolder.getAppRoot();
+    const gemfile = path.join(appRoot, "Gemfile");
     try {
       await fs.promises.access(gemfile);
       return true;
@@ -234,9 +242,10 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     const installed = await testCommand(
       shouldUseBundle ? "bundle exec pod --version" : "pod --version"
     );
+    const appRoot = this.appRootFolder.getAppRoot();
     this.emitEvent("cocoaPods", {
       status: installed ? "installed" : "notInstalled",
-      isOptional: !(await projectRequiresNativeBuild()),
+      isOptional: !(await projectRequiresNativeBuild(appRoot)),
     });
   }
 
@@ -249,9 +258,11 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   private async checkPackageManagerInstallationStatus() {
+    const appRoot = this.appRootFolder.getAppRoot();
+
     // the resolvePackageManager function in getPackageManager checks
     // if a package manager is installed and otherwise returns undefined
-    const packageManager = await this.getPackageManager();
+    const packageManager = await this.getPackageManager(appRoot);
     this.emitEvent("packageManager", {
       status: packageManager ? "installed" : "notInstalled",
       isOptional: false,
@@ -261,13 +272,14 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkNodeModulesInstallationStatus() {
-    const packageManager = await this.getPackageManager();
+    const appRoot = this.appRootFolder.getAppRoot();
+    const packageManager = await this.getPackageManager(appRoot);
     if (!packageManager) {
       this.emitEvent("nodeModules", { status: "notInstalled", isOptional: false });
       return false;
     }
 
-    const installed = await isNodeModulesInstalled(packageManager);
+    const installed = await isNodeModulesInstalled(packageManager, appRoot);
     this.emitEvent("nodeModules", {
       status: installed ? "installed" : "notInstalled",
       isOptional: false,
@@ -276,14 +288,14 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkPodsInstallationStatus() {
-    const requiresNativeBuild = await projectRequiresNativeBuild();
+    const appRoot = this.appRootFolder.getAppRoot();
+    const requiresNativeBuild = await projectRequiresNativeBuild(appRoot);
     if (!requiresNativeBuild) {
       this.emitEvent("pods", { status: "notInstalled", isOptional: true });
       return true;
     }
 
-    const appRootFolder = getAppRootFolder();
-    const iosDirPath = getIosSourceDir(appRootFolder);
+    const iosDirPath = getIosSourceDir(appRoot);
 
     const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
     const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
@@ -314,7 +326,8 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkEasCliInstallationStatus() {
-    const installed = await isEasCliInstalled();
+    const appRoot = this.appRootFolder.getAppRoot();
+    const installed = await isEasCliInstalled(appRoot);
     this.emitEvent("easCli", {
       status: installed ? "installed" : "notInstalled",
       isOptional: true,
@@ -337,10 +350,14 @@ async function testCommand(cmd: string) {
   }
 }
 
-function npmPackageVersionCheck(dependency: string, minVersion?: string | semver.SemVer) {
+function npmPackageVersionCheck(
+  dependency: string,
+  appRoot: string,
+  minVersion?: string | semver.SemVer
+) {
   try {
     const module = requireNoCache(path.join(dependency, "package.json"), {
-      paths: [getAppRootFolder()],
+      paths: [appRoot],
     });
 
     if (!minVersion) {
@@ -368,10 +385,9 @@ export async function checkXcodeExists() {
   return isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
 }
 
-function appDependsOnExpoRouter() {
+function appDependsOnExpoRouter(appRoot: string) {
   // we assume that a expo router based project contain
   // the package "expo-router" in its dependencies or devDependencies
-  const appRoot = getAppRootFolder();
   try {
     const packageJson = requireNoCache(path.join(appRoot, "package.json"));
     const allDependencies = [
@@ -394,11 +410,11 @@ function appDependsOnExpoRouter() {
  * or uses Expo Go, the IDE is not responsible for building the project, and hence
  * we don't want to report missing directories or tools as errors.
  */
-async function projectRequiresNativeBuild() {
+async function projectRequiresNativeBuild(appRoot: string) {
   const launchConfiguration = getLaunchConfiguration();
   if (launchConfiguration.customBuild || launchConfiguration.eas) {
     return false;
   }
 
-  return !(await isExpoGoProject());
+  return !(await isExpoGoProject(appRoot));
 }
