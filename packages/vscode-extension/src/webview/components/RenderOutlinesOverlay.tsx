@@ -6,6 +6,7 @@ import {
   RenderOutlinesInterface,
 } from "../../common/RenderOutlines";
 import { makeProxy } from "../utilities/rpc";
+import "./RenderOutlinesOverlay.css";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -90,8 +91,12 @@ function RenderOutlinesOverlay() {
     };
     RenderOutlines.addEventListener("rendersReported", blueprintListener);
 
-    const resizeObserver = new ResizeObserver(() => {
-      const { width, height } = host.getBoundingClientRect();
+    const resizeObserver = new ResizeObserver((entries) => {
+      const hostIndex = entries.findIndex((entry) => entry.target === host);
+      if (hostIndex === -1) {
+        return;
+      }
+      const { width, height } = entries[hostIndex].contentRect;
       size = { width, height };
       outlineRenderer.resize(size);
     });
@@ -104,27 +109,8 @@ function RenderOutlinesOverlay() {
   }, [hostRef.current, canvasRef.current]);
 
   return (
-    <div
-      ref={hostRef}
-      style={{
-        position: "absolute",
-        left: "7px",
-        right: "7px",
-        top: 0,
-        bottom: 0,
-      }}>
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          pointerEvents: "none",
-          zIndex: 2147483646,
-        }}
-        aria-hidden="true"></canvas>
+    <div ref={hostRef} className="phone-screen not-masked">
+      <canvas ref={canvasRef} className="render-outlines-overlay" aria-hidden="true"></canvas>
     </div>
   );
 }
