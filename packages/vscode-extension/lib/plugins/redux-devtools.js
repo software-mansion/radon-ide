@@ -30,9 +30,6 @@ class RNIDEAppExtensionProxy {
   };
 
   clearDevToolsAgent() {
-    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-    hook.off("react-devtools", this.setDevtoolsAgent);
-
     if (!this.devtoolsAgent) {
       return;
     }
@@ -63,6 +60,8 @@ class RNIDEAppExtensionProxy {
   }
 
   closeAsync() {
+    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    hook.off("react-devtools", this.setDevtoolsAgent);
     this.clearDevToolsAgent();
     this.listeners.clear();
   }
