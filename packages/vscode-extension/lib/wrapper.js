@@ -11,8 +11,6 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
-const { useReduxDevTools, isProxyClientReady, clearProxyClient } = require("./plugins/redux-devtools");
-const { useReactQueryDevTools } = require("./plugins/react-query-devtools");
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
@@ -41,6 +39,15 @@ const InternalImports = {
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
   },
+  get reactQueryDevToolsBroadcast() {
+    return require("./plugins/react-query-devtools").broadcastQueryClient
+    ;
+  }
+};
+
+window.__RNIDE_REACT_QUERY_CLIENT_INIT__ = function (queryClient) {
+  global.__RNIDE_register_dev_plugin && global.__RNIDE_register_dev_plugin("RNIDE-react-query-devtools");
+  return InternalImports.reactQueryDevToolsBroadcast('RNIDE-react-query-devtools',queryClient);
 };
 
 window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
@@ -214,9 +221,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
-  
-  useReduxDevTools(devtoolsAgent);
-  useReactQueryDevTools(devtoolsAgent);
 
   const mountCallback = initialProps?.__RNIDE_onMount;
   useEffect(() => {
@@ -408,11 +412,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
           plugins: Array.from(devtoolPlugins.values()),
         });
       };
-      devtoolsAgent._bridge.send("RNIDE_pluginsChanged", {
-        plugins: [
-          isProxyClientReady() && "RNIDE-redux-devtools",
-        ].filter(Boolean),
-      });
       return () => {
         devtoolPluginsChanged = undefined;
       };
