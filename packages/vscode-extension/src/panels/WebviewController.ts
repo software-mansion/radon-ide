@@ -41,7 +41,10 @@ export class WebviewController implements Disposable {
       ["WorkspaceConfig", this.ide.workspaceConfigController as object],
       ["LaunchConfig", this.ide.launchConfig as object],
       ["Utils", this.ide.utils as object],
-      ["RenderOutlines", this.ide.project.toolsManager.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object],
+      [
+        "RenderOutlines",
+        this.ide.project.toolsManager.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
+      ],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
