@@ -28,7 +28,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   }
 
   public readonly id = RENDER_OUTLINES_PLUGIN_ID;
-  public readonly label = "Outline renders";
+  public readonly label = "Outline Renders";
   public readonly available = true;
 
   activate(): void {
@@ -38,8 +38,6 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   deactivate(): void {
     this.setEnabled(false);
   }
-
-  openTool(): void {}
 
   dispose() {
     this.devtools.removeListener(this.devToolsListener);
