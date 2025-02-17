@@ -17,7 +17,7 @@ const PATH = "dist/react-query-devtools/assets/";
 const prepareWebviewCSS = (files: string[]) => {
   return files
     .map((file) => {
-    return /*html*/ `<link rel="stylesheet" crossorigin href="${file}">`;
+    return /*html*/ `<link rel="stylesheet" href="${file}">`;
     })
     .join("\n");
 };
@@ -25,7 +25,7 @@ const prepareWebviewCSS = (files: string[]) => {
 const prepareWebviewJS = (files: string[], nonce: string) => {
   return files
     .map((file) => {
-      return /*html*/ `<script type="module" crossorigin src="${file}"></script>`;
+      return /*html*/ `<script type="module" nonce="${nonce}" src="${file}"></script>`;
     })
     .join("\n");
 };
@@ -55,6 +55,14 @@ function generateWebviewContent(
         <meta charset="UTF-8" />
         <title>React Query DevTools</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="Content-Security-Policy"
+          content="default-src 'none';
+          img-src vscode-resource: http: https: data:;
+          media-src vscode-resource: http: https:;
+          style-src ${webview.cspSource} 'unsafe-inline';
+          script-src 'nonce-${nonce}';
+          font-src vscode-resource: https:;" 
+        />
         ${jsImports}
         ${cssImports}
         <style>
