@@ -47,7 +47,7 @@ const InternalImports = {
 
 window.__RNIDE_REACT_QUERY_CLIENT_INIT__ = function (queryClient) {
   global.__RNIDE_register_dev_plugin && global.__RNIDE_register_dev_plugin("RNIDE-react-query-devtools");
-  return InternalImports.reactQueryDevToolsBroadcast('RNIDE-react-query-devtools',queryClient);
+  return InternalImports.reactQueryDevToolsBroadcast('RNIDE-react-query-devtools', queryClient);
 };
 
 window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
