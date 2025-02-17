@@ -185,11 +185,6 @@
       ],
       "panel": [
         {
-          "id": "RadonIDEToolExpoDevPluginReactQuery",
-          "title": "React Query",
-          "icon": "assets/react-query.svg"
-        },
-        {
           "id": "RadonIDEToolExpoDevPluginMMKV",
           "title": "MMKV",
           "icon": "assets/mmkv.svg"
@@ -223,14 +218,6 @@
           "id": "RadonIDE.view",
           "name": "",
           "when": "RNIDE.extensionIsActive && config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
-        }
-      ],
-      "RadonIDEToolExpoDevPluginReactQuery": [
-        {
-          "type": "webview",
-          "id": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.view",
-          "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolExpoDevPluginMMKV": [
