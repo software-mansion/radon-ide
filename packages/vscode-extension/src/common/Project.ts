@@ -17,7 +17,7 @@ export type DeviceSettings = {
 };
 
 export type ToolsState = {
-  [key: string]: { enabled: boolean; label: string };
+  [key: string]: { enabled: boolean; panelAvailable: boolean; label: string };
 };
 
 export type ProjectState = {

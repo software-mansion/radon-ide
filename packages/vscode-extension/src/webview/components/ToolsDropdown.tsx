@@ -10,21 +10,25 @@ import { useProject } from "../providers/ProjectProvider";
 import IconButton from "./shared/IconButton";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
+interface DevToolCheckboxProps {
+  label: string;
+  checked: boolean;
+  panelAvailable: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  onSelect: () => void;
+}
+
 function DevToolCheckbox({
   label,
   checked,
+  panelAvailable,
   onCheckedChange,
   onSelect,
-}: {
-  label: string;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  onSelect: () => void;
-}) {
+}: DevToolCheckboxProps) {
   return (
     <div className="dropdown-menu-item">
       {label}
-      {checked && (
+      {checked && panelAvailable && (
         <IconButton onClick={onSelect}>
           <span className="codicon codicon-link-external" />
         </IconButton>
@@ -49,6 +53,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
         key={key}
         label={tool.label}
         checked={tool.enabled}
+        panelAvailable={tool.panelAvailable}
         onCheckedChange={async (checked) => {
           await project.updateToolEnabledState(key, checked);
           if (checked) {
