@@ -17,7 +17,7 @@ const PATH = "dist/react-query-devtools/assets/";
 const prepareWebviewCSS = (files: string[]) => {
   return files
     .map((file) => {
-    return /*html*/ `<link rel="stylesheet" href="${file}">`;
+      return /*html*/ `<link rel="stylesheet" href="${file}">`;
     })
     .join("\n");
 };
