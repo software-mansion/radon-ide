@@ -1,12 +1,12 @@
 [submodule "packages/simulator-server"]
 	path = packages/simulator-server
-	url = git@github.com:software-mansion-labs/simulator-server.git
+	url = https://github.com/software-mansion-labs/simulator-server.git
 [submodule "packages/vscode-js-debug"]
 	path = packages/vscode-js-debug
-	url = git@github.com:software-mansion-labs/vscode-js-debug.git
+	url = https://github.com/software-mansion-labs/vscode-js-debug.git
 [submodule "packages/chrome-devtools-ui"]
 	path = packages/chrome-devtools-ui
-	url = git@github.com:software-mansion-labs/chrome-devtools-ui.git
+	url = https://github.com/software-mansion-labs/chrome-devtools-ui.git
 [submodule "packages/redux-devtools-expo-dev-plugin"]
 	path = packages/redux-devtools-expo-dev-plugin
-	url = git@github.com:software-mansion-labs/redux-devtools-expo-dev-plugin.git
+	url = https://github.com/software-mansion-labs/redux-devtools-expo-dev-plugin.git
