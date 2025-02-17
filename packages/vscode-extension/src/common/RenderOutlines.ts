@@ -12,7 +12,7 @@ export interface RenderOutlinesEventListener<T> {
 export interface BlueprintOutline {
   name: string;
   count: number;
-  elements: Measurement[];
+  boundingRect: Measurement;
   didCommit: 1 | 0;
 }
 

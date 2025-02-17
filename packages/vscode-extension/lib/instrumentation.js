@@ -50,6 +50,19 @@ let options = {
   componentBlocklist: CORE_COMPONENT_NAMES,
 };
 
+function mergeRects(lhs, rhs) {
+  const minX = Math.min(lhs.x, rhs.x);
+  const minY = Math.min(lhs.y, rhs.y);
+  const maxX = Math.max(lhs.x + lhs.width, rhs.x + rhs.width);
+  const maxY = Math.max(lhs.y + lhs.height, rhs.y + rhs.height);
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+}
+
 const ANIMATED_COMPONENT_REGEX = /Animated\((.*)\)/;
 function stripAnimatedFromComponentName(name) {
   const matches = ANIMATED_COMPONENT_REGEX.exec(name);
@@ -100,18 +113,14 @@ async function onRender(fibers) {
     const nearestFibers = getNearestHostFibers(fiber);
     const didCommit = didFiberCommit(fiber);
 
-    const measurements = await Promise.all(
-      nearestFibers.map((hostFiber) => {
+    if (nearestFibers.length === 0) {
+      continue;
+    }
+
+    const boundingRect = await nearestFibers
+      .map((hostFiber) => {
         return new Promise((resolve) => {
           const resolveMeasurements = (x, y, width, height) => {
-            x += windowX;
-            y += windowY;
-            // NOTE: we send values as % of the window size
-            // to avoid having to account for display/window scale
-            x /= windowWidth;
-            y /= windowHeight;
-            width /= windowWidth;
-            height /= windowHeight;
             resolve({ x, y, width, height });
           };
           if (FabricUIManager) {
@@ -124,17 +133,24 @@ async function onRender(fibers) {
           }
         });
       })
-    );
+      .reduce(async (acc, measurement) => {
+        return mergeRects(await acc, await measurement);
+      });
 
-    if (measurements.length === 0) {
-      continue;
-    }
+    boundingRect.x += windowX;
+    boundingRect.y += windowY;
+    // NOTE: we send values as % of the window size
+    // to avoid having to account for display/window scale
+    boundingRect.x /= windowWidth;
+    boundingRect.y /= windowHeight;
+    boundingRect.width /= windowWidth;
+    boundingRect.height /= windowHeight;
 
     if (!blueprint) {
       blueprintMap.set(getFiberId(fiber), {
         name,
         count: 1,
-        elements: measurements,
+        boundingRect,
         didCommit: didCommit ? 1 : 0,
       });
     } else {
