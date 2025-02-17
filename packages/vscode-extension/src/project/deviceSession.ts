@@ -35,6 +35,12 @@ export type EventDelegate = {
   onBuildSuccess(): void;
 };
 
+export class DeviceBootError extends Error {
+  constructor(message: string, public readonly cause: unknown) {
+    super(message);
+  }
+}
+
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
@@ -199,7 +205,12 @@ export class DeviceSession implements Disposable {
 
   private async bootDevice(deviceSettings: DeviceSettings) {
     this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
-    await this.device.bootDevice(deviceSettings);
+    try {
+      await this.device.bootDevice(deviceSettings);
+    } catch (e) {
+      Logger.error("Failed to boot device", e);
+      throw new DeviceBootError("Failed to boot device", e);
+    }
   }
 
   private async buildApp({ clean }: { clean: boolean }) {

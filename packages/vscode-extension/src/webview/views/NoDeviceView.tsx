@@ -1,4 +1,4 @@
-import "./DevicesNotFoundView.css";
+import "./NoDeviceView.css";
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import { useCallback, useState } from "react";
 import SmartphoneIcon from "../components/icons/SmartphoneIcon";
@@ -10,6 +10,7 @@ import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/const
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform, useUtils } from "../providers/UtilsProvider";
+import ManageDevicesView from "./ManageDevicesView";
 
 const firstIosDevice = iOSSupportedDevices[0];
 const firstAndroidDevice = AndroidSupportedDevices[0];
@@ -62,7 +63,7 @@ function findNewestIosRuntime(runtimes: IOSRuntimeInfo[]) {
   return getMax(runtimes, isNewest);
 }
 
-function DevicesNotFoundView() {
+export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }) {
   const { openModal, closeModal } = useModal();
   const { iOSRuntimes, androidImages, deviceManager } = useDevices();
   const [isIOSCreating, withIosCreating] = useLoadingState();
@@ -75,6 +76,10 @@ function DevicesNotFoundView() {
       "Create new device",
       <CreateDeviceView onCancel={closeModal} onCreate={closeModal} />
     );
+  }
+
+  function openManageDevicesModal() {
+    openModal("Manage devices", <ManageDevicesView />);
   }
 
   async function createAndroidDevice() {
@@ -120,39 +125,49 @@ function DevicesNotFoundView() {
       <div className="devices-not-found-icon">
         <SmartphoneIcon color="var(--swm-devices-not-found-icon)" />
       </div>
-      <h1 className="devices-not-found-title">No devices found</h1>
+      <h1 className="devices-not-found-title">
+        {hasNoDevices ? "No devices found" : "Select a device to start"}
+      </h1>
       <p className="devices-not-found-subtitle">
-        You can add a new device using the quick action below.
+        {hasNoDevices
+          ? "You can add a new device using the quick action below."
+          : "You can select one of available devices or create a new one to start."}
       </p>
-      <div className="devices-not-found-button-group">
-        {Platform.OS === "macos" && (
+      {hasNoDevices ? (
+        <div className="devices-not-found-button-group">
+          {Platform.OS === "macos" && (
+            <Button
+              disabled={isIOSCreating}
+              type="ternary"
+              className="devices-not-found-quick-action"
+              onClick={createIOSDevice}>
+              {isIOSCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
+              Add iPhone
+            </Button>
+          )}
+
           <Button
-            disabled={isIOSCreating}
+            disabled={isAndroidCreating}
             type="ternary"
             className="devices-not-found-quick-action"
-            onClick={createIOSDevice}>
-            {isIOSCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
-            Add iPhone
+            onClick={createAndroidDevice}>
+            {isAndroidCreating && (
+              <VSCodeProgressRing className="devices-not-found-button-spinner" />
+            )}
+            Add Android
           </Button>
-        )}
-
-        <Button
-          disabled={isAndroidCreating}
-          type="ternary"
-          className="devices-not-found-quick-action"
-          onClick={createAndroidDevice}>
-          {isAndroidCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
-          Add Android
+        </div>
+      ) : (
+        <Button onClick={openManageDevicesModal}>
+          <span className="codicon codicon-device-mobile" />
+          Select existing device
         </Button>
-      </div>
-      <>
-        <p>or</p>
-        <Button onClick={openCreateNewDeviceModal}>
-          <span className="codicon codicon-add" />
-          Create new device
-        </Button>
-      </>
+      )}
+      <p>or</p>
+      <Button onClick={openCreateNewDeviceModal}>
+        <span className="codicon codicon-add" />
+        Create new device
+      </Button>
     </div>
   );
 }
-export default DevicesNotFoundView;

@@ -31,7 +31,7 @@ If you know there's a newer version that you want to use (you can check [our rel
 Radon IDE doesn't provide official support for Windows and Linux installations.
 The extension may not work properly in these environments or work in limited capacity.
 Despite Linux and Windows builds not being published to the marketplace, we provide a VSIX package that can run on those platforms on the releases page.
-If you wish to use Radon IDE on Windows or Linux, you can do so under unlimited free license.
+If you wish to use Radon IDE on Windows or Linux, you can do so under free Beta license.
 
 To install the extension from VSIX, first head to the [releases page on GitHub](https://github.com/software-mansion/radon-ide/releases) and select the most recent release.
 From the "Assets" section, download the `.vsix` file:
