@@ -555,17 +555,17 @@
         "steps": [
           {
             "id": "open-rn-expo-project",
-            "title": "Open React Native or Expo project",
-            "description": "",
+            "title": "Open a React Native project",
+            "description": "[Open](command:workbench.action.files.openFileFolder) or create a React Native or Expo project new one.\n[Open Project](command:workbench.action.files.openFileFolder)",
             "media": {
-              "image": "media/rocket.svg",
-              "altText": "Radon Rocket"
+              "image": "media/radon-bubble.svg",
+              "altText": "Radon IDE logo"
             }
           },
           {
             "id": "open-radon-ide-panel",
             "title": "Open Radon IDE Panel",
-            "description": "\n[Open Radon IDE Panel](command:RNIDE.openPanel)",
+            "description": "Use the __Open IDE Panel__ button in the top-right corner or run ``Radon IDE: Open IDE Panel`` command in the [Command Palette](command:workbench.action.showCommands). \n[Open Panel](command:RNIDE.openPanel)",
             "media": {
               "markdown": "media/open-ide-panel.md"
             }
@@ -573,15 +573,15 @@
           {
             "id": "create-new-device",
             "title": "Create New Device",
-            "description": "\n[Open Radon IDE Panel](command:RNIDE.openPanel)",
+            "description": "Use __Add iPhone__ or __Add Android__ button in the panel or use __Create new device__ button.",
             "media": {
               "markdown": "media/create-new-device.md"
             }
           },
           {
             "id": "explore-features",
-            "title": "Explore features",
-            "description": "\n[Open Radon IDE Panel](command:RNIDE.openPanel)",
+            "title": "Explore Features",
+            "description": "Explore all the Radon IDE features on your own or see [feature highlight](https://ide.swmansion.com/docs/getting-started/feature-highlight) on our website.\nTake a look at our [Release Notes](https://github.com/software-mansion/radon-ide/releases) to learn about all the newest features and improvements in Radon IDE. \n[Open Feature Highlight](https://ide.swmansion.com/docs/getting-started/feature-highlight)",
             "media": {
               "markdown": "media/explore-features.md"
             }
