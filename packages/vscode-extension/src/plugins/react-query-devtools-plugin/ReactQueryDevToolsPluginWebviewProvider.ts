@@ -12,7 +12,7 @@ import { extensionContext } from "../../utilities/extensionContext";
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
 
-const PATH = "dist/react-query-devtools/";
+const PATH = "dist/react-query-devtools/assets/";
 
 const prepareWebviewCSS = (files: string[]) => {
   return files
