@@ -559,7 +559,7 @@
     "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
-    "build:sim-server": "bash ./scripts/install-sim-server-release-build.sh dist",
+    "build:sim-server": "bash ./scripts/download-sim-server-release-assets.sh dist",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
     "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
