@@ -25,11 +25,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: actions/checkout@v4
-        with:
-          repository: software-mansion-labs/vscode-js-debug
-          path: packages/vscode-js-debug
-
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -39,7 +34,7 @@ jobs:
 
       - name: Install node dependencies
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npm i
+        run: npm ci
 
       - name: Typecheck extension
         working-directory: ${{ env.WORKING_DIRECTORY }}
