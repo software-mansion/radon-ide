@@ -12,15 +12,12 @@ import { extensionContext } from "../../utilities/extensionContext";
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
 
-const PATH = "plugins_dist/react-query/";
+const PATH = "dist/react-query-devtools/";
 
 const prepareWebviewCSS = (files: string[]) => {
   return files
     .map((file) => {
-      return /*html*/ `
-      <link rel="preload" href="${file}" as="style">
-      <link rel="stylesheet" href="${file}">
-    `;
+    return /*html*/ `<link rel="stylesheet" crossorigin href="${file}">`;
     })
     .join("\n");
 };
@@ -28,7 +25,7 @@ const prepareWebviewCSS = (files: string[]) => {
 const prepareWebviewJS = (files: string[], nonce: string) => {
   return files
     .map((file) => {
-      return /*html*/ `<script src="${file}" nonce="${nonce}" defer></script>`;
+      return /*html*/ `<script type="module" crossorigin src="${file}"></script>`;
     })
     .join("\n");
 };
@@ -51,53 +48,40 @@ function generateWebviewContent(
   const jsImports = prepareWebviewJS(jsFiles, nonce);
 
   return /*html*/ `
-    <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <base href="${baseUri}">
-          <meta charset="utf-8" />
-          <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-          <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-          <title>redux-devtools-expo-dev-plugin-webui</title>
-          <!-- The react-native-web recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
-          <style id="expo-reset">
-            /* These styles make the body full-height */
-            html,
-            body {
-              height: 100%;
-            }
-            /* These styles disable body scrolling if you are using <ScrollView> */
-            body {
-              overflow: hidden;
-            }
-            /* These styles make the root element full-height */
-            #root {
-              display: flex;
-              height: 100%;
-              flex: 1;
-            }
-          </style>
-          <meta http-equiv="Content-Security-Policy"
-            content="default-src 'none';
-            img-src vscode-resource: http: https: data:;
-            media-src vscode-resource: http: https:;
-            style-src ${webview.cspSource} 'unsafe-inline';
-            script-src 'nonce-${nonce}';
-            font-src vscode-resource: https:;" 
-          />
-          ${cssImports}
-        </head>
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <base href="${baseUri}">
+        <meta charset="UTF-8" />
+        <title>React Query DevTools</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        ${jsImports}
+        ${cssImports}
+        <style>
+          body {
+            background: #f0f;
+            padding: 0;
+            display: block;
+          }
 
-        <body>
-          <!-- Use static rendering with Expo Router to support running without JavaScript. -->
-          <noscript>
-            You need to enable JavaScript to run this app.
-          </noscript>
-          <!-- The root element for your Expo app. -->
-          <div id="root"></div>
-          ${jsImports}
+          #app {
+            padding: 0;
+            height: 100vh!important;
+          }
+
+          .tsqd-text-logo-container {
+            display: none!important;
+          }
+
+          .tsqd-action-mock-offline-behavior {
+            display: none!important;
+          }
+        </style>
+      </head>
+      <body>
+        <div id="app"></div>
       </body>
-      </html>
+    </html>
   `;
 }
 
