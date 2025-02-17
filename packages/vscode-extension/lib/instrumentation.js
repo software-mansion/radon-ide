@@ -19,6 +19,7 @@ const CORE_COMPONENT_NAMES = new Set([
   "DrawerLayoutAndroid",
   "FlatList",
   "Image",
+  "InternalTextInput",
   "ItemWithSeparator",
   "Modal",
   "Pressable",
@@ -39,6 +40,7 @@ const CORE_COMPONENT_NAMES = new Set([
   "VirtualizedList",
   "VirtualizedListContextProvider",
   "VirtualizedListCellContextProvider",
+  "Wrapper",
 ]);
 
 let inited = false;
