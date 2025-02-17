@@ -27,6 +27,11 @@ export interface ToolPlugin extends Disposable {
   openTool?(): void;
 }
 
+export function reportToolVisibilityChanged(toolName: ToolKey, visible: boolean) {
+  const visibility = visible ? "visible" : "hidden";
+  getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:visibility:${visibility}`);
+}
+
 export class ToolsManager implements Disposable {
   private toolsSettings: Partial<Record<ToolKey, boolean>> = {};
   private plugins: Map<ToolKey, ToolPlugin> = new Map();
