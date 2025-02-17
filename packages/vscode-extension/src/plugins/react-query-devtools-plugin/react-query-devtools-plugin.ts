@@ -25,23 +25,13 @@ function initializeReactQueryDevPlugin() {
   return webviewProvider;
 }
 
-export const createREACT_QUERYDevtools = (toolsManager: ToolsManager): ToolPlugin => {
+export const createReactQueryDevtools = (toolsManager: ToolsManager): ToolPlugin => {
   const webViewProvider = initializeReactQueryDevPlugin();
-
-  // function devtoolsListener(event: string, payload: any) {
-  //   if (event === "RNIDE_pluginsChanged") {
-  //     const availablePlugins = new Set(payload.plugins);
-  //     plugin.available = availablePlugins.has(plugin.id);
-  //     toolsManager.handleStateChange();
-  //   }
-  // }
 
   let proxyDevtoolsListener: null | ((event: string, payload: any) => void) = null;
   webViewProvider?.setListener((webview) => {
     proxyDevtoolsListener = (event: string, payload: any) => {
-      console.log("DEVTOOLS EVENT", event);
       if (event === REACT_QUERY_PLUGIN_ID) {
-        console.log("DEVTOOLS PAYLOAD 2", payload);
         webview.webview.postMessage({
           scope: event,
           data: payload,
@@ -64,14 +54,13 @@ export const createREACT_QUERYDevtools = (toolsManager: ToolsManager): ToolPlugi
         toolsManager.devtools.removeListener(proxyDevtoolsListener);
       }
 
-      // toolsManager.devtools.removeListener(devtoolsListener);
       disposed = false;
     }
   }
 
   const plugin: ToolPlugin = {
     id: REACT_QUERY_PLUGIN_ID,
-    label: "REACT_QUERY DevTools",
+    label: "React Query DevTools",
     available: true,
     activate() {
       commands.executeCommand("setContext", `${REACT_QUERY_PLUGIN_PREFIX}.available`, true);
@@ -84,10 +73,6 @@ export const createREACT_QUERYDevtools = (toolsManager: ToolsManager): ToolPlugi
     },
     dispose,
   };
-
-  // Listen for events passed via devtools that indicate which plugins are loaded
-  // by the app.
-  // toolsManager.devtools.addListener(devtoolsListener);
 
   return plugin;
 };
