@@ -1,6 +1,10 @@
 import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
-import { RenderOutlinesEventListener, RenderOutlinesEventMap, RenderOutlinesInterface } from "../../common/RenderOutlines";
+import {
+  RenderOutlinesEventListener,
+  RenderOutlinesEventMap,
+  RenderOutlinesInterface,
+} from "../../common/RenderOutlines";
 import { Devtools } from "../../project/devtools";
 import { ToolPlugin } from "../../project/tools";
 

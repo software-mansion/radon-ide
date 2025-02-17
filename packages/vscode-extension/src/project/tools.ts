@@ -12,11 +12,18 @@ import {
   REDUX_PLUGIN_ID,
   createReduxDevtools,
 } from "../plugins/redux-devtools-plugin/redux-devtools-plugin";
-import { RENDER_OUTLINES_PLUGIN_ID, RenderOutlinesPlugin } from "../plugins/render-outlines/render-outlines-plugin";
+import {
+  RENDER_OUTLINES_PLUGIN_ID,
+  RenderOutlinesPlugin,
+} from "../plugins/render-outlines/render-outlines-plugin";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
-export type ToolKey = ExpoDevPluginToolName | typeof NETWORK_PLUGIN_ID | typeof REDUX_PLUGIN_ID | typeof RENDER_OUTLINES_PLUGIN_ID;
+export type ToolKey =
+  | ExpoDevPluginToolName
+  | typeof NETWORK_PLUGIN_ID
+  | typeof REDUX_PLUGIN_ID
+  | typeof RENDER_OUTLINES_PLUGIN_ID;
 
 export interface ToolPlugin extends Disposable {
   id: ToolKey;
