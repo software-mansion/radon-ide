@@ -1,98 +1,74 @@
 
-const { useEffect } = require("react");
-const { RNIDEProxyClient } = require("./utils");
+const { RNIDEAppExtensionProxy } = require("./utils");
 
-let proxyClient = null;
+export function broadcastQueryClient(scope, queryClient) {
+  const proxy = new RNIDEAppExtensionProxy(scope);
 
-export const isProxyClientReady = () => proxyClient !== null;
+  let transaction = false;
 
-export const clearProxyClient = () => proxyClient = null;
+  const tx = (cb) => {
+    transaction = true;
+    cb();
+    transaction = false;
+  };
 
-export const createRNIDEProxyClientAsync = async () => {
-  if (proxyClient !== null) {
-    return proxyClient;
-  }
-  
-  proxyClient = new RNIDEProxyClient('RNIDE-react-query-devtools');
-
-  return proxyClient;
-};
-
-async function injectReactQueryDevtools(queryClient) {
-  const client = await createRNIDEProxyClientAsync();
   const queryCache = queryClient.getQueryCache();
 
-  let unsubscribe;
-
-  function getQueries() {
-    return queryCache.getAll();
-  }
-
-  function getQueryByHash(queryHash)  {
-    return getQueries().find((query) => query.queryHash === queryHash);
-  }
-
-  function getSerializedQueries() {
-    const queries = getQueries().map((query) => serializeQuery(query));
-
-    const serializedQueries = {
-      queries: JSON.stringify(queries),
-    };
-
-    return serializedQueries;
-  }
-
-  client?.addMessageListener('queryRefetch', ({ queryHash }) => {
-    getQueryByHash(queryHash)?.fetch();
-  })
-
-  client?.addMessageListener('queryRemove', ({ queryHash }) => {
-    const query = getQueryByHash(queryHash);
-    if (query) {
-      queryClient.removeQueries({ queryKey: query.queryKey, exact: true });
+  queryClient.getQueryCache().subscribe((queryEvent) => {
+    if (transaction) {
+      return;
     }
-  })
 
-  // send initial queries
-  client?.sendMessage('queries', getSerializedQueries());
+    const {
+      query: { queryHash, queryKey, state },
+    } = queryEvent;
 
-  /**
-   * handles QueryCacheNotifyEvent
-   * @param event - QueryCacheNotifyEvent, but RQ doesn't have it exported
-   */
-  const handleCacheEvent = (event) => {
-    const { query } = event;
-    console.log("EVENT", query, client);
-    client?.sendMessage('queryCacheEvent', {
-      cacheEvent: JSON.stringify({ ...event, query: serializeQuery(query) }),
+    if (queryEvent.type === 'updated' && queryEvent.action.type === 'success') {
+      proxy.sendMessage("updated", {
+        queryHash,
+        queryKey,
+        state,
+      });
+    }
+    
+    if (queryEvent.type === 'removed') {
+      proxy.sendMessage('removed', {
+        queryHash,
+        queryKey,
+      });
+    }
+  });
+
+  proxy.addMessageListener("updated", (action) => {
+    tx(() => {
+      const { queryHash, queryKey, state } = action;
+
+      const query = queryCache.get(queryHash);
+
+      if (query) {
+        query.setState(state);
+        return;
+      }
+
+      queryCache.build(
+        queryClient,
+        {
+          queryKey,
+          queryHash,
+        },
+        state
+      );
     });
-  };
+  });
 
-  unsubscribe = queryCache.subscribe(handleCacheEvent);
+  proxy.addMessageListener("removed", (action) => {  
+    tx(() => {
+      const { queryHash } = action;
+      const query = queryCache.get(queryHash);
+
+      if (query) {
+        queryCache.remove(query);
+      }
+    });
+  });
 }
-
-function serializeQuery(query) {
-  return {
-    ...query,
-    _ext_isActive: query.isActive(),
-    _ext_isStale: query.isStale(),
-    _ext_observersCount: query.getObserversCount(),
-  };
-}
-
-global.__RNIDE_REACT_QUERY_CLIENT_INIT__ = injectReactQueryDevtools;
-
-
-// TODO: to late init 
-createRNIDEProxyClientAsync(); 
-
-export const useReactQueryDevTools = (devtoolsAgent) => {
-  useEffect(() => {
-    console.log("SET DEVTOOLS AGENT")
-    proxyClient?.setDevtoolsAgent(devtoolsAgent);
-
-    return () => {
-      proxyClient?.clearDevToolsAgent();
-    };
-  }, [devtoolsAgent]);
-};

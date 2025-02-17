@@ -1,10 +1,16 @@
-export class RNIDEProxyClient {
+export class RNIDEAppExtensionProxy {
   scope;
   listeners = new Map();
   devtoolsAgent = undefined;
 
   constructor(scope) {
     this.scope = scope;
+    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    if (hook.reactDevtoolsAgent) {
+      this.setDevtoolsAgent(hook.reactDevtoolsAgent);
+    } else {
+      hook.on("react-devtools", this.setDevtoolsAgent);
+    }
   }
 
   handleMessages = (data) => {
@@ -16,45 +22,45 @@ export class RNIDEProxyClient {
     if (!agent) {
       return;
     }
+    this.clearDevToolsAgent();
     this.devtoolsAgent = agent;
     this.devtoolsAgent._bridge.addListener(this.scope, this.handleMessages);
   };
 
-  clearDevToolsAgent = () => {
+  clearDevToolsAgent() {
     if (!this.devtoolsAgent) {
       return;
     }
-
     this.devtoolsAgent._bridge.removeListener(this.scope, this.handleMessages);
     this.devtoolsAgent = undefined;
-  };
+  }
 
-  sendMessage = (type, data) => {
-    console.log('EVENT SEND MESSAGE', type, data, this.devtoolsAgent);
+  sendMessage(type, data) {
     if (!this.devtoolsAgent) {
       return;
     }
 
-    console.log('EVENT SEND MESSAGE 2', type, data, this.devtoolsAgent._bridge);
     this.devtoolsAgent._bridge.send(this.scope, {
       type,
       data,
     });
-  };
+  }
 
-  addMessageListener = (type, listener) => {
+  addMessageListener(type, listener) {
     const currentListeners = this.listeners.get(type) || [];
     this.listeners.set(type, [...currentListeners, listener]);
-  };
+  }
 
-  removeMessageListener = (type, listener) => {
+  removeMessageListener(type, listener) {
     const currentListeners = this.listeners.get(type) || [];
     const filteredListeners = currentListeners.filter((l) => l !== listener);
     this.listeners.set(type, filteredListeners);
-  };
+  }
 
-  closeAsync = () => {
+  closeAsync() {
+    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    hook.off("react-devtools", this.setDevtoolsAgent);
     this.clearDevToolsAgent();
     this.listeners.clear();
-  };
+  }
 }
