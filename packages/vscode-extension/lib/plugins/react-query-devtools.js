@@ -1,4 +1,3 @@
-
 const { RNIDEAppExtensionProxy } = require("./utils");
 
 export function broadcastQueryClient(scope, queryClient) {

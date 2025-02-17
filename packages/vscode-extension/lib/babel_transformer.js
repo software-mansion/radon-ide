@@ -57,8 +57,6 @@ function transformWrapper({ filename, src, ...rest }) {
     return filename.endsWith(path.normalize(unixPath));
   }
 
-  // console.log("---> filename", filename);
-
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
   if (isTransforming("node_modules/react-native/Libraries/Core/InitializeCore.js")) {
     src = `${src};require("__RNIDE_lib__/runtime.js");`;
