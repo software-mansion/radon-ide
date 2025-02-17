@@ -14,29 +14,9 @@ function getDpr() {
   return Math.min(window.devicePixelRatio || 1, 2);
 }
 
-interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 interface Size {
   width: number;
   height: number;
-}
-
-function mergeRects(lhs: Rect, rhs: Rect): Rect {
-  const minX = Math.min(lhs.x, rhs.x);
-  const minY = Math.min(lhs.y, rhs.y);
-  const maxX = Math.max(lhs.x + lhs.width, rhs.x + rhs.width);
-  const maxY = Math.max(lhs.y + lhs.height, rhs.y + rhs.height);
-  return {
-    x: minX,
-    y: minY,
-    width: maxX - minX,
-    height: maxY - minY,
-  };
 }
 
 function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: number) {
@@ -69,21 +49,18 @@ function RenderOutlinesOverlay() {
       RenderOutlinesEventMap["rendersReported"]
     > = ({ blueprintOutlines }) => {
       const outlines = blueprintOutlines.flatMap(([fiberId, blueprint]) => {
-        const horizontalScale = size.width * dpr;
-        const verticalScale = size.height * dpr;
-        if (blueprint.elements.length === 0) {
-          return [];
-        }
-        const boundingRect = blueprint.elements.reduce(mergeRects);
+        const { name, count, boundingRect, didCommit } = blueprint;
+        const horizontalScale = size.width;
+        const verticalScale = size.height;
         const outline = {
           id: fiberId,
-          name: blueprint.name,
-          count: blueprint.count,
+          name: name,
+          count: count,
           x: boundingRect.x * horizontalScale,
           y: boundingRect.y * verticalScale,
           width: boundingRect.width * horizontalScale,
           height: boundingRect.height * verticalScale,
-          didCommit: blueprint.didCommit,
+          didCommit: didCommit,
         };
         return [outline];
       });
