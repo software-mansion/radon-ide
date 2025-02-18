@@ -15,7 +15,7 @@ import { DebugSource } from "../debugging/DebugSession";
 
 export interface MetroDelegate {
   onBundleError(): void;
-  onIncrementalBundleError(message: string, source: DebugSource, errorModulePath: string): void;
+  onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
 }
 
 interface CDPTargetDescription {
@@ -268,7 +268,7 @@ export class Metro implements Disposable {
               if (filePathMatch) {
                 filename = filePathMatch[1];
               }
-              this.delegate.onIncrementalBundleError(
+              this.delegate.onBundlingError(
                 message,
                 {
                   filename,

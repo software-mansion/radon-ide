@@ -158,7 +158,7 @@ export class Project
   onDebuggerPaused(event: DebugSessionCustomEvent) {
     if (event.body?.reason === "exception") {
       // if we know that incremental bundle error happened, we don't want to change the status
-      if (this.projectState.status === "incrementalBundleError") {
+      if (this.projectState.status === "bundlingError") {
         return;
       }
       this.updateProjectState({ status: "runtimeError" });
@@ -269,7 +269,7 @@ export class Project
     this.updateProjectState({ status: "bundleError" });
   }
 
-  async onIncrementalBundleError(
+  async onBundlingError(
     message: string,
     source: DebugSource,
     _errorModulePath: string
@@ -280,11 +280,11 @@ export class Project
     this.deviceSession?.pauseDebugger(message, source);
     Logger.error(message);
     // if bundle build failed, we don't want to change the status
-    // incrementalBundleError status should be set only when bundleError status is not set
+    // bundlingError status should be set only when bundleError status is not set
     if (this.projectState.status === "bundleError") {
       return;
     }
-    this.updateProjectState({ status: "incrementalBundleError" });
+    this.updateProjectState({ status: "bundlingError" });
   }
 
   /**
