@@ -266,7 +266,7 @@ export class DeviceSession implements Disposable {
   }
 
   private async connectDebugger() {
-    const connected = await this.debugSession.connectToApplication(this.metro);
+    const connected = await this.debugSession.connectJSDebugger(this.metro);
 
     if (connected) {
       // TODO(jgonet): Right now, we ignore start failure

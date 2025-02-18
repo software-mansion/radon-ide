@@ -71,7 +71,7 @@ export class DebugSession implements Disposable {
     this.debugEventsListener.dispose();
   }
 
-  public async connectToApplication(metro: Metro) {
+  public async connectJSDebugger(metro: Metro) {
     if (this.wasConnectedToCDP) {
       this.vscSession && debug.stopDebugging(this.vscSession);
       await this.startDebugSession();

@@ -37,6 +37,7 @@ type MetroEvent =
       stack: string;
       error: {
         message: string;
+        filename?: string;
         lineNumber?: number;
         columnNumber?: number;
         originModulePath: string;
@@ -263,10 +264,9 @@ export class Metro implements Disposable {
               break;
             case "bundling_error":
               const message = stripAnsi(event.message);
-              const filePathMatch = message.match(/SyntaxError: (\/[\S]+):/);
-              let filename;
-              if (filePathMatch) {
-                filename = filePathMatch[1];
+              let filename = event.error.originModulePath;
+              if (!filename && event.error.filename) {
+                filename = appRootFolder + event.error.filename;
               }
               this.delegate.onBundlingError(
                 message,
