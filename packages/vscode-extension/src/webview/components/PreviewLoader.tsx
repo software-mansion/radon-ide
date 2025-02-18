@@ -8,6 +8,7 @@ import ProgressBar from "./shared/ProgressBar";
 
 import { StartupMessage, StartupStageWeight } from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
+import Button from "./shared/Button";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -48,9 +49,9 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
   useEffect(() => {
     setIsLoadingSlowly(false);
 
-    // we show the slow loading message after 30 seconds for each phase,
+    // we show the slow loading message after 12 seconds for each phase,
     // but for the native build phase we show it after 5 seconds.
-    let timeoutMs = 30_000;
+    let timeoutMs = 12_000;
     if (projectState.startupMessage === StartupMessage.Building) {
       timeoutMs = 5_000;
     }
@@ -72,8 +73,12 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     }
   }
 
+  const isWaitingForApp = projectState.startupMessage === StartupMessage.WaitingForAppToLoad;
+  const isBuilding = projectState.startupMessage === StartupMessage.Building;
+
   return (
     <>
+      <div className="preview-loader-center-pad" />
       <button className="preview-loader-container" onClick={handleLoaderClick}>
         <div className="preview-loader-button-group">
           <StartupMessageComponent
@@ -82,9 +87,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
               isLoadingSlowly && "preview-loader-slow-progress"
             )}>
             {projectState.startupMessage}
-            {isLoadingSlowly && projectState.startupMessage === StartupMessage.Building
-              ? " (open logs)"
-              : ""}
+            {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
           </StartupMessageComponent>
           {projectState.stageProgress !== undefined && (
             <div className="preview-loader-stage-progress">
@@ -94,6 +97,32 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
         </div>
       </button>
       <ProgressBar progress={progress} />
+      <div className="preview-loader-center-pad">
+        {isLoadingSlowly && isWaitingForApp && (
+          <>
+            <div className="preview-loader-submessage">
+              Loading app takes longer than expected. If nothing happens after a while try the below
+              options to troubleshoot:
+            </div>
+            <div className="preview-loader-waiting-actions">
+              <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
+                <span className="codicon codicon-output" /> Open Radon IDE Logs
+              </Button>
+              <Button type="secondary" onClick={onRequestShowPreview}>
+                <span className="codicon codicon-open-preview" /> Force show device screen
+              </Button>
+              <a href="https://ide.swmansion.com/docs/guides/troubleshooting" target="_blank">
+                <Button type="secondary">
+                  <span className="codicon codicon-browser" /> Visit troubleshoot guide
+                </Button>
+              </a>
+              <Button type="secondary" onClick={() => project.restart("all")}>
+                <span className="codicon codicon-refresh" /> Clean rebuild project
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
     </>
   );
 }
