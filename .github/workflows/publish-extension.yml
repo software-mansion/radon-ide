@@ -53,6 +53,9 @@ jobs:
         with:
           ref: ${{ github.event.inputs.ref }}
 
+      - name: Enforce HTTPS for submodules
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -69,6 +72,8 @@ jobs:
       - name: Build and publish to Visual Studio Marketplace
         uses: HaaLeo/publish-vscode-extension@v1
         id: vs_marketplace_publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           target: ${{ steps.set_targets.outputs.targets }}
           pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
@@ -77,6 +82,8 @@ jobs:
 
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           target: ${{ steps.set_targets.outputs.targets }}
           pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
