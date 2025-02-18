@@ -615,28 +615,7 @@ export class DebugAdapter extends DebugSession {
     }
     this.sendResponse(response);
   }
-
-  // private focusOn(
-  //   args: { source?: DebugSource; message: string },
-  // ): void {
-  //   const stackFrames = [
-  //     new StackFrame(
-  //       0,
-  //       args.message,
-  //       args.source?.filename ? new Source(args.source.filename, args.source.filename) : undefined,
-  //       args.source?.line1based,
-  //       args.source?.column0based
-  //     ),
-  //   ];
-  //   this.pausedStackFrames = stackFrames;
-  //   this.sendEvent(new StoppedEvent("exception", this.threads[0].id, args.message));
-
-  //   setTimeout(()=>{
-  //     this.sendEvent(new ContinuedEvent(this.threads[0].id));
-  //   }, 1000);
-
-  // }
-
+  
   protected customRequest(
     command: string,
     response: DebugProtocol.Response,
