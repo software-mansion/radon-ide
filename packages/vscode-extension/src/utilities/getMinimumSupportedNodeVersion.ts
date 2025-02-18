@@ -6,7 +6,7 @@ This function return a minimum supported node version for given appRoot assuming
 if node modules are not installed the function will return a default value, but it may be incorrect in future versions
 of react native, so it should be always used after node_modules installation.
 */
-export function minimumSupportedNodeVersion(appRoot: string): string {
+export function getMinimumSupportedNodeVersion(appRoot: string): string {
   const appPackageJson = require(`${appRoot}/package.json`);
   if (appPackageJson.engines && appPackageJson.engines.node) {
     return appPackageJson.engines.node;

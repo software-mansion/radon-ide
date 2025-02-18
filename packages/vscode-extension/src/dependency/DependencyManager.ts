@@ -30,7 +30,7 @@ import { requireNoCache } from "../utilities/requireNoCache";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { DevicePlatform } from "../common/DeviceManager";
 import { isEasCliInstalled } from "../builders/easCommand";
-import { minimumSupportedNodeVersion } from "../utilities/minimumSuportedNodeVersion";
+import { getMinimumSupportedNodeVersion } from "../utilities/getMinimumSupportedNodeVersion";
 
 export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
@@ -86,7 +86,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   public async validateNodeVersion() {
     const appRootFolder = getAppRootFolder();
     const { stdout: nodeVersion } = await exec("node", ["-v"]);
-    const minimumNodeVersion = minimumSupportedNodeVersion(appRootFolder);
+    const minimumNodeVersion = getMinimumSupportedNodeVersion(appRootFolder);
     const isMinimumNodeVersion = semver.satisfies(nodeVersion, minimumNodeVersion);
     this.emitEvent("nodejs", {
       status: isMinimumNodeVersion ? "installed" : "notInstalled",
