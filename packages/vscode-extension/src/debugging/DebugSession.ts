@@ -104,10 +104,6 @@ export class DebugSession implements Disposable {
     return true;
   }
 
-  public async pauseDebugger(message: string, source?: DebugSource) {
-    this.session.customRequest("pause", { message, source });
-  }
-
   public resumeDebugger() {
     this.session.customRequest("continue");
   }

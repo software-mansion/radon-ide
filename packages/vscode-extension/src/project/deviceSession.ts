@@ -276,10 +276,6 @@ export class DeviceSession implements Disposable {
     }
   }
 
-  public pauseDebugger(message: string, source?: DebugSource) {
-    this.debugSession?.pauseDebugger(message, source);
-  }
-
   public resumeDebugger() {
     this.debugSession?.resumeDebugger();
   }

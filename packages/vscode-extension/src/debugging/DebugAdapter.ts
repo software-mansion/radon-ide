@@ -579,25 +579,6 @@ export class DebugAdapter extends DebugSession {
     this.sendEvent(new Event("RNIDE_continued"));
   }
 
-  protected pauseRequest(
-    response: DebugProtocol.PauseResponse,
-    args: DebugProtocol.PauseArguments & { source?: DebugSource; message: string },
-    request?: DebugProtocol.Request
-  ): void {
-    const stackFrames = [
-      new StackFrame(
-        0,
-        args.message,
-        args.source?.filename ? new Source(args.source.filename, args.source.filename) : undefined,
-        args.source?.line1based,
-        args.source?.column0based
-      ),
-    ];
-    this.pausedStackFrames = stackFrames;
-    this.sendEvent(new StoppedEvent("exception", this.threads[0].id, args.message));
-    this.sendResponse(response);
-  }
-
   protected async nextRequest(
     response: DebugProtocol.NextResponse,
     args: DebugProtocol.NextArguments
@@ -634,6 +615,27 @@ export class DebugAdapter extends DebugSession {
     }
     this.sendResponse(response);
   }
+
+  // private focusOn(
+  //   args: { source?: DebugSource; message: string },
+  // ): void {
+  //   const stackFrames = [
+  //     new StackFrame(
+  //       0,
+  //       args.message,
+  //       args.source?.filename ? new Source(args.source.filename, args.source.filename) : undefined,
+  //       args.source?.line1based,
+  //       args.source?.column0based
+  //     ),
+  //   ];
+  //   this.pausedStackFrames = stackFrames;
+  //   this.sendEvent(new StoppedEvent("exception", this.threads[0].id, args.message));
+
+  //   setTimeout(()=>{
+  //     this.sendEvent(new ContinuedEvent(this.threads[0].id));
+  //   }, 1000);
+
+  // }
 
   protected customRequest(
     command: string,

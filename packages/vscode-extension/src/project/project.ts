@@ -1,6 +1,18 @@
 import { EventEmitter } from "stream";
 import os from "os";
-import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
+import {
+  env,
+  Disposable,
+  commands,
+  workspace,
+  window,
+  Selection,
+  Range,
+  DebugSessionCustomEvent,
+  Uri,
+  Position,
+  ViewColumn,
+} from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
@@ -40,6 +52,7 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
+import { focusSource } from "../utilities/focusSource";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -275,10 +288,11 @@ export class Project
     _errorModulePath: string
   ): Promise<void> {
     await this.deviceSession?.sendDebugConsoleLog(message, source);
+
     this.focusDebugConsole();
-    // we need to simulate debugger pause here to force focus on the error source
-    this.deviceSession?.pauseDebugger(message, source);
-    Logger.error(message);
+    focusSource(source);
+
+    Logger.error("[Bundling Error]", message);
     // if bundle build failed, we don't want to change the status
     // bundlingError status should be set only when bundleError status is not set
     if (this.projectState.status === "bundleError") {
