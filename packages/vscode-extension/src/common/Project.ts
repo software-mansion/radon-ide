@@ -17,7 +17,7 @@ export type DeviceSettings = {
 };
 
 export type ToolsState = {
-  [key: string]: { enabled: boolean; label: string };
+  [key: string]: { enabled: boolean; panelAvailable: boolean; label: string };
 };
 
 export type ProjectState = {
@@ -25,6 +25,7 @@ export type ProjectState = {
     | "starting"
     | "running"
     | "buildError"
+    | "bootError"
     | "runtimeError"
     | "bundleError"
     | "bundlingError"
@@ -34,6 +35,7 @@ export type ProjectState = {
   stageProgress?: number;
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
+  initialized: boolean;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
 };
 

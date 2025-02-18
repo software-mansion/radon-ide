@@ -73,10 +73,10 @@ Due to the complexity and a non-standard nature of the brownfield development th
 |         | iOS    | Android                  |
 | ------- | ------ | ------------------------ |
 | macOS   | <Yes/> | <Yes/>                   |
-| Linux   | <No/>  | <Yes/>                   |
+| Linux   | <No/>  | <Maybe label="In Beta"/> |
 | Windows | <No/>  | <Maybe label="In Beta"/> |
 
 </div>
-You can use Radon IDE on Windows using free Beta license.
+You can use Radon IDE on Windows and Linux using free Beta license.
 <br/>
 <br/>

@@ -66,7 +66,7 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
     this._view = webviewView;
     this.webviewController = new WebviewController(this._view.webview);
     // Set an event listener to listen for when the webview is disposed (i.e. when the user changes
-    // settings or hiddes conteiner view by hand, https://code.visualstudio.com/api/references/vscode-api#WebviewView)
+    // settings or hiddes container view by hand, https://code.visualstudio.com/api/references/vscode-api#WebviewView)
     webviewView.onDidDispose(() => {
       this.dispose();
     });

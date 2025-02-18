@@ -226,7 +226,7 @@ export class Metro implements Disposable {
         })
         .then(() => {
           // we expect metro to produce a line with the port number indicating it started
-          // sucessfully. However, if it doesn't produce that line and exists, the promise
+          // successfully. However, if it doesn't produce that line and exists, the promise
           // would be waiting indefinitely, so we reject it in that case as well.
           reject(new Error("Metro exited but did not start server successfully."));
         });
@@ -235,7 +235,7 @@ export class Metro implements Disposable {
         try {
           const event = JSON.parse(line) as MetroEvent;
           if (event.type === "bundle_transform_progressed") {
-            // Because totalFileCount grows as bundle_transform progresses at the begining there are a few logs that indicate 100% progress thats why we ignore them
+            // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
               progressListener(event.transformedFileCount / event.totalFileCount);
             }
@@ -306,7 +306,7 @@ export class Metro implements Disposable {
       })
     );
     // we disconnect immediately after sending the message as there's no need
-    // to keep the connection open since we use it on rare occations.
+    // to keep the connection open since we use it on rare occasions.
     ws.close();
   }
 

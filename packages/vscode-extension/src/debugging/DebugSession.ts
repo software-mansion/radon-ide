@@ -62,6 +62,14 @@ export class DebugSession implements Disposable {
     return false;
   }
 
+  public async getOriginalSource(
+    fileName: string,
+    line0Based: number,
+    column0Based: number
+  ): Promise<{ sourceURL: string; lineNumber1Based: number; columnNumber0Based: number }> {
+    return await this.session.customRequest("source", { fileName, line0Based, column0Based });
+  }
+
   public async stopDebugSession() {
     this.vscSession && (await debug.stopDebugging(this.vscSession));
   }
