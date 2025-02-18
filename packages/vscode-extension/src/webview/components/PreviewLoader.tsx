@@ -99,17 +99,28 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
       <ProgressBar progress={progress} />
       <div className="preview-loader-center-pad">
         {isLoadingSlowly && isWaitingForApp && (
-          <div className="preview-loader-waiting-actions">
-            <Button type="secondary" onClick={onRequestShowPreview}>
-              <span className="codicon codicon-open-preview" /> Show device screen
-            </Button>
-            <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
-              <span className="codicon codicon-output" /> Open Radon IDE Logs
-            </Button>
-            <Button type="secondary" onClick={() => project.restart("all")}>
-              <span className="codicon codicon-refresh" /> Clean rebuild project
-            </Button>
-          </div>
+          <>
+            <div className="preview-loader-submessage">
+              Loading app takes longer than expected. If nothing happens after a while try the below
+              options to troubleshoot:
+            </div>
+            <div className="preview-loader-waiting-actions">
+              <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
+                <span className="codicon codicon-output" /> Open Radon IDE Logs
+              </Button>
+              <Button type="secondary" onClick={onRequestShowPreview}>
+                <span className="codicon codicon-open-preview" /> Force show device screen
+              </Button>
+              <a href="https://ide.swmansion.com/docs/guides/troubleshooting" target="_blank">
+                <Button type="secondary">
+                  <span className="codicon codicon-browser" /> Visit troubleshoot guide
+                </Button>
+              </a>
+              <Button type="secondary" onClick={() => project.restart("all")}>
+                <span className="codicon codicon-refresh" /> Clean rebuild project
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </>
