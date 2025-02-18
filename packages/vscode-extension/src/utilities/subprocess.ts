@@ -18,6 +18,11 @@ async function getPathEnv(appRoot: string) {
   const RNIDE_PATH_DELIMITER = "{RNIDE_PATH_DELIMITER}";
 
   const shellPath = process.env.SHELL ?? "/bin/zsh";
+
+  // Our goal is to determine the PATH variable that would be set when running commands from the application root.
+  // To simulate this accurately, we need to avoid inheriting the vscode process's environment variables.
+  // Therefore, we explicitly set the environment variable object to empty and disable automatic extension,
+  // which would otherwise fill missing variables with those from the currently running process.
   const { stdout } = await execa(
     shellPath,
     ["-i", "-c", `cd "${appRoot}" && echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`],
