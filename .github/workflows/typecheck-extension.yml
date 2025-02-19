@@ -25,10 +25,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: actions/checkout@v4
-        with:
-          repository: software-mansion-labs/vscode-js-debug
-          path: packages/vscode-js-debug
+      - name: Enforce HTTPS for submodules
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -39,7 +37,7 @@ jobs:
 
       - name: Install node dependencies
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npm i
+        run: npm ci
 
       - name: Typecheck extension
         working-directory: ${{ env.WORKING_DIRECTORY }}

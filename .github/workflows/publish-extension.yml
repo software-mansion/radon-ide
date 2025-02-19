@@ -1,0 +1,91 @@
+name: Publish vscode-extension
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'Pre-release'
+        default: false
+        type: boolean
+      publish_macos:
+        description: 'macOS'
+        default: true
+        type: boolean
+      publish_windows:
+        description: 'Windows'
+        default: false
+        type: boolean
+      publish_linux:
+        description: 'Linux'
+        default: false
+        type: boolean
+      ref:
+        description: 'The branch, tag or SHA to checkout'
+        default: 'main'
+        type: string
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set targets
+        id: set_targets
+        run: |
+          targets=""
+          if ${{ github.event.inputs.publish_macos }}; then
+            targets="$targets darwin-x64 darwin-arm64"
+          fi
+          if ${{ github.event.inputs.publish_windows }}; then
+            targets="$targets win32-x64"
+          fi
+          if ${{ github.event.inputs.publish_linux }}; then
+            targets="$targets linux-x64"
+          fi
+          if [ -z "$targets" ]; then
+            echo "No targets specified"
+            exit 1
+          fi
+          echo "Publishing for targets: $targets"
+          echo "::set-output name=targets::$targets"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
+      - name: Enforce HTTPS for submodules
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: packages/vscode-extension/package-lock.json
+
+      - name: Change directory
+        run: cd packages/vscode-extension
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and publish to Visual Studio Marketplace
+        uses: HaaLeo/publish-vscode-extension@v1
+        id: vs_marketplace_publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          target: ${{ steps.set_targets.outputs.targets }}
+          pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
+          preRelease: ${{ github.event.inputs.prerelease }}
+          registryUrl: https://marketplace.visualstudio.com
+
+      - name: Publish to Open VSX Registry
+        uses: HaaLeo/publish-vscode-extension@v1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          target: ${{ steps.set_targets.outputs.targets }}
+          pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
+          preRelease: ${{ github.event.inputs.prerelease }}
+          extensionFile: ${{ steps.vs_marketplace_publish.outputs.vsixPath }}
