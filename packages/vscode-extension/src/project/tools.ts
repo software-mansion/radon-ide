@@ -23,7 +23,7 @@ export interface ToolPlugin extends Disposable {
   available: boolean;
   activate(): void;
   deactivate(): void;
-  openTool(): void;
+  openTool?(): void;
 }
 
 export class ToolsManager implements Disposable {
@@ -102,6 +102,7 @@ export class ToolsManager implements Disposable {
         toolsState[id] = {
           label: plugin.label,
           enabled: this.toolsSettings[id] || false,
+          panelAvailable: plugin.openTool !== undefined,
         };
       }
     }
@@ -119,7 +120,7 @@ export class ToolsManager implements Disposable {
   public openTool(toolName: ToolKey) {
     const plugin = this.plugins.get(toolName);
     if (plugin && this.toolsSettings[toolName] && this.activePlugins.has(plugin)) {
-      plugin.openTool();
+      plugin.openTool?.();
     }
   }
 }

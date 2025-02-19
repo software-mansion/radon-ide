@@ -19,7 +19,7 @@ export class BreakpointsController {
     // all the breakpoints that were previously set. This leads to the situation, when
     // we may get breakpoint IDs misaligned. Because of that, when we execute CDPBreakpoint.reset
     // to update the breakpoint, we may attempt to delete a different breakpoint or we'd just fail to
-    // delete it altogehter if that breakpoint hasn't been yet set in the new execution context.
+    // delete it altogether if that breakpoint hasn't been yet set in the new execution context.
     // In that scenario, it is better to clear all the breakpints we'd previously set as we'd get a
     // request from DAP to set them again when the new context is ready (we send InitializeRequest).
     //

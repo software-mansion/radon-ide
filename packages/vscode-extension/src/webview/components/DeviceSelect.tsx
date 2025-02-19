@@ -5,6 +5,9 @@ import "./DeviceSelect.css";
 import "./shared/Dropdown.css";
 import Tooltip from "./shared/Tooltip";
 import { useProject } from "../providers/ProjectProvider";
+import { useDevices } from "../providers/DevicesProvider";
+import { useModal } from "../providers/ModalProvider";
+import ManageDevicesView from "../views/ManageDevicesView";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -91,17 +94,14 @@ function renderDevices(
   );
 }
 
-interface DeviceSelectProps {
-  value: string;
-  onValueChange: (newValue: string) => void;
-  label: string;
-  devices: DeviceInfo[];
-  disabled?: boolean;
-}
-
-function DeviceSelect({ onValueChange, devices, value, label, disabled }: DeviceSelectProps) {
-  const { projectState } = useProject();
+function DeviceSelect() {
+  const { projectState, project } = useProject();
+  const { devices } = useDevices();
+  const { openModal } = useModal();
   const selectedProjectDevice = projectState?.selectedDevice;
+
+  const hasNoDevices = devices.length === 0;
+  const selectedDevice = projectState.selectedDevice;
 
   const iosDevices = devices.filter(
     ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
@@ -110,13 +110,28 @@ function DeviceSelect({ onValueChange, devices, value, label, disabled }: Device
     ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
   );
 
+  const handleDeviceDropdownChange = async (value: string) => {
+    if (value === "manage") {
+      openModal("Manage Devices", <ManageDevicesView />);
+      return;
+    }
+    if (selectedDevice?.id !== value) {
+      const deviceInfo = devices.find((d) => d.id === value);
+      if (deviceInfo) {
+        project.selectDevice(deviceInfo);
+      }
+    }
+  };
+
   return (
-    <Select.Root onValueChange={onValueChange} value={value}>
-      <Select.Trigger className="device-select-trigger" disabled={disabled}>
+    <Select.Root
+      onValueChange={handleDeviceDropdownChange}
+      value={hasNoDevices ? undefined : selectedDevice?.id}>
+      <Select.Trigger className="device-select-trigger" disabled={hasNoDevices}>
         <Select.Value placeholder="No devices found">
           <div className="device-select-value">
             <span className="codicon codicon-device-mobile" />
-            {label}
+            {selectedDevice?.displayName}
           </div>
         </Select.Value>
       </Select.Trigger>

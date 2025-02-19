@@ -20,7 +20,6 @@ const DeviceManager = makeProxy<DeviceManagerInterface>("DeviceManager");
 
 interface DevicesContextProps {
   devices: DeviceInfo[];
-  finishedInitialLoad: boolean;
   androidImages: AndroidSystemImageInfo[];
   iOSRuntimes: IOSRuntimeInfo[];
   deviceManager: DeviceManagerInterface;
@@ -29,7 +28,6 @@ interface DevicesContextProps {
 
 const DevicesContext = createContext<DevicesContextProps>({
   devices: [],
-  finishedInitialLoad: false,
   androidImages: [],
   iOSRuntimes: [],
   deviceManager: DeviceManager,
@@ -40,22 +38,17 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [androidImages, setAndroidImages] = useState<AndroidSystemImageInfo[]>([]);
   const [iOSRuntimes, setIOSRuntimes] = useState<IOSRuntimeInfo[]>([]);
-  const [finishedInitialLoad, setFinishedInitialLoad] = useState(false);
 
   const reload = useCallback(async () => {
-    try {
-      const promises = [
-        DeviceManager.listAllDevices().then(setDevices),
-        DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
-      ];
-      if (Platform.OS === "macos") {
-        promises.push(DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes));
-      }
-      await Promise.all(promises);
-    } finally {
-      setFinishedInitialLoad(true);
+    const promises = [
+      DeviceManager.listAllDevices().then(setDevices),
+      DeviceManager.listInstalledAndroidImages().then(setAndroidImages),
+    ];
+    if (Platform.OS === "macos") {
+      promises.push(DeviceManager.listInstalledIOSRuntimes().then(setIOSRuntimes));
     }
-  }, [setDevices, setAndroidImages, setIOSRuntimes, setFinishedInitialLoad]);
+    await Promise.all(promises);
+  }, [setDevices, setAndroidImages, setIOSRuntimes]);
 
   useEffect(() => {
     DeviceManager.addListener("devicesChanged", setDevices);
@@ -68,13 +61,12 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
   const contextValue = useMemo(() => {
     return {
       devices,
-      finishedInitialLoad,
       androidImages,
       iOSRuntimes,
       reload,
       deviceManager: DeviceManager,
     };
-  }, [devices, finishedInitialLoad, androidImages, iOSRuntimes, reload, DeviceManager]);
+  }, [devices, androidImages, iOSRuntimes, reload, DeviceManager]);
 
   return <DevicesContext.Provider value={contextValue}>{children}</DevicesContext.Provider>;
 }

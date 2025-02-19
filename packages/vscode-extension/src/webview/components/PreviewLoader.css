@@ -3,6 +3,32 @@
   cursor: pointer;
 }
 
+.preview-loader-center-pad {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 75%;
+}
+
+.preview-loader-waiting-actions {
+  position: relative;
+  bottom: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  align-items: stretch;
+}
+
+.preview-loader-waiting-actions a {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+}
+
 .preview-loader-button-group {
   display: flex;
   justify-content: space-between;
@@ -24,6 +50,11 @@
 .preview-loader-message {
   text-wrap: nowrap;
   width: 100%;
+}
+
+.preview-loader-submessage {
+  width: 100%;
+  margin-bottom: 8px;
 }
 
 .preview-loader-slow-progress {

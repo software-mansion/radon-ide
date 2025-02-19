@@ -5,7 +5,7 @@ import { Disposable, OutputChannel } from "vscode";
 import semver, { SemVer } from "semver";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
-import { command, lineReader } from "../utilities/subprocess";
+import { command, exec, lineReader } from "../utilities/subprocess";
 import { AppRootFolder } from "../utilities/extensionContext";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
@@ -30,6 +30,7 @@ import { requireNoCache } from "../utilities/requireNoCache";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { DevicePlatform } from "../common/DeviceManager";
 import { isEasCliInstalled } from "../builders/easCommand";
+import { getMinimumSupportedNodeVersion } from "../utilities/getMinimumSupportedNodeVersion";
 
 export class DependencyManager implements Disposable, DependencyManagerInterface {
   constructor(private readonly appRootFolder: AppRootFolder) {}
@@ -82,6 +83,16 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     this.checkProjectUsesExpoRouter();
     this.checkProjectUsesStorybook();
     this.checkEasCliInstallationStatus();
+  }
+
+  public async validateNodeVersion(appRoot: string) {
+    const { stdout: nodeVersion } = await exec("node", ["-v"]);
+    const minimumNodeVersion = getMinimumSupportedNodeVersion(appRoot);
+    const isMinimumNodeVersion = semver.satisfies(nodeVersion, minimumNodeVersion);
+    this.emitEvent("nodejs", {
+      status: isMinimumNodeVersion ? "installed" : "notInstalled",
+      isOptional: false,
+    });
   }
 
   public async checkAndroidDirectoryExits() {

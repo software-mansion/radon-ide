@@ -64,6 +64,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
               side: "bottom",
               type: "secondary",
             }}
+            disabled={!deviceInfo.available}
             onClick={async (e) => {
               e.stopPropagation();
               await handleDeviceChange();
