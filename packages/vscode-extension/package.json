@@ -555,7 +555,7 @@
         "steps": [
           {
             "id": "open-rn-expo-project",
-            "title": "Open a React Native project",
+            "title": "Open a React Native or Expo project",
             "description": "[Open](command:workbench.action.files.openFileFolder) or create a React Native or Expo project new one.\n[Open Project](command:workbench.action.files.openFileFolder)",
             "media": {
               "image": "media/radon-bubble.svg",
