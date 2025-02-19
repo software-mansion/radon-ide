@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
@@ -604,7 +603,7 @@ function Preview({
         )}
       </div>
 
-      <DelayedFastRefreshIndicator isRefreshing={projectStatus === "refreshing"} />
+      <DelayedFastRefreshIndicator projectStatus={projectStatus} />
 
       <div className="button-group-left-wrapper">
         <div className="button-group-left">
