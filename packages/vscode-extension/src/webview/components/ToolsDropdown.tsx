@@ -45,7 +45,7 @@ function DevToolCheckbox({
 }
 
 function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
-  const { project, toolsState } = useProject();
+  const { project, toolsState, isProfilingCPU } = useProject();
 
   const toolEntries = Object.entries(toolsState).map(([key, tool]) => {
     return (
@@ -82,6 +82,13 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
               <a href="https://ide.swmansion.com/docs/features/dev-tools">Learn more</a>
             </div>
           )}
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() =>
+              isProfilingCPU ? project.stopProfilingCPU() : project.startProfilingCPU()
+            }>
+            {isProfilingCPU ? "Stop JS Profiler" : "Start JS Profiler"}
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenuRoot>

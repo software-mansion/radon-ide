@@ -125,6 +125,7 @@ export interface ProjectEventMap {
   needsNativeRebuild: void;
   replayDataCreated: MultimediaData;
   isRecording: boolean;
+  isProfilingCPU: boolean;
 }
 
 export interface ProjectEventListener<T> {
@@ -174,6 +175,9 @@ export interface ProjectInterface {
   captureAndStopRecording(): void;
   captureReplay(): void;
   captureScreenshot(): void;
+
+  startProfilingCPU(): void;
+  stopProfilingCPU(): void;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;

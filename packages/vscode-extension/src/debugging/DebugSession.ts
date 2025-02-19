@@ -10,6 +10,8 @@ export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
   onDebuggerPaused(event: DebugSessionCustomEvent): void;
   onDebuggerResumed(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStarted(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStopped(event: DebugSessionCustomEvent): void;
 };
 
 export class DebugSession implements Disposable {
@@ -27,6 +29,12 @@ export class DebugSession implements Disposable {
           break;
         case "RNIDE_continued":
           this.delegate.onDebuggerResumed(event);
+          break;
+        case "RNIDE_profilingCPUStarted":
+          this.delegate.onProfilingCPUStarted(event);
+          break;
+        case "RNIDE_profilingCPUStopped":
+          this.delegate.onProfilingCPUStopped(event);
           break;
         default:
           // ignore other events
@@ -96,6 +104,14 @@ export class DebugSession implements Disposable {
 
   public stepOverDebugger() {
     this.session.customRequest("next");
+  }
+
+  public async startProfilingCPU() {
+    await this.session.customRequest("startProfiling");
+  }
+
+  public async stopProfilingCPU() {
+    await this.session.customRequest("stopProfiling");
   }
 
   private get session() {

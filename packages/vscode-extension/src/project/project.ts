@@ -215,6 +215,30 @@ export class Project
     return this.deviceSession.captureAndStopRecording();
   }
 
+  async startProfilingCPU() {
+    if (this.deviceSession) {
+      await this.deviceSession.startProfilingCPU();
+    } else {
+      throw new Error("No device session available");
+    }
+  }
+
+  async stopProfilingCPU() {
+    if (this.deviceSession) {
+      await this.deviceSession.stopProfilingCPU();
+    } else {
+      throw new Error("No device session available");
+    }
+  }
+
+  onProfilingCPUStarted(event: DebugSessionCustomEvent): void {
+    this.eventEmitter.emit("isProfilingCPU", true);
+  }
+
+  onProfilingCPUStopped(event: DebugSessionCustomEvent): void {
+    this.eventEmitter.emit("isProfilingCPU", false);
+  }
+
   async captureAndStopRecording() {
     const recording = await this.stopRecording();
     await this.utils.saveMultimedia(recording);
