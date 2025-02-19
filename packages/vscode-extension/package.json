@@ -572,15 +572,23 @@
           },
           {
             "id": "create-new-device",
-            "title": "Create New Device",
+            "title": "Create new device",
             "description": "Use __Add iPhone__ or __Add Android__ button in the panel or use __Create new device__ button.",
             "media": {
               "markdown": "media/create-new-device.md"
             }
           },
           {
+            "id": "wait-for-project",
+            "title": "Wait for your project to build and run",
+            "description": "Set back and relax as building the project for the first time might take may take a longer while. Encountered an issue with a build? \n[See Troubleshooting](https://ide.swmansion.com/docs/guides/troubleshooting)",
+            "media": {
+              "markdown": "media/wait-for-project-to-build.md"
+            }
+          },
+          {
             "id": "explore-features",
-            "title": "Explore Features",
+            "title": "Explore features",
             "description": "Explore all the Radon IDE features on your own or see [feature highlight](https://ide.swmansion.com/docs/getting-started/feature-highlight) on our website.\nTake a look at our [Release Notes](https://github.com/software-mansion/radon-ide/releases) to learn about all the newest features and improvements in Radon IDE. \n[Open Feature Highlight](https://ide.swmansion.com/docs/getting-started/feature-highlight)",
             "media": {
               "markdown": "media/explore-features.md"
