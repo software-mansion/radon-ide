@@ -39,8 +39,8 @@ const InternalImports = {
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
   },
-  get setInstrumentationOptions() {
-    return require("./instrumentation").setInstrumentationOptions;
+  get updateInstrumentationOptions() {
+    return require("./instrumentation").updateInstrumentationOptions;
   },
 };
 
@@ -414,7 +414,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     if (!devtoolsAgent) {
       return;
     }
-    InternalImports.setInstrumentationOptions({
+    InternalImports.updateInstrumentationOptions({
       reportRenders: (blueprintOutlines) => {
         devtoolsAgent._bridge.send("RNIDE_rendersReported", { blueprintOutlines });
       },
@@ -425,9 +425,9 @@ export function AppWrapper({ children, initialProps, fabric }) {
   // TODO: get initial options when the app starts
   useAgentListener(
     devtoolsAgent,
-    "RNIDE_setInstrumentationOptions",
+    "RNIDE_updateInstrumentationOptions",
     (payload) => {
-      InternalImports.setInstrumentationOptions(payload);
+      InternalImports.updateInstrumentationOptions(payload);
     },
     []
   );
