@@ -64,8 +64,9 @@ function mergeRects(lhs, rhs) {
 }
 
 const ANIMATED_COMPONENT_REGEX = /Animated\((.*)\)/;
+const REANIMATED_COMPONENT_REGEX = /AnimatedComponent\((.*)\)/;
 function stripAnimatedFromComponentName(name) {
-  const matches = ANIMATED_COMPONENT_REGEX.exec(name);
+  const matches = ANIMATED_COMPONENT_REGEX.exec(name) ?? REANIMATED_COMPONENT_REGEX.exec(name);
   return matches ? matches[1] : null;
 }
 
