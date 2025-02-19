@@ -32,6 +32,10 @@ export function reportToolVisibilityChanged(toolName: ToolKey, visible: boolean)
   getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:visibility:${visibility}`);
 }
 
+export function reportToolOpened(toolName: ToolKey) {
+  getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:opened`);
+}
+
 export class ToolsManager implements Disposable {
   private toolsSettings: Partial<Record<ToolKey, boolean>> = {};
   private plugins: Map<ToolKey, ToolPlugin> = new Map();

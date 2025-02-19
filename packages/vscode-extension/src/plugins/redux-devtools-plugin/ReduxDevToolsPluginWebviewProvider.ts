@@ -11,6 +11,8 @@ import {
 import { extensionContext } from "../../utilities/extensionContext";
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
+import { REDUX_PLUGIN_ID } from "./redux-devtools-plugin";
+import { reportToolOpened } from "../../project/tools";
 
 const PATH = "dist/redux-devtools/";
 
@@ -111,6 +113,7 @@ export class ReduxDevToolsPluginWebviewProvider implements WebviewViewProvider {
     context: WebviewViewResolveContext,
     token: CancellationToken
   ): void {
+    reportToolOpened(REDUX_PLUGIN_ID);
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, PATH)],

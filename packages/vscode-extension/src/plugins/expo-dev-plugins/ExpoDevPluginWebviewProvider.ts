@@ -9,7 +9,7 @@ import {
 import { IDE } from "../../project/ide";
 import { ExpoDevPluginToolName } from "./expo-dev-plugins";
 import { Logger } from "../../Logger";
-import { reportToolVisibilityChanged } from "../../project/tools";
+import { reportToolOpened, reportToolVisibilityChanged } from "../../project/tools";
 
 function generateWebviewContent(pluginName: ExpoDevPluginToolName, metroPort: number): string {
   const iframeURL = `http://localhost:${metroPort}/_expo/plugins/${pluginName}`;
@@ -34,6 +34,7 @@ export class ExpoDevPluginWebviewProvider implements WebviewViewProvider {
     context: WebviewViewResolveContext,
     token: CancellationToken
   ): void {
+    reportToolOpened(this.pluginName);
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, "dist")],

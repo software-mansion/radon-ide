@@ -8,7 +8,7 @@ import {
 } from "vscode";
 import { IDE } from "../../project/ide";
 import { NETWORK_PLUGIN_ID, NetworkPlugin } from "./network-plugin";
-import { reportToolVisibilityChanged } from "../../project/tools";
+import { reportToolOpened, reportToolVisibilityChanged } from "../../project/tools";
 
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
   constructor(private readonly context: ExtensionContext) {}
@@ -17,6 +17,7 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
     context: WebviewViewResolveContext,
     token: CancellationToken
   ): void {
+    reportToolOpened(NETWORK_PLUGIN_ID);
     const webview = webviewView.webview;
     const baseUri = Uri.joinPath(this.context.extensionUri, "dist", "network-devtools-frontend");
     webview.options = {
