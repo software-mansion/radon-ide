@@ -39,11 +39,23 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const [urlList, setUrlList] = useState<UrlItem[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
-  const [urlSelectValue, setUrlSelectValue] = useState<string>(urlList[0]?.id);
+  const [urlSelectValue, setUrlSelectValue] = useState<string>(urlList[0]?.id ?? "/{}");
 
   useEffect(() => {
     function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {
       return [newUrl, ...urls.filter((record) => record.id !== newUrl.id)];
+    }
+
+    function handleNavigationInit(navigationData: { displayName: string; id: string }[]) {
+      const entries: Record<string, UrlItem> = {};
+      urlList.forEach((item) => {
+        entries[item.id] = item;
+      });
+      navigationData.forEach((item) => {
+        entries[item.id] = { ...item, name: item.displayName };
+      });
+      const merged = Object.values(entries);
+      setUrlList(merged);
     }
 
     function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
@@ -72,8 +84,10 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
       setBackNavigationPath("");
     }
 
+    project.addListener("navigationInit", handleNavigationInit);
     project.addListener("navigationChanged", handleNavigationChanged);
     return () => {
+      project.removeListener("navigationInit", handleNavigationInit);
       project.removeListener("navigationChanged", handleNavigationChanged);
     };
   }, [recentUrlList, urlHistory, backNavigationPath]);

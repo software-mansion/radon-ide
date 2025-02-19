@@ -360,6 +360,20 @@ export function AppWrapper({ children, initialProps, fabric }) {
     []
   );
 
+  useAgentListener(devtoolsAgent, "RNIDE_loadFileBasedRoutes", (payload) => {
+    // todo: maybe rename it to `navigationState` or something like that because this is not just history anymore.
+    for (const route of payload) {
+      navigationHistory.set(route.id, route);
+    }
+    devtoolsAgent?._bridge.send(
+      "RNIDE_navigationInit",
+      payload.map((route) => ({
+        displayName: route.name,
+        id: route.id,
+      }))
+    );
+  });
+
   useEffect(() => {
     if (devtoolsAgent) {
       LogBox.uninstall();

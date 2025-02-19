@@ -26,6 +26,7 @@ export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
   fastRefreshStarted: undefined;
   fastRefreshComplete: undefined;
+  navigationInit: { displayName: string; id: string }[];
 };
 
 export type EventDelegate = {
@@ -78,6 +79,9 @@ export class DeviceSession implements Disposable {
           break;
         case "RNIDE_navigationChanged":
           this.eventDelegate.onAppEvent("navigationChanged", payload);
+          break;
+        case "RNIDE_navigationInit":
+          this.eventDelegate.onAppEvent("navigationInit", payload);
           break;
         case "RNIDE_fastRefreshStarted":
           this.eventDelegate.onAppEvent("fastRefreshStarted", undefined);
