@@ -19,7 +19,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
       this.eventEmitter.emit("rendersReported", payload);
     }
     if (event === "RNIDE_queryInstrumentationOptions") {
-      this.devtools.send("RNIDE_setInstrumentationOptions", { isEnabled: this.isEnabled });
+      this.devtools.send("RNIDE_updateInstrumentationOptions", { isEnabled: this.isEnabled });
     }
   };
 
@@ -45,7 +45,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
 
   setEnabled(isEnabled: boolean) {
     this.isEnabled = isEnabled;
-    this.devtools.send("RNIDE_setInstrumentationOptions", { isEnabled });
+    this.devtools.send("RNIDE_updateInstrumentationOptions", { isEnabled });
   }
 
   addEventListener<K extends keyof RenderOutlinesEventMap>(

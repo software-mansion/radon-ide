@@ -186,7 +186,7 @@ function onCommitFiberRoot(_rendererID, root) {
   onRender(renderedFibers);
 }
 
-export const setInstrumentationOptions = (partialOptions) => {
+export const updateInstrumentationOptions = (partialOptions) => {
   const componentBlocklist = partialOptions.componentBlocklist
     ? new Set(partialOptions.componentBlocklist)
     : options.componentBlocklist;
@@ -194,7 +194,7 @@ export const setInstrumentationOptions = (partialOptions) => {
   if (!inited) {
     inited = true;
     instrument({
-      onCommitFiberRoot: (rendererID, root) => onCommitFiberRoot(rendererID, root),
+      onCommitFiberRoot,
     });
   }
 };
