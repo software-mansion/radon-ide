@@ -3,6 +3,7 @@ import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
+import { AppRootFolder } from "../utilities/extensionContext";
 
 type CallArgs = {
   callId: string;
@@ -27,9 +28,11 @@ export class WebviewController implements Disposable {
   });
 
   private readonly callableObjects: Map<string, object>;
-  private readonly ide = IDE.attach();
+  private readonly ide;
 
-  constructor(private webview: Webview) {
+  constructor(private webview: Webview, appRootFolder: AppRootFolder) {
+    this.ide = IDE.attach(appRootFolder);
+
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 

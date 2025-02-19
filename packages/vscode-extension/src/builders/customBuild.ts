@@ -5,7 +5,6 @@ import { mkdtemp } from "fs/promises";
 import { Logger } from "../Logger";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
-import { getAppRootFolder } from "../utilities/extensionContext";
 import { extractTarApp, isApkFile, isAppFile } from "./utils";
 import { DevicePlatform } from "../common/DeviceManager";
 
@@ -18,9 +17,10 @@ export async function runExternalBuild(
   cancelToken: CancelToken,
   buildCommand: string,
   env: Env,
-  platform: DevicePlatform
+  platform: DevicePlatform,
+  appRoot: string
 ) {
-  const output = await runExternalScript(buildCommand, env, cancelToken);
+  const output = await runExternalScript(buildCommand, env, appRoot, cancelToken);
 
   if (!output) {
     return undefined;
@@ -64,16 +64,21 @@ export async function runExternalBuild(
   return binaryPath;
 }
 
-export async function runfingerprintCommand(externalCommand: string, env: Env) {
-  const output = await runExternalScript(externalCommand, env);
+export async function runfingerprintCommand(externalCommand: string, env: Env, appRoot: string) {
+  const output = await runExternalScript(externalCommand, env, appRoot);
   if (!output) {
     return undefined;
   }
   return output.lastLine;
 }
 
-async function runExternalScript(externalCommand: string, env: Env, cancelToken?: CancelToken) {
-  let process = command(externalCommand, { cwd: getAppRootFolder(), env });
+async function runExternalScript(
+  externalCommand: string,
+  env: Env,
+  appRoot: string,
+  cancelToken?: CancelToken
+) {
+  let process = command(externalCommand, { cwd: appRoot, env });
   process = cancelToken ? cancelToken.adapt(process) : process;
   Logger.info(`Running external script: ${externalCommand}`);
 
