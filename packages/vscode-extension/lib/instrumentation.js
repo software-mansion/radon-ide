@@ -127,8 +127,9 @@ async function onRender(fibers) {
             FabricUIManager.measureInWindow(hostFiber.stateNode.node, resolveMeasurements);
           } else {
             // NOTE: we need to delay until the next frame to obtain the post-render measurements
+            const tag = hostFiber.stateNode._nativeTag;
             setTimeout(() => {
-              UIManager.measureInWindow(hostFiber.stateNode._nativeTag, resolveMeasurements);
+              UIManager.measureInWindow(tag, resolveMeasurements);
             });
           }
         });
