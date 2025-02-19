@@ -1,18 +1,6 @@
 import { EventEmitter } from "stream";
 import os from "os";
-import {
-  env,
-  Disposable,
-  commands,
-  workspace,
-  window,
-  Selection,
-  Range,
-  DebugSessionCustomEvent,
-  Uri,
-  Position,
-  ViewColumn,
-} from "vscode";
+import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";

@@ -1,8 +1,6 @@
 import WebSocket from "ws";
-import { Logger } from "../Logger";
-import { SourceMapsRegistry } from "./SourceMapsRegistry";
-import { BreakpointsController } from "./BreakpointsController";
-import { OutputEvent, Source, StackFrame, StoppedEvent, Variable } from "@vscode/debugadapter";
+import { OutputEvent, Source, StackFrame, Variable } from "@vscode/debugadapter";
+import { DebugProtocol } from "@vscode/debugprotocol";
 import { Cdp } from "vscode-js-debug/out/cdp/index";
 import { AnyObject } from "vscode-js-debug/out/adapter/objectPreview/betterTypes";
 import { formatMessage } from "vscode-js-debug/out/adapter/messageFormat";
@@ -11,9 +9,11 @@ import {
   previewAsObject,
   previewRemoteObject,
 } from "vscode-js-debug/out/adapter/objectPreview";
+import { Logger } from "../Logger";
+import { SourceMapsRegistry } from "./SourceMapsRegistry";
+import { BreakpointsController } from "./BreakpointsController";
 import { VariableStore } from "./variableStore";
 import { CDPDebuggerScope, CDPRemoteObject } from "./cdp";
-import { DebugProtocol } from "@vscode/debugprotocol";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
