@@ -2,6 +2,7 @@ import { commands, window, Disposable } from "vscode";
 import { reportToolVisibilityChanged, ToolPlugin, ToolsManager } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
+import { disposeAll } from "../../utilities/disposables";
 
 export const REDUX_PLUGIN_ID = "RNIDE-redux-devtools";
 const REDUX_PLUGIN_PREFIX = "RNIDE.Tool.ReduxDevTools";
@@ -64,8 +65,7 @@ export const createReduxDevtools = (toolsManager: ToolsManager): ToolPlugin => {
       if (proxyDevtoolsListener) {
         toolsManager.devtools.removeListener(proxyDevtoolsListener);
       }
-      disposables.forEach((d) => d.dispose());
-      disposables = [];
+      disposeAll(disposables);
       disposed = true;
     }
   }

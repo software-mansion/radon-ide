@@ -128,7 +128,6 @@ export class ToolsManager implements Disposable {
     const plugin = this.plugins.get(toolName);
     if (plugin && this.toolsSettings[toolName] && this.activePlugins.has(plugin)) {
       plugin.openTool?.();
-      getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:opened`);
     }
   }
 
