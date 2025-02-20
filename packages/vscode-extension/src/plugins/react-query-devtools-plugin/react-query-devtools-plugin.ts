@@ -1,5 +1,5 @@
 import { commands, window } from "vscode";
-import { ToolPlugin, ToolsManager } from "../../project/tools";
+import { ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { ReactQueryDevToolsPluginWebviewProvider } from "./ReactQueryDevToolsPluginWebviewProvider";
 
@@ -8,60 +8,27 @@ const REACT_QUERY_PLUGIN_PREFIX = "RNIDE.Tool.ReactQueryDevTools";
 
 let initialzed = false;
 
-function initializeReactQueryDevPlugin() {
+function initialize() {
   if (initialzed) {
     return;
   }
   initialzed = true;
 
-  const webviewProvider = new ReactQueryDevToolsPluginWebviewProvider(extensionContext);
-
   extensionContext.subscriptions.push(
-    window.registerWebviewViewProvider(`${REACT_QUERY_PLUGIN_PREFIX}.view`, webviewProvider, {
+    window.registerWebviewViewProvider(`${REACT_QUERY_PLUGIN_PREFIX}.view`, 
+      new ReactQueryDevToolsPluginWebviewProvider(extensionContext), {
       webviewOptions: { retainContextWhenHidden: true },
     })
   );
-
-  return webviewProvider;
 }
 
-export const createReactQueryDevtools = (toolsManager: ToolsManager): ToolPlugin => {
-  const webViewProvider = initializeReactQueryDevPlugin();
-
-  let proxyDevtoolsListener: null | ((event: string, payload: any) => void) = null;
-  webViewProvider?.setListener((webview) => {
-    proxyDevtoolsListener = (event: string, payload: any) => {
-      if (event === REACT_QUERY_PLUGIN_ID) {
-        webview.webview.postMessage({
-          scope: event,
-          data: payload,
-        });
-      }
-    };
-
-    toolsManager.devtools.addListener(proxyDevtoolsListener);
-
-    webview.webview.onDidReceiveMessage((message) => {
-      const { scope, ...data } = message;
-      toolsManager.devtools.send(scope, data);
-    });
-  });
-
-  let disposed = false;
-  function dispose() {
-    if (!disposed) {
-      if (proxyDevtoolsListener) {
-        toolsManager.devtools.removeListener(proxyDevtoolsListener);
-      }
-
-      disposed = false;
-    }
-  }
+export const createReactQueryDevtools = (): ToolPlugin => {
+  initialize();
 
   const plugin: ToolPlugin = {
     id: REACT_QUERY_PLUGIN_ID,
     label: "React Query DevTools",
-    available: true,
+    available: false,
     activate() {
       commands.executeCommand("setContext", `${REACT_QUERY_PLUGIN_PREFIX}.available`, true);
     },
@@ -71,7 +38,7 @@ export const createReactQueryDevtools = (toolsManager: ToolsManager): ToolPlugin
     openTool() {
       commands.executeCommand(`${REACT_QUERY_PLUGIN_PREFIX}.view.focus`);
     },
-    dispose,
+    dispose() {},
   };
 
   return plugin;

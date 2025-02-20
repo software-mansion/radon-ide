@@ -11,6 +11,8 @@ import {
 import { extensionContext } from "../../utilities/extensionContext";
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
+import { IDE } from "../../project/ide";
+import { REACT_QUERY_PLUGIN_ID } from "./react-query-devtools-plugin";
 
 const PATH = "dist/react-query-devtools/assets/";
 
@@ -96,8 +98,6 @@ function generateWebviewContent(
 export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvider {
   constructor(private readonly context: ExtensionContext) {}
 
-  cb?: (webview: WebviewView) => void;
-
   public resolveWebviewView(
     webviewView: WebviewView,
     context: WebviewViewResolveContext,
@@ -114,10 +114,20 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
       extensionContext.extensionUri
     );
 
-    this.cb?.(webviewView);
-  }
+    const devTools = IDE.getInstanceIfExists()?.project?.toolsManager.devtools;
 
-  setListener(cb: (webview: WebviewView) => void) {
-    this.cb = cb;
+    devTools?.addListener((event: string, payload: any) => {
+      if (event === REACT_QUERY_PLUGIN_ID) {
+          webviewView.webview.postMessage({
+            scope: event,
+            data: payload,
+          });
+      }
+    });
+
+    webviewView.webview.onDidReceiveMessage((message) => {
+      const { scope, ...data } = message;
+      devTools?.send(scope, data);
+    });
   }
 }

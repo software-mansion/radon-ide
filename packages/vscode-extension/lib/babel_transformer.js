@@ -124,6 +124,7 @@ function transformWrapper({ filename, src, ...rest }) {
     }
   } else if (isTransforming("node_modules/@tanstack/query-core/build/legacy/queryClient.cjs")) {
     src = src.replace('mount() {', 'mount() { global.__RNIDE_REACT_QUERY_CLIENT_INIT__?.(this);');
+    src = `require("__RNIDE_lib__/expo_dev_plugins.js").register("RNIDE-react-query-devtools");${src}`;
   }
 
   return transform({ filename, src, ...rest });
