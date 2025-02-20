@@ -20,12 +20,24 @@ export function shouldUseExpoCLI() {
 
   const appRootFolder = getAppRootFolder();
   let hasExpoCLIInstalled = false,
-    hasExpoCommandsInScripts = false;
+    hasExpoCommandsInScripts = false,
+    hasExpoConfigInAppJson = false,
+    hasExpoConfigInAppConfigJs = false;
   try {
     hasExpoCLIInstalled =
       require.resolve("@expo/cli/build/src/start/index", {
         paths: [appRootFolder],
       }) !== undefined;
+  } catch (e) {}
+
+  try {
+    const appJson = require(path.join(appRootFolder, "app.json"));
+    hasExpoConfigInAppJson = Object.keys(appJson).includes("expo");
+  } catch (e) {}
+
+  try {
+    const appConfigJs = require(path.join(appRootFolder, "app.config.js"));
+    hasExpoConfigInAppConfigJs = Object.keys(appConfigJs).includes("expo");
   } catch (e) {}
 
   try {
@@ -35,5 +47,8 @@ export function shouldUseExpoCLI() {
     });
   } catch (e) {}
 
-  return hasExpoCLIInstalled && hasExpoCommandsInScripts;
+  return (
+    hasExpoCLIInstalled &&
+    (hasExpoCommandsInScripts || hasExpoConfigInAppJson || hasExpoConfigInAppConfigJs)
+  );
 }
