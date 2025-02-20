@@ -15,10 +15,13 @@ function initialize() {
   initialzed = true;
 
   extensionContext.subscriptions.push(
-    window.registerWebviewViewProvider(`${REACT_QUERY_PLUGIN_PREFIX}.view`, 
-      new ReactQueryDevToolsPluginWebviewProvider(extensionContext), {
-      webviewOptions: { retainContextWhenHidden: true },
-    })
+    window.registerWebviewViewProvider(
+      `${REACT_QUERY_PLUGIN_PREFIX}.view`,
+      new ReactQueryDevToolsPluginWebviewProvider(extensionContext),
+      {
+        webviewOptions: { retainContextWhenHidden: true },
+      }
+    )
   );
 }
 
