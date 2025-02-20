@@ -5,7 +5,7 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { WorkspaceConfigController } from "../panels/WorkspaceConfigController";
 import { LaunchConfigController } from "../panels/LaunchConfigController";
 import { Utils } from "../utilities/utils";
-import { extensionContext } from "../utilities/extensionContext";
+import { AppRootFolder, extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
 
@@ -18,19 +18,23 @@ export class IDE implements Disposable {
   public readonly workspaceConfigController: WorkspaceConfigController;
   public readonly launchConfig: LaunchConfigController;
   public readonly utils: Utils;
-
   private disposed = false;
   private disposables: Disposable[] = [];
 
   private attachSemaphore = 0;
 
-  constructor() {
+  constructor(appRootFolder: AppRootFolder) {
     this.deviceManager = new DeviceManager();
-    this.dependencyManager = new DependencyManager();
+    this.dependencyManager = new DependencyManager(appRootFolder);
     this.utils = new Utils();
-    this.project = new Project(this.deviceManager, this.dependencyManager, this.utils);
+    this.project = new Project(
+      this.deviceManager,
+      this.dependencyManager,
+      this.utils,
+      appRootFolder
+    );
     this.workspaceConfigController = new WorkspaceConfigController();
-    this.launchConfig = new LaunchConfigController();
+    this.launchConfig = new LaunchConfigController(appRootFolder);
 
     this.disposables.push(
       this.dependencyManager,
@@ -72,9 +76,9 @@ export class IDE implements Disposable {
     }
   }
 
-  public static attach(): IDE {
+  public static attach(appRoot: AppRootFolder): IDE {
     if (!IDE.instance) {
-      IDE.instance = new IDE();
+      IDE.instance = new IDE(appRoot);
     }
     const ide = IDE.instance;
     ide.attachSemaphore += 1;

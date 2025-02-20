@@ -21,7 +21,7 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import { AppRootFolder, extensionContext } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
@@ -64,10 +64,6 @@ export class Project
 
   private isCachedBuildStale: boolean;
 
-  private fileWatcher: Disposable;
-  private licenseWatcher: Disposable;
-  private licenseUpdater: Disposable;
-
   private deviceSession: DeviceSession | undefined;
 
   private projectState: ProjectState = {
@@ -80,10 +76,13 @@ export class Project
 
   private deviceSettings: DeviceSettings;
 
+  private disposables: Disposable[] = [];
+
   constructor(
     private readonly deviceManager: DeviceManager,
     private readonly dependencyManager: DependencyManager,
-    private readonly utils: UtilsInterface
+    private readonly utils: UtilsInterface,
+    private readonly appRootFolder: AppRootFolder
   ) {
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
       appearance: "dark",
@@ -101,20 +100,30 @@ export class Project
 
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
-    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.isCachedBuildStale = false;
+    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
 
-    this.fileWatcher = watchProjectFiles(() => {
-      this.checkIfNativeChanged();
-    });
-    this.licenseUpdater = refreshTokenPeriodically();
-    this.licenseWatcher = watchLicenseTokenChange(async () => {
-      const hasActiveLicense = await this.hasActiveLicense();
-      this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
-    });
+    this.disposables.push(this.toolsManager);
+    this.disposables.push(
+      watchProjectFiles(() => {
+        this.checkIfNativeChanged();
+      })
+    );
+    this.disposables.push(refreshTokenPeriodically());
+    this.disposables.push(
+      watchLicenseTokenChange(async () => {
+        const hasActiveLicense = await this.hasActiveLicense();
+        this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
+      })
+    );
+    this.disposables.push(
+      appRootFolder.onChangeAppRoot(() => {
+        this.reload("reboot");
+      })
+    );
   }
 
   //#region Build progress
@@ -356,10 +365,9 @@ export class Project
     this.metro?.dispose();
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
-    this.fileWatcher.dispose();
-    this.licenseWatcher.dispose();
-    this.licenseUpdater.dispose();
-    this.toolsManager.dispose();
+    this.disposables.forEach((disposable) => {
+      disposable.dispose();
+    });
   }
 
   private async reloadMetro() {
@@ -498,7 +506,8 @@ export class Project
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
-      [waitForNodeModules]
+      [waitForNodeModules],
+      this.appRootFolder.getAppRoot()
     );
   }
   //#endregion
@@ -707,6 +716,8 @@ export class Project
   }
 
   private async ensureDependenciesAndNodeVersion() {
+    const appRoot = this.appRootFolder.getAppRoot()
+
     const installed = await this.dependencyManager.checkNodeModulesInstallationStatus();
 
     if (!installed) {
@@ -717,7 +728,7 @@ export class Project
       Logger.debug("Node modules already installed - skipping");
     }
 
-    await this.dependencyManager.validateNodeVersion();
+    await this.dependencyManager.validateNodeVersion(appRoot);
   }
 
   //#region Select device
@@ -776,13 +787,13 @@ export class Project
         this.devtools,
         this.metro,
         this.dependencyManager,
-        new BuildCache(device.platform, getAppRootFolder()),
+        new BuildCache(device.platform, this.appRootFolder),
         this,
         this
       );
       this.deviceSession = newDeviceSession;
 
-      const previewURL = await newDeviceSession.start(this.deviceSettings, {
+      const previewURL = await newDeviceSession.start(this.deviceSettings, this.appRootFolder, {
         cleanBuild: forceCleanBuild,
         previewReadyCallback: (url) => {
           this.updateProjectStateForDevice(deviceInfo, { previewURL: url });

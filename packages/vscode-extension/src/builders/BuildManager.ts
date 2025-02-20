@@ -3,7 +3,6 @@ import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
-import { getAppRootFolder } from "../utilities/extensionContext";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelToken } from "./cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -16,6 +15,7 @@ export interface DisposableBuild<R> extends Disposable {
 }
 
 type BuildOptions = {
+  appRoot: string;
   clean: boolean;
   progressListener: (newProgress: number) => void;
   onSuccess: () => void;
@@ -47,7 +47,7 @@ export class BuildManager {
   }
 
   public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {
-    const { clean: forceCleanBuild, progressListener, onSuccess } = options;
+    const { clean: forceCleanBuild, progressListener, onSuccess, appRoot } = options;
     const { platform } = deviceInfo;
 
     getTelemetryReporter().sendTelemetryEvent("build:requested", {
@@ -95,7 +95,7 @@ export class BuildManager {
         });
         this.buildOutputChannel.clear();
         buildResult = await buildAndroid(
-          getAppRootFolder(),
+          appRoot,
           forceCleanBuild,
           cancelToken,
           this.buildOutputChannel,
@@ -128,7 +128,7 @@ export class BuildManager {
           }
         };
         buildResult = await buildIos(
-          getAppRootFolder(),
+          appRoot,
           forceCleanBuild,
           cancelToken,
           this.buildOutputChannel,
