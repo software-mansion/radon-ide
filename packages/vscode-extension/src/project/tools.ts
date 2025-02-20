@@ -61,7 +61,7 @@ export class ToolsManager implements Disposable {
     const reduxPlugin = createReduxDevtools(this);
     this.plugins.set(reduxPlugin.id, reduxPlugin);
 
-    const reactQueryPlugin = createReactQueryDevtools(this);
+    const reactQueryPlugin = createReactQueryDevtools();
     this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 
     this.plugins.set(REDUX_PLUGIN_ID, createReduxDevtools(this));
