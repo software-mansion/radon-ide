@@ -16,6 +16,7 @@ import {
   REACT_QUERY_PLUGIN_ID,
   createReactQueryDevtools,
 } from "../plugins/react-query-devtools-plugin/react-query-devtools-plugin";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
@@ -32,6 +33,15 @@ export interface ToolPlugin extends Disposable {
   activate(): void;
   deactivate(): void;
   openTool?(): void;
+}
+
+export function reportToolVisibilityChanged(toolName: ToolKey, visible: boolean) {
+  const visibility = visible ? "visible" : "hidden";
+  getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:visibility:${visibility}`);
+}
+
+export function reportToolOpened(toolName: ToolKey) {
+  getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:opened`);
 }
 
 export class ToolsManager implements Disposable {
@@ -126,6 +136,7 @@ export class ToolsManager implements Disposable {
     if (this.plugins.has(toolName)) {
       this.toolsSettings[toolName] = enabled;
       extensionContext.workspaceState.update(TOOLS_SETTINGS_KEY, this.toolsSettings);
+      this.reportToolEnabled(toolName, enabled);
       this.handleStateChange();
     }
   }
@@ -135,5 +146,10 @@ export class ToolsManager implements Disposable {
     if (plugin && this.toolsSettings[toolName] && this.activePlugins.has(plugin)) {
       plugin.openTool?.();
     }
+  }
+
+  private reportToolEnabled(toolName: ToolKey, enabled: boolean) {
+    const enabledString = enabled ? "enabled" : "disabled";
+    getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:${enabledString}`);
   }
 }

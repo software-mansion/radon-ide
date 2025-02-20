@@ -404,14 +404,12 @@ export function AppWrapper({ children, initialProps, fabric }) {
         appKey,
         navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
       });
-      devtoolsAgent._bridge.send("RNIDE_devtoolPluginsChanged", {
-        plugins: Array.from(devtoolPlugins.values()),
-      });
       devtoolPluginsChanged = () => {
         devtoolsAgent._bridge.send("RNIDE_devtoolPluginsChanged", {
           plugins: Array.from(devtoolPlugins.values()),
         });
       };
+      devtoolPluginsChanged();
       return () => {
         devtoolPluginsChanged = undefined;
       };

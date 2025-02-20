@@ -149,7 +149,8 @@ export function dependencyDescription(dependency: Dependency) {
     case "nodejs":
       return {
         info: "Used for running scripts and getting dependencies.",
-        error: "Node.js was not found. Make sure to [install Node.js](https://nodejs.org/en).",
+        error:
+          "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements. You can find more information in our [documentation](https://ide.swmansion.com/docs/guides/troubleshooting#13-node-version-is-not-supported).",
       };
     case "packageManager":
       return {
