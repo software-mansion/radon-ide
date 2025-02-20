@@ -58,7 +58,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             </Select.Group>
             <Select.Separator className="url-select-separator" />
             <Select.Group>
-              <Select.Label className="url-select-label">All visited paths:</Select.Label>
+              <Select.Label className="url-select-label">All paths:</Select.Label>
               {items.map(
                 (item) =>
                   item.name && (

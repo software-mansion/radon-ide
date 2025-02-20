@@ -41,6 +41,7 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
+import { getAppRoutes } from "../utilities/getFileBasedRoutes";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -106,6 +107,11 @@ export class Project
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.isCachedBuildStale = false;
+    this.dependencyManager.checkProjectUsesExpoRouter().then((result) => {
+      if (result) {
+        this.initializeFileBasedRoutes("onAppReady");
+      }
+    });
 
     this.fileWatcher = watchProjectFiles(() => {
       this.checkIfNativeChanged();
@@ -129,6 +135,11 @@ export class Project
 
   onStateChange = (state: StartupMessage): void => {
     this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
+    this.dependencyManager.checkProjectUsesExpoRouter().then((result) => {
+      if (result) {
+        this.initializeFileBasedRoutes("now");
+      }
+    });
   };
   //#endregion
 
@@ -137,6 +148,9 @@ export class Project
     switch (event) {
       case "navigationChanged":
         this.eventEmitter.emit("navigationChanged", payload);
+        break;
+      case "navigationInit":
+        this.eventEmitter.emit("navigationInit", payload);
         break;
       case "fastRefreshStarted":
         this.updateProjectState({ status: "refreshing" });
@@ -265,6 +279,19 @@ export class Project
     }
     // For consistency between iOS and Android, we always display toast message
     await this.utils.showToast("Copied from device clipboard", 2000);
+  }
+
+  private async initializeFileBasedRoutes(type: "onAppReady" | "now") {
+    const routes = await getAppRoutes();
+    if (type === "onAppReady") {
+      this.devtools.addListener((name) => {
+        if (name === "RNIDE_appReady") {
+          this.devtools.send("RNIDE_loadFileBasedRoutes", routes);
+        }
+      });
+    } else {
+      this.devtools.send("RNIDE_loadFileBasedRoutes", routes);
+    }
   }
 
   onBundleError(): void {
@@ -450,28 +477,34 @@ export class Project
   }
 
   public async reload(type: ReloadAction): Promise<boolean> {
-    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
+    try {
+      this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
 
-    getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
-      platform: this.projectState.selectedDevice?.platform,
-      method: type,
-    });
+      getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
+        platform: this.projectState.selectedDevice?.platform,
+        method: type,
+      });
 
-    // this action needs to be handled outside of device session as it resets the device session itself
-    if (type === "reboot") {
-      const deviceInfo = this.projectState.selectedDevice!;
-      await this.start(true, false);
-      await this.selectDevice(deviceInfo);
-      return true;
+      // this action needs to be handled outside of device session as it resets the device session itself
+      if (type === "reboot") {
+        const deviceInfo = this.projectState.selectedDevice!;
+        await this.start(true, false);
+        await this.selectDevice(deviceInfo);
+        return true;
+      }
+
+      const success = (await this.deviceSession?.perform(type)) ?? false;
+      if (success) {
+        this.updateProjectState({ status: "running" });
+      } else {
+        window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
+      }
+      return success;
+    } finally {
+      if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
+        await this.initializeFileBasedRoutes("onAppReady");
+      }
     }
-
-    const success = (await this.deviceSession?.perform(type)) ?? false;
-    if (success) {
-      this.updateProjectState({ status: "running" });
-    } else {
-      window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
-    }
-    return success;
   }
 
   private async start(restart: boolean, resetMetroCache: boolean) {
