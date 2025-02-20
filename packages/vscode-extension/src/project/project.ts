@@ -2,7 +2,6 @@ import { EventEmitter } from "stream";
 import os from "os";
 import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
 import _ from "lodash";
-import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
@@ -26,7 +25,7 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle, throttleAsync } from "../utilities/throttle";
-import { DebugSessionDelegate } from "../debugging/DebugSession";
+import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
@@ -41,6 +40,7 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
+import { focusSource } from "../utilities/focusSource";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -160,7 +160,7 @@ export class Project
   onDebuggerPaused(event: DebugSessionCustomEvent) {
     if (event.body?.reason === "exception") {
       // if we know that incremental bundle error happened, we don't want to change the status
-      if (this.projectState.status === "incrementalBundleError") {
+      if (this.projectState.status === "bundlingError") {
         return;
       }
       this.updateProjectState({ status: "runtimeError" });
@@ -271,14 +271,23 @@ export class Project
     this.updateProjectState({ status: "bundleError" });
   }
 
-  onIncrementalBundleError(message: string, _errorModulePath: string): void {
-    Logger.error(stripAnsi(message));
+  async onBundlingError(
+    message: string,
+    source: DebugSource,
+    _errorModulePath: string
+  ): Promise<void> {
+    await this.deviceSession?.sendDebugConsoleLog(message, source);
+
+    this.focusDebugConsole();
+    focusSource(source);
+
+    Logger.error("[Bundling Error]", message);
     // if bundle build failed, we don't want to change the status
-    // incrementalBundleError status should be set only when bundleError status is not set
+    // bundlingError status should be set only when bundleError status is not set
     if (this.projectState.status === "bundleError") {
       return;
     }
-    this.updateProjectState({ status: "incrementalBundleError" });
+    this.updateProjectState({ status: "bundlingError" });
   }
 
   /**

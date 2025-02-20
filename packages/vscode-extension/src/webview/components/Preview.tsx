@@ -90,7 +90,7 @@ function Preview({
 
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
-  const hasIncrementalBundleError = projectStatus === "incrementalBundleError";
+  const hasBundlingError = projectStatus === "bundlingError";
   const hasBundleError = projectStatus === "bundleError";
 
   const debugPaused = projectStatus === "debuggerPaused";
@@ -99,7 +99,7 @@ function Preview({
   const previewURL = projectState.previewURL;
 
   const isStarting =
-    hasBundleError || hasIncrementalBundleError || debugException
+    hasBundleError || hasBundlingError || debugException
       ? false
       : !projectState || projectState.status === "starting";
   const showDevicePreview =
@@ -108,7 +108,7 @@ function Preview({
 
   useBuildErrorAlert(hasBuildError);
   useBootErrorAlert(hasBootError);
-  useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
+  useBundleErrorAlert(hasBundleError || hasBundlingError);
 
   const openRebuildAlert = useNativeRebuildAlert();
 
@@ -211,7 +211,7 @@ function Preview({
     debugPaused ||
     debugException ||
     hasBundleError ||
-    hasIncrementalBundleError ||
+    hasBundlingError ||
     !showDevicePreview ||
     !!replayData;
 
@@ -576,7 +576,7 @@ function Preview({
                   </button>
                 </div>
               )}
-              {hasIncrementalBundleError && (
+              {hasBundlingError && (
                 <div className="phone-screen phone-debug-overlay phone-exception-overlay">
                   <button className="uncaught-button" onClick={() => project.restart(false)}>
                     Bundle error&nbsp;

@@ -11,10 +11,11 @@ import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
+import { DebugSource } from "../debugging/DebugSession";
 
 export interface MetroDelegate {
   onBundleError(): void;
-  onIncrementalBundleError(message: string, errorModulePath: string): void;
+  onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
 }
 
 interface CDPTargetDescription {
@@ -36,6 +37,9 @@ type MetroEvent =
       stack: string;
       error: {
         message: string;
+        filename?: string;
+        lineNumber?: number;
+        columnNumber?: number;
         originModulePath: string;
         targetModuleName: string;
         errors: {
@@ -259,7 +263,20 @@ export class Metro implements Disposable {
               this.delegate.onBundleError();
               break;
             case "bundling_error":
-              this.delegate.onIncrementalBundleError(event.message, event.error.originModulePath);
+              const message = stripAnsi(event.message);
+              let filename = event.error.originModulePath;
+              if (!filename && event.error.filename) {
+                filename = appRootFolder + event.error.filename;
+              }
+              this.delegate.onBundlingError(
+                message,
+                {
+                  filename,
+                  line1based: event.error.lineNumber,
+                  column0based: event.error.columnNumber,
+                },
+                event.error.originModulePath
+              );
               break;
           }
         } catch (error) {
