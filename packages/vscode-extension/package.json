@@ -605,13 +605,12 @@
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
     "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
     "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui",
-    "build:extension-debug": "node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
+    "build:extension-debug": "npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
     "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
-    "build:sim-server": "bash ./scripts/install-sim-server-release-build.sh dist",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
-    "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview && npm run build:third-party-notice",
+    "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
@@ -621,7 +620,9 @@
     "build:tests": "tsc --project tsconfig.test.json",
     "build:plugins": "bash ./scripts/install-dev-plugins.sh",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
-    "preinstall": "cd ../vscode-js-debug && git submodule update --init ./ && npm install && npm exec tsc"
+    "preinstall": "bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && cd ../vscode-js-debug && npm i && npm exec tsc",
+    "fetch:sim-server-assets": "bash ./scripts/download-sim-server-release-assets.sh dist",
+    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
