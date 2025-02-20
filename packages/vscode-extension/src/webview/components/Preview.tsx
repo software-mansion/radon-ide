@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
@@ -28,6 +27,7 @@ import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
+import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -212,6 +212,7 @@ function Preview({
     debugException ||
     hasBundleError ||
     hasIncrementalBundleError ||
+    projectStatus === "refreshing" ||
     !showDevicePreview ||
     !!replayData;
 
@@ -546,8 +547,8 @@ function Preview({
               )}
               {projectStatus === "refreshing" && (
                 <div className="phone-screen phone-refreshing-overlay">
-                  <VSCodeProgressRing />
-                  <div>Refreshing...</div>
+                  <div>Project is performing Fast Refresh...</div>
+                  <div>(screen is inactive until refresh is complete)</div>
                 </div>
               )}
               {debugPaused && (
@@ -601,6 +602,8 @@ function Preview({
           </Device>
         )}
       </div>
+
+      <DelayedFastRefreshIndicator projectStatus={projectStatus} />
 
       <div className="button-group-left-wrapper">
         <div className="button-group-left">

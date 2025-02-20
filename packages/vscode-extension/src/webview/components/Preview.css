@@ -109,11 +109,17 @@
 }
 
 .phone-refreshing-overlay {
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.7);
+  opacity: 0;
   display: flex;
+  gap: 1em;
   justify-content: center;
   align-items: center;
   flex-direction: column;
+}
+
+.phone-refreshing-overlay:active {
+  opacity: 1;
 }
 
 .uncaught-button {
