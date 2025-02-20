@@ -118,10 +118,10 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
 
     devTools?.addListener((event: string, payload: any) => {
       if (event === REACT_QUERY_PLUGIN_ID) {
-          webviewView.webview.postMessage({
-            scope: event,
-            data: payload,
-          });
+        webviewView.webview.postMessage({
+          scope: event,
+          data: payload,
+        });
       }
     });
 
