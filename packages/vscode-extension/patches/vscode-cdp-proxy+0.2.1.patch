@@ -1,0 +1,13 @@
+diff --git a/node_modules/vscode-cdp-proxy/dist/index.js b/node_modules/vscode-cdp-proxy/dist/index.js
+index ca7886c..be99d9e 100644
+--- a/node_modules/vscode-cdp-proxy/dist/index.js
++++ b/node_modules/vscode-cdp-proxy/dist/index.js
+@@ -16,7 +16,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ __exportStar(require("./server"), exports);
+ __exportStar(require("./disposable"), exports);
+ __exportStar(require("./connection"), exports);
+-__exportStar(require("./cdp"), exports);
++// __exportStar(require("./cdp"), exports);
+ __exportStar(require("./cdp-error"), exports);
+ __exportStar(require("./transports/transports"), exports);
+ __exportStar(require("./transports/websocket"), exports);
