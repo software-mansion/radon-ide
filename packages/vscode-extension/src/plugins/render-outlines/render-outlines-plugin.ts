@@ -30,6 +30,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   public readonly id = RENDER_OUTLINES_PLUGIN_ID;
   public readonly label = "Outline Renders";
   public readonly available = true;
+  public readonly persist = false;
 
   activate(): void {
     this.setEnabled(true);
