@@ -42,7 +42,7 @@ export class DebugSession implements Disposable {
 
   public async reconnectIfNeeded() {
     const websocketAddress = await this.metro.getDebuggerURL();
-    if (websocketAddress !== this.vscSession?.configuration.webSocketUri) {
+    if (websocketAddress !== this.vscSession?.configuration?.websocketAddress) {
       return this.start();
     }
 
