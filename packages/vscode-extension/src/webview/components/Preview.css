@@ -116,10 +116,15 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  color: white;
+  transition: opacity 0.3s ease;
+  transition-delay: 3s;
+
 }
 
 .phone-refreshing-overlay:active {
   opacity: 1;
+  transition-delay: 0s
 }
 
 .uncaught-button {

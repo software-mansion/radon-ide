@@ -10,13 +10,16 @@
   background-color: var(--swm-popover-background);
   border-radius: 5px;
   padding: 5px 10px;
-  color: white;
+  color: var(--swm-default-text);
   font-size: 14px;
   transition: opacity 0.3s ease;
+  box-shadow: var(--swm-backdrop-shadow);
+  display: none;
 }
 
 .fast-refresh-indicator.show {
   opacity: 0.9;
+  display: block;
 }
 
 .fast-refresh-indicator .codicon {
