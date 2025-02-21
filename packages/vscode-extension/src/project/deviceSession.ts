@@ -111,6 +111,7 @@ export class DeviceSession implements Disposable {
         if (this.devtools.hasConnectedClient) {
           try {
             await this.metro.reload();
+            await this.debugSession?.checkConnection();
             return true;
           } catch (e) {
             Logger.error("Failed to reload JS", e);

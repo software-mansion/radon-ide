@@ -40,6 +40,19 @@ export class DebugSession implements Disposable {
     this.debugEventsListener.dispose();
   }
 
+  public async checkConnection() {
+    const websocketAddress = await this.metro.getDebuggerURL();
+    if (!websocketAddress) {
+      return false;
+    }
+
+    if (this.vscSession?.configuration.websocketAddress !== websocketAddress) {
+      return this.start();
+    }
+
+    return false;
+  }
+
   public async start() {
     const websocketAddress = await this.metro.getDebuggerURL();
     if (!websocketAddress) {
