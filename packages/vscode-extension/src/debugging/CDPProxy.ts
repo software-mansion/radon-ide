@@ -10,22 +10,31 @@ import {
 } from "vscode-cdp-proxy";
 import { Logger } from "../Logger";
 
+export interface CDPProxyDelegate {
+  handleApplicationCommand(command: IProtocolCommand): IProtocolCommand | undefined;
+  handleDebuggerCommand(command: IProtocolCommand): IProtocolCommand | undefined;
+  handleApplicationReply(
+    reply: IProtocolSuccess | IProtocolError
+  ): IProtocolSuccess | IProtocolError | undefined;
+  handleDebuggerReply(
+    reply: IProtocolSuccess | IProtocolError
+  ): IProtocolSuccess | IProtocolError | undefined;
+}
+
 export class CDPProxy {
   private server: Server | null = null;
-  private hostAddress: string;
-  private port: number;
   private debuggerTarget: Connection | null = null;
   private applicationTarget: Connection | null = null;
-  private browserInspectUri: string;
   private applicationTargetEventEmitter: EventEmitter<unknown> = new EventEmitter();
 
   public readonly onApplicationTargetConnectionClosed = this.applicationTargetEventEmitter.event;
 
-  constructor(hostAddress: string, port: number) {
-    this.port = port;
-    this.hostAddress = hostAddress;
-    this.browserInspectUri = "";
-  }
+  constructor(
+    private hostAddress: string,
+    private port: number,
+    private browserInspectUri: string,
+    private cdpProxyDelegate: CDPProxyDelegate
+  ) {}
 
   public async initializeServer(): Promise<void> {
     this.server = await Server.create({ port: this.port, host: this.hostAddress });
@@ -88,7 +97,10 @@ export class CDPProxy {
     //   this.applicationTarget?.send(processedMessage.event);
     // }
     console.log("Debugger Target Command", event);
-    this.applicationTarget?.send(event);
+    const processedMessage = this.cdpProxyDelegate.handleDebuggerCommand(event);
+    if (processedMessage) {
+      this.applicationTarget?.send(event);
+    }
   }
 
   private handleApplicationTargetCommand(event: IProtocolCommand) {
@@ -100,7 +112,10 @@ export class CDPProxy {
     //   this.debuggerTarget?.send(processedMessage.event);
     // }
     console.log("Application Target Command", event);
-    this.debuggerTarget?.send(event);
+    const processedMessage = this.cdpProxyDelegate.handleApplicationCommand(event);
+    if (processedMessage) {
+      this.debuggerTarget?.send(event);
+    }
   }
 
   private handleDebuggerTargetReply(event: IProtocolError | IProtocolSuccess) {
@@ -112,7 +127,10 @@ export class CDPProxy {
     //   this.applicationTarget?.send(processedMessage.event);
     // }
     console.log("Debugger Target Reply", event);
-    this.applicationTarget?.send(event);
+    const processedMessage = this.cdpProxyDelegate.handleDebuggerReply(event);
+    if (processedMessage) {
+      this.applicationTarget?.send(processedMessage);
+    }
   }
 
   private handleApplicationTargetReply(event: IProtocolError | IProtocolSuccess) {
@@ -124,7 +142,10 @@ export class CDPProxy {
     //   this.debuggerTarget?.send(processedMessage.event);
     // }
     console.log("Application Target Reply", event);
-    this.debuggerTarget?.send(event);
+    const processedMessage = this.cdpProxyDelegate.handleApplicationReply(event);
+    if (processedMessage) {
+      this.debuggerTarget?.send(event);
+    }
   }
 
   private onDebuggerTargetError(err: Error) {

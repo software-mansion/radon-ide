@@ -5,6 +5,8 @@ import {
   DebugSession as VscDebugSession,
 } from "vscode";
 import { Metro } from "../project/metro";
+import { CDPProxy } from "./CDPProxy";
+import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 
 export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
@@ -46,34 +48,67 @@ export class DebugSession implements Disposable {
       return false;
     }
 
-    let sourceMapAliases: Array<[string, string]> = [];
+    let debugStarted = false;
     const isUsingNewDebugger = this.metro.isUsingNewDebugger;
-    if (isUsingNewDebugger && this.metro.watchFolders.length > 0) {
-      // first entry in watchFolders is the project root
-      sourceMapAliases.push(["/[metro-project]/", this.metro.watchFolders[0]]);
-      this.metro.watchFolders.forEach((watchFolder, index) => {
-        sourceMapAliases.push([`/[metro-watchFolders]/${index}/`, watchFolder]);
-      });
-    }
 
-    const debugStarted = await debug.startDebugging(
-      undefined,
-      {
-        type: "com.swmansion.react-native-debugger",
-        name: "Radon IDE Debugger",
-        request: "attach",
-        websocketAddress: websocketAddress,
-        sourceMapAliases,
-        expoPreludeLineCount: this.metro.expoPreludeLineCount,
-        breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
-      },
-      {
-        suppressDebugStatusbar: true,
-        suppressDebugView: true,
-        suppressDebugToolbar: true,
-        suppressSaveBeforeStart: true,
+    if (isUsingNewDebugger) {
+      const sourceMapAliases: Array<[string, string]> = [];
+      if (isUsingNewDebugger && this.metro.watchFolders.length > 0) {
+        // first entry in watchFolders is the project root
+        sourceMapAliases.push(["/[metro-project]/", this.metro.watchFolders[0]]);
+        this.metro.watchFolders.forEach((watchFolder, index) => {
+          sourceMapAliases.push([`/[metro-watchFolders]/${index}/`, watchFolder]);
+        });
       }
-    );
+
+      const cdpProxyPort = Math.round(Math.random() * 40000 + 3000);
+
+      const cdpProxy = new CDPProxy(
+        "127.0.0.1",
+        cdpProxyPort,
+        websocketAddress,
+        new RadonCDPProxyDelegate()
+      );
+      await cdpProxy.initializeServer();
+
+      debugStarted = await debug.startDebugging(
+        undefined,
+        {
+          type: "pwa-node",
+          name: "Radon IDE Debugger",
+          request: "attach",
+          port: cdpProxyPort,
+          sourceMapPathOverrides: Object.fromEntries(
+            sourceMapAliases.map(([alias, path]) => [`${alias}*`, `${path}/*`])
+          ),
+          resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
+        },
+        {
+          suppressDebugStatusbar: true,
+          suppressDebugView: true,
+          suppressDebugToolbar: true,
+          suppressSaveBeforeStart: true,
+        }
+      );
+    } else {
+      debugStarted = await debug.startDebugging(
+        undefined,
+        {
+          type: "com.swmansion.react-native-debugger",
+          name: "Radon IDE Debugger",
+          request: "attach",
+          websocketAddress: websocketAddress,
+          expoPreludeLineCount: this.metro.expoPreludeLineCount,
+          breakpointsAreRemovedOnContextCleared: true,
+        },
+        {
+          suppressDebugStatusbar: true,
+          suppressDebugView: true,
+          suppressDebugToolbar: true,
+          suppressSaveBeforeStart: true,
+        }
+      );
+    }
 
     if (debugStarted) {
       this.vscSession = debug.activeDebugSession!;
