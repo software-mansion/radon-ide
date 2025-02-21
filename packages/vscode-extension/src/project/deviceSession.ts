@@ -110,8 +110,7 @@ export class DeviceSession implements Disposable {
       case "reloadJs":
         if (this.devtools.hasConnectedClient) {
           try {
-            await this.metro.reload();
-            await this.debugSession?.checkConnection();
+            await this.reloadMetro();
             return true;
           } catch (e) {
             Logger.error("Failed to reload JS", e);
@@ -123,6 +122,13 @@ export class DeviceSession implements Disposable {
   }
 
   private launchAppCancelToken: CancelToken | undefined;
+
+  private async reloadMetro() {
+    this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+    await Promise.all([this.metro.reload(), this.devtools.appReady()]); 
+    this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
+    await this.debugSession?.reconnectIfNeeded();
+  }
 
   private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
     this.launchAppCancelToken && this.launchAppCancelToken.cancel();

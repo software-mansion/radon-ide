@@ -11,6 +11,7 @@ import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
+import { progressiveRetryValue, sleep } from "../utilities/retry";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -304,13 +305,21 @@ export class Metro implements Disposable {
   public async getDebuggerURL() {
     const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
 
+    let retryCount = 0;
     const startTime = Date.now();
-    let websocketAddress: string | undefined;
-    while (!websocketAddress && Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
-      websocketAddress = await this.fetchDebuggerURL();
-      await new Promise((res) => setTimeout(res, 1000));
+
+    while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
+      retryCount++;
+      const websocketAddress = await this.fetchDebuggerURL();
+      
+      if (websocketAddress) {
+        return websocketAddress;
+      }
+
+      await sleep(progressiveRetryValue(retryCount));
     }
-    return websocketAddress;
+
+    return undefined;
   }
 
   private lookupWsAddressForOldDebugger(listJson: CDPTargetDescription[]) {
