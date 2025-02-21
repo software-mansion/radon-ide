@@ -1,5 +1,6 @@
 import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
+import _ from "lodash";
 import { Devtools } from "./devtools";
 import { extensionContext } from "../utilities/extensionContext";
 import { ToolsState } from "../common/Project";
@@ -22,6 +23,7 @@ export interface ToolPlugin extends Disposable {
   id: ToolKey;
   label: string;
   available: boolean;
+  persist: boolean;
   activate(): void;
   deactivate(): void;
   openTool?(): void;
@@ -120,9 +122,12 @@ export class ToolsManager implements Disposable {
   }
 
   public updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
-    if (this.plugins.has(toolName)) {
+    const plugin = this.plugins.get(toolName);
+    if (plugin) {
       this.toolsSettings[toolName] = enabled;
-      extensionContext.workspaceState.update(TOOLS_SETTINGS_KEY, this.toolsSettings);
+      if (plugin.persist) {
+        this.saveToolsState();
+      }
       this.reportToolEnabled(toolName, enabled);
       this.handleStateChange();
     }
@@ -138,5 +143,12 @@ export class ToolsManager implements Disposable {
   private reportToolEnabled(toolName: ToolKey, enabled: boolean) {
     const enabledString = enabled ? "enabled" : "disabled";
     getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:${enabledString}`);
+  }
+
+  private saveToolsState() {
+    const persistedToolsState = _.mapValues(this.toolsSettings, (value, key) => {
+      return this.plugins.get(key as ToolKey)?.persist && value;
+    });
+    extensionContext.workspaceState.update(TOOLS_SETTINGS_KEY, persistedToolsState);
   }
 }
