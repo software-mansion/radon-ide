@@ -17,7 +17,8 @@ export async function retry<T>(fn: RetryFn<T>, retries = 5, interval = 1000): Pr
   return await call(retries);
 }
 
-export const progressiveRetryValue = (retryNumber: number) => Math.min(100 * Math.max(retryNumber, 1), 1000);
+export const progressiveRetryValue = (retryNumber: number) =>
+  Math.min(100 * Math.max(retryNumber, 1), 1000);
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

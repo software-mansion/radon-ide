@@ -311,7 +311,7 @@ export class Metro implements Disposable {
     while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
       retryCount++;
       const websocketAddress = await this.fetchDebuggerURL();
-      
+
       if (websocketAddress) {
         return websocketAddress;
       }

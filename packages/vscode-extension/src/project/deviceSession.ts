@@ -125,7 +125,7 @@ export class DeviceSession implements Disposable {
 
   private async reloadMetro() {
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
-    await Promise.all([this.metro.reload(), this.devtools.appReady()]); 
+    await Promise.all([this.metro.reload(), this.devtools.appReady()]);
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.debugSession?.reconnectIfNeeded();
   }
