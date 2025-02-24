@@ -32,6 +32,7 @@ import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
 import { migrateOldBuildCachesToNewStorage } from "./builders/BuildCache";
 import { IDE } from "./project/ide";
+import { registerChat } from "./chat/chat";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -273,6 +274,8 @@ export async function activate(context: ExtensionContext) {
 
   // this needs to be run after app root is set
   migrateOldBuildCachesToNewStorage();
+
+  registerChat(context);
 
   extensionActivated();
 }
