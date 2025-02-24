@@ -1,4 +1,5 @@
 import {
+  commands,
   debug,
   DebugSessionCustomEvent,
   Disposable,
@@ -67,7 +68,7 @@ export class DebugSession implements Disposable {
         "127.0.0.1",
         cdpProxyPort,
         websocketAddress,
-        new RadonCDPProxyDelegate()
+        new RadonCDPProxyDelegate(this.delegate)
       );
       await cdpProxy.initializeServer();
 
@@ -126,11 +127,13 @@ export class DebugSession implements Disposable {
   }
 
   public resumeDebugger() {
-    this.session.customRequest("continue");
+    // this.session.customRequest("continue");
+    commands.executeCommand("workbench.action.debug.continue");
   }
 
   public stepOverDebugger() {
-    this.session.customRequest("next");
+    // this.session.customRequest("next");
+    commands.executeCommand("workbench.action.debug.stepOver");
   }
 
   private get session() {

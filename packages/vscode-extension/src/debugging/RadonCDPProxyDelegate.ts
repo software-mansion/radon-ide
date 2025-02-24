@@ -1,16 +1,45 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
+import { debug } from "vscode";
 import { CDPProxyDelegate } from "./CDPProxy";
+import { DebugSessionDelegate } from "./DebugSession";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
+  constructor(private debugSessionDelegate: DebugSessionDelegate) {}
   public handleApplicationCommand(command: IProtocolCommand): IProtocolCommand | undefined {
     switch (command.method) {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(command);
       }
+      case "Debugger.paused": {
+        this.debugSessionDelegate.onDebuggerPaused({
+          event: "RNIDE_paused",
+          session: debug.activeDebugSession!,
+          body: {},
+        });
+        return command;
+      }
+      case "Debugger.resumed": {
+        this.debugSessionDelegate.onDebuggerPaused({
+          event: "RNIDE_continued",
+          session: debug.activeDebugSession!,
+          body: {},
+        });
+        return command;
+      }
     }
     return command;
   }
   public handleDebuggerCommand(command: IProtocolCommand): IProtocolCommand | undefined {
+    // switch (command.method) {
+    //   case "Debugger.resume": {
+    //     this.debugSessionDelegate.onDebuggerResumed({
+    //       event: "RNIDE_continued",
+    //       session: debug.activeDebugSession!,
+    //       body: {},
+    //     });
+    //     return command;
+    //   }
+    // }
     return command;
   }
   public handleApplicationReply(
