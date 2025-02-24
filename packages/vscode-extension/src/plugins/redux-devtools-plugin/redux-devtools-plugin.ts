@@ -74,6 +74,7 @@ export const createReduxDevtools = (toolsManager: ToolsManager): ToolPlugin => {
     id: REDUX_PLUGIN_ID,
     label: "Redux DevTools",
     available: false,
+    persist: true,
     activate() {
       commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
     },
