@@ -89,13 +89,6 @@ export class CDPProxy {
   }
 
   private handleDebuggerTargetCommand(event: IProtocolCommand) {
-    // const processedMessage = this.CDPMessageHandler.processDebuggerCDPMessage(event);
-
-    // if (processedMessage.sendBack) {
-    //   this.debuggerTarget?.send(processedMessage.event);
-    // } else {
-    //   this.applicationTarget?.send(processedMessage.event);
-    // }
     console.log("Debugger Target Command", event);
     const processedMessage = this.cdpProxyDelegate.handleDebuggerCommand(event);
     if (processedMessage) {
@@ -104,13 +97,6 @@ export class CDPProxy {
   }
 
   private handleApplicationTargetCommand(event: IProtocolCommand) {
-    // const processedMessage = this.CDPMessageHandler.processApplicationCDPMessage(event);
-
-    // if (processedMessage.sendBack) {
-    //   this.applicationTarget?.send(processedMessage.event);
-    // } else {
-    //   this.debuggerTarget?.send(processedMessage.event);
-    // }
     console.log("Application Target Command", event);
     const processedMessage = this.cdpProxyDelegate.handleApplicationCommand(event);
     if (processedMessage) {
@@ -119,13 +105,6 @@ export class CDPProxy {
   }
 
   private handleDebuggerTargetReply(event: IProtocolError | IProtocolSuccess) {
-    // const processedMessage = this.CDPMessageHandler.processDebuggerCDPMessage(event);
-
-    // if (processedMessage.sendBack) {
-    //   this.debuggerTarget?.send(processedMessage.event);
-    // } else {
-    //   this.applicationTarget?.send(processedMessage.event);
-    // }
     console.log("Debugger Target Reply", event);
     const processedMessage = this.cdpProxyDelegate.handleDebuggerReply(event);
     if (processedMessage) {
@@ -134,13 +113,6 @@ export class CDPProxy {
   }
 
   private handleApplicationTargetReply(event: IProtocolError | IProtocolSuccess) {
-    // const processedMessage = this.CDPMessageHandler.processApplicationCDPMessage(event);
-
-    // if (processedMessage.sendBack) {
-    //   this.applicationTarget?.send(processedMessage.event);
-    // } else {
-    //   this.debuggerTarget?.send(processedMessage.event);
-    // }
     console.log("Application Target Reply", event);
     const processedMessage = this.cdpProxyDelegate.handleApplicationReply(event);
     if (processedMessage) {
