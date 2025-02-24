@@ -116,18 +116,24 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
 
     const devTools = IDE.getInstanceIfExists()?.project?.toolsManager.devtools;
 
-    devTools?.addListener((event: string, payload: any) => {
+    const handleDevToolsMessage = (event: string, payload: any) => {
       if (event === REACT_QUERY_PLUGIN_ID) {
         webviewView.webview.postMessage({
           scope: event,
           data: payload,
         });
       }
-    });
+    };
+
+    devTools?.addListener(handleDevToolsMessage);
 
     webviewView.webview.onDidReceiveMessage((message) => {
       const { scope, ...data } = message;
       devTools?.send(scope, data);
+    });
+
+    webviewView.onDidDispose(() => {
+      devTools?.removeListener(handleDevToolsMessage);
     });
   }
 }
