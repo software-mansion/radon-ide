@@ -42,7 +42,7 @@ export function shouldUseExpoCLI() {
   } catch (e) {}
 
   try {
-    const packageJson = require(path.join(appRootFolder, "package.json"));
+    const packageJson = requireNoCache(path.join(appRootFolder, "package.json"));
     hasExpoCommandsInScripts = Object.values<string>(packageJson.scripts).some((script: string) => {
       return script.includes("expo ");
     });
