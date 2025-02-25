@@ -352,7 +352,7 @@ async function findAppRootCandidates(): Promise<string[]> {
   return candidates;
 }
 
-async function findAppRootFolder() {
+export async function findAppRootFolder() {
   const launchConfiguration = getLaunchConfiguration();
   const appRootFromLaunchConfig = launchConfiguration.appRoot;
   if (appRootFromLaunchConfig) {
