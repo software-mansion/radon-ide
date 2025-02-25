@@ -1,4 +1,3 @@
-import fs from "fs";
 import {
   CancellationToken,
   ExtensionContext,
@@ -16,22 +15,6 @@ import { REACT_QUERY_PLUGIN_ID } from "./react-query-devtools-plugin";
 
 const PATH = "dist/react-query-devtools/assets/";
 
-const prepareWebviewCSS = (files: string[]) => {
-  return files
-    .map((file) => {
-      return /*html*/ `<link rel="stylesheet" href="${file}">`;
-    })
-    .join("\n");
-};
-
-const prepareWebviewJS = (files: string[], nonce: string) => {
-  return files
-    .map((file) => {
-      return /*html*/ `<script type="module" nonce="${nonce}" src="${file}"></script>`;
-    })
-    .join("\n");
-};
-
 function generateWebviewContent(
   context: ExtensionContext,
   webview: Webview,
@@ -39,15 +22,6 @@ function generateWebviewContent(
 ): string {
   const nonce = getNonce();
   const baseUri = getUri(webview, extensionUri, [PATH]);
-  const files = fs.readdirSync(baseUri.path, { recursive: true });
-  const cssFiles = files
-    .filter((file) => typeof file === "string")
-    .filter((file) => file.endsWith(".css"));
-  const jsFiles = files
-    .filter((file) => typeof file === "string")
-    .filter((file) => file.endsWith(".js"));
-  const cssImports = prepareWebviewCSS(cssFiles);
-  const jsImports = prepareWebviewJS(jsFiles, nonce);
 
   return /*html*/ `
     <!doctype html>
@@ -65,11 +39,10 @@ function generateWebviewContent(
           script-src 'nonce-${nonce}';
           font-src vscode-resource: https:;" 
         />
-        ${jsImports}
-        ${cssImports}
+        <script type="module" nonce="${nonce}" src="index.js"></script>
+        <link rel="stylesheet" href="index.css">
         <style>
           body {
-            background: #f0f;
             padding: 0;
             display: block;
           }
