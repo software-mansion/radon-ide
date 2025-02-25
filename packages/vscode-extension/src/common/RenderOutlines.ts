@@ -22,6 +22,9 @@ export interface RenderOutlinesEventMap {
   rendersReported: {
     blueprintOutlines: BlueprintEntry[];
   };
+  isEnabledChanged: {
+    isEnabled: boolean;
+  };
 }
 
 export interface RenderOutlinesInterface {

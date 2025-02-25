@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CanvasOutlineRenderer, OutlineRenderer, WorkerOutlineRenderer } from "react-scan";
 import {
   RenderOutlinesEventListener,
@@ -27,12 +27,38 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
   }
 }
 
+function useIsEnabled() {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const listener: RenderOutlinesEventListener<RenderOutlinesEventMap["isEnabledChanged"]> = ({
+      isEnabled,
+    }) => {
+      setEnabled(isEnabled);
+    };
+    RenderOutlines.addEventListener("isEnabledChanged", listener);
+    return () => {
+      RenderOutlines.removeEventListener("isEnabledChanged", listener);
+    };
+  }, []);
+
+  return enabled;
+}
+
 function RenderOutlinesOverlay() {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const outlineRendererRef = useRef<OutlineRenderer | null>(null);
+  const outlineRendererEnabled = useIsEnabled();
 
   useEffect(() => {
+    if (!outlineRendererEnabled) {
+      const outlineRenderer: any = outlineRendererRef.current;
+      outlineRenderer?.worker?.terminate();
+      outlineRendererRef.current = null;
+      return;
+    }
+
     const host = hostRef.current;
     const canvasEl = canvasRef.current;
     if (!host || !canvasEl) {
@@ -40,7 +66,7 @@ function RenderOutlinesOverlay() {
     }
 
     const dpr = getDpr();
-    let size = { width: hostRef.current.clientWidth, height: host.clientHeight };
+    let size = { width: host.clientWidth, height: host.clientHeight };
 
     outlineRendererRef.current ??= createOutlineRenderer(canvasEl, size, dpr);
     const outlineRenderer = outlineRendererRef.current;
@@ -83,12 +109,14 @@ function RenderOutlinesOverlay() {
       RenderOutlines.removeEventListener("rendersReported", blueprintListener);
       resizeObserver.disconnect();
     };
-  }, [hostRef.current, canvasRef.current]);
+  }, [hostRef.current, canvasRef.current, outlineRendererEnabled]);
 
   return (
-    <div ref={hostRef} className="phone-screen not-masked">
-      <canvas ref={canvasRef} className="render-outlines-overlay" aria-hidden="true"></canvas>
-    </div>
+    outlineRendererEnabled && (
+      <div ref={hostRef} className="phone-screen not-masked">
+        <canvas ref={canvasRef} className="render-outlines-overlay" aria-hidden="true"></canvas>
+      </div>
+    )
   );
 }
 export default RenderOutlinesOverlay;

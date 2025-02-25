@@ -191,8 +191,11 @@ export const updateInstrumentationOptions = (partialOptions) => {
     ? new Set(partialOptions.componentBlocklist)
     : options.componentBlocklist;
   options = { ...options, componentBlocklist, ...partialOptions };
-  if (!inited) {
+  if (!inited && options.isEnabled) {
     inited = true;
+    // NOTE: once initialised, there's no way to disable instrumentation,
+    // as the hook is already installed. Instead, the `onCommitFiberRoot`
+    // will be a no-op if `isEnabled` is false.
     instrument({
       onCommitFiberRoot,
     });

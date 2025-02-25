@@ -419,10 +419,8 @@ export function AppWrapper({ children, initialProps, fabric }) {
         devtoolsAgent._bridge.send("RNIDE_rendersReported", { blueprintOutlines });
       },
     });
-    devtoolsAgent._bridge.send("RNIDE_queryInstrumentationOptions");
   }, [devtoolsAgent]);
 
-  // TODO: get initial options when the app starts
   useAgentListener(
     devtoolsAgent,
     "RNIDE_updateInstrumentationOptions",
