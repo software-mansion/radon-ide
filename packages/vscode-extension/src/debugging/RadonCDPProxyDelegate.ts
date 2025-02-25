@@ -18,8 +18,21 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         });
         return command;
       }
-      case "Debugger.resumed": {
-        this.debugSessionDelegate.onDebuggerPaused({
+      // case "Debugger.resumed": {
+      //   this.debugSessionDelegate.onDebuggerPaused({
+      //     event: "RNIDE_continued",
+      //     session: debug.activeDebugSession!,
+      //     body: {},
+      //   });
+      //   return command;
+      // }
+    }
+    return command;
+  }
+  public handleDebuggerCommand(command: IProtocolCommand): IProtocolCommand | undefined {
+    switch (command.method) {
+      case "Debugger.resume": {
+        this.debugSessionDelegate.onDebuggerResumed({
           event: "RNIDE_continued",
           session: debug.activeDebugSession!,
           body: {},
@@ -27,19 +40,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return command;
       }
     }
-    return command;
-  }
-  public handleDebuggerCommand(command: IProtocolCommand): IProtocolCommand | undefined {
-    // switch (command.method) {
-    //   case "Debugger.resume": {
-    //     this.debugSessionDelegate.onDebuggerResumed({
-    //       event: "RNIDE_continued",
-    //       session: debug.activeDebugSession!,
-    //       body: {},
-    //     });
-    //     return command;
-    //   }
-    // }
     return command;
   }
   public handleApplicationReply(
