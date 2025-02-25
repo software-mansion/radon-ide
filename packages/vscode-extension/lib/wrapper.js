@@ -39,15 +39,6 @@ const InternalImports = {
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
   },
-  get reactQueryDevToolsBroadcast() {
-    return require("./plugins/react-query-devtools").broadcastQueryClient
-    ;
-  }
-};
-
-window.__RNIDE_REACT_QUERY_CLIENT_INIT__ = function (queryClient) {
-  global.__RNIDE_register_dev_plugin && global.__RNIDE_register_dev_plugin("RNIDE-react-query-devtools");
-  return InternalImports.reactQueryDevToolsBroadcast('RNIDE-react-query-devtools', queryClient);
 };
 
 window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
