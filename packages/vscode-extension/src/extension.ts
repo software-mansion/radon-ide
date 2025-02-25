@@ -12,6 +12,7 @@ import {
   Disposable,
 } from "vscode";
 import vscode from "vscode";
+import { activate as activateJsDebug } from "vscode-js-debug/dist/src/extension";
 import { TabPanel } from "./panels/Tabpanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
@@ -58,6 +59,7 @@ export function deactivate(context: ExtensionContext): undefined {
 
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
+  await activateJsDebug(context);
 
   if (Platform.OS !== "macos" && Platform.OS !== "windows" && Platform.OS !== "linux") {
     window.showErrorMessage("Radon IDE works only on macOS, Windows and Linux.", "Dismiss");

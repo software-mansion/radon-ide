@@ -75,7 +75,7 @@ export class DebugSession implements Disposable {
       debugStarted = await debug.startDebugging(
         undefined,
         {
-          type: "pwa-node",
+          type: "radon-pwa-node",
           name: "Radon IDE Debugger",
           request: "attach",
           port: cdpProxyPort,

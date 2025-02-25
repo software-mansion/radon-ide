@@ -296,6 +296,15 @@
         ]
       },
       {
+        "type": "radon-pwa-node",
+        "label": "Radon IDE internal debugger for React Native",
+        "hiddenWhen": "true",
+        "languages": [
+          "javascript",
+          "typescript"
+        ]
+      },
+      {
         "type": "radon-ide",
         "label": "Radon IDE",
         "languages": [
@@ -724,5 +733,8 @@
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
     "xml2js": "^0.6.2"
-  }
+  },
+  "enabledApiProposals": [
+    "portsAttributes"
+  ]
 }
