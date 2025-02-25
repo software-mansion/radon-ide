@@ -30,13 +30,16 @@ export class CDPProxy {
   public readonly onApplicationTargetConnectionClosed = this.applicationTargetEventEmitter.event;
 
   constructor(
-    private hostAddress: string,
-    private port: number,
+    public readonly hostAddress: string,
+    public readonly port: number,
     private browserInspectUri: string,
     private cdpProxyDelegate: CDPProxyDelegate
   ) {}
 
   public async initializeServer(): Promise<void> {
+    if (this.server) {
+      return;
+    }
     this.server = await Server.create({ port: this.port, host: this.hostAddress });
     this.server.onConnection(this.onConnectionHandler.bind(this));
   }
@@ -89,7 +92,6 @@ export class CDPProxy {
   }
 
   private handleDebuggerTargetCommand(event: IProtocolCommand) {
-    console.log("Debugger Target Command", event);
     const processedMessage = this.cdpProxyDelegate.handleDebuggerCommand(event);
     if (processedMessage) {
       this.applicationTarget?.send(event);
@@ -97,7 +99,6 @@ export class CDPProxy {
   }
 
   private handleApplicationTargetCommand(event: IProtocolCommand) {
-    console.log("Application Target Command", event);
     const processedMessage = this.cdpProxyDelegate.handleApplicationCommand(event);
     if (processedMessage) {
       this.debuggerTarget?.send(event);
@@ -105,7 +106,6 @@ export class CDPProxy {
   }
 
   private handleDebuggerTargetReply(event: IProtocolError | IProtocolSuccess) {
-    console.log("Debugger Target Reply", event);
     const processedMessage = this.cdpProxyDelegate.handleDebuggerReply(event);
     if (processedMessage) {
       this.applicationTarget?.send(processedMessage);
@@ -113,7 +113,6 @@ export class CDPProxy {
   }
 
   private handleApplicationTargetReply(event: IProtocolError | IProtocolSuccess) {
-    console.log("Application Target Reply", event);
     const processedMessage = this.cdpProxyDelegate.handleApplicationReply(event);
     if (processedMessage) {
       this.debuggerTarget?.send(event);

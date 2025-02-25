@@ -296,6 +296,15 @@
         ]
       },
       {
+        "type": "com.swmansion.proxy-debugger",
+        "label": "Radon IDE internal debugger for React Native",
+        "hiddenWhen": "true",
+        "languages": [
+          "javascript",
+          "typescript"
+        ]
+      },
+      {
         "type": "radon-pwa-node",
         "label": "Radon IDE internal debugger for React Native",
         "hiddenWhen": "true",
