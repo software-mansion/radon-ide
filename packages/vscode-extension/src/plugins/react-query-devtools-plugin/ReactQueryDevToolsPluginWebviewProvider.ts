@@ -40,7 +40,6 @@ function generateWebviewContent(
           font-src vscode-resource: https:;" 
         />
         <script type="module" nonce="${nonce}" src="index.js"></script>
-        <link rel="stylesheet" href="index.css">
         <style>
           body {
             padding: 0;
