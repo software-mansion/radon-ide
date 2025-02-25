@@ -57,6 +57,7 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
       id: id as ExpoDevPluginToolName,
       label: pluginInfo.label,
       available: false,
+      persist: true,
       activate() {
         commands.executeCommand("setContext", `${pluginInfo.viewIdPrefix}.available`, true);
       },

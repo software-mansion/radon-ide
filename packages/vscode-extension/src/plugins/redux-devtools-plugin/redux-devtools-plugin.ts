@@ -1,7 +1,8 @@
-import { commands, window } from "vscode";
-import { ToolPlugin, ToolsManager } from "../../project/tools";
+import { commands, window, Disposable } from "vscode";
+import { reportToolVisibilityChanged, ToolPlugin, ToolsManager } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
+import { disposeAll } from "../../utilities/disposables";
 
 export const REDUX_PLUGIN_ID = "RNIDE-redux-devtools";
 const REDUX_PLUGIN_PREFIX = "RNIDE.Tool.ReduxDevTools";
@@ -27,9 +28,14 @@ function initializeReduxDevPlugin() {
 
 export const createReduxDevtools = (toolsManager: ToolsManager): ToolPlugin => {
   const webViewProvider = initializeReduxDevPlugin();
+  let disposables: Disposable[] = [];
+  let disposed = false;
 
   let proxyDevtoolsListener: null | ((event: string, payload: any) => void) = null;
   webViewProvider?.setListener((webview) => {
+    if (disposed) {
+      return;
+    }
     proxyDevtoolsListener = (event: string, payload: any) => {
       if (event === REDUX_PLUGIN_ID) {
         webview.webview.postMessage({
@@ -41,18 +47,25 @@ export const createReduxDevtools = (toolsManager: ToolsManager): ToolPlugin => {
 
     toolsManager.devtools.addListener(proxyDevtoolsListener);
 
-    webview.webview.onDidReceiveMessage((message) => {
-      const { scope, ...data } = message;
-      toolsManager.devtools.send(scope, data);
-    });
+    disposables.push(
+      webview.webview.onDidReceiveMessage((message) => {
+        const { scope, ...data } = message;
+        toolsManager.devtools.send(scope, data);
+      })
+    );
+    disposables.push(
+      webview.onDidChangeVisibility(() =>
+        reportToolVisibilityChanged(REDUX_PLUGIN_ID, webview.visible)
+      )
+    );
   });
 
-  let disposed = false;
   function dispose() {
     if (!disposed) {
       if (proxyDevtoolsListener) {
         toolsManager.devtools.removeListener(proxyDevtoolsListener);
       }
+      disposeAll(disposables);
       disposed = true;
     }
   }
@@ -61,6 +74,7 @@ export const createReduxDevtools = (toolsManager: ToolsManager): ToolPlugin => {
     id: REDUX_PLUGIN_ID,
     label: "Redux DevTools",
     available: false,
+    persist: true,
     activate() {
       commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
     },

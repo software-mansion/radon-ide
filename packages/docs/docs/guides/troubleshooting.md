@@ -109,3 +109,7 @@ Radon IDE supports a wide range of themes, but it's not possible to support all 
 If you're using a theme that doesn't look good with Radon IDE, please open an issue on the [Radon IDE GitHub repository](https://github.com/software-mansion/radon-ide/issues/new/choose) and we'll try to fix it. Menawhile you can use built-in themes. Radon IDE comes with dedicated light and dark themes.
 
 <img width="698" alt="change-theme-type" src="/img/docs/change_theme_type.png" className="shadow-image"/>
+
+### -sec-num- Node version is not supported
+
+Radon IDE uses node version inherited from a shell run in the application root, and checks if it satisfies `react-native` minimum requirements. If you have a specific setup that uses node version from outside this range or you want to narrow down the scope of compatible versions for your internal needs, you can do so by specifying `engines` field of your applications `package.json`. If you have a problem installing a compatible node version, we recommend using a tool like [nvm](https://github.com/nvm-sh/nvm).

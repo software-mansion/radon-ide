@@ -1,5 +1,6 @@
 import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
+import _ from "lodash";
 import { Devtools } from "./devtools";
 import { extensionContext } from "../utilities/extensionContext";
 import { ToolsState } from "../common/Project";
@@ -12,6 +13,7 @@ import {
   REDUX_PLUGIN_ID,
   createReduxDevtools,
 } from "../plugins/redux-devtools-plugin/redux-devtools-plugin";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
@@ -21,9 +23,19 @@ export interface ToolPlugin extends Disposable {
   id: ToolKey;
   label: string;
   available: boolean;
+  persist: boolean;
   activate(): void;
   deactivate(): void;
   openTool?(): void;
+}
+
+export function reportToolVisibilityChanged(toolName: ToolKey, visible: boolean) {
+  const visibility = visible ? "visible" : "hidden";
+  getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:visibility:${visibility}`);
+}
+
+export function reportToolOpened(toolName: ToolKey) {
+  getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:opened`);
 }
 
 export class ToolsManager implements Disposable {
@@ -110,9 +122,13 @@ export class ToolsManager implements Disposable {
   }
 
   public updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
-    if (this.plugins.has(toolName)) {
+    const plugin = this.plugins.get(toolName);
+    if (plugin) {
       this.toolsSettings[toolName] = enabled;
-      extensionContext.workspaceState.update(TOOLS_SETTINGS_KEY, this.toolsSettings);
+      if (plugin.persist) {
+        this.saveToolsState();
+      }
+      this.reportToolEnabled(toolName, enabled);
       this.handleStateChange();
     }
   }
@@ -122,5 +138,17 @@ export class ToolsManager implements Disposable {
     if (plugin && this.toolsSettings[toolName] && this.activePlugins.has(plugin)) {
       plugin.openTool?.();
     }
+  }
+
+  private reportToolEnabled(toolName: ToolKey, enabled: boolean) {
+    const enabledString = enabled ? "enabled" : "disabled";
+    getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:${enabledString}`);
+  }
+
+  private saveToolsState() {
+    const persistedToolsState = _.mapValues(this.toolsSettings, (value, key) => {
+      return this.plugins.get(key as ToolKey)?.persist && value;
+    });
+    extensionContext.workspaceState.update(TOOLS_SETTINGS_KEY, persistedToolsState);
   }
 }

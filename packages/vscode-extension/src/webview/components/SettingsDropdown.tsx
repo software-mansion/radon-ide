@@ -28,6 +28,10 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
   const { movePanelToNewWindow, reportIssue } = useUtils();
   const { telemetryEnabled } = useTelemetry();
 
+  const extensionVersion = document.querySelector<HTMLMetaElement>(
+    "meta[name='radon-ide-version']"
+  )?.content;
+
   return (
     <DropdownMenuRoot>
       <DropdownMenu.Trigger asChild disabled={disabled}>
@@ -177,6 +181,9 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
           {telemetryEnabled && <SendFeedbackItem />}
+          <div className="dropdown-menu-item device-settings-version-text">
+            Radon IDE version: {extensionVersion}
+          </div>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenuRoot>

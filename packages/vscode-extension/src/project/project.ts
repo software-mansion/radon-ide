@@ -496,7 +496,7 @@ export class Project
       oldMetro.dispose();
     }
 
-    const waitForNodeModules = this.maybeInstallNodeModules();
+    const waitForNodeModules = this.ensureDependenciesAndNodeVersion();
 
     Logger.debug(`Launching devtools`);
     this.devtools.start();
@@ -715,7 +715,7 @@ export class Project
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
 
-  private async maybeInstallNodeModules() {
+  private async ensureDependenciesAndNodeVersion() {
     const installed = await this.dependencyManager.checkNodeModulesInstallationStatus();
 
     if (!installed) {
@@ -725,6 +725,8 @@ export class Project
     } else {
       Logger.debug("Node modules already installed - skipping");
     }
+
+    await this.dependencyManager.validateNodeVersion();
   }
 
   //#region Select device

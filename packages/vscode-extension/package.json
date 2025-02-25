@@ -45,9 +45,9 @@
       },
       {
         "command": "RNIDE.closePanel",
-        "title": "Close IDE Panel",
+        "title": "Shutdown Radon IDE",
         "category": "Radon IDE",
-        "icon": "$(close)",
+        "icon": "$(radon-off)",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
@@ -546,7 +546,66 @@
           }
         ]
       }
-    ]
+    ],
+    "walkthroughs": [
+      {
+        "id": "radon-ide",
+        "title": "Get Started with Radon IDE",
+        "description": "A full featured IDE for React Native and Expo",
+        "steps": [
+          {
+            "id": "open-rn-expo-project",
+            "title": "Open a React Native or Expo project",
+            "description": "[Open](command:workbench.action.files.openFileFolder) or create a React Native or Expo project new one.\n[Open Project](command:workbench.action.files.openFileFolder)",
+            "media": {
+              "image": "media/radon-bubble.svg",
+              "altText": "Radon IDE logo"
+            }
+          },
+          {
+            "id": "open-radon-ide-panel",
+            "title": "Open Radon IDE Panel",
+            "description": "Use the __Open IDE Panel__ button in the top-right corner or run ``Radon IDE: Open IDE Panel`` command in the [Command Palette](command:workbench.action.showCommands). \n[Open Panel](command:RNIDE.openPanel)",
+            "media": {
+              "markdown": "media/open-ide-panel.md"
+            }
+          },
+          {
+            "id": "create-new-device",
+            "title": "Create new device",
+            "description": "Use __Add iPhone__ or __Add Android__ button in the panel or use __Create new device__ button.",
+            "media": {
+              "markdown": "media/create-new-device.md"
+            }
+          },
+          {
+            "id": "wait-for-project",
+            "title": "Wait for your project to build and run",
+            "description": "Set back and relax as building the project for the first time might take may take a longer while. Encountered an issue with a build? \n[See Troubleshooting](https://ide.swmansion.com/docs/guides/troubleshooting)",
+            "media": {
+              "markdown": "media/wait-for-project-to-build.md"
+            }
+          },
+          {
+            "id": "explore-features",
+            "title": "Explore features",
+            "description": "Explore all the Radon IDE features on your own or see [feature highlight](https://ide.swmansion.com/docs/getting-started/feature-highlight) on our website.\nTake a look at our [Release Notes](https://github.com/software-mansion/radon-ide/releases) to learn about all the newest features and improvements in Radon IDE. \n[Open Feature Highlight](https://ide.swmansion.com/docs/getting-started/feature-highlight)",
+            "media": {
+              "markdown": "media/explore-features.md"
+            }
+          }
+        ]
+      }
+    ],
+    "icons": {
+      "radon-off": {
+        "description": "Shutdown icon",
+        "default": {
+          "fontPath": "assets/font-icons.woff2",
+          "fontCharacter": "\\E001"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:package": "vsce package",
@@ -555,13 +614,12 @@
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
     "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
     "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui",
-    "build:extension-debug": "node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
+    "build:extension-debug": "npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
     "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
-    "build:sim-server": "bash ./scripts/install-sim-server-release-build.sh dist",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
-    "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview && npm run build:third-party-notice",
+    "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
@@ -570,8 +628,11 @@
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
     "build:plugins": "bash ./scripts/install-dev-plugins.sh",
+    "build:icons": "fantasticon -c ./font-icons/fantasticon.config.json",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
-    "preinstall": "cd ../vscode-js-debug && git submodule update --init ./ && npm install && npm exec tsc"
+    "preinstall": "bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && cd ../vscode-js-debug && npm i && npm exec tsc",
+    "fetch:sim-server-assets": "bash ./scripts/download-sim-server-release-assets.sh dist",
+    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
@@ -623,6 +684,7 @@
     "eslint-import-resolver-typescript": "^3.6.3",
     "eslint-plugin-import": "^2.30.0",
     "execa": "^5.1.1",
+    "fantasticon": "^3.0.0",
     "file-loader": "^6.2.0",
     "glob": "^7.1.6",
     "lodash": "^4.17.21",
@@ -640,6 +702,7 @@
     "semver": "^7.6.2",
     "sinon": "^18.0.0",
     "source-map": "^0.8.0-beta.0",
+    "tar": "^7.4.3",
     "ts-loader": "^9.5.1",
     "typescript": "^5.6.2",
     "url-loader": "^4.1.1",
@@ -648,7 +711,6 @@
     "vscode-js-debug": "file:../vscode-js-debug",
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
-    "xml2js": "^0.6.2",
-    "tar": "^7.4.3"
+    "xml2js": "^0.6.2"
   }
 }
