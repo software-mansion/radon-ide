@@ -11,7 +11,7 @@ import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
-import { progressiveRetryValue, sleep } from "../utilities/retry";
+import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -316,7 +316,7 @@ export class Metro implements Disposable {
         return websocketAddress;
       }
 
-      await sleep(progressiveRetryValue(retryCount));
+      await sleep(progressiveRetryTimeout(retryCount));
     }
 
     return undefined;
