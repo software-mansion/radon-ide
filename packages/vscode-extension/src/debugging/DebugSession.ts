@@ -1,3 +1,4 @@
+import path from "path";
 import {
   commands,
   debug,
@@ -6,8 +7,6 @@ import {
   DebugSession as VscDebugSession,
 } from "vscode";
 import { Metro } from "../project/metro";
-import { CDPProxy } from "./CDPProxy";
-import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 
 export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
@@ -53,36 +52,22 @@ export class DebugSession implements Disposable {
     const isUsingNewDebugger = this.metro.isUsingNewDebugger;
 
     if (isUsingNewDebugger) {
-      const sourceMapAliases: Array<[string, string]> = [];
-      if (isUsingNewDebugger && this.metro.watchFolders.length > 0) {
-        // first entry in watchFolders is the project root
-        sourceMapAliases.push(["/[metro-project]/", this.metro.watchFolders[0]]);
+      const sourceMapPathOverrides: Record<string, string> = {};
+      if (this.metro.watchFolders.length > 0) {
+        sourceMapPathOverrides["/[metro-project]/*"] = `${this.metro.watchFolders[0]}${path.sep}*`;
         this.metro.watchFolders.forEach((watchFolder, index) => {
-          sourceMapAliases.push([`/[metro-watchFolders]/${index}/`, watchFolder]);
+          sourceMapPathOverrides[`/[metro-watchFolders]/${index}/*`] = `${watchFolder}${path.sep}*`;
         });
       }
-
-      const cdpProxyPort = Math.round(Math.random() * 40000 + 3000);
-
-      const cdpProxy = new CDPProxy(
-        "127.0.0.1",
-        cdpProxyPort,
-        websocketAddress,
-        new RadonCDPProxyDelegate(this.delegate)
-      );
-      await cdpProxy.initializeServer();
 
       debugStarted = await debug.startDebugging(
         undefined,
         {
-          type: "radon-pwa-node",
+          type: "com.swmansion.proxy-debugger",
           name: "Radon IDE Debugger",
           request: "attach",
-          port: cdpProxyPort,
-          sourceMapPathOverrides: Object.fromEntries(
-            sourceMapAliases.map(([alias, path]) => [`${alias}*`, `${path}/*`])
-          ),
-          resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
+          websocketAddress,
+          sourceMapPathOverrides,
         },
         {
           suppressDebugStatusbar: true,

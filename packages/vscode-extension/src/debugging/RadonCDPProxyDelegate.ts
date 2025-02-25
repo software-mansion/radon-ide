@@ -1,42 +1,31 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
-import { debug } from "vscode";
+import { EventEmitter } from "vscode";
 import { CDPProxyDelegate } from "./CDPProxy";
-import { DebugSessionDelegate } from "./DebugSession";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
-  constructor(private debugSessionDelegate: DebugSessionDelegate) {}
+  private debuggerPausedEmitter = new EventEmitter();
+  private debuggerResumedEmitter = new EventEmitter();
+
+  public onDebuggerPaused = this.debuggerPausedEmitter.event;
+  public onDebuggerResumed = this.debuggerResumedEmitter.event;
+
+  constructor() {}
   public handleApplicationCommand(command: IProtocolCommand): IProtocolCommand | undefined {
     switch (command.method) {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(command);
       }
       case "Debugger.paused": {
-        this.debugSessionDelegate.onDebuggerPaused({
-          event: "RNIDE_paused",
-          session: debug.activeDebugSession!,
-          body: {},
-        });
+        this.debuggerPausedEmitter.fire({});
         return command;
       }
-      // case "Debugger.resumed": {
-      //   this.debugSessionDelegate.onDebuggerPaused({
-      //     event: "RNIDE_continued",
-      //     session: debug.activeDebugSession!,
-      //     body: {},
-      //   });
-      //   return command;
-      // }
     }
     return command;
   }
   public handleDebuggerCommand(command: IProtocolCommand): IProtocolCommand | undefined {
     switch (command.method) {
       case "Debugger.resume": {
-        this.debugSessionDelegate.onDebuggerResumed({
-          event: "RNIDE_continued",
-          session: debug.activeDebugSession!,
-          body: {},
-        });
+        this.debuggerResumedEmitter.fire({});
         return command;
       }
     }

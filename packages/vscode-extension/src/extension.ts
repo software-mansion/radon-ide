@@ -33,6 +33,7 @@ import { findFilesInWorkspace, isWorkspaceRoot } from "./utilities/common";
 import { Platform } from "./utilities/platform";
 import { migrateOldBuildCachesToNewStorage } from "./builders/BuildCache";
 import { IDE } from "./project/ide";
+import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugSession";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -231,9 +232,24 @@ export async function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
+    debug.registerDebugConfigurationProvider(
+      "com.swmansion.proxy-debugger",
+      new DebugConfigProvider(),
+      DebugConfigurationProviderTriggerKind.Dynamic
+    )
+  );
+
+  context.subscriptions.push(
     debug.registerDebugAdapterDescriptorFactory(
       "com.swmansion.react-native-debugger",
       new DebugAdapterDescriptorFactory()
+    )
+  );
+
+  context.subscriptions.push(
+    debug.registerDebugAdapterDescriptorFactory(
+      "com.swmansion.proxy-debugger",
+      new ProxyDebugSessionAdapterDescriptorFactory()
     )
   );
 
