@@ -1,7 +1,7 @@
-const { RNIDEAppExtensionProxy } = require("./utils");
+const { AppExtensionProxy } = require("./AppExtensionProxy");
 
 export function broadcastQueryClient(scope, queryClient) {
-  const proxy = new RNIDEAppExtensionProxy(scope);
+  const proxy = new AppExtensionProxy(scope);
 
   let transaction = false;
 

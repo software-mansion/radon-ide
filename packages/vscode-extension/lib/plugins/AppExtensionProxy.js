@@ -1,4 +1,4 @@
-export class RNIDEAppExtensionProxy {
+export class AppExtensionProxy {
   scope;
   listeners = new Map();
   devtoolsAgent = undefined;
