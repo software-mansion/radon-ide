@@ -53,8 +53,7 @@ function RenderOutlinesOverlay() {
 
   useEffect(() => {
     if (!outlineRendererEnabled) {
-      const outlineRenderer: any = outlineRendererRef.current;
-      outlineRenderer?.worker?.terminate();
+      outlineRendererRef.current?.dispose();
       outlineRendererRef.current = null;
       return;
     }
