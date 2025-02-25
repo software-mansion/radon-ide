@@ -1,6 +1,15 @@
-const { AppExtensionProxy } = require("./AppExtensionProxy");
+import {
+  QueryClient
+} from '@tanstack/react-query';
+import {
+  register,
+} from '../expo_dev_plugins';
+import {
+  AppExtensionProxy
+} from './AppExtensionProxy';
 
-export function broadcastQueryClient(scope, queryClient) {
+
+function broadcastQueryClient(scope, queryClient) {
   const proxy = new AppExtensionProxy(scope);
 
   let transaction = false;
@@ -71,3 +80,12 @@ export function broadcastQueryClient(scope, queryClient) {
     });
   });
 }
+
+register('RNIDE-react-query-devtools');
+
+const origMount = QueryClient.prototype.mount;
+
+QueryClient.prototype.mount = function (...args) {
+  broadcastQueryClient('RNIDE-react-query-devtools', this);
+  return origMount.apply(this, args);
+};

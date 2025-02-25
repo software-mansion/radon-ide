@@ -123,7 +123,7 @@ function transformWrapper({ filename, src, ...rest }) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78/${jsxRuntimeFileName}");`;
     }
   } else if (isTransforming("node_modules/@tanstack/react-query/src/index.ts")) {
-    src = `require("__RNIDE_lib__/tanstack_query_plugin.js");${src}`;
+    src = `require("__RNIDE_lib__/plugins/react-query-devtools.js");${src}`;
   }
 
   return transform({ filename, src, ...rest });
