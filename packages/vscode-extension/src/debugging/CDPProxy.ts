@@ -1,5 +1,4 @@
 import { IncomingMessage } from "http";
-import { EventEmitter } from "vscode";
 import {
   Connection,
   IProtocolCommand,
@@ -23,11 +22,7 @@ export interface CDPProxyDelegate {
 
 export class CDPProxy {
   private server: Server | null = null;
-  private debuggerTarget: Connection | null = null;
-  private applicationTarget: Connection | null = null;
-  private applicationTargetEventEmitter: EventEmitter<unknown> = new EventEmitter();
-
-  public readonly onApplicationTargetConnectionClosed = this.applicationTargetEventEmitter.event;
+  private tunnel: ProxyTunnel | null = null;
 
   constructor(
     public readonly hostAddress: string,
@@ -50,10 +45,7 @@ export class CDPProxy {
       this.server = null;
     }
 
-    if (this.applicationTarget) {
-      await this.applicationTarget.close();
-      this.applicationTarget = null;
-    }
+    await this.tunnel?.close();
 
     this.browserInspectUri = "";
   }
@@ -62,18 +54,36 @@ export class CDPProxy {
     this.browserInspectUri = browserInspectUri;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async onConnectionHandler([debuggerTarget, request]: [
     Connection,
     IncomingMessage
   ]): Promise<void> {
-    this.debuggerTarget = debuggerTarget;
+    debuggerTarget = debuggerTarget;
 
-    this.debuggerTarget.pause(); // don't listen for events until the target is ready
+    debuggerTarget.pause(); // don't listen for events until the target is ready
 
-    this.applicationTarget = new Connection(
+    const applicationTarget = new Connection(
       await WebSocketTransport.create(this.browserInspectUri)
     );
+
+    this.tunnel = new ProxyTunnel(applicationTarget, debuggerTarget, this.cdpProxyDelegate);
+
+    // dequeue any messages we got in the meantime
+    debuggerTarget.unpause();
+  }
+}
+
+class ProxyTunnel {
+  private applicationTarget: Connection | null;
+  private debuggerTarget: Connection | null;
+
+  constructor(
+    applicationTarget: Connection,
+    debuggerTarget: Connection,
+    private cdpProxyDelegate: CDPProxyDelegate
+  ) {
+    this.applicationTarget = applicationTarget;
+    this.debuggerTarget = debuggerTarget;
 
     this.applicationTarget.onError(this.onApplicationTargetError.bind(this));
     this.debuggerTarget.onError(this.onDebuggerTargetError.bind(this));
@@ -86,9 +96,18 @@ export class CDPProxy {
 
     this.applicationTarget.onEnd(this.onApplicationTargetClosed.bind(this));
     this.debuggerTarget.onEnd(this.onDebuggerTargetClosed.bind(this));
+  }
 
-    // dequeue any messages we got in the meantime
-    this.debuggerTarget.unpause();
+  public async close(): Promise<void> {
+    if (this.applicationTarget) {
+      await this.applicationTarget.close();
+      this.applicationTarget = null;
+    }
+
+    if (this.debuggerTarget) {
+      await this.debuggerTarget.close();
+      this.debuggerTarget = null;
+    }
   }
 
   private handleDebuggerTargetCommand(event: IProtocolCommand) {
@@ -129,11 +148,11 @@ export class CDPProxy {
 
   private async onApplicationTargetClosed() {
     this.applicationTarget = null;
-    this.applicationTargetEventEmitter.fire({});
+    await this.close();
   }
 
   private async onDebuggerTargetClosed() {
-    this.browserInspectUri = "";
     this.debuggerTarget = null;
+    await this.close();
   }
 }
