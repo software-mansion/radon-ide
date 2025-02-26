@@ -1,10 +1,20 @@
 .button-group-top,
 .button-group-bottom {
   display: flex;
-  align-items: center;
+  justify-content: space-between;
   width: 100%;
   margin: 8px;
   gap: 4px;
+}
+
+.button-group-top-left,
+.button-group-top-right {
+  display: flex;
+  flex-direction: row;
+}
+
+.button-group-top-left {
+  flex: 1;
 }
 
 .icons-rewind:before {
@@ -71,10 +81,31 @@
 .recording-rec-indicator {
   display: flex;
   align-items: center;
-  color: white;
+  color: var(--swm-button-recording-on);
   font-size: 120%;
   filter: blur(0.4px);
   font-family: "Courier new", fixed;
+}
+
+.icon-red {
+  color: red;
+  font-size: 24px;
+  scale: 2.8;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .recording-rec-dot {
@@ -84,6 +115,7 @@
   align-self: center;
   border-radius: 50%;
   margin-right: 6px;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
 @media (max-width: 385px) {

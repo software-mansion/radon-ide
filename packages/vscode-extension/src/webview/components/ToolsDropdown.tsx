@@ -9,6 +9,7 @@ import "./ToolsDropdown.css";
 import { useProject } from "../providers/ProjectProvider";
 import IconButton from "./shared/IconButton";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import Label from "./shared/Label";
 
 interface DevToolCheckboxProps {
   label: string;
@@ -75,6 +76,16 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           className="dropdown-menu-content device-settings-content"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Tools</h4>
+          <Label>Utilities</Label>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() =>
+              isProfilingCPU ? project.stopProfilingCPU() : project.startProfilingCPU()
+            }>
+            <span className="codicon codicon-chip" />
+            {isProfilingCPU ? "Stop JS CPU Profiler" : "Start JS CPU Profiler"}
+          </DropdownMenu.Item>
+          <Label>Tool Panels</Label>
           {toolEntries}
           {toolEntries.length === 0 && (
             <div className="tools-empty-message">
@@ -82,13 +93,6 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
               <a href="https://ide.swmansion.com/docs/features/dev-tools">Learn more</a>
             </div>
           )}
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() =>
-              isProfilingCPU ? project.stopProfilingCPU() : project.startProfilingCPU()
-            }>
-            {isProfilingCPU ? "Stop JS Profiler" : "Start JS Profiler"}
-          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenuRoot>

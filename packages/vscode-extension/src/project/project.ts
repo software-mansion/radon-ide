@@ -1,6 +1,15 @@
 import { EventEmitter } from "stream";
 import os from "os";
-import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
+import {
+  env,
+  Disposable,
+  commands,
+  workspace,
+  window,
+  DebugSessionCustomEvent,
+  Uri,
+  extensions,
+} from "vscode";
 import _ from "lodash";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
@@ -41,6 +50,8 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
+import path from "path";
+import fs from "fs";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -235,8 +246,52 @@ export class Project
     this.eventEmitter.emit("isProfilingCPU", true);
   }
 
-  onProfilingCPUStopped(event: DebugSessionCustomEvent): void {
+  async onProfilingCPUStopped(event: DebugSessionCustomEvent) {
     this.eventEmitter.emit("isProfilingCPU", false);
+
+    // Handle the profile file if a file path is provided
+    if (event.body && event.body.filePath) {
+      const tempFilePath = event.body.filePath;
+
+      // Show save dialog to save the profile file to the workspace folder:
+      let defaultUri = Uri.file(tempFilePath);
+      const workspaceFolder = workspace.workspaceFolders?.[0];
+      if (workspaceFolder) {
+        defaultUri = Uri.file(path.join(workspaceFolder.uri.fsPath, path.basename(tempFilePath)));
+      }
+
+      const saveDialog = await window.showSaveDialog({
+        defaultUri,
+        filters: {
+          "CPU Profile": ["cpuprofile"],
+        },
+      });
+
+      if (saveDialog) {
+        await fs.promises.copyFile(tempFilePath, saveDialog.fsPath);
+        commands.executeCommand("vscode.open", Uri.file(saveDialog.fsPath));
+
+        // verify whether flame chart visualizer extension is installed
+        // flame chart visualizer is not necessary to open the cpuprofile file, but when it is installed,
+        // the user can use the flame button from cpuprofile view to visualize it differently
+        const flameChartExtension = extensions.getExtension("ms-vscode.vscode-js-profile-flame");
+        if (!flameChartExtension) {
+          window
+            .showInformationMessage(
+              "Flame Chart Visualizer extension is not installed. It is recommended to install it for better profiling insights.",
+              "Install Now"
+            )
+            .then((action) => {
+              if (action === "Install Now") {
+                commands.executeCommand(
+                  "workbench.extensions.search",
+                  "ms-vscode.vscode-js-profile-flame"
+                );
+              }
+            });
+        }
+      }
+    }
   }
 
   async captureAndStopRecording() {
