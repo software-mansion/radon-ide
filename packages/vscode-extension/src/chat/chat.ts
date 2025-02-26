@@ -4,6 +4,8 @@ const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 
 const START_OF_DOCUMENTATION = "\n# RELEVANT DOCUMENTATION:\n\n";
 const END_OF_DOCUMENTATION = "\n# END OF DOCUMENTATION.\n\n";
+const START_OF_PREVIOUS_RESPONSES = "\n# PREVIOUS RESPONSES:\n\n";
+const END_OF_PREVIOUS_RESPONSES = "\n# END OF PREVIOUS RESPONSES.\n\n";
 const HELPFUL_ASSISTANT = `
 You are a React Native expert.\n\n
 You are provided with detailed documentation and context.\n\n
@@ -21,7 +23,7 @@ interface IChatResult extends vscode.ChatResult {
 export function registerChat(context: vscode.ExtensionContext) {
   const handler: vscode.ChatRequestHandler = async (
     request: vscode.ChatRequest,
-    _: vscode.ChatContext,
+    chatContext: vscode.ChatContext,
     stream: vscode.ChatResponseStream,
     token: vscode.CancellationToken
   ): Promise<IChatResult> => {
@@ -43,6 +45,28 @@ export function registerChat(context: vscode.ExtensionContext) {
 
       if (json) {
         systemPrompt += START_OF_DOCUMENTATION + json.docs + END_OF_DOCUMENTATION;
+      }
+
+      const previousResponses = chatContext.history.filter(
+        (chatTurn) => chatTurn.participant === CHAT_PARTICIPANT_ID
+      );
+
+      if (previousResponses.length > 0) {
+        let history = "";
+        previousResponses.forEach((response) => {
+          if ("prompt" in response) {
+            history += `USER: ${response.prompt}\n\n`;
+          }
+          if ("response" in response) {
+            response.response.forEach((r) => {
+              if (r instanceof vscode.ChatResponseMarkdownPart) {
+                history += `ASSISTANT: ${r.value.value}\n\n`;
+              }
+            });
+          }
+        });
+
+        systemPrompt += START_OF_PREVIOUS_RESPONSES + history + END_OF_PREVIOUS_RESPONSES;
       }
 
       systemPrompt += HELPFUL_ASSISTANT + START_OF_USER_QUESTION;
