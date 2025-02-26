@@ -4,6 +4,7 @@ import { DebugProtocol } from "@vscode/debugprotocol";
 import { debug, Disposable } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
+import { disposeAll } from "../utilities/disposables";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -15,22 +16,25 @@ export class ProxyDebugSessionAdapterDescriptorFactory
   }
 }
 
-export class ProxyDebugSession extends DebugSession {
-  private websocketAddress: string;
-  private sourceMapPathOverrides: Record<string, string>;
+const CHILD_SESSION_TYPE = "radon-pwa-node";
 
+export class ProxyDebugSession extends DebugSession {
   private cdpProxy: CDPProxy;
   private disposables: Disposable[] = [];
+  private nodeDebugSession: vscode.DebugSession | null = null;
 
   constructor(private session: vscode.DebugSession) {
     super();
-    this.websocketAddress = session.configuration.websocketAddress;
-    this.sourceMapPathOverrides = session.configuration.sourceMapPathOverrides;
 
     const cdpProxyPort = Math.round(Math.random() * 40000 + 3000);
     const proxyDelegate = new RadonCDPProxyDelegate();
 
-    this.cdpProxy = new CDPProxy("127.0.0.1", cdpProxyPort, this.websocketAddress, proxyDelegate);
+    this.cdpProxy = new CDPProxy(
+      "127.0.0.1",
+      cdpProxyPort,
+      session.configuration.websocketAddress,
+      proxyDelegate
+    );
 
     this.disposables.push(
       proxyDelegate.onDebuggerPaused(() => {
@@ -84,13 +88,21 @@ export class ProxyDebugSession extends DebugSession {
   ) {
     await this.cdpProxy.initializeServer();
 
+    const unsub = vscode.debug.onDidStartDebugSession((session) => {
+      if (session.type === CHILD_SESSION_TYPE) {
+        this.nodeDebugSession = session;
+        unsub.dispose();
+      }
+    });
+
     const childSessionStarted = await debug.startDebugging(
       undefined,
       {
-        type: "radon-pwa-node",
+        type: CHILD_SESSION_TYPE,
         name: "Radon IDE Debugger",
         request: "attach",
         port: this.cdpProxy.port,
+        continueOnAttach: true,
         sourceMapPathOverrides: args.sourceMapPathOverrides,
         resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
       },
@@ -102,10 +114,12 @@ export class ProxyDebugSession extends DebugSession {
         parentSession: this.session,
         consoleMode: vscode.DebugConsoleMode.MergeWithParent,
         lifecycleManagedByParent: true,
+        compact: true,
       }
     );
 
     if (!childSessionStarted) {
+      console.assert(this.nodeDebugSession !== null);
       this.sendErrorResponse(
         response,
         { format: "Failed to attach debugger session", id: 1 },
@@ -116,5 +130,48 @@ export class ProxyDebugSession extends DebugSession {
     }
 
     this.sendResponse(response);
+  }
+
+  protected continueRequest(
+    response: DebugProtocol.ContinueResponse,
+    args: DebugProtocol.ContinueArguments,
+    request?: DebugProtocol.Request
+  ): void {
+    if (!this.nodeDebugSession) {
+      return;
+    }
+    vscode.commands.executeCommand("workbench.action.debug.continue", undefined, {
+      sessionId: this.nodeDebugSession.id,
+    });
+  }
+
+  protected nextRequest(
+    response: DebugProtocol.NextResponse,
+    args: DebugProtocol.NextArguments,
+    request?: DebugProtocol.Request
+  ): void {
+    if (!this.nodeDebugSession) {
+      return;
+    }
+    vscode.commands.executeCommand("workbench.action.debug.stepOver", undefined, {
+      sessionId: this.nodeDebugSession.id,
+    });
+  }
+
+  protected async disconnectRequest(
+    response: DebugProtocol.DisconnectResponse,
+    args: DebugProtocol.DisconnectArguments,
+    request?: DebugProtocol.Request
+  ) {
+    this.terminate();
+    this.sendResponse(response);
+  }
+
+  private terminate() {
+    this.cdpProxy.stopServer();
+    disposeAll(this.disposables);
+    vscode.commands.executeCommand("workbench.action.debug.stop", undefined, {
+      sessionId: this.session.id,
+    });
   }
 }

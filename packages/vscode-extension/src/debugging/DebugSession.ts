@@ -1,4 +1,5 @@
 import path from "path";
+import assert from "assert";
 import {
   commands,
   debug,
@@ -51,6 +52,15 @@ export class DebugSession implements Disposable {
     let debugStarted = false;
     const isUsingNewDebugger = this.metro.isUsingNewDebugger;
 
+    this.vscSession = undefined;
+
+    const unsub = debug.onDidStartDebugSession((session) => {
+      if (session.type.startsWith("com.swmansion.")) {
+        this.vscSession = session;
+        unsub.dispose();
+      }
+    });
+
     if (isUsingNewDebugger) {
       const sourceMapPathOverrides: Record<string, string> = {};
       if (this.metro.watchFolders.length > 0) {
@@ -97,7 +107,7 @@ export class DebugSession implements Disposable {
     }
 
     if (debugStarted) {
-      this.vscSession = debug.activeDebugSession!;
+      assert(this.vscSession);
       return true;
     }
     return false;
@@ -112,13 +122,15 @@ export class DebugSession implements Disposable {
   }
 
   public resumeDebugger() {
-    // this.session.customRequest("continue");
-    commands.executeCommand("workbench.action.debug.continue");
+    commands.executeCommand("workbench.action.debug.continue", undefined, {
+      sessionId: this.session.id,
+    });
   }
 
   public stepOverDebugger() {
-    // this.session.customRequest("next");
-    commands.executeCommand("workbench.action.debug.stepOver");
+    commands.executeCommand("workbench.action.debug.stepOver", undefined, {
+      sessionId: this.session.id,
+    });
   }
 
   private get session() {
