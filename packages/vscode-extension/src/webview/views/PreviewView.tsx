@@ -175,17 +175,20 @@ function PreviewView() {
           <UrlBar key={resetKey} disabled={hasNoDevices} />
         </div>
         <div className="button-group-top-right">
-          {isProfilingCPU && (
-            <IconButton
-              className="button-recording-on"
-              tooltip={{
-                label: "Stop profiling CPU",
-              }}
-              onClick={stopProfilingCPU}>
-              <div className="recording-rec-dot" />
-              <span>Profiling CPU&nbsp;</span>
-            </IconButton>
-          )}
+          <IconButton
+            className={isProfilingCPU ? "button-recording-on" : ""}
+            tooltip={{
+              label: "Stop profiling CPU",
+            }}
+            disabled={!isProfilingCPU}
+            onClick={stopProfilingCPU}>
+            {isProfilingCPU && (
+              <>
+                <div className="recording-rec-dot" />
+                <span>Profiling CPU</span>
+              </>
+            )}
+          </IconButton>
           <ToolsDropdown disabled={hasNoDevices || !isRunning}>
             <IconButton tooltip={{ label: "Tools", type: "primary" }}>
               <span className="codicon codicon-tools" />

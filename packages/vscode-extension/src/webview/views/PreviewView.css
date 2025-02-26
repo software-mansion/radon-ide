@@ -73,17 +73,17 @@
 .button-recording-on,
 .button-recording-on:hover {
   background-color: var(--swm-button-recording-on-background);
+  color: var(--swm-button-recording-on);
+  border: 1px solid var(--swm-button-counter-border);
   border-radius: 10px;
   width: auto;
-  padding: 0 5px 0 8px;
+  padding: 0 8px;
 }
 
 .recording-rec-indicator {
   display: flex;
   align-items: center;
-  color: var(--swm-button-recording-on);
   font-size: 120%;
-  filter: blur(0.4px);
   font-family: "Courier new", fixed;
 }
 
