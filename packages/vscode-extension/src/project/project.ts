@@ -80,6 +80,7 @@ export class Project
   public dependencyManager: DependencyManager;
 
   private appRootFolder: AppRootFolder;
+  private buildCache: BuildCache;
 
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
@@ -123,6 +124,7 @@ export class Project
 
     this.launchConfig = new LaunchConfigController(appRoot);
     this.dependencyManager = new DependencyManager(appRoot);
+    this.buildCache = new BuildCache(appRoot);
 
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
       appearance: "dark",
@@ -186,9 +188,12 @@ export class Project
         const oldDependencyManager = this.dependencyManager;
         this.dependencyManager = new DependencyManager(newAppRoot);
         oldDependencyManager?.dispose();
+
         const oldLaunchConfig = this.launchConfig;
         this.launchConfig = new LaunchConfigController(newAppRoot);
         oldLaunchConfig?.dispose();
+
+        this.buildCache = new BuildCache(newAppRoot);
 
         this.reload("reboot");
       })
@@ -879,7 +884,7 @@ export class Project
         this.devtools,
         this.metro,
         this.dependencyManager,
-        new BuildCache(device.platform, this.appRootFolder),
+        this.buildCache,
         this,
         this
       );
@@ -922,7 +927,11 @@ export class Project
 
   private checkIfNativeChanged = throttleAsync(async () => {
     if (!this.isCachedBuildStale && this.deviceSession) {
-      const isCacheStale = await this.deviceSession.buildCache.isCacheStale();
+      const isCacheStale =
+        !this.projectState.selectedDevice ||
+        (await this.deviceSession.buildCache.isCacheStale(
+          this.projectState.selectedDevice.platform
+        ));
 
       if (isCacheStale) {
         this.isCachedBuildStale = true;

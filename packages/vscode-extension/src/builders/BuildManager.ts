@@ -58,7 +58,7 @@ export class BuildManager {
     const cancelToken = new CancelToken();
 
     const buildApp = async () => {
-      const currentFingerprint = await this.buildCache.calculateFingerprint();
+      const currentFingerprint = await this.buildCache.calculateFingerprint(platform);
 
       // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
       const buildDependenciesChanged = await this.checkBuildDependenciesChanged(deviceInfo);
@@ -70,9 +70,9 @@ export class BuildManager {
           "Build cache is being invalidated",
           forceCleanBuild ? "on request" : "due to build dependencies change"
         );
-        await this.buildCache.clearCache();
+        await this.buildCache.clearCache(platform);
       } else {
-        const cachedBuild = await this.buildCache.getBuild(currentFingerprint);
+        const cachedBuild = await this.buildCache.getBuild(currentFingerprint, platform);
         if (cachedBuild) {
           Logger.debug("Skipping native build – using cached");
           getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
@@ -124,7 +124,7 @@ export class BuildManager {
             await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
             // Installing pods may impact the fingerprint as new pods may be created under the project directory.
             // For this reason we need to recalculate the fingerprint after installing pods.
-            buildFingerprint = await this.buildCache.calculateFingerprint();
+            buildFingerprint = await this.buildCache.calculateFingerprint(platform);
           }
         };
         buildResult = await buildIos(
@@ -138,7 +138,7 @@ export class BuildManager {
         );
       }
 
-      await this.buildCache.storeBuild(buildFingerprint, buildResult);
+      await this.buildCache.storeBuild(buildFingerprint, buildResult, platform);
 
       return buildResult;
     };
