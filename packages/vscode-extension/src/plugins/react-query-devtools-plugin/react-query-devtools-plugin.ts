@@ -3,7 +3,7 @@ import { ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { ReactQueryDevToolsPluginWebviewProvider } from "./ReactQueryDevToolsPluginWebviewProvider";
 
-export const REACT_QUERY_PLUGIN_ID = "RNIDE-react-query-devtools";
+export const REACT_QUERY_PLUGIN_ID = "react-query";
 const REACT_QUERY_PLUGIN_PREFIX = "RNIDE.Tool.ReactQueryDevTools";
 
 let initialzed = false;

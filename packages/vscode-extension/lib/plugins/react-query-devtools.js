@@ -81,11 +81,11 @@ function broadcastQueryClient(scope, queryClient) {
   });
 }
 
-register('RNIDE-react-query-devtools');
+register('react-query');
 
 const origMount = QueryClient.prototype.mount;
 
 QueryClient.prototype.mount = function (...args) {
-  broadcastQueryClient('RNIDE-react-query-devtools', this);
+  broadcastQueryClient('react-query', this);
   return origMount.apply(this, args);
 };
