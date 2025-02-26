@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import { createFingerprintAsync } from "@expo/fingerprint";
 import { Logger } from "../Logger";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import { AppRootFolder, extensionContext } from "../utilities/extensionContext";
 import { DevicePlatform } from "../common/DeviceManager";
 import { IOSBuildResult } from "./buildIOS";
 import { AndroidBuildResult } from "./buildAndroid";
@@ -37,11 +37,14 @@ function makeCacheKey(platform: DevicePlatform, appRoot: string) {
 }
 
 export class BuildCache {
-  private readonly cacheKey: string;
-
-  constructor(private readonly platform: DevicePlatform, private readonly appRoot: string) {
-    this.cacheKey = makeCacheKey(platform, appRoot);
+  private get cacheKey() {
+    return makeCacheKey(this.platform, this.appRootFolder.getAppRoot());
   }
+
+  constructor(
+    private readonly platform: DevicePlatform,
+    private readonly appRootFolder: AppRootFolder
+  ) {}
 
   /**
    * Passed fingerprint should be calculated at the time build is started.
@@ -112,7 +115,7 @@ export class BuildCache {
       return customFingerprint;
     }
 
-    const fingerprint = await createFingerprintAsync(getAppRootFolder(), {
+    const fingerprint = await createFingerprintAsync(this.appRootFolder.getAppRoot(), {
       ignorePaths: IGNORE_PATHS,
     });
     Logger.debug("App folder fingerprint", fingerprint.hash);
@@ -134,7 +137,11 @@ export class BuildCache {
     }
 
     Logger.debug(`Using custom fingerprint script '${fingerprintCommand}'`);
-    const fingerprint = await runfingerprintCommand(fingerprintCommand, env);
+    const fingerprint = await runfingerprintCommand(
+      fingerprintCommand,
+      env,
+      this.appRootFolder.getAppRoot()
+    );
 
     if (!fingerprint) {
       throw new Error("Failed to generate application fingerprint using custom script.");
@@ -153,10 +160,8 @@ async function getAppHash(appPath: string) {
   return (await calculateMD5(appPath)).digest("hex");
 }
 
-export async function migrateOldBuildCachesToNewStorage() {
+export async function migrateOldBuildCachesToNewStorage(appRoot: string) {
   try {
-    const appRoot = getAppRootFolder();
-
     for (const platform of [DevicePlatform.Android, DevicePlatform.IOS]) {
       const oldKey =
         platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;

@@ -1,8 +1,6 @@
 import path from "path";
-import { getAppRootFolder } from "./extensionContext";
 
-export function getReactNativeVersion() {
-  const workspacePath = getAppRootFolder();
+export function getReactNativeVersion(workspacePath: string) {
   const reactNativeRoot = path.dirname(require.resolve("react-native", { paths: [workspacePath] }));
   const packageJsonPath = path.join(reactNativeRoot, "package.json");
   const packageJson = require(packageJsonPath);

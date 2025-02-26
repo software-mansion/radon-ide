@@ -1,6 +1,14 @@
 import { EventEmitter } from "stream";
 import os from "os";
-import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
+import {
+  env,
+  Disposable,
+  commands,
+  workspace,
+  window,
+  DebugSessionCustomEvent,
+  ConfigurationChangeEvent,
+} from "vscode";
 import _ from "lodash";
 import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
@@ -21,7 +29,12 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import {
+  AppRootFolder,
+  extensionContext,
+  findAppRootFolder,
+  getCurrentLaunchConfig,
+} from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DependencyManager } from "../dependency/DependencyManager";
@@ -30,7 +43,7 @@ import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
-import { BuildCache } from "../builders/BuildCache";
+import { BuildCache, migrateOldBuildCachesToNewStorage } from "../builders/BuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
@@ -41,6 +54,9 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
+import { LaunchConfigController } from "../panels/LaunchConfigController";
+import { Platform } from "../utilities/platform";
+import { setupPathEnv } from "../utilities/subprocess";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -59,14 +75,16 @@ export class Project
 {
   public metro: Metro;
   public toolsManager: ToolsManager;
+
+  public launchConfig: LaunchConfigController;
+  public dependencyManager: DependencyManager;
+
+  private appRootFolder: AppRootFolder;
+
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
 
   private isCachedBuildStale: boolean;
-
-  private fileWatcher: Disposable;
-  private licenseWatcher: Disposable;
-  private licenseUpdater: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -80,11 +98,32 @@ export class Project
 
   private deviceSettings: DeviceSettings;
 
+  private disposables: Disposable[] = [];
+
   constructor(
     private readonly deviceManager: DeviceManager,
-    private readonly dependencyManager: DependencyManager,
     private readonly utils: UtilsInterface
   ) {
+    const appRoot = findAppRootFolder();
+    if (!appRoot) {
+      window.showErrorMessage(
+        "Failed to determine any application root candidates, you can set it up manually in launch configuration",
+        "Dismiss"
+      );
+      Logger.error("[Project] The application root could not be found.");
+      throw Error(
+        "Couldn't find app root folder. The extension should not be activated without reachable app root."
+      );
+    }
+
+    Logger.info(`Found app root folder: ${appRoot}`);
+    migrateOldBuildCachesToNewStorage(appRoot);
+
+    this.appRootFolder = new AppRootFolder(appRoot);
+
+    this.launchConfig = new LaunchConfigController(appRoot);
+    this.dependencyManager = new DependencyManager(appRoot);
+
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
       appearance: "dark",
       contentSize: "normal",
@@ -101,20 +140,80 @@ export class Project
 
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
-    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.isCachedBuildStale = false;
+    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
 
-    this.fileWatcher = watchProjectFiles(() => {
-      this.checkIfNativeChanged();
-    });
-    this.licenseUpdater = refreshTokenPeriodically();
-    this.licenseWatcher = watchLicenseTokenChange(async () => {
-      const hasActiveLicense = await this.hasActiveLicense();
-      this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
-    });
+    this.disposables.push(this.toolsManager);
+    this.disposables.push(
+      watchProjectFiles(() => {
+        this.checkIfNativeChanged();
+      })
+    );
+    this.disposables.push(refreshTokenPeriodically());
+    this.disposables.push(
+      watchLicenseTokenChange(async () => {
+        const hasActiveLicense = await this.hasActiveLicense();
+        this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
+      })
+    );
+
+    this.disposables.push(
+      workspace.onDidChangeConfiguration(async (event: ConfigurationChangeEvent) => {
+        if (event.affectsConfiguration("launch")) {
+          const config = getCurrentLaunchConfig();
+          const oldAppRoot = this.appRootFolder?.getAppRoot();
+          if (config.appRoot === oldAppRoot) {
+            return;
+          }
+          const newAppRoot = await this.setupAppRoot();
+
+          if (newAppRoot === undefined) {
+            window.showErrorMessage(
+              "Unable to find the new app root, after a change in launch configuration. Radon IDE might not work properly.",
+              "Dismiss"
+            );
+            return;
+          }
+        }
+      })
+    );
+
+    this.disposables.push(
+      this.appRootFolder.onChangeAppRoot((newAppRoot: string) => {
+        const oldDependencyManager = this.dependencyManager;
+        this.dependencyManager = new DependencyManager(newAppRoot);
+        oldDependencyManager?.dispose();
+        const oldLaunchConfig = this.launchConfig;
+        this.launchConfig = new LaunchConfigController(newAppRoot);
+        oldLaunchConfig?.dispose();
+
+        this.reload("reboot");
+      })
+    );
+  }
+
+  private async setupAppRoot() {
+    const appRoot = findAppRootFolder();
+    if (!appRoot) {
+      return;
+    }
+
+    this.appRootFolder.setAppRoot(appRoot);
+
+    if (Platform.OS === "macos") {
+      try {
+        await setupPathEnv(appRoot);
+      } catch (error) {
+        window.showWarningMessage(
+          "Error when setting up PATH environment variable, RN IDE may not work correctly.",
+          "Dismiss"
+        );
+      }
+    }
+    return appRoot;
   }
 
   //#region Build progress
@@ -356,10 +455,11 @@ export class Project
     this.metro?.dispose();
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
-    this.fileWatcher.dispose();
-    this.licenseWatcher.dispose();
-    this.licenseUpdater.dispose();
-    this.toolsManager.dispose();
+    this.dependencyManager?.dispose();
+    this.launchConfig?.dispose();
+    this.disposables.forEach((disposable) => {
+      disposable.dispose();
+    });
   }
 
   private async reloadMetro() {
@@ -498,7 +598,8 @@ export class Project
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
-      [waitForNodeModules]
+      [waitForNodeModules],
+      this.appRootFolder.getAppRoot()
     );
   }
   //#endregion
@@ -707,6 +808,8 @@ export class Project
   }
 
   private async ensureDependenciesAndNodeVersion() {
+    const appRoot = this.appRootFolder.getAppRoot();
+
     const installed = await this.dependencyManager.checkNodeModulesInstallationStatus();
 
     if (!installed) {
@@ -717,7 +820,7 @@ export class Project
       Logger.debug("Node modules already installed - skipping");
     }
 
-    await this.dependencyManager.validateNodeVersion();
+    await this.dependencyManager.validateNodeVersion(appRoot);
   }
 
   //#region Select device
@@ -776,13 +879,13 @@ export class Project
         this.devtools,
         this.metro,
         this.dependencyManager,
-        new BuildCache(device.platform, getAppRootFolder()),
+        new BuildCache(device.platform, this.appRootFolder),
         this,
         this
       );
       this.deviceSession = newDeviceSession;
 
-      const previewURL = await newDeviceSession.start(this.deviceSettings, {
+      const previewURL = await newDeviceSession.start(this.deviceSettings, this.appRootFolder, {
         cleanBuild: forceCleanBuild,
         previewReadyCallback: (url) => {
           this.updateProjectStateForDevice(deviceInfo, { previewURL: url });

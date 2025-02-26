@@ -17,6 +17,7 @@ import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildCache } from "../builders/BuildCache";
+import { AppRootFolder } from "../utilities/extensionContext";
 import { CancelToken } from "../builders/cancelToken";
 
 type PreviewReadyCallback = (previewURL: string) => void;
@@ -213,10 +214,11 @@ export class DeviceSession implements Disposable {
     }
   }
 
-  private async buildApp({ clean }: { clean: boolean }) {
+  private async buildApp({ appRoot, clean }: { appRoot: string; clean: boolean }) {
     const buildStartTime = Date.now();
     this.eventDelegate.onStateChange(StartupMessage.Building);
     this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
+      appRoot,
       clean,
       onSuccess: this.eventDelegate.onBuildSuccess,
       progressListener: throttle((stageProgress: number) => {
@@ -249,13 +251,14 @@ export class DeviceSession implements Disposable {
 
   public async start(
     deviceSettings: DeviceSettings,
+    appRootFolder: AppRootFolder,
     { cleanBuild, previewReadyCallback }: StartOptions
   ) {
     this.deviceSettings = deviceSettings;
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
-    await this.buildApp({ clean: cleanBuild });
+    await this.buildApp({ appRoot: appRootFolder.getAppRoot(), clean: cleanBuild });
     await this.installApp({ reinstall: false });
     const previewUrl = await this.launchApp(previewReadyCallback);
     Logger.debug("Device session started");

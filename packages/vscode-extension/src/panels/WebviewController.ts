@@ -27,18 +27,20 @@ export class WebviewController implements Disposable {
   });
 
   private readonly callableObjects: Map<string, object>;
-  private readonly ide = IDE.attach();
+  private readonly ide;
 
   constructor(private webview: Webview) {
+    this.ide = IDE.attach();
+
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
     this.callableObjects = new Map([
       ["DeviceManager", this.ide.deviceManager as object],
-      ["DependencyManager", this.ide.dependencyManager as object],
+      ["DependencyManager", this.ide.project.dependencyManager as object],
       ["Project", this.ide.project as object],
       ["WorkspaceConfig", this.ide.workspaceConfigController as object],
-      ["LaunchConfig", this.ide.launchConfig as object],
+      ["LaunchConfig", this.ide.project.launchConfig as object],
       ["Utils", this.ide.utils as object],
     ]);
 
