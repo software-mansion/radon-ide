@@ -3,6 +3,7 @@ import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
+import { RENDER_OUTLINES_PLUGIN_ID } from "../plugins/render-outlines/render-outlines-plugin";
 
 type CallArgs = {
   callId: string;
@@ -40,6 +41,10 @@ export class WebviewController implements Disposable {
       ["WorkspaceConfig", this.ide.workspaceConfigController as object],
       ["LaunchConfig", this.ide.launchConfig as object],
       ["Utils", this.ide.utils as object],
+      [
+        "RenderOutlines",
+        this.ide.project.toolsManager.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
+      ],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
