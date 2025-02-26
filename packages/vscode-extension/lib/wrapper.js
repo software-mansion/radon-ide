@@ -39,6 +39,9 @@ const InternalImports = {
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
   },
+  get updateInstrumentationOptions() {
+    return require("./instrumentation").updateInstrumentationOptions;
+  },
 };
 
 window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
@@ -406,6 +409,26 @@ export function AppWrapper({ children, initialProps, fabric }) {
       };
     }
   }, [!!devtoolsAgent && hasLayout]);
+
+  useEffect(() => {
+    if (!devtoolsAgent) {
+      return;
+    }
+    InternalImports.updateInstrumentationOptions({
+      reportRenders: (blueprintOutlines) => {
+        devtoolsAgent._bridge.send("RNIDE_rendersReported", { blueprintOutlines });
+      },
+    });
+  }, [devtoolsAgent]);
+
+  useAgentListener(
+    devtoolsAgent,
+    "RNIDE_updateInstrumentationOptions",
+    (payload) => {
+      InternalImports.updateInstrumentationOptions(payload);
+    },
+    []
+  );
 
   return (
     <View
