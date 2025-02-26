@@ -890,12 +890,16 @@ export class Project
       );
       this.deviceSession = newDeviceSession;
 
-      const previewURL = await newDeviceSession.start(this.deviceSettings, this.appRootFolder, {
-        cleanBuild: forceCleanBuild,
-        previewReadyCallback: (url) => {
-          this.updateProjectStateForDevice(deviceInfo, { previewURL: url });
-        },
-      });
+      const previewURL = await newDeviceSession.start(
+        this.deviceSettings,
+        this.appRootFolder.getAppRoot(),
+        {
+          cleanBuild: forceCleanBuild,
+          previewReadyCallback: (url) => {
+            this.updateProjectStateForDevice(deviceInfo, { previewURL: url });
+          },
+        }
+      );
       this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
         previewURL,
         status: "running",

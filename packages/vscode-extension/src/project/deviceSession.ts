@@ -17,7 +17,6 @@ import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildCache } from "../builders/BuildCache";
-import { AppRootFolder } from "../utilities/extensionContext";
 import { CancelToken } from "../builders/cancelToken";
 
 type PreviewReadyCallback = (previewURL: string) => void;
@@ -251,14 +250,14 @@ export class DeviceSession implements Disposable {
 
   public async start(
     deviceSettings: DeviceSettings,
-    appRootFolder: AppRootFolder,
+    appRoot: string,
     { cleanBuild, previewReadyCallback }: StartOptions
   ) {
     this.deviceSettings = deviceSettings;
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
-    await this.buildApp({ appRoot: appRootFolder.getAppRoot(), clean: cleanBuild });
+    await this.buildApp({ appRoot, clean: cleanBuild });
     await this.installApp({ reinstall: false });
     const previewUrl = await this.launchApp(previewReadyCallback);
     Logger.debug("Device session started");
