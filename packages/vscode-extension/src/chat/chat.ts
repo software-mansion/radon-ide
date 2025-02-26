@@ -14,6 +14,8 @@ Always assume that the user already has a development environment set up for Rea
 `;
 const START_OF_USER_QUESTION = "\n# ANSWER THE FOLLOWING USER QUESTION:\n\n";
 
+const BASE_RADON_AI_URL = "http://127.0.0.1:8000";
+
 interface IChatResult extends vscode.ChatResult {
   metadata: {
     command: string;
@@ -31,7 +33,8 @@ export function registerChat(context: vscode.ExtensionContext) {
     try {
       let json;
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/v1/documentation", {
+        const url = new URL("/api/documentation", BASE_RADON_AI_URL);
+        const response = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt: request.prompt }),
