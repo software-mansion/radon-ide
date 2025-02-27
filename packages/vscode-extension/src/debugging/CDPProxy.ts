@@ -10,14 +10,14 @@ import {
 import { Logger } from "../Logger";
 
 export interface CDPProxyDelegate {
-  handleApplicationCommand(command: IProtocolCommand): IProtocolCommand | undefined;
-  handleDebuggerCommand(command: IProtocolCommand): IProtocolCommand | undefined;
+  handleApplicationCommand(command: IProtocolCommand): Promise<IProtocolCommand | undefined>;
+  handleDebuggerCommand(command: IProtocolCommand): Promise<IProtocolCommand | undefined>;
   handleApplicationReply(
     reply: IProtocolSuccess | IProtocolError
-  ): IProtocolSuccess | IProtocolError | undefined;
+  ): Promise<IProtocolSuccess | IProtocolError | undefined>;
   handleDebuggerReply(
     reply: IProtocolSuccess | IProtocolError
-  ): IProtocolSuccess | IProtocolError | undefined;
+  ): Promise<IProtocolSuccess | IProtocolError | undefined>;
 }
 
 export class CDPProxy {
@@ -110,29 +110,29 @@ class ProxyTunnel {
     }
   }
 
-  private handleDebuggerTargetCommand(event: IProtocolCommand) {
-    const processedMessage = this.cdpProxyDelegate.handleDebuggerCommand(event);
+  private async handleDebuggerTargetCommand(event: IProtocolCommand) {
+    const processedMessage = await this.cdpProxyDelegate.handleDebuggerCommand(event);
     if (processedMessage) {
       this.applicationTarget?.send(event);
     }
   }
 
-  private handleApplicationTargetCommand(event: IProtocolCommand) {
-    const processedMessage = this.cdpProxyDelegate.handleApplicationCommand(event);
+  private async handleApplicationTargetCommand(event: IProtocolCommand) {
+    const processedMessage = await this.cdpProxyDelegate.handleApplicationCommand(event);
     if (processedMessage) {
       this.debuggerTarget?.send(event);
     }
   }
 
-  private handleDebuggerTargetReply(event: IProtocolError | IProtocolSuccess) {
-    const processedMessage = this.cdpProxyDelegate.handleDebuggerReply(event);
+  private async handleDebuggerTargetReply(event: IProtocolError | IProtocolSuccess) {
+    const processedMessage = await this.cdpProxyDelegate.handleDebuggerReply(event);
     if (processedMessage) {
       this.applicationTarget?.send(processedMessage);
     }
   }
 
-  private handleApplicationTargetReply(event: IProtocolError | IProtocolSuccess) {
-    const processedMessage = this.cdpProxyDelegate.handleApplicationReply(event);
+  private async handleApplicationTargetReply(event: IProtocolError | IProtocolSuccess) {
+    const processedMessage = await this.cdpProxyDelegate.handleApplicationReply(event);
     if (processedMessage) {
       this.debuggerTarget?.send(event);
     }

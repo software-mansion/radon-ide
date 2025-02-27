@@ -1,16 +1,24 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
 import { EventEmitter } from "vscode";
 import { CDPProxyDelegate } from "./CDPProxy";
+import { Logger } from "../Logger";
+import _ from "lodash";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter();
   private debuggerResumedEmitter = new EventEmitter();
+  private debuggerReadyEmitter = new EventEmitter();
 
   public onDebuggerPaused = this.debuggerPausedEmitter.event;
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
+  public onDebuggerReady = this.debuggerReadyEmitter.event;
 
   constructor() {}
-  public handleApplicationCommand(command: IProtocolCommand): IProtocolCommand | undefined {
+
+  public async handleApplicationCommand(
+    command: IProtocolCommand
+  ): Promise<IProtocolCommand | undefined> {
+    console.log("Application Command", command);
     switch (command.method) {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(command);
@@ -19,10 +27,16 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         this.debuggerPausedEmitter.fire({});
         return command;
       }
+      case "Debugger.scriptParsed": {
+        return this.handleScriptParsed(command);
+      }
     }
     return command;
   }
-  public handleDebuggerCommand(command: IProtocolCommand): IProtocolCommand | undefined {
+
+  public async handleDebuggerCommand(
+    command: IProtocolCommand
+  ): Promise<IProtocolCommand | undefined> {
     switch (command.method) {
       case "Debugger.resume": {
         this.debuggerResumedEmitter.fire({});
@@ -31,14 +45,16 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     }
     return command;
   }
-  public handleApplicationReply(
+
+  public async handleApplicationReply(
     reply: IProtocolSuccess | IProtocolError
-  ): IProtocolSuccess | IProtocolError | undefined {
+  ): Promise<IProtocolSuccess | IProtocolError | undefined> {
     return reply;
   }
-  public handleDebuggerReply(
+
+  public async handleDebuggerReply(
     reply: IProtocolSuccess | IProtocolError
-  ): IProtocolSuccess | IProtocolError | undefined {
+  ): Promise<IProtocolSuccess | IProtocolError | undefined> {
     return reply;
   }
 
@@ -75,6 +91,52 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       stackTrace?.callFrames.splice(0, originalCallFrameIndex);
 
       return command;
+    }
+
+    return command;
+  }
+
+  private async handleScriptParsed(
+    _command: IProtocolCommand
+  ): Promise<IProtocolCommand | undefined> {
+    const command = _.cloneDeep(_command);
+    const params = command.params as Cdp.Debugger.ScriptParsedEvent;
+    const sourceMapURL = params.sourceMapURL;
+    if (!sourceMapURL) {
+      return command;
+    }
+
+    Logger.log("Source Map URL", sourceMapURL);
+
+    let sourceMapData;
+    if (sourceMapURL?.startsWith("data:")) {
+      const base64Data = sourceMapURL.split(",")[1];
+      const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
+      sourceMapData = JSON.parse(decodedData);
+    } else {
+      try {
+        const sourceMapResponse = await fetch(sourceMapURL);
+        sourceMapData = await sourceMapResponse.json();
+        const base64URL = Buffer.from(JSON.stringify(sourceMapData)).toString("base64");
+
+        // we need to overwrite the sourceMapURL with the base64 encoded source map
+        // because the js-debug node debugger does not support fetching source maps from http servers
+        params.sourceMapURL = `data:application/json;base64,${base64URL}`;
+      } catch {
+        Logger.debug(`Failed to fetch source map from: ${sourceMapURL}`);
+      }
+    }
+
+    if (!sourceMapData) {
+      return command;
+    }
+
+    const isMainBundle = sourceMapData.sources.some((source: string) =>
+      source.includes("__prelude__")
+    );
+
+    if (isMainBundle) {
+      this.debuggerReadyEmitter.fire({});
     }
 
     return command;

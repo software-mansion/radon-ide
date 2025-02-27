@@ -46,6 +46,11 @@ export class ProxyDebugSession extends DebugSession {
         this.sendEvent(new Event("RNIDE_continued"));
       })
     );
+    this.disposables.push(
+      proxyDelegate.onDebuggerReady(() => {
+        // this.sendEvent(new Event("RNIDE_continued"));
+      })
+    );
   }
 
   protected initializeRequest(
