@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { getLicenseToken } from "../utilities/license";
 
 const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 
@@ -30,13 +31,21 @@ export function registerChat(context: vscode.ExtensionContext) {
     token: vscode.CancellationToken
   ): Promise<IChatResult> => {
     stream.progress("Thinking...");
+
+    const jwt = await getLicenseToken();
+
+    // TODO: don't allow to use Radon AI when no license token is available
+
     try {
       let json;
       try {
         const url = new URL("/api/documentation", BASE_RADON_AI_URL);
         const response = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${jwt}`,
+          },
           body: JSON.stringify({ prompt: request.prompt }),
         });
         json = await response.json();
@@ -87,7 +96,7 @@ export function registerChat(context: vscode.ExtensionContext) {
       handleError(logger, err, stream);
     }
 
-    logger.logUsage("request", { kind: "" });
+    logger.logUsage("chatRequest", { kind: "" });
     return { metadata: { command: "" } };
   };
 
