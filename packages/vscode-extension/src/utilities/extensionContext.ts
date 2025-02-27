@@ -79,7 +79,7 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
 
   // In order to optimize the search time we exclude directories,
   // that shouldn't contain applications.
-  const excludedDirectories = ["node_modules", "ios", "android", ".git", ".yarn", ".pnpm"];
+  const excludedDirectoryPatterns: RegExp[] = [/^node_modules$/, /^ios$/, /^android$/, /^\..+/];
 
   const workspacePath = workspace.workspaceFolders?.[0];
 
@@ -108,7 +108,7 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
         return;
       }
 
-      if (excludedDirectories.includes(dirEntry.name)) {
+      if (excludedDirectoryPatterns.some((pattern) => pattern.test(dirEntry.name))) {
         return;
       }
 
