@@ -30,7 +30,17 @@ export function shouldUseExpoCLI(appRoot: string) {
   } catch (e) {}
 
   try {
-    const packageJson = require(path.join(appRoot, "package.json"));
+    const appJson = requireNoCache(path.join(appRoot, "app.json"));
+    hasExpoConfigInAppJson = Object.keys(appJson).includes("expo");
+  } catch (e) {}
+
+  try {
+    const appConfigJs = requireNoCache(path.join(appRoot, "app.config.js"));
+    hasExpoConfigInAppConfigJs = Object.keys(appConfigJs).includes("expo");
+  } catch (e) {}
+
+  try {
+    const packageJson = requireNoCache(path.join(appRoot, "package.json"));
     hasExpoCommandsInScripts = Object.values<string>(packageJson.scripts).some((script: string) => {
       return script.includes("expo ");
     });

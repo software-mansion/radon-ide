@@ -75,21 +75,30 @@ export const getCurrentLaunchConfig = (): LaunchConfigurationOptions => {
 
 export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
   const candidates: string[] = [];
-  const searchedFileNames = ["metro.config.js", "app.json", "app.config.js"];
+  const searchedFileNames = [
+    "metro.config.js",
+    "metro.config.ts",
+    "app.json",
+    "app.config.js",
+    "app.config.ts",
+  ];
 
   // In order to optimize the search time we exclude directories,
   // that shouldn't contain applications.
   const excludedDirectoryPatterns: RegExp[] = [/^node_modules$/, /^ios$/, /^android$/, /^\..+/];
 
-  const workspacePath = workspace.workspaceFolders?.[0];
+  const searchQueue: [string, number][] | undefined = workspace.workspaceFolders?.map(
+    (workspaceFolder) => {
+      return [workspaceFolder.uri.path, 0];
+    }
+  );
 
-  if (workspacePath === undefined) {
+  if (searchQueue === undefined) {
     Logger.warn("[FindFiles] Could not determine active workspace");
     return [];
   }
 
-  const searchQueue: [string, number][] = [];
-  let currentDir: [string, number] | undefined = [workspacePath.uri.path, 0];
+  let currentDir: [string, number] | undefined = searchQueue.shift();
   while (currentDir !== undefined) {
     if (currentDir[1] > maxSearchDepth) {
       break;
