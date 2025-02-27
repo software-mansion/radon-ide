@@ -1,5 +1,5 @@
 import fs from "fs";
-import { commands, ExtensionContext, Uri, workspace, window, Disposable } from "vscode";
+import { commands, ExtensionContext, Uri, workspace, window } from "vscode";
 import { Logger } from "../Logger";
 import { getLaunchConfiguration } from "./launchConfiguration";
 import { LaunchConfigurationOptions } from "../common/LaunchConfig";
