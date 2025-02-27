@@ -324,6 +324,10 @@
                 "type": "string",
                 "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
               },
+              "expoStartArgs": {
+                "type": "array",
+                "description": "Extra arguments to pass to Expo start command."
+              },
               "customBuild": {
                 "type": "object",
                 "description": "Configuration for using custom scripts for building and fingerprinting the app.",
@@ -486,6 +490,10 @@
               "metroConfigPath": {
                 "type": "string",
                 "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+              },
+              "expoStartArgs": {
+                "type": "array",
+                "description": "Extra arguments to pass to Expo start command."
               },
               "ios": {
                 "description": "Provides a way to customize Xcode builds for iOS",
