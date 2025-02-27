@@ -4,11 +4,14 @@ import { useRef, useState } from "react";
 import Label from "../components/shared/Label";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import {
+  AddCustomApplicationRoot,
   EasConfig,
   LaunchConfigUpdater,
   LaunchConfigurationOptions,
 } from "../../common/LaunchConfig";
 import Select from "../components/shared/Select";
+import { useModal } from "../providers/ModalProvider";
+import Button from "../components/shared/Button";
 import { Input } from "../components/shared/Input";
 import { EasBuildConfig } from "../../common/EasConfig";
 
@@ -23,6 +26,8 @@ function LaunchConfigurationView() {
     update,
     xcodeSchemes,
     easBuildProfiles,
+    applicationRoots,
+    addCustomApplicationRoot,
   } = useLaunchConfig();
 
   return (
@@ -46,7 +51,12 @@ function LaunchConfigurationView() {
       <div className="launch-configuration-section-margin" />
 
       <Label>App Root</Label>
-      <AppRootConfiguration appRoot={appRoot} update={update} />
+      <AppRootConfiguration
+        appRoot={appRoot}
+        update={update}
+        applicationRoots={applicationRoots}
+        addCustomApplicationRoot={addCustomApplicationRoot}
+      />
       <div className="launch-configuration-section-margin" />
 
       <Label>metro Config Path</Label>
@@ -183,29 +193,137 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
 interface appRootConfigurationProps {
   appRoot?: string;
   update: LaunchConfigUpdater;
+  applicationRoots: string[];
+  addCustomApplicationRoot: AddCustomApplicationRoot;
 }
 
-function AppRootConfiguration({ appRoot, update }: appRootConfigurationProps) {
-  const appRootInputRef = useRef<HTMLInputElement>(null);
+function AppRootConfiguration({
+  appRoot,
+  update,
+  applicationRoots,
+  addCustomApplicationRoot,
+}: appRootConfigurationProps) {
+  const customAppRootInputRef = useRef<HTMLInputElement>(null);
 
-  const onAppRootBlur = () => {
-    let newAppRoot = appRootInputRef.current?.value;
-    if (newAppRoot !== "") {
+  const { openModal, closeModal } = useModal();
+
+  const [customAppRootButtonDisabled, setCustomAppRootButtonDisabled] = useState(true);
+
+  const onConfirmationCancel = () => {
+    openModal("Launch Configuration", <LaunchConfigurationView />);
+  };
+
+  const AppRootChangeConfirmationView = ({ newAppRoot }: { newAppRoot: string }) => {
+    return (
+      <div className="app-root-change-wrapper">
+        <h2 className="app-root-change-title">
+          Are you sure you want to change the application root?
+        </h2>
+        <p className="app-root-change-subtitle">
+          The new application root will be: <b>{newAppRoot}</b> and this action will reboot the
+          device.
+        </p>
+        <div className="app-root-change-button-group">
+          <Button
+            type="secondary"
+            className="app-root-change-button"
+            onClick={onConfirmationCancel}>
+            Cancel
+          </Button>
+          <Button
+            className="app-root-change-button"
+            type="ternary"
+            onClick={async () => {
+              update("appRoot", newAppRoot);
+              closeModal();
+            }}>
+            Confirm
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const CustomAppRootConfirmationView = ({ newAppRoot }: { newAppRoot: string }) => {
+    return (
+      <div className="app-root-change-wrapper">
+        <h2 className="app-root-change-title">
+          Are you sure you want to add custom application root?
+        </h2>
+        <p className="app-root-change-subtitle">
+          The new application root will be: <b>{newAppRoot}</b> and this action will reboot the
+          device.
+        </p>
+        <div className="app-root-change-button-group">
+          <Button
+            type="secondary"
+            className="app-root-change-button"
+            onClick={onConfirmationCancel}>
+            Cancel
+          </Button>
+          <Button
+            className="app-root-change-button"
+            type="ternary"
+            onClick={async () => {
+              addCustomApplicationRoot(newAppRoot);
+              update("appRoot", newAppRoot);
+              closeModal();
+            }}>
+            Confirm
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const onAppRootChange = (newAppRoot: string | undefined) => {
+    if (newAppRoot === undefined) {
       newAppRoot = "Auto";
     }
-    update("appRoot", newAppRoot);
+    openModal("", <AppRootChangeConfirmationView newAppRoot={newAppRoot} />);
   };
+
+  const onCustomAppRootChange = () => {
+    setCustomAppRootButtonDisabled(!customAppRootInputRef.current?.value);
+  };
+
+  const onAddNewAppRoot = () => {
+    let newAppRoot = customAppRootInputRef.current?.value ?? "";
+    openModal("", <CustomAppRootConfirmationView newAppRoot={newAppRoot} />);
+  };
+
+  const availableAppRoots = applicationRoots.map((applicationRoot) => {
+    return { value: applicationRoot, label: applicationRoot };
+  });
+
+  availableAppRoots.push({ value: "Auto", label: "Auto" });
 
   return (
     <div className="launch-configuration-container">
-      <div className="setting-description">App Root:</div>
-      <Input
-        ref={appRootInputRef}
-        className="input-configuration"
-        type="string"
-        defaultValue={appRoot ?? "Auto"}
-        onBlur={onAppRootBlur}
+      <div className="setting-description">AppRoot:</div>
+      <Select
+        value={appRoot ?? "Auto"}
+        onChange={onAppRootChange}
+        items={availableAppRoots}
+        className="scheme"
       />
+      <div className="setting-description">Add Custom Application Root:</div>
+      <div className="custom-app-root-container">
+        <input
+          ref={customAppRootInputRef}
+          onChange={onCustomAppRootChange}
+          className="input-configuration custom-app-root-input"
+          type="string"
+          placeholder={"Custom/Application/Root/Path"}
+        />
+        <Button
+          type="ternary"
+          className="custom-app-root-button"
+          disabled={customAppRootButtonDisabled}
+          onClick={onAddNewAppRoot}>
+          <span className="codicon codicon-add" />
+        </Button>
+      </div>
     </div>
   );
 }
