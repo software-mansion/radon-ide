@@ -88,11 +88,10 @@ export class DeviceSession implements Disposable {
       }
     });
 
-    // we create a and start debug session here to be able to leverage the functionality of debug console
-    // the session is not connected to the debugger here yet and that step can only happen,
+    // we start debug session here to be able to leverage the functionality of debug console
+    // the session is not connected to the js debugger here yet and that step can only happen,
     // after app is running.
-    this.debugSession = new DebugSession(this.debugEventDelegate);
-    this.debugSession.startDebugSession();
+    this.debugSession = DebugSession.start(this.debugEventDelegate);
   }
 
   public dispose() {
@@ -102,20 +101,14 @@ export class DeviceSession implements Disposable {
   }
 
   public async perform(type: ReloadAction) {
-    const clearDebugContext = async () => {
-      // clears the previous debug session to avoid any conflicts
-      await this.debugSession.stopDebugSession();
-      await this.debugSession.startDebugSession();
-    };
-
     switch (type) {
       case "reinstall":
-        await clearDebugContext();
+        await this.debugSession.restart();
         await this.installApp({ reinstall: true });
         await this.launchApp();
         return true;
       case "restartProcess":
-        await clearDebugContext();
+        await this.debugSession.restart();
         const launchSucceeded = await this.launchApp();
         if (!launchSucceeded) {
           return false;
@@ -193,7 +186,7 @@ export class DeviceSession implements Disposable {
 
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
-    await this.connectDebugger();
+    await this.connectJSDebugger();
     if (launchCancelToken.cancelled) {
       return undefined;
     }
@@ -276,7 +269,7 @@ export class DeviceSession implements Disposable {
     return previewUrl;
   }
 
-  private async connectDebugger() {
+  private async connectJSDebugger() {
     const connected = await this.debugSession.connectJSDebugger(this.metro);
 
     if (connected) {

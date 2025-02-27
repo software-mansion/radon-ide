@@ -39,7 +39,7 @@ export class DebugSession implements Disposable {
     });
   }
 
-  public async startDebugSession() {
+  private async startInternal() {
     const debugStarted = await debug.startDebugging(
       undefined,
       {
@@ -62,6 +62,12 @@ export class DebugSession implements Disposable {
     return false;
   }
 
+  public static start(debugEventDelegate: DebugSessionDelegate) {
+    const debugSession = new DebugSession(debugEventDelegate);
+    debugSession.startInternal();
+    return debugSession;
+  }
+
   public async getOriginalSource(
     fileName: string,
     line0Based: number,
@@ -70,7 +76,12 @@ export class DebugSession implements Disposable {
     return await this.session.customRequest("source", { fileName, line0Based, column0Based });
   }
 
-  public async stopDebugSession() {
+  public async restart() {
+    await this.stop();
+    await this.startInternal();
+  }
+
+  private async stop() {
     this.vscSession && (await debug.stopDebugging(this.vscSession));
   }
 
@@ -82,7 +93,7 @@ export class DebugSession implements Disposable {
   public async connectJSDebugger(metro: Metro) {
     if (this.wasConnectedToCDP) {
       this.vscSession && debug.stopDebugging(this.vscSession);
-      await this.startDebugSession();
+      await this.startInternal();
     }
 
     const websocketAddress = await metro.getDebuggerURL();

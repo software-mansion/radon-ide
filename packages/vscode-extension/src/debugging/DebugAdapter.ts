@@ -54,7 +54,7 @@ export class DebugAdapter extends DebugSession implements CDPSessionDelegate {
     super();
   }
 
-  private connectDebugger(cdpConfiguration: CDPConfiguration) {
+  private connectJSDebugger(cdpConfiguration: CDPConfiguration) {
     this.cdpSession = new CDPSession(
       this,
       cdpConfiguration.websocketAddress,
@@ -377,7 +377,7 @@ export class DebugAdapter extends DebugSession implements CDPSessionDelegate {
   ): void {
     switch (command) {
       case "RNIDE_connect_cdp_debugger":
-        this.connectDebugger(args);
+        this.connectJSDebugger(args);
         break;
       case "RNIDE_log_message":
         this.logCustomMessage(args.message, args.type, args.source);
