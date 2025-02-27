@@ -1,6 +1,6 @@
+import path from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
 import license from "rollup-plugin-license";
 
 export default defineConfig({
@@ -59,7 +59,6 @@ export default defineConfig({
           return "assets/[name]-[hash][extname]";
         },
       },
-      external: ["react-scan"],
     },
   },
   server: {
