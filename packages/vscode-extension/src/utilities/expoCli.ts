@@ -1,5 +1,6 @@
 import path from "path";
 import { getLaunchConfiguration } from "./launchConfiguration";
+import { requireNoCache } from "./requireNoCache";
 
 export function shouldUseExpoCLI(appRoot: string) {
   // The mechanism for detecting whether the project should use Expo CLI or React Native Community CLI works as follows:
@@ -17,8 +18,10 @@ export function shouldUseExpoCLI(appRoot: string) {
     return false;
   }
 
-  let hasExpoCLIInstalled = false,
-    hasExpoCommandsInScripts = false;
+  let hasExpoCLIInstalled = false;
+  let hasExpoCommandsInScripts = false;
+  let hasExpoConfigInAppJson = false;
+  let hasExpoConfigInAppConfigJs = false;
   try {
     hasExpoCLIInstalled =
       require.resolve("@expo/cli/build/src/start/index", {
@@ -33,5 +36,8 @@ export function shouldUseExpoCLI(appRoot: string) {
     });
   } catch (e) {}
 
-  return hasExpoCLIInstalled && hasExpoCommandsInScripts;
+  return (
+    hasExpoCLIInstalled &&
+    (hasExpoCommandsInScripts || hasExpoConfigInAppJson || hasExpoConfigInAppConfigJs)
+  );
 }

@@ -38,6 +38,12 @@
   margin-bottom: 20px;
 }
 
+.device-settings-version-text {
+  font-size: 80%;
+  justify-content: center;
+  color: var(--swm-disabled-text);
+}
+
 .icons-container {
   display: flex;
   align-items: center;
