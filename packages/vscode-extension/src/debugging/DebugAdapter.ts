@@ -617,12 +617,32 @@ export class DebugAdapter extends DebugSession {
     this.sendResponse(response);
   }
 
-  protected customRequest(
+  private async ping() {
+    try {
+      const res = await this.cdpSession.sendCDPMessage("Runtime.evaluate", {
+        expression: "('ping')",
+      });
+
+      const { result } = res;
+
+      if (result.value === "ping") {
+        this.sendEvent(new Event("RNIDE_pong"));
+      }
+    } catch (_) {
+      /** debugSession is waiting for an event, if it won't get any it will fail after timeout, so we don't need to do anything here */
+    }
+  }
+
+  protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
     args: any,
     request?: DebugProtocol.Request | undefined
-  ): void {
+  ): Promise<void> {
+    if (command === "ping") {
+      this.ping();
+    }
+
     Logger.debug(`Custom req ${command} ${args}`);
   }
 }
