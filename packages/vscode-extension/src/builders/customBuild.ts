@@ -18,9 +18,9 @@ export async function runExternalBuild(
   buildCommand: string,
   env: Env,
   platform: DevicePlatform,
-  appRoot: string
+  cwd: string
 ) {
-  const output = await runExternalScript(buildCommand, env, appRoot, cancelToken);
+  const output = await runExternalScript(buildCommand, env, cwd, cancelToken);
 
   if (!output) {
     return undefined;
@@ -64,8 +64,8 @@ export async function runExternalBuild(
   return binaryPath;
 }
 
-export async function runfingerprintCommand(externalCommand: string, env: Env, appRoot: string) {
-  const output = await runExternalScript(externalCommand, env, appRoot);
+export async function runfingerprintCommand(externalCommand: string, env: Env, cwd: string) {
+  const output = await runExternalScript(externalCommand, env, cwd);
   if (!output) {
     return undefined;
   }
@@ -75,10 +75,10 @@ export async function runfingerprintCommand(externalCommand: string, env: Env, a
 async function runExternalScript(
   externalCommand: string,
   env: Env,
-  appRoot: string,
+  cwd: string,
   cancelToken?: CancelToken
 ) {
-  let process = command(externalCommand, { cwd: appRoot, env });
+  let process = command(externalCommand, { cwd, env });
   process = cancelToken ? cancelToken.adapt(process) : process;
   Logger.info(`Running external script: ${externalCommand}`);
 

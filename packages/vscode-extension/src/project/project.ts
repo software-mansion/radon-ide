@@ -30,7 +30,6 @@ import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import {
-  AppRootFolder,
   extensionContext,
   findAppRootFolder,
   getCurrentLaunchConfig,
@@ -76,11 +75,11 @@ export class Project
   public metro: Metro;
   public toolsManager: ToolsManager;
 
-  public launchConfig: LaunchConfigController;
-  public dependencyManager: DependencyManager;
+  public launchConfig?: LaunchConfigController;
+  public dependencyManager?: DependencyManager;
 
-  private appRootFolder: AppRootFolder;
-  private buildCache: BuildCache;
+  private appRootFolder?: string;
+  private buildCache?: BuildCache;
 
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
@@ -105,26 +104,7 @@ export class Project
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface
   ) {
-    const appRoot = findAppRootFolder();
-    if (!appRoot) {
-      window.showErrorMessage(
-        "Failed to determine any application root candidates, you can set it up manually in launch configuration",
-        "Dismiss"
-      );
-      Logger.error("[Project] The application root could not be found.");
-      throw Error(
-        "Couldn't find app root folder. The extension should not be activated without reachable app root."
-      );
-    }
-
-    Logger.info(`Found app root folder: ${appRoot}`);
-    migrateOldBuildCachesToNewStorage(appRoot);
-
-    this.appRootFolder = new AppRootFolder(appRoot);
-
-    this.launchConfig = new LaunchConfigController(appRoot);
-    this.dependencyManager = new DependencyManager(appRoot);
-    this.buildCache = new BuildCache(appRoot);
+    this.setupAppRoot();
 
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
       appearance: "dark",
@@ -163,14 +143,14 @@ export class Project
     );
 
     this.disposables.push(
-      workspace.onDidChangeConfiguration(async (event: ConfigurationChangeEvent) => {
+      workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
         if (event.affectsConfiguration("launch")) {
           const config = getCurrentLaunchConfig();
-          const oldAppRoot = this.appRootFolder?.getAppRoot();
+          const oldAppRoot = this.appRootFolder;
           if (config.appRoot === oldAppRoot) {
             return;
           }
-          const newAppRoot = await this.setupAppRoot();
+          const newAppRoot = this.setupAppRoot();
 
           if (newAppRoot === undefined) {
             window.showErrorMessage(
@@ -182,35 +162,29 @@ export class Project
         }
       })
     );
-
-    this.disposables.push(
-      this.appRootFolder.onChangeAppRoot((newAppRoot: string) => {
-        const oldDependencyManager = this.dependencyManager;
-        this.dependencyManager = new DependencyManager(newAppRoot);
-        oldDependencyManager?.dispose();
-
-        const oldLaunchConfig = this.launchConfig;
-        this.launchConfig = new LaunchConfigController(newAppRoot);
-        oldLaunchConfig?.dispose();
-
-        this.buildCache = new BuildCache(newAppRoot);
-
-        this.reload("reboot");
-      })
-    );
   }
 
-  private async setupAppRoot() {
-    const appRoot = findAppRootFolder();
-    if (!appRoot) {
-      return;
+  private setupAppRoot() {
+    const newAppRoot = findAppRootFolder();
+    if (!newAppRoot) {
+      window.showErrorMessage(
+        "Failed to determine any application root candidates, you can set it up manually in launch configuration",
+        "Dismiss"
+      );
+      Logger.error("[Project] The application root could not be found.");
+      throw Error(
+        "Couldn't find app root folder. The extension should not be activated without reachable app root."
+      );
     }
 
-    this.appRootFolder.setAppRoot(appRoot);
+    Logger.info(`Found app root folder: ${newAppRoot}`);
+    migrateOldBuildCachesToNewStorage(newAppRoot);
+
+    this.appRootFolder = newAppRoot;
 
     if (Platform.OS === "macos") {
       try {
-        await setupPathEnv(appRoot);
+        setupPathEnv(newAppRoot);
       } catch (error) {
         window.showWarningMessage(
           "Error when setting up PATH environment variable, RN IDE may not work correctly.",
@@ -218,7 +192,20 @@ export class Project
         );
       }
     }
-    return appRoot;
+
+    const oldDependencyManager = this.dependencyManager;
+    this.dependencyManager = new DependencyManager(newAppRoot);
+    oldDependencyManager?.dispose();
+
+    const oldLaunchConfig = this.launchConfig;
+    this.launchConfig = new LaunchConfigController(newAppRoot);
+    oldLaunchConfig?.dispose();
+
+    this.buildCache = new BuildCache(newAppRoot);
+
+    this.reload("reboot");
+
+    return newAppRoot;
   }
 
   //#region Build progress
@@ -480,6 +467,13 @@ export class Project
       platform: this.projectState.selectedDevice?.platform,
     });
 
+    if (this.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
+
     if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
       await this.openNavigation(homeUrl);
     } else {
@@ -580,6 +574,10 @@ export class Project
   }
 
   private async start(restart: boolean, resetMetroCache: boolean) {
+    if (this.appRootFolder === undefined) {
+      Logger.error("[PROJECT] App root folder not initialized. this code should be unreachable.");
+      throw new Error("[PROJECT] App root folder not initialized");
+    }
     if (restart) {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
@@ -604,7 +602,7 @@ export class Project
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
       [waitForNodeModules],
-      this.appRootFolder.getAppRoot()
+      this.appRootFolder
     );
   }
   //#endregion
@@ -729,6 +727,13 @@ export class Project
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
+    if (this.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
+
     if (await this.dependencyManager.checkProjectUsesStorybook()) {
       this.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
     } else {
@@ -813,7 +818,12 @@ export class Project
   }
 
   private async ensureDependenciesAndNodeVersion() {
-    const appRoot = this.appRootFolder.getAppRoot();
+    if (this.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
 
     const installed = await this.dependencyManager.checkNodeModulesInstallationStatus();
 
@@ -825,7 +835,7 @@ export class Project
       Logger.debug("Node modules already installed - skipping");
     }
 
-    await this.dependencyManager.validateNodeVersion(appRoot);
+    await this.dependencyManager.validateNodeVersion();
   }
 
   //#region Select device
@@ -860,6 +870,23 @@ export class Project
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
+    if (this.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
+    if (this.appRootFolder === undefined) {
+      Logger.error("[PROJECT] App root folder not initialized. this code should be unreachable.");
+      throw new Error("[PROJECT] App root folder not initialized");
+    }
+    if (this.buildCache === undefined) {
+      Logger.error(
+        "[PROJECT] Build cache folder not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Build cache not initialized");
+    }
+
     const device = await this.selectDeviceOnly(deviceInfo);
     if (!device) {
       return false;
@@ -890,16 +917,12 @@ export class Project
       );
       this.deviceSession = newDeviceSession;
 
-      const previewURL = await newDeviceSession.start(
-        this.deviceSettings,
-        this.appRootFolder.getAppRoot(),
-        {
-          cleanBuild: forceCleanBuild,
-          previewReadyCallback: (url) => {
-            this.updateProjectStateForDevice(deviceInfo, { previewURL: url });
-          },
-        }
-      );
+      const previewURL = await newDeviceSession.start(this.deviceSettings, this.appRootFolder, {
+        cleanBuild: forceCleanBuild,
+        previewReadyCallback: (url) => {
+          this.updateProjectStateForDevice(deviceInfo, { previewURL: url });
+        },
+      });
       this.updateProjectStateForDevice(this.projectState.selectedDevice!, {
         previewURL,
         status: "running",

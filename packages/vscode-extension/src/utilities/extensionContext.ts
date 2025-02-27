@@ -6,6 +6,8 @@ import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 let _extensionContext: ExtensionContext | null = null;
 
+type searchItem = { path: string; searchDepth: number };
+
 export function setExtensionContext(context: ExtensionContext) {
   _extensionContext = context;
 }
@@ -18,39 +20,6 @@ export const extensionContext = new Proxy<ExtensionContext>({} as ExtensionConte
     return Reflect.get(_extensionContext, prop);
   },
 });
-
-export class AppRootFolder {
-  private onChangeAppRootListeners: Array<(newAppRoot: string) => void> = [];
-
-  constructor(private appRoot: string) {}
-
-  onChangeAppRoot(listener: (newAppRoot: string) => void): Disposable {
-    this.onChangeAppRootListeners.push(listener);
-    return {
-      dispose: () => {
-        const index = this.onChangeAppRootListeners.indexOf(listener);
-        if (index > -1) {
-          this.onChangeAppRootListeners.splice(index, 1);
-        }
-      },
-    };
-  }
-
-  getAppRoot(): string {
-    if (!this.appRoot) {
-      throw new Error("App root not set.");
-    }
-    return this.appRoot;
-  }
-
-  setAppRoot(newAppRoot: string): void {
-    this.appRoot = newAppRoot;
-    this.onChangeAppRootListeners.forEach((listener) => {
-      listener(newAppRoot);
-    });
-    Logger.debug(`App root was set to: ${this.appRoot}.`);
-  }
-}
 
 export const getCurrentLaunchConfig = (): LaunchConfigurationOptions => {
   const launchConfiguration = workspace.getConfiguration(
@@ -74,7 +43,6 @@ export const getCurrentLaunchConfig = (): LaunchConfigurationOptions => {
 };
 
 export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
-  const candidates: string[] = [];
   const searchedFileNames = [
     "metro.config.js",
     "metro.config.ts",
@@ -87,31 +55,57 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
   // that shouldn't contain applications.
   const excludedDirectoryPatterns: RegExp[] = [/^node_modules$/, /^ios$/, /^android$/, /^\..+/];
 
-  const searchQueue: [string, number][] | undefined = workspace.workspaceFolders?.map(
-    (workspaceFolder) => {
-      return [workspaceFolder.uri.path, 0];
-    }
-  );
+  const workspaceFolders = workspace.workspaceFolders;
 
-  if (searchQueue === undefined) {
+  if (workspaceFolders === undefined) {
     Logger.warn("[FindFiles] Could not determine active workspace");
     return [];
   }
 
-  let currentDir: [string, number] | undefined = searchQueue.shift();
+  const searchDirectories: searchItem[] = workspaceFolders.map((workspaceFolder) => {
+    return { path: workspaceFolder.uri.path, searchDepth: 0 };
+  });
+
+  const candidates = searchForFilesDirectory(
+    searchedFileNames,
+    searchDirectories,
+    excludedDirectoryPatterns,
+    maxSearchDepth
+  );
+
+  if (candidates.length > 1) {
+    Logger.debug(
+      `Found multiple directories containing one or more of ${searchedFileNames} files in the workspace`
+    );
+  }
+
+  return candidates;
+}
+
+function searchForFilesDirectory(
+  searchedFileNames: string[],
+  searchDirectories: searchItem[],
+  excludedDirectoryPatterns: RegExp[],
+  maxDepth: number
+) {
+  const results: string[] = [];
+
+  const searchQueue: searchItem[] = searchDirectories;
+
+  let currentDir: searchItem | undefined = searchQueue.shift();
   while (currentDir !== undefined) {
-    if (currentDir[1] > maxSearchDepth) {
+    if (currentDir.searchDepth > maxDepth) {
       break;
     }
 
-    const filesAndDirs = fs.readdirSync(currentDir[0].toString(), { withFileTypes: true });
+    const filesAndDirs = fs.readdirSync(currentDir.path.toString(), { withFileTypes: true });
 
     let matched = false;
 
     filesAndDirs.forEach((dirEntry) => {
       if (dirEntry.isFile()) {
         if (!matched && searchedFileNames.includes(dirEntry.name)) {
-          candidates.push(currentDir![0]);
+          results.push(currentDir!.path);
           matched = true;
         }
         return;
@@ -121,18 +115,15 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
         return;
       }
 
-      searchQueue.push([currentDir![0] + "/" + dirEntry.name, currentDir![1] + 1]);
+      searchQueue.push({
+        path: currentDir!.path + "/" + dirEntry.name,
+        searchDepth: currentDir!.searchDepth + 1,
+      });
     });
     currentDir = searchQueue.shift();
   }
 
-  if (candidates.length > 1) {
-    Logger.warn(
-      `Found multiple directories containing one or more of ${searchedFileNames} files in the workspace`
-    );
-  }
-
-  return candidates;
+  return results;
 }
 
 export function findAppRootFolder() {

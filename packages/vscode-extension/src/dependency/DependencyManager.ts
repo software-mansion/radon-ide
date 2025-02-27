@@ -84,7 +84,8 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     this.checkEasCliInstallationStatus();
   }
 
-  public async validateNodeVersion(appRoot: string) {
+  public async validateNodeVersion() {
+    const appRoot = this.appRootFolder;
     const { stdout: nodeVersion } = await exec("node", ["-v"]);
     const minimumNodeVersion = getMinimumSupportedNodeVersion(appRoot);
     const isMinimumNodeVersion = semver.satisfies(nodeVersion, minimumNodeVersion);

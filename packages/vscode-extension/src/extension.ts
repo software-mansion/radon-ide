@@ -242,7 +242,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
-    workspace.onDidChangeConfiguration(async (event: ConfigurationChangeEvent) => {
+    workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (event.affectsConfiguration("RadonIDE.panelLocation")) {
         showIDEPanel();
       }

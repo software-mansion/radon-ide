@@ -77,8 +77,6 @@ export default function LaunchConfigProvider({ children }: PropsWithChildren) {
   );
 
   const addCustomApplicationRoot = (appRoot: string) => {
-    const newState = [...applicationRoots, appRoot];
-    setApplicationRoots(newState);
     launchConfig.addCustomApplicationRoot(appRoot);
   };
 
