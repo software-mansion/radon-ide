@@ -62,7 +62,7 @@ export class DebugSession implements Disposable {
       return this.start();
     }
 
-    return false;
+    return true;
   }
 
   public async start() {
