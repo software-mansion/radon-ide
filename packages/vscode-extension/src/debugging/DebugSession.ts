@@ -124,8 +124,8 @@ export class DebugSession implements Disposable {
     await this.session.customRequest("RNIDE_connect_cdp_debugger", cdpConfiguration);
   }
 
-  public async sendDebugConsoleLog(message: string, source?: DebugSource) {
-    await this.session.customRequest("RNIDE_log_message", { message, source });
+  public async appendDebugConsoleEntry(message: string, type: string, source?: DebugSource) {
+    await this.session.customRequest("RNIDE_log_message", { message, type, source });
   }
 
   private get session() {

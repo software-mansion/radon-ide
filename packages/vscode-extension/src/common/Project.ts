@@ -27,7 +27,7 @@ export type ProjectState = {
     | "buildError"
     | "bootError"
     | "runtimeError"
-    | "bundleError"
+    | "bundleBuildFailedError"
     | "bundlingError"
     | "debuggerPaused"
     | "refreshing";

@@ -32,6 +32,16 @@ export type CDPConfiguration = {
 
 const ERROR_RESPONSE_FAIL_TO_RETRIEVE_VARIABLE_ID = 4000;
 
+export function typeToCategory(type: string) {
+  switch (type) {
+    case "warning":
+    case "error":
+      return "stderr";
+    default:
+      return "stdout";
+  }
+}
+
 export class DebugAdapter extends DebugSession implements CDPSessionDelegate {
   private cdpSession: CDPSession | undefined;
 
@@ -114,8 +124,8 @@ export class DebugAdapter extends DebugSession implements CDPSessionDelegate {
 
   //#endregion
 
-  logCustomMessage(message: string, source?: DebugSource) {
-    const output = new OutputEvent(message);
+  logCustomMessage(message: string, category: string, source?: DebugSource) {
+    const output = new OutputEvent(message, typeToCategory(category));
     if (source) {
       output.body = {
         output: message,
@@ -370,7 +380,7 @@ export class DebugAdapter extends DebugSession implements CDPSessionDelegate {
         this.connectDebugger(args);
         break;
       case "RNIDE_log_message":
-        this.logCustomMessage(args.message, args.source);
+        this.logCustomMessage(args.message, args.type, args.source);
         break;
       default:
         Logger.debug(`Custom req ${command} ${args}`);

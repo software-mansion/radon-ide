@@ -295,8 +295,8 @@ export class DeviceSession implements Disposable {
     this.debugSession?.stepOverDebugger();
   }
 
-  public async sendDebugConsoleLog(message: string, source: DebugSource) {
-    await this.debugSession?.sendDebugConsoleLog(message, source);
+  public async appendDebugConsoleEntry(message: string, type: string, source: DebugSource) {
+    await this.debugSession?.appendDebugConsoleEntry(message, type, source);
   }
 
   public async resetAppPermissions(permissionType: AppPermissionType) {

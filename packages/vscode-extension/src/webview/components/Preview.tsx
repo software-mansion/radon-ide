@@ -92,7 +92,7 @@ function Preview({
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
   const hasBundlingError = projectStatus === "bundlingError";
-  const hasBundleError = projectStatus === "bundleError";
+  const hasBundleBuildFailedError = projectStatus === "bundleBuildFailedError";
 
   const debugPaused = projectStatus === "debuggerPaused";
   const debugException = projectStatus === "runtimeError";
@@ -100,7 +100,7 @@ function Preview({
   const previewURL = projectState.previewURL;
 
   const isStarting =
-    hasBundleError || hasBundlingError || debugException
+    hasBundleBuildFailedError || hasBundlingError || debugException
       ? false
       : !projectState || projectState.status === "starting";
   const showDevicePreview =
@@ -109,7 +109,7 @@ function Preview({
 
   useBuildErrorAlert(hasBuildError);
   useBootErrorAlert(hasBootError);
-  useBundleErrorAlert(hasBundleError || hasBundlingError);
+  useBundleErrorAlert(hasBundleBuildFailedError || hasBundlingError);
 
   const openRebuildAlert = useNativeRebuildAlert();
 
@@ -211,7 +211,7 @@ function Preview({
   const shouldPreventInputEvents =
     debugPaused ||
     debugException ||
-    hasBundleError ||
+    hasBundleBuildFailedError ||
     hasBundlingError ||
     projectStatus === "refreshing" ||
     !showDevicePreview ||
@@ -567,7 +567,7 @@ function Preview({
                 </div>
               )}
               {/* TODO: Add different label in case of bundle/incremental bundle error */}
-              {hasBundleError && (
+              {hasBundleBuildFailedError && (
                 <div className="phone-screen phone-debug-overlay phone-exception-overlay">
                   <button
                     className="uncaught-button"

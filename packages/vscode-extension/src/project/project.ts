@@ -142,7 +142,7 @@ export class Project
         this.updateProjectState({ status: "refreshing" });
         break;
       case "fastRefreshComplete":
-        const ignoredEvents = ["starting", "incrementalBundleError", "runtimeError"];
+        const ignoredEvents = ["starting", "bundlingError", "runtimeError"];
         if (ignoredEvents.includes(this.projectState.status)) {
           return;
         }
@@ -267,8 +267,8 @@ export class Project
     await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
-  onBundleError(): void {
-    this.updateProjectState({ status: "bundleError" });
+  onBundleBuildFailedError(): void {
+    this.updateProjectState({ status: "bundleBuildFailedError" });
   }
 
   async onBundlingError(
@@ -276,15 +276,15 @@ export class Project
     source: DebugSource,
     _errorModulePath: string
   ): Promise<void> {
-    await this.deviceSession?.sendDebugConsoleLog(message, source);
+    await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
 
     this.focusDebugConsole();
     focusSource(source);
 
     Logger.error("[Bundling Error]", message);
     // if bundle build failed, we don't want to change the status
-    // bundlingError status should be set only when bundleError status is not set
-    if (this.projectState.status === "bundleError") {
+    // bundlingError status should be set only when bundleBuildFailedError status is not set
+    if (this.projectState.status === "bundleBuildFailedError") {
       return;
     }
     this.updateProjectState({ status: "bundlingError" });

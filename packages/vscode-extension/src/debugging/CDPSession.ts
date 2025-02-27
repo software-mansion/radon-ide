@@ -14,6 +14,7 @@ import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { VariableStore } from "./variableStore";
 import { CDPDebuggerScope, CDPRemoteObject } from "./cdp";
+import { typeToCategory } from "./DebugAdapter";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -41,16 +42,6 @@ export interface CDPSessionDelegate {
 }
 
 const RETRIEVE_VARIABLE_TIMEOUT_MS = 3000;
-
-function typeToCategory(type: string) {
-  switch (type) {
-    case "warning":
-    case "error":
-      return "stderr";
-    default:
-      return "stdout";
-  }
-}
 
 export class CDPSession {
   private connection: WebSocket;

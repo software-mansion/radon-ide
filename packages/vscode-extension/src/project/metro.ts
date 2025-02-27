@@ -14,7 +14,7 @@ import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 import { DebugSource } from "../debugging/DebugSession";
 
 export interface MetroDelegate {
-  onBundleError(): void;
+  onBundleBuildFailedError(): void;
   onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
 }
 
@@ -260,7 +260,7 @@ export class Metro implements Disposable {
               Logger.info("Captured metro watch folders", this._watchFolders);
               break;
             case "bundle_build_failed":
-              this.delegate.onBundleError();
+              this.delegate.onBundleBuildFailedError();
               break;
             case "bundling_error":
               const message = stripAnsi(event.message);
