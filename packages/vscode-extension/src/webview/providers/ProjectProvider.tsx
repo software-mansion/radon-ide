@@ -28,6 +28,7 @@ interface ProjectContextProps {
   replayData: MultimediaData | undefined;
   setReplayData: Dispatch<SetStateAction<MultimediaData | undefined>>;
   isRecording: boolean;
+  isProfilingCPU: boolean;
 }
 
 const defaultProjectState: ProjectState = {
@@ -61,6 +62,7 @@ const ProjectContext = createContext<ProjectContextProps>({
   replayData: undefined,
   setReplayData: () => {},
   isRecording: false,
+  isProfilingCPU: false,
 });
 
 export default function ProjectProvider({ children }: PropsWithChildren) {
@@ -69,6 +71,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
   const [toolsState, setToolsState] = useState<ToolsState>({});
   const [hasActiveLicense, setHasActiveLicense] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
+  const [isProfilingCPU, setIsProfilingCPU] = useState(false);
   const [replayData, setReplayData] = useState<MultimediaData | undefined>(undefined);
 
   useEffect(() => {
@@ -86,6 +89,8 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
 
     project.addListener("isRecording", setIsRecording);
     project.addListener("replayDataCreated", setReplayData);
+
+    project.addListener("isProfilingCPU", setIsProfilingCPU);
 
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
@@ -105,6 +110,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
       replayData,
       setReplayData,
       isRecording,
+      isProfilingCPU,
     };
   }, [
     projectState,
@@ -115,6 +121,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     replayData,
     setReplayData,
     isRecording,
+    isProfilingCPU,
   ]);
 
   return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;

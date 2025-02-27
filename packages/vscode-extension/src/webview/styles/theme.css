@@ -570,7 +570,8 @@ body[data-use-code-theme="true"] {
   --swm-button-counter-background: var(--vscode-activityBarBadge-background);
   --swm-button-counter-border: var(--vscode-contrastBorder);
 
-  --swm-button-recording-on-background: var(--navy-light-60);
+  --swm-button-recording-on: var(--vscode-activityBarBadge-foreground);
+  --swm-button-recording-on-background: var(--vscode-activityBarBadge-background);
   --swm-button-replay-hover: var(--navy-light-transparent);
 
   /* Tooltip */
