@@ -27,6 +27,7 @@ import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
+import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
@@ -492,6 +493,7 @@ function Preview({
                 }}
                 className="phone-screen"
               />
+              <RenderOutlinesOverlay />
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
               {isMultiTouching && (
