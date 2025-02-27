@@ -27,8 +27,8 @@ export type ProjectState = {
     | "buildError"
     | "bootError"
     | "runtimeError"
-    | "bundleError"
-    | "incrementalBundleError"
+    | "bundleBuildFailedError"
+    | "bundlingError"
     | "debuggerPaused"
     | "refreshing";
   startupMessage?: string; // Only used when status is "starting"
