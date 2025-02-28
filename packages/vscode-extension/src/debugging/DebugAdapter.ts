@@ -117,7 +117,7 @@ export class DebugAdapter extends DebugSession {
           }
         }
 
-        if (!sourceMapData) {
+        if (!sourceMapData || !sourceMapData.sources) {
           break;
         }
 

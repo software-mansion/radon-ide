@@ -11,7 +11,7 @@ import {
 import { NetworkPlugin, NETWORK_PLUGIN_ID } from "../plugins/network/network-plugin";
 import {
   REDUX_PLUGIN_ID,
-  createReduxDevtools,
+  ReduxDevtoolsPlugin,
 } from "../plugins/redux-devtools-plugin/redux-devtools-plugin";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { RenderOutlinesPlugin } from "../plugins/render-outlines/render-outlines-plugin";
@@ -59,7 +59,7 @@ export class ToolsManager implements Disposable {
       this.plugins.set(plugin.id, plugin);
     }
 
-    this.plugins.set(REDUX_PLUGIN_ID, createReduxDevtools(this));
+    this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(devtools));
     this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(devtools));
     this.plugins.set(RENDER_OUTLINES_PLUGIN_ID, new RenderOutlinesPlugin(devtools));
 
