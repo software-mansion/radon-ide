@@ -420,7 +420,7 @@ export class Metro implements Disposable {
       const list = await fetch(`http://localhost:${this._port}/json/list`);
       const listJson = await list.json();
 
-      if (listJson) {
+      if (listJson.length > 0) {
         return listJson;
       }
 

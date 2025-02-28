@@ -42,7 +42,8 @@ export class DebugSession implements Disposable {
 
   public async reconnectIfNeeded() {
     const possibleRuntimes = await this.metro.fetchRuntimeList();
-    const availableAddresses = possibleRuntimes?.map((runtime) => runtime.webSocketDebuggerUrl) ?? [];
+    const availableAddresses =
+      possibleRuntimes?.map((runtime) => runtime.webSocketDebuggerUrl) ?? [];
 
     if (!availableAddresses.includes(this.vscSession?.configuration?.websocketAddress)) {
       debug.stopDebugging(this.vscSession);
