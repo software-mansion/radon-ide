@@ -1,5 +1,5 @@
-import { commands, window, Disposable, WebviewView, Webview } from "vscode";
-import { ToolKey, ToolPlugin, ToolsManager } from "../../project/tools";
+import { commands, window, Webview } from "vscode";
+import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { Devtools } from "../../project/devtools";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
