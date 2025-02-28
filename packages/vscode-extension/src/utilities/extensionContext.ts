@@ -101,26 +101,27 @@ function searchForFilesDirectory(
 
     const filesAndDirs = fs.readdirSync(currentDir.path.toString(), { withFileTypes: true });
 
-    let matched = false;
-
-    filesAndDirs.forEach((dirEntry) => {
-      if (dirEntry.isFile()) {
-        if (!matched && searchedFileNames.includes(dirEntry.name)) {
-          results.push(currentDir!.path);
-          matched = true;
-        }
-        return;
-      }
-
-      if (excludedDirectoryPatterns.some((pattern) => pattern.test(dirEntry.name))) {
-        return;
-      }
-
-      searchQueue.push({
-        path: currentDir!.path + "/" + dirEntry.name,
-        searchDepth: currentDir!.searchDepth + 1,
-      });
+    const isCandidate = filesAndDirs.some((dirEntry) => {
+      return dirEntry.isFile() && searchedFileNames.includes(dirEntry.name);
     });
+
+    if (isCandidate) {
+      results.push(currentDir.path);
+    }
+
+    filesAndDirs
+      .filter((dirEntry) => {
+        return (
+          !dirEntry.isFile() &&
+          !excludedDirectoryPatterns.some((pattern) => pattern.test(dirEntry.name))
+        );
+      })
+      .forEach((dir) => {
+        searchQueue.push({
+          path: currentDir!.path + "/" + dir.name,
+          searchDepth: currentDir!.searchDepth + 1,
+        });
+      });
   }
 
   return results;
