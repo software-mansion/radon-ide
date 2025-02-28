@@ -185,11 +185,6 @@
       ],
       "panel": [
         {
-          "id": "RadonIDEToolExpoDevPluginReactQuery",
-          "title": "React Query",
-          "icon": "assets/react-query.svg"
-        },
-        {
           "id": "RadonIDEToolExpoDevPluginMMKV",
           "title": "MMKV",
           "icon": "assets/mmkv.svg"
@@ -200,14 +195,19 @@
           "icon": "assets/redux.svg"
         },
         {
-          "id": "RadonIDEToolNetwork",
-          "title": "Network",
-          "icon": "assets/network.svg"
-        },
-        {
           "id": "RadonIDEToolReduxDevTools",
           "title": "Redux",
           "icon": "assets/redux.svg"
+        },
+        {
+          "id": "RadonIDEToolReactQueryDevTools",
+          "title": "React Query",
+          "icon": "assets/react-query.svg"
+        },
+        {
+          "id": "RadonIDEToolNetwork",
+          "title": "Network",
+          "icon": "assets/network.svg"
         }
       ]
     },
@@ -218,14 +218,6 @@
           "id": "RadonIDE.view",
           "name": "",
           "when": "RNIDE.extensionIsActive && config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
-        }
-      ],
-      "RadonIDEToolExpoDevPluginReactQuery": [
-        {
-          "type": "webview",
-          "id": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.view",
-          "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolExpoDevPluginMMKV": [
@@ -258,6 +250,14 @@
           "id": "RNIDE.Tool.ReduxDevTools.view",
           "name": "",
           "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
+        }
+      ],
+      "RadonIDEToolReactQueryDevTools": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ReactQueryDevTools.view",
+          "name": "",
+          "when": "RNIDE.Tool.ReactQueryDevTools.available && RNIDE.panelIsOpen"
         }
       ]
     },
@@ -620,8 +620,9 @@
     "vscode:prepublish": "npm run package",
     "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
+    "build:react-query-devtools-ui": "rm -rf dist/react-query-devtools && cp -R ../radon-ide-react-query-webui/artifacts dist/react-query-devtools",
     "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
-    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui",
+    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
     "build:extension-debug": "npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
     "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
