@@ -71,7 +71,7 @@ function buildProject(
 }
 
 export async function buildIos(
-  appRootFolder: string,
+  appRoot: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
@@ -97,7 +97,8 @@ export async function buildIos(
       cancelToken,
       customBuild.ios.buildCommand,
       env,
-      DevicePlatform.IOS
+      DevicePlatform.IOS,
+      appRoot
     );
     if (!appPath) {
       throw new Error("Failed to build iOS app using custom script.");
@@ -114,7 +115,7 @@ export async function buildIos(
     getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
       platform: DevicePlatform.IOS,
     });
-    const appPath = await fetchEasBuild(cancelToken, eas.ios, DevicePlatform.IOS);
+    const appPath = await fetchEasBuild(cancelToken, eas.ios, DevicePlatform.IOS, appRoot);
     if (!appPath) {
       throw new Error("Failed to build iOS app using EAS build.");
     }
@@ -126,11 +127,11 @@ export async function buildIos(
     };
   }
 
-  if (await isExpoGoProject()) {
+  if (await isExpoGoProject(appRoot)) {
     getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
       platform: DevicePlatform.IOS,
     });
-    const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken);
+    const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken, appRoot);
     return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
   }
 
@@ -140,11 +141,11 @@ export async function buildIos(
     );
   }
 
-  const sourceDir = getIosSourceDir(appRootFolder);
+  const sourceDir = getIosSourceDir(appRoot);
 
   await installPodsIfNeeded();
 
-  const xcodeProject = await findXcodeProject(appRootFolder);
+  const xcodeProject = await findXcodeProject(appRoot);
 
   if (!xcodeProject) {
     throw new Error(`Could not find Xcode project files in "${sourceDir}" folder`);

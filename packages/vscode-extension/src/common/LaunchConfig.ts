@@ -36,6 +36,7 @@ export type LaunchConfigurationOptions = {
 
 export interface LaunchConfigEventMap {
   launchConfigChange: LaunchConfigurationOptions;
+  applicationRootsChanged: void;
 }
 
 export interface LaunchConfigEventListener<T> {
@@ -47,10 +48,14 @@ export type LaunchConfigUpdater = <K extends keyof LaunchConfigurationOptions>(
   value: LaunchConfigurationOptions[K] | "Auto"
 ) => void;
 
+export type AddCustomApplicationRoot = (appRoot: string) => void;
+
 export interface LaunchConfig {
   getConfig(): Promise<LaunchConfigurationOptions>;
   update: LaunchConfigUpdater;
+  addCustomApplicationRoot: AddCustomApplicationRoot;
   getAvailableXcodeSchemes(): Promise<string[]>;
+  getAvailableApplicationRoots(): Promise<string[]>;
   getAvailableEasProfiles(): Promise<EasBuildConfig>;
   addListener<K extends keyof LaunchConfigEventMap>(
     eventType: K,

@@ -74,7 +74,7 @@ function makeBuildTaskName(productFlavor: string, buildType: string) {
 }
 
 export async function buildAndroid(
-  appRootFolder: string,
+  appRoot: string,
   forceCleanBuild: boolean,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
@@ -97,7 +97,8 @@ export async function buildAndroid(
       cancelToken,
       customBuild.android.buildCommand,
       env,
-      DevicePlatform.Android
+      DevicePlatform.Android,
+      appRoot
     );
     if (!apkPath) {
       throw new Error("Failed to build Android app using custom script.");
@@ -114,7 +115,7 @@ export async function buildAndroid(
     getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
       platform: DevicePlatform.Android,
     });
-    const apkPath = await fetchEasBuild(cancelToken, eas.android, DevicePlatform.Android);
+    const apkPath = await fetchEasBuild(cancelToken, eas.android, DevicePlatform.Android, appRoot);
     if (!apkPath) {
       throw new Error("Failed to build Android app using EAS build.");
     }
@@ -126,11 +127,11 @@ export async function buildAndroid(
     };
   }
 
-  if (await isExpoGoProject()) {
+  if (await isExpoGoProject(appRoot)) {
     getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
       platform: DevicePlatform.Android,
     });
-    const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken);
+    const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
     return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
   }
 
@@ -140,7 +141,7 @@ export async function buildAndroid(
     );
   }
 
-  const androidSourceDir = getAndroidSourceDir(appRootFolder);
+  const androidSourceDir = getAndroidSourceDir(appRoot);
   const productFlavor = android?.productFlavor || "";
   const buildType = android?.buildType || "debug";
   const gradleArgs = [
@@ -158,7 +159,7 @@ export async function buildAndroid(
     ),
   ];
   // configureReactNativeOverrides init script is only necessary for RN versions older then 0.74.0 see comments in configureReactNativeOverrides.gradle for more details
-  if (semver.lt(getReactNativeVersion(), "0.74.0")) {
+  if (semver.lt(getReactNativeVersion(appRoot), "0.74.0")) {
     gradleArgs.push(
       "--init-script", // configureReactNativeOverrides init script is used to patch React Android project, see comments in configureReactNativeOverrides.gradle for more details
       path.join(
@@ -186,6 +187,6 @@ export async function buildAndroid(
 
   await buildProcess;
   Logger.debug("Android build successful");
-  const apkInfo = await getAndroidBuildPaths(appRootFolder, cancelToken, productFlavor, buildType);
+  const apkInfo = await getAndroidBuildPaths(appRoot, cancelToken, productFlavor, buildType);
   return { ...apkInfo, platform: DevicePlatform.Android };
 }
