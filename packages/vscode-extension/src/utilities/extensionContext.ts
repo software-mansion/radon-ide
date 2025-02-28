@@ -118,8 +118,8 @@ function searchForFilesDirectory(
       })
       .forEach((dir) => {
         searchQueue.push({
-          path: currentDir!.path + "/" + dir.name,
-          searchDepth: currentDir!.searchDepth + 1,
+          path: currentDir.path + "/" + dir.name,
+          searchDepth: currentDir.searchDepth + 1,
         });
       });
   }

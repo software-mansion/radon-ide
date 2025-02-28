@@ -47,7 +47,9 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
-import { ApplicationContext } from "./applicationContext";
+import { ApplicationContext } from "./ApplicationContext";
+import { disposeAll } from "../utilities/disposables";
+import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -92,7 +94,8 @@ export class Project
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface
   ) {
-    this.applicationContext = new ApplicationContext();
+    const appRoot = findAndSetupNewAppRootFolder();
+    this.applicationContext = new ApplicationContext(appRoot);
 
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
       appearance: "dark",
@@ -169,8 +172,9 @@ export class Project
   }
 
   private setupAppRoot() {
+    const newAppRoot = findAndSetupNewAppRootFolder();
     const oldApplicationContext = this.applicationContext;
-    this.applicationContext = new ApplicationContext();
+    this.applicationContext = new ApplicationContext(newAppRoot);
     oldApplicationContext.dispose();
 
     this.reload("reboot");
@@ -416,9 +420,7 @@ export class Project
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.applicationContext.dispose();
-    this.disposables.forEach((disposable) => {
-      disposable.dispose();
-    });
+    disposeAll(this.disposables);
   }
 
   private async reloadMetro() {
