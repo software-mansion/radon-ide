@@ -5,6 +5,9 @@ import {
   DebugSession as VscDebugSession,
 } from "vscode";
 import { Metro } from "../project/metro";
+import { Logger } from "../Logger";
+
+const PING_TIMEOUT = 1000;
 
 export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
@@ -15,6 +18,8 @@ export type DebugSessionDelegate = {
 export class DebugSession implements Disposable {
   private vscSession: VscDebugSession | undefined;
   private debugEventsListener: Disposable;
+  private pingTimeout: NodeJS.Timeout | undefined;
+  private pingResolve: ((result: boolean) => void) | undefined;
 
   constructor(private metro: Metro, private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
@@ -28,6 +33,14 @@ export class DebugSession implements Disposable {
         case "RNIDE_continued":
           this.delegate.onDebuggerResumed(event);
           break;
+        case "RNIDE_pong":
+          if (this.pingResolve) {
+            clearTimeout(this.pingTimeout);
+            this.pingResolve(true);
+          } else {
+            Logger.warn("[DEBUG SESSION] Received unexpected pong event");
+          }
+          break;
         default:
           // ignore other events
           break;
@@ -38,6 +51,18 @@ export class DebugSession implements Disposable {
   public dispose() {
     this.vscSession && debug.stopDebugging(this.vscSession);
     this.debugEventsListener.dispose();
+  }
+
+  public async reconnectIfNeeded() {
+    const isAlive = await this.ping();
+
+    if (!isAlive) {
+      this.vscSession && debug.stopDebugging(this.vscSession);
+      this.vscSession = undefined;
+      return this.start();
+    }
+
+    return true;
   }
 
   public async start() {
@@ -96,6 +121,18 @@ export class DebugSession implements Disposable {
 
   public stepOverDebugger() {
     this.session.customRequest("next");
+  }
+
+  public async ping(): Promise<boolean> {
+    this.session.customRequest("ping");
+    return new Promise((resolve, _) => {
+      this.pingResolve = resolve;
+      this.pingTimeout = setTimeout(() => {
+        resolve(false);
+        this.pingResolve = undefined;
+        this.pingTimeout = undefined;
+      }, PING_TIMEOUT);
+    });
   }
 
   private get session() {
