@@ -140,9 +140,18 @@ export class Metro implements Disposable {
     appRootFolder: string,
     libPath: string,
     resetCache: boolean,
+    expoStartExtraArgs: string[] | undefined,
     metroEnv: typeof process.env
   ) {
-    return exec("node", [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
+    const args = [path.join(libPath, "expo_start.js")];
+    if (resetCache) {
+      args.push("--clear");
+    }
+    if (expoStartExtraArgs) {
+      args.push(...expoStartExtraArgs);
+    }
+
+    return exec("node", args, {
       cwd: appRootFolder,
       env: metroEnv,
       buffer: false,
@@ -208,7 +217,13 @@ export class Metro implements Disposable {
     let bundlerProcess: ChildProcess;
 
     if (shouldUseExpoCLI(appRoot)) {
-      bundlerProcess = this.launchExpoMetro(appRoot, libPath, resetCache, metroEnv);
+      bundlerProcess = this.launchExpoMetro(
+        appRoot,
+        libPath,
+        resetCache,
+        launchConfiguration.expoStartArgs,
+        metroEnv
+      );
     } else {
       bundlerProcess = this.launchPackager(appRoot, libPath, resetCache, metroEnv);
     }

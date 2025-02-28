@@ -3,7 +3,7 @@ import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
-import { RENDER_OUTLINES_PLUGIN_ID } from "../plugins/render-outlines/render-outlines-plugin";
+import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 
 type CallArgs = {
   callId: string;
