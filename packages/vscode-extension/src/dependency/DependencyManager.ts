@@ -209,7 +209,8 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     Logger.debug("Project pods installed");
   }
 
-  private async getPackageManager(appRoot: string) {
+  private async getPackageManager() {
+    const appRoot = this.appRootFolder;
     if (!this.packageManagerInternal) {
       this.packageManagerInternal = await resolvePackageManager(appRoot);
     }

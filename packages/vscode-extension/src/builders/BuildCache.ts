@@ -42,9 +42,9 @@ export class BuildCache {
   /**
    * Passed fingerprint should be calculated at the time build is started.
    */
-  public async storeBuild(buildFingerprint: string, build: BuildResult, platform: DevicePlatform) {
+  public async storeBuild(buildFingerprint: string, build: BuildResult) {
     const appPath = await getAppHash(getAppPath(build));
-    await extensionContext.globalState.update(makeCacheKey(platform, this.appRootFolder), {
+    await extensionContext.globalState.update(makeCacheKey(build.platform, this.appRootFolder), {
       fingerprint: buildFingerprint,
       buildHash: appPath,
       buildResult: build,
