@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { CanvasOutlineRenderer, OutlineRenderer, WorkerOutlineRenderer } from "react-scan";
 import {
   RenderOutlinesEventListener,
   RenderOutlinesEventMap,
   RenderOutlinesInterface,
+  RENDER_OUTLINES_PLUGIN_ID,
 } from "../../common/RenderOutlines";
 import { makeProxy } from "../utilities/rpc";
 import "./RenderOutlinesOverlay.css";
+import { useProject } from "../providers/ProjectProvider";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -28,21 +30,8 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
 }
 
 function useIsEnabled() {
-  const [enabled, setEnabled] = useState(false);
-
-  useEffect(() => {
-    const listener: RenderOutlinesEventListener<RenderOutlinesEventMap["isEnabledChanged"]> = ({
-      isEnabled,
-    }) => {
-      setEnabled(isEnabled);
-    };
-    RenderOutlines.addEventListener("isEnabledChanged", listener);
-    return () => {
-      RenderOutlines.removeEventListener("isEnabledChanged", listener);
-    };
-  }, []);
-
-  return enabled;
+  const { toolsState } = useProject();
+  return toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
 }
 
 function RenderOutlinesOverlay() {

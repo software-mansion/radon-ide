@@ -1,14 +1,13 @@
 import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
 import {
+  RENDER_OUTLINES_PLUGIN_ID,
   RenderOutlinesEventListener,
   RenderOutlinesEventMap,
   RenderOutlinesInterface,
 } from "../../common/RenderOutlines";
 import { Devtools } from "../../project/devtools";
 import { ToolPlugin } from "../../project/tools";
-
-export const RENDER_OUTLINES_PLUGIN_ID = "RNIDE-render-outlines";
 
 export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface, Disposable {
   private eventEmitter = new EventEmitter();
@@ -47,7 +46,6 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   setEnabled(isEnabled: boolean) {
     this.isEnabled = isEnabled;
     this.devtools.send("RNIDE_updateInstrumentationOptions", { isEnabled });
-    this.eventEmitter.emit("isEnabledChanged", { isEnabled });
   }
 
   addEventListener<K extends keyof RenderOutlinesEventMap>(

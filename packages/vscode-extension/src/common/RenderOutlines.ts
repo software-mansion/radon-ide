@@ -22,10 +22,9 @@ export interface RenderOutlinesEventMap {
   rendersReported: {
     blueprintOutlines: BlueprintEntry[];
   };
-  isEnabledChanged: {
-    isEnabled: boolean;
-  };
 }
+
+export const RENDER_OUTLINES_PLUGIN_ID = "RNIDE-render-outlines";
 
 export interface RenderOutlinesInterface {
   addEventListener<K extends keyof RenderOutlinesEventMap>(

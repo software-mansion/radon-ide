@@ -3,9 +3,7 @@ import fs from "fs";
 import { createHash, Hash } from "crypto";
 import path, { join } from "path";
 import { finished } from "stream/promises";
-import { workspace } from "vscode";
 import fetch from "node-fetch";
-import { Logger } from "../Logger";
 
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
 export const IOS_FAIL_ERROR_MESSAGE = "IOS failed.";
@@ -34,14 +32,6 @@ export function isWorkspaceRoot(dir: string) {
   }
 
   return false;
-}
-
-export async function findFilesInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
-  const files = await workspace.findFiles(fileGlobPattern, excludePattern);
-  if (files.length > 1) {
-    Logger.warn(`Found multiple ${fileGlobPattern} files in the workspace`);
-  }
-  return files;
 }
 
 export enum ABI {
