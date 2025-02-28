@@ -156,7 +156,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
   public async installNodeModules(): Promise<boolean> {
     const appRoot = this.appRootFolder;
-    const packageManager = await this.getPackageManager(appRoot);
+    const packageManager = await this.getPackageManager();
     if (!packageManager) {
       return false;
     }
@@ -274,7 +274,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
     // the resolvePackageManager function in getPackageManager checks
     // if a package manager is installed and otherwise returns undefined
-    const packageManager = await this.getPackageManager(appRoot);
+    const packageManager = await this.getPackageManager();
     this.emitEvent("packageManager", {
       status: packageManager ? "installed" : "notInstalled",
       isOptional: false,
@@ -285,7 +285,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
   public async checkNodeModulesInstallationStatus() {
     const appRoot = this.appRootFolder;
-    const packageManager = await this.getPackageManager(appRoot);
+    const packageManager = await this.getPackageManager();
     if (!packageManager) {
       this.emitEvent("nodeModules", { status: "notInstalled", isOptional: false });
       return false;
