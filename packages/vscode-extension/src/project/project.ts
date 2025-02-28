@@ -332,13 +332,14 @@ export class Project
         // the user can use the flame button from cpuprofile view to visualize it differently
         const flameChartExtension = extensions.getExtension("ms-vscode.vscode-js-profile-flame");
         if (!flameChartExtension) {
+          const GO_TO_EXTENSION_BUTTON = "Go to Extension";
           window
             .showInformationMessage(
               "Flame Chart Visualizer extension is not installed. It is recommended to install it for better profiling insights.",
-              "Install Now"
+              GO_TO_EXTENSION_BUTTON
             )
             .then((action) => {
-              if (action === "Install Now") {
+              if (action === GO_TO_EXTENSION_BUTTON) {
                 commands.executeCommand(
                   "workbench.extensions.search",
                   "ms-vscode.vscode-js-profile-flame"
