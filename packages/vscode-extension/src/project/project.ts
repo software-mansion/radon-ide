@@ -29,20 +29,14 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import {
-  extensionContext,
-  findAppRootFolder,
-  getCurrentLaunchConfig,
-} from "../utilities/extensionContext";
+import { extensionContext, getCurrentLaunchConfig } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
-import { BuildCache, migrateOldBuildCachesToNewStorage } from "../builders/BuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
@@ -53,9 +47,7 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
-import { LaunchConfigController } from "../panels/LaunchConfigController";
-import { Platform } from "../utilities/platform";
-import { setupPathEnv } from "../utilities/subprocess";
+import { ApplicationContext } from "./applicationContext";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -72,14 +64,10 @@ const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
 {
+  private applicationContext: ApplicationContext;
+
   public metro: Metro;
   public toolsManager: ToolsManager;
-
-  public launchConfig?: LaunchConfigController;
-  public dependencyManager?: DependencyManager;
-
-  private appRootFolder?: string;
-  private buildCache?: BuildCache;
 
   private devtools = new Devtools();
   private eventEmitter = new EventEmitter();
@@ -104,7 +92,7 @@ export class Project
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface
   ) {
-    this.setupAppRoot();
+    this.applicationContext = new ApplicationContext();
 
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
       appearance: "dark",
@@ -150,9 +138,9 @@ export class Project
           if (config.appRoot === oldAppRoot) {
             return;
           }
-          const newAppRoot = this.setupAppRoot();
+          this.setupAppRoot();
 
-          if (newAppRoot === undefined) {
+          if (this.appRootFolder === undefined) {
             window.showErrorMessage(
               "Unable to find the new app root, after a change in launch configuration. Radon IDE might not work properly.",
               "Dismiss"
@@ -164,48 +152,28 @@ export class Project
     );
   }
 
+  get appRootFolder() {
+    return this.applicationContext.appRootFolder;
+  }
+
+  get dependencyManager() {
+    return this.applicationContext.dependencyManager;
+  }
+
+  get launchConfig() {
+    return this.applicationContext.launchConfig;
+  }
+
+  get buildCache() {
+    return this.applicationContext.buildCache;
+  }
+
   private setupAppRoot() {
-    const newAppRoot = findAppRootFolder();
-    if (!newAppRoot) {
-      window.showErrorMessage(
-        "Failed to determine any application root candidates, you can set it up manually in launch configuration",
-        "Dismiss"
-      );
-      Logger.error("[Project] The application root could not be found.");
-      throw Error(
-        "Couldn't find app root folder. The extension should not be activated without reachable app root."
-      );
-    }
-
-    Logger.info(`Found app root folder: ${newAppRoot}`);
-    migrateOldBuildCachesToNewStorage(newAppRoot);
-
-    this.appRootFolder = newAppRoot;
-
-    if (Platform.OS === "macos") {
-      try {
-        setupPathEnv(newAppRoot);
-      } catch (error) {
-        window.showWarningMessage(
-          "Error when setting up PATH environment variable, RN IDE may not work correctly.",
-          "Dismiss"
-        );
-      }
-    }
-
-    const oldDependencyManager = this.dependencyManager;
-    this.dependencyManager = new DependencyManager(newAppRoot);
-    oldDependencyManager?.dispose();
-
-    const oldLaunchConfig = this.launchConfig;
-    this.launchConfig = new LaunchConfigController(newAppRoot);
-    oldLaunchConfig?.dispose();
-
-    this.buildCache = new BuildCache(newAppRoot);
+    const oldApplicationContext = this.applicationContext;
+    this.applicationContext = new ApplicationContext();
+    oldApplicationContext.dispose();
 
     this.reload("reboot");
-
-    return newAppRoot;
   }
 
   //#region Build progress
@@ -447,8 +415,7 @@ export class Project
     this.metro?.dispose();
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
-    this.dependencyManager?.dispose();
-    this.launchConfig?.dispose();
+    this.applicationContext.dispose();
     this.disposables.forEach((disposable) => {
       disposable.dispose();
     });

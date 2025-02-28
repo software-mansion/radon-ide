@@ -6,7 +6,7 @@ import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 let _extensionContext: ExtensionContext | null = null;
 
-type searchItem = { path: string; searchDepth: number };
+type SearchItem = { path: string; searchDepth: number };
 
 export function setExtensionContext(context: ExtensionContext) {
   _extensionContext = context;
@@ -62,7 +62,7 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
     return [];
   }
 
-  const searchDirectories: searchItem[] = workspaceFolders.map((workspaceFolder) => {
+  const searchDirectories: SearchItem[] = workspaceFolders.map((workspaceFolder) => {
     return { path: workspaceFolder.uri.path, searchDepth: 0 };
   });
 
@@ -84,16 +84,17 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
 
 function searchForFilesDirectory(
   searchedFileNames: string[],
-  searchDirectories: searchItem[],
+  searchDirectories: SearchItem[],
   excludedDirectoryPatterns: RegExp[],
   maxDepth: number
 ) {
   const results: string[] = [];
 
-  const searchQueue: searchItem[] = searchDirectories;
+  const searchQueue: SearchItem[] = searchDirectories;
 
-  let currentDir: searchItem | undefined = searchQueue.shift();
-  while (currentDir !== undefined) {
+  while (searchQueue.length > 0) {
+    const currentDir = searchQueue.shift()!;
+
     if (currentDir.searchDepth > maxDepth) {
       break;
     }
@@ -120,7 +121,6 @@ function searchForFilesDirectory(
         searchDepth: currentDir!.searchDepth + 1,
       });
     });
-    currentDir = searchQueue.shift();
   }
 
   return results;
