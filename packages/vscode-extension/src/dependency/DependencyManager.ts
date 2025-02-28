@@ -270,8 +270,6 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   private async checkPackageManagerInstallationStatus() {
-    const appRoot = this.appRootFolder;
-
     // the resolvePackageManager function in getPackageManager checks
     // if a package manager is installed and otherwise returns undefined
     const packageManager = await this.getPackageManager();
