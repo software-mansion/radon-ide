@@ -59,7 +59,7 @@ export class Project
 {
   public metro: Metro;
   public toolsManager: ToolsManager;
-  private devtools = new Devtools();
+  private devtools;
   private eventEmitter = new EventEmitter();
 
   private isCachedBuildStale: boolean;

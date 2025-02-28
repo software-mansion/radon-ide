@@ -38,11 +38,21 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
 
   devtoolsListener = (event: string, payload: any) => {
     if (event === REDUX_PLUGIN_ID) {
-      console.log("[WTF] PROXY DEVTOOLS LISTENER", event, payload);
       this.connectedWebview?.postMessage({
         scope: event,
         data: payload,
       });
+    } else if (event === "RNIDE_appReady" && this.connectedWebview) {
+      // Sometimes, the messaging channel (devtools) is established only after
+      // the Redux store is created and after it sends the first message. In that
+      // case, the "start" event never makes it to the webview.
+      // To workaround this, we use "appReady" event which is sent after the messaging
+      // channel is established. We then force reload the webview with redux devtools
+      // which causes the devtools to initialize a new session and, as a consequence force the store
+      // to reconnect.
+      const html = this.connectedWebview.html;
+      this.connectedWebview.html = "";
+      this.connectedWebview.html = html;
     }
   };
 
