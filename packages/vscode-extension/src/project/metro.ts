@@ -11,6 +11,7 @@ import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
+import { getOpenPort } from "../utilities/common";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -50,7 +51,7 @@ type MetroEvent =
     }
   | { type: "RNIDE_expo_env_prelude_lines"; lineCount: number }
   | {
-      type: "RNIDE_initialize_done";
+      type: "initialize_done";
       port: number;
     }
   | {
@@ -160,6 +161,7 @@ export class Metro implements Disposable {
 
   private launchPackager(
     appRootFolder: string,
+    port: number,
     libPath: string,
     resetCache: boolean,
     metroEnv: typeof process.env
@@ -175,7 +177,7 @@ export class Metro implements Disposable {
         ...(resetCache ? ["--reset-cache"] : []),
         "--no-interactive",
         "--port",
-        "0",
+        `${port}`,
         "--config",
         path.join(libPath, "metro_config.js"),
         "--customLogReporterPath",
@@ -204,11 +206,14 @@ export class Metro implements Disposable {
       metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
     }
     const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
+
+    const port = await getOpenPort();
+
     const metroEnv = {
       ...launchConfiguration.env,
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
       NODE_PATH: path.join(appRoot, "node_modules"),
-      RCT_METRO_PORT: "0",
+      RCT_METRO_PORT: `${port}`,
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       RADON_IDE_LIB_PATH: libPath,
       RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
@@ -225,7 +230,7 @@ export class Metro implements Disposable {
         metroEnv
       );
     } else {
-      bundlerProcess = this.launchPackager(appRoot, libPath, resetCache, metroEnv);
+      bundlerProcess = this.launchPackager(appRoot, port, libPath, resetCache, metroEnv);
     }
     this.subprocess = bundlerProcess;
 
@@ -262,7 +267,7 @@ export class Metro implements Disposable {
               this._expoPreludeLineCount = event.lineCount;
               Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineCount);
               break;
-            case "RNIDE_initialize_done":
+            case "initialize_done":
               this._port = event.port;
               Logger.info(`Metro started on port ${this._port}`);
               resolve();

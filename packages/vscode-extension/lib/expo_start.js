@@ -17,10 +17,5 @@ metroConfig.loadConfig = async function (...args) {
 // base terminal reporter class from metro that Expo CLI extends
 overrideModuleFromAppDir("metro/src/lib/TerminalReporter", require("./metro_reporter"));
 
-// In addition, expo uses freeport-async to check whether provided port is busy.
-// Apparently, this module returns 11000 port when 0 is provided, so we need to
-// override this behavior here.
-overrideModuleFromAppDir("freeport-async", async (port) => port);
-
 const { expoStart } = requireFromAppDir("@expo/cli/build/src/start/index");
 expoStart(process.argv.slice(2)); // pass argv but strip node and script name

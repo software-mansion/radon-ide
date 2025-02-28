@@ -3,6 +3,7 @@ import fs from "fs";
 import { createHash, Hash } from "crypto";
 import path, { join } from "path";
 import { finished } from "stream/promises";
+import { Server } from "net";
 import fetch from "node-fetch";
 
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
@@ -232,4 +233,33 @@ export async function calculateMD5(fsPath: string, hash: Hash = createHash("md5"
     }
   }
   return hash;
+}
+
+export async function getOpenPort(): Promise<number> {
+  const { promise, resolve, reject } = Promise.withResolvers<number>();
+
+  const server = new Server().listen(0);
+
+  const onListening = () => {
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      reject(new Error("Failed to reserve an open port"));
+      return;
+    }
+    const port = address.port;
+    server.close(() => {
+      resolve(port);
+    });
+  };
+  const onError = (err: unknown) => {
+    reject(err);
+  };
+
+  const unsubListening = server.once("listening", onListening);
+  const unsubError = server.once("error", onError);
+
+  return promise.finally(() => {
+    unsubListening.off("listening", onListening);
+    unsubError.off("error", onError);
+  });
 }
