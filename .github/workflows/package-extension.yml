@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: Set workflow start time
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H:%M:%S')"
+        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H%M%S')"
 
       - name: Set targets
         id: set_targets
@@ -86,10 +86,16 @@ jobs:
           target: ${{ steps.set_targets.outputs.targets }}
           preRelease: ${{ github.event.inputs.prerelease }}
 
+      - name: Sanitize ref name for artifact upload
+        id: sanitize
+        run: |
+          ref_name=$(echo -n "${{ github.event.inputs.ref }}" | sed 's/[\\\/'"'"':<>|*?]/-/g')
+          echo "ref_name=$ref_name" >> $GITHUB_OUTPUT
+
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
         with:
-          name: radon-ide-${{ github.event.inputs.ref }}-${{ steps.date.outputs.date }}
+          name: radon-ide-${{ steps.sanitize.outputs.ref_name }}-${{ steps.date.outputs.date }}
           path: ${{ steps.package_extension.outputs.vsixPath }}
 
       - name: Publish to Visual Studio Marketplace
