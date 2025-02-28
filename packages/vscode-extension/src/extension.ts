@@ -136,6 +136,13 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  async function registerChatIfLicenseActive() {
+    const ide = IDE.getInstanceIfExists();
+    if (ide?.project.hasActiveLicense()) {
+      registerChat(context);
+    }
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -275,7 +282,7 @@ export async function activate(context: ExtensionContext) {
   // this needs to be run after app root is set
   migrateOldBuildCachesToNewStorage();
 
-  registerChat(context);
+  registerChatIfLicenseActive();
 
   extensionActivated();
 }

@@ -34,8 +34,6 @@ export function registerChat(context: vscode.ExtensionContext) {
 
     const jwt = await getLicenseToken();
 
-    // TODO: don't allow to use Radon AI when no license token is available
-
     try {
       let json;
       try {
