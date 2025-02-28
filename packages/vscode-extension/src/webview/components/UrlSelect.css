@@ -1,6 +1,5 @@
 :root {
-  --url-select-min-width: 130px;
-  --url-select-max-width: 300px;
+  --url-select-max-width: 200px;
 }
 
 .url-select-trigger {
@@ -19,7 +18,8 @@
   color: var(--swm-url-select);
   background-color: var(--swm-url-select-background);
   user-select: none;
-  min-width: var(--url-select-min-width);
+  max-width: var(--url-select-max-width);
+  flex: 1;
 }
 .url-select-trigger:hover {
   background-color: var(--swm-url-select-hover-background);

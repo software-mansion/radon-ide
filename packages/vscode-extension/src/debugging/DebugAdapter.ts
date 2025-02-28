@@ -1,4 +1,7 @@
 import { DebugConfiguration } from "vscode";
+import fs from "fs";
+import path from "path";
+import os from "os";
 import {
   DebugSession,
   InitializedEvent,
@@ -617,12 +620,25 @@ export class DebugAdapter extends DebugSession {
     this.sendResponse(response);
   }
 
-  protected customRequest(
+  protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
     args: any,
     request?: DebugProtocol.Request | undefined
-  ): void {
-    Logger.debug(`Custom req ${command} ${args}`);
+  ) {
+    if (command === "startProfiling") {
+      await this.cdpSession.sendCDPMessage("Profiler.start", {});
+      this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
+      this.sendResponse(response);
+    } else if (command === "stopProfiling") {
+      const result = await this.cdpSession.sendCDPMessage("Profiler.stop", {});
+      const fileName = `profile-${Date.now()}.cpuprofile`;
+      const filePath = path.join(os.tmpdir(), fileName);
+      await fs.promises.writeFile(filePath, JSON.stringify(result.profile));
+      this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
+      this.sendResponse(response);
+    } else {
+      Logger.debug(`Custom req ${command} ${args}`);
+    }
   }
 }
