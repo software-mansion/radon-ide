@@ -302,26 +302,6 @@ export class Metro implements Disposable {
     await this.sendMessageToDevice("devMenu");
   }
 
-  public async getDebuggerURL() {
-    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
-    let retryCount = 0;
-    const startTime = Date.now();
-
-    while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
-      retryCount++;
-      const websocketAddress = await this.fetchDebuggerURL();
-
-      if (websocketAddress) {
-        return websocketAddress;
-      }
-
-      await sleep(progressiveRetryTimeout(retryCount));
-    }
-
-    return undefined;
-  }
-
   private lookupWsAddressForOldDebugger(listJson: CDPTargetDescription[]) {
     // Pre 0.76 RN metro lists debugger pages that are identified as "deviceId-pageId"
     // After new device is connected, the deviceId is incremented while pageId could be
@@ -428,10 +408,34 @@ export class Metro implements Disposable {
     return undefined;
   }
 
-  private async fetchDebuggerURL() {
-    // query list from http://localhost:${metroPort}/json/list
-    const list = await fetch(`http://localhost:${this._port}/json/list`);
-    const listJson = await list.json();
+  public async fetchRuntimeList(): Promise<CDPTargetDescription[] | undefined> {
+    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
+
+    let retryCount = 0;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
+      retryCount++;
+
+      const list = await fetch(`http://localhost:${this._port}/json/list`);
+      const listJson = await list.json();
+
+      if (listJson) {
+        return listJson;
+      }
+
+      await sleep(progressiveRetryTimeout(retryCount));
+    }
+
+    return undefined;
+  }
+
+  public async getDebuggerURL() {
+    const listJson = await this.fetchRuntimeList();
+
+    if (listJson === undefined) {
+      return undefined;
+    }
 
     // fixup websocket addresses on the list
     for (const page of listJson) {

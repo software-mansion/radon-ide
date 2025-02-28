@@ -41,13 +41,12 @@ export class DebugSession implements Disposable {
   }
 
   public async reconnectIfNeeded() {
-    const websocketAddress = await this.metro.getDebuggerURL();
-    /**
-     * There is debug.onDidTerminateDebugSession() that should inform us about session termination,
-     * but it seems its called after reconnectIfNeeded(), thus we're checking if the session changed
-     * by obtaining getDebuggerURL again and comparing if it changed.
-     */
-    if (websocketAddress !== this.vscSession?.configuration?.websocketAddress) {
+    const possibleRuntimes = await this.metro.fetchRuntimeList();
+    const availableAddresses = possibleRuntimes?.map((runtime) => runtime.webSocketDebuggerUrl) ?? [];
+
+    if (!availableAddresses.includes(this.vscSession?.configuration?.websocketAddress)) {
+      debug.stopDebugging(this.vscSession);
+      this.vscSession = undefined;
       return this.start();
     }
 
