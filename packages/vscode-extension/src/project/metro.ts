@@ -11,6 +11,7 @@ import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
+import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 
 export interface MetroDelegate {
   onBundleError(): void;
@@ -317,18 +318,6 @@ export class Metro implements Disposable {
     await this.sendMessageToDevice("devMenu");
   }
 
-  public async getDebuggerURL() {
-    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
-    const startTime = Date.now();
-    let websocketAddress: string | undefined;
-    while (!websocketAddress && Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
-      websocketAddress = await this.fetchDebuggerURL();
-      await new Promise((res) => setTimeout(res, 1000));
-    }
-    return websocketAddress;
-  }
-
   private lookupWsAddressForOldDebugger(listJson: CDPTargetDescription[]) {
     // Pre 0.76 RN metro lists debugger pages that are identified as "deviceId-pageId"
     // After new device is connected, the deviceId is incremented while pageId could be
@@ -435,10 +424,34 @@ export class Metro implements Disposable {
     return undefined;
   }
 
-  private async fetchDebuggerURL() {
-    // query list from http://localhost:${metroPort}/json/list
-    const list = await fetch(`http://localhost:${this._port}/json/list`);
-    const listJson = await list.json();
+  public async fetchRuntimeList(): Promise<CDPTargetDescription[] | undefined> {
+    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
+
+    let retryCount = 0;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
+      retryCount++;
+
+      const list = await fetch(`http://localhost:${this._port}/json/list`);
+      const listJson = await list.json();
+
+      if (listJson.length > 0) {
+        return listJson;
+      }
+
+      await sleep(progressiveRetryTimeout(retryCount));
+    }
+
+    return undefined;
+  }
+
+  public async getDebuggerURL() {
+    const listJson = await this.fetchRuntimeList();
+
+    if (listJson === undefined) {
+      return undefined;
+    }
 
     // fixup websocket addresses on the list
     for (const page of listJson) {
