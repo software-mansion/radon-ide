@@ -34,6 +34,7 @@ import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { CDPSession } from "./CDPSession";
 import getArraySlots from "./templates/getArraySlots";
+import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -246,9 +247,7 @@ export class DebugAdapter extends DebugSession {
       };
     }
     this.sendEvent(output);
-    this.sendEvent(
-      new Event("RNIDE_consoleLog", { category: typeToCategory(message.params.type) })
-    );
+    this.sendEvent(new Event(DEBUG_CONSOLE_LOG, { category: typeToCategory(message.params.type) }));
   }
 
   private async createVariableForOutputEvent(args: CDPRemoteObject[]) {
@@ -386,7 +385,7 @@ export class DebugAdapter extends DebugSession {
       );
       this.pausedStackFrames = stackFrames;
       this.sendEvent(new StoppedEvent("exception", this.threads[0].id, errorMessage));
-      this.sendEvent(new Event("RNIDE_paused", { reason: "exception", isFatal: isFatal }));
+      this.sendEvent(new Event(DEBUG_PAUSED, { reason: "exception", isFatal: isFatal }));
     } else {
       this.pausedStackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
         const cdpLocation = cdpFrame.location;
@@ -408,7 +407,7 @@ export class DebugAdapter extends DebugSession {
         (cdpFrame: any) => cdpFrame.scopeChain
       );
       this.sendEvent(new StoppedEvent("breakpoint", this.threads[0].id, "Yollo"));
-      this.sendEvent(new Event("RNIDE_paused"));
+      this.sendEvent(new Event(DEBUG_PAUSED));
     }
   }
 
@@ -577,7 +576,7 @@ export class DebugAdapter extends DebugSession {
   ): Promise<void> {
     await this.cdpSession.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
     this.sendResponse(response);
-    this.sendEvent(new Event("RNIDE_continued"));
+    this.sendEvent(new Event(DEBUG_RESUMED));
   }
 
   protected async nextRequest(

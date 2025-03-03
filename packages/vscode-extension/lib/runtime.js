@@ -12,6 +12,8 @@ function __RNIDE_breakOnError(error, isFatal) {
   debugger;
 }
 
+// NOTE: this is only used on RN versions <= 0.75, where we use our own CDP implementation.
+// With the new debugger, uncaught exceptions are handled by the debugger itself.
 global.__RNIDE_onDebuggerReady = function () {
   // install error handler that breaks into the debugger but only do it when
   // debugger is connected. Otherwise we may miss some important initialization

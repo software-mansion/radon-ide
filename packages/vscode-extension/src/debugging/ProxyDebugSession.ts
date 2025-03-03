@@ -5,6 +5,7 @@ import { debug, Disposable } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
+import { DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -38,17 +39,12 @@ export class ProxyDebugSession extends DebugSession {
 
     this.disposables.push(
       proxyDelegate.onDebuggerPaused(() => {
-        this.sendEvent(new Event("RNIDE_paused"));
+        this.sendEvent(new Event(DEBUG_PAUSED));
       })
     );
     this.disposables.push(
       proxyDelegate.onDebuggerResumed(() => {
-        this.sendEvent(new Event("RNIDE_continued"));
-      })
-    );
-    this.disposables.push(
-      proxyDelegate.onDebuggerReady(() => {
-        // this.sendEvent(new Event("RNIDE_continued"));
+        this.sendEvent(new Event(DEBUG_RESUMED));
       })
     );
   }
@@ -169,6 +165,7 @@ export class ProxyDebugSession extends DebugSession {
     request?: DebugProtocol.Request
   ) {
     this.terminate();
+    this.sendEvent(new Event("RNIDE_continued"));
     this.sendResponse(response);
   }
 

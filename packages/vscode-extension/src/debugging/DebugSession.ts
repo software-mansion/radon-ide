@@ -9,6 +9,11 @@ import {
 } from "vscode";
 import { Metro } from "../project/metro";
 
+export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
+export const DEBUG_PAUSED = "RNIDE_paused";
+export const DEBUG_RESUMED = "RNIDE_continued";
+export const DEBUG_DISCONNECTED = "RNIDE_disconnected";
+
 export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
   onDebuggerPaused(event: DebugSessionCustomEvent): void;
@@ -22,13 +27,13 @@ export class DebugSession implements Disposable {
   constructor(private metro: Metro, private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
-        case "RNIDE_consoleLog":
+        case DEBUG_CONSOLE_LOG:
           this.delegate.onConsoleLog(event);
           break;
-        case "RNIDE_paused":
+        case DEBUG_PAUSED:
           this.delegate.onDebuggerPaused(event);
           break;
-        case "RNIDE_continued":
+        case DEBUG_RESUMED:
           this.delegate.onDebuggerResumed(event);
           break;
         default:
