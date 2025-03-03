@@ -639,11 +639,12 @@
     "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
     "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
-    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui",
+    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui && npm run build:vscode-js-debug",
     "build:extension-debug": "npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
     "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
+    "build:vscode-js-debug": "cd ../vscode-js-debug && npm run compile && cp dist/src/chromehash_bg.wasm ../vscode-extension/dist/",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
     "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
@@ -742,8 +743,5 @@
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
     "xml2js": "^0.6.2"
-  },
-  "enabledApiProposals": [
-    "portsAttributes"
-  ]
+  }
 }
