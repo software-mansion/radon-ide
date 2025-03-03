@@ -1,10 +1,18 @@
+import path from "path";
+import assert from "assert";
 import {
+  commands,
   debug,
   DebugSessionCustomEvent,
   Disposable,
   DebugSession as VscDebugSession,
 } from "vscode";
 import { Metro } from "../project/metro";
+
+export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
+export const DEBUG_PAUSED = "RNIDE_paused";
+export const DEBUG_RESUMED = "RNIDE_continued";
+export const DEBUG_DISCONNECTED = "RNIDE_disconnected";
 
 export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
@@ -19,13 +27,13 @@ export class DebugSession implements Disposable {
   constructor(private metro: Metro, private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
-        case "RNIDE_consoleLog":
+        case DEBUG_CONSOLE_LOG:
           this.delegate.onConsoleLog(event);
           break;
-        case "RNIDE_paused":
+        case DEBUG_PAUSED:
           this.delegate.onDebuggerPaused(event);
           break;
-        case "RNIDE_continued":
+        case DEBUG_RESUMED:
           this.delegate.onDebuggerResumed(event);
           break;
         default:
@@ -46,37 +54,65 @@ export class DebugSession implements Disposable {
       return false;
     }
 
-    let sourceMapAliases: Array<[string, string]> = [];
+    let debugStarted = false;
     const isUsingNewDebugger = this.metro.isUsingNewDebugger;
-    if (isUsingNewDebugger && this.metro.watchFolders.length > 0) {
-      // first entry in watchFolders is the project root
-      sourceMapAliases.push(["/[metro-project]/", this.metro.watchFolders[0]]);
-      this.metro.watchFolders.forEach((watchFolder, index) => {
-        sourceMapAliases.push([`/[metro-watchFolders]/${index}/`, watchFolder]);
-      });
+
+    this.vscSession = undefined;
+
+    const unsub = debug.onDidStartDebugSession((session) => {
+      if (session.type.startsWith("com.swmansion.")) {
+        this.vscSession = session;
+        unsub.dispose();
+      }
+    });
+
+    if (isUsingNewDebugger) {
+      const sourceMapPathOverrides: Record<string, string> = {};
+      if (this.metro.watchFolders.length > 0) {
+        sourceMapPathOverrides["/[metro-project]/*"] = `${this.metro.watchFolders[0]}${path.sep}*`;
+        this.metro.watchFolders.forEach((watchFolder, index) => {
+          sourceMapPathOverrides[`/[metro-watchFolders]/${index}/*`] = `${watchFolder}${path.sep}*`;
+        });
+      }
+
+      debugStarted = await debug.startDebugging(
+        undefined,
+        {
+          type: "com.swmansion.proxy-debugger",
+          name: "Radon IDE Debugger",
+          request: "attach",
+          websocketAddress,
+          sourceMapPathOverrides,
+        },
+        {
+          suppressDebugStatusbar: true,
+          suppressDebugView: true,
+          suppressDebugToolbar: true,
+          suppressSaveBeforeStart: true,
+        }
+      );
+    } else {
+      debugStarted = await debug.startDebugging(
+        undefined,
+        {
+          type: "com.swmansion.react-native-debugger",
+          name: "Radon IDE Debugger",
+          request: "attach",
+          websocketAddress: websocketAddress,
+          expoPreludeLineCount: this.metro.expoPreludeLineCount,
+          breakpointsAreRemovedOnContextCleared: true,
+        },
+        {
+          suppressDebugStatusbar: true,
+          suppressDebugView: true,
+          suppressDebugToolbar: true,
+          suppressSaveBeforeStart: true,
+        }
+      );
     }
 
-    const debugStarted = await debug.startDebugging(
-      undefined,
-      {
-        type: "com.swmansion.react-native-debugger",
-        name: "Radon IDE Debugger",
-        request: "attach",
-        websocketAddress: websocketAddress,
-        sourceMapAliases,
-        expoPreludeLineCount: this.metro.expoPreludeLineCount,
-        breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
-      },
-      {
-        suppressDebugStatusbar: true,
-        suppressDebugView: true,
-        suppressDebugToolbar: true,
-        suppressSaveBeforeStart: true,
-      }
-    );
-
     if (debugStarted) {
-      this.vscSession = debug.activeDebugSession!;
+      assert(this.vscSession);
       return true;
     }
     return false;
@@ -91,11 +127,15 @@ export class DebugSession implements Disposable {
   }
 
   public resumeDebugger() {
-    this.session.customRequest("continue");
+    commands.executeCommand("workbench.action.debug.continue", undefined, {
+      sessionId: this.session.id,
+    });
   }
 
   public stepOverDebugger() {
-    this.session.customRequest("next");
+    commands.executeCommand("workbench.action.debug.stepOver", undefined, {
+      sessionId: this.session.id,
+    });
   }
 
   private get session() {
