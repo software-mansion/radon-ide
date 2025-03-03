@@ -39,7 +39,7 @@ export function registerChat(context: vscode.ExtensionContext) {
 
       stream.markdown(
         vscode.l10n.t(
-          "You need to have a valid license to use the Radon Chat. Please activate your license."
+          "You need to have a valid license to use the Radon AI Chat. Please activate your license."
         )
       );
       return { metadata: { command: "" } };
