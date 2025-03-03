@@ -865,8 +865,6 @@ export class Project
       throw new Error("[PROJECT] Build cache not initialized");
     }
 
-    // await this.deviceSession?.restartDebugger();
-
     const device = await this.selectDeviceOnly(deviceInfo);
     if (!device) {
       return false;
