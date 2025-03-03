@@ -12,6 +12,7 @@ import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
 import { IDE } from "../../project/ide";
 import { REACT_QUERY_PLUGIN_ID } from "./react-query-devtools-plugin";
+import { reportToolOpened, reportToolVisibilityChanged } from "../../project/tools";
 
 const PATH = "dist/react-query-devtools/assets/";
 
@@ -75,22 +76,22 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
     context: WebviewViewResolveContext,
     token: CancellationToken
   ): void {
-    webviewView.webview.options = {
+    reportToolOpened(REACT_QUERY_PLUGIN_ID);
+
+    const webview = webviewView.webview;
+
+    webview.options = {
       enableScripts: true,
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, PATH)],
     };
 
-    webviewView.webview.html = generateWebviewContent(
-      extensionContext,
-      webviewView.webview,
-      extensionContext.extensionUri
-    );
+    webview.html = generateWebviewContent(extensionContext, webview, extensionContext.extensionUri);
 
     const devTools = IDE.getInstanceIfExists()?.project?.toolsManager.devtools;
 
     const handleDevToolsMessage = (event: string, payload: any) => {
       if (event === REACT_QUERY_PLUGIN_ID) {
-        webviewView.webview.postMessage({
+        webview.postMessage({
           scope: event,
           data: payload,
         });
@@ -99,9 +100,13 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
 
     devTools?.addListener(handleDevToolsMessage);
 
-    webviewView.webview.onDidReceiveMessage((message) => {
+    webview.onDidReceiveMessage((message) => {
       const { scope, ...data } = message;
       devTools?.send(scope, data);
+    });
+
+    webviewView.onDidChangeVisibility(() => {
+      reportToolVisibilityChanged(REACT_QUERY_PLUGIN_ID, webviewView.visible);
     });
 
     webviewView.onDidDispose(() => {
