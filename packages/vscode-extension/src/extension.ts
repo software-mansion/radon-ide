@@ -29,6 +29,7 @@ import { IDE } from "./project/ide";
 import { registerChat } from "./chat/chat";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
+const CHAT_OPENED = "chat_opened";
 
 function handleUncaughtErrors() {
   process.on("unhandledRejection", (error) => {
@@ -168,6 +169,7 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.captureScreenshot", captureScreenshot)
   );
+  context.subscriptions.push(commands.registerCommand("RNIDE.openChat", openChat));
 
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
     registeredCommandDisposable.dispose(); // must dispose to avoid endless loops
@@ -298,6 +300,17 @@ async function toggleRecording() {
 
 async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
+}
+
+async function openChat() {
+  let prompt = undefined;
+
+  if (!extensionContext.globalState.get(CHAT_OPENED)) {
+    prompt = "@radon what is Radon IDE?";
+    extensionContext.globalState.update(CHAT_OPENED, true);
+  }
+
+  commands.executeCommand("workbench.action.chat.open", prompt);
 }
 
 async function diagnoseWorkspaceStructure() {

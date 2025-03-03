@@ -97,6 +97,12 @@
         "title": "Capture Screenshot",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.openChat",
+        "title": "Chat with Radon AI",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
