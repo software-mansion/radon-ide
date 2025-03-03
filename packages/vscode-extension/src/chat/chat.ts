@@ -34,6 +34,17 @@ export function registerChat(context: vscode.ExtensionContext) {
 
     const jwt = await getLicenseToken();
 
+    if (!jwt) {
+      logger.logUsage("chat:licenseNotFound", { kind: "" });
+
+      stream.markdown(
+        vscode.l10n.t(
+          "You need to have a valid license to chat with Radon AI. Please activate your license."
+        )
+      );
+      return { metadata: { command: "" } };
+    }
+
     try {
       let json;
       try {
