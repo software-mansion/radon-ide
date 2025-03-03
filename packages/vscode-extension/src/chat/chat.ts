@@ -17,7 +17,7 @@ Always assume that the user already has a development environment set up for Rea
 `;
 const START_OF_USER_QUESTION = "\n# ANSWER THE FOLLOWING USER QUESTION:\n\n";
 
-const BASE_RADON_AI_URL = "http://127.0.0.1:8000";
+const BASE_RADON_AI_URL = "https://radon-ai-backend.swmansion.com";
 
 interface IChatResult extends vscode.ChatResult {
   metadata: {
