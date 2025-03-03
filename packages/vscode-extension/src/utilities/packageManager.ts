@@ -1,7 +1,6 @@
 import path from "path";
 import fs from "fs";
 import { command } from "./subprocess";
-import { getAppRootFolder } from "./extensionContext";
 import { isWorkspaceRoot } from "./common";
 import { Logger } from "../Logger";
 import { getLaunchConfiguration } from "./launchConfiguration";
@@ -31,9 +30,11 @@ async function listFilesSortedByModificationDate(dir: string) {
 
 const DEFAULT_PACKAGE_MANAGER = "npm";
 
-export async function resolvePackageManager(): Promise<PackageManagerInfo | undefined> {
-  function findWorkspace(appRoot: string) {
-    let currentDir = appRoot;
+export async function resolvePackageManager(
+  appRoot: string
+): Promise<PackageManagerInfo | undefined> {
+  function findWorkspace(appRootPath: string) {
+    let currentDir = appRootPath;
     let parentDir = path.resolve(currentDir, "..");
     while (parentDir !== currentDir) {
       currentDir = parentDir;
@@ -45,8 +46,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     return undefined;
   }
 
-  const appRootPath = getAppRootFolder();
-  const workspacePath = findWorkspace(appRootPath);
+  const workspacePath = findWorkspace(appRoot);
 
   async function findPackageManager(workspace: string) {
     const { packageManager } = getLaunchConfiguration();
@@ -107,7 +107,7 @@ export async function resolvePackageManager(): Promise<PackageManagerInfo | unde
     return DEFAULT_PACKAGE_MANAGER;
   }
 
-  const name = await findPackageManager(workspacePath ?? appRootPath);
+  const name = await findPackageManager(workspacePath ?? appRoot);
 
   try {
     await command(`${name} --version`);
@@ -201,8 +201,11 @@ async function isBunModulesInstalled(): Promise<boolean> {
   return false;
 }
 
-export async function isNodeModulesInstalled(manager: PackageManagerInfo): Promise<boolean> {
-  const workspacePath = manager.workspacePath ?? getAppRootFolder();
+export async function isNodeModulesInstalled(
+  manager: PackageManagerInfo,
+  appRoot: string
+): Promise<boolean> {
+  const workspacePath = manager.workspacePath ?? appRoot;
   switch (manager.name) {
     case "npm":
       return await isNpmModulesInstalled(workspacePath);

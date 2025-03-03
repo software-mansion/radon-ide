@@ -18,10 +18,8 @@ import {
   createReactQueryDevtools,
 } from "../plugins/react-query-devtools-plugin/react-query-devtools-plugin";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import {
-  RENDER_OUTLINES_PLUGIN_ID,
-  RenderOutlinesPlugin,
-} from "../plugins/render-outlines/render-outlines-plugin";
+import { RenderOutlinesPlugin } from "../plugins/render-outlines/render-outlines-plugin";
+import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 

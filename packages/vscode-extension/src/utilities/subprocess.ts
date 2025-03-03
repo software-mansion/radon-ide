@@ -31,7 +31,14 @@ async function getPathEnv(appRoot: string) {
       env: {},
     }
   );
-  const path = stdout.split(RNIDE_PATH_DELIMITER)[1].trim();
+
+  // The approach above is not always loading the whole path as it ignores some setup scripts,
+  // like .zprofile for example, to mitigate the effects of that problem we append the PATH
+  // of the current running process to the end of the ne PATH variable.
+  const vsCodeProcessPath = process.env.PATH;
+
+  const path = `${stdout.split(RNIDE_PATH_DELIMITER)[1].trim()}:${vsCodeProcessPath}`;
+
   Logger.debug("Obtained PATH environment variable:", path);
   return path;
 }

@@ -1,6 +1,6 @@
+import path from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
 import license from "rollup-plugin-license";
 
 export default defineConfig({
@@ -64,7 +64,7 @@ export default defineConfig({
   server: {
     port: 2137,
     hmr: {
-      host: "localhost",
+      host: "127.0.0.1",
     },
   },
 });
