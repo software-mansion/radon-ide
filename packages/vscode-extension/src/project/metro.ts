@@ -441,11 +441,11 @@ export class Metro implements Disposable {
       try {
         const list = await fetch(`http://localhost:${this._port}/json/list`);
         const listJson = await list.json();
-  
+
         if (listJson.length > 0) {
           return listJson;
         }
-      } catch(_) {
+      } catch (_) {
         // It shouldn't happen, so lets warn about it. Except a warning we will retry anyway, so nothing to do here.
         Logger.warn("[METRO] Fetching list of runtimes failed, retrying...");
       }
