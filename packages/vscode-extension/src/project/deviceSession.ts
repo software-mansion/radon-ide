@@ -12,7 +12,7 @@ import {
   TouchPoint,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { DebugSession, DebugSessionDelegate } from "../debugging/DebugSession";
+import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -44,7 +44,7 @@ export class DeviceBootError extends Error {
 export class DeviceSession implements Disposable {
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
-  private debugSession: DebugSession | undefined;
+  private debugSession: DebugSession;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
   private deviceSettings: DeviceSettings | undefined;
@@ -87,10 +87,19 @@ export class DeviceSession implements Disposable {
           break;
       }
     });
+
+    // we start debug session here to be able to leverage the functionality of debug console
+    // the session is not connected to the js debugger here yet and that step can only happen,
+    // after app is running.
+    this.debugSession = DebugSession.start(this.debugEventDelegate);
   }
 
-  public dispose() {
-    this.debugSession?.dispose();
+  /** 
+  This method is async to allow for awaiting it during restarts, please keep in mind tho that
+  build in vscode dispose system ignores async keyword and works synchronously. 
+  */
+  public async dispose() {
+    await this.debugSession?.dispose();
     this.disposableBuild?.dispose();
     this.device?.dispose();
   }
@@ -98,10 +107,12 @@ export class DeviceSession implements Disposable {
   public async perform(type: ReloadAction) {
     switch (type) {
       case "reinstall":
+        await this.restartDebugger();
         await this.installApp({ reinstall: true });
         await this.launchApp();
         return true;
       case "restartProcess":
+        await this.restartDebugger();
         const launchSucceeded = await this.launchApp();
         if (!launchSucceeded) {
           return false;
@@ -119,6 +130,10 @@ export class DeviceSession implements Disposable {
         return false;
     }
     throw new Error("Not implemented " + type);
+  }
+
+  public async restartDebugger() {
+    await this.debugSession.restart();
   }
 
   private launchAppCancelToken: CancelToken | undefined;
@@ -186,7 +201,7 @@ export class DeviceSession implements Disposable {
 
     Logger.debug("App and preview ready, moving on...");
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
-    await this.startDebugger();
+    await this.connectJSDebugger();
     if (launchCancelToken.cancelled) {
       return undefined;
     }
@@ -271,13 +286,10 @@ export class DeviceSession implements Disposable {
     return previewUrl;
   }
 
-  private async startDebugger() {
-    if (this.debugSession) {
-      this.debugSession.dispose();
-    }
-    this.debugSession = new DebugSession(this.metro, this.debugEventDelegate);
-    const started = await this.debugSession.start();
-    if (started) {
+  private async connectJSDebugger() {
+    const connected = await this.debugSession.connectJSDebugger(this.metro);
+
+    if (connected) {
       // TODO(jgonet): Right now, we ignore start failure
       Logger.debug("Connected to debugger, moving on...");
     } else {
@@ -291,6 +303,10 @@ export class DeviceSession implements Disposable {
 
   public stepOverDebugger() {
     this.debugSession?.stepOverDebugger();
+  }
+
+  public async appendDebugConsoleEntry(message: string, type: string, source: DebugSource) {
+    await this.debugSession?.appendDebugConsoleEntry(message, type, source);
   }
 
   public async resetAppPermissions(permissionType: AppPermissionType) {

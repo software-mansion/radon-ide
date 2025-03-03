@@ -91,8 +91,8 @@ function Preview({
 
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
-  const hasIncrementalBundleError = projectStatus === "incrementalBundleError";
-  const hasBundleError = projectStatus === "bundleError";
+  const hasBundlingError = projectStatus === "bundlingError";
+  const hasBundleBuildFailedError = projectStatus === "bundleBuildFailedError";
 
   const debugPaused = projectStatus === "debuggerPaused";
   const debugException = projectStatus === "runtimeError";
@@ -100,7 +100,7 @@ function Preview({
   const previewURL = projectState.previewURL;
 
   const isStarting =
-    hasBundleError || hasIncrementalBundleError || debugException
+    hasBundleBuildFailedError || hasBundlingError || debugException
       ? false
       : !projectState || projectState.status === "starting";
   const showDevicePreview =
@@ -109,7 +109,7 @@ function Preview({
 
   useBuildErrorAlert(hasBuildError);
   useBootErrorAlert(hasBootError);
-  useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
+  useBundleErrorAlert(hasBundleBuildFailedError || hasBundlingError);
 
   const openRebuildAlert = useNativeRebuildAlert();
 
@@ -211,8 +211,8 @@ function Preview({
   const shouldPreventInputEvents =
     debugPaused ||
     debugException ||
-    hasBundleError ||
-    hasIncrementalBundleError ||
+    hasBundleBuildFailedError ||
+    hasBundlingError ||
     projectStatus === "refreshing" ||
     !showDevicePreview ||
     !!replayData;
@@ -567,7 +567,7 @@ function Preview({
                 </div>
               )}
               {/* TODO: Add different label in case of bundle/incremental bundle error */}
-              {hasBundleError && (
+              {hasBundleBuildFailedError && (
                 <div className="phone-screen phone-debug-overlay phone-exception-overlay">
                   <button
                     className="uncaught-button"
@@ -579,7 +579,7 @@ function Preview({
                   </button>
                 </div>
               )}
-              {hasIncrementalBundleError && (
+              {hasBundlingError && (
                 <div className="phone-screen phone-debug-overlay phone-exception-overlay">
                   <button className="uncaught-button" onClick={() => project.restart(false)}>
                     Bundle error&nbsp;
