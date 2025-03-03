@@ -1,6 +1,6 @@
+import { Source } from "@vscode/debugadapter";
 import { CDPCallFrame, CDPProfile } from "./cdp";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
-import { Source } from "@vscode/debugadapter";
 
 type FrameKey = string;
 
