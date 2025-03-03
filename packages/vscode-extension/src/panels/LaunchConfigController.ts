@@ -1,3 +1,4 @@
+import path from "path";
 import { EventEmitter } from "stream";
 import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
 import {
@@ -6,48 +7,33 @@ import {
   LaunchConfigEventMap,
   LaunchConfigurationOptions,
 } from "../common/LaunchConfig";
-import { getAppRootFolder } from "../utilities/extensionContext";
+import {
+  extensionContext,
+  findAppRootCandidates,
+  getCurrentLaunchConfig,
+} from "../utilities/extensionContext";
 import { findXcodeProject, findXcodeScheme } from "../utilities/xcode";
 import { Logger } from "../Logger";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { readEasConfig } from "../utilities/eas";
 import { EasBuildConfig } from "../common/EasConfig";
 
+const CUSTOM_APPLICATION_ROOTS_KEY = "custom_application_roots_key";
+
 export class LaunchConfigController implements Disposable, LaunchConfig {
   private config: LaunchConfigurationOptions;
   private eventEmitter = new EventEmitter();
   private configListener: Disposable;
 
-  constructor() {
-    const getCurrentConfig = (): LaunchConfigurationOptions => {
-      const launchConfiguration = workspace.getConfiguration(
-        "launch",
-        workspace.workspaceFolders![0].uri
-      );
-
-      const configurations = launchConfiguration.get<Array<Record<string, any>>>("configurations")!;
-
-      const RNIDEConfiguration = configurations.find(
-        ({ type }) => type === "react-native-ide" || type === "radon-ide" // for compatibility we want to support old configuration type name
-      );
-
-      if (!RNIDEConfiguration) {
-        return {};
-      }
-
-      const { android, appRoot, ios, isExpo, metroConfigPath, env, eas } = RNIDEConfiguration;
-
-      return { android, appRoot, ios, isExpo, metroConfigPath, env, eas };
-    };
-
-    this.config = getCurrentConfig();
+  constructor(private readonly appRootFolder: string) {
+    this.config = getCurrentLaunchConfig();
 
     this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (!event.affectsConfiguration("launch")) {
         return;
       }
 
-      this.config = getCurrentConfig();
+      this.config = getCurrentLaunchConfig();
 
       this.eventEmitter.emit("launchConfigChange", this.config);
     });
@@ -90,11 +76,43 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
     await configurations.update("configurations", newConfigurations);
   }
 
-  async getAvailableXcodeSchemes() {
-    const appRootFolder = getAppRootFolder();
-    const sourceDir = getIosSourceDir(appRootFolder);
+  async addCustomApplicationRoot(appRoot: string) {
+    const oldCustomApplicationRoots =
+      extensionContext.workspaceState.get<string[] | undefined>(CUSTOM_APPLICATION_ROOTS_KEY) ?? [];
 
-    const xcodeProject = await findXcodeProject(appRootFolder);
+    const newCustomApplicationRoots = [...oldCustomApplicationRoots, appRoot];
+
+    extensionContext.workspaceState.update(
+      CUSTOM_APPLICATION_ROOTS_KEY,
+      newCustomApplicationRoots
+    ) ?? [];
+
+    this.eventEmitter.emit("applicationRootsChanged");
+  }
+
+  async getAvailableApplicationRoots() {
+    const workspacePath = workspace.workspaceFolders![0].uri.fsPath;
+    const applicationRootsCandidates = findAppRootCandidates().map((candidate) => {
+      return "./" + path.relative(workspacePath, candidate);
+    });
+    const customApplicationRoots =
+      extensionContext.workspaceState.get<string[] | undefined>(CUSTOM_APPLICATION_ROOTS_KEY) ?? [];
+
+    const applicationRoots = [...applicationRootsCandidates, ...customApplicationRoots];
+
+    if (!applicationRoots) {
+      Logger.debug(`Could not find any application roots.`);
+      return [];
+    }
+
+    return applicationRoots;
+  }
+
+  async getAvailableXcodeSchemes() {
+    const appRoot = this.appRootFolder;
+    const sourceDir = getIosSourceDir(appRoot);
+
+    const xcodeProject = await findXcodeProject(appRoot);
 
     if (!xcodeProject) {
       Logger.debug(`Could not find Xcode project files in "${sourceDir}" folder`);
@@ -110,8 +128,8 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
   }
 
   async getAvailableEasProfiles(): Promise<EasBuildConfig> {
-    const appRootFolder = getAppRootFolder();
-    const easConfig = await readEasConfig(appRootFolder);
+    const appRoot = this.appRootFolder;
+    const easConfig = await readEasConfig(appRoot);
     const easBuildConfig = easConfig?.build ?? {};
     return easBuildConfig;
   }

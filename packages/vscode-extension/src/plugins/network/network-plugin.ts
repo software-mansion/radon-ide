@@ -92,6 +92,7 @@ export class NetworkPlugin implements ToolPlugin {
   public readonly label = "Network";
 
   public available = false;
+  public readonly persist = true;
 
   private readonly websocketBackend;
 

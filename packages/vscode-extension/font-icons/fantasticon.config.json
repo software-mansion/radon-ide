@@ -1,0 +1,10 @@
+{
+  "inputDir": "./font-icons/",
+  "outputDir": "./assets/",
+  "fontTypes": ["woff2"],
+  "assetTypes": [],
+  "name": "font-icons",
+  "codepoints": {
+    "off": "0xE001"
+  }
+}
