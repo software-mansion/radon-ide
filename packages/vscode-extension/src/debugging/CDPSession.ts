@@ -15,6 +15,7 @@ import { BreakpointsController } from "./BreakpointsController";
 import { VariableStore } from "./variableStore";
 import { CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
+import { annotateLocations } from "./cpuProfiler";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -489,4 +490,14 @@ export class CDPSession {
   }
 
   //#endregion
+
+  public async startProfiling() {
+    await this.sendCDPMessage("Profiler.start", {});
+  }
+
+  public async stopProfiling() {
+    const result = await this.sendCDPMessage("Profiler.stop", {});
+    const annotatedProfile = annotateLocations(result.profile, this.sourceMapRegistry);
+    return annotatedProfile;
+  }
 }

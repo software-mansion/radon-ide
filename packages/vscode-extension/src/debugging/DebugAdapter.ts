@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+import os from "os";
 import { DebugConfiguration } from "vscode";
 import {
   DebugSession,
@@ -369,18 +372,33 @@ export class DebugAdapter extends DebugSession implements CDPSessionDelegate {
     this.sendResponse(response);
   }
 
-  protected customRequest(
+  protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
     args: any,
     request?: DebugProtocol.Request | undefined
-  ): void {
+  ) {
     switch (command) {
       case "RNIDE_connect_cdp_debugger":
         this.connectJSDebugger(args);
         break;
       case "RNIDE_log_message":
         this.logCustomMessage(args.message, args.type, args.source);
+        break;
+      case "RNIDE_startProfiling":
+        if (this.cdpSession) {
+          await this.cdpSession.startProfiling();
+          this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
+        }
+        break;
+      case "RNIDE_stopProfiling":
+        if (this.cdpSession) {
+          const profile = await this.cdpSession.stopProfiling();
+          const fileName = `profile-${Date.now()}.cpuprofile`;
+          const filePath = path.join(os.tmpdir(), fileName);
+          await fs.promises.writeFile(filePath, JSON.stringify(profile));
+          this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
+        }
         break;
       default:
         Logger.debug(`Custom req ${command} ${args}`);

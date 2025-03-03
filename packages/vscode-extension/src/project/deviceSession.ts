@@ -331,6 +331,22 @@ export class DeviceSession implements Disposable {
     return this.device.captureScreenshot();
   }
 
+  public async startProfilingCPU() {
+    if (this.debugSession) {
+      await this.debugSession.startProfilingCPU();
+    } else {
+      throw new Error("Debug session not started");
+    }
+  }
+
+  public async stopProfilingCPU() {
+    if (this.debugSession) {
+      await this.debugSession.stopProfilingCPU();
+    } else {
+      throw new Error("Debug session not started");
+    }
+  }
+
   public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
     this.device.sendTouches(touches, type);
   }

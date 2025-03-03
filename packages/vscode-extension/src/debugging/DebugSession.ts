@@ -11,6 +11,8 @@ export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
   onDebuggerPaused(event: DebugSessionCustomEvent): void;
   onDebuggerResumed(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStarted(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStopped(event: DebugSessionCustomEvent): void;
 };
 
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
@@ -31,6 +33,12 @@ export class DebugSession implements Disposable {
           break;
         case "RNIDE_continued":
           this.delegate.onDebuggerResumed(event);
+          break;
+        case "RNIDE_profilingCPUStarted":
+          this.delegate.onProfilingCPUStarted(event);
+          break;
+        case "RNIDE_profilingCPUStopped":
+          this.delegate.onProfilingCPUStopped(event);
           break;
         default:
           // ignore other events
@@ -85,9 +93,9 @@ export class DebugSession implements Disposable {
     this.vscSession && (await debug.stopDebugging(this.vscSession));
   }
 
-  /**  
+  /**
   This method is async to allow for awaiting it during restarts, please keep in mind tho that
-  build in vscode dispose system ignores async keyword and works synchronously. 
+  build in vscode dispose system ignores async keyword and works synchronously.
   */
   public async dispose() {
     this.vscSession && (await debug.stopDebugging(this.vscSession));
@@ -133,6 +141,14 @@ export class DebugSession implements Disposable {
 
   public stepOverDebugger() {
     this.session.customRequest("next");
+  }
+
+  public async startProfilingCPU() {
+    await this.session.customRequest("RNIDE_startProfiling");
+  }
+
+  public async stopProfilingCPU() {
+    await this.session.customRequest("RNIDE_stopProfiling");
   }
 
   private async connectCDPDebugger(cdpConfiguration: CDPConfiguration) {
