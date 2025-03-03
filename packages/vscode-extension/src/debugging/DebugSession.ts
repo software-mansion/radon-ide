@@ -85,8 +85,12 @@ export class DebugSession implements Disposable {
     this.vscSession && (await debug.stopDebugging(this.vscSession));
   }
 
-  public dispose() {
-    this.vscSession && debug.stopDebugging(this.vscSession);
+  /**  
+  This method is async to allow for awaiting it during restarts, please keep in mind tho that
+  build in vscode dispose system ignores async keyword and works synchronously. 
+  */
+  public async dispose() {
+    this.vscSession && (await debug.stopDebugging(this.vscSession));
     this.debugEventsListener.dispose();
   }
 

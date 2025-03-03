@@ -94,8 +94,12 @@ export class DeviceSession implements Disposable {
     this.debugSession = DebugSession.start(this.debugEventDelegate);
   }
 
-  public dispose() {
-    this.debugSession?.dispose();
+  /** 
+  This method is async to allow for awaiting it during restarts, please keep in mind tho that
+  build in vscode dispose system ignores async keyword and works synchronously. 
+  */
+  public async dispose() {
+    await this.debugSession?.dispose();
     this.disposableBuild?.dispose();
     this.device?.dispose();
   }
@@ -103,12 +107,12 @@ export class DeviceSession implements Disposable {
   public async perform(type: ReloadAction) {
     switch (type) {
       case "reinstall":
-        await this.debugSession.restart();
+        await this.restartDebugger();
         await this.installApp({ reinstall: true });
         await this.launchApp();
         return true;
       case "restartProcess":
-        await this.debugSession.restart();
+        await this.restartDebugger();
         const launchSucceeded = await this.launchApp();
         if (!launchSucceeded) {
           return false;
@@ -126,6 +130,10 @@ export class DeviceSession implements Disposable {
         return false;
     }
     throw new Error("Not implemented " + type);
+  }
+
+  public async restartDebugger() {
+    await this.debugSession.restart();
   }
 
   private launchAppCancelToken: CancelToken | undefined;
