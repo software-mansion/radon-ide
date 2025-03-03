@@ -14,7 +14,6 @@ import {
   ConfigurationChangeEvent,
 } from "vscode";
 import _ from "lodash";
-import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
@@ -37,7 +36,7 @@ import { extensionContext, getCurrentLaunchConfig } from "../utilities/extension
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { throttle, throttleAsync } from "../utilities/throttle";
-import { DebugSessionDelegate } from "../debugging/DebugSession";
+import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
@@ -54,6 +53,7 @@ import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
+import { focusSource } from "../utilities/focusSource";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -75,9 +75,8 @@ export class Project
   public metro: Metro;
   public toolsManager: ToolsManager;
 
-  private devtools = new Devtools();
+  private devtools;
   private eventEmitter = new EventEmitter();
-
   private isCachedBuildStale: boolean;
 
   private deviceSession: DeviceSession | undefined;
@@ -209,7 +208,7 @@ export class Project
         this.updateProjectState({ status: "refreshing" });
         break;
       case "fastRefreshComplete":
-        const ignoredEvents = ["starting", "incrementalBundleError", "runtimeError"];
+        const ignoredEvents = ["starting", "bundlingError", "runtimeError"];
         if (ignoredEvents.includes(this.projectState.status)) {
           return;
         }
@@ -227,7 +226,7 @@ export class Project
   onDebuggerPaused(event: DebugSessionCustomEvent) {
     if (event.body?.reason === "exception") {
       // if we know that incremental bundle error happened, we don't want to change the status
-      if (this.projectState.status === "incrementalBundleError") {
+      if (this.projectState.status === "bundlingError") {
         return;
       }
       this.updateProjectState({ status: "runtimeError" });
@@ -403,18 +402,27 @@ export class Project
     await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
-  onBundleError(): void {
-    this.updateProjectState({ status: "bundleError" });
+  onBundleBuildFailedError(): void {
+    this.updateProjectState({ status: "bundleBuildFailedError" });
   }
 
-  onIncrementalBundleError(message: string, _errorModulePath: string): void {
-    Logger.error(stripAnsi(message));
+  async onBundlingError(
+    message: string,
+    source: DebugSource,
+    _errorModulePath: string
+  ): Promise<void> {
+    await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
+
+    this.focusDebugConsole();
+    focusSource(source);
+
+    Logger.error("[Bundling Error]", message);
     // if bundle build failed, we don't want to change the status
-    // incrementalBundleError status should be set only when bundleError status is not set
-    if (this.projectState.status === "bundleError") {
+    // bundlingError status should be set only when bundleBuildFailedError status is not set
+    if (this.projectState.status === "bundleBuildFailedError") {
       return;
     }
-    this.updateProjectState({ status: "incrementalBundleError" });
+    this.updateProjectState({ status: "bundlingError" });
   }
 
   /**
@@ -935,7 +943,7 @@ export class Project
     }
     Logger.debug("Selected device is ready");
 
-    this.deviceSession?.dispose();
+    await this.deviceSession?.dispose();
     this.deviceSession = undefined;
 
     this.updateProjectState({

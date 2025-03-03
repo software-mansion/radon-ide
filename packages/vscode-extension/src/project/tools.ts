@@ -11,8 +11,12 @@ import {
 import { NetworkPlugin, NETWORK_PLUGIN_ID } from "../plugins/network/network-plugin";
 import {
   REDUX_PLUGIN_ID,
-  createReduxDevtools,
+  ReduxDevtoolsPlugin,
 } from "../plugins/redux-devtools-plugin/redux-devtools-plugin";
+import {
+  REACT_QUERY_PLUGIN_ID,
+  createReactQueryDevtools,
+} from "../plugins/react-query-devtools-plugin/react-query-devtools-plugin";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { RenderOutlinesPlugin } from "../plugins/render-outlines/render-outlines-plugin";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
@@ -21,6 +25,7 @@ const TOOLS_SETTINGS_KEY = "tools_settings";
 
 export type ToolKey =
   | ExpoDevPluginToolName
+  | typeof REACT_QUERY_PLUGIN_ID
   | typeof NETWORK_PLUGIN_ID
   | typeof REDUX_PLUGIN_ID
   | typeof RENDER_OUTLINES_PLUGIN_ID;
@@ -58,8 +63,10 @@ export class ToolsManager implements Disposable {
     for (const plugin of createExpoDevPluginTools()) {
       this.plugins.set(plugin.id, plugin);
     }
+    const reactQueryPlugin = createReactQueryDevtools();
+    this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 
-    this.plugins.set(REDUX_PLUGIN_ID, createReduxDevtools(this));
+    this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(devtools));
     this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(devtools));
     this.plugins.set(RENDER_OUTLINES_PLUGIN_ID, new RenderOutlinesPlugin(devtools));
 
