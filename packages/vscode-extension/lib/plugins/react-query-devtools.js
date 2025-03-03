@@ -1,6 +1,6 @@
 import {
   QueryClient
-} from '@tanstack/react-query';
+} from '@tanstack/query-core'
 import {
   register,
 } from '../expo_dev_plugins';
