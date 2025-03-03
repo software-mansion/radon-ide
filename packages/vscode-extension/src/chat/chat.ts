@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
+import { Logger } from "../Logger";
 import { getLicenseToken } from "../utilities/license";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 
@@ -31,16 +33,16 @@ export function registerChat(context: vscode.ExtensionContext) {
     token: vscode.CancellationToken
   ): Promise<IChatResult> => {
     stream.progress("Thinking...");
+    Logger.info("Chat requested");
 
     const jwt = await getLicenseToken();
 
     if (!jwt) {
-      logger.logUsage("chat:licenseNotFound", { kind: "" });
+      Logger.warn("No license found. Please activate your license.");
+      getTelemetryReporter().sendTelemetryEvent("chat:requested:no-license");
 
       stream.markdown(
-        vscode.l10n.t(
-          "You need to have a valid license to use the Radon AI Chat. Please activate your license."
-        )
+        "You need to have a valid license to use the Radon AI Chat. Please activate your license."
       );
       return { metadata: { command: "" } };
     }
@@ -57,9 +59,22 @@ export function registerChat(context: vscode.ExtensionContext) {
           },
           body: JSON.stringify({ prompt: request.prompt }),
         });
+
+        if (!response.ok) {
+          Logger.error(`Failed to fetch response from Radon AI with status: ${response.status}`);
+          getTelemetryReporter().sendTelemetryEvent("chat:error", {
+            error: `Failed to fetch with status: ${response.status}`,
+          });
+        }
+
         json = await response.json();
       } catch (error) {
-        console.error(error);
+        if (error instanceof Error) {
+          Logger.error(error.message);
+          getTelemetryReporter().sendTelemetryEvent("chat:error", { error: error.message });
+        } else {
+          Logger.error(String(error));
+        }
       }
 
       let systemPrompt = "";
@@ -102,57 +117,41 @@ export function registerChat(context: vscode.ExtensionContext) {
         stream.markdown(fragment);
       }
     } catch (err) {
-      handleError(logger, err, stream);
+      handleError(err, stream);
     }
 
-    logger.logUsage("chatRequest", { kind: "" });
+    getTelemetryReporter().sendTelemetryEvent("chat:responded");
     return { metadata: { command: "" } };
   };
 
   const chat = vscode.chat.createChatParticipant(CHAT_PARTICIPANT_ID, handler);
   chat.iconPath = vscode.Uri.joinPath(context.extensionUri, "/assets/logo.png");
 
-  // TODO: add capture telemetry
-  const logger = vscode.env.createTelemetryLogger({
-    sendEventData(eventName, data) {
-      // Capture event telemetry
-      console.log(`Event: ${eventName}`);
-      console.log(`Data: ${JSON.stringify(data)}`);
-    },
-    sendErrorData(error, data) {
-      // Capture error telemetry
-      console.error(`Error: ${error}`);
-      console.error(`Data: ${JSON.stringify(data)}`);
-    },
-  });
-
   context.subscriptions.push(
     chat.onDidReceiveFeedback((feedback: vscode.ChatResultFeedback) => {
       // Log chat result feedback to be able to compute the success matrix of the participant
       // unhelpful / totalRequests is a good success metric
-      logger.logUsage("chatResultFeedback", {
-        kind: feedback.kind,
-      });
+      const kind =
+        feedback.kind === vscode.ChatResultFeedbackKind.Unhelpful ? "unhelpful" : "helpful";
+      getTelemetryReporter().sendTelemetryEvent(`chat:feedback:${kind}`);
     })
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function handleError(
-  logger: vscode.TelemetryLogger,
-  err: any,
-  stream: vscode.ChatResponseStream
-): void {
+function handleError(err: unknown, stream: vscode.ChatResponseStream): void {
   // making the chat request might fail because
   // - model does not exist
   // - user consent not given
   // - quote limits exceeded
-  logger.logError(err);
+  if (err instanceof Error) {
+    Logger.error(err.message);
+    getTelemetryReporter().sendTelemetryEvent("chat:error", { error: err.message });
+  }
 
   if (err instanceof vscode.LanguageModelError) {
     console.log(err.message, err.code, err.cause);
     if (err.cause instanceof Error && err.cause.message.includes("off_topic")) {
-      stream.markdown(vscode.l10n.t("I'm sorry, I can only explain React Native concepts."));
+      stream.markdown("I'm sorry, I can only explain React Native concepts.");
     }
   } else {
     // re-throw other errors so they show up in the UI
