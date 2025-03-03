@@ -438,11 +438,16 @@ export class Metro implements Disposable {
     while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
       retryCount++;
 
-      const list = await fetch(`http://localhost:${this._port}/json/list`);
-      const listJson = await list.json();
-
-      if (listJson.length > 0) {
-        return listJson;
+      try {
+        const list = await fetch(`http://localhost:${this._port}/json/list`);
+        const listJson = await list.json();
+  
+        if (listJson.length > 0) {
+          return listJson;
+        }
+      } catch(_) {
+        // It shouldn't happen, so lets warn about it. Except a warning we will retry anyway, so nothing to do here.
+        Logger.warn("[METRO] Fetching list of runtimes failed, retrying...");
       }
 
       await sleep(progressiveRetryTimeout(retryCount));
