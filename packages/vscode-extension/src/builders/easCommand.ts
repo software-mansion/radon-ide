@@ -1,5 +1,4 @@
 import { DevicePlatform } from "../common/DeviceManager";
-import { getAppRootFolder } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 
 type UnixTimestamp = number;
@@ -53,16 +52,16 @@ type EASBuildJson = {
   isForIosSimulator: false;
 };
 
-export async function isEasCliInstalled() {
+export async function isEasCliInstalled(appRoot: string) {
   try {
-    await exec("eas", ["--version"], { cwd: getAppRootFolder() });
+    await exec("eas", ["--version"], { cwd: appRoot });
     return true;
   } catch {
     return false;
   }
 }
 
-export async function listEasBuilds(platform: DevicePlatform, profile: string) {
+export async function listEasBuilds(platform: DevicePlatform, profile: string, appRoot: string) {
   const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
 
   const { stdout } = await exec(
@@ -76,14 +75,14 @@ export async function listEasBuilds(platform: DevicePlatform, profile: string) {
       "--profile",
       profile,
     ],
-    { cwd: getAppRootFolder() }
+    { cwd: appRoot }
   );
   return parseEasBuildOutput(stdout, platform);
 }
 
-export async function viewEasBuild(buildUUID: UUID, platform: DevicePlatform) {
+export async function viewEasBuild(buildUUID: UUID, platform: DevicePlatform, appRoot: string) {
   const { stdout } = await exec("eas", ["build:view", buildUUID, "--json"], {
-    cwd: getAppRootFolder(),
+    cwd: appRoot,
   });
   return parseEasBuildOutput(stdout, platform)?.at(0);
 }

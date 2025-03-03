@@ -1,9 +1,7 @@
 import { Disposable } from "vscode";
 import { Project } from "./project";
 import { DeviceManager } from "../devices/DeviceManager";
-import { DependencyManager } from "../dependency/DependencyManager";
 import { WorkspaceConfigController } from "../panels/WorkspaceConfigController";
-import { LaunchConfigController } from "../panels/LaunchConfigController";
 import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
@@ -13,12 +11,9 @@ export class IDE implements Disposable {
   private static instance: IDE | null = null;
 
   public readonly deviceManager: DeviceManager;
-  public readonly dependencyManager: DependencyManager;
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
-  public readonly launchConfig: LaunchConfigController;
   public readonly utils: Utils;
-
   private disposed = false;
   private disposables: Disposable[] = [];
 
@@ -26,18 +21,11 @@ export class IDE implements Disposable {
 
   constructor() {
     this.deviceManager = new DeviceManager();
-    this.dependencyManager = new DependencyManager();
     this.utils = new Utils();
-    this.project = new Project(this.deviceManager, this.dependencyManager, this.utils);
+    this.project = new Project(this.deviceManager, this.utils);
     this.workspaceConfigController = new WorkspaceConfigController();
-    this.launchConfig = new LaunchConfigController();
 
-    this.disposables.push(
-      this.dependencyManager,
-      this.project,
-      this.workspaceConfigController,
-      this.launchConfig
-    );
+    this.disposables.push(this.project, this.workspaceConfigController);
     // register disposable with context
     extensionContext.subscriptions.push(this);
   }

@@ -1,8 +1,15 @@
 import { EventEmitter } from "stream";
 import os from "os";
-import { env, Disposable, commands, workspace, window, DebugSessionCustomEvent } from "vscode";
+import {
+  env,
+  Disposable,
+  commands,
+  workspace,
+  window,
+  DebugSessionCustomEvent,
+  ConfigurationChangeEvent,
+} from "vscode";
 import _ from "lodash";
-import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
@@ -21,16 +28,14 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import { extensionContext, getCurrentLaunchConfig } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { DependencyManager } from "../dependency/DependencyManager";
 import { throttle, throttleAsync } from "../utilities/throttle";
-import { DebugSessionDelegate } from "../debugging/DebugSession";
+import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
-import { BuildCache } from "../builders/BuildCache";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
@@ -41,6 +46,10 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey, ToolsManager } from "./tools";
 import { UtilsInterface } from "../common/utils";
+import { ApplicationContext } from "./ApplicationContext";
+import { disposeAll } from "../utilities/disposables";
+import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
+import { focusSource } from "../utilities/focusSource";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -57,16 +66,14 @@ const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
 {
+  private applicationContext: ApplicationContext;
+
   public metro: Metro;
   public toolsManager: ToolsManager;
+
   private devtools;
   private eventEmitter = new EventEmitter();
-
   private isCachedBuildStale: boolean;
-
-  private fileWatcher: Disposable;
-  private licenseWatcher: Disposable;
-  private licenseUpdater: Disposable;
 
   private deviceSession: DeviceSession | undefined;
 
@@ -80,11 +87,15 @@ export class Project
 
   private deviceSettings: DeviceSettings;
 
+  private disposables: Disposable[] = [];
+
   constructor(
     private readonly deviceManager: DeviceManager,
-    private readonly dependencyManager: DependencyManager,
     private readonly utils: UtilsInterface
   ) {
+    const appRoot = findAndSetupNewAppRootFolder();
+    this.applicationContext = new ApplicationContext(appRoot);
+
     this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
       appearance: "dark",
       contentSize: "normal",
@@ -101,20 +112,71 @@ export class Project
 
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, this);
-    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.isCachedBuildStale = false;
+    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
 
-    this.fileWatcher = watchProjectFiles(() => {
-      this.checkIfNativeChanged();
-    });
-    this.licenseUpdater = refreshTokenPeriodically();
-    this.licenseWatcher = watchLicenseTokenChange(async () => {
-      const hasActiveLicense = await this.hasActiveLicense();
-      this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
-    });
+    this.disposables.push(this.toolsManager);
+    this.disposables.push(
+      watchProjectFiles(() => {
+        this.checkIfNativeChanged();
+      })
+    );
+    this.disposables.push(refreshTokenPeriodically());
+    this.disposables.push(
+      watchLicenseTokenChange(async () => {
+        const hasActiveLicense = await this.hasActiveLicense();
+        this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
+      })
+    );
+
+    this.disposables.push(
+      workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+        if (event.affectsConfiguration("launch")) {
+          const config = getCurrentLaunchConfig();
+          const oldAppRoot = this.appRootFolder;
+          if (config.appRoot === oldAppRoot) {
+            return;
+          }
+          this.setupAppRoot();
+
+          if (this.appRootFolder === undefined) {
+            window.showErrorMessage(
+              "Unable to find the new app root, after a change in launch configuration. Radon IDE might not work properly.",
+              "Dismiss"
+            );
+            return;
+          }
+        }
+      })
+    );
+  }
+
+  get appRootFolder() {
+    return this.applicationContext.appRootFolder;
+  }
+
+  get dependencyManager() {
+    return this.applicationContext.dependencyManager;
+  }
+
+  get launchConfig() {
+    return this.applicationContext.launchConfig;
+  }
+
+  get buildCache() {
+    return this.applicationContext.buildCache;
+  }
+
+  private setupAppRoot() {
+    const newAppRoot = findAndSetupNewAppRootFolder();
+    const oldApplicationContext = this.applicationContext;
+    this.applicationContext = new ApplicationContext(newAppRoot);
+    oldApplicationContext.dispose();
+
+    this.reload("reboot");
   }
 
   //#region Build progress
@@ -142,7 +204,7 @@ export class Project
         this.updateProjectState({ status: "refreshing" });
         break;
       case "fastRefreshComplete":
-        const ignoredEvents = ["starting", "incrementalBundleError", "runtimeError"];
+        const ignoredEvents = ["starting", "bundlingError", "runtimeError"];
         if (ignoredEvents.includes(this.projectState.status)) {
           return;
         }
@@ -160,7 +222,7 @@ export class Project
   onDebuggerPaused(event: DebugSessionCustomEvent) {
     if (event.body?.reason === "exception") {
       // if we know that incremental bundle error happened, we don't want to change the status
-      if (this.projectState.status === "incrementalBundleError") {
+      if (this.projectState.status === "bundlingError") {
         return;
       }
       this.updateProjectState({ status: "runtimeError" });
@@ -267,18 +329,27 @@ export class Project
     await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
-  onBundleError(): void {
-    this.updateProjectState({ status: "bundleError" });
+  onBundleBuildFailedError(): void {
+    this.updateProjectState({ status: "bundleBuildFailedError" });
   }
 
-  onIncrementalBundleError(message: string, _errorModulePath: string): void {
-    Logger.error(stripAnsi(message));
+  async onBundlingError(
+    message: string,
+    source: DebugSource,
+    _errorModulePath: string
+  ): Promise<void> {
+    await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
+
+    this.focusDebugConsole();
+    focusSource(source);
+
+    Logger.error("[Bundling Error]", message);
     // if bundle build failed, we don't want to change the status
-    // incrementalBundleError status should be set only when bundleError status is not set
-    if (this.projectState.status === "bundleError") {
+    // bundlingError status should be set only when bundleBuildFailedError status is not set
+    if (this.projectState.status === "bundleBuildFailedError") {
       return;
     }
-    this.updateProjectState({ status: "incrementalBundleError" });
+    this.updateProjectState({ status: "bundlingError" });
   }
 
   /**
@@ -356,10 +427,8 @@ export class Project
     this.metro?.dispose();
     this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
-    this.fileWatcher.dispose();
-    this.licenseWatcher.dispose();
-    this.licenseUpdater.dispose();
-    this.toolsManager.dispose();
+    this.applicationContext.dispose();
+    disposeAll(this.disposables);
   }
 
   private async reloadMetro() {
@@ -374,6 +443,13 @@ export class Project
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
       platform: this.projectState.selectedDevice?.platform,
     });
+
+    if (this.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
 
     if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
       await this.openNavigation(homeUrl);
@@ -475,6 +551,10 @@ export class Project
   }
 
   private async start(restart: boolean, resetMetroCache: boolean) {
+    if (this.appRootFolder === undefined) {
+      Logger.error("[PROJECT] App root folder not initialized. this code should be unreachable.");
+      throw new Error("[PROJECT] App root folder not initialized");
+    }
     if (restart) {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
@@ -498,7 +578,8 @@ export class Project
       throttle((stageProgress: number) => {
         this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
       }, 100),
-      [waitForNodeModules]
+      [waitForNodeModules],
+      this.appRootFolder
     );
   }
   //#endregion
@@ -623,6 +704,13 @@ export class Project
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
+    if (this.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
+
     if (await this.dependencyManager.checkProjectUsesStorybook()) {
       this.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
     } else {
@@ -707,6 +795,13 @@ export class Project
   }
 
   private async ensureDependenciesAndNodeVersion() {
+    if (this.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
+
     const installed = await this.dependencyManager.checkNodeModulesInstallationStatus();
 
     if (!installed) {
@@ -752,13 +847,30 @@ export class Project
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
+    if (this.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
+    if (this.appRootFolder === undefined) {
+      Logger.error("[PROJECT] App root folder not initialized. this code should be unreachable.");
+      throw new Error("[PROJECT] App root folder not initialized");
+    }
+    if (this.buildCache === undefined) {
+      Logger.error(
+        "[PROJECT] Build cache folder not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Build cache not initialized");
+    }
+
     const device = await this.selectDeviceOnly(deviceInfo);
     if (!device) {
       return false;
     }
     Logger.debug("Selected device is ready");
 
-    this.deviceSession?.dispose();
+    await this.deviceSession?.dispose();
     this.deviceSession = undefined;
 
     this.updateProjectState({
@@ -776,13 +888,13 @@ export class Project
         this.devtools,
         this.metro,
         this.dependencyManager,
-        new BuildCache(device.platform, getAppRootFolder()),
+        this.buildCache,
         this,
         this
       );
       this.deviceSession = newDeviceSession;
 
-      const previewURL = await newDeviceSession.start(this.deviceSettings, {
+      const previewURL = await newDeviceSession.start(this.deviceSettings, this.appRootFolder, {
         cleanBuild: forceCleanBuild,
         previewReadyCallback: (url) => {
           this.updateProjectStateForDevice(deviceInfo, { previewURL: url });
@@ -819,7 +931,11 @@ export class Project
 
   private checkIfNativeChanged = throttleAsync(async () => {
     if (!this.isCachedBuildStale && this.deviceSession) {
-      const isCacheStale = await this.deviceSession.buildCache.isCacheStale();
+      const isCacheStale =
+        !this.projectState.selectedDevice ||
+        (await this.deviceSession.buildCache.isCacheStale(
+          this.projectState.selectedDevice.platform
+        ));
 
       if (isCacheStale) {
         this.isCachedBuildStale = true;

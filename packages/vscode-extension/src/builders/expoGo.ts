@@ -1,7 +1,7 @@
 import path from "path";
 import http from "http";
 import fs from "fs";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import { extensionContext } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { DevicePlatform } from "../common/DeviceManager";
 import { CancelToken } from "./cancelToken";
@@ -15,7 +15,7 @@ function fileExists(filePath: string, ...additionalPaths: string[]) {
   return fs.existsSync(path.join(filePath, ...additionalPaths));
 }
 
-export async function isExpoGoProject(): Promise<boolean> {
+export async function isExpoGoProject(appRoot: string): Promise<boolean> {
   // There is no straightforward way to tell apart different react native project
   // setups. i.e. expo-go, expo-dev-client, bare react native, etc.
   // Here, we are using a heuristic to determine if the project is expo-go based
@@ -24,7 +24,6 @@ export async function isExpoGoProject(): Promise<boolean> {
   // 2) The project doesn't have an android or ios folder
   // 3) The expo_go_project_tester.js script runs successfully – the script uses expo-cli
   // internals to resolve project config and tells expo-go and dev-client apart.
-  const appRoot = getAppRootFolder();
 
   if (!fileExists(appRoot, "app.json") && !fileExists(appRoot, "app.config.js")) {
     // app.json or app.config.js is required for expo-go projects
@@ -43,7 +42,7 @@ export async function isExpoGoProject(): Promise<boolean> {
   );
   try {
     const result = await exec("node", [expoGoProjectTesterScript], {
-      cwd: getAppRootFolder(),
+      cwd: appRoot,
       allowNonZeroExit: true,
     });
     return result.exitCode === 0;
@@ -89,11 +88,15 @@ export function fetchExpoLaunchDeeplink(
   });
 }
 
-export async function downloadExpoGo(platform: DevicePlatform, cancelToken: CancelToken) {
+export async function downloadExpoGo(
+  platform: DevicePlatform,
+  cancelToken: CancelToken,
+  appRoot: string
+) {
   const downloadScript = path.join(extensionContext.extensionPath, "lib", "expo_go_download.js");
   const { stdout } = await cancelToken.adapt(
     exec("node", [downloadScript, platform], {
-      cwd: getAppRootFolder(),
+      cwd: appRoot,
     })
   );
 

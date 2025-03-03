@@ -1,5 +1,20 @@
 import WebSocket from "ws";
+import { OutputEvent, Source, StackFrame, Variable } from "@vscode/debugadapter";
+import { DebugProtocol } from "@vscode/debugprotocol";
+import { Cdp } from "vscode-js-debug/out/cdp/index";
+import { AnyObject } from "vscode-js-debug/out/adapter/objectPreview/betterTypes";
+import { formatMessage } from "vscode-js-debug/out/adapter/messageFormat";
+import {
+  messageFormatters,
+  previewAsObject,
+  previewRemoteObject,
+} from "vscode-js-debug/out/adapter/objectPreview";
 import { Logger } from "../Logger";
+import { SourceMapsRegistry } from "./SourceMapsRegistry";
+import { BreakpointsController } from "./BreakpointsController";
+import { VariableStore } from "./variableStore";
+import { CDPDebuggerScope, CDPRemoteObject } from "./cdp";
+import { typeToCategory } from "./DebugAdapter";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -9,22 +24,61 @@ type PromiseHandlers<T = unknown> = {
   reject: RejectType;
 };
 
+export interface CDPSessionDelegate {
+  onExecutionContextCreated(threadId: number, threadName: string): void;
+  onConnectionClosed: () => void;
+  onDebugSessionReady: () => void;
+  onDebuggerPaused: (message: any) => void;
+  onDebuggerResumed: () => void;
+  onExecutionContextsCleared: () => void;
+  sendOutputEvent: (output: OutputEvent) => void;
+  sendStoppedEvent: (
+    pausedStackFrames: StackFrame[],
+    pausedScopeChains: CDPDebuggerScope[][],
+    reason: string,
+    exceptionText?: string,
+    isFatal?: string
+  ) => void;
+}
+
+const RETRIEVE_VARIABLE_TIMEOUT_MS = 3000;
+
 export class CDPSession {
   private connection: WebSocket;
+
+  private variableStore: VariableStore = new VariableStore();
+  private linesStartAt1 = true;
+  private columnsStartAt1 = true;
 
   private cdpMessageId = 0;
   private cdpMessagePromises: Map<number, PromiseHandlers> = new Map();
 
+  private sourceMapRegistry: SourceMapsRegistry;
+
+  private breakpointsController: BreakpointsController;
+
   constructor(
+    private delegate: CDPSessionDelegate,
     websocketAddress: string,
-    onConnectionClosed: () => void,
-    onIncomingCDPMethod: (message: any) => Promise<void>
+    sourceMapConfiguration: { expoPreludeLineCount: number; sourceMapAliases: [string, string][] },
+    breakpointsConfiguration: { breakpointsAreRemovedOnContextCleared: boolean }
   ) {
+    this.sourceMapRegistry = new SourceMapsRegistry(
+      sourceMapConfiguration.expoPreludeLineCount,
+      sourceMapConfiguration.sourceMapAliases
+    );
+
+    this.breakpointsController = new BreakpointsController(
+      this.sourceMapRegistry,
+      this,
+      breakpointsConfiguration.breakpointsAreRemovedOnContextCleared
+    );
+
     this.connection = new WebSocket(websocketAddress);
 
     this.connection.on("open", this.setUpDebugger);
 
-    this.connection.on("close", onConnectionClosed);
+    this.connection.on("close", this.delegate.onConnectionClosed);
 
     this.connection.on("message", async (data) => {
       const message = JSON.parse(data.toString());
@@ -32,8 +86,273 @@ export class CDPSession {
         this.handleCDPMessageResponse(message);
         return;
       }
-      await onIncomingCDPMethod(message);
+      await this.handleIncomingCDPMethodCalls(message);
     });
+  }
+
+  //#region CPD incoming communication
+
+  private handleIncomingCDPMethodCalls = async (message: any) => {
+    switch (message.method) {
+      case "Runtime.executionContextCreated":
+        const context = message.params.context;
+        this.delegate.onExecutionContextCreated(context.id, context.name);
+        break;
+      case "Debugger.scriptParsed":
+        const sourceMapURL = message.params.sourceMapURL;
+
+        if (!sourceMapURL) {
+          break;
+        }
+
+        let sourceMapData;
+
+        if (sourceMapURL?.startsWith("data:")) {
+          const base64Data = sourceMapURL.split(",")[1];
+          const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
+          sourceMapData = JSON.parse(decodedData);
+        } else {
+          try {
+            const sourceMapResponse = await fetch(sourceMapURL);
+            sourceMapData = await sourceMapResponse.json();
+          } catch {
+            Logger.debug(`Failed to fetch source map from: ${sourceMapURL}`);
+          }
+        }
+
+        if (!sourceMapData || !sourceMapData.sources) {
+          break;
+        }
+
+        // We detect when a source map for the entire bundle is loaded by checking if __prelude__ module is present in the sources.
+        const isMainBundle = sourceMapData.sources.some((source: string) =>
+          source.includes("__prelude__")
+        );
+
+        const consumer = await this.sourceMapRegistry!.registerSourceMap(
+          sourceMapData,
+          message.params.url,
+          message.params.scriptId,
+          isMainBundle
+        );
+
+        if (isMainBundle) {
+          this.sendCDPMessage("Runtime.evaluate", {
+            expression: "__RNIDE_onDebuggerReady()",
+          });
+          this.delegate.onDebugSessionReady();
+        }
+
+        this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
+        break;
+      case "Debugger.paused":
+        this.handleDebuggerPaused(message);
+        break;
+      case "Debugger.resumed":
+        this.delegate.onDebuggerResumed();
+        break;
+      case "Runtime.executionContextsCleared":
+        // clear all existing source maps, breakpoints and variable store
+        this.sourceMapRegistry.clearSourceMaps();
+        this.breakpointsController.onContextCleared();
+        this.variableStore.clearReplVariables();
+        this.variableStore.clearCDPVariables();
+
+        // inform debug adapter that context was Cleared
+        this.delegate.onExecutionContextsCleared();
+        break;
+      case "Runtime.consoleAPICalled":
+        this.handleConsoleAPICall(message);
+        break;
+      default:
+        break;
+    }
+  };
+
+  private async handleConsoleAPICall(message: any) {
+    // We wrap console calls and add stack information as last three arguments, however
+    // some logs may baypass that, especially when printed in initialization phase, so we
+    // need to detect whether the wrapper has added the stack info or not
+    // We check if there are more than 3 arguments, and if the last one is a number
+    // We filter out logs that start with __RNIDE_INTERNAL as those are messages
+    // used by IDE for tracking the app state and should not appear in the VSCode
+    // console.
+    const argsLen = message.params.args.length;
+    let output: OutputEvent;
+
+    if (argsLen > 0 && message.params.args[0].value === "__RNIDE_INTERNAL") {
+      // We return here to avoid passing internal logs to the user debug console,
+      // but they will still be visible in metro log feed.
+      return;
+    } else if (argsLen > 3 && message.params.args[argsLen - 1].type === "number") {
+      // Since console.log stack is extracted from Error, unlike other messages sent over CDP
+      // the line and column numbers are 1-based
+      const [scriptURL, generatedLineNumber1Based, generatedColumn1Based] = message.params.args
+        .slice(-3)
+        .map((v: any) => v.value);
+
+      const { lineNumber1Based, columnNumber0Based, sourceURL } =
+        this.sourceMapRegistry!.findOriginalPosition(
+          scriptURL,
+          generatedLineNumber1Based,
+          generatedColumn1Based - 1
+        );
+
+      const formattedOutput = await this.formatDefaultString(message.params.args.slice(0, -3));
+
+      output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
+
+      output.body = {
+        ...formattedOutput,
+        //@ts-ignore source, line, column and group are valid fields
+        source: new Source(sourceURL, sourceURL),
+        line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+        column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
+      };
+    } else {
+      const variablesRefDapID = await this.createVariableForOutputEvent(message.params.args);
+
+      const formattedOutput = await this.formatDefaultString(message.params.args);
+
+      output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
+
+      output.body = {
+        ...formattedOutput,
+        //@ts-ignore source, line, column and group are valid fields
+        variablesReference: variablesRefDapID,
+      };
+    }
+    this.delegate.sendOutputEvent(output);
+  }
+
+  private async handleDebuggerPaused(message: any) {
+    // We reset the paused* variables to lifecycle of objects references in DAP. https://microsoft.github.io/debug-adapter-protocol//overview.html#lifetime-of-objects-references
+    if (
+      message.params.reason === "other" &&
+      message.params.callFrames[0].functionName === "__RNIDE_breakOnError"
+    ) {
+      // this is a workaround for an issue with hermes which does not provide a full stack trace
+      // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception
+      // reporting handler, and access the actual error's stack trace from local variable
+      const localScopeCDPObjectId = message.params.callFrames[0].scopeChain?.find(
+        (scope: any) => scope.type === "local"
+      )?.object?.objectId;
+      const localScopeObjectId = this.variableStore.adaptCDPObjectId(localScopeCDPObjectId);
+      let localScopeVariables: Variable[] = [];
+      try {
+        localScopeVariables = await this.variableStore.get(localScopeObjectId, (params: object) => {
+          return this.sendCDPMessage("Runtime.getProperties", params, RETRIEVE_VARIABLE_TIMEOUT_MS);
+        });
+      } catch (e) {
+        Logger.error("[Debug Adapter] Failed to retrieve localScopeVariables", e);
+      }
+      const errorMessage = localScopeVariables.find((v) => v.name === "message")?.value;
+      const isFatal = localScopeVariables.find((v) => v.name === "isFatal")?.value;
+      const stackObjectId = localScopeVariables.find((v) => v.name === "stack")?.variablesReference;
+
+      let stackObjectProperties: Variable[] = [];
+      try {
+        stackObjectProperties = await this.variableStore.get(stackObjectId!, (params: object) => {
+          return this.sendCDPMessage("Runtime.getProperties", params, RETRIEVE_VARIABLE_TIMEOUT_MS);
+        });
+      } catch (e) {
+        Logger.error("[Debug Adapter] Failed to retrieve stackObjectProperties", e);
+      }
+
+      const stackFrames: Array<StackFrame> = [];
+      // Unfortunately we can't get proper scope chanins here, because the debugger doesn't really stop at the frame where exception is thrown
+      await Promise.all(
+        stackObjectProperties.map(async (stackObjEntry) => {
+          // we process entry with numerical names
+          if (stackObjEntry.name.match(/^\d+$/)) {
+            const index = parseInt(stackObjEntry.name, 10);
+            let stackObjProperties: Variable[] = [];
+            try {
+              stackObjProperties = await this.variableStore.get(
+                stackObjEntry.variablesReference,
+                (params: object) => {
+                  return this.sendCDPMessage(
+                    "Runtime.getProperties",
+                    params,
+                    RETRIEVE_VARIABLE_TIMEOUT_MS
+                  );
+                }
+              );
+            } catch (e) {
+              Logger.error("[Debug Adapter] Failed to retrieve stackObjProperties", e);
+            }
+            const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
+            const genUrl = stackObjProperties.find((v) => v.name === "file")?.value || "";
+            const genLine1Based = parseInt(
+              stackObjProperties.find((v) => v.name === "lineNumber")?.value || "0"
+            );
+            const genColumn1Based = parseInt(
+              stackObjProperties.find((v) => v.name === "column")?.value || "0"
+            );
+            const { sourceURL, lineNumber1Based, columnNumber0Based } =
+              this.sourceMapRegistry!.findOriginalPosition(
+                genUrl,
+                genLine1Based,
+                genColumn1Based - 1
+              );
+            stackFrames[index] = new StackFrame(
+              index,
+              methodName,
+              sourceURL ? new Source(sourceURL, sourceURL) : undefined,
+              this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+              this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
+            );
+          }
+        })
+      );
+      this.delegate.sendStoppedEvent(stackFrames, [], "exception", errorMessage, isFatal);
+    } else {
+      const stackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
+        const cdpLocation = cdpFrame.location;
+        const { sourceURL, lineNumber1Based, columnNumber0Based } =
+          this.sourceMapRegistry!.findOriginalPosition(
+            cdpLocation.scriptId,
+            cdpLocation.lineNumber + 1, // cdp line and column numbers are 0-based
+            cdpLocation.columnNumber
+          );
+        return new StackFrame(
+          index,
+          cdpFrame.functionName,
+          sourceURL ? new Source(sourceURL, sourceURL) : undefined,
+          this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+          this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
+        );
+      });
+      const scopeChains = message.params.callFrames.map((cdpFrame: any) => cdpFrame.scopeChain);
+
+      this.delegate.sendStoppedEvent(stackFrames, scopeChains, "breakpoint", "Yollov2");
+    }
+  }
+
+  private handleCDPMessageResponse(message: any) {
+    const messagePromise = this.cdpMessagePromises.get(message.id);
+    this.cdpMessagePromises.delete(message.id);
+    if (message.result && messagePromise?.resolve) {
+      messagePromise.resolve(message.result);
+    } else if (message.error && messagePromise?.reject) {
+      Logger.warn("CDP message error received", message.error);
+      // create an error object such that we can capture stack trace and assign
+      // all object error properties as provided by CDP
+      const error = new Error();
+      Object.assign(error, message.error);
+      messagePromise.reject(error);
+    }
+  }
+
+  //#endregion
+
+  //#region CPD outgoing communication
+
+  public handleSetBreakpointRequest(
+    sourcePath: string,
+    breakpoints: DebugProtocol.SourceBreakpoint[] | undefined
+  ) {
+    return this.breakpointsController.setBreakpoints(sourcePath, breakpoints);
   }
 
   private setUpDebugger = async () => {
@@ -51,21 +370,6 @@ export class CDPSession {
     await this.sendCDPMessage("Debugger.setBlackboxPatterns", { patterns: [] }).catch(ignoreError);
     await this.sendCDPMessage("Runtime.runIfWaitingForDebugger", {}).catch(ignoreError);
   };
-
-  private handleCDPMessageResponse(message: any) {
-    const messagePromise = this.cdpMessagePromises.get(message.id);
-    this.cdpMessagePromises.delete(message.id);
-    if (message.result && messagePromise?.resolve) {
-      messagePromise.resolve(message.result);
-    } else if (message.error && messagePromise?.reject) {
-      Logger.warn("CDP message error received", message.error);
-      // create an error object such that we can capture stack trace and assign
-      // all object error properties as provided by CDP
-      const error = new Error();
-      Object.assign(error, message.error);
-      messagePromise.reject(error);
-    }
-  }
 
   public closeConnection() {
     this.connection.close();
@@ -96,4 +400,93 @@ export class CDPSession {
       });
     });
   }
+
+  //#endregion
+
+  //#region variable store
+
+  public adaptCDPObjectId(id: string) {
+    return this.variableStore.adaptCDPObjectId(id);
+  }
+
+  public convertDAPObjectIdToCDP(variablesReference: number) {
+    return this.variableStore.convertDAPObjectIdToCDP(variablesReference);
+  }
+
+  public getVariable(variablesReference: number) {
+    return this.variableStore.get(variablesReference, (params: object) => {
+      return this.sendCDPMessage("Runtime.getProperties", params, RETRIEVE_VARIABLE_TIMEOUT_MS);
+    });
+  }
+
+  private async createVariableForOutputEvent(args: CDPRemoteObject[]) {
+    const prepareVariables = (
+      await Promise.all(
+        args.map(async (arg: CDPRemoteObject, index: number) => {
+          // Don't create variables for primitive types, we do it here
+          // instead of .filter to keep indexes consistent
+          if (arg.type !== "object" && arg.type !== "function") {
+            return null;
+          }
+
+          arg.description = previewRemoteObject(arg, "propertyValue");
+
+          if (arg.type === "object") {
+            arg.objectId = this.variableStore.adaptCDPObjectId(arg.objectId).toString();
+          }
+          return { name: `arg${index}`, value: arg };
+        })
+      )
+    ).filter((value) => value !== null);
+
+    // we create empty object that is needed for DAP OutputEvent to display
+    // collapsed args properly, the object references the array of args array
+    const argsObjectDapID = this.variableStore.pushReplVariable(prepareVariables);
+
+    // If originally there was only one argument, we don't want to display named arguments
+    if (args.length === 1) {
+      return argsObjectDapID;
+    }
+
+    return this.variableStore.pushReplVariable([
+      {
+        name: "<unnamed>",
+        value: {
+          type: "object",
+          objectId: argsObjectDapID.toString(),
+          className: "Object",
+          description: "object",
+        },
+      },
+    ]);
+  }
+
+  // Based on https://github.com/microsoft/vscode-js-debug/blob/3be255753c458f231e32c9ef5c60090236780060/src/adapter/console/textualMessage.ts#L83
+  // We use that to format and truncate console.log messages
+  async formatDefaultString(args: ReadonlyArray<Cdp.Runtime.RemoteObject>) {
+    const useMessageFormat = args.length > 1 && args[0].type === "string";
+    const formatResult = useMessageFormat
+      ? formatMessage(args[0].value, args.slice(1) as AnyObject[], messageFormatters)
+      : formatMessage("", args as AnyObject[], messageFormatters);
+
+    const output = formatResult.result + "\n";
+
+    if (formatResult.usedAllSubs && !args.some(previewAsObject)) {
+      return { output };
+    } else {
+      const outputVar = await this.createVariableForOutputEvent(args as CDPRemoteObject[]);
+
+      return { output, variablesReference: outputVar };
+    }
+  }
+
+  //#endregion
+
+  //#region source map registry
+
+  public findOriginalPosition(filename: string, line0Based: number, column0Based: number) {
+    return this.sourceMapRegistry.findOriginalPosition(filename, line0Based, column0Based);
+  }
+
+  //#endregion
 }
