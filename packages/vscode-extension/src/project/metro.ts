@@ -5,12 +5,13 @@ import { Disposable, ExtensionMode, Uri, workspace } from "vscode";
 import stripAnsi from "strip-ansi";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { extensionContext, getAppRootFolder } from "../utilities/extensionContext";
+import { extensionContext } from "../utilities/extensionContext";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
+import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
 
 export interface MetroDelegate {
@@ -54,7 +55,7 @@ type MetroEvent =
     }
   | { type: "RNIDE_expo_env_prelude_lines"; lineCount: number }
   | {
-      type: "RNIDE_initialize_done";
+      type: "initialize_done";
       port: number;
     }
   | {
@@ -118,12 +119,13 @@ export class Metro implements Disposable {
   public async start(
     resetCache: boolean,
     progressListener: (newStageProgress: number) => void,
-    dependencies: Promise<any>[]
+    dependencies: Promise<any>[],
+    appRoot: string
   ) {
     if (this.startPromise) {
       throw new Error("metro already started");
     }
-    this.startPromise = this.startInternal(resetCache, progressListener, dependencies);
+    this.startPromise = this.startInternal(resetCache, progressListener, dependencies, appRoot);
     this.startPromise.then(() => {
       // start promise is used to indicate that metro has started, however, sometimes
       // the metro process may exit, in which case we need to update the promise to
@@ -143,9 +145,18 @@ export class Metro implements Disposable {
     appRootFolder: string,
     libPath: string,
     resetCache: boolean,
+    expoStartExtraArgs: string[] | undefined,
     metroEnv: typeof process.env
   ) {
-    return exec("node", [path.join(libPath, "expo_start.js"), ...(resetCache ? ["--clear"] : [])], {
+    const args = [path.join(libPath, "expo_start.js")];
+    if (resetCache) {
+      args.push("--clear");
+    }
+    if (expoStartExtraArgs) {
+      args.push(...expoStartExtraArgs);
+    }
+
+    return exec("node", args, {
       cwd: appRootFolder,
       env: metroEnv,
       buffer: false,
@@ -154,6 +165,7 @@ export class Metro implements Disposable {
 
   private launchPackager(
     appRootFolder: string,
+    port: number,
     libPath: string,
     resetCache: boolean,
     metroEnv: typeof process.env
@@ -169,7 +181,7 @@ export class Metro implements Disposable {
         ...(resetCache ? ["--reset-cache"] : []),
         "--no-interactive",
         "--port",
-        "0",
+        `${port}`,
         "--config",
         path.join(libPath, "metro_config.js"),
         "--customLogReporterPath",
@@ -186,9 +198,9 @@ export class Metro implements Disposable {
   public async startInternal(
     resetCache: boolean,
     progressListener: (newStageProgress: number) => void,
-    dependencies: Promise<any>[]
+    dependencies: Promise<any>[],
+    appRoot: string
   ) {
-    const appRootFolder = getAppRootFolder();
     const launchConfiguration = getLaunchConfiguration();
     await Promise.all([this.devtools.ready()].concat(dependencies));
 
@@ -198,11 +210,14 @@ export class Metro implements Disposable {
       metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
     }
     const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
+
+    const port = await getOpenPort();
+
     const metroEnv = {
       ...launchConfiguration.env,
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
-      NODE_PATH: path.join(appRootFolder, "node_modules"),
-      RCT_METRO_PORT: "0",
+      NODE_PATH: path.join(appRoot, "node_modules"),
+      RCT_METRO_PORT: `${port}`,
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       RADON_IDE_LIB_PATH: libPath,
       RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
@@ -210,10 +225,16 @@ export class Metro implements Disposable {
     };
     let bundlerProcess: ChildProcess;
 
-    if (shouldUseExpoCLI()) {
-      bundlerProcess = this.launchExpoMetro(appRootFolder, libPath, resetCache, metroEnv);
+    if (shouldUseExpoCLI(appRoot)) {
+      bundlerProcess = this.launchExpoMetro(
+        appRoot,
+        libPath,
+        resetCache,
+        launchConfiguration.expoStartArgs,
+        metroEnv
+      );
     } else {
-      bundlerProcess = this.launchPackager(appRootFolder, libPath, resetCache, metroEnv);
+      bundlerProcess = this.launchPackager(appRoot, port, libPath, resetCache, metroEnv);
     }
     this.subprocess = bundlerProcess;
 
@@ -250,7 +271,7 @@ export class Metro implements Disposable {
               this._expoPreludeLineCount = event.lineCount;
               Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineCount);
               break;
-            case "RNIDE_initialize_done":
+            case "initialize_done":
               this._port = event.port;
               Logger.info(`Metro started on port ${this._port}`);
               resolve();
@@ -266,7 +287,7 @@ export class Metro implements Disposable {
               const message = stripAnsi(event.message);
               let filename = event.error.originModulePath;
               if (!filename && event.error.filename) {
-                filename = appRootFolder + event.error.filename;
+                filename = appRoot + event.error.filename;
               }
               this.delegate.onBundlingError(
                 message,

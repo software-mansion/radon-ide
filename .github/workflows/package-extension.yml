@@ -1,20 +1,24 @@
-name: Publish vscode-extension
+name: Package vscode-extension
 on:
   workflow_dispatch:
     inputs:
+      publish:
+        description: 'Publish to marketplaces'
+        default: true
+        type: boolean
       prerelease:
-        description: 'Pre-release'
+        description: 'Mark as pre-release'
         default: false
         type: boolean
-      publish_macos:
+      target_macos:
         description: 'macOS'
         default: true
         type: boolean
-      publish_windows:
+      target_windows:
         description: 'Windows'
         default: false
         type: boolean
-      publish_linux:
+      target_linux:
         description: 'Linux'
         default: false
         type: boolean
@@ -28,24 +32,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set workflow start time
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H%M%S')"
+
       - name: Set targets
         id: set_targets
         run: |
           targets=""
-          if ${{ github.event.inputs.publish_macos }}; then
+          if ${{ github.event.inputs.target_macos }}; then
             targets="$targets darwin-x64 darwin-arm64"
           fi
-          if ${{ github.event.inputs.publish_windows }}; then
+          if ${{ github.event.inputs.target_windows }}; then
             targets="$targets win32-x64"
           fi
-          if ${{ github.event.inputs.publish_linux }}; then
+          if ${{ github.event.inputs.target_linux }}; then
             targets="$targets linux-x64"
           fi
           if [ -z "$targets" ]; then
             echo "No targets specified"
             exit 1
           fi
-          echo "Publishing for targets: $targets"
+          echo "Building extension for targets: $targets"
           echo "::set-output name=targets::$targets"
 
       - name: Checkout repository
@@ -69,23 +77,42 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and publish to Visual Studio Marketplace
+      - name: Package extension
         uses: HaaLeo/publish-vscode-extension@v1
-        id: vs_marketplace_publish
+        id: package_extension
+        with:
+          dryRun: true
+          pat: stub
+          target: ${{ steps.set_targets.outputs.targets }}
+          preRelease: ${{ github.event.inputs.prerelease }}
+
+      - name: Sanitize ref name for artifact upload
+        id: sanitize
+        run: |
+          ref_name=$(echo -n "${{ github.event.inputs.ref }}" | sed 's/[\\\/'"'"':<>|*?]/-/g')
+          echo "ref_name=$ref_name" >> $GITHUB_OUTPUT
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: radon-ide-${{ steps.sanitize.outputs.ref_name }}-${{ steps.date.outputs.date }}
+          path: ${{ steps.package_extension.outputs.vsixPath }}
+
+      - name: Publish to Visual Studio Marketplace
+        uses: HaaLeo/publish-vscode-extension@v1
+        if: ${{ github.event.inputs.publish }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          target: ${{ steps.set_targets.outputs.targets }}
-          pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
-          preRelease: ${{ github.event.inputs.prerelease }}
           registryUrl: https://marketplace.visualstudio.com
+          extensionFile: ${{ steps.package_extension.outputs.vsixPath }}
+          pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
 
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v1
+        if: ${{ github.event.inputs.publish }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          target: ${{ steps.set_targets.outputs.targets }}
+          extensionFile: ${{ steps.package_extension.outputs.vsixPath }}
           pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
-          preRelease: ${{ github.event.inputs.prerelease }}
-          extensionFile: ${{ steps.vs_marketplace_publish.outputs.vsixPath }}
