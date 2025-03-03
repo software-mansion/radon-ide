@@ -63,9 +63,6 @@ export class ToolsManager implements Disposable {
     for (const plugin of createExpoDevPluginTools()) {
       this.plugins.set(plugin.id, plugin);
     }
-    const reduxPlugin = createReduxDevtools(this);
-    this.plugins.set(reduxPlugin.id, reduxPlugin);
-
     const reactQueryPlugin = createReactQueryDevtools();
     this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 
