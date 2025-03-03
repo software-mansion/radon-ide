@@ -12,10 +12,11 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 import { getOpenPort } from "../utilities/common";
+import { DebugSource } from "../debugging/DebugSession";
 
 export interface MetroDelegate {
-  onBundleError(): void;
-  onIncrementalBundleError(message: string, errorModulePath: string): void;
+  onBundleBuildFailedError(): void;
+  onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
 }
 
 interface CDPTargetDescription {
@@ -37,6 +38,9 @@ type MetroEvent =
       stack: string;
       error: {
         message: string;
+        filename?: string;
+        lineNumber?: number;
+        columnNumber?: number;
         originModulePath: string;
         targetModuleName: string;
         errors: {
@@ -277,10 +281,23 @@ export class Metro implements Disposable {
               Logger.info("Captured metro watch folders", this._watchFolders);
               break;
             case "bundle_build_failed":
-              this.delegate.onBundleError();
+              this.delegate.onBundleBuildFailedError();
               break;
             case "bundling_error":
-              this.delegate.onIncrementalBundleError(event.message, event.error.originModulePath);
+              const message = stripAnsi(event.message);
+              let filename = event.error.originModulePath;
+              if (!filename && event.error.filename) {
+                filename = appRoot + event.error.filename;
+              }
+              this.delegate.onBundlingError(
+                message,
+                {
+                  filename,
+                  line1based: event.error.lineNumber,
+                  column0based: event.error.columnNumber,
+                },
+                event.error.originModulePath
+              );
               break;
           }
         } catch (error) {
