@@ -31,6 +31,36 @@ export type CDPDebuggerScope = {
   object: CDPRemoteObject & { type: "object" };
 };
 
+export type CDPProfile = {
+  nodes: CDPProfileNode[];
+  startTime: number;
+  endTime: number;
+  samples?: number[];
+  timeDeltas?: number[];
+};
+
+export type CDPProfileNode = {
+  id: number;
+  callFrame: CDPCallFrame;
+  hitCount?: number;
+  children?: number[];
+  deoptReason?: string;
+  positionTicks?: CDPPositionTick[];
+};
+
+export type CDPPositionTick = {
+  line: number; // 1-based according to the spec, WTF!
+  ticks: number;
+};
+
+export type CDPCallFrame = {
+  functionName: string;
+  scriptId: string;
+  url: string;
+  lineNumber: number; // 0-based
+  columnNumber: number; // 0-based
+};
+
 export function inferDAPVariableValueForCDPRemoteObject(cdpValue: CDPRemoteObject): string {
   switch (cdpValue.type) {
     case "undefined":

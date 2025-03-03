@@ -1,7 +1,7 @@
-import { DebugConfiguration } from "vscode";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { DebugConfiguration } from "vscode";
 import {
   DebugSession,
   InitializedEvent,
@@ -37,6 +37,7 @@ import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { CDPSession } from "./CDPSession";
 import getArraySlots from "./templates/getArraySlots";
+import { annotateLocations } from "./cpuProfiler";
 
 function typeToCategory(type: string) {
   switch (type) {
@@ -634,7 +635,8 @@ export class DebugAdapter extends DebugSession {
       const result = await this.cdpSession.sendCDPMessage("Profiler.stop", {});
       const fileName = `profile-${Date.now()}.cpuprofile`;
       const filePath = path.join(os.tmpdir(), fileName);
-      await fs.promises.writeFile(filePath, JSON.stringify(result.profile));
+      const annotatedProfile = annotateLocations(result.profile, this.sourceMapRegistry);
+      await fs.promises.writeFile(filePath, JSON.stringify(annotatedProfile));
       this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
       this.sendResponse(response);
     } else {
