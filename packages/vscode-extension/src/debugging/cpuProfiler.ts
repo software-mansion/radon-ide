@@ -39,7 +39,11 @@ export function annotateLocations(profile: CDPProfile, sourceMapsRegistry: Sourc
       locationIds.set(key, locationId);
 
       const origPosition = sourceMapsRegistry.findOriginalPosition(
-        node.callFrame.scriptId,
+        // Apparently, hermes seems to report a different scriptId here – for a fresh app that just started,
+        // we get scriptId "2" for the main bundle, but in profile node's callFrame, "0" is reported.
+        // for this reasone, we rely on the script URL rather than scriptIde here, but we should revisit this
+        // to investigate if this is a bug in hermes or something that can be addressed.
+        node.callFrame.url,
         node.callFrame.lineNumber + 1,
         node.callFrame.columnNumber
       );
