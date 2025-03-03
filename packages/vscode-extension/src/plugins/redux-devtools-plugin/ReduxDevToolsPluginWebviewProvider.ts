@@ -128,6 +128,9 @@ export class ReduxDevToolsPluginWebviewProvider implements WebviewViewProvider {
     }
 
     reduxDevtoolsPlugin.connectDevtoolsWebview(webview);
+    webviewView.onDidDispose(() => {
+      reduxDevtoolsPlugin.disconnectDevtoolsWebview(webview);
+    });
 
     webviewView.onDidChangeVisibility(() => {
       reportToolVisibilityChanged(REDUX_PLUGIN_ID, webviewView.visible);

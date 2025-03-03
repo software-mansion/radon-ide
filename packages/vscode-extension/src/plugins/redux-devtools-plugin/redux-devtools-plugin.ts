@@ -1,4 +1,4 @@
-import { commands, window, Webview } from "vscode";
+import { commands, window, Webview, Disposable } from "vscode";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { Devtools } from "../../project/devtools";
@@ -31,6 +31,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   public readonly persist = true;
 
   private connectedWebview?: Webview;
+  private connectedWebviewListener?: Disposable;
 
   constructor(private readonly devtools: Devtools) {
     initialize();
@@ -57,11 +58,19 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   };
 
   connectDevtoolsWebview(webview: Webview) {
+    this.connectedWebviewListener?.dispose();
     this.connectedWebview = webview;
-    webview.onDidReceiveMessage((message) => {
+    this.connectedWebviewListener = webview.onDidReceiveMessage((message) => {
       const { scope, ...data } = message;
       this.devtools.send(scope, data);
     });
+  }
+
+  disconnectDevtoolsWebview(webview: Webview) {
+    if (this.connectedWebview === webview) {
+      this.connectedWebview = undefined;
+      this.connectedWebviewListener?.dispose();
+    }
   }
 
   activate() {
