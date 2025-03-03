@@ -60,7 +60,7 @@ export function registerChat(context: vscode.ExtensionContext) {
           body: JSON.stringify({ prompt: request.prompt }),
         });
 
-        if (!response.ok) {
+        if (response.status !== 200) {
           Logger.error(`Failed to fetch response from Radon AI with status: ${response.status}`);
           getTelemetryReporter().sendTelemetryEvent("chat:error", {
             error: `Failed to fetch with status: ${response.status}`,
