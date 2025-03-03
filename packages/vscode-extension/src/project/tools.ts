@@ -11,7 +11,7 @@ import {
 import { NetworkPlugin, NETWORK_PLUGIN_ID } from "../plugins/network/network-plugin";
 import {
   REDUX_PLUGIN_ID,
-  createReduxDevtools,
+  ReduxDevtoolsPlugin,
 } from "../plugins/redux-devtools-plugin/redux-devtools-plugin";
 import {
   REACT_QUERY_PLUGIN_ID,
@@ -63,13 +63,10 @@ export class ToolsManager implements Disposable {
     for (const plugin of createExpoDevPluginTools()) {
       this.plugins.set(plugin.id, plugin);
     }
-    const reduxPlugin = createReduxDevtools(this);
-    this.plugins.set(reduxPlugin.id, reduxPlugin);
-
     const reactQueryPlugin = createReactQueryDevtools();
     this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 
-    this.plugins.set(REDUX_PLUGIN_ID, createReduxDevtools(this));
+    this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(devtools));
     this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(devtools));
     this.plugins.set(RENDER_OUTLINES_PLUGIN_ID, new RenderOutlinesPlugin(devtools));
 

@@ -120,7 +120,7 @@ export class CDPSession {
           }
         }
 
-        if (!sourceMapData) {
+        if (!sourceMapData || !sourceMapData.sources) {
           break;
         }
 
