@@ -9,15 +9,25 @@ import {
 } from "vscode-cdp-proxy";
 import { Logger } from "../Logger";
 
+type IProtocolReply = IProtocolSuccess | IProtocolError;
+
 export interface CDPProxyDelegate {
-  handleApplicationCommand(command: IProtocolCommand): Promise<IProtocolCommand | undefined>;
-  handleDebuggerCommand(command: IProtocolCommand): Promise<IProtocolCommand | undefined>;
+  handleApplicationCommand(
+    command: IProtocolCommand,
+    tunnel: ProxyTunnel
+  ): Promise<IProtocolCommand | undefined>;
+  handleDebuggerCommand(
+    command: IProtocolCommand,
+    tunnel: ProxyTunnel
+  ): Promise<IProtocolCommand | undefined>;
   handleApplicationReply(
-    reply: IProtocolSuccess | IProtocolError
-  ): Promise<IProtocolSuccess | IProtocolError | undefined>;
+    reply: IProtocolReply,
+    tunnel: ProxyTunnel
+  ): Promise<IProtocolReply | undefined>;
   handleDebuggerReply(
-    reply: IProtocolSuccess | IProtocolError
-  ): Promise<IProtocolSuccess | IProtocolError | undefined>;
+    reply: IProtocolReply,
+    tunnel: ProxyTunnel
+  ): Promise<IProtocolReply | undefined>;
 }
 
 export class CDPProxy {
@@ -54,6 +64,14 @@ export class CDPProxy {
     this.browserInspectUri = browserInspectUri;
   }
 
+  public injectDebuggerCommand(command: IProtocolCommand & { id: number }): void {
+    this.tunnel?.injectDebuggerCommand(command);
+  }
+
+  public injectApplicationCommand(command: IProtocolCommand & { id: number }): void {
+    this.tunnel?.injectApplicationCommand(command);
+  }
+
   private async onConnectionHandler([debuggerTarget, request]: [
     Connection,
     IncomingMessage
@@ -73,9 +91,14 @@ export class CDPProxy {
   }
 }
 
-class ProxyTunnel {
+export class ProxyTunnel {
   private applicationTarget: Connection | null;
   private debuggerTarget: Connection | null;
+
+  private injectedApplicationCommandReplyResolvers: Map<number, (reply: IProtocolReply) => void> =
+    new Map();
+  private injectedDebuggerCommandReplyResolvers: Map<number, (reply: IProtocolReply) => void> =
+    new Map();
 
   constructor(
     applicationTarget: Connection,
@@ -98,6 +121,24 @@ class ProxyTunnel {
     this.debuggerTarget.onEnd(this.onDebuggerTargetClosed.bind(this));
   }
 
+  public async injectDebuggerCommand(
+    command: IProtocolCommand & { id: number }
+  ): Promise<IProtocolReply> {
+    this.applicationTarget?.send(command);
+    const { promise, resolve } = Promise.withResolvers<IProtocolReply>();
+    this.injectedDebuggerCommandReplyResolvers.set(command.id, resolve);
+    return promise;
+  }
+
+  public async injectApplicationCommand(
+    command: IProtocolCommand & { id: number }
+  ): Promise<IProtocolReply> {
+    this.debuggerTarget?.send(command);
+    const { promise, resolve } = Promise.withResolvers<IProtocolReply>();
+    this.injectedApplicationCommandReplyResolvers.set(command.id, resolve);
+    return promise;
+  }
+
   public async close(): Promise<void> {
     if (this.applicationTarget) {
       await this.applicationTarget.close();
@@ -111,28 +152,42 @@ class ProxyTunnel {
   }
 
   private async handleDebuggerTargetCommand(event: IProtocolCommand) {
-    const processedMessage = await this.cdpProxyDelegate.handleDebuggerCommand(event);
+    const processedMessage = await this.cdpProxyDelegate.handleDebuggerCommand(event, this);
     if (processedMessage) {
       this.applicationTarget?.send(event);
     }
   }
 
   private async handleApplicationTargetCommand(event: IProtocolCommand) {
-    const processedMessage = await this.cdpProxyDelegate.handleApplicationCommand(event);
+    const processedMessage = await this.cdpProxyDelegate.handleApplicationCommand(event, this);
     if (processedMessage) {
       this.debuggerTarget?.send(event);
     }
   }
 
-  private async handleDebuggerTargetReply(event: IProtocolError | IProtocolSuccess) {
-    const processedMessage = await this.cdpProxyDelegate.handleDebuggerReply(event);
+  private async handleDebuggerTargetReply(event: IProtocolReply) {
+    const resolve = this.injectedApplicationCommandReplyResolvers.get(event.id);
+    if (resolve) {
+      resolve(event);
+      this.injectedApplicationCommandReplyResolvers.delete(event.id);
+      return;
+    }
+
+    const processedMessage = await this.cdpProxyDelegate.handleDebuggerReply(event, this);
     if (processedMessage) {
       this.applicationTarget?.send(processedMessage);
     }
   }
 
-  private async handleApplicationTargetReply(event: IProtocolError | IProtocolSuccess) {
-    const processedMessage = await this.cdpProxyDelegate.handleApplicationReply(event);
+  private async handleApplicationTargetReply(event: IProtocolReply) {
+    const resolve = this.injectedDebuggerCommandReplyResolvers.get(event.id);
+    if (resolve) {
+      resolve(event);
+      this.injectedDebuggerCommandReplyResolvers.delete(event.id);
+      return;
+    }
+
+    const processedMessage = await this.cdpProxyDelegate.handleApplicationReply(event, this);
     if (processedMessage) {
       this.debuggerTarget?.send(event);
     }

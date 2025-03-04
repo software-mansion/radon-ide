@@ -1,7 +1,12 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
 import { EventEmitter } from "vscode";
 import _ from "lodash";
-import { CDPProxyDelegate } from "./CDPProxy";
+import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
+
+// Ids for the commands sent by the ProxyDelegate rather than the debugger.
+// The numbers are chosen to be large enough to not conflict with the debugger's command ids.
+const FuseBoxClientMetadataId = 1e9 + 1;
+const ReactNativeAppEnableId = 1e9 + 2;
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter();
@@ -28,11 +33,16 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   }
 
   public async handleDebuggerCommand(
-    command: IProtocolCommand
+    command: IProtocolCommand,
+    tunnel: ProxyTunnel
   ): Promise<IProtocolCommand | undefined> {
     switch (command.method) {
       case "Debugger.resume": {
         this.debuggerResumedEmitter.fire({});
+        return command;
+      }
+      case "Runtime.enable": {
+        await this.onRuntimeEnable(tunnel);
         return command;
       }
     }
@@ -51,7 +61,22 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return reply;
   }
 
+  private async onRuntimeEnable(tunnel: ProxyTunnel) {
+    await tunnel.injectDebuggerCommand({
+      method: "FuseboxClient.setClientMetadata",
+      params: {},
+      id: FuseBoxClientMetadataId,
+    });
+    await tunnel.injectDebuggerCommand({
+      method: "ReactNativeApplication.enable",
+      params: {},
+      id: ReactNativeAppEnableId,
+    });
+  }
+
   private handleConsoleAPICalled(command: IProtocolCommand): IProtocolCommand | undefined {
+    const { args, stackTrace } = command.params as Cdp.Runtime.ConsoleAPICalledEvent;
+
     // We wrap console calls and add stack information as last three arguments, however
     // some logs may baypass that, especially when printed in initialization phase, so we
     // need to detect whether the wrapper has added the stack info or not
@@ -59,7 +84,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     // We filter out logs that start with __RNIDE_INTERNAL as those are messages
     // used by IDE for tracking the app state and should not appear in the VSCode
     // console.
-    const { args, stackTrace } = command.params as Cdp.Runtime.ConsoleAPICalledEvent;
     if (args.length > 0 && args[0].value === "__RNIDE_INTERNAL") {
       // We return here to avoid passing internal logs to the user debug console,
       // but they will still be visible in metro log feed.
