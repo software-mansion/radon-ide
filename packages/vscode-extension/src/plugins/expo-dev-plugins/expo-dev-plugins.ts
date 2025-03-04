@@ -4,7 +4,6 @@ import { ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 
 export type ExpoDevPluginToolName =
-  | "@dev-plugins/react-query"
   | "@dev-plugins/react-native-mmkv"
   | "redux-devtools-expo-dev-plugin";
 
@@ -15,10 +14,6 @@ type ExpoDevPluginInfo = {
 
 // Define the map of plugins using the string union type
 const ExpoDevPluginToolMap: Record<ExpoDevPluginToolName, ExpoDevPluginInfo> = {
-  "@dev-plugins/react-query": {
-    label: "React Query DevPlugin",
-    viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.ReactQuery",
-  },
   "@dev-plugins/react-native-mmkv": {
     label: "MMKV DevPlugin",
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.MMKV",
@@ -57,6 +52,7 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
       id: id as ExpoDevPluginToolName,
       label: pluginInfo.label,
       available: false,
+      persist: true,
       activate() {
         commands.executeCommand("setContext", `${pluginInfo.viewIdPrefix}.available`, true);
       },

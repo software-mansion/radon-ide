@@ -3,9 +3,8 @@ import fs from "fs";
 import { createHash, Hash } from "crypto";
 import path, { join } from "path";
 import { finished } from "stream/promises";
-import { workspace } from "vscode";
+import { Server } from "net";
 import fetch from "node-fetch";
-import { Logger } from "../Logger";
 
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
 export const IOS_FAIL_ERROR_MESSAGE = "IOS failed.";
@@ -34,14 +33,6 @@ export function isWorkspaceRoot(dir: string) {
   }
 
   return false;
-}
-
-export async function findFilesInWorkspace(fileGlobPattern: string, excludePattern: string | null) {
-  const files = await workspace.findFiles(fileGlobPattern, excludePattern);
-  if (files.length > 1) {
-    Logger.warn(`Found multiple ${fileGlobPattern} files in the workspace`);
-  }
-  return files;
 }
 
 export enum ABI {
@@ -242,4 +233,33 @@ export async function calculateMD5(fsPath: string, hash: Hash = createHash("md5"
     }
   }
   return hash;
+}
+
+export async function getOpenPort(): Promise<number> {
+  const { promise, resolve, reject } = Promise.withResolvers<number>();
+
+  const server = new Server().listen(0);
+
+  const onListening = () => {
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      reject(new Error("Failed to reserve an open port"));
+      return;
+    }
+    const port = address.port;
+    server.close(() => {
+      resolve(port);
+    });
+  };
+  const onError = (err: unknown) => {
+    reject(err);
+  };
+
+  const unsubListening = server.once("listening", onListening);
+  const unsubError = server.once("error", onError);
+
+  return promise.finally(() => {
+    unsubListening.off("listening", onListening);
+    unsubError.off("error", onError);
+  });
 }

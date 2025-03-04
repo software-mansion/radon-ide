@@ -45,9 +45,9 @@
       },
       {
         "command": "RNIDE.closePanel",
-        "title": "Close IDE Panel",
+        "title": "Shutdown Radon IDE",
         "category": "Radon IDE",
-        "icon": "$(close)",
+        "icon": "$(radon-off)",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
@@ -185,11 +185,6 @@
       ],
       "panel": [
         {
-          "id": "RadonIDEToolExpoDevPluginReactQuery",
-          "title": "React Query",
-          "icon": "assets/react-query.svg"
-        },
-        {
           "id": "RadonIDEToolExpoDevPluginMMKV",
           "title": "MMKV",
           "icon": "assets/mmkv.svg"
@@ -200,14 +195,19 @@
           "icon": "assets/redux.svg"
         },
         {
-          "id": "RadonIDEToolNetwork",
-          "title": "Network",
-          "icon": "assets/network.svg"
-        },
-        {
           "id": "RadonIDEToolReduxDevTools",
           "title": "Redux",
           "icon": "assets/redux.svg"
+        },
+        {
+          "id": "RadonIDEToolReactQueryDevTools",
+          "title": "React Query",
+          "icon": "assets/react-query.svg"
+        },
+        {
+          "id": "RadonIDEToolNetwork",
+          "title": "Network",
+          "icon": "assets/network.svg"
         }
       ]
     },
@@ -218,14 +218,6 @@
           "id": "RadonIDE.view",
           "name": "",
           "when": "RNIDE.extensionIsActive && config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
-        }
-      ],
-      "RadonIDEToolExpoDevPluginReactQuery": [
-        {
-          "type": "webview",
-          "id": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.view",
-          "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolExpoDevPluginMMKV": [
@@ -258,6 +250,14 @@
           "id": "RNIDE.Tool.ReduxDevTools.view",
           "name": "",
           "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
+        }
+      ],
+      "RadonIDEToolReactQueryDevTools": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ReactQueryDevTools.view",
+          "name": "",
+          "when": "RNIDE.Tool.ReactQueryDevTools.available && RNIDE.panelIsOpen"
         }
       ]
     },
@@ -323,6 +323,10 @@
               "metroConfigPath": {
                 "type": "string",
                 "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+              },
+              "expoStartArgs": {
+                "type": "array",
+                "description": "Extra arguments to pass to Expo start command."
               },
               "customBuild": {
                 "type": "object",
@@ -487,6 +491,10 @@
                 "type": "string",
                 "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
               },
+              "expoStartArgs": {
+                "type": "array",
+                "description": "Extra arguments to pass to Expo start command."
+              },
               "ios": {
                 "description": "Provides a way to customize Xcode builds for iOS",
                 "type": "object",
@@ -596,22 +604,31 @@
           }
         ]
       }
-    ]
+    ],
+    "icons": {
+      "radon-off": {
+        "description": "Shutdown icon",
+        "default": {
+          "fontPath": "assets/font-icons.woff2",
+          "fontCharacter": "\\E001"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:package": "vsce package",
     "vscode:prepublish": "npm run package",
     "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
+    "build:react-query-devtools-ui": "rm -rf dist/react-query-devtools && cp -R ../radon-ide-react-query-webui/artifacts dist/react-query-devtools",
     "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
-    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui",
-    "build:extension-debug": "node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
+    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
+    "build:extension-debug": "npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
     "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
-    "build:sim-server": "bash ./scripts/install-sim-server-release-build.sh dist",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
-    "build:dist": "npm run build:extension && npm run build:sim-server && npm run build:webview && npm run build:third-party-notice",
+    "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
     "watch:extension": "vite",
     "package": "rm -rf dist/ && npm run build:dist",
@@ -620,8 +637,11 @@
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
     "build:plugins": "bash ./scripts/install-dev-plugins.sh",
+    "build:icons": "fantasticon -c ./font-icons/fantasticon.config.json",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
-    "preinstall": "cd ../vscode-js-debug && git submodule update --init ./ && npm install && npm exec tsc"
+    "preinstall": "bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && cd ../vscode-js-debug && npm i && npm exec tsc",
+    "fetch:sim-server-assets": "bash ./scripts/download-sim-server-release-assets.sh dist",
+    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
@@ -673,6 +693,7 @@
     "eslint-import-resolver-typescript": "^3.6.3",
     "eslint-plugin-import": "^2.30.0",
     "execa": "^5.1.1",
+    "fantasticon": "^3.0.0",
     "file-loader": "^6.2.0",
     "glob": "^7.1.6",
     "lodash": "^4.17.21",
@@ -685,11 +706,13 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.53.2",
+    "react-scan": "https://github.com/software-mansion-labs/react-scan/releases/download/0.1.3-radon/react-scan-0.1.3-radon.tgz",
     "rollup": "^4.18.1",
     "rollup-plugin-license": "^3.5.3",
     "semver": "^7.6.2",
     "sinon": "^18.0.0",
     "source-map": "^0.8.0-beta.0",
+    "tar": "^7.4.3",
     "ts-loader": "^9.5.1",
     "typescript": "^5.6.2",
     "url-loader": "^4.1.1",
@@ -698,7 +721,6 @@
     "vscode-js-debug": "file:../vscode-js-debug",
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
-    "xml2js": "^0.6.2",
-    "tar": "^7.4.3"
+    "xml2js": "^0.6.2"
   }
 }

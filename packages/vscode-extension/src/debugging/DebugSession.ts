@@ -6,6 +6,7 @@ import {
 } from "vscode";
 import { Metro } from "../project/metro";
 import { Logger } from "../Logger";
+import { CDPConfiguration } from "./DebugAdapter";
 
 const PING_TIMEOUT = 1000;
 
@@ -13,15 +14,20 @@ export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
   onDebuggerPaused(event: DebugSessionCustomEvent): void;
   onDebuggerResumed(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStarted(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStopped(event: DebugSessionCustomEvent): void;
 };
+
+export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
 
 export class DebugSession implements Disposable {
   private vscSession: VscDebugSession | undefined;
   private debugEventsListener: Disposable;
   private pingTimeout: NodeJS.Timeout | undefined;
   private pingResolve: ((result: boolean) => void) | undefined;
+  private wasConnectedToCDP: boolean = false;
 
-  constructor(private metro: Metro, private delegate: DebugSessionDelegate) {
+  constructor(private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
         case "RNIDE_consoleLog":
@@ -41,6 +47,12 @@ export class DebugSession implements Disposable {
             Logger.warn("[DEBUG SESSION] Received unexpected pong event");
           }
           break;
+        case "RNIDE_profilingCPUStarted":
+          this.delegate.onProfilingCPUStarted(event);
+          break;
+        case "RNIDE_profilingCPUStopped":
+          this.delegate.onProfilingCPUStopped(event);
+          break;
         default:
           // ignore other events
           break;
@@ -48,49 +60,23 @@ export class DebugSession implements Disposable {
     });
   }
 
-  public dispose() {
-    this.vscSession && debug.stopDebugging(this.vscSession);
-    this.debugEventsListener.dispose();
-  }
-
-  public async reconnectIfNeeded() {
+  public async reconnectJSDebuggerIfNeeded(metro: Metro) {
     const isAlive = await this.ping();
 
     if (!isAlive) {
-      this.vscSession && debug.stopDebugging(this.vscSession);
-      this.vscSession = undefined;
-      return this.start();
+      return this.connectJSDebugger(metro);
     }
 
     return true;
   }
 
-  public async start() {
-    const websocketAddress = await this.metro.getDebuggerURL();
-    if (!websocketAddress) {
-      return false;
-    }
-
-    let sourceMapAliases: Array<[string, string]> = [];
-    const isUsingNewDebugger = this.metro.isUsingNewDebugger;
-    if (isUsingNewDebugger && this.metro.watchFolders.length > 0) {
-      // first entry in watchFolders is the project root
-      sourceMapAliases.push(["/[metro-project]/", this.metro.watchFolders[0]]);
-      this.metro.watchFolders.forEach((watchFolder, index) => {
-        sourceMapAliases.push([`/[metro-watchFolders]/${index}/`, watchFolder]);
-      });
-    }
-
+  private async startInternal() {
     const debugStarted = await debug.startDebugging(
       undefined,
       {
         type: "com.swmansion.react-native-debugger",
         name: "Radon IDE Debugger",
         request: "attach",
-        websocketAddress: websocketAddress,
-        sourceMapAliases,
-        expoPreludeLineCount: this.metro.expoPreludeLineCount,
-        breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
       },
       {
         suppressDebugStatusbar: true,
@@ -107,12 +93,69 @@ export class DebugSession implements Disposable {
     return false;
   }
 
+  public static start(debugEventDelegate: DebugSessionDelegate) {
+    const debugSession = new DebugSession(debugEventDelegate);
+    debugSession.startInternal();
+    return debugSession;
+  }
+
   public async getOriginalSource(
     fileName: string,
     line0Based: number,
     column0Based: number
   ): Promise<{ sourceURL: string; lineNumber1Based: number; columnNumber0Based: number }> {
     return await this.session.customRequest("source", { fileName, line0Based, column0Based });
+  }
+
+  public async restart() {
+    await this.stop();
+    await this.startInternal();
+  }
+
+  private async stop() {
+    this.vscSession && (await debug.stopDebugging(this.vscSession));
+  }
+
+  /**
+  This method is async to allow for awaiting it during restarts, please keep in mind tho that
+  build in vscode dispose system ignores async keyword and works synchronously.
+  */
+  public async dispose() {
+    this.vscSession && (await debug.stopDebugging(this.vscSession));
+    this.debugEventsListener.dispose();
+  }
+
+  public async connectJSDebugger(metro: Metro) {
+    if (this.wasConnectedToCDP) {
+      this.vscSession && debug.stopDebugging(this.vscSession);
+      await this.startInternal();
+    }
+
+    const websocketAddress = await metro.getDebuggerURL();
+    if (!websocketAddress) {
+      return false;
+    }
+
+    let sourceMapAliases: Array<[string, string]> = [];
+    const isUsingNewDebugger = metro.isUsingNewDebugger;
+    if (isUsingNewDebugger && metro.watchFolders.length > 0) {
+      // first entry in watchFolders is the project root
+      sourceMapAliases.push(["/[metro-project]/", metro.watchFolders[0]]);
+      metro.watchFolders.forEach((watchFolder, index) => {
+        sourceMapAliases.push([`/[metro-watchFolders]/${index}/`, watchFolder]);
+      });
+    }
+
+    await this.connectCDPDebugger({
+      websocketAddress: websocketAddress,
+      sourceMapAliases,
+      expoPreludeLineCount: metro.expoPreludeLineCount,
+      breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
+    });
+
+    this.wasConnectedToCDP = true;
+
+    return true;
   }
 
   public resumeDebugger() {
@@ -133,6 +176,22 @@ export class DebugSession implements Disposable {
         this.pingTimeout = undefined;
       }, PING_TIMEOUT);
     });
+  }
+  
+  public async startProfilingCPU() {
+    await this.session.customRequest("RNIDE_startProfiling");
+  }
+
+  public async stopProfilingCPU() {
+    await this.session.customRequest("RNIDE_stopProfiling");
+  }
+
+  private async connectCDPDebugger(cdpConfiguration: CDPConfiguration) {
+    await this.session.customRequest("RNIDE_connect_cdp_debugger", cdpConfiguration);
+  }
+
+  public async appendDebugConsoleEntry(message: string, type: string, source?: DebugSource) {
+    await this.session.customRequest("RNIDE_log_message", { message, type, source });
   }
 
   private get session() {

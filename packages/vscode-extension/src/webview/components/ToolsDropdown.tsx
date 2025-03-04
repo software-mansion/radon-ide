@@ -9,6 +9,8 @@ import "./ToolsDropdown.css";
 import { useProject } from "../providers/ProjectProvider";
 import IconButton from "./shared/IconButton";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import Label from "./shared/Label";
+import { ProjectInterface, ToolState } from "../../common/Project";
 
 interface DevToolCheckboxProps {
   label: string;
@@ -44,26 +46,36 @@ function DevToolCheckbox({
   );
 }
 
-function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
-  const { project, toolsState } = useProject();
+function ToolsList({
+  project,
+  tools,
+}: {
+  project: ProjectInterface;
+  tools: [string, ToolState][];
+}) {
+  return tools.map(([key, tool]) => (
+    <DevToolCheckbox
+      key={key}
+      label={tool.label}
+      checked={tool.enabled}
+      panelAvailable={tool.panelAvailable}
+      onCheckedChange={async (checked) => {
+        await project.updateToolEnabledState(key, checked);
+        if (checked) {
+          project.openTool(key);
+        }
+      }}
+      onSelect={() => project.openTool(key)}
+    />
+  ));
+}
 
-  const toolEntries = Object.entries(toolsState).map(([key, tool]) => {
-    return (
-      <DevToolCheckbox
-        key={key}
-        label={tool.label}
-        checked={tool.enabled}
-        panelAvailable={tool.panelAvailable}
-        onCheckedChange={async (checked) => {
-          await project.updateToolEnabledState(key, checked);
-          if (checked) {
-            project.openTool(key);
-          }
-        }}
-        onSelect={() => project.openTool(key)}
-      />
-    );
-  });
+function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
+  const { project, toolsState, isProfilingCPU } = useProject();
+
+  const allTools = Object.entries(toolsState);
+  const panelTools = allTools.filter(([key, tool]) => tool.panelAvailable);
+  const nonPanelTools = allTools.filter(([key, tool]) => !tool.panelAvailable);
 
   return (
     <DropdownMenuRoot>
@@ -75,13 +87,18 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           className="dropdown-menu-content device-settings-content"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Tools</h4>
-          {toolEntries}
-          {toolEntries.length === 0 && (
-            <div className="tools-empty-message">
-              Your app doesn't have any supported dev tools configured.&nbsp;
-              <a href="https://ide.swmansion.com/docs/features/dev-tools">Learn more</a>
-            </div>
-          )}
+          <Label>Utilities</Label>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() =>
+              isProfilingCPU ? project.stopProfilingCPU() : project.startProfilingCPU()
+            }>
+            <span className="codicon codicon-chip" />
+            {isProfilingCPU ? "Stop JS CPU Profiler" : "Start JS CPU Profiler"}
+          </DropdownMenu.Item>
+          <ToolsList project={project} tools={nonPanelTools} />
+          <Label>Tool Panels</Label>
+          <ToolsList project={project} tools={panelTools} />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenuRoot>

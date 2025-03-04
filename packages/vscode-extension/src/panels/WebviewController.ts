@@ -3,6 +3,7 @@ import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
+import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 
 type CallArgs = {
   callId: string;
@@ -26,20 +27,26 @@ export class WebviewController implements Disposable {
     });
   });
 
-  private readonly callableObjects: Map<string, object>;
-  private readonly ide = IDE.attach();
+  private readonly callableObjectGetters: Map<string, () => object>;
+  private readonly ide;
 
   constructor(private webview: Webview) {
+    this.ide = IDE.attach();
+
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
-    this.callableObjects = new Map([
-      ["DeviceManager", this.ide.deviceManager as object],
-      ["DependencyManager", this.ide.dependencyManager as object],
-      ["Project", this.ide.project as object],
-      ["WorkspaceConfig", this.ide.workspaceConfigController as object],
-      ["LaunchConfig", this.ide.launchConfig as object],
-      ["Utils", this.ide.utils as object],
+    this.callableObjectGetters = new Map([
+      ["DeviceManager", () => this.ide.deviceManager as object],
+      ["DependencyManager", () => this.ide.project.dependencyManager as object],
+      ["Project", () => this.ide.project as object],
+      ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
+      ["LaunchConfig", () => this.ide.project.launchConfig as object],
+      ["Utils", () => this.ide.utils as object],
+      [
+        "RenderOutlines",
+        () => this.ide.project.toolsManager.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
+      ],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
@@ -75,7 +82,8 @@ export class WebviewController implements Disposable {
 
   private handleRemoteCall(message: CallArgs) {
     const { object, method, args, callId } = message;
-    const callableObject = this.callableObjects.get(object);
+    const callableObjectGetter = this.callableObjectGetters.get(object);
+    const callableObject = callableObjectGetter?.();
     if (callableObject && method in callableObject) {
       const argsWithCallbacks = args.map((arg: any) => {
         if (typeof arg === "object" && arg !== null) {

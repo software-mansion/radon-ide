@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
@@ -28,6 +27,8 @@ import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
+import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
+import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -90,8 +91,8 @@ function Preview({
 
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
-  const hasIncrementalBundleError = projectStatus === "incrementalBundleError";
-  const hasBundleError = projectStatus === "bundleError";
+  const hasBundlingError = projectStatus === "bundlingError";
+  const hasBundleBuildFailedError = projectStatus === "bundleBuildFailedError";
 
   const debugPaused = projectStatus === "debuggerPaused";
   const debugException = projectStatus === "runtimeError";
@@ -99,7 +100,7 @@ function Preview({
   const previewURL = projectState.previewURL;
 
   const isStarting =
-    hasBundleError || hasIncrementalBundleError || debugException
+    hasBundleBuildFailedError || hasBundlingError || debugException
       ? false
       : !projectState || projectState.status === "starting";
   const showDevicePreview =
@@ -108,7 +109,7 @@ function Preview({
 
   useBuildErrorAlert(hasBuildError);
   useBootErrorAlert(hasBootError);
-  useBundleErrorAlert(hasBundleError || hasIncrementalBundleError);
+  useBundleErrorAlert(hasBundleBuildFailedError || hasBundlingError);
 
   const openRebuildAlert = useNativeRebuildAlert();
 
@@ -210,8 +211,9 @@ function Preview({
   const shouldPreventInputEvents =
     debugPaused ||
     debugException ||
-    hasBundleError ||
-    hasIncrementalBundleError ||
+    hasBundleBuildFailedError ||
+    hasBundlingError ||
+    projectStatus === "refreshing" ||
     !showDevicePreview ||
     !!replayData;
 
@@ -491,6 +493,7 @@ function Preview({
                 }}
                 className="phone-screen"
               />
+              <RenderOutlinesOverlay />
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
               {isMultiTouching && (
@@ -546,8 +549,8 @@ function Preview({
               )}
               {projectStatus === "refreshing" && (
                 <div className="phone-screen phone-refreshing-overlay">
-                  <VSCodeProgressRing />
-                  <div>Refreshing...</div>
+                  <div>Project is performing Fast Refresh...</div>
+                  <div>(screen is inactive until refresh is complete)</div>
                 </div>
               )}
               {debugPaused && (
@@ -564,7 +567,7 @@ function Preview({
                 </div>
               )}
               {/* TODO: Add different label in case of bundle/incremental bundle error */}
-              {hasBundleError && (
+              {hasBundleBuildFailedError && (
                 <div className="phone-screen phone-debug-overlay phone-exception-overlay">
                   <button
                     className="uncaught-button"
@@ -576,7 +579,7 @@ function Preview({
                   </button>
                 </div>
               )}
-              {hasIncrementalBundleError && (
+              {hasBundlingError && (
                 <div className="phone-screen phone-debug-overlay phone-exception-overlay">
                   <button className="uncaught-button" onClick={() => project.restart(false)}>
                     Bundle error&nbsp;
@@ -601,6 +604,8 @@ function Preview({
           </Device>
         )}
       </div>
+
+      <DelayedFastRefreshIndicator projectStatus={projectStatus} />
 
       <div className="button-group-left-wrapper">
         <div className="button-group-left">

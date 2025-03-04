@@ -5,6 +5,7 @@ const appRoot = path.resolve();
 // Instead of using require in this code, we should use require_app, which will
 // resolve modules relative to the app root, not the extension lib root.
 function requireFromAppDir(module) {
+  // eslint-disable-next-line @typescript-eslint/no-shadow
   const path = require.resolve(module, { paths: [appRoot] });
   return require(path);
 }
@@ -58,10 +59,6 @@ function adaptMetroConfig(config) {
     }
     return origProcessModuleFilter(module);
   };
-
-  // We actually need to reset port number here again, because CLI overrides it
-  // thinking that value 0 means "use default port".
-  config.server.port = 0;
 
   config.watchFolders = [...(config.watchFolders || []), extensionLib];
 
@@ -171,31 +168,6 @@ function adaptMetroConfig(config) {
 
   return config;
 }
-
-// An ugly workaround for packager script to print actual port number.
-// Since we want to start packager on ephemeral port, we need to know the actual port number.
-// Apparently, metro only reports port provided to the config, which will be 0.
-// This workaround overrides http server prototype and prints the port number along
-// with setting some env variables specific to expo that are populated with "0" port as well.
-function patchHttpListen() {
-  const http = require("http");
-  const originalListen = http.Server.prototype.listen;
-
-  http.Server.prototype.listen = function (...args) {
-    const server = this;
-    originalListen.apply(server, args);
-    server.on("listening", () => {
-      const port = server.address().port;
-      process.env.EXPO_PACKAGER_PROXY_URL =
-        process.env.EXPO_MANIFEST_PROXY_URL = `http://localhost:${port}`;
-      process.stdout.write(JSON.stringify({ type: "RNIDE_initialize_done", port }));
-      process.stdout.write("\n");
-    });
-    return server;
-  };
-}
-
-patchHttpListen();
 
 module.exports = {
   appRoot,

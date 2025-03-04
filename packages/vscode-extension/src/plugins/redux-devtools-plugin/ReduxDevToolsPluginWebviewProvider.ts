@@ -11,8 +11,9 @@ import {
 import { extensionContext } from "../../utilities/extensionContext";
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
-import { REDUX_PLUGIN_ID } from "./redux-devtools-plugin";
-import { reportToolOpened } from "../../project/tools";
+import { REDUX_PLUGIN_ID, ReduxDevtoolsPlugin } from "./redux-devtools-plugin";
+import { reportToolOpened, reportToolVisibilityChanged } from "../../project/tools";
+import { IDE } from "../../project/ide";
 
 const PATH = "dist/redux-devtools/";
 
@@ -85,7 +86,7 @@ function generateWebviewContent(
             media-src vscode-resource: http: https:;
             style-src ${webview.cspSource} 'unsafe-inline';
             script-src 'nonce-${nonce}';
-            font-src vscode-resource: https:;" 
+            font-src vscode-resource: https:;"
           />
           ${cssImports}
         </head>
@@ -106,29 +107,39 @@ function generateWebviewContent(
 export class ReduxDevToolsPluginWebviewProvider implements WebviewViewProvider {
   constructor(private readonly context: ExtensionContext) {}
 
-  cb?: (webview: WebviewView) => void;
-
   public resolveWebviewView(
     webviewView: WebviewView,
     context: WebviewViewResolveContext,
     token: CancellationToken
   ): void {
     reportToolOpened(REDUX_PLUGIN_ID);
-    webviewView.webview.options = {
+    const webview = webviewView.webview;
+    webview.options = {
       enableScripts: true,
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, PATH)],
     };
 
-    webviewView.webview.html = generateWebviewContent(
+    const project = IDE.getInstanceIfExists()?.project;
+    const reduxDevtoolsPlugin = project?.toolsManager.getPlugin(
+      REDUX_PLUGIN_ID
+    ) as ReduxDevtoolsPlugin;
+    if (!reduxDevtoolsPlugin) {
+      throw new Error("Couldn't find redux devtools plugin");
+    }
+
+    reduxDevtoolsPlugin.connectDevtoolsWebview(webview);
+    webviewView.onDidDispose(() => {
+      reduxDevtoolsPlugin.disconnectDevtoolsWebview(webview);
+    });
+
+    webviewView.onDidChangeVisibility(() => {
+      reportToolVisibilityChanged(REDUX_PLUGIN_ID, webviewView.visible);
+    });
+
+    webview.html = generateWebviewContent(
       extensionContext,
       webviewView.webview,
       extensionContext.extensionUri
     );
-
-    this.cb?.(webviewView);
-  }
-
-  setListener(cb: (webview: WebviewView) => void) {
-    this.cb = cb;
   }
 }
