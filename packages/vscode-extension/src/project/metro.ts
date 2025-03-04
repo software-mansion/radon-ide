@@ -446,7 +446,7 @@ export class Metro implements Disposable {
     return undefined;
   }
 
-  public async fetchRuntimeList(): Promise<CDPTargetDescription[] | undefined> {
+  public async fetchWsTargets(): Promise<CDPTargetDescription[] | undefined> {
     const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
 
     let retryCount = 0;
@@ -474,7 +474,7 @@ export class Metro implements Disposable {
   }
 
   public async getDebuggerURL() {
-    const listJson = await this.fetchRuntimeList();
+    const listJson = await this.fetchWsTargets();
 
     if (listJson === undefined) {
       return undefined;

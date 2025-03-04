@@ -142,7 +142,7 @@ export class DeviceSession implements Disposable {
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
     await Promise.all([this.metro.reload(), this.devtools.appReady()]);
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
-    await this.debugSession?.reconnectIfNeeded();
+    await this.debugSession?.reconnectJSDebuggerIfNeeded(this.metro);
   }
 
   private async launchApp(previewReadyCallback?: PreviewReadyCallback) {

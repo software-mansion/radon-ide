@@ -19,6 +19,7 @@ export class DebugSession implements Disposable {
   private vscSession: VscDebugSession | undefined;
   private debugEventsListener: Disposable;
   private wasConnectedToCDP: boolean = false;
+  private currentWsTarget: string | undefined;
 
   constructor(private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
@@ -83,6 +84,8 @@ export class DebugSession implements Disposable {
 
   private async stop() {
     this.vscSession && (await debug.stopDebugging(this.vscSession));
+    this.vscSession = undefined;
+    this.currentWsTarget = undefined;
   }
 
   /**  
@@ -95,22 +98,19 @@ export class DebugSession implements Disposable {
   }
 
   public async reconnectJSDebuggerIfNeeded(metro: Metro) {
-    const possibleRuntimes = await metro.fetchRuntimeList();
-    const availableAddresses =
-      possibleRuntimes?.map((runtime) => runtime.webSocketDebuggerUrl) ?? [];
+    const possibleWsTargets = await metro.fetchWsTargets();
+    const hasCurrentWsAddress = possibleWsTargets?.some(runtime => runtime.webSocketDebuggerUrl === this.currentWsTarget);
 
-    if (!availableAddresses.includes(this.vscSession?.configuration?.websocketAddress)) {
-      this.connectJSDebugger(metro);
+    if (!this.currentWsTarget || !hasCurrentWsAddress) {
+        return this.connectJSDebugger(metro);
     }
 
-    return false;
+    return true;
   }
 
   public async connectJSDebugger(metro: Metro) {
-    if (this.wasConnectedToCDP) {
-      this.vscSession && debug.stopDebugging(this.vscSession);
-      this.vscSession = undefined;
-      await this.startInternal();
+    if (this. wasConnectedToCDP) {
+      await this.restart();
     }
 
     const websocketAddress = await metro.getDebuggerURL();
@@ -129,12 +129,13 @@ export class DebugSession implements Disposable {
     }
 
     await this.connectCDPDebugger({
-      websocketAddress: websocketAddress,
+      websocketAddress,
       sourceMapAliases,
       expoPreludeLineCount: metro.expoPreludeLineCount,
       breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
     });
 
+    this.currentWsTarget = websocketAddress;
     this.wasConnectedToCDP = true;
 
     return true;
