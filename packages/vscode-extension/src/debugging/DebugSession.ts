@@ -99,17 +99,19 @@ export class DebugSession implements Disposable {
 
   public async reconnectJSDebuggerIfNeeded(metro: Metro) {
     const possibleWsTargets = await metro.fetchWsTargets();
-    const hasCurrentWsAddress = possibleWsTargets?.some(runtime => runtime.webSocketDebuggerUrl === this.currentWsTarget);
+    const hasCurrentWsAddress = possibleWsTargets?.some(
+      (runtime) => runtime.webSocketDebuggerUrl === this.currentWsTarget
+    );
 
     if (!this.currentWsTarget || !hasCurrentWsAddress) {
-        return this.connectJSDebugger(metro);
+      return this.connectJSDebugger(metro);
     }
 
     return true;
   }
 
   public async connectJSDebugger(metro: Metro) {
-    if (this. wasConnectedToCDP) {
+    if (this.wasConnectedToCDP) {
       await this.restart();
     }
 
