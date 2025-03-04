@@ -460,6 +460,11 @@ export class Metro implements Disposable {
         const listJson = await list.json();
 
         if (listJson.length > 0) {
+          // fixup websocket addresses on the list
+          for (const page of listJson) {
+            page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+          }
+
           return listJson;
         }
       } catch (_) {
@@ -478,11 +483,6 @@ export class Metro implements Disposable {
 
     if (listJson === undefined) {
       return undefined;
-    }
-
-    // fixup websocket addresses on the list
-    for (const page of listJson) {
-      page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
     }
 
     // When there are pages that are identified as belonging to the new debugger, we
