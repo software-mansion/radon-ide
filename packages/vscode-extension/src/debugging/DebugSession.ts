@@ -114,6 +114,8 @@ export class DebugSession implements Disposable {
 
   private async stop() {
     this.vscSession && (await debug.stopDebugging(this.vscSession));
+    this.vscSession = undefined;
+    this.wasConnectedToCDP = false;
   }
 
   /**
@@ -127,8 +129,7 @@ export class DebugSession implements Disposable {
 
   public async connectJSDebugger(metro: Metro) {
     if (this.wasConnectedToCDP) {
-      this.vscSession && debug.stopDebugging(this.vscSession);
-      await this.startInternal();
+      await this.restart();
     }
 
     const websocketAddress = await metro.getDebuggerURL();
@@ -167,7 +168,7 @@ export class DebugSession implements Disposable {
   }
 
   public async ping(): Promise<boolean> {
-    this.session.customRequest("ping");
+    this.session.customRequest("RNIDE_ping");
     return new Promise((resolve, _) => {
       this.pingResolve = resolve;
       this.pingTimeout = setTimeout(() => {
