@@ -5,6 +5,25 @@ import { CDPBreakpoint } from "./CDPBreakpoint";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { CDPSession } from "./CDPSession";
 
+// NOTE: extracted from the type definition in "@vscode/debugprotocol"
+const VALID_KEYS: (keyof DebugProtocol.Breakpoint)[] = [
+  "id",
+  "verified",
+  "message",
+  "source",
+  "line",
+  "column",
+  "endLine",
+  "endColumn",
+  "instructionReference",
+  "offset",
+  "reason",
+];
+
+function isKeyOfBreakpoint(key: string): key is keyof DebugProtocol.Breakpoint {
+  return VALID_KEYS.includes(key as keyof DebugProtocol.Breakpoint);
+}
+
 export class BreakpointsController {
   private breakpoints = new Map<string, Array<CDPBreakpoint>>();
 
@@ -56,7 +75,7 @@ export class BreakpointsController {
   public async setBreakpoints(
     sourcePath: string,
     breakpoints: DebugProtocol.SourceBreakpoint[] | undefined
-  ) {
+  ): Promise<DebugProtocol.Breakpoint[]> {
     const previousBreakpoints = this.breakpoints.get(sourcePath) || [];
 
     const newBreakpoints = (breakpoints || []).map((bp) => {
@@ -95,6 +114,11 @@ export class BreakpointsController {
       })
     );
 
-    return resolvedBreakpoints;
+    const serializedBreakpoints = resolvedBreakpoints.map((bp) => {
+      const entries = Object.entries(bp).filter(([key]) => isKeyOfBreakpoint(key));
+      return Object.fromEntries(entries) as DebugProtocol.Breakpoint;
+    });
+
+    return serializedBreakpoints;
   }
 }
