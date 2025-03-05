@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import semver from "semver";
 import { OutputChannel } from "vscode";
+import loadConfig from "@react-native-community/cli-config";
 import { getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, findJavaHome } from "../utilities/android";
 import { Logger } from "../Logger";
@@ -65,12 +66,17 @@ export async function getAndroidBuildPaths(
   return { apkPath, packageName };
 }
 
-function makeBuildTaskName(productFlavor: string, buildType: string) {
-  // task name is in the format of assemble<ProductFlavor><BuildType> where productFlavor and buildType
+function makeBuildTaskName(productFlavor: string, buildType: string, appName?: string) {
+  // task name is in the format of :<appName>:assemble<ProductFlavor><BuildType> where productFlavor and buildType
   // are the names of the productFlavor and buildType that each start with a capital letter.
   // By default, Android Gradle Plugin always creates staging and release buildTypes and does not define any productFlavor.
-  const flavor = productFlavor.charAt(0).toUpperCase() + productFlavor.slice(1);
-  return "assemble" + flavor + buildType.charAt(0).toUpperCase() + buildType.slice(1);
+  // and appName is the name of the application as seen by the gradle build system, omitting appName leads to
+  // whole android project being build.
+  const flavorUppercase =
+    productFlavor && productFlavor.charAt(0).toUpperCase() + productFlavor.slice(1);
+  const buildTypeUppercase = buildType && buildType.charAt(0).toUpperCase() + buildType.slice(1);
+  const prefix = appName ? `:${appName}:` : "";
+  return `${prefix}assemble${flavorUppercase}${buildTypeUppercase}`;
 }
 
 export async function buildAndroid(
@@ -142,6 +148,10 @@ export async function buildAndroid(
   }
 
   const androidSourceDir = getAndroidSourceDir(appRoot);
+  const androidAppName = loadConfig({
+    projectRoot: appRoot,
+    selectedPlatform: "android",
+  }).platforms.android.projectConfig(appRoot)?.appName;
   const productFlavor = android?.productFlavor || "";
   const buildType = android?.buildType || "debug";
   const gradleArgs = [
@@ -149,7 +159,7 @@ export async function buildAndroid(
     "lint",
     `-PreactNativeArchitectures=${getNativeABI()}`,
     ...(forceCleanBuild ? ["clean"] : []),
-    makeBuildTaskName(productFlavor, buildType),
+    makeBuildTaskName(productFlavor, buildType, androidAppName),
     "--init-script", // buildProgressEvaluation init script is used log build task count for build progress logging
     path.join(
       extensionContext.extensionPath,
