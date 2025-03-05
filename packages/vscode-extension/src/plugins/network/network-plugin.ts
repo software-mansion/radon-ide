@@ -1,26 +1,57 @@
 import http, { Server } from "http";
+import { spawn } from "child_process";
+import path from "path";
 import { commands, Disposable, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Devtools } from "../../project/devtools";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
+
+import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
 
 export const NETWORK_PLUGIN_ID = "network";
+
+function startViteServer(onReady: () => void) {
+  const process = spawn("npm", ["run", "watch:network-webview"], {
+    cwd: path.join(__dirname, ".."),
+    shell: true,
+  });
+
+  process.stdout.on("data", (data) => {
+    const output = data.toString();
+
+    if (output.includes("ready in") || output.includes("Local:")) {
+      onReady();
+    }
+  });
+
+  process.stderr.on("data", (data) => {
+    Logger.error("ERROR:", data.toString());
+  });
+
+  process.on("close", (code) => {
+    Logger.debug(`Process exited with code ${code}`);
+  });
+}
 
 let initialzed = false;
 function initialize() {
   if (initialzed) {
     return;
   }
-  initialzed = true;
-  extensionContext.subscriptions.push(
-    window.registerWebviewViewProvider(
-      `RNIDE.Tool.Network.view`,
-      new NetworkDevtoolsWebviewProvider(extensionContext),
-      { webviewOptions: { retainContextWhenHidden: true } }
-    )
-  );
+  Logger.debug("Initilizing Network tool");
+
+  startViteServer(() => {
+    initialzed = true;
+    extensionContext.subscriptions.push(
+      window.registerWebviewViewProvider(
+        `RNIDE.Tool.Network.view`,
+        new NetworkDevtoolsWebviewProvider(extensionContext),
+        { webviewOptions: { retainContextWhenHidden: true } }
+      )
+    );
+  });
 }
 
 class NetworkCDPWebsocketBackend implements Disposable {
@@ -58,6 +89,8 @@ class NetworkCDPWebsocketBackend implements Disposable {
 
   public get port() {
     const address = this.server.address();
+    Logger.debug("Server address:", address);
+
     if (address && typeof address === "object") {
       return address.port;
     }
@@ -77,6 +110,8 @@ class NetworkCDPWebsocketBackend implements Disposable {
   }
 
   public broadcast(cdpMessage: string) {
+    Logger.debug("Broadcasting CDP message:", cdpMessage);
+
     this.sessions.forEach((ws) => {
       ws.send(cdpMessage);
     });
