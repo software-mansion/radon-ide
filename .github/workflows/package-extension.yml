@@ -4,7 +4,7 @@ on:
     inputs:
       publish:
         description: 'Publish to marketplaces'
-        default: true
+        default: false
         type: boolean
       prerelease:
         description: 'Mark as pre-release'
