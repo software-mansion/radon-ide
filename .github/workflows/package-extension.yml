@@ -71,16 +71,15 @@ jobs:
           cache: npm
           cache-dependency-path: packages/vscode-extension/package-lock.json
 
-      - name: Change directory
-        run: cd packages/vscode-extension
-
       - name: Install dependencies
+        working-directory: packages/vscode-extension
         run: npm ci
 
       - name: Package extension
         uses: HaaLeo/publish-vscode-extension@v1
         id: package_extension
         with:
+          packagePath: packages/vscode-extension
           dryRun: true
           pat: stub
           target: ${{ steps.set_targets.outputs.targets }}
