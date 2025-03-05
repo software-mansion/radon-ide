@@ -42,9 +42,7 @@ export class DebugSession implements Disposable {
           break;
         case "RNIDE_pong":
           if (this.pingResolve) {
-            clearTimeout(this.pingTimeout);
             this.pingResolve(true);
-            this.pingResolve = undefined;
           } else {
             Logger.warn("[DEBUG SESSION] Received unexpected pong event");
           }
@@ -201,11 +199,14 @@ export class DebugSession implements Disposable {
   public async pingCurrentWsTarget(): Promise<boolean> {
     this.session.customRequest("RNIDE_ping");
     return new Promise((resolve, _) => {
-      this.pingResolve = resolve;
-      this.pingTimeout = setTimeout(() => {
-        resolve(false);
+      this.pingResolve = (value) => {
+        clearTimeout(this.pingTimeout);
+        resolve(value);
         this.pingResolve = undefined;
         this.pingTimeout = undefined;
+      };
+      this.pingTimeout = setTimeout(() => {
+        this.pingResolve?.(false);
       }, PING_TIMEOUT);
     });
   }
