@@ -1,4 +1,6 @@
+import { assert } from "console";
 import {
+  commands,
   debug,
   DebugSessionCustomEvent,
   Disposable,
@@ -19,6 +21,8 @@ export type DebugSessionDelegate = {
 };
 
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
+
+const REACT_NATIVE_SESSION_TYPE = "com.swmansion.react-native-debugger";
 
 export class DebugSession implements Disposable {
   private vscSession: VscDebugSession | undefined;
@@ -71,11 +75,18 @@ export class DebugSession implements Disposable {
   }
 
   private async startInternal() {
+    const unsub = debug.onDidStartDebugSession((session) => {
+      if (session.type === REACT_NATIVE_SESSION_TYPE) {
+        this.vscSession = session;
+        unsub.dispose();
+      }
+    });
+
     const debugStarted = await debug.startDebugging(
       undefined,
       {
-        type: "com.swmansion.react-native-debugger",
-        name: "Radon IDE Debugger",
+        type: REACT_NATIVE_SESSION_TYPE,
+        name: "React Native Preview Debugger",
         request: "attach",
       },
       {
@@ -87,7 +98,9 @@ export class DebugSession implements Disposable {
     );
 
     if (debugStarted) {
-      this.vscSession = debug.activeDebugSession!;
+      // NOTE: this is safe, because `debugStarted` means the session started successfully,
+      // and we set the session in the `onDidStartDebugSession` handler
+      assert(this.vscSession, "Expected debug session to be set");
       return true;
     }
     return false;
@@ -162,11 +175,15 @@ export class DebugSession implements Disposable {
   }
 
   public resumeDebugger() {
-    this.session.customRequest("continue");
+    commands.executeCommand("workbench.action.debug.continue", undefined, {
+      sessionId: this.vscSession?.id,
+    });
   }
 
   public stepOverDebugger() {
-    this.session.customRequest("next");
+    commands.executeCommand("workbench.action.debug.stepOver", undefined, {
+      sessionId: this.vscSession?.id,
+    });
   }
 
   public async isWsTargetAlive(metro: Metro): Promise<boolean> {
