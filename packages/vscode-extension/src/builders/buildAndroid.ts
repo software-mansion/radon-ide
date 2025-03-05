@@ -71,10 +71,12 @@ function makeBuildTaskName(productFlavor: string, buildType: string, appName?: s
   // are the names of the productFlavor and buildType that each start with a capital letter.
   // By default, Android Gradle Plugin always creates staging and release buildTypes and does not define any productFlavor.
   // and appName is the name of the application as seen by the gradle build system, omitting appName leads to
-  // whole android file being build.
-  const flavor = productFlavor.charAt(0).toUpperCase() + productFlavor.slice(1);
+  // whole android project being build.
+  const flavorUppercase =
+    productFlavor && productFlavor.charAt(0).toUpperCase() + productFlavor.slice(1);
+  const buildTypeUppercase = buildType && buildType.charAt(0).toUpperCase() + buildType.slice(1);
   const prefix = appName ? `:${appName}:` : "";
-  return prefix + "assemble" + flavor + buildType.charAt(0).toUpperCase() + buildType.slice(1);
+  return `${prefix}assemble${flavorUppercase}${buildTypeUppercase}`;
 }
 
 export async function buildAndroid(
