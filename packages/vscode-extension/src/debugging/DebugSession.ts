@@ -5,7 +5,10 @@ import {
   DebugSession as VscDebugSession,
 } from "vscode";
 import { Metro } from "../project/metro";
+import { Logger } from "../Logger";
 import { CDPConfiguration } from "./DebugAdapter";
+
+const PING_TIMEOUT = 1000;
 
 export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
@@ -20,7 +23,10 @@ export type DebugSource = { filename?: string; line1based?: number; column0based
 export class DebugSession implements Disposable {
   private vscSession: VscDebugSession | undefined;
   private debugEventsListener: Disposable;
+  private pingTimeout: NodeJS.Timeout | undefined;
+  private pingResolve: ((result: boolean) => void) | undefined;
   private wasConnectedToCDP: boolean = false;
+  private currentWsTarget: string | undefined;
 
   constructor(private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
@@ -34,6 +40,13 @@ export class DebugSession implements Disposable {
         case "RNIDE_continued":
           this.delegate.onDebuggerResumed(event);
           break;
+        case "RNIDE_pong":
+          if (this.pingResolve) {
+            this.pingResolve(true);
+          } else {
+            Logger.warn("[DEBUG SESSION] Received unexpected pong event");
+          }
+          break;
         case "RNIDE_profilingCPUStarted":
           this.delegate.onProfilingCPUStarted(event);
           break;
@@ -45,6 +58,16 @@ export class DebugSession implements Disposable {
           break;
       }
     });
+  }
+
+  public async reconnectJSDebuggerIfNeeded(metro: Metro) {
+    const isAlive = await this.isWsTargetAlive(metro);
+
+    if (!isAlive) {
+      return this.connectJSDebugger(metro);
+    }
+
+    return true;
   }
 
   private async startInternal() {
@@ -91,6 +114,9 @@ export class DebugSession implements Disposable {
 
   private async stop() {
     this.vscSession && (await debug.stopDebugging(this.vscSession));
+    this.vscSession = undefined;
+    this.wasConnectedToCDP = false;
+    this.currentWsTarget = undefined;
   }
 
   /**
@@ -104,8 +130,7 @@ export class DebugSession implements Disposable {
 
   public async connectJSDebugger(metro: Metro) {
     if (this.wasConnectedToCDP) {
-      this.vscSession && debug.stopDebugging(this.vscSession);
-      await this.startInternal();
+      await this.restart();
     }
 
     const websocketAddress = await metro.getDebuggerURL();
@@ -124,13 +149,14 @@ export class DebugSession implements Disposable {
     }
 
     await this.connectCDPDebugger({
-      websocketAddress: websocketAddress,
+      websocketAddress,
       sourceMapAliases,
       expoPreludeLineCount: metro.expoPreludeLineCount,
       breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
     });
 
     this.wasConnectedToCDP = true;
+    this.currentWsTarget = websocketAddress;
 
     return true;
   }
@@ -141,6 +167,48 @@ export class DebugSession implements Disposable {
 
   public stepOverDebugger() {
     this.session.customRequest("next");
+  }
+
+  public async isWsTargetAlive(metro: Metro): Promise<boolean> {
+    /**
+     * This is a bit tricky, the idea is that we run both checks.
+     * pingCurrentWsTarget provides us reliable information about connection.
+     * isCurrentWsTargetStillVisible can say reliably only if the connection were lost (is missing on ws targets list).
+     * So what we do is promise any, but isCurrentWsTargetStillVisible rejects promise if the connection is on the list, so
+     * we can wait for ping to resolve.
+     */
+    return Promise.any([this.pingCurrentWsTarget(), this.isCurrentWsTargetStillVisible(metro)]);
+  }
+
+  public async isCurrentWsTargetStillVisible(metro: Metro): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+      const possibleWsTargets = await metro.fetchWsTargets();
+      const hasCurrentWsAddress = possibleWsTargets?.some(
+        (runtime) => runtime.webSocketDebuggerUrl === this.currentWsTarget
+      );
+
+      if (!this.currentWsTarget || !hasCurrentWsAddress) {
+        return resolve(false);
+      }
+      // We're rejecting as shouldDebuggerReconnect uses .any which waits for first promise to resolve.
+      // And th fact that current wsTarget is on the list is not enough, it might be stale, so in this case we wait for ping.
+      reject();
+    });
+  }
+
+  public async pingCurrentWsTarget(): Promise<boolean> {
+    this.session.customRequest("RNIDE_ping");
+    return new Promise((resolve, _) => {
+      this.pingResolve = (value) => {
+        clearTimeout(this.pingTimeout);
+        resolve(value);
+        this.pingResolve = undefined;
+        this.pingTimeout = undefined;
+      };
+      this.pingTimeout = setTimeout(() => {
+        this.pingResolve?.(false);
+      }, PING_TIMEOUT);
+    });
   }
 
   public async startProfilingCPU() {

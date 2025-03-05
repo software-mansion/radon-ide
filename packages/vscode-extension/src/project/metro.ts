@@ -11,6 +11,7 @@ import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
+import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
 
@@ -339,18 +340,6 @@ export class Metro implements Disposable {
     await this.sendMessageToDevice("devMenu");
   }
 
-  public async getDebuggerURL() {
-    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
-    const startTime = Date.now();
-    let websocketAddress: string | undefined;
-    while (!websocketAddress && Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
-      websocketAddress = await this.fetchDebuggerURL();
-      await new Promise((res) => setTimeout(res, 1000));
-    }
-    return websocketAddress;
-  }
-
   private lookupWsAddressForOldDebugger(listJson: CDPTargetDescription[]) {
     // Pre 0.76 RN metro lists debugger pages that are identified as "deviceId-pageId"
     // After new device is connected, the deviceId is incremented while pageId could be
@@ -457,14 +446,43 @@ export class Metro implements Disposable {
     return undefined;
   }
 
-  private async fetchDebuggerURL() {
-    // query list from http://localhost:${metroPort}/json/list
-    const list = await fetch(`http://localhost:${this._port}/json/list`);
-    const listJson = await list.json();
+  public async fetchWsTargets(): Promise<CDPTargetDescription[] | undefined> {
+    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
 
-    // fixup websocket addresses on the list
-    for (const page of listJson) {
-      page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+    let retryCount = 0;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
+      retryCount++;
+
+      try {
+        const list = await fetch(`http://localhost:${this._port}/json/list`);
+        const listJson = await list.json();
+
+        if (listJson.length > 0) {
+          // fixup websocket addresses on the list
+          for (const page of listJson) {
+            page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+          }
+
+          return listJson;
+        }
+      } catch (_) {
+        // It shouldn't happen, so lets warn about it. Except a warning we will retry anyway, so nothing to do here.
+        Logger.warn("[METRO] Fetching list of runtimes failed, retrying...");
+      }
+
+      await sleep(progressiveRetryTimeout(retryCount));
+    }
+
+    return undefined;
+  }
+
+  public async getDebuggerURL() {
+    const listJson = await this.fetchWsTargets();
+
+    if (listJson === undefined) {
+      return undefined;
     }
 
     // When there are pages that are identified as belonging to the new debugger, we
