@@ -26,6 +26,7 @@ export class DebugSession implements Disposable {
   private pingTimeout: NodeJS.Timeout | undefined;
   private pingResolve: ((result: boolean) => void) | undefined;
   private wasConnectedToCDP: boolean = false;
+  private currentWsTarget: string| undefined;
 
   constructor(private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
@@ -61,7 +62,7 @@ export class DebugSession implements Disposable {
   }
 
   public async reconnectJSDebuggerIfNeeded(metro: Metro) {
-    const isAlive = await this.ping();
+    const isAlive = await this.isWsTargetAlive(metro);
 
     if (!isAlive) {
       return this.connectJSDebugger(metro);
@@ -116,6 +117,7 @@ export class DebugSession implements Disposable {
     this.vscSession && (await debug.stopDebugging(this.vscSession));
     this.vscSession = undefined;
     this.wasConnectedToCDP = false;
+    this.currentWsTarget = undefined;
   }
 
   /**
@@ -148,13 +150,14 @@ export class DebugSession implements Disposable {
     }
 
     await this.connectCDPDebugger({
-      websocketAddress: websocketAddress,
+      websocketAddress,
       sourceMapAliases,
       expoPreludeLineCount: metro.expoPreludeLineCount,
       breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
     });
 
     this.wasConnectedToCDP = true;
+    this.currentWsTarget = websocketAddress;
 
     return true;
   }
@@ -167,7 +170,38 @@ export class DebugSession implements Disposable {
     this.session.customRequest("next");
   }
 
-  public async ping(): Promise<boolean> {
+
+  public async isWsTargetAlive(metro: Metro): Promise<boolean> {
+    /**
+     * This is a bit tricky, the idea is that we run both checks.
+     * pingCurrentWsTarget provides us reliable information about connection. 
+     * isCurrentWsTargetStillVisible can say reliably only if the connection were lost (is missing on ws targets list).
+     * So what we do is promise any, but isCurrentWsTargetStillVisible rejects promise if the connection is on the list, so 
+     * we can wait for ping to resolve.
+     */
+    return Promise.any([
+      this.pingCurrentWsTarget(),
+      this.isCurrentWsTargetStillVisible(metro),
+    ]);
+  } 
+
+  public async isCurrentWsTargetStillVisible(metro: Metro): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+      const possibleWsTargets = await metro.fetchWsTargets();
+      const hasCurrentWsAddress = possibleWsTargets?.some(
+        (runtime) => runtime.webSocketDebuggerUrl === this.currentWsTarget
+      );
+ 
+      if (!this.currentWsTarget || !hasCurrentWsAddress) {
+       return resolve(false);
+      }
+      // We're rejecting as shouldDebuggerReconnect uses .any which waits for first promise to resolve.
+      // And th fact that current wsTarget is on the list is not enough, it might be stale, so in this case we wait for ping.
+      reject(); 
+    });
+  }
+
+  public async pingCurrentWsTarget(): Promise<boolean> {
     this.session.customRequest("RNIDE_ping");
     return new Promise((resolve, _) => {
       this.pingResolve = resolve;
