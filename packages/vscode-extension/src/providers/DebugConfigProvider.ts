@@ -14,9 +14,6 @@ export class DebugConfigProvider implements DebugConfigurationProvider {
   ): ProviderResult<DebugConfiguration> {
     return {
       ...debugConfiguration,
-      request: "attach",
-      name: "React Native Preview Debugger",
-      websocketAddress: debugConfiguration.websocketAddress,
       internalConsoleOptions: "neverOpen",
     };
   }

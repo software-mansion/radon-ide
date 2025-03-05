@@ -288,7 +288,16 @@
     "debuggers": [
       {
         "type": "com.swmansion.react-native-debugger",
-        "label": "Radon IDE internal debugger for React Native",
+        "label": "Radon IDE internal debugger for React Native projects",
+        "hiddenWhen": "true",
+        "languages": [
+          "javascript",
+          "typescript"
+        ]
+      },
+      {
+        "type": "com.swmansion.js-debugger",
+        "label": "Radon IDE internal JavaScript debugger",
         "hiddenWhen": "true",
         "languages": [
           "javascript",
