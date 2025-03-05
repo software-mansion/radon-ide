@@ -1,6 +1,5 @@
 import { Breakpoint } from "@vscode/debugadapter";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
-import { CDPSession } from "./CDPSession";
 
 function makeDeferredTaskPromise<T>(task: () => Promise<T>) {
   let resolve: (value: T | PromiseLike<T>) => void;
@@ -22,7 +21,7 @@ export class CDPBreakpoint extends Breakpoint {
   private lastTaskPromise = Promise.resolve();
 
   constructor(
-    private cdpSession: CDPSession,
+    private cdpSendMessage: (method: string, params: object, timeoutMs?: number) => Promise<any>,
     private sourceMapController: SourceMapsRegistry,
     private sourcePath: string,
     public readonly line: number,
@@ -58,7 +57,7 @@ export class CDPBreakpoint extends Breakpoint {
       return;
     }
 
-    const result = await this.cdpSession.sendCDPMessage("Debugger.setBreakpointByUrl", {
+    const result = await this.cdpSendMessage("Debugger.setBreakpointByUrl", {
       // in CDP line and column numbers are 0-based
       lineNumber: generatedPos.lineNumber1Based - 1,
       url: generatedPos.source,
@@ -76,7 +75,7 @@ export class CDPBreakpoint extends Breakpoint {
 
   private deleteWithCDP = async () => {
     if (this.cdpId !== undefined && this.verified) {
-      await this.cdpSession.sendCDPMessage("Debugger.removeBreakpoint", {
+      await this.cdpSendMessage("Debugger.removeBreakpoint", {
         breakpointId: this.cdpId,
       });
     }

@@ -67,7 +67,9 @@ export class BreakpointsController {
         return previousBp;
       } else {
         return new CDPBreakpoint(
-          this.cdpSession,
+          (method: string, params: object, timeoutMs?: number) => {
+            return this.cdpSession.sendCDPMessage(method, params, timeoutMs);
+          },
           this.sourceMapController,
           sourcePath,
           bp.line,
