@@ -78,6 +78,8 @@ jobs:
       - name: Package extension
         uses: HaaLeo/publish-vscode-extension@v1
         id: package_extension
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           packagePath: packages/vscode-extension
           dryRun: true
