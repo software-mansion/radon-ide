@@ -44,6 +44,7 @@ export class DebugSession implements Disposable {
           if (this.pingResolve) {
             clearTimeout(this.pingTimeout);
             this.pingResolve(true);
+            this.pingResolve = undefined;
           } else {
             Logger.warn("[DEBUG SESSION] Received unexpected pong event");
           }
