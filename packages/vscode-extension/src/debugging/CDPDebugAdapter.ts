@@ -33,16 +33,6 @@ export type CDPConfiguration = {
 
 const ERROR_RESPONSE_FAIL_TO_RETRIEVE_VARIABLE_ID = 4000;
 
-export function typeToCategory(type: string) {
-  switch (type) {
-    case "warning":
-    case "error":
-      return "stderr";
-    default:
-      return "stdout";
-  }
-}
-
 export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate {
   private cdpSession: CDPSession | undefined;
 
@@ -57,10 +47,10 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
       "websocketAddress" in configuration,
       "CDPDebugSession requires websocketAddress"
     );
-    this.connectJSDebugger(configuration as unknown as CDPConfiguration);
+    this.startCDPSession(configuration as unknown as CDPConfiguration);
   }
 
-  private connectJSDebugger(cdpConfiguration: CDPConfiguration) {
+  private startCDPSession(cdpConfiguration: CDPConfiguration) {
     this.cdpSession = new CDPSession(
       this,
       cdpConfiguration.websocketAddress,

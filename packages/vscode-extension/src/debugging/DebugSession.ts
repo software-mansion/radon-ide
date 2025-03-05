@@ -75,35 +75,38 @@ export class DebugSession implements Disposable {
   }
 
   private async startInternal() {
-    const unsub = debug.onDidStartDebugSession((session) => {
+    let didStartHandler: Disposable | null = debug.onDidStartDebugSession((session) => {
       if (session.type === REACT_NATIVE_SESSION_TYPE) {
         this.vscSession = session;
-        unsub.dispose();
+        didStartHandler?.dispose();
+        didStartHandler = null;
       }
     });
+    try {
+      const debugStarted = await debug.startDebugging(
+        undefined,
+        {
+          type: REACT_NATIVE_SESSION_TYPE,
+          name: "React Native Preview Debugger",
+          request: "attach",
+        },
+        {
+          suppressDebugStatusbar: true,
+          suppressDebugView: true,
+          suppressDebugToolbar: true,
+          suppressSaveBeforeStart: true,
+        }
+      );
 
-    const debugStarted = await debug.startDebugging(
-      undefined,
-      {
-        type: REACT_NATIVE_SESSION_TYPE,
-        name: "React Native Preview Debugger",
-        request: "attach",
-      },
-      {
-        suppressDebugStatusbar: true,
-        suppressDebugView: true,
-        suppressDebugToolbar: true,
-        suppressSaveBeforeStart: true,
+      if (debugStarted) {
+        // NOTE: this is safe, because `debugStarted` means the session started successfully,
+        // and we set the session in the `onDidStartDebugSession` handler
+        assert(this.vscSession, "Expected debug session to be set");
+        return true;
       }
-    );
-
-    if (debugStarted) {
-      // NOTE: this is safe, because `debugStarted` means the session started successfully,
-      // and we set the session in the `onDidStartDebugSession` handler
-      assert(this.vscSession, "Expected debug session to be set");
-      return true;
+    } finally {
+      didStartHandler?.dispose();
     }
-    return false;
   }
 
   public static start(debugEventDelegate: DebugSessionDelegate) {

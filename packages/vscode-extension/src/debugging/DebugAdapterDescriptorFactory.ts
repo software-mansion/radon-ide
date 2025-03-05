@@ -1,6 +1,6 @@
 import vscode from "vscode";
 import { DebugAdapter } from "./DebugAdapter";
-import { CDPDebugAdapter } from "./CDPDebugSession";
+import { CDPDebugAdapter } from "./CDPDebugAdapter";
 
 export class DebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
   createDebugAdapterDescriptor(

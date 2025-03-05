@@ -1,6 +1,7 @@
 import { debug, DebugConsoleMode, DebugSession } from "vscode";
 import { DebugSession as DebugAdapterSession, OutputEvent, Source } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
+import { Disposable } from "vscode";
 import { Logger } from "../Logger";
 import { DebugSource } from "./DebugSession";
 
@@ -30,31 +31,39 @@ export class DebugAdapter extends DebugAdapterSession {
     super();
   }
 
-  private connectJSDebugger(cdpConfiguration: CDPConfiguration) {
-    const unsub = debug.onDidStartDebugSession((session) => {
+  private async connectJSDebugger(cdpConfiguration: CDPConfiguration) {
+    let didStartHandler: Disposable | null = debug.onDidStartDebugSession((session) => {
       if (session.type === JS_DEBUGGER_TYPE) {
         this.cdpDebugSession = session;
-        unsub.dispose();
+        didStartHandler?.dispose();
+        didStartHandler = null;
       }
     });
-    debug.startDebugging(
-      undefined,
-      {
-        type: JS_DEBUGGER_TYPE,
-        name: "React Native JS Debugger",
-        request: "attach",
-        ...cdpConfiguration,
-      },
-      {
-        parentSession: this.vscDebugSession,
-        suppressDebugStatusbar: true,
-        suppressDebugView: true,
-        suppressDebugToolbar: true,
-        suppressSaveBeforeStart: true,
-        consoleMode: DebugConsoleMode.MergeWithParent,
-        compact: true,
-      }
-    );
+
+    try {
+      await debug.startDebugging(
+        undefined,
+        {
+          type: JS_DEBUGGER_TYPE,
+          name: "React Native JS Debugger",
+          request: "attach",
+          ...cdpConfiguration,
+        },
+        {
+          parentSession: this.vscDebugSession,
+          suppressDebugStatusbar: true,
+          suppressDebugView: true,
+          suppressDebugToolbar: true,
+          suppressSaveBeforeStart: true,
+          consoleMode: DebugConsoleMode.MergeWithParent,
+          compact: true,
+        }
+      );
+
+      console.assert(this.cdpDebugSession, "CDP Debug session should be set once it's started");
+    } finally {
+      didStartHandler?.dispose();
+    }
   }
 
   logCustomMessage(message: string, category: string, source?: DebugSource) {
@@ -101,7 +110,7 @@ export class DebugAdapter extends DebugAdapterSession {
           debug.stopDebugging(this.cdpDebugSession);
           this.cdpDebugSession = null;
         }
-        this.connectJSDebugger(args);
+        await this.connectJSDebugger(args);
         break;
       case "RNIDE_log_message":
         this.logCustomMessage(args.message, args.type, args.source);
