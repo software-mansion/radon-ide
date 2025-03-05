@@ -178,7 +178,7 @@ export class DebugSession implements Disposable {
       }, PING_TIMEOUT);
     });
   }
-  
+
   public async startProfilingCPU() {
     await this.session.customRequest("RNIDE_startProfiling");
   }
