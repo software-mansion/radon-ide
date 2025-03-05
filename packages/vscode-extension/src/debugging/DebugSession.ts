@@ -26,7 +26,7 @@ export class DebugSession implements Disposable {
   private pingTimeout: NodeJS.Timeout | undefined;
   private pingResolve: ((result: boolean) => void) | undefined;
   private wasConnectedToCDP: boolean = false;
-  private currentWsTarget: string| undefined;
+  private currentWsTarget: string | undefined;
 
   constructor(private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
@@ -170,20 +170,16 @@ export class DebugSession implements Disposable {
     this.session.customRequest("next");
   }
 
-
   public async isWsTargetAlive(metro: Metro): Promise<boolean> {
     /**
      * This is a bit tricky, the idea is that we run both checks.
-     * pingCurrentWsTarget provides us reliable information about connection. 
+     * pingCurrentWsTarget provides us reliable information about connection.
      * isCurrentWsTargetStillVisible can say reliably only if the connection were lost (is missing on ws targets list).
-     * So what we do is promise any, but isCurrentWsTargetStillVisible rejects promise if the connection is on the list, so 
+     * So what we do is promise any, but isCurrentWsTargetStillVisible rejects promise if the connection is on the list, so
      * we can wait for ping to resolve.
      */
-    return Promise.any([
-      this.pingCurrentWsTarget(),
-      this.isCurrentWsTargetStillVisible(metro),
-    ]);
-  } 
+    return Promise.any([this.pingCurrentWsTarget(), this.isCurrentWsTargetStillVisible(metro)]);
+  }
 
   public async isCurrentWsTargetStillVisible(metro: Metro): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
@@ -191,13 +187,13 @@ export class DebugSession implements Disposable {
       const hasCurrentWsAddress = possibleWsTargets?.some(
         (runtime) => runtime.webSocketDebuggerUrl === this.currentWsTarget
       );
- 
+
       if (!this.currentWsTarget || !hasCurrentWsAddress) {
-       return resolve(false);
+        return resolve(false);
       }
       // We're rejecting as shouldDebuggerReconnect uses .any which waits for first promise to resolve.
       // And th fact that current wsTarget is on the list is not enough, it might be stale, so in this case we wait for ping.
-      reject(); 
+      reject();
     });
   }
 
