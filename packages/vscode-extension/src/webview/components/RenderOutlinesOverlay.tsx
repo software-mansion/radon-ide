@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { CanvasOutlineRenderer, OutlineRenderer, WorkerOutlineRenderer } from "react-scan";
+import { CanvasOutlineRenderer, OutlineRenderer } from "react-scan";
 import {
   RenderOutlinesEventListener,
   RenderOutlinesEventMap,
@@ -22,11 +22,7 @@ interface Size {
 }
 
 function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: number) {
-  try {
-    return new WorkerOutlineRenderer(canvas, size, dpr);
-  } catch {
-    return new CanvasOutlineRenderer(canvas, size, dpr);
-  }
+  return new CanvasOutlineRenderer(canvas, size, dpr);
 }
 
 function useIsEnabled() {
