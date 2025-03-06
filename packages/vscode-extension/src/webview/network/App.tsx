@@ -1,9 +1,13 @@
 import "./App.css";
 import NetworkBar from "../components/NetworkBar";
-import NetworkRequestsChart from "../components/NetworkTimeline";
 import NetworkFilters from "../components/NetworkFilters";
+import useNetworkTracker from "../hooks/useNetworkTracker";
 
 function App() {
+  const networkLogs = useNetworkTracker();
+
+  console.log("networkLogs", networkLogs);
+
   return (
     <main>
       <div className="panel-view">
@@ -11,7 +15,6 @@ function App() {
           <NetworkBar />
           <NetworkFilters />
         </div>
-        <NetworkRequestsChart />
       </div>
     </main>
   );
