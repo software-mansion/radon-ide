@@ -92,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.prepare_name.outputs.package_name }}
-          path: ${{ steps.package_extension.outputs.vsixPath }}
+          path: ${{ steps.package_extension.outputs.vsix_path }}
 
       - name: Publish to Visual Studio Marketplace
         uses: HaaLeo/publish-vscode-extension@v1
