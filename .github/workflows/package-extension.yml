@@ -71,7 +71,7 @@ jobs:
         working-directory: packages/vscode-extension
         run: npm ci
 
-      - name: Prepare package ref name for artifact upload
+      - name: Prepare package name for artifact upload
         id: prepare_name
         run: |
           ref_name=$(echo -n "${{ github.event.inputs.ref }}" | xargs | sed 's/[\\\/'"'"':<>|*?]/-/g') 
