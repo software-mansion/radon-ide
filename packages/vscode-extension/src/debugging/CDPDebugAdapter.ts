@@ -349,6 +349,24 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
     this.sendResponse(response);
   }
 
+  private async ping() {
+    if (!this.cdpSession) {
+      Logger.warn("[DebugAdapter] [ping] The CDPSession was not initialized yet");
+      return;
+    }
+    try {
+      const res = await this.cdpSession.sendCDPMessage("Runtime.evaluate", {
+        expression: "('ping')",
+      });
+      const { result } = res;
+      if (result.value === "ping") {
+        this.sendEvent(new Event("RNIDE_pong"));
+      }
+    } catch (_) {
+      /** debugSession is waiting for an event, if it won't get any it will fail after timeout, so we don't need to do anything here */
+    }
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -370,6 +388,9 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
           await fs.promises.writeFile(filePath, JSON.stringify(profile));
           this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
         }
+        break;
+      case "RNIDE_ping":
+        this.ping();
         break;
       default:
         Logger.debug(`Custom req ${command} ${args}`);

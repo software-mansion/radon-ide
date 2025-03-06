@@ -2,7 +2,6 @@ import { debug, DebugConsoleMode, DebugSession } from "vscode";
 import { DebugSession as DebugAdapterSession, OutputEvent, Source } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { Disposable } from "vscode";
-import { Logger } from "../Logger";
 import { DebugSource } from "./DebugSession";
 
 export type CDPConfiguration = {
@@ -80,24 +79,6 @@ export class DebugAdapter extends DebugAdapterSession {
     this.sendEvent(output);
   }
 
-  private async ping() {
-    // if (!this.cdpSession) {
-    //   Logger.warn("[DebugAdapter] [ping] The CDPSession was not initialized yet");
-    //   return;
-    // }
-    // try {
-    //   const res = await this.cdpSession.sendCDPMessage("Runtime.evaluate", {
-    //     expression: "('ping')",
-    //   });
-    //   const { result } = res;
-    //   if (result.value === "ping") {
-    //     this.sendEvent(new Event("RNIDE_pong"));
-    //   }
-    // } catch (_) {
-    //   /** debugSession is waiting for an event, if it won't get any it will fail after timeout, so we don't need to do anything here */
-    // }
-  }
-
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -115,17 +96,10 @@ export class DebugAdapter extends DebugAdapterSession {
       case "RNIDE_log_message":
         this.logCustomMessage(args.message, args.type, args.source);
         break;
-      case "RNIDE_startProfiling":
-        await this.cdpDebugSession?.customRequest("RNIDE_startProfiling", {});
-        break;
-      case "RNIDE_stopProfiling":
-        await this.cdpDebugSession?.customRequest("RNIDE_stopProfiling", {});
-        break;
-      case "RNIDE_ping":
-        this.ping();
-        break;
       default:
-        Logger.debug(`Custom req ${command} ${args}`);
+        // NOTE: forward unhandled custom requests to the JS Debug session
+        await this.cdpDebugSession?.customRequest(command, args);
+        break;
     }
     this.sendResponse(response);
   }
