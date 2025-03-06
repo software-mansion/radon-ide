@@ -86,7 +86,7 @@ jobs:
         run: |
           out_path=/tmp/${{ steps.prepare_name.outputs.package_name }}.vsix
           npm run vscode:package -- --out $out_path --target ${{ steps.set_targets.outputs.targets }}
-          echo "vsix_path=$OUT_PATH" >> $GITHUB_OUTPUT
+          echo "vsix_path=$out_path" >> $GITHUB_OUTPUT
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
@@ -101,7 +101,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           registryUrl: https://marketplace.visualstudio.com
-          extensionFile: ${{ steps.package_extension.outputs.vsixPath }}
+          extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
           pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
 
       - name: Publish to Open VSX Registry
@@ -110,5 +110,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          extensionFile: ${{ steps.package_extension.outputs.vsixPath }}
+          extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
           pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
