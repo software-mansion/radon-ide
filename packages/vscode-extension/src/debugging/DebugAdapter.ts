@@ -432,5 +432,3 @@ export class DebugAdapter extends DebugSession implements CDPSessionDelegate {
 
   //#endregion
 }
-
-// target: ${{ steps.set_targets.outputs.targets }}
