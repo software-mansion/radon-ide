@@ -4,7 +4,7 @@ on:
     inputs:
       publish:
         description: 'Publish to marketplaces'
-        default: true
+        default: false
         type: boolean
       prerelease:
         description: 'Mark as pre-release'
@@ -71,36 +71,36 @@ jobs:
           cache: npm
           cache-dependency-path: packages/vscode-extension/package-lock.json
 
-      - name: Change directory
-        run: cd packages/vscode-extension
-
       - name: Install dependencies
+        working-directory: packages/vscode-extension
         run: npm ci
-
-      - name: Package extension
-        uses: HaaLeo/publish-vscode-extension@v1
-        id: package_extension
-        with:
-          dryRun: true
-          pat: stub
-          target: ${{ steps.set_targets.outputs.targets }}
-          preRelease: ${{ github.event.inputs.prerelease }}
 
       - name: Sanitize ref name for artifact upload
         id: sanitize
         run: |
-          ref_name=$(echo -n "${{ github.event.inputs.ref }}" | sed 's/[\\\/'"'"':<>|*?]/-/g')
-          echo "ref_name=$ref_name" >> $GITHUB_OUTPUT
+          ref_name=$(echo -n "${{ github.event.inputs.ref }}" | xargs | sed 's/[\\\/'"'"':<>|*?]/-/g') 
+          package_name=radon-ide-${ref_name}-${{ steps.date.outputs.date }}
+          echo "package_name=$package_name" >> $GITHUB_OUTPUT
+
+      - name: Package extension
+        working-directory: packages/vscode-extension
+        id: package_extension
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          export OUT_PATH=/tmp/${{ steps.sanitize.outputs.package_name }}.vsix
+          npm run vscode:package -- --out $OUT_PATH
+          echo "vsixPath=$OUT_PATH" >> $GITHUB_OUTPUT
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
         with:
-          name: radon-ide-${{ steps.sanitize.outputs.ref_name }}-${{ steps.date.outputs.date }}
+          name: ${{ steps.sanitize.outputs.package_name }}
           path: ${{ steps.package_extension.outputs.vsixPath }}
 
       - name: Publish to Visual Studio Marketplace
         uses: HaaLeo/publish-vscode-extension@v1
-        if: ${{ github.event.inputs.publish }}
+        if: ${{ github.event.inputs.publish == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -110,7 +110,7 @@ jobs:
 
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v1
-        if: ${{ github.event.inputs.publish }}
+        if: ${{ github.event.inputs.publish == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
