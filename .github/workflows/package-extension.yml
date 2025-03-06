@@ -89,7 +89,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export OUT_PATH=/tmp/${{ steps.sanitize.outputs.package_name }}.vsix
-          npm run vscode:package -- --out $OUT_PATH
+          npm run vscode:package -- --out $OUT_PATH --target ${{ steps.set_targets.outputs.targets }}
           echo "vsixPath=$OUT_PATH" >> $GITHUB_OUTPUT
 
       - name: Upload extension artifact
