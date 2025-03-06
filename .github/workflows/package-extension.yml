@@ -84,8 +84,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          export OUT_PATH=/tmp/${{ steps.prepare_name.outputs.package_name }}.vsix
-          npm run vscode:package -- --out $OUT_PATH --target ${{ steps.set_targets.outputs.targets }}
+          out_path=/tmp/${{ steps.prepare_name.outputs.package_name }}.vsix
+          npm run vscode:package -- --out $out_path --target ${{ steps.set_targets.outputs.targets }}
           echo "vsixPath=$OUT_PATH" >> $GITHUB_OUTPUT
 
       - name: Upload extension artifact
