@@ -86,7 +86,7 @@ jobs:
         run: |
           out_path=/tmp/${{ steps.prepare_name.outputs.package_name }}.vsix
           npm run vscode:package -- --out $out_path --target ${{ steps.set_targets.outputs.targets }}
-          echo "vsixPath=$OUT_PATH" >> $GITHUB_OUTPUT
+          echo "vsix_path=$OUT_PATH" >> $GITHUB_OUTPUT
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
