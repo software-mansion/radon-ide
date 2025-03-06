@@ -6,10 +6,6 @@ on:
         description: 'Publish to marketplaces'
         default: false
         type: boolean
-      prerelease:
-        description: 'Mark as pre-release'
-        default: false
-        type: boolean
       target_macos:
         description: 'macOS'
         default: true
@@ -75,8 +71,8 @@ jobs:
         working-directory: packages/vscode-extension
         run: npm ci
 
-      - name: Sanitize ref name for artifact upload
-        id: sanitize
+      - name: Prepare package ref name for artifact upload
+        id: prepare_name
         run: |
           ref_name=$(echo -n "${{ github.event.inputs.ref }}" | xargs | sed 's/[\\\/'"'"':<>|*?]/-/g') 
           package_name=radon-ide-${ref_name}-${{ steps.date.outputs.date }}
@@ -88,14 +84,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          export OUT_PATH=/tmp/${{ steps.sanitize.outputs.package_name }}.vsix
+          export OUT_PATH=/tmp/${{ steps.prepare_name.outputs.package_name }}.vsix
           npm run vscode:package -- --out $OUT_PATH --target ${{ steps.set_targets.outputs.targets }}
           echo "vsixPath=$OUT_PATH" >> $GITHUB_OUTPUT
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.sanitize.outputs.package_name }}
+          name: ${{ steps.prepare_name.outputs.package_name }}
           path: ${{ steps.package_extension.outputs.vsixPath }}
 
       - name: Publish to Visual Studio Marketplace
