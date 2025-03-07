@@ -30,14 +30,14 @@ jobs:
     steps:
       - name: Set workflow start time
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H%M%S')"
+        run: echo "date=$(date +'%Y-%m-%dT%H%M%S')" >> $GITHUB_OUTPUT 
 
       - name: Set targets
         id: set_targets
         run: |
           targets=""
           if ${{ github.event.inputs.target_macos }}; then
-            targets="$targets darwin-x64 darwin-arm64"
+            targets="$targets darwin-arm64 darwin-x64"
           fi
           if ${{ github.event.inputs.target_windows }}; then
             targets="$targets win32-x64"
@@ -50,7 +50,7 @@ jobs:
             exit 1
           fi
           echo "Building extension for targets: $targets"
-          echo "::set-output name=targets::$targets"
+          echo "targets=$targets" >> $GITHUB_OUTPUT 
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -85,7 +85,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           out_path=/tmp/${{ steps.prepare_name.outputs.package_name }}.vsix
-          npm run vscode:package -- --out $out_path --target ${{ steps.set_targets.outputs.targets }}
+          npm run vscode:package -- --out $out_path
           echo "vsix_path=$out_path" >> $GITHUB_OUTPUT
 
       - name: Upload extension artifact
@@ -103,6 +103,7 @@ jobs:
           registryUrl: https://marketplace.visualstudio.com
           extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
           pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
+          target: ${{ steps.set_targets.outputs.targets }}
 
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v1
@@ -112,3 +113,4 @@ jobs:
         with:
           extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
           pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
+          target: ${{ steps.set_targets.outputs.targets }}
