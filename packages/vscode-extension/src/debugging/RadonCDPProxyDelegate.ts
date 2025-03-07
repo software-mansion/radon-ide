@@ -3,11 +3,6 @@ import { EventEmitter } from "vscode";
 import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 
-// Ids for the commands sent by the ProxyDelegate rather than the debugger.
-// The numbers are chosen to be large enough to not conflict with the debugger's command ids.
-const FuseBoxClientMetadataId = 1e9 + 1;
-const ReactNativeAppEnableId = 1e9 + 2;
-
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter();
   private debuggerResumedEmitter = new EventEmitter();
@@ -66,14 +61,12 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       .injectDebuggerCommand({
         method: "FuseboxClient.setClientMetadata",
         params: {},
-        id: FuseBoxClientMetadataId,
       })
       .catch(_.noop);
     await tunnel
       .injectDebuggerCommand({
         method: "ReactNativeApplication.enable",
         params: {},
-        id: ReactNativeAppEnableId,
       })
       .catch(_.noop);
   }

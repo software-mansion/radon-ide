@@ -105,8 +105,8 @@ type PromiseResolvers<T> = {
 export class ProxyTunnel {
   private applicationTarget: Connection | null;
   private debuggerTarget: Connection | null;
-  private nextInjectedDebuggerCommandId = 2e9;
-  private nextInjectedApplicationCommandId = 2e9;
+  private nextInjectedDebuggerCommandId = 1e9;
+  private nextInjectedApplicationCommandId = 1e9;
 
   private injectedApplicationCommandReplyResolvers: Map<number, PromiseResolvers<object>> =
     new Map();
