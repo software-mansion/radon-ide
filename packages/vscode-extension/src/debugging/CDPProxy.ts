@@ -64,12 +64,12 @@ export class CDPProxy {
     this.browserInspectUri = browserInspectUri;
   }
 
-  public injectDebuggerCommand(command: IProtocolCommand & { id: number }): void {
-    this.tunnel?.injectDebuggerCommand(command);
+  public injectDebuggerCommand(command: IProtocolCommand): Promise<IProtocolReply> | undefined {
+    return this.tunnel?.injectDebuggerCommand(command);
   }
 
-  public injectApplicationCommand(command: IProtocolCommand & { id: number }): void {
-    this.tunnel?.injectApplicationCommand(command);
+  public injectApplicationCommand(command: IProtocolCommand): Promise<IProtocolReply> | undefined {
+    return this.tunnel?.injectApplicationCommand(command);
   }
 
   private async onConnectionHandler([debuggerTarget, request]: [
@@ -94,6 +94,8 @@ export class CDPProxy {
 export class ProxyTunnel {
   private applicationTarget: Connection | null;
   private debuggerTarget: Connection | null;
+  private nextInjectedDebuggerCommandId = 2e9;
+  private nextInjectedApplicationCommandId = 2e9;
 
   private injectedApplicationCommandReplyResolvers: Map<number, (reply: IProtocolReply) => void> =
     new Map();
@@ -121,20 +123,18 @@ export class ProxyTunnel {
     this.debuggerTarget.onEnd(this.onDebuggerTargetClosed.bind(this));
   }
 
-  public async injectDebuggerCommand(
-    command: IProtocolCommand & { id: number }
-  ): Promise<IProtocolReply> {
-    this.applicationTarget?.send(command);
+  public async injectDebuggerCommand(command: IProtocolCommand): Promise<IProtocolReply> {
     const { promise, resolve } = Promise.withResolvers<IProtocolReply>();
+    command.id ??= this.nextInjectedDebuggerCommandId++;
+    this.applicationTarget?.send(command);
     this.injectedDebuggerCommandReplyResolvers.set(command.id, resolve);
     return promise;
   }
 
-  public async injectApplicationCommand(
-    command: IProtocolCommand & { id: number }
-  ): Promise<IProtocolReply> {
-    this.debuggerTarget?.send(command);
+  public async injectApplicationCommand(command: IProtocolCommand): Promise<IProtocolReply> {
     const { promise, resolve } = Promise.withResolvers<IProtocolReply>();
+    command.id ??= this.nextInjectedApplicationCommandId++;
+    this.debuggerTarget?.send(command);
     this.injectedApplicationCommandReplyResolvers.set(command.id, resolve);
     return promise;
   }

@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+import os from "os";
 import { DebugSession, ErrorDestination, Event } from "@vscode/debugadapter";
 import * as vscode from "vscode";
 import { DebugProtocol } from "@vscode/debugprotocol";
@@ -182,5 +185,63 @@ export class ProxyDebugSession extends DebugSession {
     vscode.commands.executeCommand("workbench.action.debug.stop", undefined, {
       sessionId: this.session.id,
     });
+  }
+
+  private async ping() {
+    try {
+      const res = await this.cdpProxy.injectDebuggerCommand({
+        method: "Runtime.evaluate",
+        params: {
+          expression: "('ping')",
+        },
+      });
+      if (!res || "error" in res) {
+        return;
+      }
+      const { result } = res;
+      if ("value" in result && result.value === "ping") {
+        this.sendEvent(new Event("RNIDE_pong"));
+      }
+    } catch (_) {
+      /** debugSession is waiting for an event, if it won't get any it will fail after timeout, so we don't need to do anything here */
+    }
+  }
+
+  protected async customRequest(
+    command: string,
+    response: DebugProtocol.Response,
+    args: any,
+    request?: DebugProtocol.Request | undefined
+  ) {
+    switch (command) {
+      case "RNIDE_startProfiling":
+        await this.cdpProxy.injectDebuggerCommand({ method: "Profiler.start", params: {} });
+        this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
+
+        break;
+      case "RNIDE_stopProfiling":
+        const result = await this.cdpProxy.injectDebuggerCommand({
+          method: "Profiler.stop",
+          params: {},
+        });
+
+        if (!result || "error" in result || !("profile" in result.result)) {
+          const error =
+            result && "error" in result ? result.error : new Error("Failed to save profile");
+          throw error;
+        }
+
+        const fileName = `profile-${Date.now()}.cpuprofile`;
+        const filePath = path.join(os.tmpdir(), fileName);
+        const profile = result.result.profile;
+        await fs.promises.writeFile(filePath, JSON.stringify(profile));
+        this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
+
+        break;
+      case "RNIDE_ping":
+        this.ping();
+        break;
+    }
+    this.sendResponse(response);
   }
 }
