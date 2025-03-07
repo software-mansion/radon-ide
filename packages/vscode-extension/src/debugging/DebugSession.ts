@@ -159,21 +159,13 @@ export class DebugSession implements Disposable {
       return false;
     }
 
-    let sourceMapAliases: Array<[string, string]> = [];
-    const isUsingNewDebugger = metro.isUsingNewDebugger;
-    if (isUsingNewDebugger && metro.watchFolders.length > 0) {
-      // first entry in watchFolders is the project root
-      sourceMapAliases.push(["/[metro-project]/", metro.watchFolders[0]]);
-      metro.watchFolders.forEach((watchFolder, index) => {
-        sourceMapAliases.push([`/[metro-watchFolders]/${index}/`, watchFolder]);
-      });
-    }
+    const isUsingNewDebugger = metro.isUsingNewDebugger.valueOf();
 
     await this.connectCDPDebugger({
       websocketAddress,
-      sourceMapAliases,
+      metroWatchFolders: metro.watchFolders,
       expoPreludeLineCount: metro.expoPreludeLineCount,
-      breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
+      isUsingNewDebugger,
     });
 
     this.wasConnectedToCDP = true;

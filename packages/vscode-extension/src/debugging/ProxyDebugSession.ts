@@ -89,48 +89,55 @@ export class ProxyDebugSession extends DebugSession {
   ) {
     await this.cdpProxy.initializeServer();
 
-    const unsub = vscode.debug.onDidStartDebugSession((session) => {
-      if (session.type === CHILD_SESSION_TYPE) {
-        this.nodeDebugSession = session;
-        unsub.dispose();
-      }
-    });
-
-    const childSessionStarted = await debug.startDebugging(
-      undefined,
-      {
-        type: CHILD_SESSION_TYPE,
-        name: "Radon IDE Debugger",
-        request: "attach",
-        port: this.cdpProxy.port,
-        continueOnAttach: true,
-        sourceMapPathOverrides: args.sourceMapPathOverrides,
-        resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
-      },
-      {
-        suppressDebugStatusbar: true,
-        suppressDebugView: true,
-        suppressDebugToolbar: true,
-        suppressSaveBeforeStart: true,
-        parentSession: this.session,
-        consoleMode: vscode.DebugConsoleMode.MergeWithParent,
-        lifecycleManagedByParent: true,
-        compact: true,
+    let didStartSessionHandler: Disposable | null = vscode.debug.onDidStartDebugSession(
+      (session) => {
+        if (session.type === CHILD_SESSION_TYPE) {
+          this.nodeDebugSession = session;
+          didStartSessionHandler?.dispose();
+          didStartSessionHandler = null;
+        }
       }
     );
 
-    if (!childSessionStarted) {
-      console.assert(this.nodeDebugSession !== null);
-      this.sendErrorResponse(
-        response,
-        { format: "Failed to attach debugger session", id: 1 },
+    try {
+      const childSessionStarted = await debug.startDebugging(
         undefined,
-        undefined,
-        ErrorDestination.User
+        {
+          type: CHILD_SESSION_TYPE,
+          name: "Radon IDE Debugger",
+          request: "attach",
+          port: this.cdpProxy.port,
+          continueOnAttach: true,
+          sourceMapPathOverrides: args.sourceMapPathOverrides,
+          resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
+        },
+        {
+          suppressDebugStatusbar: true,
+          suppressDebugView: true,
+          suppressDebugToolbar: true,
+          suppressSaveBeforeStart: true,
+          parentSession: this.session,
+          consoleMode: vscode.DebugConsoleMode.MergeWithParent,
+          lifecycleManagedByParent: true,
+          compact: true,
+        }
       );
-    }
 
-    this.sendResponse(response);
+      if (!childSessionStarted) {
+        this.sendErrorResponse(
+          response,
+          { format: "Failed to attach debugger session", id: 1 },
+          undefined,
+          undefined,
+          ErrorDestination.User
+        );
+      }
+
+      console.assert(this.nodeDebugSession !== null);
+      this.sendResponse(response);
+    } finally {
+      didStartSessionHandler?.dispose();
+    }
   }
 
   protected continueRequest(
