@@ -62,16 +62,20 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   }
 
   private async onRuntimeEnable(tunnel: ProxyTunnel) {
-    await tunnel.injectDebuggerCommand({
-      method: "FuseboxClient.setClientMetadata",
-      params: {},
-      id: FuseBoxClientMetadataId,
-    });
-    await tunnel.injectDebuggerCommand({
-      method: "ReactNativeApplication.enable",
-      params: {},
-      id: ReactNativeAppEnableId,
-    });
+    await tunnel
+      .injectDebuggerCommand({
+        method: "FuseboxClient.setClientMetadata",
+        params: {},
+        id: FuseBoxClientMetadataId,
+      })
+      .catch(_.noop);
+    await tunnel
+      .injectDebuggerCommand({
+        method: "ReactNativeApplication.enable",
+        params: {},
+        id: ReactNativeAppEnableId,
+      })
+      .catch(_.noop);
   }
 
   private handleConsoleAPICalled(command: IProtocolCommand): IProtocolCommand | undefined {

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
+import assert from "assert";
 import { DebugSession, ErrorDestination, Event } from "@vscode/debugadapter";
 import * as vscode from "vscode";
 import { DebugProtocol } from "@vscode/debugprotocol";
@@ -136,7 +137,7 @@ export class ProxyDebugSession extends DebugSession {
         );
       }
 
-      console.assert(this.nodeDebugSession !== null);
+      assert(this.nodeDebugSession !== null);
       this.sendResponse(response);
     } finally {
       didStartSessionHandler?.dispose();
@@ -189,16 +190,12 @@ export class ProxyDebugSession extends DebugSession {
 
   private async ping() {
     try {
-      const res = await this.cdpProxy.injectDebuggerCommand({
+      const result = await this.cdpProxy.injectDebuggerCommand({
         method: "Runtime.evaluate",
         params: {
           expression: "('ping')",
         },
       });
-      if (!res || "error" in res) {
-        return;
-      }
-      const { result } = res;
       if ("value" in result && result.value === "ping") {
         this.sendEvent(new Event("RNIDE_pong"));
       }
@@ -225,16 +222,11 @@ export class ProxyDebugSession extends DebugSession {
           params: {},
         });
 
-        if (!result || "error" in result || !("profile" in result.result)) {
-          const error =
-            result && "error" in result ? result.error : new Error("Failed to save profile");
-          throw error;
-        }
+        assert("profile" in result, "Profiler.stop response should contain a profile");
 
         const fileName = `profile-${Date.now()}.cpuprofile`;
         const filePath = path.join(os.tmpdir(), fileName);
-        const profile = result.result.profile;
-        await fs.promises.writeFile(filePath, JSON.stringify(profile));
+        await fs.promises.writeFile(filePath, JSON.stringify(result.profile));
         this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
 
         break;

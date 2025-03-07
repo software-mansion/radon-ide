@@ -64,12 +64,18 @@ export class CDPProxy {
     this.browserInspectUri = browserInspectUri;
   }
 
-  public injectDebuggerCommand(command: IProtocolCommand): Promise<IProtocolReply> | undefined {
-    return this.tunnel?.injectDebuggerCommand(command);
+  public injectDebuggerCommand(command: IProtocolCommand): Promise<object> {
+    if (!this.tunnel) {
+      return Promise.reject(new Error("CDP connection not established"));
+    }
+    return this.tunnel.injectDebuggerCommand(command);
   }
 
-  public injectApplicationCommand(command: IProtocolCommand): Promise<IProtocolReply> | undefined {
-    return this.tunnel?.injectApplicationCommand(command);
+  public injectApplicationCommand(command: IProtocolCommand): Promise<object> {
+    if (!this.tunnel) {
+      return Promise.reject(new Error("CDP connection not established"));
+    }
+    return this.tunnel.injectApplicationCommand(command);
   }
 
   private async onConnectionHandler([debuggerTarget, request]: [
@@ -91,16 +97,20 @@ export class CDPProxy {
   }
 }
 
+type PromiseResolvers<T> = {
+  resolve: (value: T) => void;
+  reject: (error?: any) => void;
+};
+
 export class ProxyTunnel {
   private applicationTarget: Connection | null;
   private debuggerTarget: Connection | null;
   private nextInjectedDebuggerCommandId = 2e9;
   private nextInjectedApplicationCommandId = 2e9;
 
-  private injectedApplicationCommandReplyResolvers: Map<number, (reply: IProtocolReply) => void> =
+  private injectedApplicationCommandReplyResolvers: Map<number, PromiseResolvers<object>> =
     new Map();
-  private injectedDebuggerCommandReplyResolvers: Map<number, (reply: IProtocolReply) => void> =
-    new Map();
+  private injectedDebuggerCommandReplyResolvers: Map<number, PromiseResolvers<object>> = new Map();
 
   constructor(
     applicationTarget: Connection,
@@ -123,19 +133,19 @@ export class ProxyTunnel {
     this.debuggerTarget.onEnd(this.onDebuggerTargetClosed.bind(this));
   }
 
-  public async injectDebuggerCommand(command: IProtocolCommand): Promise<IProtocolReply> {
-    const { promise, resolve } = Promise.withResolvers<IProtocolReply>();
+  public async injectDebuggerCommand(command: IProtocolCommand): Promise<object> {
+    const { promise, resolve, reject } = Promise.withResolvers<object>();
     command.id ??= this.nextInjectedDebuggerCommandId++;
     this.applicationTarget?.send(command);
-    this.injectedDebuggerCommandReplyResolvers.set(command.id, resolve);
+    this.injectedDebuggerCommandReplyResolvers.set(command.id, { resolve, reject });
     return promise;
   }
 
-  public async injectApplicationCommand(command: IProtocolCommand): Promise<IProtocolReply> {
-    const { promise, resolve } = Promise.withResolvers<IProtocolReply>();
+  public async injectApplicationCommand(command: IProtocolCommand): Promise<object> {
+    const { promise, resolve, reject } = Promise.withResolvers<object>();
     command.id ??= this.nextInjectedApplicationCommandId++;
     this.debuggerTarget?.send(command);
-    this.injectedApplicationCommandReplyResolvers.set(command.id, resolve);
+    this.injectedApplicationCommandReplyResolvers.set(command.id, { resolve, reject });
     return promise;
   }
 
@@ -166,10 +176,15 @@ export class ProxyTunnel {
   }
 
   private async handleDebuggerTargetReply(event: IProtocolReply) {
-    const resolve = this.injectedApplicationCommandReplyResolvers.get(event.id);
-    if (resolve) {
-      resolve(event);
+    const resolvers = this.injectedApplicationCommandReplyResolvers.get(event.id);
+    if (resolvers) {
       this.injectedApplicationCommandReplyResolvers.delete(event.id);
+      const { resolve, reject } = resolvers;
+      if ("error" in event) {
+        reject(event.error);
+        return;
+      }
+      resolve(event.result);
       return;
     }
 
@@ -180,10 +195,15 @@ export class ProxyTunnel {
   }
 
   private async handleApplicationTargetReply(event: IProtocolReply) {
-    const resolve = this.injectedDebuggerCommandReplyResolvers.get(event.id);
-    if (resolve) {
-      resolve(event);
+    const resolvers = this.injectedDebuggerCommandReplyResolvers.get(event.id);
+    if (resolvers) {
       this.injectedDebuggerCommandReplyResolvers.delete(event.id);
+      const { resolve, reject } = resolvers;
+      if ("error" in event) {
+        reject(event.error);
+        return;
+      }
+      resolve(event.result);
       return;
     }
 
