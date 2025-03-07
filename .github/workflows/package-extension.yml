@@ -4,10 +4,6 @@ on:
     inputs:
       publish:
         description: 'Publish to marketplaces'
-        default: true
-        type: boolean
-      prerelease:
-        description: 'Mark as pre-release'
         default: false
         type: boolean
       target_macos:
@@ -34,14 +30,14 @@ jobs:
     steps:
       - name: Set workflow start time
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H:%M:%S')"
+        run: echo "date=$(date +'%Y-%m-%dT%H%M%S')" >> $GITHUB_OUTPUT 
 
       - name: Set targets
         id: set_targets
         run: |
           targets=""
           if ${{ github.event.inputs.target_macos }}; then
-            targets="$targets darwin-x64 darwin-arm64"
+            targets="$targets darwin-arm64 darwin-x64"
           fi
           if ${{ github.event.inputs.target_windows }}; then
             targets="$targets win32-x64"
@@ -54,7 +50,7 @@ jobs:
             exit 1
           fi
           echo "Building extension for targets: $targets"
-          echo "::set-output name=targets::$targets"
+          echo "targets=$targets" >> $GITHUB_OUTPUT 
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -71,42 +67,50 @@ jobs:
           cache: npm
           cache-dependency-path: packages/vscode-extension/package-lock.json
 
-      - name: Change directory
-        run: cd packages/vscode-extension
-
       - name: Install dependencies
+        working-directory: packages/vscode-extension
         run: npm ci
 
+      - name: Prepare package name for artifact upload
+        id: prepare_name
+        run: |
+          ref_name=$(echo -n "${{ github.event.inputs.ref }}" | xargs | sed 's/[\\\/'"'"':<>|*?]/-/g') 
+          package_name=radon-ide-${ref_name}-${{ steps.date.outputs.date }}
+          echo "package_name=$package_name" >> $GITHUB_OUTPUT
+
       - name: Package extension
-        uses: HaaLeo/publish-vscode-extension@v1
+        working-directory: packages/vscode-extension
         id: package_extension
-        with:
-          dryRun: true
-          pat: stub
-          target: ${{ steps.set_targets.outputs.targets }}
-          preRelease: ${{ github.event.inputs.prerelease }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          out_path=/tmp/${{ steps.prepare_name.outputs.package_name }}.vsix
+          npm run vscode:package -- --out $out_path
+          echo "vsix_path=$out_path" >> $GITHUB_OUTPUT
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
         with:
-          name: radon-ide-${{ github.event.inputs.ref }}-${{ steps.date.outputs.date }}
-          path: ${{ steps.package_extension.outputs.vsixPath }}
+          name: ${{ steps.prepare_name.outputs.package_name }}
+          path: ${{ steps.package_extension.outputs.vsix_path }}
 
       - name: Publish to Visual Studio Marketplace
         uses: HaaLeo/publish-vscode-extension@v1
-        if: ${{ github.event.inputs.publish }}
+        if: ${{ github.event.inputs.publish == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           registryUrl: https://marketplace.visualstudio.com
-          extensionFile: ${{ steps.package_extension.outputs.vsixPath }}
+          extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
           pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
+          target: ${{ steps.set_targets.outputs.targets }}
 
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v1
-        if: ${{ github.event.inputs.publish }}
+        if: ${{ github.event.inputs.publish == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          extensionFile: ${{ steps.package_extension.outputs.vsixPath }}
+          extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
           pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
+          target: ${{ steps.set_targets.outputs.targets }}

@@ -16,7 +16,10 @@ import { activate as activateJsDebug } from "vscode-js-debug/dist/src/extension"
 import { TabPanel } from "./panels/Tabpanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
-import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
+import {
+  CDPDebugAdapterDescriptorFactory,
+  DebugAdapterDescriptorFactory,
+} from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger, enableDevModeLogging } from "./Logger";
 import {
   extensionContext,
@@ -227,6 +230,14 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     debug.registerDebugConfigurationProvider(
+      "com.swmansion.js-debugger",
+      new DebugConfigProvider(),
+      DebugConfigurationProviderTriggerKind.Dynamic
+    )
+  );
+
+  context.subscriptions.push(
+    debug.registerDebugConfigurationProvider(
       "com.swmansion.proxy-debugger",
       new DebugConfigProvider(),
       DebugConfigurationProviderTriggerKind.Dynamic
@@ -237,6 +248,12 @@ export async function activate(context: ExtensionContext) {
     debug.registerDebugAdapterDescriptorFactory(
       "com.swmansion.react-native-debugger",
       new DebugAdapterDescriptorFactory()
+    )
+  );
+  context.subscriptions.push(
+    debug.registerDebugAdapterDescriptorFactory(
+      "com.swmansion.js-debugger",
+      new CDPDebugAdapterDescriptorFactory()
     )
   );
 

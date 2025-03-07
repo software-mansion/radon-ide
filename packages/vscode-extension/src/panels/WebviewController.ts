@@ -27,7 +27,7 @@ export class WebviewController implements Disposable {
     });
   });
 
-  private readonly callableObjects: Map<string, object>;
+  private readonly callableObjectGetters: Map<string, () => object>;
   private readonly ide;
 
   constructor(private webview: Webview) {
@@ -36,16 +36,16 @@ export class WebviewController implements Disposable {
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
-    this.callableObjects = new Map([
-      ["DeviceManager", this.ide.deviceManager as object],
-      ["DependencyManager", this.ide.project.dependencyManager as object],
-      ["Project", this.ide.project as object],
-      ["WorkspaceConfig", this.ide.workspaceConfigController as object],
-      ["LaunchConfig", this.ide.project.launchConfig as object],
-      ["Utils", this.ide.utils as object],
+    this.callableObjectGetters = new Map([
+      ["DeviceManager", () => this.ide.deviceManager as object],
+      ["DependencyManager", () => this.ide.project.dependencyManager as object],
+      ["Project", () => this.ide.project as object],
+      ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
+      ["LaunchConfig", () => this.ide.project.launchConfig as object],
+      ["Utils", () => this.ide.utils as object],
       [
         "RenderOutlines",
-        this.ide.project.toolsManager.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
+        () => this.ide.project.toolsManager.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
       ],
     ]);
 
@@ -82,7 +82,8 @@ export class WebviewController implements Disposable {
 
   private handleRemoteCall(message: CallArgs) {
     const { object, method, args, callId } = message;
-    const callableObject = this.callableObjects.get(object);
+    const callableObjectGetter = this.callableObjectGetters.get(object);
+    const callableObject = callableObjectGetter?.();
     if (callableObject && method in callableObject) {
       const argsWithCallbacks = args.map((arg: any) => {
         if (typeof arg === "object" && arg !== null) {

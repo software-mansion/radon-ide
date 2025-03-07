@@ -1,5 +1,7 @@
 import { EventEmitter } from "stream";
 import os from "os";
+import path from "path";
+import fs from "fs";
 import {
   env,
   Disposable,
@@ -7,10 +9,11 @@ import {
   workspace,
   window,
   DebugSessionCustomEvent,
+  Uri,
+  extensions,
   ConfigurationChangeEvent,
 } from "vscode";
 import _ from "lodash";
-import stripAnsi from "strip-ansi";
 import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
@@ -33,7 +36,7 @@ import { extensionContext, getCurrentLaunchConfig } from "../utilities/extension
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { throttle, throttleAsync } from "../utilities/throttle";
-import { DebugSessionDelegate } from "../debugging/DebugSession";
+import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
@@ -50,6 +53,7 @@ import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
+import { focusSource } from "../utilities/focusSource";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -71,9 +75,8 @@ export class Project
   public metro: Metro;
   public toolsManager: ToolsManager;
 
-  private devtools = new Devtools();
+  private devtools;
   private eventEmitter = new EventEmitter();
-
   private isCachedBuildStale: boolean;
 
   private deviceSession: DeviceSession | undefined;
@@ -205,7 +208,7 @@ export class Project
         this.updateProjectState({ status: "refreshing" });
         break;
       case "fastRefreshComplete":
-        const ignoredEvents = ["starting", "incrementalBundleError", "runtimeError"];
+        const ignoredEvents = ["starting", "bundlingError", "runtimeError"];
         if (ignoredEvents.includes(this.projectState.status)) {
           return;
         }
@@ -223,7 +226,7 @@ export class Project
   onDebuggerPaused(event: DebugSessionCustomEvent) {
     if (event.body?.reason === "exception") {
       // if we know that incremental bundle error happened, we don't want to change the status
-      if (this.projectState.status === "incrementalBundleError") {
+      if (this.projectState.status === "bundlingError") {
         return;
       }
       this.updateProjectState({ status: "runtimeError" });
@@ -278,6 +281,75 @@ export class Project
     return this.deviceSession.captureAndStopRecording();
   }
 
+  async startProfilingCPU() {
+    if (this.deviceSession) {
+      await this.deviceSession.startProfilingCPU();
+    } else {
+      throw new Error("No device session available");
+    }
+  }
+
+  async stopProfilingCPU() {
+    if (this.deviceSession) {
+      await this.deviceSession.stopProfilingCPU();
+    } else {
+      throw new Error("No device session available");
+    }
+  }
+
+  onProfilingCPUStarted(event: DebugSessionCustomEvent): void {
+    this.eventEmitter.emit("isProfilingCPU", true);
+  }
+
+  async onProfilingCPUStopped(event: DebugSessionCustomEvent) {
+    this.eventEmitter.emit("isProfilingCPU", false);
+
+    // Handle the profile file if a file path is provided
+    if (event.body && event.body.filePath) {
+      const tempFilePath = event.body.filePath;
+
+      // Show save dialog to save the profile file to the workspace folder:
+      let defaultUri = Uri.file(tempFilePath);
+      const workspaceFolder = workspace.workspaceFolders?.[0];
+      if (workspaceFolder) {
+        defaultUri = Uri.file(path.join(workspaceFolder.uri.fsPath, path.basename(tempFilePath)));
+      }
+
+      const saveDialog = await window.showSaveDialog({
+        defaultUri,
+        filters: {
+          "CPU Profile": ["cpuprofile"],
+        },
+      });
+
+      if (saveDialog) {
+        await fs.promises.copyFile(tempFilePath, saveDialog.fsPath);
+        commands.executeCommand("vscode.open", Uri.file(saveDialog.fsPath));
+
+        // verify whether flame chart visualizer extension is installed
+        // flame chart visualizer is not necessary to open the cpuprofile file, but when it is installed,
+        // the user can use the flame button from cpuprofile view to visualize it differently
+        const flameChartExtension = extensions.getExtension("ms-vscode.vscode-js-profile-flame");
+        if (!flameChartExtension) {
+          const GO_TO_EXTENSION_BUTTON = "Go to Extension";
+          window
+            .showInformationMessage(
+              "Flame Chart Visualizer extension is not installed. It is recommended to install it for better profiling insights.",
+              GO_TO_EXTENSION_BUTTON
+            )
+            .then((action) => {
+              if (action === GO_TO_EXTENSION_BUTTON) {
+                commands.executeCommand(
+                  "workbench.extensions.search",
+                  "ms-vscode.vscode-js-profile-flame"
+                );
+              }
+            });
+        }
+      }
+    }
+  }
+
   async captureAndStopRecording() {
     const recording = await this.stopRecording();
     await this.utils.saveMultimedia(recording);
@@ -330,18 +402,27 @@ export class Project
     await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
-  onBundleError(): void {
-    this.updateProjectState({ status: "bundleError" });
+  onBundleBuildFailedError(): void {
+    this.updateProjectState({ status: "bundleBuildFailedError" });
   }
 
-  onIncrementalBundleError(message: string, _errorModulePath: string): void {
-    Logger.error(stripAnsi(message));
+  async onBundlingError(
+    message: string,
+    source: DebugSource,
+    _errorModulePath: string
+  ): Promise<void> {
+    await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
+
+    this.focusDebugConsole();
+    focusSource(source);
+
+    Logger.error("[Bundling Error]", message);
     // if bundle build failed, we don't want to change the status
-    // incrementalBundleError status should be set only when bundleError status is not set
-    if (this.projectState.status === "bundleError") {
+    // bundlingError status should be set only when bundleBuildFailedError status is not set
+    if (this.projectState.status === "bundleBuildFailedError") {
       return;
     }
-    this.updateProjectState({ status: "incrementalBundleError" });
+    this.updateProjectState({ status: "bundlingError" });
   }
 
   /**
@@ -862,7 +943,7 @@ export class Project
     }
     Logger.debug("Selected device is ready");
 
-    this.deviceSession?.dispose();
+    await this.deviceSession?.dispose();
     this.deviceSession = undefined;
 
     this.updateProjectState({

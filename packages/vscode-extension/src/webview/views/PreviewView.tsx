@@ -42,6 +42,7 @@ function PreviewView() {
     hasActiveLicense,
     replayData,
     isRecording,
+    isProfilingCPU,
     setReplayData,
   } = useProject();
   const { showDismissableError } = useUtils();
@@ -136,6 +137,10 @@ function PreviewView() {
     }
   }
 
+  function stopProfilingCPU() {
+    project.stopProfilingCPU();
+  }
+
   async function handleReplay() {
     try {
       await project.captureReplay();
@@ -166,64 +171,81 @@ function PreviewView() {
   return (
     <div className="panel-view">
       <div className="button-group-top">
-        <UrlBar key={resetKey} disabled={hasNoDevices} />
-        <div className="spacer" />
-        <ToolsDropdown disabled={hasNoDevices || !isRunning}>
-          <IconButton tooltip={{ label: "Tools", type: "primary" }}>
-            <span className="codicon codicon-tools" />
+        <div className="button-group-top-left">
+          <UrlBar key={resetKey} disabled={hasNoDevices} />
+        </div>
+        <div className="button-group-top-right">
+          <IconButton
+            className={isProfilingCPU ? "button-recording-on" : ""}
+            tooltip={{
+              label: "Stop profiling CPU",
+            }}
+            disabled={!isProfilingCPU}
+            onClick={stopProfilingCPU}>
+            {isProfilingCPU && (
+              <>
+                <div className="recording-rec-dot" />
+                <span>Profiling CPU</span>
+              </>
+            )}
           </IconButton>
-        </ToolsDropdown>
-        <IconButton
-          className={isRecording ? "button-recording-on" : ""}
-          tooltip={{
-            label: isRecording ? "Stop screen recording" : "Start screen recording",
-          }}
-          onClick={toggleRecording}
-          disabled={isStarting}>
-          {isRecording ? (
-            <div className="recording-rec-indicator">
-              <div className="recording-rec-dot" />
-              <span>{recordingTimeFormat}</span>
-            </div>
-          ) : (
-            <RecordingIcon />
+          <ToolsDropdown disabled={hasNoDevices || !isRunning}>
+            <IconButton tooltip={{ label: "Tools", type: "primary" }}>
+              <span className="codicon codicon-tools" />
+            </IconButton>
+          </ToolsDropdown>
+          <IconButton
+            className={isRecording ? "button-recording-on" : ""}
+            tooltip={{
+              label: isRecording ? "Stop screen recording" : "Start screen recording",
+            }}
+            onClick={toggleRecording}
+            disabled={isStarting}>
+            {isRecording ? (
+              <div className="recording-rec-indicator">
+                <div className="recording-rec-dot" />
+                <span>{recordingTimeFormat}</span>
+              </div>
+            ) : (
+              <RecordingIcon />
+            )}
+          </IconButton>
+          {showReplayButton && (
+            <IconButton
+              tooltip={{
+                label: "Replay the last few seconds of the app",
+              }}
+              onClick={handleReplay}
+              disabled={isStarting}>
+              <ReplayIcon />
+            </IconButton>
           )}
-        </IconButton>
-        {showReplayButton && (
           <IconButton
             tooltip={{
-              label: "Replay the last few seconds of the app",
+              label: "Capture a screenshot of the app",
             }}
-            onClick={handleReplay}
+            onClick={captureScreenshot}
             disabled={isStarting}>
-            <ReplayIcon />
+            <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
-        )}
-        <IconButton
-          tooltip={{
-            label: "Capture a screenshot of the app",
-          }}
-          onClick={captureScreenshot}
-          disabled={isStarting}>
-          <span slot="start" className="codicon codicon-device-camera" />
-        </IconButton>
-        <IconButton
-          counter={logCounter}
-          onClick={() => {
-            setLogCounter(0);
-            project.focusDebugConsole();
-          }}
-          tooltip={{
-            label: "Open logs panel",
-          }}
-          disabled={hasNoDevices}>
-          <span slot="start" className="codicon codicon-debug-console" />
-        </IconButton>
-        <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={hasNoDevices}>
-          <IconButton tooltip={{ label: "Settings", type: "primary" }}>
-            <span className="codicon codicon-settings-gear" />
+          <IconButton
+            counter={logCounter}
+            onClick={() => {
+              setLogCounter(0);
+              project.focusDebugConsole();
+            }}
+            tooltip={{
+              label: "Open logs panel",
+            }}
+            disabled={hasNoDevices}>
+            <span slot="start" className="codicon codicon-debug-console" />
           </IconButton>
-        </SettingsDropdown>
+          <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={hasNoDevices}>
+            <IconButton tooltip={{ label: "Settings", type: "primary" }}>
+              <span className="codicon codicon-settings-gear" />
+            </IconButton>
+          </SettingsDropdown>
+        </div>
       </div>
 
       {selectedDevice && initialized ? (

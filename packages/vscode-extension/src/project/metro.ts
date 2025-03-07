@@ -11,11 +11,13 @@ import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
+import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
+import { DebugSource } from "../debugging/DebugSession";
 
 export interface MetroDelegate {
-  onBundleError(): void;
-  onIncrementalBundleError(message: string, errorModulePath: string): void;
+  onBundleBuildFailedError(): void;
+  onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
 }
 
 interface CDPTargetDescription {
@@ -37,6 +39,9 @@ type MetroEvent =
       stack: string;
       error: {
         message: string;
+        filename?: string;
+        lineNumber?: number;
+        columnNumber?: number;
         originModulePath: string;
         targetModuleName: string;
         errors: {
@@ -277,10 +282,23 @@ export class Metro implements Disposable {
               Logger.info("Captured metro watch folders", this._watchFolders);
               break;
             case "bundle_build_failed":
-              this.delegate.onBundleError();
+              this.delegate.onBundleBuildFailedError();
               break;
             case "bundling_error":
-              this.delegate.onIncrementalBundleError(event.message, event.error.originModulePath);
+              const message = stripAnsi(event.message);
+              let filename = event.error.originModulePath;
+              if (!filename && event.error.filename) {
+                filename = path.join(appRoot, event.error.filename);
+              }
+              this.delegate.onBundlingError(
+                message,
+                {
+                  filename,
+                  line1based: event.error.lineNumber,
+                  column0based: event.error.columnNumber,
+                },
+                event.error.originModulePath
+              );
               break;
           }
         } catch (error) {
@@ -320,18 +338,6 @@ export class Metro implements Disposable {
 
   public async openDevMenu() {
     await this.sendMessageToDevice("devMenu");
-  }
-
-  public async getDebuggerURL() {
-    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
-    const startTime = Date.now();
-    let websocketAddress: string | undefined;
-    while (!websocketAddress && Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
-      websocketAddress = await this.fetchDebuggerURL();
-      await new Promise((res) => setTimeout(res, 1000));
-    }
-    return websocketAddress;
   }
 
   private lookupWsAddressForOldDebugger(listJson: CDPTargetDescription[]) {
@@ -440,14 +446,43 @@ export class Metro implements Disposable {
     return undefined;
   }
 
-  private async fetchDebuggerURL() {
-    // query list from http://localhost:${metroPort}/json/list
-    const list = await fetch(`http://localhost:${this._port}/json/list`);
-    const listJson = await list.json();
+  public async fetchWsTargets(): Promise<CDPTargetDescription[] | undefined> {
+    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
 
-    // fixup websocket addresses on the list
-    for (const page of listJson) {
-      page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+    let retryCount = 0;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
+      retryCount++;
+
+      try {
+        const list = await fetch(`http://localhost:${this._port}/json/list`);
+        const listJson = await list.json();
+
+        if (listJson.length > 0) {
+          // fixup websocket addresses on the list
+          for (const page of listJson) {
+            page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+          }
+
+          return listJson;
+        }
+      } catch (_) {
+        // It shouldn't happen, so lets warn about it. Except a warning we will retry anyway, so nothing to do here.
+        Logger.warn("[METRO] Fetching list of runtimes failed, retrying...");
+      }
+
+      await sleep(progressiveRetryTimeout(retryCount));
+    }
+
+    return undefined;
+  }
+
+  public async getDebuggerURL() {
+    const listJson = await this.fetchWsTargets();
+
+    if (listJson === undefined) {
+      return undefined;
     }
 
     // When there are pages that are identified as belonging to the new debugger, we

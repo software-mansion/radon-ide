@@ -10,3 +10,6 @@
 [submodule "packages/redux-devtools-expo-dev-plugin"]
 	path = packages/redux-devtools-expo-dev-plugin
 	url = git@github.com:software-mansion-labs/redux-devtools-expo-dev-plugin.git
+[submodule "packages/radon-ide-react-query-webui"]
+	path = packages/radon-ide-react-query-webui
+	url = git@github.com:software-mansion-labs/radon-ide-react-query-webui.git
