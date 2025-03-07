@@ -288,7 +288,7 @@ export class Metro implements Disposable {
               const message = stripAnsi(event.message);
               let filename = event.error.originModulePath;
               if (!filename && event.error.filename) {
-                filename = appRoot + event.error.filename;
+                filename = path.join(appRoot, event.error.filename);
               }
               this.delegate.onBundlingError(
                 message,
