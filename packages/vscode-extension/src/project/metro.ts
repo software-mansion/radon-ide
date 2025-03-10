@@ -377,7 +377,7 @@ export class Metro implements Disposable {
         page.reactNative &&
         (page.title.startsWith("React Native Bridge") ||
           page.description.endsWith("[C++ connection]") ||
-          page?.reactNative?.capabilities?.prefersFuseboxFrontend)
+          page.reactNative.capabilities?.prefersFuseboxFrontend)
     );
   }
 
