@@ -2,6 +2,8 @@ import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-
 import { EventEmitter } from "vscode";
 import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
+import { SourceMapsRegistry } from "./SourceMapsRegistry";
+import { Logger } from "../Logger";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter();
@@ -10,7 +12,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onDebuggerPaused = this.debuggerPausedEmitter.event;
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
 
-  constructor() {}
+  constructor(private sourceMapRegistry: SourceMapsRegistry) {}
 
   public async handleApplicationCommand(
     command: IProtocolCommand
@@ -21,6 +23,13 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       }
       case "Debugger.paused": {
         this.debuggerPausedEmitter.fire({});
+        return command;
+      }
+      case "Debugger.scriptParsed": {
+        return this.handleScriptParsed(command);
+      }
+      case "Runtime.executionContextsCleared": {
+        this.sourceMapRegistry.clearSourceMaps();
         return command;
       }
     }
@@ -69,6 +78,32 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         params: {},
       })
       .catch(_.noop);
+  }
+
+  private handleScriptParsed(command: IProtocolCommand): IProtocolCommand {
+    const { sourceMapURL, url, scriptId } = command.params as Cdp.Debugger.ScriptParsedEvent;
+    if (!sourceMapURL) {
+      return command;
+    }
+
+    if (!sourceMapURL.startsWith("data:")) {
+      Logger.error(
+        "Source map URL doesn't encode source map data, mapping sources may not work correctly",
+        sourceMapURL
+      );
+      return command;
+    }
+
+    const base64Data = sourceMapURL.split(",")[1];
+    const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
+    const sourceMapData = JSON.parse(decodedData);
+
+    const isMainBundle = sourceMapData.sources.some((source: string) =>
+      source.includes("__prelude__")
+    );
+
+    this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
+    return command;
   }
 
   private handleConsoleAPICalled(command: IProtocolCommand): IProtocolCommand | undefined {

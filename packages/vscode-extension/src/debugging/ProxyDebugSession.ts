@@ -1,6 +1,4 @@
 import fs from "fs";
-import path from "path";
-import os from "os";
 import assert from "assert";
 import { DebugSession, ErrorDestination, Event } from "@vscode/debugadapter";
 import * as vscode from "vscode";
@@ -10,6 +8,9 @@ import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
 import { DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
+import { CDPProfile } from "./cdp";
+import { annotateLocations, filePathForProfile } from "./cpuProfiler";
+import { SourceMapsRegistry } from "./SourceMapsRegistry";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -21,6 +22,21 @@ export class ProxyDebugSessionAdapterDescriptorFactory
   }
 }
 
+// strip the wildcard `*` from the sourceMapPathOverrides before passing them to the SourceMapsRegistry
+function sourceMapAliasesFromPathOverrides(
+  sourceMapPathOverrides: Record<string, string>
+): [string, string][] {
+  return Object.entries(sourceMapPathOverrides).map(([key, value]): [string, string] => {
+    if (key.endsWith("*")) {
+      key = key.slice(0, -1);
+    }
+    if (value.endsWith("*")) {
+      value = value.slice(0, -1);
+    }
+    return [key, value];
+  });
+}
+
 const CHILD_SESSION_TYPE = "radon-pwa-node";
 
 export class ProxyDebugSession extends DebugSession {
@@ -28,12 +44,21 @@ export class ProxyDebugSession extends DebugSession {
   private disposables: Disposable[] = [];
   private nodeDebugSession: vscode.DebugSession | null = null;
   private terminated: boolean = false;
+  private sourceMapRegistry: SourceMapsRegistry;
 
   constructor(private session: vscode.DebugSession) {
     super();
 
+    const sourceMapAliases = sourceMapAliasesFromPathOverrides(
+      session.configuration.sourceMapPathOverrides
+    );
+    this.sourceMapRegistry = new SourceMapsRegistry(
+      session.configuration.expoPreludeLineCount,
+      sourceMapAliases
+    );
+
     const cdpProxyPort = Math.round(Math.random() * 40000 + 3000);
-    const proxyDelegate = new RadonCDPProxyDelegate();
+    const proxyDelegate = new RadonCDPProxyDelegate(this.sourceMapRegistry);
 
     this.cdpProxy = new CDPProxy(
       "127.0.0.1",
@@ -97,7 +122,10 @@ export class ProxyDebugSession extends DebugSession {
 
   protected async attachRequest(
     response: DebugProtocol.AttachResponse,
-    args: any,
+    args: DebugProtocol.AttachRequestArguments & {
+      sourceMapPathOverrides: Record<string, string>;
+      websocketAddress: string;
+    },
     request?: DebugProtocol.Request
   ) {
     await this.cdpProxy.initializeServer();
@@ -217,6 +245,25 @@ export class ProxyDebugSession extends DebugSession {
     }
   }
 
+  private async startProfiling() {
+    await this.cdpProxy.injectDebuggerCommand({ method: "Profiler.start", params: {} });
+    this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
+  }
+
+  private async stopProfiling() {
+    const result = await this.cdpProxy.injectDebuggerCommand({
+      method: "Profiler.stop",
+      params: {},
+    });
+
+    assert("profile" in result, "Profiler.stop response should contain a profile");
+
+    const profile = annotateLocations(result.profile as CDPProfile, this.sourceMapRegistry);
+    const filePath = filePathForProfile();
+    await fs.promises.writeFile(filePath, JSON.stringify(profile));
+    this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -225,23 +272,10 @@ export class ProxyDebugSession extends DebugSession {
   ) {
     switch (command) {
       case "RNIDE_startProfiling":
-        await this.cdpProxy.injectDebuggerCommand({ method: "Profiler.start", params: {} });
-        this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
-
+        await this.startProfiling();
         break;
       case "RNIDE_stopProfiling":
-        const result = await this.cdpProxy.injectDebuggerCommand({
-          method: "Profiler.stop",
-          params: {},
-        });
-
-        assert("profile" in result, "Profiler.stop response should contain a profile");
-
-        const fileName = `profile-${Date.now()}.cpuprofile`;
-        const filePath = path.join(os.tmpdir(), fileName);
-        await fs.promises.writeFile(filePath, JSON.stringify(result.profile));
-        this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
-
+        await this.stopProfiling();
         break;
       case "RNIDE_ping":
         this.ping();
