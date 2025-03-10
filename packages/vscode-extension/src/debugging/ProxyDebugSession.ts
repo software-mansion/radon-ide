@@ -27,6 +27,7 @@ export class ProxyDebugSession extends DebugSession {
   private cdpProxy: CDPProxy;
   private disposables: Disposable[] = [];
   private nodeDebugSession: vscode.DebugSession | null = null;
+  private terminated: boolean = false;
 
   constructor(private session: vscode.DebugSession) {
     super();
@@ -49,6 +50,14 @@ export class ProxyDebugSession extends DebugSession {
     this.disposables.push(
       proxyDelegate.onDebuggerResumed(() => {
         this.sendEvent(new Event(DEBUG_RESUMED));
+      })
+    );
+
+    this.disposables.push(
+      vscode.debug.onDidTerminateDebugSession(({ id }) => {
+        if (id === this.nodeDebugSession?.id) {
+          this.terminate();
+        }
       })
     );
   }
@@ -181,6 +190,10 @@ export class ProxyDebugSession extends DebugSession {
   }
 
   private terminate() {
+    if (this.terminated) {
+      return;
+    }
+    this.terminated = true;
     this.cdpProxy.stopServer();
     disposeAll(this.disposables);
     vscode.commands.executeCommand("workbench.action.debug.stop", undefined, {

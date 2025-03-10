@@ -15,7 +15,6 @@ const PING_TIMEOUT = 1000;
 export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
 export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
-export const DEBUG_DISCONNECTED = "RNIDE_disconnected";
 
 export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;

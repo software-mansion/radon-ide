@@ -55,7 +55,11 @@ export class CDPProxy {
       this.server = null;
     }
 
-    await this.tunnel?.close();
+    if (this.tunnel) {
+      const tunnel = this.tunnel;
+      this.tunnel = null;
+      await tunnel?.close();
+    }
 
     this.browserInspectUri = "";
   }
@@ -102,15 +106,22 @@ type PromiseResolvers<T> = {
   reject: (error?: any) => void;
 };
 
+function resolveWithReply(resolvers: PromiseResolvers<object>, reply: IProtocolReply) {
+  if ("error" in reply) {
+    resolvers.reject(reply.error);
+    return;
+  }
+  resolvers.resolve(reply.result);
+}
+
 export class ProxyTunnel {
   private applicationTarget: Connection | null;
   private debuggerTarget: Connection | null;
   private nextInjectedDebuggerCommandId = 1e9;
   private nextInjectedApplicationCommandId = 1e9;
 
-  private injectedApplicationCommandReplyResolvers: Map<number, PromiseResolvers<object>> =
-    new Map();
-  private injectedDebuggerCommandReplyResolvers: Map<number, PromiseResolvers<object>> = new Map();
+  private debuggerReplyResolvers: Map<number, PromiseResolvers<object>> = new Map();
+  private applicationReplyResolvers: Map<number, PromiseResolvers<object>> = new Map();
 
   constructor(
     applicationTarget: Connection,
@@ -137,7 +148,7 @@ export class ProxyTunnel {
     const { promise, resolve, reject } = Promise.withResolvers<object>();
     command.id ??= this.nextInjectedDebuggerCommandId++;
     this.applicationTarget?.send(command);
-    this.injectedDebuggerCommandReplyResolvers.set(command.id, { resolve, reject });
+    this.applicationReplyResolvers.set(command.id, { resolve, reject });
     return promise;
   }
 
@@ -145,7 +156,7 @@ export class ProxyTunnel {
     const { promise, resolve, reject } = Promise.withResolvers<object>();
     command.id ??= this.nextInjectedApplicationCommandId++;
     this.debuggerTarget?.send(command);
-    this.injectedApplicationCommandReplyResolvers.set(command.id, { resolve, reject });
+    this.debuggerReplyResolvers.set(command.id, { resolve, reject });
     return promise;
   }
 
@@ -176,15 +187,10 @@ export class ProxyTunnel {
   }
 
   private async handleDebuggerTargetReply(event: IProtocolReply) {
-    const resolvers = this.injectedApplicationCommandReplyResolvers.get(event.id);
+    const resolvers = this.debuggerReplyResolvers.get(event.id);
     if (resolvers) {
-      this.injectedApplicationCommandReplyResolvers.delete(event.id);
-      const { resolve, reject } = resolvers;
-      if ("error" in event) {
-        reject(event.error);
-        return;
-      }
-      resolve(event.result);
+      this.debuggerReplyResolvers.delete(event.id);
+      resolveWithReply(resolvers, event);
       return;
     }
 
@@ -195,15 +201,10 @@ export class ProxyTunnel {
   }
 
   private async handleApplicationTargetReply(event: IProtocolReply) {
-    const resolvers = this.injectedDebuggerCommandReplyResolvers.get(event.id);
+    const resolvers = this.applicationReplyResolvers.get(event.id);
     if (resolvers) {
-      this.injectedDebuggerCommandReplyResolvers.delete(event.id);
-      const { resolve, reject } = resolvers;
-      if ("error" in event) {
-        reject(event.error);
-        return;
-      }
-      resolve(event.result);
+      this.applicationReplyResolvers.delete(event.id);
+      resolveWithReply(resolvers, event);
       return;
     }
 
