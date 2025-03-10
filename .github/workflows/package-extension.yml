@@ -95,22 +95,31 @@ jobs:
           path: ${{ steps.package_extension.outputs.vsix_path }}
 
       - name: Publish to Visual Studio Marketplace
-        uses: HaaLeo/publish-vscode-extension@v1
-        if: ${{ github.event.inputs.publish == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          packagePath: "packages/vscode-extension"
-          registryUrl: https://marketplace.visualstudio.com
-          pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
-          target: ${{ steps.set_targets.outputs.targets }}
+        working-directory: packages/vscode-extension
+        run: npm run vscode:publish -- --pat ${{ secrets.VSCODE_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
 
       - name: Publish to Open VSX Registry
-        uses: HaaLeo/publish-vscode-extension@v1
-        if: ${{ github.event.inputs.publish == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          packagePath: "packages/vscode-extension"
-          pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
-          target: ${{ steps.set_targets.outputs.targets }}
+        working-directory: packages/vscode-extension
+        run: npm run openVSX:publish -- --pat ${{ secrets.VSCODE_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
+
+
+      # - name: Publish to Visual Studio Marketplacesfg
+      #   uses: HaaLeo/publish-vscode-extension@v1
+      #   if: ${{ github.event.inputs.publish == 'true' }}
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     packagePath: "packages/vscode-extension"
+      #     registryUrl: https://marketplace.visualstudio.com
+      #     pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
+      #     target: ${{ steps.set_targets.outputs.targets }}
+
+      # - name: sdfgfg
+      #   uses: HaaLeo/publish-vscode-extension@v1
+      #   if: ${{ github.event.inputs.publish == 'true' }}
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     packagePath: "packages/vscode-extension"
+      #     pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
+      #     target: ${{ steps.set_targets.outputs.targets }}
