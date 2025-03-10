@@ -101,7 +101,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           registryUrl: https://marketplace.visualstudio.com
-          extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
           pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
           target: ${{ steps.set_targets.outputs.targets }}
 
@@ -111,6 +110,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
           pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
           target: ${{ steps.set_targets.outputs.targets }}
