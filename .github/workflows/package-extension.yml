@@ -100,4 +100,4 @@ jobs:
 
       - name: Publish to Open VSX Registry
         working-directory: packages/vscode-extension
-        run: npm run openVSX:publish -- --pat ${{ secrets.VSCODE_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
+        run: npm run openVSX:publish -- --pat ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
