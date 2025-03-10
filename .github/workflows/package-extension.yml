@@ -96,8 +96,12 @@ jobs:
 
       - name: Publish to Visual Studio Marketplace
         working-directory: packages/vscode-extension
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: npm run vscode:publish -- --pat ${{ secrets.VSCODE_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
-
+        
       - name: Publish to Open VSX Registry
         working-directory: packages/vscode-extension
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: npm run openVSX:publish -- --pat ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
