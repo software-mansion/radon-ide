@@ -18,7 +18,7 @@ export class ProxyDebugSessionAdapterDescriptorFactory
   createDebugAdapterDescriptor(
     session: vscode.DebugSession
   ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
-    return new vscode.DebugAdapterInlineImplementation(new ProxyDebugSession(session));
+    return new vscode.DebugAdapterInlineImplementation(new ProxyDebugAdapter(session));
   }
 }
 
@@ -39,7 +39,7 @@ function sourceMapAliasesFromPathOverrides(
 
 const CHILD_SESSION_TYPE = "radon-pwa-node";
 
-export class ProxyDebugSession extends DebugSession {
+export class ProxyDebugAdapter extends DebugSession {
   private cdpProxy: CDPProxy;
   private disposables: Disposable[] = [];
   private nodeDebugSession: vscode.DebugSession | null = null;
