@@ -58,7 +58,7 @@ Once you save the profiling file, the IDE will automatically open the saved prof
 
 <img width="550" src="/img/docs/ide_devtools_profiler_stop.png" className="shadow-image" />
 
-When profile is saved, Radon IDE resolves the source location of the methods captured during profiling session, such that you can navigate to code directly from the profile visualizer tool.
+When the profile is saved, Radon IDE resolves the source location of the methods captured during profiling session such that you can navigate to the code directly from the profile visualizer tool.
 
 <img width="700" src="/img/docs/ide_devtools_profiler_visualize.png" className="shadow-image" />
 
