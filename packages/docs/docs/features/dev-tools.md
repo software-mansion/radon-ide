@@ -8,8 +8,6 @@ Radon IDE comes with support for launching Dev Tools as separate panels withing 
 
 The built-in tools for Network Inspector, Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and doesn't require any additional configuration.
 
-> NOTE: If your app uses [Expo Devtools Plugins](https://docs.expo.dev/debugging/devtools-plugins/) you will be able to use the Redux and React Query dev tools via the plugin too. However, we recommend using the tools that are built into the Radon IDE instead of the ones from the plugins as Radon relies on the official dev extension for Redux and React Query respectively.
-
 When the IDE detects that a specific tool is available and configured properly (see below for details on configuring individual tools), it will be listed in the tools menu where you can turn it on and off:
 <img width="350" src="/img/docs/ide_devtools_menu.png" className="shadow-image" />
 
@@ -85,14 +83,6 @@ We recommend you use the built-in Redux dev tool as described in the above secti
 However, if your workflow relies on using Expo CLI and you need to have the [Expo Redux Devtool Plugin](https://docs.expo.dev/debugging/devtools-plugins/#redux) setup in your project, Radon IDE will automatically detect it and will use the Redux devtools via the installed plugin.
 
 <img width="700" src="/img/docs/ide_devtools_expo_redux.png" className="shadow-image" />
-
-## React Query (via Expo Devtools Plugin)
-
-We recommend you use the built-in React Query tool as described in one of the previous sections as it provides the official UI for React Query that is much more powerful than the one build for the Expo Plugin.
-For legacy reasons however, Radon IDE still supports the Expo Devtool Plugin for React Query.
-In order to use it, you need to install and configure the plugin by following the instructions from [React Query Expo Devtool Plugin website](https://docs.expo.dev/debugging/devtools-plugins/#react-query).
-
-<img width="700" src="/img/docs/ide_devtools_expo_reactquery.png" className="shadow-image" />
 
 ## More tools
 
