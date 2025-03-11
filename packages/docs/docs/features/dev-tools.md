@@ -6,7 +6,7 @@ sidebar_position: 7
 
 Radon IDE comes with support for launching Dev Tools as separate panels withing VSCode or Cursor.
 
-The built-in tools for Network Inspector, Redux, Outline Rerenders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and doesn't require any additional configuration.
+The built-in tools for Network Inspector, Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and doesn't require any additional configuration.
 
 > NOTE: If your app uses [Expo Devtools Plugins](https://docs.expo.dev/debugging/devtools-plugins/) you will be able to use the Redux and React Query dev tools via the plugin too. However, we recommend using the tools that are built into the Radon IDE instead of the ones from the plugins as Radon relies on the official dev extension for Redux and React Query respectively.
 
