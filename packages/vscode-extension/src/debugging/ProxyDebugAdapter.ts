@@ -7,7 +7,7 @@ import { debug, Disposable } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
-import { DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
+import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
 import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
@@ -75,6 +75,11 @@ export class ProxyDebugAdapter extends DebugSession {
     this.disposables.push(
       proxyDelegate.onDebuggerResumed(() => {
         this.sendEvent(new Event(DEBUG_RESUMED));
+      })
+    );
+    this.disposables.push(
+      proxyDelegate.onConsoleAPICalled(() => {
+        this.sendEvent(new Event(DEBUG_CONSOLE_LOG));
       })
     );
 

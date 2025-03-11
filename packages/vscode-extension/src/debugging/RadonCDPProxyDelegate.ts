@@ -8,9 +8,11 @@ import { Logger } from "../Logger";
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter();
   private debuggerResumedEmitter = new EventEmitter();
+  private consoleAPICalledEmitter = new EventEmitter();
 
   public onDebuggerPaused = this.debuggerPausedEmitter.event;
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
+  public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
 
   constructor(private sourceMapRegistry: SourceMapsRegistry) {}
 
@@ -138,9 +140,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       });
 
       stackTrace?.callFrames.splice(0, originalCallFrameIndex);
-
-      return command;
     }
+
+    this.consoleAPICalledEmitter.fire({});
 
     return command;
   }
