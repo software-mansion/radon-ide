@@ -66,7 +66,7 @@ When profile is saved, Radon IDE resolves the source location of the methods cap
 
 When profiling, remember that the app you profile is the development build of your application running in a simulator environment.
 Development builds typically come with a significant overhead of extra work that is only done to provide better error reporting and traceability of errors.
-Hance the performance may significanly differ compared to the production builds running on an actual phone.
+Hence the performance may significantly differ compared to the production builds running on an actual phone.
 
 ## Outline Renders (react-scan)
 
