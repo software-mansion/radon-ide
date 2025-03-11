@@ -65,7 +65,7 @@ When profile is saved, Radon IDE resolves the source location of the methods cap
 > NOTE: In order to view the profile in flame chart view, you need to install official [Flame Chart Visualizer](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame) extension. Once the profile is saved, Radon IDE will display a message with direct installation link for this extension.
 
 When profiling, remember that the app you profile is the development build of your application running in a simulator environment.
-Development builds typically come with a significant overhead of extra work that is only done to provide better error reporting and tracability of errors.
+Development builds typically come with a significant overhead of extra work that is only done to provide better error reporting and traceability of errors.
 Hance the performance may significanly differ compared to the production builds running on an actual phone.
 
 ## Outline Renders (react-scan)
