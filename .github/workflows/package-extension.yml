@@ -95,22 +95,13 @@ jobs:
           path: ${{ steps.package_extension.outputs.vsix_path }}
 
       - name: Publish to Visual Studio Marketplace
-        uses: HaaLeo/publish-vscode-extension@v1
-        if: ${{ github.event.inputs.publish == 'true' }}
+        working-directory: packages/vscode-extension
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          registryUrl: https://marketplace.visualstudio.com
-          extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
-          pat: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
-          target: ${{ steps.set_targets.outputs.targets }}
-
+          GH_TOKEN: ${{ github.token }}
+        run: npm run vscode:publish -- --pat ${{ secrets.VSCODE_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
+        
       - name: Publish to Open VSX Registry
-        uses: HaaLeo/publish-vscode-extension@v1
-        if: ${{ github.event.inputs.publish == 'true' }}
+        working-directory: packages/vscode-extension
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          extensionFile: ${{ steps.package_extension.outputs.vsix_path }}
-          pat: ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }}
-          target: ${{ steps.set_targets.outputs.targets }}
+          GH_TOKEN: ${{ github.token }}
+        run: npm run openVSX:publish -- --pat ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
