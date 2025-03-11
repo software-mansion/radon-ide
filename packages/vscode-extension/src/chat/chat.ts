@@ -75,6 +75,8 @@ export function registerChat(context: vscode.ExtensionContext) {
         } else {
           Logger.error(String(error));
         }
+        stream.markdown("Couldn't connect to Radon AI.");
+        return { metadata: { command: "" } };
       }
 
       let systemPrompt = "";
