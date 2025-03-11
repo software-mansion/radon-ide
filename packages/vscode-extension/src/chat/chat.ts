@@ -83,18 +83,18 @@ export function registerChat(context: vscode.ExtensionContext) {
         systemPrompt += START_OF_DOCUMENTATION + json.docs + END_OF_DOCUMENTATION;
       }
 
-      const previousResponses = chatContext.history.filter(
+      const chatMessageHistory = chatContext.history.filter(
         (chatTurn) => chatTurn.participant === CHAT_PARTICIPANT_ID
       );
 
-      if (previousResponses.length > 0) {
+      if (chatMessageHistory.length > 0) {
         let history = "";
-        previousResponses.forEach((response) => {
-          if ("prompt" in response) {
-            history += `USER: ${response.prompt}\n\n`;
+        chatMessageHistory.forEach((chatMessage) => {
+          if ("prompt" in chatMessage) {
+            history += `USER: ${chatMessage.prompt}\n\n`;
           }
-          if ("response" in response) {
-            response.response.forEach((r) => {
+          if ("response" in chatMessage) {
+            chatMessage.response.forEach((r) => {
               if (r instanceof vscode.ChatResponseMarkdownPart) {
                 history += `ASSISTANT: ${r.value.value}\n\n`;
               }
