@@ -71,7 +71,7 @@ export function registerChat(context: vscode.ExtensionContext) {
         return { metadata: { command: "" } };
       }
 
-      const { system, context: documentation } = data;
+      const { system, context: documentation, tools } = data;
 
       if (!system || !documentation) {
         Logger.error("No system prompt received from Radon AI.");
@@ -111,9 +111,13 @@ export function registerChat(context: vscode.ExtensionContext) {
         vscode.LanguageModelChatMessage.User(request.prompt),
       ];
 
-      const chatResponse = await request.model.sendRequest(messages, {}, token);
-      for await (const fragment of chatResponse.text) {
-        stream.markdown(fragment);
+      const chatResponse = await request.model.sendRequest(messages, { tools }, token);
+      for await (const chunk of chatResponse.stream) {
+        if (chunk instanceof vscode.LanguageModelTextPart) {
+          stream.markdown(chunk.value);
+        } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
+          Logger.debug("CALLING TOOL", chunk);
+        }
       }
     } catch (err) {
       handleError(err, stream);
