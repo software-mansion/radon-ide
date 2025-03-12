@@ -9,6 +9,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
+  private blackBoxPatterns: RegExp[] = [];
 
   public onDebuggerPaused = this.debuggerPausedEmitter.event;
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
@@ -17,15 +18,15 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   constructor(private sourceMapRegistry: SourceMapsRegistry) {}
 
   public async handleApplicationCommand(
-    command: IProtocolCommand
+    command: IProtocolCommand,
+    tunnel: ProxyTunnel
   ): Promise<IProtocolCommand | IProtocolSuccess | IProtocolError> {
     switch (command.method) {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(command);
       }
       case "Debugger.paused": {
-        this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
-        return command;
+        return this.handleDebuggerPaused(command, tunnel);
       }
       case "Debugger.scriptParsed": {
         return this.handleScriptParsed(command);
@@ -35,6 +36,33 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return command;
       }
     }
+    return command;
+  }
+
+  private shouldResumeImmediately(params: Cdp.Debugger.PausedEvent): boolean {
+    if (params.reason !== "exception") {
+      return false;
+    }
+    const { scriptId, lineNumber, columnNumber } = params.callFrames[0].location;
+    const { sourceURL } = this.sourceMapRegistry.findOriginalPosition(
+      scriptId,
+      lineNumber + 1,
+      columnNumber ?? 0
+    );
+    const shouldSkipFile = this.blackBoxPatterns.some((p) => p.exec(sourceURL)?.length);
+    return shouldSkipFile;
+  }
+
+  private handleDebuggerPaused(command: IProtocolCommand, tunnel: ProxyTunnel) {
+    const params = command.params as Cdp.Debugger.PausedEvent;
+    if (this.shouldResumeImmediately(params)) {
+      tunnel.injectDebuggerCommand({
+        method: "Debugger.resume",
+        params: {},
+      });
+      return { id: command.id!, result: {} };
+    }
+    this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
     return command;
   }
 
@@ -51,8 +79,11 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         await this.onRuntimeEnable(tunnel);
         return command;
       }
-      // NOTE: setBlackbox* commands (as of 0.78) are not handled correctly by the Hermes debugger, so we need to disable them
+      // NOTE: setBlackbox* commands (as of 0.78) are not handled correctly by the Hermes debugger, so we need to disable them.
+      // Instead, we handle exception pauses in the blackboxed files explicitely in the `handleDebuggerPaused` method.
       case "Debugger.setBlackboxPatterns": {
+        const params = command.params as Cdp.Debugger.SetBlackboxPatternsParams;
+        this.blackBoxPatterns = params.patterns.map((p) => new RegExp(p));
         command.params = {
           patterns: [],
         };
