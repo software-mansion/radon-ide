@@ -1,0 +1,21 @@
+.details {
+  display: flex;
+  position: relative;
+  border-right: none;
+}
+
+.header {
+  display: flex;
+  justify-content: space-around;
+  background-color: var(--vscode-dropdown-background);
+}
+
+.selected-tab-title {
+  border-bottom: 2px solid var(--vscode-list-activeSelectionBackground);
+}
+
+.content-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px;
+}

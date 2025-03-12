@@ -1,0 +1,59 @@
+.resizable-container {
+  display: flex;
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.resizable-container .content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: transparent;
+  cursor: col-resize;
+  z-index: 20;
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.draggable {
+  cursor: ew-resize;
+  width: 1px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  transform: translateX(-8px);
+  background-color: var(--vscode-focusBorder, rgba(0, 120, 212, 0.4));
+}
+
+.draggable:hover {
+  width: 1px;
+}
+
+.details {
+  display: flex;
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.dragging * {
+  user-select: none !important;
+  pointer-events: none !important;
+}

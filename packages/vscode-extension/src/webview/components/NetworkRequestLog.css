@@ -1,0 +1,64 @@
+table {
+  border-radius: 20px;
+  align-self: flex-start;
+  border-collapse: collapse;
+  padding-top: 30px;
+  /* width: 100%; */
+}
+
+th,
+td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: none;
+}
+
+.table-paragraph {
+  margin: 0;
+  padding: 8px;
+}
+
+th {
+  background-color: var(--vscode-dropdown-background);
+  font-weight: bold;
+  text-align: left;
+  padding-bottom: 8px;
+  padding-top: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 30px;
+  user-select: none;
+}
+
+tr:nth-child(odd) {
+  background-color: var(--vscode-tree-tableOddRowsBackground);
+}
+
+tr.selected {
+  background-color: var(--vscode-list-activeSelectionBackground);
+}
+
+tr {
+  width: 100%;
+  justify-content: space-between;
+}
+
+tr:hover {
+  background-color: var(--vscode-list-hoverBackground);
+  cursor: pointer;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  width: 100%;
+}
+
+.table-container {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  width: 100%;
+  height: 100%;
+}
