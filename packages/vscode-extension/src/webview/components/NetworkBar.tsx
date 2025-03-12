@@ -3,11 +3,9 @@ import IconButton from "./shared/IconButton";
 import { useNetwork } from "../providers/NetworkProvider";
 
 const NetworkBar = () => {
-  const { isRecording, toggleRecording, showFilter, toggleShowFilter } = useNetwork();
+  const { isRecording, toggleRecording, showFilter, toggleShowFilter, clearActivity } =
+    useNetwork();
   const [showSearch, setShowSearch] = useState(false);
-  const resetActivity = () => {
-    console.log("Resetting network activity");
-  };
 
   return (
     <>
@@ -20,12 +18,12 @@ const NetworkBar = () => {
           side: "bottom",
         }}>
         <span
-          style={{ color: isRecording ? "red" : "white" }}
+          style={{ color: isRecording ? "var(--vscode-charts-red)" : "var(--swm-default-text)" }}
           className={`codicon ${isRecording ? "codicon-record" : "codicon-stop-circle"}`}
         />
       </IconButton>
       <IconButton
-        onClick={resetActivity}
+        onClick={clearActivity}
         tooltip={{
           label: "Reset network activity",
           side: "bottom",
@@ -38,7 +36,10 @@ const NetworkBar = () => {
           label: "Show network activity filter",
           side: "bottom",
         }}>
-        <span style={{ color: showFilter ? "blue" : "white" }} className="codicon codicon-filter" />
+        <span
+          style={{ color: showFilter ? "var(--vscode-charts-blue)" : "var(--swm-default-text)" }}
+          className="codicon codicon-filter"
+        />
       </IconButton>
       <IconButton
         onClick={() => setShowSearch(!showSearch)}

@@ -45,7 +45,10 @@ export class TabPanel implements Disposable {
     this._panel.webview.html = generateWebviewContent(
       extensionContext,
       this._panel.webview,
-      extensionContext.extensionUri
+      extensionContext.extensionUri,
+      "localhost:2137",
+      "webview",
+      "/src/webview"
     );
 
     this.webviewController = new WebviewController(this._panel.webview);

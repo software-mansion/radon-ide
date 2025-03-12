@@ -33,7 +33,10 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
     this._view.webview.html = generateWebviewContent(
       this.context,
       this._view.webview,
-      this.context.extensionUri
+      this.context.extensionUri,
+      "localhost:2137",
+      "webview",
+      "/src/webview"
     );
   }
 
@@ -61,7 +64,10 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
     webviewView.webview.html = generateWebviewContent(
       this.context,
       webviewView.webview,
-      this.context.extensionUri
+      this.context.extensionUri,
+      "localhost:2137",
+      "webview",
+      "/src/webview"
     );
     this._view = webviewView;
     this.webviewController = new WebviewController(this._view.webview);

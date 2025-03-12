@@ -6,6 +6,7 @@ import useNetworkTracker, { NetworkLog } from "../hooks/useNetworkTracker";
 import NetworkRequestLog from "../components/NetworkRequestLog";
 import NetworkLogDetails from "../components/NetworkLogDetails";
 import { useNetwork } from "../providers/NetworkProvider";
+import NetworkTimeline from "../components/NetworkTimeline";
 
 function App() {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -35,7 +36,7 @@ function App() {
             <NetworkFilters />
           </div>
         )}
-        {/* <NetworkRequestsChart /> */}
+        <NetworkTimeline />
       </div>
       <div className="network-log-container" ref={parentRef}>
         <NetworkRequestLog
