@@ -2,46 +2,99 @@ import { createContext, PropsWithChildren, useContext, useMemo, useState } from 
 
 interface NetworkProviderProps {
   isRecording: boolean;
-  filters: Filters | null;
+  showFilter: boolean;
+  filters: Filters;
+  isClearing: boolean;
+  isScrolling: boolean;
   toggleRecording: () => void;
+  toggleShowFilter: () => void;
   setFilters: (filters: Filters) => void;
+  clearActivity: () => void;
+  toggleScrolling: () => void;
 }
 
 enum RequestType {
+  All = "all",
   XHR = "xhr",
   Image = "image",
   Script = "script",
   CSS = "css",
   Font = "font",
   Media = "media",
+  Manifest = "manifest",
+  WebSocket = "ws",
+  WebAssembly = "wasm",
+  Other = "other",
 }
+
+type TimestampRange = {
+  start: number;
+  end: number;
+};
 
 interface Filters {
   requestType: RequestType;
+  timestampRange?: TimestampRange;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
   isRecording: true,
-  filters: null,
+  showFilter: false,
+  filters: {
+    requestType: RequestType.All,
+    timestampRange: undefined,
+  },
+  isClearing: false,
+  isScrolling: false,
   toggleRecording: () => {},
+  toggleShowFilter: () => {},
   setFilters: () => {},
+  clearActivity: () => {},
+  toggleScrolling: () => {},
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const [isRecording, setIsRecording] = useState(true);
-  const [filters, setFilters] = useState<Filters | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [filters, setFilters] = useState<Filters>({
+    requestType: RequestType.All,
+    timestampRange: undefined,
+  });
 
   function toggleRecording() {
     console.log("Toggling recording");
     setIsRecording(!isRecording);
   }
 
+  function toggleShowFilter() {
+    console.log("Toggling show filter");
+    setShowFilter(!showFilter);
+  }
+
+  function clearActivity() {
+    setIsClearing(!isClearing);
+    console.log("Clearing activity");
+  }
+
+  function toggleScrolling() {
+    console.log("Toggling scrolling");
+    setIsScrolling(!isScrolling);
+  }
+
   const contextValue = useMemo(() => {
     return {
       isRecording,
       filters,
+      showFilter,
+      isClearing,
+      isScrolling,
       toggleRecording,
+      toggleShowFilter,
       setFilters,
+      clearActivity,
+      toggleScrolling,
     };
   }, [isRecording, toggleRecording, setFilters, filters]);
 

@@ -1,3 +1,4 @@
+@import url("/node_modules/@vscode/codicons/dist/codicon.css");
 html,
 body,
 #root {
@@ -31,9 +32,18 @@ main {
   user-select: none;
 }
 
-.button-group-top {
+.network-bar {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  width: 100%;
+  margin: 8px;
+  gap: 4px;
+}
+
+.network-filter {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   width: 100%;
   margin: 8px;
   gap: 4px;

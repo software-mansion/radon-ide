@@ -1,20 +1,24 @@
 import "./App.css";
 import NetworkBar from "../components/NetworkBar";
+import NetworkRequestsChart from "../components/NetworkTimeline";
 import NetworkFilters from "../components/NetworkFilters";
-import useNetworkTracker from "../hooks/useNetworkTracker";
+import { useNetwork } from "../providers/NetworkProvider";
 
 function App() {
-  const networkLogs = useNetworkTracker();
-
-  console.log("networkLogs", networkLogs);
+  const { showFilter } = useNetwork();
 
   return (
     <main>
       <div className="panel-view">
-        <div className="button-group-top">
+        <div className="network-bar">
           <NetworkBar />
-          <NetworkFilters />
         </div>
+        {showFilter && (
+          <div className="network-filter">
+            <NetworkFilters />
+          </div>
+        )}
+        <NetworkRequestsChart />
       </div>
     </main>
   );
