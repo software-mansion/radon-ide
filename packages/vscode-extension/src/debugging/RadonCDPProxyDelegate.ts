@@ -23,20 +23,20 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   ): Promise<IProtocolCommand | IProtocolSuccess | IProtocolError> {
     switch (command.method) {
       case "Runtime.consoleAPICalled": {
-        return this.handleConsoleAPICalled(command);
+        return this.handleConsoleAPICalled(applicationCommand);
       }
       case "Debugger.paused": {
         return this.handleDebuggerPaused(command, tunnel);
       }
       case "Debugger.scriptParsed": {
-        return this.handleScriptParsed(command);
+        return this.handleScriptParsed(applicationCommand);
       }
       case "Runtime.executionContextsCleared": {
         this.sourceMapRegistry.clearSourceMaps();
-        return command;
+        return applicationCommand;
       }
     }
-    return command;
+    return applicationCommand;
   }
 
   private shouldResumeImmediately(params: Cdp.Debugger.PausedEvent): boolean {
@@ -67,17 +67,17 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   }
 
   public async handleDebuggerCommand(
-    command: IProtocolCommand,
+    debuggerCommand: IProtocolCommand,
     tunnel: ProxyTunnel
   ): Promise<IProtocolCommand> {
     switch (command.method) {
       case "Debugger.resume": {
         this.debuggerResumedEmitter.fire({});
-        return command;
+        return debuggerCommand;
       }
       case "Runtime.enable": {
         await this.onRuntimeEnable(tunnel);
-        return command;
+        return debuggerCommand;
       }
       // NOTE: setBlackbox* commands (as of 0.78) are not handled correctly by the Hermes debugger, so we need to disable them.
       // Instead, we handle exception pauses in the blackboxed files explicitely in the `handleDebuggerPaused` method.
@@ -96,7 +96,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return command;
       }
     }
-    return command;
+    return debuggerCommand;
   }
 
   public async handleApplicationReply(
