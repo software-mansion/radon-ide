@@ -51,6 +51,19 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         await this.onRuntimeEnable(tunnel);
         return command;
       }
+      // NOTE: setBlackbox* commands (as of 0.78) are not handled correctly by the Hermes debugger, so we need to disable them
+      case "Debugger.setBlackboxPatterns": {
+        command.params = {
+          patterns: [],
+        };
+        return command;
+      }
+      case "Debugger.setBlackboxedRanges": {
+        if ("positions" in command.params) {
+          command.params.positions = [];
+        }
+        return command;
+      }
     }
     return command;
   }

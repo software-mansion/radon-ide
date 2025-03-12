@@ -156,6 +156,11 @@ export class ProxyDebugAdapter extends DebugSession {
           continueOnAttach: true,
           sourceMapPathOverrides: args.sourceMapPathOverrides,
           resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
+          skipFiles: [
+            "**/extension/lib/**/*.js",
+            "**/vscode-extension/lib/**/*.js",
+            "**/node_modules/**/*",
+          ],
         },
         {
           suppressDebugStatusbar: true,
