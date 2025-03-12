@@ -73,15 +73,15 @@ export function registerChat(context: vscode.ExtensionContext) {
 
       const { system, context: documentation } = data;
 
-      // if (!systemPrompt) {
-      //   Logger.error("No system prompt received from Radon AI.");
-      //   getTelemetryReporter().sendTelemetryEvent("chat:error", {
-      //     error: "No system prompt received from Radon AI.",
-      //   });
+      if (!system || !documentation) {
+        Logger.error("No system prompt received from Radon AI.");
+        getTelemetryReporter().sendTelemetryEvent("chat:error", {
+          error: "No system prompt received from Radon AI.",
+        });
 
-      //   stream.markdown("Couldn't connect to Radon AI.");
-      //   return { metadata: { command: "" } };
-      // }
+        stream.markdown("Couldn't connect to Radon AI.");
+        return { metadata: { command: "" } };
+      }
 
       const chatMessageHistory = chatContext.history.filter(
         (chatTurn) => chatTurn.participant === CHAT_PARTICIPANT_ID
