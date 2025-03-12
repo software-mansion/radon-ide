@@ -68,8 +68,8 @@ export class ProxyDebugAdapter extends DebugSession {
     );
 
     this.disposables.push(
-      proxyDelegate.onDebuggerPaused(() => {
-        this.sendEvent(new Event(DEBUG_PAUSED));
+      proxyDelegate.onDebuggerPaused(({ reason }) => {
+        this.sendEvent(new Event(DEBUG_PAUSED, { reason }));
       })
     );
     this.disposables.push(

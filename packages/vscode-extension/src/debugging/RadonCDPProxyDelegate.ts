@@ -6,7 +6,7 @@ import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
-  private debuggerPausedEmitter = new EventEmitter();
+  private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
 
@@ -18,13 +18,13 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
 
   public async handleApplicationCommand(
     command: IProtocolCommand
-  ): Promise<IProtocolCommand | undefined> {
+  ): Promise<IProtocolCommand | IProtocolSuccess | IProtocolError> {
     switch (command.method) {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(command);
       }
       case "Debugger.paused": {
-        this.debuggerPausedEmitter.fire({});
+        this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
         return command;
       }
       case "Debugger.scriptParsed": {
@@ -41,7 +41,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public async handleDebuggerCommand(
     command: IProtocolCommand,
     tunnel: ProxyTunnel
-  ): Promise<IProtocolCommand | undefined> {
+  ): Promise<IProtocolCommand> {
     switch (command.method) {
       case "Debugger.resume": {
         this.debuggerResumedEmitter.fire({});
@@ -121,7 +121,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return command;
   }
 
-  private handleConsoleAPICalled(command: IProtocolCommand): IProtocolCommand | undefined {
+  private handleConsoleAPICalled(command: IProtocolCommand): IProtocolCommand | IProtocolSuccess {
     const { args, stackTrace } = command.params as Cdp.Runtime.ConsoleAPICalledEvent;
 
     // We wrap console calls and add stack information as last three arguments, however
@@ -134,7 +134,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     if (args.length > 0 && args[0].value === "__RNIDE_INTERNAL") {
       // We return here to avoid passing internal logs to the user debug console,
       // but they will still be visible in metro log feed.
-      return undefined;
+      return { id: command.id!, result: {} };
     }
     if (args.length > 3 && args[args.length - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP
