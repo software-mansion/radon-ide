@@ -5,19 +5,10 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 
 const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 
-const START_OF_DOCUMENTATION = "\n# RELEVANT DOCUMENTATION:\n\n";
-const END_OF_DOCUMENTATION = "\n# END OF DOCUMENTATION.\n\n";
 const START_OF_PREVIOUS_RESPONSES = "\n# PREVIOUS RESPONSES:\n\n";
 const END_OF_PREVIOUS_RESPONSES = "\n# END OF PREVIOUS RESPONSES.\n\n";
-const HELPFUL_ASSISTANT = `
-You are a React Native expert.\n\n
-You are provided with detailed documentation and context.\n\n
-Answer any and all user questions regarding React Native.\n\n
-Always assume that the user already has a development environment set up for React Native and Expo.\n\n
-`;
-const START_OF_USER_QUESTION = "\n# ANSWER THE FOLLOWING USER QUESTION:\n\n";
 
-const BASE_RADON_AI_URL = "https://radon-ai-backend.swmansion.com";
+const BASE_RADON_AI_URL = "http://127.0.0.1:8000";
 
 interface IChatResult extends vscode.ChatResult {
   metadata: {
@@ -48,9 +39,9 @@ export function registerChat(context: vscode.ExtensionContext) {
     }
 
     try {
-      let json;
+      let data;
       try {
-        const url = new URL("/api/documentation", BASE_RADON_AI_URL);
+        const url = new URL("/api/system_prompt", BASE_RADON_AI_URL);
         const response = await fetch(url, {
           method: "POST",
           headers: {
@@ -65,9 +56,10 @@ export function registerChat(context: vscode.ExtensionContext) {
           getTelemetryReporter().sendTelemetryEvent("chat:error", {
             error: `Failed to fetch with status: ${response.status}`,
           });
+          stream.markdown("Couldn't connect to Radon AI.");
+          return { metadata: { command: "" } };
         }
-
-        json = await response.json();
+        data = await response.json();
       } catch (error) {
         if (error instanceof Error) {
           Logger.error(error.message);
@@ -79,38 +71,43 @@ export function registerChat(context: vscode.ExtensionContext) {
         return { metadata: { command: "" } };
       }
 
-      let systemPrompt = "";
+      const { system, context: documentation } = data;
 
-      if (json) {
-        systemPrompt += START_OF_DOCUMENTATION + json.docs + END_OF_DOCUMENTATION;
-      }
+      // if (!systemPrompt) {
+      //   Logger.error("No system prompt received from Radon AI.");
+      //   getTelemetryReporter().sendTelemetryEvent("chat:error", {
+      //     error: "No system prompt received from Radon AI.",
+      //   });
+
+      //   stream.markdown("Couldn't connect to Radon AI.");
+      //   return { metadata: { command: "" } };
+      // }
 
       const chatMessageHistory = chatContext.history.filter(
         (chatTurn) => chatTurn.participant === CHAT_PARTICIPANT_ID
       );
 
+      let chatHistoryText = START_OF_PREVIOUS_RESPONSES;
       if (chatMessageHistory.length > 0) {
-        let history = "";
         chatMessageHistory.forEach((chatMessage) => {
           if ("prompt" in chatMessage) {
-            history += `USER: ${chatMessage.prompt}\n\n`;
+            chatHistoryText += `USER: ${chatMessage.prompt}\n\n`;
           }
           if ("response" in chatMessage) {
             chatMessage.response.forEach((r) => {
               if (r instanceof vscode.ChatResponseMarkdownPart) {
-                history += `ASSISTANT: ${r.value.value}\n\n`;
+                chatHistoryText += `ASSISTANT: ${r.value.value}\n\n`;
               }
             });
           }
         });
-
-        systemPrompt += START_OF_PREVIOUS_RESPONSES + history + END_OF_PREVIOUS_RESPONSES;
       }
-
-      systemPrompt += HELPFUL_ASSISTANT + START_OF_USER_QUESTION;
+      chatHistoryText += END_OF_PREVIOUS_RESPONSES;
 
       const messages = [
-        vscode.LanguageModelChatMessage.Assistant(systemPrompt),
+        vscode.LanguageModelChatMessage.Assistant(documentation),
+        vscode.LanguageModelChatMessage.Assistant(chatHistoryText),
+        vscode.LanguageModelChatMessage.Assistant(system),
         vscode.LanguageModelChatMessage.User(request.prompt),
       ];
 
