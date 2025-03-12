@@ -4,7 +4,7 @@ import useNetworkTracker from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/network";
 
-const HEIGHT = 400;
+const HEIGHT = 100;
 const SIDEBAR_MAX_WIDTH = 600;
 const ROW_HEIGHT = 10;
 const ROW_PADDING = 5;
@@ -51,9 +51,15 @@ const NetworkTimeline = () => {
 
   const processedData = useMemo(() => {
     return currentData.map((d) => ({
-      ...d,
-      startTimestamp: d.startTimestamp * 1000,
-      endTimestamp: d.endTimestamp * 1000,
+      requestId: d.requestId,
+      url: d.request?.url || "",
+      status: d.response?.status || 0,
+      method: d.request?.method || "",
+      type: d.type || "",
+      startTimestamp: d.timeline.timestamp * 1000,
+      endTimestamp: d.timeline.timestamp * 1000 + (d.timeline?.durationMs || 0),
+      duration: d.timeline?.durationMs || 0,
+      headers: d.request?.headers || {},
     }));
   }, [currentData, isClearing]);
 
