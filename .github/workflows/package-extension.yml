@@ -107,7 +107,7 @@ jobs:
         run: |
           IFS=' ' read -r -a output_paths <<< "${{ steps.package_and_upload.outputs.output_paths }}"
           for output_path in "${output_paths[@]}"; do
-            npm run vscode:publish -- --pat ${{ secrets.VSCODE_MARKETPLACE_TOKEN }} --vsix $output_path
+            npm run vscode:publish -- --pat ${{ secrets.VSCODE_MARKETPLACE_TOKEN }} --packagePath $output_path
           done
       
       - name: Publish to Open VSX Registry for each target
@@ -118,5 +118,5 @@ jobs:
         run: |
           IFS=' ' read -r -a output_paths <<< "${{ steps.package_and_upload.outputs.output_paths }}"
           for output_path in "${output_paths[@]}"; do
-            npm run openVSX:publish -- --pat ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }} --vsix $output_path
+            npm run openVSX:publish -- --pat ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }} --packagePath $output_path
           done
