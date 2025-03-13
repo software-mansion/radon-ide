@@ -18,7 +18,6 @@ function App() {
 
   useEffect(() => {
     if (!selectedNetworkLog) {
-      console.log("Resetting details width");
       setDetailsWidth(0);
     } else {
       setDetailsWidth(500);
@@ -36,7 +35,7 @@ function App() {
             <NetworkFilters />
           </div>
         )}
-        <NetworkTimeline />
+        {/* <NetworkTimeline /> */}
       </div>
       <div className="network-log-container" ref={parentRef}>
         <NetworkRequestLog

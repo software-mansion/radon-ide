@@ -19,3 +19,11 @@
   justify-content: flex-end;
   padding: 8px;
 }
+
+.details-container {
+  background-color: var(--vscode-tree-tableOddRowsBackground);
+  margin-inline: 10px;
+  width: calc(100% - 20px);
+  height: 100%;
+  border-radius: 5px;
+}

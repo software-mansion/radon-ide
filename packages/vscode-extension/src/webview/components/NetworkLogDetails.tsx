@@ -28,16 +28,16 @@ const NetworkLogDetails = ({
       }}
       isColumn={false}
       side="left">
-      <>
+      <div className="details-container">
         <div className="content-header">
           <IconButton tooltip={{ label: "Close", side: "bottom" }}>
             <span className="codicon codicon-close gray-icon" onClick={handleClose} />
           </IconButton>
         </div>
-        <div style={{ padding: "8px" }}>
+        <div className="details-content">
           {networkLog ? JSON.stringify(networkLog) : "Select a network log to view details"}
         </div>
-      </>
+      </div>
     </ResizableContainer>
   );
 };

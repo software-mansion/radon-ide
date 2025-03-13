@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect, createRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { NetworkLog } from "../hooks/useNetworkTracker";
-import "./NetworkRequestLog.css";
 import ResizableContainer from "./shared/ResizableContainer";
+import "./NetworkRequestLog.css";
 
 interface NetworkRequestLogProps {
   networkLogs: NetworkLog[];
@@ -11,6 +11,8 @@ interface NetworkRequestLogProps {
 }
 
 const ROWS = ["Domain", "File", "Status", "Method", "Type", "Size", "Time"];
+const TABLE_RIGHT_PADDING = 15;
+const TABLE_CELL_MIN_WIDTH = 50;
 
 const NetworkRequestLog = ({
   networkLogs,
@@ -18,7 +20,7 @@ const NetworkRequestLog = ({
   handleSelectedRequest,
   selectedNetworkLog,
 }: NetworkRequestLogProps) => {
-  const containerRef = createRef<HTMLTableElement>();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>(
     ROWS.reduce(
       (acc, title) => ({
@@ -37,7 +39,9 @@ const NetworkRequestLog = ({
         return;
       }
 
-      setInitialRowWidth(containerRef.current.clientWidth / ROWS.length);
+      setInitialRowWidth(
+        containerRef.current.clientWidth / ROWS.length - TABLE_RIGHT_PADDING / ROWS.length
+      );
     };
 
     window.addEventListener("resize", handleResize);
@@ -47,7 +51,7 @@ const NetworkRequestLog = ({
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [columnWidths]);
+  }, []);
 
   useEffect(() => {
     setColumnWidths(
@@ -62,30 +66,29 @@ const NetworkRequestLog = ({
   }, [initialRowWidth]);
 
   useEffect(() => {
-    if (detailsWidth) {
-      setColumnWidths((prev) =>
-        ROWS.reduce(
-          (acc, title) => ({
-            ...acc,
-            [title]: detailsWidth / ROWS.length,
-          }),
-          {}
-        )
-      );
-      setLastDetailsWidth(detailsWidth);
-    } else {
+    if (detailsWidth !== lastDetailsWidth) {
+      const isIncreasing = detailsWidth > lastDetailsWidth;
+
       setColumnWidths((prev) => {
-        const proportion = detailsWidth / lastDetailsWidth;
-        return ROWS.reduce(
-          (acc, title) => ({
-            ...acc,
-            [title]: prev[title] * proportion,
-          }),
-          {}
-        );
+        let updatedWidths = { ...prev };
+        const diff = Math.abs(detailsWidth - lastDetailsWidth);
+        const proportion = diff / ROWS.length;
+
+        ROWS.forEach((title) => {
+          if (isIncreasing) {
+            updatedWidths[title] -= proportion;
+          } else {
+            updatedWidths[title] += proportion;
+          }
+
+          updatedWidths[title] = updatedWidths[title];
+        });
+
+        return updatedWidths;
       });
+      setLastDetailsWidth(detailsWidth);
     }
-  }, [detailsWidth]);
+  }, [detailsWidth, lastDetailsWidth]);
 
   const handleResize = (title: string, newWidth: number) => {
     setColumnWidths((prev) => {
@@ -103,8 +106,8 @@ const NetworkRequestLog = ({
         }
 
         if (diff > 0) {
-          if (keys[i] !== title && updatedWidths[keys[i]] > 50) {
-            const availableShrink = updatedWidths[keys[i]] - 66;
+          if (keys[i] !== title && updatedWidths[keys[i]] > TABLE_CELL_MIN_WIDTH) {
+            const availableShrink = updatedWidths[keys[i]] - TABLE_CELL_MIN_WIDTH;
             const shrinkBy = Math.min(availableShrink, remainingDiff);
             updatedWidths[keys[i]] -= shrinkBy;
             remainingDiff -= shrinkBy;
@@ -123,8 +126,8 @@ const NetworkRequestLog = ({
 
       if (remainingDiff > 0 && diff > 0) {
         for (let i = 0; i < keys.length; i++) {
-          if (keys[i] !== title && updatedWidths[keys[i]] > 50) {
-            const availableShrink = updatedWidths[keys[i]] - 66;
+          if (keys[i] !== title && updatedWidths[keys[i]] > TABLE_CELL_MIN_WIDTH) {
+            const availableShrink = updatedWidths[keys[i]] - TABLE_CELL_MIN_WIDTH;
             const shrinkBy = Math.min(availableShrink, remainingDiff);
             updatedWidths[keys[i]] -= shrinkBy;
             remainingDiff -= shrinkBy;
@@ -232,58 +235,68 @@ const NetworkRequestLog = ({
   }, [networkLogs, selectedNetworkLog]);
 
   return (
-    <div className="table-container" ref={containerRef}>
-      <table>
-        <thead>
-          <tr>
-            {logDetailsConfig.map(({ title }) => (
-              <th
-                key={title}
-                style={{
-                  maxWidth: `${columnWidths[title]}px`,
-                  width: `${columnWidths[title]}px`,
-                }}>
-                <ResizableContainer
-                  side="right"
-                  containerWidth={columnWidths[title]}
-                  setContainerWidth={(width) => handleResize(title, width)}
-                  isColumn={true}>
-                  <p className="table-paragraph">{title}</p>
-                </ResizableContainer>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {networkLogs.map((log, index) => (
-            <tr
-              key={index}
-              className={selectedNetworkLog?.requestId === log.requestId ? "selected" : ""}
-              onClick={() =>
-                handleSelectedRequest(selectedNetworkLog?.requestId === log.requestId ? null : log)
-              }>
-              {logDetailsConfig.map(({ title, getValue, getClass }) => (
-                <td
+    <div
+      className="table-container"
+      style={{ paddingRight: TABLE_RIGHT_PADDING + "px" }}
+      ref={containerRef}>
+      <div style={{ width: "100%", overflowX: "hidden", borderRadius: "5px" }}>
+        <table>
+          <thead
+            style={{
+              width: Object.values(columnWidths).reduce((acc, width) => acc + width, 0) + "px",
+            }}>
+            <tr>
+              {logDetailsConfig.map(({ title }) => (
+                <th
                   key={title}
                   style={{
                     maxWidth: `${columnWidths[title]}px`,
                     width: `${columnWidths[title]}px`,
-                  }}
-                  className={getClass ? getClass(log) : ""}>
-                  <p
-                    className="table-paragraph"
+                  }}>
+                  <ResizableContainer
+                    side="right"
+                    containerWidth={columnWidths[title]}
+                    setContainerWidth={(width) => handleResize(title, width)}
+                    isColumn={true}>
+                    <p className="table-paragraph">{title}</p>
+                  </ResizableContainer>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {networkLogs.map((log, index) => (
+              <tr
+                key={index}
+                className={selectedNetworkLog?.requestId === log.requestId ? "selected" : ""}
+                onClick={() =>
+                  handleSelectedRequest(
+                    selectedNetworkLog?.requestId === log.requestId ? null : log
+                  )
+                }>
+                {logDetailsConfig.map(({ title, getValue, getClass }) => (
+                  <td
+                    key={title}
                     style={{
                       maxWidth: `${columnWidths[title]}px`,
                       width: `${columnWidths[title]}px`,
-                    }}>
-                    {getValue(log)}
-                  </p>
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                    }}
+                    className={getClass ? getClass(log) : ""}>
+                    <p
+                      className="table-paragraph"
+                      style={{
+                        maxWidth: `${columnWidths[title]}px`,
+                        width: `${columnWidths[title]}px`,
+                      }}>
+                      {getValue(log)}
+                    </p>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -39,11 +39,23 @@
   bottom: 0;
   z-index: 10;
   transform: translateX(-8px);
-  background-color: var(--vscode-focusBorder, rgba(0, 120, 212, 0.4));
+  background-color: var(--vscode-input-border);
+}
+
+.draggable-bg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 100%;
+  transform: translateX(8px);
+  background-color: var(--vscode-dropdown-background);
 }
 
 .draggable:hover {
   width: 1px;
+  background-color: var(--vscode-focusBorder);
 }
 
 .details {
