@@ -40,7 +40,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   }
 
   private shouldResumeImmediately(params: Cdp.Debugger.PausedEvent): boolean {
-    if (params.reason !== "exception") {
+    if ((params.reason as string) === "other") {
       return false;
     }
     const { scriptId, lineNumber, columnNumber } = params.callFrames[0].location;
@@ -56,11 +56,19 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private handleDebuggerPaused(command: IProtocolCommand, tunnel: ProxyTunnel) {
     const params = command.params as Cdp.Debugger.PausedEvent;
     if (this.shouldResumeImmediately(params)) {
-      tunnel.injectDebuggerCommand({
-        method: "Debugger.resume",
-        params: {},
-      });
-      return { id: command.id!, result: {} };
+      tunnel
+        .injectDebuggerCommand({
+          method: "Debugger.resume",
+          params: {},
+        })
+        .then(() => {
+          this.debuggerResumedEmitter.fire({});
+        })
+        .catch(_.noop);
+      if (command.id === undefined) {
+        return undefined;
+      }
+      return { id: command.id, result: {} };
     }
     this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
     return command;
@@ -74,6 +82,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     switch (command.method) {
       case "Debugger.resume": {
         this.debuggerResumedEmitter.fire({});
+        return command;
+      }
+      case "Debugger.stepOver": {
         return command;
       }
       case "Runtime.enable": {
