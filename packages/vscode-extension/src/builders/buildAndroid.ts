@@ -151,7 +151,7 @@ export async function buildAndroid(
   const androidAppName = loadConfig({
     projectRoot: appRoot,
     selectedPlatform: "android",
-  }).platforms.android.projectConfig(appRoot)?.appName;
+  }).platforms.android?.projectConfig(appRoot)?.appName;
   const productFlavor = android?.productFlavor || "";
   const buildType = android?.buildType || "debug";
   const gradleArgs = [
