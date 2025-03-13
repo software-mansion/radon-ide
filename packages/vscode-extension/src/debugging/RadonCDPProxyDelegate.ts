@@ -18,15 +18,15 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   constructor(private sourceMapRegistry: SourceMapsRegistry) {}
 
   public async handleApplicationCommand(
-    command: IProtocolCommand,
+    applicationCommand: IProtocolCommand,
     tunnel: ProxyTunnel
-  ): Promise<IProtocolCommand | IProtocolSuccess | IProtocolError> {
-    switch (command.method) {
+  ): Promise<IProtocolCommand | IProtocolSuccess | IProtocolError | undefined> {
+    switch (applicationCommand.method) {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(applicationCommand);
       }
       case "Debugger.paused": {
-        return this.handleDebuggerPaused(command, tunnel);
+        return this.handleDebuggerPaused(applicationCommand, tunnel);
       }
       case "Debugger.scriptParsed": {
         return this.handleScriptParsed(applicationCommand);
@@ -65,19 +65,20 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
     return command;
   }
+  private setBreakpointCommands = new Map<number, Cdp.Debugger.SetBreakpointByUrlParams>();
 
   public async handleDebuggerCommand(
-    debuggerCommand: IProtocolCommand,
+    command: IProtocolCommand,
     tunnel: ProxyTunnel
   ): Promise<IProtocolCommand> {
     switch (command.method) {
       case "Debugger.resume": {
         this.debuggerResumedEmitter.fire({});
-        return debuggerCommand;
+        return command;
       }
       case "Runtime.enable": {
         await this.onRuntimeEnable(tunnel);
-        return debuggerCommand;
+        return command;
       }
       // NOTE: setBlackbox* commands (as of 0.78) are not handled correctly by the Hermes debugger, so we need to disable them.
       // Instead, we handle exception pauses in the blackboxed files explicitely in the `handleDebuggerPaused` method.
@@ -95,13 +96,52 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         }
         return command;
       }
+      case "Debugger.setBreakpointByUrl": {
+        this.setBreakpointCommands.set(
+          command.id!,
+          command.params as Cdp.Debugger.SetBreakpointByUrlParams
+        );
+        return command;
+      }
     }
-    return debuggerCommand;
+    return command;
+  }
+
+  // NOTE: sometimes on Fast Refresh, when we try to set a new breakpoint with the new location,
+  // the breakpoint is not set correctly by the application.
+  // To mitigate this, we retry setting the breakpoint one time.
+  async maybeRetrySetBreakpointByUrl(reply: IProtocolSuccess, tunnel: ProxyTunnel) {
+    const params = this.setBreakpointCommands.get(reply.id)!;
+    this.setBreakpointCommands.delete(reply.id);
+    const setBreakpointResult = reply.result as Cdp.Debugger.SetBreakpointByUrlResult;
+    // NOTE: this condition was found by trial and error, it seems that if the breakpoint is not set
+    // correctly, the locations array will be empty
+    if (!setBreakpointResult.locations.length) {
+      await tunnel
+        .injectDebuggerCommand({
+          method: "Debugger.removeBreakpoint",
+          params: { breakpointId: setBreakpointResult.breakpointId },
+        })
+        .catch(_.noop);
+      return tunnel
+        .injectDebuggerCommand({
+          method: "Debugger.setBreakpointByUrl",
+          params,
+        })
+        .then((result): IProtocolSuccess => ({ id: reply.id, result }))
+        .catch((error): IProtocolError => ({ id: reply.id, error }));
+    }
+    return reply;
   }
 
   public async handleApplicationReply(
-    reply: IProtocolSuccess | IProtocolError
+    reply: IProtocolSuccess | IProtocolError,
+    tunnel: ProxyTunnel
   ): Promise<IProtocolSuccess | IProtocolError | undefined> {
+    if (reply.id && "result" in reply && this.setBreakpointCommands.has(reply.id)) {
+      const finalReply = await this.maybeRetrySetBreakpointByUrl(reply, tunnel);
+      return finalReply;
+    }
     return reply;
   }
 

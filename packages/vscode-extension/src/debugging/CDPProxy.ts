@@ -15,11 +15,11 @@ export interface CDPProxyDelegate {
   handleApplicationCommand(
     command: IProtocolCommand,
     tunnel: ProxyTunnel
-  ): Promise<IProtocolCommand | IProtocolReply>;
+  ): Promise<IProtocolCommand | IProtocolReply | undefined>;
   handleDebuggerCommand(
     command: IProtocolCommand,
     tunnel: ProxyTunnel
-  ): Promise<IProtocolCommand | IProtocolReply>;
+  ): Promise<IProtocolCommand | IProtocolReply | undefined>;
   handleApplicationReply(
     reply: IProtocolReply,
     tunnel: ProxyTunnel
@@ -178,6 +178,10 @@ export class ProxyTunnel {
 
   private async handleDebuggerTargetCommand(event: IProtocolCommand) {
     const processedMessage = await this.cdpProxyDelegate.handleDebuggerCommand(event, this);
+    if (!processedMessage) {
+      return;
+    }
+
     if (this.isProtocolReply(processedMessage)) {
       this.debuggerTarget?.send(processedMessage);
     } else {
@@ -187,6 +191,10 @@ export class ProxyTunnel {
 
   private async handleApplicationTargetCommand(event: IProtocolCommand) {
     const processedMessage = await this.cdpProxyDelegate.handleApplicationCommand(event, this);
+    if (!processedMessage) {
+      return;
+    }
+
     if (this.isProtocolReply(processedMessage)) {
       this.applicationTarget?.send(processedMessage);
     } else {
@@ -218,7 +226,7 @@ export class ProxyTunnel {
 
     const processedMessage = await this.cdpProxyDelegate.handleApplicationReply(event, this);
     if (processedMessage) {
-      this.debuggerTarget?.send(event);
+      this.debuggerTarget?.send(processedMessage);
     }
   }
 
