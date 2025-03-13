@@ -52,6 +52,7 @@ thead {
   width: 100%;
   overflow: hidden;
   border-top-right-radius: 5px;
+  border-top-left-radius: 5px;
 }
 
 .table-container {

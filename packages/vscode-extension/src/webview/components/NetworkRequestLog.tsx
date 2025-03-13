@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import ResizableContainer from "./shared/ResizableContainer";
 import "./NetworkRequestLog.css";
@@ -90,7 +90,7 @@ const NetworkRequestLog = ({
     }
   }, [detailsWidth, lastDetailsWidth]);
 
-  const handleResize = (title: string, newWidth: number) => {
+  const handleResize = useCallback((title: string, newWidth: number) => {
     setColumnWidths((prev) => {
       const prevWidth = prev[title];
       const diff = newWidth - prevWidth;
@@ -142,7 +142,7 @@ const NetworkRequestLog = ({
 
       return updatedWidths;
     });
-  };
+  }, []);
 
   const getStatusClass = (status: number | string | undefined) => {
     if (!status) {
