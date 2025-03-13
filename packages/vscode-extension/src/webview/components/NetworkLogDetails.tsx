@@ -1,4 +1,4 @@
-import { RefObject, useState } from "react";
+import { RefObject } from "react";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import "./NetworkLogDetails.css";
 import IconButton from "./shared/IconButton";
@@ -7,24 +7,23 @@ import ResizableContainer from "./shared/ResizableContainer";
 interface NetworkLogDetailsProps {
   networkLog: NetworkLog;
   parentRef: RefObject<HTMLDivElement>;
+  containerWidth: number;
   handleClose: () => void;
-  handleContainerSize: (width: number) => void;
+  setContainerWidth: (width: number) => void;
 }
 
 const NetworkLogDetails = ({
   networkLog,
   parentRef,
+  containerWidth,
+  setContainerWidth,
   handleClose,
-  handleContainerSize,
 }: NetworkLogDetailsProps) => {
-  const [containerWidth, setContainerWidth] = useState(500);
-
   return (
     <ResizableContainer
       containerWidth={containerWidth}
       setContainerWidth={(width) => {
         setContainerWidth(width);
-        handleContainerSize(width);
       }}
       isColumn={false}
       side="left">

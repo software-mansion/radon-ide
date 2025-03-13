@@ -49,8 +49,9 @@ function App() {
           <NetworkLogDetails
             parentRef={parentRef}
             networkLog={selectedNetworkLog}
+            containerWidth={detailsWidth}
             handleClose={() => setSelectedNetworkLog(null)}
-            handleContainerSize={(width) => setDetailsWidth(width)}
+            setContainerWidth={(width) => setDetailsWidth(width)}
           />
         )}
       </div>
