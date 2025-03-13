@@ -159,7 +159,10 @@ export class ProxyDebugAdapter extends DebugSession {
           skipFiles: [
             "**/extension/lib/**/*.js",
             "**/vscode-extension/lib/**/*.js",
+            "**/ReactFabric-dev.js",
+            "**/ReactNativeRenderer-dev.js",
             "**/node_modules/**/*",
+            "!**/node_modules/expo-router/**/*",
           ],
         },
         {
