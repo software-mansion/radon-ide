@@ -49,6 +49,12 @@ window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
 };
 
 const RNInternals = {
+  get parseErrorStack() {
+    return require("react-native/Libraries/Core/Devtools/parseErrorStack");
+  },
+  get LogBoxData() {
+    return require("react-native/Libraries/LogBox/Data/LogBoxData");
+  },
   get getInspectorDataForViewAtPoint() {
     return require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
   },
@@ -365,7 +371,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   useEffect(() => {
     if (devtoolsAgent) {
-      LogBox.uninstall();
       const LoadingView = RNInternals.LoadingView;
       LoadingView.showMessage = (message) => {
         devtoolsAgent._bridge.send("RNIDE_fastRefreshStarted");
@@ -429,6 +434,33 @@ export function AppWrapper({ children, initialProps, fabric }) {
     },
     []
   );
+
+  useEffect(() => {
+    if (!devtoolsAgent) {
+      return;
+    }
+    const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
+    LogBox.uninstall();
+
+    function wrappedGlobalErrorHandler(error, isFatal) {
+      try {
+        LogBox.install();
+        LogBox.ignoreAllLogs(true);
+        RNInternals.LogBoxData.clear();
+        originalErrorHandler(error, isFatal);
+        LogBox.uninstall();
+      } catch {}
+      const message = error.message;
+      const stack = RNInternals.parseErrorStack(error.stack);
+      devtoolsAgent._bridge.send("RNIDE_openCodeOnException", { message, stack });
+    }
+
+    global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
+    return () => {
+      global.ErrorUtils.setGlobalHandler(originalErrorHandler);
+      LogBox.install();
+    };
+  }, [devtoolsAgent]);
 
   return (
     <View
