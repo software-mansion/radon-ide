@@ -175,7 +175,7 @@ export interface ProjectInterface {
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
   getDeepLinksHistory(): Promise<string[]>;
-  openDeepLink(link: string): Promise<void>;
+  openDeepLink(link: string, terminateApp: boolean): Promise<void>;
 
   startRecording(): void;
   captureAndStopRecording(): void;

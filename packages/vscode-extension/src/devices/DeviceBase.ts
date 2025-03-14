@@ -26,6 +26,7 @@ export abstract class DeviceBase implements Disposable {
   abstract getClipboard(): Promise<string | void>;
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
+  abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
   abstract makePreview(): Preview;
   abstract get platform(): DevicePlatform;
   abstract get deviceInfo(): DeviceInfo;
@@ -33,7 +34,11 @@ export abstract class DeviceBase implements Disposable {
     appPermission: AppPermissionType,
     buildResult: BuildResult
   ): Promise<boolean>;
-  abstract sendDeepLink(link: string, buildResult: BuildResult): Promise<void>;
+  abstract sendDeepLink(
+    link: string,
+    buildResult: BuildResult,
+    terminateApp: boolean
+  ): Promise<void>;
 
   async acquire() {
     const acquired = await tryAcquiringLock(this.lockFilePath);
