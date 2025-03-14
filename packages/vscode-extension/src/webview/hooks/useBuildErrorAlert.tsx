@@ -8,10 +8,14 @@ import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
 
+type LogsButtonDestination = "build" | "extension";
+
 function BuildErrorActions({
   logsButtonDestination,
+  onReload,
 }: {
-  logsButtonDestination?: "build" | "extension";
+  logsButtonDestination?: LogsButtonDestination;
+  onReload?: () => void;
 }) {
   const { project } = useProject();
   const { openModal } = useModal();
@@ -40,9 +44,7 @@ function BuildErrorActions({
       </IconButton>
       <IconButton
         type="secondary"
-        onClick={() => {
-          project.restart(false);
-        }}
+        onClick={onReload}
         tooltip={{ label: "Reload IDE", side: "bottom" }}>
         <span className="codicon codicon-refresh" />
       </IconButton>
@@ -52,11 +54,15 @@ function BuildErrorActions({
 
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   const { ios, xcodeSchemes, eas } = useLaunchConfig();
-  const { dependencies } = useDependencies();
-  const { projectState } = useProject();
+  const { dependencies, runDiagnostics } = useDependencies();
+  const { projectState, project } = useProject();
+
+  let onReload = () => {
+    project.restart(false);
+  };
+  let logsButtonDestination: LogsButtonDestination | undefined = undefined;
 
   let description = "Open build logs to find out what went wrong.";
-  let actions = <BuildErrorActions />;
 
   if (!ios?.scheme && xcodeSchemes.length > 1) {
     description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
@@ -68,6 +74,10 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   ) {
     description =
       'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
+    onReload = () => {
+      runDiagnostics();
+      project.restart(false);
+    };
   }
 
   if (
@@ -76,6 +86,10 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   ) {
     description =
       'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
+    onReload = () => {
+      runDiagnostics();
+      project.restart(false);
+    };
   }
 
   const isEasBuild =
@@ -89,8 +103,12 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     } else {
       description = "Your project EAS build has failed, see extension logs to see what went wrong.";
     }
-    actions = <BuildErrorActions logsButtonDestination="extension" />;
+    logsButtonDestination = "extension";
   }
+
+  const actions = (
+    <BuildErrorActions logsButtonDestination={logsButtonDestination} onReload={onReload} />
+  );
 
   const buildErrorAlert = {
     id: "build-error-alert",
