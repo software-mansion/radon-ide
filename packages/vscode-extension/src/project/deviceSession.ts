@@ -316,9 +316,13 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
-  public async sendDeepLink(link: string) {
+  public async sendDeepLink(link: string, terminateApp: boolean) {
     if (this.maybeBuildResult) {
-      return this.device.sendDeepLink(link, this.maybeBuildResult);
+      await this.device.sendDeepLink(link, this.maybeBuildResult, terminateApp);
+
+      if (terminateApp) {
+        this.debugSession?.reconnectJSDebuggerIfNeeded(this.metro);
+      }
     }
   }
 

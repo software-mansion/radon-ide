@@ -290,6 +290,21 @@ export class IosSimulatorDevice extends DeviceBase {
     }
   }
 
+  terminateApp = async (bundleID: string) => {
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+
+    // Terminate the app if it's running:
+    try {
+      await exec(
+        "xcrun",
+        ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, bundleID],
+        { allowNonZeroExit: true }
+      );
+    } catch (e) {
+      // terminate will exit with non-zero code when the app wasn't running. we ignore this error
+    }
+  };
+
   /**
    * This function terminates any running applications. Might be useful when you launch a new application
    * before terminating the previous one.
@@ -312,20 +327,7 @@ export class IosSimulatorDevice extends DeviceBase {
       matches.push(match[1]);
     }
 
-    const terminateApp = async (bundleID: string) => {
-      // Terminate the app if it's running:
-      try {
-        await exec(
-          "xcrun",
-          ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, bundleID],
-          { allowNonZeroExit: true }
-        );
-      } catch (e) {
-        // terminate will exit with non-zero code when the app wasn't running. we ignore this error
-      }
-    };
-
-    await Promise.all(matches.map(terminateApp));
+    await Promise.all(matches.map(this.terminateApp));
   }
 
   async launchWithBuild(build: IOSBuildResult) {
@@ -456,9 +458,13 @@ export class IosSimulatorDevice extends DeviceBase {
     return false;
   }
 
-  async sendDeepLink(link: string, build: BuildResult) {
+  async sendDeepLink(link: string, build: BuildResult, terminateApp: boolean) {
     if (build.platform !== DevicePlatform.IOS) {
       throw new Error("Invalid platform");
+    }
+
+    if (terminateApp) {
+      await this.terminateApp(build.bundleID);
     }
 
     await exec("xcrun", [

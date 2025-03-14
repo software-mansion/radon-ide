@@ -540,9 +540,13 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return true; // Android will terminate the process if any of the permissions were granted prior to reset-permissions call
   }
 
-  async sendDeepLink(link: string, build: BuildResult) {
+  async sendDeepLink(link: string, build: BuildResult, terminateApp: boolean) {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
+    }
+
+    if (terminateApp) {
+      await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", build.packageName]);
     }
 
     await exec(ADB_PATH, [

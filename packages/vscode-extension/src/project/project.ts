@@ -668,7 +668,7 @@ export class Project
     return extensionContext.workspaceState.get<string[] | undefined>(DEEP_LINKS_HISTORY_KEY) ?? [];
   }
 
-  async openDeepLink(link: string) {
+  async openDeepLink(link: string, terminateApp: boolean) {
     const history = await this.getDeepLinksHistory();
     if (history.length === 0 || link !== history[0]) {
       extensionContext.workspaceState.update(
@@ -677,7 +677,7 @@ export class Project
       );
     }
 
-    this.deviceSession?.sendDeepLink(link);
+    this.deviceSession?.sendDeepLink(link, terminateApp);
   }
 
   public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {

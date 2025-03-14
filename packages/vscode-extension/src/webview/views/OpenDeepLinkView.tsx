@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import * as Switch from "@radix-ui/react-switch";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
 import { SearchSelect } from "../components/shared/SearchSelect";
@@ -11,6 +12,7 @@ export const OpenDeepLinkView = () => {
 
   const [url, setUrl] = useState<string>("");
   const [history, setHistory] = useState<string[] | undefined>(undefined);
+  const [terminateApp, setTerminateApp] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -24,7 +26,7 @@ export const OpenDeepLinkView = () => {
       return;
     }
     closeModal();
-    await project.openDeepLink(link);
+    await project.openDeepLink(link, terminateApp);
   };
 
   return (
@@ -41,6 +43,15 @@ export const OpenDeepLinkView = () => {
         isLoading={history === undefined}
         onValueChange={setUrl}
       />
+      <div className="checkbox-container">
+        <Switch.Root
+          className="switch-root small-switch"
+          onCheckedChange={setTerminateApp}
+          defaultChecked={terminateApp}>
+          <Switch.Thumb className="switch-thumb" />
+        </Switch.Root>
+        <label>Terminate app before sending deep link</label>
+      </div>
       <div className="submit-button-container">
         <Button className="submit-button" type="secondary" onClick={() => openDeepLink(url)}>
           Open
