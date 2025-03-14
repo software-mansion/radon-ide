@@ -19,6 +19,7 @@ const IGNORE_PATHS = [
   path.join("android", "build/**/*"),
   path.join("android", "app", "build/**/*"),
   path.join("ios", "build/**/*"),
+  path.join("ios", "DerivedData/**/*"),
   "**/node_modules/**/android/.cxx/**/*",
   "**/node_modules/**/.gradle/**/*",
   "**/node_modules/**/android/build/intermediates/cxx/**/*",
