@@ -222,7 +222,7 @@ const NetworkRequestLog = ({
       }
     };
 
-    if (!selectedNetworkLog && scrollTop >= container.scrollHeight - container.clientHeight * 1.1) {
+    if (!selectedNetworkLog && scrollTop >= container.scrollHeight - container.clientHeight * 1.2) {
       container.scrollTo({
         top: container.scrollHeight,
         behavior: "smooth",

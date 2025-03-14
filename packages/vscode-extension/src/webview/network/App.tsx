@@ -2,7 +2,7 @@ import "./App.css";
 import { useEffect, useRef, useState } from "react";
 import NetworkBar from "../components/NetworkBar";
 import NetworkFilters from "../components/NetworkFilters";
-import useNetworkTracker, { NetworkLog } from "../hooks/useNetworkTracker";
+import { NetworkLog } from "../hooks/useNetworkTracker";
 import NetworkRequestLog from "../components/NetworkRequestLog";
 import NetworkLogDetails from "../components/NetworkLogDetails";
 import { useNetwork } from "../providers/NetworkProvider";
@@ -10,8 +10,7 @@ import NetworkTimeline from "../components/NetworkTimeline";
 
 function App() {
   const parentRef = useRef<HTMLDivElement>(null);
-  const networkLogs = useNetworkTracker();
-  const { showFilter } = useNetwork();
+  const { showFilter, networkLogs } = useNetwork();
 
   const [selectedNetworkLog, setSelectedNetworkLog] = useState<NetworkLog | null>(null);
   const [detailsWidth, setDetailsWidth] = useState(0);
@@ -47,7 +46,6 @@ function App() {
 
         {selectedNetworkLog && (
           <NetworkLogDetails
-            parentRef={parentRef}
             networkLog={selectedNetworkLog}
             containerWidth={detailsWidth}
             handleClose={() => setSelectedNetworkLog(null)}

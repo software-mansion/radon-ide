@@ -53,7 +53,7 @@ const XHR_REF_TIMEOUT_MS = 3 * 60 * 1000; // 3 mins
 class FakeWeakRef {
   constructor(obj) {
     this.obj = obj;
-    this.timeout = setTimeout(() => this.obj = undefined, XHR_REF_TIMEOUT_MS)
+    this.timeout = setTimeout(() => (this.obj = undefined), XHR_REF_TIMEOUT_MS);
   }
   deref() {
     // timeout captures this and hence may extend the time the reference is kept.
@@ -158,11 +158,13 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
         timestamp: Date.now() / 1000,
         type: "XHR",
         response: {
+          type: xhr.responseType,
           url: xhr._url,
           status: xhr.status,
           statusText: xhr.statusText,
           headers: xhr.responseHeaders,
           mimeType: mimeTypeFromResponseType(xhr.responseType),
+          data: xhr._response,
         },
       });
     });

@@ -1,7 +1,6 @@
 table {
   align-self: flex-start;
   border-collapse: collapse;
-  padding-top: 30px;
   width: 100%;
 }
 
@@ -61,4 +60,5 @@ thead {
   width: 100%;
   height: 100%;
   border-radius: 5px;
+  padding-top: 32px;
 }
