@@ -15,5 +15,5 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #333; /* Adjust color to match your theme */
+  color: var(--swm-default-text);
 }
