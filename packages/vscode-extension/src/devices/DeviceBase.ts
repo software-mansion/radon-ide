@@ -26,6 +26,7 @@ export abstract class DeviceBase implements Disposable {
   abstract getClipboard(): Promise<string | void>;
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
   abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
+  abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
   abstract makePreview(): Preview;
   abstract get platform(): DevicePlatform;
   abstract get deviceInfo(): DeviceInfo;

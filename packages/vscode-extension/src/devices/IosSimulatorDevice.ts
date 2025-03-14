@@ -290,7 +290,7 @@ export class IosSimulatorDevice extends DeviceBase {
     }
   }
 
-  terminateApp = async (bundleID: string) => {
+  async terminateApp(bundleID: string) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
     // Terminate the app if it's running:
@@ -303,7 +303,7 @@ export class IosSimulatorDevice extends DeviceBase {
     } catch (e) {
       // terminate will exit with non-zero code when the app wasn't running. we ignore this error
     }
-  };
+  }
 
   /**
    * This function terminates any running applications. Might be useful when you launch a new application
@@ -327,7 +327,11 @@ export class IosSimulatorDevice extends DeviceBase {
       matches.push(match[1]);
     }
 
-    await Promise.all(matches.map(this.terminateApp));
+    await Promise.all(
+      matches.map((e) => {
+        this.terminateApp(e);
+      })
+    );
   }
 
   async launchWithBuild(build: IOSBuildResult) {
@@ -458,13 +462,9 @@ export class IosSimulatorDevice extends DeviceBase {
     return false;
   }
 
-  async sendDeepLink(link: string, build: BuildResult, terminateApp: boolean) {
+  async sendDeepLink(link: string, build: BuildResult) {
     if (build.platform !== DevicePlatform.IOS) {
       throw new Error("Invalid platform");
-    }
-
-    if (terminateApp) {
-      await this.terminateApp(build.bundleID);
     }
 
     await exec("xcrun", [
