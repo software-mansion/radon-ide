@@ -441,6 +441,15 @@ export function AppWrapper({ children, initialProps, fabric }) {
     }
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
     LogBox.uninstall();
+    const subscription = RNInternals.LogBoxData.observe(({ logs, selectedLogIndex }) => {
+      const log = Array.from(logs)[selectedLogIndex];
+      if (!log) {
+        return;
+      }
+      const message = log.message.content;
+      const codeFrame = log.codeFrame;
+      devtoolsAgent._bridge.send("RNIDE_uncaughtException", { message, codeFrame });
+    });
 
     function wrappedGlobalErrorHandler(error, isFatal) {
       try {
@@ -450,14 +459,12 @@ export function AppWrapper({ children, initialProps, fabric }) {
         originalErrorHandler(error, isFatal);
         LogBox.uninstall();
       } catch {}
-      const message = error.message;
-      const stack = RNInternals.parseErrorStack(error.stack);
-      devtoolsAgent._bridge.send("RNIDE_openCodeOnException", { message, stack });
     }
 
     global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
     return () => {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
+      subscription.unsubscribe();
       LogBox.install();
     };
   }, [devtoolsAgent]);

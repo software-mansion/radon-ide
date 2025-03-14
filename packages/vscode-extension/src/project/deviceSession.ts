@@ -23,10 +23,16 @@ import { DevicePlatform } from "../common/DeviceManager";
 type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
 
+export interface CodeFrame {
+  location: { row: number; column: number };
+  fileName: string;
+}
+
 export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
   fastRefreshStarted: undefined;
   fastRefreshComplete: undefined;
+  uncaughtException: { message: string; codeFrame: CodeFrame };
 };
 
 export type EventDelegate = {
@@ -85,6 +91,9 @@ export class DeviceSession implements Disposable {
           break;
         case "RNIDE_fastRefreshComplete":
           this.eventDelegate.onAppEvent("fastRefreshComplete", undefined);
+          break;
+        case "RNIDE_uncaughtException":
+          this.eventDelegate.onAppEvent("uncaughtException", payload);
           break;
       }
     });

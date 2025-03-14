@@ -12,6 +12,11 @@ import {
   Uri,
   extensions,
   ConfigurationChangeEvent,
+  Diagnostic,
+  Range,
+  Position,
+  languages,
+  DiagnosticSeverity,
 } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
@@ -71,6 +76,7 @@ export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
 {
   private applicationContext: ApplicationContext;
+  private diagnosticsCollection = languages.createDiagnosticCollection("Radon IDE");
 
   public metro: Metro;
   public toolsManager: ToolsManager;
@@ -213,6 +219,27 @@ export class Project
           return;
         }
         this.updateProjectState({ status: "running" });
+        break;
+      case "uncaughtException":
+        const { message, codeFrame } = payload as AppEvent["uncaughtException"];
+        (async () => {
+          const errorPosition = new Position(
+            codeFrame.location.row - 1,
+            codeFrame.location.column - 1
+          );
+          const textDocument = await workspace.openTextDocument(codeFrame.fileName);
+          await window.showTextDocument(textDocument, {
+            selection: new Range(errorPosition, errorPosition),
+          });
+          this.diagnosticsCollection.clear();
+          this.diagnosticsCollection.set(textDocument.uri, [
+            new Diagnostic(
+              new Range(errorPosition, errorPosition),
+              `Uncaught exception: ${message}`,
+              DiagnosticSeverity.Error
+            ),
+          ]);
+        })();
         break;
     }
   };
