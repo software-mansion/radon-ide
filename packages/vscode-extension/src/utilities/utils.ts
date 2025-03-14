@@ -89,7 +89,7 @@ export class Utils implements UtilsInterface {
   }
 
   public async openFileAt(filePath: string, line0Based: number, column0Based: number) {
-    openFileAtPosition(filePath, line0Based, column0Based);
+    await openFileAtPosition(filePath, line0Based, column0Based);
   }
 
   public async saveMultimedia(multimediaData: MultimediaData) {

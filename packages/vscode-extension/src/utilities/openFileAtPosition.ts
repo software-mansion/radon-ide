@@ -1,11 +1,11 @@
-import { window, workspace, ViewColumn, Range } from "vscode";
+import vscode, { window, workspace, ViewColumn, Range } from "vscode";
 import { Logger } from "../Logger";
 
 export async function openFileAtPosition(
   filePath: string,
   line0Based: number,
   column0Based: number
-) {
+): Promise<vscode.TextEditor> {
   const existingDocument = workspace.textDocuments.find((document) => {
     Logger.debug(`Existing document list ${document.uri.fsPath}`);
     return document.uri.fsPath === filePath;
@@ -19,14 +19,14 @@ export async function openFileAtPosition(
   const column = activeRNIDEColumn === ViewColumn.One ? ViewColumn.Beside : ViewColumn.One;
   if (existingDocument) {
     // If the file is already open, show (focus on) its editor
-    await window.showTextDocument(existingDocument, {
+    return await window.showTextDocument(existingDocument, {
       selection,
       viewColumn: column,
     });
   } else {
     // If the file is not open, open it in a new editor
     const document = await workspace.openTextDocument(filePath);
-    await window.showTextDocument(document, {
+    return await window.showTextDocument(document, {
       selection,
       viewColumn: column,
     });

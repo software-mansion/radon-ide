@@ -15,8 +15,10 @@ import {
   Diagnostic,
   Range,
   Position,
+  Location,
   languages,
   DiagnosticSeverity,
+  DiagnosticRelatedInformation,
 } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
@@ -44,7 +46,13 @@ import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
-import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
+import {
+  AppEvent,
+  CodeFrame,
+  DeviceBootError,
+  DeviceSession,
+  EventDelegate,
+} from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
@@ -59,6 +67,7 @@ import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
 import { focusSource } from "../utilities/focusSource";
+import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -222,24 +231,7 @@ export class Project
         break;
       case "uncaughtException":
         const { message, codeFrame } = payload as AppEvent["uncaughtException"];
-        (async () => {
-          const errorPosition = new Position(
-            codeFrame.location.row - 1,
-            codeFrame.location.column - 1
-          );
-          const textDocument = await workspace.openTextDocument(codeFrame.fileName);
-          await window.showTextDocument(textDocument, {
-            selection: new Range(errorPosition, errorPosition),
-          });
-          this.diagnosticsCollection.clear();
-          this.diagnosticsCollection.set(textDocument.uri, [
-            new Diagnostic(
-              new Range(errorPosition, errorPosition),
-              `Uncaught exception: ${message}`,
-              DiagnosticSeverity.Error
-            ),
-          ]);
-        })();
+        this.showUncaughtException(message, codeFrame);
         break;
     }
   };
@@ -1043,6 +1035,24 @@ export class Project
       }
     }
   }, FINGERPRINT_THROTTLE_MS);
+
+  private async showUncaughtException(message: string, codeFrame: CodeFrame) {
+    const line = codeFrame.location.row - 1;
+    const column = codeFrame.location.column - 1;
+    const errorPosition = new Position(line, column);
+    const errorRange = new Range(errorPosition, errorPosition);
+    const textEditor = await openFileAtPosition(codeFrame.fileName, line, column);
+    this.diagnosticsCollection.clear();
+    const exceptionDiagnostic = new Diagnostic(errorRange, message, DiagnosticSeverity.Error);
+    exceptionDiagnostic.source = "Uncaught exception";
+    exceptionDiagnostic.relatedInformation = [
+      new DiagnosticRelatedInformation(
+        new Location(textEditor.document.uri, errorRange),
+        `Uncaught exception: ${message}`
+      ),
+    ];
+    this.diagnosticsCollection.set(textEditor.document.uri, [exceptionDiagnostic]);
+  }
 }
 
 function watchProjectFiles(onChange: () => void) {
