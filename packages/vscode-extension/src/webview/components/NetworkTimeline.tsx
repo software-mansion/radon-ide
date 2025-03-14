@@ -4,7 +4,9 @@ import useNetworkTracker from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/network";
 
-const HEIGHT = 100;
+const HEIGHT = 150;
+const MARGIN_VERTICAL = 20;
+const TIMELINE_LEGEND_HEIGHT = 20;
 const SIDEBAR_MAX_WIDTH = 600;
 const ROW_HEIGHT = 10;
 const ROW_PADDING = 5;
@@ -15,15 +17,16 @@ const MAX_SIZE_SMALL_SCREEN = 5000;
 const MAX_VIEW_TIME =
   window.innerWidth > SIDEBAR_MAX_WIDTH ? MAX_SIZE_BIG_SCREEN : MAX_SIZE_SMALL_SCREEN;
 
-const NetworkTimeline = () => {
-  const { isClearing, filters, setFilters } = useNetwork();
+interface NetworkFiltersProps {
+  handleSelectedRequest: (id: string | null) => void;
+}
 
-  const networkData = useNetworkTracker();
+const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
+  const { isClearing, filters, setFilters } = useNetwork();
+  const networkLogs = useNetworkTracker();
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
-  const [stopInserting, setStopInserting] = useState(false);
-  const [currentData, setCurrentData] = useState(networkData);
 
   const getColorForSameService = (url: string) => {
     const urlObject = new URL(url);
@@ -31,26 +34,8 @@ const NetworkTimeline = () => {
     return `hsl(${urlObject.hostname.length * 10}, 70%, 50%)`;
   };
 
-  const getColorForStatus = (status: number) => {
-    if (status >= 200 && status < 300) {
-      return "var(--vscode-charts-green)";
-    } else if (status >= 300 && status < 400) {
-      return "var(--vscode-charts-blue)";
-    } else if (status >= 400 && status < 500) {
-      return "var(--vscode-charts-orange)";
-    } else {
-      return "var(--vscode-charts-red)";
-    }
-  };
-
-  useEffect(() => {
-    if (!stopInserting) {
-      setCurrentData(networkData);
-    }
-  }, [networkData]);
-
   const processedData = useMemo(() => {
-    return currentData.map((d) => ({
+    return networkLogs.map((d) => ({
       requestId: d.requestId,
       url: d.request?.url || "",
       status: d.response?.status || 0,
@@ -61,7 +46,7 @@ const NetworkTimeline = () => {
       duration: d.timeline?.durationMs || 0,
       headers: d.request?.headers || {},
     }));
-  }, [currentData, isClearing]);
+  }, [networkLogs]);
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -122,28 +107,40 @@ const NetworkTimeline = () => {
     };
 
     const rows = placeRequestsInRows(processedData);
-    const svgHeight = rows.length * (ROW_HEIGHT + ROW_PADDING) + 50;
+    const renderHeight = HEIGHT - TIMELINE_LEGEND_HEIGHT - MARGIN_VERTICAL;
+    const maxRows = Math.floor(renderHeight / (ROW_HEIGHT + ROW_PADDING));
+    const adjustedRowHeight =
+      rows.length > maxRows ? Math.max(2, renderHeight / rows.length - ROW_PADDING) : ROW_HEIGHT;
 
     const svg = container
       .append("svg")
       .attr("width", containerWidth)
-      .attr("height", svgHeight)
+      .attr("height", HEIGHT)
       .style("background", "var(--swm-preview-background)");
 
     svg
       .append("g")
-      .attr("transform", `translate(0,${svgHeight - 20})`)
+      .attr("transform", `translate(0,${HEIGHT - TIMELINE_LEGEND_HEIGHT})`)
       .call(xAxis);
+
+    const dashedLineGroup = svg.append("g").attr("class", "dashed-lines");
+    for (let i = minTime; i < maxTime; i += 1000) {
+      dashedLineGroup
+        .append("line")
+        .attr("x1", timeScale(i))
+        .attr("x2", timeScale(i))
+        .attr("y1", 0)
+        .attr("y2", HEIGHT - TIMELINE_LEGEND_HEIGHT)
+        .attr("stroke", "var(--swm-default-text)")
+        .attr("stroke-dasharray", "4,4");
+    }
 
     const brush = d3
       .brushX()
       .extent([
         [CHART_MARGIN, 0],
-        [containerWidth - CHART_MARGIN, HEIGHT - 20],
+        [containerWidth - CHART_MARGIN, HEIGHT - TIMELINE_LEGEND_HEIGHT],
       ])
-      .on("start", () => {
-        setStopInserting(true);
-      })
       .on("brush", (event) => {
         const [start, end] = event.selection;
         if (start === end) {
@@ -162,82 +159,93 @@ const NetworkTimeline = () => {
       .on("end", (event) => {
         if (!event.selection) {
           setIsAutoScrolling(true);
-          setStopInserting(false);
         }
       });
 
     svg.append("g").attr("class", "brush").call(brush);
 
-    const cursorLine = svg
-      .append("line")
-      .attr("class", "cursor-line")
-      .attr("y1", 0)
-      .attr("y2", svgHeight - 20)
-      .attr("stroke", "gray")
-      .attr("stroke-dasharray", "4")
-      .style("opacity", 0);
+    svg.on("click", function (event) {
+      console.log("click", event);
+      const [x] = d3.pointer(event);
+      const clickedRequest = processedData.find(
+        (d) => x >= timeScale(d.startTimestamp) && x <= timeScale(d.endTimestamp)
+      );
+      if (clickedRequest) {
+        handleSelectedRequest(clickedRequest.requestId);
+      }
+    });
 
-    svg
-      .on("mousemove", function (event) {
-        const [x] = d3.pointer(event);
-        cursorLine.attr("x1", x).attr("x2", x).style("opacity", 1);
-      })
-      .on("mouseleave", function () {
-        cursorLine.style("opacity", 0);
-      });
+    const rowGroups = svg
+      .append("g")
+      .attr("class", "requests")
+      .selectAll(".request-row")
+      .data(rows)
+      .join(
+        (enter) => enter.append("g").attr("class", "request-row"),
+        (update) => update,
+        (exit) => exit.remove()
+      );
 
-    const requestGroup = svg.append("g").attr("class", "requests");
+    rowGroups.each(function (rowData, rowIndex) {
+      const rowGroup = d3.select(this);
 
-    rows.forEach((row, rowIndex) => {
-      const bars = requestGroup
-        .selectAll(`.request-row-${rowIndex}`)
-        .data(row, (d: any) => d.requestId)
-        .enter()
-        .append("g")
-        .attr("class", `request-row-${rowIndex}`);
+      rowGroup
+        .selectAll(".request-bar")
+        .data(rowData, (d: any) => d.requestId)
+        .join(
+          (enter) =>
+            enter
+              .append("rect")
+              .attr("class", "request-bar")
+              .attr("x", (d) => timeScale(d.startTimestamp))
+              .attr("y", rowIndex * (adjustedRowHeight + ROW_PADDING) + MARGIN_VERTICAL / 2)
+              .attr("width", (d) =>
+                Math.max(1, timeScale(d.endTimestamp) - timeScale(d.startTimestamp))
+              )
+              .attr("height", adjustedRowHeight)
+              .attr("fill", (d) => getColorForSameService(d.url))
+              .on("mouseover", function (event, d) {
+                d3.select("body").selectAll(".tooltip").remove();
+                const tooltip = d3.select("body").append("div").attr("class", "tooltip");
+                tooltip
+                  .style("position", "absolute")
+                  .style("background", "var(--swm-input-background)")
+                  .style("color", "var(--swm-default-text)")
+                  .style("border", "1px")
+                  .style("box-shadow", "var(--swm-input-shadow)")
+                  .style("padding", "5px")
+                  .style("border-radius", "5px")
+                  .style("pointer-events", "none")
+                  .style("left", `${event.pageX + 10}px`)
+                  .style("top", `${event.pageY + 10}px`).html(`
+                    <strong>Request:</strong> ${d.requestId}<br/>
+                    <strong>URL:</strong> ${d.url}<br/>
+                    <strong>Method:</strong> ${d.method}<br/>
+                    <strong>Status:</strong> ${d.status}<br/>
+                    <strong>Duration:</strong> ${d.endTimestamp - d.startTimestamp} ms<br/>
+                  `);
 
-      bars
-        .append("rect")
-        .attr("x", (d) => timeScale(d.startTimestamp))
-        .attr("y", rowIndex * (ROW_HEIGHT + ROW_PADDING) + 20)
-        .attr("width", (d) => Math.max(1, timeScale(d.endTimestamp) - timeScale(d.startTimestamp)))
-        .attr("height", ROW_HEIGHT)
-        .attr("fill", (d) => getColorForSameService(d.url))
-
-        .on("mouseover", function (event, d) {
-          d3.select("body").selectAll(".tooltip").remove();
-          const tooltip = d3.select("body").append("div").attr("class", "tooltip");
-          tooltip
-            .style("position", "absolute")
-            .style("background", "var(--swm-url-select-background)")
-            .style("border", `2px solid ${getColorForStatus(d.status)}`)
-            .style("box-shadow", `0 2px 5px ${getColorForStatus(d.status)}`)
-            .style("padding", "5px")
-            .style("border-radius", "5px")
-            .style("pointer-events", "none")
-            .style("left", `${event.pageX + 10}px`)
-            .style("top", `${event.pageY + 10}px`).html(`
-              <strong>Request:</strong> ${d.requestId}<br/>
-              <strong>URL:</strong> ${d.url}<br/>
-              <strong>Method:</strong> ${d.method}<br/>
-              <strong>Status:</strong> ${d.status}<br/>
-              <strong>Duration:</strong> ${d.endTimestamp - d.startTimestamp} ms<br/>
-            `);
-
-          setTimeout(() => {
-            tooltip.transition().duration(200).style("opacity", 1);
-          }, 100);
-        })
-        .on("mouseout", function () {
-          setTimeout(() => {
-            d3.select("body")
-              .selectAll(".tooltip")
+                tooltip.transition().duration(50).style("opacity", 1);
+              })
+              .on("mouseout", function () {
+                d3.select("body")
+                  .selectAll(".tooltip")
+                  .transition()
+                  .duration(50)
+                  .style("opacity", 0)
+                  .remove();
+              }),
+          (update) =>
+            update
               .transition()
-              .duration(200)
-              .style("opacity", 0)
-              .remove();
-          }, 300);
-        });
+              .duration(50)
+              .attr("x", (d) => timeScale(d.startTimestamp))
+              .attr("width", (d) =>
+                Math.max(1, timeScale(d.endTimestamp) - timeScale(d.startTimestamp))
+              ),
+
+          (exit) => exit.transition().duration(50).style("opacity", 0).remove()
+        );
     });
 
     const handleScroll = (event: WheelEvent) => {
@@ -250,7 +258,7 @@ const NetworkTimeline = () => {
 
     containerRef.current.addEventListener("wheel", handleScroll, { passive: true });
     return () => containerRef.current?.removeEventListener("wheel", handleScroll);
-  }, [processedData, scrollOffset]);
+  }, [processedData]);
 
   return <div ref={containerRef} style={{ width: "100%", height: HEIGHT, overflowX: "hidden" }} />;
 };

@@ -7,7 +7,7 @@ interface NetworkRequestLogProps {
   networkLogs: NetworkLog[];
   detailsWidth: number;
   selectedNetworkLog: NetworkLog | null;
-  handleSelectedRequest: (log: NetworkLog | null) => void;
+  handleSelectedRequest: (id: string | null) => void;
 }
 
 const ROWS = ["Domain", "File", "Status", "Method", "Type", "Size", "Time"];
@@ -260,7 +260,9 @@ const NetworkRequestLog = ({
               key={index}
               className={selectedNetworkLog?.requestId === log.requestId ? "selected" : ""}
               onClick={() =>
-                handleSelectedRequest(selectedNetworkLog?.requestId === log.requestId ? null : log)
+                handleSelectedRequest(
+                  selectedNetworkLog?.requestId === log.requestId ? null : log.requestId
+                )
               }>
               {logDetailsConfig.map(({ title, getValue, getClass }) => (
                 <td

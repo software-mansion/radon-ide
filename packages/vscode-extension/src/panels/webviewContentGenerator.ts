@@ -3,17 +3,6 @@ import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { Platform } from "../utilities/platform";
 
-const VITE_DEV_PREABMLE = /*html*/ `
-<script type="module">
-import RefreshRuntime from "/@react-refresh"
-RefreshRuntime.injectIntoGlobalHook(window)
-window.$RefreshReg$ = () => {}
-window.$RefreshSig$ = () => (type) => type
-window.__vite_plugin_react_preamble_installed__ = true
-</script>
-<script type="module" src="/@vite/client"></script>
-`;
-
 export function generateWebviewContent(
   context: ExtensionContext,
   webview: Webview,
@@ -40,6 +29,17 @@ export function generateWebviewContent(
     : "codicon.css";
 
   const nonce = getNonce();
+
+  const VITE_DEV_PREABMLE = /*html*/ `
+    <script type="module">
+      import RefreshRuntime from "/@react-refresh";
+      RefreshRuntime.injectIntoGlobalHook(window);
+      window.$RefreshReg$ = () => {};
+      window.$RefreshSig$ = () => (type) => type;
+      window.__vite_plugin_react_preamble_installed__ = true;
+    </script>
+    <script type="module" nonce="${nonce}" src="/@vite/client"></script>
+  `;
 
   const version = context.extension.packageJSON.version;
 

@@ -1,5 +1,14 @@
 import { createContext, PropsWithChildren, useContext, useMemo, useState } from "react";
 
+type TimestampRange = {
+  start: number;
+  end: number;
+};
+
+interface Filters {
+  timestampRange?: TimestampRange;
+}
+
 interface NetworkProviderProps {
   isRecording: boolean;
   showFilter: boolean;
@@ -13,35 +22,10 @@ interface NetworkProviderProps {
   toggleScrolling: () => void;
 }
 
-enum RequestType {
-  All = "all",
-  XHR = "xhr",
-  Image = "image",
-  Script = "script",
-  CSS = "css",
-  Font = "font",
-  Media = "media",
-  Manifest = "manifest",
-  WebSocket = "ws",
-  WebAssembly = "wasm",
-  Other = "other",
-}
-
-type TimestampRange = {
-  start: number;
-  end: number;
-};
-
-interface Filters {
-  requestType: RequestType;
-  timestampRange?: TimestampRange;
-}
-
 const NetworkContext = createContext<NetworkProviderProps>({
   isRecording: true,
   showFilter: false,
   filters: {
-    requestType: RequestType.All,
     timestampRange: undefined,
   },
   isClearing: false,
@@ -59,7 +43,6 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [showFilter, setShowFilter] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [filters, setFilters] = useState<Filters>({
-    requestType: RequestType.All,
     timestampRange: undefined,
   });
 
