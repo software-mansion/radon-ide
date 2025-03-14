@@ -1,4 +1,4 @@
-import { assert } from "console";
+import assert from "assert";
 import {
   commands,
   debug,
@@ -11,6 +11,10 @@ import { Logger } from "../Logger";
 import { CDPConfiguration } from "./DebugAdapter";
 
 const PING_TIMEOUT = 1000;
+
+export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
+export const DEBUG_PAUSED = "RNIDE_paused";
+export const DEBUG_RESUMED = "RNIDE_continued";
 
 export type DebugSessionDelegate = {
   onConsoleLog(event: DebugSessionCustomEvent): void;
@@ -35,13 +39,13 @@ export class DebugSession implements Disposable {
   constructor(private delegate: DebugSessionDelegate) {
     this.debugEventsListener = debug.onDidReceiveDebugSessionCustomEvent((event) => {
       switch (event.event) {
-        case "RNIDE_consoleLog":
+        case DEBUG_CONSOLE_LOG:
           this.delegate.onConsoleLog(event);
           break;
-        case "RNIDE_paused":
+        case DEBUG_PAUSED:
           this.delegate.onDebuggerPaused(event);
           break;
-        case "RNIDE_continued":
+        case DEBUG_RESUMED:
           this.delegate.onDebuggerResumed(event);
           break;
         case "RNIDE_pong":
@@ -154,21 +158,13 @@ export class DebugSession implements Disposable {
       return false;
     }
 
-    let sourceMapAliases: Array<[string, string]> = [];
-    const isUsingNewDebugger = metro.isUsingNewDebugger;
-    if (isUsingNewDebugger && metro.watchFolders.length > 0) {
-      // first entry in watchFolders is the project root
-      sourceMapAliases.push(["/[metro-project]/", metro.watchFolders[0]]);
-      metro.watchFolders.forEach((watchFolder, index) => {
-        sourceMapAliases.push([`/[metro-watchFolders]/${index}/`, watchFolder]);
-      });
-    }
+    const isUsingNewDebugger = metro.isUsingNewDebugger.valueOf();
 
     await this.connectCDPDebugger({
       websocketAddress,
-      sourceMapAliases,
+      metroWatchFolders: metro.watchFolders,
       expoPreludeLineCount: metro.expoPreludeLineCount,
-      breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
+      isUsingNewDebugger,
     });
 
     this.wasConnectedToCDP = true;

@@ -1,6 +1,4 @@
 import fs from "fs";
-import path from "path";
-import os from "os";
 import { DebugConfiguration } from "vscode";
 import {
   DebugSession,
@@ -23,6 +21,7 @@ import {
 } from "./cdp";
 import { CDPSession, CDPSessionDelegate } from "./CDPSession";
 import getArraySlots from "./templates/getArraySlots";
+import { filePathForProfile } from "./cpuProfiler";
 
 export type CDPConfiguration = {
   websocketAddress: string;
@@ -383,8 +382,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
       case "RNIDE_stopProfiling":
         if (this.cdpSession) {
           const profile = await this.cdpSession.stopProfiling();
-          const fileName = `profile-${Date.now()}.cpuprofile`;
-          const filePath = path.join(os.tmpdir(), fileName);
+          const filePath = filePathForProfile();
           await fs.promises.writeFile(filePath, JSON.stringify(profile));
           this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
         }

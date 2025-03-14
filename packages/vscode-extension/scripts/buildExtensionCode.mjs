@@ -22,7 +22,7 @@ if (mode === "production") {
             return {
               package_name: dependency.packageJson.name,
               package_version: dependency.packageJson.version,
-              repository: dependency.packageJson.repository.url,
+              repository: dependency.packageJson.repository?.url,
               license: dependency.packageJson.license,
               licenses: [
                 {

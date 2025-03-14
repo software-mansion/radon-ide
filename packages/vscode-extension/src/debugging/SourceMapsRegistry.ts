@@ -163,7 +163,7 @@ export class SourceMapsRegistry {
     if (this.sourceMapAliases) {
       // we return the first alias from the list
       for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
-        if (absoluteFilePath.startsWith(absoluteFilePath)) {
+        if (sourceAbsoluteFilePath.startsWith(absoluteFilePath)) {
           return path.join(alias, path.relative(absoluteFilePath, sourceAbsoluteFilePath));
         }
       }

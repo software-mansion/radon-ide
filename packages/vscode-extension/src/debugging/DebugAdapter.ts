@@ -1,3 +1,4 @@
+import path from "path";
 import { debug, DebugConsoleMode, DebugSession } from "vscode";
 import { DebugSession as DebugAdapterSession, OutputEvent, Source } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
@@ -7,11 +8,12 @@ import { DebugSource } from "./DebugSession";
 export type CDPConfiguration = {
   websocketAddress: string;
   expoPreludeLineCount: number;
-  sourceMapAliases: [string, string][];
-  breakpointsAreRemovedOnContextCleared: boolean;
+  isUsingNewDebugger: boolean;
+  metroWatchFolders: string[];
 };
 
-const JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
+const OLD_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
+const PROXY_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
 
 export function typeToCategory(type: string) {
   switch (type) {
@@ -31,22 +33,37 @@ export class DebugAdapter extends DebugAdapterSession {
   }
 
   private async connectJSDebugger(cdpConfiguration: CDPConfiguration) {
+    const { websocketAddress, expoPreludeLineCount, isUsingNewDebugger, metroWatchFolders } =
+      cdpConfiguration;
+    const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
+
     let didStartHandler: Disposable | null = debug.onDidStartDebugSession((session) => {
-      if (session.type === JS_DEBUGGER_TYPE) {
+      if (session.type === debuggerType) {
         this.cdpDebugSession = session;
         didStartHandler?.dispose();
         didStartHandler = null;
       }
     });
 
+    const sourceMapPathOverrides: Record<string, string> = {};
+    if (isUsingNewDebugger && metroWatchFolders.length > 0) {
+      sourceMapPathOverrides["/[metro-project]/*"] = `${metroWatchFolders[0]}${path.sep}*`;
+      metroWatchFolders.forEach((watchFolder, index) => {
+        sourceMapPathOverrides[`/[metro-watchFolders]/${index}/*`] = `${watchFolder}${path.sep}*`;
+      });
+    }
+
     try {
       await debug.startDebugging(
         undefined,
         {
-          type: JS_DEBUGGER_TYPE,
+          type: debuggerType,
           name: "React Native JS Debugger",
           request: "attach",
-          ...cdpConfiguration,
+          breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
+          sourceMapPathOverrides,
+          websocketAddress,
+          expoPreludeLineCount,
         },
         {
           parentSession: this.vscDebugSession,
