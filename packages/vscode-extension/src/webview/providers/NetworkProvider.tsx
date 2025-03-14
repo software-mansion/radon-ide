@@ -1,4 +1,8 @@
 import { createContext, PropsWithChildren, useContext, useMemo, useState } from "react";
+import useNetworkTracker, {
+  NetworkTracker,
+  networkTrackerInitialState,
+} from "../hooks/useNetworkTracker";
 
 type TimestampRange = {
   start: number;
@@ -9,7 +13,7 @@ interface Filters {
   timestampRange?: TimestampRange;
 }
 
-interface NetworkProviderProps {
+interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
   showFilter: boolean;
   filters: Filters;
@@ -23,6 +27,7 @@ interface NetworkProviderProps {
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
+  ...networkTrackerInitialState,
   isRecording: true,
   showFilter: false,
   filters: {
@@ -38,6 +43,8 @@ const NetworkContext = createContext<NetworkProviderProps>({
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
+  const networkTracker = useNetworkTracker();
+
   const [isRecording, setIsRecording] = useState(true);
   const [isClearing, setIsClearing] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
@@ -68,6 +75,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
   const contextValue = useMemo(() => {
     return {
+      ...networkTracker,
       isRecording,
       filters,
       showFilter,

@@ -55,3 +55,7 @@ main {
   overflow: scroll;
   position: relative;
 }
+
+::-webkit-scrollbar {
+  width: 10px;
+}

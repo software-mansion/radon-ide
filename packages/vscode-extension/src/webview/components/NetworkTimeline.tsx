@@ -35,7 +35,7 @@ const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
   };
 
   const processedData = useMemo(() => {
-    return networkLogs.map((d) => ({
+    return networkLogs.networkLogs.map((d) => ({
       requestId: d.requestId,
       url: d.request?.url || "",
       status: d.response?.status || 0,

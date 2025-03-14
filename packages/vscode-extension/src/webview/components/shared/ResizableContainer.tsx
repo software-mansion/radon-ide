@@ -89,9 +89,9 @@ const ResizableContainer = ({
           onMouseDown={handleMouseDown}
           style={{
             right: isColumn || side === "right" ? 0 : "100%",
-            // position: isColumn ? "absolute" : "relative",
           }}
         />
+        {isColumn && <div className="draggable-bg" />}
         <div className="content">{children}</div>
       </div>
     </div>

@@ -2,7 +2,6 @@ import "./App.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import NetworkBar from "../components/NetworkBar";
 import NetworkFilters from "../components/NetworkFilters";
-import useNetworkTracker from "../hooks/useNetworkTracker";
 import NetworkRequestLog from "../components/NetworkRequestLog";
 import NetworkLogDetails from "../components/NetworkLogDetails";
 import { useNetwork } from "../providers/NetworkProvider";
@@ -10,8 +9,7 @@ import NetworkTimeline from "../components/NetworkTimeline";
 
 function App() {
   const parentRef = useRef<HTMLDivElement>(null);
-  const networkLogs = useNetworkTracker();
-  const { showFilter } = useNetwork();
+  const { showFilter, networkLogs } = useNetwork();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
   const [detailsWidth, setDetailsWidth] = useState(0);
@@ -21,7 +19,7 @@ function App() {
   }, [selectedNetworkLogId]);
 
   useEffect(() => {
-    if (!selectedNetworkLogId) {
+    if (!selectedNetworkLog) {
       console.log("Resetting details width");
       setDetailsWidth(0);
     } else {
@@ -52,10 +50,10 @@ function App() {
 
         {selectedNetworkLog && (
           <NetworkLogDetails
-            parentRef={parentRef}
             networkLog={selectedNetworkLog}
             handleClose={() => setSelectedNetworkLogId(null)}
-            handleContainerSize={(width) => setDetailsWidth(width)}
+            containerWidth={detailsWidth}
+            setContainerWidth={setDetailsWidth}
           />
         )}
       </div>

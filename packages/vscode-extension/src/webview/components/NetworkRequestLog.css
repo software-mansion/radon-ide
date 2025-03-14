@@ -1,9 +1,7 @@
 table {
-  border-radius: 20px;
   align-self: flex-start;
   border-collapse: collapse;
-  padding-top: 30px;
-  /* width: 100%; */
+  width: 100%;
 }
 
 th,
@@ -23,9 +21,6 @@ th {
   background-color: var(--vscode-dropdown-background);
   font-weight: bold;
   text-align: left;
-  padding-bottom: 8px;
-  padding-top: 4px;
-  position: sticky;
   top: 0;
   z-index: 10;
   height: 30px;
@@ -51,9 +46,12 @@ tr:hover {
 }
 
 thead {
-  position: sticky;
+  position: absolute;
   top: 0;
   width: 100%;
+  overflow: hidden;
+  border-top-right-radius: 5px;
+  border-top-left-radius: 5px;
 }
 
 .table-container {
@@ -61,4 +59,6 @@ thead {
   overflow-x: hidden;
   width: 100%;
   height: 100%;
+  border-radius: 5px;
+  padding-top: 32px;
 }
