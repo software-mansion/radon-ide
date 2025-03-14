@@ -107,8 +107,7 @@ function transformWrapper({ filename, src, ...rest }) {
       version.startsWith("0.74") ||
       version.startsWith("0.75") ||
       version.startsWith("0.76") ||
-      version.startsWith("0.77") ||
-      version.startsWith("0.78")
+      version.startsWith("0.77")
     ) {
       src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-74-77/${rendererFileName}");`;
     }
