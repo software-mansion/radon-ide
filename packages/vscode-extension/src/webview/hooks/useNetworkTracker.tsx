@@ -57,12 +57,16 @@ export interface NetworkTracker {
   networkLogs: NetworkLog[];
   ws: WebSocket | null;
   getResponseBody: (networkLog: NetworkLog) => Promise<unknown>;
+  clearLogs: () => void;
+  toggleNetwork: (isRunning: boolean) => void;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
   ws: null,
   getResponseBody: async () => undefined,
+  clearLogs: () => {},
+  toggleNetwork: () => {},
 };
 
 const useNetworkTracker = (): NetworkTracker => {
@@ -147,6 +151,19 @@ const useNetworkTracker = (): NetworkTracker => {
     });
   }, [serverMessages]);
 
+  const clearLogs = () => {
+    setNetworkLogs([]);
+    setServerMessages([]);
+  };
+
+  const toggleNetwork = (isRunning: boolean) => {
+    wsRef.current?.send(
+      JSON.stringify({
+        method: isRunning ? "Network.disable" : "Network.enable",
+      })
+    );
+  };
+
   const getResponseBody = (networkLog: NetworkLog) => {
     const id = Math.random().toString(36).substring(7);
 
@@ -183,6 +200,8 @@ const useNetworkTracker = (): NetworkTracker => {
     networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
     ws: wsRef.current,
     getResponseBody,
+    clearLogs,
+    toggleNetwork,
   };
 };
 

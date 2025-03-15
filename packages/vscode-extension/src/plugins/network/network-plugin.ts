@@ -68,7 +68,11 @@ class NetworkCDPWebsocketBackend implements Disposable {
       ws.on("message", (message) => {
         try {
           const payload = JSON.parse(message.toString());
-          if (payload.method === "Network.getResponseBody") {
+          if (
+            ["Network.getResponseBody", "Network.enable", "Network.disable"].includes(
+              payload.method
+            )
+          ) {
             // forward message to devtools
             this.devtools.send("RNIDE_networkInspectorCDPRequest", payload);
           } else if (payload.id) {

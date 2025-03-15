@@ -54,22 +54,20 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   });
 
   function toggleRecording() {
-    console.log("Toggling recording");
     setIsRecording(!isRecording);
+    networkTracker.toggleNetwork(isRecording);
   }
 
   function toggleShowFilter() {
-    console.log("Toggling show filter");
     setShowFilter(!showFilter);
   }
 
   function clearActivity() {
     setIsClearing(!isClearing);
-    console.log("Clearing activity");
+    networkTracker.clearLogs();
   }
 
   function toggleScrolling() {
-    console.log("Toggling scrolling");
     setIsScrolling(!isScrolling);
   }
 
