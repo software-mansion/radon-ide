@@ -4,7 +4,7 @@ import useNetworkTracker from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/network";
 
-const HEIGHT = 150;
+const HEIGHT = 80;
 const MARGIN_VERTICAL = 20;
 const TIMELINE_LEGEND_HEIGHT = 20;
 const SIDEBAR_MAX_WIDTH = 600;
@@ -260,7 +260,12 @@ const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
     return () => containerRef.current?.removeEventListener("wheel", handleScroll);
   }, [processedData]);
 
-  return <div ref={containerRef} style={{ width: "100%", height: HEIGHT, overflowX: "hidden" }} />;
+  return (
+    <div
+      ref={containerRef}
+      style={{ width: "100%", height: HEIGHT, overflowX: "hidden", paddingBlock: "20px" }}
+    />
+  );
 };
 
 export default NetworkTimeline;
