@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { Logger } from "../Logger";
 import { getLicenseToken } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { getSystemPrompt } from "./api";
+import { executeToolCall as invokeToolCall, getSystemPrompt } from "./api";
 import { getChatHistory, formatChatHistory } from "./history";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
@@ -69,7 +69,16 @@ export function registerChat(context: vscode.ExtensionContext) {
         if (chunk instanceof vscode.LanguageModelTextPart) {
           stream.markdown(chunk.value);
         } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
-          Logger.debug("CALLING TOOL", chunk);
+          const results = await invokeToolCall(chunk, jwt);
+          if (!results) {
+            stream.markdown("Radon AI couldn't execute tool call.");
+            return { metadata: { command: "" } };
+          }
+          const toolMessages = [
+            vscode.LanguageModelChatMessage.Assistant(chunk.name),
+            vscode.LanguageModelChatMessage.User(results),
+          ];
+          await request.model.sendRequest(toolMessages, {}, token);
         }
       }
     } catch (err) {
