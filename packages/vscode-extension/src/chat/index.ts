@@ -2,13 +2,10 @@ import * as vscode from "vscode";
 import { Logger } from "../Logger";
 import { getLicenseToken } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { getSystemPrompt } from "./api";
+import { getChatHistory, formatChatHistory } from "./history";
 
-const CHAT_PARTICIPANT_ID = "chat.radon-ai";
-
-const START_OF_PREVIOUS_RESPONSES = "\n# PREVIOUS RESPONSES:\n\n";
-const END_OF_PREVIOUS_RESPONSES = "\n# END OF PREVIOUS RESPONSES.\n\n";
-
-const BASE_RADON_AI_URL = "http://127.0.0.1:8000";
+export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 
 interface IChatResult extends vscode.ChatResult {
   metadata: {
@@ -39,34 +36,8 @@ export function registerChat(context: vscode.ExtensionContext) {
     }
 
     try {
-      let data;
-      try {
-        const url = new URL("/api/system_prompt", BASE_RADON_AI_URL);
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${jwt}`,
-          },
-          body: JSON.stringify({ prompt: request.prompt }),
-        });
-
-        if (response.status !== 200) {
-          Logger.error(`Failed to fetch response from Radon AI with status: ${response.status}`);
-          getTelemetryReporter().sendTelemetryEvent("chat:error", {
-            error: `Failed to fetch with status: ${response.status}`,
-          });
-          stream.markdown("Couldn't connect to Radon AI.");
-          return { metadata: { command: "" } };
-        }
-        data = await response.json();
-      } catch (error) {
-        if (error instanceof Error) {
-          Logger.error(error.message);
-          getTelemetryReporter().sendTelemetryEvent("chat:error", { error: error.message });
-        } else {
-          Logger.error(String(error));
-        }
+      const data = await getSystemPrompt(request.prompt, jwt);
+      if (!data) {
         stream.markdown("Couldn't connect to Radon AI.");
         return { metadata: { command: "" } };
       }
@@ -83,26 +54,8 @@ export function registerChat(context: vscode.ExtensionContext) {
         return { metadata: { command: "" } };
       }
 
-      const chatMessageHistory = chatContext.history.filter(
-        (chatTurn) => chatTurn.participant === CHAT_PARTICIPANT_ID
-      );
-
-      let chatHistoryText = START_OF_PREVIOUS_RESPONSES;
-      if (chatMessageHistory.length > 0) {
-        chatMessageHistory.forEach((chatMessage) => {
-          if ("prompt" in chatMessage) {
-            chatHistoryText += `USER: ${chatMessage.prompt}\n\n`;
-          }
-          if ("response" in chatMessage) {
-            chatMessage.response.forEach((r) => {
-              if (r instanceof vscode.ChatResponseMarkdownPart) {
-                chatHistoryText += `ASSISTANT: ${r.value.value}\n\n`;
-              }
-            });
-          }
-        });
-      }
-      chatHistoryText += END_OF_PREVIOUS_RESPONSES;
+      const chatHistory = getChatHistory(chatContext);
+      const chatHistoryText = formatChatHistory(chatHistory);
 
       const messages = [
         vscode.LanguageModelChatMessage.Assistant(documentation),
