@@ -340,33 +340,17 @@ export class Metro implements Disposable {
   }
 
   private handleOpenEditor(payload: string) {
-    const parts = payload.split(":");
-    let fileName: string;
-    let lineNumber: number = 0;
-    let columnNumber: number = 0;
-    switch (parts.length) {
-      case 0:
-        return;
-      case 1:
-        fileName = parts[0];
-        break;
-      case 2:
-        fileName = parts[0];
-        lineNumber = parseInt(parts[1], 10) - 1;
-        break;
-      case 3:
-        fileName = parts[0];
-        lineNumber = parseInt(parts[1], 10) - 1;
-        columnNumber = parseInt(parts[2], 10) - 1;
-        break;
-      default:
-        lineNumber = parseInt(parts[parts.length - 2], 10) - 1;
-        columnNumber = parseInt(parts[parts.length - 1], 10) - 1;
-        fileName = parts.slice(0, parts.length - 2).join(":");
-        break;
+    // NOTE: this regex matches `fileName[:lineNumber][:columnNumber]` format:
+    // - (.+?) - fileName (any character, non-greedy to allow for the trailing numbers)
+    // - (?::(\d+))? - optional ":number", not capturing the colon
+    const matches = /^(.+?)(?::(\d+))?(?::(\d+))?$/.exec(payload);
+    if (!matches) {
+      return;
     }
+    const fileName = matches[1];
+    const lineNumber = matches[2] ? parseInt(matches[2], 10) - 1 : 0;
+    const columnNumber = matches[3] ? parseInt(matches[3], 10) - 1 : 0;
     openFileAtPosition(fileName, lineNumber, columnNumber);
-    return;
   }
 
   private async sendMessageToDevice(method: "devMenu" | "reload") {
