@@ -64,25 +64,32 @@ export function registerChat(context: vscode.ExtensionContext) {
         vscode.LanguageModelChatMessage.User(request.prompt),
       ];
 
-      const chatResponse = await request.model.sendRequest(messages, { tools }, token);
-      for await (const chunk of chatResponse.stream) {
-        if (chunk instanceof vscode.LanguageModelTextPart) {
-          stream.markdown(chunk.value);
-        } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
-          const results = await invokeToolCall(chunk, jwt);
-          if (!results) {
-            stream.markdown("Radon AI couldn't execute tool call.");
-            return { metadata: { command: "" } };
+      const carryOverMessages: vscode.LanguageModelChatMessage[] = [];
+      do {
+        messages.push(...carryOverMessages);
+        carryOverMessages.length = 0;
+        const chatResponse = await request.model.sendRequest(messages, { tools }, token);
+        for await (const chunk of chatResponse.stream) {
+          if (chunk instanceof vscode.LanguageModelTextPart) {
+            Logger.debug("Proper response");
+            stream.markdown(chunk.value);
+          } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
+            Logger.debug("Tool call:", chunk.name);
+            const results = await invokeToolCall(chunk, jwt);
+            if (!results) {
+              stream.markdown("Radon AI couldn't execute tool call.");
+              return { metadata: { command: "" } };
+            }
+            const toolMessages = results.map((result) =>
+              vscode.LanguageModelChatMessage.User(
+                result.content[0] as string,
+                `tool_result:${result.callId}`
+              )
+            );
+            carryOverMessages.push(...toolMessages);
           }
-          const toolMessages = results.map((result) =>
-            vscode.LanguageModelChatMessage.Assistant(
-              result.content[0] as string,
-              `tool_result:${result.callId}`
-            )
-          );
-          await request.model.sendRequest(toolMessages, {}, token);
         }
-      }
+      } while (carryOverMessages.length > 0);
     } catch (err) {
       handleError(err, stream);
     }
