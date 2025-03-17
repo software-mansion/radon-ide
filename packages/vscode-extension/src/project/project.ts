@@ -12,13 +12,6 @@ import {
   Uri,
   extensions,
   ConfigurationChangeEvent,
-  Diagnostic,
-  Range,
-  Position,
-  Location,
-  languages,
-  DiagnosticSeverity,
-  DiagnosticRelatedInformation,
 } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
@@ -46,13 +39,7 @@ import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
-import {
-  AppEvent,
-  CodeFrame,
-  DeviceBootError,
-  DeviceSession,
-  EventDelegate,
-} from "./deviceSession";
+import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
@@ -67,7 +54,6 @@ import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
 import { focusSource } from "../utilities/focusSource";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -85,7 +71,6 @@ export class Project
   implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
 {
   private applicationContext: ApplicationContext;
-  private diagnosticsCollection = languages.createDiagnosticCollection("Radon IDE");
 
   public metro: Metro;
   public toolsManager: ToolsManager;
@@ -228,10 +213,6 @@ export class Project
           return;
         }
         this.updateProjectState({ status: "running" });
-        break;
-      case "uncaughtException":
-        const { message, codeFrame } = payload as AppEvent["uncaughtException"];
-        this.showUncaughtException(message, codeFrame);
         break;
     }
   };
@@ -1035,24 +1016,6 @@ export class Project
       }
     }
   }, FINGERPRINT_THROTTLE_MS);
-
-  private async showUncaughtException(message: string, codeFrame: CodeFrame) {
-    const line = codeFrame.location.row - 1;
-    const column = codeFrame.location.column - 1;
-    const errorPosition = new Position(line, column);
-    const errorRange = new Range(errorPosition, errorPosition);
-    const textEditor = await openFileAtPosition(codeFrame.fileName, line, column);
-    this.diagnosticsCollection.clear();
-    const exceptionDiagnostic = new Diagnostic(errorRange, message, DiagnosticSeverity.Error);
-    exceptionDiagnostic.source = "Uncaught exception";
-    exceptionDiagnostic.relatedInformation = [
-      new DiagnosticRelatedInformation(
-        new Location(textEditor.document.uri, errorRange),
-        `Uncaught exception: ${message}`
-      ),
-    ];
-    this.diagnosticsCollection.set(textEditor.document.uri, [exceptionDiagnostic]);
-  }
 }
 
 function watchProjectFiles(onChange: () => void) {

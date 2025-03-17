@@ -440,32 +440,22 @@ export function AppWrapper({ children, initialProps, fabric }) {
       return;
     }
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
-    LogBox.uninstall();
-    const subscription = RNInternals.LogBoxData.observe(({ logs, selectedLogIndex }) => {
-      const log = Array.from(logs)[selectedLogIndex];
-      if (!log) {
-        return;
-      }
-      const message = log.message.content;
-      const codeFrame = log.codeFrame;
-      devtoolsAgent._bridge.send("RNIDE_uncaughtException", { message, codeFrame });
-    });
+    LogBox.ignoreAllLogs(true);
 
     function wrappedGlobalErrorHandler(error, isFatal) {
       try {
-        LogBox.install();
-        LogBox.ignoreAllLogs(true);
+        // NOTE: this is necessary for two reasons:
+        // 1. even though we wish to ignore warnings, without this, when displaying the LogBox,
+        // the warnings will be included in the list of reported errors
+        // 2. when the fullscreen LogBox is minimized, new errors won't bring it up unless we clear the old ones
         RNInternals.LogBoxData.clear();
         originalErrorHandler(error, isFatal);
-        LogBox.uninstall();
       } catch {}
     }
 
     global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
     return () => {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
-      subscription.unsubscribe();
-      LogBox.install();
     };
   }, [devtoolsAgent]);
 
