@@ -88,13 +88,13 @@ export function registerChat(context: vscode.ExtensionContext) {
             const toolMessages = results.map((result) =>
               // result.content will always be a 1-long array of strings
               vscode.LanguageModelChatMessage.Assistant(
-                `${chunk.name} tool has been called - results:\n\n\`\`\`\n${result.content[0]}\n\`\`\``
+                `"${chunk.name}" has been called - results:\n\n\`\`\`\n${result.content[0]}\n\`\`\``
               )
             );
 
-            carryOverMessages.push(...toolMessages);
-            // request.model.sendRequest API requires `User` to be the last message
             carryOverMessages.push(
+              ...toolMessages,
+              // request.model.sendRequest API requires `User` to be the last message
               vscode.LanguageModelChatMessage.User("All requested tool calls have been executed.")
             );
 
