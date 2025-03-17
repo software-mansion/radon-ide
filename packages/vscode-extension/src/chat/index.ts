@@ -68,7 +68,9 @@ export function registerChat(context: vscode.ExtensionContext) {
       do {
         messages.push(...carryOverMessages);
         carryOverMessages.length = 0;
+        Logger.debug("Sending request to Radon AI:", messages);
         const chatResponse = await request.model.sendRequest(messages, { tools }, token);
+        // Logger.debug("Received response:", chatResponse);
         for await (const chunk of chatResponse.stream) {
           if (chunk instanceof vscode.LanguageModelTextPart) {
             Logger.debug("Proper response");
@@ -81,16 +83,21 @@ export function registerChat(context: vscode.ExtensionContext) {
               return { metadata: { command: "" } };
             }
             const toolMessages = results.map((result) =>
-              vscode.LanguageModelChatMessage.User(
-                result.content[0] as string,
-                `tool_result:${result.callId}`
+              // result.content will always be a 1-long array of strings
+              vscode.LanguageModelChatMessage.Assistant(
+                `${chunk.name} tool has been called, it returned:\n\n\`\`\`\n${result.content[0]}\n\`\`\``
               )
             );
             carryOverMessages.push(...toolMessages);
+            // request.model.sendRequest API requires `User` to be the last message
+            carryOverMessages.push(
+              vscode.LanguageModelChatMessage.User("All requested tool calls have been executed.")
+            );
           }
         }
       } while (carryOverMessages.length > 0);
     } catch (err) {
+      Logger.error("Error: ", err);
       handleError(err, stream);
     }
 
