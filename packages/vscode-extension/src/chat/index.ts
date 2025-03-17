@@ -3,7 +3,7 @@ import { Logger } from "../Logger";
 import { getLicenseToken } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { executeToolCall as invokeToolCall, getSystemPrompt } from "./api";
-import { getChatHistory, formatChatHistory } from "./history";
+import { getChatHistory } from "./history";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 const TOOLS_INTERACTION_LIMIT = 3;
@@ -56,11 +56,10 @@ export function registerChat(context: vscode.ExtensionContext) {
       }
 
       const chatHistory = getChatHistory(chatContext);
-      const chatHistoryText = formatChatHistory(chatHistory);
 
       const messages = [
+        ...chatHistory,
         vscode.LanguageModelChatMessage.Assistant(documentation),
-        vscode.LanguageModelChatMessage.Assistant(chatHistoryText),
         vscode.LanguageModelChatMessage.Assistant(system),
         vscode.LanguageModelChatMessage.User(request.prompt),
       ];
