@@ -6,6 +6,7 @@ import { executeToolCall as invokeToolCall, getSystemPrompt } from "./api";
 import { getChatHistory, formatChatHistory } from "./history";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
+const TOOLS_INTERACTION_LIMIT = 3;
 
 interface IChatResult extends vscode.ChatResult {
   metadata: {
@@ -65,6 +66,7 @@ export function registerChat(context: vscode.ExtensionContext) {
       ];
 
       const carryOverMessages: vscode.LanguageModelChatMessage[] = [];
+      let toolInteractionCount = 0;
 
       do {
         messages.push(...carryOverMessages);
@@ -95,9 +97,11 @@ export function registerChat(context: vscode.ExtensionContext) {
             carryOverMessages.push(
               vscode.LanguageModelChatMessage.User("All requested tool calls have been executed.")
             );
+
+            toolInteractionCount++;
           }
         }
-      } while (carryOverMessages.length > 0);
+      } while (carryOverMessages.length > 0 && toolInteractionCount < TOOLS_INTERACTION_LIMIT);
     } catch (err) {
       Logger.error("Error: ", err);
       handleError(err, stream);
