@@ -74,10 +74,12 @@ export function registerChat(context: vscode.ExtensionContext) {
             stream.markdown("Radon AI couldn't execute tool call.");
             return { metadata: { command: "" } };
           }
-          const toolMessages = [
-            vscode.LanguageModelChatMessage.Assistant(chunk.name),
-            vscode.LanguageModelChatMessage.User(results),
-          ];
+          const toolMessages = results.map((result) =>
+            vscode.LanguageModelChatMessage.Assistant(
+              result.content[0] as string,
+              `tool_result:${result.callId}`
+            )
+          );
           await request.model.sendRequest(toolMessages, {}, token);
         }
       }
