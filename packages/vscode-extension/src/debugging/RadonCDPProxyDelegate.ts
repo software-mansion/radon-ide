@@ -203,7 +203,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return command;
   }
 
-  private handleConsoleAPICalled(command: IProtocolCommand): IProtocolCommand | IProtocolSuccess {
+  private handleConsoleAPICalled(
+    command: IProtocolCommand
+  ): IProtocolCommand | IProtocolSuccess | undefined {
     const { args, stackTrace } = command.params as Cdp.Runtime.ConsoleAPICalledEvent;
 
     // We wrap console calls and add stack information as last three arguments, however
@@ -216,7 +218,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     if (args.length > 0 && args[0].value === "__RNIDE_INTERNAL") {
       // We return here to avoid passing internal logs to the user debug console,
       // but they will still be visible in metro log feed.
-      return { id: command.id!, result: {} };
+      return command.id !== undefined ? { id: command.id, result: {} } : undefined;
     }
     if (args.length > 3 && args[args.length - 1].type === "number") {
       // Since console.log stack is extracted from Error, unlike other messages sent over CDP

@@ -47,6 +47,7 @@ export class DebugAdapter extends DebugAdapterSession {
 
     const sourceMapPathOverrides: Record<string, string> = {};
     if (isUsingNewDebugger && metroWatchFolders.length > 0) {
+      // first entry in watchFolders is the project root
       sourceMapPathOverrides["/[metro-project]/*"] = `${metroWatchFolders[0]}${path.sep}*`;
       metroWatchFolders.forEach((watchFolder, index) => {
         sourceMapPathOverrides[`/[metro-watchFolders]/${index}/*`] = `${watchFolder}${path.sep}*`;

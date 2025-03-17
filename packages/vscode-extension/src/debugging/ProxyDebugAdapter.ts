@@ -50,10 +50,10 @@ export class ProxyDebugAdapter extends DebugSession {
     super();
 
     const sourceMapAliases = sourceMapAliasesFromPathOverrides(
-      session.configuration.sourceMapPathOverrides
+      this.session.configuration.sourceMapPathOverrides
     );
     this.sourceMapRegistry = new SourceMapsRegistry(
-      session.configuration.expoPreludeLineCount,
+      this.session.configuration.expoPreludeLineCount,
       sourceMapAliases
     );
 
@@ -63,7 +63,7 @@ export class ProxyDebugAdapter extends DebugSession {
     this.cdpProxy = new CDPProxy(
       "127.0.0.1",
       cdpProxyPort,
-      session.configuration.websocketAddress,
+      this.session.configuration.websocketAddress,
       proxyDelegate
     );
 
@@ -226,6 +226,8 @@ export class ProxyDebugAdapter extends DebugSession {
     request?: DebugProtocol.Request
   ) {
     this.terminate();
+    // since the application resumes once the debugger is disconnected, we need to send a continued event
+    // to the frontend to update the UI
     this.sendEvent(new Event("RNIDE_continued"));
     this.sendResponse(response);
   }
