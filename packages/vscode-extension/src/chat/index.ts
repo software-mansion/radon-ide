@@ -56,20 +56,20 @@ export function registerChat(context: vscode.ExtensionContext) {
       }
 
       const chatHistory = getChatHistory(chatContext);
-
-      const messages = [
-        ...chatHistory,
+      const messages = [...chatHistory];
+      const messageRequests: vscode.LanguageModelChatMessage[] = [
         vscode.LanguageModelChatMessage.Assistant(documentation),
         vscode.LanguageModelChatMessage.Assistant(system),
         vscode.LanguageModelChatMessage.User(request.prompt),
       ];
 
-      const carryOverMessages: vscode.LanguageModelChatMessage[] = [];
-      let toolInteractionCount = 0;
-
-      do {
-        messages.push(...carryOverMessages);
-        carryOverMessages.length = 0;
+      for (
+        let toolInteractionCount = 0;
+        messageRequests.length > 0 && toolInteractionCount < TOOLS_INTERACTION_LIMIT;
+        toolInteractionCount++
+      ) {
+        messages.push(...messageRequests);
+        messageRequests.length = 0;
 
         const chatResponse = await request.model.sendRequest(messages, { tools }, token);
 
@@ -91,16 +91,16 @@ export function registerChat(context: vscode.ExtensionContext) {
               )
             );
 
-            carryOverMessages.push(
+            messageRequests.push(
               ...toolMessages,
-              // request.model.sendRequest API requires `User` to be the last message
+              // request.model.sendRequest API requires the last message to be of type `User`
               vscode.LanguageModelChatMessage.User("All requested tool calls have been executed.")
             );
 
             toolInteractionCount++;
           }
         }
-      } while (carryOverMessages.length > 0 && toolInteractionCount < TOOLS_INTERACTION_LIMIT);
+      }
     } catch (err) {
       Logger.error("Error: ", err);
       handleError(err, stream);
