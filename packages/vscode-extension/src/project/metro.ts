@@ -14,6 +14,10 @@ import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
+import { openFileAtPosition } from "../utilities/openFileAtPosition";
+
+const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
+const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
 
 export interface MetroDelegate {
   onBundleBuildFailedError(): void;
@@ -214,6 +218,10 @@ export class Metro implements Disposable {
 
     const port = await getOpenPort();
 
+    // NOTE: this is needed to capture metro's open-stack-frame calls.
+    // See `packages/vscode-extension/atom` script for more details.
+    const fakeEditorPath = extensionContext.asAbsolutePath("dist/atom");
+
     const metroEnv = {
       ...launchConfiguration.env,
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
@@ -222,6 +230,9 @@ export class Metro implements Disposable {
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       RADON_IDE_LIB_PATH: libPath,
       RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
+      DEBUG: "expo:utils:editor",
+      REACT_EDITOR: fakeEditorPath,
+      EXPO_EDITOR: FAKE_EDITOR,
       ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
     let bundlerProcess: ChildProcess;
@@ -254,8 +265,7 @@ export class Metro implements Disposable {
         });
 
       lineReader(bundlerProcess).onLineRead((line) => {
-        try {
-          const event = JSON.parse(line) as MetroEvent;
+        const handleMetroEvent = (event: MetroEvent) => {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
@@ -301,14 +311,62 @@ export class Metro implements Disposable {
               );
               break;
           }
-        } catch (error) {
-          // ignore parsing errors, just print out the line
-          Logger.debug("Metro", line);
+        };
+
+        let event: MetroEvent | undefined;
+        try {
+          event = JSON.parse(line) as MetroEvent;
+        } catch {}
+
+        if (event) {
+          handleMetroEvent(event);
+          return;
+        }
+
+        Logger.debug("Metro", line);
+
+        if (line.startsWith("__RNIDE__open_editor__ ")) {
+          this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));
+        } else if (line.includes(FAKE_EDITOR)) {
+          const matches = line.match(OPENING_IN_FAKE_EDITOR_REGEX);
+          if (matches?.length) {
+            this.handleOpenEditor(matches[1]);
+          }
         }
       });
     });
 
     return initPromise;
+  }
+
+  private handleOpenEditor(payload: string) {
+    const parts = payload.split(":");
+    let fileName: string;
+    let lineNumber: number = 0;
+    let columnNumber: number = 0;
+    switch (parts.length) {
+      case 0:
+        return;
+      case 1:
+        fileName = parts[0];
+        break;
+      case 2:
+        fileName = parts[0];
+        lineNumber = parseInt(parts[1], 10) - 1;
+        break;
+      case 3:
+        fileName = parts[0];
+        lineNumber = parseInt(parts[1], 10) - 1;
+        columnNumber = parseInt(parts[2], 10) - 1;
+        break;
+      default:
+        lineNumber = parseInt(parts[parts.length - 2], 10) - 1;
+        columnNumber = parseInt(parts[parts.length - 1], 10) - 1;
+        fileName = parts.slice(0, parts.length - 2).join(":");
+        break;
+    }
+    openFileAtPosition(fileName, lineNumber, columnNumber);
+    return;
   }
 
   private async sendMessageToDevice(method: "devMenu" | "reload") {
