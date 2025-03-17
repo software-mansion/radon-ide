@@ -651,7 +651,7 @@
     "build:plugins": "bash ./scripts/install-dev-plugins.sh",
     "build:icons": "fantasticon -c ./font-icons/fantasticon.config.json",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
-    "preinstall": "prepare:fake_editor && bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && cd ../vscode-js-debug && npm i && npm exec tsc",
+    "preinstall": "npm run prepare:fake_editor && bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && cd ../vscode-js-debug && npm i && npm exec tsc",
     "fetch:sim-server-assets": "bash ./scripts/download-sim-server-release-assets.sh dist",
     "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin ../radon-ide-react-query-webui"
   },
