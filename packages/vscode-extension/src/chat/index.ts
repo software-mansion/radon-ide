@@ -14,6 +14,40 @@ interface IChatResult extends vscode.ChatResult {
   };
 }
 
+async function processChatResponse(
+  chatResponse: vscode.LanguageModelChatResponse,
+  stream: vscode.ChatResponseStream,
+  jwt: string
+): Promise<vscode.LanguageModelChatMessage[] | null> {
+  for await (const chunk of chatResponse.stream) {
+    if (chunk instanceof vscode.LanguageModelTextPart) {
+      stream.markdown(chunk.value);
+    } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
+      const results = await invokeToolCall(chunk, jwt);
+
+      if (!results) {
+        stream.markdown("Radon AI couldn't execute tool call.");
+        return null;
+      }
+
+      const toolMessages = results.map((result) =>
+        // result.content will always be a 1-long array of strings
+        vscode.LanguageModelChatMessage.Assistant(
+          `"${chunk.name}" has been called - results:\n\n\`\`\`\n${result.content[0]}\n\`\`\``
+        )
+      );
+
+      return [
+        ...toolMessages,
+        // request.model.sendRequest API requires the last message to be of type `User`
+        vscode.LanguageModelChatMessage.User("All requested tool calls have been executed."),
+      ];
+    }
+  }
+
+  return [];
+}
+
 export function registerChat(context: vscode.ExtensionContext) {
   const handler: vscode.ChatRequestHandler = async (
     request: vscode.ChatRequest,
@@ -72,34 +106,13 @@ export function registerChat(context: vscode.ExtensionContext) {
         messageRequests.length = 0;
 
         const chatResponse = await request.model.sendRequest(messages, { tools }, token);
+        const newMessages = await processChatResponse(chatResponse, stream, jwt);
 
-        for await (const chunk of chatResponse.stream) {
-          if (chunk instanceof vscode.LanguageModelTextPart) {
-            stream.markdown(chunk.value);
-          } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
-            const results = await invokeToolCall(chunk, jwt);
-
-            if (!results) {
-              stream.markdown("Radon AI couldn't execute tool call.");
-              return { metadata: { command: "" } };
-            }
-
-            const toolMessages = results.map((result) =>
-              // result.content will always be a 1-long array of strings
-              vscode.LanguageModelChatMessage.Assistant(
-                `"${chunk.name}" has been called - results:\n\n\`\`\`\n${result.content[0]}\n\`\`\``
-              )
-            );
-
-            messageRequests.push(
-              ...toolMessages,
-              // request.model.sendRequest API requires the last message to be of type `User`
-              vscode.LanguageModelChatMessage.User("All requested tool calls have been executed.")
-            );
-
-            toolInteractionCount++;
-          }
+        if (newMessages === null) {
+          return { metadata: { command: "" } };
         }
+
+        messageRequests.push(...newMessages);
       }
     } catch (err) {
       Logger.error("Error: ", err);
