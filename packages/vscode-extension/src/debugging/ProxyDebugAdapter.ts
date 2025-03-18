@@ -11,6 +11,7 @@ import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
 import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
+import { Logger } from "../Logger";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -187,7 +188,11 @@ export class ProxyDebugAdapter extends DebugSession {
         );
       }
 
-      assert(this.nodeDebugSession !== null);
+      if (this.nodeDebugSession === null) {
+        Logger.warn(
+          "The JS debug session started, but it wasn't registered correctly. The debugger may not work correctly."
+        );
+      }
       this.sendResponse(response);
     } finally {
       didStartSessionHandler?.dispose();
