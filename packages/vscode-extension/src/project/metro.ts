@@ -230,8 +230,11 @@ export class Metro implements Disposable {
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       RADON_IDE_LIB_PATH: libPath,
       RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
-      DEBUG: "expo:utils:editor",
       REACT_EDITOR: fakeEditorPath,
+      // NOTE: At least as of version 52, Expo uses a different mechanism to open stack frames in the editor,
+      // which doesn't allow passing a path to the EDITOR executable.
+      // Instead, we pass it a fake editor name and inspect the debug logs to extract the file path to open.
+      DEBUG: "expo:utils:editor",
       EXPO_EDITOR: FAKE_EDITOR,
       ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
