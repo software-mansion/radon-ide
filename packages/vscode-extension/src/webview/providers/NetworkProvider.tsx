@@ -11,6 +11,7 @@ type TimestampRange = {
 
 interface Filters {
   timestampRange?: TimestampRange;
+  url?: string;
 }
 
 interface NetworkProviderProps extends NetworkTracker {
@@ -31,6 +32,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
   isRecording: true,
   showFilter: false,
   filters: {
+    url: undefined,
     timestampRange: undefined,
   },
   isClearing: false,
@@ -51,6 +53,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [isScrolling, setIsScrolling] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     timestampRange: undefined,
+    url: undefined,
   });
 
   function toggleRecording() {
@@ -71,15 +74,17 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     setIsScrolling(!isScrolling);
   }
 
-  const networkLogs = networkTracker.networkLogs.filter((log) => {
-    if (!filters.timestampRange) {
-      return true;
-    }
-    return (
-      log.timeline.timestamp >= filters.timestampRange.start &&
-      log.timeline.timestamp <= filters.timestampRange.end
-    );
-  });
+  const networkLogs = useMemo(() => {
+    const filteredLogs = networkTracker.networkLogs.filter((log) => {
+      const matchesUrl = filters.url ? log.request?.url.includes(filters.url) : true;
+      const matchesTimestampRange = filters.timestampRange
+        ? log.timeline.timestamp >= filters.timestampRange.start &&
+          log.timeline.timestamp <= filters.timestampRange.end
+        : true;
+      return matchesUrl && matchesTimestampRange;
+    });
+    return filteredLogs;
+  }, [networkTracker.networkLogs, filters]);
 
   const contextValue = useMemo(() => {
     return {
