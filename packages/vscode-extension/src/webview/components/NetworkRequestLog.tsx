@@ -186,7 +186,7 @@ const NetworkRequestLog = ({
             formattedSize /= 1024;
             unitIndex++;
           }
-          return `${formattedSize.toFixed(2)} ${units[unitIndex]}`;
+          return `${parseFloat(formattedSize.toFixed(2))} ${units[unitIndex]}`;
         },
       },
       { title: "Time", getValue: (log: NetworkLog) => `${log.timeline?.durationMs} ms` },
