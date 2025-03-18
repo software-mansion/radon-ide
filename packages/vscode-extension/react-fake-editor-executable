@@ -1,0 +1,8 @@
+#!/bin/sh
+# Metro uses a utility library "launch-editor" to open files in the editor.
+# "launch-editor" changes the way it passes line and column numbers to the editor
+# based on the name of the command it launches. This script is a workaround to
+# make it pass the correct arguments to `echo`, which we later use to open the
+# file in the editor the extension is running in.
+
+echo "__RNIDE__open_editor__" "$@"

@@ -5,21 +5,6 @@
 const AppRegistry = require("react-native/Libraries/ReactNative/AppRegistry");
 const parseErrorStack = require("react-native/Libraries/Core/Devtools/parseErrorStack");
 
-function __RNIDE_breakOnError(error, isFatal) {
-  // the below variables are accessed from the debugger and hence are necessary despite being unused in the code
-  const message = error.message;
-  const stack = parseErrorStack(error.stack);
-  debugger;
-}
-
-global.__RNIDE_onDebuggerReady = function () {
-  // install error handler that breaks into the debugger but only do it when
-  // debugger is connected. Otherwise we may miss some important initialization
-  // errors or even pause the app execution before the debugger is attached.
-  global.ErrorUtils.setGlobalHandler(__RNIDE_breakOnError);
-  global.__fbDisableExceptionsManager = true;
-};
-
 // We add log this trace to diagnose issues with loading runtime in the IDE
 // The first argument is "__RNIDE_INTERNAL" so we can filter it out in
 // debug adapter and avoid exposing as part of application logs

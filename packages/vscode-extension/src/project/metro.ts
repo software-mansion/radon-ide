@@ -14,6 +14,10 @@ import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
+import { openFileAtPosition } from "../utilities/openFileAtPosition";
+
+const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
+const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
 
 export interface MetroDelegate {
   onBundleBuildFailedError(): void;
@@ -214,6 +218,10 @@ export class Metro implements Disposable {
 
     const port = await getOpenPort();
 
+    // NOTE: this is needed to capture metro's open-stack-frame calls.
+    // See `packages/vscode-extension/atom` script for more details.
+    const fakeEditorPath = extensionContext.asAbsolutePath("dist/atom");
+
     const metroEnv = {
       ...launchConfiguration.env,
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
@@ -222,6 +230,12 @@ export class Metro implements Disposable {
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       RADON_IDE_LIB_PATH: libPath,
       RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
+      REACT_EDITOR: fakeEditorPath,
+      // NOTE: At least as of version 52, Expo uses a different mechanism to open stack frames in the editor,
+      // which doesn't allow passing a path to the EDITOR executable.
+      // Instead, we pass it a fake editor name and inspect the debug logs to extract the file path to open.
+      DEBUG: "expo:utils:editor",
+      EXPO_EDITOR: FAKE_EDITOR,
       ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
     let bundlerProcess: ChildProcess;
@@ -254,8 +268,7 @@ export class Metro implements Disposable {
         });
 
       lineReader(bundlerProcess).onLineRead((line) => {
-        try {
-          const event = JSON.parse(line) as MetroEvent;
+        const handleMetroEvent = (event: MetroEvent) => {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
@@ -301,14 +314,46 @@ export class Metro implements Disposable {
               );
               break;
           }
-        } catch (error) {
-          // ignore parsing errors, just print out the line
-          Logger.debug("Metro", line);
+        };
+
+        let event: MetroEvent | undefined;
+        try {
+          event = JSON.parse(line) as MetroEvent;
+        } catch {}
+
+        if (event) {
+          handleMetroEvent(event);
+          return;
+        }
+
+        Logger.debug("Metro", line);
+
+        if (line.startsWith("__RNIDE__open_editor__ ")) {
+          this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));
+        } else if (line.includes(FAKE_EDITOR)) {
+          const matches = line.match(OPENING_IN_FAKE_EDITOR_REGEX);
+          if (matches?.length) {
+            this.handleOpenEditor(matches[1]);
+          }
         }
       });
     });
 
     return initPromise;
+  }
+
+  private handleOpenEditor(payload: string) {
+    // NOTE: this regex matches `fileName[:lineNumber][:columnNumber]` format:
+    // - (.+?) - fileName (any character, non-greedy to allow for the trailing numbers)
+    // - (?::(\d+))? - optional ":number", not capturing the colon
+    const matches = /^(.+?)(?::(\d+))?(?::(\d+))?$/.exec(payload);
+    if (!matches) {
+      return;
+    }
+    const fileName = matches[1];
+    const lineNumber = matches[2] ? parseInt(matches[2], 10) - 1 : 0;
+    const columnNumber = matches[3] ? parseInt(matches[3], 10) - 1 : 0;
+    openFileAtPosition(fileName, lineNumber, columnNumber);
   }
 
   private async sendMessageToDevice(method: "devMenu" | "reload") {
