@@ -47,8 +47,6 @@ export async function executeToolCall(
   toolCall: vscode.LanguageModelToolCallPart,
   jwt: string
 ): Promise<vscode.LanguageModelToolResultPart[] | undefined> {
-  Logger.debug("Calling tool:", toolCall);
-
   try {
     const url = new URL("/api/tool_calls/", BASE_RADON_AI_URL);
     const response = await fetch(url, {
@@ -61,6 +59,7 @@ export async function executeToolCall(
         tool_calls: [{ name: toolCall.name, id: toolCall.callId, args: toolCall.input }],
       }),
     });
+
     if (response.status !== 200) {
       Logger.error(`Failed to fetch response from Radon AI with status: ${response.status}`);
       getTelemetryReporter().sendTelemetryEvent("chat:error", {
@@ -70,7 +69,6 @@ export async function executeToolCall(
     }
 
     const results: ToolResult = await response.json();
-    Logger.debug("Tool call results:", results);
     const toolResults = results.tool_results.map((result) => ({
       callId: result.tool_call_id,
       content: [result.content],

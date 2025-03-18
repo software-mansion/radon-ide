@@ -3,14 +3,49 @@ import { Logger } from "../Logger";
 import { getLicenseToken } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { executeToolCall as invokeToolCall, getSystemPrompt } from "./api";
-import { getChatHistory, formatChatHistory } from "./history";
+import { getChatHistory } from "./history";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
+const TOOLS_INTERACTION_LIMIT = 3;
 
 interface IChatResult extends vscode.ChatResult {
   metadata: {
     command: string;
   };
+}
+
+async function processChatResponse(
+  chatResponse: vscode.LanguageModelChatResponse,
+  stream: vscode.ChatResponseStream,
+  jwt: string
+): Promise<vscode.LanguageModelChatMessage[] | null> {
+  for await (const chunk of chatResponse.stream) {
+    if (chunk instanceof vscode.LanguageModelTextPart) {
+      stream.markdown(chunk.value);
+    } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
+      const results = await invokeToolCall(chunk, jwt);
+
+      if (!results) {
+        stream.markdown("Radon AI couldn't execute tool call.");
+        return null;
+      }
+
+      const toolMessages = results.map((result) =>
+        // result.content will always be a 1-long array of strings
+        vscode.LanguageModelChatMessage.Assistant(
+          `"${chunk.name}" has been called - results:\n\n\`\`\`\n${result.content[0]}\n\`\`\``
+        )
+      );
+
+      return [
+        ...toolMessages,
+        // request.model.sendRequest API requires the last message to be of type `User`
+        vscode.LanguageModelChatMessage.User("All requested tool calls have been executed."),
+      ];
+    }
+  }
+
+  return [];
 }
 
 export function registerChat(context: vscode.ExtensionContext) {
@@ -55,33 +90,32 @@ export function registerChat(context: vscode.ExtensionContext) {
       }
 
       const chatHistory = getChatHistory(chatContext);
-      const chatHistoryText = formatChatHistory(chatHistory);
-
-      const messages = [
+      const messages = [...chatHistory];
+      const messageRequests: vscode.LanguageModelChatMessage[] = [
         vscode.LanguageModelChatMessage.Assistant(documentation),
-        vscode.LanguageModelChatMessage.Assistant(chatHistoryText),
         vscode.LanguageModelChatMessage.Assistant(system),
         vscode.LanguageModelChatMessage.User(request.prompt),
       ];
 
-      const chatResponse = await request.model.sendRequest(messages, { tools }, token);
-      for await (const chunk of chatResponse.stream) {
-        if (chunk instanceof vscode.LanguageModelTextPart) {
-          stream.markdown(chunk.value);
-        } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
-          const results = await invokeToolCall(chunk, jwt);
-          if (!results) {
-            stream.markdown("Radon AI couldn't execute tool call.");
-            return { metadata: { command: "" } };
-          }
-          const toolMessages = [
-            vscode.LanguageModelChatMessage.Assistant(chunk.name),
-            vscode.LanguageModelChatMessage.User(results),
-          ];
-          await request.model.sendRequest(toolMessages, {}, token);
+      for (
+        let toolInteractionCount = 0;
+        messageRequests.length > 0 && toolInteractionCount < TOOLS_INTERACTION_LIMIT;
+        toolInteractionCount++
+      ) {
+        messages.push(...messageRequests);
+        messageRequests.length = 0;
+
+        const chatResponse = await request.model.sendRequest(messages, { tools }, token);
+        const newMessages = await processChatResponse(chatResponse, stream, jwt);
+
+        if (newMessages === null) {
+          return { metadata: { command: "" } };
         }
+
+        messageRequests.push(...newMessages);
       }
     } catch (err) {
+      Logger.error("Error: ", err);
       handleError(err, stream);
     }
 
