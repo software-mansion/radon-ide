@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { Logger } from "../Logger";
 import { getLicenseToken } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { executeToolCall as invokeToolCall, getSystemPrompt } from "./api";
+import { invokeToolCall, getSystemPrompt } from "./api";
 import { getChatHistory } from "./history";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";

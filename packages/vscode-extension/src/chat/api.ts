@@ -43,7 +43,7 @@ interface ToolResult {
   }[];
 }
 
-export async function executeToolCall(
+export async function invokeToolCall(
   toolCall: vscode.LanguageModelToolCallPart,
   jwt: string
 ): Promise<vscode.LanguageModelToolResultPart[] | undefined> {
