@@ -78,7 +78,7 @@ async function runExternalScript(
   cwd: string,
   cancelToken?: CancelToken
 ) {
-  let process = command(externalCommand, { cwd, env });
+  let process = command(externalCommand, { cwd, env, shell: true });
   process = cancelToken ? cancelToken.adapt(process) : process;
   Logger.info(`Running external script: ${externalCommand}`);
 

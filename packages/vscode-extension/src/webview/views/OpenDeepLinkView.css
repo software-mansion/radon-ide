@@ -8,3 +8,12 @@
   display: flex;
   justify-content: center;
 }
+
+.checkbox-container {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--swm-default-text);
+}
