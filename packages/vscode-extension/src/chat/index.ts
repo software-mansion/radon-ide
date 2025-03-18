@@ -23,6 +23,7 @@ async function processChatResponse(
     if (chunk instanceof vscode.LanguageModelTextPart) {
       stream.markdown(chunk.value);
     } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
+      Logger.info("Tool call requested");
       const results = await invokeToolCall(chunk, jwt);
 
       if (!results) {
