@@ -113,6 +113,7 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
   function sendCallback(data, xhr) {
     const requestId = `${requestIdPrefix}-${requestIdCounter++}`;
     const sendTime = Date.now();
+    let ttfb;
 
     xhrsMap.set(requestId, new WeakRefImpl(xhr));
 
@@ -132,6 +133,7 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
         url: xhr._url,
         method: xhr._method,
         headers: xhr._headers,
+        postData: data,
       },
       type: "XHR",
       initiator: {
@@ -159,11 +161,18 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
       });
     });
 
+    xhr.addEventListener("readystatechange", (event) => {
+      if (xhr.readyState === 2) {
+        ttfb = Date.now() - sendTime;
+      }
+    });
+
     xhr.addEventListener("load", (event) => {
       sendCDPMessage("Network.responseReceived", {
         requestId: requestId,
         loaderId,
         timestamp: Date.now() / 1000,
+        ttfb,
         type: "XHR",
         response: {
           type: xhr.responseType,

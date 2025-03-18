@@ -6,7 +6,7 @@ export interface NetworkRequest {
   url: string;
   method: HttpMethod;
   headers?: Record<string, string>;
-  postData?: unknown;
+  postData?: string;
 }
 
 export interface NetworkResponse {
@@ -22,6 +22,7 @@ export interface TimelineEvent {
   timestamp: number;
   wallTime: number;
   durationMs?: number;
+  ttfb?: number;
 }
 
 type NetworkState =
@@ -48,6 +49,7 @@ export interface WebSocketMessage {
     request?: NetworkRequest;
     response?: NetworkResponse;
     timestamp: number;
+    ttfb?: number;
     wallTime: number;
     type?: string;
   };
@@ -123,6 +125,7 @@ const useNetworkTracker = (): NetworkTracker => {
                 timestamp: params.timestamp,
                 wallTime: params.wallTime,
                 durationMs: durationMs || existingLog.timeline.durationMs,
+                ttfb: params.ttfb || existingLog.timeline.ttfb,
               },
               type: params?.type || existingLog?.type,
               encodedDataLength: params.encodedDataLength || existingLog.encodedDataLength,
@@ -139,6 +142,7 @@ const useNetworkTracker = (): NetworkTracker => {
                 timestamp: params.timestamp,
                 wallTime: params.wallTime,
                 durationMs: undefined,
+                ttfb: params.ttfb,
               },
             });
           }
@@ -164,7 +168,13 @@ const useNetworkTracker = (): NetworkTracker => {
     );
   };
 
+  const [responseBodies, setResponseBodies] = useState<Record<string, unknown>>({});
+
   const getResponseBody = (networkLog: NetworkLog) => {
+    if (responseBodies[networkLog.requestId]) {
+      return Promise.resolve(responseBodies[networkLog.requestId]);
+    }
+
     const id = Math.random().toString(36).substring(7);
 
     wsRef.current?.send(
@@ -173,17 +183,19 @@ const useNetworkTracker = (): NetworkTracker => {
         method: "Network.getResponseBody",
         params: {
           requestId: networkLog.requestId,
-          response: networkLog.response,
         },
       })
     );
 
     return new Promise((resolve) => {
       const listener = (message: MessageEvent) => {
-        console.log("Message received: asd ", message.data);
         try {
           const parsedMsg = JSON.parse(message.data);
           if (parsedMsg.id === id) {
+            setResponseBodies((prev) => ({
+              ...prev,
+              [networkLog.requestId]: parsedMsg.result.body,
+            }));
             resolve(parsedMsg.result.body);
             wsRef.current?.removeEventListener("message", listener);
           }

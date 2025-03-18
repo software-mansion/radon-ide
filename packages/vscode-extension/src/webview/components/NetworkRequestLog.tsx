@@ -222,7 +222,7 @@ const NetworkRequestLog = ({
       }
     };
 
-    if (!selectedNetworkLog && scrollTop >= container.scrollHeight - container.clientHeight * 1.2) {
+    if (!selectedNetworkLog && scrollTop >= container.scrollHeight - container.clientHeight * 1.5) {
       container.scrollTo({
         top: container.scrollHeight,
         behavior: "smooth",
@@ -267,7 +267,7 @@ const NetworkRequestLog = ({
           <tbody>
             {networkLogs.map((log, index) => (
               <tr
-                key={index}
+                key={log.requestId}
                 className={selectedNetworkLog?.requestId === log.requestId ? "selected" : ""}
                 onClick={() =>
                   handleSelectedRequest(

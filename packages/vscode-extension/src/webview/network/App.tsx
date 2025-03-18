@@ -1,5 +1,5 @@
 import "./App.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import NetworkBar from "../components/NetworkBar";
 import NetworkFilters from "../components/NetworkFilters";
 import NetworkRequestLog from "../components/NetworkRequestLog";
@@ -8,7 +8,6 @@ import { useNetwork } from "../providers/NetworkProvider";
 import NetworkTimeline from "../components/NetworkTimeline";
 
 function App() {
-  const parentRef = useRef<HTMLDivElement>(null);
   const { showFilter, networkLogs } = useNetwork();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
@@ -16,7 +15,7 @@ function App() {
 
   const selectedNetworkLog = useMemo(() => {
     return networkLogs.find((log) => log.requestId === selectedNetworkLogId) || null;
-  }, [selectedNetworkLogId]);
+  }, [selectedNetworkLogId, networkLogs]);
 
   useEffect(() => {
     if (!selectedNetworkLog) {
@@ -40,7 +39,7 @@ function App() {
         )}
         <NetworkTimeline handleSelectedRequest={setSelectedNetworkLogId} />
       </div>
-      <div className="network-log-container" ref={parentRef}>
+      <div className="network-log-container">
         <NetworkRequestLog
           selectedNetworkLog={selectedNetworkLog}
           networkLogs={networkLogs}
@@ -50,6 +49,7 @@ function App() {
 
         {selectedNetworkLog && (
           <NetworkLogDetails
+            key={selectedNetworkLog.requestId}
             networkLog={selectedNetworkLog}
             handleClose={() => setSelectedNetworkLogId(null)}
             containerWidth={detailsWidth}

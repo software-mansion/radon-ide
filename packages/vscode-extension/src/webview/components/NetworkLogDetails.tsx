@@ -5,7 +5,7 @@ import IconButton from "./shared/IconButton";
 import ResizableContainer from "./shared/ResizableContainer";
 import { useNetwork } from "../providers/NetworkProvider";
 
-const TABS = ["Headers", "Response"];
+const TABS = ["Headers", "Request", "Response", "Timing"];
 
 type Tab = typeof TABS[number];
 
@@ -83,6 +83,22 @@ const NetworkLogDetails = ({
             <Section title="Response Headers" data={networkLog.response?.headers} />
           </>
         );
+      case "Request":
+        if (!networkLog.request) {
+          return null;
+        }
+
+        return (
+          <pre>
+            {JSON.stringify(
+              JSON.parse(
+                typeof networkLog.request.postData === "string" ? networkLog.request.postData : "{}"
+              ),
+              null,
+              2
+            )}
+          </pre>
+        );
       case "Response":
         return (
           <pre>
@@ -93,18 +109,47 @@ const NetworkLogDetails = ({
             )}
           </pre>
         );
+
+      case "Timing":
+        const totalTime = networkLog.timeline.durationMs || 0;
+        const ttfb = networkLog.timeline.ttfb || 0;
+
+        console.log("time:", totalTime, ttfb);
+
+        const ttfbPercent = (ttfb / totalTime) * 100;
+        const responseLoadingPercent = ((totalTime - ttfb) / totalTime) * 100;
+
+        return (
+          <div className="timing-container">
+            <div className="timing-bar">
+              <div className="bar request-sent-bar" style={{ width: `${ttfbPercent}%` }} />
+              <div
+                className="bar response-receive-bar"
+                style={{ width: `${responseLoadingPercent}%` }}
+              />
+            </div>
+
+            <div className="timing-section">
+              <span>Waiting (TTFB): {ttfb} ms</span>
+              <span>Downloading response: {totalTime - ttfb} ms</span>
+              <span>Total: {totalTime} ms</span>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
   };
 
   useEffect(() => {
+    console.log("activeTab: ", activeTab, "networkLog: ", networkLog);
     if (activeTab === "Response") {
       getResponseBody(networkLog).then((data) => {
         setResponseBody(data);
+        console.log("data xyz: ", data);
       });
     }
-  }, [activeTab, networkLog]);
+  }, [activeTab, networkLog.requestId]);
 
   return (
     <ResizableContainer

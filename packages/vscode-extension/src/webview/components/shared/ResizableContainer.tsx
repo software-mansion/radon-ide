@@ -9,6 +9,8 @@ interface ResizableContainerProps {
   side?: "left" | "right";
 }
 
+const MIN_WIDTH = 50;
+
 const ResizableContainer = ({
   containerWidth,
   setContainerWidth,
@@ -37,9 +39,9 @@ const ResizableContainer = ({
     const parentRect = parentRef.current.getBoundingClientRect();
 
     if (side === "left") {
-      newWidth = Math.max(50, parentRect.right - e.clientX);
+      newWidth = Math.max(MIN_WIDTH, parentRect.right - e.clientX);
     } else {
-      newWidth = Math.max(50, e.clientX - parentRect.left);
+      newWidth = Math.max(MIN_WIDTH, e.clientX - parentRect.left);
     }
 
     setContainerWidth(newWidth);
@@ -88,7 +90,7 @@ const ResizableContainer = ({
           className="draggable"
           onMouseDown={handleMouseDown}
           style={{
-            right: isColumn || side === "right" ? 0 : "100%",
+            right: side === "right" || isColumn ? 0 : "100%",
           }}
         />
         {isColumn && <div className="draggable-bg" />}
