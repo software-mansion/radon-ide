@@ -4,6 +4,7 @@ import { getLicenseToken } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { invokeToolCall, getSystemPrompt } from "./api";
 import { getChatHistory } from "./history";
+import { getReactNativePackagesPrompt } from "./packages";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 const TOOLS_INTERACTION_LIMIT = 3;
@@ -71,6 +72,8 @@ export function registerChat(context: vscode.ExtensionContext) {
       return { metadata: { command: "" } };
     }
 
+    const packages = await getReactNativePackagesPrompt();
+
     try {
       const data = await getSystemPrompt(request.prompt, jwt);
       if (!data) {
@@ -94,6 +97,7 @@ export function registerChat(context: vscode.ExtensionContext) {
       const messages = [...chatHistory];
       const messageRequests = [
         vscode.LanguageModelChatMessage.Assistant(documentation),
+        vscode.LanguageModelChatMessage.Assistant(packages),
         vscode.LanguageModelChatMessage.Assistant(system),
         vscode.LanguageModelChatMessage.User(request.prompt),
       ];
