@@ -71,9 +71,20 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     setIsScrolling(!isScrolling);
   }
 
+  const networkLogs = networkTracker.networkLogs.filter((log) => {
+    if (!filters.timestampRange) {
+      return true;
+    }
+    return (
+      log.timeline.timestamp >= filters.timestampRange.start &&
+      log.timeline.timestamp <= filters.timestampRange.end
+    );
+  });
+
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
+      networkLogs,
       isRecording,
       filters,
       showFilter,

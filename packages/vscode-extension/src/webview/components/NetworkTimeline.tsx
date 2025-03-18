@@ -4,7 +4,7 @@ import useNetworkTracker from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/network";
 
-const HEIGHT = 80;
+const HEIGHT = 100;
 const MARGIN_VERTICAL = 20;
 const TIMELINE_LEGEND_HEIGHT = 20;
 const SIDEBAR_MAX_WIDTH = 600;
@@ -21,18 +21,40 @@ interface NetworkFiltersProps {
   handleSelectedRequest: (id: string | null) => void;
 }
 
+const getColorForSameService = (url: string) => {
+  const urlObject = new URL(url);
+  return `hsl(${urlObject.hostname.length * 10}, 70%, 50%)`;
+};
+
+const placeRequestsInRows = (requests: NetworkLog[]) => {
+  const rows: NetworkLog[][] = [];
+
+  requests.forEach((req) => {
+    let placed = false;
+    for (const row of rows) {
+      if (
+        row.length === 0 ||
+        req.startTimestamp - row[row.length - 1].endTimestamp > TIME_GAP_THRESHOLD
+      ) {
+        row.push(req);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      rows.push([req]);
+    }
+  });
+  return rows;
+};
+
 const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
   const { isClearing, filters, setFilters } = useNetwork();
   const networkLogs = useNetworkTracker();
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
-
-  const getColorForSameService = (url: string) => {
-    const urlObject = new URL(url);
-
-    return `hsl(${urlObject.hostname.length * 10}, 70%, 50%)`;
-  };
+  const [stopInserting, setStopInserting] = useState(false);
 
   const processedData = useMemo(() => {
     return networkLogs.networkLogs.map((d) => ({
@@ -48,8 +70,21 @@ const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
     }));
   }, [networkLogs]);
 
+  const firstRequestTime = useMemo(() => {
+    return processedData.length > 0 ? d3.min(processedData, (d) => d.startTimestamp) || 0 : 0;
+  }, [processedData]);
+
+  const lastRequestTime = useMemo(() => {
+    return processedData.length > 0
+      ? d3.max(processedData, (d) => d.endTimestamp) || 0
+      : firstRequestTime;
+  }, [processedData]);
+
+  const minTime = firstRequestTime;
+  const maxTime = lastRequestTime;
+
   useEffect(() => {
-    if (!containerRef.current) {
+    if (stopInserting || !containerRef.current) {
       return;
     }
 
@@ -57,9 +92,6 @@ const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
     container.selectAll("*").remove();
 
     const containerWidth = containerRef.current.clientWidth;
-
-    const minTime = d3.min(processedData, (d) => d.startTimestamp) || 0;
-    const maxTime = d3.max(processedData, (d) => d.endTimestamp) || minTime + MAX_VIEW_TIME;
 
     if (isAutoScrolling && maxTime - minTime > MAX_VIEW_TIME) {
       setScrollOffset(maxTime - minTime - MAX_VIEW_TIME);
@@ -83,28 +115,6 @@ const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
       .ticks(MAX_VIEW_TIME / 1000)
       .tickValues(d3.range(minTime, maxTime, 1000))
       .tickFormat((d) => `${d.valueOf() - minTime} ms`);
-
-    const placeRequestsInRows = (requests: NetworkLog[]) => {
-      const rows: NetworkLog[][] = [];
-
-      requests.forEach((req) => {
-        let placed = false;
-        for (const row of rows) {
-          if (
-            row.length === 0 ||
-            req.startTimestamp - row[row.length - 1].endTimestamp > TIME_GAP_THRESHOLD
-          ) {
-            row.push(req);
-            placed = true;
-            break;
-          }
-        }
-        if (!placed) {
-          rows.push([req]);
-        }
-      });
-      return rows;
-    };
 
     const rows = placeRequestsInRows(processedData);
     const renderHeight = HEIGHT - TIMELINE_LEGEND_HEIGHT - MARGIN_VERTICAL;
@@ -141,31 +151,38 @@ const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
         [CHART_MARGIN, 0],
         [containerWidth - CHART_MARGIN, HEIGHT - TIMELINE_LEGEND_HEIGHT],
       ])
+      .on("start", () => {
+        setStopInserting(true);
+        setIsAutoScrolling(false);
+      })
       .on("brush", (event) => {
         const [start, end] = event.selection;
         if (start === end) {
           return;
         }
         const newDomain = [timeScale.invert(start), timeScale.invert(end)];
-        console.log("newDomain", newDomain);
         setFilters({
           ...filters,
           timestampRange: {
-            start: newDomain[0],
-            end: newDomain[1],
+            start: Math.floor(newDomain[0]) / 1000,
+            end: Math.floor(newDomain[1]) / 1000,
           },
         });
       })
       .on("end", (event) => {
         if (!event.selection) {
           setIsAutoScrolling(true);
+          setStopInserting(false);
+          setFilters({
+            ...filters,
+            timestampRange: undefined,
+          });
         }
       });
 
     svg.append("g").attr("class", "brush").call(brush);
 
     svg.on("click", function (event) {
-      console.log("click", event);
       const [x] = d3.pointer(event);
       const clickedRequest = processedData.find(
         (d) => x >= timeScale(d.startTimestamp) && x <= timeScale(d.endTimestamp)
