@@ -92,7 +92,7 @@ export function registerChat(context: vscode.ExtensionContext) {
 
       const chatHistory = getChatHistory(chatContext);
       const messages = [...chatHistory];
-      const messageRequests: vscode.LanguageModelChatMessage[] = [
+      const messageRequests = [
         vscode.LanguageModelChatMessage.Assistant(documentation),
         vscode.LanguageModelChatMessage.Assistant(system),
         vscode.LanguageModelChatMessage.User(request.prompt),
