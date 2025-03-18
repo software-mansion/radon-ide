@@ -186,6 +186,7 @@ export class ProxyDebugAdapter extends DebugSession {
           undefined,
           ErrorDestination.User
         );
+        return;
       }
 
       if (this.nodeDebugSession === null) {
