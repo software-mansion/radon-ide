@@ -37,7 +37,10 @@ function App() {
             <NetworkFilters />
           </div>
         )}
-        <NetworkTimeline handleSelectedRequest={setSelectedNetworkLogId} />
+        <NetworkTimeline
+          networkLogs={networkLogs}
+          handleSelectedRequest={setSelectedNetworkLogId}
+        />
       </div>
       <div className="network-log-container">
         <NetworkRequestLog

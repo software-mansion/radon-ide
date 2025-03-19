@@ -1,8 +1,8 @@
 import { useEffect, useRef, useMemo, useState } from "react";
 import * as d3 from "d3";
-import useNetworkTracker from "../hooks/useNetworkTracker";
+import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
-import { NetworkLog } from "../types/network";
+import { NetworkLog as TimelineNetworkLog } from "../types/network";
 
 const HEIGHT = 100;
 const MARGIN_VERTICAL = 20;
@@ -10,7 +10,8 @@ const TIMELINE_LEGEND_HEIGHT = 20;
 const SIDEBAR_MAX_WIDTH = 600;
 const ROW_HEIGHT = 10;
 const ROW_PADDING = 5;
-const TIME_GAP_THRESHOLD = 100;
+const TIME_GAP_THRESHOLD = 50;
+const MAX_ITEMS_TO_DISPLAY = 100;
 const CHART_MARGIN = 10;
 const MAX_SIZE_BIG_SCREEN = 15000;
 const MAX_SIZE_SMALL_SCREEN = 5000;
@@ -19,6 +20,7 @@ const MAX_VIEW_TIME =
 
 interface NetworkFiltersProps {
   handleSelectedRequest: (id: string | null) => void;
+  networkLogs: NetworkLog[];
 }
 
 const getColorForSameService = (url: string) => {
@@ -26,10 +28,11 @@ const getColorForSameService = (url: string) => {
   return `hsl(${urlObject.hostname.length * 10}, 70%, 50%)`;
 };
 
-const placeRequestsInRows = (requests: NetworkLog[]) => {
-  const rows: NetworkLog[][] = [];
+const placeRequestsInRows = (requests: TimelineNetworkLog[]) => {
+  const rows: TimelineNetworkLog[][] = [];
+  const limitedRequests = requests.slice(-MAX_ITEMS_TO_DISPLAY);
 
-  requests.forEach((req) => {
+  limitedRequests.forEach((req) => {
     let placed = false;
     for (const row of rows) {
       if (
@@ -48,16 +51,15 @@ const placeRequestsInRows = (requests: NetworkLog[]) => {
   return rows;
 };
 
-const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
+const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersProps) => {
   const { isClearing, filters, setFilters } = useNetwork();
-  const networkLogs = useNetworkTracker();
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const [stopInserting, setStopInserting] = useState(false);
 
   const processedData = useMemo(() => {
-    return networkLogs.networkLogs.map((d) => ({
+    return networkLogs.map((d) => ({
       requestId: d.requestId,
       url: d.request?.url || "",
       status: d.response?.status || 0,
@@ -275,12 +277,18 @@ const NetworkTimeline = ({ handleSelectedRequest }: NetworkFiltersProps) => {
 
     containerRef.current.addEventListener("wheel", handleScroll, { passive: true });
     return () => containerRef.current?.removeEventListener("wheel", handleScroll);
-  }, [processedData]);
+  }, [processedData, isClearing]);
 
   return (
     <div
       ref={containerRef}
-      style={{ width: "100%", height: HEIGHT, overflowX: "hidden", paddingBlock: "20px" }}
+      style={{
+        width: "100%",
+        height: HEIGHT,
+        overflowX: "hidden",
+        overflowY: "hidden",
+        paddingBlock: "20px",
+      }}
     />
   );
 };

@@ -66,8 +66,9 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   }
 
   function clearActivity() {
-    setIsClearing(!isClearing);
+    setIsClearing(true);
     networkTracker.clearLogs();
+    setIsClearing(false);
   }
 
   function toggleScrolling() {
