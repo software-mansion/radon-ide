@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 
-const BASE_RADON_AI_URL = "http://127.0.0.1:8000";
+const BASE_RADON_AI_URL = "https://radon-ai-backend.swmansion.com/";
 
 export async function getSystemPrompt(userPrompt: string, jwt: string): Promise<any> {
   try {
