@@ -11,7 +11,7 @@ interface Package {
 }
 
 const appRootFolder = findAppRootFolder() ?? "";
-const result: Package[] = [];
+const packages: Package[] = [];
 let packageJsonHash: string;
 
 async function getPackageJsonHash(): Promise<string> {
@@ -31,11 +31,13 @@ async function getReactNativePackages(): Promise<Package[]> {
     // check if hash is the same
     const newPackageJsonHash = await getPackageJsonHash();
     if (newPackageJsonHash === packageJsonHash) {
-      return result;
+      return packages;
     }
     Logger.info(CHAT_LOG, "Found changes in package.json, rescanning packages");
     // update hash
     packageJsonHash = newPackageJsonHash;
+    // empty packages array
+    packages.length = 0;
   } else {
     // generate hash for the first time
     packageJsonHash = await getPackageJsonHash();
@@ -56,24 +58,24 @@ async function getReactNativePackages(): Promise<Package[]> {
     try {
       const packageJsonDoc = await vscode.workspace.openTextDocument(pkg);
       const { name, version } = JSON.parse(packageJsonDoc.getText());
-      result.push({ name, version });
+      packages.push({ name, version });
     } catch (err) {
       Logger.error(`Error reading package.json: ${err}`);
       return [];
     }
   }
 
-  return result;
+  return packages;
 }
 
 export async function getReactNativePackagesPrompt(): Promise<string> {
   let prompt = "User has the following packages installed in the project :\n";
-  const packages = await getReactNativePackages();
+  const rnPackages = await getReactNativePackages();
 
-  if (packages.length === 0) {
+  if (rnPackages.length === 0) {
     return "";
   }
-  packages.forEach((pkg) => {
+  rnPackages.forEach((pkg) => {
     prompt += `- ${pkg.name}@${pkg.version}\n`;
   });
 
