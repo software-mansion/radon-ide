@@ -11,7 +11,7 @@ const SIDEBAR_MAX_WIDTH = 600;
 const ROW_HEIGHT = 10;
 const ROW_PADDING = 5;
 const TIME_GAP_THRESHOLD = 50;
-const MAX_ITEMS_TO_DISPLAY = 100;
+const MAX_ITEMS_TO_DISPLAY = 150;
 const CHART_MARGIN = 10;
 const MAX_SIZE_BIG_SCREEN = 15000;
 const MAX_SIZE_SMALL_SCREEN = 5000;
@@ -26,29 +26,6 @@ interface NetworkFiltersProps {
 const getColorForSameService = (url: string) => {
   const urlObject = new URL(url);
   return `hsl(${urlObject.hostname.length * 10}, 70%, 50%)`;
-};
-
-const placeRequestsInRows = (requests: TimelineNetworkLog[]) => {
-  const rows: TimelineNetworkLog[][] = [];
-  const limitedRequests = requests.slice(-MAX_ITEMS_TO_DISPLAY);
-
-  limitedRequests.forEach((req) => {
-    let placed = false;
-    for (const row of rows) {
-      if (
-        row.length === 0 ||
-        req.startTimestamp - row[row.length - 1].endTimestamp > TIME_GAP_THRESHOLD
-      ) {
-        row.push(req);
-        placed = true;
-        break;
-      }
-    }
-    if (!placed) {
-      rows.push([req]);
-    }
-  });
-  return rows;
 };
 
 const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersProps) => {
@@ -82,6 +59,37 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       : firstRequestTime;
   }, [processedData]);
 
+  const rows = useMemo(() => {
+    const timelineRows: TimelineNetworkLog[][] = [];
+    const limitedRequests = processedData.slice(-MAX_ITEMS_TO_DISPLAY);
+
+    limitedRequests.forEach((req) => {
+      let placed = false;
+      for (const row of timelineRows) {
+        if (
+          row.length === 0 ||
+          req.startTimestamp - row[row.length - 1].endTimestamp > TIME_GAP_THRESHOLD
+        ) {
+          row.push(req);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        timelineRows.push([req]);
+      }
+    });
+    return timelineRows;
+  }, [processedData]);
+
+  const adjustedRowHeight = useMemo(() => {
+    const renderHeight = HEIGHT - TIMELINE_LEGEND_HEIGHT - MARGIN_VERTICAL;
+    const maxRows = Math.floor(renderHeight / (ROW_HEIGHT + ROW_PADDING));
+    return rows.length > maxRows
+      ? Math.max(2, renderHeight / rows.length - ROW_PADDING)
+      : ROW_HEIGHT;
+  }, [rows]);
+
   const minTime = firstRequestTime;
   const maxTime = lastRequestTime;
 
@@ -90,10 +98,9 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       return;
     }
 
-    const container = d3.select(containerRef.current);
-    container.selectAll("*").remove();
-
-    const containerWidth = containerRef.current.clientWidth;
+    if (scrollOffset === maxTime - minTime - MAX_VIEW_TIME) {
+      setIsAutoScrolling(true);
+    }
 
     if (isAutoScrolling && maxTime - minTime > MAX_VIEW_TIME) {
       setScrollOffset(maxTime - minTime - MAX_VIEW_TIME);
@@ -103,9 +110,10 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       setScrollOffset(0);
     }
 
-    if (scrollOffset === maxTime - minTime - MAX_VIEW_TIME) {
-      setIsAutoScrolling(true);
-    }
+    const container = d3.select(containerRef.current);
+    container.selectAll("*").remove();
+
+    const containerWidth = containerRef.current.clientWidth;
 
     const timeScale = d3
       .scaleLinear()
@@ -117,12 +125,6 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       .ticks(MAX_VIEW_TIME / 1000)
       .tickValues(d3.range(minTime, maxTime, 1000))
       .tickFormat((d) => `${d.valueOf() - minTime} ms`);
-
-    const rows = placeRequestsInRows(processedData);
-    const renderHeight = HEIGHT - TIMELINE_LEGEND_HEIGHT - MARGIN_VERTICAL;
-    const maxRows = Math.floor(renderHeight / (ROW_HEIGHT + ROW_PADDING));
-    const adjustedRowHeight =
-      rows.length > maxRows ? Math.max(2, renderHeight / rows.length - ROW_PADDING) : ROW_HEIGHT;
 
     const svg = container
       .append("svg")
@@ -215,6 +217,7 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
           (enter) =>
             enter
               .append("rect")
+              .attr("key", (d) => d.requestId)
               .attr("class", "request-bar")
               .attr("x", (d) => timeScale(d.startTimestamp))
               .attr("y", rowIndex * (adjustedRowHeight + ROW_PADDING) + MARGIN_VERTICAL / 2)
@@ -277,7 +280,7 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
 
     containerRef.current.addEventListener("wheel", handleScroll, { passive: true });
     return () => containerRef.current?.removeEventListener("wheel", handleScroll);
-  }, [processedData, isClearing]);
+  }, [processedData, isClearing, scrollOffset]);
 
   return (
     <div
@@ -285,8 +288,7 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       style={{
         width: "100%",
         height: HEIGHT,
-        overflowX: "hidden",
-        overflowY: "hidden",
+        overflow: "hidden",
         paddingBlock: "20px",
       }}
     />
