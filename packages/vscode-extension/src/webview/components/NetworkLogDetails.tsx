@@ -115,16 +115,36 @@ const NetworkLogDetails = ({
           </pre>
         );
       case "Response":
+        let isValidJSON = false;
+        try {
+          JSON.parse(typeof responseBody === "string" ? responseBody : "{}");
+          isValidJSON = true;
+        } catch (e) {
+          isValidJSON = false;
+        }
+        const data =
+          typeof responseBody === "string"
+            ? isValidJSON
+              ? JSON.stringify(
+                  JSON.parse(typeof responseBody === "string" ? responseBody : "{}"),
+                  null,
+                  2
+                )
+              : responseBody
+            : "No response body";
         return (
-          <pre>
-            {JSON.stringify(
-              JSON.parse(typeof responseBody === "string" ? responseBody : "{}"),
-              null,
-              2
-            )}
-          </pre>
+          <>
+            <IconButton
+              className="copy-button"
+              tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
+              onClick={() => {
+                navigator.clipboard.writeText(data);
+              }}>
+              <span className="codicon codicon-copy" />
+            </IconButton>
+            <pre>{data}</pre>
+          </>
         );
-
       case "Timing":
         const totalTime = networkLog.timeline.durationMs || 0;
         const ttfb = networkLog.timeline.ttfb || 0;

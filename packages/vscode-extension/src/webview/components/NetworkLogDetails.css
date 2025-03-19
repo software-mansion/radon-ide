@@ -109,6 +109,13 @@
   margin-block: 5px;
 }
 
+.copy-button {
+  position: absolute;
+  right: 20px;
+  top: 40px;
+  background-color: var(--vscode-dropdown-background);
+}
+
 .timing-container {
   margin: 20px;
   width: 80%;
