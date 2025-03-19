@@ -21,7 +21,7 @@
     "workspaceContains:**/app.config.js",
     "workspaceContains:**/app.config.ts"
   ],
-  "version": "1.3.0",
+  "version": "1.4.1",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -191,11 +191,6 @@
       ],
       "panel": [
         {
-          "id": "RadonIDEToolExpoDevPluginReactQuery",
-          "title": "React Query",
-          "icon": "assets/react-query.svg"
-        },
-        {
           "id": "RadonIDEToolExpoDevPluginMMKV",
           "title": "MMKV",
           "icon": "assets/mmkv.svg"
@@ -206,14 +201,19 @@
           "icon": "assets/redux.svg"
         },
         {
-          "id": "RadonIDEToolNetwork",
-          "title": "Network",
-          "icon": "assets/network.svg"
-        },
-        {
           "id": "RadonIDEToolReduxDevTools",
           "title": "Redux",
           "icon": "assets/redux.svg"
+        },
+        {
+          "id": "RadonIDEToolReactQueryDevTools",
+          "title": "React Query",
+          "icon": "assets/react-query.svg"
+        },
+        {
+          "id": "RadonIDEToolNetwork",
+          "title": "Network",
+          "icon": "assets/network.svg"
         }
       ]
     },
@@ -224,14 +224,6 @@
           "id": "RadonIDE.view",
           "name": "",
           "when": "RNIDE.extensionIsActive && config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
-        }
-      ],
-      "RadonIDEToolExpoDevPluginReactQuery": [
-        {
-          "type": "webview",
-          "id": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.view",
-          "name": "",
-          "when": "RNIDE.Tool.ExpoDevPlugin.ReactQuery.available && RNIDE.panelIsOpen"
         }
       ],
       "RadonIDEToolExpoDevPluginMMKV": [
@@ -265,6 +257,14 @@
           "name": "",
           "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
+      ],
+      "RadonIDEToolReactQueryDevTools": [
+        {
+          "type": "webview",
+          "id": "RNIDE.Tool.ReactQueryDevTools.view",
+          "name": "",
+          "when": "RNIDE.Tool.ReactQueryDevTools.available && RNIDE.panelIsOpen"
+        }
       ]
     },
     "menus": {
@@ -294,6 +294,33 @@
     "debuggers": [
       {
         "type": "com.swmansion.react-native-debugger",
+        "label": "Radon IDE internal debugger for React Native projects",
+        "hiddenWhen": "true",
+        "languages": [
+          "javascript",
+          "typescript"
+        ]
+      },
+      {
+        "type": "com.swmansion.js-debugger",
+        "label": "Radon IDE internal JavaScript debugger",
+        "hiddenWhen": "true",
+        "languages": [
+          "javascript",
+          "typescript"
+        ]
+      },
+      {
+        "type": "com.swmansion.proxy-debugger",
+        "label": "Radon IDE internal debugger for React Native",
+        "hiddenWhen": "true",
+        "languages": [
+          "javascript",
+          "typescript"
+        ]
+      },
+      {
+        "type": "radon-pwa-node",
         "label": "Radon IDE internal debugger for React Native",
         "hiddenWhen": "true",
         "languages": [
@@ -633,19 +660,24 @@
   "scripts": {
     "vscode:package": "vsce package",
     "vscode:prepublish": "npm run package",
+    "vscode:publish": "vsce publish",
+    "open-vsx:publish": "ovsx publish",
     "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
+    "build:react-query-devtools-ui": "rm -rf dist/react-query-devtools && cp -R ../radon-ide-react-query-webui/artifacts dist/react-query-devtools",
     "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
-    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui",
-    "build:extension-debug": "npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
-    "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
+    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
+    "build:extension-debug": "npm run prepare:fake_editor && npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
+    "build:extension": "npm run prepare:fake_editor && node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
+    "build:vscode-js-debug": "cd ../vscode-js-debug && npm i && npm exec tsc && npm run compile && cp dist/src/chromehash_bg.wasm ../vscode-extension/dist/",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
     "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
+    "prepare:fake_editor": "mkdir -p dist && cp react-fake-editor-executable dist/atom",
     "watch:extension": "vite",
-    "package": "rm -rf dist/ && npm run build:dist",
+    "package": "rm -rf dist/* && cp ../vscode-js-debug/dist/src/chromehash_bg.wasm dist/ && npm run build:dist",
     "lint": "eslint src/**/*.\\{ts,tsx,js,jsx\\} && prettier --check src",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
@@ -653,9 +685,10 @@
     "build:plugins": "bash ./scripts/install-dev-plugins.sh",
     "build:icons": "fantasticon -c ./font-icons/fantasticon.config.json",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
-    "preinstall": "bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && cd ../vscode-js-debug && npm i && npm exec tsc",
+    "preinstall": "mkdir -p dist && bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && npm run build:vscode-js-debug",
     "fetch:sim-server-assets": "bash ./scripts/download-sim-server-release-assets.sh dist",
-    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin"
+    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin ../radon-ide-react-query-webui",
+    "postinstall": "patch-package"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
@@ -673,6 +706,8 @@
     "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tooltip": "^1.0.7",
+    "@react-native-community/cli-config": "^15.1.3",
+    "@react-native-community/cli-types": "^15.1.3",
     "@types/glob": "^7.1.3",
     "@types/lodash": "^4.14.202",
     "@types/node": "^18.19.3",
@@ -714,13 +749,15 @@
     "minimatch": "^9.0.4",
     "mocha": "^10.4.0",
     "node-fetch": "^2.7.0",
+    "patch-package": "^8.0.0",
+    "ovsx": "^0.10.1",
     "plist": "^3.1.0",
     "prettier": "2.4.1",
     "re-resizable": "^6.9.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.53.2",
-    "react-scan": "https://github.com/software-mansion-labs/react-scan/releases/download/0.1.3-radon/react-scan-0.1.3-radon.tgz",
+    "react-scan": "https://github.com/software-mansion-labs/react-scan/releases/download/0.1.3-radon-2/react-scan-0.1.3-radon-2.tgz",
     "rollup": "^4.18.1",
     "rollup-plugin-license": "^3.5.3",
     "semver": "^7.6.2",
@@ -732,9 +769,13 @@
     "url-loader": "^4.1.1",
     "uuid": "^9.0.1",
     "vite": "^5.0.8",
+    "vscode-cdp-proxy": "^0.2.1",
     "vscode-js-debug": "file:../vscode-js-debug",
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",
     "xml2js": "^0.6.2"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.9.5"
   }
 }

@@ -16,8 +16,14 @@ export type DeviceSettings = {
   showTouches: boolean;
 };
 
+export type ToolState = {
+  enabled: boolean;
+  panelAvailable: boolean;
+  label: string;
+};
+
 export type ToolsState = {
-  [key: string]: { enabled: boolean; panelAvailable: boolean; label: string };
+  [key: string]: ToolState;
 };
 
 export type ProjectState = {
@@ -27,8 +33,8 @@ export type ProjectState = {
     | "buildError"
     | "bootError"
     | "runtimeError"
-    | "bundleError"
-    | "incrementalBundleError"
+    | "bundleBuildFailedError"
+    | "bundlingError"
     | "debuggerPaused"
     | "refreshing";
   startupMessage?: string; // Only used when status is "starting"
@@ -125,6 +131,7 @@ export interface ProjectEventMap {
   needsNativeRebuild: void;
   replayDataCreated: MultimediaData;
   isRecording: boolean;
+  isProfilingCPU: boolean;
 }
 
 export interface ProjectEventListener<T> {
@@ -168,12 +175,15 @@ export interface ProjectInterface {
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
   getDeepLinksHistory(): Promise<string[]>;
-  openDeepLink(link: string): Promise<void>;
+  openDeepLink(link: string, terminateApp: boolean): Promise<void>;
 
   startRecording(): void;
   captureAndStopRecording(): void;
   captureReplay(): void;
   captureScreenshot(): void;
+
+  startProfilingCPU(): void;
+  stopProfilingCPU(): void;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;

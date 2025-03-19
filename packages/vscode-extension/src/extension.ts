@@ -12,10 +12,14 @@ import {
   Disposable,
 } from "vscode";
 import vscode from "vscode";
+import { activate as activateJsDebug } from "vscode-js-debug/dist/src/extension";
 import { TabPanel } from "./panels/Tabpanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
-import { DebugAdapterDescriptorFactory } from "./debugging/DebugAdapterDescriptorFactory";
+import {
+  CDPDebugAdapterDescriptorFactory,
+  DebugAdapterDescriptorFactory,
+} from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger, enableDevModeLogging } from "./Logger";
 import {
   extensionContext,
@@ -27,6 +31,7 @@ import { PanelLocation } from "./common/WorkspaceConfig";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
 import { registerChat } from "./chat";
+import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 const CHAT_OPENED = "chat_opened";
@@ -60,6 +65,7 @@ export function deactivate(context: ExtensionContext): undefined {
 
 export async function activate(context: ExtensionContext) {
   handleUncaughtErrors();
+  await activateJsDebug(context);
 
   if (Platform.OS !== "macos" && Platform.OS !== "windows" && Platform.OS !== "linux") {
     window.showErrorMessage("Radon IDE works only on macOS, Windows and Linux.", "Dismiss");
@@ -226,9 +232,38 @@ export async function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
+    debug.registerDebugConfigurationProvider(
+      "com.swmansion.js-debugger",
+      new DebugConfigProvider(),
+      DebugConfigurationProviderTriggerKind.Dynamic
+    )
+  );
+
+  context.subscriptions.push(
+    debug.registerDebugConfigurationProvider(
+      "com.swmansion.proxy-debugger",
+      new DebugConfigProvider(),
+      DebugConfigurationProviderTriggerKind.Dynamic
+    )
+  );
+
+  context.subscriptions.push(
     debug.registerDebugAdapterDescriptorFactory(
       "com.swmansion.react-native-debugger",
       new DebugAdapterDescriptorFactory()
+    )
+  );
+  context.subscriptions.push(
+    debug.registerDebugAdapterDescriptorFactory(
+      "com.swmansion.js-debugger",
+      new CDPDebugAdapterDescriptorFactory()
+    )
+  );
+
+  context.subscriptions.push(
+    debug.registerDebugAdapterDescriptorFactory(
+      "com.swmansion.proxy-debugger",
+      new ProxyDebugSessionAdapterDescriptorFactory()
     )
   );
 

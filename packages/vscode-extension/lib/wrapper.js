@@ -49,6 +49,12 @@ window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
 };
 
 const RNInternals = {
+  get parseErrorStack() {
+    return require("react-native/Libraries/Core/Devtools/parseErrorStack");
+  },
+  get LogBoxData() {
+    return require("react-native/Libraries/LogBox/Data/LogBoxData");
+  },
   get getInspectorDataForViewAtPoint() {
     return require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
   },
@@ -365,7 +371,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   useEffect(() => {
     if (devtoolsAgent) {
-      LogBox.uninstall();
       const LoadingView = RNInternals.LoadingView;
       LoadingView.showMessage = (message) => {
         devtoolsAgent._bridge.send("RNIDE_fastRefreshStarted");
@@ -429,6 +434,30 @@ export function AppWrapper({ children, initialProps, fabric }) {
     },
     []
   );
+
+  useEffect(() => {
+    if (!devtoolsAgent) {
+      return;
+    }
+    const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
+    LogBox.ignoreAllLogs(true);
+
+    function wrappedGlobalErrorHandler(error, isFatal) {
+      try {
+        // NOTE: this is necessary for two reasons:
+        // 1. even though we wish to ignore warnings, without this, when displaying the LogBox,
+        // the warnings will be included in the list of reported errors
+        // 2. when the fullscreen LogBox is minimized, new errors won't bring it up unless we clear the old ones
+        RNInternals.LogBoxData.clear();
+        originalErrorHandler(error, isFatal);
+      } catch {}
+    }
+
+    global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
+    return () => {
+      global.ErrorUtils.setGlobalHandler(originalErrorHandler);
+    };
+  }, [devtoolsAgent]);
 
   return (
     <View

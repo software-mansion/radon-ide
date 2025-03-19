@@ -444,7 +444,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
     // terminate the app before launching, otherwise launch commands won't actually start the process which
     // may be in a bad state
-    await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", build.packageName]);
+    this.terminateApp(build.packageName);
 
     this.mirrorNativeLogs(build);
 
@@ -538,6 +538,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
       build.packageName,
     ]);
     return true; // Android will terminate the process if any of the permissions were granted prior to reset-permissions call
+  }
+
+  async terminateApp(packageName: string) {
+    await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", packageName]);
   }
 
   async sendDeepLink(link: string, build: BuildResult) {

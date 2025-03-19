@@ -11,11 +11,17 @@ import { Devtools } from "./devtools";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
+import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
+import { DebugSource } from "../debugging/DebugSession";
+import { openFileAtPosition } from "../utilities/openFileAtPosition";
+
+const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
+const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
 
 export interface MetroDelegate {
-  onBundleError(): void;
-  onIncrementalBundleError(message: string, errorModulePath: string): void;
+  onBundleBuildFailedError(): void;
+  onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
 }
 
 interface CDPTargetDescription {
@@ -37,6 +43,9 @@ type MetroEvent =
       stack: string;
       error: {
         message: string;
+        filename?: string;
+        lineNumber?: number;
+        columnNumber?: number;
         originModulePath: string;
         targetModuleName: string;
         errors: {
@@ -209,6 +218,10 @@ export class Metro implements Disposable {
 
     const port = await getOpenPort();
 
+    // NOTE: this is needed to capture metro's open-stack-frame calls.
+    // See `packages/vscode-extension/atom` script for more details.
+    const fakeEditorPath = extensionContext.asAbsolutePath("dist/atom");
+
     const metroEnv = {
       ...launchConfiguration.env,
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
@@ -217,6 +230,12 @@ export class Metro implements Disposable {
       RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
       RADON_IDE_LIB_PATH: libPath,
       RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
+      REACT_EDITOR: fakeEditorPath,
+      // NOTE: At least as of version 52, Expo uses a different mechanism to open stack frames in the editor,
+      // which doesn't allow passing a path to the EDITOR executable.
+      // Instead, we pass it a fake editor name and inspect the debug logs to extract the file path to open.
+      DEBUG: "expo:utils:editor",
+      EXPO_EDITOR: FAKE_EDITOR,
       ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
     let bundlerProcess: ChildProcess;
@@ -249,8 +268,7 @@ export class Metro implements Disposable {
         });
 
       lineReader(bundlerProcess).onLineRead((line) => {
-        try {
-          const event = JSON.parse(line) as MetroEvent;
+        const handleMetroEvent = (event: MetroEvent) => {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
@@ -277,20 +295,65 @@ export class Metro implements Disposable {
               Logger.info("Captured metro watch folders", this._watchFolders);
               break;
             case "bundle_build_failed":
-              this.delegate.onBundleError();
+              this.delegate.onBundleBuildFailedError();
               break;
             case "bundling_error":
-              this.delegate.onIncrementalBundleError(event.message, event.error.originModulePath);
+              const message = stripAnsi(event.message);
+              let filename = event.error.originModulePath;
+              if (!filename && event.error.filename) {
+                filename = path.join(appRoot, event.error.filename);
+              }
+              this.delegate.onBundlingError(
+                message,
+                {
+                  filename,
+                  line1based: event.error.lineNumber,
+                  column0based: event.error.columnNumber,
+                },
+                event.error.originModulePath
+              );
               break;
           }
-        } catch (error) {
-          // ignore parsing errors, just print out the line
-          Logger.debug("Metro", line);
+        };
+
+        let event: MetroEvent | undefined;
+        try {
+          event = JSON.parse(line) as MetroEvent;
+        } catch {}
+
+        if (event) {
+          handleMetroEvent(event);
+          return;
+        }
+
+        Logger.debug("Metro", line);
+
+        if (line.startsWith("__RNIDE__open_editor__ ")) {
+          this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));
+        } else if (line.includes(FAKE_EDITOR)) {
+          const matches = line.match(OPENING_IN_FAKE_EDITOR_REGEX);
+          if (matches?.length) {
+            this.handleOpenEditor(matches[1]);
+          }
         }
       });
     });
 
     return initPromise;
+  }
+
+  private handleOpenEditor(payload: string) {
+    // NOTE: this regex matches `fileName[:lineNumber][:columnNumber]` format:
+    // - (.+?) - fileName (any character, non-greedy to allow for the trailing numbers)
+    // - (?::(\d+))? - optional ":number", not capturing the colon
+    const matches = /^(.+?)(?::(\d+))?(?::(\d+))?$/.exec(payload);
+    if (!matches) {
+      return;
+    }
+    const fileName = matches[1];
+    const lineNumber = matches[2] ? parseInt(matches[2], 10) - 1 : 0;
+    const columnNumber = matches[3] ? parseInt(matches[3], 10) - 1 : 0;
+    openFileAtPosition(fileName, lineNumber, columnNumber);
   }
 
   private async sendMessageToDevice(method: "devMenu" | "reload") {
@@ -320,18 +383,6 @@ export class Metro implements Disposable {
 
   public async openDevMenu() {
     await this.sendMessageToDevice("devMenu");
-  }
-
-  public async getDebuggerURL() {
-    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
-    const startTime = Date.now();
-    let websocketAddress: string | undefined;
-    while (!websocketAddress && Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
-      websocketAddress = await this.fetchDebuggerURL();
-      await new Promise((res) => setTimeout(res, 1000));
-    }
-    return websocketAddress;
   }
 
   private lookupWsAddressForOldDebugger(listJson: CDPTargetDescription[]) {
@@ -370,7 +421,8 @@ export class Metro implements Disposable {
       (page) =>
         page.reactNative &&
         (page.title.startsWith("React Native Bridge") ||
-          page.description.endsWith("[C++ connection]"))
+          page.description.endsWith("[C++ connection]") ||
+          page.reactNative.capabilities?.prefersFuseboxFrontend)
     );
   }
 
@@ -440,14 +492,43 @@ export class Metro implements Disposable {
     return undefined;
   }
 
-  private async fetchDebuggerURL() {
-    // query list from http://localhost:${metroPort}/json/list
-    const list = await fetch(`http://localhost:${this._port}/json/list`);
-    const listJson = await list.json();
+  public async fetchWsTargets(): Promise<CDPTargetDescription[] | undefined> {
+    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
 
-    // fixup websocket addresses on the list
-    for (const page of listJson) {
-      page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+    let retryCount = 0;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
+      retryCount++;
+
+      try {
+        const list = await fetch(`http://localhost:${this._port}/json/list`);
+        const listJson = await list.json();
+
+        if (listJson.length > 0) {
+          // fixup websocket addresses on the list
+          for (const page of listJson) {
+            page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+          }
+
+          return listJson;
+        }
+      } catch (_) {
+        // It shouldn't happen, so lets warn about it. Except a warning we will retry anyway, so nothing to do here.
+        Logger.warn("[METRO] Fetching list of runtimes failed, retrying...");
+      }
+
+      await sleep(progressiveRetryTimeout(retryCount));
+    }
+
+    return undefined;
+  }
+
+  public async getDebuggerURL() {
+    const listJson = await this.fetchWsTargets();
+
+    if (listJson === undefined) {
+      return undefined;
     }
 
     // When there are pages that are identified as belonging to the new debugger, we
