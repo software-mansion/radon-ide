@@ -16,40 +16,45 @@ interface Filters {
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
-  showFilter: boolean;
+  showSearch: boolean;
   filters: Filters;
   isClearing: boolean;
   isScrolling: boolean;
+  showChart: boolean;
   toggleRecording: () => void;
-  toggleShowFilter: () => void;
+  toggleShowSearch: () => void;
   setFilters: (filters: Filters) => void;
   clearActivity: () => void;
   toggleScrolling: () => void;
+  toggleShowChart: () => void;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
   isRecording: true,
-  showFilter: false,
+  showSearch: false,
   filters: {
     url: undefined,
     timestampRange: undefined,
   },
   isClearing: false,
   isScrolling: false,
+  showChart: true,
   toggleRecording: () => {},
-  toggleShowFilter: () => {},
+  toggleShowSearch: () => {},
   setFilters: () => {},
   clearActivity: () => {},
   toggleScrolling: () => {},
+  toggleShowChart: () => {},
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
 
+  const [showChart, setShowChart] = useState(true);
   const [isRecording, setIsRecording] = useState(true);
   const [isClearing, setIsClearing] = useState(false);
-  const [showFilter, setShowFilter] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     timestampRange: undefined,
@@ -57,22 +62,26 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   });
 
   function toggleRecording() {
-    setIsRecording(!isRecording);
+    setIsRecording((prev) => !prev);
     networkTracker.toggleNetwork(isRecording);
   }
 
-  function toggleShowFilter() {
-    setShowFilter(!showFilter);
+  function toggleShowSearch() {
+    setShowSearch((prev) => !prev);
   }
 
   function clearActivity() {
-    setIsClearing(true);
+    setIsClearing((prev) => prev);
     networkTracker.clearLogs();
     setIsClearing(false);
   }
 
   function toggleScrolling() {
-    setIsScrolling(!isScrolling);
+    setIsScrolling((prev) => !prev);
+  }
+
+  function toggleShowChart() {
+    setShowChart((prev) => !prev);
   }
 
   const networkLogs = useMemo(() => {
@@ -93,16 +102,18 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       networkLogs,
       isRecording,
       filters,
-      showFilter,
+      showSearch,
       isClearing,
       isScrolling,
+      showChart,
       toggleRecording,
-      toggleShowFilter,
+      toggleShowSearch,
       setFilters,
       clearActivity,
       toggleScrolling,
+      toggleShowChart,
     };
-  }, [isRecording, toggleRecording, setFilters, filters]);
+  }, [isRecording, filters, showSearch, isClearing, isScrolling, showChart, networkLogs]);
 
   return <NetworkContext.Provider value={contextValue}>{children}</NetworkContext.Provider>;
 }
@@ -113,5 +124,6 @@ export function useNetwork() {
   if (!context) {
     throw new Error("useNetwork must be used within a NetworkProvider");
   }
+
   return context;
 }

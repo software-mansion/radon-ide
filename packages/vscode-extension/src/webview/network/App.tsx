@@ -1,25 +1,28 @@
 import "./App.css";
 import { useEffect, useMemo, useState } from "react";
 import NetworkBar from "../components/NetworkBar";
-import NetworkFilters from "../components/NetworkFilters";
 import NetworkRequestLog from "../components/NetworkRequestLog";
 import NetworkLogDetails from "../components/NetworkLogDetails";
 import { useNetwork } from "../providers/NetworkProvider";
 import NetworkTimeline from "../components/NetworkTimeline";
+import { Input } from "../components/shared/Input";
 
 function App() {
-  const { showFilter, networkLogs } = useNetwork();
+  const { showSearch, networkLogs, filters, showChart, setFilters } = useNetwork();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
   const [detailsWidth, setDetailsWidth] = useState(0);
 
   const selectedNetworkLog = useMemo(() => {
-    return networkLogs.find((log) => log.requestId === selectedNetworkLogId) || null;
+    const fullLog = networkLogs.find((log) => log.requestId === selectedNetworkLogId);
+    if (!fullLog) {
+      setSelectedNetworkLogId(null);
+    }
+    return fullLog || null;
   }, [selectedNetworkLogId, networkLogs]);
 
   useEffect(() => {
     if (!selectedNetworkLog) {
-      console.log("Resetting details width");
       setDetailsWidth(0);
     } else {
       setDetailsWidth(500);
@@ -32,15 +35,23 @@ function App() {
         <div className="network-bar">
           <NetworkBar />
         </div>
-        {showFilter && (
-          <div className="network-filter">
-            <NetworkFilters />
+        {showSearch && (
+          <div className="network-search">
+            <Input
+              style={{ border: "none" }}
+              value={filters.url ?? ""}
+              type="string"
+              onChange={(e) => setFilters({ ...filters, url: e.target.value })}
+              placeholder="Filter"
+            />
           </div>
         )}
-        <NetworkTimeline
-          networkLogs={networkLogs}
-          handleSelectedRequest={setSelectedNetworkLogId}
-        />
+        {showChart && (
+          <NetworkTimeline
+            networkLogs={networkLogs}
+            handleSelectedRequest={setSelectedNetworkLogId}
+          />
+        )}
       </div>
       <div className="network-log-container">
         <NetworkRequestLog

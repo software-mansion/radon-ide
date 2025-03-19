@@ -3,8 +3,8 @@ import * as d3 from "d3";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog as TimelineNetworkLog } from "../types/network";
+import ResizableContainer from "./shared/ResizableContainer";
 
-const HEIGHT = 100;
 const MARGIN_VERTICAL = 20;
 const TIMELINE_LEGEND_HEIGHT = 20;
 const SIDEBAR_MAX_WIDTH = 600;
@@ -34,6 +34,7 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const [stopInserting, setStopInserting] = useState(false);
+  const [chartHeight, setChartHeight] = useState(100);
 
   const processedData = useMemo(() => {
     return networkLogs.map((d) => ({
@@ -83,7 +84,7 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
   }, [processedData]);
 
   const adjustedRowHeight = useMemo(() => {
-    const renderHeight = HEIGHT - TIMELINE_LEGEND_HEIGHT - MARGIN_VERTICAL;
+    const renderHeight = chartHeight - TIMELINE_LEGEND_HEIGHT - MARGIN_VERTICAL;
     const maxRows = Math.floor(renderHeight / (ROW_HEIGHT + ROW_PADDING));
     return rows.length > maxRows
       ? Math.max(2, renderHeight / rows.length - ROW_PADDING)
@@ -129,12 +130,12 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
     const svg = container
       .append("svg")
       .attr("width", containerWidth)
-      .attr("height", HEIGHT)
+      .attr("height", chartHeight)
       .style("background", "var(--swm-preview-background)");
 
     svg
       .append("g")
-      .attr("transform", `translate(0,${HEIGHT - TIMELINE_LEGEND_HEIGHT})`)
+      .attr("transform", `translate(0,${chartHeight - TIMELINE_LEGEND_HEIGHT})`)
       .call(xAxis);
 
     const dashedLineGroup = svg.append("g").attr("class", "dashed-lines");
@@ -144,7 +145,7 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
         .attr("x1", timeScale(i))
         .attr("x2", timeScale(i))
         .attr("y1", 0)
-        .attr("y2", HEIGHT - TIMELINE_LEGEND_HEIGHT)
+        .attr("y2", chartHeight - TIMELINE_LEGEND_HEIGHT)
         .attr("stroke", "var(--swm-default-text)")
         .attr("stroke-dasharray", "4,4");
     }
@@ -153,7 +154,7 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       .brushX()
       .extent([
         [CHART_MARGIN, 0],
-        [containerWidth - CHART_MARGIN, HEIGHT - TIMELINE_LEGEND_HEIGHT],
+        [containerWidth - CHART_MARGIN, chartHeight - TIMELINE_LEGEND_HEIGHT],
       ])
       .on("start", () => {
         setStopInserting(true);
@@ -283,15 +284,20 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
   }, [processedData, isClearing, scrollOffset]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: "100%",
-        height: HEIGHT,
-        overflow: "hidden",
-        paddingBlock: "20px",
-      }}
-    />
+    <ResizableContainer
+      containerWidth={chartHeight + 10}
+      setContainerWidth={setChartHeight}
+      showDragable={false}
+      side="bottom">
+      <div
+        ref={containerRef}
+        style={{
+          width: "100%",
+          height: chartHeight,
+          overflow: "hidden",
+        }}
+      />
+    </ResizableContainer>
   );
 };
 

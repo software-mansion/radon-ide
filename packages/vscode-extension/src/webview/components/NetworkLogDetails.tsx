@@ -49,7 +49,7 @@ const getParams = (url: string): Record<string, string> => {
 };
 
 const Section = ({ title, data }: SectionProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   return (
     <div className="section">
@@ -177,7 +177,6 @@ const NetworkLogDetails = ({
   };
 
   useEffect(() => {
-    console.log("activeTab: ", activeTab, "networkLog: ", networkLog);
     if (activeTab === "Response") {
       getResponseBody(networkLog).then((data) => {
         setResponseBody(data);
@@ -188,6 +187,7 @@ const NetworkLogDetails = ({
 
   return (
     <ResizableContainer
+      showDragable={false}
       containerWidth={containerWidth}
       setContainerWidth={(width) => {
         setContainerWidth(width);

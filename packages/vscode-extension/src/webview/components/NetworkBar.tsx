@@ -1,11 +1,9 @@
-import { useState } from "react";
 import IconButton from "./shared/IconButton";
 import { useNetwork } from "../providers/NetworkProvider";
 
 const NetworkBar = () => {
-  const { isRecording, toggleRecording, showFilter, toggleShowFilter, clearActivity } =
+  const { isRecording, toggleRecording, clearActivity, toggleShowSearch, toggleShowChart } =
     useNetwork();
-  const [showSearch, setShowSearch] = useState(false);
 
   return (
     <>
@@ -31,18 +29,7 @@ const NetworkBar = () => {
         <span className="codicon codicon-circle-slash" />
       </IconButton>
       <IconButton
-        onClick={toggleShowFilter}
-        tooltip={{
-          label: "Show network activity filter",
-          side: "bottom",
-        }}>
-        <span
-          style={{ color: showFilter ? "var(--vscode-charts-blue)" : "var(--swm-default-text)" }}
-          className="codicon codicon-filter"
-        />
-      </IconButton>
-      <IconButton
-        onClick={() => setShowSearch(!showSearch)}
+        onClick={toggleShowSearch}
         tooltip={{
           label: "Search network activity",
           side: "bottom",
@@ -50,20 +37,12 @@ const NetworkBar = () => {
         <span className="codicon codicon-search" />
       </IconButton>
       <IconButton
-        onClick={() => setShowSearch(!showSearch)}
+        onClick={toggleShowChart}
         tooltip={{
-          label: "Upload network activity",
+          label: "Show/Hide timeline visibility",
           side: "bottom",
         }}>
-        <span className="codicon codicon-cloud-upload" />
-      </IconButton>
-      <IconButton
-        onClick={() => setShowSearch(!showSearch)}
-        tooltip={{
-          label: "Download network activity",
-          side: "bottom",
-        }}>
-        <span className="codicon codicon-cloud-download" />
+        <span className="codicon codicon-graph" />
       </IconButton>
     </>
   );
