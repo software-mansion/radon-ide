@@ -9,6 +9,12 @@ export interface NetworkRequest {
   postData?: string;
 }
 
+export interface NetworkRequestInitiator {
+  sourceUrl: string;
+  lineNumber: number;
+  columnNumber: number;
+}
+
 export interface NetworkResponse {
   type: string;
   status: number;
@@ -39,6 +45,7 @@ export interface NetworkLog {
   encodedDataLength?: number;
   type?: string;
   timeline: TimelineEvent;
+  initiator?: any;
 }
 
 export interface WebSocketMessage {
@@ -52,6 +59,7 @@ export interface WebSocketMessage {
     ttfb?: number;
     wallTime: number;
     type?: string;
+    initiator?: NetworkRequestInitiator;
   };
 }
 
@@ -61,6 +69,7 @@ export interface NetworkTracker {
   getResponseBody: (networkLog: NetworkLog) => Promise<unknown>;
   clearLogs: () => void;
   toggleNetwork: (isRunning: boolean) => void;
+  getSource: (networkLog: NetworkLog) => void;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
@@ -69,6 +78,7 @@ export const networkTrackerInitialState: NetworkTracker = {
   getResponseBody: async () => undefined,
   clearLogs: () => {},
   toggleNetwork: () => {},
+  getSource: () => {},
 };
 
 const useNetworkTracker = (): NetworkTracker => {
@@ -121,6 +131,7 @@ const useNetworkTracker = (): NetworkTracker => {
               currentState: method,
               request: params.request || existingLog.request,
               response: params.response || existingLog.response,
+              initiator: params.initiator || existingLog.initiator,
               timeline: {
                 timestamp: params.timestamp,
                 wallTime: params.wallTime,
@@ -138,6 +149,7 @@ const useNetworkTracker = (): NetworkTracker => {
               response: params.response,
               encodedDataLength: params.encodedDataLength,
               type: params?.type,
+              initiator: params.initiator,
               timeline: {
                 timestamp: params.timestamp,
                 wallTime: params.wallTime,
@@ -208,12 +220,24 @@ const useNetworkTracker = (): NetworkTracker => {
     });
   };
 
+  const getSource = (networkLog: NetworkLog) => {
+    wsRef.current?.send(
+      JSON.stringify({
+        method: "Network.Initiator",
+        params: {
+          ...networkLog.initiator,
+        },
+      })
+    );
+  };
+
   return {
     networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
     ws: wsRef.current,
     getResponseBody,
     clearLogs,
     toggleNetwork,
+    getSource,
   };
 };
 

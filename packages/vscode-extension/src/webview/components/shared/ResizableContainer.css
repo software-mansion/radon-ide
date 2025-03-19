@@ -31,7 +31,6 @@
 }
 
 .draggable {
-  cursor: ew-resize;
   width: 1px;
   height: 100%;
   position: absolute;

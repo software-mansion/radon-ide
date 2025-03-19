@@ -49,7 +49,7 @@ const getParams = (url: string): Record<string, string> => {
 };
 
 const Section = ({ title, data }: SectionProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   return (
     <div className="section">
@@ -115,13 +115,26 @@ const NetworkLogDetails = ({
           </pre>
         );
       case "Response":
+        let isValidJSON = false;
+
+        try {
+          JSON.parse(typeof responseBody === "string" ? responseBody : "{}");
+          isValidJSON = true;
+        } catch (e) {
+          isValidJSON = false;
+        }
+
         return (
           <pre>
-            {JSON.stringify(
-              JSON.parse(typeof responseBody === "string" ? responseBody : "{}"),
-              null,
-              2
-            )}
+            {typeof responseBody === "string"
+              ? isValidJSON
+                ? JSON.stringify(
+                    JSON.parse(typeof responseBody === "string" ? responseBody : "{}"),
+                    null,
+                    2
+                  )
+                : responseBody
+              : ""}
           </pre>
         );
 
@@ -157,7 +170,6 @@ const NetworkLogDetails = ({
   };
 
   useEffect(() => {
-    console.log("activeTab: ", activeTab, "networkLog: ", networkLog);
     if (activeTab === "Response") {
       getResponseBody(networkLog).then((data) => {
         setResponseBody(data);
@@ -168,6 +180,7 @@ const NetworkLogDetails = ({
 
   return (
     <ResizableContainer
+      showDragable={false}
       containerWidth={containerWidth}
       setContainerWidth={(width) => {
         setContainerWidth(width);

@@ -11,7 +11,7 @@ interface NetworkRequestLogProps {
 }
 
 const ROWS = ["Domain", "File", "Status", "Method", "Type", "Size", "Time"];
-const TABLE_RIGHT_PADDING = 15;
+const TABLE_RIGHT_PADDING = 0;
 const TABLE_CELL_MIN_WIDTH = 50;
 
 const NetworkRequestLog = ({
@@ -186,7 +186,7 @@ const NetworkRequestLog = ({
             formattedSize /= 1024;
             unitIndex++;
           }
-          return `${parseFloat(formattedSize.toFixed(2))} ${units[unitIndex]}`;
+          return `${parseFloat(formattedSize.toFixed(2) || "")} ${units[unitIndex]}`;
         },
       },
       { title: "Time", getValue: (log: NetworkLog) => `${log.timeline?.durationMs} ms` },
@@ -222,12 +222,17 @@ const NetworkRequestLog = ({
       }
     };
 
-    if (!selectedNetworkLog && scrollTop >= container.scrollHeight - container.clientHeight * 1.5) {
+    if (
+      !selectedNetworkLog &&
+      scrollTop >= container.scrollHeight - container.clientHeight * 1.25
+    ) {
       container.scrollTo({
         top: container.scrollHeight,
         behavior: "smooth",
       });
     }
+
+    container.addEventListener("scroll", handleScroll);
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
