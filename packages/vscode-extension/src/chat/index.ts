@@ -9,12 +9,6 @@ import { getReactNativePackagesPrompt } from "./packages";
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 const TOOLS_INTERACTION_LIMIT = 3;
 
-interface IChatResult extends vscode.ChatResult {
-  metadata: {
-    command: string;
-  };
-}
-
 async function processChatResponse(
   chatResponse: vscode.LanguageModelChatResponse,
   stream: vscode.ChatResponseStream,
@@ -50,85 +44,85 @@ async function processChatResponse(
   return [];
 }
 
-export function registerChat(context: vscode.ExtensionContext) {
-  const handler: vscode.ChatRequestHandler = async (
-    request: vscode.ChatRequest,
-    chatContext: vscode.ChatContext,
-    stream: vscode.ChatResponseStream,
-    token: vscode.CancellationToken
-  ): Promise<IChatResult> => {
-    stream.progress("Thinking...");
-    Logger.info("Chat requested");
+const chatHandler: vscode.ChatRequestHandler = async (
+  request,
+  chatContext,
+  stream,
+  token
+): Promise<vscode.ChatResult> => {
+  stream.progress("Thinking...");
+  Logger.info("Chat requested");
 
-    const jwt = await getLicenseToken();
+  const jwt = await getLicenseToken();
 
-    if (!jwt) {
-      Logger.warn("No license found. Please activate your license.");
-      getTelemetryReporter().sendTelemetryEvent("chat:requested:no-license");
+  if (!jwt) {
+    Logger.warn("No license found. Please activate your license.");
+    getTelemetryReporter().sendTelemetryEvent("chat:requested:no-license");
 
-      stream.markdown(
-        "You need to have a valid license to use the Radon AI Chat. Please activate your license."
-      );
+    stream.markdown(
+      "You need to have a valid license to use the Radon AI Chat. Please activate your license."
+    );
+    return { metadata: { command: "" } };
+  }
+
+  const packages = await getReactNativePackagesPrompt();
+
+  try {
+    const data = await getSystemPrompt(request.prompt, jwt);
+    if (!data) {
+      stream.markdown("Couldn't connect to Radon AI.");
       return { metadata: { command: "" } };
     }
 
-    const packages = await getReactNativePackagesPrompt();
+    const { system, context: documentation, tools } = data;
 
-    try {
-      const data = await getSystemPrompt(request.prompt, jwt);
-      if (!data) {
-        stream.markdown("Couldn't connect to Radon AI.");
-        return { metadata: { command: "" } };
-      }
+    if (!system || !documentation) {
+      Logger.error("No system prompt received from Radon AI.");
+      getTelemetryReporter().sendTelemetryEvent("chat:error", {
+        error: "No system prompt received from Radon AI.",
+      });
 
-      const { system, context: documentation, tools } = data;
-
-      if (!system || !documentation) {
-        Logger.error("No system prompt received from Radon AI.");
-        getTelemetryReporter().sendTelemetryEvent("chat:error", {
-          error: "No system prompt received from Radon AI.",
-        });
-
-        stream.markdown("Couldn't connect to Radon AI.");
-        return { metadata: { command: "" } };
-      }
-
-      const chatHistory = getChatHistory(chatContext);
-      const messages = [...chatHistory];
-      const messageRequests = [
-        vscode.LanguageModelChatMessage.Assistant(documentation),
-        vscode.LanguageModelChatMessage.Assistant(packages),
-        vscode.LanguageModelChatMessage.Assistant(system),
-        vscode.LanguageModelChatMessage.User(request.prompt),
-      ];
-
-      for (
-        let toolInteractionCount = 0;
-        messageRequests.length > 0 && toolInteractionCount < TOOLS_INTERACTION_LIMIT;
-        toolInteractionCount++
-      ) {
-        messages.push(...messageRequests);
-        messageRequests.length = 0;
-
-        const chatResponse = await request.model.sendRequest(messages, { tools }, token);
-        const newMessages = await processChatResponse(chatResponse, stream, jwt);
-
-        if (newMessages === null) {
-          return { metadata: { command: "" } };
-        }
-
-        messageRequests.push(...newMessages);
-      }
-    } catch (err) {
-      Logger.error("Error: ", err);
-      handleError(err, stream);
+      stream.markdown("Couldn't connect to Radon AI.");
+      return { metadata: { command: "" } };
     }
 
-    getTelemetryReporter().sendTelemetryEvent("chat:responded");
-    return { metadata: { command: "" } };
-  };
+    const chatHistory = getChatHistory(chatContext);
+    const messages = [...chatHistory];
+    const messageRequests = [
+      vscode.LanguageModelChatMessage.Assistant(documentation),
+      vscode.LanguageModelChatMessage.Assistant(packages),
+      vscode.LanguageModelChatMessage.Assistant(system),
+      vscode.LanguageModelChatMessage.User(request.prompt),
+    ];
 
-  const chat = vscode.chat.createChatParticipant(CHAT_PARTICIPANT_ID, handler);
+    for (
+      let toolInteractionCount = 0;
+      messageRequests.length > 0 && toolInteractionCount < TOOLS_INTERACTION_LIMIT;
+      toolInteractionCount++
+    ) {
+      messages.push(...messageRequests);
+      messageRequests.length = 0;
+
+      const chatResponse = await request.model.sendRequest(messages, { tools }, token);
+      const newMessages = await processChatResponse(chatResponse, stream, jwt);
+
+      if (newMessages === null) {
+        return { metadata: { command: "" } };
+      }
+
+      messageRequests.push(...newMessages);
+    }
+  } catch (err) {
+    Logger.error("Error: ", err);
+    handleError(err, stream);
+  }
+
+  getTelemetryReporter().sendTelemetryEvent("chat:responded");
+  return { metadata: { command: "" } };
+};
+
+export function registerChat(context: vscode.ExtensionContext) {
+  const chat = vscode.chat.createChatParticipant(CHAT_PARTICIPANT_ID, chatHandler);
   chat.iconPath = vscode.Uri.joinPath(context.extensionUri, "/assets/logo.png");
 
   context.subscriptions.push(
