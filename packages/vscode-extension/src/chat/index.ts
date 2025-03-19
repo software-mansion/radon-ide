@@ -8,6 +8,7 @@ import { getReactNativePackagesPrompt } from "./packages";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 const TOOLS_INTERACTION_LIMIT = 3;
+export const CHAT_LOG = "[CHAT]";
 
 async function processChatResponse(
   chatResponse: vscode.LanguageModelChatResponse,
@@ -18,7 +19,7 @@ async function processChatResponse(
     if (chunk instanceof vscode.LanguageModelTextPart) {
       stream.markdown(chunk.value);
     } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
-      Logger.info("Tool call requested");
+      Logger.info(CHAT_LOG, "Tool call requested");
       const results = await invokeToolCall(chunk, jwt);
 
       if (!results) {
@@ -51,7 +52,7 @@ const chatHandler: vscode.ChatRequestHandler = async (
   token
 ): Promise<vscode.ChatResult> => {
   stream.progress("Thinking...");
-  Logger.info("Chat requested");
+  Logger.info(CHAT_LOG, "Chat requested");
 
   const jwt = await getLicenseToken();
 
@@ -77,7 +78,7 @@ const chatHandler: vscode.ChatRequestHandler = async (
     const { system, context: documentation, tools } = data;
 
     if (!system || !documentation) {
-      Logger.error("No system prompt received from Radon AI.");
+      Logger.error(CHAT_LOG, "No system prompt received from Radon AI.");
       getTelemetryReporter().sendTelemetryEvent("chat:error", {
         error: "No system prompt received from Radon AI.",
       });
@@ -113,7 +114,7 @@ const chatHandler: vscode.ChatRequestHandler = async (
       messageRequests.push(...newMessages);
     }
   } catch (err) {
-    Logger.error("Error: ", err);
+    Logger.error(CHAT_LOG, "Error: ", err);
     handleError(err, stream);
   }
 

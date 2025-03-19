@@ -3,6 +3,7 @@ import { RelativePattern } from "vscode";
 import { Logger } from "../Logger";
 import { findAppRootFolder } from "../utilities/extensionContext";
 import { calculateMD5 } from "../utilities/common";
+import { CHAT_LOG } from ".";
 
 interface Package {
   name: string;
@@ -13,32 +14,42 @@ const appRootFolder = findAppRootFolder() ?? "";
 const result: Package[] = [];
 let packageJsonHash: string;
 
-async function getPackageJsonHash() {
+async function getPackageJsonHash(): Promise<string> {
   const rootPackageJson = await vscode.workspace.findFiles(
     new RelativePattern(appRootFolder, "package.json"),
     null,
     1
   );
 
-  return await calculateMD5(rootPackageJson[0].fsPath);
+  const hash = await calculateMD5(rootPackageJson[0].fsPath);
+  return hash.digest("hex");
 }
 
 async function getReactNativePackages(): Promise<Package[]> {
   // if we have already scanned the packages, we can skip the scan if package.json has not changed
   if (packageJsonHash) {
+    // check if hash is the same
     const newPackageJsonHash = await getPackageJsonHash();
-    if (newPackageJsonHash.digest("hex") === packageJsonHash) {
+    if (newPackageJsonHash === packageJsonHash) {
       return result;
     }
+    Logger.info(CHAT_LOG, "Found changes in package.json, rescanning packages");
+    // update hash
+    packageJsonHash = newPackageJsonHash;
   } else {
-    const hash = await getPackageJsonHash();
-    packageJsonHash = hash.digest("hex");
+    // generate hash for the first time
+    packageJsonHash = await getPackageJsonHash();
   }
 
+  Logger.info(CHAT_LOG, "Scanning node_modules for React Native packages");
   // we scan node_modules here because different package managers use different lock files
   // and bun uses binary format - bun.lockb - which is not the easiest to parse
   const packageFiles = await vscode.workspace.findFiles(
-    new RelativePattern(appRootFolder, "**/node_modules/{expo,react-native}*/package.json")
+    new RelativePattern(
+      appRootFolder,
+      "**/node_modules/**/*{expo,react-native,react-navigation}*/package.json"
+    ),
+    new RelativePattern(appRootFolder, "**/node_modules/**/*{export,exponent}*")
   );
 
   for await (const pkg of packageFiles) {
