@@ -56,7 +56,7 @@ async function getReactNativePackages(): Promise<Package[]> {
 }
 
 export async function getReactNativePackagesPrompt(): Promise<string> {
-  let prompt = "React Native packages found in the workspace:\n";
+  let prompt = "User has the following packages installed in the project :\n";
   const packages = await getReactNativePackages();
 
   if (packages.length === 0) {
