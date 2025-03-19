@@ -5,7 +5,7 @@ import IconButton from "./shared/IconButton";
 import ResizableContainer from "./shared/ResizableContainer";
 import { useNetwork } from "../providers/NetworkProvider";
 
-const TABS = ["Headers", "Request", "Response", "Timing"];
+const TABS = ["Headers", "Payload", "Response", "Timing"];
 
 type Tab = typeof TABS[number];
 
@@ -33,6 +33,19 @@ const Tab = ({ title, activeTab, setActiveTab }: TabProps) => {
       <p>{title}</p>
     </li>
   );
+};
+
+const getParams = (url: string): Record<string, string> => {
+  const params = url.split("?")[1];
+  if (!params) {
+    return {};
+  }
+
+  return params.split("&").reduce((acc: Record<string, string>, curr: string) => {
+    const [key, value] = curr.split("=");
+    acc[key] = value;
+    return acc;
+  }, {});
 };
 
 const Section = ({ title, data }: SectionProps) => {
@@ -83,12 +96,14 @@ const NetworkLogDetails = ({
             <Section title="Response Headers" data={networkLog.response?.headers} />
           </>
         );
-      case "Request":
+      case "Payload":
         if (!networkLog.request) {
           return null;
         }
 
-        return (
+        return networkLog.request.method === "GET" ? (
+          <pre>{JSON.stringify(getParams(networkLog.request.url), null, 2)}</pre>
+        ) : (
           <pre>
             {JSON.stringify(
               JSON.parse(
