@@ -37,7 +37,7 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
-import { Metro, MetroDelegate } from "./metro";
+import { MetroDelegate, MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
@@ -72,7 +72,7 @@ export class Project
 {
   private applicationContext: ApplicationContext;
 
-  public metro: Metro;
+  public metro: MetroLauncher;
   public toolsManager: ToolsManager;
 
   private devtools;
@@ -115,7 +115,7 @@ export class Project
     };
 
     this.devtools = new Devtools();
-    this.metro = new Metro(this.devtools, this);
+    this.metro = new MetroLauncher(this.devtools, this);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -633,7 +633,7 @@ export class Project
       const oldMetro = this.metro;
       const oldToolsManager = this.toolsManager;
       this.devtools = new Devtools();
-      this.metro = new Metro(this.devtools, this);
+      this.metro = new MetroLauncher(this.devtools, this);
       this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
       oldToolsManager.dispose();
       oldDevtools.dispose();
@@ -668,7 +668,7 @@ export class Project
     return extensionContext.workspaceState.get<string[] | undefined>(DEEP_LINKS_HISTORY_KEY) ?? [];
   }
 
-  async openDeepLink(link: string, terminateApp: boolean) {
+  async openDeepLink(link: string) {
     const history = await this.getDeepLinksHistory();
     if (history.length === 0 || link !== history[0]) {
       extensionContext.workspaceState.update(
@@ -677,7 +677,7 @@ export class Project
       );
     }
 
-    this.deviceSession?.sendDeepLink(link, terminateApp);
+    this.deviceSession?.sendDeepLink(link);
   }
 
   public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
