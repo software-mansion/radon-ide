@@ -95,28 +95,7 @@ const NetworkRequestLog = ({
     if (!container) {
       return;
     }
-
-    const selectedElement = container.querySelector(".selected");
     const { scrollTop } = container;
-
-    const handleScroll = () => {
-      if (!selectedElement) {
-        return;
-      }
-
-      const selectedElementTop = selectedElement.getBoundingClientRect().top;
-      const selectedElementHeight = selectedElement.clientHeight;
-
-      if (
-        selectedElementTop < 0 ||
-        selectedElementTop + selectedElementHeight > container.clientHeight
-      ) {
-        container.scrollTo({
-          top: scrollTop + selectedElementTop,
-          behavior: "smooth",
-        });
-      }
-    };
 
     if (
       !selectedNetworkLog &&
@@ -124,10 +103,40 @@ const NetworkRequestLog = ({
     ) {
       container.scrollTo({
         top: container.scrollHeight,
-        behavior: "smooth",
       });
     }
   }, [networkLogs, selectedNetworkLog]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const selectedElement = container.querySelector(".selected");
+    const { scrollTop } = container;
+
+    const handleScrollToSelectedElement = () => {
+      if (!selectedElement) {
+        return;
+      }
+
+      const containerRect = container.getBoundingClientRect();
+      const selectedElementRect = selectedElement.getBoundingClientRect();
+
+      if (
+        selectedElementRect.top < containerRect.top ||
+        selectedElementRect.bottom > containerRect.bottom
+      ) {
+        container.scrollTo({
+          top: scrollTop + (selectedElementRect.top - containerRect.top - 100),
+          behavior: "smooth",
+        });
+      }
+    };
+
+    handleScrollToSelectedElement();
+  }, [selectedNetworkLog?.requestId]);
 
   const handleResize = useCallback((title: string, newWidth: number) => {
     setColumnWidths((prev) => {
@@ -264,7 +273,7 @@ const NetworkRequestLog = ({
             </tr>
           </thead>
           <tbody>
-            {networkLogs.map((log, index) => (
+            {networkLogs.map((log) => (
               <tr
                 key={log.requestId}
                 className={selectedNetworkLog?.requestId === log.requestId ? "selected" : ""}
