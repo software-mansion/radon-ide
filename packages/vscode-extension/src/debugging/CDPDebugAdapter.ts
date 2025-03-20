@@ -104,15 +104,13 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
   public sendStoppedEvent = (
     pausedStackFrames: StackFrame[],
     pausedScopeChains: CDPDebuggerScope[][],
-    reason: string,
-    exceptionText?: string,
-    isFatal?: string
+    reason: string
   ) => {
     this.pausedStackFrames = pausedStackFrames;
     this.pausedScopeChains = pausedScopeChains;
 
-    this.sendEvent(new StoppedEvent(reason, this.threads[0].id, exceptionText));
-    this.sendEvent(new Event("RNIDE_paused", { reason, isFatal }));
+    this.sendEvent(new StoppedEvent(reason, this.threads[0].id));
+    this.sendEvent(new Event("RNIDE_paused", { reason }));
   };
 
   //#endregion
