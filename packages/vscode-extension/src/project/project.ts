@@ -350,6 +350,8 @@ export class Project
     }
   }
 
+  onDebugSessionTerminated() {}
+
   async captureAndStopRecording() {
     const recording = await this.stopRecording();
     await this.utils.saveMultimedia(recording);

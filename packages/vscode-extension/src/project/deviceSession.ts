@@ -95,9 +95,9 @@ export class DeviceSession implements Disposable {
     this.debugSession = DebugSession.start(this.debugEventDelegate);
   }
 
-  /** 
+  /**
   This method is async to allow for awaiting it during restarts, please keep in mind tho that
-  build in vscode dispose system ignores async keyword and works synchronously. 
+  build in vscode dispose system ignores async keyword and works synchronously.
   */
   public async dispose() {
     await this.debugSession?.dispose();
@@ -288,7 +288,7 @@ export class DeviceSession implements Disposable {
   }
 
   private async connectJSDebugger() {
-    const connected = await this.debugSession.connectJSDebugger(this.metro);
+    const connected = await this.debugSession.startJSDebugSession(this.metro);
 
     if (connected) {
       // TODO(jgonet): Right now, we ignore start failure

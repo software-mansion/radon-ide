@@ -1,4 +1,3 @@
-import { DebugSession } from "vscode";
 import { DebugSession as DebugAdapterSession, OutputEvent, Source } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { DebugSource } from "./DebugSession";
@@ -21,9 +20,7 @@ export function typeToCategory(type: string) {
 }
 
 export class DebugAdapter extends DebugAdapterSession {
-  private cdpDebugSession: DebugSession | null = null;
-
-  constructor(private vscDebugSession: DebugSession) {
+  constructor() {
     super();
   }
 

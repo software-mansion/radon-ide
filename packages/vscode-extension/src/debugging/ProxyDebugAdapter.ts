@@ -259,11 +259,12 @@ export class ProxyDebugAdapter extends DebugSession {
         },
       });
       if ("value" in result && result.value === "ping") {
-        this.sendEvent(new Event("RNIDE_pong"));
+        return true;
       }
     } catch (_) {
       /** debugSession is waiting for an event, if it won't get any it will fail after timeout, so we don't need to do anything here */
     }
+    return false;
   }
 
   private async startProfiling() {
@@ -291,6 +292,7 @@ export class ProxyDebugAdapter extends DebugSession {
     args: any,
     request?: DebugProtocol.Request | undefined
   ) {
+    response.body = response.body || {};
     switch (command) {
       case "RNIDE_startProfiling":
         await this.startProfiling();
@@ -299,7 +301,7 @@ export class ProxyDebugAdapter extends DebugSession {
         await this.stopProfiling();
         break;
       case "RNIDE_ping":
-        this.ping();
+        response.body.result = await this.ping();
         break;
     }
     this.sendResponse(response);

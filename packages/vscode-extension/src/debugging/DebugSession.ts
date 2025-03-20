@@ -1,11 +1,10 @@
 import assert from "assert";
+import path from "path";
 import { commands, debug, DebugConsoleMode, DebugSessionCustomEvent, Disposable } from "vscode";
 import * as vscode from "vscode";
 import { Metro } from "../project/metro";
-import { Logger } from "../Logger";
-import { CDPConfiguration } from "./DebugAdapter";
 import { disposeAll } from "../utilities/disposables";
-import path from "path";
+import { sleep } from "../utilities/retry";
 
 const PING_TIMEOUT = 1000;
 
@@ -72,10 +71,9 @@ export class DebugSession implements Disposable {
 
   private disposables: Disposable[] = [];
 
-  private pingResolve: (() => void) | undefined;
   private currentWsTarget: string | undefined;
 
-  constructor(private delegate: DebugSessionDelegate) {
+  constructor(private useParentDebugSession: boolean, private delegate: DebugSessionDelegate) {
     this.disposables.push(
       debug.onDidTerminateDebugSession((session) => {
         if (session.id === this.jsDebugSession?.id) {
@@ -95,13 +93,6 @@ export class DebugSession implements Disposable {
           case DEBUG_RESUMED:
             this.delegate.onDebuggerResumed(event);
             break;
-          case "RNIDE_pong":
-            if (this.pingResolve) {
-              this.pingResolve();
-            } else {
-              Logger.warn("[DEBUG SESSION] Received unexpected pong event");
-            }
-            break;
           case "RNIDE_profilingCPUStarted":
             this.delegate.onProfilingCPUStarted(event);
             break;
@@ -117,11 +108,11 @@ export class DebugSession implements Disposable {
   }
 
   public async reconnectJSDebuggerIfNeeded(metro: Metro) {
-    // const isAlive = await this.isWsTargetAlive(metro);
-    // if (!isAlive) {
-    //   return this.connectJSDebugger(metro);
-    // }
-    // return true;
+    const isAlive = await this.isJsDebugSessionAlive(metro);
+    if (!isAlive) {
+      return this.startJSDebugSession(metro);
+    }
+    return true;
   }
 
   public async startParentDebugSession() {
@@ -142,15 +133,14 @@ export class DebugSession implements Disposable {
   }
 
   public static start(debugEventDelegate: DebugSessionDelegate) {
-    const debugSession = new DebugSession(debugEventDelegate);
+    const debugSession = new DebugSession(true, debugEventDelegate);
     debugSession.startParentDebugSession();
     return debugSession;
   }
 
   public async restart() {
-    const hasParentDebugSession = !!this.parentDebugSession;
     await this.stop();
-    if (hasParentDebugSession) {
+    if (this.useParentDebugSession) {
       await this.startParentDebugSession();
     }
   }
@@ -173,9 +163,9 @@ export class DebugSession implements Disposable {
   }
 
   public async startJSDebugSession(metro: Metro) {
-    // if (this.wasConnectedToCDP) {
-    //   await this.restart();
-    // }
+    if (this.jsDebugSession) {
+      await this.restart();
+    }
 
     const websocketAddress = await metro.getDebuggerURL();
     if (!websocketAddress) {
@@ -234,19 +224,28 @@ export class DebugSession implements Disposable {
     });
   }
 
-  public async isWsTargetAlive(metro: Metro): Promise<boolean> {
+  public async isJsDebugSessionAlive(metro: Metro): Promise<boolean> {
     /**
-     * This is a bit tricky, the idea is that we run both checks.
-     * pingCurrentWsTarget provides us reliable information about connection.
-     * isCurrentWsTargetStillVisible can say reliably only if the connection were lost (is missing on ws targets list).
-     * So what we do is promise any, but isCurrentWsTargetStillVisible rejects promise if the connection is on the list, so
-     * we can wait for ping to resolve.
+     * We use a combination of two check to determine if the js debug session is alive and active:
+     * 1. we use "ping" command that executes a simple JS code using Runtime.evaluate to determine that the runtime responds.
+     * 2. we check if the runtime is listed on the ws targets list.
+     *
+     * Apparently, the sole existence of the runtime on the list doesn't tell if it is really running. Metro has some
+     * internal logic that keeps the runtimes listed for some time after they've been terminated. However, when the
+     * runtime is not listed it is sufficient to conclude that it is not running.
+     *
+     * We therefore use Promise.any for this check and expect the 2nd check to only return when the runtime isn't listed
+     * but otherwise we want it to throw and wait for the ping check to finish. In addition the ping check is guarded by
+     * a timeout as when the runtime is disconnected the evaluate call is never picked up bu the runtime and we will never
+     * get a response back.
      */
-    return Promise.any([this.pingCurrentWsTarget(), this.isCurrentWsTargetStillVisible(metro)]);
+    return Promise.any([
+      this.pingJsDebugSessionWithTimeout(),
+      this.isCurrentWsTargetStillVisible(metro),
+    ]);
   }
 
-  public async isCurrentWsTargetStillVisible(metro: Metro): Promise<boolean> {
-    // return new Promise(async (resolve, reject) => {
+  public async isCurrentWsTargetStillVisible(metro: Metro) {
     const possibleWsTargets = await metro.fetchWsTargets();
     const hasCurrentWsAddress = possibleWsTargets?.some(
       (runtime) => runtime.webSocketDebuggerUrl === this.currentWsTarget
@@ -257,24 +256,18 @@ export class DebugSession implements Disposable {
     }
     // We're rejecting as shouldDebuggerReconnect uses .any which waits for first promise to resolve.
     // And th fact that current wsTarget is on the list is not enough, it might be stale, so in this case we wait for ping.
-    throw new Error("current");
+    throw new Error("current ws target is still");
   }
 
-  public async pingCurrentWsTarget() {
-    this.jsDebugSession?.customRequest("RNIDE_ping");
-    const { promise, resolve } = Promise.withResolvers<boolean>();
-    const timeout = setTimeout(() => resolve(false), PING_TIMEOUT);
-    let prevResolve = this.pingResolve;
-    let currentResolve = () => {
-      clearTimeout(timeout);
-      resolve(true);
-      prevResolve?.();
-      if (this.pingResolve === currentResolve) {
-        this.pingResolve = undefined;
-      }
-    };
-    this.pingResolve = currentResolve;
-    return promise;
+  public async pingJsDebugSessionWithTimeout() {
+    if (!this.jsDebugSession) {
+      return false;
+    }
+    const resultPromise = this.jsDebugSession.customRequest("RNIDE_ping").then((response) => {
+      return !!response.body.result;
+    });
+    const timeout = sleep(PING_TIMEOUT).then(() => false);
+    return Promise.any([resultPromise, timeout]);
   }
 
   public async startProfilingCPU() {
