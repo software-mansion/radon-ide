@@ -206,7 +206,6 @@ export class DebugSession implements Disposable {
       }
     );
 
-    // this.wasConnectedToCDP = true;
     this.currentWsTarget = websocketAddress;
 
     return true;
