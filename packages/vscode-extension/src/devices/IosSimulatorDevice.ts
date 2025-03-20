@@ -327,11 +327,7 @@ export class IosSimulatorDevice extends DeviceBase {
       matches.push(match[1]);
     }
 
-    await Promise.all(
-      matches.map((e) => {
-        this.terminateApp(e);
-      })
-    );
+    await Promise.all(matches.map(async (e) => await this.terminateApp(e)));
   }
 
   async launchWithBuild(build: IOSBuildResult) {
