@@ -36,9 +36,11 @@ async function startDebugging(
   nameOrConfiguration: string | vscode.DebugConfiguration,
   parentSessionOrOptions?: vscode.DebugSession | vscode.DebugSessionOptions
 ) {
+  const debugSessionType =
+    typeof nameOrConfiguration === "string" ? nameOrConfiguration : nameOrConfiguration.type;
   let debugSession: vscode.DebugSession | undefined;
   let didStartHandler: Disposable | null = debug.onDidStartDebugSession((session) => {
-    if (session.type === nameOrConfiguration.type) {
+    if (session.type === debugSessionType) {
       didStartHandler?.dispose();
       didStartHandler = null;
       debugSession = session;
@@ -156,7 +158,8 @@ export class DebugSession implements Disposable {
   private async stop() {
     if (this.parentDebugSession) {
       await debug.stopDebugging(this.parentDebugSession);
-    } else {
+    }
+    if (this.jsDebugSession) {
       await debug.stopDebugging(this.jsDebugSession);
     }
     this.parentDebugSession = undefined;
