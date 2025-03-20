@@ -1,8 +1,6 @@
-import path from "path";
-import { debug, DebugConsoleMode, DebugSession } from "vscode";
+import { DebugSession } from "vscode";
 import { DebugSession as DebugAdapterSession, OutputEvent, Source } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
-import { Disposable } from "vscode";
 import { DebugSource } from "./DebugSession";
 
 export type CDPConfiguration = {
@@ -50,13 +48,6 @@ export class DebugAdapter extends DebugAdapterSession {
     request?: DebugProtocol.Request | undefined
   ) {
     switch (command) {
-      // case "RNIDE_connect_cdp_debugger":
-      //   if (this.cdpDebugSession) {
-      //     debug.stopDebugging(this.cdpDebugSession);
-      //     this.cdpDebugSession = null;
-      //   }
-      //   await this.connectJSDebugger(args);
-      //   break;
       case "RNIDE_log_message":
         this.logCustomMessage(args.message, args.type, args.source);
         break;
