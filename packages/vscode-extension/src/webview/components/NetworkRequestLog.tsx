@@ -90,6 +90,45 @@ const NetworkRequestLog = ({
     }
   }, [detailsWidth, lastDetailsWidth]);
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const selectedElement = container.querySelector(".selected");
+    const { scrollTop } = container;
+
+    const handleScroll = () => {
+      if (!selectedElement) {
+        return;
+      }
+
+      const selectedElementTop = selectedElement.getBoundingClientRect().top;
+      const selectedElementHeight = selectedElement.clientHeight;
+
+      if (
+        selectedElementTop < 0 ||
+        selectedElementTop + selectedElementHeight > container.clientHeight
+      ) {
+        container.scrollTo({
+          top: scrollTop + selectedElementTop,
+          behavior: "smooth",
+        });
+      }
+    };
+
+    if (
+      !selectedNetworkLog &&
+      scrollTop >= container.scrollHeight - container.clientHeight * 1.25
+    ) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [networkLogs, selectedNetworkLog]);
+
   const handleResize = useCallback((title: string, newWidth: number) => {
     setColumnWidths((prev) => {
       const prevWidth = prev[title];
@@ -193,51 +232,6 @@ const NetworkRequestLog = ({
     ],
     []
   );
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-
-    const selectedElement = container.querySelector(".selected");
-    const { scrollTop } = container;
-
-    const handleScroll = () => {
-      if (!selectedElement) {
-        return;
-      }
-
-      const selectedElementTop = selectedElement.getBoundingClientRect().top;
-      const selectedElementHeight = selectedElement.clientHeight;
-
-      if (
-        selectedElementTop < 0 ||
-        selectedElementTop + selectedElementHeight > container.clientHeight
-      ) {
-        container.scrollTo({
-          top: scrollTop + selectedElementTop,
-          behavior: "smooth",
-        });
-      }
-    };
-
-    if (
-      !selectedNetworkLog &&
-      scrollTop >= container.scrollHeight - container.clientHeight * 1.25
-    ) {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-
-    container.addEventListener("scroll", handleScroll);
-
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-    };
-  }, [networkLogs, selectedNetworkLog]);
 
   return (
     <div
