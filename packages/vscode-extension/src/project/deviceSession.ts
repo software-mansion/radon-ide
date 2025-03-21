@@ -1,5 +1,5 @@
 import { Disposable } from "vscode";
-import { Metro } from "./metro";
+import { MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
@@ -65,7 +65,7 @@ export class DeviceSession implements Disposable {
   constructor(
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
-    private readonly metro: Metro,
+    private readonly metro: MetroLauncher,
     readonly dependencyManager: DependencyManager,
     readonly buildCache: BuildCache,
     debugEventDelegate: DebugSessionDelegate,

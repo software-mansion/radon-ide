@@ -37,7 +37,7 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
-import { Metro, MetroDelegate } from "./metro";
+import { Metro, MetroDelegate, MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
@@ -72,7 +72,7 @@ export class Project
 {
   private applicationContext: ApplicationContext;
 
-  public metro: Metro;
+  public metro: MetroLauncher;
   public toolsManager: ToolsManager;
 
   private devtools;
@@ -115,7 +115,7 @@ export class Project
     };
 
     this.devtools = new Devtools();
-    this.metro = new Metro(this.devtools, this);
+    this.metro = new MetroLauncher(this.devtools, this);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -635,7 +635,7 @@ export class Project
       const oldMetro = this.metro;
       const oldToolsManager = this.toolsManager;
       this.devtools = new Devtools();
-      this.metro = new Metro(this.devtools, this);
+      this.metro = new MetroLauncher(this.devtools, this);
       this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
       oldToolsManager.dispose();
       oldDevtools.dispose();
