@@ -138,9 +138,6 @@ export class CDPSession {
         );
 
         if (isMainBundle) {
-          this.sendCDPMessage("Runtime.evaluate", {
-            expression: "__RNIDE_onDebuggerReady()",
-          });
           this.delegate.onDebugSessionReady();
         }
 

@@ -78,30 +78,45 @@ jobs:
           package_name=radon-ide-${ref_name}-${{ steps.date.outputs.date }}
           echo "package_name=$package_name" >> $GITHUB_OUTPUT
 
-      - name: Package extension
+      - name: Package extension for each target
         working-directory: packages/vscode-extension
-        id: package_extension
+        id: package_and_upload
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          out_path=/tmp/${{ steps.prepare_name.outputs.package_name }}.vsix
-          npm run vscode:package -- --out $out_path
-          echo "vsix_path=$out_path" >> $GITHUB_OUTPUT
+          IFS=' ' read -r -a targets <<< "${{ steps.set_targets.outputs.targets }}"
+          output_paths=""
+          for target in "${targets[@]}"; do
+            out_path=/tmp/${{ steps.prepare_name.outputs.package_name }}-$target.vsix
+            npm run vscode:package -- --out $out_path --target $target
+            output_paths="$output_paths $out_path"
+          done
+          echo "output_paths=$output_paths" >> $GITHUB_OUTPUT
 
-      - name: Upload extension artifact
+      - name: Upload extension artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.prepare_name.outputs.package_name }}
-          path: ${{ steps.package_extension.outputs.vsix_path }}
+          name: radon-ide-extensions
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*.vsix
 
-      - name: Publish to Visual Studio Marketplace
+      - name: Publish to Visual Studio Marketplace for each target
         working-directory: packages/vscode-extension
+        if: ${{ github.event.inputs.publish == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: npm run vscode:publish -- --pat ${{ secrets.VSCODE_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
-        
-      - name: Publish to Open VSX Registry
+        run: |
+          IFS=' ' read -r -a output_paths <<< "${{ steps.package_and_upload.outputs.output_paths }}"
+          for output_path in "${output_paths[@]}"; do
+            npm run vscode:publish -- --pat ${{ secrets.VSCODE_MARKETPLACE_TOKEN }} --packagePath $output_path
+          done
+      
+      - name: Publish to Open VSX Registry for each target
         working-directory: packages/vscode-extension
+        if: ${{ github.event.inputs.publish == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: npm run openVSX:publish -- --pat ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }} --target ${{ steps.set_targets.outputs.targets }}
+        run: |
+          IFS=' ' read -r -a output_paths <<< "${{ steps.package_and_upload.outputs.output_paths }}"
+          for output_path in "${output_paths[@]}"; do
+            npm run open-vsx:publish -- --pat ${{ secrets.OPENVSX_MARKETPLACE_TOKEN }} --packagePath $output_path
+          done

@@ -21,7 +21,7 @@
     "workspaceContains:**/app.config.js",
     "workspaceContains:**/app.config.ts"
   ],
-  "version": "1.4.0",
+  "version": "1.4.1",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -298,6 +298,24 @@
       {
         "type": "com.swmansion.js-debugger",
         "label": "Radon IDE internal JavaScript debugger",
+        "hiddenWhen": "true",
+        "languages": [
+          "javascript",
+          "typescript"
+        ]
+      },
+      {
+        "type": "com.swmansion.proxy-debugger",
+        "label": "Radon IDE internal debugger for React Native",
+        "hiddenWhen": "true",
+        "languages": [
+          "javascript",
+          "typescript"
+        ]
+      },
+      {
+        "type": "radon-pwa-node",
+        "label": "Radon IDE internal debugger for React Native",
         "hiddenWhen": "true",
         "languages": [
           "javascript",
@@ -628,23 +646,25 @@
     "vscode:package": "vsce package",
     "vscode:prepublish": "npm run package",
     "vscode:publish": "vsce publish",
-    "openVSX:publish": "ovsx publish",
+    "open-vsx:publish": "ovsx publish",
     "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
     "build:react-query-devtools-ui": "rm -rf dist/react-query-devtools && cp -R ../radon-ide-react-query-webui/artifacts dist/react-query-devtools",
     "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
     "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
-    "build:extension-debug": "npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
-    "build:extension": "node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/. && npm run build:network-webview",
     "build:network-webview": "cd ./src/webview/network && vite build --mode production",
+    "build:extension-debug": "npm run prepare:fake_editor && npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
+    "build:extension": "npm run prepare:fake_editor && node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
+    "build:vscode-js-debug": "cd ../vscode-js-debug && npm i && npm exec tsc && npm run compile && cp dist/src/chromehash_bg.wasm ../vscode-extension/dist/",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
     "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
+    "prepare:fake_editor": "mkdir -p dist && cp react-fake-editor-executable dist/atom",
     "watch:extension": "vite",
     "watch:network-webview": "cd ./src/webview/network && vite",
-    "package": "rm -rf dist/ && npm run build:dist",
+    "package": "rm -rf dist/* && cp ../vscode-js-debug/dist/src/chromehash_bg.wasm dist/ && npm run build:dist",
     "lint": "eslint src/**/*.\\{ts,tsx,js,jsx\\} && prettier --check src",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
@@ -652,9 +672,11 @@
     "build:plugins": "bash ./scripts/install-dev-plugins.sh",
     "build:icons": "fantasticon -c ./font-icons/fantasticon.config.json",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
-    "preinstall": "bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && cd ../vscode-js-debug && npm i && npm exec tsc",
+    "preinstall": "mkdir -p dist && bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && npm run build:vscode-js-debug",
     "fetch:sim-server-assets": "bash ./scripts/download-sim-server-release-assets.sh dist",
-    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin ../radon-ide-react-query-webui"
+    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin ../radon-ide-react-query-webui",
+    "postinstall": "patch-
+    "
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
@@ -717,6 +739,7 @@
     "minimatch": "^9.0.4",
     "mocha": "^10.4.0",
     "node-fetch": "^2.7.0",
+    "patch-package": "^8.0.0",
     "ovsx": "^0.10.1",
     "plist": "^3.1.0",
     "prettier": "^2.2.1",
@@ -736,6 +759,7 @@
     "url-loader": "^4.1.1",
     "uuid": "^9.0.1",
     "vite": "^5.0.8",
+    "vscode-cdp-proxy": "^0.2.1",
     "vscode-js-debug": "file:../vscode-js-debug",
     "vscode-test": "^1.5.0",
     "ws": "^8.14.2",

@@ -18,6 +18,7 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildCache } from "../builders/BuildCache";
 import { CancelToken } from "../builders/cancelToken";
+import { DevicePlatform } from "../common/DeviceManager";
 
 type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
@@ -316,9 +317,22 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
-  public async sendDeepLink(link: string) {
+  public async sendDeepLink(link: string, terminateApp: boolean) {
     if (this.maybeBuildResult) {
-      return this.device.sendDeepLink(link, this.maybeBuildResult);
+      if (terminateApp) {
+        const packageNameOrBundleID =
+          this.maybeBuildResult.platform === DevicePlatform.Android
+            ? this.maybeBuildResult.packageName
+            : this.maybeBuildResult.bundleID;
+
+        await this.device.terminateApp(packageNameOrBundleID);
+      }
+
+      await this.device.sendDeepLink(link, this.maybeBuildResult, terminateApp);
+
+      if (terminateApp) {
+        this.debugSession?.reconnectJSDebuggerIfNeeded(this.metro);
+      }
     }
   }
 

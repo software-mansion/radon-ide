@@ -1,3 +1,5 @@
+import path from "path";
+import os from "os";
 import { Source } from "@vscode/debugadapter";
 import { CDPCallFrame, CDPProfile } from "./cdp";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
@@ -18,6 +20,15 @@ type DAPSourceLocation = {
 
 function callFrameKey(callFrame: CDPCallFrame): FrameKey {
   return [callFrame.scriptId, callFrame.lineNumber, callFrame.columnNumber].join(":") as FrameKey;
+}
+
+/**
+ * Returns the file path the profile file should be saved to.
+ */
+export function filePathForProfile() {
+  const fileName = `profile-${Date.now()}.cpuprofile`;
+  const filePath = path.join(os.tmpdir(), fileName);
+  return filePath;
 }
 
 /**
