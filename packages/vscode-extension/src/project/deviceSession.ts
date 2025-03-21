@@ -68,10 +68,11 @@ export class DeviceSession implements Disposable {
     private readonly metro: Metro,
     readonly dependencyManager: DependencyManager,
     readonly buildCache: BuildCache,
-    private readonly debugEventDelegate: DebugSessionDelegate,
+    debugEventDelegate: DebugSessionDelegate,
     private readonly eventDelegate: EventDelegate
   ) {
     this.buildManager = new BuildManager(dependencyManager, buildCache);
+    this.debugSession = new DebugSession(debugEventDelegate);
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "RNIDE_appReady":
@@ -88,16 +89,11 @@ export class DeviceSession implements Disposable {
           break;
       }
     });
-
-    // we start debug session here to be able to leverage the functionality of debug console
-    // the session is not connected to the js debugger here yet and that step can only happen,
-    // after app is running.
-    this.debugSession = DebugSession.start(this.debugEventDelegate);
   }
 
-  /** 
+  /**
   This method is async to allow for awaiting it during restarts, please keep in mind tho that
-  build in vscode dispose system ignores async keyword and works synchronously. 
+  build in vscode dispose system ignores async keyword and works synchronously.
   */
   public async dispose() {
     await this.debugSession?.dispose();
@@ -277,6 +273,12 @@ export class DeviceSession implements Disposable {
     { cleanBuild, previewReadyCallback }: StartOptions
   ) {
     this.deviceSettings = deviceSettings;
+
+    // We start the debug session early to be able to use it to surface bundle
+    // errors in the console. We only start the parent debug session and the JS
+    // debugger will be started at later time once the app is built and launched.
+    await this.debugSession.startParentDebugSession();
+
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);
@@ -288,7 +290,7 @@ export class DeviceSession implements Disposable {
   }
 
   private async connectJSDebugger() {
-    const connected = await this.debugSession.connectJSDebugger(this.metro);
+    const connected = await this.debugSession.startJSDebugSession(this.metro);
 
     if (connected) {
       // TODO(jgonet): Right now, we ignore start failure
