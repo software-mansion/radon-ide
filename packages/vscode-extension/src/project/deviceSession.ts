@@ -88,11 +88,6 @@ export class DeviceSession implements Disposable {
           break;
       }
     });
-
-    // we start debug session here to be able to leverage the functionality of debug console
-    // the session is not connected to the js debugger here yet and that step can only happen,
-    // after app is running.
-    this.debugSession = DebugSession.start(this.debugEventDelegate);
   }
 
   /**
@@ -277,6 +272,13 @@ export class DeviceSession implements Disposable {
     { cleanBuild, previewReadyCallback }: StartOptions
   ) {
     this.deviceSettings = deviceSettings;
+
+    // We start the debug session early to be able to use it to surface bundle
+    // errors in the console. We only start the parent debug session and the JS
+    // debugger will be started at later time once the app is built and launched.
+    this.debugSession = new DebugSession(this.debugEventDelegate);
+    await this.debugSession.startParentDebugSession();
+
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(deviceSettings);

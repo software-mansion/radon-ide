@@ -69,11 +69,12 @@ export class DebugSession implements Disposable {
   private parentDebugSession: vscode.DebugSession | undefined;
   private jsDebugSession: vscode.DebugSession | undefined;
 
+  private useParentDebugSession = false;
   private disposables: Disposable[] = [];
 
   private currentWsTarget: string | undefined;
 
-  constructor(private useParentDebugSession: boolean, private delegate: DebugSessionDelegate) {
+  constructor(private delegate: DebugSessionDelegate) {
     this.disposables.push(
       debug.onDidTerminateDebugSession((session) => {
         if (session.id === this.jsDebugSession?.id) {
@@ -116,6 +117,7 @@ export class DebugSession implements Disposable {
   }
 
   public async startParentDebugSession() {
+    this.useParentDebugSession = true;
     this.parentDebugSession = await startDebugging(
       undefined,
       {
@@ -130,12 +132,6 @@ export class DebugSession implements Disposable {
         suppressSaveBeforeStart: true,
       }
     );
-  }
-
-  public static start(debugEventDelegate: DebugSessionDelegate) {
-    const debugSession = new DebugSession(true, debugEventDelegate);
-    debugSession.startParentDebugSession();
-    return debugSession;
   }
 
   public async restart() {
