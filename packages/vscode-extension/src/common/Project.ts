@@ -32,7 +32,6 @@ export type ProjectState = {
     | "running"
     | "buildError"
     | "bootError"
-    | "runtimeError"
     | "bundleBuildFailedError"
     | "bundlingError"
     | "debuggerPaused"

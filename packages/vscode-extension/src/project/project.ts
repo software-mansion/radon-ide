@@ -208,7 +208,7 @@ export class Project
         this.updateProjectState({ status: "refreshing" });
         break;
       case "fastRefreshComplete":
-        const ignoredEvents = ["starting", "bundlingError", "runtimeError"];
+        const ignoredEvents = ["starting", "bundlingError"];
         if (ignoredEvents.includes(this.projectState.status)) {
           return;
         }
@@ -224,15 +224,7 @@ export class Project
   }
 
   onDebuggerPaused(event: DebugSessionCustomEvent) {
-    if (event.body?.reason === "exception") {
-      // if we know that incremental bundle error happened, we don't want to change the status
-      if (this.projectState.status === "bundlingError") {
-        return;
-      }
-      this.updateProjectState({ status: "runtimeError" });
-    } else {
-      this.updateProjectState({ status: "debuggerPaused" });
-    }
+    this.updateProjectState({ status: "debuggerPaused" });
 
     // we don't want to focus on debug side panel if it means hiding Radon IDE
     const panelLocation = workspace
