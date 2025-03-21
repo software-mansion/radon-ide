@@ -68,10 +68,11 @@ export class DeviceSession implements Disposable {
     private readonly metro: Metro,
     readonly dependencyManager: DependencyManager,
     readonly buildCache: BuildCache,
-    private readonly debugEventDelegate: DebugSessionDelegate,
+    debugEventDelegate: DebugSessionDelegate,
     private readonly eventDelegate: EventDelegate
   ) {
     this.buildManager = new BuildManager(dependencyManager, buildCache);
+    this.debugSession = new DebugSession(debugEventDelegate);
     this.devtools.addListener((event, payload) => {
       switch (event) {
         case "RNIDE_appReady":
@@ -276,7 +277,6 @@ export class DeviceSession implements Disposable {
     // We start the debug session early to be able to use it to surface bundle
     // errors in the console. We only start the parent debug session and the JS
     // debugger will be started at later time once the app is built and launched.
-    this.debugSession = new DebugSession(this.debugEventDelegate);
     await this.debugSession.startParentDebugSession();
 
     await this.waitForMetroReady();
