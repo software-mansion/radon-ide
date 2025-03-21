@@ -1,17 +1,6 @@
-// runtime.js is setup to be loaded as one of the first modules. Because of that
-// the things ot requires may interfere with other modules that depend on the loading
-// order. In order to avoid issues related to that, we only require minimal set of
-// dependencies, and we load the main bits of runtime lazyli as a part of wrapper.js
-let AppRegistry = require("react-native/Libraries/ReactNative/AppRegistry");
-let parseErrorStack = require("react-native/Libraries/Core/Devtools/parseErrorStack");
-
-// since version 0.79 react native changed how imports of some modules work 
-// (https://github.com/facebook/react-native/blob/main/CHANGELOG.md#v0790-rc0)
-// we handle it mostly by spiting react native internal imports in babel_transformer.js
-// but this method works only for lazy imports and we want to require those modules 
-// here directly so we check if the module is a default export in runtime here. 
-AppRegistry = AppRegistry.default !== undefined ? AppRegistry.default : AppRegistry;
-parseErrorStack = parseErrorStack.default !== undefined ? parseErrorStack.default : parseErrorStack; 
+const RNInternals = require("./rn-internals/rn-internals");
+const AppRegistry = RNInternals.AppRegistry;
+const parseErrorStack = RNInternals.parseErrorStack;
 
 // We add log this trace to diagnose issues with loading runtime in the IDE
 // The first argument is "__RNIDE_INTERNAL" so we can filter it out in

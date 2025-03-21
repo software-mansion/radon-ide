@@ -1,7 +1,6 @@
 module.exports = {
-  get parseErrorStack() {
-    return require("react-native/Libraries/Core/Devtools/parseErrorStack").default;
-  },
+  parseErrorStack: require("react-native/Libraries/Core/Devtools/parseErrorStack").default,
+  AppRegistry: require("react-native/Libraries/ReactNative/AppRegistry").default,
   get LogBoxData() {
     return require("react-native/Libraries/LogBox/Data/LogBoxData");
   },
