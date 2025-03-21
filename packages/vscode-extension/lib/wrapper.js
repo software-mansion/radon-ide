@@ -48,33 +48,7 @@ window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
   return InternalImports.reduxDevtoolsExtensionCompose(...args);
 };
 
-const RNInternals = {
-  get parseErrorStack() {
-    return require("react-native/Libraries/Core/Devtools/parseErrorStack");
-  },
-  get LogBoxData() {
-    return require("react-native/Libraries/LogBox/Data/LogBoxData");
-  },
-  get getInspectorDataForViewAtPoint() {
-    return require("react-native/Libraries/Inspector/getInspectorDataForViewAtPoint");
-  },
-  get SceneTracker() {
-    return require("react-native/Libraries/Utilities/SceneTracker");
-  },
-  get LoadingView() {
-    // In React Native 0.75 LoadingView was moved to DevLoadingView
-    // We need to use `try catch` pattern for both files as it has special semantics
-    // in bundler. If require isn't surrounded with try catch it will need to resolve
-    // at build time.
-    try {
-      return require("react-native/Libraries/Utilities/LoadingView");
-    } catch (e) {}
-    try {
-      return require("react-native/Libraries/Utilities/DevLoadingView");
-    } catch (e) {}
-    throw new Error("Couldn't locate LoadingView module");
-  },
-};
+const RNInternals = require('./rn-internals/rn-internals');
 
 function getCurrentScene() {
   return RNInternals.SceneTracker.getActiveScene().name;

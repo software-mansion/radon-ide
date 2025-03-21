@@ -1,3 +1,5 @@
+const RNInternals = require("./rn-internals/rn-internals");
+
 function mimeTypeFromResponseType(responseType) {
   switch (responseType) {
     case "arraybuffer":
@@ -66,7 +68,7 @@ class FakeWeakRef {
 const WeakRefImpl = typeof WeakRef !== "undefined" ? WeakRef : FakeWeakRef;
 
 export function enableNetworkInspect(devtoolsAgent, payload) {
-  const XHRInterceptor = require("react-native/Libraries/Network/XHRInterceptor");
+  const XHRInterceptor = RNInternals.XHRInterceptor;
 
   const loaderId = "xhr-interceptor";
   const xhrsMap = new Map();

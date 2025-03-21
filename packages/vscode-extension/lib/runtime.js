@@ -1,9 +1,6 @@
-// runtime.js is setup to be loaded as one of the first modules. Because of that
-// the things ot requires may interfere with other modules that depend on the loading
-// order. In order to avoid issues related to that, we only require minimal set of
-// dependencies, and we load the main bits of runtime lazyli as a part of wrapper.js
-const AppRegistry = require("react-native/Libraries/ReactNative/AppRegistry");
-const parseErrorStack = require("react-native/Libraries/Core/Devtools/parseErrorStack");
+const RNInternals = require("./rn-internals/rn-internals");
+const AppRegistry = RNInternals.AppRegistry;
+const parseErrorStack = RNInternals.parseErrorStack;
 
 // We add log this trace to diagnose issues with loading runtime in the IDE
 // The first argument is "__RNIDE_INTERNAL" so we can filter it out in
