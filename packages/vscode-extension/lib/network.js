@@ -82,7 +82,6 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
   devtoolsAgent._bridge.addListener("RNIDE_networkInspectorCDPRequest", (message) => {
     if (message.method === "Network.disable") {
       XHRInterceptor.disableInterception();
-      console.log("XHRInterceptor disabled");
     } else if (message.method === "Network.enable") {
       XHRInterceptor.setSendCallback(sendCallback);
       XHRInterceptor.enableInterception();
