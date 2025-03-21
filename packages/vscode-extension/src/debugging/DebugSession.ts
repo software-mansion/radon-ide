@@ -117,6 +117,10 @@ export class DebugSession implements Disposable {
   }
 
   public async startParentDebugSession() {
+    assert(
+      !this.jsDebugSession,
+      "Cannot start parent debug session when js debug session is already running"
+    );
     this.useParentDebugSession = true;
     this.parentDebugSession = await startDebugging(
       undefined,
@@ -143,19 +147,22 @@ export class DebugSession implements Disposable {
 
   private async stop() {
     if (this.parentDebugSession) {
-      await debug.stopDebugging(this.parentDebugSession);
+      const parentDebugSession = this.parentDebugSession;
+      this.parentDebugSession = undefined;
+      await debug.stopDebugging(parentDebugSession);
     }
     if (this.jsDebugSession) {
-      await debug.stopDebugging(this.jsDebugSession);
+      const jsDebugSession = this.jsDebugSession;
+      this.jsDebugSession = undefined;
+      await debug.stopDebugging(jsDebugSession);
     }
-    this.parentDebugSession = undefined;
-    this.jsDebugSession = undefined;
     this.currentWsTarget = undefined;
   }
 
   public dispose() {
-    this.stop();
-    disposeAll(this.disposables);
+    this.stop()
+      .catch()
+      .then(() => disposeAll(this.disposables));
   }
 
   public async startJSDebugSession(metro: Metro) {
