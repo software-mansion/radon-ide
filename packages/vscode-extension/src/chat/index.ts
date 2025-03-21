@@ -53,9 +53,7 @@ const chatHandler: vscode.ChatRequestHandler = async (
 ): Promise<vscode.ChatResult> => {
   stream.progress("Thinking...");
   Logger.info(CHAT_LOG, "Chat requested");
-  getTelemetryReporter().sendTelemetryEvent("chat:requested", {
-    prompt: request.prompt,
-  });
+  getTelemetryReporter().sendTelemetryEvent("chat:requested");
 
   const jwt = await getLicenseToken();
 
@@ -152,7 +150,7 @@ function handleError(err: unknown, stream: vscode.ChatResponseStream): void {
     }
   } else {
     Logger.error(CHAT_LOG, err);
-    getTelemetryReporter().sendTelemetryEvent("chat:error", { error: JSON.stringify(err) });
+    getTelemetryReporter().sendTelemetryEvent("chat:error", { error: "Unknown error" });
     // re-throw other errors so they show up in the UI
     throw err;
   }
