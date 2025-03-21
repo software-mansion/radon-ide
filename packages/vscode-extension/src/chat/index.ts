@@ -53,6 +53,9 @@ const chatHandler: vscode.ChatRequestHandler = async (
 ): Promise<vscode.ChatResult> => {
   stream.progress("Thinking...");
   Logger.info(CHAT_LOG, "Chat requested");
+  getTelemetryReporter().sendTelemetryEvent("chat:requested", {
+    prompt: request.prompt,
+  });
 
   const jwt = await getLicenseToken();
 
