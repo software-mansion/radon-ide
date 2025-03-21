@@ -53,7 +53,7 @@ const XHR_REF_TIMEOUT_MS = 3 * 60 * 1000; // 3 mins
 class FakeWeakRef {
   constructor(obj) {
     this.obj = obj;
-    this.timeout = setTimeout(() => this.obj = undefined, XHR_REF_TIMEOUT_MS)
+    this.timeout = setTimeout(() => (this.obj = undefined), XHR_REF_TIMEOUT_MS);
   }
   deref() {
     // timeout captures this and hence may extend the time the reference is kept.
@@ -80,6 +80,14 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
   let requestIdCounter = 0;
 
   devtoolsAgent._bridge.addListener("RNIDE_networkInspectorCDPRequest", (message) => {
+    if (message.method === "Network.disable") {
+      XHRInterceptor.disableInterception();
+      console.log("XHRInterceptor disabled");
+    } else if (message.method === "Network.enable") {
+      XHRInterceptor.setSendCallback(sendCallback);
+      XHRInterceptor.enableInterception();
+    }
+
     if (
       message.method === "Network.getResponseBody" &&
       message.params.requestId.startsWith(requestIdPrefix)
@@ -105,6 +113,7 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
   function sendCallback(data, xhr) {
     const requestId = `${requestIdPrefix}-${requestIdCounter++}`;
     const sendTime = Date.now();
+    let ttfb;
 
     xhrsMap.set(requestId, new WeakRefImpl(xhr));
 
@@ -124,6 +133,7 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
         url: xhr._url,
         method: xhr._method,
         headers: xhr._headers,
+        postData: data,
       },
       type: "XHR",
       initiator: {
@@ -151,18 +161,27 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
       });
     });
 
+    xhr.addEventListener("readystatechange", (event) => {
+      if (xhr.readyState === 2) {
+        ttfb = Date.now() - sendTime;
+      }
+    });
+
     xhr.addEventListener("load", (event) => {
       sendCDPMessage("Network.responseReceived", {
         requestId: requestId,
         loaderId,
         timestamp: Date.now() / 1000,
+        ttfb,
         type: "XHR",
         response: {
+          type: xhr.responseType,
           url: xhr._url,
           status: xhr.status,
           statusText: xhr.statusText,
           headers: xhr.responseHeaders,
           mimeType: mimeTypeFromResponseType(xhr.responseType),
+          data: xhr._response,
         },
       });
     });
