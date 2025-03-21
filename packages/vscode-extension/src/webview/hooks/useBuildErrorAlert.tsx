@@ -69,6 +69,14 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   }
 
   if (
+    dependencies.pods?.status !== "installed" &&
+    projectState.selectedDevice?.platform === DevicePlatform.IOS
+  ) {
+    description =
+      "Pods are not installed in your project. Run `pod install` in the `ios` directory and reload the app.";
+  }
+
+  if (
     dependencies.android?.status === "notInstalled" &&
     projectState.selectedDevice?.platform === DevicePlatform.Android
   ) {
