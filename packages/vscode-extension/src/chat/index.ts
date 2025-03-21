@@ -117,7 +117,6 @@ const chatHandler: vscode.ChatRequestHandler = async (
       messageRequests.push(...newMessages);
     }
   } catch (err) {
-    Logger.error(CHAT_LOG, "Error: ", err);
     handleError(err, stream);
   }
 
@@ -145,10 +144,6 @@ function handleError(err: unknown, stream: vscode.ChatResponseStream): void {
   // - model does not exist
   // - user consent not given
   // - quote limits exceeded
-  if (err instanceof Error) {
-    Logger.error(err.message);
-    getTelemetryReporter().sendTelemetryEvent("chat:error", { error: err.message });
-  }
 
   if (err instanceof vscode.LanguageModelError) {
     console.log(err.message, err.code, err.cause);
@@ -156,6 +151,8 @@ function handleError(err: unknown, stream: vscode.ChatResponseStream): void {
       stream.markdown("I'm sorry, I can only explain React Native concepts.");
     }
   } else {
+    Logger.error(CHAT_LOG, err);
+    getTelemetryReporter().sendTelemetryEvent("chat:error", { error: JSON.stringify(err) });
     // re-throw other errors so they show up in the UI
     throw err;
   }
