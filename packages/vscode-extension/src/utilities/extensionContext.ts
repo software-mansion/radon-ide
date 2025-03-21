@@ -63,7 +63,7 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
   }
 
   const searchDirectories: SearchItem[] = workspaceFolders.map((workspaceFolder) => {
-    return { path: workspaceFolder.uri.path, searchDepth: 0 };
+    return { path: workspaceFolder.uri.fsPath, searchDepth: 0 };
   });
 
   const candidates = searchForFilesDirectory(
