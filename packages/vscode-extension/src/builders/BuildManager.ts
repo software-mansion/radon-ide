@@ -122,6 +122,10 @@ export class BuildManager {
           if (installPods) {
             getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
             await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
+            const installed = await this.dependencyManager.checkPodsInstallationStatus();
+            if (!installed) {
+              throw new Error("Pods could not be installed automatically.");
+            }
             // Installing pods may impact the fingerprint as new pods may be created under the project directory.
             // For this reason we need to recalculate the fingerprint after installing pods.
             buildFingerprint = await this.buildCache.calculateFingerprint(platform);

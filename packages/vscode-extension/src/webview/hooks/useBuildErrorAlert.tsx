@@ -37,7 +37,6 @@ function BuildErrorActions({
           } else {
             project.focusBuildOutput();
           }
-          project.focusBuildOutput();
         }}
         tooltip={{ label: "Open build logs", side: "bottom" }}>
         <span className="codicon codicon-symbol-keyword" />
@@ -72,8 +71,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     dependencies.pods?.status !== "installed" &&
     projectState.selectedDevice?.platform === DevicePlatform.IOS
   ) {
-    description =
-      "Pods are not installed in your project. Run `pod install` in the `ios` directory and reload the app.";
+    description = "Pods could not be installed in your project. Check the build logs for details.";
   }
 
   if (
