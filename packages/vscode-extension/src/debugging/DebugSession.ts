@@ -143,13 +143,15 @@ export class DebugSession implements Disposable {
 
   private async stop() {
     if (this.parentDebugSession) {
-      await debug.stopDebugging(this.parentDebugSession);
+      const parentDebugSession = this.parentDebugSession;
+      this.parentDebugSession = undefined;
+      await debug.stopDebugging(parentDebugSession);
     }
     if (this.jsDebugSession) {
-      await debug.stopDebugging(this.jsDebugSession);
+      const jsDebugSession = this.jsDebugSession;
+      this.jsDebugSession = undefined;
+      await debug.stopDebugging(jsDebugSession);
     }
-    this.parentDebugSession = undefined;
-    this.jsDebugSession = undefined;
     this.currentWsTarget = undefined;
   }
 
