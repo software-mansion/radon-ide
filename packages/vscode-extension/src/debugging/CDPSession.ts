@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { OutputEvent, Source, StackFrame, Variable } from "@vscode/debugadapter";
+import { OutputEvent, Source, StackFrame } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { Cdp } from "vscode-js-debug/out/cdp/index";
 import { AnyObject } from "vscode-js-debug/out/adapter/objectPreview/betterTypes";
@@ -36,9 +36,7 @@ export interface CDPSessionDelegate {
   sendStoppedEvent: (
     pausedStackFrames: StackFrame[],
     pausedScopeChains: CDPDebuggerScope[][],
-    reason: string,
-    exceptionText?: string,
-    isFatal?: string
+    reason: string
   ) => void;
 }
 
@@ -224,107 +222,25 @@ export class CDPSession {
   }
 
   private async handleDebuggerPaused(message: any) {
-    // We reset the paused* variables to lifecycle of objects references in DAP. https://microsoft.github.io/debug-adapter-protocol//overview.html#lifetime-of-objects-references
-    if (
-      message.params.reason === "other" &&
-      message.params.callFrames[0].functionName === "__RNIDE_breakOnError"
-    ) {
-      // this is a workaround for an issue with hermes which does not provide a full stack trace
-      // when it pauses due to the uncaught exception. Instead, we trigger debugger pause from exception
-      // reporting handler, and access the actual error's stack trace from local variable
-      const localScopeCDPObjectId = message.params.callFrames[0].scopeChain?.find(
-        (scope: any) => scope.type === "local"
-      )?.object?.objectId;
-      const localScopeObjectId = this.variableStore.adaptCDPObjectId(localScopeCDPObjectId);
-      let localScopeVariables: Variable[] = [];
-      try {
-        localScopeVariables = await this.variableStore.get(localScopeObjectId, (params: object) => {
-          return this.sendCDPMessage("Runtime.getProperties", params, RETRIEVE_VARIABLE_TIMEOUT_MS);
-        });
-      } catch (e) {
-        Logger.error("[Debug Adapter] Failed to retrieve localScopeVariables", e);
-      }
-      const errorMessage = localScopeVariables.find((v) => v.name === "message")?.value;
-      const isFatal = localScopeVariables.find((v) => v.name === "isFatal")?.value;
-      const stackObjectId = localScopeVariables.find((v) => v.name === "stack")?.variablesReference;
-
-      let stackObjectProperties: Variable[] = [];
-      try {
-        stackObjectProperties = await this.variableStore.get(stackObjectId!, (params: object) => {
-          return this.sendCDPMessage("Runtime.getProperties", params, RETRIEVE_VARIABLE_TIMEOUT_MS);
-        });
-      } catch (e) {
-        Logger.error("[Debug Adapter] Failed to retrieve stackObjectProperties", e);
-      }
-
-      const stackFrames: Array<StackFrame> = [];
-      // Unfortunately we can't get proper scope chanins here, because the debugger doesn't really stop at the frame where exception is thrown
-      await Promise.all(
-        stackObjectProperties.map(async (stackObjEntry) => {
-          // we process entry with numerical names
-          if (stackObjEntry.name.match(/^\d+$/)) {
-            const index = parseInt(stackObjEntry.name, 10);
-            let stackObjProperties: Variable[] = [];
-            try {
-              stackObjProperties = await this.variableStore.get(
-                stackObjEntry.variablesReference,
-                (params: object) => {
-                  return this.sendCDPMessage(
-                    "Runtime.getProperties",
-                    params,
-                    RETRIEVE_VARIABLE_TIMEOUT_MS
-                  );
-                }
-              );
-            } catch (e) {
-              Logger.error("[Debug Adapter] Failed to retrieve stackObjProperties", e);
-            }
-            const methodName = stackObjProperties.find((v) => v.name === "methodName")?.value || "";
-            const genUrl = stackObjProperties.find((v) => v.name === "file")?.value || "";
-            const genLine1Based = parseInt(
-              stackObjProperties.find((v) => v.name === "lineNumber")?.value || "0"
-            );
-            const genColumn1Based = parseInt(
-              stackObjProperties.find((v) => v.name === "column")?.value || "0"
-            );
-            const { sourceURL, lineNumber1Based, columnNumber0Based } =
-              this.sourceMapRegistry!.findOriginalPosition(
-                genUrl,
-                genLine1Based,
-                genColumn1Based - 1
-              );
-            stackFrames[index] = new StackFrame(
-              index,
-              methodName,
-              sourceURL ? new Source(sourceURL, sourceURL) : undefined,
-              this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
-              this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
-            );
-          }
-        })
-      );
-      this.delegate.sendStoppedEvent(stackFrames, [], "exception", errorMessage, isFatal);
-    } else {
-      const stackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
-        const cdpLocation = cdpFrame.location;
-        const { sourceURL, lineNumber1Based, columnNumber0Based } =
-          this.sourceMapRegistry!.findOriginalPosition(
-            cdpLocation.scriptId,
-            cdpLocation.lineNumber + 1, // cdp line and column numbers are 0-based
-            cdpLocation.columnNumber
-          );
-        return new StackFrame(
-          index,
-          cdpFrame.functionName,
-          sourceURL ? new Source(sourceURL, sourceURL) : undefined,
-          this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
-          this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
+    const stackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
+      const cdpLocation = cdpFrame.location;
+      const { sourceURL, lineNumber1Based, columnNumber0Based } =
+        this.sourceMapRegistry!.findOriginalPosition(
+          cdpLocation.scriptId,
+          cdpLocation.lineNumber + 1, // cdp line and column numbers are 0-based
+          cdpLocation.columnNumber
         );
-      });
-      const scopeChains = message.params.callFrames.map((cdpFrame: any) => cdpFrame.scopeChain);
+      return new StackFrame(
+        index,
+        cdpFrame.functionName,
+        sourceURL ? new Source(sourceURL, sourceURL) : undefined,
+        this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+        this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based
+      );
+    });
+    const scopeChains = message.params.callFrames.map((cdpFrame: any) => cdpFrame.scopeChain);
 
-      this.delegate.sendStoppedEvent(stackFrames, scopeChains, "breakpoint", "Yollov2");
-    }
+    this.delegate.sendStoppedEvent(stackFrames, scopeChains, "breakpoint");
   }
 
   private handleCDPMessageResponse(message: any) {
