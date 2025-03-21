@@ -31,6 +31,7 @@ import { PanelLocation } from "./common/WorkspaceConfig";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
+import { Connector } from "./connect/Connector";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -302,6 +303,7 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
 
 function extensionActivated() {
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
+  Connector.getInstance().start();
   if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
     commands.executeCommand("RNIDE.openPanel");
   }
