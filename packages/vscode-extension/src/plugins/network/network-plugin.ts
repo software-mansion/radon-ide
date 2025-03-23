@@ -114,8 +114,6 @@ class NetworkCDPWebsocketBackend implements Disposable {
   }
 
   public broadcast(cdpMessage: string) {
-    Logger.debug("Broadcasting CDP message:", cdpMessage);
-
     this.sessions.forEach((ws) => {
       ws.send(cdpMessage);
     });
