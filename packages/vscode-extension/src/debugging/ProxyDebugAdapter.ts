@@ -69,11 +69,25 @@ export class ProxyDebugAdapter extends DebugSession {
     this.disposables.push(
       proxyDelegate.onDebuggerPaused(({ reason }) => {
         this.sendEvent(new Event(DEBUG_PAUSED, { reason }));
+        if (this.session.configuration.displayDebuggerOverlay) {
+          this.cdpProxy.injectDebuggerCommand({
+            method: "Overlay.setPausedInDebuggerMessage",
+            params: {
+              message: "Paused in debugger",
+            },
+          });
+        }
       })
     );
     this.disposables.push(
       proxyDelegate.onDebuggerResumed(() => {
         this.sendEvent(new Event(DEBUG_RESUMED));
+        if (this.session.configuration.displayDebuggerOverlay) {
+          this.cdpProxy.injectDebuggerCommand({
+            method: "Overlay.setPausedInDebuggerMessage",
+            params: {},
+          });
+        }
       })
     );
     this.disposables.push(
