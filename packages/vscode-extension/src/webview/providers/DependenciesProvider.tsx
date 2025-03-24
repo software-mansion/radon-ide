@@ -118,7 +118,7 @@ function getErrors(statuses: DependencyRecord) {
     .forEach(([dependency, _info]) => {
       switch (dependency) {
         case "xcode":
-          setFirstError(dependency, "emulator");
+          setFirstError(dependency, "simulator");
         /* fallthrough */
         case "cocoaPods":
         case "pods":
