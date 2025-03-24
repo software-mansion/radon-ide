@@ -30,11 +30,19 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       }
       case "Debugger.paused": {
         if (this.resumeEventTimeout) {
+          // if resume event was delayed, we clear it
           clearTimeout(this.resumeEventTimeout);
+          this.resumeEventTimeout = undefined;
         }
         return this.handleDebuggerPaused(applicationCommand, tunnel);
       }
       case "Debugger.resumed": {
+        if (this.resumeEventTimeout) {
+          // we clear resume event here as well as we will either schedule a new one
+          // or fire the event immediately.
+          clearTimeout(this.resumeEventTimeout);
+          this.resumeEventTimeout = undefined;
+        }
         if (this.justCalledStepOver) {
           // when step-ober is called, we expect Debugger.resumed event to be called
           // after which the paused event will be fired almost immediately as the
@@ -43,9 +51,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
           // in the overlay blinking for a fraction of second, we wait for a short period
           // just in case the paused event is never fired.
           this.justCalledStepOver = true;
-          if (this.resumeEventTimeout) {
-            clearTimeout(this.resumeEventTimeout);
-          }
           this.resumeEventTimeout = setTimeout(() => {
             this.justCalledStepOver = false;
             this.debuggerResumedEmitter.fire({});
