@@ -14,6 +14,7 @@ export class Connector {
 
   private statusBarItem: StatusBarItem;
   private debugSession: DebugSession | null = null;
+  private metro: Metro | null = null;
 
   private portsStatus: Record<number, string> = {};
 
@@ -46,6 +47,7 @@ export class Connector {
           this.portsStatus[port] = "running metro";
           const debugSession = new DebugSession({
             onDebugSessionTerminated: () => {
+              this.metro = null;
               this.debugSession = null;
               this.updateStatusBarItem();
             },
@@ -53,6 +55,7 @@ export class Connector {
           const metro = new Metro(port, [projectRoot]);
           const success = await debugSession.startJSDebugSession(metro);
           if (success) {
+            this.metro = metro;
             this.debugSession = debugSession;
             this.updateStatusBarItem();
           } else {
@@ -91,8 +94,9 @@ export class Connector {
     markdownText.supportThemeIcons = true;
     markdownText.isTrusted = true;
 
-    if (this.debugSession) {
+    if (this.debugSession && this.metro) {
       this.statusBarItem.text = "Radon IDE $(debug)";
+      markdownText.appendMarkdown("Connected on port " + this.metro.port);
     } else {
       this.statusBarItem.text = "Radon IDE $(debug-disconnect)";
       markdownText.appendMarkdown(
