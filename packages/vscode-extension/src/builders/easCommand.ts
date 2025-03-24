@@ -61,7 +61,7 @@ export async function isEasCliInstalled(appRoot: string) {
   }
 }
 
-type ListEasBuildsOptions = { profile: string; fingerprintHash?: string };
+type ListEasBuildsOptions = { profile: string; fingerprintHash: string };
 
 export async function listEasBuilds(
   platform: DevicePlatform,
@@ -78,11 +78,9 @@ export async function listEasBuilds(
     platformMapping[platform],
     "--profile",
     profile,
+    "--fingerprint-hash",
+    fingerprintHash,
   ];
-
-  if (fingerprintHash !== undefined) {
-    commandArgs.push("--fingerprint-hash", fingerprintHash);
-  }
 
   const { stdout } = await exec("eas", commandArgs, { cwd: appRoot });
   return parseEasBuildOutput(stdout, platform);
