@@ -113,3 +113,29 @@ function parseEasBuildOutput(stdout: string, platform: DevicePlatform): EASBuild
       };
     });
 }
+
+export async function compareFingerprintWithBuild(
+  buildId: string,
+  appRoot: string
+): Promise<boolean> {
+  const { stdout } = await exec(
+    "eas",
+    ["fingerprint:compare", "--json", "--non-interactive", "--build-id", buildId],
+    {
+      cwd: appRoot,
+    }
+  );
+  try {
+    const outputObject = JSON.parse(stdout);
+    const fingerprint1 = outputObject["fingerprint1"];
+    const fingerprint2 = outputObject["fingerprint2"];
+    [fingerprint1, fingerprint2].forEach((fingerprint) => {
+      if (!fingerprint || !("hash" in fingerprint) || typeof fingerprint.hash !== "string") {
+        throw new Error();
+      }
+    });
+    return fingerprint1.hash === fingerprint2.hash;
+  } catch {
+    throw new Error("Failed to compare build fingerprints: the response from EAS is malformed");
+  }
+}

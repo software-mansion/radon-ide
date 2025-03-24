@@ -1,14 +1,20 @@
 import path from "path";
 import os from "os";
 import { mkdtemp } from "fs/promises";
-import maxBy from "lodash/maxBy";
 
+import { orderBy } from "lodash";
 import { DevicePlatform } from "../common/DeviceManager";
 import { EasConfig } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
 import { downloadBinary } from "../utilities/common";
-import { EASBuild, isEasCliInstalled, listEasBuilds, viewEasBuild } from "./easCommand";
+import {
+  compareFingerprintWithBuild,
+  EASBuild,
+  isEasCliInstalled,
+  listEasBuilds,
+  viewEasBuild,
+} from "./easCommand";
 import { extractTarApp } from "./utils";
 
 export async function fetchEasBuild(
@@ -69,7 +75,27 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: 
     return undefined;
   }
 
-  const build = maxBy(builds, "completedAt")!;
+  const buildsByCompletedAt = orderBy(builds, "completedAt", "desc");
+
+  let build;
+  for (const candidate of buildsByCompletedAt) {
+    try {
+      if (await compareFingerprintWithBuild(candidate.id, appRoot)) {
+        build = candidate;
+        break;
+      }
+    } catch (e: unknown) {
+      // NOTE: type safe because we always throw `Error` from `compareFingerprint`
+      Logger.error((e as Error).message);
+    }
+  }
+
+  if (!build) {
+    Logger.error(
+      "None of the EAS artifacts match the fingerprint of the current workspace. Run `eas fingerprint:compare` to see why each build is incompatible."
+    );
+    return;
+  }
 
   if (
     platform === DevicePlatform.Android &&
