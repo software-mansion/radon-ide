@@ -24,6 +24,8 @@ const ANDROID_CODENAMES_TO_API_LEVELS = {
 // Temporary solution due to sdkmanager not having information about android version.
 function mapApiLevelToAndroidVersion(apiLevel: number): number | undefined {
   switch (apiLevel) {
+    case 36:
+      return 16;
     case 35:
       return 15;
     case 34:
