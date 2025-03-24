@@ -175,7 +175,7 @@ export class DebugSession implements Disposable {
       await this.restart();
     }
 
-    let websocketAddress = extraConfiguration?.websocketAddress || (await metro.getDebuggerURL());
+    const websocketAddress = extraConfiguration?.websocketAddress || (await metro.getDebuggerURL());
     if (!websocketAddress) {
       return false;
     }
