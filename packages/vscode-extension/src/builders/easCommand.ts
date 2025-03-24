@@ -61,22 +61,30 @@ export async function isEasCliInstalled(appRoot: string) {
   }
 }
 
-export async function listEasBuilds(platform: DevicePlatform, profile: string, appRoot: string) {
+type ListEasBuildsOptions = { profile: string; fingerprintHash?: string };
+
+export async function listEasBuilds(
+  platform: DevicePlatform,
+  { profile, fingerprintHash }: ListEasBuildsOptions,
+  appRoot: string
+) {
   const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
 
-  const { stdout } = await exec(
-    "eas",
-    [
-      "build:list",
-      "--non-interactive",
-      "--json",
-      "--platform",
-      platformMapping[platform],
-      "--profile",
-      profile,
-    ],
-    { cwd: appRoot }
-  );
+  const commandArgs = [
+    "build:list",
+    "--non-interactive",
+    "--json",
+    "--platform",
+    platformMapping[platform],
+    "--profile",
+    profile,
+  ];
+
+  if (fingerprintHash !== undefined) {
+    commandArgs.push("--fingerprint-hash", fingerprintHash);
+  }
+
+  const { stdout } = await exec("eas", commandArgs, { cwd: appRoot });
   return parseEasBuildOutput(stdout, platform);
 }
 
@@ -114,10 +122,17 @@ function parseEasBuildOutput(stdout: string, platform: DevicePlatform): EASBuild
     });
 }
 
-export async function compareFingerprintWithBuild(
+export interface FingerprintDetails {
+  hash: string;
+}
+
+export async function fingerprintCompareWithBuild(
   buildId: string,
   appRoot: string
-): Promise<boolean> {
+): Promise<{
+  fingerprint1: FingerprintDetails;
+  fingerprint2: FingerprintDetails;
+}> {
   const { stdout } = await exec(
     "eas",
     ["fingerprint:compare", "--json", "--non-interactive", "--build-id", buildId],
@@ -126,15 +141,23 @@ export async function compareFingerprintWithBuild(
     }
   );
   try {
-    const outputObject = JSON.parse(stdout);
-    const fingerprint1 = outputObject["fingerprint1"];
-    const fingerprint2 = outputObject["fingerprint2"];
-    [fingerprint1, fingerprint2].forEach((fingerprint) => {
-      if (!fingerprint || !("hash" in fingerprint) || typeof fingerprint.hash !== "string") {
-        throw new Error();
-      }
-    });
-    return fingerprint1.hash === fingerprint2.hash;
+    const payload = JSON.parse(stdout);
+    const fingerprint1 = payload["fingerprint1"];
+    const fingerprint2 = payload["fingerprint2"];
+
+    function isFingerprintDetails(fingerprint: unknown): fingerprint is FingerprintDetails {
+      return (
+        !!fingerprint &&
+        typeof fingerprint === "object" &&
+        "hash" in fingerprint &&
+        typeof fingerprint.hash === "string"
+      );
+    }
+
+    if (!isFingerprintDetails(fingerprint1) || !isFingerprintDetails(fingerprint2)) {
+      throw new Error();
+    }
+    return payload;
   } catch {
     throw new Error("Failed to compare build fingerprints: the response from EAS is malformed");
   }

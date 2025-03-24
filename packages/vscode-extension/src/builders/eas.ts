@@ -2,14 +2,15 @@ import path from "path";
 import os from "os";
 import { mkdtemp } from "fs/promises";
 
-import { orderBy } from "lodash";
+import assert from "assert";
+import { maxBy } from "lodash";
 import { DevicePlatform } from "../common/DeviceManager";
 import { EasConfig } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
 import { downloadBinary } from "../utilities/common";
 import {
-  compareFingerprintWithBuild,
+  fingerprintCompareWithBuild,
   EASBuild,
   isEasCliInstalled,
   listEasBuilds,
@@ -61,7 +62,7 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: 
     return build;
   }
 
-  const builds = await listEasBuilds(platform, config.profile, appRoot);
+  const builds = await listEasBuilds(platform, config, appRoot);
   if (!builds || builds.length === 0) {
     Logger.error(
       `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile. If you're building iOS app, make sure you set '"ios.simulator": true' option in eas.json.`
@@ -75,19 +76,21 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: 
     return undefined;
   }
 
-  const buildsByCompletedAt = orderBy(builds, "completedAt", "desc");
+  const newestBuild = maxBy(builds, "completedAt");
+  assert(newestBuild !== undefined, "builds array is non-empty, so there must be a newest build");
+  const { fingerprint2: localFingerprint, fingerprint1: newestBuildFingerprint } =
+    await fingerprintCompareWithBuild(newestBuild.id, appRoot);
 
   let build;
-  for (const candidate of buildsByCompletedAt) {
-    try {
-      if (await compareFingerprintWithBuild(candidate.id, appRoot)) {
-        build = candidate;
-        break;
-      }
-    } catch (e: unknown) {
-      // NOTE: type safe because we always throw `Error` from `compareFingerprint`
-      Logger.error((e as Error).message);
-    }
+  if (localFingerprint.hash === newestBuildFingerprint.hash) {
+    build = newestBuild;
+  } else {
+    const matchingFingerprintBuilds = await listEasBuilds(
+      platform,
+      { profile: config.profile, fingerprintHash: localFingerprint.hash },
+      appRoot
+    );
+    build = maxBy(matchingFingerprintBuilds, "completedAt");
   }
 
   if (!build) {
