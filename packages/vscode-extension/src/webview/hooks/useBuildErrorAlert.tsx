@@ -161,7 +161,7 @@ function BundleErrorActions() {
         onClick={() => {
           project.focusDebugConsole();
         }}
-        tooltip={{ label: "Open extension logs", side: "bottom" }}>
+        tooltip={{ label: "Open debug console", side: "bottom" }}>
         <span className="codicon codicon-output" />
       </IconButton>
       <IconButton
