@@ -25,6 +25,11 @@ export type DebugSessionDelegate = {
   onDebugSessionTerminated(): void;
 };
 
+export interface DebugExtraConfiguration {
+  websocketAddress?: string;
+  displayDebuggerOverlay?: boolean;
+}
+
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
 
 /**
@@ -165,12 +170,12 @@ export class DebugSession implements Disposable {
       .then(() => disposeAll(this.disposables));
   }
 
-  public async startJSDebugSession(metro: Metro) {
+  public async startJSDebugSession(metro: Metro, extraConfiguration?: DebugExtraConfiguration) {
     if (this.jsDebugSession) {
       await this.restart();
     }
 
-    const websocketAddress = await metro.getDebuggerURL();
+    let websocketAddress = extraConfiguration?.websocketAddress || (await metro.getDebuggerURL());
     if (!websocketAddress) {
       return false;
     }
@@ -197,6 +202,7 @@ export class DebugSession implements Disposable {
         sourceMapPathOverrides,
         websocketAddress,
         expoPreludeLineCount: metro.expoPreludeLineCount,
+        displayDebuggerOverlay: extraConfiguration?.displayDebuggerOverlay,
       },
       {
         parentSession: this.parentDebugSession,
