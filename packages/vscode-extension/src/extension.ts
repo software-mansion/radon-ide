@@ -287,7 +287,7 @@ export async function activate(context: ExtensionContext) {
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
-  shouldExtensionActivate && extensionActivated();
+  shouldExtensionActivate && extensionActivated(context);
 }
 
 class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
@@ -301,9 +301,12 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
   }
 }
 
-function extensionActivated() {
+function extensionActivated(context: ExtensionContext) {
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
-  Connector.getInstance().start();
+  if (context.extensionMode === ExtensionMode.Development) {
+    // "Connector" implements experimental functionality that is available in development mode only
+    Connector.getInstance().start();
+  }
   if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
     commands.executeCommand("RNIDE.openPanel");
   }

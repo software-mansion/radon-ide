@@ -23,6 +23,7 @@ export class Connector {
       StatusBarAlignment.Left,
       Number.MIN_SAFE_INTEGER
     );
+    this.statusBarItem.command = "RNIDE.openPanel";
   }
 
   private scanPortsPeriodically() {
@@ -36,6 +37,38 @@ export class Connector {
       .then(this.updateStatusBarItem.bind(this));
   }
 
+  private async tryConnectMetroAndJSDebugger(port: number, projectRoot: string) {
+    const metro = new Metro(port, [projectRoot]);
+    const websocketAddress = await metro.getDebuggerURL();
+    if (!websocketAddress) {
+      this.portsStatus[port] = "no connected device";
+      return false;
+    }
+    if (!metro.isUsingNewDebugger) {
+      this.portsStatus[port] = "using old debugger";
+      return false;
+    }
+
+    const debugSession = new DebugSession({
+      onDebugSessionTerminated: () => {
+        this.metro = null;
+        this.debugSession = null;
+        this.updateStatusBarItem();
+      },
+    });
+    const success = await debugSession.startJSDebugSession(metro, {
+      websocketAddress,
+      displayDebuggerOverlay: true,
+    });
+    if (success) {
+      this.metro = metro;
+      this.debugSession = debugSession;
+    } else {
+      this.portsStatus[port] = "unable to connect";
+      debugSession.dispose();
+    }
+  }
+
   private async scanPort(port: number) {
     try {
       const response = await fetch(`http://localhost:${port}/status`);
@@ -44,23 +77,7 @@ export class Connector {
         // that points to the project root folder
         const projectRoot = response.headers.get("X-React-Native-Project-Root");
         if (projectRoot && isInWorkspace(projectRoot)) {
-          this.portsStatus[port] = "running metro";
-          const debugSession = new DebugSession({
-            onDebugSessionTerminated: () => {
-              this.metro = null;
-              this.debugSession = null;
-              this.updateStatusBarItem();
-            },
-          });
-          const metro = new Metro(port, [projectRoot]);
-          const success = await debugSession.startJSDebugSession(metro);
-          if (success) {
-            this.metro = metro;
-            this.debugSession = debugSession;
-            this.updateStatusBarItem();
-          } else {
-            debugSession.dispose();
-          }
+          await this.tryConnectMetroAndJSDebugger(port, projectRoot);
         } else if (projectRoot) {
           this.portsStatus[port] = "running for a different workspace";
         } else {
@@ -71,6 +88,8 @@ export class Connector {
       }
     } catch (error) {
       this.portsStatus[port] = "not running";
+    } finally {
+      this.updateStatusBarItem();
     }
   }
 
@@ -97,6 +116,8 @@ export class Connector {
     if (this.debugSession && this.metro) {
       this.statusBarItem.text = "Radon IDE $(debug)";
       markdownText.appendMarkdown("Connected on port " + this.metro.port);
+      markdownText.appendMarkdown("\n\n");
+      markdownText.appendMarkdown("[Open debug console](command:workbench.panel.repl.view.focus)");
     } else {
       this.statusBarItem.text = "Radon IDE $(debug-disconnect)";
       markdownText.appendMarkdown(
