@@ -10,11 +10,11 @@ import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
 import { downloadBinary } from "../utilities/common";
 import {
-  fingerprintCompareWithBuild,
   EASBuild,
   isEasCliInstalled,
   listEasBuilds,
   viewEasBuild,
+  generateFingerprint,
 } from "./easCommand";
 import { extractTarApp } from "./utils";
 
@@ -62,7 +62,13 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: 
     return build;
   }
 
-  const builds = await listEasBuilds(platform, config, appRoot);
+  const localFingerprint = await generateFingerprint(platform, appRoot);
+
+  const builds = await listEasBuilds(
+    platform,
+    { profile: config.profile, fingerprintHash: localFingerprint.hash },
+    appRoot
+  );
   if (!builds || builds.length === 0) {
     Logger.error(
       `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile. If you're building iOS app, make sure you set '"ios.simulator": true' option in eas.json.`
@@ -76,29 +82,8 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: 
     return undefined;
   }
 
-  const newestBuild = maxBy(builds, "completedAt");
-  assert(newestBuild !== undefined, "builds array is non-empty, so there must be a newest build");
-  const { fingerprint2: localFingerprint, fingerprint1: newestBuildFingerprint } =
-    await fingerprintCompareWithBuild(newestBuild.id, appRoot);
-
-  let build;
-  if (localFingerprint.hash === newestBuildFingerprint.hash) {
-    build = newestBuild;
-  } else {
-    const matchingFingerprintBuilds = await listEasBuilds(
-      platform,
-      { profile: config.profile, fingerprintHash: localFingerprint.hash },
-      appRoot
-    );
-    build = maxBy(matchingFingerprintBuilds, "completedAt");
-  }
-
-  if (!build) {
-    Logger.error(
-      "None of the EAS artifacts match the fingerprint of the current workspace. Run `eas fingerprint:compare` to see why each build is incompatible."
-    );
-    return;
-  }
+  const build = maxBy(builds, "completedAt");
+  assert(build !== undefined, "builds array is non-empty, so there must be a newest build");
 
   if (
     platform === DevicePlatform.Android &&

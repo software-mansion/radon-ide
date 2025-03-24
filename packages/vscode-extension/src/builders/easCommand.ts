@@ -126,39 +126,32 @@ export interface FingerprintDetails {
   hash: string;
 }
 
-export async function fingerprintCompareWithBuild(
-  buildId: string,
+function isFingerprintDetails(fingerprint: unknown): fingerprint is FingerprintDetails {
+  return (
+    !!fingerprint &&
+    typeof fingerprint === "object" &&
+    "hash" in fingerprint &&
+    typeof fingerprint.hash === "string"
+  );
+}
+
+export async function generateFingerprint(
+  platform: DevicePlatform,
   appRoot: string
-): Promise<{
-  fingerprint1: FingerprintDetails;
-  fingerprint2: FingerprintDetails;
-}> {
+): Promise<FingerprintDetails> {
+  const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
   const { stdout } = await exec(
     "eas",
-    ["fingerprint:compare", "--json", "--non-interactive", "--build-id", buildId],
-    {
-      cwd: appRoot,
-    }
+    ["fingerprint:generate", "--json", "--non-interactive", "-p", platformMapping[platform]],
+    { cwd: appRoot }
   );
   try {
-    const payload = JSON.parse(stdout);
-    const fingerprint1 = payload["fingerprint1"];
-    const fingerprint2 = payload["fingerprint2"];
-
-    function isFingerprintDetails(fingerprint: unknown): fingerprint is FingerprintDetails {
-      return (
-        !!fingerprint &&
-        typeof fingerprint === "object" &&
-        "hash" in fingerprint &&
-        typeof fingerprint.hash === "string"
-      );
-    }
-
-    if (!isFingerprintDetails(fingerprint1) || !isFingerprintDetails(fingerprint2)) {
+    const result = JSON.parse(stdout);
+    if (!isFingerprintDetails(result)) {
       throw new Error();
     }
-    return payload;
+    return result;
   } catch {
-    throw new Error("Failed to compare build fingerprints: the response from EAS is malformed");
+    throw new Error("Failed to generate build fingerprint: the output of eas-cli is malformed");
   }
 }
