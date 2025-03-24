@@ -47,7 +47,7 @@ export class CDPProxy {
     if (this.server) {
       return;
     }
-    this.server = await Server.create({ port: this.port, host: this.hostAddress });
+    this.server = await Server.create({ port: 0, host: this.hostAddress });
     this.server.onConnection(this.onConnectionHandler.bind(this));
   }
 
