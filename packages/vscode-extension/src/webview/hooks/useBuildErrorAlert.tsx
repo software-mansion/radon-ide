@@ -159,7 +159,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusExtensionLogsOutput();
+          project.focusDebugConsole();
         }}
         tooltip={{ label: "Open extension logs", side: "bottom" }}>
         <span className="codicon codicon-output" />
