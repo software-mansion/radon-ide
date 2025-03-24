@@ -58,12 +58,10 @@ export class ProxyDebugAdapter extends DebugSession {
       sourceMapAliases
     );
 
-    const cdpProxyPort = Math.round(Math.random() * 40000 + 3000);
     const proxyDelegate = new RadonCDPProxyDelegate(this.sourceMapRegistry);
 
     this.cdpProxy = new CDPProxy(
       "127.0.0.1",
-      cdpProxyPort,
       this.session.configuration.websocketAddress,
       proxyDelegate
     );
@@ -153,7 +151,7 @@ export class ProxyDebugAdapter extends DebugSession {
           type: CHILD_SESSION_TYPE,
           name: "Radon IDE Debugger",
           request: "attach",
-          port: this.cdpProxy.port,
+          port: this.cdpProxy.port!,
           continueOnAttach: true,
           sourceMapPathOverrides: args.sourceMapPathOverrides,
           resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
