@@ -50,9 +50,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
           // In order to prevent the paused event from being fired immediately resulting
           // in the overlay blinking for a fraction of second, we wait for a short period
           // just in case the paused event is never fired.
-          this.justCalledStepOver = true;
+          this.justCalledStepOver = false;
           this.resumeEventTimeout = setTimeout(() => {
-            this.justCalledStepOver = false;
             this.debuggerResumedEmitter.fire({});
           }, 100);
         } else {
