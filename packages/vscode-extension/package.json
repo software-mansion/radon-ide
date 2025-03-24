@@ -675,8 +675,7 @@
     "preinstall": "mkdir -p dist && bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && npm run build:vscode-js-debug",
     "fetch:sim-server-assets": "bash ./scripts/download-sim-server-release-assets.sh dist",
     "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin ../radon-ide-react-query-webui",
-    "postinstall": "patch-
-    "
+    "postinstall": "patch-package"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.23.3",
