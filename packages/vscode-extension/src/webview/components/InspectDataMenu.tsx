@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Frame, InspectDataStackItem } from "../../common/Project";
-import { DeviceProperties } from "../utilities/consts";
+import { DeviceProperties } from "../utilities/deviceContants";
 import "./InspectDataMenu.css";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;

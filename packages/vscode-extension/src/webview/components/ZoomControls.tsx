@@ -2,7 +2,7 @@ import { RefObject, useCallback, useState } from "react";
 import * as Select from "@radix-ui/react-select";
 import IconButton from "./shared/IconButton";
 import { ZoomLevelType } from "../../common/Project";
-import { DeviceProperties } from "../utilities/consts";
+import { DeviceProperties } from "../utilities/deviceContants";
 import "./ZoomControls.css";
 import { useDeviceFrame } from "../Preview/Device/hooks";
 

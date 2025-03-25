@@ -12,46 +12,51 @@ import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider
 
 export const NETWORK_PLUGIN_ID = "network";
 
-function startViteServer(onReady: () => void) {
-  const process = spawn("npm", ["run", "watch:network-webview"], {
-    cwd: path.join(__dirname, ".."),
-    shell: true,
-  });
+function startViteServer(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const process = spawn("npm", ["run", "watch:network-webview"], {
+      cwd: path.join(__dirname, ".."),
+      shell: true,
+    });
 
-  process.stdout.on("data", (data) => {
-    const output = data.toString();
+    process.stdout.on("data", (data) => {
+      const output = data.toString();
 
-    if (output.includes("ready in") || output.includes("Local:")) {
-      onReady();
-    }
-  });
+      if (output.includes("ready in") || output.includes("Local:")) {
+        resolve();
+      }
+    });
 
-  process.stderr.on("data", (data) => {
-    Logger.error("ERROR:", data.toString());
-  });
+    process.stderr.on("data", (data) => {
+      Logger.error("ERROR:", data.toString());
+    });
 
-  process.on("close", (code) => {
-    Logger.debug(`Process exited with code ${code}`);
+    process.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`Process exited with code ${code}`));
+      } else {
+        Logger.debug(`Process exited with code ${code}`);
+      }
+    });
   });
 }
 
 let initialzed = false;
-function initialize() {
+async function initialize() {
   if (initialzed) {
     return;
   }
   Logger.debug("Initilizing Network tool");
 
-  startViteServer(() => {
-    initialzed = true;
-    extensionContext.subscriptions.push(
-      window.registerWebviewViewProvider(
-        `RNIDE.Tool.Network.view`,
-        new NetworkDevtoolsWebviewProvider(extensionContext),
-        { webviewOptions: { retainContextWhenHidden: true } }
-      )
-    );
-  });
+  await startViteServer();
+  initialzed = true;
+  extensionContext.subscriptions.push(
+    window.registerWebviewViewProvider(
+      `RNIDE.Tool.Network.view`,
+      new NetworkDevtoolsWebviewProvider(extensionContext),
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
 }
 
 class NetworkCDPWebsocketBackend implements Disposable {
