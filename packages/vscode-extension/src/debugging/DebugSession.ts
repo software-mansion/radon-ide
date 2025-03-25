@@ -25,9 +25,12 @@ export type DebugSessionDelegate = {
   onDebugSessionTerminated(): void;
 };
 
-export interface DebugExtraConfiguration {
-  websocketAddress?: string;
-  displayDebuggerOverlay?: boolean;
+export interface JSDebugConfiguration {
+  websocketAddress: string;
+  watchFolders: string[];
+  displayDebuggerOverlay: boolean;
+  isUsingNewDebugger: boolean;
+  expoPreludeLineCount: number;
 }
 
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
@@ -113,7 +116,17 @@ export class DebugSession implements Disposable {
     );
   }
 
-  public async reconnectJSDebuggerIfNeeded(metro: Metro) {
+  public get websocketTarget() {
+    return this.currentWsTarget;
+  }
+
+  public async reconnectJSDebuggerIfNeeded(configuration: JSDebugConfiguration) {
+    if (configuration.websocketAddress === this.currentWsTarget) {
+      // if the websocket address is the same, it means that the old endpoint is still listed
+      // however, the record might be stale as Metro often lists endpoints for some time after
+      // they've been terminated. We need to check if the endpoint is responding before we decide
+      // whether we need to reconnect.
+    }
     const isAlive = await this.isJsDebugSessionAlive(metro);
     if (!isAlive) {
       return this.startJSDebugSession(metro);
@@ -170,21 +183,16 @@ export class DebugSession implements Disposable {
       .then(() => disposeAll(this.disposables));
   }
 
-  public async startJSDebugSession(metro: Metro, extraConfiguration?: DebugExtraConfiguration) {
+  public async startJSDebugSession(configuration: JSDebugConfiguration) {
     if (this.jsDebugSession) {
       await this.restart();
     }
 
-    const websocketAddress = extraConfiguration?.websocketAddress || (await metro.getDebuggerURL());
-    if (!websocketAddress) {
-      return false;
-    }
-
-    const isUsingNewDebugger = metro.isUsingNewDebugger;
+    const isUsingNewDebugger = configuration.isUsingNewDebugger;
     const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
 
     const sourceMapPathOverrides: Record<string, string> = {};
-    const metroWatchFolders = metro.watchFolders;
+    const metroWatchFolders = configuration.watchFolders;
     if (isUsingNewDebugger && metroWatchFolders.length > 0) {
       sourceMapPathOverrides["/[metro-project]/*"] = `${metroWatchFolders[0]}${path.sep}*`;
       metroWatchFolders.forEach((watchFolder, index) => {
@@ -200,9 +208,9 @@ export class DebugSession implements Disposable {
         request: "attach",
         breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
         sourceMapPathOverrides,
-        websocketAddress,
-        expoPreludeLineCount: metro.expoPreludeLineCount,
-        displayDebuggerOverlay: extraConfiguration?.displayDebuggerOverlay,
+        websocketAddress: configuration.websocketAddress,
+        expoPreludeLineCount: configuration.expoPreludeLineCount,
+        displayDebuggerOverlay: configuration.displayDebuggerOverlay,
       },
       {
         parentSession: this.parentDebugSession,
@@ -215,7 +223,7 @@ export class DebugSession implements Disposable {
       }
     );
 
-    this.currentWsTarget = websocketAddress;
+    this.currentWsTarget = configuration.websocketAddress;
 
     return true;
   }
@@ -230,41 +238,6 @@ export class DebugSession implements Disposable {
     commands.executeCommand("workbench.action.debug.stepOver", undefined, {
       sessionId: this.jsDebugSession?.id,
     });
-  }
-
-  public async isJsDebugSessionAlive(metro: Metro): Promise<boolean> {
-    /**
-     * We use a combination of two check to determine if the js debug session is alive and active:
-     * 1. we use "ping" command that executes a simple JS code using Runtime.evaluate to determine that the runtime responds.
-     * 2. we check if the runtime is listed on the ws targets list.
-     *
-     * Apparently, the sole existence of the runtime on the list doesn't tell if it is really running. Metro has some
-     * internal logic that keeps the runtimes listed for some time after they've been terminated. However, when the
-     * runtime is not listed it is sufficient to conclude that it is not running.
-     *
-     * We therefore use Promise.any for this check and expect the 2nd check to only return when the runtime isn't listed
-     * but otherwise we want it to throw and wait for the ping check to finish. In addition the ping check is guarded by
-     * a timeout as when the runtime is disconnected the evaluate call is never picked up bu the runtime and we will never
-     * get a response back.
-     */
-    return Promise.any([
-      this.pingJsDebugSessionWithTimeout(),
-      this.isCurrentWsTargetStillVisible(metro),
-    ]);
-  }
-
-  public async isCurrentWsTargetStillVisible(metro: Metro) {
-    const possibleWsTargets = await metro.fetchWsTargets();
-    const hasCurrentWsAddress = possibleWsTargets?.some(
-      (runtime) => runtime.webSocketDebuggerUrl === this.currentWsTarget
-    );
-
-    if (!this.currentWsTarget || !hasCurrentWsAddress) {
-      return false;
-    }
-    // We're rejecting as shouldDebuggerReconnect uses .any which waits for first promise to resolve.
-    // And th fact that current wsTarget is on the list is not enough, it might be stale, so in this case we wait for ping.
-    throw new Error("current ws target is still");
   }
 
   public async pingJsDebugSessionWithTimeout() {

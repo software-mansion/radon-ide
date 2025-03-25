@@ -83,7 +83,7 @@ export class Metro implements Disposable {
   private _port = 0;
   private _watchFolders: string[] | undefined = undefined;
   private startPromise: Promise<void> | undefined;
-  private usesNewDebugger?: Boolean;
+  private usesNewDebugger?: boolean;
   private _expoPreludeLineCount = 0;
 
   constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {}
