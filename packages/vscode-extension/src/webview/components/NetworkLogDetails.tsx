@@ -36,16 +36,12 @@ const Tab = ({ title, activeTab, setActiveTab }: TabProps) => {
 };
 
 const getParams = (url: string): Record<string, string> => {
-  const params = url.split("?")[1];
-  if (!params) {
-    return {};
-  }
-
-  return params.split("&").reduce((acc: Record<string, string>, curr: string) => {
-    const [key, value] = curr.split("=");
-    acc[key] = value;
-    return acc;
-  }, {});
+  const urlObj = new URL(url);
+  const params: Record<string, string> = {};
+  urlObj.searchParams.forEach((value, key) => {
+    params[key] = value;
+  });
+  return params;
 };
 
 const Section = ({ title, data }: SectionProps) => {
@@ -65,10 +61,10 @@ const Section = ({ title, data }: SectionProps) => {
       {isExpanded && (
         <div className="section-content">
           {data &&
-            Object.keys(data).map((i) => (
-              <div key={i} className="section-row">
-                <p>{i}:</p>
-                <p>{data[i]}</p>
+            Object.entries(data).map(([key, value]) => (
+              <div key={key} className="section-row">
+                <p>{key}:</p>
+                <p>{String(value)}</p>
               </div>
             ))}
         </div>
@@ -101,55 +97,50 @@ const NetworkLogDetails = ({
           return null;
         }
 
-        return networkLog.request.method === "GET" ? (
-          <pre>{JSON.stringify(getParams(networkLog.request.url), null, 2)}</pre>
-        ) : (
-          <pre>
-            {JSON.stringify(
-              JSON.parse(
-                typeof networkLog.request.postData === "string" ? networkLog.request.postData : "{}"
-              ),
-              null,
-              2
-            )}
-          </pre>
-        );
+        const payloadData =
+          networkLog.request.method === "GET"
+            ? JSON.stringify(getParams(networkLog.request.url), null, 2)
+            : JSON.stringify(
+                JSON.parse(
+                  typeof networkLog.request.postData === "string"
+                    ? networkLog.request.postData
+                    : "{}"
+                ),
+                null,
+                2
+              );
+
+        return <pre>{payloadData}</pre>;
       case "Response":
-        let isValidJSON = false;
-        try {
-          JSON.parse(typeof responseBody === "string" ? responseBody : "{}");
-          isValidJSON = true;
-        } catch (e) {
-          isValidJSON = false;
-        }
-        const data =
-          typeof responseBody === "string"
-            ? isValidJSON
-              ? JSON.stringify(
-                  JSON.parse(typeof responseBody === "string" ? responseBody : "{}"),
-                  null,
-                  2
-                )
-              : responseBody
-            : "No response body";
+        const formatResponseBody = (body: unknown): string => {
+          console.log("resbody", body);
+          if (typeof body !== "string") {
+            return "No response body";
+          }
+          try {
+            const parsed = JSON.parse(body);
+            return JSON.stringify(parsed, null, 2);
+          } catch {
+            return body;
+          }
+        };
+
+        const responseData = formatResponseBody(responseBody);
+
         return (
           <>
             <IconButton
               className="copy-button"
               tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
-              onClick={() => {
-                navigator.clipboard.writeText(data);
-              }}>
+              onClick={() => navigator.clipboard.writeText(responseData)}>
               <span className="codicon codicon-copy" />
             </IconButton>
-            <pre>{data}</pre>
+            <pre>{responseData}</pre>
           </>
         );
       case "Timing":
         const totalTime = networkLog.timeline.durationMs || 0;
         const ttfb = networkLog.timeline.ttfb || 0;
-
-        console.log("time:", totalTime, ttfb);
 
         const ttfbPercent = (ttfb / totalTime) * 100;
         const responseLoadingPercent = ((totalTime - ttfb) / totalTime) * 100;
@@ -180,7 +171,6 @@ const NetworkLogDetails = ({
     if (activeTab === "Response") {
       getResponseBody(networkLog).then((data) => {
         setResponseBody(data);
-        console.log("data xyz: ", data);
       });
     }
   }, [activeTab, networkLog.requestId]);
