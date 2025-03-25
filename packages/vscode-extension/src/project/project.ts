@@ -32,7 +32,7 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { extensionContext, getCurrentLaunchConfig } from "../utilities/extensionContext";
+import { extensionContext } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { throttle, throttleAsync } from "../utilities/throttle";
@@ -54,6 +54,7 @@ import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
 import { focusSource } from "../utilities/focusSource";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -139,7 +140,7 @@ export class Project
     this.disposables.push(
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
         if (event.affectsConfiguration("launch")) {
-          const config = getCurrentLaunchConfig();
+          const config = getLaunchConfiguration();
           const oldAppRoot = this.appRootFolder;
           if (config.appRoot === oldAppRoot) {
             return;

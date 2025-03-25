@@ -115,16 +115,24 @@ export async function buildIos(
     getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
       platform: DevicePlatform.IOS,
     });
-    const appPath = await fetchEasBuild(cancelToken, eas.ios, DevicePlatform.IOS, appRoot);
-    if (!appPath) {
+
+    try {
+      const appPath = await fetchEasBuild(
+        cancelToken,
+        eas.ios,
+        DevicePlatform.IOS,
+        appRoot,
+        outputChannel
+      );
+
+      return {
+        appPath,
+        bundleID: await getBundleID(appPath),
+        platform: DevicePlatform.IOS,
+      };
+    } catch {
       throw new Error("Failed to build iOS app using EAS build.");
     }
-
-    return {
-      appPath,
-      bundleID: await getBundleID(appPath),
-      platform: DevicePlatform.IOS,
-    };
   }
 
   if (await isExpoGoProject(appRoot)) {

@@ -7,16 +7,13 @@ import {
   LaunchConfigEventMap,
   LaunchConfigurationOptions,
 } from "../common/LaunchConfig";
-import {
-  extensionContext,
-  findAppRootCandidates,
-  getCurrentLaunchConfig,
-} from "../utilities/extensionContext";
+import { extensionContext, findAppRootCandidates } from "../utilities/extensionContext";
 import { findXcodeProject, findXcodeScheme } from "../utilities/xcode";
 import { Logger } from "../Logger";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { readEasConfig } from "../utilities/eas";
 import { EasBuildConfig } from "../common/EasConfig";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 const CUSTOM_APPLICATION_ROOTS_KEY = "custom_application_roots_key";
 
@@ -26,14 +23,14 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
   private configListener: Disposable;
 
   constructor(private readonly appRootFolder: string) {
-    this.config = getCurrentLaunchConfig();
+    this.config = getLaunchConfiguration();
 
     this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (!event.affectsConfiguration("launch")) {
         return;
       }
 
-      this.config = getCurrentLaunchConfig();
+      this.config = getLaunchConfiguration();
 
       this.eventEmitter.emit("launchConfigChange", this.config);
     });

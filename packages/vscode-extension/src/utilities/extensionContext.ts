@@ -3,7 +3,6 @@ import path from "path";
 import { commands, ExtensionContext, Uri, workspace, window } from "vscode";
 import { Logger } from "../Logger";
 import { getLaunchConfiguration } from "./launchConfiguration";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 let _extensionContext: ExtensionContext | null = null;
 
@@ -21,27 +20,6 @@ export const extensionContext = new Proxy<ExtensionContext>({} as ExtensionConte
     return Reflect.get(_extensionContext, prop);
   },
 });
-
-export const getCurrentLaunchConfig = (): LaunchConfigurationOptions => {
-  const launchConfiguration = workspace.getConfiguration(
-    "launch",
-    workspace.workspaceFolders![0].uri
-  );
-
-  const configurations = launchConfiguration.get<Array<Record<string, any>>>("configurations")!;
-
-  const RNIDEConfiguration = configurations.find(
-    ({ type }) => type === "react-native-ide" || type === "radon-ide" // for compatibility we want to support old configuration type name
-  );
-
-  if (!RNIDEConfiguration) {
-    return {};
-  }
-
-  const { android, appRoot, ios, isExpo, metroConfigPath, env } = RNIDEConfiguration;
-
-  return { android, appRoot, ios, isExpo, metroConfigPath, env };
-};
 
 export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
   const searchedFileNames = [
