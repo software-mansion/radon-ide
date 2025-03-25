@@ -70,12 +70,16 @@ export class Connector implements Disposable {
         this.updateStatusBarItem();
       },
     });
+    const isUsingNewDebugger = metro.isUsingNewDebugger;
+    if (!isUsingNewDebugger) {
+      throw new Error("Auto-connect is only supported for the new React Native debugger");
+    }
     const success = await debugSession.startJSDebugSession({
       websocketAddress,
       displayDebuggerOverlay: true,
-      isUsingNewDebugger: true,
-      expoPreludeLineCount: 0,
-      watchFolders: [],
+      isUsingNewDebugger,
+      expoPreludeLineCount: metro.expoPreludeLineCount,
+      watchFolders: metro.watchFolders,
     });
     if (success) {
       this.metro = metro;
