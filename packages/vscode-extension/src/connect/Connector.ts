@@ -5,16 +5,12 @@ import {
   StatusBarAlignment,
   StatusBarItem,
   window,
-  workspace,
 } from "vscode";
 import { DebugSession } from "../debugging/DebugSession";
 import { Metro } from "../project/metro";
-import { sleep } from "../utilities/retry";
 import { extensionContext } from "../utilities/extensionContext";
 import { disposeAll } from "../utilities/disposables";
-
-const PORT_SCAN_INTERVAL_MS = 4000;
-const DEFAULT_PORTS = [8081, 8082, 8083];
+import { Scanner } from "./Scanner";
 
 const RADON_CONNECT_ENABLED_KEY = "radon_connect_enabled";
 
@@ -39,6 +35,15 @@ export class Connector implements Disposable {
     this.disposables.push(
       commands.registerCommand("RNIDE.disableAutoConnect", () => {
         extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, false);
+        this.disconnect();
+        this.updateStatusBarItem();
+      })
+    );
+
+    this.disposables.push(
+      commands.registerCommand("RNIDE.enableAutoConnect", () => {
+        extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
+        this.startScanner();
         this.updateStatusBarItem();
       })
     );
@@ -46,6 +51,7 @@ export class Connector implements Disposable {
 
   public dispose() {
     this.disconnect();
+    this.stopScanner();
     disposeAll(this.disposables);
     Connector.instance = null;
   }
@@ -109,7 +115,7 @@ export class Connector implements Disposable {
   }
 
   private printPortStatus(port: number) {
-    const status = this.scanner?.portsStatus[port];
+    const status = this.scanner?.portsStatus.get(port);
     if (status) {
       return ` - ${port}: ${status}`;
     } else {
@@ -128,17 +134,20 @@ export class Connector implements Disposable {
       this.statusBarItem.text = "Radon IDE $(debug)";
       markdownText.appendMarkdown("Connected on port " + this.metro.port);
       markdownText.appendMarkdown("\n\n");
+      markdownText.appendMarkdown("[Disconnect](command:RNIDE.disableAutoConnect)");
+      markdownText.appendMarkdown("\n\n");
       markdownText.appendMarkdown("[Open debug console](command:workbench.panel.repl.view.focus)");
     } else if (!enabled) {
       this.statusBarItem.text = "Radon IDE $(open-preview)";
-      markdownText.appendMarkdown(
-        "Auto-connect is disabled [enable](command:RNIDE.enableAutoConnect)"
-      );
+      markdownText.appendMarkdown("Auto-connect is disabled");
+      markdownText.appendMarkdown("\n\n");
+      markdownText.appendMarkdown("[Enable auto-connect](command:RNIDE.enableAutoConnect)");
     } else {
       this.statusBarItem.text = "Radon IDE $(debug-disconnect)";
+      const ports = Array.from(this.scanner?.portsStatus.keys() ?? []);
       markdownText.appendMarkdown(
         "Waiting for metro to start on ports:\n" +
-          DEFAULT_PORTS.map(this.printPortStatus.bind(this)).join("\n")
+          ports.map(this.printPortStatus.bind(this)).join("\n")
       );
       markdownText.appendMarkdown("\n\n");
       markdownText.appendMarkdown(
@@ -155,83 +164,4 @@ export class Connector implements Disposable {
     }
     return Connector.instance;
   }
-}
-
-type ScannerDelegate = {
-  onPortStatusUpdated: () => void;
-  onDeviceCandidateFound: (metro: Metro, websocketAddress: string) => Promise<void>;
-};
-
-class Scanner implements Disposable {
-  public portsStatus: Record<number, string> = {};
-  private disposed = false;
-  private delegate: ScannerDelegate | null = null;
-
-  public constructor(delegate: ScannerDelegate) {
-    this.delegate = delegate;
-  }
-
-  public dispose() {
-    this.delegate = null;
-    this.disposed = true;
-  }
-
-  public start() {
-    this.scanPortsPeriodically();
-  }
-
-  private scanPortsPeriodically() {
-    if (this.disposed) {
-      return;
-    }
-    Promise.all(DEFAULT_PORTS.map(this.scanPort.bind(this)))
-      .then(() => sleep(PORT_SCAN_INTERVAL_MS))
-      .then(this.scanPortsPeriodically.bind(this))
-      .then(this.delegate?.onPortStatusUpdated);
-  }
-
-  private async verifyAndConnect(port: number, projectRoot: string) {
-    const metro = new Metro(port, [projectRoot]);
-    const websocketAddress = await metro.getDebuggerURL();
-    if (!websocketAddress) {
-      this.portsStatus[port] = "no connected device";
-      return false;
-    }
-    if (!metro.isUsingNewDebugger) {
-      this.portsStatus[port] = "using old debugger";
-      return false;
-    }
-
-    this.portsStatus[port] = "connecting...";
-    await this.delegate?.onDeviceCandidateFound(metro, websocketAddress);
-  }
-
-  private async scanPort(port: number) {
-    try {
-      const response = await fetch(`http://localhost:${port}/status`);
-      if (response.ok) {
-        // we expect metro to include a response header X-React-Native-Project-Root
-        // that points to the project root folder
-        const projectRoot = response.headers.get("X-React-Native-Project-Root");
-        if (projectRoot && isInWorkspace(projectRoot)) {
-          await this.verifyAndConnect(port, projectRoot);
-        } else if (projectRoot) {
-          this.portsStatus[port] = "running for a different workspace";
-        } else {
-          this.portsStatus[port] = "not recognized as metro process";
-        }
-      } else {
-        this.portsStatus[port] = "not running";
-      }
-    } catch (error) {
-      this.portsStatus[port] = "not running";
-    } finally {
-      this.delegate?.onPortStatusUpdated();
-    }
-  }
-}
-
-function isInWorkspace(filePath: string) {
-  // first check if the provided path is a parent of any workspace folder
-  return workspace.workspaceFolders?.some((folder) => filePath.startsWith(folder.uri.fsPath));
 }
