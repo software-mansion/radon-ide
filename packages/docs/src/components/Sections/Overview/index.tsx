@@ -63,9 +63,16 @@ const items = [
   {
     label: "React Scan integration",
     title: "Outline renders",
-    body: "Radon IDE highlights components that re-render too frequently.\n\nSee for yourself what parts of your application need optimization.",
+    body: "Radon IDE can highlight components that re-render too frequently.\n\nSee for yourself what parts of your application need optimization.",
     mediaSrc: "video/8_sztudio_outline_renders.mp4",
     placeholderSrc: "video/placeholders/8_sztudio_outline_renders_placeholder.webp",
+  },
+  {
+    label: "Network Inspector",
+    title: "Inspect network requests",
+    body: "Use the built-in Network panel to inspect your application network activity.\n\nConveniently right in your editor.",
+    mediaSrc: "video/9_sztudio_network_inspector.mp4",
+    placeholderSrc: "video/placeholders/9_sztudio_network_inspector_placeholder.webp",
   },
 ];
 
