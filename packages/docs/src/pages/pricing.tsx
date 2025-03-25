@@ -1,6 +1,5 @@
 import React from "react";
 import Layout from "@theme/Layout";
-import FooterBackground from "../components/FooterBackground";
 
 import styles from "./pricing.module.css";
 import PricingScreen from "../components/Pricing";
@@ -13,7 +12,6 @@ export default function Pricing(): JSX.Element {
           <PricingScreen />
         </div>
       </div>
-      <FooterBackground />
     </Layout>
   );
 }
