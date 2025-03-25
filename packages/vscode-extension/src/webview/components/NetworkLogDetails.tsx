@@ -188,7 +188,7 @@ const NetworkLogDetails = ({
   return (
     <ResizableContainer
       showDragable={false}
-      containerWidth={containerWidth}
+      containerSize={containerWidth}
       setContainerWidth={(width) => {
         setContainerWidth(width);
       }}

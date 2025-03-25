@@ -1,26 +1,28 @@
 .resizable-container {
   display: flex;
   position: relative;
-  height: 100%;
-  width: 100%;
+}
+
+.resizable-container:not(.bottom) {
+  flex-direction: row;
+}
+
+.resizable-container .bottom {
+  flex-direction: column;
+}
+
+.resizable-container:is(.right, .column) {
+  justify-content: flex-start;
+}
+
+.resizable-container:is(.left, .bottom) {
+  justify-content: flex-end;
 }
 
 .resizable-container .content {
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 100%;
-}
-
-.resize-handle {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background-color: transparent;
-  cursor: col-resize;
-  z-index: 20;
 }
 
 .content {
@@ -31,14 +33,46 @@
 }
 
 .draggable {
-  width: 1px;
-  height: 100%;
   position: absolute;
+  z-index: 10;
+  background-color: var(--vscode-input-border);
+}
+
+.draggable:is(.bottom) {
+  cursor: row-resize;
+  top: 100%;
+  height: 10px;
+  width: 100%;
+}
+
+.draggable:not(.bottom) {
+  cursor: col-resize;
+  top: auto;
+  height: 100%;
+  width: 1px;
   top: 0;
   bottom: 0;
-  z-index: 10;
   transform: translateX(-8px);
-  background-color: var(--vscode-input-border);
+}
+
+.draggable:not(.bottom, .show) {
+  width: 10px;
+}
+
+.draggable .left {
+  right: 100%;
+}
+
+.draggable:not(.left) {
+  right: 0;
+}
+
+.draggable .show {
+  opacity: 1;
+}
+
+.draggable:not(.show) {
+  opacity: 0;
 }
 
 .draggable-bg {

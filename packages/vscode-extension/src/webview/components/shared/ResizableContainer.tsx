@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, ReactNode } from "react";
 import "./ResizableContainer.css";
 
 interface ResizableContainerProps {
-  containerWidth: number;
+  containerSize: number;
   setContainerWidth: (width: number) => void;
   children: ReactNode;
   isColumn?: boolean;
@@ -13,7 +13,7 @@ interface ResizableContainerProps {
 const MIN_WIDTH = 50;
 
 const ResizableContainer = ({
-  containerWidth,
+  containerSize: containerWidth,
   setContainerWidth,
   children,
   isColumn = false,
@@ -83,14 +83,10 @@ const ResizableContainer = ({
   return (
     <div
       ref={parentRef}
+      className={`resizable-container ${side} ${isColumn ? "column" : ""}`}
       style={{
-        position: "relative",
         width: side === "bottom" ? "100%" : `${containerWidth}px`,
         height: side === "bottom" ? `${containerWidth}px` : "auto",
-        display: "flex",
-        flexDirection: side === "bottom" ? "column" : "row",
-        justifyContent:
-          side === "right" || isColumn ? "flex-start" : side === "bottom" ? "flex-end" : "flex-end",
       }}>
       <div
         ref={containerRef}
@@ -99,16 +95,8 @@ const ResizableContainer = ({
           transition: isDragging ? "none" : "width 0.1s ease, height 0.1s ease",
         }}>
         <div
-          className="draggable"
+          className={`draggable ${side} ${isColumn ? "column" : ""} ${showDragable ? "show" : ""}`}
           onMouseDown={handleMouseDown}
-          style={{
-            cursor: side === "bottom" ? "row-resize" : "col-resize",
-            right: side === "right" || side === "bottom" || isColumn ? 0 : "100%",
-            top: side === "bottom" ? "100%" : "auto",
-            opacity: showDragable ? 1 : 0,
-            width: side === "bottom" ? "100%" : !showDragable ? 10 : 1,
-            height: side === "bottom" ? 5 : "100%",
-          }}
         />
         {isColumn && <div className="draggable-bg" />}
         <div className="content">{children}</div>

@@ -263,7 +263,7 @@ const NetworkRequestLog = ({
                   }}>
                   <ResizableContainer
                     side="right"
-                    containerWidth={columnWidths[title]}
+                    containerSize={columnWidths[title]}
                     setContainerWidth={(width) => handleResize(title, width)}
                     isColumn={true}>
                     <p className="table-paragraph">{title}</p>

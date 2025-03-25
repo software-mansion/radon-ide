@@ -281,11 +281,11 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
 
     containerRef.current.addEventListener("wheel", handleScroll, { passive: true });
     return () => containerRef.current?.removeEventListener("wheel", handleScroll);
-  }, [processedData, isClearing, scrollOffset]);
+  }, [processedData, isClearing, scrollOffset, chartHeight]);
 
   return (
     <ResizableContainer
-      containerWidth={chartHeight + 10}
+      containerSize={chartHeight + 10}
       setContainerWidth={setChartHeight}
       showDragable={false}
       side="bottom">
