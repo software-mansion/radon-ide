@@ -2,9 +2,9 @@ import assert from "assert";
 import path from "path";
 import { commands, debug, DebugConsoleMode, DebugSessionCustomEvent, Disposable } from "vscode";
 import * as vscode from "vscode";
-import { Metro } from "../project/metro";
 import { disposeAll } from "../utilities/disposables";
 import { sleep } from "../utilities/retry";
+import { startDebugging } from "./startDebugging";
 
 const PING_TIMEOUT = 1000;
 
@@ -34,44 +34,6 @@ export interface JSDebugConfiguration {
 }
 
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
-
-/**
- * Helpr function that starts a debug session and returns the session object upon sucesfull start
- */
-async function startDebugging(
-  folder: vscode.WorkspaceFolder | undefined,
-  nameOrConfiguration: string | vscode.DebugConfiguration,
-  parentSessionOrOptions?: vscode.DebugSession | vscode.DebugSessionOptions
-) {
-  const debugSessionType =
-    typeof nameOrConfiguration === "string" ? nameOrConfiguration : nameOrConfiguration.type;
-  let debugSession: vscode.DebugSession | undefined;
-  let didStartHandler: Disposable | null = debug.onDidStartDebugSession((session) => {
-    if (session.type === debugSessionType) {
-      didStartHandler?.dispose();
-      didStartHandler = null;
-      debugSession = session;
-    }
-  });
-  try {
-    const debugStarted = await debug.startDebugging(
-      folder,
-      nameOrConfiguration,
-      parentSessionOrOptions
-    );
-
-    if (debugStarted) {
-      // NOTE: this is safe, because `debugStarted` means the session started successfully,
-      // and we set the session in the `onDidStartDebugSession` handler
-      assert(debugSession, "Expected debug session to be set");
-      return debugSession;
-    } else {
-      throw new Error("Failed to start debug session");
-    }
-  } finally {
-    didStartHandler?.dispose();
-  }
-}
 
 export class DebugSession implements Disposable {
   private parentDebugSession: vscode.DebugSession | undefined;
