@@ -158,14 +158,14 @@ export class DeviceSession implements Disposable {
         }
       }
     }
-    return this.connectJSDebugger();
+    await this.connectJSDebugger();
   }
 
   private async reloadMetro() {
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
     await Promise.all([this.metro.reload(), this.devtools.appReady()]);
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
-    return this.reconnectJSDebuggerIfNeeded();
+    await this.reconnectJSDebuggerIfNeeded();
   }
 
   private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
