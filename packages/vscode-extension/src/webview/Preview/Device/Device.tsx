@@ -2,7 +2,7 @@ import { Resizable, ResizableProps } from "re-resizable";
 
 import DeviceFrame from "./DeviceFrame";
 
-import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/consts";
+import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/deviceContants";
 import { useDeviceFrame } from "./hooks";
 
 declare module "react" {

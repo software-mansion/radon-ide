@@ -11,7 +11,7 @@ import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
-import { mapIdToModel } from "../utilities/consts";
+import { mapIdToModel } from "../utilities/deviceContants";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
