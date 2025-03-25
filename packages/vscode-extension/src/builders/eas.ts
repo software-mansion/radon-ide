@@ -1,14 +1,21 @@
 import path from "path";
 import os from "os";
 import { mkdtemp } from "fs/promises";
-import maxBy from "lodash/maxBy";
 
+import assert from "assert";
+import { maxBy } from "lodash";
 import { DevicePlatform } from "../common/DeviceManager";
 import { EasConfig } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { CancelToken } from "./cancelToken";
 import { downloadBinary } from "../utilities/common";
-import { EASBuild, isEasCliInstalled, listEasBuilds, viewEasBuild } from "./easCommand";
+import {
+  EASBuild,
+  isEasCliInstalled,
+  listEasBuilds,
+  viewEasBuild,
+  generateFingerprint,
+} from "./easCommand";
 import { extractTarApp } from "./utils";
 
 export async function fetchEasBuild(
@@ -55,7 +62,13 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: 
     return build;
   }
 
-  const builds = await listEasBuilds(platform, config.profile, appRoot);
+  const localFingerprint = await generateFingerprint(platform, appRoot);
+
+  const builds = await listEasBuilds(
+    platform,
+    { profile: config.profile, fingerprintHash: localFingerprint.hash },
+    appRoot
+  );
   if (!builds || builds.length === 0) {
     Logger.error(
       `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile. If you're building iOS app, make sure you set '"ios.simulator": true' option in eas.json.`
@@ -69,7 +82,8 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: 
     return undefined;
   }
 
-  const build = maxBy(builds, "completedAt")!;
+  const build = maxBy(builds, "completedAt");
+  assert(build !== undefined, "builds array is non-empty, so there must be a newest build");
 
   if (
     platform === DevicePlatform.Android &&

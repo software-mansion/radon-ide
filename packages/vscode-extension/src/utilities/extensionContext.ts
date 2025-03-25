@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import { commands, ExtensionContext, Uri, workspace, window } from "vscode";
 import { Logger } from "../Logger";
 import { getLaunchConfiguration } from "./launchConfiguration";
@@ -63,7 +64,7 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
   }
 
   const searchDirectories: SearchItem[] = workspaceFolders.map((workspaceFolder) => {
-    return { path: workspaceFolder.uri.path, searchDepth: 0 };
+    return { path: workspaceFolder.uri.fsPath, searchDepth: 0 };
   });
 
   const candidates = searchForFilesDirectory(
@@ -118,7 +119,7 @@ function searchForFilesDirectory(
       })
       .forEach((dir) => {
         searchQueue.push({
-          path: currentDir.path + "/" + dir.name,
+          path: path.join(currentDir.path, dir.name),
           searchDepth: currentDir.searchDepth + 1,
         });
       });

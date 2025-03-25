@@ -58,12 +58,10 @@ export class ProxyDebugAdapter extends DebugSession {
       sourceMapAliases
     );
 
-    const cdpProxyPort = Math.round(Math.random() * 40000 + 3000);
     const proxyDelegate = new RadonCDPProxyDelegate(this.sourceMapRegistry);
 
     this.cdpProxy = new CDPProxy(
       "127.0.0.1",
-      cdpProxyPort,
       this.session.configuration.websocketAddress,
       proxyDelegate
     );
@@ -71,11 +69,25 @@ export class ProxyDebugAdapter extends DebugSession {
     this.disposables.push(
       proxyDelegate.onDebuggerPaused(({ reason }) => {
         this.sendEvent(new Event(DEBUG_PAUSED, { reason }));
+        if (this.session.configuration.displayDebuggerOverlay) {
+          this.cdpProxy.injectDebuggerCommand({
+            method: "Overlay.setPausedInDebuggerMessage",
+            params: {
+              message: "Paused in debugger",
+            },
+          });
+        }
       })
     );
     this.disposables.push(
       proxyDelegate.onDebuggerResumed(() => {
         this.sendEvent(new Event(DEBUG_RESUMED));
+        if (this.session.configuration.displayDebuggerOverlay) {
+          this.cdpProxy.injectDebuggerCommand({
+            method: "Overlay.setPausedInDebuggerMessage",
+            params: {},
+          });
+        }
       })
     );
     this.disposables.push(
@@ -153,7 +165,7 @@ export class ProxyDebugAdapter extends DebugSession {
           type: CHILD_SESSION_TYPE,
           name: "Radon IDE Debugger",
           request: "attach",
-          port: this.cdpProxy.port,
+          port: this.cdpProxy.port!,
           continueOnAttach: true,
           sourceMapPathOverrides: args.sourceMapPathOverrides,
           resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],

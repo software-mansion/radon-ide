@@ -61,22 +61,28 @@ export async function isEasCliInstalled(appRoot: string) {
   }
 }
 
-export async function listEasBuilds(platform: DevicePlatform, profile: string, appRoot: string) {
+type ListEasBuildsOptions = { profile: string; fingerprintHash: string };
+
+export async function listEasBuilds(
+  platform: DevicePlatform,
+  { profile, fingerprintHash }: ListEasBuildsOptions,
+  appRoot: string
+) {
   const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
 
-  const { stdout } = await exec(
-    "eas",
-    [
-      "build:list",
-      "--non-interactive",
-      "--json",
-      "--platform",
-      platformMapping[platform],
-      "--profile",
-      profile,
-    ],
-    { cwd: appRoot }
-  );
+  const commandArgs = [
+    "build:list",
+    "--non-interactive",
+    "--json",
+    "--platform",
+    platformMapping[platform],
+    "--profile",
+    profile,
+    "--fingerprint-hash",
+    fingerprintHash,
+  ];
+
+  const { stdout } = await exec("eas", commandArgs, { cwd: appRoot });
   return parseEasBuildOutput(stdout, platform);
 }
 
@@ -112,4 +118,38 @@ function parseEasBuildOutput(stdout: string, platform: DevicePlatform): EASBuild
         expired: Date.parse(expirationDate) < Date.now(),
       };
     });
+}
+
+export interface FingerprintDetails {
+  hash: string;
+}
+
+function isFingerprintDetails(fingerprint: unknown): fingerprint is FingerprintDetails {
+  return (
+    !!fingerprint &&
+    typeof fingerprint === "object" &&
+    "hash" in fingerprint &&
+    typeof fingerprint.hash === "string"
+  );
+}
+
+export async function generateFingerprint(
+  platform: DevicePlatform,
+  appRoot: string
+): Promise<FingerprintDetails> {
+  const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
+  const { stdout } = await exec(
+    "eas",
+    ["fingerprint:generate", "--json", "--non-interactive", "-p", platformMapping[platform]],
+    { cwd: appRoot }
+  );
+  try {
+    const result = JSON.parse(stdout);
+    if (!isFingerprintDetails(result)) {
+      throw new Error();
+    }
+    return result;
+  } catch {
+    throw new Error("Failed to generate build fingerprint: the output of eas-cli is malformed");
+  }
 }
