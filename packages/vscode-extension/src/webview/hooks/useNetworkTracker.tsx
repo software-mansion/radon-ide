@@ -60,6 +60,7 @@ export interface WebSocketMessage {
     wallTime: number;
     type?: string;
     initiator?: NetworkRequestInitiator;
+    duration?: number;
   };
 }
 
@@ -100,10 +101,6 @@ const useNetworkTracker = (): NetworkTracker => {
 
       if (existingIndex !== -1) {
         const existingLog = newLogs[existingIndex];
-        const startTime = existingLog.timeline.timestamp;
-        const endTime = params.timestamp;
-        const durationMs =
-          startTime && endTime ? Math.round((endTime - startTime) * 1000) : undefined;
 
         newLogs[existingIndex] = {
           ...existingLog,
@@ -112,9 +109,10 @@ const useNetworkTracker = (): NetworkTracker => {
           response: params.response || existingLog.response,
           initiator: params.initiator || existingLog.initiator,
           timeline: {
+            ...existingLog.timeline,
             timestamp: params.timestamp,
             wallTime: params.wallTime,
-            durationMs: durationMs || existingLog.timeline.durationMs,
+            durationMs: params.duration || existingLog.timeline.durationMs,
             ttfb: params.ttfb || existingLog.timeline.ttfb,
           },
           type: params?.type || existingLog?.type,
@@ -132,7 +130,7 @@ const useNetworkTracker = (): NetworkTracker => {
           timeline: {
             timestamp: params.timestamp,
             wallTime: params.wallTime,
-            durationMs: undefined,
+            durationMs: params.duration,
             ttfb: params.ttfb,
           },
         });
