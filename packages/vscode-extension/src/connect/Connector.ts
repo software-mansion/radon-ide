@@ -24,8 +24,8 @@ export class Connector implements Disposable {
   private statusBarItem: StatusBarItem;
   private debugSession: DebugSession | null = null;
   private metro: Metro | null = null;
+  private scanner: Scanner | null = null;
 
-  private portsStatus: Record<number, string> = {};
   private disposables: Disposable[] = [];
 
   private constructor() {
@@ -56,31 +56,7 @@ export class Connector implements Disposable {
     this.debugSession = null;
   }
 
-  private scanPortsPeriodically() {
-    const enabled =
-      this === Connector.instance &&
-      extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
-    if (!enabled || this.debugSession) {
-      return;
-    }
-    Promise.all(DEFAULT_PORTS.map(this.scanPort.bind(this)))
-      .then(() => sleep(PORT_SCAN_INTERVAL_MS))
-      .then(this.scanPortsPeriodically.bind(this))
-      .then(this.updateStatusBarItem.bind(this));
-  }
-
-  private async tryConnectMetroAndJSDebugger(port: number, projectRoot: string) {
-    const metro = new Metro(port, [projectRoot]);
-    const websocketAddress = await metro.getDebuggerURL();
-    if (!websocketAddress) {
-      this.portsStatus[port] = "no connected device";
-      return false;
-    }
-    if (!metro.isUsingNewDebugger) {
-      this.portsStatus[port] = "using old debugger";
-      return false;
-    }
-
+  private async tryConnectMetroAndJSDebugger(metro: Metro, websocketAddress: string) {
     const debugSession = new DebugSession({
       onDebugSessionTerminated: () => {
         this.metro = null;
@@ -88,52 +64,52 @@ export class Connector implements Disposable {
         this.updateStatusBarItem();
       },
     });
-    const success = await debugSession.startJSDebugSession(metro, {
+    const success = await debugSession.startJSDebugSession({
       websocketAddress,
       displayDebuggerOverlay: true,
+      isUsingNewDebugger: true,
+      expoPreludeLineCount: 0,
+      watchFolders: [],
     });
     if (success) {
       this.metro = metro;
       this.debugSession = debugSession;
+      this.stopScanner();
     } else {
-      this.portsStatus[port] = "unable to connect";
       debugSession.dispose();
     }
   }
 
-  private async scanPort(port: number) {
-    try {
-      const response = await fetch(`http://localhost:${port}/status`);
-      if (response.ok) {
-        // we expect metro to include a response header X-React-Native-Project-Root
-        // that points to the project root folder
-        const projectRoot = response.headers.get("X-React-Native-Project-Root");
-        if (projectRoot && isInWorkspace(projectRoot)) {
-          await this.tryConnectMetroAndJSDebugger(port, projectRoot);
-        } else if (projectRoot) {
-          this.portsStatus[port] = "running for a different workspace";
-        } else {
-          this.portsStatus[port] = "not recognized as metro process";
-        }
-      } else {
-        this.portsStatus[port] = "not running";
-      }
-    } catch (error) {
-      this.portsStatus[port] = "not running";
-    } finally {
-      this.updateStatusBarItem();
+  private startScanner() {
+    if (!this.scanner) {
+      this.scanner = new Scanner({
+        onPortStatusUpdated: () => this.updateStatusBarItem(),
+        onDeviceCandidateFound: async (metro, websocketAddress) => {
+          await this.tryConnectMetroAndJSDebugger(metro, websocketAddress);
+        },
+      });
+      this.scanner.start();
     }
+  }
+
+  private stopScanner() {
+    this.scanner?.dispose();
+    this.scanner = null;
+    this.updateStatusBarItem();
   }
 
   public start() {
     this.updateStatusBarItem();
     this.statusBarItem.show();
     commands.executeCommand("setContext", "RNIDE.showsStatusBarItem", true);
-    this.scanPortsPeriodically();
+    const enabled = extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
+    if (enabled) {
+      this.startScanner();
+    }
   }
 
   private printPortStatus(port: number) {
-    const status = this.portsStatus[port];
+    const status = this.scanner?.portsStatus[port];
     if (status) {
       return ` - ${port}: ${status}`;
     } else {
@@ -183,7 +159,7 @@ export class Connector implements Disposable {
 
 type ScannerDelegate = {
   onPortStatusUpdated: () => void;
-  onDeviceCandidateFound: (port: number, projectRoot: string, websocketAddress: string) => void;
+  onDeviceCandidateFound: (metro: Metro, websocketAddress: string) => Promise<void>;
 };
 
 class Scanner implements Disposable {
@@ -214,7 +190,7 @@ class Scanner implements Disposable {
       .then(this.delegate?.onPortStatusUpdated);
   }
 
-  private async tryConnectMetroAndJSDebugger(port: number, projectRoot: string) {
+  private async verifyAndConnect(port: number, projectRoot: string) {
     const metro = new Metro(port, [projectRoot]);
     const websocketAddress = await metro.getDebuggerURL();
     if (!websocketAddress) {
@@ -226,24 +202,8 @@ class Scanner implements Disposable {
       return false;
     }
 
-    const debugSession = new DebugSession({
-      onDebugSessionTerminated: () => {
-        this.metro = null;
-        this.debugSession = null;
-        this.updateStatusBarItem();
-      },
-    });
-    const success = await debugSession.startJSDebugSession(metro, {
-      websocketAddress,
-      displayDebuggerOverlay: true,
-    });
-    if (success) {
-      this.metro = metro;
-      this.debugSession = debugSession;
-    } else {
-      this.portsStatus[port] = "unable to connect";
-      debugSession.dispose();
-    }
+    this.portsStatus[port] = "connecting...";
+    await this.delegate?.onDeviceCandidateFound(metro, websocketAddress);
   }
 
   private async scanPort(port: number) {
@@ -254,7 +214,7 @@ class Scanner implements Disposable {
         // that points to the project root folder
         const projectRoot = response.headers.get("X-React-Native-Project-Root");
         if (projectRoot && isInWorkspace(projectRoot)) {
-          await this.tryConnectMetroAndJSDebugger(port, projectRoot);
+          await this.verifyAndConnect(port, projectRoot);
         } else if (projectRoot) {
           this.portsStatus[port] = "running for a different workspace";
         } else {
@@ -266,7 +226,7 @@ class Scanner implements Disposable {
     } catch (error) {
       this.portsStatus[port] = "not running";
     } finally {
-      this.updateStatusBarItem();
+      this.delegate?.onPortStatusUpdated();
     }
   }
 }
