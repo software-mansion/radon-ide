@@ -120,20 +120,6 @@ export class DebugSession implements Disposable {
     return this.currentWsTarget;
   }
 
-  public async reconnectJSDebuggerIfNeeded(configuration: JSDebugConfiguration) {
-    if (configuration.websocketAddress === this.currentWsTarget) {
-      // if the websocket address is the same, it means that the old endpoint is still listed
-      // however, the record might be stale as Metro often lists endpoints for some time after
-      // they've been terminated. We need to check if the endpoint is responding before we decide
-      // whether we need to reconnect.
-    }
-    const isAlive = await this.isJsDebugSessionAlive(metro);
-    if (!isAlive) {
-      return this.startJSDebugSession(metro);
-    }
-    return true;
-  }
-
   public async startParentDebugSession() {
     assert(
       !this.jsDebugSession,

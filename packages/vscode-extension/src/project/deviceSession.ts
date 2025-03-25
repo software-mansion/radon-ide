@@ -370,7 +370,7 @@ export class DeviceSession implements Disposable {
       await this.device.sendDeepLink(link, this.maybeBuildResult, terminateApp);
 
       if (terminateApp) {
-        this.debugSession?.reconnectJSDebuggerIfNeeded(this.metro);
+        this.reconnectJSDebuggerIfNeeded();
       }
     }
   }
