@@ -60,6 +60,13 @@ const items = [
     mediaSrc: "video/ide_screen_recording.mp4",
     placeholderSrc: "video/placeholders/ide_screen_recording_placeholder.webp",
   },
+  {
+    label: "React Scan integration",
+    title: "Outline renders",
+    body: "Radon IDE highlights components that re-render too frequently.\n\nSee for yourself what parts of your application need optimization.",
+    mediaSrc: "video/8_sztudio_outline_renders.mp4",
+    placeholderSrc: "video/placeholders/8_sztudio_outline_renders_placeholder.webp",
+  },
 ];
 
 const Overview = () => {
