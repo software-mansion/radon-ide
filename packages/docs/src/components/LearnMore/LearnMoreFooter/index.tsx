@@ -50,7 +50,8 @@ const LearnMoreFooter = () => {
         </h2>
       </div>
       <HomepageButton
-        href="/pricing"
+        target="_blank"
+        href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
         backgroundStyling={ButtonStyling.TO_WHITE}
         borderStyling={BorderStyling.NAVY}
         title="Try Radon IDE for Free"
