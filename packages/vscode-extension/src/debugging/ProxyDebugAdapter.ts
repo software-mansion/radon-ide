@@ -3,7 +3,7 @@ import assert from "assert";
 import { DebugSession, ErrorDestination, Event } from "@vscode/debugadapter";
 import * as vscode from "vscode";
 import { DebugProtocol } from "@vscode/debugprotocol";
-import { debug, Disposable } from "vscode";
+import { Disposable } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
@@ -11,7 +11,7 @@ import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
 import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
-import { Logger } from "../Logger";
+import { startDebugging } from "./startDebugging";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -148,67 +148,48 @@ export class ProxyDebugAdapter extends DebugSession {
   ) {
     await this.cdpProxy.initializeServer();
 
-    let didStartSessionHandler: Disposable | null = vscode.debug.onDidStartDebugSession(
-      (session) => {
-        if (session.type === CHILD_SESSION_TYPE) {
-          this.nodeDebugSession = session;
-          didStartSessionHandler?.dispose();
-          didStartSessionHandler = null;
-        }
+    const debugSession = await startDebugging(
+      undefined,
+      {
+        type: CHILD_SESSION_TYPE,
+        name: "Radon IDE Debugger",
+        request: "attach",
+        port: this.cdpProxy.port!,
+        continueOnAttach: true,
+        sourceMapPathOverrides: args.sourceMapPathOverrides,
+        resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
+        skipFiles: [
+          "**/extension/lib/**/*.js",
+          "**/vscode-extension/lib/**/*.js",
+          "**/ReactFabric-dev.js",
+          "**/ReactNativeRenderer-dev.js",
+          "**/node_modules/**/*",
+          "!**/node_modules/expo-router/**/*",
+        ],
+      },
+      {
+        suppressDebugStatusbar: true,
+        suppressDebugView: true,
+        suppressDebugToolbar: true,
+        suppressSaveBeforeStart: true,
+        parentSession: this.session,
+        consoleMode: vscode.DebugConsoleMode.MergeWithParent,
+        lifecycleManagedByParent: true,
+        compact: true,
       }
     );
 
-    try {
-      const childSessionStarted = await debug.startDebugging(
+    if (!debugSession) {
+      this.sendErrorResponse(
+        response,
+        { format: "Failed to attach debugger session", id: 1 },
         undefined,
-        {
-          type: CHILD_SESSION_TYPE,
-          name: "Radon IDE Debugger",
-          request: "attach",
-          port: this.cdpProxy.port!,
-          continueOnAttach: true,
-          sourceMapPathOverrides: args.sourceMapPathOverrides,
-          resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
-          skipFiles: [
-            "**/extension/lib/**/*.js",
-            "**/vscode-extension/lib/**/*.js",
-            "**/ReactFabric-dev.js",
-            "**/ReactNativeRenderer-dev.js",
-            "**/node_modules/**/*",
-            "!**/node_modules/expo-router/**/*",
-          ],
-        },
-        {
-          suppressDebugStatusbar: true,
-          suppressDebugView: true,
-          suppressDebugToolbar: true,
-          suppressSaveBeforeStart: true,
-          parentSession: this.session,
-          consoleMode: vscode.DebugConsoleMode.MergeWithParent,
-          lifecycleManagedByParent: true,
-          compact: true,
-        }
+        undefined,
+        ErrorDestination.User
       );
-
-      if (!childSessionStarted) {
-        this.sendErrorResponse(
-          response,
-          { format: "Failed to attach debugger session", id: 1 },
-          undefined,
-          undefined,
-          ErrorDestination.User
-        );
-        return;
-      }
-
-      if (this.nodeDebugSession === null) {
-        Logger.warn(
-          "The JS debug session started, but it wasn't registered correctly. The debugger may not work correctly."
-        );
-      }
+    } else {
+      this.nodeDebugSession = debugSession;
       this.sendResponse(response);
-    } finally {
-      didStartSessionHandler?.dispose();
     }
   }
 

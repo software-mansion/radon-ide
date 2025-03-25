@@ -81,7 +81,7 @@ type MetroEvent =
 export class Metro {
   protected _port = 0;
   protected _watchFolders: string[] | undefined = undefined;
-  protected usesNewDebugger?: Boolean;
+  protected usesNewDebugger?: boolean;
   protected _expoPreludeLineCount = 0;
 
   constructor(port: number, watchFolders: string[] | undefined = undefined) {

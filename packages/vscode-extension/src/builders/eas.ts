@@ -4,6 +4,7 @@ import { mkdtemp } from "fs/promises";
 
 import assert from "assert";
 import { maxBy } from "lodash";
+import { OutputChannel } from "vscode";
 import { DevicePlatform } from "../common/DeviceManager";
 import { EasConfig } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
@@ -22,8 +23,9 @@ export async function fetchEasBuild(
   cancelToken: CancelToken,
   config: EasConfig,
   platform: DevicePlatform,
-  appRoot: string
-): Promise<string | undefined> {
+  appRoot: string,
+  outputChannel: OutputChannel
+): Promise<string> {
   if (!(await isEasCliInstalled(appRoot))) {
     throw new Error(
       "Failed to build iOS app using EAS build. Check if eas-cli is installed and available in PATH."
@@ -31,31 +33,27 @@ export async function fetchEasBuild(
   }
 
   const build = await fetchBuild(config, platform, appRoot);
-  if (!build) {
-    return undefined;
-  }
 
   let easBinaryPath = await downloadAppFromEas(build, platform, cancelToken);
-  if (!easBinaryPath) {
-    return undefined;
-  }
 
   Logger.debug(`Using built app from EAS: '${easBinaryPath}'`);
   return easBinaryPath;
 }
 
-async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: string) {
+async function fetchBuild(
+  config: EasConfig,
+  platform: DevicePlatform,
+  appRoot: string
+): Promise<EASBuild> {
   if (config.buildUUID) {
     const build = await viewEasBuild(config.buildUUID, platform, appRoot);
     if (!build) {
-      Logger.error(
+      throw new Error(
         `Failed to find EAS build artifact with ID ${config.buildUUID} for platform ${platform}.`
       );
-      return undefined;
     }
     if (build.expired) {
-      Logger.error(`EAS build artifact with ID ${config.buildUUID} has expired.`);
-      return undefined;
+      throw new Error(`EAS build artifact with ID ${config.buildUUID} has expired.`);
     }
 
     Logger.debug(`Using EAS build artifact with ID ${build.id}.`);
@@ -70,16 +68,14 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: 
     appRoot
   );
   if (!builds || builds.length === 0) {
-    Logger.error(
+    throw new Error(
       `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile. If you're building iOS app, make sure you set '"ios.simulator": true' option in eas.json.`
     );
-    return undefined;
   }
   if (builds.every((build) => build.expired)) {
-    Logger.error(
+    throw new Error(
       `All EAS build artifacts for ${platform} with ${config.profile} profile have expired.`
     );
-    return undefined;
   }
 
   const build = maxBy(builds, "completedAt");
@@ -90,10 +86,9 @@ async function fetchBuild(config: EasConfig, platform: DevicePlatform, appRoot: 
     !build.binaryUrl.endsWith(".apk") &&
     !build.binaryUrl.endsWith(".apex")
   ) {
-    Logger.error(
+    throw new Error(
       `EAS build artifact needs to be a development build in .apk or .apex format to work with the Radon IDE, make sure you set up eas to use "development" profile`
     );
-    return undefined;
   }
 
   Logger.debug(`Using EAS build artifact with ID ${build.id}.`);
@@ -104,7 +99,7 @@ async function downloadAppFromEas(
   build: EASBuild,
   platform: DevicePlatform,
   cancelToken: CancelToken
-) {
+): Promise<string> {
   const { id, binaryUrl } = build;
 
   const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-eas-build-"));
@@ -115,8 +110,7 @@ async function downloadAppFromEas(
 
   const success = await downloadBinary(binaryUrl, binaryPath);
   if (!success) {
-    Logger.error(`Failed to download archive from '${binaryUrl}'.`);
-    return undefined;
+    throw new Error(`Failed to download archive from '${binaryUrl}'.`);
   }
   // on iOS we need to extract the .tar.gz archive to get the .app file
   const shouldExtractArchive = platform === DevicePlatform.IOS;
@@ -124,5 +118,9 @@ async function downloadAppFromEas(
     return binaryPath;
   }
 
-  return await extractTarApp(binaryPath, tmpDirectory, DevicePlatform.IOS);
+  const extracted = await extractTarApp(binaryPath, tmpDirectory, DevicePlatform.IOS);
+  if (!extracted) {
+    throw new Error("Failed to extract the downloaded application");
+  }
+  return extracted;
 }

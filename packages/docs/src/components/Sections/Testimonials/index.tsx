@@ -44,7 +44,7 @@ const data: Testimonial[] = [
     handle: "@alecdhansen",
     body: "Congrats SM team. I find <b>Radon especially useful for hopping in an unfamiliar codebase</b>. Tap a component, get taken right to the code. Saves a ton of time!",
     avatar:
-      "https://media.licdn.com/dms/image/v2/D4E03AQFy_VU4VjIe8A/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1712089763617?e=1738800000&v=beta&t=-IoLPOBHvxwQirMTBeKpkwNGNSRZBiYg1Z8Z2FMSANA",
+      "https://media.licdn.com/dms/image/v2/D4E03AQFy_VU4VjIe8A/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1712089763617?e=1748476800&v=beta&t=THPirBXmlHRLF0W4MxvCUkNTtYU5ay2zhfs9TtbeJKI",
   },
   {
     type: "producthunt",
@@ -78,7 +78,7 @@ const data: Testimonial[] = [
     author: "felippe",
     handle: "@felippewick",
     body: "<b>Amazing DX</b> 🙌",
-    avatar: "https://pbs.twimg.com/profile_images/1859710852053557248/U_nrTBAh_400x400.jpg",
+    avatar: "https://pbs.twimg.com/profile_images/1889709082241597440/tVDwrG3C_400x400.jpg",
   },
   {
     type: "producthunt",
