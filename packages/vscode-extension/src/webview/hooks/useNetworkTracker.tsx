@@ -87,6 +87,61 @@ const useNetworkTracker = (): NetworkTracker => {
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [serverMessages, setServerMessages] = useState<string[]>([]);
 
+  const processServerMessage = (msg: string, newLogs: NetworkLog[]): void => {
+    try {
+      const parsedMsg: WebSocketMessage = JSON.parse(msg);
+      const { method, params } = parsedMsg;
+
+      if (!params?.requestId) {
+        return;
+      }
+
+      const existingIndex = newLogs.findIndex((log) => log.requestId === params.requestId);
+
+      if (existingIndex !== -1) {
+        const existingLog = newLogs[existingIndex];
+        const startTime = existingLog.timeline.timestamp;
+        const endTime = params.timestamp;
+        const durationMs =
+          startTime && endTime ? Math.round((endTime - startTime) * 1000) : undefined;
+
+        newLogs[existingIndex] = {
+          ...existingLog,
+          currentState: method,
+          request: params.request || existingLog.request,
+          response: params.response || existingLog.response,
+          initiator: params.initiator || existingLog.initiator,
+          timeline: {
+            timestamp: params.timestamp,
+            wallTime: params.wallTime,
+            durationMs: durationMs || existingLog.timeline.durationMs,
+            ttfb: params.ttfb || existingLog.timeline.ttfb,
+          },
+          type: params?.type || existingLog?.type,
+          encodedDataLength: params.encodedDataLength || existingLog.encodedDataLength,
+        };
+      } else {
+        newLogs.push({
+          currentState: method,
+          requestId: params.requestId,
+          request: params.request,
+          response: params.response,
+          encodedDataLength: params.encodedDataLength,
+          type: params?.type,
+          initiator: params.initiator,
+          timeline: {
+            timestamp: params.timestamp,
+            wallTime: params.wallTime,
+            durationMs: undefined,
+            ttfb: params.ttfb,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error parsing WebSocket message:", error);
+    }
+  };
+
   useEffect(() => {
     const ws = new WebSocket(`ws://${window.__websocketEndpoint}`);
     wsRef.current = ws;
@@ -107,62 +162,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
     setNetworkLogs((prevLogs) => {
       const newLogs = [...prevLogs];
-
-      serverMessages.forEach((msg) => {
-        try {
-          const parsedMsg: WebSocketMessage = JSON.parse(msg);
-          const { method, params } = parsedMsg;
-
-          if (!params?.requestId) {
-            return;
-          }
-
-          const existingIndex = newLogs.findIndex((log) => log.requestId === params.requestId);
-
-          if (existingIndex !== -1) {
-            const existingLog = newLogs[existingIndex];
-            const startTime = existingLog.timeline.timestamp;
-            const endTime = params.timestamp;
-            const durationMs =
-              startTime && endTime ? Math.round((endTime - startTime) * 1000) : undefined;
-
-            newLogs[existingIndex] = {
-              ...existingLog,
-              currentState: method,
-              request: params.request || existingLog.request,
-              response: params.response || existingLog.response,
-              initiator: params.initiator || existingLog.initiator,
-              timeline: {
-                timestamp: params.timestamp,
-                wallTime: params.wallTime,
-                durationMs: durationMs || existingLog.timeline.durationMs,
-                ttfb: params.ttfb || existingLog.timeline.ttfb,
-              },
-              type: params?.type || existingLog?.type,
-              encodedDataLength: params.encodedDataLength || existingLog.encodedDataLength,
-            };
-          } else {
-            newLogs.push({
-              currentState: method,
-              requestId: params.requestId,
-              request: params.request,
-              response: params.response,
-              encodedDataLength: params.encodedDataLength,
-              type: params?.type,
-              initiator: params.initiator,
-              timeline: {
-                timestamp: params.timestamp,
-                wallTime: params.wallTime,
-                durationMs: undefined,
-                ttfb: params.ttfb,
-              },
-            });
-          }
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-        }
-      });
-
+      serverMessages.map((msg) => processServerMessage(msg, newLogs));
       return newLogs;
     });
   }, [serverMessages]);
