@@ -35,7 +35,7 @@ async function getPackageJsonHashes(): Promise<string[]> {
   return resolvedHashes;
 }
 
-function compareArrays(a: unknown[], b: unknown[]) {
+export function compareUnorderedArrays(a: unknown[], b: unknown[]): boolean {
   if (a.length !== b.length) {
     return false;
   }
@@ -49,7 +49,7 @@ async function getReactNativePackages(): Promise<Package[]> {
   if (packageJsonHashes) {
     // check if hash is the same
     const newPackageJsonHash = await getPackageJsonHashes();
-    if (compareArrays(newPackageJsonHash, packageJsonHashes)) {
+    if (compareUnorderedArrays(newPackageJsonHash, packageJsonHashes)) {
       return packages;
     }
 
