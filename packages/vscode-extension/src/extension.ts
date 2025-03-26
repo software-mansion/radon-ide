@@ -34,7 +34,7 @@ import { registerChat } from "./chat";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
-const CHAT_OPENED = "chat_opened";
+const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
 function handleUncaughtErrors() {
   process.on("unhandledRejection", (error) => {
@@ -340,9 +340,9 @@ async function captureScreenshot() {
 async function openChat() {
   let prompt = undefined;
 
-  if (!extensionContext.globalState.get(CHAT_OPENED)) {
+  if (!extensionContext.globalState.get(CHAT_ONBOARDING_COMPLETED)) {
     prompt = "@radon what is Radon IDE?";
-    extensionContext.globalState.update(CHAT_OPENED, true);
+    extensionContext.globalState.update(CHAT_ONBOARDING_COMPLETED, true);
   }
 
   commands.executeCommand("workbench.action.chat.open", prompt);
