@@ -3,7 +3,7 @@ import assert from "assert";
 import { DebugSession, ErrorDestination, Event } from "@vscode/debugadapter";
 import * as vscode from "vscode";
 import { DebugProtocol } from "@vscode/debugprotocol";
-import { debug, Disposable } from "vscode";
+import { Disposable } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
@@ -11,6 +11,7 @@ import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
 import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
+import { startDebugging } from "./startDebugging";
 import { Logger } from "../Logger";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
@@ -58,12 +59,10 @@ export class ProxyDebugAdapter extends DebugSession {
       sourceMapAliases
     );
 
-    const cdpProxyPort = Math.round(Math.random() * 40000 + 3000);
     const proxyDelegate = new RadonCDPProxyDelegate(this.sourceMapRegistry);
 
     this.cdpProxy = new CDPProxy(
       "127.0.0.1",
-      cdpProxyPort,
       this.session.configuration.websocketAddress,
       proxyDelegate
     );
@@ -71,11 +70,25 @@ export class ProxyDebugAdapter extends DebugSession {
     this.disposables.push(
       proxyDelegate.onDebuggerPaused(({ reason }) => {
         this.sendEvent(new Event(DEBUG_PAUSED, { reason }));
+        if (this.session.configuration.displayDebuggerOverlay) {
+          this.cdpProxy.injectDebuggerCommand({
+            method: "Overlay.setPausedInDebuggerMessage",
+            params: {
+              message: "Paused in debugger",
+            },
+          });
+        }
       })
     );
     this.disposables.push(
       proxyDelegate.onDebuggerResumed(() => {
         this.sendEvent(new Event(DEBUG_RESUMED));
+        if (this.session.configuration.displayDebuggerOverlay) {
+          this.cdpProxy.injectDebuggerCommand({
+            method: "Overlay.setPausedInDebuggerMessage",
+            params: {},
+          });
+        }
       })
     );
     this.disposables.push(
@@ -136,24 +149,14 @@ export class ProxyDebugAdapter extends DebugSession {
   ) {
     await this.cdpProxy.initializeServer();
 
-    let didStartSessionHandler: Disposable | null = vscode.debug.onDidStartDebugSession(
-      (session) => {
-        if (session.type === CHILD_SESSION_TYPE) {
-          this.nodeDebugSession = session;
-          didStartSessionHandler?.dispose();
-          didStartSessionHandler = null;
-        }
-      }
-    );
-
     try {
-      const childSessionStarted = await debug.startDebugging(
+      this.nodeDebugSession = await startDebugging(
         undefined,
         {
           type: CHILD_SESSION_TYPE,
           name: "Radon IDE Debugger",
           request: "attach",
-          port: this.cdpProxy.port,
+          port: this.cdpProxy.port!,
           continueOnAttach: true,
           sourceMapPathOverrides: args.sourceMapPathOverrides,
           resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
@@ -177,26 +180,16 @@ export class ProxyDebugAdapter extends DebugSession {
           compact: true,
         }
       );
-
-      if (!childSessionStarted) {
-        this.sendErrorResponse(
-          response,
-          { format: "Failed to attach debugger session", id: 1 },
-          undefined,
-          undefined,
-          ErrorDestination.User
-        );
-        return;
-      }
-
-      if (this.nodeDebugSession === null) {
-        Logger.warn(
-          "The JS debug session started, but it wasn't registered correctly. The debugger may not work correctly."
-        );
-      }
       this.sendResponse(response);
-    } finally {
-      didStartSessionHandler?.dispose();
+    } catch (e) {
+      Logger.error("Error starting proxy debug adapter child session", e);
+      this.sendErrorResponse(
+        response,
+        { format: "Failed to attach debugger session", id: 1 },
+        undefined,
+        undefined,
+        ErrorDestination.User
+      );
     }
   }
 
@@ -259,11 +252,12 @@ export class ProxyDebugAdapter extends DebugSession {
         },
       });
       if ("value" in result && result.value === "ping") {
-        this.sendEvent(new Event("RNIDE_pong"));
+        return true;
       }
     } catch (_) {
       /** debugSession is waiting for an event, if it won't get any it will fail after timeout, so we don't need to do anything here */
     }
+    return false;
   }
 
   private async startProfiling() {
@@ -291,6 +285,7 @@ export class ProxyDebugAdapter extends DebugSession {
     args: any,
     request?: DebugProtocol.Request | undefined
   ) {
+    response.body = response.body || {};
     switch (command) {
       case "RNIDE_startProfiling":
         await this.startProfiling();
@@ -299,7 +294,7 @@ export class ProxyDebugAdapter extends DebugSession {
         await this.stopProfiling();
         break;
       case "RNIDE_ping":
-        this.ping();
+        response.body.result = await this.ping();
         break;
     }
     this.sendResponse(response);

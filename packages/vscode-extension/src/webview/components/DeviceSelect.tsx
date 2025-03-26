@@ -137,7 +137,10 @@ function DeviceSelect() {
       </Select.Trigger>
 
       <Select.Portal>
-        <Select.Content className="device-select-content" position="popper">
+        <Select.Content
+          className="device-select-content"
+          position="popper"
+          onCloseAutoFocus={(e) => e.preventDefault()}>
           <Select.ScrollUpButton className="device-select-scroll">
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>

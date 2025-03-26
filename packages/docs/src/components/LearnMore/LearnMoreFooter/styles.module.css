@@ -1,39 +1,76 @@
 .learnMoreSectionFooter {
+  background-color: var(--swm-green-light-60);
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: row;
+  gap: 4.5rem;
   position: relative;
+  overflow: hidden;
+  opacity: 0;
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.learnMoreSectionFooter.show {
+  animation-name: slideUpAndFade;
+  animation-fill-mode: forwards;
+}
+
+@keyframes slideUpAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.contentContainer {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2.75rem;
-  margin: 2.5rem 0;
+  gap: 0.5rem;
+  flex: 3;
+  z-index: 3;
 }
 
-.learnMoreSectionFooter > div {
+.contentContainer span {
+  font-size: 20px;
+  max-width: 650px;
+}
+
+.learnMoreSectionFooter a {
   display: flex;
   align-items: center;
-}
-
-.learnMoreSectionFooter p {
-  font-weight: 700;
-  font-size: 24px;
-  margin-bottom: 0;
-  text-wrap: balance;
-  text-align: center;
+  z-index: 3;
 }
 
 @media (max-width: 996px) {
   .learnMoreSectionFooter {
-    gap: 1rem;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 }
 
-@media (max-width: 768px) {
-  .learnMoreSectionFooter p {
-    text-align: left;
-  }
+.ellipse {
+  height: 250px;
+  width: 250px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #ffffff66 35%, #ffffff33 70%, #ffffff00 100%);
+  position: absolute;
+  z-index: 2;
 }
 
-@media (max-width: 430px) {
-  .learnMoreSectionFooter {
-    margin-top: 1.5rem;
-  }
+.ellipse:nth-of-type(1) {
+  top: -8rem;
+  left: -6rem;
+  rotate: 80deg;
+}
+
+.ellipse:nth-of-type(2) {
+  right: -8rem;
+  bottom: -10rem;
+  rotate: 180deg;
 }

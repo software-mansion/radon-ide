@@ -32,7 +32,7 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { extensionContext, getCurrentLaunchConfig } from "../utilities/extensionContext";
+import { extensionContext } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { throttle, throttleAsync } from "../utilities/throttle";
@@ -54,6 +54,7 @@ import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
 import { focusSource } from "../utilities/focusSource";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -139,7 +140,7 @@ export class Project
     this.disposables.push(
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
         if (event.affectsConfiguration("launch")) {
-          const config = getCurrentLaunchConfig();
+          const config = getLaunchConfiguration();
           const oldAppRoot = this.appRootFolder;
           if (config.appRoot === oldAppRoot) {
             return;
@@ -208,7 +209,7 @@ export class Project
         this.updateProjectState({ status: "refreshing" });
         break;
       case "fastRefreshComplete":
-        const ignoredEvents = ["starting", "bundlingError", "runtimeError"];
+        const ignoredEvents = ["starting", "bundlingError"];
         if (ignoredEvents.includes(this.projectState.status)) {
           return;
         }
@@ -224,15 +225,7 @@ export class Project
   }
 
   onDebuggerPaused(event: DebugSessionCustomEvent) {
-    if (event.body?.reason === "exception") {
-      // if we know that incremental bundle error happened, we don't want to change the status
-      if (this.projectState.status === "bundlingError") {
-        return;
-      }
-      this.updateProjectState({ status: "runtimeError" });
-    } else {
-      this.updateProjectState({ status: "debuggerPaused" });
-    }
+    this.updateProjectState({ status: "debuggerPaused" });
 
     // we don't want to focus on debug side panel if it means hiding Radon IDE
     const panelLocation = workspace
@@ -349,6 +342,8 @@ export class Project
       }
     }
   }
+
+  onDebugSessionTerminated() {}
 
   async captureAndStopRecording() {
     const recording = await this.stopRecording();
@@ -978,7 +973,7 @@ export class Project
         status: "running",
       });
     } catch (e) {
-      Logger.error("Couldn't start device session", e);
+      Logger.error("Couldn't start device session", e instanceof Error ? e.message : e);
 
       const isSelected = this.projectState.selectedDevice === deviceInfo;
       const isNewSession = this.deviceSession === newDeviceSession;

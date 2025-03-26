@@ -95,12 +95,11 @@ function Preview({
   const hasBundleBuildFailedError = projectStatus === "bundleBuildFailedError";
 
   const debugPaused = projectStatus === "debuggerPaused";
-  const debugException = projectStatus === "runtimeError";
 
   const previewURL = projectState.previewURL;
 
   const isStarting =
-    hasBundleBuildFailedError || hasBundlingError || debugException
+    hasBundleBuildFailedError || hasBundlingError
       ? false
       : !projectState || projectState.status === "starting";
   const showDevicePreview =
@@ -126,7 +125,6 @@ function Preview({
     let { x: anchorX, y: anchorY } = anchorPoint;
     const { x: prevPointX, y: prevPointY } = touchPoint;
     const { x: newPointX, y: newPointY } = getTouchPosition(event);
-
     anchorX += newPointX - prevPointX;
     anchorY += newPointY - prevPointY;
     anchorX = clamp(anchorX, 0, 1);
@@ -210,7 +208,6 @@ function Preview({
 
   const shouldPreventInputEvents =
     debugPaused ||
-    debugException ||
     hasBundleBuildFailedError ||
     hasBundlingError ||
     projectStatus === "refreshing" ||
@@ -558,17 +555,9 @@ function Preview({
                   <Debugger />
                 </div>
               )}
-              {debugException && (
-                <div className="phone-screen phone-debug-overlay phone-exception-overlay">
-                  <button className="uncaught-button" onClick={() => project.resumeDebugger()}>
-                    Uncaught exception&nbsp;
-                    <span className="codicon codicon-debug-continue" />
-                  </button>
-                </div>
-              )}
               {/* TODO: Add different label in case of bundle/incremental bundle error */}
               {hasBundleBuildFailedError && (
-                <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                <div className="phone-screen phone-debug-overlay phone-error-overlay">
                   <button
                     className="uncaught-button"
                     onClick={() => {
@@ -580,7 +569,7 @@ function Preview({
                 </div>
               )}
               {hasBundlingError && (
-                <div className="phone-screen phone-debug-overlay phone-exception-overlay">
+                <div className="phone-screen phone-debug-overlay phone-error-overlay">
                   <button className="uncaught-button" onClick={() => project.restart(false)}>
                     Bundle error&nbsp;
                     <span className="codicon codicon-refresh" />

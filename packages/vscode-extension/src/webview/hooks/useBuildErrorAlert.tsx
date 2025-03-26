@@ -37,7 +37,6 @@ function BuildErrorActions({
           } else {
             project.focusBuildOutput();
           }
-          project.focusBuildOutput();
         }}
         tooltip={{ label: "Open build logs", side: "bottom" }}>
         <span className="codicon codicon-symbol-keyword" />
@@ -66,6 +65,13 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
 
   if (!ios?.scheme && xcodeSchemes.length > 1) {
     description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
+  }
+
+  if (
+    dependencies.pods?.status !== "installed" &&
+    projectState.selectedDevice?.platform === DevicePlatform.IOS
+  ) {
+    description = "Pods could not be installed in your project. Check the build logs for details.";
   }
 
   if (

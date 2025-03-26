@@ -6,7 +6,7 @@ export class DebugAdapterDescriptorFactory implements vscode.DebugAdapterDescrip
   createDebugAdapterDescriptor(
     session: vscode.DebugSession
   ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
-    return new vscode.DebugAdapterInlineImplementation(new DebugAdapter(session));
+    return new vscode.DebugAdapterInlineImplementation(new DebugAdapter());
   }
 }
 

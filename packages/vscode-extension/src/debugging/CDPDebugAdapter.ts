@@ -104,15 +104,13 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
   public sendStoppedEvent = (
     pausedStackFrames: StackFrame[],
     pausedScopeChains: CDPDebuggerScope[][],
-    reason: string,
-    exceptionText?: string,
-    isFatal?: string
+    reason: string
   ) => {
     this.pausedStackFrames = pausedStackFrames;
     this.pausedScopeChains = pausedScopeChains;
 
-    this.sendEvent(new StoppedEvent(reason, this.threads[0].id, exceptionText));
-    this.sendEvent(new Event("RNIDE_paused", { reason, isFatal }));
+    this.sendEvent(new StoppedEvent(reason, this.threads[0].id));
+    this.sendEvent(new Event("RNIDE_paused", { reason }));
   };
 
   //#endregion
@@ -357,13 +355,13 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
       const res = await this.cdpSession.sendCDPMessage("Runtime.evaluate", {
         expression: "('ping')",
       });
-      const { result } = res;
-      if (result.value === "ping") {
-        this.sendEvent(new Event("RNIDE_pong"));
+      if (res.result.value === "ping") {
+        return true;
       }
     } catch (_) {
       /** debugSession is waiting for an event, if it won't get any it will fail after timeout, so we don't need to do anything here */
     }
+    return false;
   }
 
   protected async customRequest(
@@ -372,6 +370,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
     args: any,
     request?: DebugProtocol.Request | undefined
   ) {
+    response.body = response.body || {};
     switch (command) {
       case "RNIDE_startProfiling":
         if (this.cdpSession) {
@@ -388,7 +387,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
         }
         break;
       case "RNIDE_ping":
-        this.ping();
+        response.body.result = await this.ping();
         break;
       default:
         Logger.debug(`Custom req ${command} ${args}`);
