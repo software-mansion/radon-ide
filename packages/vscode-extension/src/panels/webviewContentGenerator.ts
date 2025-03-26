@@ -61,7 +61,7 @@ export function generateWebviewContent(
                       img-src vscode-resource: http: https: data:;
                       media-src vscode-resource: http: https:;
                       style-src ${webview.cspSource} 'unsafe-inline';
-                      script-src http: 'nonce-${nonce}';
+                      script-src 'nonce-${nonce}';
                       font-src vscode-resource: https:;" />
         <link rel="stylesheet" type="text/css" href="${webviewName}.css" />`
         }
