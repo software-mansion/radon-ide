@@ -973,7 +973,7 @@ export class Project
         status: "running",
       });
     } catch (e) {
-      Logger.error("Couldn't start device session", e);
+      Logger.error("Couldn't start device session", e instanceof Error ? e.message : e);
 
       const isSelected = this.projectState.selectedDevice === deviceInfo;
       const isNewSession = this.deviceSession === newDeviceSession;

@@ -121,23 +121,19 @@ export async function buildAndroid(
     getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
       platform: DevicePlatform.Android,
     });
-    try {
-      const apkPath = await fetchEasBuild(
-        cancelToken,
-        eas.android,
-        DevicePlatform.Android,
-        appRoot,
-        outputChannel
-      );
+    const apkPath = await fetchEasBuild(
+      cancelToken,
+      eas.android,
+      DevicePlatform.Android,
+      appRoot,
+      outputChannel
+    );
 
-      return {
-        apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
-        platform: DevicePlatform.Android,
-      };
-    } catch {
-      throw new Error("Failed to build Android app using EAS build.");
-    }
+    return {
+      apkPath,
+      packageName: await extractPackageName(apkPath, cancelToken),
+      platform: DevicePlatform.Android,
+    };
   }
 
   if (await isExpoGoProject(appRoot)) {

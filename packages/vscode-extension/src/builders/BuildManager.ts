@@ -1,4 +1,5 @@
 import { Disposable, OutputChannel, window } from "vscode";
+import _ from "lodash";
 import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
@@ -153,7 +154,7 @@ export class BuildManager {
         cancelToken.cancel();
       },
     };
-    disposableBuild.build.then(onSuccess);
+    disposableBuild.build.then(onSuccess).catch(_.noop);
 
     return disposableBuild;
   }
