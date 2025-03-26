@@ -111,13 +111,14 @@ export function lineReader(childProcess: ExecaChildProcess<string>) {
 export function exec(
   name: string,
   args?: string[],
-  options?: execa.Options & { allowNonZeroExit?: boolean }
+  options?: execa.Options & { allowNonZeroExit?: boolean; quietErrorsOnExit?: boolean }
 ) {
   const subprocess = execa(
     name,
     args,
     Platform.select({ macos: overrideEnv(options), windows: options, linux: options })
   );
+
   const allowNonZeroExit = options?.allowNonZeroExit;
   async function printErrorsOnExit() {
     try {
@@ -137,7 +138,10 @@ export function exec(
       }
     }
   }
-  printErrorsOnExit(); // don't want to await here not to block the outer method
+  if (!options?.quietErrorsOnExit) {
+    printErrorsOnExit(); // don't want to await here not to block the outer method
+  }
+
   return subprocess;
 }
 
