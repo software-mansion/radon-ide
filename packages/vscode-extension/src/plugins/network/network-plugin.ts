@@ -41,15 +41,15 @@ function startViteServer(): Promise<void> {
   });
 }
 
-let initialzed = false;
+let initialized = false;
 async function initialize() {
-  if (initialzed) {
+  if (initialized) {
     return;
   }
   Logger.debug("Initilizing Network tool");
 
   await startViteServer();
-  initialzed = true;
+  initialized = true;
   extensionContext.subscriptions.push(
     window.registerWebviewViewProvider(
       `RNIDE.Tool.Network.view`,
