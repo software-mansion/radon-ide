@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { CHAT_LOG } from ".";
 
 const BASE_RADON_AI_URL = "https://radon-ai-backend.swmansion.com";
 
@@ -18,7 +19,10 @@ export async function getSystemPrompt(userPrompt: string, jwt: string): Promise<
     });
 
     if (response.status !== 200) {
-      Logger.error(`Failed to fetch response from Radon AI with status: ${response.status}`);
+      Logger.error(
+        CHAT_LOG,
+        `Failed to fetch response from Radon AI with status: ${response.status}`
+      );
       getTelemetryReporter().sendTelemetryEvent("chat:error", {
         error: `Failed to fetch with status: ${response.status}`,
       });
@@ -27,10 +31,13 @@ export async function getSystemPrompt(userPrompt: string, jwt: string): Promise<
     return await response.json();
   } catch (error) {
     if (error instanceof Error) {
-      Logger.error(error.message);
+      Logger.error(
+        CHAT_LOG,
+        `Failed to fetch response from Radon AI with message: ${error.message}`
+      );
       getTelemetryReporter().sendTelemetryEvent("chat:error", { error: error.message });
     } else {
-      Logger.error(String(error));
+      Logger.error(CHAT_LOG, `Failed to fetch response from Radon AI: ${String(error)}`);
     }
   }
   return;
@@ -61,7 +68,10 @@ export async function invokeToolCall(
     });
 
     if (response.status !== 200) {
-      Logger.error(`Failed to fetch response from Radon AI with status: ${response.status}`);
+      Logger.error(
+        CHAT_LOG,
+        `Failed to fetch response from Radon AI with status: ${response.status}`
+      );
       getTelemetryReporter().sendTelemetryEvent("chat:error", {
         error: `Failed to fetch with status: ${response.status}`,
       });
@@ -76,10 +86,10 @@ export async function invokeToolCall(
     return toolResults;
   } catch (error) {
     if (error instanceof Error) {
-      Logger.error(error.message);
+      Logger.error(CHAT_LOG, `Tool call failed with message: ${error.message}`);
       getTelemetryReporter().sendTelemetryEvent("chat:error", { error: error.message });
     } else {
-      Logger.error(String(error));
+      Logger.error(CHAT_LOG, `Tool call failed: ${String(error)}`);
     }
   }
   return;
