@@ -16,6 +16,7 @@ import {
   listEasBuilds,
   viewEasBuild,
   generateFingerprint,
+  buildLocal,
 } from "./easCommand";
 import { extractTarApp } from "./utils";
 
@@ -32,12 +33,14 @@ export async function fetchEasBuild(
     );
   }
 
-  const build = await fetchBuild(config, platform, appRoot);
-
-  let easBinaryPath = await downloadAppFromEas(build, platform, cancelToken);
-
-  Logger.debug(`Using built app from EAS: '${easBinaryPath}'`);
-  return easBinaryPath;
+  try {
+    const build = await fetchBuild(config, platform, appRoot);
+    let easBinaryPath = await downloadAppFromEas(build, platform, cancelToken);
+    Logger.debug(`Using built app from EAS: '${easBinaryPath}'`);
+    return easBinaryPath;
+  } catch {
+    return performLocalBuild(config, platform, appRoot, outputChannel, cancelToken);
+  }
 }
 
 async function fetchBuild(
@@ -101,6 +104,24 @@ async function fetchBuild(
   return build;
 }
 
+async function performLocalBuild(
+  config: EasConfig,
+  platform: DevicePlatform,
+  appRoot: string,
+  outputChannel: OutputChannel,
+  cancelToken: CancelToken
+) {
+  const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-eas-build-"));
+  const outputBase = `eas-${config.profile}`;
+  const outputPath =
+    platform === DevicePlatform.Android
+      ? path.join(tmpDirectory, `${outputBase}.apk`)
+      : path.join(tmpDirectory, `${outputBase}.tar.gz`);
+  await buildLocal({ platform, profile: config.profile, outputPath }, appRoot, outputChannel);
+
+  return maybeExtractBinary(platform, outputPath, tmpDirectory);
+}
+
 async function downloadAppFromEas(
   build: EASBuild,
   platform: DevicePlatform,
@@ -120,6 +141,14 @@ async function downloadAppFromEas(
       `EAS build was found at '${binaryUrl}' but could not be downloaded. Verify your Internet connection is stable and try again.`
     );
   }
+  return maybeExtractBinary(platform, binaryPath, tmpDirectory);
+}
+
+async function maybeExtractBinary(
+  platform: DevicePlatform,
+  binaryPath: string,
+  tmpDirectory: string
+) {
   // on iOS we need to extract the .tar.gz archive to get the .app file
   const shouldExtractArchive = platform === DevicePlatform.IOS;
   if (!shouldExtractArchive) {
