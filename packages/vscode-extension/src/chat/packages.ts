@@ -48,14 +48,14 @@ async function getReactNativePackages(): Promise<Package[]> {
   // if we have already scanned the packages, we can skip the scan if package.json has not changed
   if (packageJsonHashes) {
     // check if hash is the same
-    const newPackageJsonHash = await getPackageJsonHashes();
-    if (compareUnorderedArrays(newPackageJsonHash, packageJsonHashes)) {
+    const newPackageJsonHashes = await getPackageJsonHashes();
+    if (compareUnorderedArrays(newPackageJsonHashes, packageJsonHashes)) {
       return packages;
     }
 
     Logger.info(CHAT_LOG, "Found changes in package.json, rescanning packages");
     // update hash
-    packageJsonHashes = newPackageJsonHash;
+    packageJsonHashes = newPackageJsonHashes;
     // empty packages array
     packages.length = 0;
   } else {
