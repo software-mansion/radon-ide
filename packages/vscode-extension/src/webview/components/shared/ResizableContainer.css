@@ -34,14 +34,15 @@
 
 .draggable {
   position: absolute;
-  z-index: 10;
+  z-index: 9999;
   background-color: var(--vscode-input-border);
+  pointer-events: auto;
 }
 
 .draggable:is(.bottom) {
   cursor: row-resize;
   top: 100%;
-  height: 10px;
+  height: 1px;
   width: 100%;
 }
 
@@ -52,11 +53,6 @@
   width: 1px;
   top: 0;
   bottom: 0;
-  transform: translateX(-8px);
-}
-
-.draggable:not(.bottom, .show) {
-  width: 10px;
 }
 
 .draggable .left {
@@ -65,14 +61,6 @@
 
 .draggable:not(.left) {
   right: 0;
-}
-
-.draggable .show {
-  opacity: 1;
-}
-
-.draggable:not(.show) {
-  opacity: 0;
 }
 
 .draggable-bg {
@@ -87,7 +75,6 @@
 }
 
 .draggable:hover {
-  width: 1px;
   background-color: var(--vscode-focusBorder);
 }
 

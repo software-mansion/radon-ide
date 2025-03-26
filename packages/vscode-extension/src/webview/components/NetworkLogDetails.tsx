@@ -197,7 +197,7 @@ const NetworkLogDetails = ({
         </div>
         <div className="details-content">
           <div className="invisible" />
-          {renderContent()}
+          <div className="selected-tab-content">{renderContent()}</div>
         </div>
       </div>
     </ResizableContainer>
