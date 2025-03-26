@@ -29,7 +29,7 @@ const getColorForSameService = (url: string) => {
 };
 
 const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersProps) => {
-  const { isClearing, filters, setFilters } = useNetwork();
+  const { filters, setFilters } = useNetwork();
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
@@ -107,7 +107,7 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       setScrollOffset(maxTime - minTime - MAX_VIEW_TIME);
     }
 
-    if (isClearing) {
+    if (processedData.length === 0) {
       setScrollOffset(0);
     }
 
@@ -281,7 +281,7 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
 
     containerRef.current.addEventListener("wheel", handleScroll, { passive: true });
     return () => containerRef.current?.removeEventListener("wheel", handleScroll);
-  }, [processedData, isClearing, scrollOffset, chartHeight]);
+  }, [processedData, scrollOffset, chartHeight]);
 
   return (
     <ResizableContainer
