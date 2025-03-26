@@ -1,5 +1,5 @@
 import "./App.css";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import NetworkBar from "../components/NetworkBar";
 import NetworkRequestLog from "../components/NetworkRequestLog";
 import NetworkLogDetails from "../components/NetworkLogDetails";
@@ -21,13 +21,15 @@ function App() {
     return fullLog || null;
   }, [selectedNetworkLogId, networkLogs]);
 
-  useEffect(() => {
-    if (!selectedNetworkLog) {
-      setDetailsWidth(0);
-    } else {
+  const handleSelectedRequest = (id: string | null) => {
+    setSelectedNetworkLogId(id);
+
+    if (id) {
       setDetailsWidth(500);
+    } else {
+      setDetailsWidth(0);
     }
-  }, [selectedNetworkLogId]);
+  };
 
   return (
     <main>
@@ -38,7 +40,6 @@ function App() {
         {showSearch && (
           <div className="network-search">
             <Input
-              style={{ border: "none" }}
               value={filters.url ?? ""}
               type="string"
               onChange={(e) => setFilters({ ...filters, url: e.target.value })}
@@ -49,7 +50,7 @@ function App() {
         {showChart && (
           <NetworkTimeline
             networkLogs={networkLogs}
-            handleSelectedRequest={setSelectedNetworkLogId}
+            handleSelectedRequest={handleSelectedRequest}
           />
         )}
       </div>
@@ -58,14 +59,14 @@ function App() {
           selectedNetworkLog={selectedNetworkLog}
           networkLogs={networkLogs}
           detailsWidth={detailsWidth}
-          handleSelectedRequest={setSelectedNetworkLogId}
+          handleSelectedRequest={handleSelectedRequest}
         />
 
         {selectedNetworkLog && (
           <NetworkLogDetails
             key={selectedNetworkLog.requestId}
             networkLog={selectedNetworkLog}
-            handleClose={() => setSelectedNetworkLogId(null)}
+            handleClose={() => handleSelectedRequest(null)}
             containerWidth={detailsWidth}
             setContainerWidth={setDetailsWidth}
           />

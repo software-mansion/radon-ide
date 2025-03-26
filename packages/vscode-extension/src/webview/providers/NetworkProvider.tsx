@@ -1,12 +1,4 @@
-import {
-  createContext,
-  PropsWithChildren,
-  useContext,
-  useEffect,
-  useMemo,
-  useReducer,
-  useState,
-} from "react";
+import { createContext, PropsWithChildren, useContext, useMemo, useReducer, useState } from "react";
 import useNetworkTracker, {
   NetworkTracker,
   networkTrackerInitialState,
@@ -58,21 +50,25 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
 
   const [showChart, toggleShowChart] = useReducer((state) => !state, true);
-  const [isRecording, toggleRecording] = useReducer((state) => !state, true);
   const [showSearch, toggleShowSearch] = useReducer((state) => !state, false);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
+
+  const [isRecording, setIsRecording] = useState(true);
   const [filters, setFilters] = useState<Filters>({
     timestampRange: undefined,
     url: undefined,
   });
 
-  useEffect(() => {
-    networkTracker.toggleNetwork(isRecording);
-  }, [isRecording]);
-
-  function clearActivity() {
+  const clearActivity = () => {
     networkTracker.clearLogs();
-  }
+  };
+
+  const toggleRecording = () => {
+    setIsRecording((prev) => {
+      networkTracker.toggleNetwork(prev);
+      return !prev;
+    });
+  };
 
   const networkLogs = useMemo(() => {
     return networkTracker.networkLogs.filter((log) => {

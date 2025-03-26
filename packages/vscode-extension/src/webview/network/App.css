@@ -67,3 +67,7 @@ main {
   justify-content: flex-start;
   padding-bottom: 15px;
 }
+
+.network-search input {
+  border: "none";
+}
