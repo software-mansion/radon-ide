@@ -12,6 +12,7 @@ import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { startDebugging } from "./startDebugging";
+import { Logger } from "../Logger";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -148,38 +149,40 @@ export class ProxyDebugAdapter extends DebugSession {
   ) {
     await this.cdpProxy.initializeServer();
 
-    const debugSession = await startDebugging(
-      undefined,
-      {
-        type: CHILD_SESSION_TYPE,
-        name: "Radon IDE Debugger",
-        request: "attach",
-        port: this.cdpProxy.port!,
-        continueOnAttach: true,
-        sourceMapPathOverrides: args.sourceMapPathOverrides,
-        resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
-        skipFiles: [
-          "**/extension/lib/**/*.js",
-          "**/vscode-extension/lib/**/*.js",
-          "**/ReactFabric-dev.js",
-          "**/ReactNativeRenderer-dev.js",
-          "**/node_modules/**/*",
-          "!**/node_modules/expo-router/**/*",
-        ],
-      },
-      {
-        suppressDebugStatusbar: true,
-        suppressDebugView: true,
-        suppressDebugToolbar: true,
-        suppressSaveBeforeStart: true,
-        parentSession: this.session,
-        consoleMode: vscode.DebugConsoleMode.MergeWithParent,
-        lifecycleManagedByParent: true,
-        compact: true,
-      }
-    );
-
-    if (!debugSession) {
+    try {
+      this.nodeDebugSession = await startDebugging(
+        undefined,
+        {
+          type: CHILD_SESSION_TYPE,
+          name: "Radon IDE Debugger",
+          request: "attach",
+          port: this.cdpProxy.port!,
+          continueOnAttach: true,
+          sourceMapPathOverrides: args.sourceMapPathOverrides,
+          resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
+          skipFiles: [
+            "**/extension/lib/**/*.js",
+            "**/vscode-extension/lib/**/*.js",
+            "**/ReactFabric-dev.js",
+            "**/ReactNativeRenderer-dev.js",
+            "**/node_modules/**/*",
+            "!**/node_modules/expo-router/**/*",
+          ],
+        },
+        {
+          suppressDebugStatusbar: true,
+          suppressDebugView: true,
+          suppressDebugToolbar: true,
+          suppressSaveBeforeStart: true,
+          parentSession: this.session,
+          consoleMode: vscode.DebugConsoleMode.MergeWithParent,
+          lifecycleManagedByParent: true,
+          compact: true,
+        }
+      );
+      this.sendResponse(response);
+    } catch (e) {
+      Logger.error("Error starting proxy debug adapter child session", e);
       this.sendErrorResponse(
         response,
         { format: "Failed to attach debugger session", id: 1 },
@@ -187,9 +190,6 @@ export class ProxyDebugAdapter extends DebugSession {
         undefined,
         ErrorDestination.User
       );
-    } else {
-      this.nodeDebugSession = debugSession;
-      this.sendResponse(response);
     }
   }
 

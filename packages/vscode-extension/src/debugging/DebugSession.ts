@@ -27,7 +27,7 @@ export type DebugSessionDelegate = {
 
 export interface JSDebugConfiguration {
   websocketAddress: string;
-  watchFolders: string[];
+  sourceMapPathOverrides: Record<string, string>;
   displayDebuggerOverlay: boolean;
   isUsingNewDebugger: boolean;
   expoPreludeLineCount: number;
@@ -139,15 +139,6 @@ export class DebugSession implements Disposable {
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
     const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
 
-    const sourceMapPathOverrides: Record<string, string> = {};
-    const metroWatchFolders = configuration.watchFolders;
-    if (isUsingNewDebugger && metroWatchFolders.length > 0) {
-      sourceMapPathOverrides["/[metro-project]/*"] = `${metroWatchFolders[0]}${path.sep}*`;
-      metroWatchFolders.forEach((watchFolder, index) => {
-        sourceMapPathOverrides[`/[metro-watchFolders]/${index}/*`] = `${watchFolder}${path.sep}*`;
-      });
-    }
-
     this.jsDebugSession = await startDebugging(
       undefined,
       {
@@ -155,7 +146,7 @@ export class DebugSession implements Disposable {
         name: "React Native JS Debugger",
         request: "attach",
         breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
-        sourceMapPathOverrides,
+        sourceMapPathOverrides: configuration.sourceMapPathOverrides,
         websocketAddress: configuration.websocketAddress,
         expoPreludeLineCount: configuration.expoPreludeLineCount,
         displayDebuggerOverlay: configuration.displayDebuggerOverlay,
