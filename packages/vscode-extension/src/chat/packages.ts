@@ -13,7 +13,7 @@ interface Package {
 
 const appRootFolder = findAppRootFolder() ?? "";
 const packages: Package[] = [];
-let packageJsonHashes: string[];
+let packageJsonHashes: string[] = [];
 
 async function getPackageJsonHashes(): Promise<string[]> {
   const rootPackageJson = await vscode.workspace.findFiles(
@@ -46,7 +46,7 @@ export function compareUnorderedArrays(a: unknown[], b: unknown[]): boolean {
 
 async function getReactNativePackages(): Promise<Package[]> {
   // if we have already scanned the packages, we can skip the scan if package.json has not changed
-  if (packageJsonHashes) {
+  if (packageJsonHashes.length !== 0) {
     // check if hash is the same
     const newPackageJsonHashes = await getPackageJsonHashes();
     if (compareUnorderedArrays(newPackageJsonHashes, packageJsonHashes)) {
@@ -67,18 +67,26 @@ async function getReactNativePackages(): Promise<Package[]> {
   // we scan node_modules here because different package managers use different lock files
   // and bun uses binary format - bun.lockb - which is not the easiest to parse
   const packageFiles = await vscode.workspace.findFiles(
-    new RelativePattern(
-      appRootFolder,
-      "**/node_modules/**/*{expo,react-native,react-navigation}*/package.json"
-    ),
-    new RelativePattern(appRootFolder, "**/node_modules/**/*{export,exponent}*")
+    "**/node_modules/**/*{expo,react-native,react-navigation}*/package.json",
+    "**/node_modules/**/*{export,exponent}*"
   );
 
   for await (const pkg of packageFiles) {
     try {
       const packageJsonDoc = await vscode.workspace.openTextDocument(pkg);
       const { name, version } = JSON.parse(packageJsonDoc.getText());
-      packages.push({ path: pkg.path, name, version });
+      const relativePath = vscode.workspace.asRelativePath(pkg.path);
+
+      // last 3 segments will always be: node_modules/<package-name>/package.json
+      // we are only interested in the part before these 3 segments
+      const trimmedPath = relativePath.split("/").slice(0, -3).join("/");
+
+      if (trimmedPath.includes("node_modules")) {
+        // ignore packages that are nested inside other node_modules packages
+        continue;
+      }
+
+      packages.push({ path: trimmedPath, name, version });
     } catch (err) {
       Logger.error(`Error reading package.json: ${err}`);
       return [];
