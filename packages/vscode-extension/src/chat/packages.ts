@@ -98,7 +98,7 @@ async function getReactNativePackages(): Promise<Package[]> {
 }
 
 export async function getReactNativePackagesPrompt(): Promise<string> {
-  let prompt = "User has the following packages installed in the project :\n";
+  let prompt = "User has the following packages installed in the project:\n";
   const rnPackages = await getReactNativePackages();
 
   if (rnPackages.length === 0) {
@@ -107,7 +107,7 @@ export async function getReactNativePackagesPrompt(): Promise<string> {
   let prevPath = "";
   rnPackages.forEach((pkg) => {
     if (pkg.path !== prevPath) {
-      prompt += `\n"${pkg.path}":`;
+      prompt += `\n"${pkg.path}":\n`;
       prevPath = pkg.path;
     }
 
