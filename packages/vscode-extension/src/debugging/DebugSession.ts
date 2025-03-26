@@ -1,5 +1,4 @@
 import assert from "assert";
-import path from "path";
 import { commands, debug, DebugConsoleMode, DebugSessionCustomEvent, Disposable } from "vscode";
 import * as vscode from "vscode";
 import { disposeAll } from "../utilities/disposables";
