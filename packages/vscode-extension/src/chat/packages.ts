@@ -23,7 +23,7 @@ async function getPackageJsonHashes(): Promise<string[]> {
 
   if (!rootPackageJson.length) {
     Logger.error("No package.json found in the workspace");
-    return await Promise.all([]);
+    return [];
   }
 
   const hashes = rootPackageJson.map((packageJson) =>
