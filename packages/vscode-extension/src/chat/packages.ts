@@ -6,41 +6,61 @@ import { calculateMD5 } from "../utilities/common";
 import { CHAT_LOG } from ".";
 
 interface Package {
+  path: string;
   name: string;
   version: string;
 }
 
 const appRootFolder = findAppRootFolder() ?? "";
 const packages: Package[] = [];
-let packageJsonHash: string;
+let packageJsonHashes: string[];
 
-async function getPackageJsonHash(): Promise<string> {
+async function getPackageJsonHashes(): Promise<string[]> {
   const rootPackageJson = await vscode.workspace.findFiles(
     new RelativePattern(appRootFolder, "package.json"),
-    null,
-    1
+    null
   );
 
-  const hash = await calculateMD5(rootPackageJson[0].fsPath);
-  return hash.digest("hex");
+  if (!rootPackageJson.length) {
+    Logger.error("No package.json found in the workspace");
+    return await Promise.all([]);
+  }
+
+  const hashes = rootPackageJson.map((packageJson) =>
+    calculateMD5(packageJson.fsPath).then((hash) => hash.digest("hex"))
+  );
+
+  const resolvedHashes = await Promise.all(hashes);
+
+  return resolvedHashes;
+}
+
+function compareArrays(a: unknown[], b: unknown[]) {
+  if (a.length !== b.length) {
+    return false;
+  }
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((value, i) => value === sortedB[i]);
 }
 
 async function getReactNativePackages(): Promise<Package[]> {
   // if we have already scanned the packages, we can skip the scan if package.json has not changed
-  if (packageJsonHash) {
+  if (packageJsonHashes) {
     // check if hash is the same
-    const newPackageJsonHash = await getPackageJsonHash();
-    if (newPackageJsonHash === packageJsonHash) {
+    const newPackageJsonHash = await getPackageJsonHashes();
+    if (compareArrays(newPackageJsonHash, packageJsonHashes)) {
       return packages;
     }
+
     Logger.info(CHAT_LOG, "Found changes in package.json, rescanning packages");
     // update hash
-    packageJsonHash = newPackageJsonHash;
+    packageJsonHashes = newPackageJsonHash;
     // empty packages array
     packages.length = 0;
   } else {
     // generate hash for the first time
-    packageJsonHash = await getPackageJsonHash();
+    packageJsonHashes = await getPackageJsonHashes();
   }
 
   Logger.info(CHAT_LOG, "Scanning node_modules for React Native packages");
@@ -58,13 +78,14 @@ async function getReactNativePackages(): Promise<Package[]> {
     try {
       const packageJsonDoc = await vscode.workspace.openTextDocument(pkg);
       const { name, version } = JSON.parse(packageJsonDoc.getText());
-      packages.push({ name, version });
+      packages.push({ path: pkg.path, name, version });
     } catch (err) {
       Logger.error(`Error reading package.json: ${err}`);
       return [];
     }
   }
 
+  packages.sort((a, b) => a.path.localeCompare(b.path));
   return packages;
 }
 
@@ -75,7 +96,13 @@ export async function getReactNativePackagesPrompt(): Promise<string> {
   if (rnPackages.length === 0) {
     return "";
   }
+  let prevPath = "";
   rnPackages.forEach((pkg) => {
+    if (pkg.path !== prevPath) {
+      prompt += `\n"${pkg.path}":`;
+      prevPath = pkg.path;
+    }
+
     prompt += `- ${pkg.name}@${pkg.version}\n`;
   });
 
