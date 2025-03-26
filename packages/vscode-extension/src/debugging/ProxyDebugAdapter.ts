@@ -3,7 +3,7 @@ import assert from "assert";
 import { DebugSession, ErrorDestination, Event } from "@vscode/debugadapter";
 import * as vscode from "vscode";
 import { DebugProtocol } from "@vscode/debugprotocol";
-import { debug, Disposable } from "vscode";
+import { Disposable } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
@@ -11,6 +11,7 @@ import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
 import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
+import { startDebugging } from "./startDebugging";
 import { Logger } from "../Logger";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
@@ -148,18 +149,8 @@ export class ProxyDebugAdapter extends DebugSession {
   ) {
     await this.cdpProxy.initializeServer();
 
-    let didStartSessionHandler: Disposable | null = vscode.debug.onDidStartDebugSession(
-      (session) => {
-        if (session.type === CHILD_SESSION_TYPE) {
-          this.nodeDebugSession = session;
-          didStartSessionHandler?.dispose();
-          didStartSessionHandler = null;
-        }
-      }
-    );
-
     try {
-      const childSessionStarted = await debug.startDebugging(
+      this.nodeDebugSession = await startDebugging(
         undefined,
         {
           type: CHILD_SESSION_TYPE,
@@ -189,26 +180,16 @@ export class ProxyDebugAdapter extends DebugSession {
           compact: true,
         }
       );
-
-      if (!childSessionStarted) {
-        this.sendErrorResponse(
-          response,
-          { format: "Failed to attach debugger session", id: 1 },
-          undefined,
-          undefined,
-          ErrorDestination.User
-        );
-        return;
-      }
-
-      if (this.nodeDebugSession === null) {
-        Logger.warn(
-          "The JS debug session started, but it wasn't registered correctly. The debugger may not work correctly."
-        );
-      }
       this.sendResponse(response);
-    } finally {
-      didStartSessionHandler?.dispose();
+    } catch (e) {
+      Logger.error("Error starting proxy debug adapter child session", e);
+      this.sendErrorResponse(
+        response,
+        { format: "Failed to attach debugger session", id: 1 },
+        undefined,
+        undefined,
+        ErrorDestination.User
+      );
     }
   }
 
