@@ -162,7 +162,7 @@ export async function buildAndroid(
 
   if (!(await dependencyManager.checkAndroidDirectoryExits())) {
     throw new BuildError(
-      'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.',
+      'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.',
       BuildType.Local
     );
   }

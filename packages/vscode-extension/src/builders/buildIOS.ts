@@ -160,7 +160,7 @@ export async function buildIos(
 
   if (!(await dependencyManager.checkIOSDirectoryExists())) {
     throw new BuildError(
-      'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.',
+      'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.',
       BuildType.Local
     );
   }
