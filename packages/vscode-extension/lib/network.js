@@ -1,3 +1,5 @@
+const RNInternals = require("./rn-internals/rn-internals");
+
 function mimeTypeFromResponseType(responseType) {
   switch (responseType) {
     case "arraybuffer":
@@ -66,7 +68,7 @@ class FakeWeakRef {
 const WeakRefImpl = typeof WeakRef !== "undefined" ? WeakRef : FakeWeakRef;
 
 export function enableNetworkInspect(devtoolsAgent, payload) {
-  const XHRInterceptor = require("react-native/Libraries/Network/XHRInterceptor");
+  const XHRInterceptor = RNInternals.XHRInterceptor;
 
   const loaderId = "xhr-interceptor";
   const xhrsMap = new Map();
@@ -82,7 +84,6 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
   devtoolsAgent._bridge.addListener("RNIDE_networkInspectorCDPRequest", (message) => {
     if (message.method === "Network.disable") {
       XHRInterceptor.disableInterception();
-      console.log("XHRInterceptor disabled");
     } else if (message.method === "Network.enable") {
       XHRInterceptor.setSendCallback(sendCallback);
       XHRInterceptor.enableInterception();
@@ -109,6 +110,8 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
       });
     }
   });
+
+  const HEADERS_RECEIVED = 2; // readyState value when headers are received
 
   function sendCallback(data, xhr) {
     const requestId = `${requestIdPrefix}-${requestIdCounter++}`;
@@ -162,7 +165,7 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
     });
 
     xhr.addEventListener("readystatechange", (event) => {
-      if (xhr.readyState === 2) {
+      if (xhr.readyState === HEADERS_RECEIVED) {
         ttfb = Date.now() - sendTime;
       }
     });

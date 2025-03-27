@@ -33,10 +33,12 @@ export interface CDPProxyDelegate {
 export class CDPProxy {
   private server: Server | null = null;
   private tunnel: ProxyTunnel | null = null;
+  public get port() {
+    return this.server?.address.port;
+  }
 
   constructor(
     public readonly hostAddress: string,
-    public readonly port: number,
     private browserInspectUri: string,
     private cdpProxyDelegate: CDPProxyDelegate
   ) {}
@@ -45,7 +47,7 @@ export class CDPProxy {
     if (this.server) {
       return;
     }
-    this.server = await Server.create({ port: this.port, host: this.hostAddress });
+    this.server = await Server.create({ port: 0, host: this.hostAddress });
     this.server.onConnection(this.onConnectionHandler.bind(this));
   }
 

@@ -37,7 +37,6 @@ function BuildErrorActions({
           } else {
             project.focusBuildOutput();
           }
-          project.focusBuildOutput();
         }}
         tooltip={{ label: "Open build logs", side: "bottom" }}>
         <span className="codicon codicon-symbol-keyword" />
@@ -69,6 +68,13 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   }
 
   if (
+    dependencies.pods?.status !== "installed" &&
+    projectState.selectedDevice?.platform === DevicePlatform.IOS
+  ) {
+    description = "Pods could not be installed in your project. Check the build logs for details.";
+  }
+
+  if (
     dependencies.android?.status === "notInstalled" &&
     projectState.selectedDevice?.platform === DevicePlatform.Android
   ) {
@@ -90,6 +96,12 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
       runDiagnostics();
       project.restart(false);
     };
+  }
+
+  if (dependencies.nodejs?.status === "notInstalled") {
+    description =
+      "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements.";
+    logsButtonDestination = "extension";
   }
 
   const isEasBuild =
@@ -153,9 +165,9 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusExtensionLogsOutput();
+          project.focusDebugConsole();
         }}
-        tooltip={{ label: "Open extension logs", side: "bottom" }}>
+        tooltip={{ label: "Open debug console", side: "bottom" }}>
         <span className="codicon codicon-output" />
       </IconButton>
       <IconButton

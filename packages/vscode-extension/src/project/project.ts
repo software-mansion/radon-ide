@@ -32,7 +32,7 @@ import {
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
-import { extensionContext, getCurrentLaunchConfig } from "../utilities/extensionContext";
+import { extensionContext } from "../utilities/extensionContext";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { throttle, throttleAsync } from "../utilities/throttle";
@@ -53,7 +53,9 @@ import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
+import { isAutoSaveEnabled } from "../utilities/isAutoSaveEnabled";
 import { focusSource } from "../utilities/focusSource";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -139,7 +141,7 @@ export class Project
     this.disposables.push(
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
         if (event.affectsConfiguration("launch")) {
-          const config = getCurrentLaunchConfig();
+          const config = getLaunchConfiguration();
           const oldAppRoot = this.appRootFolder;
           if (config.appRoot === oldAppRoot) {
             return;
@@ -407,8 +409,10 @@ export class Project
   ): Promise<void> {
     await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
 
-    this.focusDebugConsole();
-    focusSource(source);
+    if (!isAutoSaveEnabled()) {
+      this.focusDebugConsole();
+      focusSource(source);
+    }
 
     Logger.error("[Bundling Error]", message);
     // if bundle build failed, we don't want to change the status
@@ -972,7 +976,7 @@ export class Project
         status: "running",
       });
     } catch (e) {
-      Logger.error("Couldn't start device session", e);
+      Logger.error("Couldn't start device session", e instanceof Error ? e.message : e);
 
       const isSelected = this.projectState.selectedDevice === deviceInfo;
       const isNewSession = this.deviceSession === newDeviceSession;

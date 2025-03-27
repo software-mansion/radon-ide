@@ -121,10 +121,13 @@ export async function buildAndroid(
     getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
       platform: DevicePlatform.Android,
     });
-    const apkPath = await fetchEasBuild(cancelToken, eas.android, DevicePlatform.Android, appRoot);
-    if (!apkPath) {
-      throw new Error("Failed to build Android app using EAS build.");
-    }
+    const apkPath = await fetchEasBuild(
+      cancelToken,
+      eas.android,
+      DevicePlatform.Android,
+      appRoot,
+      outputChannel
+    );
 
     return {
       apkPath,

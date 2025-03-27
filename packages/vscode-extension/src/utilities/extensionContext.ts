@@ -1,8 +1,8 @@
 import fs from "fs";
+import path from "path";
 import { commands, ExtensionContext, Uri, workspace, window } from "vscode";
 import { Logger } from "../Logger";
 import { getLaunchConfiguration } from "./launchConfiguration";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 let _extensionContext: ExtensionContext | null = null;
 
@@ -20,27 +20,6 @@ export const extensionContext = new Proxy<ExtensionContext>({} as ExtensionConte
     return Reflect.get(_extensionContext, prop);
   },
 });
-
-export const getCurrentLaunchConfig = (): LaunchConfigurationOptions => {
-  const launchConfiguration = workspace.getConfiguration(
-    "launch",
-    workspace.workspaceFolders![0].uri
-  );
-
-  const configurations = launchConfiguration.get<Array<Record<string, any>>>("configurations")!;
-
-  const RNIDEConfiguration = configurations.find(
-    ({ type }) => type === "react-native-ide" || type === "radon-ide" // for compatibility we want to support old configuration type name
-  );
-
-  if (!RNIDEConfiguration) {
-    return {};
-  }
-
-  const { android, appRoot, ios, isExpo, metroConfigPath, env } = RNIDEConfiguration;
-
-  return { android, appRoot, ios, isExpo, metroConfigPath, env };
-};
 
 export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
   const searchedFileNames = [
@@ -63,7 +42,7 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
   }
 
   const searchDirectories: SearchItem[] = workspaceFolders.map((workspaceFolder) => {
-    return { path: workspaceFolder.uri.path, searchDepth: 0 };
+    return { path: workspaceFolder.uri.fsPath, searchDepth: 0 };
   });
 
   const candidates = searchForFilesDirectory(
@@ -118,7 +97,7 @@ function searchForFilesDirectory(
       })
       .forEach((dir) => {
         searchQueue.push({
-          path: currentDir.path + "/" + dir.name,
+          path: path.join(currentDir.path, dir.name),
           searchDepth: currentDir.searchDepth + 1,
         });
       });
