@@ -6,7 +6,6 @@ import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { BuildType } from "../../common/Project";
-import { useDependencies } from "../providers/DependenciesProvider";
 
 type LogsButtonDestination = "build" | "extension";
 
@@ -54,7 +53,6 @@ function BuildErrorActions({
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   const { projectState, project } = useProject();
   const { ios, xcodeSchemes } = useLaunchConfig();
-  const { dependencies } = useDependencies();
 
   let onReload = () => {
     project.restart(false);
@@ -67,19 +65,11 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     description = projectState.buildError.message;
     if (projectState.buildError.buildType === BuildType.Eas) {
       logsButtonDestination = "extension";
-    } else if (
-      projectState.buildError.buildType === BuildType.Unknown &&
-      dependencies.nodejs?.status === "notInstalled"
-    ) {
-      description =
-        "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements.";
+    } else if (projectState.buildError.buildType === BuildType.Unknown) {
       logsButtonDestination = "extension";
-    } else if (
-      projectState.buildError.buildType === BuildType.Unknown &&
-      !ios?.scheme &&
-      xcodeSchemes.length > 1
-    ) {
-      description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
+      if (!ios?.scheme && xcodeSchemes.length > 1) {
+        description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
+      }
     }
   }
 

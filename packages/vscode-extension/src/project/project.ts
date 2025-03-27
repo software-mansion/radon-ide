@@ -892,7 +892,13 @@ export class Project
       Logger.debug("Node modules already installed - skipping");
     }
 
-    await this.dependencyManager.validateNodeVersion();
+    const supportedNodeInstalled =
+      await this.dependencyManager.checkSupportedNodeVersionInstalled();
+    if (!supportedNodeInstalled) {
+      throw new Error(
+        "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
+      );
+    }
   }
 
   //#region Select device
