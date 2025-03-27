@@ -2,7 +2,6 @@ import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
 import fs from "fs";
-import assert from "assert";
 import {
   env,
   Disposable,
@@ -19,6 +18,7 @@ import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
   AppPermissionType,
+  BuildType,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
@@ -1002,7 +1002,14 @@ export class Project
             },
           });
         } else {
-          assert(false, "Unexpected error type");
+          this.updateProjectState({
+            status: "buildError",
+            buildError: {
+              message: (e as Error).message,
+              buildType: BuildType.Unknown,
+              platform: deviceInfo.platform,
+            },
+          });
         }
       }
     }

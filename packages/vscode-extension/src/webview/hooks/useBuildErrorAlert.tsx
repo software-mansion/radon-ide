@@ -61,22 +61,26 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   };
   let logsButtonDestination: LogsButtonDestination | undefined = undefined;
 
-  let description =
-    projectState.status === "buildError"
-      ? projectState.buildError.message
-      : "Open build logs to find out what went wrong.";
+  let description = "Open extension logs to find out what went wrong.";
 
-  if (projectState.status !== "buildError" && dependencies.nodejs?.status === "notInstalled") {
-    description =
-      "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements.";
-    logsButtonDestination = "extension";
-  } else if (projectState.status !== "buildError" && !ios?.scheme && xcodeSchemes.length > 1) {
-    description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
-  } else if (
-    projectState.status === "buildError" &&
-    projectState.buildError.buildType === BuildType.Eas
-  ) {
-    logsButtonDestination = "extension";
+  if (projectState.status === "buildError") {
+    description = projectState.buildError.message;
+    if (projectState.buildError.buildType === BuildType.Eas) {
+      logsButtonDestination = "extension";
+    } else if (
+      projectState.buildError.buildType === BuildType.Unknown &&
+      dependencies.nodejs?.status === "notInstalled"
+    ) {
+      description =
+        "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements.";
+      logsButtonDestination = "extension";
+    } else if (
+      projectState.buildError.buildType === BuildType.Unknown &&
+      !ios?.scheme &&
+      xcodeSchemes.length > 1
+    ) {
+      description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
+    }
   }
 
   const actions = (
