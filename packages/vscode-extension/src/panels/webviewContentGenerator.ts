@@ -9,7 +9,7 @@ export function generateWebviewContent(
   extensionUri: Uri,
   viteDevHost: string,
   webviewName: string,
-  webviewPath: string
+  webviewDevPath: string
 ) {
   const config = workspace.getConfiguration("RadonIDE");
   const useCodeTheme = config.get("themeType") === "vscode";
@@ -17,8 +17,8 @@ export function generateWebviewContent(
 
   // The JS file from the React build output
   const scriptUri = IS_DEV
-    ? webviewPath
-      ? `${webviewPath}/index.jsx`
+    ? webviewDevPath
+      ? `${webviewDevPath}/index.jsx`
       : "/index.jsx"
     : `${webviewName}.js`;
 
