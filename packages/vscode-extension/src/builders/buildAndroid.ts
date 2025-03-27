@@ -112,7 +112,10 @@ export async function buildAndroid(
       appRoot
     );
     if (!apkPath) {
-      throw new BuildError("Failed to build Android app using custom script.", BuildType.Custom);
+      throw new BuildError(
+        "Failed to build Android app using custom script. See the build logs for details.",
+        BuildType.Custom
+      );
     }
 
     return {
@@ -159,7 +162,7 @@ export async function buildAndroid(
 
   if (!(await dependencyManager.checkAndroidDirectoryExits())) {
     throw new BuildError(
-      '"android" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory',
+      'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.',
       BuildType.Local
     );
   }

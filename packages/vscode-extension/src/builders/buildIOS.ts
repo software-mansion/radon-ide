@@ -107,7 +107,9 @@ export async function buildIos(
         appRoot
       );
       if (!appPath) {
-        throw new Error("Failed to build iOS app using custom script.");
+        throw new Error(
+          "Failed to build iOS app using custom script. See the build logs for details."
+        );
       }
 
       return {
@@ -158,7 +160,7 @@ export async function buildIos(
 
   if (!(await dependencyManager.checkIOSDirectoryExists())) {
     throw new BuildError(
-      '"ios" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory',
+      'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.',
       BuildType.Local
     );
   }
@@ -191,12 +193,20 @@ async function buildLocal(
 
   const sourceDir = getIosSourceDir(appRoot);
 
-  await installPodsIfNeeded();
+  try {
+    await installPodsIfNeeded();
+  } catch {
+    throw new Error(
+      "Pods could not be installed in your project. Check the build logs for details."
+    );
+  }
 
   const xcodeProject = await findXcodeProject(appRoot);
 
   if (!xcodeProject) {
-    throw new Error(`Could not find Xcode project files in "${sourceDir}" folder`);
+    throw new Error(
+      `Could not find Xcode project files in "${sourceDir}" folder. Verify the iOS project is set up correctly.`
+    );
   }
   Logger.debug(
     `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${
@@ -279,7 +289,9 @@ async function getBuildPath(
   } = settings[0].buildSettings;
   // Find app in all building settings - look for WRAPPER_EXTENSION: 'app',
   if (wrapperExtension !== "app") {
-    throw new Error("Failed to get the target build directory and app name.");
+    throw new Error(
+      "Failed to get the target build directory and app name. Check the build logs for details."
+    );
   }
 
   return `${targetBuildDir}/${executableFolderPath}`;
