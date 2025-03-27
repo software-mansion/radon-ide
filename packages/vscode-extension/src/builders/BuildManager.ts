@@ -1,4 +1,5 @@
 import { Disposable, OutputChannel, window } from "vscode";
+import _ from "lodash";
 import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
@@ -122,6 +123,10 @@ export class BuildManager {
           if (installPods) {
             getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
             await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
+            const installed = await this.dependencyManager.checkPodsInstallationStatus();
+            if (!installed) {
+              throw new Error("Pods could not be installed automatically.");
+            }
             // Installing pods may impact the fingerprint as new pods may be created under the project directory.
             // For this reason we need to recalculate the fingerprint after installing pods.
             buildFingerprint = await this.buildCache.calculateFingerprint(platform);
@@ -149,7 +154,7 @@ export class BuildManager {
         cancelToken.cancel();
       },
     };
-    disposableBuild.build.then(onSuccess);
+    disposableBuild.build.then(onSuccess).catch(_.noop);
 
     return disposableBuild;
   }

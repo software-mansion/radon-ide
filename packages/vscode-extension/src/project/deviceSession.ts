@@ -135,11 +135,37 @@ export class DeviceSession implements Disposable {
 
   private launchAppCancelToken: CancelToken | undefined;
 
+  private async reconnectJSDebuggerIfNeeded() {
+    // after reloading JS, we sometimes need to reconnect the JS debugger. This is
+    // needed specifically in Expo Go based environments where the reloaded runtime
+    // will be listed as a new target.
+    // Additionally, in some cases the old websocket endpoint would still be listed
+    // despite the runtime being terminated.
+    // In order to properly handle this case we first check if the websocket endpoint
+    // is still listed and if it is, we verify that the runtime is responding by
+    // requesting to execute some simple JS snippet.
+    const currentWsTarget = this.debugSession?.websocketTarget;
+    if (currentWsTarget) {
+      const possibleWsTargets = await this.metro.fetchWsTargets();
+      const currentWsTargetStillVisible = possibleWsTargets?.some(
+        (runtime) => runtime.webSocketDebuggerUrl === currentWsTarget
+      );
+      if (currentWsTargetStillVisible) {
+        // verify the runtime is responding
+        const isRuntimeResponding = await this.debugSession.pingJsDebugSessionWithTimeout();
+        if (isRuntimeResponding) {
+          return;
+        }
+      }
+    }
+    await this.connectJSDebugger();
+  }
+
   private async reloadMetro() {
     this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
     await Promise.all([this.metro.reload(), this.devtools.appReady()]);
     this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
-    await this.debugSession?.reconnectJSDebuggerIfNeeded(this.metro);
+    await this.reconnectJSDebuggerIfNeeded();
   }
 
   private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
@@ -290,7 +316,18 @@ export class DeviceSession implements Disposable {
   }
 
   private async connectJSDebugger() {
-    const connected = await this.debugSession.startJSDebugSession(this.metro);
+    const websocketAddress = await this.metro.getDebuggerURL();
+    if (!websocketAddress) {
+      Logger.error("Couldn't find a proper debugger URL to connect to");
+      return;
+    }
+    const connected = await this.debugSession.startJSDebugSession({
+      websocketAddress,
+      displayDebuggerOverlay: false,
+      isUsingNewDebugger: this.metro.isUsingNewDebugger,
+      expoPreludeLineCount: this.metro.expoPreludeLineCount,
+      sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
+    });
 
     if (connected) {
       // TODO(jgonet): Right now, we ignore start failure
@@ -333,7 +370,7 @@ export class DeviceSession implements Disposable {
       await this.device.sendDeepLink(link, this.maybeBuildResult, terminateApp);
 
       if (terminateApp) {
-        this.debugSession?.reconnectJSDebuggerIfNeeded(this.metro);
+        this.reconnectJSDebuggerIfNeeded();
       }
     }
   }

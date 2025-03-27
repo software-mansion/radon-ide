@@ -43,7 +43,7 @@ function generateWebviewContent(
 ): string {
   const nonce = getNonce();
   const baseUri = getUri(webview, extensionUri, [PATH]);
-  const files = fs.readdirSync(baseUri.path, { recursive: true });
+  const files = fs.readdirSync(baseUri.fsPath, { recursive: true });
   const cssFiles = files
     .filter((file) => typeof file === "string")
     .filter((file) => file.endsWith(".css"));

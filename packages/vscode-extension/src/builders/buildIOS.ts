@@ -115,10 +115,14 @@ export async function buildIos(
     getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
       platform: DevicePlatform.IOS,
     });
-    const appPath = await fetchEasBuild(cancelToken, eas.ios, DevicePlatform.IOS, appRoot);
-    if (!appPath) {
-      throw new Error("Failed to build iOS app using EAS build.");
-    }
+
+    const appPath = await fetchEasBuild(
+      cancelToken,
+      eas.ios,
+      DevicePlatform.IOS,
+      appRoot,
+      outputChannel
+    );
 
     return {
       appPath,
