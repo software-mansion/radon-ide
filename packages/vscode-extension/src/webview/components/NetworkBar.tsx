@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import IconButton from "./shared/IconButton";
 import { useNetwork } from "../providers/NetworkProvider";
 
@@ -17,7 +18,7 @@ function NetworkBar() {
         }}>
         <span
           style={{ color: isRecording ? "var(--vscode-charts-red)" : "var(--swm-default-text)" }}
-          className={`codicon ${isRecording ? "codicon-record" : "codicon-stop-circle"}`}
+          className={classNames("codicon", isRecording ? "codicon-record" : "codicon-stop-circle")}
         />
       </IconButton>
       <IconButton

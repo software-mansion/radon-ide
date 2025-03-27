@@ -1,4 +1,5 @@
-import { useState } from "react";
+import classNames from "classnames";
+import { useReducer } from "react";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 
 interface HeadersTabProps {
@@ -11,16 +12,18 @@ interface SectionProps {
 }
 
 const Section = ({ title, data }: SectionProps) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, toggleExpanded] = useReducer((s) => !s, true);
 
   return (
     <div className="section">
       <div className="section-header">
         <span
-          className={`codicon ${
-            isExpanded ? "codicon-triangle-down" : "codicon-triangle-right"
-          } gray-icon`}
-          onClick={() => setIsExpanded((prev) => !prev)}
+          className={classNames(
+            "codicon",
+            isExpanded ? "codicon-triangle-down" : "codicon-triangle-right",
+            "gray-icon"
+          )}
+          onClick={toggleExpanded}
         />
         <p>{title}</p>
       </div>
