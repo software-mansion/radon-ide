@@ -1,7 +1,7 @@
 import IconButton from "./shared/IconButton";
 import { useNetwork } from "../providers/NetworkProvider";
 
-const NetworkBar = () => {
+function NetworkBar() {
   const { isRecording, toggleRecording, clearActivity, toggleShowSearch, toggleShowChart } =
     useNetwork();
 
@@ -46,6 +46,6 @@ const NetworkBar = () => {
       </IconButton>
     </>
   );
-};
+}
 
 export default NetworkBar;

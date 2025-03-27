@@ -8,7 +8,8 @@ import NetworkTimeline from "../components/NetworkTimeline";
 import { Input } from "../components/shared/Input";
 
 function App() {
-  const { showSearch, networkLogs, filters, showChart, setFilters } = useNetwork();
+  const { showSearch, networkLogs, unfilteredNetworkLogs, filters, showChart, setFilters } =
+    useNetwork();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
   const [detailsWidth, setDetailsWidth] = useState(0);
@@ -49,7 +50,7 @@ function App() {
         )}
         {showChart && (
           <NetworkTimeline
-            networkLogs={networkLogs}
+            networkLogs={unfilteredNetworkLogs}
             handleSelectedRequest={handleSelectedRequest}
           />
         )}

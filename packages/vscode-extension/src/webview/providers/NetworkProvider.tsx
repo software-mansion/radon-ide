@@ -15,6 +15,7 @@ interface Filters {
 }
 
 interface NetworkProviderProps extends NetworkTracker {
+  unfilteredNetworkLogs: NetworkTracker["networkLogs"];
   isRecording: boolean;
   showSearch: boolean;
   filters: Filters;
@@ -30,6 +31,7 @@ interface NetworkProviderProps extends NetworkTracker {
 
 const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
+  unfilteredNetworkLogs: [],
   isRecording: true,
   showSearch: false,
   filters: {
@@ -87,6 +89,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
+      unfilteredNetworkLogs: networkTracker.networkLogs,
       networkLogs,
       isRecording,
       filters,

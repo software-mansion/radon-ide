@@ -4,7 +4,9 @@ import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog as TimelineNetworkLog } from "../types/network";
 import ResizableContainer from "./shared/ResizableContainer";
+import "./NetworkTimeline.css";
 
+const PADDING_HORIZONTAL = 8;
 const MARGIN_VERTICAL = 20;
 const TIMELINE_LEGEND_HEIGHT = 20;
 const SIDEBAR_MAX_WIDTH = 600;
@@ -17,10 +19,28 @@ const MAX_SIZE_BIG_SCREEN = 15000;
 const MAX_SIZE_SMALL_SCREEN = 5000;
 const MAX_VIEW_TIME =
   window.innerWidth > SIDEBAR_MAX_WIDTH ? MAX_SIZE_BIG_SCREEN : MAX_SIZE_SMALL_SCREEN;
+const SCREEN_WIDTH = window.innerWidth - 2 * PADDING_HORIZONTAL;
 
 interface NetworkFiltersProps {
   handleSelectedRequest: (id: string | null) => void;
   networkLogs: NetworkLog[];
+}
+
+interface RequestBarProps {
+  d: TimelineNetworkLog;
+  rowIndex: number;
+}
+
+interface RequestRowProps {
+  rowData: TimelineNetworkLog[];
+  rowIndex: number;
+}
+
+interface TooltipProps {
+  d: TimelineNetworkLog;
+  isLeftSide: boolean;
+  x: number;
+  y: number;
 }
 
 const getColorForSameService = (url: string) => {
@@ -28,13 +48,21 @@ const getColorForSameService = (url: string) => {
   return `hsl(${urlObject.hostname.length * 10}, 70%, 50%)`;
 };
 
-const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersProps) => {
+function NetworkTimeline({ handleSelectedRequest, networkLogs }: NetworkFiltersProps) {
   const { filters, setFilters } = useNetwork();
-  const containerRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
-  const [stopInserting, setStopInserting] = useState(false);
   const [chartHeight, setChartHeight] = useState(100);
+  const [isCmdPressed, setIsCmdPressed] = useState(false);
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    data: null as TimelineNetworkLog | null,
+    x: 0,
+    y: 0,
+  });
+
+  const brushRef = useRef<SVGGElement>(null);
+  const xAxisRef = useRef<SVGGElement>(null);
 
   const processedData = useMemo(() => {
     return networkLogs.map((d) => ({
@@ -94,70 +122,45 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
   const minTime = firstRequestTime;
   const maxTime = lastRequestTime;
 
-  useEffect(() => {
-    if (stopInserting || !containerRef.current) {
-      return;
-    }
-
-    if (scrollOffset === maxTime - minTime - MAX_VIEW_TIME) {
-      setIsAutoScrolling(true);
-    }
-
-    if (isAutoScrolling && maxTime - minTime > MAX_VIEW_TIME) {
-      setScrollOffset(maxTime - minTime - MAX_VIEW_TIME);
-    }
-
-    if (processedData.length === 0) {
-      setScrollOffset(0);
-    }
-
-    const container = d3.select(containerRef.current);
-    container.selectAll("*").remove();
-
-    const containerWidth = containerRef.current.clientWidth;
-
-    const timeScale = d3
+  const timeScale = useMemo(() => {
+    return d3
       .scaleLinear()
       .domain([minTime + scrollOffset, minTime + scrollOffset + MAX_VIEW_TIME])
-      .range([CHART_MARGIN, containerWidth - CHART_MARGIN]);
+      .range([CHART_MARGIN, SCREEN_WIDTH - CHART_MARGIN]);
+  }, [minTime, maxTime, scrollOffset]);
 
-    const xAxis = d3
+  const xAxis = useMemo(() => {
+    return d3
       .axisBottom(timeScale)
       .ticks(MAX_VIEW_TIME / 1000)
       .tickValues(d3.range(minTime, maxTime, 1000))
       .tickFormat((d) => `${d.valueOf() - minTime} ms`);
+  }, [timeScale, minTime]);
 
-    const svg = container
-      .append("svg")
-      .attr("width", containerWidth)
-      .attr("height", chartHeight)
-      .style("background", "var(--swm-preview-background)");
-
-    svg
-      .append("g")
-      .attr("transform", `translate(0,${chartHeight - TIMELINE_LEGEND_HEIGHT})`)
-      .call(xAxis);
-
-    const dashedLineGroup = svg.append("g").attr("class", "dashed-lines");
-    for (let i = minTime; i < maxTime; i += 1000) {
-      dashedLineGroup
-        .append("line")
-        .attr("x1", timeScale(i))
-        .attr("x2", timeScale(i))
-        .attr("y1", 0)
-        .attr("y2", chartHeight - TIMELINE_LEGEND_HEIGHT)
-        .attr("stroke", "var(--swm-default-text)")
-        .attr("stroke-dasharray", "4,4");
+  useEffect(() => {
+    if (!xAxisRef.current) {
+      return;
     }
 
-    const brush = d3
+    const xAxisGroup = d3.select(xAxisRef.current);
+    xAxisGroup.call(xAxis);
+
+    return () => {
+      xAxisGroup.selectAll("*").remove();
+    };
+  }, [xAxis]);
+
+  const brushX = useMemo(() => {
+    return d3
       .brushX()
       .extent([
         [CHART_MARGIN, 0],
-        [containerWidth - CHART_MARGIN, chartHeight - TIMELINE_LEGEND_HEIGHT],
+        [SCREEN_WIDTH - CHART_MARGIN, chartHeight - TIMELINE_LEGEND_HEIGHT],
       ])
+      .filter((event) => {
+        return isCmdPressed && !event.button;
+      })
       .on("start", () => {
-        setStopInserting(true);
         setIsAutoScrolling(false);
       })
       .on("brush", (event) => {
@@ -177,111 +180,150 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       .on("end", (event) => {
         if (!event.selection) {
           setIsAutoScrolling(true);
-          setStopInserting(false);
           setFilters({
             ...filters,
             timestampRange: undefined,
           });
         }
       });
+  }, [timeScale, chartHeight, filters, firstRequestTime, isCmdPressed]);
 
-    svg.append("g").attr("class", "brush").call(brush);
-
-    svg.on("click", function (event) {
-      const [x] = d3.pointer(event);
-      const clickedRequest = processedData.find(
-        (d) => x >= timeScale(d.startTimestamp) && x <= timeScale(d.endTimestamp)
-      );
-      if (clickedRequest) {
-        handleSelectedRequest(clickedRequest.requestId);
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey) {
+        setIsCmdPressed(true);
       }
-    });
-
-    const rowGroups = svg
-      .append("g")
-      .attr("class", "requests")
-      .selectAll(".request-row")
-      .data(rows)
-      .join(
-        (enter) => enter.append("g").attr("class", "request-row"),
-        (update) => update,
-        (exit) => exit.remove()
-      );
-
-    rowGroups.each(function (rowData, rowIndex) {
-      const rowGroup = d3.select(this);
-
-      rowGroup
-        .selectAll(".request-bar")
-        .data(rowData, (d: any) => d.requestId)
-        .join(
-          (enter) =>
-            enter
-              .append("rect")
-              .attr("key", (d) => d.requestId)
-              .attr("class", "request-bar")
-              .attr("x", (d) => timeScale(d.startTimestamp))
-              .attr("y", rowIndex * (adjustedRowHeight + ROW_PADDING) + MARGIN_VERTICAL / 2)
-              .attr("width", (d) =>
-                Math.max(1, timeScale(d.endTimestamp) - timeScale(d.startTimestamp))
-              )
-              .attr("height", adjustedRowHeight)
-              .attr("fill", (d) => getColorForSameService(d.url))
-              .on("mouseover", function (event, d) {
-                d3.select("body").selectAll(".tooltip").remove();
-                const tooltip = d3.select("body").append("div").attr("class", "tooltip");
-                tooltip
-                  .style("position", "absolute")
-                  .style("background", "var(--swm-input-background)")
-                  .style("color", "var(--swm-default-text)")
-                  .style("border", "1px")
-                  .style("box-shadow", "var(--swm-input-shadow)")
-                  .style("padding", "5px")
-                  .style("border-radius", "5px")
-                  .style("pointer-events", "none")
-                  .style("left", `${event.pageX + 10}px`)
-                  .style("top", `${event.pageY + 10}px`).html(`
-                    <strong>Request:</strong> ${d.requestId}<br/>
-                    <strong>URL:</strong> ${d.url}<br/>
-                    <strong>Method:</strong> ${d.method}<br/>
-                    <strong>Status:</strong> ${d.status}<br/>
-                    <strong>Duration:</strong> ${d.endTimestamp - d.startTimestamp} ms<br/>
-                  `);
-
-                tooltip.transition().duration(50).style("opacity", 1);
-              })
-              .on("mouseout", function () {
-                d3.select("body")
-                  .selectAll(".tooltip")
-                  .transition()
-                  .duration(50)
-                  .style("opacity", 0)
-                  .remove();
-              }),
-          (update) =>
-            update
-              .transition()
-              .duration(50)
-              .attr("x", (d) => timeScale(d.startTimestamp))
-              .attr("width", (d) =>
-                Math.max(1, timeScale(d.endTimestamp) - timeScale(d.startTimestamp))
-              ),
-
-          (exit) => exit.transition().duration(50).style("opacity", 0).remove()
-        );
-    });
-
-    const handleScroll = (event: WheelEvent) => {
-      setScrollOffset((prev) => {
-        const newOffset = prev + event.deltaX * 10;
-        return Math.max(0, Math.min(newOffset, maxTime - minTime - MAX_VIEW_TIME));
-      });
-      setIsAutoScrolling(false);
     };
 
-    containerRef.current.addEventListener("wheel", handleScroll, { passive: true });
-    return () => containerRef.current?.removeEventListener("wheel", handleScroll);
-  }, [processedData, scrollOffset, chartHeight]);
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (!event.metaKey) {
+        setIsCmdPressed(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!brushRef.current || !isCmdPressed) {
+      return;
+    }
+
+    const brushGroup = d3.select(brushRef.current);
+    if (isCmdPressed) {
+      brushGroup.call(brushX);
+    } else {
+      brushGroup.selectAll("*").remove();
+    }
+
+    return () => {
+      brushGroup.selectAll("*").remove();
+    };
+  }, [brushX, isCmdPressed]);
+
+  useMemo(() => {
+    if (isAutoScrolling && maxTime - minTime > MAX_VIEW_TIME) {
+      setScrollOffset(maxTime - minTime - MAX_VIEW_TIME);
+    } else if (scrollOffset === maxTime - minTime - MAX_VIEW_TIME) {
+      setIsAutoScrolling(true);
+    }
+  }, [maxTime, minTime, isAutoScrolling]);
+
+  const handleScroll = (event: React.WheelEvent) => {
+    setScrollOffset((prev) => {
+      const newOffset = prev + event.deltaX * 10;
+      return Math.max(0, Math.min(newOffset, maxTime - minTime - MAX_VIEW_TIME));
+    });
+    setIsAutoScrolling(false);
+  };
+
+  function Tooltip({ d, isLeftSide, x, y }: TooltipProps) {
+    return (
+      <div
+        className="tooltip"
+        style={{
+          left: isLeftSide ? `${x + 10}px` : `${x - 300}px`,
+          top: `${y}px`,
+        }}>
+        <strong>Request:</strong> {d.requestId} <br />
+        <strong>URL:</strong> {d.url} <br />
+        <strong>Method:</strong> {d.method} <br />
+        <strong>Status:</strong> {d.status} <br />
+        <strong>Duration:</strong> {d.endTimestamp - d.startTimestamp} ms
+      </div>
+    );
+  }
+
+  function RequestBar({ d, rowIndex }: RequestBarProps) {
+    const handleMouseOver = (e: React.MouseEvent<SVGRectElement, MouseEvent>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setTooltip({
+        visible: true,
+        data: d,
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+    };
+
+    const handleMouseOut = () => {
+      setTooltip({ visible: false, data: null, x: 0, y: 0 });
+    };
+
+    const handleClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      console.log("Clicked requestId:", d.requestId);
+      handleSelectedRequest(d.requestId);
+    };
+
+    return (
+      <rect
+        key={d.requestId}
+        className="request-bar"
+        x={timeScale(d.startTimestamp)}
+        y={rowIndex * (adjustedRowHeight + ROW_PADDING) + MARGIN_VERTICAL / 2}
+        width={Math.max(1, timeScale(d.endTimestamp) - timeScale(d.startTimestamp))}
+        height={adjustedRowHeight}
+        fill={getColorForSameService(d.url)}
+        onClick={handleClick}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
+      />
+    );
+  }
+
+  function RequestRow({ rowData, rowIndex }: RequestRowProps) {
+    return (
+      <g key={rowIndex} className="request-row">
+        {rowData.map((d) => (
+          <RequestBar key={d.requestId} d={d} rowIndex={rowIndex} />
+        ))}
+      </g>
+    );
+  }
+
+  function DashedLines() {
+    return (
+      <g className="dashed-lines">
+        {d3.range(minTime, maxTime, 1000).map((tick) => (
+          <line
+            key={tick}
+            x1={timeScale(tick)}
+            x2={timeScale(tick)}
+            y1={0}
+            y2={chartHeight - 20}
+            stroke="var(--swm-default-text)"
+            strokeDasharray="4,4"
+          />
+        ))}
+      </g>
+    );
+  }
 
   return (
     <ResizableContainer
@@ -290,15 +332,37 @@ const NetworkTimeline = ({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       showDragable={false}
       side="bottom">
       <div
-        ref={containerRef}
         style={{
           width: "100%",
           height: chartHeight,
           overflow: "hidden",
         }}
-      />
+        onMouseLeave={() => setTooltip({ visible: false, data: null, x: 0, y: 0 })}
+        onWheel={handleScroll}>
+        <svg
+          width="100%"
+          height={chartHeight}
+          style={{ background: "var(--swm-preview-background)", pointerEvents: "none" }}>
+          <g transform={`translate(0,${chartHeight - TIMELINE_LEGEND_HEIGHT})`} ref={xAxisRef} />
+          <DashedLines />
+          <g className="requests">
+            {rows.map((rowData, rowIndex) => (
+              <RequestRow key={rowIndex} rowData={rowData} rowIndex={rowIndex} />
+            ))}
+          </g>
+          <g className="brush" ref={brushRef} />
+        </svg>
+        {tooltip.visible && (
+          <Tooltip
+            d={tooltip.data!}
+            isLeftSide={tooltip.x < window.innerWidth / 2}
+            x={tooltip.x}
+            y={tooltip.y}
+          />
+        )}
+      </div>
     </ResizableContainer>
   );
-};
+}
 
 export default NetworkTimeline;
