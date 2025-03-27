@@ -98,6 +98,12 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     };
   }
 
+  if (dependencies.nodejs?.status === "notInstalled") {
+    description =
+      "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements.";
+    logsButtonDestination = "extension";
+  }
+
   const isEasBuild =
     (!!eas?.android && projectState.selectedDevice?.platform === DevicePlatform.Android) ||
     (!!eas?.ios && projectState.selectedDevice?.platform === DevicePlatform.IOS);
