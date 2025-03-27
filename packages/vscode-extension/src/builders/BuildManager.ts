@@ -160,7 +160,7 @@ export class BuildManager {
         if (e instanceof BuildError) {
           throw e;
         }
-        throw new BuildError(e.message, "unknown");
+        throw new BuildError(e.message, BuildType.Unknown);
       }),
       dispose: () => {
         cancelToken.cancel();

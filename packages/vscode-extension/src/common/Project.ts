@@ -61,7 +61,13 @@ type ProjectStateBuildError = {
   };
 } & ProjectStateCommon;
 
-export type BuildType = "local" | "expoGo" | "eas" | "custom" | "unknown";
+export enum BuildType {
+  Local = "local",
+  ExpoGo = "expoGo",
+  Eas = "eas",
+  Custom = "custom",
+  Unknown = "unknown",
+}
 
 export type ZoomLevelType = number | "Fit";
 

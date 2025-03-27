@@ -20,6 +20,7 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildError } from "./BuildManager";
 import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { BuildType } from "../common/Project";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
@@ -95,7 +96,7 @@ export async function buildAndroid(
   if (customBuild?.android && eas?.android) {
     throw new BuildError(
       "Both custom custom builds and EAS builds are configured for Android. Please use only one build method.",
-      "unknown"
+      BuildType.Unknown
     );
   }
 
@@ -111,7 +112,7 @@ export async function buildAndroid(
       appRoot
     );
     if (!apkPath) {
-      throw new BuildError("Failed to build Android app using custom script.", "custom");
+      throw new BuildError("Failed to build Android app using custom script.", BuildType.Custom);
     }
 
     return {
@@ -140,7 +141,7 @@ export async function buildAndroid(
         platform: DevicePlatform.Android,
       };
     } catch (e) {
-      throw new BuildError((e as Error).message, "eas");
+      throw new BuildError((e as Error).message, BuildType.Eas);
     }
   }
 
@@ -152,14 +153,14 @@ export async function buildAndroid(
       const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
       return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
     } catch (e) {
-      throw new BuildError((e as Error).message, "expoGo");
+      throw new BuildError((e as Error).message, BuildType.ExpoGo);
     }
   }
 
   if (!(await dependencyManager.checkAndroidDirectoryExits())) {
     throw new BuildError(
       '"android" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory',
-      "local"
+      BuildType.Local
     );
   }
 
@@ -173,7 +174,7 @@ export async function buildAndroid(
       progressListener
     );
   } catch (e) {
-    throw new BuildError((e as Error).message, "local");
+    throw new BuildError((e as Error).message, BuildType.Local);
   }
 }
 
