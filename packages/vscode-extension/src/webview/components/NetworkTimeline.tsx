@@ -29,11 +29,36 @@ interface NetworkFiltersProps {
 interface RequestBarProps {
   d: TimelineNetworkLog;
   rowIndex: number;
+  adjustedRowHeight: number;
+  setTooltip: (tooltip: {
+    visible: boolean;
+    data: TimelineNetworkLog | null;
+    x: number;
+    y: number;
+  }) => void;
+  handleSelectedRequest: (id: string) => void;
+  timeScale: d3.ScaleLinear<number, number>;
 }
 
 interface RequestRowProps {
   rowData: TimelineNetworkLog[];
   rowIndex: number;
+  adjustedRowHeight: number;
+  setTooltip: (tooltip: {
+    visible: boolean;
+    data: TimelineNetworkLog | null;
+    x: number;
+    y: number;
+  }) => void;
+  handleSelectedRequest: (id: string) => void;
+  timeScale: d3.ScaleLinear<number, number>;
+}
+
+interface DashedLinesProps {
+  timeScale: d3.ScaleLinear<number, number>;
+  minTime: number;
+  maxTime: number;
+  chartHeight: number;
 }
 
 interface TooltipProps {
@@ -47,6 +72,110 @@ const getColorForSameService = (url: string) => {
   const urlObject = new URL(url);
   return `hsl(${urlObject.hostname.length * 10}, 70%, 50%)`;
 };
+
+function RequestBar({
+  d,
+  rowIndex,
+  adjustedRowHeight,
+  setTooltip,
+  handleSelectedRequest,
+  timeScale,
+}: RequestBarProps) {
+  const handleMouseOver = (e: React.MouseEvent<SVGRectElement, MouseEvent>) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({
+      visible: true,
+      data: d,
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+    });
+  };
+
+  const handleMouseOut = (e: React.MouseEvent<SVGRectElement, MouseEvent>) => {
+    e.stopPropagation();
+    setTooltip({ visible: false, data: null, x: 0, y: 0 });
+  };
+
+  const handleClick = (e: React.MouseEvent<SVGRectElement, MouseEvent>) => {
+    e.stopPropagation();
+    console.log("Clicked requestId:", d.requestId);
+    handleSelectedRequest(d.requestId);
+  };
+
+  return (
+    <rect
+      className="request-bar"
+      x={timeScale(d.startTimestamp)}
+      y={rowIndex * (adjustedRowHeight + ROW_PADDING) + MARGIN_VERTICAL / 2}
+      width={Math.max(1, timeScale(d.endTimestamp) - timeScale(d.startTimestamp))}
+      height={adjustedRowHeight}
+      fill={getColorForSameService(d.url)}
+      onClick={handleClick}
+      onMouseEnter={handleMouseOver}
+      onMouseLeave={handleMouseOut}
+    />
+  );
+}
+
+function RequestRow({
+  rowData,
+  rowIndex,
+  adjustedRowHeight,
+  setTooltip,
+  handleSelectedRequest,
+  timeScale,
+}: RequestRowProps) {
+  return (
+    <g className="request-row" key={rowIndex}>
+      {rowData.map((d) => (
+        <RequestBar
+          key={d.requestId}
+          d={d}
+          rowIndex={rowIndex}
+          adjustedRowHeight={adjustedRowHeight}
+          setTooltip={setTooltip}
+          handleSelectedRequest={handleSelectedRequest}
+          timeScale={timeScale}
+        />
+      ))}
+    </g>
+  );
+}
+
+function DashedLines({ timeScale, minTime, maxTime, chartHeight }: DashedLinesProps) {
+  return (
+    <g className="dashed-lines">
+      {d3.range(minTime, maxTime, 1000).map((tick) => (
+        <line
+          x1={timeScale(tick)}
+          x2={timeScale(tick)}
+          y1={0}
+          y2={chartHeight - 20}
+          stroke="var(--swm-default-text)"
+          strokeDasharray="4,4"
+        />
+      ))}
+    </g>
+  );
+}
+
+function Tooltip({ d, isLeftSide, x, y }: TooltipProps) {
+  return (
+    <div
+      className="tooltip"
+      style={{
+        left: isLeftSide ? `${x + 10}px` : `${x - 300}px`,
+        top: `${y}px`,
+      }}>
+      <strong>Request:</strong> {d.requestId} <br />
+      <strong>URL:</strong> {d.url} <br />
+      <strong>Method:</strong> {d.method} <br />
+      <strong>Status:</strong> {d.status} <br />
+      <strong>Duration:</strong> {d.endTimestamp - d.startTimestamp} ms
+    </div>
+  );
+}
 
 function NetworkTimeline({ handleSelectedRequest, networkLogs }: NetworkFiltersProps) {
   const { filters, setFilters } = useNetwork();
@@ -243,114 +372,42 @@ function NetworkTimeline({ handleSelectedRequest, networkLogs }: NetworkFiltersP
     setIsAutoScrolling(false);
   };
 
-  function Tooltip({ d, isLeftSide, x, y }: TooltipProps) {
-    return (
-      <div
-        className="tooltip"
-        style={{
-          left: isLeftSide ? `${x + 10}px` : `${x - 300}px`,
-          top: `${y}px`,
-        }}>
-        <strong>Request:</strong> {d.requestId} <br />
-        <strong>URL:</strong> {d.url} <br />
-        <strong>Method:</strong> {d.method} <br />
-        <strong>Status:</strong> {d.status} <br />
-        <strong>Duration:</strong> {d.endTimestamp - d.startTimestamp} ms
-      </div>
-    );
-  }
-
-  function RequestBar({ d, rowIndex }: RequestBarProps) {
-    const handleMouseOver = (e: React.MouseEvent<SVGRectElement, MouseEvent>) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setTooltip({
-        visible: true,
-        data: d,
-        x: rect.left + rect.width / 2,
-        y: rect.top,
-      });
-    };
-
-    const handleMouseOut = () => {
-      setTooltip({ visible: false, data: null, x: 0, y: 0 });
-    };
-
-    const handleClick = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      console.log("Clicked requestId:", d.requestId);
-      handleSelectedRequest(d.requestId);
-    };
-
-    return (
-      <rect
-        key={d.requestId}
-        className="request-bar"
-        x={timeScale(d.startTimestamp)}
-        y={rowIndex * (adjustedRowHeight + ROW_PADDING) + MARGIN_VERTICAL / 2}
-        width={Math.max(1, timeScale(d.endTimestamp) - timeScale(d.startTimestamp))}
-        height={adjustedRowHeight}
-        fill={getColorForSameService(d.url)}
-        onClick={handleClick}
-        onMouseOver={handleMouseOver}
-        onMouseOut={handleMouseOut}
-      />
-    );
-  }
-
-  function RequestRow({ rowData, rowIndex }: RequestRowProps) {
-    return (
-      <g key={rowIndex} className="request-row">
-        {rowData.map((d) => (
-          <RequestBar key={d.requestId} d={d} rowIndex={rowIndex} />
-        ))}
-      </g>
-    );
-  }
-
-  function DashedLines() {
-    return (
-      <g className="dashed-lines">
-        {d3.range(minTime, maxTime, 1000).map((tick) => (
-          <line
-            key={tick}
-            x1={timeScale(tick)}
-            x2={timeScale(tick)}
-            y1={0}
-            y2={chartHeight - 20}
-            stroke="var(--swm-default-text)"
-            strokeDasharray="4,4"
-          />
-        ))}
-      </g>
-    );
-  }
-
   return (
     <ResizableContainer
-      containerSize={chartHeight + 10}
+      containerSize={chartHeight + CHART_MARGIN}
       setContainerWidth={setChartHeight}
       showDragable={false}
       side="bottom">
       <div
         style={{
           width: "100%",
-          height: chartHeight,
+          height: "100%",
           overflow: "hidden",
         }}
-        onMouseLeave={() => setTooltip({ visible: false, data: null, x: 0, y: 0 })}
+        // onMouseLeave={() => setTooltip({ visible: false, data: null, x: 0, y: 0 })}
         onWheel={handleScroll}>
-        <svg
-          width="100%"
-          height={chartHeight}
-          style={{ background: "var(--swm-preview-background)", pointerEvents: "none" }}>
+        <svg width="100%" height="100%" style={{ background: "var(--swm-preview-background)" }}>
           <g transform={`translate(0,${chartHeight - TIMELINE_LEGEND_HEIGHT})`} ref={xAxisRef} />
-          <DashedLines />
+          <DashedLines
+            chartHeight={chartHeight - MARGIN_VERTICAL}
+            timeScale={timeScale}
+            minTime={minTime}
+            maxTime={maxTime}
+          />
           <g className="requests">
             {rows.map((rowData, rowIndex) => (
-              <RequestRow key={rowIndex} rowData={rowData} rowIndex={rowIndex} />
+              <RequestRow
+                key={rowIndex}
+                rowData={rowData}
+                rowIndex={rowIndex}
+                adjustedRowHeight={adjustedRowHeight}
+                setTooltip={setTooltip}
+                handleSelectedRequest={handleSelectedRequest}
+                timeScale={timeScale}
+              />
             ))}
           </g>
-          <g className="brush" ref={brushRef} />
+          {isCmdPressed && <g className="brush" ref={brushRef} />}
         </svg>
         {tooltip.visible && (
           <Tooltip
