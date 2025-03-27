@@ -13,6 +13,8 @@ import { fetchEasBuild } from "./eas";
 import { getXcodebuildArch } from "../utilities/common";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { BuildError } from "./BuildManager";
+import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
@@ -79,71 +81,112 @@ export async function buildIos(
   dependencyManager: DependencyManager,
   installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
-  const { customBuild, eas, ios: buildOptions, env } = getLaunchConfiguration();
+  const launchConfig = getLaunchConfiguration();
+  const { customBuild, eas, env } = launchConfig;
 
   if (customBuild?.ios && eas?.ios) {
-    throw new Error(
-      "Both custom builds and EAS builds are configured for iOS. Please use only one build method."
+    throw new BuildError(
+      "Both custom builds and EAS builds are configured for iOS. Please use only one build method.",
+      "unknown"
     );
   }
 
   if (customBuild?.ios?.buildCommand) {
-    getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
-      platform: DevicePlatform.IOS,
-    });
-    // We don't autoinstall Pods here to make custom build scripts more flexible
+    try {
+      getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
+        platform: DevicePlatform.IOS,
+      });
+      // We don't autoinstall Pods here to make custom build scripts more flexible
 
-    const appPath = await runExternalBuild(
-      cancelToken,
-      customBuild.ios.buildCommand,
-      env,
-      DevicePlatform.IOS,
-      appRoot
-    );
-    if (!appPath) {
-      throw new Error("Failed to build iOS app using custom script.");
+      const appPath = await runExternalBuild(
+        cancelToken,
+        customBuild.ios.buildCommand,
+        env,
+        DevicePlatform.IOS,
+        appRoot
+      );
+      if (!appPath) {
+        throw new Error("Failed to build iOS app using custom script.");
+      }
+
+      return {
+        appPath,
+        bundleID: await getBundleID(appPath),
+        platform: DevicePlatform.IOS,
+      };
+    } catch (e) {
+      throw new BuildError((e as Error).message, "custom");
     }
-
-    return {
-      appPath,
-      bundleID: await getBundleID(appPath),
-      platform: DevicePlatform.IOS,
-    };
   }
 
   if (eas?.ios) {
-    getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
-      platform: DevicePlatform.IOS,
-    });
+    try {
+      getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
+        platform: DevicePlatform.IOS,
+      });
 
-    const appPath = await fetchEasBuild(
-      cancelToken,
-      eas.ios,
-      DevicePlatform.IOS,
-      appRoot,
-      outputChannel
-    );
+      const appPath = await fetchEasBuild(
+        cancelToken,
+        eas.ios,
+        DevicePlatform.IOS,
+        appRoot,
+        outputChannel
+      );
 
-    return {
-      appPath,
-      bundleID: await getBundleID(appPath),
-      platform: DevicePlatform.IOS,
-    };
+      return {
+        appPath,
+        bundleID: await getBundleID(appPath),
+        platform: DevicePlatform.IOS,
+      };
+    } catch (e) {
+      throw new BuildError((e as Error).message, "eas");
+    }
   }
 
   if (await isExpoGoProject(appRoot)) {
-    getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
-      platform: DevicePlatform.IOS,
-    });
-    const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken, appRoot);
-    return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
+    try {
+      getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
+        platform: DevicePlatform.IOS,
+      });
+      const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken, appRoot);
+      return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
+    } catch (e) {
+      throw new BuildError((e as Error).message, "expoGo");
+    }
   }
 
   if (!(await dependencyManager.checkIOSDirectoryExists())) {
-    throw new Error(
-      '"ios" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory'
+    throw new BuildError(
+      '"ios" directory does not exist, configure build source in launch configuration or use expo prebuild to generate the directory',
+      "local"
     );
   }
+
+  try {
+    return await buildLocal(
+      appRoot,
+      forceCleanBuild,
+      installPodsIfNeeded,
+      launchConfig,
+      cancelToken,
+      outputChannel,
+      progressListener
+    );
+  } catch (e) {
+    throw new BuildError((e as Error).message, "local");
+  }
+}
+
+async function buildLocal(
+  appRoot: string,
+  forceCleanBuild: boolean,
+  installPodsIfNeeded: Function,
+  launchConfiguration: LaunchConfigurationOptions,
+  cancelToken: CancelToken,
+  outputChannel: OutputChannel,
+  progressListener: (newProgress: number) => void
+): Promise<IOSBuildResult> {
+  const { ios: buildOptions } = launchConfiguration;
 
   const sourceDir = getIosSourceDir(appRoot);
 

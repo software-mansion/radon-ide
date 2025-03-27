@@ -21,7 +21,13 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
 
+  const startupMessage =
+    projectState.status === "starting" ? projectState.startupMessage : undefined;
+
   useEffect(() => {
+    if (projectState.status !== "starting") {
+      return;
+    }
     if (projectState.startupMessage === StartupMessage.Restarting) {
       setProgress(0);
     } else {
@@ -52,7 +58,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     // we show the slow loading message after 12 seconds for each phase,
     // but for the native build phase we show it after 5 seconds.
     let timeoutMs = 12_000;
-    if (projectState.startupMessage === StartupMessage.Building) {
+    if (startupMessage === StartupMessage.Building) {
       timeoutMs = 5_000;
     }
 
@@ -61,69 +67,71 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     }, timeoutMs);
 
     return () => timeoutHandle && clearTimeout(timeoutHandle);
-  }, [projectState.startupMessage]);
+  }, [startupMessage]);
 
   function handleLoaderClick() {
-    if (projectState.startupMessage === StartupMessage.Building) {
+    if (startupMessage === StartupMessage.Building) {
       project.focusBuildOutput();
-    } else if (projectState.startupMessage === StartupMessage.WaitingForAppToLoad) {
+    } else if (startupMessage === StartupMessage.WaitingForAppToLoad) {
       onRequestShowPreview();
     } else {
       project.focusExtensionLogsOutput();
     }
   }
 
-  const isWaitingForApp = projectState.startupMessage === StartupMessage.WaitingForAppToLoad;
-  const isBuilding = projectState.startupMessage === StartupMessage.Building;
+  const isWaitingForApp = startupMessage === StartupMessage.WaitingForAppToLoad;
+  const isBuilding = startupMessage === StartupMessage.Building;
 
   return (
-    <>
-      <div className="preview-loader-center-pad" />
-      <button className="preview-loader-container" onClick={handleLoaderClick}>
-        <div className="preview-loader-button-group">
-          <StartupMessageComponent
-            className={classNames(
-              "preview-loader-message",
-              isLoadingSlowly && "preview-loader-slow-progress"
-            )}>
-            {projectState.startupMessage}
-            {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
-          </StartupMessageComponent>
-          {projectState.stageProgress !== undefined && (
-            <div className="preview-loader-stage-progress">
-              {(projectState.stageProgress * 100).toFixed(1)}%
-            </div>
+    projectState.status === "starting" && (
+      <>
+        <div className="preview-loader-center-pad" />
+        <button className="preview-loader-container" onClick={handleLoaderClick}>
+          <div className="preview-loader-button-group">
+            <StartupMessageComponent
+              className={classNames(
+                "preview-loader-message",
+                isLoadingSlowly && "preview-loader-slow-progress"
+              )}>
+              {projectState.startupMessage}
+              {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
+            </StartupMessageComponent>
+            {projectState.stageProgress !== undefined && (
+              <div className="preview-loader-stage-progress">
+                {(projectState.stageProgress * 100).toFixed(1)}%
+              </div>
+            )}
+          </div>
+        </button>
+        <ProgressBar progress={progress} />
+        <div className="preview-loader-center-pad">
+          {isLoadingSlowly && isWaitingForApp && (
+            <>
+              <div className="preview-loader-submessage">
+                Loading app takes longer than expected. If nothing happens after a while try the
+                below options to troubleshoot:
+              </div>
+              <div className="preview-loader-waiting-actions">
+                <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
+                  <span className="codicon codicon-output" /> Open Radon IDE Logs
+                </Button>
+                <Button type="secondary" onClick={onRequestShowPreview}>
+                  <span className="codicon codicon-open-preview" /> Force show device screen
+                </Button>
+                <a href="https://ide.swmansion.com/docs/guides/troubleshooting" target="_blank">
+                  <Button type="secondary">
+                    <span className="codicon codicon-browser" /> Visit troubleshoot guide
+                  </Button>
+                </a>
+                <Button type="secondary" onClick={() => project.restart("all")}>
+                  <span className="codicon codicon-refresh" /> Clean rebuild project
+                </Button>
+              </div>
+            </>
           )}
         </div>
-      </button>
-      <ProgressBar progress={progress} />
-      <div className="preview-loader-center-pad">
-        {isLoadingSlowly && isWaitingForApp && (
-          <>
-            <div className="preview-loader-submessage">
-              Loading app takes longer than expected. If nothing happens after a while try the below
-              options to troubleshoot:
-            </div>
-            <div className="preview-loader-waiting-actions">
-              <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
-                <span className="codicon codicon-output" /> Open Radon IDE Logs
-              </Button>
-              <Button type="secondary" onClick={onRequestShowPreview}>
-                <span className="codicon codicon-open-preview" /> Force show device screen
-              </Button>
-              <a href="https://ide.swmansion.com/docs/guides/troubleshooting" target="_blank">
-                <Button type="secondary">
-                  <span className="codicon codicon-browser" /> Visit troubleshoot guide
-                </Button>
-              </a>
-              <Button type="secondary" onClick={() => project.restart("all")}>
-                <span className="codicon codicon-refresh" /> Clean rebuild project
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
-    </>
+      </>
+    )
   );
 }
 

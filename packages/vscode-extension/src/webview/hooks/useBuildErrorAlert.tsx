@@ -4,9 +4,6 @@ import { useProject } from "../providers/ProjectProvider";
 import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import { useLaunchConfig } from "../providers/LaunchConfigProvider";
-import { useDependencies } from "../providers/DependenciesProvider";
-import { DevicePlatform } from "../../common/DeviceManager";
 
 type LogsButtonDestination = "build" | "extension";
 
@@ -52,8 +49,6 @@ function BuildErrorActions({
 }
 
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
-  const { ios, xcodeSchemes, eas } = useLaunchConfig();
-  const { dependencies, runDiagnostics } = useDependencies();
   const { projectState, project } = useProject();
 
   let onReload = () => {
@@ -61,42 +56,45 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   };
   let logsButtonDestination: LogsButtonDestination | undefined = undefined;
 
-  let description = "Open build logs to find out what went wrong.";
+  let description =
+    projectState.status === "buildError"
+      ? projectState.buildError.message
+      : "Open build logs to find out what went wrong.";
 
-  if (!ios?.scheme && xcodeSchemes.length > 1) {
-    description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
-  }
+  // if (!ios?.scheme && xcodeSchemes.length > 1) {
+  //   description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
+  // }
 
-  if (
-    dependencies.pods?.status !== "installed" &&
-    projectState.selectedDevice?.platform === DevicePlatform.IOS
-  ) {
-    description = "Pods could not be installed in your project. Check the build logs for details.";
-  }
+  // if (
+  //   dependencies.pods?.status !== "installed" &&
+  //   projectState.selectedDevice?.platform === DevicePlatform.IOS
+  // ) {
+  //   description = "Pods could not be installed in your project. Check the build logs for details.";
+  // }
 
-  if (
-    dependencies.android?.status === "notInstalled" &&
-    projectState.selectedDevice?.platform === DevicePlatform.Android
-  ) {
-    description =
-      'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
-    onReload = () => {
-      runDiagnostics();
-      project.restart(false);
-    };
-  }
+  // if (
+  //   dependencies.android?.status === "notInstalled" &&
+  //   projectState.selectedDevice?.platform === DevicePlatform.Android
+  // ) {
+  //   description =
+  //     'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
+  //   onReload = () => {
+  //     runDiagnostics();
+  //     project.restart(false);
+  //   };
+  // }
 
-  if (
-    dependencies.ios?.status === "notInstalled" &&
-    projectState.selectedDevice?.platform === DevicePlatform.IOS
-  ) {
-    description =
-      'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
-    onReload = () => {
-      runDiagnostics();
-      project.restart(false);
-    };
-  }
+  // if (
+  //   dependencies.ios?.status === "notInstalled" &&
+  //   projectState.selectedDevice?.platform === DevicePlatform.IOS
+  // ) {
+  //   description =
+  //     'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure external build source using launch configuration.';
+  //   onReload = () => {
+  //     runDiagnostics();
+  //     project.restart(false);
+  //   };
+  // }
 
   if (dependencies.nodejs?.status === "notInstalled") {
     description =
@@ -104,19 +102,19 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     logsButtonDestination = "extension";
   }
 
-  const isEasBuild =
-    (!!eas?.android && projectState.selectedDevice?.platform === DevicePlatform.Android) ||
-    (!!eas?.ios && projectState.selectedDevice?.platform === DevicePlatform.IOS);
+  // const isEasBuild =
+  //   (!!eas?.android && projectState.selectedDevice?.platform === DevicePlatform.Android) ||
+  //   (!!eas?.ios && projectState.selectedDevice?.platform === DevicePlatform.IOS);
 
-  if (isEasBuild) {
-    if (dependencies.easCli?.status === "notInstalled") {
-      description =
-        "Your project uses EAS build, but eas-cli is not installed. Install it and reload the app.";
-    } else {
-      description = "Your project EAS build has failed, see extension logs to see what went wrong.";
-    }
-    logsButtonDestination = "extension";
-  }
+  // if (isEasBuild) {
+  //   if (dependencies.easCli?.status === "notInstalled") {
+  //     description =
+  //       "Your project uses EAS build, but eas-cli is not installed. Install it and reload the app.";
+  //   } else {
+  //     description = "Your project EAS build has failed, see extension logs to see what went wrong.";
+  //   }
+  //   logsButtonDestination = "extension";
+  // }
 
   const actions = (
     <BuildErrorActions logsButtonDestination={logsButtonDestination} onReload={onReload} />

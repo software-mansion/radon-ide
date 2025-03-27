@@ -14,6 +14,7 @@ import {
   MultimediaData,
   ProjectInterface,
   ProjectState,
+  StartupMessage,
   ToolsState,
 } from "../../common/Project";
 
@@ -33,6 +34,8 @@ interface ProjectContextProps {
 
 const defaultProjectState: ProjectState = {
   status: "starting",
+  startupMessage: StartupMessage.InitializingDevice,
+  stageProgress: 0,
   previewURL: undefined,
   selectedDevice: undefined,
   previewZoom: undefined,
