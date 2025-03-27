@@ -51,7 +51,7 @@ const NetworkRequestLog = ({
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, []);
+  }, [selectedNetworkLog]);
 
   useLayoutEffect(() => {
     setColumnWidths(
@@ -211,21 +211,27 @@ const NetworkRequestLog = ({
 
   const logDetailsConfig = useMemo(
     () => [
-      { title: "Domain", getValue: (log: NetworkLog) => log.request?.url.split("/")[2] },
-      { title: "File", getValue: (log: NetworkLog) => log.request?.url.split("/").pop() },
+      {
+        title: "Domain",
+        getValue: (log: NetworkLog) => log.request?.url.split("/")[2] || "(pending)",
+      },
+      {
+        title: "File",
+        getValue: (log: NetworkLog) => log.request?.url.split("/").pop() || "(pending)",
+      },
       {
         title: "Status",
-        getValue: (log: NetworkLog) => log.response?.status,
+        getValue: (log: NetworkLog) => log.response?.status || "(pending)",
         getClass: (log: NetworkLog) => getStatusClass(log.response?.status) + " status",
       },
-      { title: "Method", getValue: (log: NetworkLog) => log.request?.method },
-      { title: "Type", getValue: (log: NetworkLog) => log.type },
+      { title: "Method", getValue: (log: NetworkLog) => log.request?.method || "(pending)" },
+      { title: "Type", getValue: (log: NetworkLog) => log.type || "(pending)" },
       {
         title: "Size",
         getValue: (log: NetworkLog) => {
           const size = log.encodedDataLength;
           if (!size) {
-            return "N/A";
+            return "(pending)";
           }
           const units = ["B", "KB", "MB", "GB", "TB"];
           let unitIndex = 0;
@@ -237,7 +243,11 @@ const NetworkRequestLog = ({
           return `${parseFloat(formattedSize.toFixed(2) || "")} ${units[unitIndex]}`;
         },
       },
-      { title: "Time", getValue: (log: NetworkLog) => `${log.timeline?.durationMs} ms` },
+      {
+        title: "Time",
+        getValue: (log: NetworkLog) =>
+          log.timeline?.durationMs ? `${log.timeline?.durationMs} ms` : "(pending)",
+      },
     ],
     []
   );
