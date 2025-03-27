@@ -141,11 +141,11 @@
 }
 
 .request-sent-bar {
-  background-color: #add8e6;
+  background-color: var(--vscode-textLink-foreground);
 }
 
 .response-receive-bar {
-  background-color: #90ee90;
+  background-color: var(--vscode-button-hoverBackground);
 }
 
 .timing-section > span {
