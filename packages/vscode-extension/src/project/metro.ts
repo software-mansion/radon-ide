@@ -100,11 +100,18 @@ export class Metro {
     return this._port;
   }
 
-  public get watchFolders() {
+  public get sourceMapPathOverrides() {
     if (this._watchFolders === undefined) {
-      throw new Error("Attempting to read watchFolders before metro has started");
+      throw new Error("Attempting to read sourceMapPathOverrides before metro has started");
     }
-    return this._watchFolders;
+    const sourceMapPathOverrides: Record<string, string> = {};
+    if (this.isUsingNewDebugger && this._watchFolders.length > 0) {
+      sourceMapPathOverrides["/[metro-project]/*"] = `${this._watchFolders[0]}${path.sep}*`;
+      this._watchFolders.forEach((watchFolder, index) => {
+        sourceMapPathOverrides[`/[metro-watchFolders]/${index}/*`] = `${watchFolder}${path.sep}*`;
+      });
+    }
+    return sourceMapPathOverrides;
   }
 
   public get expoPreludeLineCount() {

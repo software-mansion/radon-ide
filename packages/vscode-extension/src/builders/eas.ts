@@ -68,9 +68,13 @@ async function fetchBuild(
     appRoot
   );
   if (!builds || builds.length === 0) {
-    throw new Error(
-      `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile. If you're building iOS app, make sure you set '"ios.simulator": true' option in eas.json.`
-    );
+    let message = `Failed to find any EAS build artifacts for ${platform} with ${config.profile} profile and matching the fingerprint of the local workspace.`;
+    message +=
+      "\nYou can run `eas fingerprint:compare` in a terminal to check why the fingerprint doesn't match the available builds.";
+    if (platform === DevicePlatform.IOS) {
+      message += `\nMake sure you set '"ios.simulator": true' option for profile '${config.profile}' in eas.json.`;
+    }
+    throw new Error(message);
   }
   if (builds.every((build) => build.expired)) {
     throw new Error(

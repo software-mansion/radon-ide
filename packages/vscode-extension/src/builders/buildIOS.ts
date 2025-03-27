@@ -116,23 +116,19 @@ export async function buildIos(
       platform: DevicePlatform.IOS,
     });
 
-    try {
-      const appPath = await fetchEasBuild(
-        cancelToken,
-        eas.ios,
-        DevicePlatform.IOS,
-        appRoot,
-        outputChannel
-      );
+    const appPath = await fetchEasBuild(
+      cancelToken,
+      eas.ios,
+      DevicePlatform.IOS,
+      appRoot,
+      outputChannel
+    );
 
-      return {
-        appPath,
-        bundleID: await getBundleID(appPath),
-        platform: DevicePlatform.IOS,
-      };
-    } catch {
-      throw new Error("Failed to build iOS app using EAS build.");
-    }
+    return {
+      appPath,
+      bundleID: await getBundleID(appPath),
+      platform: DevicePlatform.IOS,
+    };
   }
 
   if (await isExpoGoProject(appRoot)) {

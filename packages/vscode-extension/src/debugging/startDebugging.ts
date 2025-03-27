@@ -9,7 +9,7 @@ export async function startDebugging(
   folder: vscode.WorkspaceFolder | undefined,
   nameOrConfiguration: string | vscode.DebugConfiguration,
   parentSessionOrOptions?: vscode.DebugSession | vscode.DebugSessionOptions
-) {
+): Promise<vscode.DebugSession> {
   const debugSessionType =
     typeof nameOrConfiguration === "string" ? nameOrConfiguration : nameOrConfiguration.type;
   let debugSession: vscode.DebugSession | undefined;

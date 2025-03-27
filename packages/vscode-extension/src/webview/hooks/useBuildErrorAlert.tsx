@@ -98,6 +98,12 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     };
   }
 
+  if (dependencies.nodejs?.status === "notInstalled") {
+    description =
+      "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements.";
+    logsButtonDestination = "extension";
+  }
+
   const isEasBuild =
     (!!eas?.android && projectState.selectedDevice?.platform === DevicePlatform.Android) ||
     (!!eas?.ios && projectState.selectedDevice?.platform === DevicePlatform.IOS);
@@ -159,9 +165,9 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusExtensionLogsOutput();
+          project.focusDebugConsole();
         }}
-        tooltip={{ label: "Open extension logs", side: "bottom" }}>
+        tooltip={{ label: "Open debug console", side: "bottom" }}>
         <span className="codicon codicon-output" />
       </IconButton>
       <IconButton

@@ -53,6 +53,7 @@ import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
+import { isAutoSaveEnabled } from "../utilities/isAutoSaveEnabled";
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
@@ -408,8 +409,10 @@ export class Project
   ): Promise<void> {
     await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
 
-    this.focusDebugConsole();
-    focusSource(source);
+    if (!isAutoSaveEnabled()) {
+      this.focusDebugConsole();
+      focusSource(source);
+    }
 
     Logger.error("[Bundling Error]", message);
     // if bundle build failed, we don't want to change the status
@@ -973,7 +976,7 @@ export class Project
         status: "running",
       });
     } catch (e) {
-      Logger.error("Couldn't start device session", e);
+      Logger.error("Couldn't start device session", e instanceof Error ? e.message : e);
 
       const isSelected = this.projectState.selectedDevice === deviceInfo;
       const isNewSession = this.deviceSession === newDeviceSession;

@@ -79,7 +79,7 @@ export class Connector implements Disposable {
       displayDebuggerOverlay: true,
       isUsingNewDebugger,
       expoPreludeLineCount: metro.expoPreludeLineCount,
-      watchFolders: metro.watchFolders,
+      sourceMapPathOverrides: metro.sourceMapPathOverrides,
     });
     if (success) {
       this.metro = metro;

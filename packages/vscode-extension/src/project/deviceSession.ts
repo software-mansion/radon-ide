@@ -326,7 +326,7 @@ export class DeviceSession implements Disposable {
       displayDebuggerOverlay: false,
       isUsingNewDebugger: this.metro.isUsingNewDebugger,
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
-      watchFolders: this.metro.watchFolders,
+      sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
 
     if (connected) {
