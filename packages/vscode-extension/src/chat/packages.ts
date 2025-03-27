@@ -16,17 +16,17 @@ const packages: Package[] = [];
 let packageJsonHashes: string[] = [];
 
 async function getPackageJsonHashes(): Promise<string[]> {
-  const rootPackageJson = await vscode.workspace.findFiles(
+  const packageJsonFiles = await vscode.workspace.findFiles(
     new RelativePattern(appRootFolder, "package.json"),
     null
   );
 
-  if (!rootPackageJson.length) {
+  if (!packageJsonFiles.length) {
     Logger.error("No package.json found in the workspace");
     return [];
   }
 
-  const hashes = rootPackageJson.map((packageJson) =>
+  const hashes = packageJsonFiles.map((packageJson) =>
     calculateMD5(packageJson.fsPath).then((hash) => hash.digest("hex"))
   );
 
