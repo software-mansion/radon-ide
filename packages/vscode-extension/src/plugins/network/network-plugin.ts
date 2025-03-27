@@ -1,7 +1,7 @@
 import http, { Server } from "http";
 import { spawn } from "child_process";
 import path from "path";
-import { commands, Disposable, window } from "vscode";
+import { commands, Disposable, ExtensionMode, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Devtools } from "../../project/devtools";
 import { ToolKey, ToolPlugin } from "../../project/tools";
@@ -47,8 +47,9 @@ async function initialize() {
     return;
   }
   Logger.debug("Initilizing Network tool");
-
-  await startViteServer();
+  if (extensionContext.extensionMode === ExtensionMode.Development) {
+    await startViteServer();
+  }
   initialized = true;
   extensionContext.subscriptions.push(
     window.registerWebviewViewProvider(
@@ -73,11 +74,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
       ws.on("message", (message) => {
         try {
           const payload = JSON.parse(message.toString());
-          if (
-            ["Network.getResponseBody", "Network.enable", "Network.disable"].includes(
-              payload.method
-            )
-          ) {
+          if (payload.method.startsWith("Network.")) {
             // forward message to devtools
             this.devtools.send("RNIDE_networkInspectorCDPRequest", payload);
           } else if (payload.id) {
