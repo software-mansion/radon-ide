@@ -104,7 +104,8 @@ export async function buildIos(
         customBuild.ios.buildCommand,
         env,
         DevicePlatform.IOS,
-        appRoot
+        appRoot,
+        outputChannel
       );
       if (!appPath) {
         throw new Error(

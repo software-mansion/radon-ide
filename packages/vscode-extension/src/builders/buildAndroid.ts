@@ -109,7 +109,8 @@ export async function buildAndroid(
       customBuild.android.buildCommand,
       env,
       DevicePlatform.Android,
-      appRoot
+      appRoot,
+      outputChannel
     );
     if (!apkPath) {
       throw new BuildError(
