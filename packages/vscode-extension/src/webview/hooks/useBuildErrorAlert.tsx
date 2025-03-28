@@ -62,14 +62,16 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   let description = "Open extension logs to find out what went wrong.";
 
   if (projectState.status === "buildError") {
-    description = projectState.buildError.message;
-    if (projectState.buildError.buildType === BuildType.Eas) {
+    const { buildType, message } = projectState.buildError;
+    description = message;
+    if ([BuildType.Local, BuildType.Custom].includes(buildType)) {
+      logsButtonDestination = "build";
+    } else {
       logsButtonDestination = "extension";
-    } else if (projectState.buildError.buildType === BuildType.Unknown) {
-      logsButtonDestination = "extension";
-      if (!ios?.scheme && xcodeSchemes.length > 1) {
-        description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
-      }
+    }
+
+    if (buildType === BuildType.Unknown && !ios?.scheme && xcodeSchemes.length > 1) {
+      description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
     }
   }
 
