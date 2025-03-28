@@ -2,14 +2,15 @@ import { ExtensionContext, ExtensionMode, Webview, Uri, workspace } from "vscode
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { Platform } from "../utilities/platform";
+import { EXTENSION_DEV_SERVER_HOST } from "../webview/utilities/constants";
 
 export function generateWebviewContent(
   context: ExtensionContext,
   webview: Webview,
   extensionUri: Uri,
-  viteDevHost: string,
   webviewName: string,
-  webviewDevPath: string
+  webviewDevPath: string,
+  extraBodyHtml?: string
 ) {
   const config = workspace.getConfiguration("RadonIDE");
   const useCodeTheme = config.get("themeType") === "vscode";
@@ -22,7 +23,9 @@ export function generateWebviewContent(
       : "/index.jsx"
     : `${webviewName}.js`;
 
-  const baseUri = IS_DEV ? `http://${viteDevHost}` : getUri(webview, extensionUri, ["dist/"]);
+  const baseUri = IS_DEV
+    ? `http://${EXTENSION_DEV_SERVER_HOST}`
+    : getUri(webview, extensionUri, ["dist/"]);
 
   const codiconsCssUri = IS_DEV
     ? getUri(webview, extensionUri, ["node_modules/@vscode/codicons/dist/codicon.css"])
@@ -70,6 +73,7 @@ export function generateWebviewContent(
         <div id="root"></div>
         <script nonce="${nonce}">window.RNIDE_hostOS = "${Platform.OS}";</script>
         <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+        ${extraBodyHtml || ""}
       </body>
     </html>
   `;

@@ -14,11 +14,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { generateWebviewContent } from "./webviewContentGenerator";
 import { WebviewController } from "./WebviewController";
 import { disposeAll } from "../utilities/disposables";
-import {
-  EXTENSION_DEV_SERVER_HOST,
-  PREVIEW_WEBVIEW_NAME,
-  PREVIEW_WEBVIEW_PATH,
-} from "../webview/utilities/constants";
+import { PREVIEW_WEBVIEW_NAME, PREVIEW_WEBVIEW_PATH } from "../webview/utilities/constants";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 
@@ -51,9 +47,9 @@ export class TabPanel implements Disposable {
       extensionContext,
       this._panel.webview,
       extensionContext.extensionUri,
-      EXTENSION_DEV_SERVER_HOST,
       PREVIEW_WEBVIEW_NAME,
-      PREVIEW_WEBVIEW_PATH
+      PREVIEW_WEBVIEW_PATH,
+      ""
     );
 
     this.webviewController = new WebviewController(this._panel.webview);

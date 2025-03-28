@@ -10,11 +10,7 @@ import { IDE } from "../../project/ide";
 import { NETWORK_PLUGIN_ID, NetworkPlugin } from "./network-plugin";
 import { reportToolOpened, reportToolVisibilityChanged } from "../../project/tools";
 import { generateWebviewContent } from "../../panels/webviewContentGenerator";
-import {
-  NETWORK_DEV_SERVER_HOST,
-  PREVIEW_NETWORK_NAME,
-  PREVIEW_NETWORK_PATH,
-} from "../../webview/utilities/constants";
+import { PREVIEW_NETWORK_NAME, PREVIEW_NETWORK_PATH } from "../../webview/utilities/constants";
 
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
   constructor(private readonly context: ExtensionContext) {}
@@ -45,12 +41,9 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
       this.context,
       webviewView.webview,
       this.context.extensionUri,
-      NETWORK_DEV_SERVER_HOST,
       PREVIEW_NETWORK_NAME,
-      PREVIEW_NETWORK_PATH
-    ).replace(
-      "</body>",
-      `<script>window.__websocketEndpoint = 'localhost:${wsPort}';</script></body>`
+      PREVIEW_NETWORK_PATH,
+      `<script>window.__websocketEndpoint = 'localhost:${wsPort}';</script>`
     );
   }
 }

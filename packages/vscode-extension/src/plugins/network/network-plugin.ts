@@ -1,7 +1,5 @@
 import http, { Server } from "http";
-import { spawn } from "child_process";
-import path from "path";
-import { commands, Disposable, ExtensionMode, window } from "vscode";
+import { commands, Disposable, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Devtools } from "../../project/devtools";
 import { ToolKey, ToolPlugin } from "../../project/tools";
@@ -12,44 +10,12 @@ import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider
 
 export const NETWORK_PLUGIN_ID = "network";
 
-function startViteServer(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const process = spawn("npm", ["run", "watch:network-webview"], {
-      cwd: path.join(__dirname, ".."),
-      shell: true,
-    });
-
-    process.stdout.on("data", (data) => {
-      const output = data.toString();
-
-      if (output.includes("ready in") || output.includes("Local:")) {
-        resolve();
-      }
-    });
-
-    process.stderr.on("data", (data) => {
-      Logger.error("ERROR:", data.toString());
-    });
-
-    process.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(`Process exited with code ${code}`));
-      } else {
-        Logger.debug(`Process exited with code ${code}`);
-      }
-    });
-  });
-}
-
 let initialized = false;
 async function initialize() {
   if (initialized) {
     return;
   }
   Logger.debug("Initilizing Network tool");
-  if (extensionContext.extensionMode === ExtensionMode.Development) {
-    await startViteServer();
-  }
   initialized = true;
   extensionContext.subscriptions.push(
     window.registerWebviewViewProvider(
