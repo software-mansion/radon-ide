@@ -832,13 +832,35 @@ async function parseAvdIniFile(filePath: string) {
 }
 
 async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
-  await exec(ADB_PATH, [
-    "-s",
-    serial,
-    "wait-for-device",
-    "shell",
-    "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
-  ]);
+  return new Promise<void>(async (resolve, reject) => {
+    let process: ChildProcess | undefined;
+    const timeout = setTimeout(() => {
+      process?.kill(9);
+      reject(new Error("Timeout waiting for emulator to boot"));
+    }, timeoutMs);
+
+    process = exec(ADB_PATH, [
+      "-s",
+      serial,
+      "wait-for-device",
+      "shell",
+      "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
+    ]);
+
+    await process;
+
+    process = exec(ADB_PATH, [
+      "-s",
+      serial,
+      "shell",
+      `while ! ping -c 1 10.0.2.2>/dev/null 2>&1; do sleep 0.5; done;`,
+    ]);
+
+    await process;
+
+    clearTimeout(timeout);
+    resolve();
+  });
 }
 
 function getOrCreateAvdDirectory(avd?: string) {
