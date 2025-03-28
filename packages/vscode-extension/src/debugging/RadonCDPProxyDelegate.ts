@@ -213,30 +213,41 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       .catch(_.noop);
   }
 
-  private handleScriptParsed(command: IProtocolCommand): IProtocolCommand {
+  private async getSourceMapData(sourceMapURL: string) {
+    if (sourceMapURL.startsWith("data:")) {
+      const base64Data = sourceMapURL.split(",")[1];
+      const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
+      const sourceMapData = JSON.parse(decodedData);
+      return sourceMapData;
+    }
+
+    if (sourceMapURL.startsWith("http")) {
+      const result = await fetch(sourceMapURL);
+      const data = await result.json();
+      return data;
+    }
+
+    throw new Error("Source map URL schemas other than `data` and `http` are not supported");
+  }
+
+  private async handleScriptParsed(command: IProtocolCommand): Promise<IProtocolCommand> {
     const { sourceMapURL, url, scriptId } = command.params as Cdp.Debugger.ScriptParsedEvent;
     if (!sourceMapURL) {
       return command;
     }
 
-    if (!sourceMapURL.startsWith("data:")) {
-      Logger.error(
-        "Source map URL doesn't encode source map data, mapping sources may not work correctly",
-        sourceMapURL
+    try {
+      const sourceMapData = await this.getSourceMapData(sourceMapURL);
+      const isMainBundle = sourceMapData.sources.some((source: string) =>
+        source.includes("__prelude__")
       );
+
+      this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
+    } catch (e) {
+      Logger.error("Could not process the source map", e);
+    } finally {
       return command;
     }
-
-    const base64Data = sourceMapURL.split(",")[1];
-    const decodedData = Buffer.from(base64Data, "base64").toString("utf-8");
-    const sourceMapData = JSON.parse(decodedData);
-
-    const isMainBundle = sourceMapData.sources.some((source: string) =>
-      source.includes("__prelude__")
-    );
-
-    this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
-    return command;
   }
 
   private handleConsoleAPICalled(
