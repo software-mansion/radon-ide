@@ -222,8 +222,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     }
 
     if (sourceMapURL.startsWith("http")) {
-      const data = await fetch(sourceMapURL);
-      return data.json();
+      const result = await fetch(sourceMapURL);
+      const data = await result.json();
+      return data;
     }
 
     throw new Error("Source map URL schemas other than `data` and `http` are not supported");
