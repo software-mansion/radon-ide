@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import IconButton from "./shared/IconButton";
+import IconButton from "../../webview/components/shared/IconButton";
 import { useNetwork } from "../providers/NetworkProvider";
 
 function NetworkBar() {

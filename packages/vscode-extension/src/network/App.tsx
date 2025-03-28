@@ -1,12 +1,12 @@
 import "./App.css";
-import "../styles/theme.css";
+import "../webview/styles/theme.css";
 import { useMemo, useState } from "react";
-import NetworkBar from "../components/NetworkBar";
-import NetworkRequestLog from "../components/NetworkRequestLog";
-import NetworkLogDetails from "../components/NetworkLogDetails";
-import { useNetwork } from "../providers/NetworkProvider";
-import NetworkTimeline from "../components/NetworkTimeline";
-import { Input } from "../components/shared/Input";
+import NetworkBar from "./components/NetworkBar";
+import NetworkRequestLog from "./components/NetworkRequestLog";
+import NetworkLogDetails from "./components/NetworkLogDetails";
+import { useNetwork } from "./providers/NetworkProvider";
+import NetworkTimeline from "./components/NetworkTimeline";
+import { Input } from "../webview/components/shared/Input";
 
 function App() {
   const { showSearch, networkLogs, unfilteredNetworkLogs, filters, showChart, setFilters } =

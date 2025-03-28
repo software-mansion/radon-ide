@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./NetworkLogDetails.css";
-import IconButton from "./shared/IconButton";
-import ResizableContainer from "./shared/ResizableContainer";
+import IconButton from "../../webview/components/shared/IconButton";
+import ResizableContainer from "../../webview/components/shared/ResizableContainer";
 import HeadersTab from "./HeadersTab";
 import PayloadTab from "./PayloadTab";
 import ResponseTab from "./ResponseTab";

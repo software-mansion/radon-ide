@@ -48,8 +48,7 @@ export class TabPanel implements Disposable {
       this._panel.webview,
       extensionContext.extensionUri,
       PREVIEW_WEBVIEW_NAME,
-      PREVIEW_WEBVIEW_PATH,
-      ""
+      PREVIEW_WEBVIEW_PATH
     );
 
     this.webviewController = new WebviewController(this._panel.webview);

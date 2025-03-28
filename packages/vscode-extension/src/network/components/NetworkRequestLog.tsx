@@ -1,6 +1,6 @@
 import { useState, useMemo, useLayoutEffect, useRef, useCallback } from "react";
 import { NetworkLog } from "../hooks/useNetworkTracker";
-import ResizableContainer from "./shared/ResizableContainer";
+import ResizableContainer from "../../webview/components/shared/ResizableContainer";
 import "./NetworkRequestLog.css";
 
 interface NetworkRequestLogProps {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import IconButton from "./shared/IconButton";
+import IconButton from "../../webview/components/shared/IconButton";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 

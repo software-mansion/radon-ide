@@ -47,7 +47,7 @@ export default defineConfig({
     assetsInlineLimit: 0, // disable assets inlining
     reportCompressedSize: false, // disable reporting compressed size
     rollupOptions: {
-      input: { panel: "src/webview/index.jsx", network: "src/webview/network/index.jsx" },
+      input: { panel: "src/webview/index.jsx", network: "src/network/index.jsx" },
       output: {
         // Fixed name for the JavaScript entry file
         entryFileNames: (chunkInfo) => {

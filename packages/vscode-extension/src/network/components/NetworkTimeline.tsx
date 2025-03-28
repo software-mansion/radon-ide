@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog as TimelineNetworkLog } from "../types/network";
-import ResizableContainer from "./shared/ResizableContainer";
+import ResizableContainer from "../../webview/components/shared/ResizableContainer";
 import "./NetworkTimeline.css";
 
 const PADDING_HORIZONTAL = 8;

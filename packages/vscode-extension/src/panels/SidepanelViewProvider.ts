@@ -35,8 +35,7 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
       this._view.webview,
       this.context.extensionUri,
       PREVIEW_WEBVIEW_NAME,
-      PREVIEW_WEBVIEW_PATH,
-      ""
+      PREVIEW_WEBVIEW_PATH
     );
   }
 
