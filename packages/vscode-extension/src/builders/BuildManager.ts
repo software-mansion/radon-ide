@@ -8,6 +8,7 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelToken } from "./cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
+import { BuildType } from "../common/Project";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -21,6 +22,12 @@ type BuildOptions = {
   progressListener: (newProgress: number) => void;
   onSuccess: () => void;
 };
+
+export class BuildError extends Error {
+  constructor(message: string, public readonly buildType: BuildType) {
+    super(message);
+  }
+}
 
 export class BuildManager {
   constructor(
@@ -149,7 +156,12 @@ export class BuildManager {
     };
 
     const disposableBuild = {
-      build: buildApp(),
+      build: buildApp().catch((e: Error) => {
+        if (e instanceof BuildError) {
+          throw e;
+        }
+        throw new BuildError(e.message, BuildType.Unknown);
+      }),
       dispose: () => {
         cancelToken.cancel();
       },

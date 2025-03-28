@@ -18,6 +18,7 @@ import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
   AppPermissionType,
+  BuildType,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
@@ -56,6 +57,7 @@ import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRoo
 import { isAutoSaveEnabled } from "../utilities/isAutoSaveEnabled";
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { BuildError } from "../builders/BuildManager";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -85,6 +87,8 @@ export class Project
 
   private projectState: ProjectState = {
     status: "starting",
+    stageProgress: 0,
+    startupMessage: StartupMessage.InitializingDevice,
     previewURL: undefined,
     previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
     selectedDevice: undefined,
@@ -838,19 +842,24 @@ export class Project
   }
 
   private reportStageProgress(stageProgress: number, stage: string) {
-    if (stage !== this.projectState.startupMessage) {
+    if (this.projectState.status !== "starting" || stage !== this.projectState.startupMessage) {
       return;
     }
     this.updateProjectState({ stageProgress });
   }
 
   private updateProjectState(newState: Partial<ProjectState>) {
+    // NOTE: this is unsafe, but I'm not sure there's a way to enforce the type of `newState` correctly
+    const mergedState: any = { ...this.projectState, ...newState };
     // stageProgress is tied to a startup stage, so when there is a change of status or startupMessage,
     // we always want to reset the progress.
-    if (newState.status !== undefined || newState.startupMessage !== undefined) {
-      delete this.projectState.stageProgress;
+    if (
+      newState.status !== undefined ||
+      ("startupMessage" in newState && newState.startupMessage !== undefined)
+    ) {
+      delete mergedState.stageProgress;
     }
-    this.projectState = { ...this.projectState, ...newState };
+    this.projectState = mergedState;
     this.eventEmitter.emit("projectStateChanged", this.projectState);
   }
 
@@ -883,7 +892,13 @@ export class Project
       Logger.debug("Node modules already installed - skipping");
     }
 
-    await this.dependencyManager.validateNodeVersion();
+    const supportedNodeInstalled =
+      await this.dependencyManager.checkSupportedNodeVersionInstalled();
+    if (!supportedNodeInstalled) {
+      throw new Error(
+        "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
+      );
+    }
   }
 
   //#region Select device
@@ -983,8 +998,24 @@ export class Project
       if (isSelected && isNewSession) {
         if (e instanceof DeviceBootError) {
           this.updateProjectState({ status: "bootError" });
+        } else if (e instanceof BuildError) {
+          this.updateProjectState({
+            status: "buildError",
+            buildError: {
+              message: e.message,
+              buildType: e.buildType,
+              platform: deviceInfo.platform,
+            },
+          });
         } else {
-          this.updateProjectState({ status: "buildError" });
+          this.updateProjectState({
+            status: "buildError",
+            buildError: {
+              message: (e as Error).message,
+              buildType: BuildType.Unknown,
+              platform: deviceInfo.platform,
+            },
+          });
         }
       }
     }

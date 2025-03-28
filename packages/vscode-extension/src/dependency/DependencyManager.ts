@@ -84,15 +84,21 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     this.checkEasCliInstallationStatus();
   }
 
-  public async validateNodeVersion() {
+  public async checkSupportedNodeVersionInstalled(): Promise<boolean> {
     const appRoot = this.appRootFolder;
-    const { stdout: nodeVersion } = await exec("node", ["-v"]);
-    const minimumNodeVersion = getMinimumSupportedNodeVersion(appRoot);
-    const isMinimumNodeVersion = semver.satisfies(nodeVersion, minimumNodeVersion);
-    this.emitEvent("nodejs", {
-      status: isMinimumNodeVersion ? "installed" : "notInstalled",
-      isOptional: false,
-    });
+    try {
+      const { stdout: nodeVersion } = await exec("node", ["-v"]);
+      const minimumNodeVersion = getMinimumSupportedNodeVersion(appRoot);
+      const isMinimumNodeVersion = semver.satisfies(nodeVersion, minimumNodeVersion);
+      this.emitEvent("nodejs", {
+        status: isMinimumNodeVersion ? "installed" : "notInstalled",
+        isOptional: false,
+      });
+      return isMinimumNodeVersion;
+    } catch {
+      this.emitEvent("nodejs", { status: "notInstalled", isOptional: false });
+      return false;
+    }
   }
 
   public async checkAndroidDirectoryExits() {
