@@ -9,7 +9,7 @@ import {
   iOSSupportedDevices,
   AndroidSupportedDevices,
   DeviceProperties,
-} from "../utilities/consts";
+} from "../utilities/deviceContants";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform } from "../providers/UtilsProvider";
 import { Input } from "../components/shared/Input";

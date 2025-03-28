@@ -4,16 +4,19 @@ import { WebSocketServer, WebSocket } from "ws";
 import { Devtools } from "../../project/devtools";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
+
+import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
 
 export const NETWORK_PLUGIN_ID = "network";
 
-let initialzed = false;
-function initialize() {
-  if (initialzed) {
+let initialized = false;
+async function initialize() {
+  if (initialized) {
     return;
   }
-  initialzed = true;
+  Logger.debug("Initilizing Network tool");
+  initialized = true;
   extensionContext.subscriptions.push(
     window.registerWebviewViewProvider(
       `RNIDE.Tool.Network.view`,
@@ -37,7 +40,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
       ws.on("message", (message) => {
         try {
           const payload = JSON.parse(message.toString());
-          if (payload.method === "Network.getResponseBody") {
+          if (payload.method.startsWith("Network.")) {
             // forward message to devtools
             this.devtools.send("RNIDE_networkInspectorCDPRequest", payload);
           } else if (payload.id) {
@@ -58,6 +61,8 @@ class NetworkCDPWebsocketBackend implements Disposable {
 
   public get port() {
     const address = this.server.address();
+    Logger.debug("Server address:", address);
+
     if (address && typeof address === "object") {
       return address.port;
     }

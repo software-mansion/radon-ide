@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "allowJs": true,
-    "jsx": "react-jsx",
+    "jsx": "react-jsx"
   },
   "exclude": [
     "node_modules/**/*",

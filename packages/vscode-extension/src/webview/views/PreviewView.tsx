@@ -15,7 +15,7 @@ import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
 import { Frame, InspectDataStackItem, InspectStackData, ZoomLevelType } from "../../common/Project";
 import { Platform, useUtils } from "../providers/UtilsProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
 import "./View.css";
 import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
