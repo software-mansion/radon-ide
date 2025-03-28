@@ -54,7 +54,7 @@ export default defineConfig({
           // Return different filenames based on the entry point
           switch (chunkInfo.name) {
             case "panel":
-              return "webview.js";
+              return "panel.js";
             case "network":
               return "network.js";
             default:
@@ -67,7 +67,7 @@ export default defineConfig({
             // Handle CSS files based on the entry point
             switch (path.basename(assetInfo.name)) {
               case "panel":
-                return "webview.css";
+                return "panel.css";
               case "network":
                 return "network.css";
               default:

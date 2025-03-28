@@ -141,7 +141,11 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://${window.__websocketEndpoint}`);
+    const websocketEndpoint = document.querySelector<HTMLMetaElement>(
+      "meta[name='websocketEndpoint']"
+    )?.content;
+
+    const ws = new WebSocket(`ws://${websocketEndpoint}`);
     wsRef.current = ws;
 
     ws.onmessage = (message) => {

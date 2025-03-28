@@ -1,4 +1,4 @@
-import { ExtensionContext, ExtensionMode, Webview, Uri, workspace } from "vscode";
+import { ExtensionContext, Webview, Uri, workspace, ExtensionMode } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { Platform } from "../utilities/platform";
@@ -10,7 +10,7 @@ export function generateWebviewContent(
   extensionUri: Uri,
   webviewName: string,
   webviewDevPath: string,
-  extraBodyHtml?: string
+  wsEndpoint?: string
 ) {
   const config = workspace.getConfiguration("RadonIDE");
   const useCodeTheme = config.get("themeType") === "vscode";
@@ -41,7 +41,7 @@ export function generateWebviewContent(
       window.$RefreshSig$ = () => (type) => type;
       window.__vite_plugin_react_preamble_installed__ = true;
     </script>
-    <script type="module" nonce="${nonce}" src="/@vite/client"></script>
+    <script type="module" src="/@vite/client"></script>
   `;
 
   const version = context.extension.packageJSON.version;
@@ -54,6 +54,7 @@ export function generateWebviewContent(
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="radon-ide-version" content="${version}" />
+        ${wsEndpoint ? `<meta name='websocketEndpoint' content="${wsEndpoint}" />` : ""}
         <link rel="stylesheet" href="${codiconsCssUri}" />
         ${
           IS_DEV
@@ -65,15 +66,17 @@ export function generateWebviewContent(
                       media-src vscode-resource: http: https:;
                       style-src ${webview.cspSource} 'unsafe-inline';
                       script-src 'nonce-${nonce}';
+                      ${wsEndpoint ? `connect-src ws://${wsEndpoint} ${webview.cspSource};` : ""}
                       font-src vscode-resource: https:;" />
-        <link rel="stylesheet" type="text/css" href="${webviewName}.css" />`
+        <link rel="stylesheet" type="text/css" href="${webviewName}.css" />
+        <link rel="stylesheet" type="text/css" href="theme.css" />
+        `
         }
       </head>
       <body data-use-code-theme="${useCodeTheme}">
         <div id="root"></div>
         <script nonce="${nonce}">window.RNIDE_hostOS = "${Platform.OS}";</script>
         <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
-        ${extraBodyHtml || ""}
       </body>
     </html>
   `;

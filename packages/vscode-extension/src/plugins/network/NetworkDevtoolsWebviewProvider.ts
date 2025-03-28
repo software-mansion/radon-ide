@@ -21,10 +21,12 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
   ): void {
     reportToolOpened(NETWORK_PLUGIN_ID);
     const webview = webviewView.webview;
-    const baseUri = Uri.joinPath(this.context.extensionUri, "dist", "network-devtools-frontend");
     webview.options = {
       enableScripts: true,
-      localResourceRoots: [baseUri],
+      localResourceRoots: [
+        Uri.joinPath(this.context.extensionUri, "dist"),
+        Uri.joinPath(this.context.extensionUri, "node_modules"),
+      ],
     };
 
     const project = IDE.getInstanceIfExists()?.project;
@@ -43,7 +45,7 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
       this.context.extensionUri,
       PREVIEW_NETWORK_NAME,
       PREVIEW_NETWORK_PATH,
-      `<script>window.__websocketEndpoint = 'localhost:${wsPort}';</script>`
+      `localhost:${wsPort}`
     );
   }
 }

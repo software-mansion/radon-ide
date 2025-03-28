@@ -1,4 +1,5 @@
 import "./App.css";
+import "../styles/theme.css";
 import { useMemo, useState } from "react";
 import NetworkBar from "../components/NetworkBar";
 import NetworkRequestLog from "../components/NetworkRequestLog";
