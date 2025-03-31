@@ -1,4 +1,5 @@
 import { DevicePlatform } from "../common/DeviceManager";
+import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 
 type UnixTimestamp = number;
@@ -138,18 +139,25 @@ export async function generateFingerprint(
   appRoot: string
 ): Promise<FingerprintDetails> {
   const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
-  const { stdout } = await exec(
-    "eas",
-    ["fingerprint:generate", "--json", "--non-interactive", "-p", platformMapping[platform]],
-    { cwd: appRoot }
-  );
   try {
+    const { stdout } = await exec(
+      "eas",
+      ["fingerprint:generate", "--json", "--non-interactive", "-p", platformMapping[platform]],
+      { cwd: appRoot }
+    );
     const result = JSON.parse(stdout);
     if (!isFingerprintDetails(result)) {
+      Logger.error(
+        `Failed to parse the fingerprint details. The output seems to be malformed.\n` +
+          "`fingerprint:generate` output: " +
+          stdout
+      );
       throw new Error();
     }
     return result;
   } catch {
-    throw new Error("Failed to generate build fingerprint: the output of eas-cli is malformed");
+    throw new Error(
+      "Failed to generate the local workspace fingerprint. Check the extension logs for more details."
+    );
   }
 }

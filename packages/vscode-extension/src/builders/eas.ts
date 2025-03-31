@@ -28,7 +28,7 @@ export async function fetchEasBuild(
 ): Promise<string> {
   if (!(await isEasCliInstalled(appRoot))) {
     throw new Error(
-      "Failed to build iOS app using EAS build. Check if eas-cli is installed and available in PATH."
+      "Your project uses EAS build, but eas-cli could not be found. Install eas-cli and make sure it's available in your PATH."
     );
   }
 
@@ -49,11 +49,13 @@ async function fetchBuild(
     const build = await viewEasBuild(config.buildUUID, platform, appRoot);
     if (!build) {
       throw new Error(
-        `Failed to find EAS build artifact with ID ${config.buildUUID} for platform ${platform}.`
+        `Failed to find EAS build artifact with ID ${config.buildUUID} for platform ${platform}. Update your launch configuration and try again.`
       );
     }
     if (build.expired) {
-      throw new Error(`EAS build artifact with ID ${config.buildUUID} has expired.`);
+      throw new Error(
+        `EAS build artifact with ID ${config.buildUUID} has expired. Update your launch configuration and try again.`
+      );
     }
 
     Logger.debug(`Using EAS build artifact with ID ${build.id}.`);
@@ -78,7 +80,7 @@ async function fetchBuild(
   }
   if (builds.every((build) => build.expired)) {
     throw new Error(
-      `All EAS build artifacts for ${platform} with ${config.profile} profile have expired.`
+      `All EAS build artifacts for ${platform} with ${config.profile} profile have expired. Create a new EAS build and try again.`
     );
   }
 
@@ -91,7 +93,7 @@ async function fetchBuild(
     !build.binaryUrl.endsWith(".apex")
   ) {
     throw new Error(
-      `EAS build artifact needs to be a development build in .apk or .apex format to work with the Radon IDE, make sure you set up eas to use "development" profile`
+      `EAS build artifact was found, but is not a development build in .apk or .apex format. Make sure you set up eas to use a development profile.`
     );
   }
 
@@ -114,7 +116,9 @@ async function downloadAppFromEas(
 
   const success = await downloadBinary(binaryUrl, binaryPath);
   if (!success) {
-    throw new Error(`Failed to download archive from '${binaryUrl}'.`);
+    throw new Error(
+      `EAS build was found at '${binaryUrl}' but could not be downloaded. Verify your Internet connection is stable and try again.`
+    );
   }
   // on iOS we need to extract the .tar.gz archive to get the .app file
   const shouldExtractArchive = platform === DevicePlatform.IOS;
@@ -124,7 +128,9 @@ async function downloadAppFromEas(
 
   const extracted = await extractTarApp(binaryPath, tmpDirectory, DevicePlatform.IOS);
   if (!extracted) {
-    throw new Error("Failed to extract the downloaded application");
+    throw new Error(
+      "EAS build was downloaded successfully, but could not be extracted. Verify you have enough disk space and try again."
+    );
   }
   return extracted;
 }
