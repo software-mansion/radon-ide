@@ -40,7 +40,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
   private pausedStackFrames: StackFrame[] = [];
   private pausedScopeChains: CDPDebuggerScope[][] = [];
 
-  constructor(configuration: DebugConfiguration) {
+  constructor(private configuration: DebugConfiguration) {
     super();
     console.assert(
       "websocketAddress" in configuration,
@@ -63,6 +63,20 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
       }
     );
   }
+
+  private maybeUpdateDebuggerOverlay(isPaused: boolean) {
+    if (this.configuration.displayDebuggerOverlay) {
+      this.cdpSession?.sendCDPMessage(
+        "Overlay.setPausedInDebuggerMessage",
+        isPaused
+          ? {
+              message: "Paused in debugger",
+            }
+          : {}
+      );
+    }
+  }
+
   //#region CDPDelegate
 
   public onExecutionContextCreated = (threadId: number, threadName: string) => {
@@ -111,6 +125,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
 
     this.sendEvent(new StoppedEvent(reason, this.threads[0].id));
     this.sendEvent(new Event("RNIDE_paused", { reason }));
+    this.maybeUpdateDebuggerOverlay(true);
   };
 
   //#endregion
@@ -289,6 +304,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
     await this.cdpSession.sendCDPMessage("Debugger.resume", { terminateOnResume: false });
     this.sendResponse(response);
     this.sendEvent(new Event("RNIDE_continued"));
+    this.maybeUpdateDebuggerOverlay(false);
   }
 
   protected async nextRequest(
