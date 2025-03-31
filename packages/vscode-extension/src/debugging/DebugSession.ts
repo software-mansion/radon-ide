@@ -136,7 +136,7 @@ export class DebugSession implements Disposable {
     }
 
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
-    const debuggerType = OLD_JS_DEBUGGER_TYPE;
+    const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
 
     this.jsDebugSession = await startDebugging(
       undefined,
