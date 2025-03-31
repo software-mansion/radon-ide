@@ -849,6 +849,10 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
 
     await process;
 
+    // If booting device and building the application was fast enough, the emulators network internals
+    // would not be loaded before the start of the application. This in turn would cause PackagerStatusCheck
+    // (https://github.com/facebook/react-native/blob/main/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/devsupport/PackagerStatusCheck.kt)
+    // to fail and the application would think that there is no metro server.
     process = exec(ADB_PATH, [
       "-s",
       serial,
