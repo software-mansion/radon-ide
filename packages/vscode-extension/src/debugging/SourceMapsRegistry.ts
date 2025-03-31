@@ -20,7 +20,7 @@ export class SourceMapsRegistry {
 
   constructor(
     private expoPreludeLineCount: number,
-    private sourceMapAliases?: Array<[string, string]>
+    private sourceMapPathOverrides: Array<[string, string]>
   ) {}
 
   public clearSourceMaps() {
@@ -148,11 +148,15 @@ export class SourceMapsRegistry {
   }
 
   public toAbsoluteFilePathFromSourceMapAlias(sourceMapPath: string) {
-    if (this.sourceMapAliases) {
-      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
-        if (sourceMapPath.startsWith(alias)) {
-          // URL may contain ".." fragments, so we want to resolve it to a proper absolute file path
-          return path.resolve(path.join(absoluteFilePath, sourceMapPath.slice(alias.length)));
+    if (this.sourceMapPathOverrides) {
+      for (const [overridePattern, absoluteFilePathPattern] of this.sourceMapPathOverrides) {
+        const absoluteFilePath = replacePathWithOverride(
+          sourceMapPath,
+          overridePattern,
+          absoluteFilePathPattern
+        );
+        if (absoluteFilePath) {
+          return absoluteFilePath;
         }
       }
     }
@@ -160,14 +164,32 @@ export class SourceMapsRegistry {
   }
 
   private toSourceMapAliasedFilePath(sourceAbsoluteFilePath: string) {
-    if (this.sourceMapAliases) {
+    if (this.sourceMapPathOverrides) {
       // we return the first alias from the list
-      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
-        if (sourceAbsoluteFilePath.startsWith(absoluteFilePath)) {
-          return path.join(alias, path.relative(absoluteFilePath, sourceAbsoluteFilePath));
+      for (const [overridePattern, absoluteFilePathPattern] of this.sourceMapPathOverrides) {
+        const aliasedPath = replacePathWithOverride(
+          sourceAbsoluteFilePath,
+          absoluteFilePathPattern,
+          overridePattern
+        );
+        if (aliasedPath) {
+          return aliasedPath;
         }
       }
     }
     return sourceAbsoluteFilePath;
   }
+}
+
+function replacePathWithOverride(filePath: string, fromPattern: string, toPattern: string) {
+  // This method isn't generic enough. It only supports * at the end of the pattern
+  // as that's the only case we use it for right now.
+  const strippedFromPattern = fromPattern.replace("*", "");
+  const strippedToPattern = toPattern.replace("*", "");
+
+  if (filePath.startsWith(strippedFromPattern)) {
+    return path.normalize(filePath.replace(strippedFromPattern, strippedToPattern));
+  }
+
+  return null;
 }
