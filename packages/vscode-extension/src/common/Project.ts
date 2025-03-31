@@ -98,6 +98,7 @@ export const StartupStageWeight = [
 ];
 
 export type ReloadAction =
+  | "autoReload" // automatic reload mode
   | "rebuild" // clean build, boot device, install app
   | "reboot" // reboots device, launch app
   | "reinstall" // force reinstall app

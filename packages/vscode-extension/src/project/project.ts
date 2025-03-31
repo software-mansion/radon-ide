@@ -27,6 +27,7 @@ import {
   ProjectState,
   ReloadAction,
   StartupMessage,
+  ToolsState,
   TouchPoint,
   ZoomLevelType,
 } from "../common/Project";
@@ -40,7 +41,7 @@ import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
-import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
+import { AppEvent, DeviceBootError, DeviceSession, DeviceSessionDelegate } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
@@ -49,7 +50,7 @@ import {
   refreshTokenPeriodically,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { ToolKey, ToolsManager } from "./tools";
+import { ToolKey, ToolsDelegate } from "./tools";
 import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
@@ -72,18 +73,19 @@ const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 
 export class Project
-  implements Disposable, MetroDelegate, EventDelegate, DebugSessionDelegate, ProjectInterface
+  implements
+    Disposable,
+    MetroDelegate,
+    DeviceSessionDelegate,
+    DebugSessionDelegate,
+    ProjectInterface,
+    ToolsDelegate
 {
   private applicationContext: ApplicationContext;
-
-  public metro: Metro;
-  public toolsManager: ToolsManager;
-
-  private devtools;
   private eventEmitter = new EventEmitter();
   private isCachedBuildStale: boolean;
 
-  private deviceSession: DeviceSession | undefined;
+  public deviceSession: DeviceSession | undefined;
 
   private projectState: ProjectState = {
     status: "starting",
@@ -120,15 +122,10 @@ export class Project
       showTouches: false,
     };
 
-    this.devtools = new Devtools();
-    this.metro = new Metro(this.devtools, this);
-    this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.isCachedBuildStale = false;
-    this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
 
-    this.disposables.push(this.toolsManager);
     this.disposables.push(
       watchProjectFiles(() => {
         this.checkIfNativeChanged();
@@ -427,6 +424,10 @@ export class Project
     this.updateProjectState({ status: "bundlingError" });
   }
 
+  onBundleProgress = throttle((stageProgress: number) => {
+    this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
+  }, 100);
+
   /**
    * This method tried to select the last selected device from devices list.
    * If the device list is empty, we wait until we can select a device.
@@ -499,8 +500,6 @@ export class Project
 
   public dispose() {
     this.deviceSession?.dispose();
-    this.metro?.dispose();
-    this.devtools?.dispose();
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.applicationContext.dispose();
     disposeAll(this.disposables);
@@ -557,8 +556,7 @@ export class Project
     // we first consider forceCleanBuild flag, if set we always perform a clean
     // start of the project and select the device
     if (clean) {
-      await this.start(true, true);
-      await this.selectDevice(deviceInfo, clean === "all");
+      await this.selectDevice(deviceInfo, clean === "all", true);
       return;
     }
 
@@ -594,7 +592,6 @@ export class Project
       // before doing anything, we check if the device hasn't been updated in the meantime
       // which might have initiated a new session anyway
       if (deviceInfo === this.projectState.selectedDevice) {
-        await this.start(true, false);
         await this.selectDevice(deviceInfo, false);
       }
     }
@@ -611,7 +608,6 @@ export class Project
     // this action needs to be handled outside of device session as it resets the device session itself
     if (type === "reboot") {
       const deviceInfo = this.projectState.selectedDevice!;
-      await this.start(true, false);
       await this.selectDevice(deviceInfo);
       return true;
     }
@@ -625,38 +621,6 @@ export class Project
     return success;
   }
 
-  private async start(restart: boolean, resetMetroCache: boolean) {
-    if (this.appRootFolder === undefined) {
-      Logger.error("[PROJECT] App root folder not initialized. this code should be unreachable.");
-      throw new Error("[PROJECT] App root folder not initialized");
-    }
-    if (restart) {
-      const oldDevtools = this.devtools;
-      const oldMetro = this.metro;
-      const oldToolsManager = this.toolsManager;
-      this.devtools = new Devtools();
-      this.metro = new Metro(this.devtools, this);
-      this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
-      oldToolsManager.dispose();
-      oldDevtools.dispose();
-      oldMetro.dispose();
-    }
-
-    const waitForNodeModules = this.ensureDependenciesAndNodeVersion();
-
-    Logger.debug(`Launching devtools`);
-    this.devtools.start();
-
-    Logger.debug(`Launching metro`);
-    this.metro.start(
-      resetMetroCache,
-      throttle((stageProgress: number) => {
-        this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
-      }, 100),
-      [waitForNodeModules],
-      this.appRootFolder
-    );
-  }
   //#endregion
 
   async resetAppPermissions(permissionType: AppPermissionType) {
@@ -787,7 +751,7 @@ export class Project
     }
 
     if (await this.dependencyManager.checkProjectUsesStorybook()) {
-      this.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
+      this.deviceSession!.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");
     }
@@ -817,16 +781,21 @@ export class Project
     }
   }
 
+  onToolsStateChange = (toolsState: ToolsState) => {
+    this.eventEmitter.emit("toolsStateChanged", toolsState);
+  };
+
+  // frytki !!!!! is wrong here
   public async getToolsState() {
-    return this.toolsManager.getToolsState();
+    return this.deviceSession!.toolsManager.getToolsState();
   }
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
-    await this.toolsManager.updateToolEnabledState(toolName, enabled);
+    await this.deviceSession!.toolsManager.updateToolEnabledState(toolName, enabled);
   }
 
   public async openTool(toolName: ToolKey) {
-    await this.toolsManager.openTool(toolName);
+    await this.deviceSession!.toolsManager.openTool(toolName);
   }
 
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
@@ -874,7 +843,7 @@ export class Project
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
 
-  private async ensureDependenciesAndNodeVersion() {
+  public async ensureDependenciesAndNodeVersion() {
     if (this.dependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
@@ -932,7 +901,11 @@ export class Project
     return undefined;
   }
 
-  public async selectDevice(deviceInfo: DeviceInfo, forceCleanBuild = false) {
+  public async selectDevice(
+    deviceInfo: DeviceInfo,
+    forceCleanBuild = false,
+    resetMetroCache = false
+  ) {
     if (this.dependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
@@ -971,16 +944,19 @@ export class Project
     try {
       newDeviceSession = new DeviceSession(
         device,
-        this.devtools,
-        this.metro,
         this.dependencyManager,
         this.buildCache,
+        this,
+        this,
         this,
         this
       );
       this.deviceSession = newDeviceSession;
 
-      const previewURL = await newDeviceSession.start(this.deviceSettings, this.appRootFolder, {
+      const previewURL = await newDeviceSession.start({
+        resetMetroCache,
+        deviceSettings: this.deviceSettings,
+        appRoot: this.appRootFolder,
         cleanBuild: forceCleanBuild,
         previewReadyCallback: (url) => {
           this.updateProjectStateForDevice(deviceInfo, { previewURL: url });

@@ -1,5 +1,5 @@
 import { Disposable } from "vscode";
-import { Metro } from "./metro";
+import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
@@ -19,9 +19,16 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildCache } from "../builders/BuildCache";
 import { CancelToken } from "../builders/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
+import { ToolsDelegate, ToolsManager } from "./tools";
 
 type PreviewReadyCallback = (previewURL: string) => void;
-type StartOptions = { cleanBuild: boolean; previewReadyCallback: PreviewReadyCallback };
+type StartOptions = {
+  cleanBuild: boolean;
+  resetMetroCache: boolean;
+  previewReadyCallback: PreviewReadyCallback;
+  deviceSettings: DeviceSettings;
+  appRoot: string;
+};
 
 export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
@@ -29,11 +36,12 @@ export type AppEvent = {
   fastRefreshComplete: undefined;
 };
 
-export type EventDelegate = {
+export type DeviceSessionDelegate = {
   onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void;
   onStateChange(state: StartupMessage): void;
   onBuildProgress(stageProgress: number): void;
   onBuildSuccess(): void;
+  ensureDependenciesAndNodeVersion(): Promise<void>;
 };
 
 export class DeviceBootError extends Error {
@@ -43,8 +51,12 @@ export class DeviceBootError extends Error {
 }
 
 export class DeviceSession implements Disposable {
+  public metro: Metro;
+  public toolsManager: ToolsManager;
+
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
+  public devtools;
   private debugSession: DebugSession;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
@@ -64,13 +76,17 @@ export class DeviceSession implements Disposable {
 
   constructor(
     private readonly device: DeviceBase,
-    private readonly devtools: Devtools,
-    private readonly metro: Metro,
     readonly dependencyManager: DependencyManager,
     readonly buildCache: BuildCache,
     debugEventDelegate: DebugSessionDelegate,
-    private readonly eventDelegate: EventDelegate
+    private readonly deviceSessionDelegate: DeviceSessionDelegate,
+    private readonly metroDelegate: MetroDelegate,
+    private readonly toolsDelegate: ToolsDelegate
   ) {
+    this.devtools = new Devtools();
+    this.metro = new Metro(this.devtools, metroDelegate);
+    this.toolsManager = new ToolsManager(this.devtools, toolsDelegate);
+
     this.buildManager = new BuildManager(dependencyManager, buildCache);
     this.debugSession = new DebugSession(debugEventDelegate);
     this.devtools.addListener((event, payload) => {
@@ -79,13 +95,13 @@ export class DeviceSession implements Disposable {
           Logger.debug("App ready");
           break;
         case "RNIDE_navigationChanged":
-          this.eventDelegate.onAppEvent("navigationChanged", payload);
+          this.deviceSessionDelegate.onAppEvent("navigationChanged", payload);
           break;
         case "RNIDE_fastRefreshStarted":
-          this.eventDelegate.onAppEvent("fastRefreshStarted", undefined);
+          this.deviceSessionDelegate.onAppEvent("fastRefreshStarted", undefined);
           break;
         case "RNIDE_fastRefreshComplete":
-          this.eventDelegate.onAppEvent("fastRefreshComplete", undefined);
+          this.deviceSessionDelegate.onAppEvent("fastRefreshComplete", undefined);
           break;
       }
     });
@@ -99,6 +115,8 @@ export class DeviceSession implements Disposable {
     await this.debugSession?.dispose();
     this.disposableBuild?.dispose();
     this.device?.dispose();
+    this.metro?.dispose();
+    this.devtools?.dispose();
   }
 
   public async perform(type: ReloadAction) {
@@ -162,9 +180,9 @@ export class DeviceSession implements Disposable {
   }
 
   private async reloadMetro() {
-    this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+    this.deviceSessionDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
     await Promise.all([this.metro.reload(), this.devtools.appReady()]);
-    this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
+    this.deviceSessionDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.reconnectJSDebuggerIfNeeded();
   }
 
@@ -187,14 +205,14 @@ export class DeviceSession implements Disposable {
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
-    this.eventDelegate.onStateChange(StartupMessage.Launching);
+    this.deviceSessionDelegate.onStateChange(StartupMessage.Launching);
     await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
     if (launchCancelToken.cancelled) {
       return undefined;
     }
 
     Logger.debug("Will wait for app ready and for preview");
-    this.eventDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+    this.deviceSessionDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
 
     let previewURL: string | undefined;
     if (shouldWaitForAppLaunch) {
@@ -223,7 +241,7 @@ export class DeviceSession implements Disposable {
     }
 
     Logger.debug("App and preview ready, moving on...");
-    this.eventDelegate.onStateChange(StartupMessage.AttachingDebugger);
+    this.deviceSessionDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.connectJSDebugger();
     if (launchCancelToken.cancelled) {
       return undefined;
@@ -249,7 +267,7 @@ export class DeviceSession implements Disposable {
   }
 
   private async bootDevice(deviceSettings: DeviceSettings) {
-    this.eventDelegate.onStateChange(StartupMessage.BootingDevice);
+    this.deviceSessionDelegate.onStateChange(StartupMessage.BootingDevice);
     try {
       await this.device.bootDevice(deviceSettings);
     } catch (e) {
@@ -260,13 +278,13 @@ export class DeviceSession implements Disposable {
 
   private async buildApp({ appRoot, clean }: { appRoot: string; clean: boolean }) {
     const buildStartTime = Date.now();
-    this.eventDelegate.onStateChange(StartupMessage.Building);
+    this.deviceSessionDelegate.onStateChange(StartupMessage.Building);
     this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
       appRoot,
       clean,
-      onSuccess: this.eventDelegate.onBuildSuccess,
+      onSuccess: this.deviceSessionDelegate.onBuildSuccess,
       progressListener: throttle((stageProgress: number) => {
-        this.eventDelegate.onBuildProgress(stageProgress);
+        this.deviceSessionDelegate.onBuildProgress(stageProgress);
       }, 100),
     });
     this.maybeBuildResult = await this.disposableBuild.build;
@@ -282,22 +300,36 @@ export class DeviceSession implements Disposable {
   }
 
   private async installApp({ reinstall }: { reinstall: boolean }) {
-    this.eventDelegate.onStateChange(StartupMessage.Installing);
+    this.deviceSessionDelegate.onStateChange(StartupMessage.Installing);
     return this.device.installApp(this.buildResult, reinstall);
   }
 
   private async waitForMetroReady() {
-    this.eventDelegate.onStateChange(StartupMessage.StartingPackager);
+    this.deviceSessionDelegate.onStateChange(StartupMessage.StartingPackager);
     // wait for metro/devtools to start before we continue
     await Promise.all([this.metro.ready(), this.devtools.ready()]);
     Logger.debug("Metro & devtools ready");
   }
 
-  public async start(
-    deviceSettings: DeviceSettings,
-    appRoot: string,
-    { cleanBuild, previewReadyCallback }: StartOptions
-  ) {
+  public async start({
+    cleanBuild,
+    resetMetroCache,
+    previewReadyCallback,
+    deviceSettings,
+    appRoot,
+  }: StartOptions) {
+    const waitForNodeModules = this.deviceSessionDelegate.ensureDependenciesAndNodeVersion();
+
+    Logger.debug(`Launching devtools`);
+    this.devtools.start();
+
+    Logger.debug(`Launching metro`);
+    this.metro.start({
+      resetCache: resetMetroCache,
+      appRoot,
+      dependencies: [waitForNodeModules],
+    });
+
     this.deviceSettings = deviceSettings;
 
     // We start the debug session early to be able to use it to surface bundle

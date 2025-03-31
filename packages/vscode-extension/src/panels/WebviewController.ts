@@ -45,7 +45,10 @@ export class WebviewController implements Disposable {
       ["Utils", () => this.ide.utils as object],
       [
         "RenderOutlines",
-        () => this.ide.project.toolsManager.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
+        () =>
+          this.ide.project.deviceSession!.toolsManager.getPlugin(
+            RENDER_OUTLINES_PLUGIN_ID
+          ) as object,
       ],
     ]);
 

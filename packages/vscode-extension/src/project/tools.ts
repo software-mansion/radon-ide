@@ -49,15 +49,16 @@ export function reportToolOpened(toolName: ToolKey) {
   getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:opened`);
 }
 
+export interface ToolsDelegate {
+  onToolsStateChange(toolsState: ToolsState): void;
+}
+
 export class ToolsManager implements Disposable {
   private toolsSettings: Partial<Record<ToolKey, boolean>> = {};
   private plugins: Map<ToolKey, ToolPlugin> = new Map();
   private activePlugins: Set<ToolPlugin> = new Set();
 
-  public constructor(
-    public readonly devtools: Devtools,
-    private readonly eventEmitter: EventEmitter
-  ) {
+  public constructor(public readonly devtools: Devtools, private readonly delegate: ToolsDelegate) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
 
     for (const plugin of createExpoDevPluginTools()) {
@@ -118,7 +119,7 @@ export class ToolsManager implements Disposable {
       }
     }
 
-    this.eventEmitter.emit("toolsStateChanged", this.getToolsState());
+    this.delegate.onToolsStateChange(this.getToolsState());
   }
 
   public getToolsState(): ToolsState {

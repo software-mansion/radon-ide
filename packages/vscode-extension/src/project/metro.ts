@@ -20,6 +20,7 @@ const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
 
 export interface MetroDelegate {
+  onBundleProgress(bundleProgress: number): void;
   onBundleBuildFailedError(): void;
   onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
 }
@@ -128,16 +129,19 @@ export class Metro implements Disposable {
     await this.startPromise;
   }
 
-  public async start(
-    resetCache: boolean,
-    progressListener: (newStageProgress: number) => void,
-    dependencies: Promise<any>[],
-    appRoot: string
-  ) {
+  public async start({
+    resetCache,
+    dependencies,
+    appRoot,
+  }: {
+    resetCache: boolean;
+    dependencies: Promise<any>[];
+    appRoot: string;
+  }) {
     if (this.startPromise) {
       throw new Error("metro already started");
     }
-    this.startPromise = this.startInternal(resetCache, progressListener, dependencies, appRoot);
+    this.startPromise = this.startInternal(resetCache, dependencies, appRoot);
     this.startPromise.then(() => {
       // start promise is used to indicate that metro has started, however, sometimes
       // the metro process may exit, in which case we need to update the promise to
@@ -207,12 +211,7 @@ export class Metro implements Disposable {
     );
   }
 
-  public async startInternal(
-    resetCache: boolean,
-    progressListener: (newStageProgress: number) => void,
-    dependencies: Promise<any>[],
-    appRoot: string
-  ) {
+  public async startInternal(resetCache: boolean, dependencies: Promise<any>[], appRoot: string) {
     const launchConfiguration = getLaunchConfiguration();
     await Promise.all([this.devtools.ready()].concat(dependencies));
 
@@ -279,7 +278,7 @@ export class Metro implements Disposable {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
-              progressListener(event.transformedFileCount / event.totalFileCount);
+              this.delegate.onBundleProgress(event.transformedFileCount / event.totalFileCount);
             }
           } else if (event.type === "client_log" && event.level === "error") {
             Logger.error(stripAnsi(event.data[0]));
