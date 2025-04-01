@@ -148,42 +148,41 @@ export class SourceMapsRegistry {
   }
 
   public toAbsoluteFilePathFromSourceMapAlias(sourceMapPath: string) {
-    if (this.sourceMapPathOverrides) {
-      for (const [overridePattern, absoluteFilePathPattern] of this.sourceMapPathOverrides) {
-        const absoluteFilePath = replacePathWithOverride(
-          sourceMapPath,
-          overridePattern,
-          absoluteFilePathPattern
-        );
-        if (absoluteFilePath) {
-          return absoluteFilePath;
-        }
+    for (const [aliasedPattern, absoluteFilePathPattern] of this.sourceMapPathOverrides) {
+      const absoluteFilePath = replacePrefixPattern(
+        sourceMapPath,
+        aliasedPattern,
+        absoluteFilePathPattern
+      );
+      if (absoluteFilePath) {
+        return absoluteFilePath;
       }
     }
     return sourceMapPath;
   }
 
   private toSourceMapAliasedFilePath(sourceAbsoluteFilePath: string) {
-    if (this.sourceMapPathOverrides) {
-      // we return the first alias from the list
-      for (const [overridePattern, absoluteFilePathPattern] of this.sourceMapPathOverrides) {
-        const aliasedPath = replacePathWithOverride(
-          sourceAbsoluteFilePath,
-          absoluteFilePathPattern,
-          overridePattern
-        );
-        if (aliasedPath) {
-          return aliasedPath;
-        }
+    // we return the first alias from the list
+    for (const [aliasedPattern, absoluteFilePathPattern] of this.sourceMapPathOverrides) {
+      const aliasedPath = replacePrefixPattern(
+        sourceAbsoluteFilePath,
+        absoluteFilePathPattern,
+        aliasedPattern
+      );
+      if (aliasedPath) {
+        return aliasedPath;
       }
     }
     return sourceAbsoluteFilePath;
   }
 }
 
-function replacePathWithOverride(filePath: string, fromPattern: string, toPattern: string) {
-  // This method isn't generic enough. It only supports * at the end of the pattern
-  // as that's the only case we use it for right now.
+/**
+ * This mathod handles the path override pattern replacement logic.
+ * It only supports prefix-only patterns which have * at the end as this is currently
+ * the only case we use it for right now.
+ */
+function replacePrefixPattern(filePath: string, fromPattern: string, toPattern: string) {
   const strippedFromPattern = fromPattern.replace("*", "");
   const strippedToPattern = toPattern.replace("*", "");
 
