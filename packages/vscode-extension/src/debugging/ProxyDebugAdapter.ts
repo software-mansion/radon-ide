@@ -160,14 +160,7 @@ export class ProxyDebugAdapter extends DebugSession {
           continueOnAttach: true,
           sourceMapPathOverrides: args.sourceMapPathOverrides,
           resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
-          skipFiles: [
-            "**/extension/lib/**/*.js",
-            "**/vscode-extension/lib/**/*.js",
-            "**/ReactFabric-dev.js",
-            "**/ReactNativeRenderer-dev.js",
-            "**/node_modules/**/*",
-            "!**/node_modules/expo-router/**/*",
-          ],
+          skipFiles: this.session.configuration.skipFiles,
         },
         {
           suppressDebugStatusbar: true,

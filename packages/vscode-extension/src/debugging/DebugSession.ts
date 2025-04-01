@@ -136,7 +136,7 @@ export class DebugSession implements Disposable {
     }
 
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
-    const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
+    const debuggerType = OLD_JS_DEBUGGER_TYPE;
 
     this.jsDebugSession = await startDebugging(
       undefined,
@@ -149,6 +149,15 @@ export class DebugSession implements Disposable {
         websocketAddress: configuration.websocketAddress,
         expoPreludeLineCount: configuration.expoPreludeLineCount,
         displayDebuggerOverlay: configuration.displayDebuggerOverlay,
+        skipFiles: [
+          "__source__",
+          "**/extension/lib/**/*.js",
+          "**/vscode-extension/lib/**/*.js",
+          "**/ReactFabric-dev.js",
+          "**/ReactNativeRenderer-dev.js",
+          "**/node_modules/**/*",
+          "!**/node_modules/expo-router/**/*",
+        ],
       },
       {
         parentSession: this.parentDebugSession,

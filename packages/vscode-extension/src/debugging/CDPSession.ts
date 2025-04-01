@@ -17,6 +17,8 @@ import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
 import { EventEmitter } from "vscode";
+import { CDPConfiguration } from "./CDPDebugAdapter";
+import { minimatch } from "minimatch";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -60,24 +62,19 @@ export class CDPSession {
   private debugSessionReady = false;
   private debugSessionReadyEmitter = new EventEmitter<void>();
 
-  constructor(
-    private delegate: CDPSessionDelegate,
-    websocketAddress: string,
-    sourceMapConfiguration: { expoPreludeLineCount: number; sourceMapAliases: [string, string][] },
-    breakpointsConfiguration: { breakpointsAreRemovedOnContextCleared: boolean }
-  ) {
+  constructor(private delegate: CDPSessionDelegate, private configuration: CDPConfiguration) {
     this.sourceMapRegistry = new SourceMapsRegistry(
-      sourceMapConfiguration.expoPreludeLineCount,
-      sourceMapConfiguration.sourceMapAliases
+      configuration.expoPreludeLineCount,
+      configuration.sourceMapAliases
     );
 
     this.breakpointsController = new BreakpointsController(
       this.sourceMapRegistry,
       this,
-      breakpointsConfiguration.breakpointsAreRemovedOnContextCleared
+      configuration.breakpointsAreRemovedOnContextCleared
     );
 
-    this.connection = new WebSocket(websocketAddress);
+    this.connection = new WebSocket(configuration.websocketAddress);
 
     this.connection.on("open", this.setUpDebugger);
 
@@ -228,7 +225,7 @@ export class CDPSession {
       if (message.params.stackTrace) {
         const stackTrace = message.params.stackTrace;
         const { sourceURL, lineNumber1Based, columnNumber0Based } =
-          this.findFirstCallFramePositionFromApp(stackTrace.callFrames);
+          this.findFirstNonSkippedCallFramePosition(stackTrace.callFrames);
         Object.assign(output.body, {
           //@ts-ignore source, line, column and group are valid fields
           source: new Source(sourceURL, sourceURL),
@@ -240,7 +237,7 @@ export class CDPSession {
     this.delegate.sendOutputEvent(output);
   }
 
-  private findFirstCallFramePositionFromApp(callFrames: CDPCallFrame[]) {
+  private findFirstNonSkippedCallFramePosition(callFrames: CDPCallFrame[]) {
     let firstPosition;
     for (const frame of callFrames) {
       const originalPosition = this.sourceMapRegistry!.findOriginalPosition(
@@ -248,10 +245,10 @@ export class CDPSession {
         frame.lineNumber + 1, // cdp line and column numbers are 0-based
         frame.columnNumber
       );
-      if (
-        originalPosition.sourceURL !== "__source__" &&
-        !originalPosition.sourceURL.includes("node_modules")
-      ) {
+      const shouldSkip = this.configuration.skipFiles.some((pattern) =>
+        minimatch(originalPosition.sourceURL, pattern)
+      );
+      if (!shouldSkip) {
         return originalPosition;
       } else if (!firstPosition) {
         firstPosition = originalPosition;

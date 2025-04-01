@@ -28,6 +28,7 @@ export type CDPConfiguration = {
   expoPreludeLineCount: number;
   sourceMapAliases: [string, string][];
   breakpointsAreRemovedOnContextCleared: boolean;
+  skipFiles: string[];
 };
 
 const ERROR_RESPONSE_FAIL_TO_RETRIEVE_VARIABLE_ID = 4000;
@@ -50,18 +51,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
   }
 
   private startCDPSession(cdpConfiguration: CDPConfiguration) {
-    this.cdpSession = new CDPSession(
-      this,
-      cdpConfiguration.websocketAddress,
-      {
-        expoPreludeLineCount: cdpConfiguration.expoPreludeLineCount,
-        sourceMapAliases: cdpConfiguration.sourceMapAliases,
-      },
-      {
-        breakpointsAreRemovedOnContextCleared:
-          cdpConfiguration.breakpointsAreRemovedOnContextCleared,
-      }
-    );
+    this.cdpSession = new CDPSession(this, cdpConfiguration);
   }
   //#region CDPDelegate
 
