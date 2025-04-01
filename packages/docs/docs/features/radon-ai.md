@@ -4,15 +4,23 @@ title: Radon AI
 sidebar_position: 9
 ---
 
-Radon AI is a [GitHub Copilot Chat](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot-chat) integration enhanced with up-to-date information about the React Native ecosystem.
+Radon AI is a [GitHub Copilot Chat participant](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#chat-participants) enhanced with up-to-date information about the React Native ecosystem.
 
-Before answering your question, Radon AI queries a React Native knowledge database alongside with parts of your project context.
+Before answering your question, Radon AI queries a React Native knowledge database alongside with package versions used in your project
+
+The Radon AI knowledge database is updated daily, to ensure that you get the most up to date information.
 
 <img width="550" src="/img/docs/ide_chat_response.png" className="shadow-image"/>
 
 ## Pre-requisites
 
-You need to have GitHub Copilot Chat extension installed to use Radon AI.
+You need to have [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) and [GitHub Copilot Chat](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot-chat) extension installed to use Radon AI.
+
+To install GitHub Copilot Chat, navigate to the extensions tab in vscode and search for 'GitHub Copilot Chat'. Click install. Once installed, ensure that you are logged in with your GitHub account.
+
+<img width="550" src="/img/docs/ide_chat_github_copilot.png" className="shadow-image"/>
+
+GitHub Copilot Chat will request to accept [GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) on the first use.
 
 GitHub Copilot Chat comes with a [GitHub Copilot Free](https://docs.github.com/en/copilot/managing-copilot/managing-copilot-as-an-individual-subscriber/managing-copilot-free/about-github-copilot-free) without needing to sign up for another subscription.
 
@@ -40,4 +48,4 @@ To start a new conversation open a new chat window.
 
 ## Privacy
 
-We do not store user queries (prompts) or project data provided to the Radon AI chat. Your data is used to query the Radon AI knowledge database before sending to GitHub Copilot Chat large language model alongside the package versions used in your project.
+We do not store user queries (prompts) or project data provided to the Radon AI chat. Your data is used to query the Radon AI knowledge database before sending to GitHub Copilot Chat large language model alongside with package versions used in your project.
