@@ -13,9 +13,10 @@ import { Logger } from "../Logger";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { VariableStore } from "./variableStore";
-import { CDPDebuggerScope, CDPRemoteObject } from "./cdp";
+import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
+import { EventEmitter } from "vscode";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -55,6 +56,9 @@ export class CDPSession {
   private sourceMapRegistry: SourceMapsRegistry;
 
   private breakpointsController: BreakpointsController;
+
+  private debugSessionReady = false;
+  private debugSessionReadyEmitter = new EventEmitter<void>();
 
   constructor(
     private delegate: CDPSessionDelegate,
@@ -139,6 +143,8 @@ export class CDPSession {
         );
 
         if (isMainBundle) {
+          this.debugSessionReady = true;
+          this.debugSessionReadyEmitter.fire();
           this.delegate.onDebugSessionReady();
         }
 
@@ -161,7 +167,13 @@ export class CDPSession {
         this.delegate.onExecutionContextsCleared();
         break;
       case "Runtime.consoleAPICalled":
-        this.handleConsoleAPICall(message);
+        if (this.debugSessionReady) {
+          this.handleConsoleAPICall(message);
+        } else {
+          this.debugSessionReadyEmitter.event(() => {
+            this.handleConsoleAPICall(message);
+          });
+        }
         break;
       default:
         break;
@@ -201,27 +213,55 @@ export class CDPSession {
 
       output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
 
-      output.body = {
+      Object.assign(output.body, {
         ...formattedOutput,
         //@ts-ignore source, line, column and group are valid fields
         source: new Source(sourceURL, sourceURL),
         line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
         column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
-      };
+      });
     } else {
-      const variablesRefDapID = await this.createVariableForOutputEvent(message.params.args);
-
       const formattedOutput = await this.formatDefaultString(message.params.args);
 
       output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
-
-      output.body = {
+      Object.assign(output.body, {
         ...formattedOutput,
-        //@ts-ignore source, line, column and group are valid fields
-        variablesReference: variablesRefDapID,
-      };
+      });
+
+      if (message.params.stackTrace) {
+        const stackTrace = message.params.stackTrace;
+        const { sourceURL, lineNumber1Based, columnNumber0Based } =
+          this.findFirstCallFramePositionFromApp(stackTrace.callFrames);
+        Object.assign(output.body, {
+          //@ts-ignore source, line, column and group are valid fields
+          source: new Source(sourceURL, sourceURL),
+          line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+          column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
+        });
+      }
     }
     this.delegate.sendOutputEvent(output);
+  }
+
+  private findFirstCallFramePositionFromApp(callFrames: CDPCallFrame[]) {
+    let firstPosition;
+    for (const frame of callFrames) {
+      const originalPosition = this.sourceMapRegistry!.findOriginalPosition(
+        frame.scriptId,
+        frame.lineNumber + 1, // cdp line and column numbers are 0-based
+        frame.columnNumber
+      );
+      if (
+        originalPosition.sourceURL !== "__source__" &&
+        !originalPosition.sourceURL.includes("node_modules")
+      ) {
+        return originalPosition;
+      } else if (!firstPosition) {
+        firstPosition = originalPosition;
+      }
+    }
+    // return the first position if none of the frames are from the app
+    return firstPosition!;
   }
 
   private async handleDebuggerPaused(message: any) {
@@ -389,7 +429,7 @@ export class CDPSession {
     const output = formatResult.result + "\n";
 
     if (formatResult.usedAllSubs && !args.some(previewAsObject)) {
-      return { output };
+      return { output, variablesReference: undefined };
     } else {
       const outputVar = await this.createVariableForOutputEvent(args as CDPRemoteObject[]);
 
