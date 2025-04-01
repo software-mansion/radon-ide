@@ -8,7 +8,11 @@ Radon AI is a [GitHub Copilot Chat participant](https://docs.github.com/en/copil
 
 Before answering your question, Radon AI queries an extensive React Native knowledge database. Our knowledge database is updated daily, to ensure the most up to date information.
 
-<img width="550" src="/img/docs/ide_chat_response.png" className="shadow-image"/>
+<!-- <img width="550" src="/img/docs/ide_chat_response.png" className="shadow-image"/> -->
+
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_chat.mp4" type="video/mp4"/>
+</video>
 
 ## Pre-requisites
 
