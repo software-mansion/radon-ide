@@ -8,11 +8,7 @@ Radon AI is a [GitHub Copilot Chat participant](https://docs.github.com/en/copil
 
 Before answering your question, Radon AI queries an extensive React Native knowledge database. Our knowledge database is updated daily, to ensure the most up to date information.
 
-<!-- <img width="550" src="/img/docs/ide_chat_response.png" className="shadow-image"/> -->
-
-<video autoPlay loop width="700" controls className="shadow-image">
-  <source src="/video/ide_chat.mp4" type="video/mp4"/>
-</video>
+<img width="550" src="/img/docs/ide_chat_response.png" className="shadow-image"/>
 
 ## Pre-requisites
 
@@ -28,11 +24,13 @@ GitHub Copilot Chat comes with a [GitHub Copilot Free](https://docs.github.com/e
 
 To start chatting with Radon AI open the GitHub Copilot Chat panel.
 
-You can use "Chat: Open Chat" or "Radon IDE: Chat with Radon AI" available in vscode's command palette.
+Open the vscode command palette (Ctrl+Shift+P or Cmd+Shift+P) and type "Chat: Open Chat" or "Radon IDE: Chat with Radon AI" and select the command.
 
 **Messages that you want to send to Radon AI need to be started with `@radon` prefix.**
 
-<img width="475" src="/img/docs/ide_chat_request.png" className="shadow-image"/>
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_chat.mp4" type="video/mp4"/>
+</video>
 
 Radon AI has the context of the history of previous messages sent in the chat window started with `@radon`. This allows you to send additional follow-up questions.
 
