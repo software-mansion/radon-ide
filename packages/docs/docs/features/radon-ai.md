@@ -46,4 +46,4 @@ To start a new conversation open a new chat window.
 
 ## Privacy
 
-We do not store user queries (prompts), code or any data provided to the Radon AI chat. Your data is used to query the Radon AI knowledge database before sending it to GitHub Copilot Chat large language model alongside with package versions used in your project.
+To provide accurate responses, queries that you type to Radon AI chatbot along with the list of your project dependencies are sent to our servers in order to search our knowledge database. The data that is sent is not stored in any form on our servers but only used for the duration of the request in order to perform the query.
