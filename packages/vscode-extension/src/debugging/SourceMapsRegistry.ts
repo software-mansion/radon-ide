@@ -20,7 +20,7 @@ export class SourceMapsRegistry {
 
   constructor(
     private expoPreludeLineCount: number,
-    private sourceMapAliases?: Array<[string, string]>
+    private sourceMapPathOverrides: Array<[string, string]>
   ) {}
 
   public clearSourceMaps() {
@@ -148,26 +148,47 @@ export class SourceMapsRegistry {
   }
 
   public toAbsoluteFilePathFromSourceMapAlias(sourceMapPath: string) {
-    if (this.sourceMapAliases) {
-      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
-        if (sourceMapPath.startsWith(alias)) {
-          // URL may contain ".." fragments, so we want to resolve it to a proper absolute file path
-          return path.resolve(path.join(absoluteFilePath, sourceMapPath.slice(alias.length)));
-        }
+    for (const [aliasedPattern, absoluteFilePathPattern] of this.sourceMapPathOverrides) {
+      const absoluteFilePath = replacePrefixPattern(
+        sourceMapPath,
+        aliasedPattern,
+        absoluteFilePathPattern
+      );
+      if (absoluteFilePath) {
+        return absoluteFilePath;
       }
     }
     return sourceMapPath;
   }
 
   private toSourceMapAliasedFilePath(sourceAbsoluteFilePath: string) {
-    if (this.sourceMapAliases) {
-      // we return the first alias from the list
-      for (const [alias, absoluteFilePath] of this.sourceMapAliases) {
-        if (sourceAbsoluteFilePath.startsWith(absoluteFilePath)) {
-          return path.join(alias, path.relative(absoluteFilePath, sourceAbsoluteFilePath));
-        }
+    // we return the first alias from the list
+    for (const [aliasedPattern, absoluteFilePathPattern] of this.sourceMapPathOverrides) {
+      const aliasedPath = replacePrefixPattern(
+        sourceAbsoluteFilePath,
+        absoluteFilePathPattern,
+        aliasedPattern
+      );
+      if (aliasedPath) {
+        return aliasedPath;
       }
     }
     return sourceAbsoluteFilePath;
   }
+}
+
+/**
+ * This mathod handles the path override pattern replacement logic.
+ * It only supports prefix-only patterns which have * at the end as this is currently
+ * the only case we use it for right now.
+ */
+function replacePrefixPattern(filePath: string, fromPattern: string, toPattern: string) {
+  const strippedFromPattern = fromPattern.replace("*", "");
+  const strippedToPattern = toPattern.replace("*", "");
+
+  if (filePath.startsWith(strippedFromPattern)) {
+    return path.normalize(filePath.replace(strippedFromPattern, strippedToPattern));
+  }
+
+  return null;
 }

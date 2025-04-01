@@ -26,7 +26,7 @@ import { filePathForProfile } from "./cpuProfiler";
 export type CDPConfiguration = {
   websocketAddress: string;
   expoPreludeLineCount: number;
-  sourceMapAliases: [string, string][];
+  sourceMapPathOverrides: Record<string, string>;
   breakpointsAreRemovedOnContextCleared: boolean;
   skipFiles: string[];
 };

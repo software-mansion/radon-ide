@@ -60,12 +60,12 @@ export class CDPSession {
   private breakpointsController: BreakpointsController;
 
   private debugSessionReady = false;
-  private debugSessionReadyEmitter = new EventEmitter<void>();
+  private consoleAPICallsQueue: any[] = [];
 
   constructor(private delegate: CDPSessionDelegate, private configuration: CDPConfiguration) {
     this.sourceMapRegistry = new SourceMapsRegistry(
       configuration.expoPreludeLineCount,
-      configuration.sourceMapAliases
+      Object.entries(configuration.sourceMapPathOverrides)
     );
 
     this.breakpointsController = new BreakpointsController(
@@ -138,7 +138,7 @@ export class CDPSession {
 
         if (isMainBundle) {
           this.debugSessionReady = true;
-          this.debugSessionReadyEmitter.fire();
+          this.flushEnqueuedConsoleAPICalls();
           this.delegate.onDebugSessionReady();
         }
 
@@ -164,15 +164,21 @@ export class CDPSession {
         if (this.debugSessionReady) {
           this.handleConsoleAPICall(message);
         } else {
-          this.debugSessionReadyEmitter.event(() => {
-            this.handleConsoleAPICall(message);
-          });
+          this.consoleAPICallsQueue.push(message);
         }
         break;
       default:
         break;
     }
   };
+
+  private flushEnqueuedConsoleAPICalls() {
+    const messages = this.consoleAPICallsQueue;
+    this.consoleAPICallsQueue = [];
+    for (const message of messages) {
+      this.handleConsoleAPICall(message);
+    }
+  }
 
   private async handleConsoleAPICall(message: any) {
     // We wrap console calls and add stack information as last three arguments, however
