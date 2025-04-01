@@ -17,6 +17,7 @@ import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
 import { EventEmitter } from "vscode";
+import { CDPConfiguration } from "./CDPDebugAdapter";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -60,27 +61,22 @@ export class CDPSession {
   private debugSessionReady = false;
   private debugSessionReadyEmitter = new EventEmitter<void>();
 
-  constructor(
-    private delegate: CDPSessionDelegate,
-    websocketAddress: string,
-    sourceMapConfiguration: {
-      expoPreludeLineCount: number;
-      sourceMapPathOverrides: Record<string, string>;
-    },
-    breakpointsConfiguration: { breakpointsAreRemovedOnContextCleared: boolean }
-  ) {
+  private resumeEventTimeout: NodeJS.Timeout | undefined;
+  private willLikelyPauseSoon = false;
+
+  constructor(private delegate: CDPSessionDelegate, private configuration: CDPConfiguration) {
     this.sourceMapRegistry = new SourceMapsRegistry(
-      sourceMapConfiguration.expoPreludeLineCount,
-      Object.entries(sourceMapConfiguration.sourceMapPathOverrides)
+      configuration.expoPreludeLineCount,
+      Object.entries(configuration.sourceMapPathOverrides)
     );
 
     this.breakpointsController = new BreakpointsController(
       this.sourceMapRegistry,
       this,
-      breakpointsConfiguration.breakpointsAreRemovedOnContextCleared
+      configuration.breakpointsAreRemovedOnContextCleared
     );
 
-    this.connection = new WebSocket(websocketAddress);
+    this.connection = new WebSocket(configuration.websocketAddress);
 
     this.connection.on("open", this.setUpDebugger);
 
@@ -154,7 +150,7 @@ export class CDPSession {
         this.handleDebuggerPaused(message);
         break;
       case "Debugger.resumed":
-        this.delegate.onDebuggerResumed();
+        this.handleDebuggerResumed();
         break;
       case "Runtime.executionContextsCleared":
         // clear all existing source maps, breakpoints and variable store
@@ -283,7 +279,49 @@ export class CDPSession {
     });
     const scopeChains = message.params.callFrames.map((cdpFrame: any) => cdpFrame.scopeChain);
 
+    if (this.resumeEventTimeout) {
+      clearTimeout(this.resumeEventTimeout);
+      this.resumeEventTimeout = undefined;
+    }
+    this.maybeUpdateDebuggerOverlay(true);
     this.delegate.sendStoppedEvent(stackFrames, scopeChains, "breakpoint");
+  }
+
+  private handleDebuggerResumed() {
+    if (this.resumeEventTimeout) {
+      // we clear resume event here as well as we will either schedule a new one
+      // or fire the event immediately.
+      clearTimeout(this.resumeEventTimeout);
+      this.resumeEventTimeout = undefined;
+    }
+    if (this.willLikelyPauseSoon) {
+      // when step-over is called, we expect Debugger.resumed event to be called
+      // after which the paused event will be fired almost immediately as the
+      // debugger stops at the next line of code.
+      // In order to prevent the paused event from being fired immediately resulting
+      // in the overlay blinking for a fraction of second, we wait for a short period
+      // just in case the paused event is never fired.
+      this.willLikelyPauseSoon = false;
+      this.resumeEventTimeout = setTimeout(() => {
+        this.maybeUpdateDebuggerOverlay(false);
+        this.delegate.onDebuggerResumed();
+      }, 100);
+    } else {
+      this.maybeUpdateDebuggerOverlay(false);
+      this.delegate.onDebuggerResumed();
+    }
+  }
+
+  private maybeUpdateDebuggerOverlay(isPaused: boolean) {
+    if (this.configuration.displayDebuggerOverlay) {
+      this.sendCDPMessage(
+        "Overlay.setPausedInDebuggerMessage",
+        isPaused
+        ? {
+            message: "Paused in debugger",
+          }
+        : {}
+    );
   }
 
   private handleCDPMessageResponse(message: any) {
