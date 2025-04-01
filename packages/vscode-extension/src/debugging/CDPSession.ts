@@ -59,12 +59,15 @@ export class CDPSession {
   constructor(
     private delegate: CDPSessionDelegate,
     websocketAddress: string,
-    sourceMapConfiguration: { expoPreludeLineCount: number; sourceMapAliases: [string, string][] },
+    sourceMapConfiguration: {
+      expoPreludeLineCount: number;
+      sourceMapPathOverrides: Record<string, string>;
+    },
     breakpointsConfiguration: { breakpointsAreRemovedOnContextCleared: boolean }
   ) {
     this.sourceMapRegistry = new SourceMapsRegistry(
       sourceMapConfiguration.expoPreludeLineCount,
-      sourceMapConfiguration.sourceMapAliases
+      Object.entries(sourceMapConfiguration.sourceMapPathOverrides)
     );
 
     this.breakpointsController = new BreakpointsController(

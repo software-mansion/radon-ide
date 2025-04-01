@@ -26,7 +26,7 @@ import { filePathForProfile } from "./cpuProfiler";
 export type CDPConfiguration = {
   websocketAddress: string;
   expoPreludeLineCount: number;
-  sourceMapAliases: [string, string][];
+  sourceMapPathOverrides: Record<string, string>;
   breakpointsAreRemovedOnContextCleared: boolean;
 };
 
@@ -55,7 +55,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
       cdpConfiguration.websocketAddress,
       {
         expoPreludeLineCount: cdpConfiguration.expoPreludeLineCount,
-        sourceMapAliases: cdpConfiguration.sourceMapAliases,
+        sourceMapPathOverrides: cdpConfiguration.sourceMapPathOverrides,
       },
       {
         breakpointsAreRemovedOnContextCleared:
