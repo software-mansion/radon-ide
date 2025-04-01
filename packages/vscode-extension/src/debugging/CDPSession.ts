@@ -16,9 +16,8 @@ import { VariableStore } from "./variableStore";
 import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
-import { EventEmitter } from "vscode";
 import { CDPConfiguration } from "./CDPDebugAdapter";
-import { minimatch } from "minimatch";
+import { Minimatch } from "minimatch";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -62,10 +61,16 @@ export class CDPSession {
   private debugSessionReady = false;
   private consoleAPICallsQueue: any[] = [];
 
+  private skipFiles: Minimatch[] = [];
+
   constructor(private delegate: CDPSessionDelegate, private configuration: CDPConfiguration) {
     this.sourceMapRegistry = new SourceMapsRegistry(
       configuration.expoPreludeLineCount,
       Object.entries(configuration.sourceMapPathOverrides)
+    );
+
+    this.skipFiles = configuration.skipFiles.map(
+      (pattern) => new Minimatch(pattern, { flipNegate: true })
     );
 
     this.breakpointsController = new BreakpointsController(
@@ -243,6 +248,16 @@ export class CDPSession {
     this.delegate.sendOutputEvent(output);
   }
 
+  private shouldAcceptFile(fileName: string) {
+    let accept = true;
+    for (const pattern of this.skipFiles) {
+      if (pattern.match(fileName)) {
+        accept = pattern.negate;
+      }
+    }
+    return accept;
+  }
+
   private findFirstNonSkippedCallFramePosition(callFrames: CDPCallFrame[]) {
     let firstPosition;
     for (const frame of callFrames) {
@@ -251,10 +266,7 @@ export class CDPSession {
         frame.lineNumber + 1, // cdp line and column numbers are 0-based
         frame.columnNumber
       );
-      const shouldSkip = this.configuration.skipFiles.some((pattern) =>
-        minimatch(originalPosition.sourceURL, pattern)
-      );
-      if (!shouldSkip) {
+      if (this.shouldAcceptFile(originalPosition.sourceURL)) {
         return originalPosition;
       } else if (!firstPosition) {
         firstPosition = originalPosition;
