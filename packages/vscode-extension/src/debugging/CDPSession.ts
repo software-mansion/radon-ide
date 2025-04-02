@@ -1,6 +1,7 @@
 import WebSocket from "ws";
 import { OutputEvent, Source, StackFrame } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
+import { Minimatch } from "minimatch";
 import { Cdp } from "vscode-js-debug/out/cdp/index";
 import { AnyObject } from "vscode-js-debug/out/adapter/objectPreview/betterTypes";
 import { formatMessage } from "vscode-js-debug/out/adapter/messageFormat";
@@ -13,9 +14,10 @@ import { Logger } from "../Logger";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { BreakpointsController } from "./BreakpointsController";
 import { VariableStore } from "./variableStore";
-import { CDPDebuggerScope, CDPRemoteObject } from "./cdp";
+import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
+import { CDPConfiguration } from "./CDPDebugAdapter";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -56,27 +58,28 @@ export class CDPSession {
 
   private breakpointsController: BreakpointsController;
 
-  constructor(
-    private delegate: CDPSessionDelegate,
-    websocketAddress: string,
-    sourceMapConfiguration: {
-      expoPreludeLineCount: number;
-      sourceMapPathOverrides: Record<string, string>;
-    },
-    breakpointsConfiguration: { breakpointsAreRemovedOnContextCleared: boolean }
-  ) {
+  private debugSessionReady = false;
+  private consoleAPICallsQueue: any[] = [];
+
+  private skipFiles: Minimatch[] = [];
+
+  constructor(private delegate: CDPSessionDelegate, private configuration: CDPConfiguration) {
     this.sourceMapRegistry = new SourceMapsRegistry(
-      sourceMapConfiguration.expoPreludeLineCount,
-      Object.entries(sourceMapConfiguration.sourceMapPathOverrides)
+      configuration.expoPreludeLineCount,
+      Object.entries(configuration.sourceMapPathOverrides)
+    );
+
+    this.skipFiles = configuration.skipFiles.map(
+      (pattern) => new Minimatch(pattern, { flipNegate: true })
     );
 
     this.breakpointsController = new BreakpointsController(
       this.sourceMapRegistry,
       this,
-      breakpointsConfiguration.breakpointsAreRemovedOnContextCleared
+      configuration.breakpointsAreRemovedOnContextCleared
     );
 
-    this.connection = new WebSocket(websocketAddress);
+    this.connection = new WebSocket(configuration.websocketAddress);
 
     this.connection.on("open", this.setUpDebugger);
 
@@ -139,6 +142,8 @@ export class CDPSession {
         );
 
         if (isMainBundle) {
+          this.debugSessionReady = true;
+          this.flushEnqueuedConsoleAPICalls();
           this.delegate.onDebugSessionReady();
         }
 
@@ -161,12 +166,24 @@ export class CDPSession {
         this.delegate.onExecutionContextsCleared();
         break;
       case "Runtime.consoleAPICalled":
-        this.handleConsoleAPICall(message);
+        if (this.debugSessionReady) {
+          this.handleConsoleAPICall(message);
+        } else {
+          this.consoleAPICallsQueue.push(message);
+        }
         break;
       default:
         break;
     }
   };
+
+  private flushEnqueuedConsoleAPICalls() {
+    const messages = this.consoleAPICallsQueue;
+    this.consoleAPICallsQueue = [];
+    for (const message of messages) {
+      this.handleConsoleAPICall(message);
+    }
+  }
 
   private async handleConsoleAPICall(message: any) {
     // We wrap console calls and add stack information as last three arguments, however
@@ -201,27 +218,62 @@ export class CDPSession {
 
       output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
 
-      output.body = {
+      Object.assign(output.body, {
         ...formattedOutput,
         //@ts-ignore source, line, column and group are valid fields
         source: new Source(sourceURL, sourceURL),
         line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
         column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
-      };
+      });
     } else {
-      const variablesRefDapID = await this.createVariableForOutputEvent(message.params.args);
-
       const formattedOutput = await this.formatDefaultString(message.params.args);
 
       output = new OutputEvent(formattedOutput.output, typeToCategory(message.params.type));
-
-      output.body = {
+      Object.assign(output.body, {
         ...formattedOutput,
-        //@ts-ignore source, line, column and group are valid fields
-        variablesReference: variablesRefDapID,
-      };
+      });
+
+      if (message.params.stackTrace) {
+        const stackTrace = message.params.stackTrace;
+        const { sourceURL, lineNumber1Based, columnNumber0Based } =
+          this.findFirstNonSkippedCallFramePosition(stackTrace.callFrames);
+        Object.assign(output.body, {
+          //@ts-ignore source, line, column and group are valid fields
+          source: new Source(sourceURL, sourceURL),
+          line: this.linesStartAt1 ? lineNumber1Based : lineNumber1Based - 1,
+          column: this.columnsStartAt1 ? columnNumber0Based + 1 : columnNumber0Based,
+        });
+      }
     }
     this.delegate.sendOutputEvent(output);
+  }
+
+  private shouldAcceptFile(fileName: string) {
+    let accept = true;
+    for (const pattern of this.skipFiles) {
+      if (pattern.match(fileName)) {
+        accept = pattern.negate;
+      }
+    }
+    return accept;
+  }
+
+  private findFirstNonSkippedCallFramePosition(callFrames: CDPCallFrame[]) {
+    let firstPosition;
+    for (const frame of callFrames) {
+      const originalPosition = this.sourceMapRegistry!.findOriginalPosition(
+        frame.scriptId,
+        frame.lineNumber + 1, // cdp line and column numbers are 0-based
+        frame.columnNumber
+      );
+      if (this.shouldAcceptFile(originalPosition.sourceURL)) {
+        return originalPosition;
+      } else if (!firstPosition) {
+        firstPosition = originalPosition;
+      }
+    }
+    // return the first position if none of the frames are from the app
+    return firstPosition!;
   }
 
   private async handleDebuggerPaused(message: any) {
@@ -389,7 +441,7 @@ export class CDPSession {
     const output = formatResult.result + "\n";
 
     if (formatResult.usedAllSubs && !args.some(previewAsObject)) {
-      return { output };
+      return { output, variablesReference: undefined };
     } else {
       const outputVar = await this.createVariableForOutputEvent(args as CDPRemoteObject[]);
 
