@@ -5,8 +5,11 @@ sidebar_position: 9
 ---
 
 Radon AI is a [GitHub Copilot Chat participant](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#chat-participants) enhanced with up-to-date information about the React Native ecosystem.
+At the heart of it is our extensive React Native knowledge database, which is queried before answering your question.
 
-Before answering your question, Radon AI queries an extensive React Native knowledge database. Our knowledge database is updated daily, to ensure the most up to date information.
+We index all of the popular React Native libraries to match questions to relevant pieces of documentation, providing additional, accurate context to your conversation.
+
+Our knowledge database is updated daily to provide the most up-to-date information.
 
 <img width="550" src="/img/docs/ide_chat_response.png" className="shadow-image"/>
 
