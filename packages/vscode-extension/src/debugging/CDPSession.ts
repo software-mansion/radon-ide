@@ -1,6 +1,7 @@
 import WebSocket from "ws";
 import { OutputEvent, Source, StackFrame } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
+import { Minimatch } from "minimatch";
 import { Cdp } from "vscode-js-debug/out/cdp/index";
 import { AnyObject } from "vscode-js-debug/out/adapter/objectPreview/betterTypes";
 import { formatMessage } from "vscode-js-debug/out/adapter/messageFormat";
@@ -16,7 +17,6 @@ import { VariableStore } from "./variableStore";
 import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
-import { EventEmitter } from "vscode";
 import { CDPConfiguration } from "./CDPDebugAdapter";
 
 type ResolveType<T = unknown> = (result: T) => void;
@@ -59,15 +59,20 @@ export class CDPSession {
   private breakpointsController: BreakpointsController;
 
   private debugSessionReady = false;
-  private debugSessionReadyEmitter = new EventEmitter<void>();
+  private consoleAPICallsQueue: any[] = [];
 
   private resumeEventTimeout: NodeJS.Timeout | undefined;
   private willLikelyPauseSoon = false;
+  private skipFiles: Minimatch[] = [];
 
   constructor(private delegate: CDPSessionDelegate, private configuration: CDPConfiguration) {
     this.sourceMapRegistry = new SourceMapsRegistry(
       configuration.expoPreludeLineCount,
       Object.entries(configuration.sourceMapPathOverrides)
+    );
+
+    this.skipFiles = configuration.skipFiles.map(
+      (pattern) => new Minimatch(pattern, { flipNegate: true })
     );
 
     this.breakpointsController = new BreakpointsController(
@@ -140,7 +145,7 @@ export class CDPSession {
 
         if (isMainBundle) {
           this.debugSessionReady = true;
-          this.debugSessionReadyEmitter.fire();
+          this.flushEnqueuedConsoleAPICalls();
           this.delegate.onDebugSessionReady();
         }
 
@@ -166,15 +171,21 @@ export class CDPSession {
         if (this.debugSessionReady) {
           this.handleConsoleAPICall(message);
         } else {
-          this.debugSessionReadyEmitter.event(() => {
-            this.handleConsoleAPICall(message);
-          });
+          this.consoleAPICallsQueue.push(message);
         }
         break;
       default:
         break;
     }
   };
+
+  private flushEnqueuedConsoleAPICalls() {
+    const messages = this.consoleAPICallsQueue;
+    this.consoleAPICallsQueue = [];
+    for (const message of messages) {
+      this.handleConsoleAPICall(message);
+    }
+  }
 
   private async handleConsoleAPICall(message: any) {
     // We wrap console calls and add stack information as last three arguments, however
@@ -227,7 +238,7 @@ export class CDPSession {
       if (message.params.stackTrace) {
         const stackTrace = message.params.stackTrace;
         const { sourceURL, lineNumber1Based, columnNumber0Based } =
-          this.findFirstCallFramePositionFromApp(stackTrace.callFrames);
+          this.findFirstNonSkippedCallFramePosition(stackTrace.callFrames);
         Object.assign(output.body, {
           //@ts-ignore source, line, column and group are valid fields
           source: new Source(sourceURL, sourceURL),
@@ -239,7 +250,17 @@ export class CDPSession {
     this.delegate.sendOutputEvent(output);
   }
 
-  private findFirstCallFramePositionFromApp(callFrames: CDPCallFrame[]) {
+  private shouldAcceptFile(fileName: string) {
+    let accept = true;
+    for (const pattern of this.skipFiles) {
+      if (pattern.match(fileName)) {
+        accept = pattern.negate;
+      }
+    }
+    return accept;
+  }
+
+  private findFirstNonSkippedCallFramePosition(callFrames: CDPCallFrame[]) {
     let firstPosition;
     for (const frame of callFrames) {
       const originalPosition = this.sourceMapRegistry!.findOriginalPosition(
@@ -247,10 +268,7 @@ export class CDPSession {
         frame.lineNumber + 1, // cdp line and column numbers are 0-based
         frame.columnNumber
       );
-      if (
-        originalPosition.sourceURL !== "__source__" &&
-        !originalPosition.sourceURL.includes("node_modules")
-      ) {
+      if (this.shouldAcceptFile(originalPosition.sourceURL)) {
         return originalPosition;
       } else if (!firstPosition) {
         firstPosition = originalPosition;
@@ -317,11 +335,12 @@ export class CDPSession {
       this.sendCDPMessage(
         "Overlay.setPausedInDebuggerMessage",
         isPaused
-        ? {
-            message: "Paused in debugger",
-          }
-        : {}
-    );
+          ? {
+              message: "Paused in debugger",
+            }
+          : {}
+      );
+    }
   }
 
   private handleCDPMessageResponse(message: any) {

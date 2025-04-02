@@ -28,6 +28,8 @@ export type CDPConfiguration = {
   expoPreludeLineCount: number;
   sourceMapPathOverrides: Record<string, string>;
   breakpointsAreRemovedOnContextCleared: boolean;
+  displayDebuggerOverlay?: boolean;
+  skipFiles: string[];
 };
 
 const ERROR_RESPONSE_FAIL_TO_RETRIEVE_VARIABLE_ID = 4000;
