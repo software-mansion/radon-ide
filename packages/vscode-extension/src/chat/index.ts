@@ -144,7 +144,7 @@ function handleError(err: unknown, stream: vscode.ChatResponseStream): void {
   // - quote limits exceeded
 
   if (err instanceof vscode.LanguageModelError) {
-    console.log(err.message, err.code, err.cause);
+    Logger.error(CHAT_LOG, err.message, err.code, err.cause);
     if (err.cause instanceof Error && err.cause.message.includes("off_topic")) {
       stream.markdown("I'm sorry, I can only explain React Native concepts.");
     }
