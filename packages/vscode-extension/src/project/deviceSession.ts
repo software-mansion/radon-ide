@@ -20,13 +20,16 @@ import { BuildCache } from "../builders/BuildCache";
 import { CancelToken } from "../builders/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { ToolsDelegate, ToolsManager } from "./tools";
+import { extensionContext } from "../utilities/extensionContext";
+import _ from "lodash";
+
+const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
 type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = {
   cleanBuild: boolean;
   resetMetroCache: boolean;
   previewReadyCallback: PreviewReadyCallback;
-  deviceSettings: DeviceSettings;
   appRoot: string;
 };
 
@@ -41,8 +44,11 @@ export type DeviceSessionDelegate = {
   onStateChange(state: StartupMessage): void;
   onBuildProgress(stageProgress: number): void;
   onBuildSuccess(): void;
+  onDeviceSettingChanged(settings: DeviceSettings): void;
   ensureDependenciesAndNodeVersion(): Promise<void>;
-};
+} & MetroDelegate &
+  ToolsDelegate &
+  DebugSessionDelegate;
 
 export class DeviceBootError extends Error {
   constructor(message: string, public readonly cause: unknown) {
@@ -60,7 +66,7 @@ export class DeviceSession implements Disposable {
   private debugSession: DebugSession;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
-  private deviceSettings: DeviceSettings | undefined;
+  public deviceSettings: DeviceSettings;
   private isLaunching = true;
 
   private get buildResult() {
@@ -83,6 +89,20 @@ export class DeviceSession implements Disposable {
     private readonly metroDelegate: MetroDelegate,
     private readonly toolsDelegate: ToolsDelegate
   ) {
+    this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
+      appearance: "dark",
+      contentSize: "normal",
+      location: {
+        latitude: 50.048653,
+        longitude: 19.965474,
+        isDisabled: false,
+      },
+      hasEnrolledBiometrics: false,
+      locale: "en_US",
+      replaysEnabled: false,
+      showTouches: false,
+    };
+
     this.devtools = new Devtools();
     this.metro = new Metro(this.devtools, metroDelegate);
     this.toolsManager = new ToolsManager(this.devtools, toolsDelegate);
@@ -311,13 +331,7 @@ export class DeviceSession implements Disposable {
     Logger.debug("Metro & devtools ready");
   }
 
-  public async start({
-    cleanBuild,
-    resetMetroCache,
-    previewReadyCallback,
-    deviceSettings,
-    appRoot,
-  }: StartOptions) {
+  public async start({ cleanBuild, resetMetroCache, previewReadyCallback, appRoot }: StartOptions) {
     const waitForNodeModules = this.deviceSessionDelegate.ensureDependenciesAndNodeVersion();
 
     Logger.debug(`Launching devtools`);
@@ -329,9 +343,6 @@ export class DeviceSession implements Disposable {
       appRoot,
       dependencies: [waitForNodeModules],
     });
-
-    this.deviceSettings = deviceSettings;
-
     // We start the debug session early to be able to use it to surface bundle
     // errors in the console. We only start the parent debug session and the JS
     // debugger will be started at later time once the app is built and launched.
@@ -339,7 +350,7 @@ export class DeviceSession implements Disposable {
 
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
-    await this.bootDevice(deviceSettings);
+    await this.bootDevice(this.deviceSettings);
     await this.buildApp({ appRoot, clean: cleanBuild });
     await this.installApp({ reinstall: false });
     const previewUrl = await this.launchApp(previewReadyCallback);
@@ -502,6 +513,18 @@ export class DeviceSession implements Disposable {
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
+    const changedSettings = (Object.keys(settings) as Array<keyof DeviceSettings>).filter(
+      (settingKey) => {
+        return !_.isEqual(settings[settingKey], this.deviceSettings[settingKey]);
+      }
+    );
+
+    getTelemetryReporter().sendTelemetryEvent("device-settings:update-device-settings", {
+      platform: this.device.platform,
+      changedSetting: JSON.stringify(changedSettings),
+    });
+
+    extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
     if (this.deviceSettings?.replaysEnabled !== settings.replaysEnabled && !this.isLaunching) {
       if (settings.replaysEnabled) {
         this.device.enableReplay();
@@ -517,6 +540,8 @@ export class DeviceSession implements Disposable {
       }
     }
     this.deviceSettings = settings;
+
+    this.deviceSessionDelegate.onDeviceSettingChanged(settings);
     return this.device.changeSettings(settings);
   }
 
