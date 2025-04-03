@@ -68,15 +68,6 @@ export function registerChat(context: vscode.ExtensionContext) {
       return { metadata: { command: "" } };
     }
 
-    // Calling this function will not trigger a consent UI but just checks for a persisted state.
-    if (!context.languageModelAccessInformation.canSendRequest(request.model)) {
-      Logger.error(CHAT_LOG, "the language model does not exist or consent hasn't been asked for");
-      stream.markdown(
-        "The selected model does not exist or consent hasn't been asked for. Please check your GitHub Copilot settings."
-      );
-      return { metadata: { command: "" } };
-    }
-
     const packages = await getReactNativePackagesPrompt();
 
     try {
