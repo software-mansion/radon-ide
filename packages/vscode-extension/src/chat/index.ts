@@ -115,7 +115,15 @@ export function registerChat(context: vscode.ExtensionContext) {
         messages.push(...messageRequests);
         messageRequests.length = 0;
 
-        const chatResponse = await request.model.sendRequest(messages, { tools }, token);
+        const chatResponse = await request.model.sendRequest(
+          messages,
+          {
+            tools,
+            justification:
+              "Radon AI uses a language model to answer React Native related questions.",
+          },
+          token
+        );
         const newMessages = await processChatResponse(chatResponse, stream, jwt);
 
         if (newMessages === null) {
@@ -147,13 +155,31 @@ export function registerChat(context: vscode.ExtensionContext) {
 }
 
 function handleError(err: unknown, stream: vscode.ChatResponseStream): void {
-  // making the chat request might fail because
-  // - model does not exist
-  // - user consent not given
-  // - quote limits exceeded
-
   if (err instanceof vscode.LanguageModelError) {
     Logger.error(CHAT_LOG, err.message, err.code, err.cause);
+    getTelemetryReporter().sendTelemetryEvent("chat:error", {
+      error: err.message,
+      code: err.code,
+    });
+
+    // making the chat request might fail because
+    switch (err.code) {
+      // model does not exist
+      case vscode.LanguageModelError.NotFound.name:
+        stream.markdown("The selected model does not exist.");
+        break;
+      // user consent not given
+      case vscode.LanguageModelError.NoPermissions.name:
+        stream.markdown("You need to give permission to the language model to use the Radon AI.");
+        break;
+      // quote limits exceeded
+      case vscode.LanguageModelError.Blocked.name:
+        stream.markdown(
+          "Github Copilot quote limits exceeded. Upgrade Copilot Pro to keep using Radon AI."
+        );
+        break;
+    }
+
     if (err.cause instanceof Error && err.cause.message.includes("off_topic")) {
       stream.markdown("I'm sorry, I can only explain React Native concepts.");
     }
