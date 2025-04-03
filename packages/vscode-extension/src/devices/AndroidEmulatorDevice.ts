@@ -832,13 +832,39 @@ async function parseAvdIniFile(filePath: string) {
 }
 
 async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
-  await exec(ADB_PATH, [
-    "-s",
-    serial,
-    "wait-for-device",
-    "shell",
-    "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
-  ]);
+  return new Promise<void>(async (resolve, reject) => {
+    let process: ChildProcess | undefined;
+    const timeout = setTimeout(() => {
+      process?.kill(9);
+      reject(new Error("Timeout waiting for emulator to boot"));
+    }, timeoutMs);
+
+    process = exec(ADB_PATH, [
+      "-s",
+      serial,
+      "wait-for-device",
+      "shell",
+      "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
+    ]);
+
+    await process;
+
+    // If booting device and building the application was fast enough, the emulators network internals
+    // would not be loaded before the start of the application. This in turn would cause PackagerStatusCheck
+    // (https://github.com/facebook/react-native/blob/main/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/devsupport/PackagerStatusCheck.kt)
+    // to fail and the application would think that there is no metro server.
+    process = exec(ADB_PATH, [
+      "-s",
+      serial,
+      "shell",
+      `while ! ping -c 1 10.0.2.2>/dev/null 2>&1; do sleep 0.5; done;`,
+    ]);
+
+    await process;
+
+    clearTimeout(timeout);
+    resolve();
+  });
 }
 
 function getOrCreateAvdDirectory(avd?: string) {

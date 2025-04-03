@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import { mkdtemp } from "fs/promises";
+import { OutputChannel } from "vscode";
 import { Logger } from "../Logger";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
@@ -18,9 +19,10 @@ export async function runExternalBuild(
   buildCommand: string,
   env: Env,
   platform: DevicePlatform,
-  cwd: string
+  cwd: string,
+  outputChannel: OutputChannel
 ) {
-  const output = await runExternalScript(buildCommand, env, cwd, cancelToken);
+  const output = await runExternalScript(buildCommand, env, cwd, outputChannel, cancelToken);
 
   if (!output) {
     return undefined;
@@ -76,6 +78,7 @@ async function runExternalScript(
   externalCommand: string,
   env: Env,
   cwd: string,
+  outputChannel?: OutputChannel,
   cancelToken?: CancelToken
 ) {
   let process = command(externalCommand, { cwd, env, shell: true });
@@ -85,7 +88,11 @@ async function runExternalScript(
   let lastLine: string | undefined;
   const scriptName = getScriptName(externalCommand);
   lineReader(process).onLineRead((line) => {
-    Logger.info(`External script: ${scriptName} (${process.pid})`, line);
+    if (outputChannel) {
+      outputChannel.appendLine(line);
+    } else {
+      Logger.info(`External script: ${scriptName} (${process.pid})`, line);
+    }
     lastLine = line.trim();
   });
 

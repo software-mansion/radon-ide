@@ -1,4 +1,4 @@
-import { DeviceInfo } from "./DeviceManager";
+import { DeviceInfo, DevicePlatform } from "./DeviceManager";
 
 export type Locale = string;
 
@@ -26,23 +26,48 @@ export type ToolsState = {
   [key: string]: ToolState;
 };
 
-export type ProjectState = {
-  status:
-    | "starting"
-    | "running"
-    | "buildError"
-    | "bootError"
-    | "bundleBuildFailedError"
-    | "bundlingError"
-    | "debuggerPaused"
-    | "refreshing";
-  startupMessage?: string; // Only used when status is "starting"
-  stageProgress?: number;
+export type ProjectState =
+  | ({
+      status:
+        | "running"
+        | "bootError"
+        | "bundleBuildFailedError"
+        | "bundlingError"
+        | "debuggerPaused"
+        | "refreshing";
+    } & ProjectStateCommon)
+  | ProjectStateStarting
+  | ProjectStateBuildError;
+
+type ProjectStateCommon = {
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
   initialized: boolean;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
 };
+
+type ProjectStateStarting = {
+  status: "starting";
+  startupMessage: StartupMessage;
+  stageProgress: number;
+} & ProjectStateCommon;
+
+type ProjectStateBuildError = {
+  status: "buildError";
+  buildError: {
+    message: string;
+    platform: DevicePlatform;
+    buildType: BuildType;
+  };
+} & ProjectStateCommon;
+
+export enum BuildType {
+  Local = "local",
+  ExpoGo = "expoGo",
+  Eas = "eas",
+  Custom = "custom",
+  Unknown = "unknown",
+}
 
 export type ZoomLevelType = number | "Fit";
 
