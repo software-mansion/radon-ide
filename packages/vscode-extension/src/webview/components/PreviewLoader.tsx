@@ -21,13 +21,9 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
 
-  const startupMessage =
-    projectState.status === "starting" ? projectState.startupMessage : undefined;
+  const startupMessage = projectState.startupMessage;
 
   useEffect(() => {
-    if (projectState.status !== "starting") {
-      return;
-    }
     if (projectState.startupMessage === StartupMessage.Restarting) {
       setProgress(0);
     } else {
