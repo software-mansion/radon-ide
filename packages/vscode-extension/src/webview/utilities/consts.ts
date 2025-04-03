@@ -23,6 +23,11 @@ import iphone15promask from "../../assets/iphone_15_pro/mask.png";
 import iphone15probezel from "../../assets/iphone_15_pro/bezel.png";
 import iphone15proscreen from "../../assets/iphone_15_pro/screen.png";
 
+import iphone16pro from "../../assets/iphone_16_pro/skin.png";
+import iphone16promask from "../../assets/iphone_16_pro/mask.png";
+import iphone16probezel from "../../assets/iphone_16_pro/bezel.png";
+import iphone16proscreen from "../../assets/iphone_16_pro/screen.png";
+
 import iphoneSE from "../../assets/iphone_SE/skin.webp";
 import iphoneSEmask from "../../assets/iphone_SE/mask.png";
 import iphoneSEbezel from "../../assets/iphone_SE/bezel.png";
@@ -57,41 +62,56 @@ export type DeviceProperties = {
 
 // iOS devices names should match supportedDeviceTypes inside the runtime
 
-// Shared properties for iPhone 15 Pro and iPhone 16 Pro
-const iphone15And16ProShared = {
-  platform: DevicePlatform.IOS,
-  screenWidth: 1178,
-  screenHeight: 2556,
-  maskImage: iphone15promask,
-  screenImage: iphone15proscreen,
-  bezel: {
-    type: "mask" as const,
-    width: 1186,
-    height: 2564,
-    offsetX: 4,
-    offsetY: 4,
-    image: iphone15probezel,
-  },
-  skin: {
-    type: "skin" as const,
-    width: 1285,
-    height: 2663,
-    offsetX: 55,
-    offsetY: 55,
-    image: iphone15pro,
-  },
-};
-
 export const iOSSupportedDevices: DeviceProperties[] = [
   {
     modelName: "iPhone 16 Pro",
     modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro",
-    ...iphone15And16ProShared,
+    platform: DevicePlatform.IOS,
+    screenWidth: 1178,
+    screenHeight: 2556,
+    maskImage: iphone16promask,
+    screenImage: iphone16proscreen,
+    bezel: {
+      type: "mask" as const,
+      width: 1186,
+      height: 2564,
+      offsetX: 4,
+      offsetY: 4,
+      image: iphone16probezel,
+    },
+    skin: {
+      type: "skin" as const,
+      width: 1285,
+      height: 2663,
+      offsetX: 55,
+      offsetY: 55,
+      image: iphone16pro,
+    },
   },
   {
     modelName: "iPhone 15 Pro",
     modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
-    ...iphone15And16ProShared,
+    platform: DevicePlatform.IOS,
+    screenWidth: 1178,
+    screenHeight: 2556,
+    maskImage: iphone15promask,
+    screenImage: iphone15proscreen,
+    bezel: {
+      type: "mask" as const,
+      width: 1186,
+      height: 2564,
+      offsetX: 4,
+      offsetY: 4,
+      image: iphone15probezel,
+    },
+    skin: {
+      type: "skin" as const,
+      width: 1285,
+      height: 2663,
+      offsetX: 55,
+      offsetY: 55,
+      image: iphone15pro,
+    },
   },
   {
     modelName: "iPhone SE (3rd generation)",
