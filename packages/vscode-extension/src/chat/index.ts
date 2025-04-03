@@ -52,15 +52,6 @@ export function registerChat(context: vscode.ExtensionContext) {
     stream,
     token
   ): Promise<vscode.ChatResult> => {
-    // Calling this function will not trigger a consent UI but just checks for a persisted state.
-    if (!context.languageModelAccessInformation.canSendRequest(request.model)) {
-      Logger.error(CHAT_LOG, "the language model does not exist or consent hasn't been asked for");
-      stream.markdown(
-        "The selected model does not exist or consent hasn't been asked for. Please check your GitHub Copilot settings."
-      );
-      return { metadata: { command: "" } };
-    }
-
     stream.progress("Thinking...");
     Logger.info(CHAT_LOG, "Chat requested");
     getTelemetryReporter().sendTelemetryEvent("chat:requested");
@@ -73,6 +64,15 @@ export function registerChat(context: vscode.ExtensionContext) {
 
       stream.markdown(
         "You need to have a valid license to use the Radon AI Chat. Please activate your license."
+      );
+      return { metadata: { command: "" } };
+    }
+
+    // Calling this function will not trigger a consent UI but just checks for a persisted state.
+    if (!context.languageModelAccessInformation.canSendRequest(request.model)) {
+      Logger.error(CHAT_LOG, "the language model does not exist or consent hasn't been asked for");
+      stream.markdown(
+        "The selected model does not exist or consent hasn't been asked for. Please check your GitHub Copilot settings."
       );
       return { metadata: { command: "" } };
     }
