@@ -13,7 +13,7 @@ import "./shared/SwitchGroup.css";
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import { AppPermissionType, DeviceSettings } from "../../common/Project";
+import { AppPermissionType, DeviceSettings, ProjectInterface } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
@@ -126,6 +126,18 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             </div>
             <div className="device-settings-margin" />
           </form>
+          <CommandItem
+            project={project}
+            commandName="RNIDE.deviceHomeButtonPress"
+            label="Press Home Button"
+            icon="home"
+          />
+          <CommandItem
+            project={project}
+            commandName="RNIDE.deviceAppSwitchButtonPress"
+            label="Open App Switcher"
+            icon="chrome-restore"
+          />
           {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
@@ -228,6 +240,32 @@ const LocalizationItem = () => {
   );
 };
 
+function CommandItem({
+  project,
+  commandName,
+  label,
+  icon,
+}: {
+  project: ProjectInterface;
+  commandName: string;
+  label: string;
+  icon: string;
+}) {
+  return (
+    <DropdownMenu.Item
+      className="dropdown-menu-item"
+      onSelect={() => {
+        project.runCommand(commandName);
+      }}>
+      <span className="dropdown-menu-item-wraper">
+        <span className={`codicon codicon-${icon}`} />
+        {label}
+        <KeybindingInfo commandName={commandName} />
+      </span>
+    </DropdownMenu.Item>
+  );
+}
+
 const BiometricsItem = () => {
   const { project, deviceSettings } = useProject();
 
@@ -255,32 +293,18 @@ const BiometricsItem = () => {
               <span className="codicon codicon-check right-slot" />
             )}
           </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => {
-              project.sendBiometricAuthorization(true);
-            }}>
-            <span className="dropdown-menu-item-wraper">
-              <span className="codicon codicon-layout-sidebar-left" />
-              <div className="dropdown-menu-item-content">
-                Matching ID
-                <KeybindingInfo commandName="RNIDE.performBiometricAuthorization" />
-              </div>
-            </span>
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => {
-              project.sendBiometricAuthorization(false);
-            }}>
-            <span className="dropdown-menu-item-wraper">
-              <span className="codicon codicon-layout-sidebar-left" />
-              <div className="dropdown-menu-item-content">
-                Non-Matching ID
-                <KeybindingInfo commandName="RNIDE.performFailedBiometricAuthorization" />
-              </div>
-            </span>
-          </DropdownMenu.Item>
+          <CommandItem
+            project={project}
+            commandName="RNIDE.performBiometricAuthorization"
+            label="Matching ID"
+            icon="layout-sidebar-left"
+          />
+          <CommandItem
+            project={project}
+            commandName="RNIDE.performFailedBiometricAuthorization"
+            label="Non-Matching ID"
+            icon="layout-sidebar-left"
+          />
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
     </DropdownMenu.Sub>
