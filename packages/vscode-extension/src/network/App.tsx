@@ -6,11 +6,9 @@ import NetworkRequestLog from "./components/NetworkRequestLog";
 import NetworkLogDetails from "./components/NetworkLogDetails";
 import { useNetwork } from "./providers/NetworkProvider";
 import NetworkTimeline from "./components/NetworkTimeline";
-import { Input } from "../webview/components/shared/Input";
 
 function App() {
-  const { showSearch, networkLogs, unfilteredNetworkLogs, filters, showChart, setFilters } =
-    useNetwork();
+  const { networkLogs, unfilteredNetworkLogs, showChart } = useNetwork();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
   const [detailsWidth, setDetailsWidth] = useState(0);
@@ -36,19 +34,7 @@ function App() {
   return (
     <main>
       <div className="panel-view">
-        <div className="network-bar">
-          <NetworkBar />
-        </div>
-        {showSearch && (
-          <div className="network-search">
-            <Input
-              value={filters.url ?? ""}
-              type="string"
-              onChange={(e) => setFilters({ ...filters, url: e.target.value })}
-              placeholder="Filter"
-            />
-          </div>
-        )}
+        <NetworkBar />
         {showChart && (
           <NetworkTimeline
             networkLogs={unfilteredNetworkLogs}

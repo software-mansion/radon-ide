@@ -1,0 +1,13 @@
+.network-bar {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  margin: 8px;
+  gap: 4px;
+}
+
+.network-search {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}

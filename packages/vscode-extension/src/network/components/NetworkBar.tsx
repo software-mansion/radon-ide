@@ -1,19 +1,27 @@
 import classNames from "classnames";
+import "./NetworkBar.css";
+import { VscodeTextfield } from "@vscode-elements/react-elements";
 import IconButton from "../../webview/components/shared/IconButton";
 import { useNetwork } from "../providers/NetworkProvider";
 
 function NetworkBar() {
-  const { isRecording, toggleRecording, clearActivity, toggleShowSearch, toggleShowChart } =
-    useNetwork();
+  const {
+    isRecording,
+    toggleRecording,
+    clearActivity,
+    toggleShowSearch,
+    toggleShowChart,
+    showSearch,
+    filters,
+    setFilters,
+  } = useNetwork();
 
   return (
-    <>
+    <div className="network-bar">
       <IconButton
         onClick={toggleRecording}
         tooltip={{
-          label: isRecording
-            ? "Stop recording network activity"
-            : "Start recording network activity",
+          label: `${isRecording ? "Stop" : "Start"} recording network activity`,
           side: "bottom",
         }}>
         <span
@@ -32,10 +40,10 @@ function NetworkBar() {
       <IconButton
         onClick={toggleShowSearch}
         tooltip={{
-          label: "Search network activity",
+          label: "Filter domains",
           side: "bottom",
         }}>
-        <span className="codicon codicon-search" />
+        <span className="codicon codicon-filter" />
       </IconButton>
       <IconButton
         onClick={toggleShowChart}
@@ -45,7 +53,20 @@ function NetworkBar() {
         }}>
         <span className="codicon codicon-graph" />
       </IconButton>
-    </>
+      {showSearch && (
+        <div className="network-search">
+          <VscodeTextfield
+            value={filters.url ?? ""}
+            onInput={(e) => {
+              // @ts-ignore it works, types seem to be incorrect here
+              setFilters({ ...filters, url: e.target.value });
+            }}
+            placeholder="Filter domain">
+            <span className="codicon codicon-filter" />
+          </VscodeTextfield>
+        </div>
+      )}
+    </div>
   );
 }
 

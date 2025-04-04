@@ -30,14 +30,6 @@ main {
   user-select: none;
 }
 
-.network-bar {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  margin: 8px;
-  gap: 4px;
-}
-
 .network-filter {
   display: flex;
   flex-direction: row;
@@ -57,16 +49,4 @@ main {
 
 ::-webkit-scrollbar {
   width: 10px;
-}
-
-.network-search {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  justify-content: flex-start;
-  padding-bottom: 15px;
-}
-
-.network-search input {
-  border: "none";
 }
