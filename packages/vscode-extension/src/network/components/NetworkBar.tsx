@@ -11,6 +11,7 @@ function NetworkBar() {
     clearActivity,
     toggleFilterVisible,
     toggleTimelineVisible,
+    isTimelineVisible,
     isFilterVisible,
     filters,
     setFilters,
@@ -32,7 +33,7 @@ function NetworkBar() {
       <IconButton
         onClick={clearActivity}
         tooltip={{
-          label: "Reset network activity",
+          label: "Clear network log",
           side: "bottom",
         }}>
         <span className="codicon codicon-circle-slash" />
@@ -40,7 +41,7 @@ function NetworkBar() {
       <IconButton
         onClick={toggleTimelineVisible}
         tooltip={{
-          label: "Show/Hide timeline visibility",
+          label: isTimelineVisible ? "Hide timeline" : "Show timeline",
           side: "bottom",
         }}>
         <span className="codicon codicon-graph" />
@@ -51,7 +52,12 @@ function NetworkBar() {
           label: "Filter domains",
           side: "bottom",
         }}>
-        <span className="codicon codicon-filter" />
+        <span
+          className={classNames(
+            "codicon",
+            isFilterVisible ? "codicon-filter-filled" : "codicon-filter"
+          )}
+        />
       </IconButton>
       {isFilterVisible && (
         <div className="network-filter">
@@ -61,9 +67,8 @@ function NetworkBar() {
               // @ts-ignore it works, types seem to be incorrect here
               setFilters({ ...filters, url: e.target.value });
             }}
-            placeholder="Filter domain">
-            <span className="codicon codicon-filter" />
-          </VscodeTextfield>
+            placeholder="Filter domain"
+          />
         </div>
       )}
     </div>
