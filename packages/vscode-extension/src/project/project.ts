@@ -38,7 +38,7 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
-import { Metro, MetroDelegate, MetroLauncher } from "./metro";
+import { MetroDelegate, MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
