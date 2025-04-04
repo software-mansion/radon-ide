@@ -1,0 +1,17 @@
+.tooltip {
+  z-index: 10000;
+  position: absolute;
+  background-color: var(--swm-input-background);
+  color: var(--swm-default-text);
+  border: 1px solid var(--swm-border-color);
+  box-shadow: var(--swm-input-shadow);
+  padding: 5px;
+  width: 400px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+}
+.request-bar {
+  pointer-events: visiblePainted;
+  cursor: pointer;
+}
