@@ -62,7 +62,7 @@ type ProjectStateBuildError = {
 } & ProjectStateCommon;
 
 export type SelectDeviceOptions = {
-  killPreviousDevice?: boolean;
+  preservePreviousDevice?: boolean;
 };
 
 export enum BuildType {

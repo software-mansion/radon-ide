@@ -44,7 +44,7 @@ export class DeviceSessionsManager {
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions) {
-    const killPreviousDeviceSession = selectDeviceOptions?.killPreviousDevice;
+    const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
     const { id } = deviceInfo;
 
     const selectedActiveSession = this.trySelectingActiveDeviceSession(
@@ -63,7 +63,7 @@ export class DeviceSessionsManager {
     Logger.debug("Selected device is ready");
 
     if (killPreviousDeviceSession && this.selectedDevice) {
-      this.killAndRemoveDevice(this.selectedDevice);
+      await this.killAndRemoveDevice(this.selectedDevice);
     }
 
     this.updateProjectState({
@@ -160,7 +160,7 @@ export class DeviceSessionsManager {
 
       if (device) {
         // if we found a device on the devices list, we try to select it
-        const isDeviceSelected = await this.selectDevice(device, { killPreviousDevice: true });
+        const isDeviceSelected = await this.selectDevice(device);
         if (isDeviceSelected) {
           return true;
         }
@@ -199,7 +199,9 @@ export class DeviceSessionsManager {
   }
 
   private async killAndRemoveDevice(deviceId: string) {
-    //frytki so fucking hard
+    const deviceSession = this.deviceSessions.get(deviceId);
+    await deviceSession?.dispose();
+    this.deviceSessions.delete(deviceId);
   }
 
   private async selectDeviceOnly(deviceInfo: DeviceInfo) {

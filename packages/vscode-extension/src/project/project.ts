@@ -222,6 +222,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
   }
 
   onDebuggerResumed() {
+    const ignoredEvents = ["starting", "bundlingError"];
+    if (ignoredEvents.includes(this.projectState.status)) {
+      return;
+    }
     this.updateProjectState({ status: "running" });
   }
   //#endregion
