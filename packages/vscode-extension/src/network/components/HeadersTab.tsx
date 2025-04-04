@@ -5,33 +5,32 @@ interface HeadersTabProps {
   networkLog: NetworkLog;
 }
 
-const HeadersTab = ({ networkLog }: HeadersTabProps) => {
-  const requestData = networkLog.request?.headers;
-  const responseData = networkLog.response?.headers;
+interface SectionProps {
+  data: Record<string, string> | undefined;
+}
 
+function Section({ data }: SectionProps) {
+  return (
+    <div className="section-content">
+      {data &&
+        Object.entries(data).map(([key, value]) => (
+          <div key={key} className="section-row">
+            <p>{key}:</p>
+            <p>{String(value)}</p>
+          </div>
+        ))}
+    </div>
+  );
+}
+
+const HeadersTab = ({ networkLog }: HeadersTabProps) => {
   return (
     <>
       <VscodeCollapsible title="Request Headers">
-        <div className="section-content">
-          {requestData &&
-            Object.entries(requestData).map(([key, value]) => (
-              <div key={key} className="section-row">
-                <p>{key}:</p>
-                <p>{String(value)}</p>
-              </div>
-            ))}
-        </div>
+        <Section data={networkLog.request?.headers} />
       </VscodeCollapsible>
       <VscodeCollapsible title="Response Headers" open>
-        <div className="section-content">
-          {responseData &&
-            Object.entries(responseData).map(([key, value]) => (
-              <div key={key} className="section-row">
-                <p>{key}:</p>
-                <p>{String(value)}</p>
-              </div>
-            ))}
-        </div>
+        <Section data={networkLog.response?.headers} />
       </VscodeCollapsible>
     </>
   );
