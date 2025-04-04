@@ -23,8 +23,8 @@ interface NetworkProviderProps extends NetworkTracker {
   setFilters: (filters: Filters) => void;
   clearActivity: () => void;
   toggleScrolling: () => void;
-  isSearchVisible: boolean;
-  toggleSearchVisible: () => void;
+  isFilterVisible: boolean;
+  toggleFilterVisible: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
 }
@@ -33,14 +33,14 @@ const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
   unfilteredNetworkLogs: [],
   isRecording: true,
-  isSearchVisible: false,
+  isFilterVisible: false,
   filters: {
     url: undefined,
     timestampRange: undefined,
   },
   isScrolling: false,
   toggleRecording: () => {},
-  toggleSearchVisible: () => {},
+  toggleFilterVisible: () => {},
   setFilters: () => {},
   clearActivity: () => {},
   toggleScrolling: () => {},
@@ -52,7 +52,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
-  const [isSearchVisible, toggleSearchVisible] = useReducer((state) => !state, false);
+  const [isFilterVisible, toggleFilterVisible] = useReducer((state) => !state, false);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
 
   const [isRecording, setIsRecording] = useState(true);
@@ -98,12 +98,12 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       isScrolling,
       clearActivity,
       toggleScrolling,
-      isSearchVisible,
-      toggleSearchVisible,
+      isFilterVisible,
+      toggleFilterVisible,
       isTimelineVisible,
       toggleTimelineVisible,
     };
-  }, [isRecording, filters, isSearchVisible, isScrolling, isTimelineVisible, networkLogs]);
+  }, [isRecording, filters, isFilterVisible, isScrolling, isTimelineVisible, networkLogs]);
 
   return <NetworkContext.Provider value={contextValue}>{children}</NetworkContext.Provider>;
 }

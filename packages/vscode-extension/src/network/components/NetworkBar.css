@@ -6,7 +6,7 @@
   gap: 4px;
 }
 
-.network-search {
+.network-filter {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;

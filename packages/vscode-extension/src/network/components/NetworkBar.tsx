@@ -9,9 +9,9 @@ function NetworkBar() {
     isRecording,
     toggleRecording,
     clearActivity,
-    toggleSearchVisible,
+    toggleFilterVisible,
     toggleTimelineVisible,
-    isSearchVisible,
+    isFilterVisible,
     filters,
     setFilters,
   } = useNetwork();
@@ -38,14 +38,6 @@ function NetworkBar() {
         <span className="codicon codicon-circle-slash" />
       </IconButton>
       <IconButton
-        onClick={toggleSearchVisible}
-        tooltip={{
-          label: "Filter domains",
-          side: "bottom",
-        }}>
-        <span className="codicon codicon-filter" />
-      </IconButton>
-      <IconButton
         onClick={toggleTimelineVisible}
         tooltip={{
           label: "Show/Hide timeline visibility",
@@ -53,8 +45,16 @@ function NetworkBar() {
         }}>
         <span className="codicon codicon-graph" />
       </IconButton>
-      {isSearchVisible && (
-        <div className="network-search">
+      <IconButton
+        onClick={toggleFilterVisible}
+        tooltip={{
+          label: "Filter domains",
+          side: "bottom",
+        }}>
+        <span className="codicon codicon-filter" />
+      </IconButton>
+      {isFilterVisible && (
+        <div className="network-filter">
           <VscodeTextfield
             value={filters.url ?? ""}
             onInput={(e) => {
