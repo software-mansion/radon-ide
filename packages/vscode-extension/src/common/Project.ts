@@ -103,6 +103,7 @@ export const StartupStageWeight = [
 
 export type ReloadAction =
   | "autoReload" // automatic reload mode
+  | "clearMetro" // clear metro cache, boot device, install app
   | "rebuild" // clean build, boot device, install app
   | "reboot" // reboots device, launch app
   | "reinstall" // force reinstall app

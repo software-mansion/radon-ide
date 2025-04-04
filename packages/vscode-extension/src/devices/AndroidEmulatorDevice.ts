@@ -38,6 +38,8 @@ const ADB_PATH = path.join(
     linux: "adb",
   })
 );
+
+const REBOOT_TIMEOUT = 3000;
 const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
@@ -209,6 +211,27 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private async forcefullyResetDevice() {
     this.emulatorProcess?.kill(9);
     await this.internalBootDevice();
+  }
+
+  public async reboot(){
+    const {promise, resolve} = Promise.withResolvers<void>()  
+
+    const timeout = setTimeout(async () => {
+      this.emulatorProcess?.off("exit", exitListener);
+      await this.forcefullyResetDevice();
+      resolve();
+    }, REBOOT_TIMEOUT)
+
+    const exitListener = async () => {
+      await this.internalBootDevice();
+      clearTimeout(timeout);
+      resolve();
+    }
+
+    this.emulatorProcess?.on("exit", exitListener);
+    this.emulatorProcess?.kill();
+
+    return promise;
   }
 
   async bootDevice(deviceSettings: DeviceSettings): Promise<void> {

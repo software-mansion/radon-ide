@@ -3,7 +3,12 @@ import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { BuildManager, BuildResult, DisposableBuild } from "../builders/BuildManager";
+import {
+  BuildManager,
+  BuildManagerDelegate,
+  BuildResult,
+  DisposableBuild,
+} from "../builders/BuildManager";
 import {
   AppPermissionType,
   DeviceSettings,
@@ -30,7 +35,6 @@ type StartOptions = {
   cleanBuild: boolean;
   resetMetroCache: boolean;
   previewReadyCallback: PreviewReadyCallback;
-  appRoot: string;
 };
 
 export type AppEvent = {
@@ -42,13 +46,16 @@ export type AppEvent = {
 export type DeviceSessionDelegate = {
   onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void;
   onStateChange(state: StartupMessage): void;
+  onReloadStarted(id: string): void;
+  onReloadCompleted(id: string): void;
+  onPreviewReady(previewURL: string): void;
   onBuildProgress(stageProgress: number): void;
-  onBuildSuccess(): void;
   onDeviceSettingChanged(settings: DeviceSettings): void;
   ensureDependenciesAndNodeVersion(): Promise<void>;
 } & MetroDelegate &
   ToolsDelegate &
-  DebugSessionDelegate;
+  DebugSessionDelegate &
+  BuildManagerDelegate;
 
 export class DeviceBootError extends Error {
   constructor(message: string, public readonly cause: unknown) {
@@ -59,6 +66,7 @@ export class DeviceBootError extends Error {
 export class DeviceSession implements Disposable {
   public metro: Metro;
   public toolsManager: ToolsManager;
+  private isActive: boolean = false;
 
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
@@ -81,6 +89,7 @@ export class DeviceSession implements Disposable {
   }
 
   constructor(
+    private readonly appRootFolder: string,
     private readonly device: DeviceBase,
     readonly dependencyManager: DependencyManager,
     readonly buildCache: BuildCache,
@@ -107,7 +116,12 @@ export class DeviceSession implements Disposable {
     this.metro = new Metro(this.devtools, metroDelegate);
     this.toolsManager = new ToolsManager(this.devtools, toolsDelegate);
 
-    this.buildManager = new BuildManager(dependencyManager, buildCache);
+    this.buildManager = new BuildManager(
+      dependencyManager,
+      buildCache,
+      deviceSessionDelegate,
+      device.platform
+    );
     this.debugSession = new DebugSession(debugEventDelegate);
     this.devtools.addListener((event, payload) => {
       switch (event) {
@@ -139,32 +153,99 @@ export class DeviceSession implements Disposable {
     this.devtools?.dispose();
   }
 
+  public async activate() {
+    this.isActive = true;
+    this.buildManager.activate();
+  }
+
+  public async deactivate() {
+    this.isActive = false;
+    this.buildManager.deactivate();
+  }
+
   public async perform(type: ReloadAction) {
     switch (type) {
+      case "autoReload":
+        await this.autoReload();
+        break;
       case "reinstall":
         await this.restartDebugger();
         await this.installApp({ reinstall: true });
         await this.launchApp();
         return true;
       case "restartProcess":
-        await this.restartDebugger();
-        const launchSucceeded = await this.launchApp();
-        if (!launchSucceeded) {
-          return false;
-        }
-        return true;
+        return await this.restartProcess();
       case "reloadJs":
-        if (this.devtools.hasConnectedClient) {
-          try {
-            await this.reloadMetro();
-            return true;
-          } catch (e) {
-            Logger.error("Failed to reload JS", e);
-          }
-        }
-        return false;
+        return this.reloadJS();
     }
     throw new Error("Not implemented " + type);
+  }
+
+  private async reloadJS() {
+    if (this.devtools.hasConnectedClient) {
+      try {
+        await this.reloadMetro();
+        return true;
+      } catch (e) {
+        Logger.error("Failed to reload JS", e);
+      }
+    }
+    return false;
+  }
+
+  private async restartProcess() {
+    await this.restartDebugger();
+    const launchSucceeded = await this.launchApp();
+    if (!launchSucceeded) {
+      return false;
+    }
+    return true;
+  }
+
+  private async reloadSession() {
+    await this.restartDebugger();
+    await this.device.reboot();
+    await this.buildApp({ appRoot: this.appRootFolder, clean: false });
+    await this.installApp({ reinstall: false });
+    await this.launchApp();
+    Logger.debug("Device session started");
+  }
+
+  private async autoReload() {
+    getTelemetryReporter().sendTelemetryEvent("url-bar:restart-requested", {
+      platform: this.device.platform,
+    });
+
+    this.deviceSessionDelegate.onReloadStarted(this.device.deviceInfo.id);
+
+    try {
+      if (this.buildManager.shouldRebuild()) {
+        //frytki hehehehehe here something that rebuilds i guess
+        await this.selectDevice(deviceInfo);
+        return;
+      }
+
+      // if reloading JS is possible, we try to do it first and exit in case of success
+      // otherwise we continue to restart using more invasive methods
+      if (await this.reloadJS()) {
+        return;
+      }
+
+      const restartSucceeded = await this.restartProcess();
+      if (restartSucceeded) {
+        this.deviceSessionDelegate.onReloadCompleted(this.device.deviceInfo.id);
+      }
+    } catch (e) {
+      // finally in case of any errors, the last resort is performing project
+      // restart and device selection (we still avoid forcing clean builds, and
+      // only do clean build when explicitly requested).
+      // before doing anything, we check if the device hasn't been updated in the meantime
+      // which might have initiated a new session anyway
+      if (deviceInfo === this.projectState.selectedDevice) {
+        //frytki hehehehehe
+        await this.selectDevice(deviceInfo);
+      }
+    }
   }
 
   public async restartDebugger() {
@@ -206,7 +287,7 @@ export class DeviceSession implements Disposable {
     await this.reconnectJSDebuggerIfNeeded();
   }
 
-  private async launchApp(previewReadyCallback?: PreviewReadyCallback) {
+  private async launchApp() {
     this.launchAppCancelToken && this.launchAppCancelToken.cancel();
 
     const launchCancelToken = new CancelToken();
@@ -252,7 +333,7 @@ export class DeviceSession implements Disposable {
       this.metro.ready(),
       this.device.startPreview().then((url) => {
         previewURL = url;
-        previewReadyCallback && previewReadyCallback(url);
+        this.deviceSessionDelegate.onPreviewReady(url);
       }),
       waitForAppReady,
     ]);
@@ -302,7 +383,6 @@ export class DeviceSession implements Disposable {
     this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
       appRoot,
       clean,
-      onSuccess: this.deviceSessionDelegate.onBuildSuccess,
       progressListener: throttle((stageProgress: number) => {
         this.deviceSessionDelegate.onBuildProgress(stageProgress);
       }, 100),
@@ -331,7 +411,7 @@ export class DeviceSession implements Disposable {
     Logger.debug("Metro & devtools ready");
   }
 
-  public async start({ cleanBuild, resetMetroCache, previewReadyCallback, appRoot }: StartOptions) {
+  public async start({ cleanBuild, resetMetroCache, previewReadyCallback }: StartOptions) {
     const waitForNodeModules = this.deviceSessionDelegate.ensureDependenciesAndNodeVersion();
 
     Logger.debug(`Launching devtools`);
@@ -340,7 +420,7 @@ export class DeviceSession implements Disposable {
     Logger.debug(`Launching metro`);
     this.metro.start({
       resetCache: resetMetroCache,
-      appRoot,
+      appRoot: this.appRootFolder,
       dependencies: [waitForNodeModules],
     });
     // We start the debug session early to be able to use it to surface bundle
@@ -351,11 +431,15 @@ export class DeviceSession implements Disposable {
     await this.waitForMetroReady();
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await this.bootDevice(this.deviceSettings);
-    await this.buildApp({ appRoot, clean: cleanBuild });
+    await this.buildApp({ appRoot: this.appRootFolder, clean: cleanBuild });
     await this.installApp({ reinstall: false });
-    const previewUrl = await this.launchApp(previewReadyCallback);
+    const previewUrl = await this.launchApp();
     Logger.debug("Device session started");
     return previewUrl;
+  }
+
+  private async restart(){
+
   }
 
   private async connectJSDebugger() {

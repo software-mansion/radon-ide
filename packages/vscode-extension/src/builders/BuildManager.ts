@@ -9,6 +9,11 @@ import { CancelToken } from "./cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildType } from "../common/Project";
+import { throttleAsync } from "../utilities/throttle";
+import { disposeAll } from "../utilities/disposables";
+import { watchProjectFiles } from "../utilities/watchProjectFiles";
+
+const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -16,11 +21,14 @@ export interface DisposableBuild<R> extends Disposable {
   readonly build: Promise<R>;
 }
 
+export interface BuildManagerDelegate {
+  onCacheStale: (platform: DevicePlatform) => void;
+}
+
 type BuildOptions = {
   appRoot: string;
   clean: boolean;
   progressListener: (newProgress: number) => void;
-  onSuccess: () => void;
 };
 
 export class BuildError extends Error {
@@ -29,11 +37,58 @@ export class BuildError extends Error {
   }
 }
 
-export class BuildManager {
+class WorkspaceChangeListener implements Disposable {
+  private watcher: Disposable | undefined;
+
+  constructor(private readonly onChange: () => void) {}
+
+  public startWatching() {
+    this.watcher = watchProjectFiles(() => {
+      this.onChange();
+    });
+  }
+
+  public stopWatching() {
+    this.watcher?.dispose();
+    this.watcher = undefined;
+  }
+
+  public dispose() {
+    this.watcher?.dispose();
+  }
+}
+
+export class BuildManager implements Disposable {
+  private isCachedBuildStale: boolean;
+
+  private workspaceChangeListener: WorkspaceChangeListener;
+
   constructor(
     private readonly dependencyManager: DependencyManager,
-    private readonly buildCache: BuildCache
-  ) {}
+    private readonly buildCache: BuildCache,
+    private readonly buildManagerDelegate: BuildManagerDelegate,
+    platform: DevicePlatform,
+  ) {
+    this.isCachedBuildStale = false;
+    // Note: in future implementations decoupled from device session we 
+    // should make this logic platform independent
+    this.workspaceChangeListener = new WorkspaceChangeListener(() => {
+      this.checkIfNativeChangedForPlatform(platform);
+    });
+    this.workspaceChangeListener.startWatching();
+  }
+
+  public shouldRebuild(){
+    return this.isCachedBuildStale;
+  }
+
+  public activate() {
+    this.workspaceChangeListener.startWatching();
+  }
+
+  public deactivate() {
+    this.workspaceChangeListener.stopWatching();
+  }
 
   private buildOutputChannel: OutputChannel | undefined;
 
@@ -55,7 +110,7 @@ export class BuildManager {
   }
 
   public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {
-    const { clean: forceCleanBuild, progressListener, onSuccess, appRoot } = options;
+    const { clean: forceCleanBuild, progressListener, appRoot } = options;
     const { platform } = deviceInfo;
 
     getTelemetryReporter().sendTelemetryEvent("build:requested", {
@@ -166,8 +221,29 @@ export class BuildManager {
         cancelToken.cancel();
       },
     };
-    disposableBuild.build.then(onSuccess).catch(_.noop);
+    disposableBuild.build
+      .then(() => {
+        this.isCachedBuildStale = false;
+      })
+      .catch(_.noop);
 
     return disposableBuild;
+  }
+
+  private checkIfNativeChangedForPlatform = throttleAsync(async (platform: DevicePlatform) => {
+    if (!this.isCachedBuildStale) {
+      const isCacheStale = await this.buildCache.isCacheStale(platform);
+
+      if (isCacheStale) {
+        this.isCachedBuildStale = true;
+        this.buildManagerDelegate.onCacheStale(platform);
+      }
+    }
+  }, FINGERPRINT_THROTTLE_MS);
+
+
+  public dispose() {
+    this.workspaceChangeListener.dispose();
+    this.buildOutputChannel?.dispose();
   }
 }

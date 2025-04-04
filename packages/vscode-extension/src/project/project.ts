@@ -15,10 +15,8 @@ import {
 } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
-import { isEqual } from "lodash";
 import {
   AppPermissionType,
-  BuildType,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
@@ -33,7 +31,7 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { Logger } from "../Logger";
-import { DeviceInfo } from "../common/DeviceManager";
+import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
 import { throttle, throttleAsync } from "../utilities/throttle";
@@ -56,6 +54,7 @@ import { isAutoSaveEnabled } from "../utilities/isAutoSaveEnabled";
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager } from "./DeviceSessionsManager";
+import { watchProjectFiles } from "../utilities/watchProjectFiles";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -69,7 +68,6 @@ const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 export class Project implements Disposable, ProjectInterface, DeviceSessionDelegate {
   private applicationContext: ApplicationContext;
   private eventEmitter = new EventEmitter();
-  private isCachedBuildStale: boolean;
 
   private deviceSessionsManager: DeviceSessionsManager;
 
@@ -106,13 +104,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
 
     this.deviceSessionsManager.trySelectingDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.isCachedBuildStale = false;
-
-    this.disposables.push(
-      watchProjectFiles(() => {
-        this.checkIfNativeChanged();
-      })
-    );
     this.disposables.push(refreshTokenPeriodically());
     this.disposables.push(
       watchLicenseTokenChange(async () => {
@@ -168,19 +159,30 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     this.reload("reboot");
   }
 
-  //#region Build progress
+  //#region Device Session Delegate
   onBuildProgress = (stageProgress: number): void => {
     this.reportStageProgress(stageProgress, StartupMessage.Building);
   };
 
-  onBuildSuccess = (): void => {
-    // reset fingerprint change flag when build finishes successfully
-    this.isCachedBuildStale = false;
+  onStateChange = (state: StartupMessage): void => {
+    this.updateProjectState({ startupMessage: state });
   };
 
-  onStateChange = (state: StartupMessage): void => {
-    this.updateProjectStateForDevice(this.projectState.selectedDevice!, { startupMessage: state });
-  };
+  public onReloadStarted(id: string): void {
+    this.updateProjectStateForDevice(id, {
+      status: "starting",
+      startupMessage: StartupMessage.Restarting,
+    });
+  }
+
+  public onCacheStale(): void {
+    this.eventEmitter.emit("needsNativeRebuild");
+  }
+
+  public onPreviewReady(previewURL: string): void {
+    this.updateProjectState({ previewURL });
+  }
+
   //#endregion
 
   //#region App events
@@ -228,6 +230,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     }
     this.updateProjectState({ status: "running" });
   }
+
   //#endregion
 
   //#region Recordings and screenshots
@@ -481,7 +484,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     const deviceInfo = this.projectState.selectedDevice!;
     const deviceSession = this.deviceSession;
 
-    this.updateProjectStateForDevice(deviceInfo, {
+    this.updateProjectStateForDevice(deviceInfo.id, {
       status: "starting",
       startupMessage: StartupMessage.Restarting,
     });
@@ -516,7 +519,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
       if (deviceSession === this.deviceSession) {
         const restartSucceeded = await this.deviceSession?.perform("restartProcess");
         if (restartSucceeded) {
-          this.updateProjectStateForDevice(deviceInfo, {
+          this.updateProjectStateForDevice(deviceInfo.id, {
             status: "running",
           });
         }
@@ -549,13 +552,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
       return true;
     }
 
-    const success = (await this.deviceSession?.perform(type)) ?? false;
-    if (success) {
-      this.updateProjectState({ status: "running" });
-    } else {
-      window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
-    }
-    return success;
+    return await this.deviceSessionsManager.reload(type);
   }
 
   //#endregion
@@ -776,8 +773,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     this.eventEmitter.emit("projectStateChanged", this.projectState);
   }
 
-  private updateProjectStateForDevice(deviceInfo: DeviceInfo, newState: Partial<ProjectState>) {
-    if (deviceInfo === this.projectState.selectedDevice) {
+  private updateProjectStateForDevice(id: string, newState: Partial<ProjectState>) {
+    if (id === this.projectState.selectedDevice?.id) {
       this.updateProjectState(newState);
     }
   }
@@ -832,47 +829,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
       this.updateProjectState({ status: "starting" });
       await this.deviceSessionsManager.trySelectingDevice();
     }
-  };
-
-  private checkIfNativeChanged = throttleAsync(async () => {
-    if (!this.isCachedBuildStale && this.deviceSession) {
-      const isCacheStale =
-        !this.projectState.selectedDevice ||
-        (await this.deviceSession.buildCache.isCacheStale(
-          this.projectState.selectedDevice.platform
-        ));
-
-      if (isCacheStale) {
-        this.isCachedBuildStale = true;
-        this.eventEmitter.emit("needsNativeRebuild");
-      }
-    }
-  }, FINGERPRINT_THROTTLE_MS);
-}
-
-function watchProjectFiles(onChange: () => void) {
-  // VS code glob patterns don't support negation so we can't exclude
-  // native build directories like android/build, android/.gradle,
-  // android/app/build, or ios/build.
-  // VS code by default exclude .git and node_modules directories from
-  // watching, configured by `files.watcherExclude` setting.
-  //
-  // We may revisit this if better performance is needed and create
-  // recursive watches ourselves by iterating through workspace directories
-  // to workaround this issue.
-
-  const savedFileWatcher = workspace.onDidSaveTextDocument(onChange);
-
-  const watcher = workspace.createFileSystemWatcher("**/*");
-  watcher.onDidChange(onChange);
-  watcher.onDidCreate(onChange);
-  watcher.onDidDelete(onChange);
-
-  return {
-    dispose: () => {
-      watcher.dispose();
-      savedFileWatcher.dispose();
-    },
   };
 }
 

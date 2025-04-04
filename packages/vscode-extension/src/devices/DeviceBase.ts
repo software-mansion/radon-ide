@@ -20,6 +20,7 @@ export abstract class DeviceBase implements Disposable {
 
   abstract get lockFilePath(): string;
 
+  abstract reboot(): Promise<void>;;
   abstract bootDevice(deviceSettings: DeviceSettings): Promise<void>;
   abstract changeSettings(settings: DeviceSettings): Promise<boolean>;
   abstract sendBiometricAuthorization(isMatch: boolean): Promise<void>;

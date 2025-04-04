@@ -2,7 +2,13 @@ import { isEqual } from "lodash";
 import { window } from "vscode";
 import { BuildError } from "../builders/BuildManager";
 import { DeviceInfo } from "../common/DeviceManager";
-import { BuildType, ProjectState, SelectDeviceOptions, StartupMessage } from "../common/Project";
+import {
+  BuildType,
+  ProjectState,
+  ReloadAction,
+  SelectDeviceOptions,
+  StartupMessage,
+} from "../common/Project";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
@@ -43,6 +49,21 @@ export class DeviceSessionsManager {
     return false;
   }
 
+  public async reload(type: ReloadAction) {
+    const deviceSession = this.selectedDeviceSession;
+    if (!deviceSession) {
+      window.showErrorMessage("Failed to reload, no active device found.", "Dismiss");
+      return false;
+    }
+    const success = await deviceSession.perform(type);
+    if (success) {
+      this.updateProjectState({ status: "running" });
+    } else {
+      window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
+    }
+    return success;
+  }
+
   public async selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions) {
     const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
     const { id } = deviceInfo;
@@ -77,6 +98,7 @@ export class DeviceSessionsManager {
     let newDeviceSession;
     try {
       newDeviceSession = new DeviceSession(
+        this.applicationContext.appRootFolder,
         device,
         this.applicationContext.dependencyManager,
         this.applicationContext.buildCache,
@@ -90,7 +112,6 @@ export class DeviceSessionsManager {
 
       const previewURL = await newDeviceSession.start({
         resetMetroCache: false,
-        appRoot: this.applicationContext.appRootFolder,
         cleanBuild: false,
         previewReadyCallback: (url) => {
           this.updateProjectState({ previewURL: url });
