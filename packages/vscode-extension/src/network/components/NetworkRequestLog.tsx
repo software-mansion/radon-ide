@@ -1,4 +1,13 @@
 import { useState, useMemo, useLayoutEffect, useRef, useCallback } from "react";
+import {
+  VscodeTable,
+  VscodeTableBody,
+  VscodeTableCell,
+  VscodeTableHeader,
+  VscodeTableHeaderCell,
+  VscodeTableRow,
+} from "@vscode-elements/react-elements";
+
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import ResizableContainer from "../../webview/components/shared/ResizableContainer";
 import "./NetworkRequestLog.css";
@@ -258,14 +267,15 @@ const NetworkRequestLog = ({
       style={{ paddingRight: TABLE_RIGHT_PADDING + "px" }}
       ref={containerRef}>
       <div style={{ width: "100%", overflowX: "hidden", borderRadius: "5px" }}>
-        <table>
-          <thead
+        <VscodeTable zebra>
+          <VscodeTableHeader
+            slot="header"
             style={{
               width: Object.values(columnWidths).reduce((acc, width) => acc + width, 0) + "px",
             }}>
-            <tr>
+            <VscodeTableRow>
               {logDetailsConfig.map(({ title }) => (
-                <th
+                <VscodeTableHeaderCell
                   key={title}
                   style={{
                     maxWidth: `${columnWidths[title]}px`,
@@ -276,15 +286,15 @@ const NetworkRequestLog = ({
                     containerSize={columnWidths[title]}
                     setContainerWidth={(width) => handleResize(title, width)}
                     isColumn={true}>
-                    <p className="table-paragraph">{title}</p>
+                    {title}
                   </ResizableContainer>
-                </th>
+                </VscodeTableHeaderCell>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </VscodeTableRow>
+          </VscodeTableHeader>
+          <VscodeTableBody slot="body">
             {networkLogs.map((log) => (
-              <tr
+              <VscodeTableRow
                 key={log.requestId}
                 className={selectedNetworkLog?.requestId === log.requestId ? "selected" : ""}
                 onClick={() =>
@@ -293,27 +303,20 @@ const NetworkRequestLog = ({
                   )
                 }>
                 {logDetailsConfig.map(({ title, getValue, getClass }) => (
-                  <td
+                  <VscodeTableCell
                     key={title}
                     style={{
                       maxWidth: `${columnWidths[title]}px`,
                       width: `${columnWidths[title]}px`,
                     }}
                     className={getClass ? getClass(log) : ""}>
-                    <p
-                      className="table-paragraph"
-                      style={{
-                        maxWidth: `${columnWidths[title]}px`,
-                        width: `${columnWidths[title]}px`,
-                      }}>
-                      {getValue(log)}
-                    </p>
-                  </td>
+                    {getValue(log)}
+                  </VscodeTableCell>
                 ))}
-              </tr>
+              </VscodeTableRow>
             ))}
-          </tbody>
-        </table>
+          </VscodeTableBody>
+        </VscodeTable>
       </div>
     </div>
   );
