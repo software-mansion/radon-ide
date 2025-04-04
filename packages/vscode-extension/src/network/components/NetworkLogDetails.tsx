@@ -9,9 +9,7 @@ import { NetworkLog } from "../hooks/useNetworkTracker";
 
 interface NetworkLogDetailsProps {
   networkLog: NetworkLog;
-  containerWidth: number;
   handleClose: () => void;
-  setContainerWidth: (width: number) => void;
 }
 
 const TABS = [
@@ -33,12 +31,8 @@ const TABS = [
   },
 ];
 
-const NetworkLogDetails = ({
-  networkLog,
-  containerWidth,
-  setContainerWidth,
-  handleClose,
-}: NetworkLogDetailsProps) => {
+// TODO: Add a close button to the tab bar
+const NetworkLogDetails = ({ networkLog, handleClose }: NetworkLogDetailsProps) => {
   return (
     <div className="network-log-details">
       <VscodeTabs>
