@@ -1,52 +1,38 @@
-import classNames from "classnames";
-import { useReducer } from "react";
+import { VscodeCollapsible } from "@vscode-elements/react-elements";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 
 interface HeadersTabProps {
   networkLog: NetworkLog;
 }
 
-interface SectionProps {
-  title: string;
-  data: any;
-}
-
-const Section = ({ title, data }: SectionProps) => {
-  const [isExpanded, toggleExpanded] = useReducer((s) => !s, true);
+const HeadersTab = ({ networkLog }: HeadersTabProps) => {
+  const requestData = networkLog.request?.headers;
+  const responseData = networkLog.response?.headers;
 
   return (
-    <div className="section">
-      <div className="section-header">
-        <span
-          className={classNames(
-            "codicon",
-            isExpanded ? "codicon-triangle-down" : "codicon-triangle-right",
-            "gray-icon"
-          )}
-          onClick={toggleExpanded}
-        />
-        <p>{title}</p>
-      </div>
-      {isExpanded && (
+    <>
+      <VscodeCollapsible title="Request Headers">
         <div className="section-content">
-          {data &&
-            Object.entries(data).map(([key, value]) => (
+          {requestData &&
+            Object.entries(requestData).map(([key, value]) => (
               <div key={key} className="section-row">
                 <p>{key}:</p>
                 <p>{String(value)}</p>
               </div>
             ))}
         </div>
-      )}
-    </div>
-  );
-};
-
-const HeadersTab = ({ networkLog }: HeadersTabProps) => {
-  return (
-    <>
-      <Section title="Request Headers" data={networkLog.request?.headers} />
-      <Section title="Response Headers" data={networkLog.response?.headers} />
+      </VscodeCollapsible>
+      <VscodeCollapsible title="Response Headers" open>
+        <div className="section-content">
+          {responseData &&
+            Object.entries(responseData).map(([key, value]) => (
+              <div key={key} className="section-row">
+                <p>{key}:</p>
+                <p>{String(value)}</p>
+              </div>
+            ))}
+        </div>
+      </VscodeCollapsible>
     </>
   );
 };
