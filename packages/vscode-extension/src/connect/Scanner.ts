@@ -47,7 +47,7 @@ export class Scanner implements Disposable {
     const metro = new Metro(port, [projectRoot]);
     const websocketAddress = await metro.getDebuggerURL();
     if (!websocketAddress) {
-      this.portsStatus.set(port, "no connected device");
+      this.portsStatus.set(port, "no connected device listed");
       return false;
     }
     if (!metro.isUsingNewDebugger) {
