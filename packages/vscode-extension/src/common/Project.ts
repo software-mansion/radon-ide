@@ -29,6 +29,7 @@ export type ToolsState = {
 export type ProjectState =
   | ({
       status:
+        | "starting"
         | "running"
         | "bootError"
         | "bundleBuildFailedError"
@@ -36,7 +37,6 @@ export type ProjectState =
         | "debuggerPaused"
         | "refreshing";
     } & ProjectStateCommon)
-  | ProjectStateStarting
   | ProjectStateBuildError;
 
 type ProjectStateCommon = {
@@ -44,13 +44,9 @@ type ProjectStateCommon = {
   selectedDevice: DeviceInfo | undefined;
   initialized: boolean;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
+  startupMessage: StartupMessage | undefined;
+  stageProgress: number | undefined;
 };
-
-type ProjectStateStarting = {
-  status: "starting";
-  startupMessage: StartupMessage;
-  stageProgress: number;
-} & ProjectStateCommon;
 
 type ProjectStateBuildError = {
   status: "buildError";
