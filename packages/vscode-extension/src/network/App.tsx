@@ -8,7 +8,7 @@ import { useNetwork } from "./providers/NetworkProvider";
 import NetworkTimeline from "./components/NetworkTimeline";
 
 function App() {
-  const { networkLogs, unfilteredNetworkLogs, showChart } = useNetwork();
+  const { networkLogs, unfilteredNetworkLogs, isTimelineVisible } = useNetwork();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
   const [detailsWidth, setDetailsWidth] = useState(0);
@@ -35,7 +35,7 @@ function App() {
     <main>
       <div className="panel-view">
         <NetworkBar />
-        {showChart && (
+        {isTimelineVisible && (
           <NetworkTimeline
             networkLogs={unfilteredNetworkLogs}
             handleSelectedRequest={handleSelectedRequest}
