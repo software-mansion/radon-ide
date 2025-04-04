@@ -259,8 +259,10 @@ function CommandItem({
       }}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
-        {label}
-        <KeybindingInfo commandName={commandName} />
+        <div className="dropdown-menu-item-content">
+          {label}
+          <KeybindingInfo commandName={commandName} />
+        </div>
       </span>
     </DropdownMenu.Item>
   );
