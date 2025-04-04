@@ -1,5 +1,5 @@
 import { useWorkspaceConfig } from "../../providers/WorkspaceConfigProvider";
-import { DeviceProperties } from "../../utilities/consts";
+import { DeviceProperties } from "../../utilities/deviceContants";
 
 export function useDeviceFrame(device: DeviceProperties) {
   const workspace = useWorkspaceConfig();

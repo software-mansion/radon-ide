@@ -8,9 +8,9 @@ import {
   workspace,
 } from "vscode";
 import { generateWebviewContent } from "./webviewContentGenerator";
-
 import { WebviewController } from "./WebviewController";
 import { Logger } from "../Logger";
+import { PREVIEW_WEBVIEW_NAME, PREVIEW_WEBVIEW_PATH } from "../webview/utilities/constants";
 
 export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
   public static readonly viewType = "RadonIDE.view";
@@ -33,7 +33,9 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
     this._view.webview.html = generateWebviewContent(
       this.context,
       this._view.webview,
-      this.context.extensionUri
+      this.context.extensionUri,
+      PREVIEW_WEBVIEW_NAME,
+      PREVIEW_WEBVIEW_PATH
     );
   }
 
@@ -61,7 +63,10 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
     webviewView.webview.html = generateWebviewContent(
       this.context,
       webviewView.webview,
-      this.context.extensionUri
+      this.context.extensionUri,
+      PREVIEW_WEBVIEW_NAME,
+      PREVIEW_WEBVIEW_PATH,
+      ""
     );
     this._view = webviewView;
     this.webviewController = new WebviewController(this._view.webview);
