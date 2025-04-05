@@ -21,12 +21,12 @@ export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
 
 export type DebugSessionDelegate = {
-  onConsoleLog(event: DebugSessionCustomEvent): void;
-  onDebuggerPaused(event: DebugSessionCustomEvent): void;
-  onDebuggerResumed(event: DebugSessionCustomEvent): void;
-  onProfilingCPUStarted(event: DebugSessionCustomEvent): void;
-  onProfilingCPUStopped(event: DebugSessionCustomEvent): void;
-  onDebugSessionTerminated(): void;
+  onConsoleLog?(event: DebugSessionCustomEvent): void;
+  onDebuggerPaused?(event: DebugSessionCustomEvent): void;
+  onDebuggerResumed?(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStarted?(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStopped?(event: DebugSessionCustomEvent): void;
+  onDebugSessionTerminated?(): void;
 };
 
 export interface JSDebugConfiguration {
@@ -60,19 +60,19 @@ export class DebugSession implements Disposable {
       debug.onDidReceiveDebugSessionCustomEvent((event) => {
         switch (event.event) {
           case DEBUG_CONSOLE_LOG:
-            this.delegate.onConsoleLog(event);
+            this.delegate.onConsoleLog?.(event);
             break;
           case DEBUG_PAUSED:
-            this.delegate.onDebuggerPaused(event);
+            this.delegate.onDebuggerPaused?.(event);
             break;
           case DEBUG_RESUMED:
-            this.delegate.onDebuggerResumed(event);
+            this.delegate.onDebuggerResumed?.(event);
             break;
           case "RNIDE_profilingCPUStarted":
-            this.delegate.onProfilingCPUStarted(event);
+            this.delegate.onProfilingCPUStarted?.(event);
             break;
           case "RNIDE_profilingCPUStopped":
-            this.delegate.onProfilingCPUStopped(event);
+            this.delegate.onProfilingCPUStopped?.(event);
             break;
           default:
             // ignore other events

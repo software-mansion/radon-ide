@@ -61,6 +61,8 @@ export class CDPSession {
   private debugSessionReady = false;
   private consoleAPICallsQueue: any[] = [];
 
+  private resumeEventTimeout: NodeJS.Timeout | undefined;
+  private willLikelyPauseSoon = false;
   private skipFiles: Minimatch[] = [];
 
   constructor(private delegate: CDPSessionDelegate, private configuration: CDPConfiguration) {
@@ -153,7 +155,7 @@ export class CDPSession {
         this.handleDebuggerPaused(message);
         break;
       case "Debugger.resumed":
-        this.delegate.onDebuggerResumed();
+        this.handleDebuggerResumed();
         break;
       case "Runtime.executionContextsCleared":
         // clear all existing source maps, breakpoints and variable store
@@ -295,7 +297,50 @@ export class CDPSession {
     });
     const scopeChains = message.params.callFrames.map((cdpFrame: any) => cdpFrame.scopeChain);
 
+    if (this.resumeEventTimeout) {
+      clearTimeout(this.resumeEventTimeout);
+      this.resumeEventTimeout = undefined;
+    }
+    this.maybeUpdateDebuggerOverlay(true);
     this.delegate.sendStoppedEvent(stackFrames, scopeChains, "breakpoint");
+  }
+
+  private handleDebuggerResumed() {
+    if (this.resumeEventTimeout) {
+      // we clear resume event here as well as we will either schedule a new one
+      // or fire the event immediately.
+      clearTimeout(this.resumeEventTimeout);
+      this.resumeEventTimeout = undefined;
+    }
+    if (this.willLikelyPauseSoon) {
+      // when step-over is called, we expect Debugger.resumed event to be called
+      // after which the paused event will be fired almost immediately as the
+      // debugger stops at the next line of code.
+      // In order to prevent the paused event from being fired immediately resulting
+      // in the overlay blinking for a fraction of second, we wait for a short period
+      // just in case the paused event is never fired.
+      this.willLikelyPauseSoon = false;
+      this.resumeEventTimeout = setTimeout(() => {
+        this.maybeUpdateDebuggerOverlay(false);
+        this.delegate.onDebuggerResumed();
+      }, 100);
+    } else {
+      this.maybeUpdateDebuggerOverlay(false);
+      this.delegate.onDebuggerResumed();
+    }
+  }
+
+  private maybeUpdateDebuggerOverlay(isPaused: boolean) {
+    if (this.configuration.displayDebuggerOverlay) {
+      this.sendCDPMessage(
+        "Overlay.setPausedInDebuggerMessage",
+        isPaused
+          ? {
+              message: "Paused in debugger",
+            }
+          : {}
+      );
+    }
   }
 
   private handleCDPMessageResponse(message: any) {
