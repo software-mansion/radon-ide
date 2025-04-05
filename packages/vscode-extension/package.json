@@ -81,6 +81,18 @@
         "enablement": "RNIDE.extensionIsActive"
       },
       {
+        "command": "RNIDE.deviceHomeButtonPress",
+        "title": "Trigger home button press on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.deviceAppSwitchButtonPress",
+        "title": "Open app switcher on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
         "command": "RNIDE.captureReplay",
         "title": "Capture Replay",
         "category": "Radon IDE",
@@ -120,6 +132,11 @@
         "command": "RNIDE.performFailedBiometricAuthorization",
         "key": "ctrl+shift+N",
         "mac": "cmd+shift+N"
+      },
+      {
+        "command": "RNIDE.deviceHomeButtonPress",
+        "key": "ctrl+shift+H",
+        "mac": "cmd+shift+H"
       },
       {
         "command": "RNIDE.captureReplay",

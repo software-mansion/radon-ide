@@ -19,6 +19,7 @@ import { isEqual } from "lodash";
 import {
   AppPermissionType,
   BuildType,
+  DeviceButtonType,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
@@ -690,6 +691,10 @@ export class Project
     this.deviceSession?.sendKey(keyCode, direction);
   }
 
+  public dispatchButton(button: DeviceButtonType, direction: "Up" | "Down") {
+    this.deviceSession?.sendButton(button, direction);
+  }
+
   public dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number) {
     this.deviceSession?.sendWheel(point, deltaX, deltaY);
   }
@@ -835,6 +840,10 @@ export class Project
     if (this.projectState.selectedDevice?.id === deviceInfo.id) {
       this.updateProjectState({ selectedDevice: deviceInfo });
     }
+  }
+
+  public async runCommand(command: string): Promise<void> {
+    await commands.executeCommand(command);
   }
 
   public async sendBiometricAuthorization(isMatch: boolean) {

@@ -73,6 +73,8 @@ export type ZoomLevelType = number | "Fit";
 
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
 
+export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown";
+
 // important: order of values in this enum matters
 export enum StartupMessage {
   InitializingDevice = "Initializing device",
@@ -179,7 +181,7 @@ export interface ProjectInterface {
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  sendBiometricAuthorization(match: boolean): Promise<void>;
+  runCommand(command: string): Promise<void>;
 
   getToolsState(): Promise<ToolsState>;
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;

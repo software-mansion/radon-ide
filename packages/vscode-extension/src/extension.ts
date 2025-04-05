@@ -151,6 +151,12 @@ export async function activate(context: ExtensionContext) {
       performFailedBiometricAuthorization
     )
   );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceHomeButtonPress", deviceHomeButtonPress)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceAppSwitchButtonPress", deviceAppSwitchButtonPress)
+  );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
@@ -317,6 +323,18 @@ async function performBiometricAuthorization() {
 
 async function performFailedBiometricAuthorization() {
   IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
+}
+
+async function deviceHomeButtonPress() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("home", "Down");
+  project?.dispatchButton("home", "Up");
+}
+
+async function deviceAppSwitchButtonPress() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("appSwitch", "Down");
+  project?.dispatchButton("appSwitch", "Up");
 }
 
 async function captureReplay() {

@@ -2,7 +2,7 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { MultimediaData, TouchPoint } from "../common/Project";
+import { MultimediaData, TouchPoint, DeviceButtonType } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 
@@ -189,6 +189,10 @@ export class Preview implements Disposable {
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
     this.subprocess?.stdin?.write(`key ${direction} ${keyCode}\n`);
+  }
+
+  public sendButton(button: DeviceButtonType, direction: "Up" | "Down") {
+    this.subprocess?.stdin?.write(`button ${direction} ${button}\n`);
   }
 
   public sendClipboard(text: string) {
