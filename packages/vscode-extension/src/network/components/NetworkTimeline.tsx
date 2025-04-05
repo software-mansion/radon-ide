@@ -3,7 +3,6 @@ import * as d3 from "d3";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog as TimelineNetworkLog } from "../types/network";
-import ResizableContainer from "../../webview/components/shared/ResizableContainer";
 import "./NetworkTimeline.css";
 
 const PADDING_HORIZONTAL = 8;
@@ -373,52 +372,46 @@ function NetworkTimeline({ handleSelectedRequest, networkLogs }: NetworkFiltersP
   };
 
   return (
-    <ResizableContainer
-      containerSize={chartHeight + CHART_MARGIN}
-      setContainerWidth={setChartHeight}
-      showDragable={false}
-      side="bottom">
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          overflow: "hidden",
-        }}
-        // onMouseLeave={() => setTooltip({ visible: false, data: null, x: 0, y: 0 })}
-        onWheel={handleScroll}>
-        <svg width="100%" height="100%" style={{ background: "var(--swm-preview-background)" }}>
-          <g transform={`translate(0,${chartHeight - TIMELINE_LEGEND_HEIGHT})`} ref={xAxisRef} />
-          <DashedLines
-            chartHeight={chartHeight - MARGIN_VERTICAL}
-            timeScale={timeScale}
-            minTime={minTime}
-            maxTime={maxTime}
-          />
-          <g className="requests">
-            {rows.map((rowData, rowIndex) => (
-              <RequestRow
-                key={rowIndex}
-                rowData={rowData}
-                rowIndex={rowIndex}
-                adjustedRowHeight={adjustedRowHeight}
-                setTooltip={setTooltip}
-                handleSelectedRequest={handleSelectedRequest}
-                timeScale={timeScale}
-              />
-            ))}
-          </g>
-          {isCmdPressed && <g className="brush" ref={brushRef} />}
-        </svg>
-        {tooltip.visible && (
-          <Tooltip
-            d={tooltip.data!}
-            isLeftSide={tooltip.x < window.innerWidth / 2}
-            x={tooltip.x}
-            y={tooltip.y}
-          />
-        )}
-      </div>
-    </ResizableContainer>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+      }}
+      // onMouseLeave={() => setTooltip({ visible: false, data: null, x: 0, y: 0 })}
+      onWheel={handleScroll}>
+      <svg width="100%" height="100%" style={{ background: "var(--swm-preview-background)" }}>
+        <g transform={`translate(0,${chartHeight - TIMELINE_LEGEND_HEIGHT})`} ref={xAxisRef} />
+        <DashedLines
+          chartHeight={chartHeight - MARGIN_VERTICAL}
+          timeScale={timeScale}
+          minTime={minTime}
+          maxTime={maxTime}
+        />
+        <g className="requests">
+          {rows.map((rowData, rowIndex) => (
+            <RequestRow
+              key={rowIndex}
+              rowData={rowData}
+              rowIndex={rowIndex}
+              adjustedRowHeight={adjustedRowHeight}
+              setTooltip={setTooltip}
+              handleSelectedRequest={handleSelectedRequest}
+              timeScale={timeScale}
+            />
+          ))}
+        </g>
+        {isCmdPressed && <g className="brush" ref={brushRef} />}
+      </svg>
+      {tooltip.visible && (
+        <Tooltip
+          d={tooltip.data!}
+          isLeftSide={tooltip.x < window.innerWidth / 2}
+          x={tooltip.x}
+          y={tooltip.y}
+        />
+      )}
+    </div>
   );
 }
 

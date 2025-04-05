@@ -17,42 +17,42 @@ interface Filters {
 interface NetworkProviderProps extends NetworkTracker {
   unfilteredNetworkLogs: NetworkTracker["networkLogs"];
   isRecording: boolean;
-  showSearch: boolean;
   filters: Filters;
   isScrolling: boolean;
-  showChart: boolean;
   toggleRecording: () => void;
-  toggleShowSearch: () => void;
   setFilters: (filters: Filters) => void;
   clearActivity: () => void;
   toggleScrolling: () => void;
-  toggleShowChart: () => void;
+  isFilterVisible: boolean;
+  toggleFilterVisible: () => void;
+  isTimelineVisible: boolean;
+  toggleTimelineVisible: () => void;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
   unfilteredNetworkLogs: [],
   isRecording: true,
-  showSearch: false,
+  isFilterVisible: false,
   filters: {
     url: undefined,
     timestampRange: undefined,
   },
   isScrolling: false,
-  showChart: true,
   toggleRecording: () => {},
-  toggleShowSearch: () => {},
+  toggleFilterVisible: () => {},
   setFilters: () => {},
   clearActivity: () => {},
   toggleScrolling: () => {},
-  toggleShowChart: () => {},
+  isTimelineVisible: true,
+  toggleTimelineVisible: () => {},
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
 
-  const [showChart, toggleShowChart] = useReducer((state) => !state, true);
-  const [showSearch, toggleShowSearch] = useReducer((state) => !state, false);
+  const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
+  const [isFilterVisible, toggleFilterVisible] = useReducer((state) => !state, false);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
 
   const [isRecording, setIsRecording] = useState(true);
@@ -92,18 +92,18 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       unfilteredNetworkLogs: networkTracker.networkLogs,
       networkLogs,
       isRecording,
-      filters,
-      showSearch,
-      isScrolling,
-      showChart,
       toggleRecording,
-      toggleShowSearch,
+      filters,
       setFilters,
+      isScrolling,
       clearActivity,
       toggleScrolling,
-      toggleShowChart,
+      isFilterVisible,
+      toggleFilterVisible,
+      isTimelineVisible,
+      toggleTimelineVisible,
     };
-  }, [isRecording, filters, showSearch, isScrolling, showChart, networkLogs]);
+  }, [isRecording, filters, isFilterVisible, isScrolling, isTimelineVisible, networkLogs]);
 
   return <NetworkContext.Provider value={contextValue}>{children}</NetworkContext.Provider>;
 }

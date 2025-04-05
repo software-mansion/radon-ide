@@ -1,19 +1,17 @@
 import "./App.css";
 import "../webview/styles/theme.css";
 import { useMemo, useState } from "react";
+import { VscodeSplitLayout } from "@vscode-elements/react-elements";
 import NetworkBar from "./components/NetworkBar";
 import NetworkRequestLog from "./components/NetworkRequestLog";
 import NetworkLogDetails from "./components/NetworkLogDetails";
 import { useNetwork } from "./providers/NetworkProvider";
 import NetworkTimeline from "./components/NetworkTimeline";
-import { Input } from "../webview/components/shared/Input";
 
 function App() {
-  const { showSearch, networkLogs, unfilteredNetworkLogs, filters, showChart, setFilters } =
-    useNetwork();
+  const { networkLogs, unfilteredNetworkLogs, isTimelineVisible } = useNetwork();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
-  const [detailsWidth, setDetailsWidth] = useState(0);
 
   const selectedNetworkLog = useMemo(() => {
     const fullLog = networkLogs.find((log) => log.requestId === selectedNetworkLogId);
@@ -25,55 +23,45 @@ function App() {
 
   const handleSelectedRequest = (id: string | null) => {
     setSelectedNetworkLogId(id);
-
-    if (id) {
-      setDetailsWidth(500);
-    } else {
-      setDetailsWidth(0);
-    }
   };
 
   return (
     <main>
       <div className="panel-view">
-        <div className="network-bar">
-          <NetworkBar />
-        </div>
-        {showSearch && (
-          <div className="network-search">
-            <Input
-              value={filters.url ?? ""}
-              type="string"
-              onChange={(e) => setFilters({ ...filters, url: e.target.value })}
-              placeholder="Filter"
-            />
-          </div>
-        )}
-        {showChart && (
+        <NetworkBar />
+        {isTimelineVisible && (
           <NetworkTimeline
             networkLogs={unfilteredNetworkLogs}
             handleSelectedRequest={handleSelectedRequest}
           />
         )}
       </div>
-      <div className="network-log-container">
-        <NetworkRequestLog
-          selectedNetworkLog={selectedNetworkLog}
-          networkLogs={networkLogs}
-          detailsWidth={detailsWidth}
-          handleSelectedRequest={handleSelectedRequest}
-        />
-
-        {selectedNetworkLog && (
-          <NetworkLogDetails
-            key={selectedNetworkLog.requestId}
-            networkLog={selectedNetworkLog}
-            handleClose={() => handleSelectedRequest(null)}
-            containerWidth={detailsWidth}
-            setContainerWidth={setDetailsWidth}
+      {selectedNetworkLog ? (
+        <VscodeSplitLayout className="network-log-container">
+          <div slot="start">
+            <NetworkRequestLog
+              selectedNetworkLog={selectedNetworkLog}
+              networkLogs={networkLogs}
+              handleSelectedRequest={handleSelectedRequest}
+            />
+          </div>
+          <div slot="end">
+            <NetworkLogDetails
+              key={selectedNetworkLog.requestId}
+              networkLog={selectedNetworkLog}
+              handleClose={() => handleSelectedRequest(null)}
+            />
+          </div>
+        </VscodeSplitLayout>
+      ) : (
+        <div className="network-log-container">
+          <NetworkRequestLog
+            selectedNetworkLog={selectedNetworkLog}
+            networkLogs={networkLogs}
+            handleSelectedRequest={handleSelectedRequest}
           />
-        )}
-      </div>
+        </div>
+      )}
     </main>
   );
 }
