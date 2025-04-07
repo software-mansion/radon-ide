@@ -28,6 +28,7 @@ type BuildOptions = {
   appRoot: string;
   clean: boolean;
   progressListener: (newProgress: number) => void;
+  cancelToken: CancelToken;
 };
 
 export class BuildError extends Error {
@@ -109,15 +110,13 @@ export class BuildManager implements Disposable {
   }
 
   public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {
-    const { clean: forceCleanBuild, progressListener, appRoot } = options;
+    const { clean: forceCleanBuild, progressListener, appRoot, cancelToken } = options;
     const { platform } = deviceInfo;
 
     getTelemetryReporter().sendTelemetryEvent("build:requested", {
       platform,
       type: forceCleanBuild ? "clean" : "incremental",
     });
-
-    const cancelToken = new CancelToken();
 
     const buildApp = async () => {
       const currentFingerprint = await this.buildCache.calculateFingerprint(platform);

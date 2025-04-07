@@ -110,6 +110,12 @@ export type ReloadAction =
   | "restartProcess" // relaunch app
   | "reloadJs"; // refetch JS scripts from metro
 
+export enum ReloadResult {
+  succeeded,
+  failed,
+  canceled,
+}
+
 export type Frame = {
   x: number;
   y: number;

@@ -8,9 +8,30 @@ export class CancelToken {
     this.cancelListeners.push(cb);
   }
 
-  public adapt(execResult: ReturnType<typeof exec>) {
-    this.onCancel(() => execResult.kill(9));
-    return execResult;
+  private isExecaChildProcess(input: any): input is ReturnType<typeof exec> {
+    return typeof input.kill === "function"; // ExecaChildProcess has a `kill` method
+  }
+
+  public adapt(input: ReturnType<typeof exec>): ReturnType<typeof exec>;
+  public adapt<T>(input: Promise<T>): Promise<T>;
+  public adapt<T>(
+    input: Promise<T> | ReturnType<typeof exec>
+  ): Promise<T> | ReturnType<typeof exec> {
+    if (this.isExecaChildProcess(input)) {
+      // Handle ExecaChildProcess
+      this.onCancel(() => input.kill(9));
+      return input;
+    } else {
+      // Handle Promise
+      const { promise, resolve, reject } = Promise.withResolvers<T>();
+      this.onCancel(() => {
+        reject("The process was canceled");
+      });
+
+      input.then(resolve).catch(reject);
+
+      return promise;
+    }
   }
 
   public cancel() {

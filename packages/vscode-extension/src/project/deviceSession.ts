@@ -14,6 +14,7 @@ import {
   AppPermissionType,
   DeviceSettings,
   ReloadAction,
+  ReloadResult,
   StartupMessage,
   TouchPoint,
 } from "../common/Project";
@@ -72,7 +73,6 @@ export class DeviceSession implements Disposable {
   public metro: Metro;
   public toolsManager: ToolsManager;
   private isActive: boolean = false;
-
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
   public devtools;
@@ -81,6 +81,7 @@ export class DeviceSession implements Disposable {
   private buildManager: BuildManager;
   public deviceSettings: DeviceSettings;
   private isLaunching = true;
+  private cancelToken: CancelToken | undefined;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -168,27 +169,38 @@ export class DeviceSession implements Disposable {
     this.buildManager.deactivate();
   }
 
-  public async perform(type: ReloadAction) {
-    switch (type) {
-      case "autoReload":
-        await this.autoReload();
-        return true;
-      case "reboot":
-        await this.restart({ forceClean: false, cleanCache: false });
-        return true;
-      case "clearMetro":
-        await this.restart({ forceClean: false, cleanCache: true });
-        return true;
-      case "rebuild":
-        await this.restart({ forceClean: true, cleanCache: false });
-        return true;
-      case "reinstall":
-        await this.reinstallApp();
-        return true;
-      case "restartProcess":
-        return await this.restartProcess();
-      case "reloadJs":
-        return this.reloadJS();
+  public async perform(type: ReloadAction): Promise<ReloadResult> {
+    try {
+      switch (type) {
+        case "autoReload":
+          await this.autoReload();
+          return ReloadResult.succeeded;
+        case "reboot":
+          await this.restart({ forceClean: false, cleanCache: false });
+          return ReloadResult.succeeded;
+        case "clearMetro":
+          await this.restart({ forceClean: false, cleanCache: true });
+          return ReloadResult.succeeded;
+        case "rebuild":
+          await this.restart({ forceClean: true, cleanCache: false });
+          return ReloadResult.succeeded;
+        case "reinstall":
+          await this.reinstallApp();
+          return ReloadResult.succeeded;
+        case "restartProcess":
+          if (await this.restartProcess()) {
+            return ReloadResult.succeeded;
+          }
+          return ReloadResult.failed;
+        case "reloadJs":
+          if (await this.reloadJS()) {
+            return ReloadResult.succeeded;
+          }
+          return ReloadResult.failed;
+      }
+    } catch (e) {
+      Logger.debug("[Reload]", e);
+      return ReloadResult.canceled;
     }
     throw new Error("Not implemented " + type);
   }
@@ -207,16 +219,28 @@ export class DeviceSession implements Disposable {
   }
 
   private async reinstallApp() {
-    // frytki cancel token here?
-    await this.restartDebugger();
-    await this.installApp({ reinstall: true });
-    await this.launchApp();
+    if (this.cancelToken) {
+      this.cancelToken.cancel();
+      this.cancelToken = undefined;
+    }
+    const cancelToken = new CancelToken();
+    this.cancelToken = cancelToken;
+
+    await cancelToken.adapt(this.restartDebugger());
+    await cancelToken.adapt(this.installApp({ reinstall: true }));
+    await this.launchApp(cancelToken);
   }
 
   private async restartProcess() {
-    // frytki cancel token here?
-    await this.restartDebugger();
-    const launchSucceeded = await this.launchApp();
+    if (this.cancelToken) {
+      this.cancelToken.cancel();
+      this.cancelToken = undefined;
+    }
+    const cancelToken = new CancelToken();
+    this.cancelToken = cancelToken;
+
+    await cancelToken.adapt(this.restartDebugger());
+    const launchSucceeded = await this.launchApp(cancelToken);
     if (!launchSucceeded) {
       return false;
     }
@@ -224,6 +248,14 @@ export class DeviceSession implements Disposable {
   }
 
   private async restart({ forceClean, cleanCache }: RestartOptions) {
+    if (this.cancelToken) {
+      this.cancelToken.cancel();
+      this.cancelToken = undefined;
+    }
+
+    const cancelToken = new CancelToken();
+    this.cancelToken = cancelToken;
+
     // frytki cancel token here?
     if (cleanCache) {
       const oldDevtools = this.devtools;
@@ -247,12 +279,12 @@ export class DeviceSession implements Disposable {
       });
     }
 
-    await this.restartDebugger();
+    await cancelToken.adapt(this.restartDebugger());
     this.deviceSessionDelegate.onStateChange(StartupMessage.BootingDevice);
-    await this.device.reboot();
-    await this.buildApp({ appRoot: this.appRootFolder, clean: forceClean });
+    await cancelToken.adapt(this.device.reboot());
+    await this.buildApp({ appRoot: this.appRootFolder, clean: forceClean, cancelToken });
     await this.installApp({ reinstall: false });
-    await this.launchApp();
+    await this.launchApp(cancelToken);
     Logger.debug("Device session started");
   }
 
@@ -331,11 +363,8 @@ export class DeviceSession implements Disposable {
     await this.reconnectJSDebuggerIfNeeded();
   }
 
-  private async launchApp() {
-    this.launchAppCancelToken && this.launchAppCancelToken.cancel();
-
-    const launchCancelToken = new CancelToken();
-    this.launchAppCancelToken = launchCancelToken;
+  private async launchApp(cancelToken: CancelToken) {
+    cancelToken.cancel();
 
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
@@ -351,10 +380,9 @@ export class DeviceSession implements Disposable {
     const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.deviceSessionDelegate.onStateChange(StartupMessage.Launching);
-    await this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port);
-    if (launchCancelToken.cancelled) {
-      return undefined;
-    }
+    await cancelToken.adapt(
+      this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port)
+    );
 
     Logger.debug("Will wait for app ready and for preview");
     this.deviceSessionDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
@@ -373,24 +401,20 @@ export class DeviceSession implements Disposable {
       waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
     }
 
-    await Promise.all([
-      this.metro.ready(),
-      this.device.startPreview().then((url) => {
-        previewURL = url;
-        this.deviceSessionDelegate.onPreviewReady(url);
-      }),
-      waitForAppReady,
-    ]);
-    if (launchCancelToken.cancelled) {
-      return undefined;
-    }
+    await cancelToken.adapt(
+      Promise.all([
+        this.metro.ready(),
+        this.device.startPreview().then((url) => {
+          previewURL = url;
+          this.deviceSessionDelegate.onPreviewReady(url);
+        }),
+        waitForAppReady,
+      ])
+    );
 
     Logger.debug("App and preview ready, moving on...");
     this.deviceSessionDelegate.onStateChange(StartupMessage.AttachingDebugger);
-    await this.connectJSDebugger();
-    if (launchCancelToken.cancelled) {
-      return undefined;
-    }
+    await cancelToken.adapt(this.connectJSDebugger());
 
     this.isLaunching = false;
     if (this.deviceSettings?.replaysEnabled) {
@@ -421,7 +445,15 @@ export class DeviceSession implements Disposable {
     }
   }
 
-  private async buildApp({ appRoot, clean }: { appRoot: string; clean: boolean }) {
+  private async buildApp({
+    appRoot,
+    clean,
+    cancelToken,
+  }: {
+    appRoot: string;
+    clean: boolean;
+    cancelToken: CancelToken;
+  }) {
     const buildStartTime = Date.now();
     this.deviceSessionDelegate.onStateChange(StartupMessage.Building);
     this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
@@ -430,6 +462,7 @@ export class DeviceSession implements Disposable {
       progressListener: throttle((stageProgress: number) => {
         this.deviceSessionDelegate.onBuildProgress(stageProgress);
       }, 100),
+      cancelToken,
     });
     this.maybeBuildResult = await this.disposableBuild.build;
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
@@ -456,6 +489,14 @@ export class DeviceSession implements Disposable {
   }
 
   public async start({ cleanBuild, resetMetroCache, previewReadyCallback }: StartOptions) {
+    if (this.cancelToken) {
+      this.cancelToken.cancel();
+      this.cancelToken = undefined;
+    }
+
+    const cancelToken = new CancelToken();
+    this.cancelToken = cancelToken;
+
     const waitForNodeModules = this.deviceSessionDelegate.ensureDependenciesAndNodeVersion();
 
     Logger.debug(`Launching devtools`);
@@ -470,14 +511,14 @@ export class DeviceSession implements Disposable {
     // We start the debug session early to be able to use it to surface bundle
     // errors in the console. We only start the parent debug session and the JS
     // debugger will be started at later time once the app is built and launched.
-    await this.debugSession.startParentDebugSession();
+    await cancelToken.adapt(this.debugSession.startParentDebugSession());
 
-    await this.waitForMetroReady();
+    await cancelToken.adapt(this.waitForMetroReady());
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
-    await this.bootDevice(this.deviceSettings);
-    await this.buildApp({ appRoot: this.appRootFolder, clean: cleanBuild });
-    await this.installApp({ reinstall: false });
-    const previewUrl = await this.launchApp();
+    await cancelToken.adapt(this.bootDevice(this.deviceSettings));
+    await this.buildApp({ appRoot: this.appRootFolder, clean: cleanBuild, cancelToken });
+    await cancelToken.adapt(this.installApp({ reinstall: false }));
+    const previewUrl = await this.launchApp(cancelToken);
     Logger.debug("Device session started");
     return previewUrl;
   }

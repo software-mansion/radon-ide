@@ -6,6 +6,7 @@ import {
   BuildType,
   ProjectState,
   ReloadAction,
+  ReloadResult,
   SelectDeviceOptions,
   StartupMessage,
 } from "../common/Project";
@@ -56,12 +57,13 @@ export class DeviceSessionsManager {
       return false;
     }
     const success = await deviceSession.perform(type);
-    if (success) {
+    if (success === ReloadResult.succeeded) {
       this.updateProjectState({ status: "running" });
-    } else {
+      return true;
+    } else if (success === ReloadResult.failed) {
       window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
     }
-    return success;
+    return false;
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions) {
