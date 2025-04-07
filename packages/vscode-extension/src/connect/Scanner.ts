@@ -10,9 +10,11 @@ export type ScannerDelegate = {
   onDeviceCandidateFound: (metro: Metro, websocketAddress: string) => Promise<void>;
 };
 
-export function isInWorkspace(filePath: string) {
+function isInWorkspace(absoluteFilePath: string) {
   // first check if the provided path is a parent of any workspace folder
-  return workspace.workspaceFolders?.some((folder) => filePath.startsWith(folder.uri.fsPath));
+  return workspace.workspaceFolders?.some((folder) =>
+    absoluteFilePath.startsWith(folder.uri.fsPath)
+  );
 }
 
 export class Scanner implements Disposable {

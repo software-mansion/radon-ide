@@ -36,6 +36,7 @@ export class Connector implements Disposable {
       commands.registerCommand("RNIDE.disableAutoConnect", () => {
         extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, false);
         this.disconnect();
+        this.stopScanner();
         this.updateStatusBarItem();
       })
     );
@@ -43,7 +44,7 @@ export class Connector implements Disposable {
     this.disposables.push(
       commands.registerCommand("RNIDE.enableAutoConnect", () => {
         extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
-        this.startScanner();
+        this.maybeStartScanner();
         this.updateStatusBarItem();
       })
     );
@@ -53,6 +54,7 @@ export class Connector implements Disposable {
     this.disconnect();
     this.stopScanner();
     disposeAll(this.disposables);
+    commands.executeCommand("setContext", "RNIDE.showsStatusBarItem", false);
     Connector.instance = null;
   }
 
@@ -62,12 +64,13 @@ export class Connector implements Disposable {
     this.debugSession = null;
   }
 
-  private async tryConnectMetroAndJSDebugger(metro: Metro, websocketAddress: string) {
+  private async tryConnectJSDebuggerWithMetro(websocketAddress: string, metro: Metro) {
     const debugSession = new DebugSession({
       onDebugSessionTerminated: () => {
         this.metro = null;
         this.debugSession = null;
         this.updateStatusBarItem();
+        this.maybeStartScanner();
       },
     });
     const isUsingNewDebugger = metro.isUsingNewDebugger;
@@ -90,16 +93,19 @@ export class Connector implements Disposable {
     }
   }
 
-  private startScanner() {
-    if (!this.scanner) {
-      this.scanner = new Scanner({
-        onPortStatusUpdated: () => this.updateStatusBarItem(),
-        onDeviceCandidateFound: async (metro, websocketAddress) => {
-          await this.tryConnectMetroAndJSDebugger(metro, websocketAddress);
-        },
-      });
-      this.scanner.start();
+  private maybeStartScanner() {
+    const enabled = extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
+    if (!enabled || this.scanner) {
+      return;
     }
+
+    this.scanner = new Scanner({
+      onPortStatusUpdated: () => this.updateStatusBarItem(),
+      onDeviceCandidateFound: async (metro, websocketAddress) => {
+        await this.tryConnectJSDebuggerWithMetro(websocketAddress, metro);
+      },
+    });
+    this.scanner.start();
   }
 
   private stopScanner() {
@@ -112,10 +118,7 @@ export class Connector implements Disposable {
     this.updateStatusBarItem();
     this.statusBarItem.show();
     commands.executeCommand("setContext", "RNIDE.showsStatusBarItem", true);
-    const enabled = extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
-    if (enabled) {
-      this.startScanner();
-    }
+    this.maybeStartScanner();
   }
 
   private printPortStatus(port: number) {
