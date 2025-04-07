@@ -1,4 +1,3 @@
-import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
 import _ from "lodash";
 import { Devtools } from "./devtools";

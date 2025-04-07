@@ -55,7 +55,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   const { ios, xcodeSchemes } = useLaunchConfig();
 
   let onReload = () => {
-    project.restart(false);
+    project.reload("autoReload");
   };
   let logsButtonDestination: LogsButtonDestination | undefined = undefined;
 
@@ -130,7 +130,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.restart(false);
+          project.reload("autoReload");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />

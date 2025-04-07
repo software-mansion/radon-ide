@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { Disposable } from "vscode";
 import { Metro, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
@@ -26,7 +27,6 @@ import { CancelToken } from "../builders/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { ToolsDelegate, ToolsManager } from "./tools";
 import { extensionContext } from "../utilities/extensionContext";
-import _ from "lodash";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -35,6 +35,11 @@ type StartOptions = {
   cleanBuild: boolean;
   resetMetroCache: boolean;
   previewReadyCallback: PreviewReadyCallback;
+};
+
+type RestartOptions = {
+  forceClean: boolean;
+  cleanCache: boolean;
 };
 
 export type AppEvent = {
@@ -167,11 +172,18 @@ export class DeviceSession implements Disposable {
     switch (type) {
       case "autoReload":
         await this.autoReload();
-        break;
+        return true;
+      case "reboot":
+        await this.restart({ forceClean: false, cleanCache: false });
+        return true;
+      case "clearMetro":
+        await this.restart({ forceClean: false, cleanCache: true });
+        return true;
+      case "rebuild":
+        await this.restart({ forceClean: true, cleanCache: false });
+        return true;
       case "reinstall":
-        await this.restartDebugger();
-        await this.installApp({ reinstall: true });
-        await this.launchApp();
+        await this.reinstallApp();
         return true;
       case "restartProcess":
         return await this.restartProcess();
@@ -182,6 +194,7 @@ export class DeviceSession implements Disposable {
   }
 
   private async reloadJS() {
+    // frytki cancel token here?
     if (this.devtools.hasConnectedClient) {
       try {
         await this.reloadMetro();
@@ -193,7 +206,15 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
+  private async reinstallApp() {
+    // frytki cancel token here?
+    await this.restartDebugger();
+    await this.installApp({ reinstall: true });
+    await this.launchApp();
+  }
+
   private async restartProcess() {
+    // frytki cancel token here?
     await this.restartDebugger();
     const launchSucceeded = await this.launchApp();
     if (!launchSucceeded) {
@@ -202,16 +223,42 @@ export class DeviceSession implements Disposable {
     return true;
   }
 
-  private async reloadSession() {
+  private async restart({ forceClean, cleanCache }: RestartOptions) {
+    // frytki cancel token here?
+    if (cleanCache) {
+      const oldDevtools = this.devtools;
+      const oldMetro = this.metro;
+      const oldToolsManager = this.toolsManager;
+      this.devtools = new Devtools();
+      this.metro = new Metro(this.devtools, this.metroDelegate);
+      this.toolsManager = new ToolsManager(this.devtools, this.toolsDelegate);
+      oldToolsManager.dispose();
+      oldDevtools.dispose();
+      oldMetro.dispose();
+
+      Logger.debug(`Launching devtools`);
+      this.devtools.start();
+
+      Logger.debug(`Launching metro`);
+      this.metro.start({
+        resetCache: true,
+        appRoot: this.appRootFolder,
+        dependencies: [],
+      });
+    }
+
     await this.restartDebugger();
+    this.deviceSessionDelegate.onStateChange(StartupMessage.BootingDevice);
     await this.device.reboot();
-    await this.buildApp({ appRoot: this.appRootFolder, clean: false });
+    await this.buildApp({ appRoot: this.appRootFolder, clean: forceClean });
     await this.installApp({ reinstall: false });
     await this.launchApp();
     Logger.debug("Device session started");
   }
 
   private async autoReload() {
+    //Frytki some cancel token here?
+
     getTelemetryReporter().sendTelemetryEvent("url-bar:restart-requested", {
       platform: this.device.platform,
     });
@@ -221,7 +268,7 @@ export class DeviceSession implements Disposable {
     try {
       if (this.buildManager.shouldRebuild()) {
         //frytki hehehehehe here something that rebuilds i guess
-        await this.selectDevice(deviceInfo);
+        await this.restart({ forceClean: false, cleanCache: false });
         return;
       }
 
@@ -241,14 +288,11 @@ export class DeviceSession implements Disposable {
       // only do clean build when explicitly requested).
       // before doing anything, we check if the device hasn't been updated in the meantime
       // which might have initiated a new session anyway
-      if (deviceInfo === this.projectState.selectedDevice) {
-        //frytki hehehehehe
-        await this.selectDevice(deviceInfo);
-      }
+      await this.restart({ forceClean: false, cleanCache: false });
     }
   }
 
-  public async restartDebugger() {
+  private async restartDebugger() {
     await this.debugSession.restart();
   }
 
@@ -436,10 +480,6 @@ export class DeviceSession implements Disposable {
     const previewUrl = await this.launchApp();
     Logger.debug("Device session started");
     return previewUrl;
-  }
-
-  private async restart(){
-
   }
 
   private async connectJSDebugger() {

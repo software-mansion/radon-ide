@@ -177,7 +177,6 @@ export type MultimediaData = {
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   reload(type: ReloadAction): Promise<boolean>;
-  restart(clean: "all" | "metro" | false): Promise<void>;
   goHome(homeUrl: string): Promise<void>;
   selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions): Promise<boolean>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;

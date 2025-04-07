@@ -9,7 +9,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
   const { project } = useProject();
   return (
     <IconButtonWithOptions
-      onClick={() => project.restart(false)}
+      onClick={() => project.reload("autoReload")}
       tooltip={{
         label: "Reload the app",
         side: "bottom",
@@ -19,9 +19,9 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
         "Reload JS": () => project.reload("reloadJs"),
         "Restart app process": () => project.reload("restartProcess"),
         "Reinstall app": () => project.reload("reinstall"),
-        "Clear Metro cache": () => project.restart("metro"),
+        "Clear Metro cache": () => project.reload("clearMetro"),
         "Reboot IDE": () => project.reload("reboot"),
-        "Clean rebuild": () => project.restart("all"),
+        "Clean rebuild": () => project.reload("rebuild"),
       }}>
       <span className="codicon codicon-refresh" />
     </IconButtonWithOptions>

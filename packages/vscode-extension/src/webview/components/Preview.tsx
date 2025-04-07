@@ -561,7 +561,7 @@ function Preview({
                   <button
                     className="uncaught-button"
                     onClick={() => {
-                      project.restart(false);
+                      project.reload("autoReload");
                     }}>
                     Bundle error&nbsp;
                     <span className="codicon codicon-refresh" />
@@ -570,7 +570,7 @@ function Preview({
               )}
               {hasBundlingError && (
                 <div className="phone-screen phone-debug-overlay phone-error-overlay">
-                  <button className="uncaught-button" onClick={() => project.restart(false)}>
+                  <button className="uncaught-button" onClick={() => project.reload("autoReload")}>
                     Bundle error&nbsp;
                     <span className="codicon codicon-refresh" />
                   </button>

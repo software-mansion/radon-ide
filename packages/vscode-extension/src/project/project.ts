@@ -31,10 +31,10 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { Logger } from "../Logger";
-import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
+import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
-import { throttle, throttleAsync } from "../utilities/throttle";
+import { throttle } from "../utilities/throttle";
 import { DebugSource } from "../debugging/DebugSession";
 import { AppEvent, DeviceSessionDelegate } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
@@ -54,14 +54,11 @@ import { isAutoSaveEnabled } from "../utilities/isAutoSaveEnabled";
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager } from "./DeviceSessionsManager";
-import { watchProjectFiles } from "../utilities/watchProjectFiles";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
 const DEEP_LINKS_HISTORY_LIMIT = 50;
-
-const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 
@@ -172,6 +169,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     this.updateProjectStateForDevice(id, {
       status: "starting",
       startupMessage: StartupMessage.Restarting,
+    });
+  }
+
+  public onReloadCompleted(id: string): void {
+    this.updateProjectStateForDevice(id, {
+      status: "running",
     });
   }
 
@@ -469,73 +472,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
   }
 
   //#region Session lifecycle
-  public async restart(
-    clean: "all" | "metro" | false,
-    onlyReloadJSWhenPossible: boolean = true,
-    restartDevice: boolean = false
-  ) {
-    getTelemetryReporter().sendTelemetryEvent("url-bar:restart-requested", {
-      platform: this.projectState.selectedDevice?.platform,
-    });
-
-    // we save device info and device session at the start such that we can
-    // check if they weren't updated in the meantime while we await for restart
-    // procedures
-    const deviceInfo = this.projectState.selectedDevice!;
-    const deviceSession = this.deviceSession;
-
-    this.updateProjectStateForDevice(deviceInfo.id, {
-      status: "starting",
-      startupMessage: StartupMessage.Restarting,
-    });
-
-    // we first consider forceCleanBuild flag, if set we always perform a clean
-    // start of the project and select the device
-    //frytki clean restart is removed now so well...
-    if (clean) {
-      await this.selectDevice(deviceInfo);
-      return;
-    }
-
-    // Otherwise, depending on the project state we try deviceSelection, or
-    // only relad JS if possible.
-    //frytki hehehehehe
-    try {
-      if (restartDevice || this.isCachedBuildStale) {
-        //frytki hehehehehe
-        await this.selectDevice(deviceInfo);
-        return;
-      }
-
-      if (onlyReloadJSWhenPossible) {
-        // if reloading JS is possible, we try to do it first and exit in case of success
-        // otherwise we continue to restart using more invasive methods
-        if (await this.reloadMetro()) {
-          return;
-        }
-      }
-
-      // we first check if the device session hasn't changed in the meantime
-      if (deviceSession === this.deviceSession) {
-        const restartSucceeded = await this.deviceSession?.perform("restartProcess");
-        if (restartSucceeded) {
-          this.updateProjectStateForDevice(deviceInfo.id, {
-            status: "running",
-          });
-        }
-      }
-    } catch (e) {
-      // finally in case of any errors, the last resort is performing project
-      // restart and device selection (we still avoid forcing clean builds, and
-      // only do clean build when explicitly requested).
-      // before doing anything, we check if the device hasn't been updated in the meantime
-      // which might have initiated a new session anyway
-      if (deviceInfo === this.projectState.selectedDevice) {
-        //frytki hehehehehe
-        await this.selectDevice(deviceInfo);
-      }
-    }
-  }
 
   public async reload(type: ReloadAction): Promise<boolean> {
     this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
@@ -545,13 +481,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
       method: type,
     });
 
-    // this action needs to be handled outside of device session as it resets the device session itself
-    if (type === "reboot") {
-      const deviceInfo = this.projectState.selectedDevice!;
-      await this.selectDevice(deviceInfo);
-      return true;
-    }
-
     return await this.deviceSessionsManager.reload(type);
   }
 
@@ -560,7 +489,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
   async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
     if (needsRestart) {
-      this.restart(false, false);
+      this.reload("restartProcess");
     }
   }
 
@@ -718,7 +647,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     let needsRestart = await this.deviceSession?.changeDeviceSettings(settings);
 
     if (needsRestart) {
-      await this.restart(false, false, true);
+      await this.reload("reboot");
     }
   }
 

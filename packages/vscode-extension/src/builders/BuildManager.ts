@@ -10,7 +10,6 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildType } from "../common/Project";
 import { throttleAsync } from "../utilities/throttle";
-import { disposeAll } from "../utilities/disposables";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 
 const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -67,10 +66,10 @@ export class BuildManager implements Disposable {
     private readonly dependencyManager: DependencyManager,
     private readonly buildCache: BuildCache,
     private readonly buildManagerDelegate: BuildManagerDelegate,
-    platform: DevicePlatform,
+    platform: DevicePlatform
   ) {
     this.isCachedBuildStale = false;
-    // Note: in future implementations decoupled from device session we 
+    // Note: in future implementations decoupled from device session we
     // should make this logic platform independent
     this.workspaceChangeListener = new WorkspaceChangeListener(() => {
       this.checkIfNativeChangedForPlatform(platform);
@@ -78,7 +77,7 @@ export class BuildManager implements Disposable {
     this.workspaceChangeListener.startWatching();
   }
 
-  public shouldRebuild(){
+  public shouldRebuild() {
     return this.isCachedBuildStale;
   }
 
@@ -240,7 +239,6 @@ export class BuildManager implements Disposable {
       }
     }
   }, FINGERPRINT_THROTTLE_MS);
-
 
   public dispose() {
     this.workspaceChangeListener.dispose();

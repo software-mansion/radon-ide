@@ -83,13 +83,22 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  async bootDevice(settings: DeviceSettings) {
+  public async reboot() {
+    super.reboot();
+    this.runningAppProcess?.cancel();
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(this.deviceUDID),
+      "shutdown",
+      this.deviceUDID,
+    ]);
+
+    await this.internalBootDevice();
+  }
+
+  private async internalBootDevice() {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-
-    if (await this.shouldUpdateLocale(settings.locale)) {
-      await this.changeLocale(settings.locale);
-    }
-
     try {
       await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", this.deviceUDID], {
         allowNonZeroExit: true,
@@ -102,6 +111,14 @@ export class IosSimulatorDevice extends DeviceBase {
         throw e;
       }
     }
+  }
+
+  async bootDevice(settings: DeviceSettings) {
+    if (await this.shouldUpdateLocale(settings.locale)) {
+      await this.changeLocale(settings.locale);
+    }
+
+    await this.internalBootDevice();
 
     await this.changeSettings(settings);
   }

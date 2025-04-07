@@ -5,7 +5,7 @@ import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
-import { DeviceBase } from "./DeviceBase";
+import { DeviceBase, REBOOT_TIMEOUT } from "./DeviceBase";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
@@ -39,7 +39,6 @@ const ADB_PATH = path.join(
   })
 );
 
-const REBOOT_TIMEOUT = 3000;
 const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
@@ -213,20 +212,21 @@ export class AndroidEmulatorDevice extends DeviceBase {
     await this.internalBootDevice();
   }
 
-  public async reboot(){
-    const {promise, resolve} = Promise.withResolvers<void>()  
+  public async reboot() {
+    super.reboot();
+    const { promise, resolve } = Promise.withResolvers<void>();
 
     const timeout = setTimeout(async () => {
       this.emulatorProcess?.off("exit", exitListener);
       await this.forcefullyResetDevice();
       resolve();
-    }, REBOOT_TIMEOUT)
+    }, REBOOT_TIMEOUT);
 
     const exitListener = async () => {
       await this.internalBootDevice();
       clearTimeout(timeout);
       resolve();
-    }
+    };
 
     this.emulatorProcess?.on("exit", exitListener);
     this.emulatorProcess?.kill();

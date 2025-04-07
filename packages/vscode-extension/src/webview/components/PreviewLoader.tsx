@@ -123,7 +123,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
                     <span className="codicon codicon-browser" /> Visit troubleshoot guide
                   </Button>
                 </a>
-                <Button type="secondary" onClick={() => project.restart("all")}>
+                <Button type="secondary" onClick={() => project.reload("rebuild")}>
                   <span className="codicon codicon-refresh" /> Clean rebuild project
                 </Button>
               </div>
