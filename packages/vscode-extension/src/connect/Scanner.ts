@@ -41,8 +41,7 @@ export class Scanner implements Disposable {
     }
     Promise.all(DEFAULT_PORTS.map(this.scanPort.bind(this)))
       .then(() => sleep(PORT_SCAN_INTERVAL_MS))
-      .then(this.scanPortsPeriodically.bind(this))
-      .then(this.delegate?.onPortStatusUpdated);
+      .then(this.scanPortsPeriodically.bind(this));
   }
 
   private async verifyAndConnect(port: number, projectRoot: string) {
