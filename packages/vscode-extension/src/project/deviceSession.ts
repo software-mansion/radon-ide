@@ -206,7 +206,6 @@ export class DeviceSession implements Disposable {
   }
 
   private async reloadJS() {
-    // frytki cancel token here?
     if (this.devtools.hasConnectedClient) {
       try {
         await this.reloadMetro();
@@ -256,7 +255,6 @@ export class DeviceSession implements Disposable {
     const cancelToken = new CancelToken();
     this.cancelToken = cancelToken;
 
-    // frytki cancel token here?
     if (cleanCache) {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
@@ -289,8 +287,6 @@ export class DeviceSession implements Disposable {
   }
 
   private async autoReload() {
-    //Frytki some cancel token here?
-
     getTelemetryReporter().sendTelemetryEvent("url-bar:restart-requested", {
       platform: this.device.platform,
     });
@@ -299,7 +295,6 @@ export class DeviceSession implements Disposable {
 
     try {
       if (this.buildManager.shouldRebuild()) {
-        //frytki hehehehehe here something that rebuilds i guess
         await this.restart({ forceClean: false, cleanCache: false });
         return;
       }

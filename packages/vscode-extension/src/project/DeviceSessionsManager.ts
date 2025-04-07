@@ -1,5 +1,5 @@
 import { isEqual } from "lodash";
-import { window } from "vscode";
+import { Disposable, window } from "vscode";
 import { BuildError } from "../builders/BuildManager";
 import { DeviceInfo } from "../common/DeviceManager";
 import {
@@ -20,7 +20,7 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
-export class DeviceSessionsManager {
+export class DeviceSessionsManager implements Disposable {
   // selected device id
   private selectedDevice: string | undefined;
   private deviceSessions: Map<string, DeviceSession> = new Map();
@@ -255,5 +255,11 @@ export class DeviceSessionsManager {
       return device;
     }
     return undefined;
+  }
+
+  dispose() {
+    this.deviceSessions.forEach((session) => {
+      session.dispose();
+    });
   }
 }

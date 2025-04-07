@@ -149,11 +149,23 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
 
   private setupAppRoot() {
     const newAppRoot = findAndSetupNewAppRootFolder();
+
     const oldApplicationContext = this.applicationContext;
     this.applicationContext = new ApplicationContext(newAppRoot);
     oldApplicationContext.dispose();
 
-    this.reload("reboot");
+    const oldDeviceSessionsManager = this.deviceSessionsManager;
+    this.deviceSessionsManager = this.deviceSessionsManager = new DeviceSessionsManager(
+      this.applicationContext,
+      this.deviceManager,
+      this,
+      (newState) => {
+        this.updateProjectState(newState);
+      }
+    );
+    oldDeviceSessionsManager.dispose();
+
+    this.deviceSessionsManager.trySelectingDevice();
   }
 
   //#region Device Session Delegate
@@ -621,7 +633,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
   }
 
   public async getDeviceSettings() {
-    // frytki it needs to be reworked in collaboration with frontend
     return (
       this.deviceSession?.deviceSettings ?? {
         appearance: "dark",
@@ -655,7 +666,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     this.eventEmitter.emit("toolsStateChanged", toolsState);
   };
 
-  // frytki !!!!! is wrong here
   public async getToolsState() {
     return this.deviceSession!.toolsManager.getToolsState();
   }
