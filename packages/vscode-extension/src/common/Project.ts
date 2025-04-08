@@ -29,6 +29,7 @@ export type ToolsState = {
 export type ProjectState =
   | ({
       status:
+        | "starting"
         | "running"
         | "bootError"
         | "bundleBuildFailedError"
@@ -36,7 +37,6 @@ export type ProjectState =
         | "debuggerPaused"
         | "refreshing";
     } & ProjectStateCommon)
-  | ProjectStateStarting
   | ProjectStateBuildError;
 
 type ProjectStateCommon = {
@@ -44,13 +44,9 @@ type ProjectStateCommon = {
   selectedDevice: DeviceInfo | undefined;
   initialized: boolean;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
+  startupMessage: StartupMessage | undefined;
+  stageProgress: number | undefined;
 };
-
-type ProjectStateStarting = {
-  status: "starting";
-  startupMessage: StartupMessage;
-  stageProgress: number;
-} & ProjectStateCommon;
 
 type ProjectStateBuildError = {
   status: "buildError";
@@ -72,6 +68,8 @@ export enum BuildType {
 export type ZoomLevelType = number | "Fit";
 
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
+
+export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown";
 
 // important: order of values in this enum matters
 export enum StartupMessage {
@@ -179,7 +177,7 @@ export interface ProjectInterface {
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  sendBiometricAuthorization(match: boolean): Promise<void>;
+  runCommand(command: string): Promise<void>;
 
   getToolsState(): Promise<ToolsState>;
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
