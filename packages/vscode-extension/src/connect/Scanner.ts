@@ -1,9 +1,10 @@
 import { Disposable, workspace } from "vscode";
 import { Metro } from "../project/metro";
 import { sleep } from "../utilities/retry";
-
+import { RADON_CONNECT_PORT_KEY } from "./Connector";
+import { extensionContext } from "../utilities/extensionContext";
 export const PORT_SCAN_INTERVAL_MS = 4000;
-export const DEFAULT_PORTS = [8081, 8082, 8083];
+export const DEFAULT_PORTS = [8081, 8082];
 
 export type ScannerDelegate = {
   onPortStatusUpdated: () => void;
@@ -39,7 +40,10 @@ export class Scanner implements Disposable {
     if (this.disposed) {
       return;
     }
-    Promise.all(DEFAULT_PORTS.map(this.scanPort.bind(this)))
+    const customPort = extensionContext.workspaceState.get<number>(RADON_CONNECT_PORT_KEY);
+    const ports = customPort ? [customPort] : DEFAULT_PORTS;
+
+    Promise.all(ports.map(this.scanPort.bind(this)))
       .then(() => sleep(PORT_SCAN_INTERVAL_MS))
       .then(this.scanPortsPeriodically.bind(this));
   }
@@ -62,6 +66,9 @@ export class Scanner implements Disposable {
 
   private async scanPort(port: number) {
     try {
+      if (!this.portsStatus.has(port)) {
+        this.portsStatus.set(port, "scanning...");
+      }
       const response = await fetch(`http://localhost:${port}/status`);
       if (response.ok) {
         // we expect metro to include a response header X-React-Native-Project-Root

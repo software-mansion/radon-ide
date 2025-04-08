@@ -13,6 +13,7 @@ import { disposeAll } from "../utilities/disposables";
 import { Scanner } from "./Scanner";
 
 const RADON_CONNECT_ENABLED_KEY = "radon_connect_enabled";
+export const RADON_CONNECT_PORT_KEY = "radon_connect_port";
 
 export class Connector implements Disposable {
   private static instance: Connector | null = null;
@@ -29,11 +30,10 @@ export class Connector implements Disposable {
       StatusBarAlignment.Left,
       Number.MIN_SAFE_INTEGER
     );
-    this.statusBarItem.command = "RNIDE.openPanel";
     this.disposables.push(this.statusBarItem);
 
     this.disposables.push(
-      commands.registerCommand("RNIDE.disableAutoConnect", () => {
+      commands.registerCommand("RNIDE.disableRadonConnect", () => {
         extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, false);
         this.disconnect();
         this.stopScanner();
@@ -42,10 +42,43 @@ export class Connector implements Disposable {
     );
 
     this.disposables.push(
-      commands.registerCommand("RNIDE.enableAutoConnect", () => {
+      commands.registerCommand("RNIDE.enableRadonConnect", () => {
         extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
         this.maybeStartScanner();
         this.updateStatusBarItem();
+      })
+    );
+
+    this.disposables.push(
+      commands.registerCommand("RNIDE.connect.configurePort", async () => {
+        const port = await window.showInputBox({
+          prompt: "Enter metro/Expo server port. Leave empty to reset to default ports.",
+          placeHolder: "e.g. 8081",
+          validateInput: (value) => {
+            const num = parseInt(value);
+            if (value === "") {
+              return null;
+            }
+            if (isNaN(num)) {
+              return "Please enter a valid number";
+            }
+            if (num < 1 || num > 65535) {
+              return "Port number must be between 1 and 65535";
+            }
+            return null;
+          },
+        });
+
+        if (port !== undefined) {
+          if (port === "") {
+            extensionContext.workspaceState.update(RADON_CONNECT_PORT_KEY, undefined);
+          } else {
+            extensionContext.workspaceState.update(RADON_CONNECT_PORT_KEY, parseInt(port));
+          }
+          extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
+          this.maybeStartScanner(true);
+          this.updateStatusBarItem();
+        }
       })
     );
   }
@@ -93,10 +126,14 @@ export class Connector implements Disposable {
     }
   }
 
-  private maybeStartScanner() {
+  private maybeStartScanner(forceRestart: boolean = false) {
     const enabled = extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
-    if (!enabled || this.scanner) {
+    if (!enabled || (this.scanner && !forceRestart)) {
       return;
+    }
+
+    if (this.scanner) {
+      this.scanner.dispose();
     }
 
     this.scanner = new Scanner({
@@ -141,24 +178,34 @@ export class Connector implements Disposable {
       this.statusBarItem.text = "Radon IDE $(debug)";
       markdownText.appendMarkdown("Connected on port " + this.metro.port);
       markdownText.appendMarkdown("\n\n");
-      markdownText.appendMarkdown("[Disconnect](command:RNIDE.disableAutoConnect)");
+      markdownText.appendMarkdown("[Disconnect](command:RNIDE.disableRadonConnect)");
       markdownText.appendMarkdown("\n\n");
       markdownText.appendMarkdown("[Open debug console](command:workbench.panel.repl.view.focus)");
     } else if (!enabled) {
       this.statusBarItem.text = "Radon IDE $(open-preview)";
-      markdownText.appendMarkdown("Auto-connect is disabled");
+      markdownText.appendMarkdown("Radon Connect is disabled\n\n");
+      markdownText.appendMarkdown(
+        "Radon will not connect to running\nmetro instances and React Native apps"
+      );
       markdownText.appendMarkdown("\n\n");
-      markdownText.appendMarkdown("[Enable auto-connect](command:RNIDE.enableAutoConnect)");
+      markdownText.appendMarkdown("[Enable Radon Connect](command:RNIDE.enableRadonConnect)\n\n");
+      markdownText.appendMarkdown("[Open Radon IDE Panel](command:RNIDE.openPanel)\n\n");
     } else {
       this.statusBarItem.text = "Radon IDE $(debug-disconnect)";
       const ports = Array.from(this.scanner?.portsStatus.keys() ?? []);
       markdownText.appendMarkdown(
-        "Waiting for metro to start on ports:\n" +
+        "Waiting for React Native app to connect, scanning ports:\n" +
           ports.map(this.printPortStatus.bind(this)).join("\n")
       );
       markdownText.appendMarkdown("\n\n");
       markdownText.appendMarkdown(
-        "[Specify a different port](command:RNIDE.connect.configurePort)"
+        "[$(broadcast) Connect on custom port](command:RNIDE.connect.configurePort)\n\n"
+      );
+      markdownText.appendMarkdown(
+        "[$(circle-slash) Disable Radon Connect](command:RNIDE.disableRadonConnect)\n\n"
+      );
+      markdownText.appendMarkdown(
+        "[$(open-preview) Open Radon IDE Panel](command:RNIDE.openPanel)\n\n"
       );
     }
 
