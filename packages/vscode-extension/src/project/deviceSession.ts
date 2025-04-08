@@ -152,6 +152,7 @@ export class DeviceSession implements Disposable {
   build in vscode dispose system ignores async keyword and works synchronously.
   */
   public async dispose() {
+    this.deactivate();
     await this.debugSession?.dispose();
     this.disposableBuild?.dispose();
     this.device?.dispose();
