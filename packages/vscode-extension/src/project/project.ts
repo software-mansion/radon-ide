@@ -851,7 +851,7 @@ export class Project
   }
 
   private reportStageProgress(stageProgress: number, stage: string) {
-    if (this.projectState.status !== "starting" || stage !== this.projectState.startupMessage) {
+    if (stage !== this.projectState.startupMessage) {
       return;
     }
     this.updateProjectState({ stageProgress });
