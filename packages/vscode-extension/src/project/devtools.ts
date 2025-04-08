@@ -2,6 +2,12 @@ import http from "http";
 import { Disposable } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
+// import {
+//   createBridge as createFrontendBridge,
+//   createStore,
+//   initialize as createDevTools,
+//   Wall,
+// } from "react-devtools-inline/frontend";
 
 export class Devtools implements Disposable {
   private _port = 0;
@@ -71,6 +77,19 @@ export class Devtools implements Disposable {
       ws.on("close", () => {
         this.socket = undefined;
       });
+
+      const wall: Wall = {
+        listen(fn) {
+          ws.on("message", fn);
+          return fn;
+        },
+        send(event, payload) {
+          ws.send(JSON.stringify({ event, payload }));
+        },
+      };
+
+      // const bridge = createFrontendBridge(undefined as unknown as Window, wall);
+      // const store = createStore(bridge);
     });
 
     return new Promise<void>((resolve) => {
