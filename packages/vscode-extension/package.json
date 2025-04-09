@@ -54,7 +54,7 @@
         "command": "RNIDE.openPanel",
         "title": "Open IDE Panel",
         "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+        "enablement": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen && !RNIDE.showsStatusBarItem"
       },
       {
         "command": "RNIDE.showPanel",
@@ -289,7 +289,7 @@
         {
           "command": "RNIDE.openPanel",
           "group": "navigation",
-          "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+          "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen && !RNIDE.showsStatusBarItem"
         }
       ],
       "view/title": [
