@@ -35,6 +35,10 @@ const data = [
     label: "Supporter's License Terms",
     link: "/legal/supporter-terms",
   },
+  {
+    label: "Data Processing Addendum (DPA)",
+    link: "/legal/dpa",
+  },
 ];
 
 export default function Legal(): JSX.Element {
