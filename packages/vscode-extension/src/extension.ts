@@ -30,9 +30,11 @@ import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
+import { registerChat } from "./chat";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
+const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
 function handleUncaughtErrors() {
   process.on("unhandledRejection", (error) => {
@@ -179,6 +181,7 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.captureScreenshot", captureScreenshot)
   );
+  context.subscriptions.push(commands.registerCommand("RNIDE.openChat", openChat));
 
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
     registeredCommandDisposable.dispose(); // must dispose to avoid endless loops
@@ -290,6 +293,9 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
+  // You can configure the chat in package.json under the `chatParticipants` key
+  registerChat(context);
+
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
   shouldExtensionActivate && extensionActivated();
@@ -347,6 +353,17 @@ async function toggleRecording() {
 
 async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
+}
+
+async function openChat() {
+  let prompt = undefined;
+
+  if (!extensionContext.globalState.get(CHAT_ONBOARDING_COMPLETED)) {
+    prompt = "@radon what is Radon IDE?";
+    extensionContext.globalState.update(CHAT_ONBOARDING_COMPLETED, true);
+  }
+
+  commands.executeCommand("workbench.action.chat.open", prompt);
 }
 
 async function diagnoseWorkspaceStructure() {

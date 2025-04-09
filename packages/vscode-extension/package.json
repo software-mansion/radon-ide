@@ -109,6 +109,12 @@
         "title": "Capture Screenshot",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.openChat",
+        "title": "Chat with Radon AI",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -657,7 +663,16 @@
           "fontCharacter": "\\E001"
         }
       }
-    }
+    },
+    "chatParticipants": [
+      {
+        "id": "chat.radon-ai",
+        "fullName": "Radon AI",
+        "name": "radon",
+        "description": "Get up-to-date answers related to React Native",
+        "isSticky": true
+      }
+    ]
   },
   "scripts": {
     "vscode:package": "vsce package",
@@ -756,7 +771,7 @@
     "patch-package": "^8.0.0",
     "ovsx": "^0.10.1",
     "plist": "^3.1.0",
-    "prettier": "^2.2.1",
+    "prettier": "2.4.1",
     "re-resizable": "^6.9.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
