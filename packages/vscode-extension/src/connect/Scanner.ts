@@ -40,8 +40,9 @@ export class Scanner implements Disposable {
     if (this.disposed) {
       return;
     }
+
     const customPort = extensionContext.workspaceState.get<number>(RADON_CONNECT_PORT_KEY);
-    const ports = customPort ? [customPort] : DEFAULT_PORTS;
+    const ports = customPort ? [customPort, ...DEFAULT_PORTS] : DEFAULT_PORTS;
 
     Promise.all(ports.map(this.scanPort.bind(this)))
       .then(() => sleep(PORT_SCAN_INTERVAL_MS))
