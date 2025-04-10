@@ -180,7 +180,7 @@ function NetworkTimeline({ handleSelectedRequest, networkLogs }: NetworkFiltersP
   const { filters, setFilters } = useNetwork();
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
-  const [chartHeight, setChartHeight] = useState(100);
+  const [chartHeight, _] = useState(100);
   const [isCmdPressed, setIsCmdPressed] = useState(false);
   const [tooltip, setTooltip] = useState({
     visible: false,
