@@ -10,8 +10,6 @@ function NetworkBar() {
     toggleRecording,
     clearActivity,
     toggleFilterVisible,
-    toggleTimelineVisible,
-    isTimelineVisible,
     isFilterVisible,
     filters,
     setFilters,
@@ -38,14 +36,14 @@ function NetworkBar() {
         }}>
         <span className="codicon codicon-circle-slash" />
       </IconButton>
-      <IconButton
+      {/* <IconButton
         onClick={toggleTimelineVisible}
         tooltip={{
           label: isTimelineVisible ? "Hide timeline" : "Show timeline",
           side: "bottom",
         }}>
         <span className="codicon codicon-graph" />
-      </IconButton>
+      </IconButton> */}
       <IconButton
         onClick={toggleFilterVisible}
         tooltip={{

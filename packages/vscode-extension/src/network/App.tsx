@@ -6,10 +6,9 @@ import NetworkBar from "./components/NetworkBar";
 import NetworkRequestLog from "./components/NetworkRequestLog";
 import NetworkLogDetails from "./components/NetworkLogDetails";
 import { useNetwork } from "./providers/NetworkProvider";
-import NetworkTimeline from "./components/NetworkTimeline";
 
 function App() {
-  const { networkLogs, unfilteredNetworkLogs, isTimelineVisible } = useNetwork();
+  const { networkLogs } = useNetwork();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
 
@@ -31,43 +30,27 @@ function App() {
     />
   );
 
-  const LogContainer = () =>
-    isNetworkLogDetailsVisible ? (
-      <VscodeSplitLayout className="network-log-container">
-        <div slot="start">
-          <RequestLog />
-        </div>
-        <div slot="end">
-          <NetworkLogDetails
-            key={selectedNetworkLog.requestId}
-            networkLog={selectedNetworkLog}
-            handleClose={() => setSelectedNetworkLogId(null)}
-          />
-        </div>
-      </VscodeSplitLayout>
-    ) : (
-      <div className="network-log-container">
-        <RequestLog />
-      </div>
-    );
-
   return (
     <main>
       <NetworkBar />
-      {isTimelineVisible ? (
-        <VscodeSplitLayout split="horizontal" className="network-log-container">
+
+      {isNetworkLogDetailsVisible ? (
+        <VscodeSplitLayout className="network-log-container">
           <div slot="start">
-            <NetworkTimeline
-              networkLogs={unfilteredNetworkLogs}
-              handleSelectedRequest={setSelectedNetworkLogId}
-            />
+            <RequestLog />
           </div>
           <div slot="end">
-            <LogContainer />
+            <NetworkLogDetails
+              key={selectedNetworkLog.requestId}
+              networkLog={selectedNetworkLog}
+              handleClose={() => setSelectedNetworkLogId(null)}
+            />
           </div>
         </VscodeSplitLayout>
       ) : (
-        <LogContainer />
+        <div className="network-log-container">
+          <RequestLog />
+        </div>
       )}
     </main>
   );

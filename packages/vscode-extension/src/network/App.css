@@ -6,7 +6,7 @@ body,
   width: 100%;
   margin: 0;
   padding: 0;
-  background-color: var(--swm-preview-background);
+  background-color: var(--background);
 }
 
 main {
@@ -36,4 +36,5 @@ main {
   height: 100%;
   overflow: hidden;
   border: none;
+  border-top: 1px solid var(--vscode-editorWidget-border);
 }
