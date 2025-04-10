@@ -15,8 +15,9 @@ function Section({ data }: SectionProps) {
       {data &&
         Object.entries(data).map(([key, value]) => (
           <div key={key} className="section-row">
-            <p>{key}:</p>
-            <p>{String(value)}</p>
+            <p>
+              {key}: {String(value)}
+            </p>
           </div>
         ))}
     </div>
