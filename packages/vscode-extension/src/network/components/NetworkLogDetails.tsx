@@ -39,24 +39,29 @@ const TABS = [
   },
 ];
 
-// TODO: Add a close button to the tab bar
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   return (
-    <VscodeTabs>
-      {TABS.map(({ title, Tab }) => (
-        <Fragment key={title}>
-          <VscodeTabHeader className="network-log-details-tab-header">{title}</VscodeTabHeader>
-          <VscodeTabPanel>
-            <VscodeScrollable
-              style={{
-                height: parentHeight ? parentHeight - VSCODE_TABS_HEADER_HEIGHT : undefined,
-              }}>
-              <Tab networkLog={networkLog} />
-            </VscodeScrollable>
-          </VscodeTabPanel>
-        </Fragment>
-      ))}
-    </VscodeTabs>
+    <>
+      {/* TODO: use VscodeToolbarButton when it will be available in @vscode-elements/react-elements  */}
+      <button className="network-log-details-close-button" onClick={handleClose}>
+        <span className="codicon codicon-close" />
+      </button>
+      <VscodeTabs>
+        {TABS.map(({ title, Tab }) => (
+          <Fragment key={title}>
+            <VscodeTabHeader className="network-log-details-tab-header">{title}</VscodeTabHeader>
+            <VscodeTabPanel className="network-log-details-tab-panel">
+              <VscodeScrollable
+                style={{
+                  height: parentHeight ? parentHeight - VSCODE_TABS_HEADER_HEIGHT : undefined,
+                }}>
+                <Tab networkLog={networkLog} />
+              </VscodeScrollable>
+            </VscodeTabPanel>
+          </Fragment>
+        ))}
+      </VscodeTabs>
+    </>
   );
 };
 

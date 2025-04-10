@@ -1,3 +1,27 @@
 .network-log-details-tab-header {
   padding: 5px 10px;
 }
+
+.network-log-details-tab-panel {
+  padding: 8px;
+}
+
+.network-log-details-close-button {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  background: none;
+  border: none;
+  width: 22px;
+  height: 22px;
+  color: var(--vscode-icon-foreground);
+  border-radius: 5px;
+  padding: 3px;
+  cursor: pointer;
+}
+
+.network-log-details-close-button:hover {
+  outline: 1px dashed var(--vscode-toolbar-hoverOutline);
+  outline-offset: -1px;
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
