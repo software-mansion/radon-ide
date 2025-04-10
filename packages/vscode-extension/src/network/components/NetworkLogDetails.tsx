@@ -1,5 +1,9 @@
-import "./NetworkLogDetails.css";
-import { VscodeTabHeader, VscodeTabPanel, VscodeTabs } from "@vscode-elements/react-elements";
+import {
+  VscodeScrollable,
+  VscodeTabHeader,
+  VscodeTabPanel,
+  VscodeTabs,
+} from "@vscode-elements/react-elements";
 import { Fragment } from "react";
 import HeadersTab from "./HeadersTab";
 import PayloadTab from "./PayloadTab";
@@ -7,9 +11,12 @@ import ResponseTab from "./ResponseTab";
 import TimingTab from "./TimingTab";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 
+const VSCODE_TABS_HEADER_HEIGHT = 35;
+
 interface NetworkLogDetailsProps {
   networkLog: NetworkLog;
   handleClose: () => void;
+  parentHeight: number | undefined;
 }
 
 const TABS = [
@@ -32,20 +39,23 @@ const TABS = [
 ];
 
 // TODO: Add a close button to the tab bar
-const NetworkLogDetails = ({ networkLog, handleClose }: NetworkLogDetailsProps) => {
+const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   return (
-    <div className="network-log-details">
-      <VscodeTabs>
-        {TABS.map(({ title, Tab }) => (
-          <Fragment key={title}>
-            <VscodeTabHeader>{title}</VscodeTabHeader>
-            <VscodeTabPanel>
+    <VscodeTabs>
+      {TABS.map(({ title, Tab }) => (
+        <Fragment key={title}>
+          <VscodeTabHeader>{title}</VscodeTabHeader>
+          <VscodeTabPanel>
+            <VscodeScrollable
+              style={{
+                height: parentHeight ? parentHeight - VSCODE_TABS_HEADER_HEIGHT : undefined,
+              }}>
               <Tab networkLog={networkLog} />
-            </VscodeTabPanel>
-          </Fragment>
-        ))}
-      </VscodeTabs>
-    </div>
+            </VscodeScrollable>
+          </VscodeTabPanel>
+        </Fragment>
+      ))}
+    </VscodeTabs>
   );
 };
 

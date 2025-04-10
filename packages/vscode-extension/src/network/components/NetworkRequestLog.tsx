@@ -16,12 +16,14 @@ interface NetworkRequestLogProps {
   networkLogs: NetworkLog[];
   selectedNetworkLog: NetworkLog | null;
   handleSelectedRequest: (id: string | null) => void;
+  parentHeight: number | undefined;
 }
 
 const NetworkRequestLog = ({
   networkLogs,
   handleSelectedRequest,
   selectedNetworkLog,
+  parentHeight,
 }: NetworkRequestLogProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -136,7 +138,7 @@ const NetworkRequestLog = ({
   return (
     <div className="table-container" ref={containerRef}>
       <div style={{ width: "100%", overflowX: "hidden" }}>
-        <VscodeTable zebra resizable>
+        <VscodeTable zebra resizable style={{ height: parentHeight }}>
           <VscodeTableHeader slot="header">
             {logDetailsConfig.map(({ title }) => (
               <VscodeTableHeaderCell key={title}>{title}</VscodeTableHeaderCell>

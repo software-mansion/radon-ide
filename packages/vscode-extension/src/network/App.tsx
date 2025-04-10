@@ -1,6 +1,6 @@
 import "./App.css";
 import "../webview/styles/theme.css";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { VscodeSplitLayout } from "@vscode-elements/react-elements";
 import NetworkBar from "./components/NetworkBar";
 import NetworkRequestLog from "./components/NetworkRequestLog";
@@ -8,6 +8,9 @@ import NetworkLogDetails from "./components/NetworkLogDetails";
 import { useNetwork } from "./providers/NetworkProvider";
 
 function App() {
+  const networkLogContainerRef = useRef<HTMLDivElement | null>(null);
+  const networkLogContainerHeight = networkLogContainerRef?.current?.clientHeight;
+
   const { networkLogs } = useNetwork();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
@@ -22,36 +25,39 @@ function App() {
 
   const isNetworkLogDetailsVisible = !!selectedNetworkLog;
 
-  const RequestLog = () => (
-    <NetworkRequestLog
-      selectedNetworkLog={selectedNetworkLog}
-      networkLogs={networkLogs}
-      handleSelectedRequest={setSelectedNetworkLogId}
-    />
-  );
-
   return (
     <main>
       <NetworkBar />
 
-      {isNetworkLogDetailsVisible ? (
-        <VscodeSplitLayout className="network-log-container">
-          <div slot="start">
-            <RequestLog />
-          </div>
-          <div slot="end">
-            <NetworkLogDetails
-              key={selectedNetworkLog.requestId}
-              networkLog={selectedNetworkLog}
-              handleClose={() => setSelectedNetworkLogId(null)}
-            />
-          </div>
-        </VscodeSplitLayout>
-      ) : (
-        <div className="network-log-container">
-          <RequestLog />
-        </div>
-      )}
+      <div className="network-log-container" ref={networkLogContainerRef}>
+        {isNetworkLogDetailsVisible ? (
+          <VscodeSplitLayout className="network-log-split-layout">
+            <div slot="start">
+              <NetworkRequestLog
+                selectedNetworkLog={selectedNetworkLog}
+                networkLogs={networkLogs}
+                handleSelectedRequest={setSelectedNetworkLogId}
+                parentHeight={networkLogContainerHeight}
+              />
+            </div>
+            <div slot="end">
+              <NetworkLogDetails
+                key={selectedNetworkLog.requestId}
+                networkLog={selectedNetworkLog}
+                handleClose={() => setSelectedNetworkLogId(null)}
+                parentHeight={networkLogContainerHeight}
+              />
+            </div>
+          </VscodeSplitLayout>
+        ) : (
+          <NetworkRequestLog
+            selectedNetworkLog={selectedNetworkLog}
+            networkLogs={networkLogs}
+            handleSelectedRequest={setSelectedNetworkLogId}
+            parentHeight={networkLogContainerHeight}
+          />
+        )}
+      </div>
     </main>
   );
 }

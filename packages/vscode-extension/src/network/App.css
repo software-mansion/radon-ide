@@ -38,3 +38,7 @@ main {
   border: none;
   border-top: 1px solid var(--vscode-editorWidget-border);
 }
+
+.network-log-split-layout {
+  border: none;
+}
