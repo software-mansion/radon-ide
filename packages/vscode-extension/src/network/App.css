@@ -37,7 +37,3 @@ main {
   overflow: hidden;
   border: none;
 }
-
-::-webkit-scrollbar {
-  width: 10px;
-}
