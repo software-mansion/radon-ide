@@ -380,7 +380,7 @@ function NetworkTimeline({ handleSelectedRequest, networkLogs }: NetworkFiltersP
       }}
       // onMouseLeave={() => setTooltip({ visible: false, data: null, x: 0, y: 0 })}
       onWheel={handleScroll}>
-      <svg width="100%" height="100%" style={{ background: "var(--swm-preview-background)" }}>
+      <svg width="100%" height="100%">
         <g transform={`translate(0,${chartHeight - TIMELINE_LEGEND_HEIGHT})`} ref={xAxisRef} />
         <DashedLines
           chartHeight={chartHeight - MARGIN_VERTICAL}
