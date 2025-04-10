@@ -403,10 +403,6 @@ export class Project
     await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
-  onBundleBuildFailedError(): void {
-    this.updateProjectState({ status: "bundleBuildFailedError" });
-  }
-
   async onBundlingError(
     message: string,
     source: DebugSource,
@@ -414,17 +410,13 @@ export class Project
   ): Promise<void> {
     await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
 
-    if (!isAutoSaveEnabled()) {
+    if (this.projectState.status === "starting") {
       this.focusDebugConsole();
       focusSource(source);
     }
 
     Logger.error("[Bundling Error]", message);
-    // if bundle build failed, we don't want to change the status
-    // bundlingError status should be set only when bundleBuildFailedError status is not set
-    if (this.projectState.status === "bundleBuildFailedError") {
-      return;
-    }
+
     this.updateProjectState({ status: "bundlingError" });
   }
 

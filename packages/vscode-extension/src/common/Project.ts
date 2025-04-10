@@ -32,7 +32,6 @@ export type ProjectState =
         | "starting"
         | "running"
         | "bootError"
-        | "bundleBuildFailedError"
         | "bundlingError"
         | "debuggerPaused"
         | "refreshing";
