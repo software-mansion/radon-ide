@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import { useMemo, useLayoutEffect, useRef } from "react";
 import {
   VscodeTable,
@@ -135,8 +136,8 @@ const NetworkRequestLog = ({
   return (
     <div className="table-container" ref={containerRef}>
       <div style={{ width: "100%", overflowX: "hidden" }}>
-        <VscodeTable zebra>
-          <VscodeTableHeader slot="header" style={{}}>
+        <VscodeTable zebra resizable>
+          <VscodeTableHeader slot="header">
             {logDetailsConfig.map(({ title }) => (
               <VscodeTableHeaderCell key={title}>{title}</VscodeTableHeaderCell>
             ))}
@@ -145,7 +146,10 @@ const NetworkRequestLog = ({
             {networkLogs.map((log) => (
               <VscodeTableRow
                 key={log.requestId}
-                className={selectedNetworkLog?.requestId === log.requestId ? "selected" : ""}
+                className={classNames(
+                  "table-row",
+                  selectedNetworkLog?.requestId === log.requestId && "selected"
+                )}
                 onClick={() =>
                   handleSelectedRequest(
                     selectedNetworkLog?.requestId === log.requestId ? null : log.requestId

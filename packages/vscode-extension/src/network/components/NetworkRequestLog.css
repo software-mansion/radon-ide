@@ -4,3 +4,8 @@
   width: 100%;
   height: 100%;
 }
+
+.table-row:hover {
+  cursor: pointer;
+  background-color: var(--vscode-list-hoverBackground);
+}
