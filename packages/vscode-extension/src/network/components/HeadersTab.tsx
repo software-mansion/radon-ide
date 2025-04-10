@@ -11,16 +11,15 @@ interface SectionProps {
 
 function Section({ data }: SectionProps) {
   return (
-    <div className="section-content">
+    <table className="section-content">
       {data &&
         Object.entries(data).map(([key, value]) => (
-          <div key={key} className="section-row">
-            <p>
-              {key}: {String(value)}
-            </p>
-          </div>
+          <tr key={key} className="section-row">
+            <td>{key}:</td>
+            <td> {String(value)}</td>
+          </tr>
         ))}
-    </div>
+    </table>
   );
 }
 
