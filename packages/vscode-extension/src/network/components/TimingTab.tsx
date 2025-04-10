@@ -1,3 +1,4 @@
+import "./TimingTab.css";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 
 interface TimingTabProps {
@@ -19,9 +20,9 @@ const TimingTab = ({ networkLog }: TimingTabProps) => {
       </div>
 
       <div className="timing-section">
-        <span>Waiting (TTFB): {ttfb} ms</span>
-        <span>Downloading response: {totalTime - ttfb} ms</span>
-        <span>Total: {totalTime} ms</span>
+        <p>Waiting (TTFB): {ttfb} ms</p>
+        <p>Downloading response: {totalTime - ttfb} ms</p>
+        <p>Total: {totalTime} ms</p>
       </div>
     </div>
   );
