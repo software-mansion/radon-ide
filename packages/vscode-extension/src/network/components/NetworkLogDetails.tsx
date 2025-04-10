@@ -1,3 +1,4 @@
+import "./NetworkLogDetails.css";
 import {
   VscodeScrollable,
   VscodeTabHeader,
@@ -11,7 +12,7 @@ import ResponseTab from "./ResponseTab";
 import TimingTab from "./TimingTab";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 
-const VSCODE_TABS_HEADER_HEIGHT = 35;
+const VSCODE_TABS_HEADER_HEIGHT = 30;
 
 interface NetworkLogDetailsProps {
   networkLog: NetworkLog;
@@ -44,7 +45,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     <VscodeTabs>
       {TABS.map(({ title, Tab }) => (
         <Fragment key={title}>
-          <VscodeTabHeader>{title}</VscodeTabHeader>
+          <VscodeTabHeader className="network-log-details-tab-header">{title}</VscodeTabHeader>
           <VscodeTabPanel>
             <VscodeScrollable
               style={{
