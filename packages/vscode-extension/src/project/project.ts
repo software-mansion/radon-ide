@@ -411,7 +411,6 @@ export class Project
     await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
 
     if (this.projectState.status === "starting") {
-      this.focusDebugConsole();
       focusSource(source);
     }
 
