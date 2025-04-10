@@ -50,12 +50,14 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
         {TABS.map(({ title, Tab }) => (
           <Fragment key={title}>
             <VscodeTabHeader className="network-log-details-tab-header">{title}</VscodeTabHeader>
-            <VscodeTabPanel className="network-log-details-tab-panel">
+            <VscodeTabPanel>
               <VscodeScrollable
                 style={{
                   height: parentHeight ? parentHeight - VSCODE_TABS_HEADER_HEIGHT : undefined,
                 }}>
-                <Tab networkLog={networkLog} />
+                <div className="network-log-details-tab">
+                  <Tab networkLog={networkLog} />
+                </div>
               </VscodeScrollable>
             </VscodeTabPanel>
           </Fragment>
