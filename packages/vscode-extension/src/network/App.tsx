@@ -21,17 +21,13 @@ function App() {
     return fullLog || null;
   }, [selectedNetworkLogId, networkLogs]);
 
-  const handleSelectedRequest = (id: string | null) => {
-    setSelectedNetworkLogId(id);
-  };
-
   const isNetworkLogDetailsVisible = !!selectedNetworkLog;
 
   const RequestLog = () => (
     <NetworkRequestLog
       selectedNetworkLog={selectedNetworkLog}
       networkLogs={networkLogs}
-      handleSelectedRequest={handleSelectedRequest}
+      handleSelectedRequest={setSelectedNetworkLogId}
     />
   );
 
@@ -45,7 +41,7 @@ function App() {
           <NetworkLogDetails
             key={selectedNetworkLog.requestId}
             networkLog={selectedNetworkLog}
-            handleClose={() => handleSelectedRequest(null)}
+            handleClose={() => setSelectedNetworkLogId(null)}
           />
         </div>
       </VscodeSplitLayout>
@@ -63,7 +59,7 @@ function App() {
           <div slot="start">
             <NetworkTimeline
               networkLogs={unfilteredNetworkLogs}
-              handleSelectedRequest={handleSelectedRequest}
+              handleSelectedRequest={setSelectedNetworkLogId}
             />
           </div>
           <div slot="end">
