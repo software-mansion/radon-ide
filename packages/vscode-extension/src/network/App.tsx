@@ -1,7 +1,8 @@
 import "./App.css";
 import "../webview/styles/theme.css";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { VscodeSplitLayout } from "@vscode-elements/react-elements";
+import { debounce } from "lodash";
 import NetworkBar from "./components/NetworkBar";
 import NetworkRequestLog from "./components/NetworkRequestLog";
 import NetworkLogDetails from "./components/NetworkLogDetails";
@@ -9,7 +10,25 @@ import { useNetwork } from "./providers/NetworkProvider";
 
 function App() {
   const networkLogContainerRef = useRef<HTMLDivElement | null>(null);
-  const networkLogContainerHeight = networkLogContainerRef?.current?.clientHeight;
+  const [networkLogContainerHeight, setNetworkLogContainerHeight] = useState<number | undefined>(
+    networkLogContainerRef?.current?.clientHeight
+  );
+
+  useEffect(() => {
+    // debounce the resize event to avoid performance issues
+    const handleResize = debounce(() => {
+      if (networkLogContainerRef.current) {
+        console.log("Resizing network log container");
+        setNetworkLogContainerHeight(networkLogContainerRef.current.clientHeight);
+      }
+    }, 30);
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      handleResize.cancel();
+    };
+  }, []);
 
   const { networkLogs } = useNetwork();
 
