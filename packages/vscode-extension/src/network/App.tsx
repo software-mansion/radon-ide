@@ -25,42 +25,53 @@ function App() {
     setSelectedNetworkLogId(id);
   };
 
+  const isNetworkLogDetailsVisible = !!selectedNetworkLog;
+
+  const RequestLog = () => (
+    <NetworkRequestLog
+      selectedNetworkLog={selectedNetworkLog}
+      networkLogs={networkLogs}
+      handleSelectedRequest={handleSelectedRequest}
+    />
+  );
+
+  const LogContainer = () =>
+    isNetworkLogDetailsVisible ? (
+      <VscodeSplitLayout className="network-log-container">
+        <div slot="start">
+          <RequestLog />
+        </div>
+        <div slot="end">
+          <NetworkLogDetails
+            key={selectedNetworkLog.requestId}
+            networkLog={selectedNetworkLog}
+            handleClose={() => handleSelectedRequest(null)}
+          />
+        </div>
+      </VscodeSplitLayout>
+    ) : (
+      <div className="network-log-container">
+        <RequestLog />
+      </div>
+    );
+
   return (
     <main>
-      <div className="panel-view">
-        <NetworkBar />
-        {isTimelineVisible && (
-          <NetworkTimeline
-            networkLogs={unfilteredNetworkLogs}
-            handleSelectedRequest={handleSelectedRequest}
-          />
-        )}
-      </div>
-      {selectedNetworkLog ? (
-        <VscodeSplitLayout className="network-log-container">
+      <NetworkBar />
+      {isTimelineVisible ? (
+        <VscodeSplitLayout split="horizontal" className="network-log-container">
           <div slot="start">
-            <NetworkRequestLog
-              selectedNetworkLog={selectedNetworkLog}
-              networkLogs={networkLogs}
+            <NetworkTimeline
+              networkLogs={unfilteredNetworkLogs}
               handleSelectedRequest={handleSelectedRequest}
             />
           </div>
           <div slot="end">
-            <NetworkLogDetails
-              key={selectedNetworkLog.requestId}
-              networkLog={selectedNetworkLog}
-              handleClose={() => handleSelectedRequest(null)}
-            />
+            <LogContainer />
           </div>
         </VscodeSplitLayout>
       ) : (
-        <div className="network-log-container">
-          <NetworkRequestLog
-            selectedNetworkLog={selectedNetworkLog}
-            networkLogs={networkLogs}
-            handleSelectedRequest={handleSelectedRequest}
-          />
-        </div>
+        <LogContainer />
       )}
     </main>
   );
