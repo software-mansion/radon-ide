@@ -24,11 +24,7 @@ export default function Home(): JSX.Element {
       <LandingBackground />
       <div className={styles.preventfulContainer}>
         <div className={styles.container}>
-        <BrowserOnly>
-        {() => 
-          <PrivacyPolicyNote />
-        }
-          </BrowserOnly>
+          <BrowserOnly>{() => <PrivacyPolicyNote />}</BrowserOnly>
           <Hero />
           {/* <Disclaimer /> */}
           {/* <LearnMoreHero /> */}
