@@ -1,3 +1,4 @@
+import "./HeadersTab.css";
 import { VscodeCollapsible } from "@vscode-elements/react-elements";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 
@@ -11,11 +12,11 @@ interface SectionProps {
 
 function Section({ data }: SectionProps) {
   return (
-    <table className="section-content">
+    <table>
       {data &&
         Object.entries(data).map(([key, value]) => (
-          <tr key={key} className="section-row">
-            <td>{key}:</td>
+          <tr key={key}>
+            <td className="network-log-request-header">{key}:</td>
             <td> {String(value)}</td>
           </tr>
         ))}
