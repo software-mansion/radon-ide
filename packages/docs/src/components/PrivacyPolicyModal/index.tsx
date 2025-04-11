@@ -1,17 +1,15 @@
-"use client";
-
 import React, { useState } from "react";
 import styles from "./styles.module.css";
 
 const WAS_EVER_CLOSED_KEY = "was-ever-closed-privacy-policy-banner-v1";
 
 export function PrivacyPolicyNote() {
-  const wasEverClosed = localStorage.getItem(WAS_EVER_CLOSED_KEY);
+  const wasEverClosed = global.localStorage.getItem(WAS_EVER_CLOSED_KEY);
   const [isHidden, setIsHidden] = useState(Boolean(wasEverClosed));
 
   const handleClose = () => {
     setIsHidden(true);
-    localStorage.setItem(WAS_EVER_CLOSED_KEY, "true");
+    global.localStorage.setItem(WAS_EVER_CLOSED_KEY, "true");
   };
 
   if (isHidden) return null;
