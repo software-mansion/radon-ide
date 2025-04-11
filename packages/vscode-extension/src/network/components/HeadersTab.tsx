@@ -7,20 +7,29 @@ interface HeadersTabProps {
 }
 
 interface SectionProps {
-  data: Record<string, string> | undefined;
+  data: Record<string, any> | undefined;
 }
 
-function sortHeaders(headers: Record<string, string> | undefined) {
-  if (!headers) {
+function formatHeaders(headersObj: Record<string, any> | undefined) {
+  if (!headersObj) {
     return undefined;
   }
-  const sortedHeaders = Object.entries(headers)
+
+  // sort object by keys and capitalize keys
+  const sortedObj = Object.entries(headersObj)
     .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
     .reduce((acc, [key, value]) => {
-      acc[key] = value;
+      // Capitalize the first letter of each word in the key
+      const capitalizedKey = key
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join("-");
+
+      acc[capitalizedKey] = value;
       return acc;
-    }, {} as Record<string, string>);
-  return sortedHeaders;
+    }, {} as Record<string, any>);
+
+  return sortedObj;
 }
 
 function Section({ data }: SectionProps) {
@@ -38,10 +47,20 @@ function Section({ data }: SectionProps) {
 }
 
 const HeadersTab = ({ networkLog }: HeadersTabProps) => {
-  const sortedRequestHeaders = sortHeaders(networkLog.request?.headers);
-  const sortedResponseHeaders = sortHeaders(networkLog.response?.headers);
+  const general = {
+    "Request URL": networkLog.request?.url,
+    "Request Method": networkLog.request?.method,
+    "Status Code": networkLog.response?.status,
+  };
+
+  const sortedRequestHeaders = formatHeaders(networkLog.request?.headers);
+  const sortedResponseHeaders = formatHeaders(networkLog.response?.headers);
+
   return (
     <>
+      <VscodeCollapsible title="General" open>
+        <Section data={general} />
+      </VscodeCollapsible>
       <VscodeCollapsible title="Request Headers">
         <Section data={sortedRequestHeaders} />
       </VscodeCollapsible>
