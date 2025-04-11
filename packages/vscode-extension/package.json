@@ -682,8 +682,7 @@
     "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
     "build:react-query-devtools-ui": "rm -rf dist/react-query-devtools && cp -R ../radon-ide-react-query-webui/artifacts dist/react-query-devtools",
-    "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
-    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
+    "build:third-party": "npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:extension-debug": "npm run prepare:fake_editor && npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
     "build:extension": "npm run prepare:fake_editor && node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
@@ -704,7 +703,7 @@
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
     "preinstall": "mkdir -p dist && bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && npm run build:vscode-js-debug",
     "fetch:sim-server-assets": "bash ./scripts/download-sim-server-release-assets.sh dist",
-    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin ../radon-ide-react-query-webui",
+    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../redux-devtools-expo-dev-plugin ../radon-ide-react-query-webui",
     "postinstall": "patch-package"
   },
   "devDependencies": {
