@@ -95,11 +95,7 @@ const NetworkRequestLog = ({
   const logDetailsConfig = useMemo(
     () => [
       {
-        title: "Domain",
-        getValue: (log: NetworkLog) => log.request?.url.split("/")[2] || "(pending)",
-      },
-      {
-        title: "File",
+        title: "Name",
         getValue: (log: NetworkLog) => log.request?.url.split("/").pop() || "(pending)",
       },
       {
