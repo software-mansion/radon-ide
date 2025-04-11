@@ -1,5 +1,5 @@
 import { Disposable } from "vscode";
-import { Metro } from "./metro";
+import { MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
@@ -10,6 +10,7 @@ import {
   ReloadAction,
   StartupMessage,
   TouchPoint,
+  DeviceButtonType,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
@@ -65,7 +66,7 @@ export class DeviceSession implements Disposable {
   constructor(
     private readonly device: DeviceBase,
     private readonly devtools: Devtools,
-    private readonly metro: Metro,
+    private readonly metro: MetroLauncher,
     readonly dependencyManager: DependencyManager,
     readonly buildCache: BuildCache,
     debugEventDelegate: DebugSessionDelegate,
@@ -413,6 +414,10 @@ export class DeviceSession implements Disposable {
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
     this.device.sendKey(keyCode, direction);
+  }
+
+  public sendButton(button: DeviceButtonType, direction: "Up" | "Down") {
+    this.device.sendButton(button, direction);
   }
 
   public sendClipboard(text: string) {

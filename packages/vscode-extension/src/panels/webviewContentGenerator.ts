@@ -68,8 +68,8 @@ export function generateWebviewContent(
                       script-src 'nonce-${nonce}';
                       ${wsEndpoint ? `connect-src ws://${wsEndpoint} ${webview.cspSource};` : ""}
                       font-src vscode-resource: https:;" />
-        <link rel="stylesheet" type="text/css" href="${webviewName}.css" />
         <link rel="stylesheet" type="text/css" href="theme.css" />
+        <link rel="stylesheet" type="text/css" href="${webviewName}.css" />
         `
         }
       </head>

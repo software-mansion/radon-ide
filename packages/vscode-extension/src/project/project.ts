@@ -19,6 +19,7 @@ import { isEqual } from "lodash";
 import {
   AppPermissionType,
   BuildType,
+  DeviceButtonType,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
@@ -38,7 +39,7 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
-import { Metro, MetroDelegate } from "./metro";
+import { MetroDelegate, MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
 import { AppEvent, DeviceBootError, DeviceSession, EventDelegate } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
@@ -54,7 +55,6 @@ import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
-import { isAutoSaveEnabled } from "../utilities/isAutoSaveEnabled";
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { BuildError } from "../builders/BuildManager";
@@ -76,7 +76,7 @@ export class Project
 {
   private applicationContext: ApplicationContext;
 
-  public metro: Metro;
+  public metro: MetroLauncher;
   public toolsManager: ToolsManager;
 
   private devtools;
@@ -121,7 +121,7 @@ export class Project
     };
 
     this.devtools = new Devtools();
-    this.metro = new Metro(this.devtools, this);
+    this.metro = new MetroLauncher(this.devtools, this);
     this.start(false, false);
     this.trySelectingInitialDevice();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
@@ -402,10 +402,6 @@ export class Project
     await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
-  onBundleBuildFailedError(): void {
-    this.updateProjectState({ status: "bundleBuildFailedError" });
-  }
-
   async onBundlingError(
     message: string,
     source: DebugSource,
@@ -413,17 +409,12 @@ export class Project
   ): Promise<void> {
     await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
 
-    if (!isAutoSaveEnabled()) {
-      this.focusDebugConsole();
+    if (this.projectState.status === "starting") {
       focusSource(source);
     }
 
     Logger.error("[Bundling Error]", message);
-    // if bundle build failed, we don't want to change the status
-    // bundlingError status should be set only when bundleBuildFailedError status is not set
-    if (this.projectState.status === "bundleBuildFailedError") {
-      return;
-    }
+
     this.updateProjectState({ status: "bundlingError" });
   }
 
@@ -635,7 +626,7 @@ export class Project
       const oldMetro = this.metro;
       const oldToolsManager = this.toolsManager;
       this.devtools = new Devtools();
-      this.metro = new Metro(this.devtools, this);
+      this.metro = new MetroLauncher(this.devtools, this);
       this.toolsManager = new ToolsManager(this.devtools, this.eventEmitter);
       oldToolsManager.dispose();
       oldDevtools.dispose();
@@ -688,6 +679,10 @@ export class Project
 
   public dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
     this.deviceSession?.sendKey(keyCode, direction);
+  }
+
+  public dispatchButton(button: DeviceButtonType, direction: "Up" | "Down") {
+    this.deviceSession?.sendButton(button, direction);
   }
 
   public dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number) {
@@ -837,12 +832,16 @@ export class Project
     }
   }
 
+  public async runCommand(command: string): Promise<void> {
+    await commands.executeCommand(command);
+  }
+
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
 
   private reportStageProgress(stageProgress: number, stage: string) {
-    if (this.projectState.status !== "starting" || stage !== this.projectState.startupMessage) {
+    if (stage !== this.projectState.startupMessage) {
       return;
     }
     this.updateProjectState({ stageProgress });

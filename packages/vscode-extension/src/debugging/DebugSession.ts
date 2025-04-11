@@ -9,6 +9,11 @@ const PING_TIMEOUT = 1000;
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
 const OLD_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
+
+// vscode-js-debug based debugger implementation is disabled for now because
+// of a very slow initialization times. We force the use of the original
+// debug adapter implementation here.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PROXY_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
 
 export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
@@ -16,12 +21,12 @@ export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
 
 export type DebugSessionDelegate = {
-  onConsoleLog(event: DebugSessionCustomEvent): void;
-  onDebuggerPaused(event: DebugSessionCustomEvent): void;
-  onDebuggerResumed(event: DebugSessionCustomEvent): void;
-  onProfilingCPUStarted(event: DebugSessionCustomEvent): void;
-  onProfilingCPUStopped(event: DebugSessionCustomEvent): void;
-  onDebugSessionTerminated(): void;
+  onConsoleLog?(event: DebugSessionCustomEvent): void;
+  onDebuggerPaused?(event: DebugSessionCustomEvent): void;
+  onDebuggerResumed?(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStarted?(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStopped?(event: DebugSessionCustomEvent): void;
+  onDebugSessionTerminated?(): void;
 };
 
 export interface JSDebugConfiguration {
@@ -55,19 +60,19 @@ export class DebugSession implements Disposable {
       debug.onDidReceiveDebugSessionCustomEvent((event) => {
         switch (event.event) {
           case DEBUG_CONSOLE_LOG:
-            this.delegate.onConsoleLog(event);
+            this.delegate.onConsoleLog?.(event);
             break;
           case DEBUG_PAUSED:
-            this.delegate.onDebuggerPaused(event);
+            this.delegate.onDebuggerPaused?.(event);
             break;
           case DEBUG_RESUMED:
-            this.delegate.onDebuggerResumed(event);
+            this.delegate.onDebuggerResumed?.(event);
             break;
           case "RNIDE_profilingCPUStarted":
-            this.delegate.onProfilingCPUStarted(event);
+            this.delegate.onProfilingCPUStarted?.(event);
             break;
           case "RNIDE_profilingCPUStopped":
-            this.delegate.onProfilingCPUStopped(event);
+            this.delegate.onProfilingCPUStopped?.(event);
             break;
           default:
             // ignore other events
@@ -136,7 +141,7 @@ export class DebugSession implements Disposable {
     }
 
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
-    const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
+    const debuggerType = OLD_JS_DEBUGGER_TYPE;
 
     this.jsDebugSession = await startDebugging(
       undefined,
