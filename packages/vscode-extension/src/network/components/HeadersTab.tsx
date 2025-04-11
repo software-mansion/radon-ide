@@ -10,6 +10,19 @@ interface SectionProps {
   data: Record<string, string> | undefined;
 }
 
+function sortHeaders(headers: Record<string, string> | undefined) {
+  if (!headers) {
+    return undefined;
+  }
+  const sortedHeaders = Object.entries(headers)
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+    .reduce((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+  return sortedHeaders;
+}
+
 function Section({ data }: SectionProps) {
   return (
     <table>
@@ -25,13 +38,15 @@ function Section({ data }: SectionProps) {
 }
 
 const HeadersTab = ({ networkLog }: HeadersTabProps) => {
+  const sortedRequestHeaders = sortHeaders(networkLog.request?.headers);
+  const sortedResponseHeaders = sortHeaders(networkLog.response?.headers);
   return (
     <>
       <VscodeCollapsible title="Request Headers">
-        <Section data={networkLog.request?.headers} />
+        <Section data={sortedRequestHeaders} />
       </VscodeCollapsible>
       <VscodeCollapsible title="Response Headers" open>
-        <Section data={networkLog.response?.headers} />
+        <Section data={sortedResponseHeaders} />
       </VscodeCollapsible>
     </>
   );
