@@ -1,14 +1,34 @@
 .privacyPolicyNote {
-  position: sticky;
-  bottom: 24px;
-  left: 24px;
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
   background: var(--swm-off-white);
   border: 1px solid var(--swm-navy-light-100);
   max-width: 400px;
-  padding: 16px;
-  font-size: 14px;
+  padding: 12px;
+  font-size: 12px;
+  z-index: 1000;
+  box-sizing: border-box;
 }
 
-.privacyPolicyNote p:last-of-type {
+.closeButton {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 14px;
+  line-height: 1;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--swm-navy-light-100);
+  padding: 0;
+}
+
+.privacyPolicyNote p:first-of-type {
   margin: 0;
+}
+
+.privacyPolicyNote p {
+  margin: 0;
+  margin-top: 6px;
 }
