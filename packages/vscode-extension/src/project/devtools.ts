@@ -2,12 +2,12 @@ import http from "http";
 import { Disposable } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
-// import {
-//   createBridge as createFrontendBridge,
-//   createStore,
-//   initialize as createDevTools,
-//   Wall,
-// } from "react-devtools-inline/frontend";
+import {
+  createBridge as createFrontendBridge,
+  createStore,
+  initialize as createDevTools,
+  Wall,
+} from "react-devtools-inline/frontend";
 
 export class Devtools implements Disposable {
   private _port = 0;
@@ -67,7 +67,7 @@ export class Devtools implements Disposable {
       ws.on("message", (message: string) => {
         try {
           const { event, payload } = JSON.parse(message);
-          Logger.log("Devtools message", event);
+          Logger.log("Devtools message", event, payload);
           this.listeners.forEach((listener) => listener(event, payload));
         } catch (e) {
           Logger.error("Error while handling devtools websocket message", e);
@@ -80,16 +80,33 @@ export class Devtools implements Disposable {
 
       const wall: Wall = {
         listen(fn) {
-          ws.on("message", fn);
+          console.log("BRIDGEY LISTEN");
+          ws.on("message", (message: string) => {
+            const { event, payload } = JSON.parse(message);
+            // console.log("RECEIVED BRIDGEY", data);
+            return fn({ event, payload });
+          });
           return fn;
         },
         send(event, payload) {
+          console.log("SENDING BRIDGEY", event, payload);
           ws.send(JSON.stringify({ event, payload }));
         },
       };
 
-      // const bridge = createFrontendBridge(undefined as unknown as Window, wall);
-      // const store = createStore(bridge);
+      const bridge = createFrontendBridge(undefined as unknown as Window, wall);
+      bridge.addListener("profilingStatus", () => console.log("JKHSDJDHJSD PROFILING STATUS"));
+      const store = createStore(bridge);
+      setTimeout(() => {
+        console.log("Profiler store?", store.profilerStore);
+        store.profilerStore.addListener("profilingData", (profilerData) => {
+          console.log("PROFILERDATA", profilerData);
+        });
+        store.profilerStore.startProfiling();
+        setTimeout(() => {
+          store.profilerStore.stopProfiling();
+        }, 5000);
+      }, 5000);
     });
 
     return new Promise<void>((resolve) => {
