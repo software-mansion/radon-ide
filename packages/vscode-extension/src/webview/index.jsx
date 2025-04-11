@@ -9,10 +9,11 @@ import ProjectProvider from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
 import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
 
-import "./styles/theme.css";
 import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
 import { TelemetryProvider } from "./providers/TelemetryProvider";
 import LaunchConfigProvider from "./providers/LaunchConfigProvider";
+
+import "./styles/theme.css";
 
 installLogOverrides();
 
