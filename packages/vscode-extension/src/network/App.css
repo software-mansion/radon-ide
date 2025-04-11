@@ -6,7 +6,7 @@ body,
   width: 100%;
   margin: 0;
   padding: 0;
-  background-color: var(--swm-preview-background);
+  background-color: var(--background);
 }
 
 main {
@@ -30,43 +30,15 @@ main {
   user-select: none;
 }
 
-.network-bar {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  margin: 8px;
-  gap: 4px;
-}
-
-.network-filter {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  width: 100%;
-  margin: 8px;
-  gap: 4px;
-}
-
 .network-log-container {
   display: flex;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  position: relative;
+  border: none;
+  border-top: 1px solid var(--vscode-editorWidget-border);
 }
 
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-.network-search {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  justify-content: flex-start;
-  padding-bottom: 15px;
-}
-
-.network-search input {
-  border: "none";
+.network-log-split-layout {
+  border: none;
 }
