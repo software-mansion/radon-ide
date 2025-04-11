@@ -203,11 +203,7 @@ function Preview({
   }
 
   const shouldPreventInputEvents =
-    debugPaused ||
-    hasBundlingError ||
-    projectStatus === "refreshing" ||
-    !showDevicePreview ||
-    !!replayData;
+    debugPaused || projectStatus === "refreshing" || !showDevicePreview || !!replayData;
 
   const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
 
