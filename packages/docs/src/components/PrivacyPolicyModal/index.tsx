@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import styles from "./styles.module.css";
+import BrowserOnly from "@docusaurus/BrowserOnly";
 
 const WAS_EVER_CLOSED_KEY = "was-ever-closed-privacy-policy-banner-v1";
 
-export function PrivacyPolicyNote() {
+function ClientSidePrivacyPolicyNote() {
   const wasEverClosed = global.localStorage.getItem(WAS_EVER_CLOSED_KEY);
   const [isHidden, setIsHidden] = useState(Boolean(wasEverClosed));
 
@@ -29,4 +30,8 @@ export function PrivacyPolicyNote() {
       </p>
     </div>
   );
+}
+
+export function PrivacyPolicyNote() {
+  return <BrowserOnly>{() => <ClientSidePrivacyPolicyNote />}</BrowserOnly>;
 }
