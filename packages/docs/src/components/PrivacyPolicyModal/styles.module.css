@@ -1,0 +1,14 @@
+.privacyPolicyNote {
+  position: sticky;
+  bottom: 24px;
+  left: 24px;
+  background: var(--swm-off-white);
+  border: 1px solid var(--swm-navy-light-100);
+  max-width: 400px;
+  padding: 16px;
+  font-size: 14px;
+}
+
+.privacyPolicyNote p:last-of-type {
+  margin: 0;
+}
