@@ -20,7 +20,6 @@ const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
 
 export interface MetroDelegate {
-  onBundleBuildFailedError(): void;
   onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
 }
 
@@ -496,9 +495,6 @@ export class MetroLauncher extends Metro implements Disposable {
             case "RNIDE_watch_folders":
               this._watchFolders = event.watchFolders;
               Logger.info("Captured metro watch folders", this._watchFolders);
-              break;
-            case "bundle_build_failed":
-              this.delegate.onBundleBuildFailedError();
               break;
             case "bundling_error":
               const message = stripAnsi(event.message);

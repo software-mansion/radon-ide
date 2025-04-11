@@ -55,7 +55,6 @@ import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
-import { isAutoSaveEnabled } from "../utilities/isAutoSaveEnabled";
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { BuildError } from "../builders/BuildManager";
@@ -403,10 +402,6 @@ export class Project
     await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
-  onBundleBuildFailedError(): void {
-    this.updateProjectState({ status: "bundleBuildFailedError" });
-  }
-
   async onBundlingError(
     message: string,
     source: DebugSource,
@@ -414,17 +409,12 @@ export class Project
   ): Promise<void> {
     await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
 
-    if (!isAutoSaveEnabled()) {
-      this.focusDebugConsole();
+    if (this.projectState.status === "starting") {
       focusSource(source);
     }
 
     Logger.error("[Bundling Error]", message);
-    // if bundle build failed, we don't want to change the status
-    // bundlingError status should be set only when bundleBuildFailedError status is not set
-    if (this.projectState.status === "bundleBuildFailedError") {
-      return;
-    }
+
     this.updateProjectState({ status: "bundlingError" });
   }
 
