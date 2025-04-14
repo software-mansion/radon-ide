@@ -463,19 +463,19 @@ export class DeviceSession implements Disposable {
   }
 
   public async startPreview(previewId: string) {
-    this.devtools.send("RNIDE_openPreview", { previewId });
-    return new Promise<void>((res, rej) => {
-      const listener = this.devtools.addListener("RNIDE_openPreviewResult", (payload) => {
-        if (payload.previewId === previewId) {
-          listener.dispose();
-          if (payload.error) {
-            rej(payload.error);
-          } else {
-            res();
-          }
+    const { resolve, reject, promise } = Promise.withResolvers<void>();
+    const listener = this.devtools.addListener("RNIDE_openPreviewResult", (payload) => {
+      if (payload.previewId === previewId) {
+        listener.dispose();
+        if (payload.error) {
+          reject(payload.error);
+        } else {
+          resolve();
         }
-      });
+      }
     });
+    this.devtools.send("RNIDE_openPreview", { previewId });
+    return promise;
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {

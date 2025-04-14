@@ -34,15 +34,12 @@ export class Devtools implements Disposable {
   }
 
   public async appReady() {
-    return new Promise<void>((resolve) => {
-      const listener = (event: string) => {
-        if (event === "RNIDE_appReady") {
-          this.removeListener(listener);
-          resolve();
-        }
-      };
-      this.addListener(listener);
+    const { resolve, promise } = Promise.withResolvers<void>();
+    const listener = this.addListener("RNIDE_appReady", () => {
+      resolve();
+      listener.dispose();
     });
+    return promise;
   }
 
   public async start() {
