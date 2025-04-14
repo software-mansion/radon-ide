@@ -8,7 +8,9 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelToken } from "./cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
-import { BuildType } from "../common/Project";
+import { BuildConfig, BuildType } from "../common/BuildConfig";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { isExpoGoProject } from "./expoGo";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -55,6 +57,89 @@ export class BuildManager {
       return !(await this.dependencyManager.checkPodsInstallationStatus());
     }
     return false;
+  }
+
+  private async createBuildConfig(
+    appRoot: string,
+    platform: DevicePlatform,
+    forceCleanBuild: boolean
+  ): Promise<BuildConfig> {
+    const platformMapping = {
+      [DevicePlatform.Android]: "android",
+      [DevicePlatform.IOS]: "ios",
+    } as const;
+    const platformKey = platformMapping[platform];
+    const { customBuild, eas, env, android, ios } = getLaunchConfiguration();
+
+    const easBuildConfig = eas?.[platformKey];
+    const customBuildConfig = customBuild?.[platformKey];
+    if (customBuildConfig && easBuildConfig) {
+      throw new BuildError(
+        `Both custom custom builds and EAS builds are configured for ${platform}. Please use only one build method.`,
+        BuildType.Unknown
+      );
+    }
+
+    if (customBuildConfig?.buildCommand !== undefined) {
+      return {
+        appRoot,
+        platform,
+        forceCleanBuild,
+        env,
+        type: BuildType.Custom,
+        buildCommand: customBuildConfig.buildCommand,
+        ...customBuildConfig,
+      };
+    }
+
+    if (easBuildConfig) {
+      return {
+        appRoot,
+        platform,
+        forceCleanBuild,
+        env,
+        type: BuildType.Eas,
+        config: easBuildConfig,
+      };
+    }
+
+    if (await isExpoGoProject(appRoot)) {
+      return {
+        appRoot,
+        platform,
+        forceCleanBuild,
+        env,
+        type: BuildType.ExpoGo,
+      };
+    }
+
+    switch (platform) {
+      case DevicePlatform.IOS: {
+        return {
+          appRoot,
+          platform: DevicePlatform.IOS,
+          forceCleanBuild,
+          env,
+          type: BuildType.Local,
+          scheme: ios?.scheme ?? null,
+          configuration: ios?.configuration ?? null,
+        };
+      }
+      case DevicePlatform.Android: {
+        const productFlavor = android?.productFlavor || "";
+        const buildType = android?.buildType || "debug";
+
+        return {
+          appRoot,
+          platform: DevicePlatform.Android,
+          forceCleanBuild,
+          env,
+          type: BuildType.Local,
+          productFlavor,
+          buildType,
+        };
+      }
+    }
   }
 
   public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {

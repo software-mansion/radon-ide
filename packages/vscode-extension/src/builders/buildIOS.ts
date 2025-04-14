@@ -15,7 +15,7 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildError } from "./BuildManager";
 import { LaunchConfigurationOptions } from "../common/LaunchConfig";
-import { BuildType } from "../common/Project";
+import { BuildType } from "../common/BuildConfig";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;

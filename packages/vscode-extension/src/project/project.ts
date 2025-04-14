@@ -18,7 +18,6 @@ import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
   AppPermissionType,
-  BuildType,
   DeviceButtonType,
   DeviceSettings,
   InspectData,
@@ -58,6 +57,7 @@ import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRoo
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { BuildError } from "../builders/BuildManager";
+import { BuildType } from "../common/BuildConfig";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 

@@ -5,7 +5,7 @@ import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
-import { BuildType } from "../../common/Project";
+import { BuildType } from "../../common/BuildConfig";
 
 type LogsButtonDestination = "build" | "extension";
 
