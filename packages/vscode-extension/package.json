@@ -463,6 +463,10 @@
                   "configuration": {
                     "type": "string",
                     "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+                  },
+                  "launchArguments": {
+                    "type": "array",
+                    "description": "Arguments passed to the app when launching it. Note: this configuration is only applied for applications that are launched using a build and not those opened with expo deep link."
                   }
                 }
               },
@@ -556,6 +560,10 @@
                   "configuration": {
                     "type": "string",
                     "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+                  },
+                  "launchArguments": {
+                    "type": "array",
+                    "description": "Arguments passed to the app when launching it. Note: this configuration is only applied for applications that are launched using a build and not those opened with expo deep link."
                   }
                 }
               },

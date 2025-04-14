@@ -77,6 +77,7 @@ The following attributes can be set within the `ios` object:
 
 - `scheme` - Scheme name (from xcode project) the IDE will use for iOS builds, defaults to xcworkspace base file name.
 - `configuration` – Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to "Debug".
+- `launchArguments` - Arguments passed to the app when launching it.
 
 Here is how the launch configuration could look like with some custom iOS build options:
 
@@ -90,7 +91,8 @@ Here is how the launch configuration could look like with some custom iOS build 
       "name": "Radon IDE panel",
       "ios": {
         "scheme": "AcmeApp",
-        "configuration": "Staging"
+        "configuration": "Staging",
+        "launchArguments": ["-FIRDebugEnabled"]
       }
     }
   ]
@@ -134,7 +136,7 @@ options.
 #### Using `customBuild`
 
 The requirement for scripts is to output the absolute path to the built app as
-the last line of the standard output. If multiple paths are provided, just the first one is used. The path should point to `.app`, `.apk` (for iOS and Android consecutively), or `.tar.gz` archive, which must contain one of the previous.  
+the last line of the standard output. If multiple paths are provided, just the first one is used. The path should point to `.app`, `.apk` (for iOS and Android consecutively), or `.tar.gz` archive, which must contain one of the previous.
 
 If custom fingerprint script is used, it
 should output fingerprint (a string identifying the build) as the last line of the standard output. When
@@ -174,22 +176,22 @@ Example with EAS local build:
 
 ```json
 {
-   "version": "0.2.0",
-   "configurations": [
-      {
-         "type": "radon-ide",
-         "request": "launch",
-         "name": "Radon IDE panel",
-         "customBuild": {
-            "ios": {
-               "buildCommand": "npx eas build --platform ios --profile development --local --non-interactive",
-            },
-            "android": {
-               "buildCommand": "npx eas build --platform android --profile development --local --non-interactive",
-            }
-         }
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "radon-ide",
+      "request": "launch",
+      "name": "Radon IDE panel",
+      "customBuild": {
+        "ios": {
+          "buildCommand": "npx eas build --platform ios --profile development --local --non-interactive"
+        },
+        "android": {
+          "buildCommand": "npx eas build --platform android --profile development --local --non-interactive"
+        }
       }
-   ]
+    }
+  ]
 }
 ```
 
