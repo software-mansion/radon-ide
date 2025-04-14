@@ -1,5 +1,5 @@
-import classNames from "classnames";
-import { useReducer } from "react";
+import "./HeadersTab.css";
+import { VscodeCollapsible } from "@vscode-elements/react-elements";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 
 interface HeadersTabProps {
@@ -7,46 +7,66 @@ interface HeadersTabProps {
 }
 
 interface SectionProps {
-  title: string;
-  data: any;
+  data: Record<string, any> | undefined;
 }
 
-const Section = ({ title, data }: SectionProps) => {
-  const [isExpanded, toggleExpanded] = useReducer((s) => !s, true);
+function formatHeaders(headersObj: Record<string, any> | undefined) {
+  if (!headersObj) {
+    return undefined;
+  }
 
+  // sort object by keys and capitalize keys
+  const sortedObj = Object.entries(headersObj)
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+    .reduce((acc, [key, value]) => {
+      // Capitalize the first letter of each word in the key
+      const capitalizedKey = key
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join("-");
+
+      acc[capitalizedKey] = value;
+      return acc;
+    }, {} as Record<string, any>);
+
+  return sortedObj;
+}
+
+function Section({ data }: SectionProps) {
   return (
-    <div className="section">
-      <div className="section-header">
-        <span
-          className={classNames(
-            "codicon",
-            isExpanded ? "codicon-triangle-down" : "codicon-triangle-right",
-            "gray-icon"
-          )}
-          onClick={toggleExpanded}
-        />
-        <p>{title}</p>
-      </div>
-      {isExpanded && (
-        <div className="section-content">
-          {data &&
-            Object.entries(data).map(([key, value]) => (
-              <div key={key} className="section-row">
-                <p>{key}:</p>
-                <p>{String(value)}</p>
-              </div>
-            ))}
-        </div>
-      )}
-    </div>
+    <table>
+      {data &&
+        Object.entries(data).map(([key, value]) => (
+          <tr key={key}>
+            <td className="network-log-request-header">{key}:</td>
+            <td> {String(value)}</td>
+          </tr>
+        ))}
+    </table>
   );
-};
+}
 
 const HeadersTab = ({ networkLog }: HeadersTabProps) => {
+  const general = {
+    "Request URL": networkLog.request?.url,
+    "Request Method": networkLog.request?.method,
+    "Status Code": networkLog.response?.status,
+  };
+
+  const sortedRequestHeaders = formatHeaders(networkLog.request?.headers);
+  const sortedResponseHeaders = formatHeaders(networkLog.response?.headers);
+
   return (
     <>
-      <Section title="Request Headers" data={networkLog.request?.headers} />
-      <Section title="Response Headers" data={networkLog.response?.headers} />
+      <VscodeCollapsible title="General" open>
+        <Section data={general} />
+      </VscodeCollapsible>
+      <VscodeCollapsible title="Request Headers">
+        <Section data={sortedRequestHeaders} />
+      </VscodeCollapsible>
+      <VscodeCollapsible title="Response Headers" open>
+        <Section data={sortedResponseHeaders} />
+      </VscodeCollapsible>
     </>
   );
 };

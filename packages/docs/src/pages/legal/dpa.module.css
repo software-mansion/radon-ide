@@ -1,0 +1,45 @@
+.container {
+  width: 60%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.container p {
+  text-wrap: balance;
+  max-width: 600px;
+}
+
+.link {
+  text-decoration: underline;
+}
+
+.buttonWrapper {
+  min-width: 200px;
+}
+
+@media (max-width: 1920px) {
+  .container {
+    width: 65%;
+  }
+}
+
+@media (max-width: 1440px) {
+  .container {
+    width: 75%;
+  }
+}
+
+@media (max-width: 996px) {
+  .container {
+    width: 85%;
+  }
+}
+
+@media (max-width: 430px) {
+  .container {
+    width: 90%;
+  }
+}

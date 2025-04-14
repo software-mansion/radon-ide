@@ -1,3 +1,4 @@
+import "./ResponseTab.css";
 import { useEffect, useState } from "react";
 import IconButton from "../../webview/components/shared/IconButton";
 import { NetworkLog } from "../hooks/useNetworkTracker";
@@ -34,7 +35,7 @@ const ResponseTab = ({ networkLog }: ResponseTabProps) => {
   return (
     <>
       <IconButton
-        className="copy-button"
+        className="response-tab-copy-button"
         tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
         onClick={() => navigator.clipboard.writeText(responseData)}>
         <span className="codicon codicon-copy" />

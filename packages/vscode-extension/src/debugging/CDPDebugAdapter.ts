@@ -28,6 +28,7 @@ export type CDPConfiguration = {
   expoPreludeLineCount: number;
   sourceMapPathOverrides: Record<string, string>;
   breakpointsAreRemovedOnContextCleared: boolean;
+  displayDebuggerOverlay?: boolean;
   skipFiles: string[];
 };
 
@@ -41,7 +42,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
   private pausedStackFrames: StackFrame[] = [];
   private pausedScopeChains: CDPDebuggerScope[][] = [];
 
-  constructor(configuration: DebugConfiguration) {
+  constructor(private configuration: DebugConfiguration) {
     super();
     console.assert(
       "websocketAddress" in configuration,
@@ -53,6 +54,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
   private startCDPSession(cdpConfiguration: CDPConfiguration) {
     this.cdpSession = new CDPSession(this, cdpConfiguration);
   }
+
   //#region CDPDelegate
 
   public onExecutionContextCreated = (threadId: number, threadName: string) => {

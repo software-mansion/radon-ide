@@ -1,94 +1,31 @@
-import { useState, useMemo, useLayoutEffect, useRef, useCallback } from "react";
+import classNames from "classnames";
+import { useMemo, useLayoutEffect, useRef } from "react";
+import {
+  VscodeTable,
+  VscodeTableBody,
+  VscodeTableCell,
+  VscodeTableHeader,
+  VscodeTableHeaderCell,
+  VscodeTableRow,
+} from "@vscode-elements/react-elements";
+
 import { NetworkLog } from "../hooks/useNetworkTracker";
-import ResizableContainer from "../../webview/components/shared/ResizableContainer";
 import "./NetworkRequestLog.css";
 
 interface NetworkRequestLogProps {
   networkLogs: NetworkLog[];
-  detailsWidth: number;
   selectedNetworkLog: NetworkLog | null;
   handleSelectedRequest: (id: string | null) => void;
+  parentHeight: number | undefined;
 }
-
-const ROWS = ["Domain", "File", "Status", "Method", "Type", "Size", "Time"];
-const TABLE_RIGHT_PADDING = 0;
-const TABLE_CELL_MIN_WIDTH = 50;
 
 const NetworkRequestLog = ({
   networkLogs,
-  detailsWidth,
   handleSelectedRequest,
   selectedNetworkLog,
+  parentHeight,
 }: NetworkRequestLogProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>(
-    ROWS.reduce(
-      (acc, title) => ({
-        ...acc,
-        [title]: 0,
-      }),
-      {}
-    )
-  );
-  const [lastDetailsWidth, setLastDetailsWidth] = useState(0);
-  const [initialRowWidth, setInitialRowWidth] = useState(0);
-
-  useLayoutEffect(() => {
-    const handleResize = () => {
-      if (!containerRef.current) {
-        return;
-      }
-
-      setInitialRowWidth(
-        containerRef.current.clientWidth / ROWS.length - TABLE_RIGHT_PADDING / ROWS.length
-      );
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    handleResize();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [selectedNetworkLog]);
-
-  useLayoutEffect(() => {
-    setColumnWidths(
-      ROWS.reduce(
-        (acc, title) => ({
-          ...acc,
-          [title]: initialRowWidth,
-        }),
-        {}
-      )
-    );
-  }, [initialRowWidth]);
-
-  useLayoutEffect(() => {
-    if (detailsWidth !== lastDetailsWidth) {
-      const isIncreasing = detailsWidth > lastDetailsWidth;
-
-      setColumnWidths((prev) => {
-        let updatedWidths = { ...prev };
-        const diff = Math.abs(detailsWidth - lastDetailsWidth);
-        const proportion = diff / ROWS.length;
-
-        ROWS.forEach((title) => {
-          if (isIncreasing) {
-            updatedWidths[title] -= proportion;
-          } else {
-            updatedWidths[title] += proportion;
-          }
-
-          updatedWidths[title] = updatedWidths[title];
-        });
-
-        return updatedWidths;
-      });
-      setLastDetailsWidth(detailsWidth);
-    }
-  }, [detailsWidth, lastDetailsWidth]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -138,60 +75,6 @@ const NetworkRequestLog = ({
     handleScrollToSelectedElement();
   }, [selectedNetworkLog?.requestId]);
 
-  const handleResize = useCallback((title: string, newWidth: number) => {
-    setColumnWidths((prev) => {
-      const prevWidth = prev[title];
-      const diff = newWidth - prevWidth;
-
-      const keys = Object.keys(prev);
-
-      let remainingDiff = diff;
-      let updatedWidths = { ...prev };
-
-      for (let i = keys.length - 1; i >= 0; i--) {
-        if (diff > 0 && keys[i] === title) {
-          return { ...prev };
-        }
-
-        if (diff > 0) {
-          if (keys[i] !== title && updatedWidths[keys[i]] > TABLE_CELL_MIN_WIDTH) {
-            const availableShrink = updatedWidths[keys[i]] - TABLE_CELL_MIN_WIDTH;
-            const shrinkBy = Math.min(availableShrink, remainingDiff);
-            updatedWidths[keys[i]] -= shrinkBy;
-            remainingDiff -= shrinkBy;
-            if (remainingDiff <= 0) {
-              break;
-            }
-          }
-        } else {
-          if (keys[i] !== title) {
-            updatedWidths[keys[i]] -= remainingDiff;
-            remainingDiff = 0;
-            break;
-          }
-        }
-      }
-
-      if (remainingDiff > 0 && diff > 0) {
-        for (let i = 0; i < keys.length; i++) {
-          if (keys[i] !== title && updatedWidths[keys[i]] > TABLE_CELL_MIN_WIDTH) {
-            const availableShrink = updatedWidths[keys[i]] - TABLE_CELL_MIN_WIDTH;
-            const shrinkBy = Math.min(availableShrink, remainingDiff);
-            updatedWidths[keys[i]] -= shrinkBy;
-            remainingDiff -= shrinkBy;
-            if (remainingDiff <= 0) {
-              break;
-            }
-          }
-        }
-      }
-
-      updatedWidths[title] = newWidth;
-
-      return updatedWidths;
-    });
-  }, []);
-
   const getStatusClass = (status: number | string | undefined) => {
     if (!status) {
       return "";
@@ -212,11 +95,7 @@ const NetworkRequestLog = ({
   const logDetailsConfig = useMemo(
     () => [
       {
-        title: "Domain",
-        getValue: (log: NetworkLog) => log.request?.url.split("/")[2] || "(pending)",
-      },
-      {
-        title: "File",
+        title: "Name",
         getValue: (log: NetworkLog) => log.request?.url.split("/").pop() || "(pending)",
       },
       {
@@ -253,67 +132,37 @@ const NetworkRequestLog = ({
   );
 
   return (
-    <div
-      className="table-container"
-      style={{ paddingRight: TABLE_RIGHT_PADDING + "px" }}
-      ref={containerRef}>
-      <div style={{ width: "100%", overflowX: "hidden", borderRadius: "5px" }}>
-        <table>
-          <thead
-            style={{
-              width: Object.values(columnWidths).reduce((acc, width) => acc + width, 0) + "px",
-            }}>
-            <tr>
-              {logDetailsConfig.map(({ title }) => (
-                <th
-                  key={title}
-                  style={{
-                    maxWidth: `${columnWidths[title]}px`,
-                    width: `${columnWidths[title]}px`,
-                  }}>
-                  <ResizableContainer
-                    side="right"
-                    containerSize={columnWidths[title]}
-                    setContainerWidth={(width) => handleResize(title, width)}
-                    isColumn={true}>
-                    <p className="table-paragraph">{title}</p>
-                  </ResizableContainer>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+    <div className="table-container" ref={containerRef}>
+      <div style={{ width: "100%", overflowX: "hidden" }}>
+        {/* DIRTY HACK: table rerenders on window resize, including scroll position which sucks */}
+        <VscodeTable zebra resizable responsive style={{ height: parentHeight }} key={parentHeight}>
+          <VscodeTableHeader slot="header">
+            {logDetailsConfig.map(({ title }) => (
+              <VscodeTableHeaderCell key={title}>{title}</VscodeTableHeaderCell>
+            ))}
+          </VscodeTableHeader>
+          <VscodeTableBody slot="body">
             {networkLogs.map((log) => (
-              <tr
+              <VscodeTableRow
                 key={log.requestId}
-                className={selectedNetworkLog?.requestId === log.requestId ? "selected" : ""}
+                className={classNames(
+                  "table-row",
+                  selectedNetworkLog?.requestId === log.requestId && "selected"
+                )}
                 onClick={() =>
                   handleSelectedRequest(
                     selectedNetworkLog?.requestId === log.requestId ? null : log.requestId
                   )
                 }>
                 {logDetailsConfig.map(({ title, getValue, getClass }) => (
-                  <td
-                    key={title}
-                    style={{
-                      maxWidth: `${columnWidths[title]}px`,
-                      width: `${columnWidths[title]}px`,
-                    }}
-                    className={getClass ? getClass(log) : ""}>
-                    <p
-                      className="table-paragraph"
-                      style={{
-                        maxWidth: `${columnWidths[title]}px`,
-                        width: `${columnWidths[title]}px`,
-                      }}>
-                      {getValue(log)}
-                    </p>
-                  </td>
+                  <VscodeTableCell key={title} className={getClass ? getClass(log) : ""}>
+                    {getValue(log)}
+                  </VscodeTableCell>
                 ))}
-              </tr>
+              </VscodeTableRow>
             ))}
-          </tbody>
-        </table>
+          </VscodeTableBody>
+        </VscodeTable>
       </div>
     </div>
   );
