@@ -59,11 +59,11 @@ export class BuildManager {
     return false;
   }
 
-  private async createBuildConfig(
+  private async createBuildConfig<Platform extends DevicePlatform>(
     appRoot: string,
-    platform: DevicePlatform,
+    platform: Platform,
     forceCleanBuild: boolean
-  ): Promise<BuildConfig> {
+  ): Promise<BuildConfig & { platform: Platform }> {
     const platformMapping = {
       [DevicePlatform.Android]: "android",
       [DevicePlatform.IOS]: "ios",
@@ -117,26 +117,23 @@ export class BuildManager {
       case DevicePlatform.IOS: {
         return {
           appRoot,
-          platform: DevicePlatform.IOS,
+          platform: platform as DevicePlatform.IOS & Platform,
           forceCleanBuild,
           env,
           type: BuildType.Local,
-          scheme: ios?.scheme ?? null,
-          configuration: ios?.configuration ?? null,
+          scheme: ios?.scheme,
+          configuration: ios?.configuration,
         };
       }
       case DevicePlatform.Android: {
-        const productFlavor = android?.productFlavor || "";
-        const buildType = android?.buildType || "debug";
-
         return {
           appRoot,
-          platform: DevicePlatform.Android,
+          platform: platform as DevicePlatform.Android & Platform,
           forceCleanBuild,
           env,
           type: BuildType.Local,
-          productFlavor,
-          buildType,
+          productFlavor: android?.productFlavor,
+          buildType: android?.buildType,
         };
       }
     }
@@ -190,9 +187,9 @@ export class BuildManager {
           log: true,
         });
         this.buildOutputChannel.clear();
+        const buildConfig = await this.createBuildConfig(appRoot, platform, forceCleanBuild);
         buildResult = await buildAndroid(
-          appRoot,
-          forceCleanBuild,
+          buildConfig,
           cancelToken,
           this.buildOutputChannel,
           progressListener,
@@ -227,9 +224,10 @@ export class BuildManager {
             buildFingerprint = await this.buildCache.calculateFingerprint(platform);
           }
         };
+        const buildConfig = await this.createBuildConfig(appRoot, platform, forceCleanBuild);
+
         buildResult = await buildIos(
-          appRoot,
-          forceCleanBuild,
+          buildConfig,
           cancelToken,
           this.buildOutputChannel,
           progressListener,

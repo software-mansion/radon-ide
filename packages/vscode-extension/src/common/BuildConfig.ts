@@ -33,15 +33,15 @@ export type EasBuildConfig = {
 export type AndroidLocalBuildConfig = {
   type: BuildType.Local;
   platform: DevicePlatform.Android;
-  buildType: string;
-  productFlavor: string;
+  buildType?: string;
+  productFlavor?: string;
 } & BuildConfigCommon;
 
-export type IOSLocaBuildConfig = {
+export type IOSLocalBuildConfig = {
   type: BuildType.Local;
   platform: DevicePlatform.IOS;
-  scheme: string | null;
-  configuration: string | null;
+  scheme?: string;
+  configuration?: string;
 } & BuildConfigCommon;
 
 export type BuildConfig =
@@ -49,13 +49,14 @@ export type BuildConfig =
   | ExpoGoBuildConfig
   | EasBuildConfig
   | AndroidLocalBuildConfig
-  | IOSLocaBuildConfig;
+  | IOSLocalBuildConfig;
+
+export type IOSBuildConfig = BuildConfig & { platform: DevicePlatform.IOS };
+export type AndroidBuildConfig = BuildConfig & { platform: DevicePlatform.Android };
 
 // NOTE: we let typescript verify that the `BuildConfig` union covers all the `BuildType` variants for both platforms
 type Satisfy<Base, T extends Base> = T;
 
-type IOSBuildConfig = BuildConfig & { platform: DevicePlatform.IOS };
-type AndroidBuildConfig = BuildConfig & { platform: DevicePlatform.Android };
 type _CoversBuildTypes = Satisfy<
   IOSBuildConfig["type"] & AndroidBuildConfig["type"],
   Exclude<BuildType, BuildType.Unknown>
