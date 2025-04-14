@@ -101,7 +101,7 @@ export class NetworkPlugin implements ToolPlugin {
   public readonly persist = true;
 
   private readonly websocketBackend;
-  private disposables: Disposable[] = [];
+  private devtoolsListeners: Disposable[] = [];
 
   constructor(private readonly devtools: Devtools) {
     this.websocketBackend = new NetworkCDPWebsocketBackend(devtools);
@@ -115,12 +115,12 @@ export class NetworkPlugin implements ToolPlugin {
   activate(): void {
     this.websocketBackend.start().then(() => {
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
-      this.disposables.push(
+      this.devtoolsListeners.push(
         this.devtools.addListener("RNIDE_networkInspectorCDPMessage", (payload) => {
           this.websocketBackend.broadcast(payload);
         })
       );
-      this.disposables.push(
+      this.devtoolsListeners.push(
         this.devtools.addListener("RNIDE_appReady", () => {
           this.devtools.send("RNIDE_enableNetworkInspect", { enable: true });
         })
@@ -129,7 +129,7 @@ export class NetworkPlugin implements ToolPlugin {
   }
 
   deactivate(): void {
-    disposeAll(this.disposables);
+    disposeAll(this.devtoolsListeners);
     this.devtools.send("RNIDE_enableNetworkInspect", { enable: false });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
   }
@@ -139,6 +139,6 @@ export class NetworkPlugin implements ToolPlugin {
   }
 
   dispose() {
-    disposeAll(this.disposables);
+    disposeAll(this.devtoolsListeners);
   }
 }
