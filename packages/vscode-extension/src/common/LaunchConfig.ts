@@ -22,6 +22,7 @@ export type LaunchConfigurationOptions = {
   ios?: {
     scheme?: string;
     configuration?: string;
+    launchArguments?: string[];
   };
   isExpo?: boolean;
   android?: {
