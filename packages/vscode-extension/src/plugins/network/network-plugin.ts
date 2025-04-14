@@ -7,6 +7,7 @@ import { extensionContext } from "../../utilities/extensionContext";
 
 import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
+import { disposeAll } from "../../utilities/disposables";
 
 export const NETWORK_PLUGIN_ID = "network";
 
@@ -100,6 +101,7 @@ export class NetworkPlugin implements ToolPlugin {
   public readonly persist = true;
 
   private readonly websocketBackend;
+  private disposables: Disposable[] = [];
 
   constructor(private readonly devtools: Devtools) {
     this.websocketBackend = new NetworkCDPWebsocketBackend(devtools);
@@ -113,21 +115,21 @@ export class NetworkPlugin implements ToolPlugin {
   activate(): void {
     this.websocketBackend.start().then(() => {
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
-      this.devtools.addListener(this.devtoolsListener);
-      this.devtools.send("RNIDE_enableNetworkInspect", { enable: true });
+      this.disposables.push(
+        this.devtools.addListener("RNIDE_networkInspectorCDPMessage", (payload) => {
+          this.websocketBackend.broadcast(payload);
+        })
+      );
+      this.disposables.push(
+        this.devtools.addListener("RNIDE_appReady", () => {
+          this.devtools.send("RNIDE_enableNetworkInspect", { enable: true });
+        })
+      );
     });
   }
 
-  devtoolsListener = (event: string, payload: any) => {
-    if (event === "RNIDE_networkInspectorCDPMessage") {
-      this.websocketBackend.broadcast(payload);
-    } else if (event === "RNIDE_appReady") {
-      this.devtools.send("RNIDE_enableNetworkInspect", { enable: true });
-    }
-  };
-
   deactivate(): void {
-    this.devtools.removeListener(this.devtoolsListener);
+    disposeAll(this.disposables);
     this.devtools.send("RNIDE_enableNetworkInspect", { enable: false });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
   }
@@ -137,6 +139,6 @@ export class NetworkPlugin implements ToolPlugin {
   }
 
   dispose() {
-    this.devtools.removeListener(this.devtoolsListener);
+    disposeAll(this.disposables);
   }
 }

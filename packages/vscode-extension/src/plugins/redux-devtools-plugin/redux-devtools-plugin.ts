@@ -3,6 +3,7 @@ import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { Devtools } from "../../project/devtools";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
+import { disposeAll } from "../../utilities/disposables";
 
 export const REDUX_PLUGIN_ID = "RNIDE-redux-devtools";
 const REDUX_PLUGIN_PREFIX = "RNIDE.Tool.ReduxDevTools";
@@ -32,30 +33,11 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
 
   private connectedWebview?: Webview;
   private connectedWebviewListener?: Disposable;
+  private devtoolsListeners: Disposable[] = [];
 
   constructor(private readonly devtools: Devtools) {
     initialize();
   }
-
-  devtoolsListener = (event: string, payload: any) => {
-    if (event === REDUX_PLUGIN_ID) {
-      this.connectedWebview?.postMessage({
-        scope: event,
-        data: payload,
-      });
-    } else if (event === "RNIDE_appReady" && this.connectedWebview) {
-      // Sometimes, the messaging channel (devtools) is established only after
-      // the Redux store is created and after it sends the first message. In that
-      // case, the "start" event never makes it to the webview.
-      // To workaround this, we use "appReady" event which is sent after the messaging
-      // channel is established. We then force reload the webview with redux devtools
-      // which causes the devtools to initialize a new session and, as a consequence force the store
-      // to reconnect.
-      const html = this.connectedWebview.html;
-      this.connectedWebview.html = "";
-      this.connectedWebview.html = html;
-    }
-  };
 
   connectDevtoolsWebview(webview: Webview) {
     this.connectedWebviewListener?.dispose();
@@ -75,11 +57,34 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
 
   activate() {
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
-    this.devtools.addListener(this.devtoolsListener);
+    this.devtoolsListeners.push(
+      this.devtools.addListener(REDUX_PLUGIN_ID, (payload) => {
+        this.connectedWebview?.postMessage({
+          scope: REDUX_PLUGIN_ID,
+          data: payload,
+        });
+      })
+    );
+    this.devtoolsListeners.push(
+      this.devtools.addListener("RNIDE_appReady", () => {
+        // Sometimes, the messaging channel (devtools) is established only after
+        // the Redux store is created and after it sends the first message. In that
+        // case, the "start" event never makes it to the webview.
+        // To workaround this, we use "appReady" event which is sent after the messaging
+        // channel is established. We then force reload the webview with redux devtools
+        // which causes the devtools to initialize a new session and, as a consequence force the store
+        // to reconnect.
+        if (this.connectedWebview) {
+          const html = this.connectedWebview.html;
+          this.connectedWebview.html = "";
+          this.connectedWebview.html = html;
+        }
+      })
+    );
   }
 
   deactivate() {
-    this.devtools.removeListener(this.devtoolsListener);
+    disposeAll(this.devtoolsListeners);
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
   }
 
@@ -88,6 +93,6 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   }
 
   dispose() {
-    this.devtools.removeListener(this.devtoolsListener);
+    disposeAll(this.devtoolsListeners);
   }
 }

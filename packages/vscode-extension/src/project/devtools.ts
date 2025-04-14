@@ -6,14 +6,16 @@ import {
   createBridge as createFrontendBridge,
   createStore,
   initialize as createDevTools,
+  FrontendBridge,
   Wall,
 } from "react-devtools-inline/frontend";
+import { c } from "tar";
 
 export class Devtools implements Disposable {
   private _port = 0;
   private server: any;
   private socket?: WebSocket;
-  private listeners: Set<(event: string, payload: any) => void> = new Set();
+  private bridge?: FrontendBridge;
   private startPromise: Promise<void> | undefined;
 
   public get port() {
@@ -64,29 +66,26 @@ export class Devtools implements Disposable {
       this.socket = ws;
 
       // When data is received from a client
-      ws.on("message", (message: string) => {
-        try {
-          const { event, payload } = JSON.parse(message);
-          Logger.log("Devtools message", event, payload);
-          this.listeners.forEach((listener) => listener(event, payload));
-        } catch (e) {
-          Logger.error("Error while handling devtools websocket message", e);
-        }
-      });
-
-      ws.on("close", () => {
-        this.socket = undefined;
-      });
+      // ws.on("message", (message: string) => {
+      //   try {
+      //     const { event, payload } = JSON.parse(message);
+      //     Logger.log("Devtools message", event, payload);
+      //     this.listeners.forEach((listener) => listener(event, payload));
+      //   } catch (e) {
+      //     Logger.error("Error while handling devtools websocket message", e);
+      //   }
+      // });
 
       const wall: Wall = {
         listen(fn) {
-          console.log("BRIDGEY LISTEN");
-          ws.on("message", (message: string) => {
+          function listener(message: string) {
             const { event, payload } = JSON.parse(message);
-            // console.log("RECEIVED BRIDGEY", data);
             return fn({ event, payload });
-          });
-          return fn;
+          }
+          ws.on("message", listener);
+          return () => {
+            ws.off("message", listener);
+          };
         },
         send(event, payload) {
           console.log("SENDING BRIDGEY", event, payload);
@@ -94,19 +93,24 @@ export class Devtools implements Disposable {
         },
       };
 
-      const bridge = createFrontendBridge(undefined as unknown as Window, wall);
-      bridge.addListener("profilingStatus", () => console.log("JKHSDJDHJSD PROFILING STATUS"));
-      const store = createStore(bridge);
-      setTimeout(() => {
-        console.log("Profiler store?", store.profilerStore);
-        store.profilerStore.addListener("profilingData", (profilerData) => {
-          console.log("PROFILERDATA", profilerData);
-        });
-        store.profilerStore.startProfiling();
-        setTimeout(() => {
-          store.profilerStore.stopProfiling();
-        }, 5000);
-      }, 5000);
+      this.bridge = createFrontendBridge(undefined as unknown as Window, wall);
+      ws.on("close", () => {
+        this.socket = undefined;
+        this.bridge = undefined;
+      });
+      this.bridge.addListener("profilingStatus", () => console.log("JKHSDJDHJSD PROFILING STATUS"));
+      // bridge.addListener("RNIDE_appReady", () => console.log("JKHSDJDHJSD APP READY"));
+      // const store = createStore(bridge);
+      // setTimeout(() => {
+      //   console.log("Profiler store?", store.profilerStore);
+      //   store.profilerStore.addListener("profilingData", (profilerData) => {
+      //     console.log("PROFILERDATA", profilerData);
+      //   });
+      //   store.profilerStore.startProfiling();
+      //   setTimeout(() => {
+      //     store.profilerStore.stopProfiling();
+      //   }, 5000);
+      // }, 5000);
     });
 
     return new Promise<void>((resolve) => {
@@ -126,11 +130,20 @@ export class Devtools implements Disposable {
     this.socket?.send(JSON.stringify({ event, payload }));
   }
 
-  public addListener(listener: (event: string, payload: any) => void) {
-    this.listeners.add(listener);
+  public addListener(eventName: string, listener: (payload: any) => void): Disposable {
+    this.bridge?.addListener(eventName, listener);
+    return {
+      dispose: () => {
+        this.bridge?.removeListener(eventName, listener);
+      },
+    };
   }
 
-  public removeListener(listener: (event: string, payload: any) => void) {
-    this.listeners.delete(listener);
-  }
+  // public addListener(listener: (event: string, payload: any) => void) {
+  //   this.listeners.add(listener);
+  // }
+
+  // public removeListener(listener: (event: string, payload: any) => void) {
+  //   this.listeners.delete(listener);
+  // }
 }
