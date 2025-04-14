@@ -466,7 +466,7 @@
                   },
                   "launchArguments": {
                     "type": "array",
-                    "description": "Arguments passed to the app when launching it. This is used for passing custom arguments to the app when launching it. Note: this configuration is only applied for applications that are launched using a build and not those opened with expo deep link."
+                    "description": "Arguments passed to the app when launching it. Note: this configuration is only applied for applications that are launched using a build and not those opened with expo deep link."
                   }
                 }
               },
@@ -563,7 +563,7 @@
                   },
                   "launchArguments": {
                     "type": "array",
-                    "description": "Arguments passed to the app when launching it. This is used for passing custom arguments to the app when launching it. Note: this configuration is only applied for applications that are launched using a build and not those opened with expo deep link."
+                    "description": "Arguments passed to the app when launching it. Note: this configuration is only applied for applications that are launched using a build and not those opened with expo deep link."
                   }
                 }
               },
