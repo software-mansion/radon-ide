@@ -88,34 +88,42 @@ export async function buildAndroid(
   dependencyManager: DependencyManager
 ): Promise<AndroidBuildResult> {
   const { appRoot, env, type: buildType } = buildConfig;
-  switch (buildType) {
-    case BuildType.Custom: {
-      getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
-        platform: DevicePlatform.Android,
-      });
-      const apkPath = await runExternalBuild(
-        cancelToken,
-        buildConfig.buildCommand,
-        env,
-        DevicePlatform.Android,
-        appRoot,
-        outputChannel
-      );
-      if (!apkPath) {
-        throw new BuildError(
-          "Failed to build Android app using custom script. See the build logs for details.",
-          BuildType.Custom
-        );
-      }
 
-      return {
-        apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
-        platform: DevicePlatform.Android,
-      };
+  function rethrowAsBuildError(e: Error): never {
+    if (e instanceof BuildError) {
+      throw e;
     }
-    case BuildType.Eas: {
-      try {
+    throw new BuildError(e.message, buildType);
+  }
+
+  try {
+    switch (buildType) {
+      case BuildType.Custom: {
+        getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
+          platform: DevicePlatform.Android,
+        });
+        const apkPath = await runExternalBuild(
+          cancelToken,
+          buildConfig.buildCommand,
+          env,
+          DevicePlatform.Android,
+          appRoot,
+          outputChannel
+        );
+        if (!apkPath) {
+          throw new BuildError(
+            "Failed to build Android app using custom script. See the build logs for details.",
+            BuildType.Custom
+          );
+        }
+
+        return {
+          apkPath,
+          packageName: await extractPackageName(apkPath, cancelToken),
+          platform: DevicePlatform.Android,
+        };
+      }
+      case BuildType.Eas: {
         getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
           platform: DevicePlatform.Android,
         });
@@ -132,35 +140,27 @@ export async function buildAndroid(
           packageName: await extractPackageName(apkPath, cancelToken),
           platform: DevicePlatform.Android,
         };
-      } catch (e) {
-        throw new BuildError((e as Error).message, BuildType.Eas);
       }
-    }
-    case BuildType.ExpoGo: {
-      getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
-        platform: DevicePlatform.Android,
-      });
-      try {
+      case BuildType.ExpoGo: {
+        getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
+          platform: DevicePlatform.Android,
+        });
         const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
         return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
-      } catch (e) {
-        throw new BuildError((e as Error).message, BuildType.ExpoGo);
       }
-    }
-    case BuildType.Local: {
-      if (!(await dependencyManager.checkAndroidDirectoryExits())) {
-        throw new BuildError(
-          'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.',
-          BuildType.Local
-        );
-      }
+      case BuildType.Local: {
+        if (!(await dependencyManager.checkAndroidDirectoryExits())) {
+          throw new BuildError(
+            'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.',
+            BuildType.Local
+          );
+        }
 
-      try {
         return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
-      } catch (e) {
-        throw new BuildError((e as Error).message, BuildType.Local);
       }
     }
+  } catch (e) {
+    rethrowAsBuildError(e as Error);
   }
 }
 

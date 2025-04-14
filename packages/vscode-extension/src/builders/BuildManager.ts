@@ -113,29 +113,26 @@ export class BuildManager {
       };
     }
 
-    switch (platform) {
-      case DevicePlatform.IOS: {
-        return {
-          appRoot,
-          platform: platform as DevicePlatform.IOS & Platform,
-          forceCleanBuild,
-          env,
-          type: BuildType.Local,
-          scheme: ios?.scheme,
-          configuration: ios?.configuration,
-        };
-      }
-      case DevicePlatform.Android: {
-        return {
-          appRoot,
-          platform: platform as DevicePlatform.Android & Platform,
-          forceCleanBuild,
-          env,
-          type: BuildType.Local,
-          productFlavor: android?.productFlavor,
-          buildType: android?.buildType,
-        };
-      }
+    if (platform === DevicePlatform.IOS) {
+      return {
+        appRoot,
+        platform: platform as DevicePlatform.IOS & Platform,
+        forceCleanBuild,
+        env,
+        type: BuildType.Local,
+        scheme: ios?.scheme,
+        configuration: ios?.configuration,
+      };
+    } else {
+      return {
+        appRoot,
+        platform: platform as DevicePlatform.Android & Platform,
+        forceCleanBuild,
+        env,
+        type: BuildType.Local,
+        productFlavor: android?.productFlavor,
+        buildType: android?.buildType,
+      };
     }
   }
 

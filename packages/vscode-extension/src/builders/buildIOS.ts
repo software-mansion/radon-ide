@@ -80,11 +80,18 @@ export async function buildIos(
   dependencyManager: DependencyManager,
   installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
-  const { appRoot, forceCleanBuild, env, type: buildType } = buildConfig;
+  const { appRoot, env, type: buildType } = buildConfig;
 
-  switch (buildType) {
-    case BuildType.Custom: {
-      try {
+  function rethrowAsBuildError(e: Error): never {
+    if (e instanceof BuildError) {
+      throw e;
+    }
+    throw new BuildError(e.message, buildType);
+  }
+
+  try {
+    switch (buildType) {
+      case BuildType.Custom: {
         getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
           platform: DevicePlatform.IOS,
         });
@@ -109,12 +116,8 @@ export async function buildIos(
           bundleID: await getBundleID(appPath),
           platform: DevicePlatform.IOS,
         };
-      } catch (e) {
-        throw new BuildError((e as Error).message, BuildType.Custom);
       }
-    }
-    case BuildType.Eas: {
-      try {
+      case BuildType.Eas: {
         getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
           platform: DevicePlatform.IOS,
         });
@@ -132,29 +135,21 @@ export async function buildIos(
           bundleID: await getBundleID(appPath),
           platform: DevicePlatform.IOS,
         };
-      } catch (e) {
-        throw new BuildError((e as Error).message, BuildType.Eas);
       }
-    }
-    case BuildType.ExpoGo: {
-      try {
+      case BuildType.ExpoGo: {
         getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
           platform: DevicePlatform.IOS,
         });
         const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken, appRoot);
         return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
-      } catch (e) {
-        throw new BuildError((e as Error).message, BuildType.ExpoGo);
       }
-    }
-    case BuildType.Local: {
-      if (!(await dependencyManager.checkIOSDirectoryExists())) {
-        throw new BuildError(
-          'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.',
-          BuildType.Local
-        );
-      }
-      try {
+      case BuildType.Local: {
+        if (!(await dependencyManager.checkIOSDirectoryExists())) {
+          throw new BuildError(
+            'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.',
+            BuildType.Local
+          );
+        }
         return await buildLocal(
           buildConfig,
           installPodsIfNeeded,
@@ -162,10 +157,10 @@ export async function buildIos(
           outputChannel,
           progressListener
         );
-      } catch (e) {
-        throw new BuildError((e as Error).message, BuildType.Local);
       }
     }
+  } catch (e) {
+    rethrowAsBuildError(e as Error);
   }
 }
 
