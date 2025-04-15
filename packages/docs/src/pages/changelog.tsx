@@ -12,11 +12,15 @@ const changelog: ChangelogItem[] = [
     date: "2025-04-11",
     title: "Radon AI",
     content: `
-- Radon AI
-- Improved EAS workflows
-- Home / App Switch buttons support
-- Improved error & exception handling with clickable links
-- Support for React Native 0.79
+- **Radon AI Chat**: a GitHub Copilot Chat participant enhanced with up-to-date information about the React Native ecosystem. At the heart of it is our extensive React Native knowledge database, which is queried before answering your question.
+
+- **Improved EAS workflows**: You'll now see clearer build error messages directly, and all your EAS settings in launch configs are consistently recognized. Plus, automatic build fetching is now smarter, showing you only relevant builds.
+
+- **Home / App Switch buttons support**: Added options in tye device settings menu that can trigger Home and AppSwitch button presses on active device.
+
+- **Improved error & exception handling with clickable links**: We improved error handling by centralizing error message generation closer to the source and streamlining user focus during bundle errors. Specifically, we disabled auto-focus on source errors and shifted focus to the debug console for bundle errors, leveraging built-in error messaging and preventing input during these states.
+
+- **Support for React Native 0.79**:
 `,
   },
   {
@@ -25,8 +29,11 @@ const changelog: ChangelogItem[] = [
     title: "Zero-config React Query devtools, Outline Renders",
     content: `
 - No config React Query devtools
+
 - Visualize renders with React Scan
+
 - JavaScript sampling profiler
+
 - Tons of stability improvements
     `,
   },
@@ -36,7 +43,9 @@ const changelog: ChangelogItem[] = [
     title: "Network Inspector, Redux DevTools",
     content: `
 - Network tools panel
+
 - First-party Redux DevTools integration
+
 - The panel now matches editor theme by default 
     `,
   },
@@ -46,8 +55,11 @@ const changelog: ChangelogItem[] = [
     title: "Redux and React Query DevTools",
     content: `
 - Redux and React Query tools 
+
 - Local EAS builds support
+
 - UI updates making more room for device
+
 - More stability improvements and bug fixes
     `,
   },
@@ -57,8 +69,11 @@ const changelog: ChangelogItem[] = [
     title: "PNPM monorepos, console upgrades, and more",
     content: `
 - Experimental Linux support
+
 - Support for PNPM monorepos
+
 - Console upgrades: log grouping, object previews, long data handling
+
 - Better log-to-source links
     `,
   },
@@ -68,9 +83,13 @@ const changelog: ChangelogItem[] = [
     title: "Stable release",
     content: `
 - Router integration
+
 - Jump to code
+
 - Built-in Debugger
+
 - Preview components
+
 - Adjust device settings
     `,
   },
