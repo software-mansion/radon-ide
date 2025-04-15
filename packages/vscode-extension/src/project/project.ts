@@ -57,7 +57,6 @@ import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRoo
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { BuildError } from "../builders/BuildManager";
-import { BuildType } from "../common/BuildConfig";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -1011,7 +1010,7 @@ export class Project
             status: "buildError",
             buildError: {
               message: (e as Error).message,
-              buildType: BuildType.Unknown,
+              buildType: null,
               platform: deviceInfo.platform,
             },
           });

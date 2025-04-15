@@ -64,13 +64,13 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   if (projectState.status === "buildError") {
     const { buildType, message } = projectState.buildError;
     description = message;
-    if ([BuildType.Local, BuildType.Custom].includes(buildType)) {
+    if (buildType && [BuildType.Local, BuildType.Custom].includes(buildType)) {
       logsButtonDestination = "build";
     } else {
       logsButtonDestination = "extension";
     }
 
-    if (buildType === BuildType.Unknown && !ios?.scheme && xcodeSchemes.length > 1) {
+    if (buildType === null && !ios?.scheme && xcodeSchemes.length > 1) {
       description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
     }
   }

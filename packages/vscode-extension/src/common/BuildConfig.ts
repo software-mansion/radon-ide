@@ -5,7 +5,6 @@ export enum BuildType {
   ExpoGo = "expoGo",
   Eas = "eas",
   Custom = "custom",
-  Unknown = "unknown",
 }
 
 interface BuildConfigCommon {
@@ -62,7 +61,4 @@ type SupportedIOSBuildType = IOSBuildConfig["type"];
 type SupportedAndroidBuildType = AndroidBuildConfig["type"];
 type SupportedBuildType = SupportedIOSBuildType & SupportedAndroidBuildType;
 
-type _SupportsAllBuildTypes = IsSuperTypeOf<
-  SupportedBuildType,
-  Exclude<BuildType, BuildType.Unknown>
->;
+type _SupportsAllBuildTypes = IsSuperTypeOf<SupportedBuildType, BuildType>;

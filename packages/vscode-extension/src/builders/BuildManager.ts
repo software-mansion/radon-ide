@@ -27,10 +27,7 @@ type BuildOptions = {
 };
 
 export class BuildError extends Error {
-  constructor(
-    message: string,
-    public readonly buildType: BuildType
-  ) {
+  constructor(message: string, public readonly buildType: BuildType | null) {
     super(message);
   }
 }
@@ -64,7 +61,7 @@ export class BuildManager {
     appRoot: string,
     platform: DevicePlatform,
     launchConfiguration: LaunchConfigurationOptions
-  ): Promise<Exclude<BuildType, BuildType.Unknown>> {
+  ): Promise<BuildType> {
     const { customBuild, eas } = launchConfiguration;
     const platformMapping = {
       [DevicePlatform.Android]: "android",
@@ -76,7 +73,7 @@ export class BuildManager {
     if (customBuildConfig && easBuildConfig) {
       throw new BuildError(
         `Both custom custom builds and EAS builds are configured for ${platform}. Please use only one build method.`,
-        BuildType.Unknown
+        null
       );
     }
 
@@ -100,7 +97,7 @@ export class BuildManager {
     platform: Platform,
     forceCleanBuild: boolean,
     launchConfiguration: LaunchConfigurationOptions,
-    buildType: Exclude<BuildType, BuildType.Unknown>
+    buildType: BuildType
   ): BuildConfig & { platform: Platform } {
     const { customBuild, eas, env, android, ios } = launchConfiguration;
     const platformMapping = {
@@ -298,7 +295,7 @@ export class BuildManager {
         if (e instanceof BuildError) {
           throw e;
         }
-        throw new BuildError(e.message, BuildType.Unknown);
+        throw new BuildError(e.message, null);
       }),
       dispose: () => {
         cancelToken.cancel();

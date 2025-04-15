@@ -53,7 +53,7 @@ type ProjectStateBuildError = {
   buildError: {
     message: string;
     platform: DevicePlatform;
-    buildType: BuildType;
+    buildType: BuildType | null;
   };
 } & ProjectStateCommon;
 
