@@ -11,6 +11,7 @@ import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { isExpoGoProject } from "./expoGo";
+import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -59,18 +60,17 @@ export class BuildManager {
     return false;
   }
 
-  private async createBuildConfig<Platform extends DevicePlatform>(
+  private async guessBuildType(
     appRoot: string,
-    platform: Platform,
-    forceCleanBuild: boolean
-  ): Promise<BuildConfig & { platform: Platform }> {
+    platform: DevicePlatform,
+    launchConfiguration: LaunchConfigurationOptions
+  ): Promise<Exclude<BuildType, BuildType.Unknown>> {
+    const { customBuild, eas } = launchConfiguration;
     const platformMapping = {
       [DevicePlatform.Android]: "android",
       [DevicePlatform.IOS]: "ios",
     } as const;
     const platformKey = platformMapping[platform];
-    const { customBuild, eas, env, android, ios } = getLaunchConfiguration();
-
     const easBuildConfig = eas?.[platformKey];
     const customBuildConfig = customBuild?.[platformKey];
     if (customBuildConfig && easBuildConfig) {
@@ -81,61 +81,106 @@ export class BuildManager {
     }
 
     if (customBuildConfig?.buildCommand !== undefined) {
-      return {
-        appRoot,
-        platform,
-        env,
-        type: BuildType.Custom,
-        buildCommand: customBuildConfig.buildCommand,
-        ...customBuildConfig,
-      };
+      return BuildType.Custom;
     }
 
     if (easBuildConfig) {
-      return {
-        appRoot,
-        platform,
-        env,
-        type: BuildType.Eas,
-        config: easBuildConfig,
-      };
+      return BuildType.Eas;
     }
 
     if (await isExpoGoProject(appRoot)) {
-      return {
-        appRoot,
-        platform,
-        env,
-        type: BuildType.ExpoGo,
-      };
+      return BuildType.ExpoGo;
     }
 
-    if (platform === DevicePlatform.IOS) {
-      return {
-        appRoot,
-        platform: platform as DevicePlatform.IOS & Platform,
-        forceCleanBuild,
-        env,
-        type: BuildType.Local,
-        scheme: ios?.scheme,
-        configuration: ios?.configuration,
-      };
-    } else {
-      return {
-        appRoot,
-        platform: platform as DevicePlatform.Android & Platform,
-        forceCleanBuild,
-        env,
-        type: BuildType.Local,
-        productFlavor: android?.productFlavor,
-        buildType: android?.buildType,
-      };
+    return BuildType.Local;
+  }
+
+  private createBuildConfig<Platform extends DevicePlatform>(
+    appRoot: string,
+    platform: Platform,
+    forceCleanBuild: boolean,
+    launchConfiguration: LaunchConfigurationOptions,
+    buildType: Exclude<BuildType, BuildType.Unknown>
+  ): BuildConfig & { platform: Platform } {
+    const { customBuild, eas, env, android, ios } = launchConfiguration;
+    const platformMapping = {
+      [DevicePlatform.Android]: "android",
+      [DevicePlatform.IOS]: "ios",
+    } as const;
+    const platformKey = platformMapping[platform];
+
+    switch (buildType) {
+      case BuildType.Local: {
+        if (platform === DevicePlatform.IOS) {
+          return {
+            appRoot,
+            platform: platform as DevicePlatform.IOS & Platform,
+            forceCleanBuild,
+            env,
+            type: BuildType.Local,
+            scheme: ios?.scheme,
+            configuration: ios?.configuration,
+          };
+        } else {
+          return {
+            appRoot,
+            platform: platform as DevicePlatform.Android & Platform,
+            forceCleanBuild,
+            env,
+            type: BuildType.Local,
+            productFlavor: android?.productFlavor,
+            buildType: android?.buildType,
+          };
+        }
+      }
+      case BuildType.ExpoGo: {
+        return {
+          appRoot,
+          platform,
+          env,
+          type: BuildType.ExpoGo,
+        };
+      }
+      case BuildType.Eas: {
+        const easBuildConfig = eas?.[platformKey];
+        if (!easBuildConfig) {
+          throw new BuildError(
+            "An EAS build was initialized but no EAS build config was specified in the launch configuration.",
+            BuildType.Eas
+          );
+        }
+        return {
+          appRoot,
+          platform,
+          env,
+          type: BuildType.Eas,
+          config: easBuildConfig,
+        };
+      }
+      case BuildType.Custom: {
+        const customBuildConfig = customBuild?.[platformKey];
+        if (!customBuildConfig?.buildCommand) {
+          throw new BuildError(
+            "A custom build was initialized but no custom build command was specified in the launch configuration.",
+            BuildType.Custom
+          );
+        }
+        return {
+          appRoot,
+          platform,
+          env,
+          type: BuildType.Custom,
+          buildCommand: customBuildConfig.buildCommand,
+          ...customBuildConfig,
+        };
+      }
     }
   }
 
   public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {
     const { clean: forceCleanBuild, progressListener, onSuccess, appRoot } = options;
     const { platform } = deviceInfo;
+    const launchConfiguration = getLaunchConfiguration();
 
     getTelemetryReporter().sendTelemetryEvent("build:requested", {
       platform,
@@ -176,12 +221,19 @@ export class BuildManager {
 
       let buildResult: BuildResult;
       let buildFingerprint = currentFingerprint;
+      const buildType = await this.guessBuildType(appRoot, platform, launchConfiguration);
       if (platform === DevicePlatform.Android) {
         this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
           log: true,
         });
         this.buildOutputChannel.clear();
-        const buildConfig = await this.createBuildConfig(appRoot, platform, forceCleanBuild);
+        const buildConfig = this.createBuildConfig(
+          appRoot,
+          platform,
+          forceCleanBuild,
+          launchConfiguration,
+          buildType
+        );
         buildResult = await buildAndroid(
           buildConfig,
           cancelToken,
@@ -218,7 +270,13 @@ export class BuildManager {
             buildFingerprint = await this.buildCache.calculateFingerprint(platform);
           }
         };
-        const buildConfig = await this.createBuildConfig(appRoot, platform, forceCleanBuild);
+        const buildConfig = this.createBuildConfig(
+          appRoot,
+          platform,
+          forceCleanBuild,
+          launchConfiguration,
+          buildType
+        );
 
         buildResult = await buildIos(
           buildConfig,
