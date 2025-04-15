@@ -55,9 +55,13 @@ export type IOSBuildConfig = BuildConfig & { platform: DevicePlatform.IOS };
 export type AndroidBuildConfig = BuildConfig & { platform: DevicePlatform.Android };
 
 // NOTE: we let typescript verify that the `BuildConfig` union covers all the `BuildType` variants for both platforms
-type Satisfy<Base, T extends Base> = T;
+type IsSuperTypeOf<Base, T extends Base> = T;
 
-type _CoversBuildTypes = Satisfy<
-  IOSBuildConfig["type"] & AndroidBuildConfig["type"],
+type SupportedIOSBuildType = IOSBuildConfig["type"];
+type SupportedAndroidBuildType = AndroidBuildConfig["type"];
+type SupportedBuildType = SupportedIOSBuildType & SupportedAndroidBuildType;
+
+type _SupportsAllBuildTypes = IsSuperTypeOf<
+  SupportedBuildType,
   Exclude<BuildType, BuildType.Unknown>
 >;
