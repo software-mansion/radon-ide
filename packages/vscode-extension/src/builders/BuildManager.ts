@@ -84,7 +84,6 @@ export class BuildManager {
       return {
         appRoot,
         platform,
-        forceCleanBuild,
         env,
         type: BuildType.Custom,
         buildCommand: customBuildConfig.buildCommand,
@@ -96,7 +95,6 @@ export class BuildManager {
       return {
         appRoot,
         platform,
-        forceCleanBuild,
         env,
         type: BuildType.Eas,
         config: easBuildConfig,
@@ -107,7 +105,6 @@ export class BuildManager {
       return {
         appRoot,
         platform,
-        forceCleanBuild,
         env,
         type: BuildType.ExpoGo,
       };

@@ -10,7 +10,6 @@ export enum BuildType {
 
 interface BuildConfigCommon {
   appRoot: string;
-  forceCleanBuild: boolean;
   platform: DevicePlatform;
   env?: Record<string, string>;
 }
@@ -33,6 +32,7 @@ export type EasBuildConfig = {
 export type AndroidLocalBuildConfig = {
   type: BuildType.Local;
   platform: DevicePlatform.Android;
+  forceCleanBuild: boolean;
   buildType?: string;
   productFlavor?: string;
 } & BuildConfigCommon;
@@ -40,6 +40,7 @@ export type AndroidLocalBuildConfig = {
 export type IOSLocalBuildConfig = {
   type: BuildType.Local;
   platform: DevicePlatform.IOS;
+  forceCleanBuild: boolean;
   scheme?: string;
   configuration?: string;
 } & BuildConfigCommon;
