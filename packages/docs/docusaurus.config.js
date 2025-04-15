@@ -80,6 +80,7 @@ const config = {
           { to: "/legal/privacy-policy", label: "Privacy" },
           { to: "/legal", label: "Legal" },
           { to: "https://portal.ide.swmansion.com/", label: "Customer Portal" },
+          { to: "/changelog", label: "Changelog" },
         ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },
