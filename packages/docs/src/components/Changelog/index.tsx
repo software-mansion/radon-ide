@@ -8,7 +8,8 @@ export interface ChangelogItem {
   version: string;
   date: string;
   title: string;
-  content: string;
+  content?: string;
+  JSX?: React.ReactNode;
 }
 
 interface ChangelogProps {
@@ -43,7 +44,12 @@ export default function ChangelogScreen({ changelog }: ChangelogProps) {
             <h2 id={item.version} className={styles.title}>
               {item.title}
             </h2>
-            <Markdown rehypePlugins={[rehypeRaw]}>{item.content}</Markdown>
+            {item.content && (
+              <div className={styles.content}>
+                <Markdown rehypePlugins={[rehypeRaw]}>{item.content}</Markdown>
+              </div>
+            )}
+            <div>{item.JSX}</div>
           </article>
         </section>
       ))}

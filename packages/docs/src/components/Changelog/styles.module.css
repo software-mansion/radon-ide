@@ -1,5 +1,6 @@
 .changelogContainer {
   padding: 32px;
+  max-width: 1300px;
 }
 
 .changelogItem {
@@ -68,7 +69,7 @@
   stroke: var(--swm-navy-light-100);
 }
 
-.article a {
+.article .content a {
   text-decoration: underline;
 }
 

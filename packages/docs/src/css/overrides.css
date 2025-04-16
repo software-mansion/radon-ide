@@ -165,7 +165,7 @@ img.shadow-image {
   margin-top: 0 !important;
 }
 
-.changelog-video {
+.changelog-item {
   max-width: calc(100% - 32px);
   margin-left: 32px;
 }
