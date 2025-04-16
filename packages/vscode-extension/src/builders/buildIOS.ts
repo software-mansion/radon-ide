@@ -9,7 +9,7 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
 import { runExternalBuild } from "./customBuild";
-import { fetchEasBuild } from "./eas";
+import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { getXcodebuildArch } from "../utilities/common";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
