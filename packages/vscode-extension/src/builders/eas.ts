@@ -33,14 +33,10 @@ export async function fetchEasBuild(
     );
   }
 
-  try {
-    const build = await fetchBuild(config, platform, appRoot);
-    let easBinaryPath = await downloadAppFromEas(build, platform, cancelToken);
-    Logger.debug(`Using built app from EAS: '${easBinaryPath}'`);
-    return easBinaryPath;
-  } catch {
-    return performLocalBuild(config, platform, appRoot, outputChannel, cancelToken);
-  }
+  const build = await fetchBuild(config, platform, appRoot);
+  let easBinaryPath = await downloadAppFromEas(build, platform, cancelToken);
+  Logger.debug(`Using built app from EAS: '${easBinaryPath}'`);
+  return easBinaryPath;
 }
 
 async function fetchBuild(
@@ -104,7 +100,7 @@ async function fetchBuild(
   return build;
 }
 
-async function performLocalBuild(
+export async function performLocalEasBuild(
   config: EasConfig,
   platform: DevicePlatform,
   appRoot: string,
