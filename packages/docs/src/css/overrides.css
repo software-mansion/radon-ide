@@ -164,3 +164,8 @@ img.shadow-image {
 [class*="DocSearch-Footer"] {
   margin-top: 0 !important;
 }
+
+.changelog-video {
+  max-width: calc(100% - 32px);
+  margin-left: 32px;
+}

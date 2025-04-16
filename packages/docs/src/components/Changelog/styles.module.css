@@ -68,6 +68,10 @@
   stroke: var(--swm-navy-light-100);
 }
 
+.article a {
+  text-decoration: underline;
+}
+
 .versionContainer .date {
   display: none;
 }

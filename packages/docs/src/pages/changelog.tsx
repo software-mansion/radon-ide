@@ -12,15 +12,20 @@ const changelog: ChangelogItem[] = [
     date: "2025-04-11",
     title: "Radon AI",
     content: `
-- **Radon AI Chat**: a GitHub Copilot Chat participant enhanced with up-to-date information about the React Native ecosystem. At the heart of it is our extensive React Native knowledge database, which is queried before answering your question.
+- [**Radon AI Chat**](/docs/features/radon-ai): a GitHub Copilot Chat participant enhanced with up-to-date information about the React Native ecosystem. At the heart of it is our extensive React Native knowledge database, which is queried before answering your question.
 
-- **Improved EAS workflows**: You'll now see clearer build error messages directly, and all your EAS settings in launch configs are consistently recognized. Plus, automatic build fetching is now smarter, showing you only relevant builds.
+<video autoPlay loop width="700" controls className="shadow-image changelog-video">
+  <source src="/video/ide_chat.mp4" type="video/mp4"/>
+</video>
 
-- **Home / App Switch buttons support**: Added options in tye device settings menu that can trigger Home and AppSwitch button presses on active device.
 
-- **Improved error & exception handling with clickable links**: We improved error handling by centralizing error message generation closer to the source and streamlining user focus during bundle errors. Specifically, we disabled auto-focus on source errors and shifted focus to the debug console for bundle errors, leveraging built-in error messaging and preventing input during these states.
+- **Improved EAS workflows**: You'll now see clearer build error messages directly, and all your EAS settings in launch configs are consistently recognized. Plus, automatic build fetching will show you only relevant builds.
 
-- **Support for React Native 0.79**:
+- **Home / App Switch buttons support**: Added options in the device settings menu that can trigger Home and AppSwitch button presses on active device.
+
+- **Improved error & exception handling with clickable links**,
+
+- **Support for React Native 0.79**.
 `,
   },
   {
@@ -28,11 +33,24 @@ const changelog: ChangelogItem[] = [
     date: "2025-03-10",
     title: "Zero-config React Query devtools, Outline Renders",
     content: `
-- No config React Query devtools
+- [**Outline Renders**](/docs/features/dev-tools#outline-renders-react-scan): [react-scan](https://react-scan.com/) integration that help you visualize React renders happening within the app.
 
-- Visualize renders with React Scan
+<video autoPlay loop width="700" controls className="shadow-image changelog-video">
+  <source src="/video/8_sztudio_outline_renders.mp4" type="video/mp4"/>
+</video>
 
-- JavaScript sampling profiler
+
+- [**No setup React Query devtools**](/docs/features/dev-tools#react-query): React Query devtools now doesn't require any additional configuration. If your app uses React Query you can investigate queries, modify data from the store, etc,
+
+<video autoPlay loop width="700" controls className="shadow-image changelog-video">
+  <source src="/video/ide_react_query.mp4" type="video/mp4"/>
+</video>
+
+- [**JavaScript sampling profiler**](/docs/features/dev-tools#cpu-profiling-javascript): Radon IDE integrates with the hermes sampling CPU profiler. Once you save the profiling file, the IDE will automatically open the saved profile and use the built-in Profile Visualizer plugin to display a profile.
+
+<video autoPlay loop width="700" controls className="shadow-image changelog-video">
+  <source src="/video/ide_js_sampling.mp4" type="video/mp4"/>
+</video>
 
 - Tons of stability improvements
     `,
@@ -80,7 +98,7 @@ const changelog: ChangelogItem[] = [
   {
     version: "1.0.x",
     date: "2024-12-03",
-    title: "Stable release",
+    title: "Stable release 🎉",
     content: `
 - Router integration
 

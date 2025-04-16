@@ -5,6 +5,10 @@
   margin: 0 auto;
 }
 
+.video-ident {
+  margin-left: 16px;
+}
+
 @media (max-width: 1920px) {
   .container {
     width: 65%;
