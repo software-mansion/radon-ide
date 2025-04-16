@@ -1,6 +1,7 @@
 // This module configures the MCP files for Cursor and VSCode
 
-import fs from "fs";
+import fs from "node:fs/promises";
+import path from "node:path";
 import * as vscode from "vscode";
 import { Logger } from "../Logger";
 
@@ -28,8 +29,47 @@ function getEditorType(): EditorType {
   return editorType;
 }
 
-function readMcpConfig(): McpConfig | null {
-  return null;
+async function readMcpConfig(): Promise<McpConfig> {
+  return new Promise((resolve, reject) => {
+    const editorType = getEditorType();
+    let filePath = "";
+
+    if (editorType === EditorType.CURSOR) {
+      Logger.info(`Writing MCP config to ${CURSOR_FILE_PATH}`);
+      filePath = CURSOR_FILE_PATH;
+    } else if (editorType === EditorType.VSCODE) {
+      Logger.info(`Writing MCP config to ${VSCODE_FILE_PATH}`);
+      filePath = VSCODE_FILE_PATH;
+    } else {
+      // Unknown editors will not be handled, as mcp.json is not standardized yet.
+      Logger.error(`Couldn't read MCP config - unknown editor detected.`);
+      reject();
+    }
+
+    if (vscode.workspace.workspaceFolders?.length === 0) {
+      Logger.error(`Couldn't read MCP config - no workspace folder available.`);
+      reject();
+    }
+
+    const folder = vscode.workspace.workspaceFolders?.[0];
+
+    if (!folder) {
+      Logger.error(`Couldn't read MCP config - no workspace folder open.`);
+      reject();
+    }
+
+    // todo: handle lack of mcp.json separately
+
+    fs.readFile(filePath, { encoding: "utf8" })
+      .then((data) => {
+        const config = JSON.parse(data);
+        resolve(config);
+      })
+      .catch(() => {
+        Logger.info(`Couldn't read MCP config - MCP config not found.`);
+        reject();
+      });
+  });
 }
 
 function writeMcpConfig(config: McpConfig) {
@@ -62,7 +102,9 @@ function writeMcpConfig(config: McpConfig) {
 
   const jsonString = JSON.stringify(config, null, 2);
 
-  fs.writeFile(filePath, jsonString, (err) => {
+  const fsPath = path.join(folder.uri.fsPath, filePath);
+
+  fs.writeFile(fsPath, jsonString).catch((err) => {
     if (err) {
       Logger.error(`Failed writing MCP config - error: ${err}`);
     }
@@ -95,8 +137,8 @@ function newMcpConfig(jwtToken: string): McpConfig {
   };
 }
 
-export function updateMcpConfig(jwtToken: string) {
-  let mcpConfig = readMcpConfig();
+export async function updateMcpConfig(jwtToken: string) {
+  let mcpConfig = await readMcpConfig();
 
   // todo: keep track of config changes, exit if none are detected
 
