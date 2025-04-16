@@ -130,8 +130,8 @@ Below is an example of how the `launch.json` file could look like with android v
 
 Instead of letting Radon IDE build your app, you can use scripts (`customBuild` option) or [Expo
 Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it. Both `customBuild` and `eas` are objects having `ios` and `android` optional
-keys. You can't specify one platform in both custom script and EAS build
-options.
+keys. You can't specify both a custom script and EAS build
+options for a single platform.
 
 #### Using `customBuild`
 
@@ -200,8 +200,8 @@ Example with EAS local build:
 `eas.ios` and `eas.android` are objects taking keys:
 
 - `profile` – required, used for [selecting builds](https://docs.expo.dev/build/eas-json/#development-builds) suitable for running in simulators.
-- `buildUUID` – when specified, downloads build using its UUID. It uses latest
-  build otherwise.
+- `buildUUID` – when specified, the build with the specified ID will be used.
+  Otherwise, Radon IDE will attempt to find a compatible build and use that.
 
 Below is an example that replaces iOS and Android local builds with builds from EAS:
 
