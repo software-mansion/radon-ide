@@ -1,8 +1,8 @@
 import styles from "./styles.module.css";
 import * as React from "react";
 import Markdown from "react-markdown";
-import Heading from "@theme/Heading";
 import LinkIcon from "../ChainIcon";
+import rehypeRaw from "rehype-raw";
 
 export interface ChangelogItem {
   version: string;
@@ -43,7 +43,7 @@ export default function ChangelogScreen({ changelog }: ChangelogProps) {
             <h2 id={item.version} className={styles.title}>
               {item.title}
             </h2>
-            <Markdown>{item.content}</Markdown>
+            <Markdown rehypePlugins={[rehypeRaw]}>{item.content}</Markdown>
           </article>
         </section>
       ))}
