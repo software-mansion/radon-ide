@@ -1,5 +1,7 @@
 // This module configures the MCP files for Cursor and VSCode
 
+import fs from "fs";
+import * as vscode from "vscode";
 import { Logger } from "../Logger";
 
 enum EditorType {
@@ -32,14 +34,39 @@ function readMcpConfig(): McpConfig | null {
 
 function writeMcpConfig(config: McpConfig) {
   const editorType = getEditorType();
+  let filePath = "";
 
   if (editorType === EditorType.CURSOR) {
-    Logger.info(`Writing to ${CURSOR_FILE_PATH}`);
+    Logger.info(`Writing MCP config to ${CURSOR_FILE_PATH}`);
+    filePath = CURSOR_FILE_PATH;
   } else if (editorType === EditorType.VSCODE) {
-    Logger.info(`Writing to ${VSCODE_FILE_PATH}`);
+    Logger.info(`Writing MCP config to ${VSCODE_FILE_PATH}`);
+    filePath = VSCODE_FILE_PATH;
+  } else {
+    // Unknown editors will not be handled, as mcp.json is not standardized yet.
+    Logger.error(`Failed writing MCP config - unknown editor detected.`);
+    return;
   }
 
-  // Cannot have a default case here, as using invalid schema usually results in red errors being thrown.
+  if (vscode.workspace.workspaceFolders?.length === 0) {
+    Logger.error(`Failed writing MCP config - no workspace folder available.`);
+    return;
+  }
+
+  const folder = vscode.workspace.workspaceFolders?.[0];
+
+  if (!folder) {
+    Logger.error(`Failed writing MCP config - no workspace folder open.`);
+    return;
+  }
+
+  const jsonString = JSON.stringify(config, null, 2);
+
+  fs.writeFile(filePath, jsonString, (err) => {
+    if (err) {
+      Logger.error(`Failed writing MCP config - error: ${err}`);
+    }
+  });
 }
 
 function newMcpConfig(jwtToken: string): McpConfig {
@@ -50,6 +77,8 @@ function newMcpConfig(jwtToken: string): McpConfig {
       url: MCP_BACKEND_URL,
       type: "sse",
       headers: {
+        // this doesn't work for now due to a Cursor bug,
+        // said bug should be fixed with the next Cursor version
         Authorization: `Bearer ${jwtToken}`,
       },
     },
