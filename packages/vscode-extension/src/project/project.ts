@@ -17,6 +17,7 @@ import _ from "lodash";
 import { minimatch } from "minimatch";
 import {
   AppPermissionType,
+  DeviceButtonType,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
@@ -655,14 +656,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
       await this.reload("reboot");
     }
   }
-
-  onToolsStateChange = (toolsState: ToolsState) => {
-    this.eventEmitter.emit("toolsStateChanged", toolsState);
-  };
-
-  onToolsStateChange = (toolsState: ToolsState) => {
-    this.eventEmitter.emit("toolsStateChanged", toolsState);
-  };
 
   onToolsStateChange = (toolsState: ToolsState) => {
     this.eventEmitter.emit("toolsStateChanged", toolsState);
