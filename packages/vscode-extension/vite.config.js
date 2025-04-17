@@ -47,7 +47,11 @@ export default defineConfig({
     assetsInlineLimit: 0, // disable assets inlining
     reportCompressedSize: false, // disable reporting compressed size
     rollupOptions: {
-      input: { panel: "src/webview/index.jsx", network: "src/network/index.jsx" },
+      input: {
+        panel: "src/webview/index.jsx",
+        network: "src/network/index.jsx",
+        reactDevtoolsProfiler: "src/react-devtools-profiler/index.jsx",
+      },
       output: {
         // Fixed name for the JavaScript entry file
         entryFileNames: (chunkInfo) => {
@@ -57,6 +61,8 @@ export default defineConfig({
               return "panel.js";
             case "network":
               return "network.js";
+            case "reactDevtoolsProfiler":
+              return "react-devtools-profiler.js";
             default:
               return "[name].js";
           }
@@ -70,6 +76,8 @@ export default defineConfig({
                 return "panel.css";
               case "network":
                 return "network.css";
+              case "reactDevtoolsProfiler":
+                return "react-devtools-profiler.css";
               default:
                 return "[name].css";
             }

@@ -58,11 +58,10 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   activate() {
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
     this.devtoolsListeners.push(
-      this.devtools.addListener(REDUX_PLUGIN_ID, (payload) => {
-        this.connectedWebview?.postMessage({
-          scope: REDUX_PLUGIN_ID,
-          data: payload,
-        });
+      this.devtools.addListener("RNIDE_devtoolsPluginMessage", (payload) => {
+        if (payload.scope === REDUX_PLUGIN_ID) {
+          this.connectedWebview?.postMessage(payload);
+        }
       })
     );
     this.devtoolsListeners.push(

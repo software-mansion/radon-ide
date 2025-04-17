@@ -506,22 +506,23 @@ export class Project
   }
 
   public async goHome(homeUrl: string) {
-    getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
-      platform: this.projectState.selectedDevice?.platform,
-    });
+    // getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
+    //   platform: this.projectState.selectedDevice?.platform,
+    // });
 
-    if (this.dependencyManager === undefined) {
-      Logger.error(
-        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
-      );
-      throw new Error("[PROJECT] Dependency manager not initialized");
-    }
+    // if (this.dependencyManager === undefined) {
+    //   Logger.error(
+    //     "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+    //   );
+    //   throw new Error("[PROJECT] Dependency manager not initialized");
+    // }
 
-    if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
-      await this.openNavigation(homeUrl);
-    } else {
-      await this.reloadMetro();
-    }
+    // if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
+    //   await this.openNavigation(homeUrl);
+    // } else {
+    //   await this.reloadMetro();
+    // }
+    this.devtools?.profileReact();
   }
 
   //#region Session lifecycle
