@@ -56,7 +56,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private nativeLogsOutputChannel: OutputChannel | undefined;
   private nativeLogsCancelToken: CancelToken | undefined;
 
-  constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
+  constructor(
+    private readonly avdId: string,
+    private readonly info: DeviceInfo
+  ) {
     super();
   }
 

@@ -120,8 +120,8 @@ export class Preview implements Disposable {
           const id = multimediaReadyMatch
             ? multimediaReadyMatch[2]
             : multimediaErrorMatch
-            ? multimediaErrorMatch[2]
-            : "";
+              ? multimediaErrorMatch[2]
+              : "";
 
           const handlers = this.multimediaPromises.get(id);
           this.multimediaPromises.delete(id);
