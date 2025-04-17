@@ -40,9 +40,9 @@ Radon IDE supports projects bootstrapped with the [React Native Community CLI](h
 
 <div className="compatibility">
 
-| 0.72  | 0.73   | 0.74   | 0.75   | 0.76   | 0.77   | 0.78   |
-| ----- | ------ | ------ | ------ | ------ | ------ | ------ |
-| <No/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> |
+| 0.72  | 0.73   | 0.74   | 0.75   | 0.76   | 0.77   | 0.78   | 0.79   |
+| ----- | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| <No/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> |
 
 </div>
 
@@ -54,7 +54,7 @@ If your project doesn't work out-of-the-box because of modifications made in the
 
 | Nx     | yarn workspaces | npm workspaces | pnpm workspaces |
 | ------ | --------------- | -------------- | --------------- |
-| <Yes/> | <Yes/>          | <No/>          | <Yes/>           |
+| <Yes/> | <Yes/>          | <No/>          | <Yes/>          |
 
 </div>
 

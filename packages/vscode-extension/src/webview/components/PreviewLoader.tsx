@@ -21,13 +21,9 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
 
-  const startupMessage =
-    projectState.status === "starting" ? projectState.startupMessage : undefined;
+  const startupMessage = projectState.startupMessage;
 
   useEffect(() => {
-    if (projectState.status !== "starting") {
-      return;
-    }
     if (projectState.startupMessage === StartupMessage.Restarting) {
       setProgress(0);
     } else {
@@ -83,55 +79,53 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
   const isBuilding = startupMessage === StartupMessage.Building;
 
   return (
-    projectState.status === "starting" && (
-      <>
-        <div className="preview-loader-center-pad" />
-        <button className="preview-loader-container" onClick={handleLoaderClick}>
-          <div className="preview-loader-button-group">
-            <StartupMessageComponent
-              className={classNames(
-                "preview-loader-message",
-                isLoadingSlowly && "preview-loader-slow-progress"
-              )}>
-              {projectState.startupMessage}
-              {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
-            </StartupMessageComponent>
-            {projectState.stageProgress !== undefined && (
-              <div className="preview-loader-stage-progress">
-                {(projectState.stageProgress * 100).toFixed(1)}%
-              </div>
-            )}
-          </div>
-        </button>
-        <ProgressBar progress={progress} />
-        <div className="preview-loader-center-pad">
-          {isLoadingSlowly && isWaitingForApp && (
-            <>
-              <div className="preview-loader-submessage">
-                Loading app takes longer than expected. If nothing happens after a while try the
-                below options to troubleshoot:
-              </div>
-              <div className="preview-loader-waiting-actions">
-                <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
-                  <span className="codicon codicon-output" /> Open Radon IDE Logs
-                </Button>
-                <Button type="secondary" onClick={onRequestShowPreview}>
-                  <span className="codicon codicon-open-preview" /> Force show device screen
-                </Button>
-                <a href="https://ide.swmansion.com/docs/guides/troubleshooting" target="_blank">
-                  <Button type="secondary">
-                    <span className="codicon codicon-browser" /> Visit troubleshoot guide
-                  </Button>
-                </a>
-                <Button type="secondary" onClick={() => project.reload("rebuild")}>
-                  <span className="codicon codicon-refresh" /> Clean rebuild project
-                </Button>
-              </div>
-            </>
+    <>
+      <div className="preview-loader-center-pad" />
+      <button className="preview-loader-container" onClick={handleLoaderClick}>
+        <div className="preview-loader-button-group">
+          <StartupMessageComponent
+            className={classNames(
+              "preview-loader-message",
+              isLoadingSlowly && "preview-loader-slow-progress"
+            )}>
+            {projectState.startupMessage}
+            {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
+          </StartupMessageComponent>
+          {projectState.stageProgress !== undefined && (
+            <div className="preview-loader-stage-progress">
+              {(projectState.stageProgress * 100).toFixed(1)}%
+            </div>
           )}
         </div>
-      </>
-    )
+      </button>
+      <ProgressBar progress={progress} />
+      <div className="preview-loader-center-pad">
+        {isLoadingSlowly && isWaitingForApp && (
+          <>
+            <div className="preview-loader-submessage">
+              Loading app takes longer than expected. If nothing happens after a while try the below
+              options to troubleshoot:
+            </div>
+            <div className="preview-loader-waiting-actions">
+              <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
+                <span className="codicon codicon-output" /> Open Radon IDE Logs
+              </Button>
+              <Button type="secondary" onClick={onRequestShowPreview}>
+                <span className="codicon codicon-open-preview" /> Force show device screen
+              </Button>
+              <a href="https://ide.swmansion.com/docs/guides/troubleshooting" target="_blank">
+                <Button type="secondary">
+                  <span className="codicon codicon-browser" /> Visit troubleshoot guide
+                </Button>
+              </a>
+              <Button type="secondary" onClick={() => project.reload("rebuild")}>
+                <span className="codicon codicon-refresh" /> Clean rebuild project
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }
 

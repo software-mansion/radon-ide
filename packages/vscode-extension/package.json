@@ -21,7 +21,7 @@
     "workspaceContains:**/app.config.js",
     "workspaceContains:**/app.config.ts"
   ],
-  "version": "1.4.1",
+  "version": "1.5.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -54,7 +54,7 @@
         "command": "RNIDE.openPanel",
         "title": "Open IDE Panel",
         "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+        "enablement": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen && !RNIDE.showsStatusBarItem"
       },
       {
         "command": "RNIDE.showPanel",
@@ -81,6 +81,18 @@
         "enablement": "RNIDE.extensionIsActive"
       },
       {
+        "command": "RNIDE.deviceHomeButtonPress",
+        "title": "Trigger home button press on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.deviceAppSwitchButtonPress",
+        "title": "Open app switcher on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
         "command": "RNIDE.captureReplay",
         "title": "Capture Replay",
         "category": "Radon IDE",
@@ -95,6 +107,12 @@
       {
         "command": "RNIDE.captureScreenshot",
         "title": "Capture Screenshot",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.openChat",
+        "title": "Chat with Radon AI",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
@@ -120,6 +138,11 @@
         "command": "RNIDE.performFailedBiometricAuthorization",
         "key": "ctrl+shift+N",
         "mac": "cmd+shift+N"
+      },
+      {
+        "command": "RNIDE.deviceHomeButtonPress",
+        "key": "ctrl+shift+H",
+        "mac": "cmd+shift+H"
       },
       {
         "command": "RNIDE.captureReplay",
@@ -266,7 +289,7 @@
         {
           "command": "RNIDE.openPanel",
           "group": "navigation",
-          "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen"
+          "when": "RNIDE.extensionIsActive && !RNIDE.panelIsOpen && !RNIDE.showsStatusBarItem"
         }
       ],
       "view/title": [
@@ -440,6 +463,10 @@
                   "configuration": {
                     "type": "string",
                     "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+                  },
+                  "launchArguments": {
+                    "type": "array",
+                    "description": "Arguments passed to the app when launching it. Note: this configuration is only applied for applications that are launched using a build and not those opened with expo deep link."
                   }
                 }
               },
@@ -533,6 +560,10 @@
                   "configuration": {
                     "type": "string",
                     "description": "Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to \"Debug\"."
+                  },
+                  "launchArguments": {
+                    "type": "array",
+                    "description": "Arguments passed to the app when launching it. Note: this configuration is only applied for applications that are launched using a build and not those opened with expo deep link."
                   }
                 }
               },
@@ -640,7 +671,16 @@
           "fontCharacter": "\\E001"
         }
       }
-    }
+    },
+    "chatParticipants": [
+      {
+        "id": "chat.radon-ai",
+        "fullName": "Radon AI",
+        "name": "radon",
+        "description": "Get up-to-date answers related to React Native",
+        "isSticky": true
+      }
+    ]
   },
   "scripts": {
     "vscode:package": "vsce package",
@@ -650,18 +690,17 @@
     "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
     "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
     "build:react-query-devtools-ui": "rm -rf dist/react-query-devtools && cp -R ../radon-ide-react-query-webui/artifacts dist/react-query-devtools",
-    "build:chrome-devtools-ui": "rm -rf dist/network-devtools-frontend && cp -R ../chrome-devtools-ui/build_artifacts/RadonIDE/gen/front_end/ dist/network-devtools-frontend",
-    "build:third-party": "npm run build:chrome-devtools-ui && npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
+    "build:third-party": "npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
+    "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:extension-debug": "npm run prepare:fake_editor && npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
     "build:extension": "npm run prepare:fake_editor && node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
-    "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
     "build:vscode-js-debug": "cd ../vscode-js-debug && npm i && npm exec tsc && npm run compile && cp dist/src/chromehash_bg.wasm ../vscode-extension/dist/",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
     "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
     "prepare:fake_editor": "mkdir -p dist && cp react-fake-editor-executable dist/atom",
-    "watch:extension": "vite",
+    "watch:extension": "vite && cd ./src/network && vite",
     "package": "rm -rf dist/* && cp ../vscode-js-debug/dist/src/chromehash_bg.wasm dist/ && npm run build:dist",
     "lint": "eslint src/**/*.\\{ts,tsx,js,jsx\\} && prettier --check src",
     "typecheck": "tsc --noEmit",
@@ -672,7 +711,7 @@
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
     "preinstall": "mkdir -p dist && bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && npm run build:vscode-js-debug",
     "fetch:sim-server-assets": "bash ./scripts/download-sim-server-release-assets.sh dist",
-    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../chrome-devtools-ui ../redux-devtools-expo-dev-plugin ../radon-ide-react-query-webui",
+    "fetch:third-party": "bash ./scripts/init-submodules-if-not-present.sh ../redux-devtools-expo-dev-plugin ../radon-ide-react-query-webui",
     "postinstall": "patch-package"
   },
   "devDependencies": {
@@ -693,6 +732,7 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@react-native-community/cli-config": "^15.1.3",
     "@react-native-community/cli-types": "^15.1.3",
+    "@types/d3": "^7.4.3",
     "@types/glob": "^7.1.3",
     "@types/lodash": "^4.14.202",
     "@types/node": "^18.19.3",
@@ -709,6 +749,7 @@
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.14.1",
     "@vitejs/plugin-react": "^4.2.1",
+    "@vscode-elements/react-elements": "^0.9.0",
     "@vscode/codicons": "^0.0.35",
     "@vscode/debugadapter": "^1.51.0",
     "@vscode/debugprotocol": "^1.51.0",
@@ -721,6 +762,7 @@
     "chrome-remote-interface": "^0.33.0",
     "classnames": "^2.5.1",
     "coordinate-parser": "^1.0.7",
+    "d3": "^7.9.0",
     "esbuild": "^0.19.9",
     "esbuild-plugin-license": "^1.2.3",
     "eslint": "^7.19.0",
@@ -734,10 +776,10 @@
     "minimatch": "^9.0.4",
     "mocha": "^10.4.0",
     "node-fetch": "^2.7.0",
-    "patch-package": "^8.0.0",
     "ovsx": "^0.10.1",
+    "patch-package": "^8.0.0",
     "plist": "^3.1.0",
-    "prettier": "^2.2.1",
+    "prettier": "2.4.1",
     "re-resizable": "^6.9.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

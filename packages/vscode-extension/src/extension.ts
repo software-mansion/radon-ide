@@ -30,11 +30,14 @@ import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
+import { registerChat } from "./chat";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
+import { Connector } from "./connect/Connector";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
+const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
-function handleUncaughtErrors() {
+function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
     Logger.error("Unhandled promise rejection", error);
   });
@@ -48,7 +51,9 @@ function handleUncaughtErrors() {
     }
     Logger.error("Uncaught exception", error);
     Logger.openOutputPanel();
-    window.showErrorMessage("Internal extension error.", "Dismiss");
+    if (context.extensionMode === ExtensionMode.Development) {
+      window.showErrorMessage("Internal extension error.", "Dismiss");
+    }
   });
 }
 
@@ -62,7 +67,7 @@ export function deactivate(context: ExtensionContext): undefined {
 }
 
 export async function activate(context: ExtensionContext) {
-  handleUncaughtErrors();
+  handleUncaughtErrors(context);
   await activateJsDebug(context);
 
   if (Platform.OS !== "macos" && Platform.OS !== "windows" && Platform.OS !== "linux") {
@@ -151,6 +156,12 @@ export async function activate(context: ExtensionContext) {
       performFailedBiometricAuthorization
     )
   );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceHomeButtonPress", deviceHomeButtonPress)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceAppSwitchButtonPress", deviceAppSwitchButtonPress)
+  );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
@@ -173,6 +184,7 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.captureScreenshot", captureScreenshot)
   );
+  context.subscriptions.push(commands.registerCommand("RNIDE.openChat", openChat));
 
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
     registeredCommandDisposable.dispose(); // must dispose to avoid endless loops
@@ -284,9 +296,12 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
+  // You can configure the chat in package.json under the `chatParticipants` key
+  registerChat(context);
+
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
-  shouldExtensionActivate && extensionActivated();
+  shouldExtensionActivate && extensionActivated(context);
 }
 
 class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
@@ -300,8 +315,12 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
   }
 }
 
-function extensionActivated() {
+function extensionActivated(context: ExtensionContext) {
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
+  if (context.extensionMode === ExtensionMode.Development) {
+    // "Connector" implements experimental functionality that is available in development mode only
+    Connector.getInstance().start();
+  }
   if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
     commands.executeCommand("RNIDE.openPanel");
   }
@@ -319,6 +338,18 @@ async function performFailedBiometricAuthorization() {
   IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
 }
 
+async function deviceHomeButtonPress() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("home", "Down");
+  project?.dispatchButton("home", "Up");
+}
+
+async function deviceAppSwitchButtonPress() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("appSwitch", "Down");
+  project?.dispatchButton("appSwitch", "Up");
+}
+
 async function captureReplay() {
   IDE.getInstanceIfExists()?.project.captureReplay();
 }
@@ -329,6 +360,17 @@ async function toggleRecording() {
 
 async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
+}
+
+async function openChat() {
+  let prompt = undefined;
+
+  if (!extensionContext.globalState.get(CHAT_ONBOARDING_COMPLETED)) {
+    prompt = "@radon what is Radon IDE?";
+    extensionContext.globalState.update(CHAT_ONBOARDING_COMPLETED, true);
+  }
+
+  commands.executeCommand("workbench.action.chat.open", prompt);
 }
 
 async function diagnoseWorkspaceStructure() {

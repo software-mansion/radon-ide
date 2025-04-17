@@ -1,4 +1,4 @@
-import { DevicePropertiesFrame } from "../../utilities/consts";
+import { DevicePropertiesFrame } from "../../utilities/deviceContants";
 
 type DeviceFrameProps = {
   frame: DevicePropertiesFrame;

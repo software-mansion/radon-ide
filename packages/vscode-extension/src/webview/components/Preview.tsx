@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/consts";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
 import PreviewLoader from "./PreviewLoader";
 import {
   useBootErrorAlert,
@@ -92,23 +92,19 @@ function Preview({
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
   const hasBundlingError = projectStatus === "bundlingError";
-  const hasBundleBuildFailedError = projectStatus === "bundleBuildFailedError";
 
   const debugPaused = projectStatus === "debuggerPaused";
 
   const previewURL = projectState.previewURL;
 
-  const isStarting =
-    hasBundleBuildFailedError || hasBundlingError
-      ? false
-      : !projectState || projectState.status === "starting";
+  const isStarting = hasBundlingError ? false : !projectState || projectState.status === "starting";
   const showDevicePreview =
     projectState?.previewURL &&
     (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
   useBuildErrorAlert(hasBuildError);
   useBootErrorAlert(hasBootError);
-  useBundleErrorAlert(hasBundleBuildFailedError || hasBundlingError);
+  useBundleErrorAlert(hasBundlingError);
 
   const openRebuildAlert = useNativeRebuildAlert();
 
@@ -207,12 +203,7 @@ function Preview({
   }
 
   const shouldPreventInputEvents =
-    debugPaused ||
-    hasBundleBuildFailedError ||
-    hasBundlingError ||
-    projectStatus === "refreshing" ||
-    !showDevicePreview ||
-    !!replayData;
+    debugPaused || projectStatus === "refreshing" || !showDevicePreview || !!replayData;
 
   const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
 
@@ -553,27 +544,6 @@ function Preview({
               {debugPaused && (
                 <div className="phone-screen phone-debug-overlay">
                   <Debugger />
-                </div>
-              )}
-              {/* TODO: Add different label in case of bundle/incremental bundle error */}
-              {hasBundleBuildFailedError && (
-                <div className="phone-screen phone-debug-overlay phone-error-overlay">
-                  <button
-                    className="uncaught-button"
-                    onClick={() => {
-                      project.reload("autoReload");
-                    }}>
-                    Bundle error&nbsp;
-                    <span className="codicon codicon-refresh" />
-                  </button>
-                </div>
-              )}
-              {hasBundlingError && (
-                <div className="phone-screen phone-debug-overlay phone-error-overlay">
-                  <button className="uncaught-button" onClick={() => project.reload("autoReload")}>
-                    Bundle error&nbsp;
-                    <span className="codicon codicon-refresh" />
-                  </button>
                 </div>
               )}
             </div>

@@ -2,7 +2,7 @@ import fs from "fs";
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, TouchPoint } from "../common/Project";
+import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType } from "../common/Project";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 
@@ -142,6 +142,10 @@ export abstract class DeviceBase implements Disposable {
     } else {
       this.preview?.sendKey(keyCode, direction);
     }
+  }
+
+  public sendButton(button: DeviceButtonType, direction: "Up" | "Down") {
+    this.preview?.sendButton(button, direction);
   }
 
   public async sendClipboard(text: string) {

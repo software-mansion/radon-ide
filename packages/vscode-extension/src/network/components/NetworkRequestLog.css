@@ -1,0 +1,11 @@
+.table-container {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: var(--vscode-editor-background);
+}
+
+.table-row:hover {
+  cursor: pointer;
+  background-color: var(--vscode-list-hoverBackground);
+}

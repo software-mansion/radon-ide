@@ -50,7 +50,6 @@ import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
-import { isAutoSaveEnabled } from "../utilities/isAutoSaveEnabled";
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager } from "./DeviceSessionsManager";
@@ -403,10 +402,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
-  onBundleBuildFailedError(): void {
-    this.updateProjectState({ status: "bundleBuildFailedError" });
-  }
-
   async onBundlingError(
     message: string,
     source: DebugSource,
@@ -414,17 +409,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
   ): Promise<void> {
     await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
 
-    if (!isAutoSaveEnabled()) {
-      this.focusDebugConsole();
+    if (this.projectState.status === "starting") {
       focusSource(source);
     }
 
     Logger.error("[Bundling Error]", message);
-    // if bundle build failed, we don't want to change the status
-    // bundlingError status should be set only when bundleBuildFailedError status is not set
-    if (this.projectState.status === "bundleBuildFailedError") {
-      return;
-    }
+
     this.updateProjectState({ status: "bundlingError" });
   }
 
@@ -527,6 +517,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
 
   public dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
     this.deviceSession?.sendKey(keyCode, direction);
+  }
+
+  public dispatchButton(button: DeviceButtonType, direction: "Up" | "Down") {
+    this.deviceSession?.sendButton(button, direction);
   }
 
   public dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number) {
@@ -666,6 +660,15 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     this.eventEmitter.emit("toolsStateChanged", toolsState);
   };
 
+  onToolsStateChange = (toolsState: ToolsState) => {
+    this.eventEmitter.emit("toolsStateChanged", toolsState);
+  };
+
+  onToolsStateChange = (toolsState: ToolsState) => {
+    this.eventEmitter.emit("toolsStateChanged", toolsState);
+  };
+
+  // frytki !!!!! is wrong here
   public async getToolsState() {
     return this.deviceSession!.toolsManager.getToolsState();
   }
@@ -686,12 +689,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     }
   }
 
+  public async runCommand(command: string): Promise<void> {
+    await commands.executeCommand(command);
+  }
+
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
 
   private reportStageProgress(stageProgress: number, stage: string) {
-    if (this.projectState.status !== "starting" || stage !== this.projectState.startupMessage) {
+    if (stage !== this.projectState.startupMessage) {
       return;
     }
     this.updateProjectState({ stageProgress });

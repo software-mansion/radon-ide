@@ -47,14 +47,32 @@ export default defineConfig({
     assetsInlineLimit: 0, // disable assets inlining
     reportCompressedSize: false, // disable reporting compressed size
     rollupOptions: {
-      input: "src/webview/index.jsx",
+      input: { panel: "src/webview/index.jsx", network: "src/network/index.jsx" },
       output: {
         // Fixed name for the JavaScript entry file
-        entryFileNames: "webview.js",
+        entryFileNames: (chunkInfo) => {
+          // Return different filenames based on the entry point
+          switch (chunkInfo.name) {
+            case "panel":
+              return "panel.js";
+            case "network":
+              return "network.js";
+            default:
+              return "[name].js";
+          }
+        },
         // Fixed name for the CSS file
         assetFileNames: (assetInfo) => {
           if (assetInfo.name.endsWith(".css")) {
-            return "webview.css";
+            // Handle CSS files based on the entry point
+            switch (path.basename(assetInfo.name)) {
+              case "panel":
+                return "panel.css";
+              case "network":
+                return "network.css";
+              default:
+                return "[name].css";
+            }
           }
           return "assets/[name]-[hash][extname]";
         },

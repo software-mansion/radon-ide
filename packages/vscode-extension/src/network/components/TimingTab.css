@@ -1,0 +1,19 @@
+.timing-bar {
+  display: flex;
+  height: 20px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+}
+
+.request-sent-bar {
+  background-color: var(--vscode-textLink-foreground);
+}
+
+.response-receive-bar {
+  background-color: var(--vscode-button-hoverBackground);
+}
