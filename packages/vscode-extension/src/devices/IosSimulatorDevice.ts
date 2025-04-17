@@ -53,7 +53,10 @@ export class IosSimulatorDevice extends DeviceBase {
   private nativeLogsOutputChannel: OutputChannel | undefined;
   private runningAppProcess: ExecaChildProcess | undefined;
 
-  constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
+  constructor(
+    private readonly deviceUDID: string,
+    private readonly _deviceInfo: DeviceInfo
+  ) {
     super();
   }
 
