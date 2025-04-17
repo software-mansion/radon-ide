@@ -71,7 +71,7 @@ export class DeviceBootError extends Error {
 }
 
 export class DeviceSession implements Disposable {
-  public metro: Metro;
+  public metro: MetroLauncher;
   public toolsManager: ToolsManager;
   private isActive: boolean = false;
   private inspectCallID = 7621;
@@ -120,7 +120,7 @@ export class DeviceSession implements Disposable {
     };
 
     this.devtools = new Devtools();
-    this.metro = new Metro(this.devtools, metroDelegate);
+    this.metro = new MetroLauncher(this.devtools, metroDelegate);
     this.toolsManager = new ToolsManager(this.devtools, toolsDelegate);
 
     this.buildManager = new BuildManager(
@@ -262,7 +262,7 @@ export class DeviceSession implements Disposable {
       const oldMetro = this.metro;
       const oldToolsManager = this.toolsManager;
       this.devtools = new Devtools();
-      this.metro = new Metro(this.devtools, this.metroDelegate);
+      this.metro = new MetroLauncher(this.devtools, this.metroDelegate);
       this.toolsManager = new ToolsManager(this.devtools, this.toolsDelegate);
       oldToolsManager.dispose();
       oldDevtools.dispose();
