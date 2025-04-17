@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import * as vscode from "vscode";
 import { Logger } from "../Logger";
+import { getLicenseToken } from "../utilities/license";
 
 enum EditorType {
   CURSOR = "cursor",
@@ -137,13 +138,18 @@ function newMcpConfig(jwtToken: string): McpConfig {
   };
 }
 
-export async function updateMcpConfig(jwtToken: string) {
+export async function updateMcpConfig() {
   let mcpConfig = await readMcpConfig();
 
   // todo: keep track of config changes, exit if none are detected
 
   if (!mcpConfig) {
-    mcpConfig = newMcpConfig(jwtToken);
+    const jwt = await getLicenseToken();
+    if (!jwt) {
+      Logger.error(`Failed updating MCP config - no JWT token available.`);
+      return;
+    }
+    mcpConfig = newMcpConfig(jwt);
   }
 
   writeMcpConfig(mcpConfig);
