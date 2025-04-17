@@ -11,15 +11,10 @@ enum EditorType {
   VSCODE = "vscode",
 }
 
-interface CursorMcpConfig {
-  mcpServers: Record<string, Object | string>;
-}
-
-interface VscodeMcpConfig {
-  servers: Record<string, Object | string>;
-}
-
-type McpConfig = CursorMcpConfig | VscodeMcpConfig;
+type McpConfig = {
+  mcpServers?: { RadonAi?: Object }; // cursor
+  servers?: { RadonAi?: Object }; // vscode
+};
 
 const VSCODE_FILE_PATH = ".vscode/mcp.json";
 const CURSOR_FILE_PATH = ".cursor/mcp.json";
@@ -112,45 +107,66 @@ function writeMcpConfig(config: McpConfig) {
   });
 }
 
-function newMcpConfig(jwtToken: string): McpConfig {
-  const editorType = getEditorType();
+async function updateRadonEntry(incompleteConfig: McpConfig): Promise<boolean> {
+  if (incompleteConfig.servers?.RadonAi || incompleteConfig.mcpServers?.RadonAi) {
+    return true;
+  }
+
+  const jwt = await getLicenseToken();
+  if (!jwt) {
+    // this case is irrelevant, we'll change JWT retrieval soon
+    Logger.error(`Failed updating MCP config - no JWT token available.`);
+    return false;
+  }
 
   const radonMcpEntry = {
     RadonAi: {
       url: MCP_BACKEND_URL,
       type: "sse",
       headers: {
-        // this doesn't work for now due to a Cursor bug,
-        // said bug should be fixed with the next Cursor version
-        Authorization: `Bearer ${jwtToken}`,
+        // `headers` do not work for now due to a Cursor bug,
+        // said bug should be fixed with the next Cursor release
+        Authorization: `Bearer ${jwt}`,
       },
     },
   };
 
+  if (incompleteConfig.servers) {
+    incompleteConfig.servers.RadonAi = radonMcpEntry;
+    return true;
+  } else if (incompleteConfig.mcpServers) {
+    incompleteConfig.mcpServers.RadonAi = radonMcpEntry;
+    return true;
+  }
+
+  // mcp.json file has to have either 'servers' or 'mcpServers' field, otherwise it's invalid
+  Logger.error(`Failed updating MCP config - existing mcp.json file is corrupted.`);
+  return false;
+}
+
+function newMcpConfig(): McpConfig {
+  const editorType = getEditorType();
+
   if (editorType === EditorType.VSCODE) {
     return {
-      servers: radonMcpEntry,
+      servers: {},
     };
   }
 
   return {
-    mcpServers: radonMcpEntry,
+    mcpServers: {},
   };
 }
 
 export async function updateMcpConfig() {
-  let mcpConfig = await readMcpConfig();
+  let mcpConfig = {};
 
-  // todo: keep track of config changes, exit if none are detected
-
-  if (!mcpConfig) {
-    const jwt = await getLicenseToken();
-    if (!jwt) {
-      Logger.error(`Failed updating MCP config - no JWT token available.`);
-      return;
-    }
-    mcpConfig = newMcpConfig(jwt);
+  try {
+    mcpConfig = await readMcpConfig();
+  } catch {
+    mcpConfig = newMcpConfig();
   }
 
+  updateRadonEntry(mcpConfig);
   writeMcpConfig(mcpConfig);
 }
