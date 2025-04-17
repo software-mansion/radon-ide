@@ -3,10 +3,16 @@
   "tasks": [
     {
       "label": "build and run everything",
-      "dependsOn": ["build extension", "start webview server"],
+      "dependsOn": ["kill vite", "build extension", "start webview server", "start network inspector server"],
       "dependsOrder": "sequence" // or "parallel" if you want to run them concurrently
     },
 
+    {
+      "label": "kill vite",
+      "type": "shell",
+      // kills the processes listening on ports 2137 and 5173
+      "command": "lsof -n -i :2137,5173 -sTCP:LISTEN | awk '{print $2}' | grep -E '[0-9]+' | xargs kill",
+    },
     {
       "label": "build extension",
       "type": "npm",
@@ -33,6 +39,23 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": ".*Local:\\s+http://localhost:2137/.*",
+          "endsPattern": "^.*$"
+        }
+      }
+    },
+    {
+      "label": "start network inspector server",
+      "type": "npm",
+      "isBackground": true,
+      "script": "watch:network_inspector",
+      "presentation": { "reveal": "silent" },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^Local:\\s+http://localhost:5173/$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*Local:\\s+http://localhost:5173/.*",
           "endsPattern": "^.*$"
         }
       }
