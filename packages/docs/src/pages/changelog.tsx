@@ -102,7 +102,7 @@ const changelog: ChangelogItem[] = [
 
 <img width="700" src="/img/docs/ide_devtools_expo_redux.png" className="shadow-image changelog-item" />
 
-- [**Local EAS builds support**](/docs/guides/configuration#custom-build-settings): You can use [Expo Application Services](https://expo.dev/eas) to build your app in Radon IDE.
+- [**Support for eas build --local**](/docs/guides/configuration#custom-build-settings): Radon IDE can now build your apps using [EAS Build with --local flag](https://docs.expo.dev/build-reference/local-builds/). This can be configured using the \`customBuild\` in \`launch.json\` file. 
 
 - Support for React Native 0.77
 
