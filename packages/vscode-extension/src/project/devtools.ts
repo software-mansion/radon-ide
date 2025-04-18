@@ -108,7 +108,6 @@ export class Devtools implements Disposable {
         listen(fn) {
           function listener(message: string) {
             const parsedMessage = JSON.parse(message);
-            console.log("RECEIVED EVENT", parsedMessage);
             return fn(parsedMessage);
           }
           ws.on("message", listener);
@@ -121,19 +120,29 @@ export class Devtools implements Disposable {
         },
       };
 
-      this.bridge = createBridge(wall);
+      const bridge = createBridge(wall);
+      const store = createStore(bridge);
+
       ws.on("close", () => {
         this.socket = undefined;
-        this.bridge = undefined;
+        bridge.shutdown();
+        if (this.bridge === bridge) {
+          this.bridge = undefined;
+        }
+        if (this.store === store) {
+          this.store = undefined;
+        }
       });
-      this.store = createStore(this.bridge!);
 
       // Register bridge listeners for ALL custom event types
       for (const event of DEVTOOLS_EVENTS) {
-        this.bridge.addListener(event, (payload) => {
+        bridge.addListener(event, (payload) => {
           this.listeners.get(event)?.forEach((listener) => listener(payload));
         });
       }
+
+      this.bridge = bridge;
+      this.store = store;
     });
 
     return new Promise<void>((resolve) => {
@@ -143,26 +152,6 @@ export class Devtools implements Disposable {
         resolve();
       });
     });
-  }
-
-  public profileReact() {
-    this.store?.profilerStore.startProfiling();
-    this.store?.profilerStore.addListener("isProcessingData", async () => {
-      console.log("PROFILING DATA", this.store?.profilerStore.profilingData);
-      const profilingData = this.store?.profilerStore.profilingData;
-      if (profilingData) {
-        const exportData = prepareProfilingDataExport(profilingData);
-        // save data to file
-        const filePath = filePathForProfile();
-        await fs.promises.writeFile(filePath, JSON.stringify(exportData));
-        console.log("PROFILE SAVED TO", filePath);
-        // Open the saved profile using the custom editor via the vscode.open command
-        commands.executeCommand("vscode.open", Uri.file(filePath));
-      }
-    });
-    setTimeout(() => {
-      this.store?.profilerStore.stopProfiling();
-    }, 5000);
   }
 
   public dispose() {
