@@ -9,7 +9,7 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
 import { runExternalBuild } from "./customBuild";
-import { fetchEasBuild } from "./eas";
+import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { getXcodebuildArch } from "../utilities/common";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -129,13 +129,15 @@ export async function buildIos(
         platform: DevicePlatform.IOS,
       });
 
-      const appPath = await fetchEasBuild(
-        cancelToken,
-        eas.ios,
-        DevicePlatform.IOS,
-        appRoot,
-        outputChannel
-      );
+      const appPath = eas.ios.local
+        ? await performLocalEasBuild(
+            eas.ios,
+            DevicePlatform.IOS,
+            appRoot,
+            outputChannel,
+            cancelToken
+          )
+        : await fetchEasBuild(cancelToken, eas.ios, DevicePlatform.IOS, appRoot, outputChannel);
 
       return {
         appPath,

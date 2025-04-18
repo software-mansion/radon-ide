@@ -1,6 +1,6 @@
 import { EasBuildConfig } from "./EasConfig";
 
-export type EasConfig = { profile: string; buildUUID?: string };
+export type EasConfig = { profile: string; buildUUID?: string; local?: boolean };
 export type CustomBuild = {
   buildCommand?: string;
   fingerprintCommand?: string;
