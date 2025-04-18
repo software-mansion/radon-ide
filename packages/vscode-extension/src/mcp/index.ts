@@ -4,7 +4,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import * as vscode from "vscode";
 import { Logger } from "../Logger";
-import { getLicenseToken } from "../utilities/license";
 
 enum EditorType {
   CURSOR = "cursor",
@@ -125,13 +124,6 @@ async function insertRadonEntry(incompleteConfig: McpConfig): Promise<boolean> {
     return false;
   }
 
-  const jwt = await getLicenseToken();
-  if (!jwt) {
-    // this case is irrelevant, we'll change JWT retrieval soon
-    Logger.error(`Failed updating MCP config - no JWT token available.`);
-    return false;
-  }
-
   const radonMcpEntry = {
     RadonAi: {
       url: MCP_BACKEND_URL,
@@ -139,7 +131,7 @@ async function insertRadonEntry(incompleteConfig: McpConfig): Promise<boolean> {
       headers: {
         // `headers` do not work for now due to a Cursor bug,
         // said bug should be fixed with the next Cursor release
-        Authorization: `Bearer ${jwt}`,
+        Authorization: "Bearer ${command:RNIDE.getLicenseToken}",
       },
     },
   };
