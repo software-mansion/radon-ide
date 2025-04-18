@@ -9,9 +9,7 @@ module.exports = function (context, options) {
     async loadContent() {
       // load mdx files from ./docs/_changelog/
       const dirPath = path.resolve(__dirname, "../../../docs/_changelog");
-      console.log("Loading changelog files from:", dirPath);
       const changelogFiles = globSync(`${dirPath}/*.{md,mdx}`);
-      console.log("Found changelog files:", changelogFiles);
       // read each file and parse it
       const fileData = changelogFiles.map((filePath) => {
         return fs.readFileSync(filePath, "utf-8");
