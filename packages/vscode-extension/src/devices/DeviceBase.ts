@@ -24,6 +24,7 @@ export abstract class DeviceBase implements Disposable {
 
   async reboot(): Promise<void> {
     this.preview?.dispose();
+    this.preview = undefined;
     this.previewStartPromise = undefined;
   }
   abstract bootDevice(deviceSettings: DeviceSettings): Promise<void>;

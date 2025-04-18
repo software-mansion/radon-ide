@@ -223,13 +223,18 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }, REBOOT_TIMEOUT);
 
     const exitListener = async () => {
-      await this.internalBootDevice();
       clearTimeout(timeout);
+      await this.internalBootDevice();
       resolve();
     };
 
-    this.emulatorProcess?.on("exit", exitListener);
-    this.emulatorProcess?.kill();
+    if (this.emulatorProcess) {
+      this.emulatorProcess.on("exit", exitListener);
+      this.emulatorProcess.kill();
+    } else {
+      await this.internalBootDevice();
+      resolve();
+    }
 
     return promise;
   }

@@ -31,6 +31,20 @@ import { extensionContext } from "../utilities/extensionContext";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
+export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
+  appearance: "dark",
+  contentSize: "normal",
+  location: {
+    latitude: 50.048653,
+    longitude: 19.965474,
+    isDisabled: false,
+  },
+  hasEnrolledBiometrics: false,
+  locale: "en_US",
+  replaysEnabled: false,
+  showTouches: false,
+};
+
 type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = {
   cleanBuild: boolean;
@@ -104,19 +118,8 @@ export class DeviceSession implements Disposable {
     private readonly metroDelegate: MetroDelegate,
     private readonly toolsDelegate: ToolsDelegate
   ) {
-    this.deviceSettings = extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? {
-      appearance: "dark",
-      contentSize: "normal",
-      location: {
-        latitude: 50.048653,
-        longitude: 19.965474,
-        isDisabled: false,
-      },
-      hasEnrolledBiometrics: false,
-      locale: "en_US",
-      replaysEnabled: false,
-      showTouches: false,
-    };
+    this.deviceSettings =
+      extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? DEVICE_SETTINGS_DEFAULT;
 
     this.devtools = new Devtools();
     this.metro = new MetroLauncher(this.devtools, metroDelegate);

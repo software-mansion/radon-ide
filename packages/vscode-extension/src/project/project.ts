@@ -37,7 +37,7 @@ import { DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
 import { throttle } from "../utilities/throttle";
 import { DebugSource } from "../debugging/DebugSession";
-import { AppEvent, DeviceSessionDelegate } from "./deviceSession";
+import { AppEvent, DEVICE_SETTINGS_DEFAULT, DeviceSessionDelegate } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
@@ -155,7 +155,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     oldApplicationContext.dispose();
 
     const oldDeviceSessionsManager = this.deviceSessionsManager;
-    this.deviceSessionsManager = this.deviceSessionsManager = new DeviceSessionsManager(
+    this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
       this,
@@ -628,21 +628,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
   }
 
   public async getDeviceSettings() {
-    return (
-      this.deviceSession?.deviceSettings ?? {
-        appearance: "dark",
-        contentSize: "normal",
-        location: {
-          latitude: 50.048653,
-          longitude: 19.965474,
-          isDisabled: false,
-        },
-        hasEnrolledBiometrics: false,
-        locale: "en_US",
-        replaysEnabled: false,
-        showTouches: false,
-      }
-    );
+    return this.deviceSession?.deviceSettings ?? DEVICE_SETTINGS_DEFAULT;
   }
 
   public async onDeviceSettingChanged(deviceSettings: DeviceSettings) {
