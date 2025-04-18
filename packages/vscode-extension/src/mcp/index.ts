@@ -21,8 +21,12 @@ const MCP_FILE_NAME = "mcp.json";
 const MCP_BACKEND_URL = "https://radon-ai-backend.swmansion.com/sse";
 
 function getEditorType(): EditorType {
-  const editorType = EditorType.CURSOR;
-  return editorType;
+  // heurestics, major == 0 means Cursor
+  // found no better way of determining editor type
+  if (vscode.version.startsWith("0.")) {
+    return EditorType.CURSOR;
+  }
+  return EditorType.VSCODE;
 }
 
 async function readMcpConfig(): Promise<McpConfig> {
