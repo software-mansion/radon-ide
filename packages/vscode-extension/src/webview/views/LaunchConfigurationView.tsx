@@ -522,7 +522,7 @@ function EasBuildConfiguration({
             className="input-configuration"
             type="string"
             defaultValue={buildUUID ?? ""}
-            placeholder="Auto (newest build with matching fingerprint)"
+            placeholder="Auto (build with matching fingerprint)"
             onBlur={onBuildUUIDInputBlur}
           />
         </>

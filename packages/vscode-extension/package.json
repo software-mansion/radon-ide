@@ -426,7 +426,7 @@
                       },
                       "buildUUID": {
                         "type": "string",
-                        "description": "UUID of the EAS build used in `eas build:view` command."
+                        "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
                       }
                     },
                     "required": [
@@ -443,7 +443,7 @@
                       },
                       "buildUUID": {
                         "type": "string",
-                        "description": "UUID of the EAS build used in `eas build:view` command."
+                        "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
                       }
                     },
                     "required": [
