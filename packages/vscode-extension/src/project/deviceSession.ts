@@ -166,11 +166,13 @@ export class DeviceSession implements Disposable {
   public async activate() {
     this.isActive = true;
     this.buildManager.activate();
+    this.toolsManager.activate();
   }
 
   public async deactivate() {
     this.isActive = false;
     this.buildManager.deactivate();
+    this.toolsManager.deactivate();
   }
 
   public async perform(type: ReloadAction): Promise<boolean> {

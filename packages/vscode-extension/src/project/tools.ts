@@ -101,6 +101,14 @@ export class ToolsManager implements Disposable {
     this.devtools.removeListener(this.devtoolsListener);
   }
 
+  public deactivate() {
+    this.activePlugins.forEach((plugin) => plugin.deactivate());
+  }
+
+  public activate() {
+    this.activePlugins.forEach((plugin) => plugin.activate());
+  }
+
   public handleStateChange() {
     for (const plugin of this.plugins.values()) {
       if (plugin.available) {
