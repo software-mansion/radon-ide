@@ -1,5 +1,11 @@
 import { exec } from "../utilities/subprocess";
 
+export class CancelError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export class CancelToken {
   private isCancelled = false;
   private cancelListeners: (() => void)[] = [];
@@ -8,24 +14,38 @@ export class CancelToken {
     this.cancelListeners.push(cb);
   }
 
-  private isExecaChildProcess(input: any): input is ReturnType<typeof exec> {
-    return typeof input.kill === "function"; // ExecaChildProcess has a `kill` method
-  }
-
   public adapt(input: ReturnType<typeof exec>): ReturnType<typeof exec>;
   public adapt<T>(input: Promise<T>): Promise<T>;
   public adapt<T>(
     input: Promise<T> | ReturnType<typeof exec>
   ): Promise<T> | ReturnType<typeof exec> {
-    if (this.isExecaChildProcess(input)) {
-      // Handle ExecaChildProcess
-      this.onCancel(() => input.kill(9));
-      return input;
+    if (isExecaChildProcess(input)) {
+      let cancelError: CancelError | null = null;
+
+      this.onCancel(() => {
+        cancelError = new CancelError("The process was canceled");
+        input.kill(9);
+      });
+
+      const wrappedInput = new Proxy(input, {
+        get(target, prop, receiver) {
+          if (prop === "then") {
+            return (resolve: any, reject: any) => {
+              if (cancelError) {
+                return Promise.reject(cancelError).then(resolve, reject);
+              }
+              return Promise.resolve(target).then(resolve, reject);
+            };
+          }
+          return Reflect.get(target, prop, receiver);
+        },
+      });
+
+      return wrappedInput as ReturnType<typeof exec>;
     } else {
-      // Handle Promise
       const { promise, resolve, reject } = Promise.withResolvers<T>();
       this.onCancel(() => {
-        reject("The process was canceled");
+        reject(new CancelError("The process was canceled"));
       });
 
       input.then(resolve).catch(reject);
@@ -44,4 +64,8 @@ export class CancelToken {
   get cancelled() {
     return this.isCancelled;
   }
+}
+
+function isExecaChildProcess(input: any): input is ReturnType<typeof exec> {
+  return typeof input.kill === "function"; // ExecaChildProcess has a `kill` method
 }

@@ -43,9 +43,11 @@ class WorkspaceChangeListener implements Disposable {
   constructor(private readonly onChange: () => void) {}
 
   public startWatching() {
-    this.watcher = watchProjectFiles(() => {
-      this.onChange();
-    });
+    if (this.watcher === undefined) {
+      this.watcher = watchProjectFiles(() => {
+        this.onChange();
+      });
+    }
   }
 
   public stopWatching() {
@@ -67,13 +69,13 @@ export class BuildManager implements Disposable {
     private readonly dependencyManager: DependencyManager,
     private readonly buildCache: BuildCache,
     private readonly buildManagerDelegate: BuildManagerDelegate,
-    platform: DevicePlatform
+    private readonly platform: DevicePlatform
   ) {
     this.isCachedBuildStale = false;
     // Note: in future implementations decoupled from device session we
     // should make this logic platform independent
     this.workspaceChangeListener = new WorkspaceChangeListener(() => {
-      this.checkIfNativeChangedForPlatform(platform);
+      this.checkIfNativeChangedForPlatform();
     });
     this.workspaceChangeListener.startWatching();
   }
@@ -228,13 +230,13 @@ export class BuildManager implements Disposable {
     return disposableBuild;
   }
 
-  private checkIfNativeChangedForPlatform = throttleAsync(async (platform: DevicePlatform) => {
+  private checkIfNativeChangedForPlatform = throttleAsync(async () => {
     if (!this.isCachedBuildStale) {
-      const isCacheStale = await this.buildCache.isCacheStale(platform);
+      const isCacheStale = await this.buildCache.isCacheStale(this.platform);
 
       if (isCacheStale) {
         this.isCachedBuildStale = true;
-        this.buildManagerDelegate.onCacheStale(platform);
+        this.buildManagerDelegate.onCacheStale(this.platform);
       }
     }
   }, FINGERPRINT_THROTTLE_MS);

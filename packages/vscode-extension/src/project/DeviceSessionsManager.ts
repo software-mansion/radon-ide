@@ -6,7 +6,6 @@ import {
   BuildType,
   ProjectState,
   ReloadAction,
-  ReloadResult,
   SelectDeviceOptions,
   StartupMessage,
 } from "../common/Project";
@@ -17,6 +16,7 @@ import { ApplicationContext } from "./ApplicationContext";
 import { DeviceBootError, DeviceSession, DeviceSessionDelegate } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
+import { CancelError } from "../builders/cancelToken";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
@@ -56,12 +56,20 @@ export class DeviceSessionsManager implements Disposable {
       window.showErrorMessage("Failed to reload, no active device found.", "Dismiss");
       return false;
     }
-    const success = await deviceSession.perform(type);
-    if (success === ReloadResult.succeeded) {
-      this.updateProjectState({ status: "running" });
-      return true;
-    } else if (success === ReloadResult.failed) {
-      window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
+    try {
+      const success = await deviceSession.perform(type);
+      if (success) {
+        this.updateProjectState({ status: "running" });
+        return true;
+      } else if (!success) {
+        window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
+      }
+    } catch (e) {
+      if (e instanceof CancelError) {
+        return false;
+      }
+      Logger.error("Failed to reload device", e);
+      throw e;
     }
     return false;
   }

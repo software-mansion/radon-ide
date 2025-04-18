@@ -80,7 +80,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
 
   private disposables: Disposable[] = [];
 
-  private get deviceSession() {
+  public get deviceSession() {
     return this.deviceSessionsManager.selectedDeviceSession;
   }
 

@@ -14,7 +14,6 @@ import {
   AppPermissionType,
   DeviceSettings,
   ReloadAction,
-  ReloadResult,
   StartupMessage,
   TouchPoint,
   DeviceButtonType,
@@ -171,38 +170,32 @@ export class DeviceSession implements Disposable {
     this.buildManager.deactivate();
   }
 
-  public async perform(type: ReloadAction): Promise<ReloadResult> {
+  public async perform(type: ReloadAction): Promise<boolean> {
     try {
       switch (type) {
         case "autoReload":
           await this.autoReload();
-          return ReloadResult.succeeded;
+          return true;
         case "reboot":
           await this.restart({ forceClean: false, cleanCache: false });
-          return ReloadResult.succeeded;
+          return true;
         case "clearMetro":
           await this.restart({ forceClean: false, cleanCache: true });
-          return ReloadResult.succeeded;
+          return true;
         case "rebuild":
           await this.restart({ forceClean: true, cleanCache: false });
-          return ReloadResult.succeeded;
+          return true;
         case "reinstall":
           await this.reinstallApp();
-          return ReloadResult.succeeded;
+          return true;
         case "restartProcess":
-          if (await this.restartProcess()) {
-            return ReloadResult.succeeded;
-          }
-          return ReloadResult.failed;
+          return await this.restartProcess();
         case "reloadJs":
-          if (await this.reloadJS()) {
-            return ReloadResult.succeeded;
-          }
-          return ReloadResult.failed;
+          return await this.reloadJS();
       }
     } catch (e) {
       Logger.debug("[Reload]", e);
-      return ReloadResult.canceled;
+      throw e;
     }
     throw new Error("Not implemented " + type);
   }
