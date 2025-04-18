@@ -18,7 +18,6 @@ import { minimatch } from "minimatch";
 import { isEqual } from "lodash";
 import {
   AppPermissionType,
-  BuildType,
   DeviceButtonType,
   DeviceSettings,
   InspectData,
@@ -1011,7 +1010,7 @@ export class Project
             status: "buildError",
             buildError: {
               message: (e as Error).message,
-              buildType: BuildType.Unknown,
+              buildType: null,
               platform: deviceInfo.platform,
             },
           });

@@ -8,7 +8,10 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelToken } from "./cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
-import { BuildType } from "../common/Project";
+import { BuildConfig, BuildType } from "../common/BuildConfig";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { isExpoGoProject } from "./expoGo";
+import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -26,7 +29,7 @@ type BuildOptions = {
 export class BuildError extends Error {
   constructor(
     message: string,
-    public readonly buildType: BuildType
+    public readonly buildType: BuildType | null
   ) {
     super(message);
   }
@@ -57,9 +60,127 @@ export class BuildManager {
     return false;
   }
 
+  private async inferBuildType(
+    appRoot: string,
+    platform: DevicePlatform,
+    launchConfiguration: LaunchConfigurationOptions
+  ): Promise<BuildType> {
+    const { customBuild, eas } = launchConfiguration;
+    const platformMapping = {
+      [DevicePlatform.Android]: "android",
+      [DevicePlatform.IOS]: "ios",
+    } as const;
+    const platformKey = platformMapping[platform];
+    const easBuildConfig = eas?.[platformKey];
+    const customBuildConfig = customBuild?.[platformKey];
+    if (customBuildConfig && easBuildConfig) {
+      throw new BuildError(
+        `Both custom custom builds and EAS builds are configured for ${platform}. Please use only one build method.`,
+        null
+      );
+    }
+
+    if (customBuildConfig?.buildCommand !== undefined) {
+      return BuildType.Custom;
+    }
+
+    if (easBuildConfig) {
+      return BuildType.Eas;
+    }
+
+    if (await isExpoGoProject(appRoot)) {
+      return BuildType.ExpoGo;
+    }
+
+    return BuildType.Local;
+  }
+
+  private createBuildConfig<Platform extends DevicePlatform>(
+    appRoot: string,
+    platform: Platform,
+    forceCleanBuild: boolean,
+    launchConfiguration: LaunchConfigurationOptions,
+    buildType: BuildType
+  ): BuildConfig & { platform: Platform } {
+    const { customBuild, eas, env, android, ios } = launchConfiguration;
+    const platformMapping = {
+      [DevicePlatform.Android]: "android",
+      [DevicePlatform.IOS]: "ios",
+    } as const;
+    const platformKey = platformMapping[platform];
+
+    switch (buildType) {
+      case BuildType.Local: {
+        if (platform === DevicePlatform.IOS) {
+          return {
+            appRoot,
+            platform: platform as DevicePlatform.IOS & Platform,
+            forceCleanBuild,
+            env,
+            type: BuildType.Local,
+            scheme: ios?.scheme,
+            configuration: ios?.configuration,
+          };
+        } else {
+          return {
+            appRoot,
+            platform: platform as DevicePlatform.Android & Platform,
+            forceCleanBuild,
+            env,
+            type: BuildType.Local,
+            productFlavor: android?.productFlavor,
+            buildType: android?.buildType,
+          };
+        }
+      }
+      case BuildType.ExpoGo: {
+        return {
+          appRoot,
+          platform,
+          env,
+          type: BuildType.ExpoGo,
+        };
+      }
+      case BuildType.Eas: {
+        const easBuildConfig = eas?.[platformKey];
+        if (easBuildConfig === undefined) {
+          throw new BuildError(
+            "An EAS build was initialized but no EAS build config was specified in the launch configuration.",
+            BuildType.Eas
+          );
+        }
+        return {
+          appRoot,
+          platform,
+          env,
+          type: BuildType.Eas,
+          config: easBuildConfig,
+        };
+      }
+      case BuildType.Custom: {
+        const customBuildConfig = customBuild?.[platformKey];
+        if (!customBuildConfig?.buildCommand) {
+          throw new BuildError(
+            "A custom build was initialized but no custom build command was specified in the launch configuration.",
+            BuildType.Custom
+          );
+        }
+        return {
+          appRoot,
+          platform,
+          env,
+          type: BuildType.Custom,
+          buildCommand: customBuildConfig.buildCommand,
+          ...customBuildConfig,
+        };
+      }
+    }
+  }
+
   public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {
     const { clean: forceCleanBuild, progressListener, onSuccess, appRoot } = options;
     const { platform } = deviceInfo;
+    const launchConfiguration = getLaunchConfiguration();
 
     getTelemetryReporter().sendTelemetryEvent("build:requested", {
       platform,
@@ -100,57 +221,75 @@ export class BuildManager {
 
       let buildResult: BuildResult;
       let buildFingerprint = currentFingerprint;
-      if (platform === DevicePlatform.Android) {
-        this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
-          log: true,
-        });
-        this.buildOutputChannel.clear();
-        buildResult = await buildAndroid(
-          appRoot,
-          forceCleanBuild,
-          cancelToken,
-          this.buildOutputChannel,
-          progressListener,
-          this.dependencyManager
-        );
-      } else {
-        const iOSBuildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
-          log: true,
-        });
-        this.buildOutputChannel = iOSBuildOutputChannel;
-        this.buildOutputChannel.clear();
-        const installPodsIfNeeded = async () => {
-          let installPods = forceCleanBuild;
-          if (installPods) {
-            Logger.info("Clean build requested: installing pods");
-          } else {
-            const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
-            if (!podsInstalled) {
-              Logger.info("Pods installation is missing or outdated. Installing Pods.");
-              installPods = true;
+      const buildType = await this.inferBuildType(appRoot, platform, launchConfiguration);
+      try {
+        if (platform === DevicePlatform.Android) {
+          this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
+            log: true,
+          });
+          this.buildOutputChannel.clear();
+          const buildConfig = this.createBuildConfig(
+            appRoot,
+            platform,
+            forceCleanBuild,
+            launchConfiguration,
+            buildType
+          );
+          buildResult = await buildAndroid(
+            buildConfig,
+            cancelToken,
+            this.buildOutputChannel,
+            progressListener,
+            this.dependencyManager
+          );
+        } else {
+          const iOSBuildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
+            log: true,
+          });
+          this.buildOutputChannel = iOSBuildOutputChannel;
+          this.buildOutputChannel.clear();
+          const installPodsIfNeeded = async () => {
+            let installPods = forceCleanBuild;
+            if (installPods) {
+              Logger.info("Clean build requested: installing pods");
+            } else {
+              const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
+              if (!podsInstalled) {
+                Logger.info("Pods installation is missing or outdated. Installing Pods.");
+                installPods = true;
+              }
             }
-          }
-          if (installPods) {
-            getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
-            await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
-            const installed = await this.dependencyManager.checkPodsInstallationStatus();
-            if (!installed) {
-              throw new Error("Pods could not be installed automatically.");
+            if (installPods) {
+              getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
+              await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
+              const installed = await this.dependencyManager.checkPodsInstallationStatus();
+              if (!installed) {
+                throw new Error("Pods could not be installed automatically.");
+              }
+              // Installing pods may impact the fingerprint as new pods may be created under the project directory.
+              // For this reason we need to recalculate the fingerprint after installing pods.
+              buildFingerprint = await this.buildCache.calculateFingerprint(platform);
             }
-            // Installing pods may impact the fingerprint as new pods may be created under the project directory.
-            // For this reason we need to recalculate the fingerprint after installing pods.
-            buildFingerprint = await this.buildCache.calculateFingerprint(platform);
-          }
-        };
-        buildResult = await buildIos(
-          appRoot,
-          forceCleanBuild,
-          cancelToken,
-          this.buildOutputChannel,
-          progressListener,
-          this.dependencyManager,
-          installPodsIfNeeded
-        );
+          };
+          const buildConfig = this.createBuildConfig(
+            appRoot,
+            platform,
+            forceCleanBuild,
+            launchConfiguration,
+            buildType
+          );
+
+          buildResult = await buildIos(
+            buildConfig,
+            cancelToken,
+            this.buildOutputChannel,
+            progressListener,
+            this.dependencyManager,
+            installPodsIfNeeded
+          );
+        }
+      } catch (e) {
+        throw new BuildError((e as Error).message, buildType);
       }
 
       await this.buildCache.storeBuild(buildFingerprint, buildResult);
@@ -163,7 +302,7 @@ export class BuildManager {
         if (e instanceof BuildError) {
           throw e;
         }
-        throw new BuildError(e.message, BuildType.Unknown);
+        throw new BuildError(e.message, null);
       }),
       dispose: () => {
         cancelToken.cancel();
