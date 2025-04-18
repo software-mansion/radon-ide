@@ -3,6 +3,7 @@ import * as React from "react";
 import Markdown from "react-markdown";
 import LinkIcon from "../ChainIcon";
 import rehypeRaw from "rehype-raw";
+import { usePluginData } from "@docusaurus/useGlobalData";
 
 export interface ChangelogItem {
   version: string;
@@ -10,10 +11,6 @@ export interface ChangelogItem {
   title: string;
   content?: string;
   JSX?: React.ReactNode;
-}
-
-interface ChangelogProps {
-  changelog: ChangelogItem[];
 }
 
 const DateItem = ({ item }: { item: ChangelogItem }) => (
@@ -29,7 +26,10 @@ const DateItem = ({ item }: { item: ChangelogItem }) => (
   </span>
 );
 
-export default function ChangelogScreen({ changelog }: ChangelogProps) {
+export default function ChangelogScreen() {
+  // @ts-expect-error missing types
+  const { changelog } = usePluginData("changelog-plugin");
+
   return (
     <div className={styles.changelogContainer}>
       {changelog.map((item) => (
