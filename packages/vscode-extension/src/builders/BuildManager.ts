@@ -27,7 +27,10 @@ type BuildOptions = {
 };
 
 export class BuildError extends Error {
-  constructor(message: string, public readonly buildType: BuildType | null) {
+  constructor(
+    message: string,
+    public readonly buildType: BuildType | null
+  ) {
     super(message);
   }
 }
@@ -140,7 +143,7 @@ export class BuildManager {
       }
       case BuildType.Eas: {
         const easBuildConfig = eas?.[platformKey];
-        if (!easBuildConfig) {
+        if (easBuildConfig === undefined) {
           throw new BuildError(
             "An EAS build was initialized but no EAS build config was specified in the launch configuration.",
             BuildType.Eas
@@ -219,70 +222,74 @@ export class BuildManager {
       let buildResult: BuildResult;
       let buildFingerprint = currentFingerprint;
       const buildType = await this.guessBuildType(appRoot, platform, launchConfiguration);
-      if (platform === DevicePlatform.Android) {
-        this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
-          log: true,
-        });
-        this.buildOutputChannel.clear();
-        const buildConfig = this.createBuildConfig(
-          appRoot,
-          platform,
-          forceCleanBuild,
-          launchConfiguration,
-          buildType
-        );
-        buildResult = await buildAndroid(
-          buildConfig,
-          cancelToken,
-          this.buildOutputChannel,
-          progressListener,
-          this.dependencyManager
-        );
-      } else {
-        const iOSBuildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
-          log: true,
-        });
-        this.buildOutputChannel = iOSBuildOutputChannel;
-        this.buildOutputChannel.clear();
-        const installPodsIfNeeded = async () => {
-          let installPods = forceCleanBuild;
-          if (installPods) {
-            Logger.info("Clean build requested: installing pods");
-          } else {
-            const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
-            if (!podsInstalled) {
-              Logger.info("Pods installation is missing or outdated. Installing Pods.");
-              installPods = true;
+      try {
+        if (platform === DevicePlatform.Android) {
+          this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
+            log: true,
+          });
+          this.buildOutputChannel.clear();
+          const buildConfig = this.createBuildConfig(
+            appRoot,
+            platform,
+            forceCleanBuild,
+            launchConfiguration,
+            buildType
+          );
+          buildResult = await buildAndroid(
+            buildConfig,
+            cancelToken,
+            this.buildOutputChannel,
+            progressListener,
+            this.dependencyManager
+          );
+        } else {
+          const iOSBuildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
+            log: true,
+          });
+          this.buildOutputChannel = iOSBuildOutputChannel;
+          this.buildOutputChannel.clear();
+          const installPodsIfNeeded = async () => {
+            let installPods = forceCleanBuild;
+            if (installPods) {
+              Logger.info("Clean build requested: installing pods");
+            } else {
+              const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
+              if (!podsInstalled) {
+                Logger.info("Pods installation is missing or outdated. Installing Pods.");
+                installPods = true;
+              }
             }
-          }
-          if (installPods) {
-            getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
-            await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
-            const installed = await this.dependencyManager.checkPodsInstallationStatus();
-            if (!installed) {
-              throw new Error("Pods could not be installed automatically.");
+            if (installPods) {
+              getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
+              await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
+              const installed = await this.dependencyManager.checkPodsInstallationStatus();
+              if (!installed) {
+                throw new Error("Pods could not be installed automatically.");
+              }
+              // Installing pods may impact the fingerprint as new pods may be created under the project directory.
+              // For this reason we need to recalculate the fingerprint after installing pods.
+              buildFingerprint = await this.buildCache.calculateFingerprint(platform);
             }
-            // Installing pods may impact the fingerprint as new pods may be created under the project directory.
-            // For this reason we need to recalculate the fingerprint after installing pods.
-            buildFingerprint = await this.buildCache.calculateFingerprint(platform);
-          }
-        };
-        const buildConfig = this.createBuildConfig(
-          appRoot,
-          platform,
-          forceCleanBuild,
-          launchConfiguration,
-          buildType
-        );
+          };
+          const buildConfig = this.createBuildConfig(
+            appRoot,
+            platform,
+            forceCleanBuild,
+            launchConfiguration,
+            buildType
+          );
 
-        buildResult = await buildIos(
-          buildConfig,
-          cancelToken,
-          this.buildOutputChannel,
-          progressListener,
-          this.dependencyManager,
-          installPodsIfNeeded
-        );
+          buildResult = await buildIos(
+            buildConfig,
+            cancelToken,
+            this.buildOutputChannel,
+            progressListener,
+            this.dependencyManager,
+            installPodsIfNeeded
+          );
+        }
+      } catch (e) {
+        throw new BuildError((e as Error).message, buildType);
       }
 
       await this.buildCache.storeBuild(buildFingerprint, buildResult);

@@ -17,7 +17,6 @@ import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild } from "./eas";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { BuildError } from "./BuildManager";
 import { AndroidBuildConfig, AndroidLocalBuildConfig, BuildType } from "../common/BuildConfig";
 
 export type AndroidBuildResult = {
@@ -89,78 +88,65 @@ export async function buildAndroid(
 ): Promise<AndroidBuildResult> {
   const { appRoot, env, type: buildType } = buildConfig;
 
-  function rethrowAsBuildError(e: Error): never {
-    if (e instanceof BuildError) {
-      throw e;
-    }
-    throw new BuildError(e.message, buildType);
-  }
-
-  try {
-    switch (buildType) {
-      case BuildType.Custom: {
-        getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
-          platform: DevicePlatform.Android,
-        });
-        const apkPath = await runExternalBuild(
-          cancelToken,
-          buildConfig.buildCommand,
-          env,
-          DevicePlatform.Android,
-          appRoot,
-          outputChannel
+  switch (buildType) {
+    case BuildType.Custom: {
+      getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
+        platform: DevicePlatform.Android,
+      });
+      const apkPath = await runExternalBuild(
+        cancelToken,
+        buildConfig.buildCommand,
+        env,
+        DevicePlatform.Android,
+        appRoot,
+        outputChannel
+      );
+      if (!apkPath) {
+        throw new Error(
+          "Failed to build Android app using custom script. See the build logs for details."
         );
-        if (!apkPath) {
-          throw new BuildError(
-            "Failed to build Android app using custom script. See the build logs for details.",
-            BuildType.Custom
-          );
-        }
+      }
 
-        return {
-          apkPath,
-          packageName: await extractPackageName(apkPath, cancelToken),
-          platform: DevicePlatform.Android,
-        };
-      }
-      case BuildType.Eas: {
-        getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
-          platform: DevicePlatform.Android,
-        });
-        const apkPath = await fetchEasBuild(
-          cancelToken,
-          buildConfig.config,
-          DevicePlatform.Android,
-          appRoot,
-          outputChannel
-        );
-
-        return {
-          apkPath,
-          packageName: await extractPackageName(apkPath, cancelToken),
-          platform: DevicePlatform.Android,
-        };
-      }
-      case BuildType.ExpoGo: {
-        getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
-          platform: DevicePlatform.Android,
-        });
-        const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
-        return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
-      }
-      case BuildType.Local: {
-        if (!(await dependencyManager.checkAndroidDirectoryExits())) {
-          throw new BuildError(
-            'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.',
-            BuildType.Local
-          );
-        }
-
-        return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
-      }
+      return {
+        apkPath,
+        packageName: await extractPackageName(apkPath, cancelToken),
+        platform: DevicePlatform.Android,
+      };
     }
-  } catch (e) {
-    rethrowAsBuildError(e as Error);
+    case BuildType.Eas: {
+      getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
+        platform: DevicePlatform.Android,
+      });
+      const apkPath = await fetchEasBuild(
+        cancelToken,
+        buildConfig.config,
+        DevicePlatform.Android,
+        appRoot,
+        outputChannel
+      );
+
+      return {
+        apkPath,
+        packageName: await extractPackageName(apkPath, cancelToken),
+        platform: DevicePlatform.Android,
+      };
+    }
+    case BuildType.ExpoGo: {
+      getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
+        platform: DevicePlatform.Android,
+      });
+      const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
+      return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
+    }
+    case BuildType.Local: {
+      if (!(await dependencyManager.checkAndroidDirectoryExits())) {
+        throw new Error(
+          'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.'
+        );
+      }
+
+      return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
+    }
   }
 }
 
