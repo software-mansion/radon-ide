@@ -129,8 +129,6 @@ async function insertRadonEntry(incompleteConfig: McpConfig): Promise<boolean> {
       url: MCP_BACKEND_URL,
       type: "sse",
       headers: {
-        // `headers` do not work for now due to a Cursor bug,
-        // said bug should be fixed with the next Cursor release
         Authorization: "Bearer ${command:RNIDE.getLicenseToken}",
       },
     },
