@@ -56,6 +56,10 @@ type ProjectStateBuildError = {
   };
 } & ProjectStateCommon;
 
+export type SelectDeviceOptions = {
+  preservePreviousDevice?: boolean;
+};
+
 export enum BuildType {
   Local = "local",
   ExpoGo = "expoGo",
@@ -95,6 +99,8 @@ export const StartupStageWeight = [
 ];
 
 export type ReloadAction =
+  | "autoReload" // automatic reload mode
+  | "clearMetro" // clear metro cache, boot device, install app
   | "rebuild" // clean build, boot device, install app
   | "reboot" // reboots device, launch app
   | "reinstall" // force reinstall app
@@ -168,9 +174,8 @@ export type MultimediaData = {
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   reload(type: ReloadAction): Promise<boolean>;
-  restart(clean: "all" | "metro" | false): Promise<void>;
   goHome(homeUrl: string): Promise<void>;
-  selectDevice(deviceInfo: DeviceInfo): Promise<boolean>;
+  selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions): Promise<boolean>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
