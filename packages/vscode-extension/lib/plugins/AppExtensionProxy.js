@@ -24,14 +24,14 @@ export class AppExtensionProxy {
     }
     this.clearDevToolsAgent();
     this.devtoolsAgent = agent;
-    this.devtoolsAgent._bridge.addListener(this.scope, this.handleMessages);
+    this.devtoolsAgent._bridge.addListener("RNIDE_devtoolsPluginMessage", this.handleMessages);
   };
 
   clearDevToolsAgent() {
     if (!this.devtoolsAgent) {
       return;
     }
-    this.devtoolsAgent._bridge.removeListener(this.scope, this.handleMessages);
+    this.devtoolsAgent._bridge.removeListener("RNIDE_devtoolsPluginMessage", this.handleMessages);
     this.devtoolsAgent = undefined;
   }
 
@@ -40,8 +40,8 @@ export class AppExtensionProxy {
       return;
     }
 
-    this.devtoolsAgent._bridge.send(this.scope, {
-      type,
+    this.devtoolsAgent._bridge.send("RNIDE_devtoolsPluginMessage", {
+      scope: this.scope,
       data,
     });
   }

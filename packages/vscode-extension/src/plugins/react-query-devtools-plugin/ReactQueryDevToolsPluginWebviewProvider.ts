@@ -38,7 +38,7 @@ function generateWebviewContent(
           media-src vscode-resource: http: https:;
           style-src ${webview.cspSource} 'unsafe-inline';
           script-src 'nonce-${nonce}';
-          font-src vscode-resource: https:;" 
+          font-src vscode-resource: https:;"
         />
         <script type="module" nonce="${nonce}" src="index.js"></script>
         <style>
@@ -89,20 +89,18 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
 
     const devTools = IDE.getInstanceIfExists()?.project?.toolsManager.devtools;
 
-    const handleDevToolsMessage = (event: string, payload: any) => {
-      if (event === REACT_QUERY_PLUGIN_ID) {
-        webview.postMessage({
-          scope: event,
-          data: payload,
-        });
+    const listener = devTools?.addListener("RNIDE_devtoolsPluginMessage", (payload) => {
+      if (payload.scope === REACT_QUERY_PLUGIN_ID) {
+        webview.postMessage(payload);
       }
-    };
-
-    devTools?.addListener(handleDevToolsMessage);
+    });
 
     webview.onDidReceiveMessage((message) => {
       const { scope, ...data } = message;
-      devTools?.send(scope, data);
+      devTools?.send("RNIDE_devtoolsPluginMessage", {
+        scope: REACT_QUERY_PLUGIN_ID,
+        data,
+      });
     });
 
     webviewView.onDidChangeVisibility(() => {
@@ -110,7 +108,7 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
     });
 
     webviewView.onDidDispose(() => {
-      devTools?.removeListener(handleDevToolsMessage);
+      listener?.dispose();
     });
   }
 }

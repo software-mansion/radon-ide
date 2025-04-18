@@ -8,22 +8,24 @@ import {
 } from "../../common/RenderOutlines";
 import { Devtools } from "../../project/devtools";
 import { ToolPlugin } from "../../project/tools";
+import { disposeAll } from "../../utilities/disposables";
 
 export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface, Disposable {
   private eventEmitter = new EventEmitter();
   private isEnabled = false;
-
-  private devToolsListener = (event: string, payload: any): void => {
-    if (event === "RNIDE_rendersReported") {
-      this.eventEmitter.emit("rendersReported", payload);
-    }
-    if (event === "RNIDE_appReady") {
-      this.setEnabled(this.isEnabled);
-    }
-  };
+  private devtoolsListeners: Disposable[] = [];
 
   constructor(private devtools: Devtools) {
-    this.devtools.addListener(this.devToolsListener);
+    this.devtoolsListeners.push(
+      this.devtools.addListener("RNIDE_appReady", () => {
+        this.setEnabled(this.isEnabled);
+      })
+    );
+    this.devtoolsListeners.push(
+      this.devtools.addListener("RNIDE_rendersReported", (payload) => {
+        this.eventEmitter.emit("rendersReported", payload);
+      })
+    );
   }
 
   public readonly id = RENDER_OUTLINES_PLUGIN_ID;
@@ -40,7 +42,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   }
 
   dispose() {
-    this.devtools.removeListener(this.devToolsListener);
+    disposeAll(this.devtoolsListeners);
   }
 
   setEnabled(isEnabled: boolean) {
@@ -54,6 +56,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   ): void {
     this.eventEmitter.addListener(type, listener);
   }
+
   removeEventListener<K extends keyof RenderOutlinesEventMap>(
     type: K,
     listener: RenderOutlinesEventListener<RenderOutlinesEventMap[K]>

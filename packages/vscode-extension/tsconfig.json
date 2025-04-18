@@ -24,6 +24,7 @@
     ".vscode-test",
     "vite.config.js",
     "plugins_dist/**/*",
+    "third-party/**/*",
     "eslint.config.mjs"
   ]
 }

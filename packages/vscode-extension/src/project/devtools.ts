@@ -2,13 +2,61 @@ import http from "http";
 import { Disposable } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
+import {
+  createBridge,
+  createStore,
+  FrontendBridge,
+  Store,
+  Wall,
+} from "../../third-party/react-devtools/headless";
+import path from "path";
+import os from "os";
+
+// Define event names as a const array to avoid duplication
+export const DEVTOOLS_EVENTS = [
+  "RNIDE_appReady",
+  "RNIDE_navigationChanged",
+  "RNIDE_fastRefreshStarted",
+  "RNIDE_fastRefreshComplete",
+  "RNIDE_openPreviewResult",
+  "RNIDE_inspectData",
+  "RNIDE_networkInspectorCDPMessage",
+  "RNIDE_devtoolPluginsChanged",
+  "RNIDE_rendersReported",
+  "RNIDE_devtoolsPluginMessage",
+] as const;
+
+// Create a type for the event names
+export type DevtoolsEventName = (typeof DEVTOOLS_EVENTS)[number];
+
+function filePathForProfile() {
+  const fileName = `profile-${Date.now()}.reactprofile`;
+  const filePath = path.join(os.tmpdir(), fileName);
+  return filePath;
+}
+
+// Define the payload types for each event
+export interface DevtoolsEvents {
+  RNIDE_appReady: [];
+  RNIDE_navigationChanged: [{ displayName: string; id: string }];
+  RNIDE_fastRefreshStarted: [];
+  RNIDE_fastRefreshComplete: [];
+  RNIDE_openPreviewResult: [{ previewId: string; error?: string }];
+  RNIDE_inspectData: [{ id: number }];
+  RNIDE_networkInspectorCDPMessage: [string];
+  RNIDE_devtoolPluginsChanged: [{ plugins: string[] }];
+  RNIDE_rendersReported: [any];
+  RNIDE_devtoolsPluginMessage: [{ scope: string; data: any }];
+}
 
 export class Devtools implements Disposable {
   private _port = 0;
   private server: any;
   private socket?: WebSocket;
-  private listeners: Set<(event: string, payload: any) => void> = new Set();
+  private bridge?: FrontendBridge;
   private startPromise: Promise<void> | undefined;
+  private store?: Store;
+  private listeners: Map<keyof DevtoolsEvents, Array<(...payload: any) => void>> = new Map();
 
   public get port() {
     return this._port;
@@ -26,15 +74,12 @@ export class Devtools implements Disposable {
   }
 
   public async appReady() {
-    return new Promise<void>((resolve) => {
-      const listener = (event: string) => {
-        if (event === "RNIDE_appReady") {
-          this.removeListener(listener);
-          resolve();
-        }
-      };
-      this.addListener(listener);
+    const { resolve, promise } = Promise.withResolvers<void>();
+    const listener = this.addListener("RNIDE_appReady", () => {
+      resolve();
+      listener.dispose();
     });
+    return promise;
   }
 
   public async start() {
@@ -57,20 +102,45 @@ export class Devtools implements Disposable {
       Logger.debug("Devtools client connected");
       this.socket = ws;
 
-      // When data is received from a client
-      ws.on("message", (message: string) => {
-        try {
-          const { event, payload } = JSON.parse(message);
-          Logger.log("Devtools message", event);
-          this.listeners.forEach((listener) => listener(event, payload));
-        } catch (e) {
-          Logger.error("Error while handling devtools websocket message", e);
-        }
-      });
+      const wall: Wall = {
+        listen(fn) {
+          function listener(message: string) {
+            const parsedMessage = JSON.parse(message);
+            return fn(parsedMessage);
+          }
+          ws.on("message", listener);
+          return () => {
+            ws.off("message", listener);
+          };
+        },
+        send(event, payload) {
+          ws.send(JSON.stringify({ event, payload }));
+        },
+      };
+
+      const bridge = createBridge(wall);
+      const store = createStore(bridge);
 
       ws.on("close", () => {
         this.socket = undefined;
+        bridge.shutdown();
+        if (this.bridge === bridge) {
+          this.bridge = undefined;
+        }
+        if (this.store === store) {
+          this.store = undefined;
+        }
       });
+
+      // Register bridge listeners for ALL custom event types
+      for (const event of DEVTOOLS_EVENTS) {
+        bridge.addListener(event, (payload) => {
+          this.listeners.get(event)?.forEach((listener) => listener(payload));
+        });
+      }
+
+      this.bridge = bridge;
+      this.store = store;
     });
 
     return new Promise<void>((resolve) => {
@@ -90,11 +160,29 @@ export class Devtools implements Disposable {
     this.socket?.send(JSON.stringify({ event, payload }));
   }
 
-  public addListener(listener: (event: string, payload: any) => void) {
-    this.listeners.add(listener);
-  }
-
-  public removeListener(listener: (event: string, payload: any) => void) {
-    this.listeners.delete(listener);
+  public addListener<K extends keyof DevtoolsEvents>(
+    eventName: K,
+    listener: (...payload: DevtoolsEvents[K]) => void
+  ): Disposable {
+    const listeners = this.listeners.get(eventName);
+    if (!listeners) {
+      this.listeners.set(eventName, [listener]);
+    } else {
+      const index = listeners.indexOf(listener);
+      if (index === -1) {
+        listeners.push(listener as (...payload: any) => void);
+      }
+    }
+    return {
+      dispose: () => {
+        const listeners = this.listeners.get(eventName);
+        if (listeners) {
+          const index = listeners.indexOf(listener as (...payload: any) => void);
+          if (index !== -1) {
+            listeners.splice(index, 1);
+          }
+        }
+      },
+    };
   }
 }
