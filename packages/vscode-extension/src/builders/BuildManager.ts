@@ -60,7 +60,7 @@ export class BuildManager {
     return false;
   }
 
-  private async guessBuildType(
+  private async inferBuildType(
     appRoot: string,
     platform: DevicePlatform,
     launchConfiguration: LaunchConfigurationOptions
@@ -221,7 +221,7 @@ export class BuildManager {
 
       let buildResult: BuildResult;
       let buildFingerprint = currentFingerprint;
-      const buildType = await this.guessBuildType(appRoot, platform, launchConfiguration);
+      const buildType = await this.inferBuildType(appRoot, platform, launchConfiguration);
       try {
         if (platform === DevicePlatform.Android) {
           this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
