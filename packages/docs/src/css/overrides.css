@@ -166,6 +166,6 @@ img.shadow-image {
 }
 
 .changelog-item {
-  max-width: calc(100% - 32px);
-  margin-left: 32px;
+  max-width: calc(100% - 32px) !important;
+  margin-left: 32px !important;
 }

@@ -50,14 +50,15 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
-  width: 200px;
-  min-width: 200px;
+  width: 100px;
+  min-width: 100px;
 }
 
 .link {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none !important;
 }
 
 .link svg path {
@@ -67,10 +68,6 @@
 
 .link svg:hover path {
   stroke: var(--swm-navy-light-100);
-}
-
-.article .content a {
-  text-decoration: underline;
 }
 
 .versionContainer .date {
