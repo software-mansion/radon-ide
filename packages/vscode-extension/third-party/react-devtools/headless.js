@@ -1,6 +1,6 @@
 /******/ var __webpack_modules__ = ({
 
-/***/ 3811:
+/***/ 811:
 /***/ ((module) => {
 
 //  Import support https://stackoverflow.com/questions/13673346/supporting-both-commonjs-and-amd
@@ -315,12 +315,12 @@
 
 /***/ }),
 
-/***/ 4730:
+/***/ 730:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
  // A linked list to keep track of recently-used-ness
 
-const Yallist = __webpack_require__(4695);
+const Yallist = __webpack_require__(695);
 
 const MAX = Symbol('max');
 const LENGTH = Symbol('length');
@@ -641,7 +641,7 @@ module.exports = LRUCache;
 
 /***/ }),
 
-/***/ 3169:
+/***/ 169:
 /***/ ((module) => {
 
 // shim for using process in browser
@@ -855,7 +855,7 @@ process.umask = function () {
 
 /***/ }),
 
-/***/ 1718:
+/***/ 718:
 /***/ ((module) => {
 
 if (typeof Object.create === 'function') {
@@ -895,10 +895,10 @@ module.exports = function isBuffer(arg) {
 
 /***/ }),
 
-/***/ 3082:
+/***/ 82:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-/* provided dependency */ var process = __webpack_require__(3169);
+/* provided dependency */ var process = __webpack_require__(169);
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1470,7 +1470,7 @@ exports.log = function () {
  */
 
 
-exports.inherits = __webpack_require__(1718);
+exports.inherits = __webpack_require__(718);
 
 exports._extend = function (origin, add) {
   // Don't do anything if add isn't an object
@@ -1491,7 +1491,7 @@ function hasOwnProperty(obj, prop) {
 
 /***/ }),
 
-/***/ 6476:
+/***/ 476:
 /***/ ((module) => {
 
 
@@ -1506,7 +1506,7 @@ module.exports = function (Yallist) {
 
 /***/ }),
 
-/***/ 4695:
+/***/ 695:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 
@@ -1990,12 +1990,12 @@ function Node(value, prev, next, list) {
 
 try {
   // add if support for Symbol.iterator is present
-  __webpack_require__(6476)(Yallist);
+  __webpack_require__(476)(Yallist);
 } catch (er) {}
 
 /***/ }),
 
-/***/ 8074:
+/***/ 74:
 /***/ (function(module) {
 
 (function (global, factory) {
@@ -4127,9 +4127,9 @@ class Bridge extends EventEmitter {
 
 /* harmony default export */ const bridge = (Bridge);
 // EXTERNAL MODULE: ../../node_modules/clipboard-js/clipboard.js
-var clipboard = __webpack_require__(3811);
+var clipboard = __webpack_require__(811);
 // EXTERNAL MODULE: ../../node_modules/util/util.js
-var util = __webpack_require__(3082);
+var util = __webpack_require__(82);
 ;// CONCATENATED MODULE: ../react-devtools-shared/src/constants.js
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
@@ -4235,7 +4235,7 @@ const StrictMode = 1; // Each element on the frontend corresponds to an ElementI
 // Elements are updated on a push basis– meaning the backend pushes updates to the frontend when needed.
 // TODO: Add profiling type
 // EXTERNAL MODULE: ../../node_modules/lru-cache/index.js
-var lru_cache = __webpack_require__(4730);
+var lru_cache = __webpack_require__(730);
 var lru_cache_default = /*#__PURE__*/__webpack_require__.n(lru_cache);
 ;// CONCATENATED MODULE: ../shared/ReactFeatureFlags.js
 /**
@@ -4311,7 +4311,8 @@ const enableHalt = (/* unused pure expression or super */ null && (true));
 const enableViewTransition = (/* unused pure expression or super */ null && (true));
 const enableGestureTransition = (/* unused pure expression or super */ null && (true));
 const enableScrollEndPolyfill = (/* unused pure expression or super */ null && (true));
-const enableSuspenseyImages = (/* unused pure expression or super */ null && (true));
+const enableSuspenseyImages = false;
+const enableSrcObject = (/* unused pure expression or super */ null && (true));
 /**
  * Switches the Fabric API from doing layout in commit work instead of complete work.
  */
@@ -6224,10 +6225,19 @@ function backendToFrontendSerializedElementMapper(element) {
     hocDisplayNames,
     compiledWithForget
   };
-} // Chrome normalizes urls like webpack-internals:// but new URL don't, so cannot use new URL here.
+}
+/**
+ * Should be used when treating url as a Chrome Resource URL.
+ */
 
-function normalizeUrl(url) {
-  return url.replace('/./', '/');
+function normalizeUrlIfValid(url) {
+  try {
+    // TODO: Chrome will use the basepath to create a Resource URL.
+    return new URL(url).toString();
+  } catch {
+    // Giving up if it's not a valid URL without basepath
+    return url;
+  }
 }
 function getIsReloadAndProfileSupported() {
   // Notify the frontend if the backend supports the Storage API (e.g. localStorage).
@@ -6262,7 +6272,7 @@ function onReloadAndProfileFlagsReset() {
   sessionStorageRemoveItem(SESSION_STORAGE_RECORD_TIMELINE_KEY);
 }
 // EXTERNAL MODULE: ../react-devtools-shared/node_modules/json5/dist/index.js
-var dist = __webpack_require__(8074);
+var dist = __webpack_require__(74);
 ;// CONCATENATED MODULE: ../react-devtools-shared/src/devtools/utils.js
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
@@ -7630,8 +7640,6 @@ class ProfilerStore extends EventEmitter {
     });
 
     ProfilerStore_defineProperty(this, "onProfilingStatus", isProfiling => {
-      console.log('PROFILER STATUS', this._isBackendProfiling, isProfiling);
-
       if (this._isBackendProfiling === isProfiling) {
         return;
       }

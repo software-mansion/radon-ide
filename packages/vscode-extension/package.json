@@ -680,18 +680,6 @@
         "description": "Get up-to-date answers related to React Native",
         "isSticky": true
       }
-    ],
-    "customEditors": [
-      {
-        "viewType": "RadonIDE.reactDevtoolsProfiler",
-        "displayName": "React Profiler",
-        "selector": [
-          {
-            "filenamePattern": "*.reactprofile"
-          }
-        ],
-        "priority": "default"
-      }
     ]
   },
   "scripts": {
@@ -813,9 +801,5 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.40.0"
-  },
-  "dependencies": {
-    "react-devtools-inline": "^6.1.1",
-    "react-is": "^19.1.0"
   }
 }
