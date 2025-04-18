@@ -82,10 +82,6 @@ async function writeMcpConfig(config: McpConfig) {
     return;
   }
 
-  const filePath = path.join(directoryPath);
-
-  Logger.info(`Writing MCP config to ${filePath}`);
-
   if (vscode.workspace.workspaceFolders?.length === 0) {
     Logger.error(`Failed writing MCP config - no workspace folder available.`);
     return;
@@ -101,7 +97,7 @@ async function writeMcpConfig(config: McpConfig) {
   const jsonString = JSON.stringify(config, null, 2);
 
   const fsDirPath = path.join(folder.uri.fsPath, directoryPath);
-  const fsPath = path.join(folder.uri.fsPath, filePath);
+  const fsPath = path.join(fsDirPath, MCP_FILE_NAME);
 
   try {
     await fs.mkdir(fsDirPath);
