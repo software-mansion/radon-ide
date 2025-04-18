@@ -21,11 +21,11 @@ const changelog: ChangelogItem[] = [
 </video>
 
 
-- **Improved EAS workflows**: You'll now see clearer build error messages directly, and all your EAS settings in launch configs are consistently recognized. Radon will now only download compatible builds from EAS by default.
+- **Improved EAS workflows**: Radon IDE will now display clearer build error messages and only download compatible builds from EAS by default.
 
 - **Home / App Switch buttons support**: Added options in the device settings menu that can trigger Home and AppSwitch button presses on the active device.
 
-- Improved error & exception handling, including a stack trace with links to source files
+- Improved bundle error & exception handling, including a stack trace with links to source files
 
 - Support for React Native 0.79
 `,
