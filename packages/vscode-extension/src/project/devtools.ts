@@ -1,5 +1,5 @@
 import http from "http";
-import { Disposable } from "vscode";
+import { commands, Disposable, Uri, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
 import {
@@ -29,7 +29,7 @@ export const DEVTOOLS_EVENTS = [
 ] as const;
 
 // Create a type for the event names
-export type DevtoolsEventName = typeof DEVTOOLS_EVENTS[number];
+export type DevtoolsEventName = (typeof DEVTOOLS_EVENTS)[number];
 
 function filePathForProfile() {
   const fileName = `profile-${Date.now()}.reactprofile`;
@@ -156,6 +156,8 @@ export class Devtools implements Disposable {
         const filePath = filePathForProfile();
         await fs.promises.writeFile(filePath, JSON.stringify(exportData));
         console.log("PROFILE SAVED TO", filePath);
+        // Open the saved profile using the custom editor via the vscode.open command
+        commands.executeCommand("vscode.open", Uri.file(filePath));
       }
     });
     setTimeout(() => {

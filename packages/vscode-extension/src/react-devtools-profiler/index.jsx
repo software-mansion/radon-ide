@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { useLayoutEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
   createBridge as createFrontendBridge,
@@ -6,7 +6,9 @@ import {
   initialize as createDevTools,
 } from "react-devtools-inline/frontend";
 
+import { vscode } from "../webview/utilities/vscode";
 import "../webview/styles/theme.css";
+import { prepareProfilingDataFrontendFromExport } from "../../third-party/react-devtools/headless";
 
 const wall = {
   _listeners: [],
@@ -14,6 +16,7 @@ const wall = {
     wall._listeners.push(listener);
   },
   send(event, payload) {
+    console.log("SENDING EVENT!", event, payload, new Error().stack);
     wall._listeners.forEach((listener) => listener({ event, payload }));
   },
 };
@@ -23,7 +26,23 @@ const store = createStore(bridge);
 const DevTools = createDevTools(window, { bridge, store });
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <DevTools />
-  </StrictMode>
+  <DevTools
+    browserTheme="dark"
+    showTabBar={false}
+    hideSettings={true}
+    readOnly={true}
+    overrideTab="profiler"
+    warnIfLegacyBackendDetected={true}
+    enabledInspectedElementContextMenu={true}
+  />
 );
+
+window.addEventListener("message", (event) => {
+  if (event.data.type === "profiler-data") {
+    console.log("PROFILER DATA!", event.data.data);
+    store.profilerStore.profilingData = prepareProfilingDataFrontendFromExport(
+      JSON.parse(event.data.data)
+    );
+  }
+});
+vscode.postMessage({ type: "ready" });

@@ -7,6 +7,7 @@ import {
   CustomTextEditorProvider,
   Disposable,
   window,
+  workspace,
 } from "vscode";
 import { generateWebviewContent } from "../panels/webviewContentGenerator";
 
@@ -43,6 +44,19 @@ export class ReactDevtoolsEditorProvider implements CustomTextEditorProvider {
         Uri.joinPath(this.context.extensionUri, "node_modules"),
       ],
     };
+
+    webview.onDidReceiveMessage(async (message) => {
+      console.log("MESSAGE!", message);
+
+      // load the file here and send formatted data to the webview
+      const file = await workspace.openTextDocument(Uri.file(document.uri.fsPath));
+      const data = file.getText();
+
+      webview.postMessage({
+        type: "profiler-data",
+        data: data,
+      });
+    });
 
     webview.html = generateWebviewContent(
       this.context,
