@@ -41,7 +41,7 @@ const changelog: ChangelogItem[] = [
     date: "2025-03-10",
     title: "Zero-config React Query devtools, Outline Renders",
     content: `
-- [**Outline Renders**](/docs/features/dev-tools#outline-renders-react-scan): [react-scan](https://react-scan.com/) integration that help you visualize React renders happening within the app.
+- [**Outline Renders**](/docs/features/dev-tools#outline-renders-react-scan): a [react-scan](https://react-scan.com/) feature that helps you visualize React renders happening within the app.
 
 <video autoPlay loop width="700" controls className="shadow-image changelog-item">
   <source src="/video/8_sztudio_outline_renders.mp4" type="video/mp4"/>
