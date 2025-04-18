@@ -54,7 +54,7 @@ function isVideoPlaying(videoElement: HTMLVideoElement) {
 }
 
 interface SeekbarProps {
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   startTime: number;
 }
 
@@ -123,7 +123,7 @@ function Seekbar({ videoRef, startTime }: SeekbarProps) {
 
 interface LengthSelectorProps {
   startTime: number;
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   setStartTime: (startTime: number) => void;
 }
 
@@ -176,7 +176,7 @@ type ReplayOverlayProps = {
   replayData: MultimediaData;
   isRewinding: boolean;
   setIsRewinding: React.Dispatch<React.SetStateAction<boolean>>;
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   onClose: () => void;
 };
 

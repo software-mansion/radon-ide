@@ -33,7 +33,10 @@ export enum SimServerLicenseValidationResult {
 }
 
 async function saveTokenIfValid(response: Response) {
-  const responseBody = await response.json();
+  const responseBody = (await response.json()) as {
+    token?: string;
+    code?: ServerResponseStatusCode;
+  };
   if (response.ok) {
     const newToken = responseBody.token as string;
     const checkResult = await checkLicenseToken(newToken);

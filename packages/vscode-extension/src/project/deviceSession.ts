@@ -38,7 +38,10 @@ export type EventDelegate = {
 };
 
 export class DeviceBootError extends Error {
-  constructor(message: string, public readonly cause: unknown) {
+  constructor(
+    message: string,
+    public readonly cause: unknown
+  ) {
     super(message);
   }
 }

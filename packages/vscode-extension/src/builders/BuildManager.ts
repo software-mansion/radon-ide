@@ -24,7 +24,10 @@ type BuildOptions = {
 };
 
 export class BuildError extends Error {
-  constructor(message: string, public readonly buildType: BuildType) {
+  constructor(
+    message: string,
+    public readonly buildType: BuildType
+  ) {
     super(message);
   }
 }

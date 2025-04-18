@@ -1,5 +1,5 @@
 import "./NoDeviceView.css";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import { useCallback, useState } from "react";
 import SmartphoneIcon from "../components/icons/SmartphoneIcon";
 import Button from "../components/shared/Button";
@@ -141,7 +141,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
               type="ternary"
               className="devices-not-found-quick-action"
               onClick={createIOSDevice}>
-              {isIOSCreating && <VSCodeProgressRing className="devices-not-found-button-spinner" />}
+              {isIOSCreating && <VscodeProgressRing className="devices-not-found-button-spinner" />}
               Add iPhone
             </Button>
           )}
@@ -152,7 +152,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
             className="devices-not-found-quick-action"
             onClick={createAndroidDevice}>
             {isAndroidCreating && (
-              <VSCodeProgressRing className="devices-not-found-button-spinner" />
+              <VscodeProgressRing className="devices-not-found-button-spinner" />
             )}
             Add Android
           </Button>

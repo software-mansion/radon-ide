@@ -38,7 +38,7 @@ import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevt
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
-function handleUncaughtErrors() {
+function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
     Logger.error("Unhandled promise rejection", error);
   });
@@ -52,7 +52,9 @@ function handleUncaughtErrors() {
     }
     Logger.error("Uncaught exception", error);
     Logger.openOutputPanel();
-    window.showErrorMessage("Internal extension error.", "Dismiss");
+    if (context.extensionMode === ExtensionMode.Development) {
+      window.showErrorMessage("Internal extension error.", "Dismiss");
+    }
   });
 }
 
@@ -66,7 +68,7 @@ export function deactivate(context: ExtensionContext): undefined {
 }
 
 export async function activate(context: ExtensionContext) {
-  handleUncaughtErrors();
+  handleUncaughtErrors(context);
   await activateJsDebug(context);
 
   if (Platform.OS !== "macos" && Platform.OS !== "windows" && Platform.OS !== "linux") {

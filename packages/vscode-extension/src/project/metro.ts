@@ -73,7 +73,7 @@ type MetroEvent =
         string, // message
         string, // bundle
         string, // todo: ensure what this field means
-        string // todo: ensure what this field means
+        string, // todo: ensure what this field means
       ];
     };
 
@@ -308,7 +308,10 @@ export class MetroLauncher extends Metro implements Disposable {
   private subprocess?: ChildProcess;
   private startPromise: Promise<void> | undefined;
 
-  constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {
+  constructor(
+    private readonly devtools: Devtools,
+    private readonly delegate: MetroDelegate
+  ) {
     super(0);
   }
 

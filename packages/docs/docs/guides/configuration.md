@@ -77,6 +77,7 @@ The following attributes can be set within the `ios` object:
 
 - `scheme` - Scheme name (from xcode project) the IDE will use for iOS builds, defaults to xcworkspace base file name.
 - `configuration` – Build configuration name (from xcode project) the IDE will use for iOS builds, defaults to "Debug".
+- `launchArguments` - Arguments passed to the app when launching it.
 
 Here is how the launch configuration could look like with some custom iOS build options:
 
@@ -90,7 +91,8 @@ Here is how the launch configuration could look like with some custom iOS build 
       "name": "Radon IDE panel",
       "ios": {
         "scheme": "AcmeApp",
-        "configuration": "Staging"
+        "configuration": "Staging",
+        "launchArguments": ["-FIRDebugEnabled"]
       }
     }
   ]
@@ -128,13 +130,13 @@ Below is an example of how the `launch.json` file could look like with android v
 
 Instead of letting Radon IDE build your app, you can use scripts (`customBuild` option) or [Expo
 Application Services (EAS)](https://expo.dev/eas) (`eas` option) to do it. Both `customBuild` and `eas` are objects having `ios` and `android` optional
-keys. You can't specify one platform in both custom script and EAS build
-options.
+keys. You can't specify both a custom script and EAS build
+options for a single platform.
 
 #### Using `customBuild`
 
 The requirement for scripts is to output the absolute path to the built app as
-the last line of the standard output. If multiple paths are provided, just the first one is used. The path should point to `.app`, `.apk` (for iOS and Android consecutively), or `.tar.gz` archive, which must contain one of the previous.  
+the last line of the standard output. If multiple paths are provided, just the first one is used. The path should point to `.app`, `.apk` (for iOS and Android consecutively), or `.tar.gz` archive, which must contain one of the previous.
 
 If custom fingerprint script is used, it
 should output fingerprint (a string identifying the build) as the last line of the standard output. When
@@ -174,22 +176,22 @@ Example with EAS local build:
 
 ```json
 {
-   "version": "0.2.0",
-   "configurations": [
-      {
-         "type": "radon-ide",
-         "request": "launch",
-         "name": "Radon IDE panel",
-         "customBuild": {
-            "ios": {
-               "buildCommand": "npx eas build --platform ios --profile development --local --non-interactive",
-            },
-            "android": {
-               "buildCommand": "npx eas build --platform android --profile development --local --non-interactive",
-            }
-         }
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "radon-ide",
+      "request": "launch",
+      "name": "Radon IDE panel",
+      "customBuild": {
+        "ios": {
+          "buildCommand": "npx eas build --platform ios --profile development --local --non-interactive"
+        },
+        "android": {
+          "buildCommand": "npx eas build --platform android --profile development --local --non-interactive"
+        }
       }
-   ]
+    }
+  ]
 }
 ```
 
@@ -198,8 +200,8 @@ Example with EAS local build:
 `eas.ios` and `eas.android` are objects taking keys:
 
 - `profile` – required, used for [selecting builds](https://docs.expo.dev/build/eas-json/#development-builds) suitable for running in simulators.
-- `buildUUID` – when specified, downloads build using its UUID. It uses latest
-  build otherwise.
+- `buildUUID` – when specified, the build with the specified ID will be used.
+  Otherwise, Radon IDE will attempt to find a compatible build and use that.
 
 Below is an example that replaces iOS and Android local builds with builds from EAS:
 

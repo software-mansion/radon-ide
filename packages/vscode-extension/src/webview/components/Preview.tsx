@@ -74,7 +74,7 @@ function Preview({
   replayData,
   onReplayClose,
 }: Props) {
-  const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>();
+  const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);

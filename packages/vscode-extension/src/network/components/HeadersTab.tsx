@@ -18,16 +18,19 @@ function formatHeaders(headersObj: Record<string, any> | undefined) {
   // sort object by keys and capitalize keys
   const sortedObj = Object.entries(headersObj)
     .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-    .reduce((acc, [key, value]) => {
-      // Capitalize the first letter of each word in the key
-      const capitalizedKey = key
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join("-");
+    .reduce(
+      (acc, [key, value]) => {
+        // Capitalize the first letter of each word in the key
+        const capitalizedKey = key
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join("-");
 
-      acc[capitalizedKey] = value;
-      return acc;
-    }, {} as Record<string, any>);
+        acc[capitalizedKey] = value;
+        return acc;
+      },
+      {} as Record<string, any>
+    );
 
   return sortedObj;
 }

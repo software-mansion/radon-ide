@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
@@ -264,7 +264,7 @@ function PreviewView() {
         />
       ) : (
         <div className="missing-device-filler">
-          {initialized ? <NoDeviceView hasNoDevices={hasNoDevices} /> : <VSCodeProgressRing />}
+          {initialized ? <NoDeviceView hasNoDevices={hasNoDevices} /> : <VscodeProgressRing />}
         </div>
       )}
 

@@ -13,6 +13,7 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
+import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 interface SimulatorInfo {
   availability?: string;
@@ -52,7 +53,10 @@ export class IosSimulatorDevice extends DeviceBase {
   private nativeLogsOutputChannel: OutputChannel | undefined;
   private runningAppProcess: ExecaChildProcess | undefined;
 
-  constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
+  constructor(
+    private readonly deviceUDID: string,
+    private readonly _deviceInfo: DeviceInfo
+  ) {
     super();
   }
 
@@ -348,7 +352,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
     this.nativeLogsOutputChannel.clear();
 
-    this.runningAppProcess = exec("xcrun", [
+    const applicationArguments = getLaunchConfiguration().ios?.launchArguments ?? [];
+
+    const launchAppArgs = [
       "simctl",
       "--set",
       deviceSetLocation,
@@ -357,7 +363,10 @@ export class IosSimulatorDevice extends DeviceBase {
       "--terminate-running-process",
       this.deviceUDID,
       build.bundleID,
-    ]);
+      ...applicationArguments,
+    ];
+
+    this.runningAppProcess = exec("xcrun", launchAppArgs);
 
     lineReader(this.runningAppProcess).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
