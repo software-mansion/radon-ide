@@ -1,5 +1,5 @@
 import http from "http";
-import { commands, Disposable, Uri, window } from "vscode";
+import { Disposable } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
 import {
@@ -8,9 +8,7 @@ import {
   FrontendBridge,
   Store,
   Wall,
-  prepareProfilingDataExport,
 } from "../../third-party/react-devtools/headless";
-import fs from "fs";
 import path from "path";
 import os from "os";
 
