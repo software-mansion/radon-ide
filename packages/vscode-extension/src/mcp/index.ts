@@ -23,7 +23,7 @@ const MCP_BACKEND_URL = "https://radon-ai-backend.swmansion.com/sse";
 function getEditorType(): EditorType {
   // heurestics, major == 0 means Cursor
   // found no better way of determining editor type
-  if (vscode.version.startsWith("0.")) {
+  if (vscode.version[0] === "0") {
     return EditorType.CURSOR;
   }
   return EditorType.VSCODE;
