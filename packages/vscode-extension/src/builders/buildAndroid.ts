@@ -156,14 +156,13 @@ async function buildLocal(
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ): Promise<AndroidBuildResult> {
-  let { appRoot, forceCleanBuild, env, productFlavor, buildType } = buildConfig;
+  let { appRoot, forceCleanBuild, env, productFlavor = "", buildType = "debug" } = buildConfig;
   const androidSourceDir = getAndroidSourceDir(appRoot);
   const androidAppName = loadConfig({
     projectRoot: appRoot,
     selectedPlatform: "android",
   }).platforms.android?.projectConfig(appRoot)?.appName;
-  productFlavor ??= "";
-  buildType ??= "debug";
+
   const gradleArgs = [
     "-x",
     "lint",

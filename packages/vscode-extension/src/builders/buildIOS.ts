@@ -158,7 +158,7 @@ async function buildLocal(
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ): Promise<IOSBuildResult> {
-  let { appRoot, scheme, forceCleanBuild, configuration } = buildConfig;
+  const { appRoot, forceCleanBuild, configuration = "Debug" } = buildConfig;
 
   const sourceDir = getIosSourceDir(appRoot);
 
@@ -183,8 +183,8 @@ async function buildLocal(
     }`
   );
 
-  scheme ??= (await findXcodeScheme(xcodeProject))[0];
-  configuration ??= "Debug";
+  const scheme = buildConfig.scheme ?? (await findXcodeScheme(xcodeProject))[0];
+
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
   const buildProcess = cancelToken.adapt(
