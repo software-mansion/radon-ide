@@ -20,7 +20,7 @@ const DateItem = ({ item }: { item: ChangelogItem }) => (
       month: "long",
       day: "numeric",
     })}
-    <a href={`#${item.version}`} id={item.version} className={styles.link}>
+    <a href={`#${item.version}`} className={styles.link}>
       <LinkIcon width={18} height={18} />
     </a>
   </span>
@@ -33,7 +33,7 @@ export default function ChangelogScreen() {
   return (
     <div className={styles.changelogContainer}>
       {changelog.map((item) => (
-        <section key={item.version} className={styles.changelogItem}>
+        <section key={item.version} className={styles.changelogItem} id={item.version}>
           <div className={styles.versionContainer}>
             <DateItem item={item} />
             <code className={styles.tag}>{item.version}</code>
