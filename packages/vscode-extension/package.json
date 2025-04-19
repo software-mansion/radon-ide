@@ -700,7 +700,7 @@
     "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
     "prepare:fake_editor": "mkdir -p dist && cp react-fake-editor-executable dist/atom",
-    "watch:extension": "vite && cd ./src/network && vite",
+    "watch:extension": "vite",
     "package": "rm -rf dist/* && cp ../vscode-js-debug/dist/src/chromehash_bg.wasm dist/ && npm run build:dist",
     "lint": "eslint src/**/*.\\{ts,tsx,js,jsx\\} && prettier --check src",
     "typecheck": "tsc --noEmit",
