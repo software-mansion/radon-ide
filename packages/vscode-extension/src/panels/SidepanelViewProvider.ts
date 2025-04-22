@@ -75,6 +75,5 @@ export class SidePanelViewProvider implements WebviewViewProvider, Disposable {
     webviewView.onDidDispose(() => {
       this.dispose();
     });
-    commands.executeCommand("setContext", "RNIDE.previewsViewIsOpen", true);
   }
 }
