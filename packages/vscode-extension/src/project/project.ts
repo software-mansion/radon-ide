@@ -639,17 +639,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.eventEmitter.emit("toolsStateChanged", toolsState);
   };
 
-  // frytki !!!!! is wrong here
   public async getToolsState() {
-    return this.deviceSession!.toolsManager.getToolsState();
+    return this.deviceSession?.toolsManager.getToolsState() ?? {};
   }
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
-    await this.deviceSession!.toolsManager.updateToolEnabledState(toolName, enabled);
+    await this.deviceSession?.toolsManager.updateToolEnabledState(toolName, enabled);
   }
 
   public async openTool(toolName: ToolKey) {
-    await this.deviceSession!.toolsManager.openTool(toolName);
+    await this.deviceSession?.toolsManager.openTool(toolName);
   }
 
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
