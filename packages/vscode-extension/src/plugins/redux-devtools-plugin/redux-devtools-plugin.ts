@@ -57,7 +57,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   activate() {
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
     this.devtoolsListeners.push(
-      this.devtools.addListener("RNIDE_pluginMessage", (payload) => {
+      this.devtools.onEvent("RNIDE_pluginMessage", (payload) => {
         if (payload.scope === REDUX_PLUGIN_ID) {
           const { scope, ...data } = payload;
           this.connectedWebview?.postMessage({ scope: "RNIDE-redux-devtools", data });
@@ -65,7 +65,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
       })
     );
     this.devtoolsListeners.push(
-      this.devtools.addListener("RNIDE_appReady", () => {
+      this.devtools.onEvent("RNIDE_appReady", () => {
         // Sometimes, the messaging channel (devtools) is established only after
         // the Redux store is created and after it sends the first message. In that
         // case, the "start" event never makes it to the webview.

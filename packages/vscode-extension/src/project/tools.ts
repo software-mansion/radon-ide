@@ -72,7 +72,7 @@ export class ToolsManager implements Disposable {
     this.plugins.set(RENDER_OUTLINES_PLUGIN_ID, new RenderOutlinesPlugin(devtools));
 
     this.disposables.push(
-      devtools.addListener("RNIDE_devtoolPluginsChanged", (payload) => {
+      devtools.onEvent("RNIDE_devtoolPluginsChanged", (payload) => {
         // payload.plugins is a list of expo dev plugin names
         const availablePlugins = new Set(payload.plugins);
         let changed = false;

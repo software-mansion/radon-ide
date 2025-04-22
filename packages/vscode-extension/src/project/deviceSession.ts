@@ -79,22 +79,22 @@ export class DeviceSession implements Disposable {
     this.buildManager = new BuildManager(dependencyManager, buildCache);
     this.debugSession = new DebugSession(debugEventDelegate);
     this.disposables.push(
-      this.devtools.addListener("RNIDE_appReady", () => {
+      this.devtools.onEvent("RNIDE_appReady", () => {
         Logger.debug("App ready");
       })
     );
     this.disposables.push(
-      this.devtools.addListener("RNIDE_navigationChanged", (payload) => {
+      this.devtools.onEvent("RNIDE_navigationChanged", (payload) => {
         this.eventDelegate.onAppEvent("navigationChanged", payload);
       })
     );
     this.disposables.push(
-      this.devtools.addListener("RNIDE_fastRefreshStarted", () => {
+      this.devtools.onEvent("RNIDE_fastRefreshStarted", () => {
         this.eventDelegate.onAppEvent("fastRefreshStarted", undefined);
       })
     );
     this.disposables.push(
-      this.devtools.addListener("RNIDE_fastRefreshComplete", () => {
+      this.devtools.onEvent("RNIDE_fastRefreshComplete", () => {
         this.eventDelegate.onAppEvent("fastRefreshComplete", undefined);
       })
     );
@@ -448,7 +448,7 @@ export class DeviceSession implements Disposable {
     callback: (inspectData: any) => void
   ) {
     const id = this.inspectCallID++;
-    const listener = this.devtools.addListener("RNIDE_inspectData", (payload) => {
+    const listener = this.devtools.onEvent("RNIDE_inspectData", (payload) => {
       if (payload.id === id) {
         listener.dispose();
         callback(payload);
@@ -467,7 +467,7 @@ export class DeviceSession implements Disposable {
 
   public async startPreview(previewId: string) {
     const { resolve, reject, promise } = Promise.withResolvers<void>();
-    const listener = this.devtools.addListener("RNIDE_openPreviewResult", (payload) => {
+    const listener = this.devtools.onEvent("RNIDE_openPreviewResult", (payload) => {
       if (payload.previewId === previewId) {
         listener.dispose();
         if (payload.error) {

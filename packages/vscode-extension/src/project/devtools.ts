@@ -25,15 +25,6 @@ export const DEVTOOLS_EVENTS = [
   "RNIDE_pluginMessage",
 ] as const;
 
-// Create a type for the event names
-export type DevtoolsEventName = (typeof DEVTOOLS_EVENTS)[number];
-
-function filePathForProfile() {
-  const fileName = `profile-${Date.now()}.reactprofile`;
-  const filePath = path.join(os.tmpdir(), fileName);
-  return filePath;
-}
-
 // Define the payload types for each event
 export interface DevtoolsEvents {
   RNIDE_appReady: [];
@@ -51,9 +42,7 @@ export class Devtools implements Disposable {
   private _port = 0;
   private server: any;
   private socket?: WebSocket;
-  private bridge?: FrontendBridge;
   private startPromise: Promise<void> | undefined;
-  private store?: Store;
   private listeners: Map<keyof DevtoolsEvents, Array<(...payload: any) => void>> = new Map();
 
   public get port() {
@@ -73,7 +62,7 @@ export class Devtools implements Disposable {
 
   public async appReady() {
     const { resolve, promise } = Promise.withResolvers<void>();
-    const listener = this.addListener("RNIDE_appReady", () => {
+    const listener = this.onEvent("RNIDE_appReady", () => {
       resolve();
       listener.dispose();
     });
@@ -122,12 +111,6 @@ export class Devtools implements Disposable {
       ws.on("close", () => {
         this.socket = undefined;
         bridge.shutdown();
-        if (this.bridge === bridge) {
-          this.bridge = undefined;
-        }
-        if (this.store === store) {
-          this.store = undefined;
-        }
       });
 
       // Register bridge listeners for ALL custom event types
@@ -136,9 +119,6 @@ export class Devtools implements Disposable {
           this.listeners.get(event)?.forEach((listener) => listener(payload));
         });
       }
-
-      this.bridge = bridge;
-      this.store = store;
     });
 
     return new Promise<void>((resolve) => {
@@ -158,7 +138,7 @@ export class Devtools implements Disposable {
     this.socket?.send(JSON.stringify({ event, payload }));
   }
 
-  public addListener<K extends keyof DevtoolsEvents>(
+  public onEvent<K extends keyof DevtoolsEvents>(
     eventName: K,
     listener: (...payload: DevtoolsEvents[K]) => void
   ): Disposable {

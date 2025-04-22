@@ -124,14 +124,14 @@ export class NetworkPlugin implements ToolPlugin {
     this.websocketBackend.start().then(() => {
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
       this.devtoolsListeners.push(
-        this.devtools.addListener("RNIDE_pluginMessage", (payload) => {
+        this.devtools.onEvent("RNIDE_pluginMessage", (payload) => {
           if (payload.scope === "network") {
             this.websocketBackend.broadcast(payload.data);
           }
         })
       );
       this.devtoolsListeners.push(
-        this.devtools.addListener("RNIDE_appReady", () => {
+        this.devtools.onEvent("RNIDE_appReady", () => {
           this.sendCDPMessage({ method: "Network.enable", params: {} });
         })
       );

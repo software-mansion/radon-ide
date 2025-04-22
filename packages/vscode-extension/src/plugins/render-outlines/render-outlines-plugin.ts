@@ -17,12 +17,12 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
 
   constructor(private devtools: Devtools) {
     this.devtoolsListeners.push(
-      this.devtools.addListener("RNIDE_appReady", () => {
+      this.devtools.onEvent("RNIDE_appReady", () => {
         this.setEnabled(this.isEnabled);
       })
     );
     this.devtoolsListeners.push(
-      this.devtools.addListener("RNIDE_rendersReported", (payload) => {
+      this.devtools.onEvent("RNIDE_rendersReported", (payload) => {
         this.eventEmitter.emit("rendersReported", payload);
       })
     );
