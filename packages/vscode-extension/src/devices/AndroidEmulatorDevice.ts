@@ -216,6 +216,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
     super.reboot();
     const { promise, resolve } = Promise.withResolvers<void>();
 
+    // Emulator might take a long time to exit gracefully, so we set a timeout
+    // to forcefully reset the device if it doesn't exit within the specified time.
     const timeout = setTimeout(async () => {
       this.emulatorProcess?.off("exit", exitListener);
       await this.forcefullyResetDevice();
