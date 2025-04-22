@@ -5,7 +5,7 @@ import { Devtools } from "../../project/devtools";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
 
-export const REDUX_PLUGIN_ID = "RNIDE-redux-devtools";
+export const REDUX_PLUGIN_ID = "redux-devtools";
 const REDUX_PLUGIN_PREFIX = "RNIDE.Tool.ReduxDevTools";
 
 let initialzed = false;
@@ -43,8 +43,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     this.connectedWebviewListener?.dispose();
     this.connectedWebview = webview;
     this.connectedWebviewListener = webview.onDidReceiveMessage((message) => {
-      const { scope, ...data } = message;
-      this.devtools.send(scope, data);
+      this.devtools.send("RNIDE_pluginMessage", { ...message, scope: REDUX_PLUGIN_ID });
     });
   }
 
@@ -60,7 +59,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     this.devtoolsListeners.push(
       this.devtools.addListener("RNIDE_pluginMessage", (payload) => {
         if (payload.scope === REDUX_PLUGIN_ID) {
-          this.connectedWebview?.postMessage(payload);
+          this.connectedWebview?.postMessage({ ...payload, scope: "RNIDE-redux-devtools" });
         }
       })
     );
