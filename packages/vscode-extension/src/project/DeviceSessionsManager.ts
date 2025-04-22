@@ -2,13 +2,7 @@ import { isEqual } from "lodash";
 import { Disposable, window } from "vscode";
 import { BuildError } from "../builders/BuildManager";
 import { DeviceInfo } from "../common/DeviceManager";
-import {
-  BuildType,
-  ProjectState,
-  ReloadAction,
-  SelectDeviceOptions,
-  StartupMessage,
-} from "../common/Project";
+import { ProjectState, ReloadAction, SelectDeviceOptions, StartupMessage } from "../common/Project";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
@@ -153,7 +147,7 @@ export class DeviceSessionsManager implements Disposable {
             status: "buildError",
             buildError: {
               message: (e as Error).message,
-              buildType: BuildType.Unknown,
+              buildType: null,
               platform: deviceInfo.platform,
             },
           });

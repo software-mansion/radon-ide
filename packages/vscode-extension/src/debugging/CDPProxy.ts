@@ -86,7 +86,7 @@ export class CDPProxy {
 
   private async onConnectionHandler([debuggerTarget, request]: [
     Connection,
-    IncomingMessage,
+    IncomingMessage
   ]): Promise<void> {
     debuggerTarget = debuggerTarget;
 

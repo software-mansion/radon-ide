@@ -13,9 +13,7 @@
   max-height: 85vh;
   padding: 8px 16px 8px 8px;
   animation: alertContentShow 175ms cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow:
-    rgba(0, 0, 0, 0.3) 0px 19px 38px,
-    rgba(0, 0, 0, 0.22) 0px 15px 12px;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px;
   cursor: default;
 }
 .alert-dialog-content:focus {

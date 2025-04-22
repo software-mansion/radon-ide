@@ -65,10 +65,7 @@ export class CDPSession {
   private willLikelyPauseSoon = false;
   private skipFiles: Minimatch[] = [];
 
-  constructor(
-    private delegate: CDPSessionDelegate,
-    private configuration: CDPConfiguration
-  ) {
+  constructor(private delegate: CDPSessionDelegate, private configuration: CDPConfiguration) {
     this.sourceMapRegistry = new SourceMapsRegistry(
       configuration.expoPreludeLineCount,
       Object.entries(configuration.sourceMapPathOverrides)

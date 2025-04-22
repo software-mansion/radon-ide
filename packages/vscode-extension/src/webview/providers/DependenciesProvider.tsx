@@ -33,7 +33,7 @@ const dependenciesDomain = [
   "easCli",
 ] as const;
 
-type Dependency = (typeof dependenciesDomain)[number];
+type Dependency = typeof dependenciesDomain[number];
 
 type ErrorType = "ios" | "simulator" | "emulator" | "android" | "common";
 type Errors = Partial<Record<ErrorType, { message: string }>>;
