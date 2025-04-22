@@ -91,16 +91,13 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
 
     const listener = devTools?.addListener("RNIDE_pluginMessage", (payload) => {
       if (payload.scope === REACT_QUERY_PLUGIN_ID) {
-        webview.postMessage(payload);
+        const { scope, ...data } = payload;
+        webview.postMessage({ scope, data });
       }
     });
 
     webview.onDidReceiveMessage((message) => {
-      const { scope, ...data } = message;
-      devTools?.send("RNIDE_pluginMessage", {
-        scope: REACT_QUERY_PLUGIN_ID,
-        data,
-      });
+      devTools?.send("RNIDE_pluginMessage", message);
     });
 
     webviewView.onDidChangeVisibility(() => {
