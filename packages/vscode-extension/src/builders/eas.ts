@@ -101,19 +101,19 @@ async function fetchBuild(
 }
 
 export async function performLocalEasBuild(
-  config: EasConfig,
+  profile: string,
   platform: DevicePlatform,
   appRoot: string,
   outputChannel: OutputChannel,
   cancelToken: CancelToken
 ) {
   const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-eas-build-"));
-  const outputBase = `eas-${config.profile}`;
+  const outputBase = `eas-${profile}`;
   const outputPath =
     platform === DevicePlatform.Android
       ? path.join(tmpDirectory, `${outputBase}.apk`)
       : path.join(tmpDirectory, `${outputBase}.tar.gz`);
-  await buildLocal({ platform, profile: config.profile, outputPath }, appRoot, outputChannel);
+  await buildLocal({ platform, profile, outputPath }, appRoot, outputChannel);
 
   return maybeExtractBinary(platform, outputPath, tmpDirectory);
 }

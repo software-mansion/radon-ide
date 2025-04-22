@@ -85,7 +85,11 @@ export class BuildManager {
     }
 
     if (easBuildConfig) {
-      return BuildType.Eas;
+      if (easBuildConfig.local) {
+        return BuildType.EasLocal;
+      } else {
+        return BuildType.Eas;
+      }
     }
 
     if (await isExpoGoProject(appRoot)) {
@@ -155,6 +159,22 @@ export class BuildManager {
           env,
           type: BuildType.Eas,
           config: easBuildConfig,
+        };
+      }
+      case BuildType.EasLocal: {
+        const easBuildConfig = eas?.[platformKey];
+        if (easBuildConfig === undefined) {
+          throw new BuildError(
+            "A local EAS build was initialized but no EAS build config was specified in the launch configuration.",
+            BuildType.EasLocal
+          );
+        }
+        return {
+          appRoot,
+          platform,
+          env,
+          type: BuildType.EasLocal,
+          profile: easBuildConfig.profile,
         };
       }
       case BuildType.Custom: {

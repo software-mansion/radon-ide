@@ -127,6 +127,24 @@ export async function buildIos(
         platform: DevicePlatform.IOS,
       };
     }
+    case BuildType.EasLocal: {
+      getTelemetryReporter().sendTelemetryEvent("build:eas-local-build-requested", {
+        platform: DevicePlatform.IOS,
+      });
+      const appPath = await performLocalEasBuild(
+        buildConfig.profile,
+        DevicePlatform.IOS,
+        appRoot,
+        outputChannel,
+        cancelToken
+      );
+
+      return {
+        appPath,
+        bundleID: await getBundleID(appPath),
+        platform: DevicePlatform.IOS,
+      };
+    }
     case BuildType.ExpoGo: {
       getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
         platform: DevicePlatform.IOS,

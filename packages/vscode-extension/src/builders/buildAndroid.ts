@@ -131,6 +131,24 @@ export async function buildAndroid(
         platform: DevicePlatform.Android,
       };
     }
+    case BuildType.EasLocal: {
+      getTelemetryReporter().sendTelemetryEvent("build:eas-local-build-requested", {
+        platform: DevicePlatform.Android,
+      });
+      const apkPath = await performLocalEasBuild(
+        buildConfig.profile,
+        DevicePlatform.Android,
+        appRoot,
+        outputChannel,
+        cancelToken
+      );
+
+      return {
+        apkPath,
+        packageName: await extractPackageName(apkPath, cancelToken),
+        platform: DevicePlatform.Android,
+      };
+    }
     case BuildType.ExpoGo: {
       getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
         platform: DevicePlatform.Android,
