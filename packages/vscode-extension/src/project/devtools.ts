@@ -20,10 +20,9 @@ export const DEVTOOLS_EVENTS = [
   "RNIDE_fastRefreshComplete",
   "RNIDE_openPreviewResult",
   "RNIDE_inspectData",
-  "RNIDE_networkInspectorCDPMessage",
   "RNIDE_devtoolPluginsChanged",
   "RNIDE_rendersReported",
-  "RNIDE_devtoolsPluginMessage",
+  "RNIDE_pluginMessage",
 ] as const;
 
 // Create a type for the event names
@@ -43,10 +42,9 @@ export interface DevtoolsEvents {
   RNIDE_fastRefreshComplete: [];
   RNIDE_openPreviewResult: [{ previewId: string; error?: string }];
   RNIDE_inspectData: [{ id: number }];
-  RNIDE_networkInspectorCDPMessage: [string];
   RNIDE_devtoolPluginsChanged: [{ plugins: string[] }];
   RNIDE_rendersReported: [any];
-  RNIDE_devtoolsPluginMessage: [{ scope: string; data: any }];
+  RNIDE_pluginMessage: [{ scope: string; type: string; data: any }];
 }
 
 export class Devtools implements Disposable {

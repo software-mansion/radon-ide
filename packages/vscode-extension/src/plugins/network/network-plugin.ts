@@ -31,7 +31,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
   private server: Server;
   private sessions: Set<WebSocket> = new Set();
 
-  constructor(private readonly devtools: Devtools) {
+  constructor(private readonly sendCDPMessage: (messageData: any) => void) {
     this.server = http.createServer(() => {});
     const wss = new WebSocketServer({ server: this.server });
 
@@ -43,7 +43,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
           const payload = JSON.parse(message.toString());
           if (payload.method.startsWith("Network.")) {
             // forward message to devtools
-            this.devtools.send("RNIDE_networkInspectorCDPRequest", payload);
+            this.sendCDPMessage(payload);
           } else if (payload.id) {
             // send empty response otherwise
             const response = { id: payload.id, result: {} };
@@ -104,7 +104,7 @@ export class NetworkPlugin implements ToolPlugin {
   private devtoolsListeners: Disposable[] = [];
 
   constructor(private readonly devtools: Devtools) {
-    this.websocketBackend = new NetworkCDPWebsocketBackend(devtools);
+    this.websocketBackend = new NetworkCDPWebsocketBackend(this.sendCDPMessage);
     initialize();
   }
 
@@ -112,25 +112,36 @@ export class NetworkPlugin implements ToolPlugin {
     return this.websocketBackend.port;
   }
 
+  sendCDPMessage = (messageData: any) => {
+    this.devtools.send("RNIDE_pluginMessage", {
+      scope: "network",
+      type: "cdp-message",
+      data: messageData,
+    });
+  };
+
   activate(): void {
     this.websocketBackend.start().then(() => {
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
       this.devtoolsListeners.push(
-        this.devtools.addListener("RNIDE_networkInspectorCDPMessage", (payload) => {
-          this.websocketBackend.broadcast(payload);
+        this.devtools.addListener("RNIDE_pluginMessage", (payload) => {
+          if (payload.scope === "network") {
+            this.websocketBackend.broadcast(payload.data);
+          }
         })
       );
       this.devtoolsListeners.push(
         this.devtools.addListener("RNIDE_appReady", () => {
-          this.devtools.send("RNIDE_enableNetworkInspect", { enable: true });
+          this.sendCDPMessage({ method: "Network.enable", params: {} });
         })
       );
+      this.sendCDPMessage({ method: "Network.enable", params: {} });
     });
   }
 
   deactivate(): void {
     disposeAll(this.devtoolsListeners);
-    this.devtools.send("RNIDE_enableNetworkInspect", { enable: false });
+    this.sendCDPMessage({ method: "Network.disable", params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
   }
 

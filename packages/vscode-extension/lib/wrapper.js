@@ -33,8 +33,8 @@ const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
   },
-  get enableNetworkInspect() {
-    return require("./network").enableNetworkInspect;
+  get setupNetworkPlugin() {
+    return require("./network").setup;
   },
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
@@ -48,7 +48,7 @@ window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
   return InternalImports.reduxDevtoolsExtensionCompose(...args);
 };
 
-const RNInternals = require('./rn-internals/rn-internals');
+const RNInternals = require("./rn-internals/rn-internals");
 
 function getCurrentScene() {
   return RNInternals.SceneTracker.getActiveScene().name;
@@ -334,15 +334,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
     [showStorybookStory]
   );
 
-  useAgentListener(
-    devtoolsAgent,
-    "RNIDE_enableNetworkInspect",
-    (payload) => {
-      InternalImports.enableNetworkInspect(devtoolsAgent, payload);
-    },
-    []
-  );
-
   useEffect(() => {
     if (devtoolsAgent) {
       const LoadingView = RNInternals.LoadingView;
@@ -432,6 +423,10 @@ export function AppWrapper({ children, initialProps, fabric }) {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
     };
   }, [devtoolsAgent]);
+
+  useEffect(() => {
+    InternalImports.setupNetworkPlugin();
+  }, []);
 
   return (
     <View

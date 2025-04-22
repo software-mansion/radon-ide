@@ -1,4 +1,5 @@
 const RNInternals = require("./rn-internals/rn-internals");
+const { AppExtensionProxy } = require("./plugins/AppExtensionProxy");
 
 function mimeTypeFromResponseType(responseType) {
   switch (responseType) {
@@ -67,29 +68,45 @@ class FakeWeakRef {
 
 const WeakRefImpl = typeof WeakRef !== "undefined" ? WeakRef : FakeWeakRef;
 
-export function enableNetworkInspect(devtoolsAgent, payload) {
+let setupCompleted = false;
+
+export function setup() {
+  if (setupCompleted) {
+    return;
+  }
+  setupCompleted = true;
+
+  const networkProxy = new AppExtensionProxy("network");
+
+  let enabled = false;
+  networkProxy.addMessageListener("cdp-message", (message) => {
+    if (message.method === "Network.enable" && !enabled) {
+      enabled = true;
+      enableNetworkInspect(networkProxy);
+    } else if (message.method === "Network.disable" && enabled) {
+      enabled = false;
+      disableNetworkInspect();
+    }
+  });
+}
+
+function disableNetworkInspect() {
+  XHRInterceptor.disableInterception();
+}
+
+function enableNetworkInspect(networkProxy) {
   const XHRInterceptor = RNInternals.XHRInterceptor;
 
   const loaderId = "xhr-interceptor";
   const xhrsMap = new Map();
 
-  if (!payload.enable) {
-    XHRInterceptor.disableInterception();
-    return;
-  }
-
   const requestIdPrefix = Math.random().toString(36).slice(2);
   let requestIdCounter = 0;
 
-  devtoolsAgent._bridge.addListener("RNIDE_networkInspectorCDPRequest", (message) => {
+  function listener(message) {
     if (message.method === "Network.disable") {
-      XHRInterceptor.disableInterception();
-    } else if (message.method === "Network.enable") {
-      XHRInterceptor.setSendCallback(sendCallback);
-      XHRInterceptor.enableInterception();
-    }
-
-    if (
+      networkProxy.removeMessageListener("cdp-message", listener);
+    } else if (
       message.method === "Network.getResponseBody" &&
       message.params.requestId.startsWith(requestIdPrefix)
     ) {
@@ -100,8 +117,8 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
       xhrsMap.delete(requestId);
 
       readResponseBodyContent(xhr).then((body) => {
-        devtoolsAgent._bridge.send(
-          "RNIDE_networkInspectorCDPMessage",
+        networkProxy.sendMessage(
+          "cdp-message",
           JSON.stringify({
             id: message.id,
             result: { body },
@@ -109,7 +126,8 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
         );
       });
     }
-  });
+  }
+  networkProxy.addMessageListener("cdp-message", listener);
 
   const HEADERS_RECEIVED = 2; // readyState value when headers are received
 
@@ -121,10 +139,7 @@ export function enableNetworkInspect(devtoolsAgent, payload) {
     xhrsMap.set(requestId, new WeakRefImpl(xhr));
 
     function sendCDPMessage(method, params) {
-      devtoolsAgent._bridge.send(
-        "RNIDE_networkInspectorCDPMessage",
-        JSON.stringify({ method, params })
-      );
+      networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
     }
 
     sendCDPMessage("Network.requestWillBeSent", {

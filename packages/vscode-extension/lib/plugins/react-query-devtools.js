@@ -2,8 +2,8 @@ import { QueryClient } from "@tanstack/query-core";
 import { register } from "../expo_dev_plugins";
 import { AppExtensionProxy } from "./AppExtensionProxy";
 
-function broadcastQueryClient(scope, queryClient) {
-  const proxy = new AppExtensionProxy(scope);
+function broadcastQueryClient(queryClient) {
+  const proxy = new AppExtensionProxy("react-query");
 
   let transaction = false;
 
@@ -79,6 +79,6 @@ register("react-query");
 const origMount = QueryClient.prototype.mount;
 
 QueryClient.prototype.mount = function (...args) {
-  broadcastQueryClient("RNIDE_reactQueryDevtools", this);
+  broadcastQueryClient(this);
   return origMount.apply(this, args);
 };
