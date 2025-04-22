@@ -257,6 +257,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
   private removeDeviceListener = async (device: DeviceInfo) => {
     if (this.selectedDevice === device.id) {
       this.updateProjectState({ status: "starting" });
+      await this.killAndRemoveDevice(device.id);
       await this.trySelectingDevice();
     }
   };
