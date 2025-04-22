@@ -13,7 +13,6 @@ import {
 import {
   AppPermissionType,
   DeviceSettings,
-  ReloadAction,
   StartupMessage,
   TouchPoint,
   DeviceButtonType,
@@ -28,6 +27,7 @@ import { CancelToken } from "../builders/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { ToolsDelegate, ToolsManager } from "./tools";
 import { extensionContext } from "../utilities/extensionContext";
+import { ReloadAction } from "../common/DeviceSessionsManager";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -78,7 +78,10 @@ export type DeviceSessionDelegate = {
   BuildManagerDelegate;
 
 export class DeviceBootError extends Error {
-  constructor(message: string, public readonly cause: unknown) {
+  constructor(
+    message: string,
+    public readonly cause: unknown
+  ) {
     super(message);
   }
 }

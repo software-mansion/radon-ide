@@ -57,7 +57,10 @@ export class ToolsManager implements Disposable {
   private plugins: Map<ToolKey, ToolPlugin> = new Map();
   private activePlugins: Set<ToolPlugin> = new Set();
 
-  public constructor(public readonly devtools: Devtools, private readonly delegate: ToolsDelegate) {
+  public constructor(
+    public readonly devtools: Devtools,
+    private readonly delegate: ToolsDelegate
+  ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
 
     for (const plugin of createExpoDevPluginTools()) {

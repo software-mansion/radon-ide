@@ -57,10 +57,6 @@ type ProjectStateBuildError = {
   };
 } & ProjectStateCommon;
 
-export type SelectDeviceOptions = {
-  preservePreviousDevice?: boolean;
-};
-
 export type ZoomLevelType = number | "Fit";
 
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
@@ -90,15 +86,6 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
-
-export type ReloadAction =
-  | "autoReload" // automatic reload mode
-  | "clearMetro" // clear metro cache, boot device, install app
-  | "rebuild" // clean build, boot device, install app
-  | "reboot" // reboots device, launch app
-  | "reinstall" // force reinstall app
-  | "restartProcess" // relaunch app
-  | "reloadJs"; // refetch JS scripts from metro
 
 export type Frame = {
   x: number;
@@ -166,9 +153,7 @@ export type MultimediaData = {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  reload(type: ReloadAction): Promise<boolean>;
   goHome(homeUrl: string): Promise<void>;
-  selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions): Promise<boolean>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 

@@ -2,19 +2,26 @@ import { isEqual } from "lodash";
 import { Disposable, window } from "vscode";
 import { BuildError } from "../builders/BuildManager";
 import { DeviceInfo } from "../common/DeviceManager";
-import { ProjectState, ReloadAction, SelectDeviceOptions, StartupMessage } from "../common/Project";
+import { ProjectState, StartupMessage } from "../common/Project";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { ApplicationContext } from "./ApplicationContext";
-import { DeviceBootError, DeviceSession, DeviceSessionDelegate } from "./deviceSession";
+import { DeviceBootError, DeviceSession } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { CancelError } from "../builders/cancelToken";
+import {
+  DeviceSessionsManagerInterface,
+  DeviceSessionsManagerDelegate,
+  ReloadAction,
+  SelectDeviceOptions,
+} from "../common/DeviceSessionsManager";
+import { disposeAll } from "../utilities/disposables";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
-export class DeviceSessionsManager implements Disposable {
+export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Disposable {
   // selected device id
   private selectedDevice: string | undefined;
   private deviceSessions: Map<string, DeviceSession> = new Map();
@@ -29,9 +36,12 @@ export class DeviceSessionsManager implements Disposable {
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
-    private readonly deviceSessionDelegate: DeviceSessionDelegate,
+    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
     private readonly updateProjectState: (newState: Partial<ProjectState>) => void
-  ) {}
+  ) {
+    this.trySelectingDevice();
+    this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
+  }
 
   private trySelectingActiveDeviceSession(id: string, killPreviousDeviceSession?: boolean) {
     if (this.deviceSessions.has(id)) {
@@ -45,6 +55,8 @@ export class DeviceSessionsManager implements Disposable {
   }
 
   public async reload(type: ReloadAction) {
+    this.deviceSessionManagerDelegate.onReloadRequested(type);
+
     const deviceSession = this.selectedDeviceSession;
     if (!deviceSession) {
       window.showErrorMessage("Failed to reload, no active device found.", "Dismiss");
@@ -66,6 +78,23 @@ export class DeviceSessionsManager implements Disposable {
       throw e;
     }
     return false;
+  }
+
+  public async stopDevice(deviceId: string) {
+    if (deviceId === this.selectedDevice) {
+      window.showWarningMessage(
+        "You cannot stop the selected device. Please select another device first.",
+        "Dismiss"
+      );
+      return false;
+    }
+    const deviceSession = this.deviceSessions.get(deviceId);
+    if (!deviceSession) {
+      Logger.warn("Failed to stop device, device wasn't running.", "Dismiss");
+      return true;
+    }
+    await this.killAndRemoveDevice(deviceId);
+    return true;
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions) {
@@ -106,10 +135,10 @@ export class DeviceSessionsManager implements Disposable {
         device,
         this.applicationContext.dependencyManager,
         this.applicationContext.buildCache,
-        this.deviceSessionDelegate,
-        this.deviceSessionDelegate,
-        this.deviceSessionDelegate,
-        this.deviceSessionDelegate
+        this.deviceSessionManagerDelegate,
+        this.deviceSessionManagerDelegate,
+        this.deviceSessionManagerDelegate,
+        this.deviceSessionManagerDelegate
       );
       this.deviceSessions.set(id, newDeviceSession);
       this.selectedDevice = id;
@@ -154,6 +183,7 @@ export class DeviceSessionsManager implements Disposable {
         }
       }
     }
+    this.deviceSessionManagerDelegate.onDeviceSelected(deviceInfo);
     return true;
   }
 
@@ -162,7 +192,7 @@ export class DeviceSessionsManager implements Disposable {
    * it tries to select the last selected device from devices list.
    * If the device list is empty, we wait until we can select a device.
    */
-  public async trySelectingDevice() {
+  private async trySelectingDevice() {
     const anyActiveDeviceSessionId = this.deviceSessions.keys().next().value;
 
     if (anyActiveDeviceSessionId) {
@@ -223,6 +253,14 @@ export class DeviceSessionsManager implements Disposable {
     await selectInitialDevice(devices);
   }
 
+  // used in callbacks, needs to be an arrow function
+  private removeDeviceListener = async (device: DeviceInfo) => {
+    if (this.selectedDevice === device.id) {
+      this.updateProjectState({ status: "starting" });
+      await this.trySelectingDevice();
+    }
+  };
+
   private async killAndRemoveDevice(deviceId: string) {
     const deviceSession = this.deviceSessions.get(deviceId);
     await deviceSession?.dispose();
@@ -260,8 +298,7 @@ export class DeviceSessionsManager implements Disposable {
   }
 
   dispose() {
-    this.deviceSessions.forEach((session) => {
-      session.dispose();
-    });
+    disposeAll(this.deviceSessions.values().toArray());
+    this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
   }
 }

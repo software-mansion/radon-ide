@@ -4,24 +4,25 @@ import UrlSelect, { UrlItem } from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
 import { useDependencies } from "../providers/DependenciesProvider";
+import { useDevices } from "../providers/DevicesProvider";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
-  const { project } = useProject();
+  const { deviceSessionsManager } = useDevices();
   return (
     <IconButtonWithOptions
-      onClick={() => project.reload("autoReload")}
+      onClick={() => deviceSessionsManager.reload("autoReload")}
       tooltip={{
         label: "Reload the app",
         side: "bottom",
       }}
       disabled={disabled}
       options={{
-        "Reload JS": () => project.reload("reloadJs"),
-        "Restart app process": () => project.reload("restartProcess"),
-        "Reinstall app": () => project.reload("reinstall"),
-        "Clear Metro cache": () => project.reload("clearMetro"),
-        "Reboot IDE": () => project.reload("reboot"),
-        "Clean rebuild": () => project.reload("rebuild"),
+        "Reload JS": () => deviceSessionsManager.reload("reloadJs"),
+        "Restart app process": () => deviceSessionsManager.reload("restartProcess"),
+        "Reinstall app": () => deviceSessionsManager.reload("reinstall"),
+        "Clear Metro cache": () => deviceSessionsManager.reload("clearMetro"),
+        "Reboot IDE": () => deviceSessionsManager.reload("reboot"),
+        "Clean rebuild": () => deviceSessionsManager.reload("rebuild"),
       }}>
       <span className="codicon codicon-refresh" />
     </IconButtonWithOptions>

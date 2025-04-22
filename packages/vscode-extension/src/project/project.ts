@@ -24,8 +24,6 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
-  ReloadAction,
-  SelectDeviceOptions,
   StartupMessage,
   ToolsState,
   TouchPoint,
@@ -37,7 +35,7 @@ import { DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
 import { throttle } from "../utilities/throttle";
 import { DebugSource } from "../debugging/DebugSession";
-import { AppEvent, DEVICE_SETTINGS_DEFAULT, DeviceSessionDelegate } from "./deviceSession";
+import { AppEvent, DEVICE_SETTINGS_DEFAULT } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
@@ -54,6 +52,7 @@ import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRoo
 import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager } from "./DeviceSessionsManager";
+import { DeviceSessionsManagerDelegate, ReloadAction } from "../common/DeviceSessionsManager";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -62,11 +61,11 @@ const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 
-export class Project implements Disposable, ProjectInterface, DeviceSessionDelegate {
+export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
   private applicationContext: ApplicationContext;
   private eventEmitter = new EventEmitter();
 
-  private deviceSessionsManager: DeviceSessionsManager;
+  public deviceSessionsManager: DeviceSessionsManager;
 
   private projectState: ProjectState = {
     status: "starting",
@@ -99,8 +98,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
       }
     );
 
-    this.deviceSessionsManager.trySelectingDevice();
-    this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.disposables.push(refreshTokenPeriodically());
     this.disposables.push(
       watchLicenseTokenChange(async () => {
@@ -164,8 +161,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
       }
     );
     oldDeviceSessionsManager.dispose();
-
-    this.deviceSessionsManager.trySelectingDevice();
   }
 
   //#region Device Session Delegate
@@ -442,7 +437,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
 
   public dispose() {
     this.deviceSession?.dispose();
-    this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.applicationContext.dispose();
     disposeAll(this.disposables);
   }
@@ -476,15 +470,13 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
 
   //#region Session lifecycle
 
-  public async reload(type: ReloadAction): Promise<boolean> {
+  onReloadRequested(type: ReloadAction) {
     this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
 
     getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
       platform: this.projectState.selectedDevice?.platform,
       method: type,
     });
-
-    return await this.deviceSessionsManager.reload(type);
   }
 
   //#endregion
@@ -492,7 +484,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
   async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
     if (needsRestart) {
-      this.reload("restartProcess");
+      this.deviceSessionsManager.reload("restartProcess");
     }
   }
 
@@ -639,7 +631,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
     let needsRestart = await this.deviceSession?.changeDeviceSettings(settings);
 
     if (needsRestart) {
-      await this.reload("reboot");
+      await this.deviceSessionsManager.reload("reboot");
     }
   }
 
@@ -737,24 +729,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionDeleg
   }
 
   //#region Select device
-  public async selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions) {
-    const device = await this.deviceSessionsManager.selectDevice(deviceInfo, selectDeviceOptions);
-    if (!device) {
-      return false;
-    }
+
+  public async onDeviceSelected(deviceInfo: DeviceInfo) {
     this.updateProjectState({ selectedDevice: deviceInfo });
-    return true;
   }
 
   //#endregion
-
-  // used in callbacks, needs to be an arrow function
-  private removeDeviceListener = async (device: DeviceInfo) => {
-    if (this.projectState.selectedDevice?.id === device.id) {
-      this.updateProjectState({ status: "starting" });
-      await this.deviceSessionsManager.trySelectingDevice();
-    }
-  };
 }
 
 export function isAppSourceFile(filePath: string) {
