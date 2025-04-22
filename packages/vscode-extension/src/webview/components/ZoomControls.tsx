@@ -15,7 +15,7 @@ type ZoomControlsProps = {
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoom: ZoomLevelType) => void;
   device?: DeviceProperties;
-  wrapperDivRef?: RefObject<HTMLDivElement>;
+  wrapperDivRef?: RefObject<HTMLDivElement | null>;
   setIsSelectOpen?: (open: boolean) => void;
 };
 

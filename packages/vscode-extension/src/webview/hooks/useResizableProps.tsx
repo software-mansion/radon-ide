@@ -6,7 +6,7 @@ import { DEVICE_DEFAULT_SCALE } from "../components/ZoomControls";
 import { useDeviceFrame } from "../Preview/Device/hooks";
 
 type UseResizableProps = {
-  wrapperDivRef: React.RefObject<HTMLDivElement>;
+  wrapperDivRef: React.Ref<HTMLDivElement>;
   zoomLevel: ZoomLevelType;
   setZoomLevel: (zoomLevel: ZoomLevelType) => void;
   device: DeviceProperties;

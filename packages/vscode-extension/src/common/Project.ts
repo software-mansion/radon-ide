@@ -1,3 +1,4 @@
+import { BuildType } from "./BuildConfig";
 import { DeviceInfo, DevicePlatform } from "./DeviceManager";
 
 export type Locale = string;
@@ -52,21 +53,13 @@ type ProjectStateBuildError = {
   buildError: {
     message: string;
     platform: DevicePlatform;
-    buildType: BuildType;
+    buildType: BuildType | null;
   };
 } & ProjectStateCommon;
 
 export type SelectDeviceOptions = {
   preservePreviousDevice?: boolean;
 };
-
-export enum BuildType {
-  Local = "local",
-  ExpoGo = "expoGo",
-  Eas = "eas",
-  Custom = "custom",
-  Unknown = "unknown",
-}
 
 export type ZoomLevelType = number | "Fit";
 

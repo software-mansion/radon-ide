@@ -42,6 +42,7 @@ const config = {
       }),
     ],
   ],
+  plugins: ["./src/plugins/changelog"],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -80,6 +81,7 @@ const config = {
           { to: "/legal/privacy-policy", label: "Privacy" },
           { to: "/legal", label: "Legal" },
           { to: "https://portal.ide.swmansion.com/", label: "Customer Portal" },
+          { to: "/docs/getting-started/changelog", label: "Changelog" },
         ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },
