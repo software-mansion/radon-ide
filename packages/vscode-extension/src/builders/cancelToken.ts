@@ -20,22 +20,19 @@ export class CancelToken {
     input: Promise<T> | ReturnType<typeof exec>
   ): Promise<T> | ReturnType<typeof exec> {
     if (isExecaChildProcess(input)) {
-      let cancelError: CancelError | null = null;
+      const { promise, resolve, reject } = Promise.withResolvers();
 
       this.onCancel(() => {
-        cancelError = new CancelError("The process was canceled");
+        reject(new CancelError("The process was canceled"));
         input.kill(9);
       });
+
+      input.then(resolve, reject);
 
       const wrappedInput = new Proxy(input, {
         get(target, prop, receiver) {
           if (prop === "then") {
-            return (resolve: any, reject: any) => {
-              if (cancelError) {
-                return Promise.reject(cancelError).then(resolve, reject);
-              }
-              return Promise.resolve(target).then(resolve, reject);
-            };
+            return (resolve: any, reject: any) => promise.then(resolve, reject);
           }
           return Reflect.get(target, prop, receiver);
         },
