@@ -34,6 +34,33 @@ function ActivateLicenseButton() {
   );
 }
 
+function ProfilingButton({
+  isProfiling,
+  title,
+  onClick,
+}: {
+  isProfiling: boolean;
+  title: string;
+  onClick: () => void;
+}) {
+  return (
+    <IconButton
+      className={isProfiling ? "button-recording-on" : ""}
+      tooltip={{
+        label: title,
+      }}
+      disabled={!isProfiling}
+      onClick={onClick}>
+      {isProfiling && (
+        <>
+          <div className="recording-rec-dot" />
+          <span>{title}</span>
+        </>
+      )}
+    </IconButton>
+  );
+}
+
 function PreviewView() {
   const {
     projectState,
@@ -43,6 +70,7 @@ function PreviewView() {
     replayData,
     isRecording,
     isProfilingCPU,
+    isProfilingReact,
     setReplayData,
   } = useProject();
   const { showDismissableError } = useUtils();
@@ -141,6 +169,10 @@ function PreviewView() {
     project.stopProfilingCPU();
   }
 
+  function stopProfilingReact() {
+    project.stopProfilingReact();
+  }
+
   async function handleReplay() {
     try {
       await project.captureReplay();
@@ -175,20 +207,16 @@ function PreviewView() {
           <UrlBar key={resetKey} disabled={hasNoDevices} />
         </div>
         <div className="button-group-top-right">
-          <IconButton
-            className={isProfilingCPU ? "button-recording-on" : ""}
-            tooltip={{
-              label: "Stop profiling CPU",
-            }}
-            disabled={!isProfilingCPU}
-            onClick={stopProfilingCPU}>
-            {isProfilingCPU && (
-              <>
-                <div className="recording-rec-dot" />
-                <span>Profiling CPU</span>
-              </>
-            )}
-          </IconButton>
+          <ProfilingButton
+            isProfiling={isProfilingCPU}
+            title="Stop profiling CPU"
+            onClick={stopProfilingCPU}
+          />
+          <ProfilingButton
+            isProfiling={isProfilingReact}
+            title="Stop profiling React"
+            onClick={stopProfilingReact}
+          />
           <ToolsDropdown disabled={hasNoDevices || !isRunning}>
             <IconButton tooltip={{ label: "Tools", type: "primary" }}>
               <span className="codicon codicon-tools" />

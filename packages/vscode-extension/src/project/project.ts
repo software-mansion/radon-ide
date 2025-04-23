@@ -211,6 +211,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         }
         this.updateProjectState({ status: "running" });
         break;
+      case "isProfilingReact":
+        this.eventEmitter.emit("isProfilingReact", payload);
+        break;
     }
   };
   //#endregion
@@ -288,6 +291,18 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       await this.deviceSession.stopProfilingCPU();
     } else {
       throw new Error("No device session available");
+    }
+  }
+
+  async startProfilingReact() {
+    await this.deviceSession?.devtools.startProfilingReact();
+  }
+
+  async stopProfilingReact() {
+    const uri = await this.deviceSession?.devtools.stopProfilingReact();
+    if (uri) {
+      // open profile file in vscode using our custom editor
+      commands.executeCommand("vscode.open", uri);
     }
   }
 
@@ -450,23 +465,22 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async goHome(homeUrl: string) {
-    // getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
-    //   platform: this.projectState.selectedDevice?.platform,
-    // });
+    getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
+      platform: this.projectState.selectedDevice?.platform,
+    });
 
-    // if (this.dependencyManager === undefined) {
-    //   Logger.error(
-    //     "[PROJECT] Dependency manager not initialized. this code should be unreachable."
-    //   );
-    //   throw new Error("[PROJECT] Dependency manager not initialized");
-    // }
+    if (this.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
 
-    // if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
-    //   await this.openNavigation(homeUrl);
-    // } else {
-    //   await this.reloadMetro();
-    // }
-    this.devtools?.profileReact();
+    if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
+      await this.openNavigation(homeUrl);
+    } else {
+      await this.reloadMetro();
+    }
   }
 
   //#region Session lifecycle
