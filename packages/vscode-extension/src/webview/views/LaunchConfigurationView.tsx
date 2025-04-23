@@ -420,9 +420,12 @@ function EasBuildConfiguration({
 }: easBuildConfigurationProps) {
   const DISABLED = "Disabled" as const;
   const CUSTOM = "Custom" as const;
+  const YES = "Yes" as const;
+  const NO = "No" as const;
 
   const profile = eas?.[platform]?.profile;
   const buildUUID = eas?.[platform]?.buildUUID;
+  const local = eas?.[platform]?.local;
 
   const [selectedProfile, setSelectedProfile] = useState<string>(() => {
     if (profile === undefined) {
@@ -440,7 +443,9 @@ function EasBuildConfiguration({
   const updateEasConfig = (configUpdate: Partial<EasConfig>) => {
     const currentPlaftormConfig = eas?.[platform] ?? {};
     const newPlatformConfig = Object.fromEntries(
-      Object.entries({ ...currentPlaftormConfig, ...configUpdate }).filter(([_k, v]) => !!v)
+      Object.entries({ ...currentPlaftormConfig, ...configUpdate }).filter(
+        ([_k, v]) => !!v || v === false
+      )
     );
     if ("profile" in newPlatformConfig) {
       update("eas", { ...eas, [platform]: newPlatformConfig });
@@ -478,6 +483,11 @@ function EasBuildConfiguration({
     updateEasConfig({ buildUUID: newBuildUUID });
   };
 
+  const onBuildLocallyChange = (selection: string) => {
+    const newLocal = selection === YES ? true : undefined;
+    updateEasConfig({ local: newLocal });
+  };
+
   const availableEasBuildProfiles = Object.entries(easBuildProfiles).map(
     ([buildProfile, config]) => {
       const canRunInSimulator =
@@ -489,6 +499,11 @@ function EasBuildConfiguration({
 
   availableEasBuildProfiles.push({ value: DISABLED, label: DISABLED, disabled: false });
   availableEasBuildProfiles.push({ value: CUSTOM, label: CUSTOM, disabled: false });
+
+  const buildLocallyOptions = [
+    { value: YES, label: YES },
+    { value: NO, label: NO },
+  ];
 
   return (
     <div className="launch-configuration-container">
@@ -516,15 +531,25 @@ function EasBuildConfiguration({
       )}
       {selectedProfile !== DISABLED && (
         <>
-          <div className="setting-description">{prettyPlatformName(platform)} Build UUID:</div>
-          <Input
-            ref={buildUUIDInputRef}
-            className="input-configuration"
-            type="string"
-            defaultValue={buildUUID ?? ""}
-            placeholder="Auto (build with matching fingerprint)"
-            onBlur={onBuildUUIDInputBlur}
-          />
+          <div className="setting-description">Build locally:</div>
+          <Select
+            value={local ? YES : NO}
+            onChange={onBuildLocallyChange}
+            items={buildLocallyOptions}
+            className="scheme"></Select>
+          {!local && (
+            <>
+              <div className="setting-description">{prettyPlatformName(platform)} Build UUID:</div>
+              <Input
+                ref={buildUUIDInputRef}
+                className="input-configuration"
+                type="string"
+                defaultValue={buildUUID ?? ""}
+                placeholder="Auto (build with matching fingerprint)"
+                onBlur={onBuildUUIDInputBlur}
+              />
+            </>
+          )}
         </>
       )}
     </div>

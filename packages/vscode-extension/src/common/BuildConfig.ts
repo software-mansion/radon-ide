@@ -4,6 +4,7 @@ export enum BuildType {
   Local = "local",
   ExpoGo = "expoGo",
   Eas = "eas",
+  EasLocal = "easLocal",
   Custom = "custom",
 }
 
@@ -28,6 +29,11 @@ export type EasBuildConfig = {
   config: { profile: string; buildUUID?: string };
 } & BuildConfigCommon;
 
+export type EasLocalBuildConfig = {
+  type: BuildType.EasLocal;
+  profile: string;
+} & BuildConfigCommon;
+
 export type AndroidLocalBuildConfig = {
   type: BuildType.Local;
   platform: DevicePlatform.Android;
@@ -48,6 +54,7 @@ export type BuildConfig =
   | CustomBuildConfig
   | ExpoGoBuildConfig
   | EasBuildConfig
+  | EasLocalBuildConfig
   | AndroidLocalBuildConfig
   | IOSLocalBuildConfig;
 

@@ -1,6 +1,7 @@
+import { OutputChannel } from "vscode";
 import { DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
-import { exec } from "../utilities/subprocess";
+import { exec, lineReader } from "../utilities/subprocess";
 
 type UnixTimestamp = number;
 
@@ -62,6 +63,11 @@ export async function isEasCliInstalled(appRoot: string) {
   }
 }
 
+const DEVICE_TO_EAS_PLATFORM_MAPPING = {
+  [DevicePlatform.Android]: "android",
+  [DevicePlatform.IOS]: "ios",
+};
+
 type ListEasBuildsOptions = { profile: string; fingerprintHash: string };
 
 export async function listEasBuilds(
@@ -69,14 +75,12 @@ export async function listEasBuilds(
   { profile, fingerprintHash }: ListEasBuildsOptions,
   appRoot: string
 ) {
-  const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
-
   const commandArgs = [
     "build:list",
     "--non-interactive",
     "--json",
     "--platform",
-    platformMapping[platform],
+    DEVICE_TO_EAS_PLATFORM_MAPPING[platform],
     "--profile",
     profile,
     "--fingerprint-hash",
@@ -138,11 +142,16 @@ export async function generateFingerprint(
   platform: DevicePlatform,
   appRoot: string
 ): Promise<FingerprintDetails> {
-  const platformMapping = { [DevicePlatform.Android]: "android", [DevicePlatform.IOS]: "ios" };
   try {
     const { stdout } = await exec(
       "eas",
-      ["fingerprint:generate", "--json", "--non-interactive", "-p", platformMapping[platform]],
+      [
+        "fingerprint:generate",
+        "--json",
+        "--non-interactive",
+        "-p",
+        DEVICE_TO_EAS_PLATFORM_MAPPING[platform],
+      ],
       { cwd: appRoot }
     );
     const result = JSON.parse(stdout);
@@ -159,5 +168,38 @@ export async function generateFingerprint(
     throw new Error(
       "Failed to generate the local workspace fingerprint. Check the extension logs for more details."
     );
+  }
+}
+
+interface BuildLocalOptions {
+  platform: DevicePlatform;
+  profile: string;
+  outputPath: string;
+}
+
+export async function buildLocal(
+  { platform, profile, outputPath }: BuildLocalOptions,
+  appRoot: string,
+  outputChannel: OutputChannel
+): Promise<void> {
+  const commandArgs = [
+    "build",
+    "--local",
+    "--non-interactive",
+    "--profile",
+    profile,
+    "--platform",
+    DEVICE_TO_EAS_PLATFORM_MAPPING[platform],
+    "--output",
+    outputPath,
+  ];
+  const buildProcess = exec("eas", commandArgs, { cwd: appRoot, quietErrorsOnExit: true });
+  lineReader(buildProcess).onLineRead((line) => {
+    outputChannel.appendLine(line);
+  });
+  try {
+    await buildProcess;
+  } catch {
+    throw new Error("EAS local build failed. See the build logs for details.");
   }
 }
