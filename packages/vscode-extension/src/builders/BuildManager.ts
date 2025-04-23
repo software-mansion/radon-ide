@@ -117,7 +117,7 @@ export class BuildManager implements Disposable {
     return false;
   }
 
-  private async inferBuildType(
+  public async inferBuildType(
     appRoot: string,
     platform: DevicePlatform,
     launchConfiguration: LaunchConfigurationOptions
@@ -156,7 +156,7 @@ export class BuildManager implements Disposable {
     return BuildType.Local;
   }
 
-  private createBuildConfig<Platform extends DevicePlatform>(
+  public createBuildConfig<Platform extends DevicePlatform>(
     appRoot: string,
     platform: Platform,
     forceCleanBuild: boolean,
