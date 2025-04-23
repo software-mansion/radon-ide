@@ -739,6 +739,7 @@
     "@types/node-fetch": "^2.6.12",
     "@types/plist": "^3.0.5",
     "@types/react": "^19.1.2",
+    "@types/react-devtools-inline": "^4.24.8",
     "@types/semver": "^7.7.0",
     "@types/sinon": "^17.0.4",
     "@types/tar": "^6.1.13",

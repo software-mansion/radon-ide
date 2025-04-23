@@ -19,7 +19,7 @@ import {
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { RenderOutlinesPlugin } from "../plugins/render-outlines/render-outlines-plugin";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
-
+import { disposeAll } from "../utilities/disposables";
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
 export type ToolKey =
@@ -56,6 +56,7 @@ export class ToolsManager implements Disposable {
   private toolsSettings: Partial<Record<ToolKey, boolean>> = {};
   private plugins: Map<ToolKey, ToolPlugin> = new Map();
   private activePlugins: Set<ToolPlugin> = new Set();
+  private disposables: Disposable[] = [];
 
   public constructor(
     public readonly devtools: Devtools,
@@ -73,25 +74,23 @@ export class ToolsManager implements Disposable {
     this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(devtools));
     this.plugins.set(RENDER_OUTLINES_PLUGIN_ID, new RenderOutlinesPlugin(devtools));
 
-    devtools.addListener(this.devtoolsListener);
+    this.disposables.push(
+      devtools.onEvent("RNIDE_devtoolPluginsChanged", (payload) => {
+        // payload.plugins is a list of expo dev plugin names
+        const availablePlugins = new Set(payload.plugins);
+        let changed = false;
+        this.plugins.forEach((plugin) => {
+          if (!plugin.available && availablePlugins.has(plugin.id)) {
+            changed = true;
+            plugin.available = true;
+          }
+        });
+        // notify tools manager that the state of requested plugins has changed
+        changed && this.handleStateChange();
+      })
+    );
     this.handleStateChange();
   }
-
-  private devtoolsListener = (event: string, payload: any) => {
-    if (event === "RNIDE_devtoolPluginsChanged") {
-      // payload.plugins is a list of expo dev plugin names
-      const availablePlugins = new Set(payload.plugins);
-      let changed = false;
-      this.plugins.forEach((plugin) => {
-        if (!plugin.available && availablePlugins.has(plugin.id)) {
-          changed = true;
-          plugin.available = true;
-        }
-      });
-      // notify tools manager that the state of requested plugins has changed
-      changed && this.handleStateChange();
-    }
-  };
 
   public getPlugin(toolName: ToolKey): ToolPlugin | undefined {
     return this.plugins.get(toolName);
@@ -101,7 +100,7 @@ export class ToolsManager implements Disposable {
     this.activePlugins.forEach((plugin) => plugin.deactivate());
     this.activePlugins.clear();
     this.plugins.forEach((plugin) => plugin.dispose());
-    this.devtools.removeListener(this.devtoolsListener);
+    disposeAll(this.disposables);
   }
 
   public deactivate() {

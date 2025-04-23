@@ -124,7 +124,7 @@ export class DeviceSession implements Disposable {
     this.deviceSettings =
       extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? DEVICE_SETTINGS_DEFAULT;
 
-    this.devtools = new Devtools();
+    this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools, metroDelegate);
     this.toolsManager = new ToolsManager(this.devtools, toolsDelegate);
 
@@ -135,22 +135,26 @@ export class DeviceSession implements Disposable {
       device.platform
     );
     this.debugSession = new DebugSession(debugEventDelegate);
-    this.devtools.addListener((event, payload) => {
-      switch (event) {
-        case "RNIDE_appReady":
-          Logger.debug("App ready");
-          break;
-        case "RNIDE_navigationChanged":
-          this.deviceSessionDelegate.onAppEvent("navigationChanged", payload);
-          break;
-        case "RNIDE_fastRefreshStarted":
-          this.deviceSessionDelegate.onAppEvent("fastRefreshStarted", undefined);
-          break;
-        case "RNIDE_fastRefreshComplete":
-          this.deviceSessionDelegate.onAppEvent("fastRefreshComplete", undefined);
-          break;
-      }
+  }
+
+  private makeDevtools() {
+    const devtools = new Devtools();
+    this.devtools.onEvent("RNIDE_appReady", () => {
+      Logger.debug("App ready");
     });
+    // We don't need to store event disposables here as they are tied to the lifecycle
+    // of the devtools instance, which is disposed when we recreate the devtools or
+    // when the device session is disposed
+    this.devtools.onEvent("RNIDE_navigationChanged", (payload) => {
+      this.deviceSessionDelegate.onAppEvent("navigationChanged", payload);
+    });
+    this.devtools.onEvent("RNIDE_fastRefreshStarted", () => {
+      this.deviceSessionDelegate.onAppEvent("fastRefreshStarted", undefined);
+    });
+    this.devtools.onEvent("RNIDE_fastRefreshComplete", () => {
+      this.deviceSessionDelegate.onAppEvent("fastRefreshComplete", undefined);
+    });
+    return devtools;
   }
 
   /**
@@ -262,7 +266,7 @@ export class DeviceSession implements Disposable {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
       const oldToolsManager = this.toolsManager;
-      this.devtools = new Devtools();
+      this.devtools = this.makeDevtools();
       this.metro = new MetroLauncher(this.devtools, this.metroDelegate);
       this.toolsManager = new ToolsManager(this.devtools, this.toolsDelegate);
       oldToolsManager.dispose();
@@ -644,13 +648,12 @@ export class DeviceSession implements Disposable {
     callback: (inspectData: any) => void
   ) {
     const id = this.inspectCallID++;
-    const listener = (event: string, payload: any) => {
-      if (event === "RNIDE_inspectData" && payload.id === id) {
-        this.devtools?.removeListener(listener);
+    const listener = this.devtools.onEvent("RNIDE_inspectData", (payload) => {
+      if (payload.id === id) {
+        listener.dispose();
         callback(payload);
       }
-    };
-    this.devtools?.addListener(listener);
+    });
     this.devtools.send("RNIDE_inspect", { x: xRatio, y: yRatio, id, requestStack });
   }
 
@@ -663,20 +666,19 @@ export class DeviceSession implements Disposable {
   }
 
   public async startPreview(previewId: string) {
-    this.devtools.send("RNIDE_openPreview", { previewId });
-    return new Promise<void>((res, rej) => {
-      let listener = (event: string, payload: any) => {
-        if (event === "RNIDE_openPreviewResult" && payload.previewId === previewId) {
-          this.devtools?.removeListener(listener);
-          if (payload.error) {
-            rej(payload.error);
-          } else {
-            res();
-          }
+    const { resolve, reject, promise } = Promise.withResolvers<void>();
+    const listener = this.devtools.onEvent("RNIDE_openPreviewResult", (payload) => {
+      if (payload.previewId === previewId) {
+        listener.dispose();
+        if (payload.error) {
+          reject(payload.error);
+        } else {
+          resolve();
         }
-      };
-      this.devtools.addListener(listener);
+      }
     });
+    this.devtools.send("RNIDE_openPreview", { previewId });
+    return promise;
   }
 
   public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {

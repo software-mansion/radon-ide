@@ -14,8 +14,10 @@ export class AppExtensionProxy {
   }
 
   handleMessages = (data) => {
-    const listeners = this.listeners.get(data.type) || [];
-    listeners.forEach((listener) => listener(data.data));
+    if (data.scope === this.scope) {
+      const listeners = this.listeners.get(data.type) || [];
+      listeners.forEach((listener) => listener(data.data));
+    }
   };
 
   setDevtoolsAgent = (agent) => {
@@ -24,14 +26,14 @@ export class AppExtensionProxy {
     }
     this.clearDevToolsAgent();
     this.devtoolsAgent = agent;
-    this.devtoolsAgent._bridge.addListener(this.scope, this.handleMessages);
+    this.devtoolsAgent._bridge.addListener("RNIDE_pluginMessage", this.handleMessages);
   };
 
   clearDevToolsAgent() {
     if (!this.devtoolsAgent) {
       return;
     }
-    this.devtoolsAgent._bridge.removeListener(this.scope, this.handleMessages);
+    this.devtoolsAgent._bridge.removeListener("RNIDE_pluginMessage", this.handleMessages);
     this.devtoolsAgent = undefined;
   }
 
@@ -40,7 +42,8 @@ export class AppExtensionProxy {
       return;
     }
 
-    this.devtoolsAgent._bridge.send(this.scope, {
+    this.devtoolsAgent._bridge.send("RNIDE_pluginMessage", {
+      scope: this.scope,
       type,
       data,
     });

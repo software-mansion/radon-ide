@@ -1,16 +1,9 @@
-import {
-  QueryClient
-} from '@tanstack/query-core';
-import {
-  register,
-} from '../expo_dev_plugins';
-import {
-  AppExtensionProxy
-} from './AppExtensionProxy';
+import { QueryClient } from "@tanstack/query-core";
+import { register } from "../expo_dev_plugins";
+import { AppExtensionProxy } from "./AppExtensionProxy";
 
-
-function broadcastQueryClient(scope, queryClient) {
-  const proxy = new AppExtensionProxy(scope);
+function broadcastQueryClient(queryClient) {
+  const proxy = new AppExtensionProxy("react-query");
 
   let transaction = false;
 
@@ -31,16 +24,16 @@ function broadcastQueryClient(scope, queryClient) {
       query: { queryHash, queryKey, state },
     } = queryEvent;
 
-    if (queryEvent.type === 'updated' && queryEvent.action.type === 'success') {
+    if (queryEvent.type === "updated" && queryEvent.action.type === "success") {
       proxy.sendMessage("updated", {
         queryHash,
         queryKey,
         state,
       });
     }
-    
-    if (queryEvent.type === 'removed') {
-      proxy.sendMessage('removed', {
+
+    if (queryEvent.type === "removed") {
+      proxy.sendMessage("removed", {
         queryHash,
         queryKey,
       });
@@ -69,7 +62,7 @@ function broadcastQueryClient(scope, queryClient) {
     });
   });
 
-  proxy.addMessageListener("removed", (action) => {  
+  proxy.addMessageListener("removed", (action) => {
     tx(() => {
       const { queryHash } = action;
       const query = queryCache.get(queryHash);
@@ -81,11 +74,11 @@ function broadcastQueryClient(scope, queryClient) {
   });
 }
 
-register('react-query');
+register("react-query");
 
 const origMount = QueryClient.prototype.mount;
 
 QueryClient.prototype.mount = function (...args) {
-  broadcastQueryClient('react-query', this);
+  broadcastQueryClient(this);
   return origMount.apply(this, args);
 };
