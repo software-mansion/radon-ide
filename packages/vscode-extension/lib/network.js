@@ -91,7 +91,7 @@ export function setup() {
 }
 
 function disableNetworkInspect() {
-  XHRInterceptor.disableInterception();
+  RNInternals.XHRInterceptor.disableInterception();
 }
 
 function enableNetworkInspect(networkProxy) {
