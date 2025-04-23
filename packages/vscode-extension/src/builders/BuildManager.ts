@@ -5,13 +5,17 @@ import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { DependencyManager } from "../dependency/DependencyManager";
-import { CancelToken } from "./cancelToken";
+import { CancelError, CancelToken } from "./cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { isExpoGoProject } from "./expoGo";
 import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { throttleAsync } from "../utilities/throttle";
+import { watchProjectFiles } from "../utilities/watchProjectFiles";
+
+const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -19,11 +23,15 @@ export interface DisposableBuild<R> extends Disposable {
   readonly build: Promise<R>;
 }
 
+export interface BuildManagerDelegate {
+  onCacheStale: (platform: DevicePlatform) => void;
+}
+
 type BuildOptions = {
   appRoot: string;
   clean: boolean;
   progressListener: (newProgress: number) => void;
-  onSuccess: () => void;
+  cancelToken: CancelToken;
 };
 
 export class BuildError extends Error {
@@ -35,11 +43,60 @@ export class BuildError extends Error {
   }
 }
 
-export class BuildManager {
+class WorkspaceChangeListener implements Disposable {
+  private watcher: Disposable | undefined;
+
+  constructor(private readonly onChange: () => void) {}
+
+  public startWatching() {
+    if (this.watcher === undefined) {
+      this.watcher = watchProjectFiles(() => {
+        this.onChange();
+      });
+    }
+  }
+
+  public stopWatching() {
+    this.watcher?.dispose();
+    this.watcher = undefined;
+  }
+
+  public dispose() {
+    this.watcher?.dispose();
+  }
+}
+
+export class BuildManager implements Disposable {
+  private isCachedBuildStale: boolean;
+
+  private workspaceChangeListener: WorkspaceChangeListener;
+
   constructor(
     private readonly dependencyManager: DependencyManager,
-    private readonly buildCache: BuildCache
-  ) {}
+    private readonly buildCache: BuildCache,
+    private readonly buildManagerDelegate: BuildManagerDelegate,
+    private readonly platform: DevicePlatform
+  ) {
+    this.isCachedBuildStale = false;
+    // Note: in future implementations decoupled from device session we
+    // should make this logic platform independent
+    this.workspaceChangeListener = new WorkspaceChangeListener(() => {
+      this.checkIfNativeChangedForPlatform();
+    });
+    this.workspaceChangeListener.startWatching();
+  }
+
+  public shouldRebuild() {
+    return this.isCachedBuildStale;
+  }
+
+  public activate() {
+    this.workspaceChangeListener.startWatching();
+  }
+
+  public deactivate() {
+    this.workspaceChangeListener.stopWatching();
+  }
 
   private buildOutputChannel: OutputChannel | undefined;
 
@@ -198,7 +255,7 @@ export class BuildManager {
   }
 
   public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {
-    const { clean: forceCleanBuild, progressListener, onSuccess, appRoot } = options;
+    const { clean: forceCleanBuild, progressListener, appRoot, cancelToken } = options;
     const { platform } = deviceInfo;
     const launchConfiguration = getLaunchConfiguration();
 
@@ -206,8 +263,6 @@ export class BuildManager {
       platform,
       type: forceCleanBuild ? "clean" : "incremental",
     });
-
-    const cancelToken = new CancelToken();
 
     const buildApp = async () => {
       const currentFingerprint = await this.buildCache.calculateFingerprint(platform);
@@ -309,6 +364,9 @@ export class BuildManager {
           );
         }
       } catch (e) {
+        if (e instanceof CancelError) {
+          throw e; // If the build was canceled we pass the exception up.
+        }
         throw new BuildError((e as Error).message, buildType);
       }
 
@@ -319,6 +377,9 @@ export class BuildManager {
 
     const disposableBuild = {
       build: buildApp().catch((e: Error) => {
+        if (e instanceof CancelError) {
+          throw e; // If the build was canceled we pass the exception up.
+        }
         if (e instanceof BuildError) {
           throw e;
         }
@@ -328,8 +389,28 @@ export class BuildManager {
         cancelToken.cancel();
       },
     };
-    disposableBuild.build.then(onSuccess).catch(_.noop);
+    disposableBuild.build
+      .then(() => {
+        this.isCachedBuildStale = false;
+      })
+      .catch(_.noop);
 
     return disposableBuild;
+  }
+
+  private checkIfNativeChangedForPlatform = throttleAsync(async () => {
+    if (!this.isCachedBuildStale) {
+      const isCacheStale = await this.buildCache.isCacheStale(this.platform);
+
+      if (isCacheStale) {
+        this.isCachedBuildStale = true;
+        this.buildManagerDelegate.onCacheStale(this.platform);
+      }
+    }
+  }, FINGERPRINT_THROTTLE_MS);
+
+  public dispose() {
+    this.workspaceChangeListener.dispose();
+    this.buildOutputChannel?.dispose();
   }
 }

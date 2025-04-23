@@ -6,6 +6,7 @@ import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { BuildType } from "../../common/BuildConfig";
+import { useDevices } from "../providers/DevicesProvider";
 
 type LogsButtonDestination = "build" | "extension";
 
@@ -51,11 +52,12 @@ function BuildErrorActions({
 }
 
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
-  const { projectState, project } = useProject();
+  const { projectState } = useProject();
   const { ios, xcodeSchemes } = useLaunchConfig();
+  const { deviceSessionsManager } = useDevices();
 
   let onReload = () => {
-    project.restart(false);
+    deviceSessionsManager.reload("autoReload");
   };
   let logsButtonDestination: LogsButtonDestination | undefined = undefined;
 
@@ -117,6 +119,7 @@ export function useBootErrorAlert(shouldDisplayAlert: boolean) {
 
 function BundleErrorActions() {
   const { project } = useProject();
+  const { deviceSessionsManager } = useDevices();
   return (
     <>
       <IconButton
@@ -130,7 +133,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.restart(false);
+          deviceSessionsManager.reload("autoReload");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />

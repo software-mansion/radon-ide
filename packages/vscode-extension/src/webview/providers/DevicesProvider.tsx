@@ -15,14 +15,17 @@ import {
   IOSRuntimeInfo,
 } from "../../common/DeviceManager";
 import { Platform } from "../providers/UtilsProvider";
+import { DeviceSessionsManagerInterface } from "../../common/DeviceSessionsManager";
 
 const DeviceManager = makeProxy<DeviceManagerInterface>("DeviceManager");
+const DeviceSessionsManager = makeProxy<DeviceSessionsManagerInterface>("DeviceSessionsManager");
 
 interface DevicesContextProps {
   devices: DeviceInfo[];
   androidImages: AndroidSystemImageInfo[];
   iOSRuntimes: IOSRuntimeInfo[];
   deviceManager: DeviceManagerInterface;
+  deviceSessionsManager: DeviceSessionsManagerInterface;
   reload: () => void;
 }
 
@@ -31,6 +34,7 @@ const DevicesContext = createContext<DevicesContextProps>({
   androidImages: [],
   iOSRuntimes: [],
   deviceManager: DeviceManager,
+  deviceSessionsManager: DeviceSessionsManager,
   reload: () => {},
 });
 
@@ -65,6 +69,7 @@ export default function DevicesProvider({ children }: PropsWithChildren) {
       iOSRuntimes,
       reload,
       deviceManager: DeviceManager,
+      deviceSessionsManager: DeviceSessionsManager,
     };
   }, [devices, androidImages, iOSRuntimes, reload, DeviceManager]);
 

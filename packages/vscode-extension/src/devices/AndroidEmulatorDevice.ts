@@ -5,7 +5,7 @@ import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
-import { DeviceBase } from "./DeviceBase";
+import { DeviceBase, REBOOT_TIMEOUT } from "./DeviceBase";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
@@ -38,6 +38,7 @@ const ADB_PATH = path.join(
     linux: "adb",
   })
 );
+
 const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
@@ -212,6 +213,35 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private async forcefullyResetDevice() {
     this.emulatorProcess?.kill(9);
     await this.internalBootDevice();
+  }
+
+  public async reboot() {
+    super.reboot();
+    const { promise, resolve } = Promise.withResolvers<void>();
+
+    // Emulator might take a long time to exit gracefully, so we set a timeout
+    // to forcefully reset the device if it doesn't exit within the specified time.
+    const timeout = setTimeout(async () => {
+      this.emulatorProcess?.off("exit", exitListener);
+      await this.forcefullyResetDevice();
+      resolve();
+    }, REBOOT_TIMEOUT);
+
+    const exitListener = async () => {
+      clearTimeout(timeout);
+      await this.internalBootDevice();
+      resolve();
+    };
+
+    if (this.emulatorProcess) {
+      this.emulatorProcess.on("exit", exitListener);
+      this.emulatorProcess.kill();
+    } else {
+      await this.internalBootDevice();
+      resolve();
+    }
+
+    return promise;
   }
 
   async bootDevice(deviceSettings: DeviceSettings): Promise<void> {

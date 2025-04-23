@@ -1,4 +1,3 @@
-import { EventEmitter } from "stream";
 import { Disposable } from "vscode";
 import _ from "lodash";
 import { Devtools } from "./devtools";
@@ -49,6 +48,10 @@ export function reportToolOpened(toolName: ToolKey) {
   getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:opened`);
 }
 
+export interface ToolsDelegate {
+  onToolsStateChange(toolsState: ToolsState): void;
+}
+
 export class ToolsManager implements Disposable {
   private toolsSettings: Partial<Record<ToolKey, boolean>> = {};
   private plugins: Map<ToolKey, ToolPlugin> = new Map();
@@ -56,7 +59,7 @@ export class ToolsManager implements Disposable {
 
   public constructor(
     public readonly devtools: Devtools,
-    private readonly eventEmitter: EventEmitter
+    private readonly delegate: ToolsDelegate
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
 
@@ -101,6 +104,14 @@ export class ToolsManager implements Disposable {
     this.devtools.removeListener(this.devtoolsListener);
   }
 
+  public deactivate() {
+    this.activePlugins.forEach((plugin) => plugin.deactivate());
+  }
+
+  public activate() {
+    this.activePlugins.forEach((plugin) => plugin.activate());
+  }
+
   public handleStateChange() {
     for (const plugin of this.plugins.values()) {
       if (plugin.available) {
@@ -118,7 +129,7 @@ export class ToolsManager implements Disposable {
       }
     }
 
-    this.eventEmitter.emit("toolsStateChanged", this.getToolsState());
+    this.delegate.onToolsStateChange(this.getToolsState());
   }
 
   public getToolsState(): ToolsState {

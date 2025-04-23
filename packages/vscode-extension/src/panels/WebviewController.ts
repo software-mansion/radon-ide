@@ -40,12 +40,16 @@ export class WebviewController implements Disposable {
       ["DeviceManager", () => this.ide.deviceManager as object],
       ["DependencyManager", () => this.ide.project.dependencyManager as object],
       ["Project", () => this.ide.project as object],
+      ["DeviceSessionsManager", () => this.ide.project.deviceSessionsManager as object],
       ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
       ["LaunchConfig", () => this.ide.project.launchConfig as object],
       ["Utils", () => this.ide.utils as object],
       [
         "RenderOutlines",
-        () => this.ide.project.toolsManager.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
+        () =>
+          this.ide.project.deviceSession!.toolsManager.getPlugin(
+            RENDER_OUTLINES_PLUGIN_ID
+          ) as object,
       ],
     ]);
 

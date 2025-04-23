@@ -87,13 +87,6 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
 
-export type ReloadAction =
-  | "rebuild" // clean build, boot device, install app
-  | "reboot" // reboots device, launch app
-  | "reinstall" // force reinstall app
-  | "restartProcess" // relaunch app
-  | "reloadJs"; // refetch JS scripts from metro
-
 export type Frame = {
   x: number;
   y: number;
@@ -160,10 +153,7 @@ export type MultimediaData = {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  reload(type: ReloadAction): Promise<boolean>;
-  restart(clean: "all" | "metro" | false): Promise<void>;
   goHome(homeUrl: string): Promise<void>;
-  selectDevice(deviceInfo: DeviceInfo): Promise<boolean>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
