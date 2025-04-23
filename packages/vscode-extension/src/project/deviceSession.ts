@@ -139,19 +139,19 @@ export class DeviceSession implements Disposable {
 
   private makeDevtools() {
     const devtools = new Devtools();
-    this.devtools.onEvent("RNIDE_appReady", () => {
+    devtools.onEvent("RNIDE_appReady", () => {
       Logger.debug("App ready");
     });
     // We don't need to store event disposables here as they are tied to the lifecycle
     // of the devtools instance, which is disposed when we recreate the devtools or
     // when the device session is disposed
-    this.devtools.onEvent("RNIDE_navigationChanged", (payload) => {
+    devtools.onEvent("RNIDE_navigationChanged", (payload) => {
       this.deviceSessionDelegate.onAppEvent("navigationChanged", payload);
     });
-    this.devtools.onEvent("RNIDE_fastRefreshStarted", () => {
+    devtools.onEvent("RNIDE_fastRefreshStarted", () => {
       this.deviceSessionDelegate.onAppEvent("fastRefreshStarted", undefined);
     });
-    this.devtools.onEvent("RNIDE_fastRefreshComplete", () => {
+    devtools.onEvent("RNIDE_fastRefreshComplete", () => {
       this.deviceSessionDelegate.onAppEvent("fastRefreshComplete", undefined);
     });
     return devtools;
