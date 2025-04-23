@@ -47,22 +47,24 @@ function toPlatformConfig<T>(
 
 describe("BuildManager", () => {
   let buildManager: BuildManager;
-  let dependencyManagerStub: DependencyManager;
-  let buildCacheStub: BuildCache;
-  let isExpoGoProjectStub: Sinon.SinonStub;
+  let dependencyManagerStub: Sinon.SinonStubbedInstance<DependencyManager>;
+  let buildCacheStub: Sinon.SinonStubbedInstance<BuildCache>;
 
   beforeEach(() => {
     dependencyManagerStub = Sinon.createStubInstance(DependencyManager);
     buildCacheStub = Sinon.createStubInstance(BuildCache);
     buildManager = new BuildManager(dependencyManagerStub, buildCacheStub);
-    isExpoGoProjectStub = Sinon.stub(ExpoGo, "isExpoGoProject");
-  });
-
-  afterEach(() => {
-    isExpoGoProjectStub.restore();
   });
 
   describe("inferBuildType", function () {
+    let isExpoGoProjectStub: Sinon.SinonStub;
+    beforeEach(() => {
+      isExpoGoProjectStub = Sinon.stub(ExpoGo, "isExpoGoProject");
+    });
+    afterEach(() => {
+      isExpoGoProjectStub.restore();
+    });
+
     Object.values(DevicePlatform).forEach((platform) => {
       describe(platform, function () {
         it("should reject if both eas and custom build configs are provided", async function () {
@@ -108,6 +110,59 @@ describe("BuildManager", () => {
           isExpoGoProjectStub.returns(false);
           const buildType = await buildManager.inferBuildType(APP_ROOT, platform, {});
           assert.equal(buildType, BuildType.Local);
+        });
+      });
+    });
+  });
+
+  describe("createBuildConfig", function () {
+    Object.values(DevicePlatform).forEach((platform) => {
+      const launchConfigByType = new Map<BuildType, LaunchConfigurationOptions>([
+        [
+          BuildType.Custom,
+          {
+            customBuild: toPlatformConfig(platform, CUSTOM_BUILD_CONFIG),
+          },
+        ],
+        [
+          BuildType.Eas,
+          {
+            eas: toPlatformConfig(platform, EAS_CONFIG),
+          },
+        ],
+        [
+          BuildType.EasLocal,
+          {
+            eas: toPlatformConfig(platform, EAS_LOCAL_CONFIG),
+          },
+        ],
+        [BuildType.ExpoGo, {}],
+        [
+          BuildType.Local,
+          {
+            env: {
+              OPTION: "value",
+              ANOTHER_OPTION: "another value",
+            },
+          },
+        ],
+      ]);
+
+      describe(platform, function () {
+        it(`should include passed information`, async function () {
+          launchConfigByType.entries().forEach(([buildType, launchConfig]) => {
+            const buildConfig = buildManager.createBuildConfig(
+              APP_ROOT,
+              platform,
+              false,
+              launchConfig,
+              buildType
+            );
+            assert.equal(buildConfig.platform, platform);
+            assert.equal(buildConfig.type, buildType);
+            assert.equal(buildConfig.appRoot, APP_ROOT);
+            assert.equal(buildConfig.env, launchConfig.env);
+          });
         });
       });
     });
