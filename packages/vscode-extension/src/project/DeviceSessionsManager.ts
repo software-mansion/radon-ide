@@ -160,7 +160,9 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
       const isSelected = this.selectedDevice === deviceInfo.id;
       const isNewSession = this.selectedDeviceSession === newDeviceSession;
       if (isSelected && isNewSession) {
-        if (e instanceof DeviceBootError) {
+        if (e instanceof CancelError) {
+          Logger.debug("[SelectDevice] Device selection was canceled", e);
+        } else if (e instanceof DeviceBootError) {
           this.updateProjectState({ status: "bootError" });
         } else if (e instanceof BuildError) {
           this.updateProjectState({
