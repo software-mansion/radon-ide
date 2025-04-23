@@ -5,7 +5,7 @@ import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { DependencyManager } from "../dependency/DependencyManager";
-import { CancelToken } from "./cancelToken";
+import { CancelError, CancelToken } from "./cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
@@ -344,6 +344,9 @@ export class BuildManager implements Disposable {
           );
         }
       } catch (e) {
+        if (e instanceof CancelError) {
+          throw e; // If the build was canceled we pass the exception up.
+        }
         throw new BuildError((e as Error).message, buildType);
       }
 
@@ -354,6 +357,9 @@ export class BuildManager implements Disposable {
 
     const disposableBuild = {
       build: buildApp().catch((e: Error) => {
+        if (e instanceof CancelError) {
+          throw e; // If the build was canceled we pass the exception up.
+        }
         if (e instanceof BuildError) {
           throw e;
         }
