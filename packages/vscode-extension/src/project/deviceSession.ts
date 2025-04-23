@@ -28,7 +28,6 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { ToolsDelegate, ToolsManager } from "./tools";
 import { extensionContext } from "../utilities/extensionContext";
 import { ReloadAction } from "../common/DeviceSessionsManager";
-import { disposeAll } from "../utilities/disposables";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -99,7 +98,6 @@ export class DeviceSession implements Disposable {
   private buildManager: BuildManager;
   public deviceSettings: DeviceSettings;
   private isLaunching = true;
-  private disposables: Disposable[] = [];
   private cancelToken: CancelToken | undefined;
 
   private get buildResult() {
@@ -126,7 +124,7 @@ export class DeviceSession implements Disposable {
     this.deviceSettings =
       extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? DEVICE_SETTINGS_DEFAULT;
 
-    this.devtools = new Devtools();
+    this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools, metroDelegate);
     this.toolsManager = new ToolsManager(this.devtools, toolsDelegate);
 
@@ -137,26 +135,26 @@ export class DeviceSession implements Disposable {
       device.platform
     );
     this.debugSession = new DebugSession(debugEventDelegate);
-    this.disposables.push(
-      this.devtools.onEvent("RNIDE_appReady", () => {
-        Logger.debug("App ready");
-      })
-    );
-    this.disposables.push(
-      this.devtools.onEvent("RNIDE_navigationChanged", (payload) => {
-        this.deviceSessionDelegate.onAppEvent("navigationChanged", payload);
-      })
-    );
-    this.disposables.push(
-      this.devtools.onEvent("RNIDE_fastRefreshStarted", () => {
-        this.deviceSessionDelegate.onAppEvent("fastRefreshStarted", undefined);
-      })
-    );
-    this.disposables.push(
-      this.devtools.onEvent("RNIDE_fastRefreshComplete", () => {
-        this.deviceSessionDelegate.onAppEvent("fastRefreshComplete", undefined);
-      })
-    );
+  }
+
+  private makeDevtools() {
+    const devtools = new Devtools();
+    this.devtools.onEvent("RNIDE_appReady", () => {
+      Logger.debug("App ready");
+    });
+    // We don't need to store event disposables here as they are tied to the lifecycle
+    // of the devtools instance, which is disposed when we recreate the devtools or
+    // when the device session is disposed
+    this.devtools.onEvent("RNIDE_navigationChanged", (payload) => {
+      this.deviceSessionDelegate.onAppEvent("navigationChanged", payload);
+    });
+    this.devtools.onEvent("RNIDE_fastRefreshStarted", () => {
+      this.deviceSessionDelegate.onAppEvent("fastRefreshStarted", undefined);
+    });
+    this.devtools.onEvent("RNIDE_fastRefreshComplete", () => {
+      this.deviceSessionDelegate.onAppEvent("fastRefreshComplete", undefined);
+    });
+    return devtools;
   }
 
   /**
@@ -170,7 +168,6 @@ export class DeviceSession implements Disposable {
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
-    disposeAll(this.disposables);
   }
 
   public async activate() {
@@ -269,7 +266,7 @@ export class DeviceSession implements Disposable {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
       const oldToolsManager = this.toolsManager;
-      this.devtools = new Devtools();
+      this.devtools = this.makeDevtools();
       this.metro = new MetroLauncher(this.devtools, this.metroDelegate);
       this.toolsManager = new ToolsManager(this.devtools, this.toolsDelegate);
       oldToolsManager.dispose();
