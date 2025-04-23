@@ -426,7 +426,7 @@
                       },
                       "buildUUID": {
                         "type": "string",
-                        "description": "UUID of the EAS build used in `eas build:view` command."
+                        "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
                       }
                     },
                     "required": [
@@ -443,7 +443,7 @@
                       },
                       "buildUUID": {
                         "type": "string",
-                        "description": "UUID of the EAS build used in `eas build:view` command."
+                        "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
                       }
                     },
                     "required": [
@@ -712,7 +712,7 @@
     "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
     "prepare:fake_editor": "mkdir -p dist && cp react-fake-editor-executable dist/atom",
-    "watch:extension": "vite && cd ./src/network && vite",
+    "watch:extension": "vite",
     "package": "rm -rf dist/* && cp ../vscode-js-debug/dist/src/chromehash_bg.wasm dist/ && npm run build:dist",
     "lint": "eslint src/**/*.\\{ts,tsx,js,jsx\\} && prettier --check src",
     "typecheck": "tsc --noEmit",
@@ -751,6 +751,7 @@
     "@types/node-fetch": "^2.6.12",
     "@types/plist": "^3.0.5",
     "@types/react": "^19.1.2",
+    "@types/react-devtools-inline": "^4.24.8",
     "@types/semver": "^7.7.0",
     "@types/sinon": "^17.0.4",
     "@types/tar": "^6.1.13",
@@ -783,8 +784,8 @@
     "file-loader": "^6.2.0",
     "lodash": "^4.17.21",
     "minimatch": "^10.0.1",
-    "mocha": "^11.1.0",
-    "node-fetch": "^3.3.2",
+    "mocha": "^10.2.0",
+    "node-fetch": "^2.6.12",
     "ovsx": "^0.10.2",
     "patch-package": "^8.0.0",
     "plist": "^3.1.0",

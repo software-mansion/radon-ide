@@ -9,6 +9,7 @@ import ProgressBar from "./shared/ProgressBar";
 import { StartupMessage, StartupStageWeight } from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
 import Button from "./shared/Button";
+import { useDevices } from "../providers/DevicesProvider";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -17,6 +18,7 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
 
 function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => void }) {
   const { projectState, project } = useProject();
+  const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
@@ -118,7 +120,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
                   <span className="codicon codicon-browser" /> Visit troubleshoot guide
                 </Button>
               </a>
-              <Button type="secondary" onClick={() => project.restart("all")}>
+              <Button type="secondary" onClick={() => deviceSessionsManager.reload("rebuild")}>
                 <span className="codicon codicon-refresh" /> Clean rebuild project
               </Button>
             </div>

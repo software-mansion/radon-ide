@@ -1,5 +1,5 @@
 import http from "http";
-import { commands, Disposable, Uri, window } from "vscode";
+import { Disposable } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
 import {
@@ -8,9 +8,7 @@ import {
   FrontendBridge,
   Store,
   Wall,
-  prepareProfilingDataExport,
 } from "../../third-party/react-devtools/headless";
-import fs from "fs";
 import path from "path";
 import os from "os";
 
@@ -22,20 +20,10 @@ export const DEVTOOLS_EVENTS = [
   "RNIDE_fastRefreshComplete",
   "RNIDE_openPreviewResult",
   "RNIDE_inspectData",
-  "RNIDE_networkInspectorCDPMessage",
   "RNIDE_devtoolPluginsChanged",
   "RNIDE_rendersReported",
-  "RNIDE_devtoolsPluginMessage",
+  "RNIDE_pluginMessage",
 ] as const;
-
-// Create a type for the event names
-export type DevtoolsEventName = (typeof DEVTOOLS_EVENTS)[number];
-
-function filePathForProfile() {
-  const fileName = `profile-${Date.now()}.reactprofile`;
-  const filePath = path.join(os.tmpdir(), fileName);
-  return filePath;
-}
 
 // Define the payload types for each event
 export interface DevtoolsEvents {
@@ -45,19 +33,16 @@ export interface DevtoolsEvents {
   RNIDE_fastRefreshComplete: [];
   RNIDE_openPreviewResult: [{ previewId: string; error?: string }];
   RNIDE_inspectData: [{ id: number }];
-  RNIDE_networkInspectorCDPMessage: [string];
   RNIDE_devtoolPluginsChanged: [{ plugins: string[] }];
   RNIDE_rendersReported: [any];
-  RNIDE_devtoolsPluginMessage: [{ scope: string; data: any }];
+  RNIDE_pluginMessage: [{ scope: string; type: string; data: any }];
 }
 
 export class Devtools implements Disposable {
   private _port = 0;
   private server: any;
   private socket?: WebSocket;
-  private bridge?: FrontendBridge;
   private startPromise: Promise<void> | undefined;
-  private store?: Store;
   private listeners: Map<keyof DevtoolsEvents, Array<(...payload: any) => void>> = new Map();
 
   public get port() {
@@ -77,7 +62,7 @@ export class Devtools implements Disposable {
 
   public async appReady() {
     const { resolve, promise } = Promise.withResolvers<void>();
-    const listener = this.addListener("RNIDE_appReady", () => {
+    const listener = this.onEvent("RNIDE_appReady", () => {
       resolve();
       listener.dispose();
     });
@@ -108,7 +93,6 @@ export class Devtools implements Disposable {
         listen(fn) {
           function listener(message: string) {
             const parsedMessage = JSON.parse(message);
-            console.log("RECEIVED EVENT", parsedMessage);
             return fn(parsedMessage);
           }
           ws.on("message", listener);
@@ -121,16 +105,17 @@ export class Devtools implements Disposable {
         },
       };
 
-      this.bridge = createBridge(wall);
+      const bridge = createBridge(wall);
+      const store = createStore(bridge);
+
       ws.on("close", () => {
         this.socket = undefined;
-        this.bridge = undefined;
+        bridge.shutdown();
       });
-      this.store = createStore(this.bridge!);
 
       // Register bridge listeners for ALL custom event types
       for (const event of DEVTOOLS_EVENTS) {
-        this.bridge.addListener(event, (payload) => {
+        bridge.addListener(event, (payload) => {
           this.listeners.get(event)?.forEach((listener) => listener(payload));
         });
       }
@@ -145,26 +130,6 @@ export class Devtools implements Disposable {
     });
   }
 
-  public profileReact() {
-    this.store?.profilerStore.startProfiling();
-    this.store?.profilerStore.addListener("isProcessingData", async () => {
-      console.log("PROFILING DATA", this.store?.profilerStore.profilingData);
-      const profilingData = this.store?.profilerStore.profilingData;
-      if (profilingData) {
-        const exportData = prepareProfilingDataExport(profilingData);
-        // save data to file
-        const filePath = filePathForProfile();
-        await fs.promises.writeFile(filePath, JSON.stringify(exportData));
-        console.log("PROFILE SAVED TO", filePath);
-        // Open the saved profile using the custom editor via the vscode.open command
-        commands.executeCommand("vscode.open", Uri.file(filePath));
-      }
-    });
-    setTimeout(() => {
-      this.store?.profilerStore.stopProfiling();
-    }, 5000);
-  }
-
   public dispose() {
     this.server.close();
   }
@@ -173,7 +138,7 @@ export class Devtools implements Disposable {
     this.socket?.send(JSON.stringify({ event, payload }));
   }
 
-  public addListener<K extends keyof DevtoolsEvents>(
+  public onEvent<K extends keyof DevtoolsEvents>(
     eventName: K,
     listener: (...payload: DevtoolsEvents[K]) => void
   ): Disposable {

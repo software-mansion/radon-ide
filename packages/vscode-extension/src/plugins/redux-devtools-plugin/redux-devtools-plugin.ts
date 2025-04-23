@@ -5,7 +5,7 @@ import { Devtools } from "../../project/devtools";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
 
-export const REDUX_PLUGIN_ID = "RNIDE-redux-devtools";
+export const REDUX_PLUGIN_ID = "redux-devtools";
 const REDUX_PLUGIN_PREFIX = "RNIDE.Tool.ReduxDevTools";
 
 let initialzed = false;
@@ -43,8 +43,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     this.connectedWebviewListener?.dispose();
     this.connectedWebview = webview;
     this.connectedWebviewListener = webview.onDidReceiveMessage((message) => {
-      const { scope, ...data } = message;
-      this.devtools.send(scope, data);
+      this.devtools.send("RNIDE_pluginMessage", { ...message, scope: REDUX_PLUGIN_ID });
     });
   }
 
@@ -58,14 +57,15 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   activate() {
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
     this.devtoolsListeners.push(
-      this.devtools.addListener("RNIDE_devtoolsPluginMessage", (payload) => {
+      this.devtools.onEvent("RNIDE_pluginMessage", (payload) => {
         if (payload.scope === REDUX_PLUGIN_ID) {
-          this.connectedWebview?.postMessage(payload);
+          const { scope, ...data } = payload;
+          this.connectedWebview?.postMessage({ scope: "RNIDE-redux-devtools", data });
         }
       })
     );
     this.devtoolsListeners.push(
-      this.devtools.addListener("RNIDE_appReady", () => {
+      this.devtools.onEvent("RNIDE_appReady", () => {
         // Sometimes, the messaging channel (devtools) is established only after
         // the Redux store is created and after it sends the first message. In that
         // case, the "start" event never makes it to the webview.

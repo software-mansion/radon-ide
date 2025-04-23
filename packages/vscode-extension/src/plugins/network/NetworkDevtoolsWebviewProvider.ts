@@ -29,7 +29,8 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
     };
 
     const project = IDE.getInstanceIfExists()?.project;
-    const wsPort = (project?.toolsManager.getPlugin("network") as NetworkPlugin)?.websocketPort;
+    const wsPort = (project?.deviceSession?.toolsManager.getPlugin("network") as NetworkPlugin)
+      ?.websocketPort;
     if (!wsPort) {
       throw new Error("Couldn't retrieve websocket port from network plugin");
     }
