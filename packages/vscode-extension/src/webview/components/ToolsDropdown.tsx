@@ -101,7 +101,8 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
             onSelect={() =>
               isProfilingReact ? project.stopProfilingReact() : project.startProfilingReact()
             }>
-            <span className="codicon codicon-chip" />
+            <span className="codicon codicon-react" />
+
             {isProfilingReact ? "Stop React Profiler" : "Start React Profiler"}
           </DropdownMenu.Item>
           <ToolsList project={project} tools={nonPanelTools} />
