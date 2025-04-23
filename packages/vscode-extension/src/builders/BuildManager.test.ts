@@ -25,17 +25,6 @@ const EAS_LOCAL_CONFIG: EasConfig = {
   local: true,
 };
 
-const EAS_AND_CUSTOM_LAUNCH_CONFIGS: LaunchConfigurationOptions = {
-  customBuild: {
-    ios: CUSTOM_BUILD_CONFIG,
-    android: CUSTOM_BUILD_CONFIG,
-  },
-  eas: {
-    ios: EAS_CONFIG,
-    android: EAS_CONFIG,
-  },
-};
-
 function toPlatformConfig<T>(
   platform: DevicePlatform,
   config: EasConfig | CustomBuild
@@ -67,10 +56,25 @@ describe("BuildManager", () => {
 
     Object.values(DevicePlatform).forEach((platform) => {
       describe(platform, function () {
+        const otherPlatform =
+          platform === DevicePlatform.IOS ? DevicePlatform.Android : DevicePlatform.IOS;
+
         it("should reject if both eas and custom build configs are provided", async function () {
           await assert.rejects(async () =>
-            buildManager.inferBuildType(APP_ROOT, platform, EAS_AND_CUSTOM_LAUNCH_CONFIGS)
+            buildManager.inferBuildType(APP_ROOT, platform, {
+              eas: toPlatformConfig(platform, EAS_CONFIG),
+              customBuild: toPlatformConfig(platform, CUSTOM_BUILD_CONFIG),
+            })
           );
+        });
+
+        it("should not reject if other platform's config is invalid", async function () {
+          await assert.doesNotReject(async () => {
+            buildManager.inferBuildType(APP_ROOT, platform, {
+              eas: toPlatformConfig(otherPlatform, EAS_CONFIG),
+              customBuild: toPlatformConfig(otherPlatform, CUSTOM_BUILD_CONFIG),
+            });
+          });
         });
 
         it("should return eas build type if eas config is provided", async function () {
@@ -80,7 +84,7 @@ describe("BuildManager", () => {
           assert.equal(buildType, BuildType.Eas);
         });
 
-        it("should return eas local build type if eas local config is provided", async function () {
+        it("should return eas local build type if eas config with `local` flag set is provided", async function () {
           const buildType = await buildManager.inferBuildType(APP_ROOT, platform, {
             eas: toPlatformConfig(platform, EAS_LOCAL_CONFIG),
           });
