@@ -35,29 +35,33 @@ function toPlatformConfig<T>(
 }
 
 describe("BuildManager", () => {
-  let buildManager: BuildManager;
-  let dependencyManagerStub: Sinon.SinonStubbedInstance<DependencyManager>;
-  let buildCacheStub: Sinon.SinonStubbedInstance<BuildCache>;
+  Object.values(DevicePlatform).forEach((platform) => {
+    describe(platform, function () {
+      const otherPlatform =
+        platform === DevicePlatform.IOS ? DevicePlatform.Android : DevicePlatform.IOS;
+      let buildManager: BuildManager;
+      let dependencyManagerStub: Sinon.SinonStubbedInstance<DependencyManager>;
+      let buildCacheStub: Sinon.SinonStubbedInstance<BuildCache>;
 
-  beforeEach(() => {
-    dependencyManagerStub = Sinon.createStubInstance(DependencyManager);
-    buildCacheStub = Sinon.createStubInstance(BuildCache);
-    buildManager = new BuildManager(dependencyManagerStub, buildCacheStub);
-  });
+      beforeEach(() => {
+        dependencyManagerStub = Sinon.createStubInstance(DependencyManager);
+        buildCacheStub = Sinon.createStubInstance(BuildCache);
+        buildManager = new BuildManager(
+          dependencyManagerStub,
+          buildCacheStub,
+          { onCacheStale: Sinon.stub() },
+          platform
+        );
+      });
 
-  describe("inferBuildType", function () {
-    let isExpoGoProjectStub: Sinon.SinonStub;
-    beforeEach(() => {
-      isExpoGoProjectStub = Sinon.stub(ExpoGo, "isExpoGoProject");
-    });
-    afterEach(() => {
-      isExpoGoProjectStub.restore();
-    });
-
-    Object.values(DevicePlatform).forEach((platform) => {
-      describe(platform, function () {
-        const otherPlatform =
-          platform === DevicePlatform.IOS ? DevicePlatform.Android : DevicePlatform.IOS;
+      describe("inferBuildType", function () {
+        let isExpoGoProjectStub: Sinon.SinonStub;
+        beforeEach(() => {
+          isExpoGoProjectStub = Sinon.stub(ExpoGo, "isExpoGoProject");
+        });
+        afterEach(() => {
+          isExpoGoProjectStub.restore();
+        });
 
         it("should reject if both eas and custom build configs are provided", async function () {
           await assert.rejects(async () =>
@@ -116,43 +120,39 @@ describe("BuildManager", () => {
           assert.equal(buildType, BuildType.Local);
         });
       });
-    });
-  });
 
-  describe("createBuildConfig", function () {
-    Object.values(DevicePlatform).forEach((platform) => {
-      const launchConfigByType = new Map<BuildType, LaunchConfigurationOptions>([
-        [
-          BuildType.Custom,
-          {
-            customBuild: toPlatformConfig(platform, CUSTOM_BUILD_CONFIG),
-          },
-        ],
-        [
-          BuildType.Eas,
-          {
-            eas: toPlatformConfig(platform, EAS_CONFIG),
-          },
-        ],
-        [
-          BuildType.EasLocal,
-          {
-            eas: toPlatformConfig(platform, EAS_LOCAL_CONFIG),
-          },
-        ],
-        [BuildType.ExpoGo, {}],
-        [
-          BuildType.Local,
-          {
-            env: {
-              OPTION: "value",
-              ANOTHER_OPTION: "another value",
+      describe("createBuildConfig", function () {
+        const launchConfigByType = new Map<BuildType, LaunchConfigurationOptions>([
+          [
+            BuildType.Custom,
+            {
+              customBuild: toPlatformConfig(platform, CUSTOM_BUILD_CONFIG),
             },
-          },
-        ],
-      ]);
+          ],
+          [
+            BuildType.Eas,
+            {
+              eas: toPlatformConfig(platform, EAS_CONFIG),
+            },
+          ],
+          [
+            BuildType.EasLocal,
+            {
+              eas: toPlatformConfig(platform, EAS_LOCAL_CONFIG),
+            },
+          ],
+          [BuildType.ExpoGo, {}],
+          [
+            BuildType.Local,
+            {
+              env: {
+                OPTION: "value",
+                ANOTHER_OPTION: "another value",
+              },
+            },
+          ],
+        ]);
 
-      describe(platform, function () {
         it(`should include passed information`, async function () {
           launchConfigByType.entries().forEach(([buildType, launchConfig]) => {
             const buildConfig = buildManager.createBuildConfig(
