@@ -14,7 +14,7 @@ import { EXPO_GO_PACKAGE_NAME, downloadExpoGo } from "./expoGo";
 import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
 import { runExternalBuild } from "./customBuild";
-import { fetchEasBuild } from "./eas";
+import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { AndroidBuildConfig, AndroidLocalBuildConfig, BuildType } from "../common/BuildConfig";
@@ -123,6 +123,24 @@ export async function buildAndroid(
         DevicePlatform.Android,
         appRoot,
         outputChannel
+      );
+
+      return {
+        apkPath,
+        packageName: await extractPackageName(apkPath, cancelToken),
+        platform: DevicePlatform.Android,
+      };
+    }
+    case BuildType.EasLocal: {
+      getTelemetryReporter().sendTelemetryEvent("build:eas-local-build-requested", {
+        platform: DevicePlatform.Android,
+      });
+      const apkPath = await performLocalEasBuild(
+        buildConfig.profile,
+        DevicePlatform.Android,
+        appRoot,
+        outputChannel,
+        cancelToken
       );
 
       return {

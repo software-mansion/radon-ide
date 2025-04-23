@@ -66,7 +66,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   if (projectState.status === "buildError") {
     const { buildType, message } = projectState.buildError;
     description = message;
-    if (buildType && [BuildType.Local, BuildType.Custom].includes(buildType)) {
+    if (buildType && [BuildType.Local, BuildType.EasLocal, BuildType.Custom].includes(buildType)) {
       logsButtonDestination = "build";
     } else {
       logsButtonDestination = "extension";

@@ -202,6 +202,7 @@ Example with EAS local build:
 - `profile` – required, used for [selecting builds](https://docs.expo.dev/build/eas-json/#development-builds) suitable for running in simulators.
 - `buildUUID` – when specified, the build with the specified ID will be used.
   Otherwise, Radon IDE will attempt to find a compatible build and use that.
+- `local` – when set to `true`, passes the `--local` flag to `eas build` in order to build the application locally. See the [EAS Build docs](https://docs.expo.dev/build-reference/local-builds/) for details.
 
 Below is an example that replaces iOS and Android local builds with builds from EAS:
 
