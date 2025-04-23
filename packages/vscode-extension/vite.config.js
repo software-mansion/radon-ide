@@ -89,6 +89,7 @@ export default defineConfig({
   },
   server: {
     port: 2137,
+    strictPort: true,
     hmr: {
       host: "127.0.0.1",
     },
