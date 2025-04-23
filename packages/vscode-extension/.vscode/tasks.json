@@ -10,8 +10,8 @@
     {
       "label": "kill vite",
       "type": "shell",
-      // kills the processes listening on port 2137 
-      "command": "lsof -n -i :2137 -sTCP:LISTEN | awk '{print $2}' | grep -E '[0-9]+' | xargs kill",
+      // kills the processes listening on port 2137
+      "command": "lsof -n -i :2137 -sTCP:LISTEN | awk '{print $2}' | grep -E '[0-9]+' | xargs kill"
     },
     {
       "label": "build extension",
@@ -38,9 +38,9 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "ready in \\d+ ms",
-          "endsPattern": ".*Local:\\s+http://localhost:2137/.*"
+          "endsPattern": ".*Local:\\s+http://.*:2137/.*"
         }
       }
-    },
+    }
   ]
 }
