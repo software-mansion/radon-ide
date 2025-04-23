@@ -11,6 +11,8 @@ const RIGHT_META_HID_CODE = 0xe7;
 const V_KEY_HID_CODE = 0x19;
 const C_KEY_HID_CODE = 0x06;
 
+export const REBOOT_TIMEOUT = 3000;
+
 export abstract class DeviceBase implements Disposable {
   protected preview: Preview | undefined;
   private previewStartPromise: Promise<string> | undefined;
@@ -20,6 +22,11 @@ export abstract class DeviceBase implements Disposable {
 
   abstract get lockFilePath(): string;
 
+  async reboot(): Promise<void> {
+    this.preview?.dispose();
+    this.preview = undefined;
+    this.previewStartPromise = undefined;
+  }
   abstract bootDevice(deviceSettings: DeviceSettings): Promise<void>;
   abstract changeSettings(settings: DeviceSettings): Promise<boolean>;
   abstract sendBiometricAuthorization(isMatch: boolean): Promise<void>;

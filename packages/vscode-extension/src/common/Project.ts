@@ -1,3 +1,4 @@
+import { BuildType } from "./BuildConfig";
 import { DeviceInfo, DevicePlatform } from "./DeviceManager";
 
 export type Locale = string;
@@ -52,17 +53,9 @@ type ProjectStateBuildError = {
   buildError: {
     message: string;
     platform: DevicePlatform;
-    buildType: BuildType;
+    buildType: BuildType | null;
   };
 } & ProjectStateCommon;
-
-export enum BuildType {
-  Local = "local",
-  ExpoGo = "expoGo",
-  Eas = "eas",
-  Custom = "custom",
-  Unknown = "unknown",
-}
 
 export type ZoomLevelType = number | "Fit";
 
@@ -93,13 +86,6 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
-
-export type ReloadAction =
-  | "rebuild" // clean build, boot device, install app
-  | "reboot" // reboots device, launch app
-  | "reinstall" // force reinstall app
-  | "restartProcess" // relaunch app
-  | "reloadJs"; // refetch JS scripts from metro
 
 export type Frame = {
   x: number;
@@ -167,10 +153,7 @@ export type MultimediaData = {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  reload(type: ReloadAction): Promise<boolean>;
-  restart(clean: "all" | "metro" | false): Promise<void>;
   goHome(homeUrl: string): Promise<void>;
-  selectDevice(deviceInfo: DeviceInfo): Promise<boolean>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 

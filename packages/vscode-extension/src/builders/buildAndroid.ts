@@ -10,17 +10,14 @@ import { exec, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "./cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { EXPO_GO_PACKAGE_NAME, downloadExpoGo, isExpoGoProject } from "./expoGo";
+import { EXPO_GO_PACKAGE_NAME, downloadExpoGo } from "./expoGo";
 import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
 import { runExternalBuild } from "./customBuild";
-import { fetchEasBuild } from "./eas";
+import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { BuildError } from "./BuildManager";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
-import { BuildType } from "../common/Project";
+import { AndroidBuildConfig, AndroidLocalBuildConfig, BuildType } from "../common/BuildConfig";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
@@ -83,57 +80,46 @@ function makeBuildTaskName(productFlavor: string, buildType: string, appName?: s
 }
 
 export async function buildAndroid(
-  appRoot: string,
-  forceCleanBuild: boolean,
+  buildConfig: AndroidBuildConfig,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void,
   dependencyManager: DependencyManager
 ): Promise<AndroidBuildResult> {
-  const launchConfiguration = getLaunchConfiguration();
-  const { customBuild, eas, env } = launchConfiguration;
+  const { appRoot, env, type: buildType } = buildConfig;
 
-  if (customBuild?.android && eas?.android) {
-    throw new BuildError(
-      "Both custom custom builds and EAS builds are configured for Android. Please use only one build method.",
-      BuildType.Unknown
-    );
-  }
-
-  if (customBuild?.android?.buildCommand) {
-    getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
-      platform: DevicePlatform.Android,
-    });
-    const apkPath = await runExternalBuild(
-      cancelToken,
-      customBuild.android.buildCommand,
-      env,
-      DevicePlatform.Android,
-      appRoot,
-      outputChannel
-    );
-    if (!apkPath) {
-      throw new BuildError(
-        "Failed to build Android app using custom script. See the build logs for details.",
-        BuildType.Custom
+  switch (buildType) {
+    case BuildType.Custom: {
+      getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
+        platform: DevicePlatform.Android,
+      });
+      const apkPath = await runExternalBuild(
+        cancelToken,
+        buildConfig.buildCommand,
+        env,
+        DevicePlatform.Android,
+        appRoot,
+        outputChannel
       );
+      if (!apkPath) {
+        throw new Error(
+          "Failed to build Android app using custom script. See the build logs for details."
+        );
+      }
+
+      return {
+        apkPath,
+        packageName: await extractPackageName(apkPath, cancelToken),
+        platform: DevicePlatform.Android,
+      };
     }
-
-    return {
-      apkPath,
-      packageName: await extractPackageName(apkPath, cancelToken),
-      platform: DevicePlatform.Android,
-    };
-  }
-
-  if (eas?.android) {
-    try {
+    case BuildType.Eas: {
       getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
         platform: DevicePlatform.Android,
       });
       const apkPath = await fetchEasBuild(
         cancelToken,
-        eas.android,
+        buildConfig.config,
         DevicePlatform.Android,
         appRoot,
         outputChannel
@@ -144,60 +130,57 @@ export async function buildAndroid(
         packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
       };
-    } catch (e) {
-      throw new BuildError((e as Error).message, BuildType.Eas);
     }
-  }
+    case BuildType.EasLocal: {
+      getTelemetryReporter().sendTelemetryEvent("build:eas-local-build-requested", {
+        platform: DevicePlatform.Android,
+      });
+      const apkPath = await performLocalEasBuild(
+        buildConfig.profile,
+        DevicePlatform.Android,
+        appRoot,
+        outputChannel,
+        cancelToken
+      );
 
-  if (await isExpoGoProject(appRoot)) {
-    getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
-      platform: DevicePlatform.Android,
-    });
-    try {
+      return {
+        apkPath,
+        packageName: await extractPackageName(apkPath, cancelToken),
+        platform: DevicePlatform.Android,
+      };
+    }
+    case BuildType.ExpoGo: {
+      getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
+        platform: DevicePlatform.Android,
+      });
       const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
       return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
-    } catch (e) {
-      throw new BuildError((e as Error).message, BuildType.ExpoGo);
     }
-  }
+    case BuildType.Local: {
+      if (!(await dependencyManager.checkAndroidDirectoryExits())) {
+        throw new Error(
+          'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.'
+        );
+      }
 
-  if (!(await dependencyManager.checkAndroidDirectoryExits())) {
-    throw new BuildError(
-      'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.',
-      BuildType.Local
-    );
-  }
-
-  try {
-    return await buildLocal(
-      appRoot,
-      forceCleanBuild,
-      launchConfiguration,
-      cancelToken,
-      outputChannel,
-      progressListener
-    );
-  } catch (e) {
-    throw new BuildError((e as Error).message, BuildType.Local);
+      return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
+    }
   }
 }
 
 async function buildLocal(
-  appRoot: string,
-  forceCleanBuild: boolean,
-  launchConfiguration: LaunchConfigurationOptions,
+  buildConfig: AndroidLocalBuildConfig,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ): Promise<AndroidBuildResult> {
-  const { android, env } = launchConfiguration;
+  let { appRoot, forceCleanBuild, env, productFlavor = "", buildType = "debug" } = buildConfig;
   const androidSourceDir = getAndroidSourceDir(appRoot);
   const androidAppName = loadConfig({
     projectRoot: appRoot,
     selectedPlatform: "android",
   }).platforms.android?.projectConfig(appRoot)?.appName;
-  const productFlavor = android?.productFlavor || "";
-  const buildType = android?.buildType || "debug";
+
   const gradleArgs = [
     "-x",
     "lint",

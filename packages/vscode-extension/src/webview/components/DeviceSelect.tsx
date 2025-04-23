@@ -95,8 +95,8 @@ function renderDevices(
 }
 
 function DeviceSelect() {
-  const { projectState, project } = useProject();
-  const { devices } = useDevices();
+  const { projectState } = useProject();
+  const { devices, deviceSessionsManager } = useDevices();
   const { openModal } = useModal();
   const selectedProjectDevice = projectState?.selectedDevice;
 
@@ -118,7 +118,7 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = devices.find((d) => d.id === value);
       if (deviceInfo) {
-        project.selectDevice(deviceInfo);
+        deviceSessionsManager.selectDevice(deviceInfo);
       }
     }
   };

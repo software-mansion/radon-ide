@@ -164,3 +164,8 @@ img.shadow-image {
 [class*="DocSearch-Footer"] {
   margin-top: 0 !important;
 }
+
+.changelog-item {
+  max-width: calc(100% - 32px) !important;
+  margin-left: 32px !important;
+}
