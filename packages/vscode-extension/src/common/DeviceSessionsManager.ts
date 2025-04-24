@@ -1,4 +1,3 @@
-import { Disposable } from "vscode";
 import { DeviceSessionDelegate } from "../project/deviceSession";
 import { DeviceInfo } from "./DeviceManager";
 
