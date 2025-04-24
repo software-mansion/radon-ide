@@ -18,7 +18,6 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
-import { activate } from "../extension";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
