@@ -7,6 +7,7 @@ import {
 
 import { vscode } from "../webview/utilities/vscode";
 import "../webview/styles/theme.css";
+import "./App.css";
 import { prepareProfilingDataFrontendFromExport } from "../../third-party/react-devtools/headless";
 
 const wall = {

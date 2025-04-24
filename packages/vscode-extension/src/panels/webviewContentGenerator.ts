@@ -55,23 +55,6 @@ export function generateWebviewContent(
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="radon-ide-version" content="${version}" />
-        <style id="expo-reset">
-            /* These styles make the body full-height */
-            html,
-            body {
-              height: 100%;
-            }
-            /* These styles disable body scrolling if you are using <ScrollView> */
-            body {
-              overflow: hidden;
-            }
-            /* These styles make the root element full-height */
-            #root {
-              display: flex;
-              height: 100%;
-              flex: 1;
-            }
-          </style>
         ${wsEndpoint ? `<meta name='websocketEndpoint' content="${wsEndpoint}" />` : ""}
         <link rel="stylesheet" href="${codiconsCssUri}" />
         ${
