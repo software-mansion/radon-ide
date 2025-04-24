@@ -46,11 +46,12 @@ export default defineConfig({
     emptyOutDir: false, // prevent out dir from being deleted when build starts – we keep additional build artifacts there
     assetsInlineLimit: 0, // disable assets inlining
     reportCompressedSize: false, // disable reporting compressed size
+    cssCodeSplit: false,
     rollupOptions: {
       input: {
-        panel: "src/webview/index.jsx",
-        network: "src/network/index.jsx",
-        // "react-devtools-profiler": "src/react-devtools-profiler/index.jsx",
+        "panel": "src/webview/index.jsx",
+        "network": "src/network/index.jsx",
+        "react-devtools-profiler": "src/react-devtools-profiler/index.jsx",
       },
       output: {
         entryFileNames: "[name].js",

@@ -46,8 +46,6 @@ export class ReactDevtoolsEditorProvider implements CustomTextEditorProvider {
     };
 
     webview.onDidReceiveMessage(async (message) => {
-      console.log("MESSAGE!", message);
-
       // load the file here and send formatted data to the webview
       const file = await workspace.openTextDocument(Uri.file(document.uri.fsPath));
       const data = file.getText();
@@ -63,7 +61,9 @@ export class ReactDevtoolsEditorProvider implements CustomTextEditorProvider {
       webview,
       this.context.extensionUri,
       "react-devtools-profiler",
-      "src/react-devtools-profiler"
+      "src/react-devtools-profiler",
+      undefined,
+      true
     );
   }
 }

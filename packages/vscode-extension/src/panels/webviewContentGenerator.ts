@@ -10,7 +10,8 @@ export function generateWebviewContent(
   extensionUri: Uri,
   webviewName: string,
   webviewDevPath: string,
-  wsEndpoint?: string
+  wsEndpoint?: string,
+  allowUnsafeEval?: boolean
 ) {
   const config = workspace.getConfiguration("RadonIDE");
   const useCodeTheme = config.get("themeType") === "vscode";
@@ -82,11 +83,11 @@ export function generateWebviewContent(
                       img-src vscode-resource: http: https: data:;
                       media-src vscode-resource: http: https:;
                       style-src ${webview.cspSource} 'unsafe-inline';
-                      script-src 'nonce-${nonce}';
+                      script-src 'nonce-${nonce}' ${allowUnsafeEval ? "'unsafe-eval'" : ""};
+                      worker-src 'self' blob:;
                       ${wsEndpoint ? `connect-src ws://${wsEndpoint} ${webview.cspSource};` : ""}
                       font-src vscode-resource: https:;" />
-        <link rel="stylesheet" type="text/css" href="theme.css" />
-        <link rel="stylesheet" type="text/css" href="${webviewName}.css" />
+        <link rel="stylesheet" type="text/css" href="style.css" />
         `
         }
       </head>
