@@ -104,7 +104,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions) {
-    const killPreviousDeviceSession = false; //!selectDeviceOptions?.preservePreviousDevice;
+    const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
     const { id: newDeviceId } = deviceInfo;
 
     const selectedActiveSession = await this.trySelectingActiveDeviceSession(
