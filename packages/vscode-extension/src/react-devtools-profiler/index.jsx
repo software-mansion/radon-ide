@@ -1,4 +1,3 @@
-import { useLayoutEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
   createBridge as createFrontendBridge,
@@ -16,7 +15,6 @@ const wall = {
     wall._listeners.push(listener);
   },
   send(event, payload) {
-    console.log("SENDING EVENT!", event, payload, new Error().stack);
     wall._listeners.forEach((listener) => listener({ event, payload }));
   },
 };
@@ -39,7 +37,6 @@ createRoot(document.getElementById("root")).render(
 
 window.addEventListener("message", (event) => {
   if (event.data.type === "profiler-data") {
-    console.log("PROFILER DATA!", event.data.data);
     store.profilerStore.profilingData = prepareProfilingDataFrontendFromExport(
       JSON.parse(event.data.data)
     );

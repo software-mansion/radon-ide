@@ -50,40 +50,13 @@ export default defineConfig({
       input: {
         panel: "src/webview/index.jsx",
         network: "src/network/index.jsx",
-        reactDevtoolsProfiler: "src/react-devtools-profiler/index.jsx",
+        // "react-devtools-profiler": "src/react-devtools-profiler/index.jsx",
       },
       output: {
-        // Fixed name for the JavaScript entry file
-        entryFileNames: (chunkInfo) => {
-          // Return different filenames based on the entry point
-          switch (chunkInfo.name) {
-            case "panel":
-              return "panel.js";
-            case "network":
-              return "network.js";
-            case "reactDevtoolsProfiler":
-              return "react-devtools-profiler.js";
-            default:
-              return "[name].js";
-          }
-        },
-        // Fixed name for the CSS file
-        assetFileNames: (assetInfo) => {
-          if (assetInfo.name.endsWith(".css")) {
-            // Handle CSS files based on the entry point
-            switch (path.basename(assetInfo.name)) {
-              case "panel":
-                return "panel.css";
-              case "network":
-                return "network.css";
-              case "reactDevtoolsProfiler":
-                return "react-devtools-profiler.css";
-              default:
-                return "[name].css";
-            }
-          }
-          return "assets/[name]-[hash][extname]";
-        },
+        entryFileNames: "[name].js",
+        chunkFileNames: "[name].js",
+        assetFileNames: (assetInfo) =>
+          assetInfo.name.endsWith(".css") ? "[name].css" : "assets/[name]-[hash][extname]",
       },
     },
   },
