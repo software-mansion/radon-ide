@@ -18,6 +18,7 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
+import { activate } from "../extension";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
@@ -44,14 +45,19 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
   }
 
   private trySelectingActiveDeviceSession(id: string, killPreviousDeviceSession?: boolean) {
-    if (this.deviceSessions.has(id)) {
-      if (killPreviousDeviceSession && this.selectedDevice) {
-        this.killAndRemoveDevice(this.selectedDevice);
-      }
-      this.selectedDevice = id;
-      return true;
+    if (!this.deviceSessions.has(id)) {
+      return false;
     }
-    return false;
+    if (this.selectedDevice) {
+      if (killPreviousDeviceSession) {
+        this.killAndRemoveDevice(this.selectedDevice);
+      } else {
+        this.selectedDeviceSession?.deactivate();
+      }
+    }
+    this.selectedDevice = id;
+    this.selectedDeviceSession?.activate();
+    return true;
   }
 
   public async reload(type: ReloadAction) {
@@ -98,7 +104,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
   }
 
   public async selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions) {
-    const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
+    const killPreviousDeviceSession = false; //!selectDeviceOptions?.preservePreviousDevice;
     const { id } = deviceInfo;
 
     const selectedActiveSession = this.trySelectingActiveDeviceSession(
@@ -107,6 +113,10 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     );
 
     if (selectedActiveSession) {
+      this.deviceSessionManagerDelegate.onDeviceSelected(
+        deviceInfo,
+        this.selectedDeviceSession?.previewURL
+      );
       return true;
     }
 

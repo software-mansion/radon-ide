@@ -111,6 +111,10 @@ export class DeviceSession implements Disposable {
     return !this.isLaunching;
   }
 
+  public get previewURL() {
+    return this.device.previewURL;
+  }
+
   constructor(
     private readonly appRootFolder: string,
     private readonly device: DeviceBase,
