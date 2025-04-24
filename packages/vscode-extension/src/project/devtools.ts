@@ -39,7 +39,7 @@ export interface DevtoolsEvents {
   RNIDE_devtoolPluginsChanged: [{ plugins: string[] }];
   RNIDE_rendersReported: [any];
   RNIDE_pluginMessage: [{ scope: string; type: string; data: any }];
-  RNIDE_isProfiling: [boolean];
+  RNIDE_isProfilingReact: [boolean];
 }
 
 function filePathForProfile() {
@@ -139,6 +139,7 @@ export class Devtools implements Disposable {
       store.profilerStore.addListener("isProfiling", () => {
         this.listeners
           .get("RNIDE_isProfilingReact")
+          // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
           ?.forEach((listener) => listener(store.profilerStore.isProfilingBasedOnUserInput));
       });
     });
