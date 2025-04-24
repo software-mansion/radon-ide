@@ -10,6 +10,7 @@ import { IDE } from "../../project/ide";
 import { NETWORK_PLUGIN_ID, NetworkPlugin } from "./network-plugin";
 import { reportToolOpened, reportToolVisibilityChanged } from "../../project/tools";
 import { generateWebviewContent } from "../../panels/webviewContentGenerator";
+import { PREVIEW_NETWORK_NAME, PREVIEW_NETWORK_PATH } from "../../webview/utilities/constants";
 
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
   constructor(private readonly context: ExtensionContext) {}
@@ -41,10 +42,10 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
 
     webview.html = generateWebviewContent(
       this.context,
-      webview,
+      webviewView.webview,
       this.context.extensionUri,
-      "network",
-      "src/network",
+      PREVIEW_NETWORK_NAME,
+      PREVIEW_NETWORK_PATH,
       `localhost:${wsPort}`
     );
   }
