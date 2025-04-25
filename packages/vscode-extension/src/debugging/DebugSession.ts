@@ -115,7 +115,7 @@ export class DebugSession implements Disposable {
     }
   }
 
-  private async stop() {
+  public async stop() {
     if (this.parentDebugSession) {
       const parentDebugSession = this.parentDebugSession;
       this.parentDebugSession = undefined;
@@ -129,8 +129,8 @@ export class DebugSession implements Disposable {
     this.currentWsTarget = undefined;
   }
 
-  public dispose() {
-    this.stop()
+  public async dispose() {
+    return this.stop()
       .catch()
       .then(() => disposeAll(this.disposables));
   }

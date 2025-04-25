@@ -43,15 +43,20 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
   }
 
-  private trySelectingActiveDeviceSession(id: string, killPreviousDeviceSession?: boolean) {
-    if (this.deviceSessions.has(id)) {
-      if (killPreviousDeviceSession && this.selectedDevice) {
-        this.killAndRemoveDevice(this.selectedDevice);
-      }
-      this.selectedDevice = id;
-      return true;
+  private async trySelectingActiveDeviceSession(id: string, killPreviousDeviceSession?: boolean) {
+    if (!this.deviceSessions.has(id)) {
+      return false;
     }
-    return false;
+    if (this.selectedDevice) {
+      if (killPreviousDeviceSession) {
+        this.killAndRemoveDevice(this.selectedDevice);
+      } else {
+        await this.selectedDeviceSession?.deactivate();
+      }
+    }
+    this.selectedDevice = id;
+    this.selectedDeviceSession?.activate();
+    return true;
   }
 
   public async reload(type: ReloadAction) {
@@ -99,14 +104,18 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
 
   public async selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions) {
     const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
-    const { id } = deviceInfo;
+    const { id: newDeviceId } = deviceInfo;
 
-    const selectedActiveSession = this.trySelectingActiveDeviceSession(
-      id,
+    const selectedActiveSession = await this.trySelectingActiveDeviceSession(
+      newDeviceId,
       killPreviousDeviceSession
     );
 
     if (selectedActiveSession) {
+      this.deviceSessionManagerDelegate.onDeviceSelected(
+        deviceInfo,
+        this.selectedDeviceSession?.previewURL
+      );
       return true;
     }
 
@@ -116,8 +125,12 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     }
     Logger.debug("Selected device is ready");
 
-    if (killPreviousDeviceSession && this.selectedDevice) {
-      await this.killAndRemoveDevice(this.selectedDevice);
+    if (this.selectedDevice) {
+      if (killPreviousDeviceSession) {
+        await this.killAndRemoveDevice(this.selectedDevice);
+      } else {
+        await this.selectedDeviceSession?.deactivate();
+      }
     }
 
     this.updateProjectState({
@@ -140,8 +153,8 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
         this.deviceSessionManagerDelegate,
         this.deviceSessionManagerDelegate
       );
-      this.deviceSessions.set(id, newDeviceSession);
-      this.selectedDevice = id;
+      this.deviceSessions.set(newDeviceId, newDeviceSession);
+      this.selectedDevice = newDeviceId;
 
       const previewURL = await newDeviceSession.start({
         resetMetroCache: false,

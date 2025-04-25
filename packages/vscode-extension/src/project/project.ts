@@ -729,8 +729,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   //#region Select device
 
-  public async onDeviceSelected(deviceInfo: DeviceInfo) {
-    this.updateProjectState({ selectedDevice: deviceInfo });
+  public async onDeviceSelected(deviceInfo: DeviceInfo, previewURL?: string) {
+    const newState: Partial<ProjectState> = previewURL
+      ? { selectedDevice: deviceInfo, previewURL }
+      : { selectedDevice: deviceInfo };
+    this.updateProjectState(newState);
   }
 
   //#endregion

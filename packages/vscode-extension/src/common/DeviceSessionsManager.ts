@@ -1,9 +1,8 @@
-import { Disposable } from "vscode";
 import { DeviceSessionDelegate } from "../project/deviceSession";
 import { DeviceInfo } from "./DeviceManager";
 
 export type DeviceSessionsManagerDelegate = DeviceSessionDelegate & {
-  onDeviceSelected: (deviceInfo: DeviceInfo) => void;
+  onDeviceSelected: (deviceInfo: DeviceInfo, previewURL?: string) => void;
   onReloadRequested: (type: ReloadAction) => void;
 };
 

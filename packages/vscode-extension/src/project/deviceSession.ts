@@ -111,6 +111,10 @@ export class DeviceSession implements Disposable {
     return !this.isLaunching;
   }
 
+  public get previewURL() {
+    return this.device.previewURL;
+  }
+
   constructor(
     private readonly appRootFolder: string,
     private readonly device: DeviceBase,
@@ -174,10 +178,14 @@ export class DeviceSession implements Disposable {
     this.isActive = true;
     this.buildManager.activate();
     this.toolsManager.activate();
+    this.debugSession = new DebugSession(this.deviceSessionDelegate);
+    await this.debugSession.startParentDebugSession();
+    await this.connectJSDebugger();
   }
 
   public async deactivate() {
     this.isActive = false;
+    await this.debugSession.dispose();
     this.buildManager.deactivate();
     this.toolsManager.deactivate();
   }

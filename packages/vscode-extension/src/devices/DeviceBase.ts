@@ -22,6 +22,10 @@ export abstract class DeviceBase implements Disposable {
 
   abstract get lockFilePath(): string;
 
+  public get previewURL() {
+    return this.preview?.streamURL;
+  }
+
   async reboot(): Promise<void> {
     this.preview?.dispose();
     this.preview = undefined;
