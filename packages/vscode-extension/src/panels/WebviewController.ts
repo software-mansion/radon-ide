@@ -54,6 +54,8 @@ export class WebviewController implements Disposable {
       ],
     ]);
 
+    commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
+
     const panelLocation = workspace
       .getConfiguration("RadonIDE")
       .get<PanelLocation>("panelLocation");
