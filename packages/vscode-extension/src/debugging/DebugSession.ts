@@ -197,10 +197,12 @@ export class DebugSession implements Disposable {
       return false;
     }
     const resultPromise = this.jsDebugSession.customRequest("RNIDE_ping").then((response) => {
-      return !!response.body.result;
+      return !!response.result;
     });
-    const timeout = sleep(PING_TIMEOUT).then(() => false);
-    return Promise.any([resultPromise, timeout]);
+    const timeout = sleep(PING_TIMEOUT).then(() => {
+      throw new Error("Ping timeout");
+    });
+    return Promise.race([resultPromise, timeout]).catch((_e) => false);
   }
 
   public async startProfilingCPU() {
