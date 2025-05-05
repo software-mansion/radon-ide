@@ -25,10 +25,14 @@ import ToolsDropdown from "../components/ToolsDropdown";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
+  const { sendTelemetry } = useUtils();
   return (
     <Button
       className="activate-license-button"
-      onClick={() => openModal("Activate License", <ActivateLicenseView />)}>
+      onClick={() => {
+        sendTelemetry("activateLicenseButtonClicked");
+        openModal("Activate License", <ActivateLicenseView />);
+      }}>
       Activate License
     </Button>
   );

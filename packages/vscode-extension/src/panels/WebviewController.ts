@@ -1,9 +1,10 @@
-import { Webview, Disposable, commands, Uri } from "vscode";
+import { Webview, Disposable, commands, Uri, workspace } from "vscode";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
+import { PanelLocation } from "../common/WorkspaceConfig";
 
 type CallArgs = {
   callId: string;
@@ -53,8 +54,13 @@ export class WebviewController implements Disposable {
       ],
     ]);
 
-    commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
-    getTelemetryReporter().sendTelemetryEvent("panelOpened");
+    const panelLocation = workspace
+      .getConfiguration("RadonIDE")
+      .get<PanelLocation>("panelLocation");
+
+    getTelemetryReporter().sendTelemetryEvent("panelOpened", {
+      panelLocation,
+    });
   }
 
   public asWebviewUri(uri: Uri) {
