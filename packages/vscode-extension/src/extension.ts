@@ -33,6 +33,8 @@ import { IDE } from "./project/ide";
 import { registerChat } from "./chat";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
+import { updateMcpConfig } from "./mcp";
+import { getLicenseToken } from "./utilities/license";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
@@ -185,6 +187,7 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.captureScreenshot", captureScreenshot)
   );
   context.subscriptions.push(commands.registerCommand("RNIDE.openChat", openChat));
+  context.subscriptions.push(commands.registerCommand("RNIDE.getLicenseToken", getLicenseToken));
 
   async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
     registeredCommandDisposable.dispose(); // must dispose to avoid endless loops
@@ -298,6 +301,9 @@ export async function activate(context: ExtensionContext) {
 
   // You can configure the chat in package.json under the `chatParticipants` key
   registerChat(context);
+
+  // Enables Radon AI tooling on editors utilizing MCP configs (e.g. Cursor, VSC Preview).
+  updateMcpConfig();
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
