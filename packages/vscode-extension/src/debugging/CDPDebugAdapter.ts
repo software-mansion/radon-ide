@@ -385,7 +385,7 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
           this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
         }
         break;
-      case "RNIDE_ping":
+      case "RNIDE_respondsAfterJsRestart":
         response.body.result = await this.ping();
         break;
       default:
