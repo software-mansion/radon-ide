@@ -231,7 +231,12 @@ export class Metro {
     const newDebuggerPages = this.filterNewDebuggerPages(listJson);
     if (newDebuggerPages.length > 0) {
       const description = newDebuggerPages[0].description;
-      const isExpoGo = description === EXPO_GO_BUNDLE_ID || description === EXPO_GO_PACKAGE_NAME;
+      const appId = newDebuggerPages[0]?.appId;
+      const isExpoGo =
+        description === EXPO_GO_BUNDLE_ID ||
+        description === EXPO_GO_PACKAGE_NAME ||
+        appId === EXPO_GO_BUNDLE_ID ||
+        appId === EXPO_GO_PACKAGE_NAME;
       if (isExpoGo) {
         // Expo go apps using the new debugger could report more then one page,
         // if it exist the first one being the Expo Go host runtime.
