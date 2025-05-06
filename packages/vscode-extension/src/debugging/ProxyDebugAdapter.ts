@@ -238,12 +238,20 @@ export class ProxyDebugAdapter extends DebugSession {
 
   private async ping() {
     try {
-      const result = await this.cdpProxy.injectDebuggerCommand({
+      const response = await this.cdpProxy.injectDebuggerCommand({
         method: "Runtime.evaluate",
         params: {
           expression: "('ping')",
         },
       });
+      if (
+        !("result" in response) ||
+        typeof response.result !== "object" ||
+        response.result === null
+      ) {
+        return false;
+      }
+      const result = response.result;
       if ("value" in result && result.value === "ping") {
         return true;
       }
@@ -286,7 +294,7 @@ export class ProxyDebugAdapter extends DebugSession {
       case "RNIDE_stopProfiling":
         await this.stopProfiling();
         break;
-      case "RNIDE_ping":
+      case "RNIDE_respondsAfterJsRestart":
         response.body.result = await this.ping();
         break;
     }
