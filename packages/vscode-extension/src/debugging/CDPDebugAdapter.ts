@@ -339,13 +339,6 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
   }
 
   private async ping() {
-    // NOTE: This is a temporary workaround to avoid issues with source maps
-    // breaking after a JS reload happens.
-    // This causes the debugger session to always restart after a JS reload happens.
-    const ALWAYS_FAIL = true;
-    if (ALWAYS_FAIL) {
-      return false;
-    }
     if (!this.cdpSession) {
       Logger.warn("[DebugAdapter] [ping] The CDPSession was not initialized yet");
       return;
@@ -386,6 +379,13 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
         }
         break;
       case "RNIDE_respondsAfterJsRestart":
+        // NOTE: This is a temporary workaround to avoid issues with source maps
+        // breaking after a JS reload happens.
+        // This causes the debugger session to always restart after a JS reload happens.
+        const ALWAYS_FAIL = true;
+        if (ALWAYS_FAIL) {
+          return false;
+        }
         response.body.result = await this.ping();
         break;
       default:
