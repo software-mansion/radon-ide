@@ -59,7 +59,10 @@ export class ProxyDebugAdapter extends DebugSession {
       sourceMapAliases
     );
 
-    const proxyDelegate = new RadonCDPProxyDelegate(this.sourceMapRegistry);
+    const proxyDelegate = new RadonCDPProxyDelegate(
+      this.sourceMapRegistry,
+      this.session.configuration.skipFiles
+    );
 
     this.cdpProxy = new CDPProxy(
       "127.0.0.1",

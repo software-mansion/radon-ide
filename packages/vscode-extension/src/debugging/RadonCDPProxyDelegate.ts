@@ -4,12 +4,13 @@ import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
+import { Minimatch } from "minimatch";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
-  private blackBoxPatterns: RegExp[] = [];
+  private ignoredPatterns: Minimatch[] = [];
 
   private justCalledStepOver = false;
   private resumeEventTimeout: NodeJS.Timeout | undefined;
@@ -18,7 +19,12 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
 
-  constructor(private sourceMapRegistry: SourceMapsRegistry) {}
+  constructor(
+    private sourceMapRegistry: SourceMapsRegistry,
+    patterns: string[]
+  ) {
+    this.ignoredPatterns = patterns.map((pattern) => new Minimatch(pattern));
+  }
 
   public async handleApplicationCommand(
     applicationCommand: IProtocolCommand,
@@ -55,7 +61,15 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       lineNumber + 1,
       columnNumber ?? 0
     );
-    const shouldSkipFile = this.blackBoxPatterns.some((p) => p.exec(sourceURL)?.length);
+    const shouldSkipFile = this.ignoredPatterns.reduce((shouldSkip, p) => {
+      if (p.negate) {
+        // if a negated pattern is _not_ matched (meaning the path matches the _negated_ part of the pattern),
+        // the file should not be skipped (unless it matches some further pattern)
+        return shouldSkip && p.match(sourceURL);
+      } else {
+        return shouldSkip || p.match(sourceURL);
+      }
+    }, false);
     return shouldSkipFile;
   }
 
@@ -128,10 +142,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return command;
       }
       // NOTE: setBlackbox* commands (as of 0.78) are not handled correctly by the Hermes debugger, so we need to disable them.
-      // Instead, we handle exception pauses in the blackboxed files explicitely in the `handleDebuggerPaused` method.
       case "Debugger.setBlackboxPatterns": {
-        const params = command.params as Cdp.Debugger.SetBlackboxPatternsParams;
-        this.blackBoxPatterns = params.patterns.map((p) => new RegExp(p));
         command.params = {
           patterns: [],
         };
