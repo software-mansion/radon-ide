@@ -28,6 +28,26 @@ type PromiseHandlers<T = unknown> = {
   reject: RejectType;
 };
 
+async function eventFiredPromise<T>(event: EventEmitter<T>["event"], timeoutMs?: number) {
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  let subscription: Disposable | undefined;
+
+  const timeout =
+    timeoutMs !== undefined
+      ? setTimeout(() => {
+          subscription?.dispose();
+          reject(new Error("Event did not fire before timeout"));
+        }, timeoutMs)
+      : undefined;
+
+  subscription = event(() => {
+    clearTimeout(timeout);
+    subscription?.dispose();
+    resolve();
+  });
+  return promise;
+}
+
 export interface CDPSessionDelegate {
   onExecutionContextCreated(threadId: number, threadName: string): void;
   onConnectionClosed: () => void;
@@ -102,6 +122,12 @@ export class CDPSession {
       }
       await this.handleIncomingCDPMethodCalls(message);
     });
+
+    this.onDebugSessionReady(() => {
+      this.debugSessionReady = true;
+      this.flushEnqueuedConsoleAPICalls();
+      this.delegate.onDebugSessionReady();
+    });
   }
 
   //#region CPD incoming communication
@@ -151,10 +177,7 @@ export class CDPSession {
         );
 
         if (isMainBundle) {
-          this.debugSessionReady = true;
           this.debugSessionReadyEmitter.fire({});
-          this.flushEnqueuedConsoleAPICalls();
-          this.delegate.onDebugSessionReady();
         }
 
         this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
@@ -292,24 +315,8 @@ export class CDPSession {
 
   private async handleDebuggerPaused(message: any) {
     if (!this.debugSessionReady) {
-      await new Promise((resolve, reject) => {
-        const UNMAPPED_PAUSE_TIMEOUT_MS = 5000;
-        let subscription: Disposable;
-        const timeoutId = setTimeout(() => {
-          reject(
-            new Error(
-              "Debugger was paused before the main bundle loaded for longer than expected, resuming..."
-            )
-          );
-          subscription.dispose();
-          this.sendCDPMessage("Debugger.resume", {});
-        }, UNMAPPED_PAUSE_TIMEOUT_MS);
-        subscription = this.onDebugSessionReady(() => {
-          clearTimeout(timeoutId);
-          resolve(undefined);
-          subscription.dispose();
-        });
-      });
+      const UNMAPPED_PAUSE_TIMEOUT_MS = 5000;
+      await eventFiredPromise(this.onDebugSessionReady, UNMAPPED_PAUSE_TIMEOUT_MS);
     }
     const stackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
       const cdpLocation = cdpFrame.location;
