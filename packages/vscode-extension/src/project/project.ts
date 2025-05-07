@@ -214,6 +214,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       case "isProfilingReact":
         this.eventEmitter.emit("isProfilingReact", payload);
         break;
+      case "isSavingReactProfile":
+        this.eventEmitter.emit("isSavingReactProfile", payload);
+        break;
     }
   };
   //#endregion
@@ -299,10 +302,15 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   async stopProfilingReact() {
-    const uri = await this.deviceSession?.devtools.stopProfilingReact();
-    if (uri) {
-      // open profile file in vscode using our custom editor
-      commands.executeCommand("vscode.open", uri);
+    try {
+      this.eventEmitter.emit("isSavingReactProfile", true);
+      const uri = await this.deviceSession?.devtools.stopProfilingReact();
+      if (uri) {
+        // open profile file in vscode using our custom editor
+        commands.executeCommand("vscode.open", uri);
+      }
+    } finally {
+      this.eventEmitter.emit("isSavingReactProfile", false);
     }
   }
 

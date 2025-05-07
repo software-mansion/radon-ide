@@ -121,7 +121,9 @@ export class Devtools implements Disposable {
       this.store = store;
 
       ws.on("close", () => {
-        this.socket = undefined;
+        if (this.socket === ws) {
+          this.socket = undefined;
+        }
         bridge.shutdown();
         if (this.store === store) {
           this.store = undefined;

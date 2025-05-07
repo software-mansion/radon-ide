@@ -31,6 +31,7 @@ interface ProjectContextProps {
   isRecording: boolean;
   isProfilingCPU: boolean;
   isProfilingReact: boolean;
+  isSavingReactProfile: boolean;
 }
 
 const defaultProjectState: ProjectState = {
@@ -68,6 +69,7 @@ const ProjectContext = createContext<ProjectContextProps>({
   isRecording: false,
   isProfilingCPU: false,
   isProfilingReact: false,
+  isSavingReactProfile: false,
 });
 
 export default function ProjectProvider({ children }: PropsWithChildren) {
@@ -78,6 +80,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProfilingCPU, setIsProfilingCPU] = useState(false);
   const [isProfilingReact, setIsProfilingReact] = useState(false);
+  const [isSavingReactProfile, setIsSavingReactProfile] = useState(false);
   const [replayData, setReplayData] = useState<MultimediaData | undefined>(undefined);
 
   useEffect(() => {
@@ -98,7 +101,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
 
     project.addListener("isProfilingCPU", setIsProfilingCPU);
     project.addListener("isProfilingReact", setIsProfilingReact);
-
+    project.addListener("isSavingReactProfile", setIsSavingReactProfile);
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
       project.removeListener("deviceSettingsChanged", setDeviceSettings);
@@ -119,6 +122,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
       isRecording,
       isProfilingCPU,
       isProfilingReact,
+      isSavingReactProfile,
     };
   }, [
     projectState,
@@ -131,6 +135,7 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     isRecording,
     isProfilingCPU,
     isProfilingReact,
+    isSavingReactProfile,
   ]);
 
   return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;

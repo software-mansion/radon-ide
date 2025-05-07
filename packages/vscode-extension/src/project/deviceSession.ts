@@ -62,6 +62,7 @@ export type AppEvent = {
   fastRefreshStarted: undefined;
   fastRefreshComplete: undefined;
   isProfilingReact: boolean;
+  isSavingReactProfile: boolean;
 };
 
 export type DeviceSessionDelegate = {

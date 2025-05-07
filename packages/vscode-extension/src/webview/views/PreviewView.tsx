@@ -36,24 +36,33 @@ function ActivateLicenseButton() {
 
 function ProfilingButton({
   isProfiling,
+  isLoadingProfile,
   title,
   onClick,
 }: {
   isProfiling: boolean;
+  isLoadingProfile: boolean;
   title: string;
   onClick: () => void;
 }) {
+  const showButton = isProfiling || isLoadingProfile;
   return (
     <IconButton
-      className={isProfiling ? "button-recording-on" : ""}
+      className={showButton ? "button-recording-on" : ""}
       tooltip={{
         label: title,
       }}
       disabled={!isProfiling}
       onClick={onClick}>
-      {isProfiling && (
+      {showButton && (
         <>
-          <div className="recording-rec-dot" />
+          <span
+            className={
+              isLoadingProfile
+                ? "codicon codicon-loading codicon-modifier-spin"
+                : "recording-rec-dot"
+            }
+          />
           <span>{title}</span>
         </>
       )}
@@ -71,6 +80,7 @@ function PreviewView() {
     isRecording,
     isProfilingCPU,
     isProfilingReact,
+    isSavingReactProfile,
     setReplayData,
   } = useProject();
   const { showDismissableError } = useUtils();
@@ -209,11 +219,13 @@ function PreviewView() {
         <div className="button-group-top-right">
           <ProfilingButton
             isProfiling={isProfilingCPU}
+            isLoadingProfile={false}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
           />
           <ProfilingButton
             isProfiling={isProfilingReact}
+            isLoadingProfile={isSavingReactProfile}
             title="Stop profiling React"
             onClick={stopProfilingReact}
           />

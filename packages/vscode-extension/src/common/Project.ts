@@ -140,6 +140,7 @@ export interface ProjectEventMap {
   isRecording: boolean;
   isProfilingCPU: boolean;
   isProfilingReact: boolean;
+  isSavingReactProfile: boolean;
 }
 
 export interface ProjectEventListener<T> {
