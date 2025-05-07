@@ -169,6 +169,10 @@ export class CDPSession {
 
         // inform debug adapter that context was Cleared
         this.delegate.onExecutionContextsCleared();
+
+        // since we cleared the source maps, we should wait for the next main bundle to be loaded
+        // before we can start sending console logs to the debug adapter
+        this.debugSessionReady = false;
         break;
       case "Runtime.consoleAPICalled":
         if (this.debugSessionReady) {
