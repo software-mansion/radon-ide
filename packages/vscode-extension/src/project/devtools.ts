@@ -1,15 +1,17 @@
 import http from "http";
-import { Disposable } from "vscode";
+import { commands, Disposable, Uri } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
 import {
   createBridge,
   createStore,
   FrontendBridge,
+  prepareProfilingDataExport,
   Store,
   Wall,
 } from "../../third-party/react-devtools/headless";
 import path from "path";
+import fs from "fs";
 import os from "os";
 
 // Define event names as a const array to avoid duplication
@@ -23,6 +25,7 @@ export const DEVTOOLS_EVENTS = [
   "RNIDE_devtoolPluginsChanged",
   "RNIDE_rendersReported",
   "RNIDE_pluginMessage",
+  "RNIDE_isProfilingReact",
 ] as const;
 
 // Define the payload types for each event
@@ -36,6 +39,13 @@ export interface DevtoolsEvents {
   RNIDE_devtoolPluginsChanged: [{ plugins: string[] }];
   RNIDE_rendersReported: [any];
   RNIDE_pluginMessage: [{ scope: string; type: string; data: any }];
+  RNIDE_isProfilingReact: [boolean];
+}
+
+function filePathForProfile() {
+  const fileName = `profile-${Date.now()}.reactprofile`;
+  const filePath = path.join(os.tmpdir(), fileName);
+  return filePath;
 }
 
 export class Devtools implements Disposable {
@@ -44,6 +54,7 @@ export class Devtools implements Disposable {
   private socket?: WebSocket;
   private startPromise: Promise<void> | undefined;
   private listeners: Map<keyof DevtoolsEvents, Array<(...payload: any) => void>> = new Map();
+  private store: Store | undefined;
 
   public get port() {
     return this._port;
@@ -107,10 +118,16 @@ export class Devtools implements Disposable {
 
       const bridge = createBridge(wall);
       const store = createStore(bridge);
+      this.store = store;
 
       ws.on("close", () => {
-        this.socket = undefined;
+        if (this.socket === ws) {
+          this.socket = undefined;
+        }
         bridge.shutdown();
+        if (this.store === store) {
+          this.store = undefined;
+        }
       });
 
       // Register bridge listeners for ALL custom event types
@@ -119,6 +136,14 @@ export class Devtools implements Disposable {
           this.listeners.get(event)?.forEach((listener) => listener(payload));
         });
       }
+
+      // Register for isProfiling event on the profiler store
+      store.profilerStore.addListener("isProfiling", () => {
+        this.listeners
+          .get("RNIDE_isProfilingReact")
+          // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
+          ?.forEach((listener) => listener(store.profilerStore.isProfilingBasedOnUserInput));
+      });
     });
 
     return new Promise<void>((resolve) => {
@@ -128,6 +153,33 @@ export class Devtools implements Disposable {
         resolve();
       });
     });
+  }
+
+  public async startProfilingReact() {
+    this.store?.profilerStore.startProfiling();
+  }
+
+  public async stopProfilingReact() {
+    const { resolve, reject, promise } = Promise.withResolvers<Uri>();
+    const saveProfileListener = async () => {
+      const isProcessingData = this.store?.profilerStore.isProcessingData;
+      if (!isProcessingData) {
+        this.store?.profilerStore.removeListener("isProcessingData", saveProfileListener);
+        const profilingData = this.store?.profilerStore.profilingData;
+        if (profilingData) {
+          const exportData = prepareProfilingDataExport(profilingData);
+          const filePath = filePathForProfile();
+          await fs.promises.writeFile(filePath, JSON.stringify(exportData));
+          resolve(Uri.file(filePath));
+        } else {
+          reject(new Error("No profiling data available"));
+        }
+      }
+    };
+
+    this.store?.profilerStore.addListener("isProcessingData", saveProfileListener);
+    this.store?.profilerStore.stopProfiling();
+    return promise;
   }
 
   public dispose() {

@@ -38,6 +38,42 @@ function ActivateLicenseButton() {
   );
 }
 
+function ProfilingButton({
+  isProfiling,
+  isLoadingProfile,
+  title,
+  onClick,
+}: {
+  isProfiling: boolean;
+  isLoadingProfile: boolean;
+  title: string;
+  onClick: () => void;
+}) {
+  const showButton = isProfiling || isLoadingProfile;
+  return (
+    <IconButton
+      className={showButton ? "button-recording-on" : ""}
+      tooltip={{
+        label: title,
+      }}
+      disabled={!isProfiling}
+      onClick={onClick}>
+      {showButton && (
+        <>
+          <span
+            className={
+              isLoadingProfile
+                ? "codicon codicon-loading codicon-modifier-spin"
+                : "recording-rec-dot"
+            }
+          />
+          <span>{title}</span>
+        </>
+      )}
+    </IconButton>
+  );
+}
+
 function PreviewView() {
   const {
     projectState,
@@ -47,6 +83,8 @@ function PreviewView() {
     replayData,
     isRecording,
     isProfilingCPU,
+    isProfilingReact,
+    isSavingReactProfile,
     setReplayData,
   } = useProject();
   const { showDismissableError } = useUtils();
@@ -145,6 +183,10 @@ function PreviewView() {
     project.stopProfilingCPU();
   }
 
+  function stopProfilingReact() {
+    project.stopProfilingReact();
+  }
+
   async function handleReplay() {
     try {
       await project.captureReplay();
@@ -179,20 +221,18 @@ function PreviewView() {
           <UrlBar key={resetKey} disabled={hasNoDevices} />
         </div>
         <div className="button-group-top-right">
-          <IconButton
-            className={isProfilingCPU ? "button-recording-on" : ""}
-            tooltip={{
-              label: "Stop profiling CPU",
-            }}
-            disabled={!isProfilingCPU}
-            onClick={stopProfilingCPU}>
-            {isProfilingCPU && (
-              <>
-                <div className="recording-rec-dot" />
-                <span>Profiling CPU</span>
-              </>
-            )}
-          </IconButton>
+          <ProfilingButton
+            isProfiling={isProfilingCPU}
+            isLoadingProfile={false}
+            title="Stop profiling CPU"
+            onClick={stopProfilingCPU}
+          />
+          <ProfilingButton
+            isProfiling={isProfilingReact}
+            isLoadingProfile={isSavingReactProfile}
+            title="Stop profiling React"
+            onClick={stopProfilingReact}
+          />
           <ToolsDropdown disabled={hasNoDevices || !isRunning}>
             <IconButton tooltip={{ label: "Tools", type: "primary" }}>
               <span className="codicon codicon-tools" />

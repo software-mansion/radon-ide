@@ -33,6 +33,7 @@ import { IDE } from "./project/ide";
 import { registerChat } from "./chat";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
+import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
@@ -147,6 +148,7 @@ export async function activate(context: ExtensionContext) {
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
+  context.subscriptions.push(ReactDevtoolsEditorProvider.register(context));
   context.subscriptions.push(
     commands.registerCommand("RNIDE.performBiometricAuthorization", performBiometricAuthorization)
   );

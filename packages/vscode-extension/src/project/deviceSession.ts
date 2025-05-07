@@ -61,6 +61,8 @@ export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
   fastRefreshStarted: undefined;
   fastRefreshComplete: undefined;
+  isProfilingReact: boolean;
+  isSavingReactProfile: boolean;
 };
 
 export type DeviceSessionDelegate = {
@@ -157,6 +159,9 @@ export class DeviceSession implements Disposable {
     });
     devtools.onEvent("RNIDE_fastRefreshComplete", () => {
       this.deviceSessionDelegate.onAppEvent("fastRefreshComplete", undefined);
+    });
+    devtools.onEvent("RNIDE_isProfilingReact", (isProfiling) => {
+      this.deviceSessionDelegate.onAppEvent("isProfilingReact", isProfiling);
     });
     return devtools;
   }
