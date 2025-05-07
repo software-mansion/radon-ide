@@ -302,6 +302,22 @@ export function AppWrapper({ children, initialProps, fabric }) {
         return;
       }
       const navigationDescriptor = navigationHistory.get(payload.id);
+      if (!navigationDescriptor) {
+        console.error("Navigation descriptor not found in history");
+        // create a new navigation descriptor
+        const newNavigationDescriptor = {
+          id: payload.id,
+          name: payload.id,
+          pathname: payload.id,
+          params: {},
+        };
+        navigationHistory.set(payload.id, newNavigationDescriptor);
+        console.log("Going to: ", newNavigationDescriptor);
+        
+        requestNavigationChange(newNavigationDescriptor);
+        return;
+      }
+
       closePreview().then(() => {
         navigationDescriptor && requestNavigationChange(navigationDescriptor);
       });

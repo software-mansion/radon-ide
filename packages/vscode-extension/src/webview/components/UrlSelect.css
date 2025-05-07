@@ -37,6 +37,20 @@
   box-shadow: var(--swm-focus-outline);
 }
 
+.url-select-input {
+  z-index: 1;
+}
+.url-select-group {
+  position: relative;
+  width: var(--url-select-max-width);
+  max-width: var(--url-select-max-width);
+  min-width: var(--swm-button-size);
+}
+.url-select-dropdown {
+  position: absolute;
+  left: 0;
+}
+
 .url-select-content {
   overflow: hidden;
   background-color: var(--swm-url-select-background);
