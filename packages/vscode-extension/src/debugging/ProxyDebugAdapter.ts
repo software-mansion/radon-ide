@@ -59,7 +59,10 @@ export class ProxyDebugAdapter extends DebugSession {
       sourceMapAliases
     );
 
-    const proxyDelegate = new RadonCDPProxyDelegate(this.sourceMapRegistry);
+    const proxyDelegate = new RadonCDPProxyDelegate(
+      this.sourceMapRegistry,
+      this.session.configuration.skipFiles
+    );
 
     this.cdpProxy = new CDPProxy(
       "127.0.0.1",
@@ -160,7 +163,10 @@ export class ProxyDebugAdapter extends DebugSession {
           continueOnAttach: true,
           sourceMapPathOverrides: args.sourceMapPathOverrides,
           resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
-          skipFiles: this.session.configuration.skipFiles,
+          // NOTE: setting skipFiles increases startup time _significantly_, so we omit them until we figure out
+          // how to work around this problem
+          skipFiles: [],
+          outFiles: [],
         },
         {
           suppressDebugStatusbar: true,
