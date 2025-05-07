@@ -21,9 +21,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
 
   constructor(
     private sourceMapRegistry: SourceMapsRegistry,
-    patterns: string[]
+    skipFiles: string[]
   ) {
-    this.ignoredPatterns = patterns.map((pattern) => new Minimatch(pattern));
+    this.ignoredPatterns = skipFiles.map((pattern) => new Minimatch(pattern, { flipNegate: true }));
   }
 
   public async handleApplicationCommand(
@@ -63,9 +63,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     );
     const shouldSkipFile = this.ignoredPatterns.reduce((shouldSkip, p) => {
       if (p.negate) {
-        // if a negated pattern is _not_ matched (meaning the path matches the _negated_ part of the pattern),
-        // the file should not be skipped (unless it matches some further pattern)
-        return shouldSkip && p.match(sourceURL);
+        // don't skip the file if some negated pattern matches it
+        return shouldSkip && !p.match(sourceURL);
       } else {
         return shouldSkip || p.match(sourceURL);
       }
