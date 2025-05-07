@@ -128,7 +128,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         recentItems={recentUrlList}
         items={sortedUrlList}
         value={urlSelectValue}
-        disabled={disabledAlsoWhenStarting || urlList.length < (isExpoRouterProject ? 2 : 1)}
+        disabled={disabledAlsoWhenStarting}
       />
     </>
   );

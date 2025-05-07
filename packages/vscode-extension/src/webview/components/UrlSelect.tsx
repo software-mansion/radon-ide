@@ -36,8 +36,11 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   // through onValueChange.
 
   const handleValueChange = (newSelection: string) => {
-    const stripped = newSelection.replace(/^recent#/, "");
-    onValueChange(stripped);
+    onValueChange(stripRecentPrefix(newSelection));
+  };
+
+  const stripRecentPrefix = (id: string) => {
+    return id.replace(/^recent#/, "");
   };
 
   const stripNameFromId = (id: string) => {
@@ -59,13 +62,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     }
   }, [inputValue, items]);
 
-  return (
-    // IDEA
-    // Use the standard dropdown with button, have an input field on top of it
-    // When the input field is focused, the dropdown opens
-    // When the input field is not focused, the dropdown closes
-    // The input field filters the dropdown
-    
+  return (    
     // kinda broken, but opens correctly without focusing away from the input
     <span className="url-select-group" onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}>
     <VscodeTextfield
@@ -112,42 +109,48 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
       }}
     />
 
+    {/* TODO: fix weird border radius overflow, add padding and prevent wrap in vscodeoptions */}
     <VscodeSingleSelect
       className="url-select-dropdown"
       disabled={disabled}
-      value={stripNameFromId(value)}
+      value={inputValue}
       autoFocus={false}
       inputMode="text"
-      open={isFocused}
+      open={isFocused && filteredItems.length > 0}
       onChange={(e) => {
         e.preventDefault();
         const selectValue = (e.target as HTMLInputElement).value;
         if (selectValue) {
-          setInputValue(selectValue);
+          setInputValue(stripNameFromId(stripRecentPrefix(selectValue)));
           handleValueChange(selectValue);
         }
       }}
-      onMouseDown={(e) => { e.currentTarget.focus(); }}
+      onMouseDown={(e) => e.currentTarget.focus()}
     >
       {/* sometimes unreliable */}
-      {filteredItems
-        // .filter((item) => item.name.includes(inputValue))
-        .map(
-          (item) =>
-            item.name && (
-              <VscodeOption value={`recent#${item.id}`} key={item.id}>
-                {item.name}
-              </VscodeOption>
-            )
-          )}
-      {/* {items.map(
-        (item) =>
+      {filteredItems.map((item, index) =>
         item.name && (
-        <VscodeOption value={item.id} key={item.id}>
-        {item.name}
-        </VscodeOption>
+          <VscodeOption
+            value={`recent#${item.id}`}
+            key={item.id}
+            className="url-select-option"
+            // onKeyDown={(e) => {
+            //   if (
+            //     e.key === "ArrowUp" &&
+            //     index === 0 // Check if it's the first element
+            //   ) {
+            //     e.preventDefault();
+            //     const input = document.querySelector<HTMLInputElement>(".url-select-input");
+            //     if (input) {
+            //       input.focus(); // Focus back on the input field
+            //     }
+            //   }
+            // }}
+          >
+            {item.name}
+          </VscodeOption>
         )
-        )} */}
+      )}
     </VscodeSingleSelect>
   </span>
 

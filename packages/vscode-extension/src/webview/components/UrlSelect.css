@@ -37,19 +37,80 @@
   box-shadow: var(--swm-focus-outline);
 }
 
+/* ------------------ WIP start ------------------ */
 .url-select-input {
   z-index: 1;
+  height: var(--swm-button-size);
+  width: var(--url-select-max-width);
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 1;
+  border: 0px solid transparent;
+  border-radius: 18px;
+  background-color: var(--swm-url-select-background);
+  color: var(--swm-url-select);
+  box-sizing: border-box;
+  align-items: center;
+  cursor: text;
+  max-width: var(--url-select-max-width);
 }
 .url-select-group {
   position: relative;
   width: var(--url-select-max-width);
   max-width: var(--url-select-max-width);
   min-width: var(--swm-button-size);
+  box-sizing: border-box;
+  display: inline;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  height: var(--swm-button-size);
+  border: 0px solid transparent;
+  border-radius: 18px;
+  gap: 5px;
+  color: var(--swm-url-select);
+  background-color: var(--swm-url-select-background);
+  max-width: var(--url-select-max-width);
+  flex: 1;
 }
+
+.url-select-group:not(:has(.url-select-dropdown[open])) {
+  overflow: hidden;
+}
+
 .url-select-dropdown {
+  box-sizing: border-box;
   position: absolute;
   left: 0;
+  height: var(--swm-button-size);
+  --vscode-settings-dropdownBackground: var(--swm-url-select-background);
+  --vscode-settings-dropdownListBorder: transparent;
+  --vscode-settings-dropdownBorder: transparent;
+  --vscode-focusBorder: transparent;
+  border-radius: 18px;
+  /* box-sizing: border-box;
+  display: inline;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  height: var(--swm-button-size);
+  border: 0px solid transparent;
+  border-radius: 18px;
+  gap: 5px;
+  color: var(--swm-url-select);
+  background-color: var(--swm-url-select-background);
+  user-select: none;
+  max-width: var(--url-select-max-width);
+  flex: 1; */
 }
+.url-select-dropdown[open] {
+  border: 0px solid transparent;
+  border-radius: 18px 18px 18px 18px;
+}
+/* ------------------ WIP end ------------------ */
 
 .url-select-content {
   overflow: hidden;
