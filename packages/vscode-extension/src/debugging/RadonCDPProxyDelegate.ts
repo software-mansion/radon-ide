@@ -23,7 +23,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     private sourceMapRegistry: SourceMapsRegistry,
     skipFiles: string[]
   ) {
-    this.ignoredPatterns = skipFiles.map((pattern) => new Minimatch(pattern, { flipNegate: true }));
+    this.ignoredPatterns = skipFiles.map(
+      (pattern) => new Minimatch(pattern, { flipNegate: true, dot: true })
+    );
   }
 
   public async handleApplicationCommand(
