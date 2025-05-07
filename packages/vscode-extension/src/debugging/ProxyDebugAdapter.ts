@@ -294,7 +294,7 @@ export class ProxyDebugAdapter extends DebugSession {
       case "RNIDE_stopProfiling":
         await this.stopProfiling();
         break;
-      case "RNIDE_respondsAfterJsRestart":
+      case "RNIDE_ping":
         response.body.result = await this.ping();
         break;
     }
