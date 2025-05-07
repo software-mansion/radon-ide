@@ -18,6 +18,7 @@ import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
 import { CDPConfiguration } from "./CDPDebugAdapter";
+import { Disposable, EventEmitter } from "vscode";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -59,6 +60,9 @@ export class CDPSession {
   private breakpointsController: BreakpointsController;
 
   private debugSessionReady = false;
+  private debugSessionReadyEmitter = new EventEmitter();
+  private onDebugSessionReady = this.debugSessionReadyEmitter.event;
+
   private consoleAPICallsQueue: any[] = [];
 
   private resumeEventTimeout: NodeJS.Timeout | undefined;
@@ -148,6 +152,7 @@ export class CDPSession {
 
         if (isMainBundle) {
           this.debugSessionReady = true;
+          this.debugSessionReadyEmitter.fire({});
           this.flushEnqueuedConsoleAPICalls();
           this.delegate.onDebugSessionReady();
         }
@@ -286,6 +291,26 @@ export class CDPSession {
   }
 
   private async handleDebuggerPaused(message: any) {
+    if (!this.debugSessionReady) {
+      await new Promise((resolve, reject) => {
+        const UNMAPPED_PAUSE_TIMEOUT_MS = 5000;
+        let subscription: Disposable;
+        const timeoutId = setTimeout(() => {
+          reject(
+            new Error(
+              "Debugger was paused before the main bundle loaded for longer than expected, resuming..."
+            )
+          );
+          subscription.dispose();
+          this.sendCDPMessage("Debugger.resume", {});
+        }, UNMAPPED_PAUSE_TIMEOUT_MS);
+        subscription = this.onDebugSessionReady(() => {
+          clearTimeout(timeoutId);
+          resolve(undefined);
+          subscription.dispose();
+        });
+      });
+    }
     const stackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
       const cdpLocation = cdpFrame.location;
       const { sourceURL, lineNumber1Based, columnNumber0Based } =
