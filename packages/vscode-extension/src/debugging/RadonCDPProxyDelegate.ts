@@ -125,7 +125,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     command: IProtocolCommand,
     tunnel: ProxyTunnel
   ): Promise<IProtocolCommand> {
-    switch (command.method) {
+    const { method } = command;
+    switch (method) {
       case "Debugger.stepOver": {
         // setting this will cause the "resume" event from being slightly delayed as we
         // expect the "paused" event to be fired almost immediately.
