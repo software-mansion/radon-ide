@@ -93,14 +93,14 @@
 
 .subheadingLabel {
   font-family: var(--swm-h2-font-size);
-  font-size: 20px;
+  font-size: var(--swm-h3-font-size);
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: var(--swm-heading-letter-spacing-bigger);
 
   margin-top: 3rem;
   margin-bottom: 5.5rem;
-  width: 60%;
+  width: 50%;
   color: var(--swm-landing-heading);
   text-wrap: balance;
 }
@@ -148,7 +148,7 @@
   }
   .subheadingLabel {
     margin: 2rem 0 3.5rem 0;
-    font-size: 24px;
+    font-size: 26px;
     width: 100%;
   }
 
