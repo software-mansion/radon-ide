@@ -25,7 +25,8 @@ interface UrlSelectProps {
 }
 
 function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
-  const [isFocused, setIsFocused] = React.useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [isInputGroupFocused, setIsInputGroupFocused] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
   const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
 
@@ -62,97 +63,230 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     }
   }, [inputValue, items]);
 
-  return (    
-    // kinda broken, but opens correctly without focusing away from the input
-    <span className="url-select-group" onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}>
-    <VscodeTextfield
-      className="url-select-input"
-      disabled={disabled}
-      type="text"
-      placeholder="Enter path"
-      value={inputValue}
-      onInput={(e) => {
-        e.preventDefault();
-        const fieldValue = (e.target as HTMLInputElement).value;
-        setInputValue(fieldValue);
-      }}
 
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          const fieldValue = (e.target as HTMLInputElement).value;
-          if (fieldValue) {
-            setInputValue(fieldValue);
-            handleValueChange(fieldValue);
-          }
-          (e.target as HTMLInputElement).parentElement?.blur();
-          (e.target as HTMLInputElement).blur();
-          setIsFocused(false);
-        }
-        if (e.key === "Escape") {
-          (e.target as HTMLInputElement).blur();
-          (e.target as HTMLInputElement).parentElement?.blur();
-          setIsFocused(false);
-        }
-        if (e.key === "ArrowDown") {
-          e.preventDefault();
-          setIsFocused(true);
-          const select = document.querySelector<HTMLSelectElement>(".url-select-dropdown");
-          if (select) {
-            select.focus();
-          }
-        }
-        // else {
-        //   const fieldValue = (e.target as HTMLInputElement).value;
-        //   setInputValue(fieldValue);
-        // }
+  return (
+    <Select.Root
+      onValueChange={(value) => {
+        handleValueChange(value);
+        setInputValue(stripNameFromId(value));
+        setIsDropdownOpen(false);
       }}
-    />
-
-    {/* TODO: fix weird border radius overflow, add padding and prevent wrap in vscodeoptions */}
-    <VscodeSingleSelect
-      className="url-select-dropdown"
+      value={value}
       disabled={disabled}
-      value={inputValue}
-      autoFocus={false}
-      inputMode="text"
-      open={isFocused && filteredItems.length > 0}
-      onChange={(e) => {
-        e.preventDefault();
-        const selectValue = (e.target as HTMLInputElement).value;
-        if (selectValue) {
-          setInputValue(stripNameFromId(stripRecentPrefix(selectValue)));
-          handleValueChange(selectValue);
-        }
-      }}
-      onMouseDown={(e) => e.currentTarget.focus()}
+      open={isDropdownOpen}
     >
-      {/* sometimes unreliable */}
-      {filteredItems.map((item, index) =>
-        item.name && (
-          <VscodeOption
-            value={`recent#${item.id}`}
-            key={item.id}
-            className="url-select-option"
-            // onKeyDown={(e) => {
-            //   if (
-            //     e.key === "ArrowUp" &&
-            //     index === 0 // Check if it's the first element
-            //   ) {
-            //     e.preventDefault();
+      <Select.Trigger className="url-select-trigger" onFocus={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const input = document.querySelector<HTMLSelectElement>(".url-select-input");
+        if (input) {
+          input.focus();
+        }
+      }}/>
+        {/* <div className="url-select-input-wrapper" onClick={(e) => e.stopPropagation()}> */}
+        <VscodeTextfield
+          type="text"
+          value={inputValue ?? "/"}
+          placeholder="Enter path..."
+          disabled={disabled}
+          className="url-select-input"
+          onChange={(e) => setInputValue((e.target as HTMLInputElement).value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const inputValue = (e.target as HTMLInputElement).value;
+              if (inputValue) {
+                handleValueChange(inputValue);
+              }
+            }
+            if (e.key === "ArrowDown") {
+              setIsDropdownOpen(true);
+            }
+          }}
+          // onBlur={() => setIsFocused(false)}
+          // onFocus={(e) => {
+            // e.preventDefault();
+            // e.stopPropagation();
+
+            // if (!isDropdownOpen) {
+            //   setIsDropdownOpen(true);
+            // }
+            // else {
+            //   setTimeout(() => {
+            //     // focus itself after the dropdown is opened
             //     const input = document.querySelector<HTMLInputElement>(".url-select-input");
             //     if (input) {
-            //       input.focus(); // Focus back on the input field
+            //       input.focus();
             //     }
-            //   }
-            // }}
-          >
-            {item.name}
-          </VscodeOption>
-        )
-      )}
-    </VscodeSingleSelect>
-  </span>
+            //   }, 100);
+            // }
+          // }}
+          
+          // onMouseDown={(e) => {
+          //   e.preventDefault();
+          //   e.stopPropagation();
+          //   if (!isDropdownOpen) {
+          //     setIsDropdownOpen(true);
+          //   }
+          // }}
+        />
+        {/* </div> */}
+      {/* </Select.Trigger> */}
+      
+      <Select.Portal>
+        <Select.Content
+          className="url-select-content"
+          position="popper"
+          autoFocus={false}
+          onPointerDownOutside={() => setIsDropdownOpen(false)}
+          onEscapeKeyDown={() => setIsDropdownOpen(false)}
+
+          // // Doesn't work
+          // onKeyDown={(e) => {
+          //   if (e.key === "ArrowUp") {
+          //     e.preventDefault();
+          //     e.stopPropagation();
+          //     // setIsDropdownOpen(false);
+          //     const input = document.querySelector<HTMLInputElement>(".url-select-input");
+          //     if (input) {
+          //       input.focus();
+          //     }
+          //   }
+          // }}
+        >
+          <Select.ScrollUpButton className="url-select-scroll">
+            <span className="codicon codicon-chevron-up" />
+          </Select.ScrollUpButton>
+          <Select.Viewport className="url-select-viewport">
+            <Select.Group>
+              <Select.Label className="url-select-label">Suggested paths:</Select.Label>
+              {filteredItems
+                .map(
+                  (item) =>
+                    item.name && (
+                      <SelectItem value={`recent#${item.id}`} key={item.id}>
+                        {item.name}
+                      </SelectItem>
+                    )
+                )}
+            </Select.Group>
+            <Select.Separator className="url-select-separator" />
+            <Select.Group>
+              <Select.Label className="url-select-label">Other paths:</Select.Label>
+              {items
+                .filter((item) => !filteredItems.some((filteredItem) => filteredItem.id === item.id))
+                .map(
+                  (item) =>
+                    item.name && (
+                      <SelectItem value={item.id} key={item.id}>
+                        {item.name}
+                      </SelectItem>
+                    )
+                )}
+            </Select.Group>
+          </Select.Viewport>
+          <Select.ScrollDownButton className="url-select-scroll">
+            <span className="codicon codicon-chevron-down" />
+          </Select.ScrollDownButton>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
+
+
+
+  //   // kinda broken, but opens correctly without focusing away from the input
+  //   <span className="url-select-group" onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}>
+  //   <VscodeTextfield
+  //     className="url-select-input"
+  //     disabled={disabled}
+  //     type="text"
+  //     placeholder="Enter path"
+  //     value={inputValue}
+  //     onInput={(e) => {
+  //       e.preventDefault();
+  //       const fieldValue = (e.target as HTMLInputElement).value;
+  //       setInputValue(fieldValue);
+  //     }}
+
+  //     onKeyDown={(e) => {
+  //       if (e.key === "Enter") {
+  //         e.preventDefault();
+  //         const fieldValue = (e.target as HTMLInputElement).value;
+  //         if (fieldValue) {
+  //           setInputValue(fieldValue);
+  //           handleValueChange(fieldValue);
+  //         }
+  //         (e.target as HTMLInputElement).parentElement?.blur();
+  //         (e.target as HTMLInputElement).blur();
+  //         setIsFocused(false);
+  //       }
+  //       if (e.key === "Escape") {
+  //         (e.target as HTMLInputElement).blur();
+  //         (e.target as HTMLInputElement).parentElement?.blur();
+  //         setIsFocused(false);
+  //       }
+  //       if (e.key === "ArrowDown") {
+  //         e.preventDefault();
+  //         setIsFocused(true);
+  //         const select = document.querySelector<HTMLSelectElement>(".url-select-dropdown");
+  //         if (select) {
+  //           select.focus();
+  //         }
+  //       }
+  //       // else {
+  //       //   const fieldValue = (e.target as HTMLInputElement).value;
+  //       //   setInputValue(fieldValue);
+  //       // }
+  //     }}
+  //   />
+
+  //   {/* TODO: fix weird border radius overflow, add padding and prevent wrap in vscodeoptions */}
+  //   <div className="url-select-wrapper">
+  //     <VscodeSingleSelect
+  //       className="url-select-dropdown"
+  //       disabled={disabled}
+  //       value={inputValue}
+  //       autoFocus={false}
+  //       inputMode="text"
+  //       open={isFocused && filteredItems.length > 0}
+  //       onChange={(e) => {
+  //         e.preventDefault();
+  //         const selectValue = (e.target as HTMLInputElement).value;
+  //         if (selectValue) {
+  //           setInputValue(stripNameFromId(stripRecentPrefix(selectValue)));
+  //           handleValueChange(selectValue);
+  //         }
+  //       }}
+  //       onMouseDown={(e) => e.currentTarget.focus()}
+  //     >
+  //       {/* sometimes unreliable */}
+  //       {filteredItems.map((item, index) =>
+  //         item.name && (
+  //           <VscodeOption
+  //             value={`recent#${item.id}`}
+  //             key={item.id}
+  //             className="url-select-option"
+  //             // onKeyDown={(e) => {
+  //             //   if (
+  //             //     e.key === "ArrowUp" &&
+  //             //     index === 0 // Check if it's the first element
+  //             //   ) {
+  //             //     e.preventDefault();
+  //             //     const input = document.querySelector<HTMLInputElement>(".url-select-input");
+  //             //     if (input) {
+  //             //       input.focus(); // Focus back on the input field
+  //             //     }
+  //             //   }
+  //             // }}
+  //           >
+  //             {item.name}
+  //           </VscodeOption>
+  //         )
+  //       )}
+  //     </VscodeSingleSelect>
+  //   </div>
+  // </span>
+
 
 
     // input w/o dropdown
@@ -180,79 +314,6 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     //   }}
     // />
 
-
-    // separate input and dropdown
-    // <Select.Root
-    //   onValueChange={handleValueChange}
-    //   value={value}
-    //   disabled={disabled}
-    //   open={isFocused}
-    // >
-    //   <VscodeTextfield
-    //     type="text"
-    //     value={inputValue}
-    //     onChange={(e) => setInputValue((e.target as HTMLInputElement).value)}
-    //     onKeyDown={(e) => {
-    //       if (e.key === "Enter") {
-    //         e.preventDefault();
-    //         const inputValue = (e.target as HTMLInputElement).value;
-    //         if (inputValue) {
-    //           handleValueChange(inputValue);
-    //         }
-    //       }
-    //     }}
-    //     // onBlur={() => setIsFocused(false)}
-    //     onFocus={() => {
-    //       setIsFocused(true);
-    //     }}
-    //     placeholder="Enter URL"
-    //     className="url-select-input"
-    //   />
-    //   <Select.Trigger className="url-select-trigger">
-    //     <Select.Value>
-    //       <div className="url-select-value">
-    //         {stripNameFromId(value)}
-    //       </div>
-    //     </Select.Value>
-    //   </Select.Trigger>
-    //   <Select.Portal>
-    //     <Select.Content className="url-select-content" position="popper" autoFocus={false}>
-    //       <Select.ScrollUpButton className="url-select-scroll">
-    //         <span className="codicon codicon-chevron-up" />
-    //       </Select.ScrollUpButton>
-    //       <Select.Viewport className="url-select-viewport">
-    //         <Select.Group>
-    //           <Select.Label className="url-select-label">Suggested paths:</Select.Label>
-    //           {recentItems
-    //             .filter((item) => item.name.includes(inputValue))
-    //             .map(
-    //               (item) =>
-    //                 item.name && (
-    //                   <SelectItem value={`recent#${item.id}`} key={item.id}>
-    //                     {item.name}
-    //                   </SelectItem>
-    //                 )
-    //             )}
-    //         </Select.Group>
-    //         <Select.Separator className="url-select-separator" />
-    //         <Select.Group>
-    //           <Select.Label className="url-select-label">All visited paths:</Select.Label>
-    //           {items.map(
-    //             (item) =>
-    //               item.name && (
-    //                 <SelectItem value={item.id} key={item.id}>
-    //                   {item.name}
-    //                 </SelectItem>
-    //               )
-    //             )}
-    //         </Select.Group>
-    //       </Select.Viewport>
-    //       <Select.ScrollDownButton className="url-select-scroll">
-    //         <span className="codicon codicon-chevron-down" />
-    //       </Select.ScrollDownButton>
-    //     </Select.Content>
-    //   </Select.Portal>
-    // </Select.Root>
 
 
     // // select with search

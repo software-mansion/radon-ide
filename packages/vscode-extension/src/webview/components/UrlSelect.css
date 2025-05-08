@@ -79,6 +79,20 @@
   overflow: hidden;
 }
 
+.url-select-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--url-select-max-width);
+  height: 100px;
+  max-width: var(--url-select-max-width);
+  min-width: var(--swm-button-size);
+  box-sizing: border-box;
+  background-color: red;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
 .url-select-dropdown {
   box-sizing: border-box;
   position: absolute;
@@ -88,7 +102,6 @@
   --vscode-settings-dropdownListBorder: transparent;
   --vscode-settings-dropdownBorder: transparent;
   --vscode-focusBorder: transparent;
-  border-radius: 18px;
   /* box-sizing: border-box;
   display: inline;
   align-items: center;
@@ -109,6 +122,16 @@
 .url-select-dropdown[open] {
   border: 0px solid transparent;
   border-radius: 18px 18px 18px 18px;
+}
+
+.url-select-option {
+  display: inline-block;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 13px;
+  height: 100px;
+  line-height: 1;
+  border-radius: 18px;
 }
 /* ------------------ WIP end ------------------ */
 
