@@ -1,5 +1,6 @@
 import React, { PropsWithChildren, useEffect } from "react";
 import * as Select from "@radix-ui/react-select";
+import { FocusScope } from "@radix-ui/react-focus-scope";
 import { VscodeOption, VscodeSingleSelect, VscodeTextfield } from "@vscode-elements/react-elements";
 import "./UrlSelect.css";
 import { set } from "lodash";
@@ -26,10 +27,11 @@ interface UrlSelectProps {
 
 function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [isInputGroupFocused, setIsInputGroupFocused] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
   const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
+  const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
 
+  // TODO CHANGE THIS BELOW
   // We use two lists for URL selection: one with recently used URLs and another
   // with all available URLs. Since recentItems is a subset of items, each recentItems's
   // value is prefixed to differentiate their origins when presented in the Select
@@ -63,17 +65,22 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     }
   }, [inputValue, items]);
 
+  useEffect(() => {
+    const filteredOut = items.filter((item) => !filteredItems.some((filteredItem) => filteredItem.id === item.id));
+    setFilteredOutItems(filteredOut);
+  }, [items, filteredItems]);
+
 
   return (
     <Select.Root
-      onValueChange={(value) => {
-        handleValueChange(value);
-        setInputValue(stripNameFromId(value));
-        setIsDropdownOpen(false);
-      }}
-      value={value}
-      disabled={disabled}
-      open={isDropdownOpen}
+    value={value}
+    disabled={disabled}
+    open={isDropdownOpen}
+    onValueChange={(value) => {
+      handleValueChange(value);
+      setInputValue(stripNameFromId(stripRecentPrefix(value)));
+      setIsDropdownOpen(false);
+    }}
     >
       <Select.Trigger className="url-select-trigger" onFocus={(e) => {
         e.preventDefault();
@@ -94,63 +101,52 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
-              const inputValue = (e.target as HTMLInputElement).value;
-              if (inputValue) {
-                handleValueChange(inputValue);
+              const fieldValue = (e.target as HTMLInputElement).value;
+              if (fieldValue) {
+                handleValueChange(stripNameFromId(stripRecentPrefix(fieldValue)));
               }
             }
             if (e.key === "ArrowDown") {
+              const fieldValue = (e.target as HTMLInputElement).value;
+              if (fieldValue) {
+                setInputValue(fieldValue);
+              }
               setIsDropdownOpen(true);
             }
           }}
-          // onBlur={() => setIsFocused(false)}
-          // onFocus={(e) => {
-            // e.preventDefault();
-            // e.stopPropagation();
-
-            // if (!isDropdownOpen) {
-            //   setIsDropdownOpen(true);
-            // }
-            // else {
-            //   setTimeout(() => {
-            //     // focus itself after the dropdown is opened
-            //     const input = document.querySelector<HTMLInputElement>(".url-select-input");
-            //     if (input) {
-            //       input.focus();
-            //     }
-            //   }, 100);
-            // }
-          // }}
           
-          // onMouseDown={(e) => {
-          //   e.preventDefault();
-          //   e.stopPropagation();
-          //   if (!isDropdownOpen) {
-          //     setIsDropdownOpen(true);
-          //   }
-          // }}
+          onMouseDown={(e) => {
+            if (!isDropdownOpen) {
+              e.preventDefault();
+              setIsDropdownOpen(true);
+            }
+          }}
         />
         {/* </div> */}
       {/* </Select.Trigger> */}
-      
+
       <Select.Portal>
+
+      {/* Doesn't do anything it seems like */}
+      <FocusScope trapped={false}>
+
         <Select.Content
           className="url-select-content"
           position="popper"
           autoFocus={false}
           onPointerDownOutside={() => setIsDropdownOpen(false)}
           onEscapeKeyDown={() => setIsDropdownOpen(false)}
+          onKeyDown={(e) => {
+            // if (e.key === "ArrowUp" and what?) {   // we want to focus the input as if it was the top item but not close the dropdown
+              // setIsDropdownOpen(false);  // temp
+            // }
+          }}
 
-          // // Doesn't work
-          // onKeyDown={(e) => {
-          //   if (e.key === "ArrowUp") {
-          //     e.preventDefault();
-          //     e.stopPropagation();
-          //     // setIsDropdownOpen(false);
-          //     const input = document.querySelector<HTMLInputElement>(".url-select-input");
-          //     if (input) {
-          //       input.focus();
-          //     }
+          // THIS WORKED!!! May be useful in the future
+          // onFocus={() => {
+          //   const input = document.querySelector<HTMLInputElement>(".url-select-input");
+          //   if (input) {
+          //     input.focus();
           //   }
           // }}
         >
@@ -159,7 +155,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           </Select.ScrollUpButton>
           <Select.Viewport className="url-select-viewport">
             <Select.Group>
-              <Select.Label className="url-select-label">Suggested paths:</Select.Label>
+              {filteredItems && filteredItems.length > 0 ? <Select.Label className="url-select-label">Suggested paths:</Select.Label> : null}
               {filteredItems
                 .map(
                   (item) =>
@@ -170,11 +166,14 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                     )
                 )}
             </Select.Group>
-            <Select.Separator className="url-select-separator" />
+            
+            {filteredItems && filteredItems.length > 0 && filteredOutItems && filteredOutItems.length > 0 ? 
+              <Select.Separator className="url-select-separator" />
+            : null}
+
             <Select.Group>
-              <Select.Label className="url-select-label">Other paths:</Select.Label>
-              {items
-                .filter((item) => !filteredItems.some((filteredItem) => filteredItem.id === item.id))
+              {filteredOutItems && filteredOutItems.length > 0 ? <Select.Label className="url-select-label">Other paths:</Select.Label> : null}
+              {filteredOutItems
                 .map(
                   (item) =>
                     item.name && (
@@ -189,6 +188,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             <span className="codicon codicon-chevron-down" />
           </Select.ScrollDownButton>
         </Select.Content>
+      </FocusScope>
       </Select.Portal>
     </Select.Root>
 
