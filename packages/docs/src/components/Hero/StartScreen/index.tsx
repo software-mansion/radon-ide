@@ -50,7 +50,7 @@ const StartScreen = () => {
             <img
               className={styles.heroImage}
               src={useBaseUrl("/img/hero.webp")}
-              alt="Radon IDE in action"
+              alt="IDE for React Native"
               width={1678}
               height={1025}
               draggable={false}

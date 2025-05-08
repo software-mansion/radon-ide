@@ -51,7 +51,7 @@ const config = {
       navbar: {
         hideOnScroll: true,
         logo: {
-          alt: "IDE logo",
+          alt: "Radon IDE logo",
           src: "img/logo.svg",
         },
         items: [
