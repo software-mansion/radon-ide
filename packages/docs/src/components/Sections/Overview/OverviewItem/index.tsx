@@ -22,7 +22,7 @@ const OverviewItem = ({ label, title, body, mediaSrc, placeholderSrc, placeholde
       <section className={styles.description}>
         <p className={styles.itemLabel}>{label}</p>
         <h3 className={styles.itemTitle}>{title}</h3>
-        <p className={styles.itemBody}>{body}</p>
+        <p className={styles.itemBody} dangerouslySetInnerHTML={{ __html: body }} />
         <LinkButton
           title="Get started for free"
           href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"

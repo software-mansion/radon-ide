@@ -7,7 +7,7 @@ const faqs = [
   {
     topic: "What is Radon IDE?",
     answer:
-      "Radon IDE is a VSCode extension that turns your editor into a fully-fledged IDE for React Native and Expo.",
+      "Radon IDE is a VSCode extension that turns your editor into a fully-fledged <strong>IDE for React Native and Expo</strong>.",
   },
   {
     topic: "Can I use it on Windows or Linux?",
@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     topic: "Do you offer a free trial?",
-    answer: `Yes! You can try our React Native IDE for free for 30 days. No sign up or card details needed.<br/><br/>
+    answer: `Yes! You can try our <strong>React Native IDE</strong> for free for 30 days. No sign up or card details needed.<br/><br/>
     You can simply download and run the extension from VSCode Marketplace. See our short <a href="http://ide.swmansion.com/docs/getting-started/installation#installing-the-radon-ide-extension" target="_blank">installation guide</a> on how to install the extension in VSCode and Cursor.`,
   },
   {
@@ -39,7 +39,7 @@ const faqs = [
   {
     topic: "Why did you make the source code public?",
     answer:
-      "We are well aware there is an infinite number of ways of setting up a React Native project. With access to the code you can adjust the Radon IDE to make it run with your codebase.",
+      "We are well aware there is an infinite number of ways of setting up a React Native project. With access to the code you can adjust the <strong>Radon IDE</strong> to make it run with your codebase.",
   },
   {
     topic: "Is WebStorm supported?",

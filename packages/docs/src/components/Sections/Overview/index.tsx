@@ -7,7 +7,7 @@ const items = [
   {
     label: "An IDE",
     title: "Integrated experience",
-    body: "See the preview of your application right where you need it the most – close to your codebase. \n\nRadon IDE runs IOS Simulator and Android emulator directly in your Visual Studio Code and Cursor project.",
+    body: "See the preview of your application right where you need it the most – close to your codebase. \n\n<strong>Radon IDE</strong> runs IOS Simulator and Android emulator directly in your Visual Studio Code and Cursor project.",
     mediaSrc: "video/1_sztudio_integrated.mp4",
     placeholderSrc: "video/placeholders/1_sztudio_integrated_placeholder.webp",
     placeholderAlt: "Experience our React Native IDE",
@@ -23,7 +23,7 @@ const items = [
   {
     label: "Debugger",
     title: "Use breakpoints right in VSCode",
-    body: "Add React Native breakpoints in Visual Studio Code to debug your React Native applications. No extra setup needed. It. Just. Works.\n\nWhat's more, Radon IDE automatically stops at runtime exceptions and shows you the exact line of code where they happened.",
+    body: "Add <strong>React Native breakpoints</strong> in Visual Studio Code to debug your React Native applications. No extra setup needed. It. Just. Works.\n\nWhat's more, Radon IDE automatically stops at runtime exceptions and shows you the exact line of code where they happened.",
     mediaSrc: "video/3_sztudio_debugger.mp4",
     placeholderSrc: "video/placeholders/3_sztudio_debugger_placeholder.webp",
     placeholderAlt: "Use React Native breakpoints in VSCode",
@@ -31,7 +31,7 @@ const items = [
   {
     label: "Router integration",
     title: "Navigation made easier",
-    body: "Our VSCode extension integrates tightly with your deep-linked application, allowing you to effortlessly jump around the navigation structure. It supports both React Navigation and Expo Router projects.",
+    body: "Our <strong>VSCode extension</strong> integrates tightly with your deep-linked application, allowing you to effortlessly jump around the navigation structure. It supports both React Navigation and Expo Router projects.",
     mediaSrc: "video/4_sztudio_url_bar.mp4",
     placeholderSrc: "video/placeholders/4_sztudio_url_bar_placeholder.webp",
     placeholderAlt: "Radon IDE router integration",
