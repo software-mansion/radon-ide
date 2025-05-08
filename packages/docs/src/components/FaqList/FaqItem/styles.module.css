@@ -47,6 +47,7 @@
 .question {
   font-family: var(--swm-body-font);
   font-size: var(--swm-heading-font-size-smaller);
+  font-weight: 400;
   color: var(--swm-navy-light-100);
   text-align: left;
 }

@@ -44,9 +44,7 @@ const FaqItem = ({ index, topic, answer, isExpanded, setActiveItem }: FaqItemPro
             styles.faqItemQuestion,
             isExpanded ? styles.faqItemExpanded : styles.faqItemNormal
           )}>
-          <span className={clsx(styles.question, isExpanded && styles.questionExpanded)}>
-            {topic}
-          </span>
+          <h3 className={clsx(styles.question, isExpanded && styles.questionExpanded)}>{topic}</h3>
           <div>
             <ChevronDownIcon
               color={"var(--swm-navy-light-100"}
