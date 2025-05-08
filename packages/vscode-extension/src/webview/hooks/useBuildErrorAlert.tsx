@@ -133,7 +133,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          deviceSessionsManager.reload("autoReload");
+          deviceSessionsManager.reload("restartProcess");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />
