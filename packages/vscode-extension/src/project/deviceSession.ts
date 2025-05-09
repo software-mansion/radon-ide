@@ -373,7 +373,16 @@ export class DeviceSession implements Disposable {
 
   private async reloadMetro() {
     this.deviceSessionDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
-    await Promise.all([this.metro.reload(), this.devtools.appReady()]);
+    const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
+    const bundleErrorSubscription = this.metro.onBundleError(() => {
+      reject(new Error("Bundle error occurred during reload"));
+    });
+    try {
+      await this.metro.reload();
+      await Promise.race([this.devtools.appReady(), bundleErrorPromise]);
+    } finally {
+      bundleErrorSubscription.dispose();
+    }
     this.deviceSessionDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.reconnectJSDebuggerIfNeeded();
   }
