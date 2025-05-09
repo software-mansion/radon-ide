@@ -252,10 +252,11 @@ export function AppWrapper({ children, initialProps, fabric }) {
         rootTag,
         initialProps: {
           __RNIDE_onLayout: () => {
+            const originalClosePromiseResolve = closePromiseResolve;
             const layoutPromise = new Promise((resolve) => {
               closePromiseResolve = resolve;
             });
-            closePromiseResolve(layoutPromise);
+            originalClosePromiseResolve(() => layoutPromise);
           },
         },
         fabric,
@@ -312,19 +313,20 @@ export function AppWrapper({ children, initialProps, fabric }) {
       }
       const navigationDescriptor = navigationHistory.get(payload.id);
 
-      let layoutPromise = closePreview();
+      let layoutPromise = closePreview;
 
       let tryCount = 0;
 
       async function navigate() {
         tryCount++;
-        layoutPromise = await layoutPromise;
+        layoutPromise = await layoutPromise();
         try {
           navigationDescriptor && requestNavigationChange(navigationDescriptor);
         } catch (e) {
           if (tryCount >= MAX_NAVIGATION_RETRY_COUNT) {
             throw e;
           }
+          console.log("frytki")
           navigate();
         }
       }
