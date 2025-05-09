@@ -58,6 +58,18 @@ When profiling, remember that the app you profile is the development build of yo
 Development builds typically come with a significant overhead of extra work that is only done to provide better error reporting and traceability of errors.
 Hence the performance may significantly differ compared to the production builds running on an actual phone.
 
+## React Profiler
+
+The React Profiler integration allows you to start and stop React Devtools profiler, and also to preview and analyze collected profile without leaving the comfort of your editor.
+You can start the React Profiler from the tools menu, similarily to how you start the CPU profiler.
+Once you are finished with your profiling session, you can stop the profiler using the active profile indicator that shows up over the device view when the profiler is active, or you can use the "Stop React Profile button from the tools menu:
+
+<img width="550" src="/img/docs/ide_devtools_react_profiler_stop.png" className="shadow-image" />
+
+Once the profile is stopped, Radon saves the profile into a temporary location under `.reactprofile` extension, and presents a new editor that uses the React Devtools UI to render the profile analysis tool:
+
+<img width="700" src="/img/docs/ide_devtools_react_profiler_analysis.png" className="shadow-image" />
+
 ## Outline Renders (react-scan)
 
 Radon IDE integrates with [react-scan](https://react-scan.com) and enables a subset of its functionality.
