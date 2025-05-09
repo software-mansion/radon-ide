@@ -15,7 +15,7 @@
   gap: 10px;
   flex-wrap: wrap;
   font-family: var(--swm-title-landing-font);
-  font-size: 46px;
+  font-size: 45px;
   font-weight: 700;
 
   line-height: 1.1;
@@ -31,7 +31,7 @@
   left: 0;
   width: 50px;
   height: 100%;
-  background: linear-gradient(70deg, transparent, var(--swm-off-white), transparent);
+  background: linear-gradient(70deg, transparent, var(--swm-white), transparent);
 }
 
 .poweredBy {
@@ -100,7 +100,7 @@
 
   margin-top: 3rem;
   margin-bottom: 5.5rem;
-  width: 50%;
+  width: 60%;
   color: var(--swm-landing-heading);
   text-wrap: balance;
 }
