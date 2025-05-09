@@ -60,12 +60,13 @@
   cursor: text;
   width: auto;
   max-width: var(--url-select-max-width);
+  --vscode-settings-textInputBackground: transparent;
 }
 .url-select-input:hover {
   background-color: var(--swm-url-select-hover-background);
   --vscode-settings-textInputBackground: transparent;
 }
-.url-select-input:focus {
+.url-select-input:focus[data-state="closed"] {
   box-shadow: var(--swm-focus-outline);
 }
 .url-select-input[data-state="open"] {

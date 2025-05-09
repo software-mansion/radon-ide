@@ -1,6 +1,7 @@
 import React, { PropsWithChildren, useEffect, useRef } from "react";
 import * as Select from "@radix-ui/react-select";
 import { FocusScope } from "@radix-ui/react-focus-scope";
+import { DismissableLayer } from "@radix-ui/react-dismissable-layer";
 import { VscodeOption, VscodeSingleSelect, VscodeTextfield } from "@vscode-elements/react-elements";
 import "./UrlSelect.css";
 
@@ -29,9 +30,11 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   const [inputValue, setInputValue] = React.useState("");
   const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
   const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
-  const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0); // State to track width
-  const textfieldRef = useRef<HTMLInputElement>(null); // Ref for the VscodeTextfield
-  // const [openState, setOpenState] = React.useState(0);
+
+  const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
+  const textfieldRef = useRef<HTMLInputElement>(null);
+  
+  const [shouldFocusOnInput, setShouldFocusOnInput] = React.useState(true);
 
   // TODO CHANGE THIS BELOW
   // We use two lists for URL selection: one with recently used URLs and another
@@ -97,6 +100,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
         value={value}
         disabled={disabled}
         open={isDropdownOpen}
+        // Handle value changes from the dropdown - WORKS
         onValueChange={(value) => {
           handleValueChange(value);
           setInputValue(stripNameFromId(stripRecentPrefix(value)));
@@ -112,16 +116,19 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           placeholder="Enter path..."
           disabled={disabled}
           className="url-select-input"
-          data-openDropdown={isDropdownOpen}
           onChange={(e) => setInputValue((e.target as HTMLInputElement).value)}
           onKeyDown={(e) => {
+            // Confirm the entered path and close the dropdown - WORKS
             if (e.key === "Enter") {
               e.preventDefault();
               const fieldValue = (e.target as HTMLInputElement).value;
-              if (fieldValue) {
+              if (fieldValue && fieldValue !== "") {
                 handleValueChange(stripNameFromId(stripRecentPrefix(fieldValue)));
               }
+              setIsDropdownOpen(false);
+              (e.target as HTMLInputElement).blur();
             }
+            // Open the dropdown + close on arrow up in content - WIP
             if (e.key === "ArrowDown") {
               const fieldValue = (e.target as HTMLInputElement).value;
               if (fieldValue) {
@@ -130,7 +137,8 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               setIsDropdownOpen(true);
             }
           }}
-          
+          // Open the dropdown on click - WORKS
+          // Allow writing in the input field while the dropdown is open - WIP
           onMouseDown={(e) => {
             if (!isDropdownOpen) {
               const fieldValue = (e.target as HTMLInputElement).value;
@@ -139,12 +147,22 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               }
               setIsDropdownOpen(true);
             }
+            else {
+              
+            }
           }}
+
+          // onBlur={(e) => {
+          //   if (!isDropdownOpen) {
+          //     setShouldFocusOnInput(true);
+          //   }
+          // }}
         />
 
         <Select.Trigger
           className="url-select-trigger"
           tabIndex={-1}
+          // Move focus to the input if the trigger is somehow focused - WORKS
           onFocus={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -164,24 +182,39 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               className="url-select-content"
               position="popper"
               autoFocus={false}
-              onPointerDownOutside={() => setIsDropdownOpen(false)}
-              onEscapeKeyDown={() => setIsDropdownOpen(false)}
-              // // Prevents focusing on the trigger->input when user clicks elsewhere
-              // onCloseAutoFocus={(e) => e.preventDefault()}
-              onKeyDown={(e) => {
-                // if (e.key === "ArrowUp" and what?) {   // we want to focus the input as if it was the top item but not close the dropdown
-                // setIsDropdownOpen(false);  // temp
-                // }
+              // Close the dropdown on outside click - WORKS
+              // Don't close the dropdown on input click - WIP
+              onPointerDownOutside={(e) => {
+                setIsDropdownOpen(false);
+                setShouldFocusOnInput(true); 
+                
+                // Check if the click position is within the input - if so, focus on it without closing the dropdown, else close the dropdown and set shouldFocusOnInput
+                // The target happens to be <html>, so we need to get coords of the click - maybe global listener and state?
               }}
+              onEscapeKeyDown={() => setIsDropdownOpen(false)}
+
+              // Prevent focusing on the trigger->input when user clicks elsewhere - WORKS / to change later
+              onCloseAutoFocus={(e) => {
+                e.preventDefault();
+                setShouldFocusOnInput(true);
+              }}
+              // onKeyDown={(e) => {
+              //   if (e.key === "ArrowUp" and what?) {   // we want to focus the input as if it was the top item but not close the dropdown
+              //   setIsDropdownOpen(false);  // temp
+              //   }
+              // }}
               
-              // THIS WORKED!!! May be useful in the future
-              // onFocus={() => {
-                //   const input = document.querySelector<HTMLInputElement>(".url-select-input");
-                //   if (input) {
-                  //     input.focus();
-                  //   }
-                  // }}
-                  >
+              // Focus on the input instead of closing the dropdown - WORKS
+              onFocus={() => {
+                if (shouldFocusOnInput) {
+                  const input = document.querySelector<HTMLInputElement>(".url-select-input");
+                  if (input) {
+                    input.focus();
+                    setShouldFocusOnInput(false);
+                  }
+                }
+              }}
+            >
               <Select.ScrollUpButton className="url-select-scroll">
                 <span className="codicon codicon-chevron-up" />
               </Select.ScrollUpButton>
@@ -226,166 +259,6 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
         </Select.Portal>
       </Select.Root>
     </div>
-
-
-
-  //   // kinda broken, but opens correctly without focusing away from the input
-  //   <span className="url-select-group" onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}>
-  //   <VscodeTextfield
-  //     className="url-select-input"
-  //     disabled={disabled}
-  //     type="text"
-  //     placeholder="Enter path"
-  //     value={inputValue}
-  //     onInput={(e) => {
-  //       e.preventDefault();
-  //       const fieldValue = (e.target as HTMLInputElement).value;
-  //       setInputValue(fieldValue);
-  //     }}
-
-  //     onKeyDown={(e) => {
-  //       if (e.key === "Enter") {
-  //         e.preventDefault();
-  //         const fieldValue = (e.target as HTMLInputElement).value;
-  //         if (fieldValue) {
-  //           setInputValue(fieldValue);
-  //           handleValueChange(fieldValue);
-  //         }
-  //         (e.target as HTMLInputElement).parentElement?.blur();
-  //         (e.target as HTMLInputElement).blur();
-  //         setIsFocused(false);
-  //       }
-  //       if (e.key === "Escape") {
-  //         (e.target as HTMLInputElement).blur();
-  //         (e.target as HTMLInputElement).parentElement?.blur();
-  //         setIsFocused(false);
-  //       }
-  //       if (e.key === "ArrowDown") {
-  //         e.preventDefault();
-  //         setIsFocused(true);
-  //         const select = document.querySelector<HTMLSelectElement>(".url-select-dropdown");
-  //         if (select) {
-  //           select.focus();
-  //         }
-  //       }
-  //       // else {
-  //       //   const fieldValue = (e.target as HTMLInputElement).value;
-  //       //   setInputValue(fieldValue);
-  //       // }
-  //     }}
-  //   />
-
-  //   {/* TODO: fix weird border radius overflow, add padding and prevent wrap in vscodeoptions */}
-  //   <div className="url-select-wrapper">
-  //     <VscodeSingleSelect
-  //       className="url-select-dropdown"
-  //       disabled={disabled}
-  //       value={inputValue}
-  //       autoFocus={false}
-  //       inputMode="text"
-  //       open={isFocused && filteredItems.length > 0}
-  //       onChange={(e) => {
-  //         e.preventDefault();
-  //         const selectValue = (e.target as HTMLInputElement).value;
-  //         if (selectValue) {
-  //           setInputValue(stripNameFromId(stripRecentPrefix(selectValue)));
-  //           handleValueChange(selectValue);
-  //         }
-  //       }}
-  //       onMouseDown={(e) => e.currentTarget.focus()}
-  //     >
-  //       {/* sometimes unreliable */}
-  //       {filteredItems.map((item, index) =>
-  //         item.name && (
-  //           <VscodeOption
-  //             value={`recent#${item.id}`}
-  //             key={item.id}
-  //             className="url-select-option"
-  //             // onKeyDown={(e) => {
-  //             //   if (
-  //             //     e.key === "ArrowUp" &&
-  //             //     index === 0 // Check if it's the first element
-  //             //   ) {
-  //             //     e.preventDefault();
-  //             //     const input = document.querySelector<HTMLInputElement>(".url-select-input");
-  //             //     if (input) {
-  //             //       input.focus(); // Focus back on the input field
-  //             //     }
-  //             //   }
-  //             // }}
-  //           >
-  //             {item.name}
-  //           </VscodeOption>
-  //         )
-  //       )}
-  //     </VscodeSingleSelect>
-  //   </div>
-  // </span>
-
-
-
-    // input w/o dropdown
-    // <VscodeTextfield
-    //   value={stripNameFromId(value)}
-    //   onSubmit={(e) => {
-    //     // @ts-ignore it works, types seem to be incorrect here
-    //     onValueChange(e.target.value);
-    //     setIsFocused(false);
-    //   }}
-    //   onFocus={() => {
-    //     setIsFocused(true);
-    //   }}
-    //   placeholder="Enter URL"
-    //   aria-label={value}
-    //   className="url-select-trigger"
-    //   onKeyDown={(e) => {
-    //     if (e.key === "Enter") {
-    //       e.preventDefault();
-    //       const inputValue = (e.target as HTMLInputElement).value;
-    //       if (inputValue) {
-    //         handleValueChange(inputValue);
-    //       }
-    //     }
-    //   }}
-    // />
-
-
-
-    // // select with search
-    // <VscodeSingleSelect 
-    //   combobox
-    //   value={inputValue}
-    //   inputMode="text"
-    //   onInput={(e) => {
-    //   e.preventDefault();
-    //     const newValue = (e.target as HTMLInputElement).value;
-    //     setInputValue(newValue); // Update the state with the input value
-    //   }}
-    //   onChange={(e) => {
-    //     e.preventDefault();
-    //     const newValue = (e.target as HTMLInputElement).value;
-    //     setInputValue(newValue); // Update the state with the input value
-    //     handleValueChange(newValue); // Handle the value change
-    //   }}
-    //   onKeyDown={(e) => {
-    //   if (e.key === "Enter") {
-    //     e.preventDefault();
-    //     if (inputValue) {
-    //     handleValueChange(inputValue); // Use the state value when Enter is pressed
-    //     }
-    //   }
-    //   }}
-    // >
-    //   {recentItems.map(
-    //   (item) =>
-    //     item.name && (
-    //     <VscodeOption value={`recent#${item.id}`} key={item.id}>
-    //       {item.name}
-    //     </VscodeOption>
-    //     )
-    //   )}
-    //   <VscodeOption value="/testoage{}">{"test bad path"}</VscodeOption>
-    // </VscodeSingleSelect>
   );
 }
 
