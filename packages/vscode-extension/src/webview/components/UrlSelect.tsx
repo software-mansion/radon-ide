@@ -157,72 +157,72 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
 
         <Select.Portal>
 
-        {/* Doesn't do anything it seems like */}
-        <FocusScope trapped={false}>
+          {/* Doesn't do anything it seems like */}
+          <FocusScope trapped={false}>
 
-          <Select.Content
-            className="url-select-content"
-            position="popper"
-            autoFocus={false}
-            onPointerDownOutside={() => setIsDropdownOpen(false)}
-            onEscapeKeyDown={() => setIsDropdownOpen(false)}
-            // // Prevents focusing on the trigger->input when user clicks elsewhere
-            // onCloseAutoFocus={(e) => e.preventDefault()}
-            onKeyDown={(e) => {
-              // if (e.key === "ArrowUp" and what?) {   // we want to focus the input as if it was the top item but not close the dropdown
-              // setIsDropdownOpen(false);  // temp
-              // }
-            }}
-            
-            // THIS WORKED!!! May be useful in the future
-            // onFocus={() => {
-              //   const input = document.querySelector<HTMLInputElement>(".url-select-input");
-              //   if (input) {
-                //     input.focus();
-                //   }
-                // }}
-                >
-            <Select.ScrollUpButton className="url-select-scroll">
-              <span className="codicon codicon-chevron-up" />
-            </Select.ScrollUpButton>
-            <Select.Viewport className="url-select-viewport">
-              {(filteredItems && filteredItems.length > 0) || (filteredOutItems && filteredOutItems.length > 0) ? <Select.Separator className="url-select-separator no-top-margin"/> : null}
+            <Select.Content
+              className="url-select-content"
+              position="popper"
+              autoFocus={false}
+              onPointerDownOutside={() => setIsDropdownOpen(false)}
+              onEscapeKeyDown={() => setIsDropdownOpen(false)}
+              // // Prevents focusing on the trigger->input when user clicks elsewhere
+              // onCloseAutoFocus={(e) => e.preventDefault()}
+              onKeyDown={(e) => {
+                // if (e.key === "ArrowUp" and what?) {   // we want to focus the input as if it was the top item but not close the dropdown
+                // setIsDropdownOpen(false);  // temp
+                // }
+              }}
+              
+              // THIS WORKED!!! May be useful in the future
+              // onFocus={() => {
+                //   const input = document.querySelector<HTMLInputElement>(".url-select-input");
+                //   if (input) {
+                  //     input.focus();
+                  //   }
+                  // }}
+                  >
+              <Select.ScrollUpButton className="url-select-scroll">
+                <span className="codicon codicon-chevron-up" />
+              </Select.ScrollUpButton>
+              <Select.Viewport className="url-select-viewport">
+                {(filteredItems && filteredItems.length > 0) || (filteredOutItems && filteredOutItems.length > 0) ? <Select.Separator className="url-select-separator no-top-margin"/> : null}
 
-              <Select.Group>
-                {filteredItems && filteredItems.length > 0 ? <Select.Label className="url-select-label">Suggested paths:</Select.Label> : null}
-                {filteredItems
-                  .map(
-                    (item) =>
+                {filteredItems && filteredItems.length > 0 ?
+                  <Select.Group className="url-select-group">
+                    <Select.Label className="url-select-label">Suggested paths:</Select.Label>
+                    {filteredItems.map((item) =>
                       item.name && (
                         <SelectItem value={`recent#${item.id}`} key={item.id} style={{ width: textfieldWidth }}>
                           {item.name}
                         </SelectItem>
                       )
                     )}
-              </Select.Group>
-              
-              {filteredItems && filteredItems.length > 0 && filteredOutItems && filteredOutItems.length > 0 ? 
-                <Select.Separator className="url-select-separator" />
+                  </Select.Group>
                 : null}
+                
+                {filteredItems && filteredItems.length > 0 && filteredOutItems && filteredOutItems.length > 0 ? 
+                  <Select.Separator className="url-select-separator" />
+                  : null}
 
-              <Select.Group>
-                {filteredOutItems && filteredOutItems.length > 0 ? <Select.Label className="url-select-label">Other paths:</Select.Label> : null}
-                {filteredOutItems
-                  .map(
-                    (item) =>
+                {filteredOutItems && filteredOutItems.length > 0 ?
+                  <Select.Group className="url-select-group">
+                    <Select.Label className="url-select-label">Other paths:</Select.Label>
+                    {filteredOutItems.map((item) =>
                       item.name && (
                         <SelectItem value={item.id} key={item.id} style={{ width: textfieldWidth }}>
                           {item.name}
                         </SelectItem>
                       )
                     )}
-              </Select.Group>
-            </Select.Viewport>
-            <Select.ScrollDownButton className="url-select-scroll">
-              <span className="codicon codicon-chevron-down" />
-            </Select.ScrollDownButton>
-          </Select.Content>
-        </FocusScope>
+                  </Select.Group>
+                : null}
+              </Select.Viewport>
+              <Select.ScrollDownButton className="url-select-scroll">
+                <span className="codicon codicon-chevron-down" />
+              </Select.ScrollDownButton>
+            </Select.Content>
+          </FocusScope>
         </Select.Portal>
       </Select.Root>
     </div>
