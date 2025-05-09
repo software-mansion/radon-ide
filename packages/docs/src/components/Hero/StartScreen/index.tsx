@@ -77,10 +77,10 @@ const StartScreen = () => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}>
-            An <span>IDE</span> for&nbsp;React Native
+            The Best <span>IDE</span> for&nbsp;React Native
             <motion.div
               initial={{ x: 0, opacity: 0 }}
-              animate={{ opacity: [0, 1, 1, 1, 0], x: 500 }}
+              animate={{ opacity: [0, 1, 1, 1, 0], x: 600 }}
               transition={{ delay: 0.8, duration: 0.8 }}
               className={styles.headingSwoosh}
             />
