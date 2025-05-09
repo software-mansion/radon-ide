@@ -23,7 +23,7 @@ import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildCache } from "../builders/BuildCache";
-import { CancelToken } from "../builders/cancelToken";
+import { CancelError, CancelToken } from "../builders/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { ToolsDelegate, ToolsManager } from "./tools";
 import { extensionContext } from "../utilities/extensionContext";
@@ -334,6 +334,11 @@ export class DeviceSession implements Disposable {
         this.deviceSessionDelegate.onReloadCompleted(this.device.deviceInfo.id);
       }
     } catch (e) {
+      if (e instanceof CancelError) {
+        // when restart process is cancelled, we don't want to fallback into
+        // restarting the session again
+        return;
+      }
       // finally in case of any errors, the last resort is performing project
       // restart and device selection (we still avoid forcing clean builds, and
       // only do clean build when explicitly requested).
