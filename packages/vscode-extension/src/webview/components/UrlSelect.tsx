@@ -1,9 +1,8 @@
-import React, { PropsWithChildren, useEffect } from "react";
+import React, { PropsWithChildren, useEffect, useRef } from "react";
 import * as Select from "@radix-ui/react-select";
 import { FocusScope } from "@radix-ui/react-focus-scope";
 import { VscodeOption, VscodeSingleSelect, VscodeTextfield } from "@vscode-elements/react-elements";
 import "./UrlSelect.css";
-import { set } from "lodash";
 
 export type UrlItem = { id: string; name: string };
 
@@ -30,6 +29,9 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   const [inputValue, setInputValue] = React.useState("");
   const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
   const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
+  const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0); // State to track width
+  const textfieldRef = useRef<HTMLInputElement>(null); // Ref for the VscodeTextfield
+  // const [openState, setOpenState] = React.useState(0);
 
   // TODO CHANGE THIS BELOW
   // We use two lists for URL selection: one with recently used URLs and another
@@ -70,6 +72,24 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     setFilteredOutItems(filteredOut);
   }, [items, filteredItems]);
 
+  useEffect(() => {
+    if (textfieldRef.current) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          if (entry.contentRect) {
+            setTextfieldWidth(entry.contentRect.width);
+          }
+        }
+      });
+
+      resizeObserver.observe(textfieldRef.current);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, []);
+
 
   return (
     <div className="url-select-wrapper">
@@ -84,6 +104,8 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
         }}
       >
         <VscodeTextfield
+          // @ts-ignore, no type for VscodeTextfield
+          ref={textfieldRef}  
           type="text"
           data-state={isDropdownOpen ? "open" : "closed"}
           value={inputValue ?? "/"}
@@ -120,14 +142,18 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           }}
         />
 
-        <Select.Trigger className="url-select-trigger" onFocus={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const input = document.querySelector<HTMLSelectElement>(".url-select-input");
-          if (input) {
-            input.focus();
-          }
-        }}/>
+        <Select.Trigger
+          className="url-select-trigger"
+          tabIndex={-1}
+          onFocus={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const input = document.querySelector<HTMLSelectElement>(".url-select-input");
+            if (input) {
+              input.focus();
+            }
+          }}
+        />
 
         <Select.Portal>
 
@@ -140,6 +166,8 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             autoFocus={false}
             onPointerDownOutside={() => setIsDropdownOpen(false)}
             onEscapeKeyDown={() => setIsDropdownOpen(false)}
+            // // Prevents focusing on the trigger->input when user clicks elsewhere
+            // onCloseAutoFocus={(e) => e.preventDefault()}
             onKeyDown={(e) => {
               // if (e.key === "ArrowUp" and what?) {   // we want to focus the input as if it was the top item but not close the dropdown
               // setIsDropdownOpen(false);  // temp
@@ -158,7 +186,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               <span className="codicon codicon-chevron-up" />
             </Select.ScrollUpButton>
             <Select.Viewport className="url-select-viewport">
-              {(filteredItems && filteredItems.length > 0) || (filteredOutItems && filteredOutItems.length > 0) ? <Select.Separator className="url-select-separator"/> : null}
+              {(filteredItems && filteredItems.length > 0) || (filteredOutItems && filteredOutItems.length > 0) ? <Select.Separator className="url-select-separator no-top-margin"/> : null}
 
               <Select.Group>
                 {filteredItems && filteredItems.length > 0 ? <Select.Label className="url-select-label">Suggested paths:</Select.Label> : null}
@@ -166,7 +194,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                   .map(
                     (item) =>
                       item.name && (
-                        <SelectItem value={`recent#${item.id}`} key={item.id}>
+                        <SelectItem value={`recent#${item.id}`} key={item.id} style={{ width: textfieldWidth }}>
                           {item.name}
                         </SelectItem>
                       )
@@ -183,7 +211,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                   .map(
                     (item) =>
                       item.name && (
-                        <SelectItem value={item.id} key={item.id}>
+                        <SelectItem value={item.id} key={item.id} style={{ width: textfieldWidth }}>
                           {item.name}
                         </SelectItem>
                       )
