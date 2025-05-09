@@ -15,6 +15,8 @@ const { storybookPreview } = require("./storybook_helper");
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
 
+const MAX_NAVIGATION_RETRY_COUNT = 5;
+
 const navigationPlugins = [];
 export function registerNavigationPlugin(name, plugin) {
   navigationPlugins.push({ name, plugin });
@@ -244,17 +246,24 @@ export function AppWrapper({ children, initialProps, fabric }) {
     const closePreviewPromise = new Promise((resolve) => {
       closePromiseResolve = resolve;
     });
+
     if (getCurrentScene() === InternalImports.PREVIEW_APP_KEY) {
       AppRegistry.runApplication("main", {
         rootTag,
         initialProps: {
-          __RNIDE_onLayout: closePromiseResolve,
+          __RNIDE_onLayout: () => {
+            const layoutPromise = new Promise((resolve) => {
+              closePromiseResolve = resolve;
+            });
+            closePromiseResolve(layoutPromise);
+          },
         },
         fabric,
       });
     } else {
       closePromiseResolve();
     }
+
     return closePreviewPromise;
   }, [rootTag, fabric]);
 
@@ -295,16 +304,31 @@ export function AppWrapper({ children, initialProps, fabric }) {
   useAgentListener(
     devtoolsAgent,
     "RNIDE_openNavigation",
-    (payload) => {
+    async (payload) => {
       const isPreviewUrl = payload.id.startsWith("preview://") || payload.id.startsWith("sb://");
       if (isPreviewUrl) {
         openPreview(payload.id);
         return;
       }
       const navigationDescriptor = navigationHistory.get(payload.id);
-      closePreview().then(() => {
-        navigationDescriptor && requestNavigationChange(navigationDescriptor);
-      });
+
+      let layoutPromise = closePreview();
+
+      let tryCount = 0;
+
+      async function navigate() {
+        tryCount++;
+        layoutPromise = await layoutPromise;
+        try {
+          navigationDescriptor && requestNavigationChange(navigationDescriptor);
+        } catch (e) {
+          if (tryCount >= MAX_NAVIGATION_RETRY_COUNT) {
+            throw e;
+          }
+          navigate();
+        }
+      }
+      navigate();
     },
     [openPreview, closePreview, requestNavigationChange]
   );
