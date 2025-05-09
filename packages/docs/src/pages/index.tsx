@@ -18,7 +18,7 @@ export default function Home(): JSX.Element {
   usePaddle();
 
   return (
-    <Layout description="A better developer experience for React Native developers.">
+    <Layout description="Radon IDE is a VSCode extension that turns your editor into an advanced React Native IDE with a robust debugger, network inspector, and more.">
       <LandingBackground />
       <div className={styles.preventfulContainer}>
         <div className={styles.container}>

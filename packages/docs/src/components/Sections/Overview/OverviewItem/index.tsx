@@ -10,9 +10,10 @@ interface Props {
   body: string;
   mediaSrc?: string;
   placeholderSrc?: string;
+  placeholderAlt?: string;
 }
 
-const OverviewItem = ({ label, title, body, mediaSrc, placeholderSrc }: Props) => {
+const OverviewItem = ({ label, title, body, mediaSrc, placeholderSrc, placeholderAlt }: Props) => {
   const handleButtonClick = () => {
     track("Overview CTA", { section: label });
   };
@@ -21,7 +22,7 @@ const OverviewItem = ({ label, title, body, mediaSrc, placeholderSrc }: Props) =
       <section className={styles.description}>
         <p className={styles.itemLabel}>{label}</p>
         <h3 className={styles.itemTitle}>{title}</h3>
-        <p className={styles.itemBody}>{body}</p>
+        <p className={styles.itemBody} dangerouslySetInnerHTML={{ __html: body }} />
         <LinkButton
           title="Get started for free"
           href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
@@ -36,7 +37,7 @@ const OverviewItem = ({ label, title, body, mediaSrc, placeholderSrc }: Props) =
                 <source src={mediaSrc} type="video/mp4" />
               </video>
             ) : (
-              <img src={placeholderSrc} alt={title} fetchPriority="high" />
+              <img src={placeholderSrc} alt={placeholderAlt ?? title} fetchPriority="high" />
             )}
           </div>
         )}

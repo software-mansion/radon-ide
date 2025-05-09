@@ -7,37 +7,42 @@ const items = [
   {
     label: "An IDE",
     title: "Integrated experience",
-    body: "See the preview of your application right where you need it the most – close to your codebase. \n\nRadon IDE runs IOS Simulator and Android emulator directly in your Visual Studio Code and Cursor project.",
+    body: "See the preview of your application right where you need it the most – close to your codebase. \n\n<strong>Radon IDE</strong> runs IOS Simulator and Android emulator directly in your Visual Studio Code and Cursor project.",
     mediaSrc: "video/1_sztudio_integrated.mp4",
     placeholderSrc: "video/placeholders/1_sztudio_integrated_placeholder.webp",
+    placeholderAlt: "Experience our React Native IDE",
   },
   {
     label: "Element Inspector",
     title: "Click to inspect",
-    body: "Using the built-in inspector you can jump directly from preview to a file where your component is defined. It can't really get simpler than that.",
+    body: "Jump directly from preview to a file where your React Native component is defined. It can't really get simpler than that.",
     mediaSrc: "video/2_sztudio_inspect.mp4",
     placeholderSrc: "video/placeholders/2_sztudio_inspect_placeholder.webp",
+    placeholderAlt: "React Native element inspector",
   },
   {
     label: "Debugger",
     title: "Use breakpoints right in VSCode",
-    body: "Without any additional setup the extension allows to add a breakpoints in Visual Studio Code to debug your React Native application. It. Just. Works.\n\nIDE also automatically stops at runtime exceptions showing you the exact line of code where they happened.",
+    body: "Add <strong>React Native breakpoints</strong> in Visual Studio Code to debug your React Native applications. No extra setup needed. It. Just. Works.\n\nWhat's more, Radon IDE automatically stops at runtime exceptions and shows you the exact line of code where they happened.",
     mediaSrc: "video/3_sztudio_debugger.mp4",
     placeholderSrc: "video/placeholders/3_sztudio_debugger_placeholder.webp",
+    placeholderAlt: "Use React Native breakpoints in VSCode",
   },
   {
     label: "Router integration",
     title: "Navigation made easier",
-    body: "The Radon IDE integrates tightly with your deep-linked application allowing you to jump around the navigation structure (supports both React Navigation and Expo Router projects).",
+    body: "Our <strong>VSCode extension</strong> integrates tightly with your deep-linked application, allowing you to effortlessly jump around the navigation structure. It supports both React Navigation and Expo Router projects.",
     mediaSrc: "video/4_sztudio_url_bar.mp4",
     placeholderSrc: "video/placeholders/4_sztudio_url_bar_placeholder.webp",
+    placeholderAlt: "Radon IDE router integration",
   },
   {
     label: "Logs",
     title: "Search through the logs easily",
-    body: "Radon IDE uses the built-in VSCode console allowing you to filter through the logs.\n\nThe links displayed in the console are automatically linking back to your source code.",
+    body: "Radon IDE uses the built-in VSCode console allowing you to filter through the logs.\n\nThe links displayed in the console automatically link back to your source code.",
     mediaSrc: "video/5_sztudio_logs_panel.mp4",
     placeholderSrc: "video/placeholders/5_sztudio_logs_panel_placeholder.webp",
+    placeholderAlt: "Search through React Native logs",
   },
   {
     label: "Previews",
@@ -45,20 +50,23 @@ const items = [
     body: "Radon IDE comes with a package allowing to preview components in full isolation.\n\nDevelop your components individually without distractions.",
     mediaSrc: "video/6_sztudio_preview.mp4",
     placeholderSrc: "video/placeholders/6_sztudio_preview_placeholder.webp",
+    placeholderAlt: "React Native IDE component previews",
   },
   {
     label: "Device settings",
     title: "Adjust device settings on the fly",
-    body: "You can adjust text size and light/dark mode right from the Radon IDE.\n\nFocus just on your app without switching between windows.",
+    body: "Adjust text size, light/dark mode and more with just a few clicks.\n\nWith our IDE for React Native, you can focus fully on your app without switching between windows.",
     mediaSrc: "video/7_sztudio_device_settings.mp4",
     placeholderSrc: "video/placeholders/7_sztudio_device_settings_placeholder.webp",
+    placeholderAlt: "Adjust React Native emulator settings",
   },
   {
     label: "Screen recording",
     title: "Instant replays",
-    body: "Missed a bug? At any time you can re-watch what just happened on the device.\n\nNo need to manually start the recording ever again.",
+    body: "Missed a bug? You can rewatch what happened on the device anytime.\n\nNo need to manually start the recording ever again.",
     mediaSrc: "video/ide_screen_recording.mp4",
     placeholderSrc: "video/placeholders/ide_screen_recording_placeholder.webp",
+    placeholderAlt: "React Native debugging tools – instant replays",
   },
   {
     label: "React Scan integration",
@@ -66,13 +74,15 @@ const items = [
     body: "Radon IDE can highlight components that re-render too frequently.\n\nSee for yourself what parts of your application need optimization.",
     mediaSrc: "video/8_sztudio_outline_renders.mp4",
     placeholderSrc: "video/placeholders/8_sztudio_outline_renders_placeholder.webp",
+    placeholderAlt: "Radon IDE outline renders",
   },
   {
     label: "Network Inspector",
     title: "Inspect network requests",
-    body: "Use the built-in Network panel to inspect your application network activity.\n\nConveniently right in your editor.",
+    body: "Use the built-in network panel to inspect your application network activity right in the editor.",
     mediaSrc: "video/9_sztudio_network_inspector.mp4",
     placeholderSrc: "video/placeholders/9_sztudio_network_inspector_placeholder.webp",
+    placeholderAlt: "React Native inspect network activity",
   },
 ];
 
@@ -94,6 +104,7 @@ const Overview = () => {
                 body={item.body}
                 mediaSrc={item.mediaSrc}
                 placeholderSrc={item.placeholderSrc}
+                placeholderAlt={item.placeholderAlt}
               />
             </div>
           ))}
