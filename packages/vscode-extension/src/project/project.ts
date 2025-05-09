@@ -507,7 +507,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
     if (needsRestart) {
-      this.deviceSessionsManager.reload("restartProcess");
+      await this.deviceSessionsManager.reload("restartProcess");
     }
   }
 

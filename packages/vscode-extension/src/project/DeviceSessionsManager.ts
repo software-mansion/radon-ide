@@ -78,6 +78,15 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     } catch (e) {
       if (e instanceof CancelError) {
         return false;
+      } else if (e instanceof BuildError) {
+        this.updateProjectState({
+          status: "buildError",
+          buildError: {
+            message: e.message,
+            buildType: e.buildType,
+            platform: this.selectedDeviceSession.platform,
+          },
+        });
       }
       Logger.error("Failed to reload device", e);
       throw e;
