@@ -6,7 +6,7 @@ sidebar_position: 7
 
 Radon IDE comes with support for launching Dev Tools as separate panels withing VSCode or Cursor.
 
-The built-in tools for Network Inspector, Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and doesn't require any additional configuration.
+The built-in tools for [Network Inspector](/docs/features/network-inspector), Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and doesn't require any additional configuration.
 
 When the IDE detects that a specific tool is available and configured properly (see below for details on configuring individual tools), it will be listed in the tools menu where you can turn it on and off:
 <img width="350" src="/img/docs/ide_devtools_menu.png" className="shadow-image" />
@@ -21,14 +21,6 @@ You can quickly navigate to the panel from the tools menu by using the "link" ic
 Tool on/off setting is persisted locally for the scope of your project (VSCode or Cursor workspace).
 Therefore when you open the project next time in the IDE, the tool panel will launch automatically.
 It will also be kept open when you switch between different devices across that project.
-
-## Network Inspector
-
-This panel doesn't require any additional configuration and should be available as soon as your app is launched.
-Network panel will capture and list all requests triggered by the JavaScript code (with HXR / fetch or wrappers like Axios/Apollo etc).
-Images or websocket connections aren't currently supported and won't show up.
-
-<img width="700" src="/img/docs/ide_devtools_network_inspector.png" className="shadow-image" />
 
 ## Redux
 
