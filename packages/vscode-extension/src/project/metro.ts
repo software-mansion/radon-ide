@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import WebSocket from "ws";
-import { Disposable, ExtensionMode, Uri, workspace } from "vscode";
+import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
 import stripAnsi from "strip-ansi";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
@@ -83,6 +83,12 @@ export class Metro {
   protected _watchFolders: string[] | undefined = undefined;
   protected usesNewDebugger?: boolean;
   protected _expoPreludeLineCount = 0;
+  protected readonly bundleErrorEventEmitter = new EventEmitter<{
+    message: string;
+    source: DebugSource;
+    errorModulePath: string;
+  }>();
+  public readonly onBundleError = this.bundleErrorEventEmitter.event;
 
   constructor(port: number, watchFolders: string[] | undefined = undefined) {
     this._port = port;
@@ -509,15 +515,14 @@ export class MetroLauncher extends Metro implements Disposable {
               if (!filename && event.error.filename) {
                 filename = path.join(appRoot, event.error.filename);
               }
-              this.delegate.onBundlingError(
-                message,
-                {
-                  filename,
-                  line1based: event.error.lineNumber,
-                  column0based: event.error.columnNumber,
-                },
-                event.error.originModulePath
-              );
+              const source = {
+                filename,
+                line1based: event.error.lineNumber,
+                column0based: event.error.columnNumber,
+              };
+              const errorModulePath = event.error.originModulePath;
+              this.delegate.onBundlingError(message, source, errorModulePath);
+              this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
               break;
           }
         };
