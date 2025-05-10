@@ -1,6 +1,6 @@
 import React, { PropsWithChildren, useEffect, useRef } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { VscodeOption, VscodeSingleSelect, VscodeTextfield } from "@vscode-elements/react-elements";
+import { VscodeTextfield } from "@vscode-elements/react-elements";
 import "./UrlSelect.css";
 
 export type UrlItem = { id: string; name: string };
@@ -32,22 +32,24 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
   const textfieldRef = useRef<HTMLInputElement>(null);
 
-  // TODO CHANGE THIS BELOW
-  // We use two lists for URL selection: one with recently used URLs and another
-  // with all available URLs. Since recentItems is a subset of items, each recentItems's
-  // value is prefixed to differentiate their origins when presented in the Select
-  // component. This prefix is stripped off when the selected value is passed back
-  // through onValueChange.
+  // Currently, recentItems are not used, but they can be mapped to show the most recent
+  // URLs in the dropdown. This can be implemented in the future if needed.
+
+  // Now, we use two lists for URL selection: one with suggested URLs based on inputted path
+  // and another with all other available URLs. Since filteredItems and filteredOutItems
+  // are both subsets of items, each filteredItems' value is prefixed to differentiate its
+  // origins when presented in the dropdown. This prefix is stripped off when the value
+  // is passed back through onValueChange.
 
   const handleValueChange = (newSelection: string) => {
-    onValueChange(stripRecentPrefix(newSelection));
+    onValueChange(stripFilterPrefix(newSelection));
   };
 
-  const stripRecentPrefix = (id: string) => {
-    return id.replace(/^recent#/, "");
+  const stripFilterPrefix = (id: string) => {
+    return id.replace(/^filtered#/, "");
   };
 
-  const stripNameFromId = (id: string) => {
+  const getNameFromId = (id: string) => {
     const item = items.find((item) => item.id === id);
     if (item) {
       return item.name;
@@ -55,21 +57,27 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     return id;
   };
 
+
   useEffect(() => {
-    setInputValue(stripNameFromId(value));
+    setInputValue(getNameFromId(value));
   }, [value]);
 
   useEffect(() => {
     if (!disabled) {
-      const filtered = items.filter((item) => item.name.toLowerCase().includes(inputValue.toLowerCase()));
+      const filtered = items.filter((item) => (
+        item.name.toLowerCase().includes(inputValue.toLowerCase())
+      ));
       setFilteredItems(filtered);
     }
   }, [inputValue, items]);
 
   useEffect(() => {
-    const filteredOut = items.filter((item) => !filteredItems.some((filteredItem) => filteredItem.id === item.id));
+    const filteredOut = items.filter((item) => (
+      !filteredItems.some((filteredItem) => filteredItem.id === item.id)
+    ));
     setFilteredOutItems(filteredOut);
   }, [items, filteredItems]);
+
 
   useEffect(() => {
     if (textfieldRef.current) {
@@ -80,15 +88,10 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           }
         }
       });
-
       resizeObserver.observe(textfieldRef.current);
-      
-      return () => {
-        resizeObserver.disconnect();
-      };
+      return () => resizeObserver.disconnect();
     }
   }, []);
-
 
   return (
     <div className="url-select-wrapper">
@@ -109,7 +112,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                 e.preventDefault();
                 const fieldValue = (e.target as HTMLInputElement).value;
                 if (fieldValue && fieldValue !== "") {
-                  handleValueChange(stripNameFromId(stripRecentPrefix(fieldValue)));
+                  handleValueChange(getNameFromId(stripFilterPrefix(fieldValue)));
                 }
                 setIsDropdownOpen(false);
                 (e.target as HTMLInputElement).blur();
@@ -165,10 +168,10 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                   item.name && (
                     <PopoverItem
                       key={item.id}
-                      value={`recent#${item.id}`}
+                      value={`filtered#${item.id}`}
                       style={{ width: textfieldWidth }}
                       onClick={() => {
-                        handleValueChange(`recent#${item.id}`);
+                        handleValueChange(`filtered#${item.id}`);
                         setInputValue(item.name);
                         setIsDropdownOpen(false);
                       }}
