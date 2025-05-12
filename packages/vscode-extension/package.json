@@ -136,8 +136,8 @@
       },
       {
         "command": "RNIDE.performFailedBiometricAuthorization",
-        "key": "ctrl+shift+N",
-        "mac": "cmd+shift+N"
+        "key": "ctrl+alt+shift+M",
+        "mac": "cmd+alt+shift+M"
       },
       {
         "command": "RNIDE.deviceHomeButtonPress",
