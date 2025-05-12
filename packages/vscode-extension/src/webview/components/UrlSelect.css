@@ -7,7 +7,6 @@
 }
 
 .url-select-input {
-  /* z-index: 1; */
   display: inline-flex;
   align-items: center;
   height: var(--swm-button-size);
@@ -33,9 +32,6 @@
 }
 .url-select-input[data-state="open"] {
   border-radius: 18px 18px 0 0;
-  /* background-color: var(--swm-url-select-highlighted-background);
-  --vscode-settings-textInputBackground: transparent; */
-  /* box-shadow: var(--swm-focus-outline); */
 }
 .url-select-input:disabled {
   background-color: var(--swm-url-select-disabled-background);
@@ -46,7 +42,6 @@
 .url-select-content {
   z-index: 1;
   overflow-x: hidden;
-  /* TODO fix the scrollbar expanding */
   overflow-y: auto;
   scrollbar-width: thin;
   background-color: var(--swm-url-select-background);
@@ -114,10 +109,6 @@
 } */
 
 @media (width <= 325px) {
-  /* .url-select-input {
-    min-width: 0;
-  } */
-
   .url-select-wrapper {
     display: none;
     opacity: 0;

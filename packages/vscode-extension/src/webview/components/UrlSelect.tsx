@@ -5,25 +5,26 @@ import "./UrlSelect.css";
 
 export type UrlItem = { id: string; name: string };
 
-const PopoverItem = React.forwardRef<
-  HTMLDivElement,
-  PropsWithChildren<{
-    value: string;
-    style?: React.CSSProperties;
-    onClick?: () => void;
-    onKeyDown?: (e: React.KeyboardEvent) => void;
-  }>
->(({ children, onClick, onKeyDown, ...props }, forwardedRef) => (
-  <div
-    className="url-select-item"
-    {...props}
-    ref={forwardedRef}
-    onClick={onClick}
-    onKeyDown={onKeyDown}
-    tabIndex={0}>
-    <div className="url-select-item-text">{children}</div>
-  </div>
-));
+interface PopoverItemProps {
+  value: string;
+  style?: React.CSSProperties;
+  onClick?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+}
+
+const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverItemProps>>(
+  ({ children, onClick, onKeyDown, ...props }, forwardedRef) => (
+    <div
+      {...props}
+      className="url-select-item"
+      ref={forwardedRef}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+      tabIndex={0}>
+      <div className="url-select-item-text">{children}</div>
+    </div>
+  )
+);
 
 interface UrlSelectProps {
   value: string;
@@ -32,6 +33,8 @@ interface UrlSelectProps {
   items: UrlItem[];
   disabled?: boolean;
 }
+
+type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
 function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
@@ -51,6 +54,49 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   // origins when presented in the dropdown. This prefix is stripped off when the value
   // is passed back through onValueChange.
 
+  const closeDropdownWithValue = (id: string) => {
+    setInputValue(getNameFromId(id));
+    handleValueChange(id);
+    setIsDropdownOpen(false);
+  };
+
+  const navigateBetweenItems = (
+    e: React.KeyboardEvent,
+    prev?: UrlSelectFocusable,
+    next?: UrlSelectFocusable,
+    prevFallback?: UrlSelectFocusable,
+    nextFallback?: UrlSelectFocusable
+  ) => {
+    e.preventDefault();
+    let targetItem = null;
+    let targetItemFallback = null;
+    if (e.key === "ArrowDown") {
+      targetItem = next;
+      targetItemFallback = nextFallback;
+    } else if (e.key === "ArrowUp") {
+      targetItem = prev;
+      targetItemFallback = prevFallback;
+    }
+
+    if (
+      targetItem &&
+      (targetItem.classList.contains("url-select-item") ||
+        targetItem.classList.contains("url-select-input"))
+    ) {
+      targetItem.focus();
+    } else if (targetItemFallback) {
+      targetItemFallback.focus();
+    } else {
+      textfieldRef.current?.focus();
+    }
+  };
+
+  const isClickOutsideElement = (e: PointerEvent, elemRect: DOMRect) =>
+    e.clientX <= elemRect.left ||
+    e.clientX >= elemRect.right ||
+    e.clientY <= elemRect.top ||
+    e.clientY >= elemRect.bottom;
+
   const handleValueChange = (newSelection: string) => {
     onValueChange(stripFilterPrefix(newSelection));
   };
@@ -61,12 +107,13 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
 
   const getNameFromId = (id: string) => {
     const item = items.find((item) => item.id === id);
-    if (item && stripFilterPrefix(item.name).startsWith("/")) {
-      return item.name;
-    } else if (item) {
-      return item.id;
+    if (!item) {
+      return id;
     }
-    return id;
+    if (stripFilterPrefix(item.name).startsWith("/")) {
+      return item.name;
+    }
+    return item.id;
   };
 
   useEffect(() => {
@@ -75,8 +122,9 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
 
   useEffect(() => {
     if (!disabled) {
+      const inputValueLowerCase = inputValue.toLowerCase();
       const filtered = items.filter((item) =>
-        getNameFromId(item.id).toLowerCase().includes(inputValue.toLowerCase())
+        getNameFromId(item.id).toLowerCase().includes(inputValueLowerCase)
       );
       setFilteredItems(filtered);
     }
@@ -110,60 +158,46 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           <VscodeTextfield
             // @ts-ignore, no type for VscodeTextfield
             ref={textfieldRef}
-            type="text"
+            className="url-select-input"
             data-state={isDropdownOpen ? "open" : "closed"}
             value={inputValue ?? "/"}
             placeholder="Enter path..."
             disabled={disabled}
-            className="url-select-input"
-            onInput={(e) => setInputValue((e.target as HTMLInputElement).value)}
+            onInput={() => setInputValue(textfieldRef.current?.value ?? "")}
+            onMouseDown={() => setIsDropdownOpen(true)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                const fieldValue = (e.target as unknown as HTMLInputElement).value;
-                if (fieldValue && fieldValue !== "") {
-                  handleValueChange(getNameFromId(stripFilterPrefix(fieldValue)));
-                }
-                setIsDropdownOpen(false);
-                (e.target as HTMLInputElement).blur();
+                closeDropdownWithValue(textfieldRef.current?.value ?? "");
+                textfieldRef.current?.blur();
               }
               if (e.key === "ArrowDown") {
                 if (isDropdownOpen) {
-                  e.preventDefault();
-                  const firstItem = document.querySelector(".url-select-item");
-                  if (firstItem) {
-                    (firstItem as HTMLDivElement).focus();
-                  }
-                } else setIsDropdownOpen(true);
+                  navigateBetweenItems(
+                    e,
+                    undefined,
+                    document.querySelector(".url-select-item") as HTMLDivElement
+                  );
+                } else {
+                  setIsDropdownOpen(true);
+                }
               }
-            }}
-            onMouseDown={(e) => {
-              const fieldValue = (e.target as HTMLInputElement).value;
-              if (fieldValue) {
-                setInputValue(fieldValue);
-              }
-              setIsDropdownOpen(true);
             }}
           />
         </Popover.Trigger>
+
         <Popover.Content
           className="url-select-content"
           side="bottom"
           onEscapeKeyDown={() => setIsDropdownOpen(false)}
           onPointerDownOutside={(e) => {
-            const originalEvent = e.detail.originalEvent as PointerEvent;
             const input = textfieldRef.current;
-            if (input) {
-              const inputRect = input.getBoundingClientRect();
-              if (
-                originalEvent.clientX >= inputRect.left &&
-                originalEvent.clientX <= inputRect.right &&
-                originalEvent.clientY >= inputRect.top &&
-                originalEvent.clientY <= inputRect.bottom
-              )
-                return;
+            if (
+              !input ||
+              isClickOutsideElement(e.detail.originalEvent, input.getBoundingClientRect())
+            ) {
+              setIsDropdownOpen(false);
             }
-            setIsDropdownOpen(false);
           }}>
           <div className="url-select-viewport">
             {(filteredItems.length > 0 || filteredOutItems.length > 0) && (
@@ -180,40 +214,20 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                         key={item.id}
                         value={`filtered#${item.id}`}
                         style={{ width: textfieldWidth }}
-                        onClick={() => {
-                          handleValueChange(`filtered#${item.id}`);
-                          setInputValue(getNameFromId(item.id));
-                          setIsDropdownOpen(false);
-                        }}
+                        onClick={() => closeDropdownWithValue(item.id)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleValueChange(`filtered#${item.id}`);
-                            setInputValue(getNameFromId(item.id));
-                            setIsDropdownOpen(false);
-                          }
-                          if (e.key === "ArrowDown") {
-                            e.preventDefault();
-                            const nextItem = (e.target as HTMLDivElement).nextElementSibling;
-                            if (nextItem) {
-                              (nextItem as HTMLDivElement).focus();
-                            } else {
-                              const nextFirstItem = document.querySelector(
+                            closeDropdownWithValue(item.id);
+                          } else {
+                            navigateBetweenItems(
+                              e,
+                              (e.target as HTMLDivElement).previousElementSibling as HTMLDivElement,
+                              (e.target as HTMLDivElement).nextElementSibling as HTMLDivElement,
+                              textfieldRef.current as HTMLInputElement,
+                              document.querySelector(
                                 ".url-select-group-other .url-select-item"
-                              );
-                              if (nextFirstItem) {
-                                (nextFirstItem as HTMLDivElement).focus();
-                              }
-                            }
-                          }
-                          if (e.key === "ArrowUp") {
-                            e.preventDefault();
-                            const prevItem = (e.target as HTMLDivElement).previousElementSibling;
-                            if (prevItem && prevItem.classList.contains("url-select-item")) {
-                              (prevItem as HTMLDivElement).focus();
-                            } else {
-                              (textfieldRef.current as HTMLInputElement).focus();
-                            }
+                              ) as HTMLDivElement
+                            );
                           }
                         }}>
                         {getNameFromId(item.id)}
@@ -237,40 +251,19 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                         key={item.id}
                         value={item.id}
                         style={{ width: textfieldWidth }}
-                        onClick={() => {
-                          handleValueChange(item.id);
-                          setInputValue(getNameFromId(item.id));
-                          setIsDropdownOpen(false);
-                        }}
+                        onClick={() => closeDropdownWithValue(item.id)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleValueChange(item.id);
-                            setInputValue(getNameFromId(item.id));
-                            setIsDropdownOpen(false);
-                          }
-                          if (e.key === "ArrowDown") {
-                            e.preventDefault();
-                            const nextItem = (e.target as HTMLDivElement).nextElementSibling;
-                            if (nextItem) {
-                              (nextItem as HTMLDivElement).focus();
-                            }
-                          }
-                          if (e.key === "ArrowUp") {
-                            e.preventDefault();
-                            const prevItem = (e.target as HTMLDivElement).previousElementSibling;
-                            if (prevItem && prevItem.classList.contains("url-select-item")) {
-                              (prevItem as HTMLDivElement).focus();
-                            } else {
-                              const prevLastItem = document.querySelector(
+                            closeDropdownWithValue(item.id);
+                          } else {
+                            navigateBetweenItems(
+                              e,
+                              (e.target as HTMLDivElement).previousElementSibling as HTMLDivElement,
+                              (e.target as HTMLDivElement).nextElementSibling as HTMLDivElement,
+                              document.querySelector(
                                 ".url-select-group-suggested .url-select-item:last-child"
-                              );
-                              if (prevLastItem) {
-                                (prevLastItem as HTMLDivElement).focus();
-                              } else {
-                                (textfieldRef.current as HTMLInputElement).focus();
-                              }
-                            }
+                              ) as HTMLDivElement
+                            );
                           }
                         }}>
                         {getNameFromId(item.id)}
