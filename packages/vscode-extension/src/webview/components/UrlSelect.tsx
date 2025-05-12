@@ -5,13 +5,22 @@ import "./UrlSelect.css";
 
 export type UrlItem = { id: string; name: string };
 
-const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<{
-  value: string;
-  style?: React.CSSProperties;
-  onClick?: () => void;
-  onKeyDown?: (e: React.KeyboardEvent) => void;
-}>>(({ children, onClick, onKeyDown, ...props }, forwardedRef) => (
-  <div className="url-select-item" {...props} ref={forwardedRef} onClick={onClick} onKeyDown={onKeyDown} tabIndex={0}>
+const PopoverItem = React.forwardRef<
+  HTMLDivElement,
+  PropsWithChildren<{
+    value: string;
+    style?: React.CSSProperties;
+    onClick?: () => void;
+    onKeyDown?: (e: React.KeyboardEvent) => void;
+  }>
+>(({ children, onClick, onKeyDown, ...props }, forwardedRef) => (
+  <div
+    className="url-select-item"
+    {...props}
+    ref={forwardedRef}
+    onClick={onClick}
+    onKeyDown={onKeyDown}
+    tabIndex={0}>
     <div className="url-select-item-text">{children}</div>
   </div>
 ));
@@ -54,13 +63,11 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     const item = items.find((item) => item.id === id);
     if (item && stripFilterPrefix(item.name).startsWith("/")) {
       return item.name;
-    }
-    else if (item) {
+    } else if (item) {
       return item.id;
     }
     return id;
   };
-
 
   useEffect(() => {
     setInputValue(getNameFromId(value));
@@ -68,20 +75,19 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
 
   useEffect(() => {
     if (!disabled) {
-      const filtered = items.filter((item) => (
+      const filtered = items.filter((item) =>
         getNameFromId(item.id).toLowerCase().includes(inputValue.toLowerCase())
-      ));
+      );
       setFilteredItems(filtered);
     }
   }, [inputValue, items]);
 
   useEffect(() => {
-    const filteredOut = items.filter((item) => (
-      !filteredItems.some((filteredItem) => filteredItem.id === item.id)
-    ));
+    const filteredOut = items.filter(
+      (item) => !filteredItems.some((filteredItem) => filteredItem.id === item.id)
+    );
     setFilteredOutItems(filteredOut);
   }, [items, filteredItems]);
-
 
   useEffect(() => {
     if (textfieldRef.current) {
@@ -103,7 +109,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
         <Popover.Trigger asChild>
           <VscodeTextfield
             // @ts-ignore, no type for VscodeTextfield
-            ref={textfieldRef}  
+            ref={textfieldRef}
             type="text"
             data-state={isDropdownOpen ? "open" : "closed"}
             value={inputValue ?? "/"}
@@ -128,8 +134,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                   if (firstItem) {
                     (firstItem as HTMLDivElement).focus();
                   }
-                }
-                else setIsDropdownOpen(true);
+                } else setIsDropdownOpen(true);
               }
             }}
             onMouseDown={(e) => {
@@ -155,11 +160,11 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                 originalEvent.clientX <= inputRect.right &&
                 originalEvent.clientY >= inputRect.top &&
                 originalEvent.clientY <= inputRect.bottom
-              ) return;
+              )
+                return;
             }
             setIsDropdownOpen(false);
-          }}
-        >
+          }}>
           <div className="url-select-viewport">
             {(filteredItems.length > 0 || filteredOutItems.length > 0) && (
               <div className="url-select-separator no-top-margin" />
@@ -168,52 +173,52 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             {filteredItems.length > 0 && (
               <div className="url-select-group url-select-group-suggested">
                 <div className="url-select-label">Suggested paths:</div>
-                {filteredItems.map((item) =>
-                  item.name && (
-                    <PopoverItem
-                      key={item.id}
-                      value={`filtered#${item.id}`}
-                      style={{ width: textfieldWidth }}
-                      onClick={() => {
-                        handleValueChange(`filtered#${item.id}`);
-                        setInputValue(getNameFromId(item.id));
-                        setIsDropdownOpen(false);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
+                {filteredItems.map(
+                  (item) =>
+                    item.name && (
+                      <PopoverItem
+                        key={item.id}
+                        value={`filtered#${item.id}`}
+                        style={{ width: textfieldWidth }}
+                        onClick={() => {
                           handleValueChange(`filtered#${item.id}`);
                           setInputValue(getNameFromId(item.id));
                           setIsDropdownOpen(false);
-                        }
-                        if (e.key === "ArrowDown") {
-                          e.preventDefault();
-                          const nextItem = (e.target as HTMLDivElement).nextElementSibling;
-                          if (nextItem) {
-                            (nextItem as HTMLDivElement).focus();
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleValueChange(`filtered#${item.id}`);
+                            setInputValue(getNameFromId(item.id));
+                            setIsDropdownOpen(false);
                           }
-                          else {
-                            const nextFirstItem = document.querySelector(".url-select-group-other .url-select-item");
-                            if (nextFirstItem) {
-                              (nextFirstItem as HTMLDivElement).focus();
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            const nextItem = (e.target as HTMLDivElement).nextElementSibling;
+                            if (nextItem) {
+                              (nextItem as HTMLDivElement).focus();
+                            } else {
+                              const nextFirstItem = document.querySelector(
+                                ".url-select-group-other .url-select-item"
+                              );
+                              if (nextFirstItem) {
+                                (nextFirstItem as HTMLDivElement).focus();
+                              }
                             }
                           }
-                        }
-                        if (e.key === "ArrowUp") {
-                          e.preventDefault();
-                          const prevItem = (e.target as HTMLDivElement).previousElementSibling;
-                          if (prevItem && prevItem.classList.contains("url-select-item")) {
-                            (prevItem as HTMLDivElement).focus();
+                          if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            const prevItem = (e.target as HTMLDivElement).previousElementSibling;
+                            if (prevItem && prevItem.classList.contains("url-select-item")) {
+                              (prevItem as HTMLDivElement).focus();
+                            } else {
+                              (textfieldRef.current as HTMLInputElement).focus();
+                            }
                           }
-                          else {
-                            (textfieldRef.current as HTMLInputElement).focus();
-                          }
-                        }
-                      }}
-                    >
-                      {getNameFromId(item.id)}
-                    </PopoverItem>
-                  )
+                        }}>
+                        {getNameFromId(item.id)}
+                      </PopoverItem>
+                    )
                 )}
               </div>
             )}
@@ -225,52 +230,52 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             {filteredOutItems.length > 0 && (
               <div className="url-select-group url-select-group-other">
                 <div className="url-select-label">Other paths:</div>
-                {filteredOutItems.map((item) =>
-                  item.name && (
-                    <PopoverItem
-                      key={item.id}
-                      value={item.id}
-                      style={{ width: textfieldWidth }}
-                      onClick={() => {
-                        handleValueChange(item.id);
-                        setInputValue(getNameFromId(item.id));
-                        setIsDropdownOpen(false);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
+                {filteredOutItems.map(
+                  (item) =>
+                    item.name && (
+                      <PopoverItem
+                        key={item.id}
+                        value={item.id}
+                        style={{ width: textfieldWidth }}
+                        onClick={() => {
                           handleValueChange(item.id);
                           setInputValue(getNameFromId(item.id));
                           setIsDropdownOpen(false);
-                        }
-                        if (e.key === "ArrowDown") {
-                          e.preventDefault();
-                          const nextItem = (e.target as HTMLDivElement).nextElementSibling;
-                          if (nextItem) {
-                            (nextItem as HTMLDivElement).focus();
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleValueChange(item.id);
+                            setInputValue(getNameFromId(item.id));
+                            setIsDropdownOpen(false);
                           }
-                        }
-                        if (e.key === "ArrowUp") {
-                          e.preventDefault();
-                          const prevItem = (e.target as HTMLDivElement).previousElementSibling;
-                          if (prevItem && prevItem.classList.contains("url-select-item")) {
-                            (prevItem as HTMLDivElement).focus();
-                          }
-                          else {
-                            const prevLastItem = document.querySelector(".url-select-group-suggested .url-select-item:last-child");
-                            if (prevLastItem) {
-                              (prevLastItem as HTMLDivElement).focus();
-                            }
-                            else {
-                              (textfieldRef.current as HTMLInputElement).focus();
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            const nextItem = (e.target as HTMLDivElement).nextElementSibling;
+                            if (nextItem) {
+                              (nextItem as HTMLDivElement).focus();
                             }
                           }
-                        }
-                      }}
-                    >
-                      {getNameFromId(item.id)}
-                    </PopoverItem>
-                  )
+                          if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            const prevItem = (e.target as HTMLDivElement).previousElementSibling;
+                            if (prevItem && prevItem.classList.contains("url-select-item")) {
+                              (prevItem as HTMLDivElement).focus();
+                            } else {
+                              const prevLastItem = document.querySelector(
+                                ".url-select-group-suggested .url-select-item:last-child"
+                              );
+                              if (prevLastItem) {
+                                (prevLastItem as HTMLDivElement).focus();
+                              } else {
+                                (textfieldRef.current as HTMLInputElement).focus();
+                              }
+                            }
+                          }
+                        }}>
+                        {getNameFromId(item.id)}
+                      </PopoverItem>
+                    )
                 )}
               </div>
             )}

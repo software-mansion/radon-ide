@@ -83,7 +83,8 @@
   border-radius: 4px;
   color: var(--swm-default-text);
 }
-.url-select-item:hover, .url-select-item:focus {
+.url-select-item:hover,
+.url-select-item:focus {
   outline: none;
   background-color: var(--swm-url-select-highlighted-background);
   cursor: pointer;
@@ -116,7 +117,7 @@
   /* .url-select-input {
     min-width: 0;
   } */
-   
+
   .url-select-wrapper {
     display: none;
     opacity: 0;
