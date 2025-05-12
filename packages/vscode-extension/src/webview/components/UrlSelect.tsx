@@ -6,25 +6,9 @@ import "./UrlSelect.css";
 export type UrlItem = { id: string; name: string };
 
 interface PopoverItemProps {
-  value: string;
+  item: UrlItem;
   style?: React.CSSProperties;
-  onClick?: () => void;
-  onKeyDown?: (e: React.KeyboardEvent) => void;
 }
-
-const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverItemProps>>(
-  ({ children, onClick, onKeyDown, ...props }, forwardedRef) => (
-    <div
-      {...props}
-      className="url-select-item"
-      ref={forwardedRef}
-      onClick={onClick}
-      onKeyDown={onKeyDown}
-      tabIndex={0}>
-      <div className="url-select-item-text">{children}</div>
-    </div>
-  )
-);
 
 interface UrlSelectProps {
   value: string;
@@ -36,6 +20,8 @@ interface UrlSelectProps {
 
 type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
+// Currently, recentItems are not used, but they can be mapped to show the most recent
+// URLs in the dropdown. This can be implemented in the future if needed.
 function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
@@ -45,18 +31,48 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
   const textfieldRef = useRef<HTMLInputElement>(null);
 
-  // Currently, recentItems are not used, but they can be mapped to show the most recent
-  // URLs in the dropdown. This can be implemented in the future if needed.
+  const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverItemProps>>(
+    ({ children, item, ...props }, forwardedRef) => (
+      <div
+        {...props}
+        tabIndex={0}
+        key={item.id}
+        ref={forwardedRef}
+        className="url-select-item"
+        style={{ width: textfieldWidth }}
+        onClick={() => closeDropdownWithValue(item.id)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            closeDropdownWithValue(item.id);
+          } else {
+            navigateBetweenItems(
+              e,
+              (e.target as HTMLDivElement).previousElementSibling as HTMLDivElement,
+              (e.target as HTMLDivElement).nextElementSibling as HTMLDivElement,
+              textfieldRef.current as HTMLInputElement,
+              document.querySelector(".url-select-group-other .url-select-item") as HTMLDivElement
+            );
+          }
+        }}>
+        <div className="url-select-item-text">{getNameFromId(item.id)}</div>
+      </div>
+    )
+  );
 
-  // Now, we use two lists for URL selection: one with suggested URLs based on inputted path
-  // and another with all other available URLs. Since filteredItems and filteredOutItems
-  // are both subsets of items, each filteredItems' value is prefixed to differentiate its
-  // origins when presented in the dropdown. This prefix is stripped off when the value
-  // is passed back through onValueChange.
+  const getNameFromId = (id: string) => {
+    const item = items.find((item) => item.id === id);
+    if (!item) {
+      return id;
+    }
+    if (item.name.startsWith("/")) {
+      return item.name;
+    }
+    return item.id;
+  };
 
   const closeDropdownWithValue = (id: string) => {
     setInputValue(getNameFromId(id));
-    handleValueChange(id);
+    onValueChange(id);
     setIsDropdownOpen(false);
   };
 
@@ -89,31 +105,6 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     } else {
       textfieldRef.current?.focus();
     }
-  };
-
-  const isClickOutsideElement = (e: PointerEvent, elemRect: DOMRect) =>
-    e.clientX <= elemRect.left ||
-    e.clientX >= elemRect.right ||
-    e.clientY <= elemRect.top ||
-    e.clientY >= elemRect.bottom;
-
-  const handleValueChange = (newSelection: string) => {
-    onValueChange(stripFilterPrefix(newSelection));
-  };
-
-  const stripFilterPrefix = (id: string) => {
-    return id.replace(/^filtered#/, "");
-  };
-
-  const getNameFromId = (id: string) => {
-    const item = items.find((item) => item.id === id);
-    if (!item) {
-      return id;
-    }
-    if (stripFilterPrefix(item.name).startsWith("/")) {
-      return item.name;
-    }
-    return item.id;
   };
 
   useEffect(() => {
@@ -171,6 +162,10 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                 closeDropdownWithValue(textfieldRef.current?.value ?? "");
                 textfieldRef.current?.blur();
               }
+              if (e.key === "Escape") {
+                setIsDropdownOpen(false);
+                textfieldRef.current?.blur();
+              }
               if (e.key === "ArrowDown") {
                 if (isDropdownOpen) {
                   navigateBetweenItems(
@@ -192,9 +187,14 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           onEscapeKeyDown={() => setIsDropdownOpen(false)}
           onPointerDownOutside={(e) => {
             const input = textfieldRef.current;
+            const originalEvent = e.detail.originalEvent as PointerEvent;
+            const elemRect = (e.target as HTMLDivElement).getBoundingClientRect();
             if (
               !input ||
-              isClickOutsideElement(e.detail.originalEvent, input.getBoundingClientRect())
+              originalEvent.clientX <= elemRect.left ||
+              originalEvent.clientX >= elemRect.right ||
+              originalEvent.clientY <= elemRect.top ||
+              originalEvent.clientY >= elemRect.bottom
             ) {
               setIsDropdownOpen(false);
             }
@@ -207,33 +207,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             {filteredItems.length > 0 && (
               <div className="url-select-group url-select-group-suggested">
                 <div className="url-select-label">Suggested paths:</div>
-                {filteredItems.map(
-                  (item) =>
-                    item.name && (
-                      <PopoverItem
-                        key={item.id}
-                        value={`filtered#${item.id}`}
-                        style={{ width: textfieldWidth }}
-                        onClick={() => closeDropdownWithValue(item.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            closeDropdownWithValue(item.id);
-                          } else {
-                            navigateBetweenItems(
-                              e,
-                              (e.target as HTMLDivElement).previousElementSibling as HTMLDivElement,
-                              (e.target as HTMLDivElement).nextElementSibling as HTMLDivElement,
-                              textfieldRef.current as HTMLInputElement,
-                              document.querySelector(
-                                ".url-select-group-other .url-select-item"
-                              ) as HTMLDivElement
-                            );
-                          }
-                        }}>
-                        {getNameFromId(item.id)}
-                      </PopoverItem>
-                    )
-                )}
+                {filteredItems.map((item) => item.name && <PopoverItem item={item} />)}
               </div>
             )}
 
@@ -244,32 +218,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             {filteredOutItems.length > 0 && (
               <div className="url-select-group url-select-group-other">
                 <div className="url-select-label">Other paths:</div>
-                {filteredOutItems.map(
-                  (item) =>
-                    item.name && (
-                      <PopoverItem
-                        key={item.id}
-                        value={item.id}
-                        style={{ width: textfieldWidth }}
-                        onClick={() => closeDropdownWithValue(item.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            closeDropdownWithValue(item.id);
-                          } else {
-                            navigateBetweenItems(
-                              e,
-                              (e.target as HTMLDivElement).previousElementSibling as HTMLDivElement,
-                              (e.target as HTMLDivElement).nextElementSibling as HTMLDivElement,
-                              document.querySelector(
-                                ".url-select-group-suggested .url-select-item:last-child"
-                              ) as HTMLDivElement
-                            );
-                          }
-                        }}>
-                        {getNameFromId(item.id)}
-                      </PopoverItem>
-                    )
-                )}
+                {filteredOutItems.map((item) => item.name && <PopoverItem item={item} />)}
               </div>
             )}
           </div>

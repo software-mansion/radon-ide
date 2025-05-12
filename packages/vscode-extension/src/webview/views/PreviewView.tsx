@@ -180,7 +180,7 @@ function PreviewView() {
         </div>
         <div className="button-group-top-right">
           <IconButton
-            className={isProfilingCPU ? "button-recording-on" : ""}
+            className={isProfilingCPU ? "button-recording-on button-recording" : "button-recording"}
             tooltip={{
               label: "Stop profiling CPU",
             }}

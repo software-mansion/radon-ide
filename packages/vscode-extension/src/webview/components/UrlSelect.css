@@ -1,9 +1,6 @@
-:root {
-  --url-select-max-width: 200px;
-}
-
 .url-select-wrapper {
   position: relative;
+  flex: 1;
 }
 
 .url-select-input {
@@ -19,8 +16,7 @@
   color: var(--swm-url-select);
   box-sizing: border-box;
   cursor: text;
-  width: auto;
-  max-width: var(--url-select-max-width);
+  width: 100%;
   --vscode-settings-textInputBackground: transparent;
 }
 .url-select-input:hover[data-state="closed"] {
@@ -101,12 +97,6 @@
 .no-top-margin {
   margin-top: 0;
 }
-
-/* @media (width <= 425px) {
-  .url-select-input {
-    min-width: 80px;
-  }
-} */
 
 @media (width <= 325px) {
   .url-select-wrapper {
