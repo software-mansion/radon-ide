@@ -9,8 +9,9 @@ const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<{
   value: string;
   style?: React.CSSProperties;
   onClick?: () => void;
-}>>(({ children, onClick, ...props }, forwardedRef) => (
-  <div className="url-select-item" {...props} ref={forwardedRef} onClick={onClick}>
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+}>>(({ children, onClick, onKeyDown, ...props }, forwardedRef) => (
+  <div className="url-select-item" {...props} ref={forwardedRef} onClick={onClick} onKeyDown={onKeyDown} tabIndex={0}>
     <div className="url-select-item-text">{children}</div>
   </div>
 ));
@@ -51,8 +52,11 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
 
   const getNameFromId = (id: string) => {
     const item = items.find((item) => item.id === id);
-    if (item) {
+    if (item && stripFilterPrefix(item.name).startsWith("/")) {
       return item.name;
+    }
+    else if (item) {
+      return item.id;
     }
     return id;
   };
@@ -65,7 +69,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   useEffect(() => {
     if (!disabled) {
       const filtered = items.filter((item) => (
-        item.name.toLowerCase().includes(inputValue.toLowerCase())
+        getNameFromId(item.id).toLowerCase().includes(inputValue.toLowerCase())
       ));
       setFilteredItems(filtered);
     }
@@ -110,30 +114,30 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                const fieldValue = (e.target as HTMLInputElement).value;
+                const fieldValue = (e.target as unknown as HTMLInputElement).value;
                 if (fieldValue && fieldValue !== "") {
                   handleValueChange(getNameFromId(stripFilterPrefix(fieldValue)));
                 }
                 setIsDropdownOpen(false);
                 (e.target as HTMLInputElement).blur();
               }
-              // WIP rn
               if (e.key === "ArrowDown") {
-                const fieldValue = (e.target as HTMLInputElement).value;
-                if (fieldValue) {
-                  setInputValue(fieldValue);
+                if (isDropdownOpen) {
+                  e.preventDefault();
+                  const firstItem = document.querySelector(".url-select-item");
+                  if (firstItem) {
+                    (firstItem as HTMLDivElement).focus();
+                  }
                 }
-                setIsDropdownOpen(true);
+                else setIsDropdownOpen(true);
               }
             }}
             onMouseDown={(e) => {
-              if (!isDropdownOpen) {
-                const fieldValue = (e.target as HTMLInputElement).value;
-                if (fieldValue) {
-                  setInputValue(fieldValue);
-                }
-                setIsDropdownOpen(true);
+              const fieldValue = (e.target as HTMLInputElement).value;
+              if (fieldValue) {
+                setInputValue(fieldValue);
               }
+              setIsDropdownOpen(true);
             }}
           />
         </Popover.Trigger>
@@ -162,7 +166,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             )}
 
             {filteredItems.length > 0 && (
-              <div className="url-select-group">
+              <div className="url-select-group url-select-group-suggested">
                 <div className="url-select-label">Suggested paths:</div>
                 {filteredItems.map((item) =>
                   item.name && (
@@ -172,11 +176,42 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                       style={{ width: textfieldWidth }}
                       onClick={() => {
                         handleValueChange(`filtered#${item.id}`);
-                        setInputValue(item.name);
+                        setInputValue(getNameFromId(item.id));
                         setIsDropdownOpen(false);
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleValueChange(`filtered#${item.id}`);
+                          setInputValue(getNameFromId(item.id));
+                          setIsDropdownOpen(false);
+                        }
+                        if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          const nextItem = (e.target as HTMLDivElement).nextElementSibling;
+                          if (nextItem) {
+                            (nextItem as HTMLDivElement).focus();
+                          }
+                          else {
+                            const nextFirstItem = document.querySelector(".url-select-group-other .url-select-item");
+                            if (nextFirstItem) {
+                              (nextFirstItem as HTMLDivElement).focus();
+                            }
+                          }
+                        }
+                        if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          const prevItem = (e.target as HTMLDivElement).previousElementSibling;
+                          if (prevItem && prevItem.classList.contains("url-select-item")) {
+                            (prevItem as HTMLDivElement).focus();
+                          }
+                          else {
+                            (textfieldRef.current as HTMLInputElement).focus();
+                          }
+                        }
+                      }}
                     >
-                      {item.name}
+                      {getNameFromId(item.id)}
                     </PopoverItem>
                   )
                 )}
@@ -188,7 +223,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             )}
 
             {filteredOutItems.length > 0 && (
-              <div className="url-select-group">
+              <div className="url-select-group url-select-group-other">
                 <div className="url-select-label">Other paths:</div>
                 {filteredOutItems.map((item) =>
                   item.name && (
@@ -198,11 +233,42 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                       style={{ width: textfieldWidth }}
                       onClick={() => {
                         handleValueChange(item.id);
-                        setInputValue(item.name);
+                        setInputValue(getNameFromId(item.id));
                         setIsDropdownOpen(false);
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleValueChange(item.id);
+                          setInputValue(getNameFromId(item.id));
+                          setIsDropdownOpen(false);
+                        }
+                        if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          const nextItem = (e.target as HTMLDivElement).nextElementSibling;
+                          if (nextItem) {
+                            (nextItem as HTMLDivElement).focus();
+                          }
+                        }
+                        if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          const prevItem = (e.target as HTMLDivElement).previousElementSibling;
+                          if (prevItem && prevItem.classList.contains("url-select-item")) {
+                            (prevItem as HTMLDivElement).focus();
+                          }
+                          else {
+                            const prevLastItem = document.querySelector(".url-select-group-suggested .url-select-item:last-child");
+                            if (prevLastItem) {
+                              (prevLastItem as HTMLDivElement).focus();
+                            }
+                            else {
+                              (textfieldRef.current as HTMLInputElement).focus();
+                            }
+                          }
+                        }
+                      }}
                     >
-                      {item.name}
+                      {getNameFromId(item.id)}
                     </PopoverItem>
                   )
                 )}
