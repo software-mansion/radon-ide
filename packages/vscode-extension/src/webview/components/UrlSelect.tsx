@@ -7,8 +7,50 @@ export type UrlItem = { id: string; name: string };
 
 interface PopoverItemProps {
   item: UrlItem;
+  width: number;
   style?: React.CSSProperties;
+  textfieldRef: React.RefObject<HTMLInputElement>;
+  onClose: (id: string) => void;
+  onNavigate: (
+    e: React.KeyboardEvent,
+    prev?: UrlSelectFocusable,
+    next?: UrlSelectFocusable,
+    prevFallback?: UrlSelectFocusable,
+    nextFallback?: UrlSelectFocusable
+  ) => void;
+  getNameFromId: (id: string) => string;
 }
+
+const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverItemProps>>(
+  (
+    { children, style, item, textfieldRef, width, onClose, onNavigate, getNameFromId, ...props },
+    forwardedRef
+  ) => (
+    <div
+      {...props}
+      tabIndex={0}
+      key={item.id}
+      ref={forwardedRef}
+      className="url-select-item"
+      style={{ ...style, width: width }}
+      onClick={() => onClose(item.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          onClose(item.id);
+        } else {
+          onNavigate(
+            e,
+            (e.target as HTMLDivElement).previousElementSibling as HTMLDivElement,
+            (e.target as HTMLDivElement).nextElementSibling as HTMLDivElement,
+            textfieldRef.current as HTMLInputElement,
+            document.querySelector(".url-select-group-other .url-select-item") as HTMLDivElement
+          );
+        }
+      }}>
+      <div className="url-select-item-text">{getNameFromId(item.id)}</div>
+    </div>
+  )
+);
 
 interface UrlSelectProps {
   value: string;
@@ -30,34 +72,6 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
 
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
   const textfieldRef = useRef<HTMLInputElement>(null);
-
-  const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverItemProps>>(
-    ({ children, item, ...props }, forwardedRef) => (
-      <div
-        {...props}
-        tabIndex={0}
-        key={item.id}
-        ref={forwardedRef}
-        className="url-select-item"
-        style={{ width: textfieldWidth }}
-        onClick={() => closeDropdownWithValue(item.id)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            closeDropdownWithValue(item.id);
-          } else {
-            navigateBetweenItems(
-              e,
-              (e.target as HTMLDivElement).previousElementSibling as HTMLDivElement,
-              (e.target as HTMLDivElement).nextElementSibling as HTMLDivElement,
-              textfieldRef.current as HTMLInputElement,
-              document.querySelector(".url-select-group-other .url-select-item") as HTMLDivElement
-            );
-          }
-        }}>
-        <div className="url-select-item-text">{getNameFromId(item.id)}</div>
-      </div>
-    )
-  );
 
   const getNameFromId = (id: string) => {
     const item = items.find((item) => item.id === id);
@@ -93,7 +107,6 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
       targetItem = prev;
       targetItemFallback = prevFallback;
     }
-
     if (
       targetItem &&
       (targetItem.classList.contains("url-select-item") ||
@@ -207,7 +220,19 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             {filteredItems.length > 0 && (
               <div className="url-select-group url-select-group-suggested">
                 <div className="url-select-label">Suggested paths:</div>
-                {filteredItems.map((item) => item.name && <PopoverItem item={item} />)}
+                {filteredItems.map(
+                  (item) =>
+                    item.name && (
+                      <PopoverItem
+                        item={item}
+                        width={textfieldWidth}
+                        onClose={closeDropdownWithValue}
+                        onNavigate={navigateBetweenItems}
+                        getNameFromId={getNameFromId}
+                        textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                      />
+                    )
+                )}
               </div>
             )}
 
@@ -218,7 +243,19 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             {filteredOutItems.length > 0 && (
               <div className="url-select-group url-select-group-other">
                 <div className="url-select-label">Other paths:</div>
-                {filteredOutItems.map((item) => item.name && <PopoverItem item={item} />)}
+                {filteredOutItems.map(
+                  (item) =>
+                    item.name && (
+                      <PopoverItem
+                        item={item}
+                        width={textfieldWidth}
+                        onClose={closeDropdownWithValue}
+                        onNavigate={navigateBetweenItems}
+                        getNameFromId={getNameFromId}
+                        textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                      />
+                    )
+                )}
               </div>
             )}
           </div>
