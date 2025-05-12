@@ -37,6 +37,11 @@
   --vscode-settings-textInputBackground: transparent; */
   /* box-shadow: var(--swm-focus-outline); */
 }
+.url-select-input:disabled {
+  background-color: var(--swm-url-select-disabled-background);
+  color: var(--swm-url-select-disabled);
+  cursor: not-allowed;
+}
 
 .url-select-content {
   z-index: 1;
@@ -107,7 +112,7 @@
   }
 } */
 
-@media (width <= 300px) {
+@media (width <= 325px) {
   /* .url-select-input {
     min-width: 0;
   } */
