@@ -89,3 +89,13 @@ Learn more about [Screen recording](/docs/features/screen-recording).
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_screen_recording.mp4" type="video/mp4"/>
 </video>
+
+## Inspect network requests
+
+Use the built-in network panel to inspect your application network activity right in the editor.
+
+Learn more about [Network Inspector](/docs/features/network-inspector).
+
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_network_inspector_new.mp4" type="video/mp4"/>
+</video>

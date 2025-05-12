@@ -4,16 +4,12 @@ import * as vscode from "vscode";
 import { disposeAll } from "../utilities/disposables";
 import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
+import { extensionContext } from "../utilities/extensionContext";
 
 const PING_TIMEOUT = 1000;
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
 const OLD_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
-
-// vscode-js-debug based debugger implementation is disabled for now because
-// of a very slow initialization times. We force the use of the original
-// debug adapter implementation here.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PROXY_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
 
 export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
@@ -141,7 +137,9 @@ export class DebugSession implements Disposable {
     }
 
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
-    const debuggerType = OLD_JS_DEBUGGER_TYPE;
+    const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
+
+    const extensionPath = extensionContext.extensionUri.path;
 
     this.jsDebugSession = await startDebugging(
       undefined,
@@ -156,10 +154,7 @@ export class DebugSession implements Disposable {
         displayDebuggerOverlay: configuration.displayDebuggerOverlay,
         skipFiles: [
           "__source__",
-          "**/extension/lib/**/*.js",
-          "**/vscode-extension/lib/**/*.js",
-          "**/ReactFabric-dev.js",
-          "**/ReactNativeRenderer-dev.js",
+          `${extensionPath}/**/*`,
           "**/node_modules/**/*",
           "!**/node_modules/expo-router/**/*",
         ],

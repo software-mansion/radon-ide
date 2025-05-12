@@ -23,7 +23,7 @@ import { throttle } from "../utilities/throttle";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildCache } from "../builders/BuildCache";
-import { CancelToken } from "../builders/cancelToken";
+import { CancelError, CancelToken } from "../builders/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { ToolsDelegate, ToolsManager } from "./tools";
 import { extensionContext } from "../utilities/extensionContext";
@@ -61,6 +61,8 @@ export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
   fastRefreshStarted: undefined;
   fastRefreshComplete: undefined;
+  isProfilingReact: boolean;
+  isSavingReactProfile: boolean;
 };
 
 export type DeviceSessionDelegate = {
@@ -115,6 +117,10 @@ export class DeviceSession implements Disposable {
     return this.device.previewURL;
   }
 
+  public get platform(): DevicePlatform {
+    return this.device.platform;
+  }
+
   constructor(
     private readonly appRootFolder: string,
     private readonly device: DeviceBase,
@@ -157,6 +163,9 @@ export class DeviceSession implements Disposable {
     });
     devtools.onEvent("RNIDE_fastRefreshComplete", () => {
       this.deviceSessionDelegate.onAppEvent("fastRefreshComplete", undefined);
+    });
+    devtools.onEvent("RNIDE_isProfilingReact", (isProfiling) => {
+      this.deviceSessionDelegate.onAppEvent("isProfilingReact", isProfiling);
     });
     return devtools;
   }
@@ -325,6 +334,11 @@ export class DeviceSession implements Disposable {
         this.deviceSessionDelegate.onReloadCompleted(this.device.deviceInfo.id);
       }
     } catch (e) {
+      if (e instanceof CancelError) {
+        // when restart process is cancelled, we don't want to fallback into
+        // restarting the session again
+        return;
+      }
       // finally in case of any errors, the last resort is performing project
       // restart and device selection (we still avoid forcing clean builds, and
       // only do clean build when explicitly requested).
@@ -368,7 +382,16 @@ export class DeviceSession implements Disposable {
 
   private async reloadMetro() {
     this.deviceSessionDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
-    await Promise.all([this.metro.reload(), this.devtools.appReady()]);
+    const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
+    const bundleErrorSubscription = this.metro.onBundleError(() => {
+      reject(new Error("Bundle error occurred during reload"));
+    });
+    try {
+      await this.metro.reload();
+      await Promise.race([this.devtools.appReady(), bundleErrorPromise]);
+    } finally {
+      bundleErrorSubscription.dispose();
+    }
     this.deviceSessionDelegate.onStateChange(StartupMessage.AttachingDebugger);
     await this.reconnectJSDebuggerIfNeeded();
   }

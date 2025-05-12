@@ -71,7 +71,7 @@ function ToolsList({
 }
 
 function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
-  const { project, toolsState, isProfilingCPU } = useProject();
+  const { project, toolsState, isProfilingCPU, isProfilingReact } = useProject();
 
   const allTools = Object.entries(toolsState);
   const panelTools = allTools.filter(([key, tool]) => tool.panelAvailable);
@@ -95,6 +95,15 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
             }>
             <span className="codicon codicon-chip" />
             {isProfilingCPU ? "Stop JS CPU Profiler" : "Start JS CPU Profiler"}
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() =>
+              isProfilingReact ? project.stopProfilingReact() : project.startProfilingReact()
+            }>
+            <span className="codicon codicon-react" />
+
+            {isProfilingReact ? "Stop React Profiler" : "Start React Profiler"}
           </DropdownMenu.Item>
           <ToolsList project={project} tools={nonPanelTools} />
           <Label>Tool Panels</Label>

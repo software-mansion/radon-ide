@@ -8,7 +8,9 @@ import { CompatibilityInfo } from "./CompatibilityInfo";
 const Pricing = () => {
   return (
     <div className={styles.container}>
-      <h1 className={styles.headingLabel}>Get the best developer experience in React Native.</h1>
+      <h1 className={styles.headingLabel}>
+        Get the best developer experience with our IDE for React Native
+      </h1>
       <h3 className={styles.subheadlingLabel}>
         Choose a plan that works for your needs. Pay monthly for flexibility or yearly for the best
         price.

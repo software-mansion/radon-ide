@@ -139,6 +139,8 @@ export interface ProjectEventMap {
   replayDataCreated: MultimediaData;
   isRecording: boolean;
   isProfilingCPU: boolean;
+  isProfilingReact: boolean;
+  isSavingReactProfile: boolean;
 }
 
 export interface ProjectEventListener<T> {
@@ -188,6 +190,9 @@ export interface ProjectInterface {
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
+
+  startProfilingReact(): void;
+  stopProfilingReact(): void;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;

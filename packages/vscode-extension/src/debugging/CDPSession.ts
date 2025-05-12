@@ -18,6 +18,7 @@ import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
 import { CDPConfiguration } from "./CDPDebugAdapter";
+import { Disposable, EventEmitter } from "vscode";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -26,6 +27,26 @@ type PromiseHandlers<T = unknown> = {
   resolve: ResolveType<T>;
   reject: RejectType;
 };
+
+async function eventFiredPromise<T>(event: EventEmitter<T>["event"], timeoutMs?: number) {
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  let subscription: Disposable | undefined;
+
+  const timeout =
+    timeoutMs !== undefined
+      ? setTimeout(() => {
+          subscription?.dispose();
+          reject(new Error("Event did not fire before timeout"));
+        }, timeoutMs)
+      : undefined;
+
+  subscription = event(() => {
+    clearTimeout(timeout);
+    subscription?.dispose();
+    resolve();
+  });
+  return promise;
+}
 
 export interface CDPSessionDelegate {
   onExecutionContextCreated(threadId: number, threadName: string): void;
@@ -59,6 +80,9 @@ export class CDPSession {
   private breakpointsController: BreakpointsController;
 
   private debugSessionReady = false;
+  private debugSessionReadyEmitter = new EventEmitter();
+  private onDebugSessionReady = this.debugSessionReadyEmitter.event;
+
   private consoleAPICallsQueue: any[] = [];
 
   private resumeEventTimeout: NodeJS.Timeout | undefined;
@@ -97,6 +121,12 @@ export class CDPSession {
         return;
       }
       await this.handleIncomingCDPMethodCalls(message);
+    });
+
+    this.onDebugSessionReady(() => {
+      this.debugSessionReady = true;
+      this.flushEnqueuedConsoleAPICalls();
+      this.delegate.onDebugSessionReady();
     });
   }
 
@@ -147,9 +177,7 @@ export class CDPSession {
         );
 
         if (isMainBundle) {
-          this.debugSessionReady = true;
-          this.flushEnqueuedConsoleAPICalls();
-          this.delegate.onDebugSessionReady();
+          this.debugSessionReadyEmitter.fire({});
         }
 
         this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
@@ -286,6 +314,10 @@ export class CDPSession {
   }
 
   private async handleDebuggerPaused(message: any) {
+    if (!this.debugSessionReady) {
+      const UNMAPPED_PAUSE_TIMEOUT_MS = 5000;
+      await eventFiredPromise(this.onDebugSessionReady, UNMAPPED_PAUSE_TIMEOUT_MS);
+    }
     const stackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
       const cdpLocation = cdpFrame.location;
       const { sourceURL, lineNumber1Based, columnNumber0Based } =

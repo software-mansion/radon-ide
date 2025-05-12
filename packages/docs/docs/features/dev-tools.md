@@ -6,7 +6,7 @@ sidebar_position: 7
 
 Radon IDE comes with support for launching Dev Tools as separate panels withing VSCode or Cursor.
 
-The built-in tools for Network Inspector, Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and doesn't require any additional configuration.
+The built-in tools for [Network Inspector](/docs/features/network-inspector), Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and doesn't require any additional configuration.
 
 When the IDE detects that a specific tool is available and configured properly (see below for details on configuring individual tools), it will be listed in the tools menu where you can turn it on and off:
 <img width="350" src="/img/docs/ide_devtools_menu.png" className="shadow-image" />
@@ -21,14 +21,6 @@ You can quickly navigate to the panel from the tools menu by using the "link" ic
 Tool on/off setting is persisted locally for the scope of your project (VSCode or Cursor workspace).
 Therefore when you open the project next time in the IDE, the tool panel will launch automatically.
 It will also be kept open when you switch between different devices across that project.
-
-## Network Inspector
-
-This panel doesn't require any additional configuration and should be available as soon as your app is launched.
-Network panel will capture and list all requests triggered by the JavaScript code (with HXR / fetch or wrappers like Axios/Apollo etc).
-Images or websocket connections aren't currently supported and won't show up.
-
-<img width="700" src="/img/docs/ide_devtools_network_inspector.png" className="shadow-image" />
 
 ## Redux
 
@@ -65,6 +57,18 @@ When the profile is saved, Radon IDE resolves the source location of the methods
 When profiling, remember that the app you profile is the development build of your application running in a simulator environment.
 Development builds typically come with a significant overhead of extra work that is only done to provide better error reporting and traceability of errors.
 Hence the performance may significantly differ compared to the production builds running on an actual phone.
+
+## React Profiler
+
+The React Profiler integration allows you to start and stop React Devtools profiler, and also to preview and analyze collected profile without leaving the comfort of your editor.
+You can start the React Profiler from the tools menu, similarily to how you start the CPU profiler.
+Once you are finished with your profiling session, you can stop the profiler using the active profile indicator that shows up over the device view when the profiler is active, or you can use the "Stop React Profile button from the tools menu:
+
+<img width="550" src="/img/docs/ide_devtools_react_profiler_stop.png" className="shadow-image" />
+
+Once the profile is stopped, Radon saves the profile into a temporary location under `.reactprofile` extension, and presents a new editor that uses the React Devtools UI to render the profile analysis tool:
+
+<img width="700" src="/img/docs/ide_devtools_react_profiler_analysis.png" className="shadow-image" />
 
 ## Outline Renders (react-scan)
 

@@ -18,3 +18,15 @@ main {
   width: 100%;
   max-height: 100vh;
 }
+
+/* Custom codicon class meant to be used the same way as all built-in codicons */
+/* Displays React icon when used with <span className="codicon codicon-react" /> */
+.codicon-react {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-image: url("/assets/react.svg");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}

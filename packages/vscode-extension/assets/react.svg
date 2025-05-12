@@ -1,0 +1,8 @@
+<svg width="24" height="24" viewBox="-10.5 -9.45 21 18.9" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="0" cy="0" r="2" fill="currentColor"></circle>
+<g stroke="currentColor" stroke-width="1" fill="none">
+<path d="M 10,0 A 10,4.5 0 1,0 -10,0 A 10,4.5 0 1,0 10,0 Z"></path>
+<path d="M 10,0 A 10,4.5 0 1,0 -10,0 A 10,4.5 0 1,0 10,0 Z" transform="rotate(60)"></path>
+<path d="M 10,0 A 10,4.5 0 1,0 -10,0 A 10,4.5 0 1,0 10,0 Z" transform="rotate(120)"></path>
+</g>
+</svg>

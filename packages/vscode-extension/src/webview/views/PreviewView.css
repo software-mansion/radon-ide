@@ -84,6 +84,10 @@
   padding: 0 8px;
 }
 
+.button-recording-on > span {
+  margin-right: 6px;
+}
+
 .recording-rec-indicator {
   display: flex;
   align-items: center;
@@ -113,12 +117,11 @@
 }
 
 .recording-rec-dot {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
   background-color: red;
   align-self: center;
   border-radius: 50%;
-  margin-right: 6px;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
