@@ -73,7 +73,7 @@ export class TabPanel implements Disposable {
     TabPanel.currentPanel = new TabPanel(panel, extensionContext);
   }
 
-  private static showInternal(viewColumn: ViewColumn, preserveFocus: boolean) {
+  private static showInternal(viewColumn: ViewColumn | undefined, preserveFocus: boolean) {
     const panel = TabPanel.currentPanel;
     if (panel) {
       panel._panel.reveal(viewColumn, preserveFocus);
@@ -81,7 +81,7 @@ export class TabPanel implements Disposable {
       const webviewPanel = window.createWebviewPanel(
         TabPanel.viewType,
         "Radon IDE",
-        { viewColumn, preserveFocus },
+        { viewColumn: viewColumn || ViewColumn.Beside, preserveFocus },
         {
           enableScripts: true,
           localResourceRoots: [
@@ -112,15 +112,20 @@ export class TabPanel implements Disposable {
         const lastEmptyGroup = emptyEditorGroups[emptyEditorGroups.length - 1];
         this.showInternal(lastEmptyGroup.viewColumn, preserveFocus);
       }
-    } else {
+    } else if (newLocation === "editor-tab") {
       // We can't tell whether the panel is in new window or in some horizonal/vertical group
       // we use the following logic to handle different cases:
       // 1. If the current panel viewColumn is > 1, this means it could be in a new window,
       // in this case we move it to the first group
-      // 2. Alternatively, if panel doesn't exist, or it is in the first group, we
+      // 2. Alternatively, if panel doesn't exist, or it is in the first group
       // use "Beside" mode to open it beside the current editor.
       const currentViewColumn = TabPanel.currentPanel?._panel.viewColumn || 0;
       this.showInternal(currentViewColumn > 1 ? ViewColumn.One : ViewColumn.Beside, preserveFocus);
+    } else {
+      // This is called when the user doens't request a specific lcoation for the panel
+      // for example, when they trigger "show IDE panel" command from the command palette
+      // or when they switch the location from the settings.
+      this.showInternal(undefined, preserveFocus);
     }
   }
 
