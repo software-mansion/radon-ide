@@ -29,7 +29,6 @@ const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverIt
     <div
       {...props}
       tabIndex={0}
-      key={item.id}
       ref={forwardedRef}
       className="url-select-item"
       style={{ ...style, width: width }}
@@ -201,9 +200,10 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           onPointerDownOutside={(e) => {
             const input = textfieldRef.current;
             const originalEvent = e.detail.originalEvent as PointerEvent;
-            const elemRect = (e.target as HTMLDivElement).getBoundingClientRect();
+            const elemRect = textfieldRef.current?.getBoundingClientRect();
             if (
               !input ||
+              !elemRect ||
               originalEvent.clientX <= elemRect.left ||
               originalEvent.clientX >= elemRect.right ||
               originalEvent.clientY <= elemRect.top ||
@@ -225,6 +225,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                     item.name && (
                       <PopoverItem
                         item={item}
+                        key={item.id}
                         width={textfieldWidth}
                         onClose={closeDropdownWithValue}
                         onNavigate={navigateBetweenItems}
@@ -248,6 +249,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                     item.name && (
                       <PopoverItem
                         item={item}
+                        key={item.id}
                         width={textfieldWidth}
                         onClose={closeDropdownWithValue}
                         onNavigate={navigateBetweenItems}
