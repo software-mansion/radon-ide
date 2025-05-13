@@ -70,6 +70,10 @@
   min-width: 200px;
 }
 
+.button-recording:not(.button-recording-on) {
+  width: 0;
+}
+
 .button-recording-on,
 .button-recording-on:hover {
   background-color: var(--swm-button-recording-on-background);

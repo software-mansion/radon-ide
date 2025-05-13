@@ -52,7 +52,7 @@ function ProfilingButton({
   const showButton = isProfiling || isLoadingProfile;
   return (
     <IconButton
-      className={showButton ? "button-recording-on" : ""}
+      className={showButton ? "button-recording-on button-recording" : "button-recording"}
       tooltip={{
         label: title,
       }}
