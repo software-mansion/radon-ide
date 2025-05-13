@@ -13,7 +13,7 @@ import {
 } from "vscode";
 import vscode from "vscode";
 import { activate as activateJsDebug } from "vscode-js-debug/dist/src/extension";
-import { TabPanel } from "./panels/Tabpanel";
+import { TabPanel, TabPanelSerializer } from "./panels/Tabpanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import {
@@ -35,7 +35,6 @@ import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebu
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 
-const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
 function handleUncaughtErrors(context: ExtensionContext) {
@@ -68,6 +67,10 @@ export function deactivate(context: ExtensionContext): undefined {
 }
 
 export async function activate(context: ExtensionContext) {
+  context.subscriptions.push(
+    window.registerWebviewPanelSerializer(TabPanel.viewType, new TabPanelSerializer())
+  );
+
   handleUncaughtErrors(context);
   await activateJsDebug(context);
 
@@ -85,17 +88,37 @@ export async function activate(context: ExtensionContext) {
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
-  async function showIDEPanel() {
+  let updatingConfigProgrammatically = false;
+  async function showIDEPanel(newLocation?: "editor-tab" | "new-window" | "side-panel") {
+    if (updatingConfigProgrammatically) {
+      return;
+    }
     await commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
-    const panelLocation = workspace
-      .getConfiguration("RadonIDE")
-      .get<PanelLocation>("panelLocation");
+    const configuration = workspace.getConfiguration("RadonIDE");
+
+    let panelLocation = configuration.get<PanelLocation>("panelLocation");
+    if (newLocation) {
+      panelLocation = newLocation === "side-panel" ? "side-panel" : "tab";
+      updatingConfigProgrammatically = true;
+      if (configuration.inspect("panelLocation")?.workspaceValue) {
+        await configuration.update("panelLocation", panelLocation, false);
+      } else {
+        await configuration.update("panelLocation", panelLocation, true);
+      }
+      updatingConfigProgrammatically = false;
+    }
 
     if (panelLocation !== "tab") {
       SidePanelViewProvider.showView();
     } else {
-      TabPanel.render(context);
+      let tabNewLocation: "new-window" | "editor-tab" | undefined;
+      if (newLocation === "new-window") {
+        tabNewLocation = "new-window";
+      } else if (newLocation === "editor-tab") {
+        tabNewLocation = "editor-tab";
+      }
+      TabPanel.show(tabNewLocation);
     }
   }
 
@@ -322,9 +345,6 @@ function extensionActivated(context: ExtensionContext) {
   if (context.extensionMode === ExtensionMode.Development) {
     // "Connector" implements experimental functionality that is available in development mode only
     Connector.getInstance().start();
-  }
-  if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
-    commands.executeCommand("RNIDE.openPanel");
   }
 }
 

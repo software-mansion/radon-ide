@@ -18,7 +18,7 @@ export interface UtilsInterface {
 
   saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
 
-  movePanelToNewWindow(): Promise<void>;
+  movePanelTo(location: "new-window" | "editor-tab" | "side-panel"): Promise<void>;
 
   showDismissableError(errorMessage: string): Promise<void>;
 

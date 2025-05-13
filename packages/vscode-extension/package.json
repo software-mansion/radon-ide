@@ -19,7 +19,8 @@
     "workspaceContains:**/metro.config.js",
     "workspaceContains:**/metro.config.ts",
     "workspaceContains:**/app.config.js",
-    "workspaceContains:**/app.config.ts"
+    "workspaceContains:**/app.config.ts",
+    "onWebviewPanel:RadonIDETabPanel"
   ],
   "version": "1.6.0",
   "engines": {
@@ -169,10 +170,9 @@
           "default": "tab",
           "enum": [
             "tab",
-            "side-panel",
-            "secondary-side-panel"
+            "side-panel"
           ],
-          "description": "Controls location of the IDE panel. Due to vscode API limitations, when secondary side panel is selected, you need to manually move the IDE panel to the secondary side panel. Changing this option closes and reopens the IDE."
+          "description": "Controls the location of the Radon IDE panel. When side-panel is selected, you can use right-click menu on the panel to move it to the secondary side panel if you wish."
         },
         "RadonIDE.themeType": {
           "type": "string",
