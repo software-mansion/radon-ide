@@ -1901,7 +1901,7 @@
     tslib "^2.6.0"
     webpack "^5.88.1"
 
-"@docusaurus/plugin-debug@3.7.0", "@docusaurus/plugin-debug@^3.7.0":
+"@docusaurus/plugin-debug@3.7.0":
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/@docusaurus/plugin-debug/-/plugin-debug-3.7.0.tgz#a4fd45132e40cffe96bb51f48e89982a1cb8e194"
   integrity sha512-Qgg+IjG/z4svtbCNyTocjIwvNTNEwgRjSXXSJkKVG0oWoH0eX/HAPiu+TS1HBwRPQV+tTYPWLrUypYFepfujZA==
@@ -1973,7 +1973,7 @@
     tslib "^2.6.0"
     webpack "^5.88.1"
 
-"@docusaurus/preset-classic@^3.7.0":
+"@docusaurus/preset-classic@3.7.0", "@docusaurus/preset-classic@^3.7.0":
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/@docusaurus/preset-classic/-/preset-classic-3.7.0.tgz#f6656a04ae6a4877523dbd04f7c491632e4003b9"
   integrity sha512-nPHj8AxDLAaQXs+O6+BwILFuhiWbjfQWrdw2tifOClQoNfuXDjfjogee6zfx6NGHWqshR23LrcN115DmkHC91Q==

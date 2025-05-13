@@ -15,9 +15,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@docusaurus/core": "^3.7.0",
-    "@docusaurus/plugin-debug": "^3.7.0",
-    "@docusaurus/preset-classic": "^3.7.0",
+    "@docusaurus/core": "3.7.0",
+    "@docusaurus/plugin-debug": "3.7.0",
+    "@docusaurus/preset-classic": "3.7.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mdx-js/react": "^3.0.0",
@@ -37,7 +37,7 @@
     "rehype-raw": "^7.0.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "^3.7.0",
+    "@docusaurus/module-type-aliases": "3.7.0",
     "@docusaurus/tsconfig": "3.7.0",
     "prettier": "^3.2.5",
     "typescript": "~5.2.2"
