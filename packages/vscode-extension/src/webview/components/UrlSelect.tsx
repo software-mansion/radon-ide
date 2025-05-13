@@ -1,6 +1,7 @@
 import React, { PropsWithChildren, useEffect, useRef } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
+import { partition } from "lodash";
 import "./UrlSelect.css";
 
 export type UrlItem = { id: string; name: string };
@@ -124,21 +125,18 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   }, [value]);
 
   useEffect(() => {
-    if (!disabled) {
-      const inputValueLowerCase = inputValue.toLowerCase();
-      const filtered = items.filter((item) =>
-        getNameFromId(item.id).toLowerCase().includes(inputValueLowerCase)
-      );
-      setFilteredItems(filtered);
+    if (disabled) {
+      setFilteredItems([]);
+      setFilteredOutItems(items);
+      return;
     }
-  }, [inputValue, items]);
-
-  useEffect(() => {
-    const filteredOut = items.filter(
-      (item) => !filteredItems.some((filteredItem) => filteredItem.id === item.id)
+    const inputValueLowerCase = inputValue.toLowerCase();
+    const [filtered, filteredOut] = partition(items, (item) =>
+      getNameFromId(item.id).toLowerCase().includes(inputValueLowerCase)
     );
+    setFilteredItems(filtered);
     setFilteredOutItems(filteredOut);
-  }, [items, filteredItems]);
+  }, [inputValue, items]);
 
   useEffect(() => {
     if (textfieldRef.current) {
