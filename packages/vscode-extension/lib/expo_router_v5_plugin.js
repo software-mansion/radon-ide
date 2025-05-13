@@ -6,6 +6,26 @@ function computeRouteIdentifier(pathname, params) {
   return pathname + JSON.stringify(params);
 }
 
+function extractNestedRouteList(rootNode) {
+  const routeList = [];
+  // TODO exclude _layout, +not-found, etc.
+  const traverse = (node) => {
+    if (node) {
+      const { contextKey, children } = node;
+      if (contextKey) {
+        routeList.push(contextKey);
+      }
+      if (children) {
+        children.forEach((child) => {
+          traverse(child);
+        });
+      }
+    }
+  };
+  traverse(rootNode);
+  return routeList;
+}
+
 function useRouterPluginMainHook({ onNavigationChange }) {
   const router = useRouter();
   const routeInfo = useRouteInfo()
@@ -25,7 +45,8 @@ function useRouterPluginMainHook({ onNavigationChange }) {
     if (routeNode) {
       console.log("Route node:", routeNode);
       console.log("Root layout location:", routeNode.contextKey);
-      console.log("Children:", routeNode.children);  
+      console.log("Children:", routeNode.children);
+      console.log("Flattened route list:", extractNestedRouteList(routeNode));
     }
     
     onNavigationChange({
