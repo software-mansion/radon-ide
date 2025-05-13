@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { use, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { store, useRouteInfo } from "expo-router/build/global-state/router-store.js";
 
@@ -10,6 +10,8 @@ function useRouterPluginMainHook({ onNavigationChange }) {
   const router = useRouter();
   const routeInfo = useRouteInfo()
 
+  const routeNode = store.routeNode;
+  
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
 
@@ -20,6 +22,12 @@ function useRouterPluginMainHook({ onNavigationChange }) {
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
 
   useEffect(() => {
+    if (routeNode) {
+      console.log("Route node:", routeNode);
+      console.log("Root layout location:", routeNode.contextKey);
+      console.log("Children:", routeNode.children);  
+    }
+    
     onNavigationChange({
       name: displayName,
       pathname,
