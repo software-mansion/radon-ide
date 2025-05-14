@@ -23,7 +23,7 @@
     "@mdx-js/react": "^3.0.0",
     "@mui/material": "^7.1.0",
     "@paddle/paddle-js": "^1.1.1",
-    "@swmansion/t-rex-ui": "file:./t-rex.tgz",
+    "@swmansion/t-rex-ui": "1.0.0",
     "@vercel/analytics": "^1.2.2",
     "clsx": "^2.1.0",
     "front-matter": "^4.0.2",
