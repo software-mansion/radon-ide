@@ -6,14 +6,40 @@ function computeRouteIdentifier(pathname, params) {
   return pathname + JSON.stringify(params);
 }
 
+// Utility routes like _layout or +not-found should be excluded
+// routeNode.route contains the "normal" route path, which is the one that should be displayed to the user
+// However, we need to watch out for the first /index, which should be just /
+// routeNode.dynamic is null or params[], may help with letting the user fill in the dynamic parts
+// routeNode.contextKey is the full path of the route, but starts with ./ and includes parts in (brackets)
+// the URL works as is (excluding index), but those parts shouldn't be displayed in the list seen by the user
+// e.g. ./(auth)/login -> /login
 function extractNestedRouteList(rootNode) {
   const routeList = [];
-  // TODO exclude _layout, +not-found, etc.
+
   const traverse = (node) => {
+    let indexFound = false;
+    const handleIndexFound = (route) => {
+      indexFound = true;
+      return "/" + route.replace("index", "");
+    }
+
     if (node) {
-      const { contextKey, children } = node;
-      if (contextKey) {
-        routeList.push(contextKey);
+      const { contextKey, children, route, dynamic, type } = node;
+      const fileName = route.split("/").pop();
+
+      // Won't match _layout, because for it the fileName is empty
+      // We need _layout's children, so that's necessary
+      if (fileName.startsWith("_") || fileName.startsWith("+")) {
+        return;
+      }
+      if (type === "route") {
+        routeList.push({
+          path: fileName === "index" && !indexFound ? handleIndexFound(route) : "/" + route,
+          filePath: contextKey,
+          children: children,
+          dynamic: dynamic,
+          type: type
+        });
       }
       if (children) {
         children.forEach((child) => {
@@ -23,7 +49,15 @@ function extractNestedRouteList(rootNode) {
     }
   };
   traverse(rootNode);
-  return routeList;
+
+  return routeList.sort((a, b) => {
+    const aPath = a.path.split("/");
+    const bPath = b.path.split("/");
+    if (aPath.length === bPath.length) {
+      return a.path.localeCompare(b.path);
+    }
+    return aPath.length - bPath.length;
+  });
 }
 
 function useRouterPluginMainHook({ onNavigationChange }) {
@@ -46,7 +80,8 @@ function useRouterPluginMainHook({ onNavigationChange }) {
       console.log("Route node:", routeNode);
       console.log("Root layout location:", routeNode.contextKey);
       console.log("Children:", routeNode.children);
-      console.log("Flattened route list:", extractNestedRouteList(routeNode));
+      const routeList = extractNestedRouteList(routeNode);
+      console.log("Route list:", routeList);
     }
     
     onNavigationChange({
