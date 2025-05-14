@@ -50,9 +50,10 @@ import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
 import { focusSource } from "../utilities/focusSource";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { getLaunchConfiguration, getSkipFiles } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager } from "./DeviceSessionsManager";
 import { DeviceSessionsManagerDelegate, ReloadAction } from "../common/DeviceSessionsManager";
+import { SkipFilesProcessor } from "../utilities/skipFiles";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -553,20 +554,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       let stack = undefined;
       if (requestStack && inspectData?.stack) {
         stack = inspectData.stack;
-        const inspectorExcludePattern = workspace
-          .getConfiguration("RadonIDE")
-          .get("inspectorExcludePattern") as string | undefined;
-        const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
-        function testInspectorExcludeGlobPattern(filename: string) {
-          return patterns?.some((pattern) => minimatch(filename, pattern));
-        }
+        const skipFiles = new SkipFilesProcessor(getSkipFiles());
         stack.forEach((item: any) => {
-          item.hide = false;
-          if (!isAppSourceFile(item.source.fileName)) {
-            item.hide = true;
-          } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
-            item.hide = true;
-          }
+          item.hide = skipFiles.shouldSkipFile(item.source.fileName);
         });
       }
       callback({ frame: inspectData.frame, stack });
@@ -760,16 +750,4 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   //#endregion
-}
-
-export function isAppSourceFile(filePath: string) {
-  const relativeToWorkspace = workspace.asRelativePath(filePath, false);
-
-  if (relativeToWorkspace === filePath) {
-    // when path is outside of any workspace folder, workspace.asRelativePath returns the original path
-    return false;
-  }
-
-  // if the relative path contain node_modules, we assume it's not user's app source file:
-  return !relativeToWorkspace.includes("node_modules");
 }

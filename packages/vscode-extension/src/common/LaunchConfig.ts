@@ -14,6 +14,7 @@ export type LaunchConfigurationOptions = {
     ios?: CustomBuild;
     android?: CustomBuild;
   };
+  skipFiles?: string[];
   eas?: {
     ios?: EasConfig;
     android?: EasConfig;

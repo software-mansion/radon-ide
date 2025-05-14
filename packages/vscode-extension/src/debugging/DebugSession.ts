@@ -5,6 +5,7 @@ import { disposeAll } from "../utilities/disposables";
 import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
+import { getSkipFiles } from "../utilities/launchConfiguration";
 
 const PING_TIMEOUT = 1000;
 
@@ -139,8 +140,6 @@ export class DebugSession implements Disposable {
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
     const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
 
-    const extensionPath = extensionContext.extensionUri.path;
-
     this.jsDebugSession = await startDebugging(
       undefined,
       {
@@ -152,12 +151,7 @@ export class DebugSession implements Disposable {
         websocketAddress: configuration.websocketAddress,
         expoPreludeLineCount: configuration.expoPreludeLineCount,
         displayDebuggerOverlay: configuration.displayDebuggerOverlay,
-        skipFiles: [
-          "__source__",
-          `${extensionPath}/**/*`,
-          "**/node_modules/**/*",
-          "!**/node_modules/expo-router/**/*",
-        ],
+        skipFiles: getSkipFiles(),
       },
       {
         parentSession: this.parentDebugSession,
