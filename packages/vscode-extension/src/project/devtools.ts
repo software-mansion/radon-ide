@@ -1,6 +1,7 @@
 import http from "http";
 import { commands, Disposable, Uri } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
+import { Route } from "../webview/providers/RoutesProvider";
 import { Logger } from "../Logger";
 import {
   createBridge,
@@ -26,6 +27,7 @@ export const DEVTOOLS_EVENTS = [
   "RNIDE_rendersReported",
   "RNIDE_pluginMessage",
   "RNIDE_isProfilingReact",
+  "RNIDE_routeListRetrieved",
 ] as const;
 
 // Define the payload types for each event
@@ -40,6 +42,7 @@ export interface DevtoolsEvents {
   RNIDE_rendersReported: [any];
   RNIDE_pluginMessage: [{ scope: string; type: string; data: any }];
   RNIDE_isProfilingReact: [boolean];
+  RNIDE_routeListRetrieved: [{ routes: Route[] }];
 }
 
 function filePathForProfile() {

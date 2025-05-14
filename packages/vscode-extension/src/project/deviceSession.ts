@@ -28,6 +28,7 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { ToolsDelegate, ToolsManager } from "./tools";
 import { extensionContext } from "../utilities/extensionContext";
 import { ReloadAction } from "../common/DeviceSessionsManager";
+import { Route } from "../webview/providers/RoutesProvider";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -63,6 +64,7 @@ export type AppEvent = {
   fastRefreshComplete: undefined;
   isProfilingReact: boolean;
   isSavingReactProfile: boolean;
+  routeListRetrieved: Route[];
 };
 
 export type DeviceSessionDelegate = {
@@ -166,6 +168,9 @@ export class DeviceSession implements Disposable {
     });
     devtools.onEvent("RNIDE_isProfilingReact", (isProfiling) => {
       this.deviceSessionDelegate.onAppEvent("isProfilingReact", isProfiling);
+    });
+    devtools.onEvent("RNIDE_routeListRetrieved", (payload) => {
+      this.deviceSessionDelegate.onAppEvent("routeListRetrieved", payload.routes);
     });
     return devtools;
   }

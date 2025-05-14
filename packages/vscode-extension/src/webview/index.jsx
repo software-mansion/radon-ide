@@ -1,3 +1,10 @@
+window.RNIDE_lastRouteList = null;
+window.addEventListener("message", (event) => {
+  if (event.data?.type === "RNIDE_routeListRetrieved") {
+    window.RNIDE_lastRouteList = event.data.routes;
+  }
+});
+
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
@@ -8,6 +15,7 @@ import ModalProvider from "./providers/ModalProvider";
 import ProjectProvider from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
 import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
+import RoutesProvider from "./providers/RoutesProvider";
 
 import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
 import { TelemetryProvider } from "./providers/TelemetryProvider";
@@ -31,7 +39,9 @@ root.render(
                 <DependenciesProvider>
                   <ModalProvider>
                     <AlertProvider>
-                      <App />
+                      <RoutesProvider>
+                        <App />
+                      </RoutesProvider>
                     </AlertProvider>
                   </ModalProvider>
                 </DependenciesProvider>

@@ -217,6 +217,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       case "isSavingReactProfile":
         this.eventEmitter.emit("isSavingReactProfile", payload);
         break;
+      case "routeListRetrieved":
+        this.eventEmitter.emit("routeListRetrieved", payload);
+        break;
     }
   };
   //#endregion

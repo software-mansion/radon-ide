@@ -1,7 +1,8 @@
 import React, { PropsWithChildren, useEffect, useRef } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
-import { partition } from "lodash";
+import { partition, set } from "lodash";
+import { Route, useRoutes } from "../providers/RoutesProvider";
 import "./UrlSelect.css";
 
 export type UrlItem = { id: string; name: string };
@@ -69,10 +70,11 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   const [inputValue, setInputValue] = React.useState("");
   const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
   const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
-
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
   const textfieldRef = useRef<HTMLInputElement>(null);
 
+  const routes = useRoutes();
+  
   const getNameFromId = (id: string) => {
     const item = items.find((item) => item.id === id);
     if (!item) {
@@ -259,6 +261,19 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               </div>
             )}
           </div>
+
+          {/* Temporary check if the routes have loaded */}
+          {routes && routes.length > 0 && (
+            <div className="url-select-separator" />
+          )}
+          {routes.map((route) => (
+            <div key={route.path} className="url-select-group">
+              <div className="url-select-label">{route.path}</div>
+              {route.children.map((child) => (
+                <p>am route {child.path}</p>
+              ))}
+            </div>
+          ))}
         </Popover.Content>
       </Popover.Root>
     </div>

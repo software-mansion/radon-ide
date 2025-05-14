@@ -64,8 +64,6 @@ function useRouterPluginMainHook({ onNavigationChange }) {
   const router = useRouter();
   const routeInfo = useRouteInfo()
 
-  const routeNode = store.routeNode;
-  
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
 
@@ -76,14 +74,15 @@ function useRouterPluginMainHook({ onNavigationChange }) {
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
 
   useEffect(() => {
-    if (routeNode) {
-      console.log("Route node:", routeNode);
-      console.log("Root layout location:", routeNode.contextKey);
-      console.log("Children:", routeNode.children);
-      const routeList = extractNestedRouteList(routeNode);
-      console.log("Route list:", routeList);
+    const routeList = extractNestedRouteList(store.routeNode);
+    if (global.__REACT_DEVTOOLS_GLOBAL_HOOK__?.reactDevtoolsAgent?._bridge) {
+      global.__REACT_DEVTOOLS_GLOBAL_HOOK__.reactDevtoolsAgent._bridge.send("RNIDE_routeListRetrieved", {
+        routes: routeList,
+      });
     }
-    
+  }, [store.routeNode]);
+
+  useEffect(() => {
     onNavigationChange({
       name: displayName,
       pathname,

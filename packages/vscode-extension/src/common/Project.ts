@@ -1,5 +1,6 @@
 import { BuildType } from "./BuildConfig";
 import { DeviceInfo, DevicePlatform } from "./DeviceManager";
+import { Route } from "../webview/providers/RoutesProvider";
 
 export type Locale = string;
 
@@ -141,6 +142,7 @@ export interface ProjectEventMap {
   isProfilingCPU: boolean;
   isProfilingReact: boolean;
   isSavingReactProfile: boolean;
+  routeListRetrieved: Route[];
 }
 
 export interface ProjectEventListener<T> {
