@@ -33,6 +33,7 @@ import { registerChat } from "./chat";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
+import { IDEPanelMoveTarget } from "./common/utils";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -87,8 +88,12 @@ export async function activate(context: ExtensionContext) {
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
+  // this flag is used to prevent re-entry for showIDEPanel method, inside this method
+  // we update the configuration, and this method is also called as a result of configuration
+  // change such that we can monitor the changes that users make directly from the VSCode settings
   let updatingConfigProgrammatically = false;
-  async function showIDEPanel(newLocation?: "editor-tab" | "new-window" | "side-panel") {
+
+  async function showIDEPanel(newLocation?: IDEPanelMoveTarget) {
     if (updatingConfigProgrammatically) {
       return;
     }

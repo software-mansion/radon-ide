@@ -9,6 +9,8 @@ export interface UtilsEventMap {
   telemetryEnabledChanged: boolean;
 }
 
+export type IDEPanelMoveTarget = "new-window" | "editor-tab" | "side-panel";
+
 export interface UtilsInterface {
   getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
 
@@ -18,7 +20,7 @@ export interface UtilsInterface {
 
   saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
 
-  movePanelTo(location: "new-window" | "editor-tab" | "side-panel"): Promise<void>;
+  movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
 
   showDismissableError(errorMessage: string): Promise<void>;
 
