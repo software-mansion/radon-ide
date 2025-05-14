@@ -194,6 +194,7 @@
           "type": "string",
           "scope": "window",
           "default": null,
+          "markdownDeprecationMessage": "This setting is now replaced by `skipFiles` option in the launch configuration, check [this link](https://ide.swmansion.com/docs/guides/configuration#customizing-launch-configuration-for-radon-ide) for more information.",
           "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
         }
       }
