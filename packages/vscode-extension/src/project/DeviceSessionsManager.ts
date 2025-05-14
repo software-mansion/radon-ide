@@ -43,6 +43,12 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
   }
 
+  private updateStateForSession(deviceSession: DeviceSession, newState: Partial<ProjectState>) {
+    if (deviceSession === this.selectedDeviceSession) {
+      this.updateProjectState(newState);
+    }
+  }
+
   private async trySelectingActiveDeviceSession(id: string, killPreviousDeviceSession?: boolean) {
     if (!this.deviceSessions.has(id)) {
       return false;
@@ -70,7 +76,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     try {
       const success = await deviceSession.perform(type);
       if (success) {
-        this.updateProjectState({ status: "running" });
+        this.updateStateForSession(deviceSession, { status: "running" });
         return true;
       } else if (!success) {
         window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
@@ -79,7 +85,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
       if (e instanceof CancelError) {
         return false;
       } else if (e instanceof BuildError) {
-        this.updateProjectState({
+        this.updateStateForSession(deviceSession, {
           status: "buildError",
           buildError: {
             message: e.message,
@@ -142,6 +148,8 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
       }
     }
 
+    // we explicitely update the project state w/o using updateStateForSession
+    // as the new session is just being created
     this.updateProjectState({
       selectedDevice: deviceInfo,
       initialized: true,
@@ -150,9 +158,9 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
       previewURL: undefined,
     });
 
-    let newDeviceSession;
+    let newDeviceSession: DeviceSession | undefined;
     try {
-      newDeviceSession = new DeviceSession(
+      const deviceSession = new DeviceSession(
         this.applicationContext.appRootFolder,
         device,
         this.applicationContext.dependencyManager,
@@ -162,32 +170,31 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
         this.deviceSessionManagerDelegate,
         this.deviceSessionManagerDelegate
       );
-      this.deviceSessions.set(newDeviceId, newDeviceSession);
+      newDeviceSession = deviceSession;
+      this.deviceSessions.set(newDeviceId, deviceSession);
       this.selectedDevice = newDeviceId;
 
       const previewURL = await newDeviceSession.start({
         resetMetroCache: false,
         cleanBuild: false,
         previewReadyCallback: (url) => {
-          this.updateProjectState({ previewURL: url });
+          this.updateStateForSession(deviceSession, { previewURL: url });
         },
       });
-      this.updateProjectState({
+      this.updateStateForSession(deviceSession, {
         previewURL,
         status: "running",
       });
     } catch (e) {
       Logger.error("Couldn't start device session", e instanceof Error ? e.message : e);
 
-      const isSelected = this.selectedDevice === deviceInfo.id;
-      const isNewSession = this.selectedDeviceSession === newDeviceSession;
-      if (isSelected && isNewSession) {
+      if (newDeviceSession) {
         if (e instanceof CancelError) {
           Logger.debug("[SelectDevice] Device selection was canceled", e);
         } else if (e instanceof DeviceBootError) {
-          this.updateProjectState({ status: "bootError" });
+          this.updateStateForSession(newDeviceSession, { status: "bootError" });
         } else if (e instanceof BuildError) {
-          this.updateProjectState({
+          this.updateStateForSession(newDeviceSession, {
             status: "buildError",
             buildError: {
               message: e.message,
@@ -196,7 +203,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
             },
           });
         } else {
-          this.updateProjectState({
+          this.updateStateForSession(newDeviceSession, {
             status: "buildError",
             buildError: {
               message: (e as Error).message,
@@ -279,8 +286,9 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
 
   // used in callbacks, needs to be an arrow function
   private removeDeviceListener = async (device: DeviceInfo) => {
+    const deviceSession = this.selectedDeviceSession;
     if (this.selectedDevice === device.id) {
-      this.updateProjectState({ status: "starting" });
+      this.updateStateForSession(this.selectedDeviceSession, { status: "starting" });
       await this.killAndRemoveDevice(device.id);
       await this.trySelectingDevice();
     }
