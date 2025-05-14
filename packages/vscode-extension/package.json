@@ -413,6 +413,10 @@
                   }
                 }
               },
+              "skipFiles": {
+                "type": "array",
+                "description": "Files matching this pattern will be filtered out or hidden from debugger stack traces / exception breakpoints in debugger or when using inspector. The patterns support negation (when '!' is place at the start of the pattern) Radon IDE has a default set of patterns and this option will add to that list. If you want to force the default patterns to be ignored, add '!**/*' as the first pattern to your list."
+              },
               "eas": {
                 "type": "object",
                 "description": "Configuration for EAS build service",
