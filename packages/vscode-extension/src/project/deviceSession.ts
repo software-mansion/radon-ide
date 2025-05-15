@@ -39,6 +39,8 @@ import { ApplicationContext } from "./ApplicationContext";
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const MAX_URL_HISTORY_SIZE = 20;
 
+const something = 88;
+
 export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
   appearance: "dark",
   contentSize: "normal",

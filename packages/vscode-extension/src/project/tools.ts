@@ -89,7 +89,6 @@ export class ToolsManager implements Disposable {
         changed && this.handleStateChange();
       })
     );
-    this.handleStateChange();
   }
 
   public getPlugin(toolName: ToolKey): ToolPlugin | undefined {

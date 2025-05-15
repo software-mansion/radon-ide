@@ -1,11 +1,10 @@
 import http from "http";
-import { commands, Disposable, Uri } from "vscode";
+import { Disposable, Uri } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
 import {
   createBridge,
   createStore,
-  FrontendBridge,
   prepareProfilingDataExport,
   Store,
   Wall,
@@ -183,7 +182,7 @@ export class Devtools implements Disposable {
   }
 
   public dispose() {
-    this.server.close();
+    this.server?.close();
   }
 
   public send(event: string, payload?: any) {
