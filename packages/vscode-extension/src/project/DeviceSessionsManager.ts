@@ -15,13 +15,11 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceSessionState } from "../common/Project";
+import { DeviceSessionInitialState } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
-export class DeviceSessionsManager
-  implements Disposable, DeviceSessionsManagerInterface, DeviceSessionDelegate
-{
+export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerInterface {
   private deviceSessions: Set<DeviceSession> = new Set();
   private activeSession: DeviceSession | undefined;
 
@@ -38,22 +36,6 @@ export class DeviceSessionsManager
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
   }
 
-  // private async trySelectingActiveDeviceSession(id: string, killPreviousDeviceSession?: boolean) {
-  //   if (!this.activeSessions.has(id)) {
-  //     return false;
-  //   }
-  //   if (this.selectedDevice) {
-  //     if (killPreviousDeviceSession) {
-  //       this.killAndRemoveDevice(this.selectedDevice);
-  //     } else {
-  //       await this.selectedDeviceSession?.deactivate();
-  //     }
-  //   }
-  //   this.selectedDevice = id;
-  //   this.selectedDeviceSession?.activate();
-  //   return true;
-  // }
-
   public async reloadCurrentSession(type: ReloadAction) {
     const deviceSession = this.selectedDeviceSession;
     if (!deviceSession) {
@@ -62,12 +44,6 @@ export class DeviceSessionsManager
     }
     return await deviceSession.performReloadAction(type);
   }
-
-  // private onSessionStateChanged(session: DeviceSession) {
-  //   if (session === this.activeSession) {
-  //     this.deviceSessionManagerDelegate.onActiveSessionStateChanged(session.getState());
-  //   }
-  // }
 
   public async startOrActivateSessionForDevice(
     deviceInfo: DeviceInfo,
@@ -214,15 +190,9 @@ export class DeviceSessionsManager
       session?.activate();
     }
     if (session) {
-      this.deviceSessionManagerDelegate.onStateChange(session.getState());
+      this.deviceSessionManagerDelegate.onActiveSessionStateChanged(session.getState());
     } else {
-      this.deviceSessionManagerDelegate.onStateChange({
-        status: "starting",
-        previewURL: undefined,
-        selectedDevice: undefined,
-        startupMessage: undefined,
-        stageProgress: undefined,
-      });
+      this.deviceSessionManagerDelegate.onActiveSessionStateChanged(DeviceSessionInitialState);
     }
   }
 

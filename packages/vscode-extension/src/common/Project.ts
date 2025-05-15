@@ -36,6 +36,17 @@ export type BuildErrorDescriptor = {
 export type ProfilingState = "stopped" | "running" | "saving";
 
 export type DeviceSessionState = {
+  status:
+    | "starting"
+    | "running"
+    | "bootError"
+    | "bundlingError"
+    | "debuggerPaused"
+    | "refreshing"
+    | "buildError";
+  startupMessage: StartupMessage | undefined;
+  stageProgress: number | undefined;
+  buildError: BuildErrorDescriptor | undefined;
   selectedDevice: DeviceInfo | undefined;
   previewURL: string | undefined;
   fastRefreshOngoing: boolean;
@@ -46,24 +57,24 @@ export type DeviceSessionState = {
   isDebuggerPaused: boolean;
   logCount: number;
   hasStaleBuildCache: boolean;
-} & (
-  | {
-      status:
-        | "starting"
-        | "running"
-        | "bootError"
-        | "bundlingError"
-        | "debuggerPaused"
-        | "refreshing";
-      startupMessage: StartupMessage | undefined;
-      stageProgress: number | undefined;
-    }
-  | {
-      status: "buildError";
-      selectedDevice: DeviceInfo | undefined;
-      buildError: BuildErrorDescriptor;
-    }
-);
+};
+
+export const DeviceSessionInitialState: DeviceSessionState = {
+  status: "starting",
+  startupMessage: undefined,
+  stageProgress: undefined,
+  buildError: undefined,
+  selectedDevice: undefined,
+  previewURL: undefined,
+  fastRefreshOngoing: false,
+  profilingReactState: "stopped",
+  profilingCPUState: "stopped",
+  navigationHistory: [],
+  toolsState: undefined,
+  isDebuggerPaused: false,
+  logCount: 0,
+  hasStaleBuildCache: false,
+};
 
 export type ProjectState = {
   initialized: boolean;

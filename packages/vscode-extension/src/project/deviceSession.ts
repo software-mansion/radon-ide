@@ -84,7 +84,7 @@ export class DeviceSession
   private toolsManager: ToolsManager;
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
-  private devtools;
+  public devtools; // TODO: make this private!
   private debugSession: DebugSession;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
@@ -142,9 +142,11 @@ export class DeviceSession
   }
 
   public getState(): DeviceSessionState {
-    const state = {
+    return {
+      status: this.status,
       startupMessage: this.startupMessage,
       stageProgress: this.stageProgress,
+      buildError: this.buildError,
       fastRefreshOngoing: this.fastRefreshOngoing,
       profilingCPUState: this.profilingCPUState,
       profilingReactState: this.profilingReactState,
@@ -156,19 +158,6 @@ export class DeviceSession
       logCount: this.logCount,
       hasStaleBuildCache: this.hasStaleBuildCache,
     };
-    if (this.status === "buildError") {
-      assert(this.buildError, "build error needs to be set");
-      return {
-        ...state,
-        status: "buildError",
-        buildError: this.buildError,
-      };
-    } else {
-      return {
-        ...state,
-        status: this.status,
-      };
-    }
   }
 
   //#region Metro delegate methods
@@ -963,5 +952,13 @@ export class DeviceSession
 
   public async openTool(toolName: ToolKey) {
     this.toolsManager.openTool(toolName);
+  }
+
+  public getPlugin(toolName: ToolKey) {
+    return this.toolsManager.getPlugin(toolName);
+  }
+
+  public getMetroPort() {
+    return this.metro.port;
   }
 }
