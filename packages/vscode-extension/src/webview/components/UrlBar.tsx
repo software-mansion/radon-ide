@@ -40,7 +40,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const [urlList, setUrlList] = useState<UrlItem[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
-  const [urlSelectValue, setUrlSelectValue] = useState<string>(urlList[0]?.id);
+  const [urlSelectValue, setUrlSelectValue] = useState<string | undefined>(urlList[0]?.id);
 
   useEffect(() => {
     function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {

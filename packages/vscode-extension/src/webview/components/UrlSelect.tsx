@@ -53,7 +53,7 @@ const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverIt
 );
 
 interface UrlSelectProps {
-  value: string;
+  value?: string;
   onValueChange: (newValue: string) => void;
   recentItems: UrlItem[];
   items: UrlItem[];
@@ -121,7 +121,9 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   };
 
   useEffect(() => {
-    setInputValue(getNameFromId(value));
+    if (value !== undefined) {
+      setInputValue(getNameFromId(value));
+    }
   }, [value]);
 
   useEffect(() => {
