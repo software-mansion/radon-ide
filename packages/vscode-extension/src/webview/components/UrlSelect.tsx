@@ -1,8 +1,8 @@
 import React, { PropsWithChildren, useEffect, useRef } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
-import { partition, set } from "lodash";
-import { Route, useRoutes } from "../providers/RoutesProvider";
+import { partition, differenceBy } from "lodash";
+import { Route, useRoutes, useRoutesAsItems } from "../providers/RoutesProvider";
 import "./UrlSelect.css";
 
 export type UrlItem = { id: string; name: string };
@@ -63,17 +63,17 @@ interface UrlSelectProps {
 
 type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
-// Currently, recentItems are not used, but they can be mapped to show the most recent
-// URLs in the dropdown. This can be implemented in the future if needed.
 function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
+  const [allItems, setAllItems] = React.useState<UrlItem[]>([]);
   const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
   const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
   const textfieldRef = useRef<HTMLInputElement>(null);
 
   const routes = useRoutes();
+  const routeItems = useRoutesAsItems();
   
   const getNameFromId = (id: string) => {
     const item = items.find((item) => item.id === id);
@@ -122,23 +122,29 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     }
   };
 
+  
   useEffect(() => {
     setInputValue(getNameFromId(value));
   }, [value]);
 
   useEffect(() => {
+    const routesNotInRecent = differenceBy(routeItems, recentItems, (item: UrlItem) => getNameFromId(item.id));
+    const allItems = [...recentItems, ...routesNotInRecent];
+    setAllItems(allItems);
+  }, [inputValue, recentItems]);
+
+  useEffect(() => {
     if (disabled) {
       setFilteredItems([]);
-      setFilteredOutItems(items);
       return;
     }
     const inputValueLowerCase = inputValue.toLowerCase();
-    const [filtered, filteredOut] = partition(items, (item) =>
-      getNameFromId(item.id).toLowerCase().includes(inputValueLowerCase)
+    const [filtered, filteredOut] = partition(allItems, (item) =>
+      item.name.toLowerCase().includes(inputValueLowerCase)
     );
     setFilteredItems(filtered);
     setFilteredOutItems(filteredOut);
-  }, [inputValue, items]);
+  }, [inputValue, allItems, disabled]);
 
   useEffect(() => {
     if (textfieldRef.current) {
@@ -243,7 +249,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
 
             {filteredOutItems.length > 0 && (
               <div className="url-select-group url-select-group-other">
-                <div className="url-select-label">Other paths:</div>
+                {/* <div className="url-select-label">Other paths:</div> */}
                 {filteredOutItems.map(
                   (item) =>
                     item.name && (
@@ -261,19 +267,6 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               </div>
             )}
           </div>
-
-          {/* Temporary check if the routes have loaded */}
-          {routes && routes.length > 0 && (
-            <div className="url-select-separator" />
-          )}
-          {routes.map((route) => (
-            <div key={route.path} className="url-select-group">
-              <div className="url-select-label">{route.path}</div>
-              {route.children.map((child) => (
-                <p>am route {child.path}</p>
-              ))}
-            </div>
-          ))}
         </Popover.Content>
       </Popover.Root>
     </div>

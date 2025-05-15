@@ -59,7 +59,7 @@
 .url-select-separator {
   height: 1px;
   background-color: var(--swm-url-select-separator);
-  margin: 5px;
+  margin: 3px;
 }
 
 .url-select-item {

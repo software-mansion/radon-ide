@@ -49,3 +49,10 @@ export function useRoutes() {
   }
   return context;
 }
+export function useRoutesAsItems() {
+  const routes = useRoutes();
+  return routes.map((route) => ({
+    id: route.path,
+    name: route.path,
+  }));
+}
