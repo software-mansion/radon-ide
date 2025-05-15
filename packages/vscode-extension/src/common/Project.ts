@@ -27,8 +27,27 @@ export type ToolsState = {
   [key: string]: ToolState;
 };
 
-export type ProjectState =
-  | ({
+export type BuildErrorDescriptor = {
+  message: string;
+  platform: DevicePlatform;
+  buildType: BuildType | null;
+};
+
+export type ProfilingState = "stopped" | "running" | "saving";
+
+export type DeviceSessionState = {
+  selectedDevice: DeviceInfo | undefined;
+  previewURL: string | undefined;
+  fastRefreshOngoing: boolean;
+  profilingReactState: ProfilingState;
+  profilingCPUState: ProfilingState;
+  navigationHistory: { displayName: string; id: string }[];
+  toolsState: ToolsState | undefined;
+  isDebuggerPaused: boolean;
+  logCount: number;
+  hasStaleBuildCache: boolean;
+} & (
+  | {
       status:
         | "starting"
         | "running"
@@ -36,26 +55,20 @@ export type ProjectState =
         | "bundlingError"
         | "debuggerPaused"
         | "refreshing";
-    } & ProjectStateCommon)
-  | ProjectStateBuildError;
+      startupMessage: StartupMessage | undefined;
+      stageProgress: number | undefined;
+    }
+  | {
+      status: "buildError";
+      selectedDevice: DeviceInfo | undefined;
+      buildError: BuildErrorDescriptor;
+    }
+);
 
-type ProjectStateCommon = {
-  previewURL: string | undefined;
-  selectedDevice: DeviceInfo | undefined;
+export type ProjectState = {
   initialized: boolean;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
-  startupMessage: StartupMessage | undefined;
-  stageProgress: number | undefined;
-};
-
-type ProjectStateBuildError = {
-  status: "buildError";
-  buildError: {
-    message: string;
-    platform: DevicePlatform;
-    buildType: BuildType | null;
-  };
-} & ProjectStateCommon;
+} & DeviceSessionState;
 
 export type ZoomLevelType = number | "Fit";
 
@@ -138,9 +151,6 @@ export interface ProjectEventMap {
   needsNativeRebuild: void;
   replayDataCreated: MultimediaData;
   isRecording: boolean;
-  isProfilingCPU: boolean;
-  isProfilingReact: boolean;
-  isSavingReactProfile: boolean;
 }
 
 export interface ProjectEventListener<T> {
@@ -163,7 +173,6 @@ export interface ProjectInterface {
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
   runCommand(command: string): Promise<void>;
 
-  getToolsState(): Promise<ToolsState>;
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;
 

@@ -1,10 +1,12 @@
 import _ from "lodash";
-import { Disposable } from "vscode";
+import assert from "assert";
+import { commands, DebugSessionCustomEvent, Disposable, window } from "vscode";
 import { MetroLauncher, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import {
+  BuildError,
   BuildManager,
   BuildManagerDelegate,
   BuildResult,
@@ -16,6 +18,10 @@ import {
   StartupMessage,
   TouchPoint,
   DeviceButtonType,
+  DeviceSessionState,
+  BuildErrorDescriptor,
+  ToolsState,
+  ProfilingState,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
@@ -24,10 +30,11 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildCache } from "../builders/BuildCache";
 import { CancelError, CancelToken } from "../builders/cancelToken";
-import { DevicePlatform } from "../common/DeviceManager";
-import { ToolsDelegate, ToolsManager } from "./tools";
+import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
+import { ToolKey, ToolsDelegate, ToolsManager } from "./tools";
 import { extensionContext } from "../utilities/extensionContext";
 import { ReloadAction } from "../common/DeviceSessionsManager";
+import { focusSource } from "../utilities/focusSource";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
 
@@ -45,11 +52,9 @@ export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
   showTouches: false,
 };
 
-type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = {
   cleanBuild: boolean;
   resetMetroCache: boolean;
-  previewReadyCallback: PreviewReadyCallback;
 };
 
 type RestartOptions = {
@@ -57,27 +62,10 @@ type RestartOptions = {
   cleanCache: boolean;
 };
 
-export type AppEvent = {
-  navigationChanged: { displayName: string; id: string };
-  fastRefreshStarted: undefined;
-  fastRefreshComplete: undefined;
-  isProfilingReact: boolean;
-  isSavingReactProfile: boolean;
-};
-
 export type DeviceSessionDelegate = {
-  onAppEvent<E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void;
-  onStateChange(state: StartupMessage): void;
-  onReloadStarted(id: string): void;
-  onReloadCompleted(id: string): void;
-  onPreviewReady(previewURL: string): void;
-  onBuildProgress(stageProgress: number): void;
-  onDeviceSettingChanged(settings: DeviceSettings): void;
+  onStateChange(state: DeviceSessionState): void;
   ensureDependenciesAndNodeVersion(): Promise<void>;
-} & MetroDelegate &
-  ToolsDelegate &
-  DebugSessionDelegate &
-  BuildManagerDelegate;
+};
 
 export class DeviceBootError extends Error {
   constructor(
@@ -88,13 +76,15 @@ export class DeviceBootError extends Error {
   }
 }
 
-export class DeviceSession implements Disposable {
-  public metro: MetroLauncher;
-  public toolsManager: ToolsManager;
-  private isActive: boolean = false;
+export class DeviceSession
+  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate, BuildManagerDelegate
+{
+  private isActive = false;
+  private metro: MetroLauncher;
+  private toolsManager: ToolsManager;
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
-  public devtools;
+  private devtools;
   private debugSession: DebugSession;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
@@ -102,6 +92,17 @@ export class DeviceSession implements Disposable {
   private isLaunching = true;
   private cancelToken: CancelToken | undefined;
 
+  private status: DeviceSessionState["status"] = "starting";
+  private startupMessage: StartupMessage | undefined;
+  private stageProgress: number | undefined;
+  private buildError: BuildErrorDescriptor | undefined;
+  private fastRefreshOngoing = false;
+  private profilingCPUState: ProfilingState = "stopped";
+  private profilingReactState: ProfilingState = "stopped";
+  private navigationHistory: { displayName: string; id: string }[] = [];
+  private logCount = 0;
+  private isDebuggerPaused = false;
+  private hasStaleBuildCache = false;
   private get buildResult() {
     if (!this.maybeBuildResult) {
       throw new Error("Expecting build to be ready");
@@ -123,29 +124,128 @@ export class DeviceSession implements Disposable {
 
   constructor(
     private readonly appRootFolder: string,
+    readonly deviceInfo: DeviceInfo,
     private readonly device: DeviceBase,
     readonly dependencyManager: DependencyManager,
     readonly buildCache: BuildCache,
-    debugEventDelegate: DebugSessionDelegate,
-    private readonly deviceSessionDelegate: DeviceSessionDelegate,
-    private readonly metroDelegate: MetroDelegate,
-    private readonly toolsDelegate: ToolsDelegate
+    private readonly deviceSessionDelegate: DeviceSessionDelegate
   ) {
     this.deviceSettings =
       extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? DEVICE_SETTINGS_DEFAULT;
 
     this.devtools = this.makeDevtools();
-    this.metro = new MetroLauncher(this.devtools, metroDelegate);
-    this.toolsManager = new ToolsManager(this.devtools, toolsDelegate);
+    this.metro = new MetroLauncher(this.devtools, this);
+    this.toolsManager = new ToolsManager(this.devtools, this);
 
-    this.buildManager = new BuildManager(
-      dependencyManager,
-      buildCache,
-      deviceSessionDelegate,
-      device.platform
-    );
-    this.debugSession = new DebugSession(debugEventDelegate);
+    this.buildManager = new BuildManager(dependencyManager, buildCache, this, device.platform);
+    this.debugSession = new DebugSession(this);
   }
+
+  public getState(): DeviceSessionState {
+    const state = {
+      startupMessage: this.startupMessage,
+      stageProgress: this.stageProgress,
+      fastRefreshOngoing: this.fastRefreshOngoing,
+      profilingCPUState: this.profilingCPUState,
+      profilingReactState: this.profilingReactState,
+      navigationHistory: this.navigationHistory,
+      selectedDevice: this.deviceInfo,
+      previewURL: this.previewURL,
+      toolsState: this.toolsManager.getToolsState(),
+      isDebuggerPaused: this.isDebuggerPaused,
+      logCount: this.logCount,
+      hasStaleBuildCache: this.hasStaleBuildCache,
+    };
+    if (this.status === "buildError") {
+      assert(this.buildError, "build error needs to be set");
+      return {
+        ...state,
+        status: "buildError",
+        buildError: this.buildError,
+      };
+    } else {
+      return {
+        ...state,
+        status: this.status,
+      };
+    }
+  }
+
+  //#region Metro delegate methods
+
+  onBundleProgress = throttle((stageProgress: number) => {
+    if (this.startupMessage === StartupMessage.WaitingForAppToLoad) {
+      this.stageProgress = stageProgress;
+      this.emitStateChange();
+    }
+  }, 100);
+
+  onBundlingError = async (message: string, source: DebugSource, errorModulePath: string) => {
+    await this.appendDebugConsoleEntry(message, "error", source);
+
+    if (this.status === "starting") {
+      focusSource(source);
+    }
+
+    Logger.error("[Bundling Error]", message);
+
+    this.status = "bundlingError";
+    this.emitStateChange();
+  };
+
+  //#endregion
+
+  //#region Tools delegate methods
+
+  onToolsStateChange = (toolsState: ToolsState) => {
+    this.emitStateChange();
+  };
+
+  //#endregion
+
+  //#region Debug session delegate methods
+
+  onConsoleLog = (event: DebugSessionCustomEvent): void => {
+    this.logCount++;
+    this.emitStateChange();
+  };
+
+  onDebuggerPaused = (event: DebugSessionCustomEvent): void => {
+    this.isDebuggerPaused = true;
+    this.emitStateChange();
+
+    if (this.isActive) {
+      commands.executeCommand("workbench.view.debug");
+    }
+  };
+
+  onDebuggerResumed = (event: DebugSessionCustomEvent): void => {
+    this.isDebuggerPaused = false;
+    this.emitStateChange();
+  };
+
+  onProfilingCPUStarted = (event: DebugSessionCustomEvent): void => {
+    this.profilingCPUState = "running";
+    this.emitStateChange();
+  };
+
+  onProfilingCPUStopped = (event: DebugSessionCustomEvent): void => {
+    this.profilingCPUState = "stopped";
+    this.emitStateChange();
+  };
+
+  //#endregion
+
+  //#region Build manager delegate methods
+
+  onCacheStale = (platform: DevicePlatform) => {
+    if (platform === this.device.platform) {
+      this.hasStaleBuildCache = true;
+      this.emitStateChange();
+    }
+  };
+
+  //#endregion
 
   private makeDevtools() {
     const devtools = new Devtools();
@@ -155,17 +255,23 @@ export class DeviceSession implements Disposable {
     // We don't need to store event disposables here as they are tied to the lifecycle
     // of the devtools instance, which is disposed when we recreate the devtools or
     // when the device session is disposed
-    devtools.onEvent("RNIDE_navigationChanged", (payload) => {
-      this.deviceSessionDelegate.onAppEvent("navigationChanged", payload);
+    devtools.onEvent("RNIDE_navigationChanged", (payload: { displayName: string; id: string }) => {
+      this.navigationHistory.push(payload);
+      this.emitStateChange();
     });
     devtools.onEvent("RNIDE_fastRefreshStarted", () => {
-      this.deviceSessionDelegate.onAppEvent("fastRefreshStarted", undefined);
+      this.fastRefreshOngoing = true;
+      this.emitStateChange();
     });
     devtools.onEvent("RNIDE_fastRefreshComplete", () => {
-      this.deviceSessionDelegate.onAppEvent("fastRefreshComplete", undefined);
+      this.fastRefreshOngoing = false;
+      this.emitStateChange();
     });
     devtools.onEvent("RNIDE_isProfilingReact", (isProfiling) => {
-      this.deviceSessionDelegate.onAppEvent("isProfilingReact", isProfiling);
+      if (this.profilingReactState !== "saving") {
+        this.profilingReactState = isProfiling ? "running" : "stopped";
+        this.emitStateChange();
+      }
     });
     return devtools;
   }
@@ -187,7 +293,7 @@ export class DeviceSession implements Disposable {
     this.isActive = true;
     this.buildManager.activate();
     this.toolsManager.activate();
-    this.debugSession = new DebugSession(this.deviceSessionDelegate);
+    this.debugSession = new DebugSession(this);
     await this.debugSession.startParentDebugSession();
     await this.connectJSDebugger();
   }
@@ -199,7 +305,42 @@ export class DeviceSession implements Disposable {
     this.toolsManager.deactivate();
   }
 
-  public async perform(type: ReloadAction): Promise<boolean> {
+  public async performReloadAction(type: ReloadAction): Promise<boolean> {
+    try {
+      this.status = "starting";
+      this.emitStateChange();
+
+      getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
+        platform: this.device.platform,
+        method: type,
+      });
+      const result = await this.performReloadActionInternal(type);
+      if (result) {
+        this.status = "running";
+        this.emitStateChange();
+      } else {
+        window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
+      }
+      return result;
+    } catch (e) {
+      if (e instanceof CancelError) {
+        // reload got cancelled, we don't show any errors
+        return false;
+      } else if (e instanceof BuildError) {
+        this.status = "buildError";
+        this.buildError = {
+          message: e.message,
+          buildType: e.buildType,
+          platform: this.device.platform,
+        };
+        this.emitStateChange();
+      }
+      Logger.error("Failed to perform reload action", type, e);
+      throw e;
+    }
+  }
+
+  private async performReloadActionInternal(type: ReloadAction): Promise<boolean> {
     try {
       switch (type) {
         case "autoReload":
@@ -226,7 +367,6 @@ export class DeviceSession implements Disposable {
       Logger.debug("[Reload]", e);
       throw e;
     }
-    throw new Error("Not implemented " + type);
   }
 
   private async reloadJS() {
@@ -284,8 +424,8 @@ export class DeviceSession implements Disposable {
       const oldMetro = this.metro;
       const oldToolsManager = this.toolsManager;
       this.devtools = this.makeDevtools();
-      this.metro = new MetroLauncher(this.devtools, this.metroDelegate);
-      this.toolsManager = new ToolsManager(this.devtools, this.toolsDelegate);
+      this.metro = new MetroLauncher(this.devtools, this);
+      this.toolsManager = new ToolsManager(this.devtools, this);
       oldToolsManager.dispose();
       oldDevtools.dispose();
       oldMetro.dispose();
@@ -302,7 +442,8 @@ export class DeviceSession implements Disposable {
     }
 
     await cancelToken.adapt(this.restartDebugger());
-    this.deviceSessionDelegate.onStateChange(StartupMessage.BootingDevice);
+    this.startupMessage = StartupMessage.BootingDevice;
+    this.emitStateChange();
     await cancelToken.adapt(this.device.reboot());
     await this.buildApp({ appRoot: this.appRootFolder, clean: forceClean, cancelToken });
     await this.installApp({ reinstall: false });
@@ -315,7 +456,8 @@ export class DeviceSession implements Disposable {
       platform: this.device.platform,
     });
 
-    this.deviceSessionDelegate.onReloadStarted(this.device.deviceInfo.id);
+    this.status = "starting";
+    this.emitStateChange();
 
     try {
       if (this.buildManager.shouldRebuild()) {
@@ -331,7 +473,8 @@ export class DeviceSession implements Disposable {
 
       const restartSucceeded = await this.restartProcess();
       if (restartSucceeded) {
-        this.deviceSessionDelegate.onReloadCompleted(this.device.deviceInfo.id);
+        this.status = "running";
+        this.emitStateChange();
       }
     } catch (e) {
       if (e instanceof CancelError) {
@@ -381,7 +524,8 @@ export class DeviceSession implements Disposable {
   }
 
   private async reloadMetro() {
-    this.deviceSessionDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+    this.startupMessage = StartupMessage.WaitingForAppToLoad;
+    this.emitStateChange();
     const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
     const bundleErrorSubscription = this.metro.onBundleError(() => {
       reject(new Error("Bundle error occurred during reload"));
@@ -392,7 +536,8 @@ export class DeviceSession implements Disposable {
     } finally {
       bundleErrorSubscription.dispose();
     }
-    this.deviceSessionDelegate.onStateChange(StartupMessage.AttachingDebugger);
+    this.startupMessage = StartupMessage.AttachingDebugger;
+    this.emitStateChange();
     await this.reconnectJSDebuggerIfNeeded();
   }
 
@@ -412,13 +557,15 @@ export class DeviceSession implements Disposable {
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
-    this.deviceSessionDelegate.onStateChange(StartupMessage.Launching);
+    this.startupMessage = StartupMessage.Launching;
+    this.emitStateChange();
     await cancelToken.adapt(
       this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port)
     );
 
     Logger.debug("Will wait for app ready and for preview");
-    this.deviceSessionDelegate.onStateChange(StartupMessage.WaitingForAppToLoad);
+    this.startupMessage = StartupMessage.WaitingForAppToLoad;
+    this.emitStateChange();
 
     let previewURL: string | undefined;
     if (shouldWaitForAppLaunch) {
@@ -439,14 +586,15 @@ export class DeviceSession implements Disposable {
         this.metro.ready(),
         this.device.startPreview().then((url) => {
           previewURL = url;
-          this.deviceSessionDelegate.onPreviewReady(url);
+          this.emitStateChange();
         }),
         waitForAppReady,
       ])
     );
 
     Logger.debug("App and preview ready, moving on...");
-    this.deviceSessionDelegate.onStateChange(StartupMessage.AttachingDebugger);
+    this.startupMessage = StartupMessage.AttachingDebugger;
+    this.emitStateChange();
     await cancelToken.adapt(this.connectJSDebugger());
 
     this.isLaunching = false;
@@ -469,7 +617,8 @@ export class DeviceSession implements Disposable {
   }
 
   private async bootDevice(deviceSettings: DeviceSettings) {
-    this.deviceSessionDelegate.onStateChange(StartupMessage.BootingDevice);
+    this.startupMessage = StartupMessage.BootingDevice;
+    this.emitStateChange();
     try {
       await this.device.bootDevice(deviceSettings);
     } catch (e) {
@@ -488,12 +637,16 @@ export class DeviceSession implements Disposable {
     cancelToken: CancelToken;
   }) {
     const buildStartTime = Date.now();
-    this.deviceSessionDelegate.onStateChange(StartupMessage.Building);
+    this.startupMessage = StartupMessage.Building;
+    this.emitStateChange();
     this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
       appRoot,
       clean,
       progressListener: throttle((stageProgress: number) => {
-        this.deviceSessionDelegate.onBuildProgress(stageProgress);
+        if (this.startupMessage === StartupMessage.Building) {
+          this.stageProgress = stageProgress;
+          this.emitStateChange();
+        }
       }, 100),
       cancelToken,
     });
@@ -510,18 +663,58 @@ export class DeviceSession implements Disposable {
   }
 
   private async installApp({ reinstall }: { reinstall: boolean }) {
-    this.deviceSessionDelegate.onStateChange(StartupMessage.Installing);
+    this.startupMessage = StartupMessage.Installing;
+    this.emitStateChange();
     return this.device.installApp(this.buildResult, reinstall);
   }
 
   private async waitForMetroReady() {
-    this.deviceSessionDelegate.onStateChange(StartupMessage.StartingPackager);
+    this.startupMessage = StartupMessage.StartingPackager;
+    this.emitStateChange();
     // wait for metro/devtools to start before we continue
     await Promise.all([this.metro.ready(), this.devtools.ready()]);
     Logger.debug("Metro & devtools ready");
   }
 
-  public async start({ cleanBuild, resetMetroCache, previewReadyCallback }: StartOptions) {
+  public async start({ cleanBuild, resetMetroCache }: StartOptions) {
+    try {
+      await this.startInternal({ cleanBuild, resetMetroCache });
+    } catch (e) {
+      if (e instanceof CancelError) {
+        Logger.info("Device selection was canceled", e);
+      } else if (e instanceof DeviceBootError) {
+        this.status = "bootError";
+      } else if (e instanceof BuildError) {
+        this.status = "buildError";
+        this.buildError = {
+          message: e.message,
+          buildType: e.buildType,
+          platform: this.device.platform,
+        };
+      } else {
+        this.status = "buildError";
+        this.buildError = {
+          message: (e as Error).message,
+          buildType: null,
+          platform: this.device.platform,
+        };
+      }
+      throw e;
+    } finally {
+      this.emitStateChange();
+    }
+  }
+
+  private emitStateChange() {
+    this.deviceSessionDelegate.onStateChange(this.getState());
+  }
+
+  private async startInternal({ cleanBuild, resetMetroCache }: StartOptions) {
+    this.status = "starting";
+    this.stageProgress = undefined;
+    this.startupMessage = StartupMessage.InitializingDevice;
+    this.emitStateChange();
+
     if (this.cancelToken) {
       this.cancelToken.cancel();
       this.cancelToken = undefined;
@@ -551,9 +744,8 @@ export class DeviceSession implements Disposable {
     await cancelToken.adapt(this.bootDevice(this.deviceSettings));
     await this.buildApp({ appRoot: this.appRootFolder, clean: cleanBuild, cancelToken });
     await cancelToken.adapt(this.installApp({ reinstall: false }));
-    const previewUrl = await this.launchApp(cancelToken);
+    await this.launchApp(cancelToken);
     Logger.debug("Device session started");
-    return previewUrl;
   }
 
   private async connectJSDebugger() {
@@ -630,6 +822,19 @@ export class DeviceSession implements Disposable {
 
   public async captureScreenshot() {
     return this.device.captureScreenshot();
+  }
+
+  public async startProfilingReact() {
+    return await this.devtools.startProfilingReact();
+  }
+
+  public async stopProfilingReact() {
+    try {
+      return await this.devtools.stopProfilingReact();
+    } finally {
+      this.profilingReactState = "stopped";
+      this.emitStateChange();
+    }
   }
 
   public async startProfilingCPU() {
@@ -741,7 +946,6 @@ export class DeviceSession implements Disposable {
     }
     this.deviceSettings = settings;
 
-    this.deviceSessionDelegate.onDeviceSettingChanged(settings);
     return this.device.changeSettings(settings);
   }
 
@@ -751,5 +955,13 @@ export class DeviceSession implements Disposable {
 
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.device.sendBiometricAuthorization(isMatch);
+  }
+
+  public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
+    this.toolsManager.updateToolEnabledState(toolName, enabled);
+  }
+
+  public async openTool(toolName: ToolKey) {
+    this.toolsManager.openTool(toolName);
   }
 }

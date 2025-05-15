@@ -78,9 +78,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
   const [toolsState, setToolsState] = useState<ToolsState>({});
   const [hasActiveLicense, setHasActiveLicense] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
-  const [isProfilingCPU, setIsProfilingCPU] = useState(false);
-  const [isProfilingReact, setIsProfilingReact] = useState(false);
-  const [isSavingReactProfile, setIsSavingReactProfile] = useState(false);
   const [replayData, setReplayData] = useState<MultimediaData | undefined>(undefined);
 
   useEffect(() => {
@@ -93,15 +90,10 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     project.hasActiveLicense().then(setHasActiveLicense);
     project.addListener("licenseActivationChanged", setHasActiveLicense);
 
-    project.getToolsState().then(setToolsState);
     project.addListener("toolsStateChanged", setToolsState);
 
     project.addListener("isRecording", setIsRecording);
     project.addListener("replayDataCreated", setReplayData);
-
-    project.addListener("isProfilingCPU", setIsProfilingCPU);
-    project.addListener("isProfilingReact", setIsProfilingReact);
-    project.addListener("isSavingReactProfile", setIsSavingReactProfile);
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
       project.removeListener("deviceSettingsChanged", setDeviceSettings);
@@ -120,9 +112,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
       replayData,
       setReplayData,
       isRecording,
-      isProfilingCPU,
-      isProfilingReact,
-      isSavingReactProfile,
     };
   }, [
     projectState,
@@ -133,9 +122,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     replayData,
     setReplayData,
     isRecording,
-    isProfilingCPU,
-    isProfilingReact,
-    isSavingReactProfile,
   ]);
 
   return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;

@@ -1,16 +1,13 @@
 import { isEqual } from "lodash";
 import { Disposable, window } from "vscode";
-import { BuildError } from "../builders/BuildManager";
-import { DeviceInfo } from "../common/DeviceManager";
-import { ProjectState, StartupMessage } from "../common/Project";
+import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { ApplicationContext } from "./ApplicationContext";
-import { DeviceBootError, DeviceSession } from "./deviceSession";
+import { DeviceSession, DeviceSessionDelegate } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
-import { CancelError } from "../builders/cancelToken";
 import {
   DeviceSessionsManagerInterface,
   DeviceSessionsManagerDelegate,
@@ -18,203 +15,117 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
+import { DeviceSessionState } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
-export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Disposable {
-  // selected device id
-  private selectedDevice: string | undefined;
-  private deviceSessions: Map<string, DeviceSession> = new Map();
+export class DeviceSessionsManager
+  implements Disposable, DeviceSessionsManagerInterface, DeviceSessionDelegate
+{
+  private deviceSessions: Set<DeviceSession> = new Set();
+  private activeSession: DeviceSession | undefined;
 
   public get selectedDeviceSession() {
-    if (!this.selectedDevice) {
-      return undefined;
-    }
-    return this.deviceSessions.get(this.selectedDevice);
+    return this.activeSession;
   }
 
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
-    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
-    private readonly updateProjectState: (newState: Partial<ProjectState>) => void
+    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
   ) {
-    this.trySelectingDevice();
+    this.findDeviceAndStartSession();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
   }
 
-  private updateStateForSession(deviceSession: DeviceSession, newState: Partial<ProjectState>) {
-    if (deviceSession === this.selectedDeviceSession) {
-      this.updateProjectState(newState);
-    }
-  }
+  // private async trySelectingActiveDeviceSession(id: string, killPreviousDeviceSession?: boolean) {
+  //   if (!this.activeSessions.has(id)) {
+  //     return false;
+  //   }
+  //   if (this.selectedDevice) {
+  //     if (killPreviousDeviceSession) {
+  //       this.killAndRemoveDevice(this.selectedDevice);
+  //     } else {
+  //       await this.selectedDeviceSession?.deactivate();
+  //     }
+  //   }
+  //   this.selectedDevice = id;
+  //   this.selectedDeviceSession?.activate();
+  //   return true;
+  // }
 
-  private async trySelectingActiveDeviceSession(id: string, killPreviousDeviceSession?: boolean) {
-    if (!this.deviceSessions.has(id)) {
-      return false;
-    }
-    if (this.selectedDevice) {
-      if (killPreviousDeviceSession) {
-        this.killAndRemoveDevice(this.selectedDevice);
-      } else {
-        await this.selectedDeviceSession?.deactivate();
-      }
-    }
-    this.selectedDevice = id;
-    this.selectedDeviceSession?.activate();
-    return true;
-  }
-
-  public async reload(type: ReloadAction) {
-    this.deviceSessionManagerDelegate.onReloadRequested(type);
-
+  public async reloadCurrentSession(type: ReloadAction) {
     const deviceSession = this.selectedDeviceSession;
     if (!deviceSession) {
       window.showErrorMessage("Failed to reload, no active device found.", "Dismiss");
       return false;
     }
-    try {
-      const success = await deviceSession.perform(type);
-      if (success) {
-        this.updateStateForSession(deviceSession, { status: "running" });
-        return true;
-      } else if (!success) {
-        window.showErrorMessage("Failed to reload, you may try another reload option.", "Dismiss");
-      }
-    } catch (e) {
-      if (e instanceof CancelError) {
-        return false;
-      } else if (e instanceof BuildError) {
-        this.updateStateForSession(deviceSession, {
-          status: "buildError",
-          buildError: {
-            message: e.message,
-            buildType: e.buildType,
-            platform: this.selectedDeviceSession.platform,
-          },
-        });
-      }
-      Logger.error("Failed to reload device", e);
-      throw e;
-    }
-    return false;
+    return await deviceSession.performReloadAction(type);
   }
 
-  public async stopDevice(deviceId: string) {
-    if (deviceId === this.selectedDevice) {
-      window.showWarningMessage(
-        "You cannot stop the selected device. Please select another device first.",
-        "Dismiss"
-      );
-      return false;
-    }
-    const deviceSession = this.deviceSessions.get(deviceId);
-    if (!deviceSession) {
-      Logger.warn("Failed to stop device, device wasn't running.", "Dismiss");
-      return true;
-    }
-    await this.killAndRemoveDevice(deviceId);
-    return true;
-  }
+  // private onSessionStateChanged(session: DeviceSession) {
+  //   if (session === this.activeSession) {
+  //     this.deviceSessionManagerDelegate.onActiveSessionStateChanged(session.getState());
+  //   }
+  // }
 
-  public async selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions) {
+  public async startOrActivateSessionForDevice(
+    deviceInfo: DeviceInfo,
+    selectDeviceOptions?: SelectDeviceOptions
+  ) {
     const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
-    const { id: newDeviceId } = deviceInfo;
 
-    const selectedActiveSession = await this.trySelectingActiveDeviceSession(
-      newDeviceId,
-      killPreviousDeviceSession
-    );
-
-    if (selectedActiveSession) {
-      this.deviceSessionManagerDelegate.onDeviceSelected(
-        deviceInfo,
-        this.selectedDeviceSession?.previewURL
-      );
+    const existingSession = this.deviceSessions
+      .values()
+      .find((session) => session.deviceInfo.id === deviceInfo.id);
+    if (existingSession) {
+      this.updateSelectedSession(existingSession);
+      const otherSessions = this.deviceSessions
+        .values()
+        .filter((session) => session !== existingSession);
+      await Promise.all(otherSessions.map((session) => this.terminateSession(session)));
       return true;
     }
 
-    const device = await this.selectDeviceOnly(deviceInfo);
+    const device = await this.acquireDeviceByDeviceInfo(deviceInfo);
     if (!device) {
       return false;
     }
     Logger.debug("Selected device is ready");
 
-    if (this.selectedDevice) {
-      if (killPreviousDeviceSession) {
-        await this.killAndRemoveDevice(this.selectedDevice);
-      } else {
-        await this.selectedDeviceSession?.deactivate();
+    const newDeviceSession = new DeviceSession(
+      this.applicationContext.appRootFolder,
+      deviceInfo,
+      device,
+      this.applicationContext.dependencyManager,
+      this.applicationContext.buildCache,
+      {
+        onStateChange: (state) => {
+          if (this.activeSession === newDeviceSession) {
+            this.deviceSessionManagerDelegate.onActiveSessionStateChanged(state);
+          }
+        },
+        ensureDependenciesAndNodeVersion: async () => {},
       }
+    );
+
+    const previousSessions = this.deviceSessions.values();
+    this.deviceSessions.add(newDeviceSession);
+    this.updateSelectedSession(newDeviceSession);
+
+    if (killPreviousDeviceSession) {
+      await Promise.all(previousSessions.map((session) => this.terminateSession(session)));
     }
 
-    // we explicitely update the project state w/o using updateStateForSession
-    // as the new session is just being created
-    this.updateProjectState({
-      selectedDevice: deviceInfo,
-      initialized: true,
-      status: "starting",
-      startupMessage: StartupMessage.InitializingDevice,
-      previewURL: undefined,
-    });
-
-    let newDeviceSession: DeviceSession | undefined;
     try {
-      const deviceSession = new DeviceSession(
-        this.applicationContext.appRootFolder,
-        device,
-        this.applicationContext.dependencyManager,
-        this.applicationContext.buildCache,
-        this.deviceSessionManagerDelegate,
-        this.deviceSessionManagerDelegate,
-        this.deviceSessionManagerDelegate,
-        this.deviceSessionManagerDelegate
-      );
-      newDeviceSession = deviceSession;
-      this.deviceSessions.set(newDeviceId, deviceSession);
-      this.selectedDevice = newDeviceId;
-
-      const previewURL = await newDeviceSession.start({
+      await newDeviceSession.start({
         resetMetroCache: false,
         cleanBuild: false,
-        previewReadyCallback: (url) => {
-          this.updateStateForSession(deviceSession, { previewURL: url });
-        },
-      });
-      this.updateStateForSession(deviceSession, {
-        previewURL,
-        status: "running",
       });
     } catch (e) {
       Logger.error("Couldn't start device session", e instanceof Error ? e.message : e);
-
-      if (newDeviceSession) {
-        if (e instanceof CancelError) {
-          Logger.debug("[SelectDevice] Device selection was canceled", e);
-        } else if (e instanceof DeviceBootError) {
-          this.updateStateForSession(newDeviceSession, { status: "bootError" });
-        } else if (e instanceof BuildError) {
-          this.updateStateForSession(newDeviceSession, {
-            status: "buildError",
-            buildError: {
-              message: e.message,
-              buildType: e.buildType,
-              platform: deviceInfo.platform,
-            },
-          });
-        } else {
-          this.updateStateForSession(newDeviceSession, {
-            status: "buildError",
-            buildError: {
-              message: (e as Error).message,
-              buildType: null,
-              platform: deviceInfo.platform,
-            },
-          });
-        }
-      }
+      return false;
     }
-    this.deviceSessionManagerDelegate.onDeviceSelected(deviceInfo);
     return true;
   }
 
@@ -223,30 +134,33 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
    * it tries to select the last selected device from devices list.
    * If the device list is empty, we wait until we can select a device.
    */
-  private async trySelectingDevice() {
-    const anyActiveDeviceSessionId = this.deviceSessions.keys().next().value;
+  private async findDeviceAndStartSession() {
+    // if (this.deviceSessions.size > 0) {
+    // if there is some session already running, we switch to that session
 
-    if (anyActiveDeviceSessionId) {
-      const selectedActiveSession = await this.trySelectingActiveDeviceSession(
-        anyActiveDeviceSessionId,
-        true
-      );
-      if (selectedActiveSession) {
-        return true;
-      }
-    }
+    // const selectedActiveSession = await this.trySelectingActiveDeviceSession(
+    //   anyActiveDeviceSessionId,
+    //   true
+    // );
+    // if (selectedActiveSession) {
+    //   return true;
+    // }
+    // }
 
-    const selectInitialDevice = async (devices: DeviceInfo[]) => {
+    const findAndStartInternal = async (devices: DeviceInfo[]) => {
       // we try to pick the last selected device that we saved in the persistent state, otherwise
       // we take the first device from the list
       const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
         LAST_SELECTED_DEVICE_KEY
       );
-      const device = devices.find(({ id }) => id === lastDeviceId) ?? devices.at(0);
+      // we select first iOS device if the user didn't use any device before
+      const defaultDevice =
+        devices.find((device) => device.platform === DevicePlatform.IOS) ?? devices.at(0);
+      const device = devices.find((device) => device.id === lastDeviceId) ?? defaultDevice;
 
       if (device) {
         // if we found a device on the devices list, we try to select it
-        const isDeviceSelected = await this.selectDevice(device);
+        const isDeviceSelected = await this.startOrActivateSessionForDevice(device);
         if (isDeviceSelected) {
           return true;
         }
@@ -255,22 +169,20 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
       // if device selection wasn't successful we will retry it later on when devicesChange
       // event is emitted (i.e. when user create a new device). We also make sure that the
       // device selection is cleared in the project state:
-      this.updateProjectState({
-        selectedDevice: undefined,
-        initialized: true, // when no device can be selected, we consider the project initialized
-      });
+      this.updateSelectedSession(undefined);
+
       // when we reach this place, it means there's no device that we can select, we
       // wait for the new device to be added to the list:
       const listener = async (newDevices: DeviceInfo[]) => {
         this.deviceManager.removeListener("devicesChanged", listener);
-        if (this.selectedDevice) {
+        if (this.activeSession) {
           // device was selected in the meantime, we don't need to do anything
           return;
         } else if (isEqual(newDevices, devices)) {
           // list is the same, we register listener to wait for the next change
           this.deviceManager.addListener("devicesChanged", listener);
         } else {
-          selectInitialDevice(newDevices);
+          findAndStartInternal(newDevices);
         }
       };
 
@@ -281,26 +193,48 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     };
 
     const devices = await this.deviceManager.listAllDevices();
-    await selectInitialDevice(devices);
+    await findAndStartInternal(devices);
   }
 
   // used in callbacks, needs to be an arrow function
   private removeDeviceListener = async (device: DeviceInfo) => {
-    const deviceSession = this.selectedDeviceSession;
-    if (this.selectedDevice === device.id) {
-      this.updateStateForSession(this.selectedDeviceSession, { status: "starting" });
-      await this.killAndRemoveDevice(device.id);
-      await this.trySelectingDevice();
-    }
+    // if the deleted device was running an active session, we need to terminate that session
+    this.deviceSessions.forEach((session) => {
+      if (session.deviceInfo.id === device.id) {
+        this.terminateSession(session);
+      }
+    });
   };
 
-  private async killAndRemoveDevice(deviceId: string) {
-    const deviceSession = this.deviceSessions.get(deviceId);
-    await deviceSession?.dispose();
-    this.deviceSessions.delete(deviceId);
+  private updateSelectedSession(session: DeviceSession | undefined) {
+    const previousSession = this.activeSession;
+    this.activeSession = session;
+    if (previousSession !== session) {
+      previousSession?.deactivate();
+      session?.activate();
+    }
+    if (session) {
+      this.deviceSessionManagerDelegate.onStateChange(session.getState());
+    } else {
+      this.deviceSessionManagerDelegate.onStateChange({
+        status: "starting",
+        previewURL: undefined,
+        selectedDevice: undefined,
+        startupMessage: undefined,
+        stageProgress: undefined,
+      });
+    }
   }
 
-  private async selectDeviceOnly(deviceInfo: DeviceInfo) {
+  private async terminateSession(session: DeviceSession) {
+    this.deviceSessions.delete(session);
+    if (session === this.activeSession) {
+      this.updateSelectedSession(undefined);
+    }
+    await session.dispose();
+  }
+
+  private async acquireDeviceByDeviceInfo(deviceInfo: DeviceInfo) {
     if (!deviceInfo.available) {
       window.showErrorMessage(
         "Selected device is not available. Perhaps the system image it uses is not installed. Please select another device.",

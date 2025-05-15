@@ -57,7 +57,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   const { deviceSessionsManager } = useDevices();
 
   let onReload = () => {
-    deviceSessionsManager.reload("autoReload");
+    deviceSessionsManager.reloadCurrentSession("autoReload");
   };
   let logsButtonDestination: LogsButtonDestination | undefined = undefined;
 
@@ -133,7 +133,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          deviceSessionsManager.reload("autoReload");
+          deviceSessionsManager.reloadCurrentSession("autoReload");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />

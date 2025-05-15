@@ -120,7 +120,9 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
                   <span className="codicon codicon-browser" /> Visit troubleshoot guide
                 </Button>
               </a>
-              <Button type="secondary" onClick={() => deviceSessionsManager.reload("rebuild")}>
+              <Button
+                type="secondary"
+                onClick={() => deviceSessionsManager.reloadCurrentSession("rebuild")}>
                 <span className="codicon codicon-refresh" /> Clean rebuild project
               </Button>
             </div>

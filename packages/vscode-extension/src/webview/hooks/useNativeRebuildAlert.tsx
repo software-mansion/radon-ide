@@ -14,7 +14,7 @@ function Actions({ closeAlert }: Props) {
       <IconButton
         type="secondary"
         onClick={() => {
-          deviceSessionsManager.reload("rebuild");
+          deviceSessionsManager.reloadCurrentSession("rebuild");
           closeAlert();
         }}
         tooltip={{ label: "Rebuild", side: "bottom" }}>

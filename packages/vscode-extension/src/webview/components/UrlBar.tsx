@@ -10,19 +10,19 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
   const { deviceSessionsManager } = useDevices();
   return (
     <IconButtonWithOptions
-      onClick={() => deviceSessionsManager.reload("autoReload")}
+      onClick={() => deviceSessionsManager.reloadCurrentSession("autoReload")}
       tooltip={{
         label: "Reload the app",
         side: "bottom",
       }}
       disabled={disabled}
       options={{
-        "Reload JS": () => deviceSessionsManager.reload("reloadJs"),
-        "Restart app process": () => deviceSessionsManager.reload("restartProcess"),
-        "Reinstall app": () => deviceSessionsManager.reload("reinstall"),
-        "Clear Metro cache": () => deviceSessionsManager.reload("clearMetro"),
-        "Reboot IDE": () => deviceSessionsManager.reload("reboot"),
-        "Clean rebuild": () => deviceSessionsManager.reload("rebuild"),
+        "Reload JS": () => deviceSessionsManager.reloadCurrentSession("reloadJs"),
+        "Restart app process": () => deviceSessionsManager.reloadCurrentSession("restartProcess"),
+        "Reinstall app": () => deviceSessionsManager.reloadCurrentSession("reinstall"),
+        "Clear Metro cache": () => deviceSessionsManager.reloadCurrentSession("clearMetro"),
+        "Reboot IDE": () => deviceSessionsManager.reloadCurrentSession("reboot"),
+        "Clean rebuild": () => deviceSessionsManager.reloadCurrentSession("rebuild"),
       }}>
       <span className="codicon codicon-refresh" />
     </IconButtonWithOptions>
