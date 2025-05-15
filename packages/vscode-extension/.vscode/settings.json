@@ -61,5 +61,6 @@
     "xsmall",
     "xxlarge",
     "xxxlarge"
-  ]
+  ],
+  "RadonIDE.inspectorExcludePattern": ""
 }

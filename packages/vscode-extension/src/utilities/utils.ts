@@ -30,6 +30,18 @@ export class Utils implements UtilsInterface {
     });
   }
 
+  public async runCommand(command: string): Promise<void> {
+    await commands.executeCommand(command);
+  }
+
+  public focusExtensionLogsOutput() {
+    Logger.openOutputPanel();
+  }
+
+  public focusDebugConsole() {
+    commands.executeCommand("workbench.panel.repl.view.focus");
+  }
+
   public async getCommandsCurrentKeyBinding(commandName: string) {
     const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
     const extensionPackageJson = require(packageJsonPath);

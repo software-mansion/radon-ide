@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import "./ActivateLicenseView.css";
 import Button from "../components/shared/Button";
-import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
-import { ActivateDeviceResult } from "../../common/Project";
 import { Input } from "../components/shared/Input";
+import { ActivateDeviceResult } from "../../utilities/license";
+import { useProject } from "../providers/ProjectProvider";
 
 export function ActivateLicenseView() {
   const { project } = useProject();

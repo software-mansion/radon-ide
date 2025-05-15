@@ -10,6 +10,7 @@ import { StartupMessage, StartupStageWeight } from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
 import Button from "./shared/Button";
 import { useDevices } from "../providers/DevicesProvider";
+import { useUtils } from "../providers/UtilsProvider";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -18,6 +19,7 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
 
 function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => void }) {
   const { projectState, project } = useProject();
+  const { focusExtensionLogsOutput} = useUtils();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
 
@@ -69,11 +71,12 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
   function handleLoaderClick() {
     if (startupMessage === StartupMessage.Building) {
-      project.focusBuildOutput();
+      // Frytki here i need to refactor to give a device ide in devicesession manager 
+      focusBuildOutput();
     } else if (startupMessage === StartupMessage.WaitingForAppToLoad) {
       onRequestShowPreview();
     } else {
-      project.focusExtensionLogsOutput();
+      focusExtensionLogsOutput();
     }
   }
 
@@ -109,7 +112,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
               options to troubleshoot:
             </div>
             <div className="preview-loader-waiting-actions">
-              <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
+              <Button type="secondary" onClick={() => focusExtensionLogsOutput()}>
                 <span className="codicon codicon-output" /> Open Radon IDE Logs
               </Button>
               <Button type="secondary" onClick={onRequestShowPreview}>

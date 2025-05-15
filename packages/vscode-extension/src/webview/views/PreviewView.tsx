@@ -45,7 +45,7 @@ function PreviewView() {
     isProfilingCPU,
     setReplayData,
   } = useProject();
-  const { showDismissableError } = useUtils();
+  const { showDismissableError, focusDebugConsole } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -232,7 +232,7 @@ function PreviewView() {
             counter={logCounter}
             onClick={() => {
               setLogCounter(0);
-              project.focusDebugConsole();
+              focusDebugConsole();
             }}
             tooltip={{
               label: "Open logs panel",

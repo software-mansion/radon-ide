@@ -1,15 +1,17 @@
-import { useProject } from "../providers/ProjectProvider";
+
+import { useUtils } from "../providers/UtilsProvider";
 import "./Debugger.css";
 import IconButton from "./shared/IconButton";
 
 function Debugger() {
-  const { project } = useProject();
+  const { focusDebugConsole } = useUtils();
 
   return (
     <div className="debugger-container">
       <p className="debugger-label debugger-shadow">Paused in debugger</p>
       <div className="debugger-button-group">
         <IconButton
+          // Frytki this is now device specific 
           onClick={() => project.resumeDebugger()}
           tooltip={{
             label: "Resume execution",
@@ -26,7 +28,7 @@ function Debugger() {
           <span className="codicon codicon-debug-step-over" />
         </IconButton>
         <IconButton
-          onClick={() => project.focusDebugConsole()}
+          onClick={() => focusDebugConsole()}
           tooltip={{
             label: "Open debugger console",
             side: "bottom",

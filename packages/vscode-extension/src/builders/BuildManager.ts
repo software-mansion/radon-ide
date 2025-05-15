@@ -83,7 +83,6 @@ export class BuildManager implements Disposable {
     this.workspaceChangeListener = new WorkspaceChangeListener(() => {
       this.checkIfNativeChangedForPlatform();
     });
-    this.workspaceChangeListener.startWatching();
   }
 
   public shouldRebuild() {

@@ -7,6 +7,7 @@ import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { BuildType } from "../../common/BuildConfig";
 import { useDevices } from "../providers/DevicesProvider";
+import { useUtils } from "../providers/UtilsProvider";
 
 type LogsButtonDestination = "build" | "extension";
 
@@ -17,7 +18,7 @@ function BuildErrorActions({
   logsButtonDestination?: LogsButtonDestination;
   onReload?: () => void;
 }) {
-  const { project } = useProject();
+  const { focusExtensionLogsOutput } = useUtils();
   const { openModal } = useModal();
   return (
     <>
@@ -33,9 +34,10 @@ function BuildErrorActions({
         type="secondary"
         onClick={() => {
           if (logsButtonDestination === "extension") {
-            project.focusExtensionLogsOutput();
+            focusExtensionLogsOutput();
           } else {
-            project.focusBuildOutput();
+            // frytki it is now deviceSession manager id specific
+            focusBuildOutput();
           }
         }}
         tooltip={{ label: "Open build logs", side: "bottom" }}>
@@ -92,13 +94,13 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
 }
 
 function BootErrorActions() {
-  const { project } = useProject();
+  const { focusExtensionLogsOutput } = useUtils();
   return (
     <>
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusExtensionLogsOutput();
+          focusExtensionLogsOutput();
         }}
         tooltip={{ label: "Open IDE logs", side: "bottom" }}>
         <span className="codicon codicon-output" />
@@ -118,14 +120,14 @@ export function useBootErrorAlert(shouldDisplayAlert: boolean) {
 }
 
 function BundleErrorActions() {
-  const { project } = useProject();
+  const { focusDebugConsole } = useUtils();
   const { deviceSessionsManager } = useDevices();
   return (
     <>
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusDebugConsole();
+          focusDebugConsole();
         }}
         tooltip={{ label: "Open debug console", side: "bottom" }}>
         <span className="codicon codicon-output" />
@@ -133,6 +135,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
+          // Frytki device specific now 
           deviceSessionsManager.reload("autoReload");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>

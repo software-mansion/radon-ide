@@ -13,7 +13,7 @@ import "./shared/SwitchGroup.css";
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import { AppPermissionType, DeviceSettings, ProjectInterface } from "../../common/Project";
+import { DeviceSettings, ProjectInterface } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
@@ -22,6 +22,9 @@ import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { UtilsInterface } from "../../common/utils";
+import { useUtils } from "../providers/UtilsProvider";
+import { AppPermissionType } from "../../common/DeviceSessionsManager";
 
 const contentSizes = [
   "xsmall",
@@ -52,6 +55,7 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const { project, deviceSettings, projectState } = useProject();
+  const utils = useUtils();
   const { showDeviceFrame, update } = useWorkspaceConfig();
   const { openModal } = useModal();
 
@@ -127,13 +131,13 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <div className="device-settings-margin" />
           </form>
           <CommandItem
-            project={project}
+            utils={utils}
             commandName="RNIDE.deviceHomeButtonPress"
             label="Press Home Button"
             icon="home"
           />
           <CommandItem
-            project={project}
+            utils={utils}
             commandName="RNIDE.deviceAppSwitchButtonPress"
             label="Open App Switcher"
             icon="chrome-restore"
@@ -241,12 +245,12 @@ const LocalizationItem = () => {
 };
 
 function CommandItem({
-  project,
+  utils,
   commandName,
   label,
   icon,
 }: {
-  project: ProjectInterface;
+  utils: UtilsInterface;
   commandName: string;
   label: string;
   icon: string;
@@ -255,7 +259,7 @@ function CommandItem({
     <DropdownMenu.Item
       className="dropdown-menu-item"
       onSelect={() => {
-        project.runCommand(commandName);
+        utils.runCommand(commandName);
       }}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
@@ -269,7 +273,8 @@ function CommandItem({
 }
 
 const BiometricsItem = () => {
-  const { project, deviceSettings } = useProject();
+  const { deviceSettings } = useProject();
+  const utils = useUtils();
 
   return (
     <DropdownMenu.Sub>
@@ -296,13 +301,13 @@ const BiometricsItem = () => {
             )}
           </DropdownMenu.Item>
           <CommandItem
-            project={project}
+            utils={utils}
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
             icon="layout-sidebar-left"
           />
           <CommandItem
-            project={project}
+            utils={utils}
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"
             icon="layout-sidebar-left"

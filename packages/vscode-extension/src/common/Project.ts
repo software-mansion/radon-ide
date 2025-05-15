@@ -1,5 +1,6 @@
+import { ActivateDeviceResult } from "../utilities/license";
 import { BuildType } from "./BuildConfig";
-import { DeviceInfo, DevicePlatform } from "./DeviceManager";
+import { DeviceId, DeviceInfo, DevicePlatform } from "./DeviceManager";
 
 export type Locale = string;
 
@@ -27,39 +28,13 @@ export type ToolsState = {
   [key: string]: ToolState;
 };
 
-export type ProjectState =
-  | ({
-      status:
-        | "starting"
-        | "running"
-        | "bootError"
-        | "bundlingError"
-        | "debuggerPaused"
-        | "refreshing";
-    } & ProjectStateCommon)
-  | ProjectStateBuildError;
-
-type ProjectStateCommon = {
-  previewURL: string | undefined;
-  selectedDevice: DeviceInfo | undefined;
+export type ProjectState = {
+  previewZoom: ZoomLevelType | undefined; 
+  selectedDevice: DeviceId | undefined;
   initialized: boolean;
-  previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
-  startupMessage: StartupMessage | undefined;
-  stageProgress: number | undefined;
 };
 
-type ProjectStateBuildError = {
-  status: "buildError";
-  buildError: {
-    message: string;
-    platform: DevicePlatform;
-    buildType: BuildType | null;
-  };
-} & ProjectStateCommon;
-
 export type ZoomLevelType = number | "Fit";
-
-export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
 
 export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown";
 
@@ -87,47 +62,6 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
 
-export type Frame = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
-export type InspectDataStackItem = {
-  componentName: string;
-  hide: boolean;
-  source: {
-    fileName: string;
-    line0Based: number;
-    column0Based: number;
-  };
-  frame: Frame;
-};
-
-export type InspectStackData = {
-  requestLocation: { x: number; y: number };
-  stack: InspectDataStackItem[];
-};
-
-export type InspectData = {
-  stack: InspectDataStackItem[] | undefined;
-  frame: Frame;
-};
-
-export type TouchPoint = {
-  xRatio: number;
-  yRatio: number;
-};
-
-export enum ActivateDeviceResult {
-  succeeded,
-  notEnoughSeats,
-  keyVerificationFailed,
-  unableToVerify,
-  connectionFailed,
-}
-
 export interface ProjectEventMap {
   log: { type: string };
   projectStateChanged: ProjectState;
@@ -151,55 +85,19 @@ export type MultimediaData = {
   fileName: string;
 };
 
+export type SelectDeviceOptions = {
+  preservePreviousDevice?: boolean;
+};
+
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  goHome(homeUrl: string): Promise<void>;
-  renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
+  selectDevice(deviceId: DeviceId, selectDeviceOptions?: SelectDeviceOptions): Promise<boolean>;
 
-  getDeviceSettings(): Promise<DeviceSettings>;
-  updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  runCommand(command: string): Promise<void>;
-
-  getToolsState(): Promise<ToolsState>;
-  updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
-  openTool(toolName: keyof ToolsState): Promise<void>;
-
-  resumeDebugger(): Promise<void>;
-  stepOverDebugger(): Promise<void>;
-  focusBuildOutput(): Promise<void>;
-  focusExtensionLogsOutput(): Promise<void>;
-  focusDebugConsole(): Promise<void>;
-  openNavigation(navigationItemID: string): Promise<void>;
-  openDevMenu(): Promise<void>;
+  getDeepLinksHistory(): Promise<string[]>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
   hasActiveLicense(): Promise<boolean>;
-
-  resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
-
-  getDeepLinksHistory(): Promise<string[]>;
-  openDeepLink(link: string, terminateApp: boolean): Promise<void>;
-
-  startRecording(): void;
-  captureAndStopRecording(): void;
-  captureReplay(): void;
-  captureScreenshot(): void;
-
-  startProfilingCPU(): void;
-  stopProfilingCPU(): void;
-
-  dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
-  dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;
-  dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
-  dispatchPaste(text: string): Promise<void>;
-  dispatchCopy(): Promise<void>;
-  inspectElementAt(
-    xRatio: number,
-    yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: InspectData) => void
-  ): Promise<void>;
 
   addListener<K extends keyof ProjectEventMap>(
     eventType: K,
