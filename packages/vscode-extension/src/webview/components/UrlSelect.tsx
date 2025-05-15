@@ -1,8 +1,7 @@
 import React, { PropsWithChildren } from "react";
 import * as Select from "@radix-ui/react-select";
 import "./UrlSelect.css";
-
-export type UrlItem = { id: string; name: string };
+import { NavigationHistoryItem } from "../../common/Project";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -17,12 +16,11 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
 interface UrlSelectProps {
   value: string;
   onValueChange: (newValue: string) => void;
-  recentItems: UrlItem[];
-  items: UrlItem[];
+  navigationHistory: NavigationHistoryItem[];
   disabled?: boolean;
 }
 
-function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
+function UrlSelect({ onValueChange, navigationHistory, value, disabled }: UrlSelectProps) {
   // We use two lists for URL selection: one with recently used URLs and another
   // with all available URLs. Since recentItems is a subset of items, each recentItems's
   // value is prefixed to differentiate their origins when presented in the Select
@@ -45,25 +43,14 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>
           <Select.Viewport className="url-select-viewport">
-            <Select.Group>
-              <Select.Label className="url-select-label">Recently used:</Select.Label>
-              {recentItems.map(
-                (item) =>
-                  item.name && (
-                    <SelectItem value={`recent#${item.id}`} key={item.id}>
-                      {item.name}
-                    </SelectItem>
-                  )
-              )}
-            </Select.Group>
             <Select.Separator className="url-select-separator" />
             <Select.Group>
               <Select.Label className="url-select-label">All visited paths:</Select.Label>
-              {items.map(
+              {navigationHistory.map(
                 (item) =>
-                  item.name && (
+                  item.displayName && (
                     <SelectItem value={item.id} key={item.id}>
-                      {item.name}
+                      {item.displayName}
                     </SelectItem>
                   )
               )}

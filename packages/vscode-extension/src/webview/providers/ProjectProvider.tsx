@@ -10,12 +10,11 @@ import {
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
+  DeviceSessionInitialState,
   DeviceSettings,
   MultimediaData,
   ProjectInterface,
   ProjectState,
-  StartupMessage,
-  ToolsState,
 } from "../../common/Project";
 
 const project = makeProxy<ProjectInterface>("Project");
@@ -23,23 +22,15 @@ const project = makeProxy<ProjectInterface>("Project");
 interface ProjectContextProps {
   projectState: ProjectState;
   deviceSettings: DeviceSettings;
-  toolsState: ToolsState;
   project: ProjectInterface;
   hasActiveLicense: boolean;
   replayData: MultimediaData | undefined;
   setReplayData: Dispatch<SetStateAction<MultimediaData | undefined>>;
   isRecording: boolean;
-  isProfilingCPU: boolean;
-  isProfilingReact: boolean;
-  isSavingReactProfile: boolean;
 }
 
 const defaultProjectState: ProjectState = {
-  status: "starting",
-  startupMessage: StartupMessage.InitializingDevice,
-  stageProgress: 0,
-  previewURL: undefined,
-  selectedDevice: undefined,
+  ...DeviceSessionInitialState,
   previewZoom: undefined,
   initialized: false,
 };
@@ -61,21 +52,16 @@ const defaultDeviceSettings: DeviceSettings = {
 const ProjectContext = createContext<ProjectContextProps>({
   projectState: defaultProjectState,
   deviceSettings: defaultDeviceSettings,
-  toolsState: {},
   project,
   hasActiveLicense: false,
   replayData: undefined,
   setReplayData: () => {},
   isRecording: false,
-  isProfilingCPU: false,
-  isProfilingReact: false,
-  isSavingReactProfile: false,
 });
 
 export default function ProjectProvider({ children }: PropsWithChildren) {
   const [projectState, setProjectState] = useState<ProjectState>(defaultProjectState);
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(defaultDeviceSettings);
-  const [toolsState, setToolsState] = useState<ToolsState>({});
   const [hasActiveLicense, setHasActiveLicense] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [replayData, setReplayData] = useState<MultimediaData | undefined>(undefined);
@@ -90,15 +76,12 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     project.hasActiveLicense().then(setHasActiveLicense);
     project.addListener("licenseActivationChanged", setHasActiveLicense);
 
-    project.addListener("toolsStateChanged", setToolsState);
-
     project.addListener("isRecording", setIsRecording);
     project.addListener("replayDataCreated", setReplayData);
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
       project.removeListener("deviceSettingsChanged", setDeviceSettings);
       project.removeListener("licenseActivationChanged", setHasActiveLicense);
-      project.removeListener("toolsStateChanged", setToolsState);
     };
   }, []);
 
@@ -108,7 +91,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
       deviceSettings,
       project,
       hasActiveLicense,
-      toolsState,
       replayData,
       setReplayData,
       isRecording,
@@ -118,7 +100,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     deviceSettings,
     project,
     hasActiveLicense,
-    toolsState,
     replayData,
     setReplayData,
     isRecording,

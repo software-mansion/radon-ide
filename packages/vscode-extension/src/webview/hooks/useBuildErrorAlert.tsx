@@ -63,7 +63,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
 
   let description = "Open extension logs to find out what went wrong.";
 
-  if (projectState.status === "buildError") {
+  if (projectState.status === "buildError" && projectState.buildError) {
     const { buildType, message } = projectState.buildError;
     description = message;
     if (buildType && [BuildType.Local, BuildType.EasLocal, BuildType.Custom].includes(buildType)) {

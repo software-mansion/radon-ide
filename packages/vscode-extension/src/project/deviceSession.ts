@@ -22,21 +22,22 @@ import {
   BuildErrorDescriptor,
   ToolsState,
   ProfilingState,
+  NavigationHistoryItem,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
-import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { BuildCache } from "../builders/BuildCache";
 import { CancelError, CancelToken } from "../builders/cancelToken";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { ToolKey, ToolsDelegate, ToolsManager } from "./tools";
 import { extensionContext } from "../utilities/extensionContext";
 import { ReloadAction } from "../common/DeviceSessionsManager";
 import { focusSource } from "../utilities/focusSource";
+import { ApplicationContext } from "./ApplicationContext";
 
 const DEVICE_SETTINGS_KEY = "device_settings_v4";
+const MAX_URL_HISTORY_SIZE = 20;
 
 export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
   appearance: "dark",
@@ -99,8 +100,9 @@ export class DeviceSession
   private fastRefreshOngoing = false;
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
-  private navigationHistory: { displayName: string; id: string }[] = [];
-  private logCount = 0;
+  private navigationHistory: NavigationHistoryItem[] = [];
+  private navigationBackTarget: NavigationHistoryItem | undefined;
+  private logCounter = 0;
   private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
   private get buildResult() {
@@ -123,11 +125,9 @@ export class DeviceSession
   }
 
   constructor(
-    private readonly appRootFolder: string,
+    private readonly applicationContext: ApplicationContext,
     readonly deviceInfo: DeviceInfo,
     private readonly device: DeviceBase,
-    readonly dependencyManager: DependencyManager,
-    readonly buildCache: BuildCache,
     private readonly deviceSessionDelegate: DeviceSessionDelegate
   ) {
     this.deviceSettings =
@@ -137,7 +137,12 @@ export class DeviceSession
     this.metro = new MetroLauncher(this.devtools, this);
     this.toolsManager = new ToolsManager(this.devtools, this);
 
-    this.buildManager = new BuildManager(dependencyManager, buildCache, this, device.platform);
+    this.buildManager = new BuildManager(
+      applicationContext.dependencyManager,
+      applicationContext.buildCache,
+      this,
+      device.platform
+    );
     this.debugSession = new DebugSession(this);
   }
 
@@ -155,7 +160,7 @@ export class DeviceSession
       previewURL: this.previewURL,
       toolsState: this.toolsManager.getToolsState(),
       isDebuggerPaused: this.isDebuggerPaused,
-      logCount: this.logCount,
+      logCounter: this.logCounter,
       hasStaleBuildCache: this.hasStaleBuildCache,
     };
   }
@@ -195,7 +200,7 @@ export class DeviceSession
   //#region Debug session delegate methods
 
   onConsoleLog = (event: DebugSessionCustomEvent): void => {
-    this.logCount++;
+    this.logCounter += 1;
     this.emitStateChange();
   };
 
@@ -214,7 +219,7 @@ export class DeviceSession
   };
 
   onProfilingCPUStarted = (event: DebugSessionCustomEvent): void => {
-    this.profilingCPUState = "running";
+    this.profilingCPUState = "profiling";
     this.emitStateChange();
   };
 
@@ -244,8 +249,23 @@ export class DeviceSession
     // We don't need to store event disposables here as they are tied to the lifecycle
     // of the devtools instance, which is disposed when we recreate the devtools or
     // when the device session is disposed
-    devtools.onEvent("RNIDE_navigationChanged", (payload: { displayName: string; id: string }) => {
-      this.navigationHistory.push(payload);
+    devtools.onEvent("RNIDE_navigationChanged", (payload: NavigationHistoryItem) => {
+      const backTargetId = this.navigationBackTarget?.id;
+      if (backTargetId === payload.id) {
+        // we are navigating back, remove all items from history that are before the back target
+        const backTargetIndex = this.navigationHistory.findIndex(
+          (record) => record.id === backTargetId
+        );
+        if (backTargetIndex !== -1) {
+          this.navigationHistory = this.navigationHistory.slice(backTargetIndex + 1);
+        }
+      }
+
+      this.navigationBackTarget = undefined;
+      this.navigationHistory = [
+        payload,
+        ...this.navigationHistory.filter((record) => record.id !== payload.id),
+      ].slice(0, MAX_URL_HISTORY_SIZE);
       this.emitStateChange();
     });
     devtools.onEvent("RNIDE_fastRefreshStarted", () => {
@@ -258,7 +278,7 @@ export class DeviceSession
     });
     devtools.onEvent("RNIDE_isProfilingReact", (isProfiling) => {
       if (this.profilingReactState !== "saving") {
-        this.profilingReactState = isProfiling ? "running" : "stopped";
+        this.profilingReactState = isProfiling ? "profiling" : "stopped";
         this.emitStateChange();
       }
     });
@@ -425,7 +445,7 @@ export class DeviceSession
       Logger.debug(`Launching metro`);
       this.metro.start({
         resetCache: true,
-        appRoot: this.appRootFolder,
+        appRoot: this.applicationContext.appRootFolder,
         dependencies: [],
       });
     }
@@ -434,7 +454,11 @@ export class DeviceSession
     this.startupMessage = StartupMessage.BootingDevice;
     this.emitStateChange();
     await cancelToken.adapt(this.device.reboot());
-    await this.buildApp({ appRoot: this.appRootFolder, clean: forceClean, cancelToken });
+    await this.buildApp({
+      appRoot: this.applicationContext.appRootFolder,
+      clean: forceClean,
+      cancelToken,
+    });
     await this.installApp({ reinstall: false });
     await this.launchApp(cancelToken);
     Logger.debug("Device session started");
@@ -720,7 +744,7 @@ export class DeviceSession
     Logger.debug(`Launching metro`);
     this.metro.start({
       resetCache: resetMetroCache,
-      appRoot: this.appRootFolder,
+      appRoot: this.applicationContext.appRootFolder,
       dependencies: [waitForNodeModules],
     });
     // We start the debug session early to be able to use it to surface bundle
@@ -731,7 +755,11 @@ export class DeviceSession
     await cancelToken.adapt(this.waitForMetroReady());
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
     await cancelToken.adapt(this.bootDevice(this.deviceSettings));
-    await this.buildApp({ appRoot: this.appRootFolder, clean: cleanBuild, cancelToken });
+    await this.buildApp({
+      appRoot: this.applicationContext.appRootFolder,
+      clean: cleanBuild,
+      cancelToken,
+    });
     await cancelToken.adapt(this.installApp({ reinstall: false }));
     await this.launchApp(cancelToken);
     Logger.debug("Device session started");
@@ -886,6 +914,13 @@ export class DeviceSession
     this.devtools.send("RNIDE_openNavigation", { id });
   }
 
+  public navigateBack() {
+    if (this.navigationHistory.length > 1) {
+      this.navigationBackTarget = this.navigationHistory[1];
+      this.devtools.send("RNIDE_openNavigation", { id: this.navigationBackTarget.id });
+    }
+  }
+
   public async openDevMenu() {
     await this.metro.openDevMenu();
   }
@@ -960,5 +995,10 @@ export class DeviceSession
 
   public getMetroPort() {
     return this.metro.port;
+  }
+
+  public resetLogCounter() {
+    this.logCounter = 0;
+    this.emitStateChange();
   }
 }

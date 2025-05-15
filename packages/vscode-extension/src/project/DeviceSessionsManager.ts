@@ -51,39 +51,34 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   ) {
     const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
 
-    const existingSession = this.deviceSessions
+    // if there's an existing session for the device, we use it instead of starting a new one
+    const existingDeviceSession = this.deviceSessions
       .values()
       .find((session) => session.deviceInfo.id === deviceInfo.id);
-    if (existingSession) {
-      this.updateSelectedSession(existingSession);
+    if (existingDeviceSession) {
+      this.updateSelectedSession(existingDeviceSession);
       const otherSessions = this.deviceSessions
         .values()
-        .filter((session) => session !== existingSession);
+        .filter((session) => session !== existingDeviceSession);
       await Promise.all(otherSessions.map((session) => this.terminateSession(session)));
       return true;
     }
 
+    // otherwise, we need to acquire the device and start a new session
     const device = await this.acquireDeviceByDeviceInfo(deviceInfo);
     if (!device) {
       return false;
     }
     Logger.debug("Selected device is ready");
 
-    const newDeviceSession = new DeviceSession(
-      this.applicationContext.appRootFolder,
-      deviceInfo,
-      device,
-      this.applicationContext.dependencyManager,
-      this.applicationContext.buildCache,
-      {
-        onStateChange: (state) => {
-          if (this.activeSession === newDeviceSession) {
-            this.deviceSessionManagerDelegate.onActiveSessionStateChanged(state);
-          }
-        },
-        ensureDependenciesAndNodeVersion: async () => {},
-      }
-    );
+    const newDeviceSession = new DeviceSession(this.applicationContext, deviceInfo, device, {
+      onStateChange: (state) => {
+        if (this.activeSession === newDeviceSession) {
+          this.deviceSessionManagerDelegate.onActiveSessionStateChanged(state);
+        }
+      },
+      ensureDependenciesAndNodeVersion: async () => {},
+    });
 
     const previousSessions = this.deviceSessions.values();
     this.deviceSessions.add(newDeviceSession);
@@ -111,18 +106,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
    * If the device list is empty, we wait until we can select a device.
    */
   private async findDeviceAndStartSession() {
-    // if (this.deviceSessions.size > 0) {
-    // if there is some session already running, we switch to that session
-
-    // const selectedActiveSession = await this.trySelectingActiveDeviceSession(
-    //   anyActiveDeviceSessionId,
-    //   true
-    // );
-    // if (selectedActiveSession) {
-    //   return true;
-    // }
-    // }
-
     const findAndStartInternal = async (devices: DeviceInfo[]) => {
       // we try to pick the last selected device that we saved in the persistent state, otherwise
       // we take the first device from the list

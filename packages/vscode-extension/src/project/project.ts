@@ -18,6 +18,7 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
+  DeviceSessionInitialState,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
@@ -65,21 +66,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public deviceSessionsManager: DeviceSessionsManager;
 
   private projectState: ProjectState = {
-    status: "starting",
-    stageProgress: 0,
-    startupMessage: StartupMessage.InitializingDevice,
-    previewURL: undefined,
-    previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
-    selectedDevice: undefined,
+    ...DeviceSessionInitialState,
     initialized: false,
-    fastRefreshOngoing: false,
-    profilingCPUState: "stopped",
-    profilingReactState: "stopped",
-    navigationHistory: [],
-    toolsState: undefined,
-    isDebuggerPaused: false,
-    logCount: 0,
-    hasStaleBuildCache: false,
+    previewZoom: undefined,
   };
 
   private disposables: Disposable[] = [];
@@ -165,34 +154,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   onActiveSessionStateChanged = (state: DeviceSessionState) => {
     this.updateProjectState(state);
   };
-
-  //#endregion
-
-  //#region App events
-  // onAppEvent = <E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void => {
-  //   switch (event) {
-  //     case "navigationChanged":
-  //       this.eventEmitter.emit("navigationChanged", payload);
-  //       break;
-  //     case "fastRefreshStarted":
-  //       this.updateProjectState({ status: "refreshing" });
-  //       break;
-  //     case "fastRefreshComplete":
-  //       const ignoredEvents = ["starting", "bundlingError"];
-  //       if (ignoredEvents.includes(this.projectState.status)) {
-  //         return;
-  //       }
-  //       this.updateProjectState({ status: "running" });
-  //       break;
-  //     case "isProfilingReact":
-  //       this.eventEmitter.emit("isProfilingReact", payload);
-  //       break;
-  //     case "isSavingReactProfile":
-  //       this.eventEmitter.emit("isSavingReactProfile", payload);
-  //       break;
-  //   }
-  // };
-  //#endregion
 
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;
 
@@ -495,11 +456,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async focusDebugConsole() {
+    this.deviceSession?.resetLogCounter();
     commands.executeCommand("workbench.panel.repl.view.focus");
   }
 
   public async openNavigation(navigationItemID: string) {
     this.deviceSession?.openNavigation(navigationItemID);
+  }
+
+  public async navigateBack() {
+    this.deviceSession?.navigateBack();
   }
 
   public async openDevMenu() {
@@ -590,7 +556,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   private updateProjectState(newState: Partial<ProjectState>) {
     // NOTE: this is unsafe, but I'm not sure there's a way to enforce the type of `newState` correctly
-    const mergedState: any = { ...this.projectState, ...newState };
+    const mergedState: any = { ...this.projectState, ...newState, initialized: true };
     // // stageProgress is tied to a startup stage, so when there is a change of status or startupMessage,
     // // we always want to reset the progress.
     // if (

@@ -33,7 +33,12 @@ export type BuildErrorDescriptor = {
   buildType: BuildType | null;
 };
 
-export type ProfilingState = "stopped" | "running" | "saving";
+export type ProfilingState = "stopped" | "profiling" | "saving";
+
+export type NavigationHistoryItem = {
+  displayName: string;
+  id: string;
+};
 
 export type DeviceSessionState = {
   status:
@@ -52,10 +57,10 @@ export type DeviceSessionState = {
   fastRefreshOngoing: boolean;
   profilingReactState: ProfilingState;
   profilingCPUState: ProfilingState;
-  navigationHistory: { displayName: string; id: string }[];
-  toolsState: ToolsState | undefined;
+  navigationHistory: NavigationHistoryItem[];
+  toolsState: ToolsState;
   isDebuggerPaused: boolean;
-  logCount: number;
+  logCounter: number;
   hasStaleBuildCache: boolean;
 };
 
@@ -70,9 +75,9 @@ export const DeviceSessionInitialState: DeviceSessionState = {
   profilingReactState: "stopped",
   profilingCPUState: "stopped",
   navigationHistory: [],
-  toolsState: undefined,
+  toolsState: {},
   isDebuggerPaused: false,
-  logCount: 0,
+  logCounter: 0,
   hasStaleBuildCache: false,
 };
 
@@ -153,13 +158,9 @@ export enum ActivateDeviceResult {
 }
 
 export interface ProjectEventMap {
-  log: { type: string };
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
-  toolsStateChanged: ToolsState;
   licenseActivationChanged: boolean;
-  navigationChanged: { displayName: string; id: string };
-  needsNativeRebuild: void;
   replayDataCreated: MultimediaData;
   isRecording: boolean;
 }
@@ -193,6 +194,7 @@ export interface ProjectInterface {
   focusExtensionLogsOutput(): Promise<void>;
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
+  navigateBack(): Promise<void>;
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
