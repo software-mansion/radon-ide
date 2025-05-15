@@ -29,7 +29,7 @@ export type ToolsState = {
 };
 
 export type ProjectState = {
-  previewZoom: ZoomLevelType | undefined; 
+  previewZoom: ZoomLevelType | undefined;
   selectedDevice: DeviceId | undefined;
   initialized: boolean;
 };

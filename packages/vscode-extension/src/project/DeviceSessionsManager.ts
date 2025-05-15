@@ -108,8 +108,8 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
       return true;
     }
 
-    if (!deviceSession.getDeviceState().isActive){
-      Logger.error("Failed to stop device, device is active.")
+    if (!deviceSession.getDeviceState().isActive) {
+      Logger.error("Failed to stop device, device is active.");
       return false;
     }
 
@@ -117,7 +117,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     return true;
   }
 
-  public async startDevice(deviceInfo: DeviceInfo) {
+  public async initializeDevice(deviceInfo: DeviceInfo) {
     if (this.deviceSessions.has(deviceInfo.id)) {
       Logger.warn("[DeviceSessionManager] Device is already running.");
       return false;
@@ -138,7 +138,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     );
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
 
-    await newDeviceSession.start({
+    newDeviceSession.start({
       resetMetroCache: false,
       cleanBuild: false,
     });

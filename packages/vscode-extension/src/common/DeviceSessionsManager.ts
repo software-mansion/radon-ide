@@ -53,7 +53,7 @@ export type TouchPoint = {
 export interface DeviceSessionsManagerInterface {
   reload(id: DeviceId, type: ReloadAction): Promise<boolean>;
   stopDevice(deviceId: DeviceId): Promise<boolean>;
-  startDevice(id: DeviceInfo): Promise<boolean>;
+  initializeDevice(id: DeviceInfo): Promise<boolean>;
   listRunningDevices(): DeviceId[];
   activateDevice(id: DeviceId): Promise<void>;
   deactivateDevice(id: DeviceId): Promise<void>;

@@ -135,7 +135,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          // Frytki device specific now 
+          // Frytki device specific now
           deviceSessionsManager.reload("autoReload");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>

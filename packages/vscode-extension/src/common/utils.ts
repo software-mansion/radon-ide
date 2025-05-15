@@ -13,7 +13,7 @@ export interface UtilsInterface {
   runCommand(command: string): Promise<void>;
 
   focusExtensionLogsOutput(): void;
-  
+
   focusDebugConsole(): void;
 
   getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;

@@ -1,7 +1,7 @@
 import { EventEmitter } from "stream";
 import { Disposable, workspace, window, ConfigurationChangeEvent } from "vscode";
 import os from "os";
-import _ from "lodash";
+import _, { isEqual } from "lodash";
 import {
   ProjectEventListener,
   ProjectEventMap,
@@ -26,8 +26,6 @@ import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRoo
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager } from "./DeviceSessionsManager";
 import { DeviceSessionsManagerDelegate } from "../common/DeviceSessionsManager";
-import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
-import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { DeviceId, DeviceInfo } from "../common/DeviceManager";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
@@ -144,11 +142,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   private async trySelectingDevice() {
     const runningDeviceSessions = this.deviceSessionsManager.listRunningDevices();
 
-    if (runningDeviceSessions[0]) {
-      const selectedActiveSession = await this.trySelectingActiveDeviceSession(
-        anyActiveDeviceSessionId,
-        true
-      );
+    if (runningDeviceSessions.length > 0) {
+      const selectedActiveSession = await this.selectDevice(runningDeviceSessions[0]);
+
       if (selectedActiveSession) {
         return true;
       }
@@ -163,10 +159,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       const device = devices.find(({ id }) => id === lastDeviceId) ?? devices.at(0);
 
       if (device) {
-        // if we found a device on the devices list, we try to select it
-        const isDeviceSelected = await this.selectDevice(device);
-        if (isDeviceSelected) {
-          return true;
+        const initialized = await this.deviceSessionsManager.initializeDevice(device);
+
+        if (initialized) {
+          this.updateProjectState({ initialized: true });
+          const isDeviceSelected = await this.selectDevice(device.id);
+          if (isDeviceSelected) {
+            return true;
+          }
         }
       }
 
@@ -181,7 +181,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       // wait for the new device to be added to the list:
       const listener = async (newDevices: DeviceInfo[]) => {
         this.deviceManager.removeListener("devicesChanged", listener);
-        if (this.selectedDevice) {
+        if (this.projectState.selectedDevice) {
           // device was selected in the meantime, we don't need to do anything
           return;
         } else if (isEqual(newDevices, devices)) {
@@ -231,6 +231,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
     if (previousDevice) {
       const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
+
       await this.deviceSessionsManager.deactivateDevice(previousDevice);
       if (killPreviousDeviceSession) {
         await this.deviceSessionsManager.stopDevice(previousDevice);

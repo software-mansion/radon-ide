@@ -19,7 +19,7 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
 
 function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => void }) {
   const { projectState, project } = useProject();
-  const { focusExtensionLogsOutput} = useUtils();
+  const { focusExtensionLogsOutput } = useUtils();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
 
@@ -71,7 +71,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
   function handleLoaderClick() {
     if (startupMessage === StartupMessage.Building) {
-      // Frytki here i need to refactor to give a device ide in devicesession manager 
+      // Frytki here i need to refactor to give a device ide in devicesession manager
       focusBuildOutput();
     } else if (startupMessage === StartupMessage.WaitingForAppToLoad) {
       onRequestShowPreview();

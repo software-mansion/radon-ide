@@ -8,7 +8,13 @@ import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo, DeviceId } from "../common/DeviceManager";
+import {
+  IOSDeviceInfo,
+  IOSRuntimeInfo,
+  DevicePlatform,
+  DeviceInfo,
+  DeviceId,
+} from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
 import { DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";

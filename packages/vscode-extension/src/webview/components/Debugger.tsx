@@ -1,4 +1,3 @@
-
 import { useUtils } from "../providers/UtilsProvider";
 import "./Debugger.css";
 import IconButton from "./shared/IconButton";
@@ -11,7 +10,7 @@ function Debugger() {
       <p className="debugger-label debugger-shadow">Paused in debugger</p>
       <div className="debugger-button-group">
         <IconButton
-          // Frytki this is now device specific 
+          // Frytki this is now device specific
           onClick={() => project.resumeDebugger()}
           tooltip={{
             label: "Resume execution",

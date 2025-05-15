@@ -11,11 +11,7 @@ import {
   BuildResult,
   DisposableBuild,
 } from "../builders/BuildManager";
-import {
-  DeviceSettings,
-  StartupMessage,
-  DeviceButtonType,
-} from "../common/Project";
+import { DeviceSettings, StartupMessage, DeviceButtonType } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
@@ -98,8 +94,7 @@ export type DeviceSessionDelegate = {
   onDeviceSettingChanged(settings: DeviceSettings): void;
   onDeviceStateChanged(newState: DeviceState): void;
   onNavigationChanged(payload: AppEvent["navigationChanged"]): void;
-} &
-  ToolsDelegate &
+} & ToolsDelegate &
   BuildManagerDelegate;
 
 export class DeviceBootError extends Error {
