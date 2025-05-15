@@ -5,12 +5,12 @@ import { partition, differenceBy } from "lodash";
 import { Route, useRoutes, useRoutesAsItems } from "../providers/RoutesProvider";
 import "./UrlSelect.css";
 
-export type UrlItem = { id: string; name: string };
+export type UrlItem = { id: string; name: string; dynamic?: boolean };
 
 interface PopoverItemProps {
   item: UrlItem;
-  width: number;
   index: number;
+  width: number;
   style?: React.CSSProperties;
   itemRefs: React.RefObject<HTMLDivElement>[];
   textfieldRef: React.RefObject<HTMLInputElement>;
@@ -26,13 +26,12 @@ interface PopoverItemProps {
 const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverItemProps>>(
   (
     {
-      children,
-      style,
       item,
       index,
+      width,
+      style,
       itemRefs,
       textfieldRef,
-      width,
       onClose,
       onNavigate,
       getNameFromId,
@@ -98,10 +97,30 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
     return item.id;
   };
 
+  const checkIsPathDynamic = (item: UrlItem) => {
+    const route = routes.find((route) => route.path === item.id);
+    if (route && route.dynamic) {
+      return true;
+    }
+    return false;
+  };
+
   const closeDropdownWithValue = (id: string) => {
+    if (checkIsPathDynamic({ id, name: id })) {
+      editDynamicPath(id);
+      return;
+    }
     setInputValue(getNameFromId(id));
     onValueChange(id);
     setIsDropdownOpen(false);
+  };
+
+  const editDynamicPath = (id: string) => {
+    setInputValue(getNameFromId(id));
+    textfieldRef.current?.focus();
+    if (textfieldRef.current && textfieldRef.current.tagName === "INPUT") {
+      textfieldRef.current.setSelectionRange(0, id.length);
+    }
   };
 
   const navigateBetweenItems = (
@@ -128,7 +147,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   };
 
   useEffect(() => {
-    setInputValue(getNameFromId(value));
+    setInputValue(getNameFromId(value))
   }, [value]);
 
   useEffect(() => {

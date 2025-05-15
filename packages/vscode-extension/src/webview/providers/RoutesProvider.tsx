@@ -50,5 +50,6 @@ export function useRoutesAsItems() {
   return routes.map((route) => ({
     id: route.path,
     name: route.path,
+    dynamic: route.dynamic ? true : false,
   }));
 }
