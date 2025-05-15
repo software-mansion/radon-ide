@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { useProject } from './ProjectProvider';
+import { createContext, useContext, useEffect, useState } from "react";
+import { useProject } from "./ProjectProvider";
 
 declare global {
   interface Window {
@@ -13,9 +13,9 @@ export type Route = {
   path: string;
   filePath: string;
   children: Route[];
-  dynamic: {name: string, deep: Boolean, notFound?: Boolean} | null;
+  dynamic: { name: string; deep: Boolean; notFound?: Boolean } | null;
   type: string;
-}
+};
 
 export default function RoutesProvider({ children }: { children: React.ReactNode }) {
   const [routes, setRoutes] = useState<Route[] | null>(null);
@@ -35,11 +35,7 @@ export default function RoutesProvider({ children }: { children: React.ReactNode
     };
   }, [project]);
 
-  return (
-    <RoutesContext.Provider value={routes}>
-      {children}
-    </RoutesContext.Provider>
-  );
+  return <RoutesContext.Provider value={routes}>{children}</RoutesContext.Provider>;
 }
 
 export function useRoutes() {

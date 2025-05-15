@@ -10,22 +10,34 @@ export type UrlItem = { id: string; name: string };
 interface PopoverItemProps {
   item: UrlItem;
   width: number;
+  index: number;
   style?: React.CSSProperties;
+  itemRefs: React.RefObject<HTMLDivElement>[];
   textfieldRef: React.RefObject<HTMLInputElement>;
   onClose: (id: string) => void;
   onNavigate: (
     e: React.KeyboardEvent,
     prev?: UrlSelectFocusable,
-    next?: UrlSelectFocusable,
-    prevFallback?: UrlSelectFocusable,
-    nextFallback?: UrlSelectFocusable
+    next?: UrlSelectFocusable
   ) => void;
   getNameFromId: (id: string) => string;
 }
 
 const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverItemProps>>(
   (
-    { children, style, item, textfieldRef, width, onClose, onNavigate, getNameFromId, ...props },
+    {
+      children,
+      style,
+      item,
+      index,
+      itemRefs,
+      textfieldRef,
+      width,
+      onClose,
+      onNavigate,
+      getNameFromId,
+      ...props
+    },
     forwardedRef
   ) => (
     <div
@@ -41,10 +53,8 @@ const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverIt
         } else {
           onNavigate(
             e,
-            (e.target as HTMLDivElement).previousElementSibling as HTMLDivElement,
-            (e.target as HTMLDivElement).nextElementSibling as HTMLDivElement,
-            textfieldRef.current as HTMLInputElement,
-            document.querySelector(".url-select-group-other .url-select-item") as HTMLDivElement
+            itemRefs[index - 1]?.current as UrlSelectFocusable,
+            itemRefs[index + 1]?.current as UrlSelectFocusable
           );
         }
       }}>
@@ -74,7 +84,9 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
 
   const routes = useRoutes();
   const routeItems = useRoutesAsItems();
-  
+
+  const itemRefs = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
+
   const getNameFromId = (id: string) => {
     const item = items.find((item) => item.id === id);
     if (!item) {
@@ -95,19 +107,14 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   const navigateBetweenItems = (
     e: React.KeyboardEvent,
     prev?: UrlSelectFocusable,
-    next?: UrlSelectFocusable,
-    prevFallback?: UrlSelectFocusable,
-    nextFallback?: UrlSelectFocusable
+    next?: UrlSelectFocusable
   ) => {
     e.preventDefault();
     let targetItem = null;
-    let targetItemFallback = null;
     if (e.key === "ArrowDown") {
       targetItem = next;
-      targetItemFallback = nextFallback;
     } else if (e.key === "ArrowUp") {
       targetItem = prev;
-      targetItemFallback = prevFallback;
     }
     if (
       targetItem &&
@@ -115,20 +122,25 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
         targetItem.classList.contains("url-select-input"))
     ) {
       targetItem.focus();
-    } else if (targetItemFallback) {
-      targetItemFallback.focus();
     } else {
       textfieldRef.current?.focus();
     }
   };
 
-  
   useEffect(() => {
     setInputValue(getNameFromId(value));
   }, [value]);
 
   useEffect(() => {
-    const routesNotInRecent = differenceBy(routeItems, recentItems, (item: UrlItem) => getNameFromId(item.id));
+    itemRefs.current = [...filteredItems, ...filteredOutItems].map(
+      (_, i) => itemRefs.current[i] || React.createRef<HTMLDivElement>()
+    );
+  }, [allItems, filteredItems]);
+
+  useEffect(() => {
+    const routesNotInRecent = differenceBy(routeItems, recentItems, (item: UrlItem) =>
+      getNameFromId(item.id)
+    );
     const allItems = [...recentItems, ...routesNotInRecent];
     setAllItems(allItems);
   }, [inputValue, recentItems]);
@@ -227,15 +239,18 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               <div className="url-select-group url-select-group-suggested">
                 <div className="url-select-label">Suggested paths:</div>
                 {filteredItems.map(
-                  (item) =>
+                  (item, index) =>
                     item.name && (
                       <PopoverItem
+                        ref={itemRefs.current[index]}
                         item={item}
+                        index={index}
                         key={item.id}
                         width={textfieldWidth}
                         onClose={closeDropdownWithValue}
                         onNavigate={navigateBetweenItems}
                         getNameFromId={getNameFromId}
+                        itemRefs={itemRefs.current}
                         textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
                       />
                     )
@@ -251,15 +266,18 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               <div className="url-select-group url-select-group-other">
                 {/* <div className="url-select-label">Other paths:</div> */}
                 {filteredOutItems.map(
-                  (item) =>
+                  (item, index) =>
                     item.name && (
                       <PopoverItem
+                        ref={itemRefs.current[index + filteredItems.length]}
                         item={item}
+                        index={index + filteredItems.length}
                         key={item.id}
                         width={textfieldWidth}
                         onClose={closeDropdownWithValue}
                         onNavigate={navigateBetweenItems}
                         getNameFromId={getNameFromId}
+                        itemRefs={itemRefs.current}
                         textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
                       />
                     )
