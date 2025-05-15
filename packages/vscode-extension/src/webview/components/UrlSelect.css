@@ -94,6 +94,10 @@
   word-wrap: break-word;
 }
 
+.url-select-item-text-highlighted {
+  font-weight: bold;
+}
+
 .no-top-margin {
   margin-top: 0;
 }

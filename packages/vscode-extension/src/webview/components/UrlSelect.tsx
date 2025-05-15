@@ -3,64 +3,11 @@ import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
 import { partition, differenceBy } from "lodash";
 import { Route, useRoutes, useRoutesAsItems } from "../providers/RoutesProvider";
+import UrlSelectItem from "./UrlSelectItem";
 import "./UrlSelect.css";
 
 export type UrlItem = { id: string; name: string; dynamic?: boolean };
-
-interface PopoverItemProps {
-  item: UrlItem;
-  index: number;
-  width: number;
-  style?: React.CSSProperties;
-  itemRefs: React.RefObject<HTMLDivElement>[];
-  textfieldRef: React.RefObject<HTMLInputElement>;
-  onClose: (id: string) => void;
-  onNavigate: (
-    e: React.KeyboardEvent,
-    prev?: UrlSelectFocusable,
-    next?: UrlSelectFocusable
-  ) => void;
-  getNameFromId: (id: string) => string;
-}
-
-const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverItemProps>>(
-  (
-    {
-      item,
-      index,
-      width,
-      style,
-      itemRefs,
-      textfieldRef,
-      onClose,
-      onNavigate,
-      getNameFromId,
-      ...props
-    },
-    forwardedRef
-  ) => (
-    <div
-      {...props}
-      tabIndex={0}
-      ref={forwardedRef}
-      className="url-select-item"
-      style={{ ...style, width: width }}
-      onClick={() => onClose(item.id)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onClose(item.id);
-        } else {
-          onNavigate(
-            e,
-            itemRefs[index - 1]?.current as UrlSelectFocusable,
-            itemRefs[index + 1]?.current as UrlSelectFocusable
-          );
-        }
-      }}>
-      <div className="url-select-item-text">{getNameFromId(item.id)}</div>
-    </div>
-  )
-);
+export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
 interface UrlSelectProps {
   value: string;
@@ -69,8 +16,6 @@ interface UrlSelectProps {
   items: UrlItem[];
   disabled?: boolean;
 }
-
-type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
 function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
@@ -260,7 +205,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                 {filteredItems.map(
                   (item, index) =>
                     item.name && (
-                      <PopoverItem
+                      <UrlSelectItem
                         ref={itemRefs.current[index]}
                         item={item}
                         index={index}
@@ -287,7 +232,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                 {filteredOutItems.map(
                   (item, index) =>
                     item.name && (
-                      <PopoverItem
+                      <UrlSelectItem
                         ref={itemRefs.current[index + filteredItems.length]}
                         item={item}
                         index={index + filteredItems.length}
