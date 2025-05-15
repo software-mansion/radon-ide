@@ -92,7 +92,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   };
 
   useEffect(() => {
-    setInputValue(getNameFromId(value))
+    setInputValue(getNameFromId(value));
   }, [value]);
 
   useEffect(() => {

@@ -94,8 +94,12 @@
   word-wrap: break-word;
 }
 
-.url-select-item-text-highlighted {
+.url-select-item-text-search {
   font-weight: bold;
+}
+
+.url-select-item-text-dynamic {
+  color: var(--swm-disabled-text);
 }
 
 .no-top-margin {
