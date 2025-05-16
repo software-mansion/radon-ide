@@ -34,9 +34,6 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const { dependencies } = useDependencies();
 
   const navigationHistory = projectState.navigationHistory;
-  const [urlSelectValue, setUrlSelectValue] = useState<string | undefined>(
-    navigationHistory[0]?.id
-  );
 
   const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
   const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
@@ -55,10 +52,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
       <ReloadButton disabled={disabled ?? false} />
       <IconButton
         onClick={() => {
-          project.goHome("/{}");
-          if (!isExpoRouterProject) {
-            setUrlSelectValue(""); // sets UrlSelect trigger to a placeholder
-          }
+          project.navigateHome();
         }}
         tooltip={{
           label: "Go to main screen",
@@ -72,7 +66,6 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           project.openNavigation(value);
         }}
         navigationHistory={navigationHistory}
-        value={urlSelectValue}
         disabled={disabledAlsoWhenStarting}
       />
     </>

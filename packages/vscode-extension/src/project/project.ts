@@ -350,7 +350,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return false;
   }
 
-  public async goHome(homeUrl: string) {
+  public async navigateHome() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
       platform: this.projectState.selectedDevice?.platform,
     });
@@ -363,7 +363,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
-      await this.openNavigation(homeUrl);
+      await this.deviceSession?.navigateHome();
     } else {
       await this.reloadMetro();
     }

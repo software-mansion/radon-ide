@@ -56,7 +56,6 @@ export type DeviceSessionState = {
   buildError: BuildErrorDescriptor | undefined;
   selectedDevice: DeviceInfo | undefined;
   previewURL: string | undefined;
-  fastRefreshOngoing: boolean;
   profilingReactState: ProfilingState;
   profilingCPUState: ProfilingState;
   navigationHistory: NavigationHistoryItem[];
@@ -73,7 +72,6 @@ export const DeviceSessionInitialState: DeviceSessionState = {
   buildError: undefined,
   selectedDevice: undefined,
   previewURL: undefined,
-  fastRefreshOngoing: false,
   profilingReactState: "stopped",
   profilingCPUState: "stopped",
   navigationHistory: [],
@@ -179,7 +177,6 @@ export type MultimediaData = {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  goHome(homeUrl: string): Promise<void>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
@@ -197,6 +194,7 @@ export interface ProjectInterface {
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
   navigateBack(): Promise<void>;
+  navigateHome(): Promise<void>;
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;

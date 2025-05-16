@@ -97,14 +97,15 @@ export class DeviceSession
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
   private buildError: BuildErrorDescriptor | undefined;
-  private fastRefreshOngoing = false;
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
   private navigationHistory: NavigationHistoryItem[] = [];
   private navigationBackTarget: NavigationHistoryItem | undefined;
+  private navigationHomeTarget: NavigationHistoryItem | undefined;
   private logCounter = 0;
   private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
+
   private get buildResult() {
     if (!this.maybeBuildResult) {
       throw new Error("Expecting build to be ready");
@@ -152,7 +153,6 @@ export class DeviceSession
       startupMessage: this.startupMessage,
       stageProgress: this.stageProgress,
       buildError: this.buildError,
-      fastRefreshOngoing: this.fastRefreshOngoing,
       profilingCPUState: this.profilingCPUState,
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
@@ -163,6 +163,18 @@ export class DeviceSession
       logCounter: this.logCounter,
       hasStaleBuildCache: this.hasStaleBuildCache,
     };
+  }
+
+  private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
+    this.status = "starting";
+    this.startupMessage = startupMessage;
+    this.stageProgress = undefined;
+    this.buildError = undefined;
+    this.profilingCPUState = "stopped";
+    this.profilingReactState = "stopped";
+    this.navigationBackTarget = undefined;
+    this.navigationHomeTarget = undefined;
+    this.emitStateChange();
   }
 
   //#region Metro delegate methods
@@ -261,6 +273,10 @@ export class DeviceSession
         }
       }
 
+      if (!this.navigationHomeTarget) {
+        this.navigationHomeTarget = payload;
+      }
+
       this.navigationBackTarget = undefined;
       this.navigationHistory = [
         payload,
@@ -269,11 +285,11 @@ export class DeviceSession
       this.emitStateChange();
     });
     devtools.onEvent("RNIDE_fastRefreshStarted", () => {
-      this.fastRefreshOngoing = true;
+      this.status = "refreshing";
       this.emitStateChange();
     });
     devtools.onEvent("RNIDE_fastRefreshComplete", () => {
-      this.fastRefreshOngoing = false;
+      this.status = "running";
       this.emitStateChange();
     });
     devtools.onEvent("RNIDE_isProfilingReact", (isProfiling) => {
@@ -316,8 +332,7 @@ export class DeviceSession
 
   public async performReloadAction(type: ReloadAction): Promise<boolean> {
     try {
-      this.status = "starting";
-      this.emitStateChange();
+      this.resetStartingState();
 
       getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
         platform: this.device.platform,
@@ -469,9 +484,7 @@ export class DeviceSession
       platform: this.device.platform,
     });
 
-    this.status = "starting";
-    this.emitStateChange();
-
+    this.resetStartingState();
     try {
       if (this.buildManager.shouldRebuild()) {
         await this.restart({ forceClean: false, cleanCache: false });
@@ -724,9 +737,8 @@ export class DeviceSession
   }
 
   private async startInternal({ cleanBuild, resetMetroCache }: StartOptions) {
-    this.status = "starting";
-    this.stageProgress = undefined;
-    this.startupMessage = StartupMessage.InitializingDevice;
+    this.resetStartingState(StartupMessage.InitializingDevice);
+
     this.emitStateChange();
 
     if (this.cancelToken) {
@@ -913,6 +925,12 @@ export class DeviceSession
 
   public openNavigation(id: string) {
     this.devtools.send("RNIDE_openNavigation", { id });
+  }
+
+  public navigateHome() {
+    if (this.navigationHomeTarget) {
+      this.devtools.send("RNIDE_openNavigation", { id: this.navigationHomeTarget.id });
+    }
   }
 
   public navigateBack() {

@@ -52,7 +52,6 @@ const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverIt
 );
 
 interface UrlSelectProps {
-  value?: string;
   onValueChange: (newValue: string) => void;
   navigationHistory: NavigationHistoryItem[];
   disabled?: boolean;
@@ -62,7 +61,7 @@ type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
 // Currently, recentItems are not used, but they can be mapped to show the most recent
 // URLs in the dropdown. This can be implemented in the future if needed.
-function UrlSelect({ onValueChange, navigationHistory, value, disabled }: UrlSelectProps) {
+function UrlSelect({ onValueChange, navigationHistory, disabled }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
   const [filteredItems, setFilteredItems] = React.useState<NavigationHistoryItem[]>([]);
@@ -119,10 +118,8 @@ function UrlSelect({ onValueChange, navigationHistory, value, disabled }: UrlSel
   };
 
   useEffect(() => {
-    if (value !== undefined) {
-      setInputValue(getNameFromId(value));
-    }
-  }, [value]);
+    setInputValue(navigationHistory[0]?.displayName ?? "");
+  }, [navigationHistory[0]?.id]);
 
   useEffect(() => {
     if (disabled) {
