@@ -1,5 +1,5 @@
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
-import { MultimediaData } from "./Project";
+import { MultimediaData } from "./DeviceSessionsManager";
 
 export interface UtilsEventListener<T> {
   (event: T): void;

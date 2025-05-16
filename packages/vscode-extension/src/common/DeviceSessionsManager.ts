@@ -50,11 +50,14 @@ export type TouchPoint = {
   yRatio: number;
 };
 
+export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown";
+
 export interface DeviceSessionsManagerInterface {
+  getDeviceState(id: DeviceId): Promise<DeviceState>;
   reload(id: DeviceId, type: ReloadAction): Promise<boolean>;
   stopDevice(deviceId: DeviceId): Promise<boolean>;
   initializeDevice(id: DeviceInfo): Promise<boolean>;
-  listRunningDevices(): DeviceId[];
+  listRunningDevices(): Promise<DeviceId[]>;
   activateDevice(id: DeviceId): Promise<void>;
   deactivateDevice(id: DeviceId): Promise<void>;
 
@@ -100,6 +103,15 @@ export interface DeviceSessionsManagerInterface {
   dispatchCopy(id: DeviceId): Promise<void>;
 
   openNavigation(id: DeviceId, navigationItemID: string): Promise<void>;
+
+  addListener<K extends keyof DeviceSessionManagerEventMap>(
+    eventType: K,
+    listener: DeviceSessionManagerEventListener<DeviceSessionManagerEventMap[K]>
+  ): Promise<void>;
+  removeListener<K extends keyof DeviceSessionManagerEventMap>(
+    eventType: K,
+    listener: DeviceSessionManagerEventListener<DeviceSessionManagerEventMap[K]>
+  ): Promise<void>;
 }
 export type Locale = string;
 
@@ -138,13 +150,14 @@ export interface DeviceSessionManagerEventListener<T> {
 }
 
 export interface DeviceSessionManagerEventMap {
+  runningDevicesChanged: DeviceId[];
   log: { deviceId: DeviceId; payload: { type: string } };
   deviceStateChanged: { deviceId: DeviceId; deviceState: DeviceState };
   deviceSettingsChanged: { deviceId: DeviceId; deviceSettings: DeviceSettings };
   toolsStateChanged: { deviceId: DeviceId; toolsState: ToolsState };
   navigationChanged: { deviceId: DeviceId; displayName: string; id: string };
   needsNativeRebuild: { deviceId: DeviceId };
-  replayDataCreated: MultimediaData;
-  isRecording: boolean;
+  replayDataCreated: { deviceId: DeviceId; multimediaData: MultimediaData };
+  isRecording: { deviceId: DeviceId; isRecording: boolean };
   isProfilingCPU: { deviceId: DeviceId; isProfiling: boolean };
 }

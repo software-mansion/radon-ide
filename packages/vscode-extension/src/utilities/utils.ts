@@ -11,8 +11,8 @@ import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsEventListener, UtilsEventMap, UtilsInterface } from "../common/utils";
 import { Platform } from "./platform";
-import { MultimediaData } from "../common/Project";
 import { getTelemetryReporter } from "./telemetry";
+import { MultimediaData } from "../common/DeviceSessionsManager";
 
 type KeybindingType = {
   command: string;

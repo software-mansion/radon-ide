@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as Select from "@radix-ui/react-select";
-import { MultimediaData } from "../../common/Project";
 import { useUtils } from "../providers/UtilsProvider";
 import "./ReplayOverlay.css";
 import Button from "./shared/Button";
+import { MultimediaData } from "../../common/DeviceSessionsManager";
 
 const INITIAL_REPLAY_LENGTH_SEC = 5;
 

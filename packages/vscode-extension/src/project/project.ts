@@ -140,7 +140,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
    * If the device list is empty, we wait until we can select a device.
    */
   private async trySelectingDevice() {
-    const runningDeviceSessions = this.deviceSessionsManager.listRunningDevices();
+    const runningDeviceSessions = await this.deviceSessionsManager.listRunningDevices();
 
     if (runningDeviceSessions.length > 0) {
       const selectedActiveSession = await this.selectDevice(runningDeviceSessions[0]);
@@ -222,7 +222,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async selectDevice(deviceId: DeviceId, selectDeviceOptions?: SelectDeviceOptions) {
-    if (!this.deviceSessionsManager.listRunningDevices().includes(deviceId)) {
+    if (!(await this.deviceSessionsManager.listRunningDevices()).includes(deviceId)) {
       Logger.error("[DeviceSessionManager] Device was not started yet.");
       return false;
     }

@@ -1,12 +1,10 @@
-import { isEqual } from "lodash";
 import { DebugSessionCustomEvent, Disposable, env, window, workspace } from "vscode";
 import { EventEmitter } from "stream";
 import { DeviceId, DeviceInfo } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { Logger } from "../Logger";
-import { extensionContext } from "../utilities/extensionContext";
 import { ApplicationContext } from "./ApplicationContext";
-import { AppEvent, DeviceSession, DeviceState } from "./deviceSession";
+import { AppEvent, DeviceSession, DeviceSessionDelegate, DeviceState } from "./deviceSession";
 import { CancelError } from "../builders/cancelToken";
 import {
   DeviceSessionsManagerInterface,
@@ -19,6 +17,7 @@ import {
   AppPermissionType,
   TouchPoint,
   InspectData,
+  DeviceButtonType,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
 import { maybeHandleProfileFile } from "../utilities/profiles";
@@ -26,7 +25,6 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { UtilsInterface } from "../common/utils";
 import { ToolKey } from "./tools";
 import { minimatch } from "minimatch";
-import { DeviceButtonType } from "../common/Project";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
@@ -75,6 +73,12 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
   }
 
   // #region Device Session Control
+
+  public async getDeviceState(id: DeviceId) {
+    const deviceSession = this.getDeviceSessionById(id);
+
+    return deviceSession.getDeviceState();
+  }
 
   public async reload(id: DeviceId, type: ReloadAction) {
     const deviceSession = this.deviceSessions.get(id);
@@ -137,6 +141,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
       wrapDelegateWithDeviceId(this as DeviceSessionsManager, deviceInfo.id)
     );
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
+    this.eventEmitter.emit("runningDevicesChanged", await this.listRunningDevices());
 
     newDeviceSession.start({
       resetMetroCache: false,
@@ -145,7 +150,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     return true;
   }
 
-  public listRunningDevices() {
+  public async listRunningDevices() {
     return this.deviceSessions.keys().toArray();
   }
 
@@ -194,6 +199,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     const deviceSession = this.deviceSessions.get(deviceId);
     await deviceSession?.dispose();
     this.deviceSessions.delete(deviceId);
+    this.eventEmitter.emit("runningDevicesChanged", await this.listRunningDevices());
   }
 
   // #endregion
@@ -347,7 +353,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
       platform: deviceSession.platform,
     });
     deviceSession.startRecording();
-    this.eventEmitter.emit("isRecording", true);
+    this.eventEmitter.emit("isRecording", { deviceId, isRecording: true });
 
     this.recordingTimeout = setTimeout(() => {
       this.stopRecording(deviceId);
@@ -363,7 +369,7 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
       platform: deviceSession.platform,
     });
 
-    this.eventEmitter.emit("isRecording", false);
+    this.eventEmitter.emit("isRecording", { deviceId, isRecording: false });
     return deviceSession.captureAndStopRecording();
   }
 

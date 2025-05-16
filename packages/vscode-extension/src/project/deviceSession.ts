@@ -11,7 +11,6 @@ import {
   BuildResult,
   DisposableBuild,
 } from "../builders/BuildManager";
-import { DeviceSettings, StartupMessage, DeviceButtonType } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
@@ -22,7 +21,13 @@ import { CancelError, CancelToken } from "../builders/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { ToolsDelegate, ToolsManager } from "./tools";
 import { extensionContext } from "../utilities/extensionContext";
-import { AppPermissionType, ReloadAction, TouchPoint } from "../common/DeviceSessionsManager";
+import {
+  AppPermissionType,
+  DeviceButtonType,
+  DeviceSettings,
+  ReloadAction,
+  TouchPoint,
+} from "../common/DeviceSessionsManager";
 import { BuildType } from "../common/BuildConfig";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import { focusSource } from "../utilities/focusSource";
@@ -60,6 +65,30 @@ export type AppEvent = {
   fastRefreshComplete: undefined;
 };
 
+// important: order of values in this enum matters
+export enum StartupMessage {
+  InitializingDevice = "Initializing device",
+  StartingPackager = "Starting packager",
+  BootingDevice = "Booting device",
+  Building = "Building",
+  Installing = "Installing",
+  Launching = "Launching",
+  WaitingForAppToLoad = "Waiting for app to load",
+  AttachingDebugger = "Attaching debugger",
+  Restarting = "Restarting",
+}
+
+export const StartupStageWeight = [
+  { StartupMessage: StartupMessage.InitializingDevice, weight: 1 },
+  { StartupMessage: StartupMessage.StartingPackager, weight: 1 },
+  { StartupMessage: StartupMessage.BootingDevice, weight: 2 },
+  { StartupMessage: StartupMessage.Building, weight: 7 },
+  { StartupMessage: StartupMessage.Installing, weight: 1 },
+  { StartupMessage: StartupMessage.Launching, weight: 1 },
+  { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
+  { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
+];
+
 export type DeviceState =
   | ({
       status:
@@ -91,6 +120,9 @@ type DeviceStateBuildError = {
 
 export type DeviceSessionDelegate = {
   ensureDependenciesAndNodeVersion(): Promise<void>;
+  onConsoleLog(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStarted(event: DebugSessionCustomEvent): void;
+  onProfilingCPUStopped(event: DebugSessionCustomEvent): void;
   onDeviceSettingChanged(settings: DeviceSettings): void;
   onDeviceStateChanged(newState: DeviceState): void;
   onNavigationChanged(payload: AppEvent["navigationChanged"]): void;
@@ -106,7 +138,7 @@ export class DeviceBootError extends Error {
   }
 }
 
-export class DeviceSession implements MetroDelegate, Disposable {
+export class DeviceSession implements MetroDelegate, DebugSessionDelegate, Disposable {
   public metro: MetroLauncher;
   public toolsManager: ToolsManager;
   private inspectCallID = 7621;
@@ -212,6 +244,18 @@ export class DeviceSession implements MetroDelegate, Disposable {
       return;
     }
     this.updateDeviceState({ status: "running" });
+  }
+
+  public onConsoleLog(event: DebugSessionCustomEvent) {
+    this.deviceSessionDelegate.onConsoleLog(event);
+  }
+
+  public onProfilingCPUStarted(event: DebugSessionCustomEvent) {
+    this.deviceSessionDelegate.onProfilingCPUStarted(event);
+  }
+
+  public async onProfilingCPUStopped(event: DebugSessionCustomEvent) {
+    await this.deviceSessionDelegate.onProfilingCPUStopped(event);
   }
 
   async onBundlingError(
