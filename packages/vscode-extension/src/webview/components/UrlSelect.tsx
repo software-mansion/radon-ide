@@ -3,11 +3,10 @@ import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
 import { partition } from "lodash";
 import "./UrlSelect.css";
-
-export type UrlItem = { id: string; name: string };
+import { NavigationHistoryItem } from "../../common/Project";
 
 interface PopoverItemProps {
-  item: UrlItem;
+  item: NavigationHistoryItem;
   width: number;
   style?: React.CSSProperties;
   textfieldRef: React.RefObject<HTMLInputElement>;
@@ -55,8 +54,7 @@ const PopoverItem = React.forwardRef<HTMLDivElement, PropsWithChildren<PopoverIt
 interface UrlSelectProps {
   value?: string;
   onValueChange: (newValue: string) => void;
-  recentItems: UrlItem[];
-  items: UrlItem[];
+  navigationHistory: NavigationHistoryItem[];
   disabled?: boolean;
 }
 
@@ -64,22 +62,22 @@ type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
 // Currently, recentItems are not used, but they can be mapped to show the most recent
 // URLs in the dropdown. This can be implemented in the future if needed.
-function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
+function UrlSelect({ onValueChange, navigationHistory, value, disabled }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
-  const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
-  const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
+  const [filteredItems, setFilteredItems] = React.useState<NavigationHistoryItem[]>([]);
+  const [filteredOutItems, setFilteredOutItems] = React.useState<NavigationHistoryItem[]>([]);
 
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
   const textfieldRef = useRef<HTMLInputElement>(null);
 
   const getNameFromId = (id: string) => {
-    const itemForID = items.find((item) => item.id === id);
+    const itemForID = navigationHistory.find((item) => item.id === id);
     if (!itemForID) {
       return id;
     }
-    if (itemForID.name.startsWith("/")) {
-      return itemForID.name;
+    if (itemForID.displayName.startsWith("/")) {
+      return itemForID.displayName;
     }
     return itemForID.id;
   };
@@ -129,16 +127,16 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   useEffect(() => {
     if (disabled) {
       setFilteredItems([]);
-      setFilteredOutItems(items);
+      setFilteredOutItems(navigationHistory);
       return;
     }
     const inputValueLowerCase = inputValue.toLowerCase();
-    const [filtered, filteredOut] = partition(items, (item) =>
+    const [filtered, filteredOut] = partition(navigationHistory, (item) =>
       getNameFromId(item.id).toLowerCase().includes(inputValueLowerCase)
     );
     setFilteredItems(filtered);
     setFilteredOutItems(filteredOut);
-  }, [inputValue, items]);
+  }, [inputValue, navigationHistory]);
 
   useEffect(() => {
     if (textfieldRef.current) {
@@ -222,7 +220,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                 <div className="url-select-label">Suggested paths:</div>
                 {filteredItems.map(
                   (item) =>
-                    item.name && (
+                    item.displayName && (
                       <PopoverItem
                         item={item}
                         key={item.id}
@@ -246,7 +244,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                 <div className="url-select-label">Other paths:</div>
                 {filteredOutItems.map(
                   (item) =>
-                    item.name && (
+                    item.displayName && (
                       <PopoverItem
                         item={item}
                         key={item.id}
