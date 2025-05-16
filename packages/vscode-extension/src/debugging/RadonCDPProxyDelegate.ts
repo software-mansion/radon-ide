@@ -5,12 +5,13 @@ import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
 import { Minimatch } from "minimatch";
+import { SkipFilesProcessor } from "../utilities/skipFiles";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
-  private ignoredPatterns: Minimatch[] = [];
+  private skipFiles: SkipFilesProcessor;
 
   private justCalledStepOver = false;
   private resumeEventTimeout: NodeJS.Timeout | undefined;
@@ -23,9 +24,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     private sourceMapRegistry: SourceMapsRegistry,
     skipFiles: string[]
   ) {
-    this.ignoredPatterns = skipFiles.map(
-      (pattern) => new Minimatch(pattern, { flipNegate: true, dot: true })
-    );
+    this.skipFiles = new SkipFilesProcessor(skipFiles);
   }
 
   public async handleApplicationCommand(
@@ -63,15 +62,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       lineNumber + 1,
       columnNumber ?? 0
     );
-    const shouldSkipFile = this.ignoredPatterns.reduce((shouldSkip, p) => {
-      if (p.negate) {
-        // don't skip the file if some negated pattern matches it
-        return shouldSkip && !p.match(sourceURL);
-      } else {
-        return shouldSkip || p.match(sourceURL);
-      }
-    }, false);
-    return shouldSkipFile;
+    return this.skipFiles.shouldSkipFile(sourceURL);
   }
 
   private handleDebuggerResumed(command: IProtocolCommand, tunnel: ProxyTunnel) {

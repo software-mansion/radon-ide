@@ -194,6 +194,7 @@
           "type": "string",
           "scope": "window",
           "default": null,
+          "markdownDeprecationMessage": "This setting is now replaced by `skipFiles` option in the launch configuration, check [this link](https://ide.swmansion.com/docs/guides/configuration#customizing-launch-configuration-for-radon-ide) for more information.",
           "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
         }
       }
@@ -411,6 +412,10 @@
                     }
                   }
                 }
+              },
+              "skipFiles": {
+                "type": "array",
+                "description": "List of glob-style patterns that is used to filter out or hide files from debugger stack traces / exception breakpoints in debugger, or when using inspector. The patterns support negation (with '!' prefix). Radon IDE has a default set of patterns and this option will add to that list. If you want to force the default patterns to be ignored, add '!**/*' as the first pattern to your list."
               },
               "eas": {
                 "type": "object",
