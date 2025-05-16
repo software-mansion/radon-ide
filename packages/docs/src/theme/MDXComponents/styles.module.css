@@ -37,8 +37,8 @@
 }
 
 .details[open]:not(.isBrowser) > summary > .arrow,
-    /* When JS works: we use the data-attribute for arrow animation */
-.details[data-collapsed='false'].isBrowser > summary > .arrow {
+      /* When JS works: we use the data-attribute for arrow animation */
+  .details[data-collapsed='false'].isBrowser > summary > .arrow {
   transform: rotate(180deg);
 }
 

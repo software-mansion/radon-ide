@@ -1,13 +1,13 @@
-import { useCollapsible, Collapsible } from '@docusaurus/theme-common';
+import { useCollapsible, Collapsible } from "@docusaurus/theme-common";
 
-import clsx from 'clsx';
-import React from 'react';
-import { useRef, useState } from 'react';
+import clsx from "clsx";
+import React from "react";
+import { useRef, useState } from "react";
 
-import styles from './styles.module.css';
-import useIsBrowser from '@docusaurus/useIsBrowser';
-import ThemedImage from '@theme/ThemedImage';
-import useBaseUrl from '@docusaurus/useBaseUrl';
+import styles from "./styles.module.css";
+import useIsBrowser from "@docusaurus/useIsBrowser";
+import ThemedImage from "@theme/ThemedImage";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 
 const DetailsStyling = ({ summary, children, ...props }): JSX.Element => {
   const isBrowser = useIsBrowser();
@@ -16,8 +16,8 @@ const DetailsStyling = ({ summary, children, ...props }): JSX.Element => {
   });
 
   const arrowIcon = {
-    light: useBaseUrl('/img/Arrow.svg'),
-    dark: useBaseUrl('img/Arrow-dark.svg'),
+    light: useBaseUrl("/img/Arrow.svg"),
+    dark: useBaseUrl("img/Arrow-dark.svg"),
   };
 
   const detailsRef = useRef<HTMLDetailsElement>(null);
@@ -33,11 +33,7 @@ const DetailsStyling = ({ summary, children, ...props }): JSX.Element => {
       ref={detailsRef}
       open={open}
       data-collapsed={collapsed}
-      className={clsx(
-        styles.details,
-        isBrowser && styles.isBrowser,
-        props.className
-      )}
+      className={clsx(styles.details, isBrowser && styles.isBrowser, props.className)}
       onMouseDown={(e) => {
         const target = e.target as HTMLElement;
         // Prevent a double-click to highlight summary text
@@ -48,8 +44,7 @@ const DetailsStyling = ({ summary, children, ...props }): JSX.Element => {
       onClick={(e) => {
         e.stopPropagation(); // For isolation of multiple nested details/summary
         const target = e.target as HTMLElement;
-        const shouldToggle =
-          isInSummary(target) && hasParent(target, detailsRef.current!);
+        const shouldToggle = isInSummary(target) && hasParent(target, detailsRef.current!);
         if (!shouldToggle) {
           return;
         }
@@ -87,7 +82,7 @@ function isInSummary(node: HTMLElement | null): boolean {
   if (!node) {
     return false;
   }
-  return node.tagName === 'SUMMARY' || isInSummary(node.parentElement);
+  return node.tagName === "SUMMARY" || isInSummary(node.parentElement);
 }
 
 function hasParent(node: HTMLElement | null, parent: HTMLElement): boolean {
