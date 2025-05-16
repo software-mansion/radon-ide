@@ -117,14 +117,14 @@ export class IosSimulatorDevice extends DeviceBase {
     }
   }
 
-  async bootDevice(settings: DeviceSettings) {
-    if (await this.shouldUpdateLocale(settings.locale)) {
-      await this.changeLocale(settings.locale);
+  async bootDevice() {
+    if (await this.shouldUpdateLocale(this.deviceSettings.locale)) {
+      await this.changeLocale(this.deviceSettings.locale);
     }
 
     await this.internalBootDevice();
 
-    await this.changeSettings(settings);
+    await this.changeSettings(this.deviceSettings);
   }
 
   private async shouldUpdateLocale(locale: Locale): Promise<boolean> {

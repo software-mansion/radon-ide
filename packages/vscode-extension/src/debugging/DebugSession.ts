@@ -5,6 +5,7 @@ import { disposeAll } from "../utilities/disposables";
 import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
+import { Logger } from "../Logger";
 
 const PING_TIMEOUT = 1000;
 
@@ -35,16 +36,22 @@ export interface JSDebugConfiguration {
 
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
 
+type DebugSessionOptions = {
+  useParentDebugSession?: boolean;
+};
+
 export class DebugSession implements Disposable {
   private parentDebugSession: vscode.DebugSession | undefined;
   private jsDebugSession: vscode.DebugSession | undefined;
 
-  private useParentDebugSession = false;
   private disposables: Disposable[] = [];
 
   private currentWsTarget: string | undefined;
 
-  constructor(private delegate: DebugSessionDelegate) {
+  constructor(
+    private delegate: DebugSessionDelegate,
+    private options: DebugSessionOptions = {}
+  ) {
     this.disposables.push(
       debug.onDidTerminateDebugSession((session) => {
         if (session.id === this.jsDebugSession?.id) {
@@ -87,8 +94,7 @@ export class DebugSession implements Disposable {
       !this.jsDebugSession,
       "Cannot start parent debug session when js debug session is already running"
     );
-    this.useParentDebugSession = true;
-    this.parentDebugSession = await startDebugging(
+    const newParentDebugSession = await startDebugging(
       undefined,
       {
         type: MASTER_DEBUGGER_TYPE,
@@ -102,27 +108,32 @@ export class DebugSession implements Disposable {
         suppressSaveBeforeStart: true,
       }
     );
+    if (this.parentDebugSession) {
+      Logger.warn("Parent debugger session has spawned concurrently, dropping the earlier session");
+      debug.stopDebugging(this.parentDebugSession);
+    }
+    this.parentDebugSession = newParentDebugSession;
   }
 
   public async restart() {
     await this.stop();
-    if (this.useParentDebugSession) {
+    if (this.options.useParentDebugSession) {
       await this.startParentDebugSession();
     }
   }
 
   public async stop() {
-    if (this.parentDebugSession) {
-      const parentDebugSession = this.parentDebugSession;
-      this.parentDebugSession = undefined;
-      await debug.stopDebugging(parentDebugSession);
-    }
     if (this.jsDebugSession) {
       const jsDebugSession = this.jsDebugSession;
       this.jsDebugSession = undefined;
       await debug.stopDebugging(jsDebugSession);
     }
     this.currentWsTarget = undefined;
+    if (this.parentDebugSession) {
+      const parentDebugSession = this.parentDebugSession;
+      this.parentDebugSession = undefined;
+      await debug.stopDebugging(parentDebugSession);
+    }
   }
 
   public async dispose() {
@@ -135,13 +146,16 @@ export class DebugSession implements Disposable {
     if (this.jsDebugSession) {
       await this.restart();
     }
+    if (this.options.useParentDebugSession && !this.parentDebugSession) {
+      await this.startParentDebugSession();
+    }
 
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
     const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
 
     const extensionPath = extensionContext.extensionUri.path;
 
-    this.jsDebugSession = await startDebugging(
+    const newDebugSession = await startDebugging(
       undefined,
       {
         type: debuggerType,
@@ -169,7 +183,11 @@ export class DebugSession implements Disposable {
         compact: true,
       }
     );
-
+    if (this.jsDebugSession) {
+      Logger.warn("JS debugger session has spawned concurrently, dropping the earlier session");
+      debug.stopDebugging(this.jsDebugSession);
+    }
+    this.jsDebugSession = newDebugSession;
     this.currentWsTarget = configuration.websocketAddress;
 
     return true;
