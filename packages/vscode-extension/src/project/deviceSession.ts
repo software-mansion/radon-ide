@@ -1,5 +1,4 @@
 import _ from "lodash";
-import assert from "assert";
 import { commands, DebugSessionCustomEvent, Disposable, window } from "vscode";
 import { MetroLauncher, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
