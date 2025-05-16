@@ -3,6 +3,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
 import { partition } from "lodash";
 import "./UrlSelect.css";
+import { useProject } from "../providers/ProjectProvider";
 
 export type UrlItem = { id: string; name: string };
 
@@ -58,30 +59,35 @@ interface UrlSelectProps {
   recentItems: UrlItem[];
   items: UrlItem[];
   disabled?: boolean;
+  dropdownOnly?: boolean;
 }
 
 type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
-// Currently, recentItems are not used, but they can be mapped to show the most recent
-// URLs in the dropdown. This can be implemented in the future if needed.
-function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
+function UrlSelect({
+  onValueChange,
+  recentItems,
+  items,
+  value,
+  disabled,
+  dropdownOnly,
+}: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState("");
+  const [inputValue, setInputValue] = React.useState("/");
   const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
   const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
 
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
   const textfieldRef = useRef<HTMLInputElement>(null);
 
+  const { project } = useProject();
+
   const getNameFromId = (id: string) => {
     const item = items.find((item) => item.id === id);
     if (!item) {
       return id;
     }
-    if (item.name.startsWith("/")) {
-      return item.name;
-    }
-    return item.id;
+    return item.name;
   };
 
   const closeDropdownWithValue = (id: string) => {
@@ -166,8 +172,15 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             value={inputValue ?? "/"}
             placeholder="Enter path..."
             disabled={disabled}
+            readonly={dropdownOnly}
             onInput={() => setInputValue(textfieldRef.current?.value ?? "")}
-            onMouseDown={() => setIsDropdownOpen(true)}
+            onMouseDown={() => {
+              if (!dropdownOnly || !isDropdownOpen) {
+                setIsDropdownOpen(true);
+              } else if (dropdownOnly) {
+                setIsDropdownOpen(false);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -202,6 +215,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             const originalEvent = e.detail.originalEvent as PointerEvent;
             const elemRect = textfieldRef.current?.getBoundingClientRect();
             if (
+              dropdownOnly ||
               !input ||
               !elemRect ||
               originalEvent.clientX <= elemRect.left ||
@@ -210,6 +224,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               originalEvent.clientY >= elemRect.bottom
             ) {
               setIsDropdownOpen(false);
+              input?.blur();
             }
           }}>
           <div className="url-select-viewport">
@@ -217,10 +232,23 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               <div className="url-select-separator no-top-margin" />
             )}
 
-            {filteredItems.length > 0 && (
-              <div className="url-select-group url-select-group-suggested">
-                <div className="url-select-label">Suggested paths:</div>
-                {filteredItems.map(
+            {dropdownOnly ? (
+              <div className="url-select-group">
+                <div className="url-select-label">Recent paths:</div>
+                <PopoverItem
+                  item={{ id: "/", name: "/" }}
+                  width={textfieldWidth}
+                  onClose={() => {
+                    setInputValue("/");
+                    setIsDropdownOpen(false);
+                    project.goHome("/{}");
+                  }}
+                  onNavigate={navigateBetweenItems}
+                  getNameFromId={getNameFromId}
+                  textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                />
+
+                {recentItems.map(
                   (item) =>
                     item.name && (
                       <PopoverItem
@@ -234,31 +262,70 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                       />
                     )
                 )}
+
+                {items
+                  .filter((item) => !recentItems.some((recentItem) => recentItem.id === item.id))
+                  .map(
+                    (item) =>
+                      item.name && (
+                        <PopoverItem
+                          item={item}
+                          key={item.id}
+                          width={textfieldWidth}
+                          onClose={closeDropdownWithValue}
+                          onNavigate={navigateBetweenItems}
+                          getNameFromId={getNameFromId}
+                          textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                        />
+                      )
+                  )}
               </div>
-            )}
-
-            {filteredItems.length > 0 && filteredOutItems.length > 0 && (
-              <div className="url-select-separator" />
-            )}
-
-            {filteredOutItems.length > 0 && (
-              <div className="url-select-group url-select-group-other">
-                <div className="url-select-label">Other paths:</div>
-                {filteredOutItems.map(
-                  (item) =>
-                    item.name && (
-                      <PopoverItem
-                        item={item}
-                        key={item.id}
-                        width={textfieldWidth}
-                        onClose={closeDropdownWithValue}
-                        onNavigate={navigateBetweenItems}
-                        getNameFromId={getNameFromId}
-                        textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
-                      />
-                    )
+            ) : (
+              <>
+                {filteredItems.length > 0 && (
+                  <div className="url-select-group url-select-group-suggested">
+                    <div className="url-select-label">Suggested paths:</div>
+                    {filteredItems.map(
+                      (item) =>
+                        item.name && (
+                          <PopoverItem
+                            item={item}
+                            key={item.id}
+                            width={textfieldWidth}
+                            onClose={closeDropdownWithValue}
+                            onNavigate={navigateBetweenItems}
+                            getNameFromId={getNameFromId}
+                            textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                          />
+                        )
+                    )}
+                  </div>
                 )}
-              </div>
+
+                {filteredItems.length > 0 && filteredOutItems.length > 0 && (
+                  <div className="url-select-separator" />
+                )}
+
+                {filteredOutItems.length > 0 && (
+                  <div className="url-select-group url-select-group-other">
+                    <div className="url-select-label">Other paths:</div>
+                    {filteredOutItems.map(
+                      (item) =>
+                        item.name && (
+                          <PopoverItem
+                            item={item}
+                            key={item.id}
+                            width={textfieldWidth}
+                            onClose={closeDropdownWithValue}
+                            onNavigate={navigateBetweenItems}
+                            getNameFromId={getNameFromId}
+                            textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                          />
+                        )
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </Popover.Content>
