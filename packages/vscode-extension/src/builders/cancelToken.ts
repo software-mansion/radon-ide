@@ -32,7 +32,7 @@ export class CancelToken {
       const wrappedInput = new Proxy(input, {
         get(target, prop, receiver) {
           if (prop === "then") {
-            return (resolve: any, reject: any) => promise.then(resolve, reject);
+            return (res: any, rej: any) => promise.then(res, rej);
           }
           return Reflect.get(target, prop, receiver);
         },

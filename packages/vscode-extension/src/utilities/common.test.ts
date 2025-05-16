@@ -1,7 +1,7 @@
 import process from "process";
 import assert from "assert";
 import sinon from "sinon";
-import { after } from "mocha";
+import { after, test } from "mocha";
 import { ABI, getNativeABI } from "./common";
 
 after(() => {

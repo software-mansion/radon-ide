@@ -301,7 +301,9 @@ export async function activate(context: ExtensionContext) {
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
-  shouldExtensionActivate && extensionActivated(context);
+  if (shouldExtensionActivate) {
+    extensionActivated(context);
+  }
 }
 
 class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {

@@ -42,7 +42,7 @@ function mapApiLevelToAndroidVersion(apiLevel: number): number | undefined {
     case 28:
       return 9;
     default:
-      undefined;
+      return undefined;
   }
 }
 

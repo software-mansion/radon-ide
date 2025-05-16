@@ -5,12 +5,12 @@ import IconButton, { IconButtonProps } from "./shared/IconButton";
 import "./IconButtonWithOptions.css";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
-interface IconButtonWithOptions extends IconButtonProps {
+interface IconButtonWithOptionsProps extends IconButtonProps {
   options: Record<string, () => void>;
   disabled?: boolean;
 }
 
-export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWithOptions>(
+export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWithOptionsProps>(
   (props, ref) => {
     const { options, disabled, children, ...iconButtonProps } = props;
 

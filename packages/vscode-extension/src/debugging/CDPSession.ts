@@ -1,4 +1,5 @@
 import WebSocket from "ws";
+import { Disposable, EventEmitter } from "vscode";
 import { OutputEvent, Source, StackFrame } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { Minimatch } from "minimatch";
@@ -18,7 +19,6 @@ import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
 import { CDPConfiguration } from "./CDPDebugAdapter";
-import { Disposable, EventEmitter } from "vscode";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -446,7 +446,9 @@ export class CDPSession {
 
       this.cdpMessagePromises.set(message.id, {
         resolve: (e: any) => {
-          timeout && clearTimeout(timeout);
+          if (timeout) {
+            clearTimeout(timeout);
+          }
           resolve(e);
         },
         reject,

@@ -112,7 +112,9 @@ export const SearchSelect = ({
 
   const updateValue = (newValue: string, updateQuery: boolean) => {
     setValue(newValue);
-    updateQuery && setQuery(newValue);
+    if (updateQuery) {
+      setQuery(newValue);
+    }
   };
 
   const getOptionWithHighlight = (element: string): ReactNode => {

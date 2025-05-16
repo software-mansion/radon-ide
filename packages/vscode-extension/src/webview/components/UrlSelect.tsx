@@ -74,14 +74,14 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   const textfieldRef = useRef<HTMLInputElement>(null);
 
   const getNameFromId = (id: string) => {
-    const item = items.find((item) => item.id === id);
-    if (!item) {
+    const itemForID = items.find((item) => item.id === id);
+    if (!itemForID) {
       return id;
     }
-    if (item.name.startsWith("/")) {
-      return item.name;
+    if (itemForID.name.startsWith("/")) {
+      return itemForID.name;
     }
-    return item.id;
+    return itemForID.id;
   };
 
   const closeDropdownWithValue = (id: string) => {

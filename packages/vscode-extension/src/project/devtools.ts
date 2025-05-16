@@ -1,4 +1,7 @@
 import http from "http";
+import path from "path";
+import fs from "fs";
+import os from "os";
 import { Disposable, Uri } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { Logger } from "../Logger";
@@ -9,9 +12,6 @@ import {
   Store,
   Wall,
 } from "../../third-party/react-devtools/headless";
-import path from "path";
-import fs from "fs";
-import os from "os";
 
 // Define event names as a const array to avoid duplication
 export const DEVTOOLS_EVENTS = [
@@ -204,11 +204,11 @@ export class Devtools implements Disposable {
     }
     return {
       dispose: () => {
-        const listeners = this.listeners.get(eventName);
-        if (listeners) {
-          const index = listeners.indexOf(listener as (...payload: any) => void);
+        const listenersToClean = this.listeners.get(eventName);
+        if (listenersToClean) {
+          const index = listenersToClean.indexOf(listener as (...payload: any) => void);
           if (index !== -1) {
-            listeners.splice(index, 1);
+            listenersToClean.splice(index, 1);
           }
         }
       },

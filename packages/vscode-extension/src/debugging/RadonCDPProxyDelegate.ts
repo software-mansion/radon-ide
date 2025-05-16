@@ -1,10 +1,10 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
 import { EventEmitter } from "vscode";
+import { Minimatch } from "minimatch";
 import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
-import { Minimatch } from "minimatch";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
@@ -258,9 +258,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
     } catch (e) {
       Logger.error("Could not process the source map", e);
-    } finally {
-      return command;
     }
+    return command;
   }
 
   private handleConsoleAPICalled(

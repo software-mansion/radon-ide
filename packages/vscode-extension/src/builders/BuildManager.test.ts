@@ -1,12 +1,13 @@
+import assert from "assert";
 import Sinon from "sinon";
+import { describe, afterEach, beforeEach, it } from "mocha";
+
 import { BuildType } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/DeviceManager";
 import { CustomBuild, EasConfig, LaunchConfigurationOptions } from "../common/LaunchConfig";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { BuildManager } from "./BuildManager";
 import { BuildCache } from "./BuildCache";
-import assert from "assert";
-import { describe, afterEach, beforeEach, it } from "mocha";
 import * as ExpoGo from "./expoGo";
 
 const APP_ROOT = "appRoot";
