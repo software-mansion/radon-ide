@@ -88,8 +88,6 @@ export class CDPProxy {
     Connection,
     IncomingMessage,
   ]): Promise<void> {
-    debuggerTarget = debuggerTarget;
-
     debuggerTarget.pause(); // don't listen for events until the target is ready
 
     const applicationTarget = new Connection(

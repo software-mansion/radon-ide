@@ -18,7 +18,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
-import { CancelToken } from "../builders/cancelToken";
+import { CancelError, CancelToken } from "../builders/cancelToken";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -865,39 +865,44 @@ async function parseAvdIniFile(filePath: string) {
 }
 
 async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
-  return new Promise<void>(async (resolve, reject) => {
-    let process: ChildProcess | undefined;
-    const timeout = setTimeout(() => {
-      process?.kill(9);
-      reject(new Error("Timeout waiting for emulator to boot"));
-    }, timeoutMs);
+  const cancelToken = new CancelToken();
+  const timeout = setTimeout(() => {
+    cancelToken.cancel();
+  }, timeoutMs);
 
-    process = exec(ADB_PATH, [
-      "-s",
-      serial,
-      "wait-for-device",
-      "shell",
-      "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
-    ]);
-
-    await process;
+  try {
+    await cancelToken.adapt(
+      exec(ADB_PATH, [
+        "-s",
+        serial,
+        "wait-for-device",
+        "shell",
+        "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
+      ])
+    );
 
     // If booting device and building the application was fast enough, the emulators network internals
     // would not be loaded before the start of the application. This in turn would cause PackagerStatusCheck
     // (https://github.com/facebook/react-native/blob/main/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/devsupport/PackagerStatusCheck.kt)
     // to fail and the application would think that there is no metro server.
-    process = exec(ADB_PATH, [
-      "-s",
-      serial,
-      "shell",
-      `while ! ping -c 1 10.0.2.2>/dev/null 2>&1; do sleep 0.5; done;`,
-    ]);
+    await cancelToken.adapt(
+      exec(ADB_PATH, [
+        "-s",
+        serial,
+        "shell",
+        `while ! ping -c 1 10.0.2.2>/dev/null 2>&1; do sleep 0.5; done;`,
+      ])
+    );
 
     await process;
 
     clearTimeout(timeout);
-    resolve();
-  });
+  } catch (error) {
+    if (error instanceof CancelError) {
+      throw new Error("Timeout waiting for emulator to boot");
+    }
+    throw error;
+  }
 }
 
 function getOrCreateAvdDirectory(avd?: string) {

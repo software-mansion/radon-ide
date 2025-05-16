@@ -86,7 +86,9 @@ export class ToolsManager implements Disposable {
           }
         });
         // notify tools manager that the state of requested plugins has changed
-        changed && this.handleStateChange();
+        if (changed) {
+          this.handleStateChange();
+        }
       })
     );
     this.handleStateChange();

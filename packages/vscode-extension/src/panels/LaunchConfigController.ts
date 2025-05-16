@@ -79,10 +79,7 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
     const newCustomApplicationRoots = [...oldCustomApplicationRoots, appRoot];
 
-    extensionContext.workspaceState.update(
-      CUSTOM_APPLICATION_ROOTS_KEY,
-      newCustomApplicationRoots
-    ) ?? [];
+    extensionContext.workspaceState.update(CUSTOM_APPLICATION_ROOTS_KEY, newCustomApplicationRoots);
 
     this.eventEmitter.emit("applicationRootsChanged");
   }
