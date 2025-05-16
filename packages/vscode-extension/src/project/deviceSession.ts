@@ -23,6 +23,7 @@ import {
   ToolsState,
   ProfilingState,
   NavigationHistoryItem,
+  DeviceSessionStatus,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
@@ -95,8 +96,8 @@ export class DeviceSession
   private isLaunching = true;
   private cancelToken: CancelToken | undefined;
 
-  private status: DeviceSessionState["status"] = "starting";
-  private startupMessage: StartupMessage | undefined;
+  private status: DeviceSessionStatus = "starting";
+  private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
   private buildError: BuildErrorDescriptor | undefined;
   private fastRefreshOngoing = false;
@@ -694,6 +695,7 @@ export class DeviceSession
   public async start({ cleanBuild, resetMetroCache }: StartOptions) {
     try {
       await this.startInternal({ cleanBuild, resetMetroCache });
+      this.status = "running";
     } catch (e) {
       if (e instanceof CancelError) {
         Logger.info("Device selection was canceled", e);

@@ -40,15 +40,17 @@ export type NavigationHistoryItem = {
   id: string;
 };
 
+export type DeviceSessionStatus =
+  | "starting"
+  | "running"
+  | "bootError"
+  | "bundlingError"
+  | "debuggerPaused"
+  | "refreshing"
+  | "buildError";
+
 export type DeviceSessionState = {
-  status:
-    | "starting"
-    | "running"
-    | "bootError"
-    | "bundlingError"
-    | "debuggerPaused"
-    | "refreshing"
-    | "buildError";
+  status: DeviceSessionStatus;
   startupMessage: StartupMessage | undefined;
   stageProgress: number | undefined;
   buildError: BuildErrorDescriptor | undefined;
