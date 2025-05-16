@@ -8,6 +8,7 @@ import {
   workspace,
   ConfigurationChangeEvent,
   Disposable,
+  WebviewPanelSerializer,
 } from "vscode";
 
 import { extensionContext } from "../utilities/extensionContext";
@@ -16,9 +17,8 @@ import { WebviewController } from "./WebviewController";
 import { disposeAll } from "../utilities/disposables";
 import { PREVIEW_WEBVIEW_NAME, PREVIEW_WEBVIEW_PATH } from "../webview/utilities/constants";
 
-const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
-
 export class TabPanel implements Disposable {
+  public static readonly viewType = "RadonIDETabPanel";
   public static currentPanel: TabPanel | undefined;
   private readonly _panel: WebviewPanel;
   private disposables: Disposable[] = [];
@@ -68,46 +68,79 @@ export class TabPanel implements Disposable {
     );
   }
 
-  public static render(context: ExtensionContext) {
-    if (TabPanel.currentPanel) {
-      // If the webview panel already exists reveal it
-      TabPanel.currentPanel._panel.reveal();
+  public static restore(panel: WebviewPanel) {
+    TabPanel.currentPanel?.dispose();
+    TabPanel.currentPanel = new TabPanel(panel, extensionContext);
+  }
+
+  private static showInternal(viewColumn: ViewColumn | undefined, preserveFocus: boolean) {
+    const panel = TabPanel.currentPanel;
+    if (panel) {
+      panel._panel.reveal(viewColumn, preserveFocus);
     } else {
-      // If a webview panel does not already exist create and show a new one
-
-      // If there is an empty group in the editor, we will open the panel there:
-      const emptyGroup = window.tabGroups.all.find((group) => group.tabs.length === 0);
-
-      const panel = window.createWebviewPanel(
-        "radon-ide-panel",
+      const webviewPanel = window.createWebviewPanel(
+        TabPanel.viewType,
         "Radon IDE",
-        { viewColumn: emptyGroup?.viewColumn || ViewColumn.Beside },
+        { viewColumn: viewColumn || ViewColumn.Beside, preserveFocus },
         {
           enableScripts: true,
           localResourceRoots: [
-            Uri.joinPath(context.extensionUri, "dist"),
-            Uri.joinPath(context.extensionUri, "node_modules"),
+            Uri.joinPath(extensionContext.extensionUri, "dist"),
+            Uri.joinPath(extensionContext.extensionUri, "node_modules"),
           ],
           retainContextWhenHidden: true,
         }
       );
-      TabPanel.currentPanel = new TabPanel(panel, context);
-      context.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, true);
+      TabPanel.restore(webviewPanel);
+    }
+  }
 
-      commands.executeCommand("workbench.action.lockEditorGroup");
+  public static async show(
+    newLocation: "editor-tab" | "new-window" | undefined,
+    preserveFocus = false
+  ) {
+    if (newLocation === "new-window") {
+      await commands.executeCommand("workbench.action.newEmptyEditorWindow");
+      // we ignore errors for the enabelCompactAuxiliaryWindow command as it only's been added
+      // in VSCode 1.100 and won't be available in older versions or VSCode forks
+      await commands
+        .executeCommand("workbench.action.enableCompactAuxiliaryWindow")
+        .then(null, () => {});
+      // we find the last empty editor group and assume it belongs to the newly opened window
+      const emptyEditorGroups = window.tabGroups.all.filter((group) => group.tabs.length === 0);
+      if (emptyEditorGroups.length > 0) {
+        const lastEmptyGroup = emptyEditorGroups[emptyEditorGroups.length - 1];
+        this.showInternal(lastEmptyGroup.viewColumn, preserveFocus);
+      }
+    } else if (newLocation === "editor-tab") {
+      // We can't tell whether the panel is in new window or in some horizonal/vertical group
+      // we use the following logic to handle different cases:
+      // 1. If the current panel viewColumn is > 1, this means it could be in a new window,
+      // in this case we move it to the first group
+      // 2. Alternatively, if panel doesn't exist, or it is in the first group
+      // use "Beside" mode to open it beside the current editor.
+      const currentViewColumn = TabPanel.currentPanel?._panel.viewColumn || 0;
+      this.showInternal(currentViewColumn > 1 ? ViewColumn.One : ViewColumn.Beside, preserveFocus);
+    } else {
+      // This is called when the user doens't request a specific lcoation for the panel
+      // for example, when they trigger "show IDE panel" command from the command palette
+      // or when they switch the location from the settings.
+      this.showInternal(undefined, preserveFocus);
     }
   }
 
   public dispose() {
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
-    // this is triggered when the user closes the webview panel by hand, we want to reset open_panel_on_activation
-    // key in this case to prevent extension from automatically opening the panel next time they open the editor
-    extensionContext.workspaceState.update(OPEN_PANEL_ON_ACTIVATION, undefined);
-
     commands.executeCommand("setContext", "RNIDE.isTabPanelFocused", false);
 
     TabPanel.currentPanel = undefined;
 
     disposeAll(this.disposables);
+  }
+}
+
+export class TabPanelSerializer implements WebviewPanelSerializer {
+  public async deserializeWebviewPanel(webviewPanel: WebviewPanel, state: any): Promise<void> {
+    TabPanel.restore(webviewPanel);
   }
 }

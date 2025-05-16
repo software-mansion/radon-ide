@@ -301,7 +301,14 @@ export function AppWrapper({ children, initialProps, fabric }) {
         openPreview(payload.id);
         return;
       }
-      const navigationDescriptor = navigationHistory.get(payload.id);
+
+      const navigationDescriptor = navigationHistory.get(payload.id) || {
+        id: payload.id,
+        name: payload.name || payload.id,
+        pathname: payload.id,
+        params: payload.params || {},
+      };
+
       closePreview().then(() => {
         navigationDescriptor && requestNavigationChange(navigationDescriptor);
       });
