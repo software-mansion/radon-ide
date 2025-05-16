@@ -213,8 +213,12 @@ function Preview({
       sendInspect(e, "Move", false);
     } else if (isMultiTouching) {
       setTouchPoint(getTouchPosition(e));
-      isPanning && moveAnchorPoint(e);
-      isPressing && sendMultiTouchForEvent(e, "Move");
+      if (isPanning) {
+        moveAnchorPoint(e);
+      }
+      if (isPressing) {
+        sendMultiTouchForEvent(e, "Move");
+      }
     } else if (isPressing) {
       sendTouch(e, "Move");
     }

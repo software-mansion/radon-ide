@@ -83,11 +83,11 @@ function UrlSelect({
   const { project } = useProject();
 
   const getNameFromId = (id: string) => {
-    const item = items.find((item) => item.id === id);
-    if (!item) {
+    const itemForID = items.find((item) => item.id === id);
+    if (!itemForID) {
       return id;
     }
-    return item.name;
+    return itemForID.name;
   };
 
   const closeDropdownWithValue = (id: string) => {

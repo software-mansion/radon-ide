@@ -59,7 +59,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     this.devtoolsListeners.push(
       this.devtools.onEvent("RNIDE_pluginMessage", (payload) => {
         if (payload.scope === REDUX_PLUGIN_ID) {
-          const { scope, ...data } = payload;
+          const { scope: _scope, ...data } = payload;
           this.connectedWebview?.postMessage({ scope: "RNIDE-redux-devtools", data });
         }
       })

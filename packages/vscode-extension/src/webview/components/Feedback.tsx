@@ -20,7 +20,7 @@ export function Feedback({ sentiment, setSentiment }: FeedbackProps) {
 
   return (
     <div className="feedback">
-      {Boolean(sentiment) ? (
+      {sentiment ? (
         <p className="feedback-prompt">
           {sentiment === "positive" ? "What went well?" : "Tell us more"}
         </p>

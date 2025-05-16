@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import { EventEmitter } from "stream";
 import fs from "fs";
 import path from "path";
-import { commands, env, ProgressLocation, Uri, window, workspace } from "vscode";
+import { commands, env, ProgressLocation, Uri, window } from "vscode";
 import JSON5 from "json5";
 import vscode from "vscode";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
