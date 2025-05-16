@@ -123,17 +123,17 @@ export class DebugSession implements Disposable {
   }
 
   public async stop() {
-    if (this.parentDebugSession) {
-      const parentDebugSession = this.parentDebugSession;
-      this.parentDebugSession = undefined;
-      await debug.stopDebugging(parentDebugSession);
-    }
     if (this.jsDebugSession) {
       const jsDebugSession = this.jsDebugSession;
       this.jsDebugSession = undefined;
       await debug.stopDebugging(jsDebugSession);
     }
     this.currentWsTarget = undefined;
+    if (this.parentDebugSession) {
+      const parentDebugSession = this.parentDebugSession;
+      this.parentDebugSession = undefined;
+      await debug.stopDebugging(parentDebugSession);
+    }
   }
 
   public async dispose() {
@@ -146,7 +146,7 @@ export class DebugSession implements Disposable {
     if (this.jsDebugSession) {
       await this.restart();
     }
-    if (this.options.useParentDebugSession) {
+    if (this.options.useParentDebugSession && !this.parentDebugSession) {
       await this.startParentDebugSession();
     }
 
@@ -188,7 +188,6 @@ export class DebugSession implements Disposable {
       debug.stopDebugging(this.jsDebugSession);
     }
     this.jsDebugSession = newDebugSession;
-    console.log("START DEBUGGER [JS]", this.jsDebugSession.id);
     this.currentWsTarget = configuration.websocketAddress;
 
     return true;
