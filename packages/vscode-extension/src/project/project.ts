@@ -34,7 +34,6 @@ import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
-import { DEVICE_SETTINGS_DEFAULT } from "./deviceSession";
 import {
   activateDevice,
   watchLicenseTokenChange,
@@ -50,6 +49,7 @@ import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRoo
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager } from "./DeviceSessionsManager";
 import { DeviceSessionsManagerDelegate } from "../common/DeviceSessionsManager";
+import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -484,7 +484,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async openComponentPreview(fileName: string, lineNumber1Based: number) {
     try {
       const deviceSession = this.deviceSession;
-      if (!deviceSession || !deviceSession.isAppLaunched) {
+      if (!deviceSession) {
         window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
         return;
       }
@@ -513,11 +513,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async getDeviceSettings() {
-    return this.deviceSession?.deviceSettings ?? DEVICE_SETTINGS_DEFAULT;
+    return extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY, DEVICE_SETTINGS_DEFAULT);
   }
 
   public async updateDeviceSettings(settings: DeviceSettings) {
-    let needsRestart = await this.deviceSession?.changeDeviceSettings(settings);
+    let needsRestart = await this.deviceSession?.updateDeviceSettings(settings);
     this.eventEmitter.emit("deviceSettingsChanged", settings);
 
     if (needsRestart) {
@@ -554,16 +554,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   private updateProjectState(newState: Partial<ProjectState>) {
-    // NOTE: this is unsafe, but I'm not sure there's a way to enforce the type of `newState` correctly
-    const mergedState: any = { ...this.projectState, ...newState, initialized: true };
-    // // stageProgress is tied to a startup stage, so when there is a change of status or startupMessage,
-    // // we always want to reset the progress.
-    // if (
-    //   newState.status !== undefined ||
-    //   ("startupMessage" in newState && newState.startupMessage !== undefined)
-    // ) {
-    //   delete mergedState.stageProgress;
-    // }
+    const mergedState = { ...this.projectState, ...newState, initialized: true };
     this.projectState = mergedState;
     this.eventEmitter.emit("projectStateChanged", this.projectState);
   }

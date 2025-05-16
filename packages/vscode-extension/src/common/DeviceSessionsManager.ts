@@ -23,5 +23,5 @@ export interface DeviceSessionsManagerInterface {
   startOrActivateSessionForDevice(
     deviceInfo: DeviceInfo,
     selectDeviceOptions?: SelectDeviceOptions
-  ): Promise<boolean>;
+  ): Promise<void>;
 }

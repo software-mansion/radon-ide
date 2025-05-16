@@ -62,13 +62,13 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
         .values()
         .filter((session) => session !== existingDeviceSession);
       await Promise.all(otherSessions.map((session) => this.terminateSession(session)));
-      return true;
+      return;
     }
 
     // otherwise, we need to acquire the device and start a new session
     const device = await this.acquireDeviceByDeviceInfo(deviceInfo);
     if (!device) {
-      return false;
+      return;
     }
     Logger.debug("Selected device is ready");
 
@@ -90,15 +90,10 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     }
 
     try {
-      await newDeviceSession.start({
-        resetMetroCache: false,
-        cleanBuild: false,
-      });
+      await newDeviceSession.start();
     } catch (e) {
       Logger.error("Couldn't start device session", e instanceof Error ? e.message : e);
-      return false;
     }
-    return true;
   }
 
   private findInitialDeviceAndStartSession = async () => {

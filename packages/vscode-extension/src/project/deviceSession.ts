@@ -31,32 +31,11 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../builders/cancelToken";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { ToolKey, ToolsDelegate, ToolsManager } from "./tools";
-import { extensionContext } from "../utilities/extensionContext";
 import { ReloadAction } from "../common/DeviceSessionsManager";
 import { focusSource } from "../utilities/focusSource";
 import { ApplicationContext } from "./ApplicationContext";
 
-const DEVICE_SETTINGS_KEY = "device_settings_v4";
 const MAX_URL_HISTORY_SIZE = 20;
-
-export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
-  appearance: "dark",
-  contentSize: "normal",
-  location: {
-    latitude: 50.048653,
-    longitude: 19.965474,
-    isDisabled: false,
-  },
-  hasEnrolledBiometrics: false,
-  locale: "en_US",
-  replaysEnabled: false,
-  showTouches: false,
-};
-
-type StartOptions = {
-  cleanBuild: boolean;
-  resetMetroCache: boolean;
-};
 
 type RestartOptions = {
   forceClean: boolean;
@@ -89,8 +68,6 @@ export class DeviceSession
   private debugSession: DebugSession;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
-  public deviceSettings: DeviceSettings;
-  private isLaunching = true;
   private cancelToken: CancelToken | undefined;
 
   private status: DeviceSessionStatus = "starting";
@@ -113,10 +90,6 @@ export class DeviceSession
     return this.maybeBuildResult;
   }
 
-  public get isAppLaunched() {
-    return !this.isLaunching;
-  }
-
   public get previewURL() {
     return this.device.previewURL;
   }
@@ -131,9 +104,6 @@ export class DeviceSession
     private readonly device: DeviceBase,
     private readonly deviceSessionDelegate: DeviceSessionDelegate
   ) {
-    this.deviceSettings =
-      extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? DEVICE_SETTINGS_DEFAULT;
-
     this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools, this);
     this.toolsManager = new ToolsManager(this.devtools, this);
@@ -144,7 +114,7 @@ export class DeviceSession
       this,
       device.platform
     );
-    this.debugSession = new DebugSession(this);
+    this.debugSession = new DebugSession(this, { useParentDebugSession: true });
   }
 
   public getState(): DeviceSessionState {
@@ -315,19 +285,21 @@ export class DeviceSession
   }
 
   public async activate() {
-    this.isActive = true;
-    this.buildManager.activate();
-    this.toolsManager.activate();
-    this.debugSession = new DebugSession(this);
-    await this.debugSession.startParentDebugSession();
-    await this.connectJSDebugger();
+    if (!this.isActive) {
+      this.isActive = true;
+      this.toolsManager.activate();
+      if (this.startupMessage === StartupMessage.AttachingDebugger) {
+        await this.reconnectJSDebuggerIfNeeded();
+      }
+    }
   }
 
   public async deactivate() {
-    this.isActive = false;
-    await this.debugSession.dispose();
-    this.buildManager.deactivate();
-    this.toolsManager.deactivate();
+    if (this.isActive) {
+      this.isActive = false;
+      this.toolsManager.deactivate();
+      await this.debugSession.dispose();
+    }
   }
 
   public async performReloadAction(type: ReloadAction): Promise<boolean> {
@@ -437,7 +409,6 @@ export class DeviceSession
   private async restart({ forceClean, cleanCache }: RestartOptions) {
     if (this.cancelToken) {
       this.cancelToken.cancel();
-      this.cancelToken = undefined;
     }
 
     const cancelToken = new CancelToken();
@@ -521,8 +492,6 @@ export class DeviceSession
     await this.debugSession.restart();
   }
 
-  private launchAppCancelToken: CancelToken | undefined;
-
   private async reconnectJSDebuggerIfNeeded() {
     // after reloading JS, we sometimes need to reconnect the JS debugger. This is
     // needed specifically in Expo Go based environments where the reloaded runtime
@@ -574,7 +543,6 @@ export class DeviceSession
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
     });
-    this.isLaunching = true;
     this.device.disableReplays();
 
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
@@ -621,14 +589,8 @@ export class DeviceSession
     Logger.debug("App and preview ready, moving on...");
     this.startupMessage = StartupMessage.AttachingDebugger;
     this.emitStateChange();
-    await cancelToken.adapt(this.connectJSDebugger());
-
-    this.isLaunching = false;
-    if (this.deviceSettings?.replaysEnabled) {
-      this.device.enableReplay();
-    }
-    if (this.deviceSettings?.showTouches) {
-      this.device.showTouches();
+    if (this.isActive) {
+      await cancelToken.adapt(this.connectJSDebugger());
     }
 
     const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
@@ -642,11 +604,11 @@ export class DeviceSession
     return previewURL!;
   }
 
-  private async bootDevice(deviceSettings: DeviceSettings) {
+  private async bootDevice() {
     this.startupMessage = StartupMessage.BootingDevice;
     this.emitStateChange();
     try {
-      await this.device.bootDevice(deviceSettings);
+      await this.device.bootDevice();
     } catch (e) {
       Logger.error("Failed to boot device", e);
       throw new DeviceBootError("Failed to boot device", e);
@@ -702,10 +664,44 @@ export class DeviceSession
     Logger.debug("Metro & devtools ready");
   }
 
-  public async start({ cleanBuild, resetMetroCache }: StartOptions) {
+  public async start() {
     try {
-      await this.startInternal({ cleanBuild, resetMetroCache });
-      this.status = "running";
+      this.resetStartingState(StartupMessage.InitializingDevice);
+
+      if (this.cancelToken) {
+        this.cancelToken.cancel();
+      }
+
+      const cancelToken = new CancelToken();
+      this.cancelToken = cancelToken;
+
+      const waitForNodeModules = this.deviceSessionDelegate.ensureDependenciesAndNodeVersion();
+
+      Logger.debug(`Launching devtools`);
+      this.devtools.start();
+
+      Logger.debug(`Launching metro`);
+      this.metro.start({
+        resetCache: false,
+        appRoot: this.applicationContext.appRootFolder,
+        dependencies: [waitForNodeModules],
+      });
+
+      if (this.isActive) {
+        await cancelToken.adapt(this.debugSession.startParentDebugSession());
+      }
+
+      await cancelToken.adapt(this.waitForMetroReady());
+      // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
+      await cancelToken.adapt(this.bootDevice());
+      await this.buildApp({
+        appRoot: this.applicationContext.appRootFolder,
+        clean: false,
+        cancelToken,
+      });
+      await cancelToken.adapt(this.installApp({ reinstall: false }));
+      await this.launchApp(cancelToken);
+      Logger.debug("Device session started");
     } catch (e) {
       if (e instanceof CancelError) {
         Logger.info("Device selection was canceled", e);
@@ -736,48 +732,6 @@ export class DeviceSession
     this.deviceSessionDelegate.onStateChange(this.getState());
   }
 
-  private async startInternal({ cleanBuild, resetMetroCache }: StartOptions) {
-    this.resetStartingState(StartupMessage.InitializingDevice);
-
-    this.emitStateChange();
-
-    if (this.cancelToken) {
-      this.cancelToken.cancel();
-      this.cancelToken = undefined;
-    }
-
-    const cancelToken = new CancelToken();
-    this.cancelToken = cancelToken;
-
-    const waitForNodeModules = this.deviceSessionDelegate.ensureDependenciesAndNodeVersion();
-
-    Logger.debug(`Launching devtools`);
-    this.devtools.start();
-
-    Logger.debug(`Launching metro`);
-    this.metro.start({
-      resetCache: resetMetroCache,
-      appRoot: this.applicationContext.appRootFolder,
-      dependencies: [waitForNodeModules],
-    });
-    // We start the debug session early to be able to use it to surface bundle
-    // errors in the console. We only start the parent debug session and the JS
-    // debugger will be started at later time once the app is built and launched.
-    await cancelToken.adapt(this.debugSession.startParentDebugSession());
-
-    await cancelToken.adapt(this.waitForMetroReady());
-    // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
-    await cancelToken.adapt(this.bootDevice(this.deviceSettings));
-    await this.buildApp({
-      appRoot: this.applicationContext.appRootFolder,
-      clean: cleanBuild,
-      cancelToken,
-    });
-    await cancelToken.adapt(this.installApp({ reinstall: false }));
-    await this.launchApp(cancelToken);
-    Logger.debug("Device session started");
-  }
-
   private async connectJSDebugger() {
     const websocketAddress = await this.metro.getDebuggerURL();
     if (!websocketAddress) {
@@ -793,7 +747,8 @@ export class DeviceSession
     });
 
     if (connected) {
-      // TODO(jgonet): Right now, we ignore start failure
+      this.status = "running";
+      this.emitStateChange();
       Logger.debug("Connected to debugger, moving on...");
     } else {
       Logger.error("Couldn't connect to debugger");
@@ -960,36 +915,8 @@ export class DeviceSession
     return promise;
   }
 
-  public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
-    const changedSettings = (Object.keys(settings) as Array<keyof DeviceSettings>).filter(
-      (settingKey) => {
-        return !_.isEqual(settings[settingKey], this.deviceSettings[settingKey]);
-      }
-    );
-
-    getTelemetryReporter().sendTelemetryEvent("device-settings:update-device-settings", {
-      platform: this.device.platform,
-      changedSetting: JSON.stringify(changedSettings),
-    });
-
-    extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
-    if (this.deviceSettings?.replaysEnabled !== settings.replaysEnabled && !this.isLaunching) {
-      if (settings.replaysEnabled) {
-        this.device.enableReplay();
-      } else {
-        this.device.disableReplays();
-      }
-    }
-    if (this.deviceSettings?.showTouches !== settings.showTouches && !this.isLaunching) {
-      if (settings.showTouches) {
-        this.device.showTouches();
-      } else {
-        this.device.hideTouches();
-      }
-    }
-    this.deviceSettings = settings;
-
-    return this.device.changeSettings(settings);
+  public async updateDeviceSettings(settings: DeviceSettings): Promise<boolean> {
+    return this.device.updateDeviceSettings(settings);
   }
 
   public focusBuildOutput() {
