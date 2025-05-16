@@ -26,7 +26,6 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
-  StartupMessage,
   ToolsState,
   TouchPoint,
   ZoomLevelType,

@@ -1,11 +1,10 @@
-import { isEqual } from "lodash";
 import { Disposable, window } from "vscode";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { ApplicationContext } from "./ApplicationContext";
-import { DeviceSession, DeviceSessionDelegate } from "./deviceSession";
+import { DeviceSession } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import {
@@ -16,7 +15,6 @@ import {
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceSessionInitialState } from "../common/Project";
-import { CancelError } from "../builders/cancelToken";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
@@ -123,11 +121,11 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
       );
       const defaultDevice =
         devices.find((device) => device.platform === DevicePlatform.IOS) ?? devices.at(0);
-      const device = devices.find((device) => device.id === lastDeviceId) ?? defaultDevice;
+      const initialDevice = devices.find((device) => device.id === lastDeviceId) ?? defaultDevice;
 
-      if (device) {
+      if (initialDevice) {
         // if we found a device on the devices list, we try to select it
-        await this.startOrActivateSessionForDevice(device);
+        await this.startOrActivateSessionForDevice(initialDevice);
       }
     } finally {
       this.findingDevice = false;
