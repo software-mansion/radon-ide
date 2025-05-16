@@ -40,7 +40,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const [urlList, setUrlList] = useState<UrlItem[]>([]);
   const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
-  const [urlSelectValue, setUrlSelectValue] = useState<string | undefined>(urlList[0]?.id);
+  const [urlSelectValue, setUrlSelectValue] = useState<string | undefined>(urlList[0]?.id || "/");
 
   useEffect(() => {
     function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {
@@ -111,7 +111,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         onClick={() => {
           project.goHome("/{}");
           if (!isExpoRouterProject) {
-            setUrlSelectValue(""); // sets UrlSelect trigger to a placeholder
+            setUrlSelectValue("/"); // sets UrlSelect trigger to a placeholder
           }
         }}
         tooltip={{
@@ -128,7 +128,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         recentItems={recentUrlList}
         items={sortedUrlList}
         value={urlSelectValue}
-        disabled={disabledAlsoWhenStarting}
+        disabled={disabledAlsoWhenStarting || (!isExpoRouterProject && urlHistory.length < 1)}
+        dropdownOnly={!isExpoRouterProject}
       />
     </>
   );
