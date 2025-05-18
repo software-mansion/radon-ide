@@ -74,6 +74,8 @@ type DeviceStateCommon = {
   initialized: boolean;
   startupMessage: StartupMessage | undefined;
   stageProgress: number | undefined;
+  isProfilingCPU: boolean;
+  isRecording: boolean;
 };
 
 type DeviceStateBuildError = {

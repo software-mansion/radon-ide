@@ -347,6 +347,12 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
 
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;
 
+  public async isRecording(deviceId: DeviceId) {
+    const deviceSession = this.getDeviceSessionById(deviceId);
+
+    return deviceSession.getDeviceState().isRecording;
+  }
+
   startRecording(deviceId: DeviceId): void {
     const deviceSession = this.getDeviceSessionById(deviceId);
 
@@ -468,6 +474,12 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
   }
 
   // #region Profiling
+
+  async isProfilingCPU(deviceId: DeviceId) {
+    const deviceSession = this.getDeviceSessionById(deviceId);
+
+    return deviceSession.getDeviceState().isProfilingCPU;
+  }
 
   async startProfilingCPU(deviceId: DeviceId) {
     const deviceSession = this.getDeviceSessionById(deviceId);

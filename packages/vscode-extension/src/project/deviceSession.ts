@@ -77,6 +77,8 @@ export class DeviceSession
     startupMessage: StartupMessage.InitializingDevice,
     previewURL: undefined,
     initialized: false,
+    isProfilingCPU: false,
+    isRecording: false,
   };
 
   public getDeviceState() {
@@ -170,10 +172,12 @@ export class DeviceSession
   }
 
   public onProfilingCPUStarted(event: DebugSessionCustomEvent) {
+    this.updateDeviceState({ isProfilingCPU: true });
     this.deviceSessionDelegate.onProfilingCPUStarted(event);
   }
 
   public async onProfilingCPUStopped(event: DebugSessionCustomEvent) {
+    this.updateDeviceState({ isProfilingCPU: false });
     await this.deviceSessionDelegate.onProfilingCPUStopped(event);
   }
 
@@ -754,10 +758,12 @@ export class DeviceSession
   }
 
   public startRecording() {
+    this.updateDeviceState({ isRecording: true });
     return this.device.startRecording();
   }
 
   public async captureAndStopRecording() {
+    this.updateDeviceState({ isRecording: false });
     return this.device.captureAndStopRecording();
   }
 

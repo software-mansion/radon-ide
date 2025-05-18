@@ -82,6 +82,7 @@ export interface DeviceSessionsManagerInterface {
     callback: (inspectData: InspectData) => void
   ): Promise<void>;
 
+  isRecording(deviceId: DeviceId): Promise<boolean>;
   startRecording(id: DeviceId): void;
   captureAndStopRecording(id: DeviceId): void;
   captureReplay(id: DeviceId): void;
@@ -96,6 +97,7 @@ export interface DeviceSessionsManagerInterface {
   stepOverDebugger(id: DeviceId): Promise<void>;
   focusBuildOutput(id: DeviceId): Promise<void>;
 
+  isProfilingCPU(deviceId: DeviceId): Promise<boolean>;
   startProfilingCPU(id: DeviceId): void;
   stopProfilingCPU(id: DeviceId): void;
 
