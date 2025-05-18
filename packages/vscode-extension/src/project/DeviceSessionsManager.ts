@@ -605,6 +605,26 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
 
   // #endregion
 
+  // #region metro
+
+  getMetroPort(deviceId: DeviceId) {
+    const deviceSession = this.getDeviceSessionById(deviceId);
+
+    return deviceSession.metro.port;
+  }
+
+  // #endregion
+
+  // #region devtools
+
+  getDevtools(deviceId: DeviceId) {
+    const deviceSession = this.getDeviceSessionById(deviceId);
+
+    return deviceSession.devtools;
+  }
+
+  // #endregion
+
   // #region EventEmitter implementation
 
   async addListener<K extends keyof DeviceSessionManagerEventMap>(

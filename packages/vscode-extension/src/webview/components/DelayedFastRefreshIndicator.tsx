@@ -1,22 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import classNames from "classnames";
 import "./DelayedFastRefreshIndicator.css";
-import { ProjectState } from "../../common/Project";
+import { DeviceState } from "../../common/DeviceSession";
 
 export default function DelayedFastRefreshIndicator({
-  projectStatus,
+  deviceStatus,
 }: {
-  projectStatus: ProjectState["status"];
+  deviceStatus: DeviceState["status"];
 }) {
   const [showRefreshing, setShowRefreshing] = useState(false);
   const [showRefreshed, setShowRefreshed] = useState(false);
-  const lastProjectStatusRef = useRef<ProjectState["status"]>(projectStatus);
+  const lastProjectStatusRef = useRef<DeviceState["status"]>(deviceStatus);
 
   useEffect(() => {
     const lastProjectStatus = lastProjectStatusRef.current;
-    lastProjectStatusRef.current = projectStatus;
+    lastProjectStatusRef.current = deviceStatus;
 
-    if (projectStatus === "refreshing") {
+    if (deviceStatus === "refreshing") {
       const timer = setTimeout(() => {
         setShowRefreshing(true);
       }, 500);
@@ -25,7 +25,7 @@ export default function DelayedFastRefreshIndicator({
       setShowRefreshing(false);
     }
 
-    if (lastProjectStatus === "refreshing" && projectStatus === "running") {
+    if (lastProjectStatus === "refreshing" && deviceStatus === "running") {
       setShowRefreshed(true);
       const timer = setTimeout(() => {
         setShowRefreshed(false);
@@ -35,7 +35,7 @@ export default function DelayedFastRefreshIndicator({
         setShowRefreshed(false);
       };
     }
-  }, [projectStatus]);
+  }, [deviceStatus]);
 
   const showIndicator = showRefreshing || showRefreshed;
   return (

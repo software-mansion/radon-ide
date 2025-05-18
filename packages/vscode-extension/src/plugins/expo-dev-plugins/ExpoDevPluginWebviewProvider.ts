@@ -44,7 +44,15 @@ export class ExpoDevPluginWebviewProvider implements WebviewViewProvider {
       reportToolVisibilityChanged(this.pluginName, webviewView.visible)
     );
 
-    const metroPort = IDE.getInstanceIfExists()?.project?.deviceSession?.metro.port;
+    const selectedDeviceId = IDE.getInstanceIfExists()?.project?.projectState.selectedDevice;
+
+    if (!selectedDeviceId) {
+      Logger.error("Device is expected to be selected, the devtools panel can not be opened");
+      return;
+    }
+
+    const metroPort =
+      IDE.getInstanceIfExists()?.project?.deviceSessionsManager?.getMetroPort(selectedDeviceId);
     if (!metroPort) {
       Logger.error(
         "Metro port is unknown while expected to be set, the devtools panel cannot be opened."

@@ -16,11 +16,10 @@ import {
   DeviceId,
 } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
-import { DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { AppPermissionType } from "../common/DeviceSessionsManager";
+import { AppPermissionType, DeviceSettings, Locale } from "../common/DeviceSessionsManager";
 
 interface SimulatorInfo {
   availability?: string;

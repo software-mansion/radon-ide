@@ -11,13 +11,7 @@ import {
 } from "../hooks/useBuildErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import {
-  Frame,
-  InspectDataStackItem,
-  ZoomLevelType,
-  InspectStackData,
-  MultimediaData,
-} from "../../common/Project";
+import { ZoomLevelType } from "../../common/Project";
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
@@ -29,6 +23,14 @@ import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
+import {
+  Frame,
+  InspectDataStackItem,
+  InspectStackData,
+  MultimediaData,
+} from "../../common/DeviceSessionsManager";
+import { useSelectedDevice } from "../hooks/useSelectedDevice";
+import { useDevices } from "../providers/DevicesProvider";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -86,8 +88,13 @@ function Preview({
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { projectState, project } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
 
-  const projectStatus = projectState.status;
+  const { deviceState } = useSelectedDevice();
+
+  const { deviceSessionsManager } = useDevices();
+
+  const projectStatus = deviceState.status;
 
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
@@ -95,11 +102,11 @@ function Preview({
 
   const debugPaused = projectStatus === "debuggerPaused";
 
-  const previewURL = projectState.previewURL;
+  const previewURL = deviceState.previewURL;
 
-  const isStarting = hasBundlingError ? false : !projectState || projectState.status === "starting";
+  const isStarting = hasBundlingError ? false : !deviceState || deviceState.status === "starting";
   const showDevicePreview =
-    projectState?.previewURL &&
+    deviceState?.previewURL &&
     (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
   useBuildErrorAlert(hasBuildError);
@@ -133,12 +140,12 @@ function Preview({
 
   type MouseMove = "Move" | "Down" | "Up";
   function sendTouch(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
-    if (shouldPreventFromSendingTouch) {
+    if (shouldPreventFromSendingTouch || !selectedDeviceId) {
       return;
     }
 
     const { x, y } = getTouchPosition(event);
-    project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
+    deviceSessionsManager.dispatchTouches(selectedDeviceId, [{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouchForEvent(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
@@ -147,12 +154,13 @@ function Preview({
   }
 
   function sendMultiTouch(pt: Point, type: MouseMove) {
-    if (shouldPreventFromSendingTouch) {
+    if (shouldPreventFromSendingTouch || !selectedDeviceId) {
       return;
     }
 
     const secondPt = calculateMirroredTouchPosition(pt, anchorPoint);
-    project.dispatchTouches(
+    deviceSessionsManager.dispatchTouches(
+      selectedDeviceId,
       [
         { xRatio: pt.x, yRatio: pt.y },
         {
@@ -168,32 +176,38 @@ function Preview({
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
   ) {
-    if (type === "Leave") {
+    if (type === "Leave" || !selectedDeviceId) {
       return;
     }
     const { x: clampedX, y: clampedY } = getTouchPosition(event);
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
-      if (requestStack && inspectData?.stack) {
-        if (showInspectStackModal) {
-          setInspectStackData({
-            requestLocation: {
-              x: event.clientX,
-              y: event.clientY,
-            },
-            stack: inspectData.stack,
-          });
-        } else {
-          // find first item w/o hide flag and open file
-          const firstItem = inspectData.stack.find((item) => !item.hide);
-          if (firstItem) {
-            onInspectorItemSelected(firstItem);
+    deviceSessionsManager.inspectElementAt(
+      selectedDeviceId,
+      clampedX,
+      clampedY,
+      requestStack,
+      (inspectData) => {
+        if (requestStack && inspectData?.stack) {
+          if (showInspectStackModal) {
+            setInspectStackData({
+              requestLocation: {
+                x: event.clientX,
+                y: event.clientY,
+              },
+              stack: inspectData.stack,
+            });
+          } else {
+            // find first item w/o hide flag and open file
+            const firstItem = inspectData.stack.find((item) => !item.hide);
+            if (firstItem) {
+              onInspectorItemSelected(firstItem);
+            }
           }
         }
+        setInspectFrame(inspectData.frame);
       }
-      setInspectFrame(inspectData.frame);
-    });
+    );
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
@@ -222,13 +236,18 @@ function Preview({
   }
 
   function onWheel(e: WheelEvent<HTMLDivElement>) {
-    if (shouldPreventFromSendingTouch) {
+    if (shouldPreventFromSendingTouch || !selectedDeviceId) {
       return;
     }
 
     const { x, y } = getTouchPosition(e);
 
-    project.dispatchWheel({ xRatio: x, yRatio: y }, e.deltaX, e.deltaY);
+    deviceSessionsManager.dispatchWheel(
+      selectedDeviceId,
+      { xRatio: x, yRatio: y },
+      e.deltaX,
+      e.deltaY
+    );
   }
 
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
@@ -373,12 +392,15 @@ function Preview({
     function synchronizeClipboard(e: ClipboardEvent) {
       if (document.activeElement === wrapperDivRef.current) {
         e.preventDefault();
+        if (!selectedDeviceId) {
+          return;
+        }
 
         const text = e.clipboardData?.getData("text");
         if (text) {
-          project.dispatchPaste(text);
+          deviceSessionsManager.dispatchPaste(selectedDeviceId, text);
         } else {
-          project.dispatchCopy();
+          deviceSessionsManager.dispatchCopy(selectedDeviceId);
         }
       }
     }
@@ -449,7 +471,7 @@ function Preview({
   }, [project, openRebuildAlert, projectStatus]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === projectState?.selectedDevice?.modelId;
+    return sd.modelId === projectState?.selectedDevice;
   });
 
   const resizableProps = useResizableProps({
