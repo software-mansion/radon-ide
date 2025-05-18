@@ -6,10 +6,12 @@ import "./PreviewLoader.css";
 import StartupMessageComponent from "./shared/StartupMessage";
 import ProgressBar from "./shared/ProgressBar";
 
-import { StartupMessage, StartupStageWeight } from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
 import Button from "./shared/Button";
 import { useDevices } from "../providers/DevicesProvider";
+import { StartupMessage, StartupStageWeight } from "../../common/DeviceSession";
+import { useSelectedDevice } from "../hooks/useSelectedDevice";
+import { useUtils } from "../providers/UtilsProvider";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -18,19 +20,22 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
 
 function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => void }) {
   const { projectState, project } = useProject();
+  const { focusExtensionLogsOutput } = useUtils();
+  const selectedDeviceId = projectState.selectedDevice;
+  const { deviceState } = useSelectedDevice();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
 
-  const startupMessage = projectState.startupMessage;
+  const startupMessage = deviceState.startupMessage;
 
   useEffect(() => {
-    if (projectState.startupMessage === StartupMessage.Restarting) {
+    if (deviceState.startupMessage === StartupMessage.Restarting) {
       setProgress(0);
     } else {
       const currentIndex = StartupStageWeight.findIndex(
-        (item) => item.StartupMessage === projectState.startupMessage
+        (item) => item.StartupMessage === deviceState.startupMessage
       );
       const currentWeight = StartupStageWeight[currentIndex].weight;
       const startupStageWeightSumUntilNow = StartupStageWeight.slice(0, currentIndex)
@@ -39,8 +44,8 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
       let progressComponent = 0;
 
-      if (projectState.stageProgress !== undefined) {
-        progressComponent = projectState.stageProgress;
+      if (deviceState.stageProgress !== undefined) {
+        progressComponent = deviceState.stageProgress;
       }
       setProgress(
         ((startupStageWeightSumUntilNow + progressComponent * currentWeight) /
@@ -69,11 +74,11 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
   function handleLoaderClick() {
     if (startupMessage === StartupMessage.Building) {
-      project.focusBuildOutput();
+      selectedDeviceId && deviceSessionsManager.focusBuildOutput(selectedDeviceId);
     } else if (startupMessage === StartupMessage.WaitingForAppToLoad) {
       onRequestShowPreview();
     } else {
-      project.focusExtensionLogsOutput();
+      focusExtensionLogsOutput();
     }
   }
 
@@ -90,12 +95,12 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
               "preview-loader-message",
               isLoadingSlowly && "preview-loader-slow-progress"
             )}>
-            {projectState.startupMessage}
+            {deviceState.startupMessage}
             {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
           </StartupMessageComponent>
-          {projectState.stageProgress !== undefined && (
+          {deviceState.stageProgress !== undefined && (
             <div className="preview-loader-stage-progress">
-              {(projectState.stageProgress * 100).toFixed(1)}%
+              {(deviceState.stageProgress * 100).toFixed(1)}%
             </div>
           )}
         </div>
@@ -109,7 +114,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
               options to troubleshoot:
             </div>
             <div className="preview-loader-waiting-actions">
-              <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
+              <Button type="secondary" onClick={() => focusExtensionLogsOutput()}>
                 <span className="codicon codicon-output" /> Open Radon IDE Logs
               </Button>
               <Button type="secondary" onClick={onRequestShowPreview}>
@@ -120,9 +125,13 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
                   <span className="codicon codicon-browser" /> Visit troubleshoot guide
                 </Button>
               </a>
-              <Button type="secondary" onClick={() => deviceSessionsManager.reload("rebuild")}>
-                <span className="codicon codicon-refresh" /> Clean rebuild project
-              </Button>
+              {selectedDeviceId && (
+                <Button
+                  type="secondary"
+                  onClick={() => deviceSessionsManager.reload(selectedDeviceId, "rebuild")}>
+                  <span className="codicon codicon-refresh" /> Clean rebuild project
+                </Button>
+              )}
             </div>
           </>
         )}

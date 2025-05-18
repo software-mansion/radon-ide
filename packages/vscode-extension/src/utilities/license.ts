@@ -4,6 +4,11 @@ import { exec } from "./subprocess";
 import { Logger } from "../Logger";
 import { simulatorServerBinary } from "./simulatorServerBinary";
 import { throttleAsync } from "./throttle";
+import {
+  ActivateDeviceResult,
+  ServerResponseStatusCode,
+  SimServerLicenseValidationResult,
+} from "../common/Project";
 
 const TOKEN_KEY = "RNIDE_license_token_key";
 const TOKEN_KEY_TIMESTAMP = "RNIDE_license_token_key_timestamp";
@@ -11,33 +16,6 @@ const BASE_CUSTOMER_PORTAL_URL = "https://portal.ide.swmansion.com/";
 
 const LICENCE_TOKEN_REFRESH_INTERVAL = 1000 * 60 * 60 * 24; // 24 hours – how often to refresh the token (given successful token verification)
 const LICENCE_TOKEN_REFRESH_RETRY_INTERVAL = 1000 * 60; // 1 minute – how often to retry refreshing the token
-
-export enum ServerResponseStatusCode {
-  success = "S001",
-  badRequest = "E001",
-  noSubscription = "E002",
-  allSeatTaken = "E003",
-  seatRemoved = "E004",
-  licenseExpired = "E005",
-  licenseCancelled = "E006",
-  noProductForSubscription = "E007",
-  internalError = "E101",
-}
-
-export enum SimServerLicenseValidationResult {
-  Success,
-  Corrupted,
-  Expired,
-  FingerprintMismatch,
-}
-
-export enum ActivateDeviceResult {
-  succeeded,
-  notEnoughSeats,
-  keyVerificationFailed,
-  unableToVerify,
-  connectionFailed,
-}
 
 async function saveTokenIfValid(response: Response) {
   const responseBody = (await response.json()) as {

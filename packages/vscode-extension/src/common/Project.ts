@@ -1,5 +1,31 @@
-import { ActivateDeviceResult } from "../utilities/license";
 import { DeviceId } from "./DeviceManager";
+
+export enum ServerResponseStatusCode {
+  success = "S001",
+  badRequest = "E001",
+  noSubscription = "E002",
+  allSeatTaken = "E003",
+  seatRemoved = "E004",
+  licenseExpired = "E005",
+  licenseCancelled = "E006",
+  noProductForSubscription = "E007",
+  internalError = "E101",
+}
+
+export enum SimServerLicenseValidationResult {
+  Success,
+  Corrupted,
+  Expired,
+  FingerprintMismatch,
+}
+
+export enum ActivateDeviceResult {
+  succeeded,
+  notEnoughSeats,
+  keyVerificationFailed,
+  unableToVerify,
+  connectionFailed,
+}
 
 export type ProjectState = {
   previewZoom: ZoomLevelType | undefined;
