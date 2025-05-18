@@ -4,15 +4,17 @@ import { useProject } from "../providers/ProjectProvider";
 import "./DeviceLocalizationView.css";
 import "../components/shared/SwitchGroup.css";
 import localesList from "../utilities/localeList.json";
-import { Locale } from "../../common/Project";
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { Input } from "../components/shared/Input";
+import { useSelectedDevice } from "../hooks/useSelectedDevice";
+import { Locale } from "../../common/DeviceSessionsManager";
+import { useDevices } from "../providers/DevicesProvider";
 
 type LocaleWithDescription = { localeIdentifier: Locale; Description: string };
 
 export function DeviceLocalizationView() {
-  const { deviceSettings } = useProject();
+  const { deviceSettings } = useSelectedDevice();
   const { openModal } = useModal();
   const [searchPhrase, setSearchPhrase] = useState("");
 
@@ -96,7 +98,11 @@ const LocalizationChangeConfirmationView = ({
 }: LocalizationChangeConfirmationViewProps) => {
   const { openModal, closeModal } = useModal();
 
-  const { project, deviceSettings } = useProject();
+  const { projectState } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
+  const { deviceSessionsManager } = useDevices();
+
+  const { deviceSettings } = useSelectedDevice();
 
   const onCancel = () => {
     openModal("Localization", <DeviceLocalizationView />);
@@ -116,7 +122,11 @@ const LocalizationChangeConfirmationView = ({
           className="localization-change-button"
           type="ternary"
           onClick={async () => {
-            project.updateDeviceSettings({ ...deviceSettings, locale: locale.localeIdentifier });
+            selectedDeviceId &&
+              deviceSessionsManager.updateDeviceSettings(selectedDeviceId, {
+                ...deviceSettings,
+                locale: locale.localeIdentifier,
+              });
             closeModal();
           }}>
           Confirm

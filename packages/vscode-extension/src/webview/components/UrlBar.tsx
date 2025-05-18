@@ -5,24 +5,28 @@ import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { useDevices } from "../providers/DevicesProvider";
+import { useSelectedDevice } from "../hooks/useSelectedDevice";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
+  const { projectState } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
   const { deviceSessionsManager } = useDevices();
   return (
     <IconButtonWithOptions
-      onClick={() => deviceSessionsManager.reload("autoReload")}
+      onClick={() => deviceSessionsManager.reload(selectedDeviceId!, "autoReload")}
       tooltip={{
         label: "Reload the app",
         side: "bottom",
       }}
-      disabled={disabled}
+      disabled={disabled || !selectedDeviceId}
       options={{
-        "Reload JS": () => deviceSessionsManager.reload("reloadJs"),
-        "Restart app process": () => deviceSessionsManager.reload("restartProcess"),
-        "Reinstall app": () => deviceSessionsManager.reload("reinstall"),
-        "Clear Metro cache": () => deviceSessionsManager.reload("clearMetro"),
-        "Reboot IDE": () => deviceSessionsManager.reload("reboot"),
-        "Clean rebuild": () => deviceSessionsManager.reload("rebuild"),
+        "Reload JS": () => deviceSessionsManager.reload(selectedDeviceId!, "reloadJs"),
+        "Restart app process": () =>
+          deviceSessionsManager.reload(selectedDeviceId!, "restartProcess"),
+        "Reinstall app": () => deviceSessionsManager.reload(selectedDeviceId!, "reinstall"),
+        "Clear Metro cache": () => deviceSessionsManager.reload(selectedDeviceId!, "clearMetro"),
+        "Reboot IDE": () => deviceSessionsManager.reload(selectedDeviceId!, "reboot"),
+        "Clean rebuild": () => deviceSessionsManager.reload(selectedDeviceId!, "rebuild"),
       }}>
       <span className="codicon codicon-refresh" />
     </IconButtonWithOptions>
@@ -31,6 +35,9 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
   const { project, projectState } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
+  const { deviceSessionsManager } = useDevices();
+  const { deviceState } = useSelectedDevice();
   const { dependencies } = useDependencies();
 
   const MAX_URL_HISTORY_SIZE = 20;
@@ -85,7 +92,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
     return sorted;
   }, [urlList]);
 
-  const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
+  const disabledAlsoWhenStarting = disabled || deviceState.status === "starting";
   const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
 
   return (
@@ -95,12 +102,17 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabledAlsoWhenStarting || !isExpoRouterProject || urlHistory.length < 2}
+        disabled={
+          disabledAlsoWhenStarting ||
+          !selectedDeviceId ||
+          !isExpoRouterProject ||
+          urlHistory.length < 2
+        }
         onClick={() => {
           setUrlHistory((prevUrlHistory) => {
             const newUrlHistory = prevUrlHistory.slice(1);
             setBackNavigationPath(newUrlHistory[0]);
-            project.openNavigation(newUrlHistory[0]);
+            deviceSessionsManager.openNavigation(selectedDeviceId!, newUrlHistory[0]);
             return newUrlHistory;
           });
         }}>
@@ -109,7 +121,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
       <ReloadButton disabled={disabled ?? false} />
       <IconButton
         onClick={() => {
-          project.goHome("/{}");
+          selectedDeviceId && deviceSessionsManager.goHome(selectedDeviceId, "/{}");
           if (!isExpoRouterProject) {
             setUrlSelectValue(""); // sets UrlSelect trigger to a placeholder
           }
@@ -123,7 +135,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
       </IconButton>
       <UrlSelect
         onValueChange={(value: string) => {
-          project.openNavigation(value);
+          selectedDeviceId && deviceSessionsManager.openNavigation(selectedDeviceId, value);
         }}
         recentItems={recentUrlList}
         items={sortedUrlList}

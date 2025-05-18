@@ -1,13 +1,18 @@
 import { useRef, useCallback } from "react";
 import { keyboardEventToHID } from "../utilities/keyMapping";
 import { useProject } from "../providers/ProjectProvider";
+import { useDevices } from "../providers/DevicesProvider";
 
 const CAPS_LOCK_HID_CODE = 57;
 
 export function useKeyPresses() {
   const pressedKeys = useRef(new Set<number>());
   const lastKnownCapsLockState = useRef(false);
-  const { project } = useProject();
+  const { projectState } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
+  const { deviceSessionsManager } = useDevices();
+
+  if (!selectedDeviceId) return;
 
   const dispatchKeyPress = useCallback((e: KeyboardEvent) => {
     // CapsLock is a special case, since it fires only a keydown event when it's turned on, and only a keyup event when it's turned off.
@@ -18,8 +23,8 @@ export function useKeyPresses() {
 
     if (isCapsLockActive !== lastKnownCapsLockState.current) {
       lastKnownCapsLockState.current = isCapsLockActive;
-      project.dispatchKeyPress(CAPS_LOCK_HID_CODE, "Down");
-      project.dispatchKeyPress(CAPS_LOCK_HID_CODE, "Up");
+      deviceSessionsManager.dispatchKeyPress(selectedDeviceId, CAPS_LOCK_HID_CODE, "Down");
+      deviceSessionsManager.dispatchKeyPress(selectedDeviceId, CAPS_LOCK_HID_CODE, "Up");
     }
 
     const hidCode = keyboardEventToHID(e);
@@ -37,7 +42,7 @@ export function useKeyPresses() {
         pressedKeys.current.delete(hidCode);
       }
 
-      project.dispatchKeyPress(hidCode, isKeydown ? "Down" : "Up");
+      deviceSessionsManager.dispatchKeyPress(selectedDeviceId, hidCode, isKeydown ? "Down" : "Up");
     } else {
       console.warn(`Unrecognized keyboard input: ${e.code}`);
     }
@@ -45,7 +50,7 @@ export function useKeyPresses() {
 
   const clearPressedKeys = useCallback(() => {
     for (const keyCode of pressedKeys.current) {
-      project.dispatchKeyPress(keyCode, "Up");
+      deviceSessionsManager.dispatchKeyPress(selectedDeviceId, keyCode, "Up");
     }
     pressedKeys.current.clear();
   }, []);

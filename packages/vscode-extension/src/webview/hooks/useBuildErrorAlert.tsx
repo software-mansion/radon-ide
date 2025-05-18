@@ -7,6 +7,8 @@ import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { BuildType } from "../../common/BuildConfig";
 import { useDevices } from "../providers/DevicesProvider";
+import { useUtils } from "../providers/UtilsProvider";
+import { useSelectedDevice } from "./useSelectedDevice";
 
 type LogsButtonDestination = "build" | "extension";
 
@@ -17,7 +19,11 @@ function BuildErrorActions({
   logsButtonDestination?: LogsButtonDestination;
   onReload?: () => void;
 }) {
-  const { project } = useProject();
+  const { projectState } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
+
+  const { deviceSessionsManager } = useDevices();
+  const { focusExtensionLogsOutput } = useUtils();
   const { openModal } = useModal();
   return (
     <>
@@ -33,9 +39,9 @@ function BuildErrorActions({
         type="secondary"
         onClick={() => {
           if (logsButtonDestination === "extension") {
-            project.focusExtensionLogsOutput();
+            focusExtensionLogsOutput();
           } else {
-            project.focusBuildOutput();
+            selectedDeviceId && deviceSessionsManager.focusBuildOutput(selectedDeviceId);
           }
         }}
         tooltip={{ label: "Open build logs", side: "bottom" }}>
@@ -53,18 +59,20 @@ function BuildErrorActions({
 
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   const { projectState } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
   const { ios, xcodeSchemes } = useLaunchConfig();
   const { deviceSessionsManager } = useDevices();
+  const { deviceState } = useSelectedDevice();
 
   let onReload = () => {
-    deviceSessionsManager.reload("autoReload");
+    selectedDeviceId && deviceSessionsManager.reload(selectedDeviceId, "autoReload");
   };
   let logsButtonDestination: LogsButtonDestination | undefined = undefined;
 
   let description = "Open extension logs to find out what went wrong.";
 
-  if (projectState.status === "buildError") {
-    const { buildType, message } = projectState.buildError;
+  if (deviceState.status === "buildError") {
+    const { buildType, message } = deviceState.buildError;
     description = message;
     if (buildType && [BuildType.Local, BuildType.EasLocal, BuildType.Custom].includes(buildType)) {
       logsButtonDestination = "build";
@@ -92,13 +100,13 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
 }
 
 function BootErrorActions() {
-  const { project } = useProject();
+  const { focusExtensionLogsOutput } = useUtils();
   return (
     <>
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusExtensionLogsOutput();
+          focusExtensionLogsOutput();
         }}
         tooltip={{ label: "Open IDE logs", side: "bottom" }}>
         <span className="codicon codicon-output" />
@@ -118,14 +126,16 @@ export function useBootErrorAlert(shouldDisplayAlert: boolean) {
 }
 
 function BundleErrorActions() {
-  const { project } = useProject();
+  const { projectState } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
+  const { focusDebugConsole } = useUtils();
   const { deviceSessionsManager } = useDevices();
   return (
     <>
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusDebugConsole();
+          focusDebugConsole();
         }}
         tooltip={{ label: "Open debug console", side: "bottom" }}>
         <span className="codicon codicon-output" />
@@ -133,7 +143,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          deviceSessionsManager.reload("autoReload");
+          selectedDeviceId && deviceSessionsManager.reload(selectedDeviceId, "autoReload");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />

@@ -8,6 +8,8 @@ import Label from "../components/shared/Label";
 import Tooltip from "../components/shared/Tooltip";
 import { throttle } from "../../utilities/throttle";
 import { Input } from "../components/shared/Input";
+import { useSelectedDevice } from "../hooks/useSelectedDevice";
+import { useDevices } from "../providers/DevicesProvider";
 
 const CoordinateInfo = () => {
   return (
@@ -42,10 +44,17 @@ const CoordinateInfo = () => {
 const THROTTLE_LIMIT = 1000;
 
 export function DeviceLocationView() {
-  const { project, deviceSettings } = useProject();
+  const { projectState } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
+  const { deviceSessionsManager } = useDevices();
+
+  const { deviceSettings } = useSelectedDevice();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const updateProjectSettingWithThrottle = throttle(project.updateDeviceSettings, THROTTLE_LIMIT);
+  const updateProjectSettingWithThrottle = throttle(
+    deviceSessionsManager.updateDeviceSettings,
+    THROTTLE_LIMIT
+  );
 
   const [isCoordinateValid, setIsCoordinateValid] = useState(true);
 
@@ -60,14 +69,15 @@ export function DeviceLocationView() {
       return;
     }
 
-    updateProjectSettingWithThrottle({
-      ...deviceSettings,
-      location: {
-        ...deviceSettings.location,
-        latitude: position.getLatitude(),
-        longitude: position.getLongitude(),
-      },
-    });
+    selectedDeviceId &&
+      updateProjectSettingWithThrottle(selectedDeviceId, {
+        ...deviceSettings,
+        location: {
+          ...deviceSettings.location,
+          latitude: position.getLatitude(),
+          longitude: position.getLongitude(),
+        },
+      });
   };
   // DD - Decimal Degrees DMS - Degrees Minutes Seconds
   // https://stackoverflow.com/questions/5786025/decimal-degrees-to-degrees-minutes-and-seconds-in-javascript
@@ -103,13 +113,14 @@ export function DeviceLocationView() {
 
   const handleEnableLocation = (check: boolean) => {
     const isDisabled = !check;
-    project.updateDeviceSettings({
-      ...deviceSettings,
-      location: {
-        ...deviceSettings.location,
-        isDisabled,
-      },
-    });
+    selectedDeviceId &&
+      deviceSessionsManager.updateDeviceSettings(selectedDeviceId, {
+        ...deviceSettings,
+        location: {
+          ...deviceSettings.location,
+          isDisabled,
+        },
+      });
   };
 
   return (
