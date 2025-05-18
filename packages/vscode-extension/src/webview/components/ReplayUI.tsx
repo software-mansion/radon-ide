@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import "./ReplayUI.css";
 import ReplayOverlay from "./ReplayOverlay";
-import { MultimediaData } from "../../common/Project";
+import { MultimediaData } from "../../common/DeviceSessionsManager";
 
 function VHSRewind() {
   return (

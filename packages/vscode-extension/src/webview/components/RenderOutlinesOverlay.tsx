@@ -9,6 +9,7 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import "./RenderOutlinesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
+import { useSelectedDevice } from "../hooks/useSelectedDevice";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -26,7 +27,7 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
 }
 
 function useIsEnabled() {
-  const { toolsState } = useProject();
+  const { toolsState } = useSelectedDevice();
   return toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
 }
 

@@ -586,7 +586,7 @@ function Preview({
         )}
       </div>
 
-      <DelayedFastRefreshIndicator projectStatus={projectStatus} />
+      <DelayedFastRefreshIndicator deviceStatus={projectStatus} />
 
       <div className="button-group-left-wrapper">
         <div className="button-group-left">

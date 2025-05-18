@@ -14,6 +14,8 @@ import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { SendFeedbackItem } from "./SendFeedbackItem";
 import { useTelemetry } from "../providers/TelemetryProvider";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { useProject } from "../providers/ProjectProvider";
+import { useDevices } from "../providers/DevicesProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -22,7 +24,13 @@ interface SettingsDropdownProps {
   disabled?: boolean;
 }
 
-function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
+function SettingsDropdown({ isDeviceRunning, children, disabled }: SettingsDropdownProps) {
+  const { projectState } = useProject();
+
+  const selectedDeviceId = projectState.selectedDevice;
+
+  const { deviceSessionsManager } = useDevices();
+
   const { panelLocation, themeType, update } = useWorkspaceConfig();
   const { openModal } = useModal();
   const { movePanelToNewWindow, reportIssue } = useUtils();
@@ -62,7 +70,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             className="dropdown-menu-item"
             disabled={!isDeviceRunning}
             onSelect={() => {
-              project.openDevMenu();
+              selectedDeviceId && deviceSessionsManager.openDevMenu(selectedDeviceId);
             }}>
             <span className="dropdown-menu-item-wraper">
               <span className="codicon codicon-code" />

@@ -1,4 +1,4 @@
-import { Frame } from "../../common/Project";
+import { Frame } from "../../common/DeviceSessionsManager";
 import { DeviceProperties } from "../utilities/deviceContants";
 import "./DimensionsBox.css";
 

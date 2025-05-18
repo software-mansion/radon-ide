@@ -118,11 +118,16 @@ export class ReduxDevToolsPluginWebviewProvider implements WebviewViewProvider {
       enableScripts: true,
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, PATH)],
     };
-
     const project = IDE.getInstanceIfExists()?.project;
-    const reduxDevtoolsPlugin = project?.deviceSession?.toolsManager.getPlugin(
-      REDUX_PLUGIN_ID
-    ) as ReduxDevtoolsPlugin;
+    const selectedDeviceId = project?.projectState.selectedDevice;
+
+    const reduxDevtoolsPlugin = selectedDeviceId
+      ? (project?.deviceSessionsManager.getToolPlugin(
+          selectedDeviceId,
+          REDUX_PLUGIN_ID
+        ) as ReduxDevtoolsPlugin)
+      : undefined;
+
     if (!reduxDevtoolsPlugin) {
       throw new Error("Couldn't find redux devtools plugin");
     }

@@ -13,7 +13,6 @@ import "./shared/SwitchGroup.css";
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import { AppPermissionType, DeviceSettings, ProjectInterface } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
@@ -22,6 +21,10 @@ import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { AppPermissionType, DeviceSettings } from "../../common/DeviceSessionsManager";
+import { useSelectedDevice } from "../hooks/useSelectedDevice";
+import { useDevices } from "../providers/DevicesProvider";
+import { useUtils } from "../providers/UtilsProvider";
 
 const contentSizes = [
   "xsmall",
@@ -51,16 +54,24 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
 ];
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
-  const { project, deviceSettings, projectState } = useProject();
+  const { projectState } = useProject();
+
+  const selectedDeviceId = projectState.selectedDevice;
+
+  const { deviceSettings } = useSelectedDevice();
+
+  const { deviceSessionsManager, devices } = useDevices();
+
+  const selectedDevice = devices.find((d) => d.id === selectedDeviceId);
+
   const { showDeviceFrame, update } = useWorkspaceConfig();
   const { openModal } = useModal();
 
-  const resetOptions =
-    projectState.selectedDevice?.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
+  const resetOptions = selectedDevice?.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
 
   return (
     <DropdownMenuRoot>
-      <DropdownMenu.Trigger asChild disabled={disabled}>
+      <DropdownMenu.Trigger asChild disabled={disabled || !selectedDeviceId}>
         {children}
       </DropdownMenu.Trigger>
 
@@ -75,7 +86,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               className="radio-group-root"
               defaultValue={deviceSettings.appearance}
               onValueChange={(value) => {
-                project.updateDeviceSettings({
+                deviceSessionsManager.updateDeviceSettings(selectedDeviceId!, {
                   ...deviceSettings,
                   appearance: value as DeviceSettings["appearance"],
                 });
@@ -107,7 +118,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 max={6}
                 step={1}
                 onValueCommit={([value]) => {
-                  project.updateDeviceSettings({
+                  deviceSessionsManager.updateDeviceSettings(selectedDeviceId!, {
                     ...deviceSettings,
                     contentSize: contentSizes[value],
                   });
@@ -127,18 +138,16 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <div className="device-settings-margin" />
           </form>
           <CommandItem
-            project={project}
             commandName="RNIDE.deviceHomeButtonPress"
             label="Press Home Button"
             icon="home"
           />
           <CommandItem
-            project={project}
             commandName="RNIDE.deviceAppSwitchButtonPress"
             label="Open App Switcher"
             icon="chrome-restore"
           />
-          {projectState.selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
+          {selectedDevice?.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
@@ -163,7 +172,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
                     key={index}
-                    onSelect={() => project.resetAppPermissions(option.value)}>
+                    onSelect={() =>
+                      deviceSessionsManager.resetAppPermissions(selectedDeviceId!, option.value)
+                    }>
                     <span className={`codicon codicon-${option.icon}`} />
                     {option.label}
                   </DropdownMenu.Item>
@@ -184,7 +195,10 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               className="switch-root small-switch"
               id="enable-replays"
               onCheckedChange={(checked) =>
-                project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
+                deviceSessionsManager.updateDeviceSettings(selectedDeviceId!, {
+                  ...deviceSettings,
+                  replaysEnabled: checked,
+                })
               }
               defaultChecked={deviceSettings.replaysEnabled}
               style={{ marginLeft: "auto" }}>
@@ -198,7 +212,10 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               className="switch-root small-switch"
               id="show-touches"
               onCheckedChange={(checked) =>
-                project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
+                deviceSessionsManager.updateDeviceSettings(selectedDeviceId!, {
+                  ...deviceSettings,
+                  showTouches: checked,
+                })
               }
               defaultChecked={deviceSettings.showTouches}
               style={{ marginLeft: "auto" }}>
@@ -241,21 +258,21 @@ const LocalizationItem = () => {
 };
 
 function CommandItem({
-  project,
   commandName,
   label,
   icon,
 }: {
-  project: ProjectInterface;
   commandName: string;
   label: string;
   icon: string;
 }) {
+  const { runCommand } = useUtils();
+
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"
       onSelect={() => {
-        project.runCommand(commandName);
+        runCommand(commandName);
       }}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
@@ -269,11 +286,17 @@ function CommandItem({
 }
 
 const BiometricsItem = () => {
-  const { project, deviceSettings } = useProject();
+  const { projectState } = useProject();
+
+  const selectedDeviceId = projectState.selectedDevice;
+
+  const { deviceSettings } = useSelectedDevice();
+
+  const { deviceSessionsManager } = useDevices();
 
   return (
     <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger className="dropdown-menu-item">
+      <DropdownMenu.SubTrigger className="dropdown-menu-item" disabled={!selectedDeviceId}>
         <span className="codicon codicon-layout" />
         Biometrics
         <span className="codicon codicon-chevron-right right-slot" />
@@ -284,7 +307,7 @@ const BiometricsItem = () => {
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              project.updateDeviceSettings({
+              deviceSessionsManager.updateDeviceSettings(selectedDeviceId!, {
                 ...deviceSettings,
                 hasEnrolledBiometrics: !deviceSettings.hasEnrolledBiometrics,
               });
@@ -296,13 +319,11 @@ const BiometricsItem = () => {
             )}
           </DropdownMenu.Item>
           <CommandItem
-            project={project}
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
             icon="layout-sidebar-left"
           />
           <CommandItem
-            project={project}
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"
             icon="layout-sidebar-left"
