@@ -431,6 +431,12 @@ export class DeviceSessionsManager implements DeviceSessionsManagerInterface, Di
     await deviceSession.toolsManager.openTool(toolName);
   }
 
+  public getToolPlugin(deviceId: DeviceId, toolName: ToolKey) {
+    const deviceSession = this.getDeviceSessionById(deviceId);
+
+    return deviceSession.toolsManager.getPlugin(toolName);
+  }
+
   public async openDevMenu(deviceId: DeviceId) {
     const deviceSession = this.getDeviceSessionById(deviceId);
 

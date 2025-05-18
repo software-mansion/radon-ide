@@ -124,7 +124,16 @@ export async function activate(context: ExtensionContext) {
     commands.executeCommand("RNIDE.openPanel");
     const ide = IDE.getInstanceIfExists();
     if (ide) {
-      ide.project.showStorybookStory(componentTitle, storyName);
+      const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+      if (!selectedDevice) {
+        window.showWarningMessage("Choose a device before launching storybook preview", "Dismiss");
+        return;
+      }
+      ide.project.deviceSessionsManager.showStorybookStory(
+        selectedDevice,
+        componentTitle,
+        storyName
+      );
     } else {
       window.showWarningMessage("Wait for the app to load before launching storybook.", "Dismiss");
     }
@@ -134,7 +143,12 @@ export async function activate(context: ExtensionContext) {
     commands.executeCommand("RNIDE.openPanel");
     const ide = IDE.getInstanceIfExists();
     if (ide) {
-      ide.project.openComponentPreview(fileName, lineNumber);
+      const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+      if (!selectedDevice) {
+        window.showWarningMessage("Choose a device before launching storybook preview", "Dismiss");
+        return;
+      }
+      ide.project.deviceSessionsManager.openComponentPreview(selectedDevice, fileName, lineNumber);
     } else {
       window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
     }
@@ -327,39 +341,111 @@ function extensionActivated(context: ExtensionContext) {
 }
 
 async function openDevMenu() {
-  IDE.getInstanceIfExists()?.project.openDevMenu();
+  const ide = IDE.getInstanceIfExists();
+  if (!ide) {
+    return;
+  }
+
+  const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+  if (!selectedDevice) {
+    return;
+  }
+  ide.project.deviceSessionsManager.openDevMenu(selectedDevice);
 }
 
 async function performBiometricAuthorization() {
-  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
+  const ide = IDE.getInstanceIfExists();
+  if (!ide) {
+    return;
+  }
+
+  const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+  if (!selectedDevice) {
+    return;
+  }
+  ide.project.deviceSessionsManager.sendBiometricAuthorization(selectedDevice, true);
 }
 
 async function performFailedBiometricAuthorization() {
-  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
+  const ide = IDE.getInstanceIfExists();
+  if (!ide) {
+    return;
+  }
+
+  const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+  if (!selectedDevice) {
+    return;
+  }
+  ide.project.deviceSessionsManager.sendBiometricAuthorization(selectedDevice, false);
 }
 
 async function deviceHomeButtonPress() {
-  const project = IDE.getInstanceIfExists()?.project;
-  project?.dispatchButton("home", "Down");
-  project?.dispatchButton("home", "Up");
+  const ide = IDE.getInstanceIfExists();
+  if (!ide) {
+    return;
+  }
+
+  const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+  if (!selectedDevice) {
+    return;
+  }
+  const project = ide.project;
+  project.deviceSessionsManager.dispatchButton(selectedDevice, "home", "Down");
+  project.deviceSessionsManager.dispatchButton(selectedDevice, "home", "Up");
 }
 
 async function deviceAppSwitchButtonPress() {
-  const project = IDE.getInstanceIfExists()?.project;
-  project?.dispatchButton("appSwitch", "Down");
-  project?.dispatchButton("appSwitch", "Up");
+  const ide = IDE.getInstanceIfExists();
+  if (!ide) {
+    return;
+  }
+
+  const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+  if (!selectedDevice) {
+    return;
+  }
+  const deviceSessionsManager = ide.project.deviceSessionsManager;
+  deviceSessionsManager.dispatchButton(selectedDevice, "appSwitch", "Down");
+  deviceSessionsManager.dispatchButton(selectedDevice, "appSwitch", "Up");
 }
 
 async function captureReplay() {
-  IDE.getInstanceIfExists()?.project.captureReplay();
+  const ide = IDE.getInstanceIfExists();
+  if (!ide) {
+    return;
+  }
+
+  const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+  if (!selectedDevice) {
+    return;
+  }
+  ide.project.deviceSessionsManager.captureReplay(selectedDevice);
 }
 
 async function toggleRecording() {
-  IDE.getInstanceIfExists()?.project.toggleRecording();
+  const ide = IDE.getInstanceIfExists();
+  if (!ide) {
+    return;
+  }
+
+  const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+  if (!selectedDevice) {
+    return;
+  }
+  ide.project.deviceSessionsManager.toggleRecording(selectedDevice);
 }
 
 async function captureScreenshot() {
-  IDE.getInstanceIfExists()?.project.captureScreenshot();
+  const ide = IDE.getInstanceIfExists();
+  if (!ide) {
+    return;
+  }
+
+  const selectedDevice = (await ide.project.getProjectState()).selectedDevice;
+  if (!selectedDevice) {
+    return;
+  }
+  ide.project.deviceSessionsManager.captureScreenshot(selectedDevice);
 }
 
 async function openChat() {

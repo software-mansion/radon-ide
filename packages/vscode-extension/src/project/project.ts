@@ -40,7 +40,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public deviceSessionsManager: DeviceSessionsManager;
 
-  private projectState: ProjectState = {
+  public projectState: ProjectState = {
     previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
     selectedDevice: undefined,
     initialized: false,
@@ -203,7 +203,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #region Project State
-
   async getProjectState(): Promise<ProjectState> {
     return this.projectState;
   }
