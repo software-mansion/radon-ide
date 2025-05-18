@@ -2,7 +2,6 @@ import { Disposable } from "vscode";
 import _ from "lodash";
 import { Devtools } from "./devtools";
 import { extensionContext } from "../utilities/extensionContext";
-import { ToolsState } from "../common/Project";
 import {
   createExpoDevPluginTools,
   ExpoDevPluginToolName,
@@ -20,6 +19,7 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { RenderOutlinesPlugin } from "../plugins/render-outlines/render-outlines-plugin";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { disposeAll } from "../utilities/disposables";
+import { ToolsState } from "../common/DeviceSessionsManager";
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
 export type ToolKey =

@@ -5,8 +5,10 @@ export enum DevicePlatform {
 
 export type DeviceInfo = AndroidDeviceInfo | IOSDeviceInfo;
 
+export type DeviceId = string & { __brand: "DeviceId" };
+
 export type AndroidDeviceInfo = {
-  id: string;
+  id: DeviceId;
   platform: DevicePlatform.Android;
   avdId: string;
   modelId: string;
@@ -16,7 +18,7 @@ export type AndroidDeviceInfo = {
 };
 
 export type IOSDeviceInfo = {
-  id: string;
+  id: DeviceId;
   platform: DevicePlatform.IOS;
   UDID: string;
   modelId: string;

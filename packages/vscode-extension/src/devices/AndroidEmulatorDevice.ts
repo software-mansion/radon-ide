@@ -13,12 +13,12 @@ import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
-import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 import { CancelToken } from "../builders/cancelToken";
+import { AppPermissionType, DeviceSettings, Locale } from "../common/DeviceSessionsManager";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,

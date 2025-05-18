@@ -2,9 +2,14 @@ import fs from "fs";
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType } from "../common/Project";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
+import {
+  AppPermissionType,
+  DeviceButtonType,
+  DeviceSettings,
+  TouchPoint,
+} from "../common/DeviceSessionsManager";
 
 const LEFT_META_HID_CODE = 0xe3;
 const RIGHT_META_HID_CODE = 0xe7;

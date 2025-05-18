@@ -11,8 +11,8 @@ import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
 import { UtilsEventListener, UtilsEventMap, UtilsInterface } from "../common/utils";
 import { Platform } from "./platform";
-import { MultimediaData } from "../common/Project";
 import { getTelemetryReporter } from "./telemetry";
+import { MultimediaData } from "../common/DeviceSessionsManager";
 
 type KeybindingType = {
   command: string;
@@ -28,6 +28,18 @@ export class Utils implements UtilsInterface {
     vscode.env.onDidChangeTelemetryEnabled((telemetryEnabled) => {
       this.eventEmitter.emit("telemetryEnabledChanged", telemetryEnabled);
     });
+  }
+
+  public async runCommand(command: string): Promise<void> {
+    await commands.executeCommand(command);
+  }
+
+  public focusExtensionLogsOutput() {
+    Logger.openOutputPanel();
+  }
+
+  public focusDebugConsole() {
+    commands.executeCommand("workbench.panel.repl.view.focus");
   }
 
   public async getCommandsCurrentKeyBinding(commandName: string) {

@@ -1,5 +1,5 @@
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
-import { MultimediaData } from "./Project";
+import { MultimediaData } from "./DeviceSessionsManager";
 
 export interface UtilsEventListener<T> {
   (event: T): void;
@@ -10,6 +10,12 @@ export interface UtilsEventMap {
 }
 
 export interface UtilsInterface {
+  runCommand(command: string): Promise<void>;
+
+  focusExtensionLogsOutput(): void;
+
+  focusDebugConsole(): void;
+
   getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
 
   reportIssue(): Promise<void>;

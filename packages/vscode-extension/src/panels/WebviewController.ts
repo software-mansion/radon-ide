@@ -44,13 +44,14 @@ export class WebviewController implements Disposable {
       ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
       ["LaunchConfig", () => this.ide.project.launchConfig as object],
       ["Utils", () => this.ide.utils as object],
-      [
-        "RenderOutlines",
-        () =>
-          this.ide.project.deviceSession!.toolsManager.getPlugin(
-            RENDER_OUTLINES_PLUGIN_ID
-          ) as object,
-      ],
+      //Frytki
+      // [
+      //   "RenderOutlines",
+      //   () =>
+      //     this.ide.project.deviceSession!.toolsManager.getPlugin(
+      //       RENDER_OUTLINES_PLUGIN_ID
+      //     ) as object,
+      // ],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
