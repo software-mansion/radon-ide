@@ -144,7 +144,7 @@ export class DeviceSession implements Disposable {
       deviceSessionDelegate,
       device.platform
     );
-    this.debugSession = new DebugSession(debugEventDelegate);
+    this.debugSession = new DebugSession(debugEventDelegate, { useParentDebugSession: true });
   }
 
   private makeDevtools() {
