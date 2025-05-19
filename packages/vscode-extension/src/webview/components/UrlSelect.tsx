@@ -1,8 +1,8 @@
-import React, { PropsWithChildren, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
 import { partition, differenceBy } from "lodash";
-import { Route, useRoutes, useRoutesAsItems } from "../providers/RoutesProvider";
+import { useRoutes, useRoutesAsItems } from "../providers/RoutesProvider";
 import UrlSelectItem from "./UrlSelectItem";
 import "./UrlSelect.css";
 import { useProject } from "../providers/ProjectProvider";
@@ -50,8 +50,8 @@ function UrlSelect({
   };
 
   const checkIsPathDynamic = (item: UrlItem) => {
-    const route = routes.find((route) => route.path === item.id);
-    if (route && route.dynamic) {
+    const matchingRoute = routes.find((route) => route.path === item.id);
+    if (matchingRoute && matchingRoute.dynamic) {
       return true;
     }
     return false;
@@ -115,8 +115,8 @@ function UrlSelect({
     const routesNotInRecent = differenceBy(routeItems, recentItems, (item: UrlItem) =>
       getNameFromId(item.id)
     );
-    const allItems = [...recentItems, ...routesNotInRecent];
-    setAllItems(allItems);
+    const combinedItems = [...recentItems, ...routesNotInRecent];
+    setAllItems(combinedItems);
   }, [inputValue, recentItems]);
 
   useEffect(() => {
@@ -222,7 +222,7 @@ function UrlSelect({
                 <div className="url-select-label">Recent paths:</div>
                 <UrlSelectItem
                   item={{ id: "/", name: "/" }}
-                  index={1}
+                  refIndex={1}
                   width={textfieldWidth}
                   onClose={() => {
                     setInputValue("/");
@@ -241,7 +241,7 @@ function UrlSelect({
                     item.name && (
                       <UrlSelectItem
                         item={item}
-                        index={index}
+                        refIndex={index}
                         key={item.id}
                         width={textfieldWidth}
                         onClose={closeDropdownWithValue}
@@ -262,7 +262,7 @@ function UrlSelect({
                         <UrlSelectItem
                           ref={itemRefs.current[index]}
                           item={item}
-                          index={index}
+                          refIndex={index}
                           key={item.id}
                           width={textfieldWidth}
                           onClose={closeDropdownWithValue}
@@ -286,7 +286,7 @@ function UrlSelect({
                           <UrlSelectItem
                             ref={itemRefs.current[index]}
                             item={item}
-                            index={index}
+                            refIndex={index}
                             key={item.id}
                             width={textfieldWidth}
                             onClose={closeDropdownWithValue}
@@ -312,7 +312,7 @@ function UrlSelect({
                           <UrlSelectItem
                             ref={itemRefs.current[index + filteredItems.length]}
                             item={item}
-                            index={index + filteredItems.length}
+                            refIndex={index + filteredItems.length}
                             key={item.id}
                             width={textfieldWidth}
                             onClose={closeDropdownWithValue}

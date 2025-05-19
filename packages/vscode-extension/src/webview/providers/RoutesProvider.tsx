@@ -13,7 +13,7 @@ export type Route = {
   path: string;
   filePath: string;
   children: Route[];
-  dynamic: { name: string; deep: Boolean; notFound?: Boolean } | null;
+  dynamic: { name: string; deep: boolean; notFound?: boolean } | null;
   type: string;
 };
 
@@ -26,8 +26,8 @@ export default function RoutesProvider({ children }: { children: React.ReactNode
       setRoutes(window.RNIDE_lastRouteList);
     }
 
-    function handleAppRouteList(routes: Route[]) {
-      setRoutes(routes);
+    function handleAppRouteList(receivedRoutes: Route[]) {
+      setRoutes(receivedRoutes);
     }
     project.addListener("routeListRetrieved", handleAppRouteList);
     return () => {

@@ -3,10 +3,10 @@ import { UrlItem, UrlSelectFocusable } from "./UrlSelect";
 
 interface UrlSelectItemProps {
   item: UrlItem;
-  index: number;
   width: number;
   style?: React.CSSProperties;
   itemRefs: React.RefObject<HTMLDivElement>[];
+  refIndex: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   onClose: (id: string) => void;
   onNavigate: (
@@ -22,10 +22,10 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
   (
     {
       item,
-      index,
       width,
       style,
       itemRefs,
+      refIndex,
       textfieldRef,
       onClose,
       onNavigate,
@@ -73,7 +73,7 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
       // Check if the current index is within a dynamic segment
       const dynamicSegment = dynamicSegmentRanges.find(([start, end]) => i >= start && i < end);
       if (dynamicSegment && (!searchQuery || i < searchMatchStart || i >= searchMatchEnd)) {
-        const [start, end] = dynamicSegment;
+        const [_, end] = dynamicSegment;
         const segEnd =
           searchQuery && searchMatchStart !== -1 && searchMatchStart > i && searchMatchStart < end
             ? searchMatchStart
@@ -92,8 +92,10 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
       if (!noHighlight && searchQuery && searchMatchStart !== -1 && searchMatchStart > i) {
         next = Math.min(next, searchMatchStart);
       }
-      dynamicSegmentRanges.forEach(([start, end]) => {
-        if (start > i) next = Math.min(next, start);
+      dynamicSegmentRanges.forEach(([start, _]) => {
+        if (start > i) {
+          next = Math.min(next, start);
+        }
       });
       segments.push({
         text: fullName.slice(i, next),
@@ -137,8 +139,8 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
           } else {
             onNavigate(
               e,
-              itemRefs[index - 1]?.current as UrlSelectFocusable,
-              itemRefs[index + 1]?.current as UrlSelectFocusable
+              itemRefs[refIndex - 1]?.current as UrlSelectFocusable,
+              itemRefs[refIndex + 1]?.current as UrlSelectFocusable
             );
           }
         }}>
