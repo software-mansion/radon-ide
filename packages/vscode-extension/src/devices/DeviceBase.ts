@@ -48,10 +48,6 @@ export abstract class DeviceBase implements Disposable {
     return this.preview?.streamURL;
   }
 
-  public get previewReady() {
-    return this.preview?.streamURL !== undefined;
-  }
-
   async reboot(): Promise<void> {
     this.preview?.dispose();
     this.preview = undefined;
@@ -67,24 +63,26 @@ export abstract class DeviceBase implements Disposable {
     });
 
     extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
-    if (this.previewReady) {
-      if (changes.replaysEnabled !== undefined) {
-        if (changes.replaysEnabled) {
-          this.enableReplay();
-        } else {
-          this.disableReplays();
-        }
-      }
-      if (changes.showTouches !== undefined) {
-        if (changes.showTouches) {
-          this.showTouches();
-        } else {
-          this.hideTouches();
-        }
-      }
-    }
+    this.deviceSettings = settings;
+    this.applyPreviewSettings();
 
     return this.changeSettings(settings);
+  }
+
+  private applyPreviewSettings() {
+    const preview = this.preview;
+    if (preview && preview.streamURL) {
+      if (this.deviceSettings.replaysEnabled) {
+        preview.startReplays();
+      } else {
+        preview.stopReplays();
+      }
+      if (this.deviceSettings.showTouches) {
+        preview.showTouches();
+      } else {
+        preview.hideTouches();
+      }
+    }
   }
 
   abstract bootDevice(): Promise<void>;
@@ -144,17 +142,6 @@ export abstract class DeviceBase implements Disposable {
       throw new Error("Preview not started");
     }
     return this.preview.captureAndStopRecording();
-  }
-
-  public enableReplay() {
-    if (!this.preview) {
-      throw new Error("Preview not started");
-    }
-    return this.preview.startReplays();
-  }
-
-  public disableReplays() {
-    return this.preview?.stopReplays();
   }
 
   public async captureReplay() {
@@ -222,12 +209,7 @@ export abstract class DeviceBase implements Disposable {
       this.preview = this.makePreview();
       this.previewStartPromise = this.preview.start();
       this.previewStartPromise.then(() => {
-        if (this.deviceSettings.replaysEnabled) {
-          this.enableReplay();
-        }
-        if (this.deviceSettings.showTouches) {
-          this.showTouches();
-        }
+        this.applyPreviewSettings();
       });
     }
     return this.previewStartPromise;

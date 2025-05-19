@@ -382,7 +382,6 @@ export class DeviceSession implements Disposable {
       platform: this.device.platform,
     });
     this.isLaunching = true;
-    this.device.disableReplays();
 
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
