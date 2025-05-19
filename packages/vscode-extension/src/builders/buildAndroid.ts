@@ -222,8 +222,21 @@ async function buildLocal(
     buildAndroidProgressProcessor.processLine(line);
   });
 
-  await buildProcess;
+  try {
+    await buildProcess;
+  } catch (e) {
+    Logger.error("Android build failed", e);
+    throw new Error("Failed to build the Android app with gradle. See the build logs for details.");
+  }
   Logger.debug("Android build successful");
-  const apkInfo = await getAndroidBuildPaths(appRoot, cancelToken, productFlavor, buildType);
-  return { ...apkInfo, platform: DevicePlatform.Android };
+  try {
+    const apkInfo = await getAndroidBuildPaths(appRoot, cancelToken, productFlavor, buildType);
+    return { ...apkInfo, platform: DevicePlatform.Android };
+  } catch (e) {
+    Logger.error("Failed to extract package name from APK", e);
+    throw new Error(
+      "The Android build was successful, but the APK file could not be accessed. " +
+        "See the build logs for details. "
+    );
+  }
 }

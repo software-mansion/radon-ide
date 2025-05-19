@@ -215,13 +215,25 @@ async function buildLocal(
     buildIOSProgressProcessor.processLine(line);
   });
 
-  await buildProcess;
+  try {
+    await buildProcess;
+  } catch (e) {
+    Logger.error("Error building iOS project", e);
+    throw new Error(
+      "Failed to build the iOS app with xcodebuild. Check the build logs for details."
+    );
+  }
 
-  const appPath = await getBuildPath(xcodeProject, sourceDir, scheme, configuration, cancelToken);
-
-  const bundleID = await getBundleID(appPath);
-
-  return { appPath, bundleID, platform: DevicePlatform.IOS };
+  try {
+    const appPath = await getBuildPath(xcodeProject, sourceDir, scheme, configuration, cancelToken);
+    const bundleID = await getBundleID(appPath);
+    return { appPath, bundleID, platform: DevicePlatform.IOS };
+  } catch (e) {
+    Logger.error("Error getting app path", e);
+    throw new Error(
+      "The iOS app build was successful, but the app file could not be accessed. See the build logs for details."
+    );
+  }
 }
 
 async function getBuildPath(
