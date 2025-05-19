@@ -182,7 +182,7 @@ export class Devtools implements Disposable {
   }
 
   public dispose() {
-    this.server.close();
+    this.server?.close();
   }
 
   public send(event: string, payload?: any) {

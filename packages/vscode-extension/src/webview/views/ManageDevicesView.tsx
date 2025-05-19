@@ -25,7 +25,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
 
   const handleDeviceChange = async () => {
     if (!isSelected) {
-      deviceSessionsManager.selectDevice(deviceInfo);
+      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
     }
   };
 

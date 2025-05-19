@@ -87,7 +87,7 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
 
     webview.html = generateWebviewContent(extensionContext, webview, extensionContext.extensionUri);
 
-    const devTools = IDE.getInstanceIfExists()?.project?.deviceSession?.toolsManager.devtools;
+    const devTools = IDE.getInstanceIfExists()?.project?.deviceSession?.devtools;
 
     const listener = devTools?.onEvent("RNIDE_pluginMessage", (payload) => {
       if (payload.scope === REACT_QUERY_PLUGIN_ID) {

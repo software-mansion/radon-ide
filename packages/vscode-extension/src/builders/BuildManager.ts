@@ -90,14 +90,6 @@ export class BuildManager implements Disposable {
     return this.isCachedBuildStale;
   }
 
-  public activate() {
-    this.workspaceChangeListener.startWatching();
-  }
-
-  public deactivate() {
-    this.workspaceChangeListener.stopWatching();
-  }
-
   private buildOutputChannel: OutputChannel | undefined;
 
   public focusBuildOutput() {

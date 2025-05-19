@@ -13,7 +13,13 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import { Frame, InspectDataStackItem, InspectStackData, ZoomLevelType } from "../../common/Project";
+import {
+  Frame,
+  InspectDataStackItem,
+  InspectStackData,
+  ProfilingState,
+  ZoomLevelType,
+} from "../../common/Project";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
 import "./View.css";
@@ -39,30 +45,28 @@ function ActivateLicenseButton() {
 }
 
 function ProfilingButton({
-  isProfiling,
-  isLoadingProfile,
+  profilingState,
   title,
   onClick,
 }: {
-  isProfiling: boolean;
-  isLoadingProfile: boolean;
+  profilingState: ProfilingState;
   title: string;
   onClick: () => void;
 }) {
-  const showButton = isProfiling || isLoadingProfile;
+  const showButton = profilingState !== "stopped";
   return (
     <IconButton
       className={showButton ? "button-recording-on button-recording" : "button-recording"}
       tooltip={{
         label: title,
       }}
-      disabled={!isProfiling}
+      disabled={profilingState !== "profiling"}
       onClick={onClick}>
       {showButton && (
         <>
           <span
             className={
-              isLoadingProfile
+              profilingState === "saving"
                 ? "codicon codicon-loading codicon-modifier-spin"
                 : "recording-rec-dot"
             }
@@ -82,9 +86,6 @@ function PreviewView() {
     hasActiveLicense,
     replayData,
     isRecording,
-    isProfilingCPU,
-    isProfilingReact,
-    isSavingReactProfile,
     setReplayData,
   } = useProject();
   const { showDismissableError } = useUtils();
@@ -99,8 +100,6 @@ function PreviewView() {
     },
     [project]
   );
-  const [logCounter, setLogCounter] = useState(0);
-  const [resetKey, setResetKey] = useState(0);
   const [recordingTime, setRecordingTime] = useState(0);
   const { devices } = useDevices();
 
@@ -115,24 +114,6 @@ function PreviewView() {
   });
 
   const { openFileAt } = useUtils();
-
-  useEffect(() => {
-    function incrementLogCounter() {
-      setLogCounter((c) => c + 1);
-    }
-    project.addListener("log", incrementLogCounter);
-
-    return () => {
-      project.removeListener("log", incrementLogCounter);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isStarting) {
-      setLogCounter(0);
-      setResetKey((prevKey) => prevKey + 1);
-    }
-  }, [setLogCounter, isStarting]);
 
   useEffect(() => {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {
@@ -218,18 +199,16 @@ function PreviewView() {
     <div className="panel-view">
       <div className="button-group-top">
         <div className="button-group-top-left">
-          <UrlBar key={resetKey} disabled={hasNoDevices} />
+          <UrlBar disabled={hasNoDevices} />
         </div>
         <div className="button-group-top-right">
           <ProfilingButton
-            isProfiling={isProfilingCPU}
-            isLoadingProfile={false}
+            profilingState={projectState.profilingCPUState}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
           />
           <ProfilingButton
-            isProfiling={isProfilingReact}
-            isLoadingProfile={isSavingReactProfile}
+            profilingState={projectState.profilingReactState}
             title="Stop profiling React"
             onClick={stopProfilingReact}
           />
@@ -273,11 +252,8 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
-            counter={logCounter}
-            onClick={() => {
-              setLogCounter(0);
-              project.focusDebugConsole();
-            }}
+            counter={projectState.logCounter}
+            onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",
             }}
