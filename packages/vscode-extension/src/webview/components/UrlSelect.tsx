@@ -178,6 +178,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
         <Popover.Content
           className="url-select-content"
           side="bottom"
+          style={{ width: textfieldWidth + 20 }}
           onEscapeKeyDown={() => setIsDropdownOpen(false)}
           onPointerDownOutside={(e) => {
             const input = textfieldRef.current;
@@ -194,11 +195,12 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               setIsDropdownOpen(false);
             }
           }}>
-          <div className="url-select-viewport">
-            {(filteredItems.length > 0 || filteredOutItems.length > 0) && (
-              <div className="url-select-separator no-top-margin" />
-            )}
 
+          {(filteredItems.length > 0 || filteredOutItems.length > 0) && (
+            <div className="url-select-separator-top" />
+          )}
+
+          <div className="url-select-viewport">
             {filteredItems.length > 0 && (
               <div className="url-select-group url-select-group-suggested">
                 <div className="url-select-label">Suggested paths:</div>

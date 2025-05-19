@@ -126,7 +126,7 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
         tabIndex={0}
         ref={forwardedRef}
         className="url-select-item"
-        style={{ ...style, width: width }}
+        style={style}
         onClick={() => onClose(item.id)}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
