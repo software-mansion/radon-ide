@@ -244,10 +244,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return promise;
   }
 
-  async bootDevice(deviceSettings: DeviceSettings): Promise<void> {
+  async bootDevice(): Promise<void> {
     await this.internalBootDevice();
 
-    let shouldRestart = await this.changeSettings(deviceSettings);
+    let shouldRestart = await this.changeSettings(this.deviceSettings);
     if (shouldRestart) {
       await this.forcefullyResetDevice();
     }

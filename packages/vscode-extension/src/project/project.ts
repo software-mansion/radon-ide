@@ -35,7 +35,7 @@ import { DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
 import { throttle } from "../utilities/throttle";
 import { DebugSource } from "../debugging/DebugSession";
-import { AppEvent, DEVICE_SETTINGS_DEFAULT } from "./deviceSession";
+import { AppEvent } from "./deviceSession";
 import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
@@ -53,6 +53,7 @@ import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager } from "./DeviceSessionsManager";
 import { DeviceSessionsManagerDelegate, ReloadAction } from "../common/DeviceSessionsManager";
+import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -643,18 +644,18 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async getDeviceSettings() {
-    return this.deviceSession?.deviceSettings ?? DEVICE_SETTINGS_DEFAULT;
-  }
-
-  public async onDeviceSettingChanged(deviceSettings: DeviceSettings) {
-    this.eventEmitter.emit("deviceSettingsChanged", deviceSettings);
+    return extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY, DEVICE_SETTINGS_DEFAULT);
   }
 
   public async updateDeviceSettings(settings: DeviceSettings) {
-    let needsRestart = await this.deviceSession?.changeDeviceSettings(settings);
+    const currentSession = this.deviceSession;
+    if (currentSession) {
+      let needsRestart = await currentSession.updateDeviceSettings(settings);
+      this.eventEmitter.emit("deviceSettingsChanged", settings);
 
-    if (needsRestart) {
-      await this.deviceSessionsManager.reload("reboot");
+      if (needsRestart) {
+        await this.deviceSessionsManager.reload("reboot");
+      }
     }
   }
 

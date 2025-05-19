@@ -26,24 +26,7 @@ import { BuildCache } from "../builders/BuildCache";
 import { CancelError, CancelToken } from "../builders/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { ToolsDelegate, ToolsManager } from "./tools";
-import { extensionContext } from "../utilities/extensionContext";
 import { ReloadAction } from "../common/DeviceSessionsManager";
-
-const DEVICE_SETTINGS_KEY = "device_settings_v4";
-
-export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
-  appearance: "dark",
-  contentSize: "normal",
-  location: {
-    latitude: 50.048653,
-    longitude: 19.965474,
-    isDisabled: false,
-  },
-  hasEnrolledBiometrics: false,
-  locale: "en_US",
-  replaysEnabled: false,
-  showTouches: false,
-};
 
 type PreviewReadyCallback = (previewURL: string) => void;
 type StartOptions = {
@@ -72,7 +55,6 @@ export type DeviceSessionDelegate = {
   onReloadCompleted(id: string): void;
   onPreviewReady(previewURL: string): void;
   onBuildProgress(stageProgress: number): void;
-  onDeviceSettingChanged(settings: DeviceSettings): void;
   ensureDependenciesAndNodeVersion(): Promise<void>;
 } & MetroDelegate &
   ToolsDelegate &
@@ -98,7 +80,6 @@ export class DeviceSession implements Disposable {
   private debugSession: DebugSession;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
-  public deviceSettings: DeviceSettings;
   private isLaunching = true;
   private cancelToken: CancelToken | undefined;
 
@@ -131,9 +112,6 @@ export class DeviceSession implements Disposable {
     private readonly metroDelegate: MetroDelegate,
     private readonly toolsDelegate: ToolsDelegate
   ) {
-    this.deviceSettings =
-      extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY) ?? DEVICE_SETTINGS_DEFAULT;
-
     this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools, metroDelegate);
     this.toolsManager = new ToolsManager(this.devtools, toolsDelegate);
@@ -450,12 +428,6 @@ export class DeviceSession implements Disposable {
     await cancelToken.adapt(this.connectJSDebugger());
 
     this.isLaunching = false;
-    if (this.deviceSettings?.replaysEnabled) {
-      this.device.enableReplay();
-    }
-    if (this.deviceSettings?.showTouches) {
-      this.device.showTouches();
-    }
 
     const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
     Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
@@ -468,10 +440,10 @@ export class DeviceSession implements Disposable {
     return previewURL!;
   }
 
-  private async bootDevice(deviceSettings: DeviceSettings) {
+  private async bootDevice() {
     this.deviceSessionDelegate.onStateChange(StartupMessage.BootingDevice);
     try {
-      await this.device.bootDevice(deviceSettings);
+      await this.device.bootDevice();
     } catch (e) {
       Logger.error("Failed to boot device", e);
       throw new DeviceBootError("Failed to boot device", e);
@@ -548,7 +520,7 @@ export class DeviceSession implements Disposable {
 
     await cancelToken.adapt(this.waitForMetroReady());
     // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
-    await cancelToken.adapt(this.bootDevice(this.deviceSettings));
+    await cancelToken.adapt(this.bootDevice());
     await this.buildApp({ appRoot: this.appRootFolder, clean: cleanBuild, cancelToken });
     await cancelToken.adapt(this.installApp({ reinstall: false }));
     const previewUrl = await this.launchApp(cancelToken);
@@ -712,37 +684,8 @@ export class DeviceSession implements Disposable {
     return promise;
   }
 
-  public async changeDeviceSettings(settings: DeviceSettings): Promise<boolean> {
-    const changedSettings = (Object.keys(settings) as Array<keyof DeviceSettings>).filter(
-      (settingKey) => {
-        return !_.isEqual(settings[settingKey], this.deviceSettings[settingKey]);
-      }
-    );
-
-    getTelemetryReporter().sendTelemetryEvent("device-settings:update-device-settings", {
-      platform: this.device.platform,
-      changedSetting: JSON.stringify(changedSettings),
-    });
-
-    extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
-    if (this.deviceSettings?.replaysEnabled !== settings.replaysEnabled && !this.isLaunching) {
-      if (settings.replaysEnabled) {
-        this.device.enableReplay();
-      } else {
-        this.device.disableReplays();
-      }
-    }
-    if (this.deviceSettings?.showTouches !== settings.showTouches && !this.isLaunching) {
-      if (settings.showTouches) {
-        this.device.showTouches();
-      } else {
-        this.device.hideTouches();
-      }
-    }
-    this.deviceSettings = settings;
-
-    this.deviceSessionDelegate.onDeviceSettingChanged(settings);
-    return this.device.changeSettings(settings);
+  public async updateDeviceSettings(settings: DeviceSettings): Promise<boolean> {
+    return this.device.updateDeviceSettings(settings);
   }
 
   public focusBuildOutput() {
