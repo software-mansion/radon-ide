@@ -50,7 +50,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: thin;
-  max-height: 200px;
+  max-height: 400px;
   display: flex;
   flex-direction: column;
   /* ensure the separator will always be stretched across the whole dropdown */
