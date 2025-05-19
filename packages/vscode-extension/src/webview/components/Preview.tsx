@@ -474,12 +474,14 @@ function Preview({
     return sd.modelId === projectState?.selectedDevice;
   });
 
-  const resizableProps = useResizableProps({
-    wrapperDivRef,
-    zoomLevel,
-    setZoomLevel: onZoomChanged,
-    device: device!,
-  });
+  const resizableProps =
+    device &&
+    useResizableProps({
+      wrapperDivRef,
+      zoomLevel,
+      setZoomLevel: onZoomChanged,
+      device,
+    });
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
@@ -493,7 +495,7 @@ function Preview({
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
-          <Device device={device!} resizableProps={resizableProps}>
+          <Device device={device!} resizableProps={resizableProps!}>
             <div className="touch-area" {...touchHandlers}>
               <MjpegImg
                 src={previewURL}
@@ -571,7 +573,7 @@ function Preview({
             </div>
           </Device>
         )}
-        {!showDevicePreview && !hasBuildError && !hasBootError && (
+        {!showDevicePreview && resizableProps && !hasBuildError && !hasBootError && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
@@ -579,7 +581,7 @@ function Preview({
             </div>
           </Device>
         )}
-        {(hasBuildError || hasBootError) && (
+        {(hasBuildError || hasBootError) && resizableProps && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized extension-error-screen" />
           </Device>
@@ -588,16 +590,18 @@ function Preview({
 
       <DelayedFastRefreshIndicator deviceStatus={projectStatus} />
 
-      <div className="button-group-left-wrapper">
-        <div className="button-group-left">
-          <ZoomControls
-            zoomLevel={zoomLevel}
-            onZoomChanged={onZoomChanged}
-            device={device}
-            wrapperDivRef={wrapperDivRef}
-          />
+      {device && (
+        <div className="button-group-left-wrapper">
+          <div className="button-group-left">
+            <ZoomControls
+              zoomLevel={zoomLevel}
+              onZoomChanged={onZoomChanged}
+              device={device}
+              wrapperDivRef={wrapperDivRef}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

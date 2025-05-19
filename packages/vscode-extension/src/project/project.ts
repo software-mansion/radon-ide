@@ -91,6 +91,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         }
       })
     );
+    this.trySelectingDevice();
   }
 
   get appRootFolder() {
