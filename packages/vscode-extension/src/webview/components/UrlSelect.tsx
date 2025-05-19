@@ -114,9 +114,9 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
       setFilteredItems([]);
       return;
     }
-    const inputValueLowerCase = inputValue.toLowerCase();
+    const inputValueLowerCase = inputValue?.toLowerCase();
     const [filtered, filteredOut] = partition(allItems, (item) =>
-      item.name.toLowerCase().includes(inputValueLowerCase)
+      item.name?.toLowerCase().includes(inputValueLowerCase)
     );
     setFilteredItems(filtered);
     setFilteredOutItems(filteredOut);

@@ -1,6 +1,7 @@
 import { useSyncExternalStore, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { store } from "expo-router/src/global-state/router-store";
+import { computeRouteIdentifier, extractNestedRouteList } from "./expo_router_helpers.js";
 
 function computeRouteIdentifier(pathname, params) {
   return pathname + JSON.stringify(params);
@@ -19,6 +20,18 @@ function useRouterPluginMainHook({ onNavigationChange }) {
   
   const displayParams = new URLSearchParams(params).toString();
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ''}`;
+
+  useEffect(() => {
+    if (!store.routeNode) {
+      return;
+    }
+    const routeList = extractNestedRouteList(store.routeNode);
+    if (global.__REACT_DEVTOOLS_GLOBAL_HOOK__?.reactDevtoolsAgent?._bridge) {
+      global.__REACT_DEVTOOLS_GLOBAL_HOOK__.reactDevtoolsAgent._bridge.send("RNIDE_routeListRetrieved", {
+        routes: routeList,
+      });
+    }
+  }, [store.routeNode]);
 
   useEffect(() => {
     onNavigationChange({

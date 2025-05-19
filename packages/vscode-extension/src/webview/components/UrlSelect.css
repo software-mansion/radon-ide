@@ -53,8 +53,6 @@
   max-height: 400px;
   display: flex;
   flex-direction: column;
-  /* ensure the separator will always be stretched across the whole dropdown */
-  /* align-items: stretch; */
 }
 
 .url-select-label {
