@@ -4,6 +4,7 @@ import { VscodeTextfield } from "@vscode-elements/react-elements";
 import { partition, differenceBy } from "lodash";
 import { useRoutes, useRoutesAsItems } from "../providers/RoutesProvider";
 import UrlSelectItem from "./UrlSelectItem";
+import UrlSelectItemGroup from "./UrlSelectItemGroup";
 import "./UrlSelect.css";
 import { useProject } from "../providers/ProjectProvider";
 
@@ -99,6 +100,15 @@ function UrlSelect({
     }
   };
 
+  // Props for UrlSelectItems and UrlSelectItemGroups to reduce code duplication
+  const commonItemProps = {
+    width: textfieldWidth,
+    itemRefs: itemRefs.current,
+    textfieldRef: textfieldRef as React.RefObject<HTMLInputElement>,
+    onNavigate: navigateBetweenItems,
+    getNameFromId,
+  };
+
   useEffect(() => {
     if (value !== undefined) {
       setInputValue(getNameFromId(value));
@@ -106,9 +116,11 @@ function UrlSelect({
   }, [value]);
 
   useEffect(() => {
-    itemRefs.current = [...filteredItems, ...filteredOutItems].map(
-      (_, i) => itemRefs.current[i] || React.createRef<HTMLDivElement>()
-    );
+    itemRefs.current = [
+      ...(dropdownOnly ? [{ id: "/", name: "/" }] : []),
+      ...filteredItems,
+      ...filteredOutItems,
+    ].map((_, i) => itemRefs.current[i] || React.createRef<HTMLDivElement>());
   }, [allItems, filteredItems]);
 
   useEffect(() => {
@@ -222,81 +234,46 @@ function UrlSelect({
                 <div className="url-select-label">Recent paths:</div>
                 <UrlSelectItem
                   item={{ id: "/", name: "/" }}
-                  refIndex={1}
-                  width={textfieldWidth}
+                  ref={itemRefs.current[0]}
+                  refIndex={0}
                   onClose={() => {
                     setInputValue("/");
                     setIsDropdownOpen(false);
                     project.goHome("/{}");
                   }}
-                  onNavigate={navigateBetweenItems}
-                  getNameFromId={getNameFromId}
-                  itemRefs={itemRefs.current}
-                  textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                  {...commonItemProps}
                   noHighlight={true}
                 />
 
-                {recentItems.map(
-                  (item, index) =>
-                    item.name && (
-                      <UrlSelectItem
-                        item={item}
-                        refIndex={index}
-                        key={item.id}
-                        width={textfieldWidth}
-                        onClose={closeDropdownWithValue}
-                        onNavigate={navigateBetweenItems}
-                        getNameFromId={getNameFromId}
-                        itemRefs={itemRefs.current}
-                        textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
-                        noHighlight={true}
-                      />
-                    )
-                )}
+                <UrlSelectItemGroup
+                  items={recentItems}
+                  refIndexOffset={1}
+                  onClose={closeDropdownWithValue}
+                  noHighlight={true}
+                  {...commonItemProps}
+                />
 
-                {items
-                  .filter((item) => !recentItems.some((recentItem) => recentItem.id === item.id))
-                  .map(
-                    (item, index) =>
-                      item.name && (
-                        <UrlSelectItem
-                          ref={itemRefs.current[index]}
-                          item={item}
-                          refIndex={index}
-                          key={item.id}
-                          width={textfieldWidth}
-                          onClose={closeDropdownWithValue}
-                          onNavigate={navigateBetweenItems}
-                          getNameFromId={getNameFromId}
-                          itemRefs={itemRefs.current}
-                          textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
-                          noHighlight={true}
-                        />
-                      )
+                <UrlSelectItemGroup
+                  items={items.filter(
+                    (item) => !recentItems.some((recentItem) => recentItem.id === item.id)
                   )}
+                  refIndexOffset={1 + recentItems.length}
+                  onClose={closeDropdownWithValue}
+                  noHighlight={true}
+                  {...commonItemProps}
+                />
               </div>
             ) : (
               <>
                 {filteredItems.length > 0 && (
                   <div className="url-select-group url-select-group-suggested">
                     <div className="url-select-label">Suggested paths:</div>
-                    {filteredItems.map(
-                      (item, index) =>
-                        item.name && (
-                          <UrlSelectItem
-                            ref={itemRefs.current[index]}
-                            item={item}
-                            refIndex={index}
-                            key={item.id}
-                            width={textfieldWidth}
-                            onClose={closeDropdownWithValue}
-                            onNavigate={navigateBetweenItems}
-                            getNameFromId={getNameFromId}
-                            itemRefs={itemRefs.current}
-                            textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
-                          />
-                        )
-                    )}
+                    <UrlSelectItemGroup
+                      items={filteredItems}
+                      refIndexOffset={0}
+                      onClose={closeDropdownWithValue}
+                      {...commonItemProps}
+                    />
                   </div>
                 )}
 
@@ -306,23 +283,12 @@ function UrlSelect({
 
                 {filteredOutItems.length > 0 && (
                   <div className="url-select-group url-select-group-other">
-                    {filteredOutItems.map(
-                      (item, index) =>
-                        item.name && (
-                          <UrlSelectItem
-                            ref={itemRefs.current[index + filteredItems.length]}
-                            item={item}
-                            refIndex={index + filteredItems.length}
-                            key={item.id}
-                            width={textfieldWidth}
-                            onClose={closeDropdownWithValue}
-                            onNavigate={navigateBetweenItems}
-                            getNameFromId={getNameFromId}
-                            itemRefs={itemRefs.current}
-                            textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
-                          />
-                        )
-                    )}
+                    <UrlSelectItemGroup
+                      items={filteredOutItems}
+                      refIndexOffset={filteredItems.length}
+                      onClose={closeDropdownWithValue}
+                      {...commonItemProps}
+                    />
                   </div>
                 )}
               </>
