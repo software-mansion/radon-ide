@@ -66,7 +66,7 @@ function UrlSelect({
     setInputValue(getNameFromId(id));
     onValueChange(id);
     setIsDropdownOpen(false);
-    textfieldRef.current?.blur();
+    setTimeout(() => textfieldRef.current?.blur(), 0);
   };
 
   const editDynamicPath = (id: string) => {
@@ -178,7 +178,7 @@ function UrlSelect({
                 setTimeout(() => textfieldRef.current?.focus(), 0);
               } else if (dropdownOnly) {
                 setIsDropdownOpen(!isDropdownOpen);
-                textfieldRef.current?.blur();
+                setTimeout(() => textfieldRef.current?.blur(), 0);
               }
             }}
             onKeyDown={(e) => {
@@ -187,7 +187,7 @@ function UrlSelect({
               }
               if (e.key === "Escape") {
                 setIsDropdownOpen(false);
-                textfieldRef.current?.blur();
+                setTimeout(() => textfieldRef.current?.blur(), 0);
               }
               if (e.key === "ArrowDown") {
                 if (isDropdownOpen) {
@@ -206,7 +206,10 @@ function UrlSelect({
           className="url-select-content"
           side="bottom"
           style={{ width: textfieldWidth + 16 }}
-          onEscapeKeyDown={() => setIsDropdownOpen(false)}
+          onEscapeKeyDown={() => {
+            setIsDropdownOpen(false);
+            setTimeout(() => textfieldRef.current?.blur(), 0);
+          }}
           onPointerDownOutside={(e) => {
             const input = textfieldRef.current;
             const originalEvent = e.detail.originalEvent as PointerEvent;
