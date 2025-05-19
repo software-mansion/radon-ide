@@ -158,5 +158,6 @@ export function useSelectedDevice() {
     isRecording,
     isProfilingCPU,
     replayData,
+    setReplayData,
   };
 }

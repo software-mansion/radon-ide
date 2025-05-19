@@ -12,8 +12,6 @@ export function useKeyPresses() {
   const selectedDeviceId = projectState.selectedDevice;
   const { deviceSessionsManager } = useDevices();
 
-  if (!selectedDeviceId) return;
-
   const dispatchKeyPress = useCallback((e: KeyboardEvent) => {
     // CapsLock is a special case, since it fires only a keydown event when it's turned on, and only a keyup event when it's turned off.
     // However, the devices expect a full keydown-keyup sequence to properly toggle CapsLock state, and go out of sync otherwise. Moreover,
@@ -23,8 +21,10 @@ export function useKeyPresses() {
 
     if (isCapsLockActive !== lastKnownCapsLockState.current) {
       lastKnownCapsLockState.current = isCapsLockActive;
-      deviceSessionsManager.dispatchKeyPress(selectedDeviceId, CAPS_LOCK_HID_CODE, "Down");
-      deviceSessionsManager.dispatchKeyPress(selectedDeviceId, CAPS_LOCK_HID_CODE, "Up");
+      selectedDeviceId &&
+        deviceSessionsManager.dispatchKeyPress(selectedDeviceId, CAPS_LOCK_HID_CODE, "Down");
+      selectedDeviceId &&
+        deviceSessionsManager.dispatchKeyPress(selectedDeviceId, CAPS_LOCK_HID_CODE, "Up");
     }
 
     const hidCode = keyboardEventToHID(e);
@@ -42,7 +42,12 @@ export function useKeyPresses() {
         pressedKeys.current.delete(hidCode);
       }
 
-      deviceSessionsManager.dispatchKeyPress(selectedDeviceId, hidCode, isKeydown ? "Down" : "Up");
+      selectedDeviceId &&
+        deviceSessionsManager.dispatchKeyPress(
+          selectedDeviceId,
+          hidCode,
+          isKeydown ? "Down" : "Up"
+        );
     } else {
       console.warn(`Unrecognized keyboard input: ${e.code}`);
     }
@@ -50,7 +55,7 @@ export function useKeyPresses() {
 
   const clearPressedKeys = useCallback(() => {
     for (const keyCode of pressedKeys.current) {
-      deviceSessionsManager.dispatchKeyPress(selectedDeviceId, keyCode, "Up");
+      selectedDeviceId && deviceSessionsManager.dispatchKeyPress(selectedDeviceId, keyCode, "Up");
     }
     pressedKeys.current.clear();
   }, []);

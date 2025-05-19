@@ -5,9 +5,12 @@ import { useModal } from "../providers/ModalProvider";
 import { SearchSelect } from "../components/shared/SearchSelect";
 import Button from "../components/shared/Button";
 import "./OpenDeepLinkView.css";
+import { useDevices } from "../providers/DevicesProvider";
 
 export const OpenDeepLinkView = () => {
-  const { project } = useProject();
+  const { projectState, project } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
+  const { deviceSessionsManager } = useDevices();
   const { closeModal } = useModal();
 
   const [url, setUrl] = useState<string>("");
@@ -26,7 +29,8 @@ export const OpenDeepLinkView = () => {
       return;
     }
     closeModal();
-    await project.openDeepLink(link, terminateApp);
+    selectedDeviceId &&
+      (await deviceSessionsManager.openDeepLink(selectedDeviceId, link, terminateApp));
   };
 
   return (

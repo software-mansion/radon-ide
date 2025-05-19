@@ -21,11 +21,13 @@ interface DeviceRowProps {
 }
 
 function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: DeviceRowProps) {
+  const { projectState, project } = useProject();
   const { deviceSessionsManager } = useDevices();
 
   const handleDeviceChange = async () => {
     if (!isSelected) {
-      deviceSessionsManager.selectDevice(deviceInfo);
+      await deviceSessionsManager.initializeDevice(deviceInfo);
+      project.selectDevice(deviceInfo.id);
     }
   };
 
@@ -175,7 +177,7 @@ function ManageDevicesView() {
               deviceInfo={deviceInfo}
               onDeviceRename={handleDeviceRename}
               onDeviceDelete={handleDeviceDelete}
-              isSelected={deviceInfo.id === selectedProjectDevice?.id}
+              isSelected={deviceInfo.id === selectedProjectDevice}
             />
           ))}
         </>
@@ -189,7 +191,7 @@ function ManageDevicesView() {
               deviceInfo={deviceInfo}
               onDeviceRename={handleDeviceRename}
               onDeviceDelete={handleDeviceDelete}
-              isSelected={deviceInfo.id === selectedProjectDevice?.id}
+              isSelected={deviceInfo.id === selectedProjectDevice}
             />
           ))}
         </>

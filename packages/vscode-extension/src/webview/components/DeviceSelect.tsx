@@ -95,13 +95,13 @@ function renderDevices(
 }
 
 function DeviceSelect() {
-  const { projectState } = useProject();
+  const { project, projectState } = useProject();
+  const selectedDeviceId = projectState.selectedDevice;
   const { devices, deviceSessionsManager } = useDevices();
   const { openModal } = useModal();
-  const selectedProjectDevice = projectState?.selectedDevice;
+  const selectedDevice = devices.find((d) => d.id === selectedDeviceId);
 
   const hasNoDevices = devices.length === 0;
-  const selectedDevice = projectState.selectedDevice;
 
   const iosDevices = devices.filter(
     ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
@@ -118,7 +118,8 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = devices.find((d) => d.id === value);
       if (deviceInfo) {
-        deviceSessionsManager.selectDevice(deviceInfo);
+        await deviceSessionsManager.initializeDevice(deviceInfo);
+        project.selectDevice(deviceInfo.id);
       }
     }
   };
@@ -145,8 +146,8 @@ function DeviceSelect() {
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>
           <Select.Viewport className="device-select-viewport">
-            {renderDevices(DevicePlatform.IOS, iosDevices, selectedProjectDevice)}
-            {renderDevices(DevicePlatform.Android, androidDevices, selectedProjectDevice)}
+            {renderDevices(DevicePlatform.IOS, iosDevices, selectedDevice)}
+            {renderDevices(DevicePlatform.Android, androidDevices, selectedDevice)}
             {devices.length > 0 && <Select.Separator className="device-select-separator" />}
             <SelectItem value="manage">Manage devices...</SelectItem>
           </Select.Viewport>

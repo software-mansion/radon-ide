@@ -13,7 +13,7 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import { Frame, InspectDataStackItem, InspectStackData, ZoomLevelType } from "../../common/Project";
+import { ZoomLevelType } from "../../common/Project";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
 import "./View.css";
@@ -22,6 +22,8 @@ import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
+import { useSelectedDevice } from "../hooks/useSelectedDevice";
+import { Frame, InspectDataStackItem, InspectStackData } from "../../common/DeviceSessionsManager";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -35,17 +37,13 @@ function ActivateLicenseButton() {
 }
 
 function PreviewView() {
-  const {
-    projectState,
-    project,
-    deviceSettings,
-    hasActiveLicense,
-    replayData,
-    isRecording,
-    isProfilingCPU,
-    setReplayData,
-  } = useProject();
-  const { showDismissableError } = useUtils();
+  const { projectState, project, hasActiveLicense } = useProject();
+
+  const { deviceState, deviceSettings, isRecording, isProfilingCPU, replayData, setReplayData } =
+    useSelectedDevice();
+
+  const { deviceSessionsManager } = useDevices();
+  const { showDismissableError, focusDebugConsole } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -64,12 +62,12 @@ function PreviewView() {
 
   const initialized = projectState.initialized;
   const selectedDevice = projectState.selectedDevice;
-  const hasNoDevices = projectState !== undefined && devices.length === 0;
-  const isStarting = projectState.status === "starting";
-  const isRunning = projectState.status === "running";
+  const hasNoDevices = deviceState !== undefined && devices.length === 0;
+  const isStarting = deviceState.status === "starting";
+  const isRunning = deviceState.status === "running";
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === projectState?.selectedDevice?.modelId;
+    return sd.modelId === projectState?.selectedDevice;
   });
 
   const { openFileAt } = useUtils();
@@ -118,12 +116,12 @@ function PreviewView() {
   }, [isRecording]);
 
   function startRecording() {
-    project.startRecording();
+    selectedDevice && deviceSessionsManager.startRecording(selectedDevice);
   }
 
   async function stopRecording() {
     try {
-      project.captureAndStopRecording();
+      selectedDevice && deviceSessionsManager.captureAndStopRecording(selectedDevice);
     } catch (e) {
       showDismissableError("Failed to capture recording");
     }
@@ -138,19 +136,19 @@ function PreviewView() {
   }
 
   function stopProfilingCPU() {
-    project.stopProfilingCPU();
+    selectedDevice && deviceSessionsManager.stopProfilingCPU(selectedDevice);
   }
 
   async function handleReplay() {
     try {
-      await project.captureReplay();
+      selectedDevice && (await deviceSessionsManager.captureReplay(selectedDevice));
     } catch (e) {
       showDismissableError("Failed to capture replay");
     }
   }
 
   async function captureScreenshot() {
-    project.captureScreenshot();
+    selectedDevice && deviceSessionsManager.captureScreenshot(selectedDevice);
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
@@ -232,7 +230,7 @@ function PreviewView() {
             counter={logCounter}
             onClick={() => {
               setLogCounter(0);
-              project.focusDebugConsole();
+              focusDebugConsole();
             }}
             tooltip={{
               label: "Open logs panel",
@@ -250,7 +248,7 @@ function PreviewView() {
 
       {selectedDevice && initialized ? (
         <Preview
-          key={selectedDevice.id}
+          key={selectedDevice}
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
           inspectFrame={inspectFrame}
