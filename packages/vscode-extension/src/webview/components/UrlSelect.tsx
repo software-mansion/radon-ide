@@ -174,16 +174,17 @@ function UrlSelect({
             disabled={disabled}
             readonly={dropdownOnly}
             onInput={() => setInputValue(textfieldRef.current?.value ?? "")}
+            onFocus={() => setIsDropdownOpen(true)}
             onMouseDown={() => {
-              if (!dropdownOnly || !isDropdownOpen) {
-                setIsDropdownOpen(true);
+              if (!isDropdownOpen && !dropdownOnly) {
+                setTimeout(() => textfieldRef.current?.focus(), 0);
               } else if (dropdownOnly) {
-                setIsDropdownOpen(false);
+                setIsDropdownOpen(!isDropdownOpen);
+                textfieldRef.current?.blur();
               }
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                e.preventDefault();
                 closeDropdownWithValue(textfieldRef.current?.value ?? "");
                 textfieldRef.current?.blur();
               }
@@ -198,8 +199,6 @@ function UrlSelect({
                     undefined,
                     document.querySelector(".url-select-item") as HTMLDivElement
                   );
-                } else {
-                  setIsDropdownOpen(true);
                 }
               }
             }}
