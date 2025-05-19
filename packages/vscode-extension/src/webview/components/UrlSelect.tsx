@@ -5,21 +5,30 @@ import { partition, differenceBy } from "lodash";
 import { Route, useRoutes, useRoutesAsItems } from "../providers/RoutesProvider";
 import UrlSelectItem from "./UrlSelectItem";
 import "./UrlSelect.css";
+import { useProject } from "../providers/ProjectProvider";
 
 export type UrlItem = { id: string; name: string; dynamic?: boolean };
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
 interface UrlSelectProps {
-  value: string;
+  value?: string;
   onValueChange: (newValue: string) => void;
   recentItems: UrlItem[];
   items: UrlItem[];
   disabled?: boolean;
+  dropdownOnly?: boolean;
 }
 
-function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSelectProps) {
+function UrlSelect({
+  onValueChange,
+  recentItems,
+  items,
+  value,
+  disabled,
+  dropdownOnly,
+}: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState("");
+  const [inputValue, setInputValue] = React.useState("/");
   const [allItems, setAllItems] = React.useState<UrlItem[]>([]);
   const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
   const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
@@ -30,16 +39,14 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   const routeItems = useRoutesAsItems();
 
   const itemRefs = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
+  const { project } = useProject();
 
   const getNameFromId = (id: string) => {
-    const item = items.find((item) => item.id === id);
-    if (!item) {
+    const itemForID = items.find((item) => item.id === id);
+    if (!itemForID) {
       return id;
     }
-    if (item.name.startsWith("/")) {
-      return item.name;
-    }
-    return item.id;
+    return itemForID.name;
   };
 
   const checkIsPathDynamic = (item: UrlItem) => {
@@ -92,7 +99,9 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
   };
 
   useEffect(() => {
-    setInputValue(getNameFromId(value));
+    if (value !== undefined) {
+      setInputValue(getNameFromId(value));
+    }
   }, [value]);
 
   useEffect(() => {
@@ -148,11 +157,19 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             value={inputValue ?? "/"}
             placeholder="Enter path..."
             disabled={disabled}
+            readonly={dropdownOnly}
             onInput={() => setInputValue(textfieldRef.current?.value ?? "")}
-            onMouseDown={() => setIsDropdownOpen(true)}
+            onFocus={() => setIsDropdownOpen(true)}
+            onMouseDown={() => {
+              if (!isDropdownOpen && !dropdownOnly) {
+                setTimeout(() => textfieldRef.current?.focus(), 0);
+              } else if (dropdownOnly) {
+                setIsDropdownOpen(!isDropdownOpen);
+                textfieldRef.current?.blur();
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                e.preventDefault();
                 closeDropdownWithValue(textfieldRef.current?.value ?? "");
                 textfieldRef.current?.blur();
               }
@@ -167,8 +184,6 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                     undefined,
                     document.querySelector(".url-select-item") as HTMLDivElement
                   );
-                } else {
-                  setIsDropdownOpen(true);
                 }
               }
             }}
@@ -185,6 +200,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
             const originalEvent = e.detail.originalEvent as PointerEvent;
             const elemRect = textfieldRef.current?.getBoundingClientRect();
             if (
+              dropdownOnly ||
               !input ||
               !elemRect ||
               originalEvent.clientX <= elemRect.left ||
@@ -193,6 +209,7 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
               originalEvent.clientY >= elemRect.bottom
             ) {
               setIsDropdownOpen(false);
+              input?.blur();
             }
           }}>
 
@@ -201,14 +218,28 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
           )}
 
           <div className="url-select-viewport">
-            {filteredItems.length > 0 && (
-              <div className="url-select-group url-select-group-suggested">
-                <div className="url-select-label">Suggested paths:</div>
-                {filteredItems.map(
+            {dropdownOnly ? (
+              <div className="url-select-group">
+                <div className="url-select-label">Recent paths:</div>
+                <UrlSelectItem
+                  item={{ id: "/", name: "/" }}
+                  index={1}
+                  width={textfieldWidth}
+                  onClose={() => {
+                    setInputValue("/");
+                    setIsDropdownOpen(false);
+                    project.goHome("/{}");
+                  }}
+                  onNavigate={navigateBetweenItems}
+                  getNameFromId={getNameFromId}
+                  itemRefs={itemRefs.current}
+                  textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                />
+
+                {recentItems.map(
                   (item, index) =>
                     item.name && (
                       <UrlSelectItem
-                        ref={itemRefs.current[index]}
                         item={item}
                         index={index}
                         key={item.id}
@@ -221,34 +252,78 @@ function UrlSelect({ onValueChange, recentItems, items, value, disabled }: UrlSe
                       />
                     )
                 )}
+
+                {items
+                  .filter((item) => !recentItems.some((recentItem) => recentItem.id === item.id))
+                  .map(
+                    (item, index) =>
+                      item.name && (
+                        <UrlSelectItem
+                          ref={itemRefs.current[index]}
+                          item={item}
+                          index={index}
+                          key={item.id}
+                          width={textfieldWidth}
+                          onClose={closeDropdownWithValue}
+                          onNavigate={navigateBetweenItems}
+                          getNameFromId={getNameFromId}
+                          itemRefs={itemRefs.current}
+                          textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                        />
+                      )
+                  )}
               </div>
-            )}
-
-            {filteredItems.length > 0 && filteredOutItems.length > 0 && (
-              <div className="url-select-separator" />
-            )}
-
-            {filteredOutItems.length > 0 && (
-              <div className="url-select-group url-select-group-other">
-                {/* <div className="url-select-label">Other paths:</div> */}
-                {filteredOutItems.map(
-                  (item, index) =>
-                    item.name && (
-                      <UrlSelectItem
-                        ref={itemRefs.current[index + filteredItems.length]}
-                        item={item}
-                        index={index + filteredItems.length}
-                        key={item.id}
-                        width={textfieldWidth}
-                        onClose={closeDropdownWithValue}
-                        onNavigate={navigateBetweenItems}
-                        getNameFromId={getNameFromId}
-                        itemRefs={itemRefs.current}
-                        textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
-                      />
-                    )
+            ) : (
+              <>
+                {filteredItems.length > 0 && (
+                  <div className="url-select-group url-select-group-suggested">
+                    <div className="url-select-label">Suggested paths:</div>
+                    {filteredItems.map(
+                      (item, index) =>
+                        item.name && (
+                          <UrlSelectItem
+                            ref={itemRefs.current[index]}
+                            item={item}
+                            index={index}
+                            key={item.id}
+                            width={textfieldWidth}
+                            onClose={closeDropdownWithValue}
+                            onNavigate={navigateBetweenItems}
+                            getNameFromId={getNameFromId}
+                            itemRefs={itemRefs.current}
+                            textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                          />
+                        )
+                    )}
+                  </div>
                 )}
-              </div>
+
+                {filteredItems.length > 0 && filteredOutItems.length > 0 && (
+                  <div className="url-select-separator" />
+                )}
+
+                {filteredOutItems.length > 0 && (
+                  <div className="url-select-group url-select-group-other">
+                    {filteredOutItems.map(
+                      (item, index) =>
+                        item.name && (
+                          <UrlSelectItem
+                            ref={itemRefs.current[index + filteredItems.length]}
+                            item={item}
+                            index={index + filteredItems.length}
+                            key={item.id}
+                            width={textfieldWidth}
+                            onClose={closeDropdownWithValue}
+                            onNavigate={navigateBetweenItems}
+                            getNameFromId={getNameFromId}
+                            itemRefs={itemRefs.current}
+                            textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                          />
+                        )
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </Popover.Content>

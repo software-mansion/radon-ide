@@ -171,7 +171,7 @@ export async function buildIos(
 
 async function buildLocal(
   buildConfig: IOSLocalBuildConfig,
-  installPodsIfNeeded: Function,
+  installPodsIfNeeded: () => Promise<void>,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void

@@ -1,6 +1,6 @@
-import { experimental_extendTheme as extendTheme } from "@mui/material/styles";
+import { extendTheme } from "@mui/material/styles";
 
-import Aeonik from "/static/fonts/Aeonik-Regular.otf";
+import Aeonik from "@site/static/fonts/Aeonik-Regular.otf";
 
 // General MUI theme
 const extTheme = extendTheme({

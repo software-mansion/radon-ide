@@ -9,7 +9,12 @@ import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import { Logger } from "../Logger";
 import { extensionContext } from "./extensionContext";
 import { openFileAtPosition } from "./openFileAtPosition";
-import { UtilsEventListener, UtilsEventMap, UtilsInterface } from "../common/utils";
+import {
+  IDEPanelMoveTarget,
+  UtilsEventListener,
+  UtilsEventMap,
+  UtilsInterface,
+} from "../common/utils";
 import { Platform } from "./platform";
 import { MultimediaData } from "../common/Project";
 import { getTelemetryReporter } from "./telemetry";
@@ -123,8 +128,8 @@ export class Utils implements UtilsInterface {
     return true;
   }
 
-  public async movePanelToNewWindow() {
-    commands.executeCommand("workbench.action.moveEditorToNewWindow");
+  public async movePanelTo(location: IDEPanelMoveTarget) {
+    commands.executeCommand("RNIDE.showPanel", location);
   }
 
   public async showDismissableError(errorMessage: string) {

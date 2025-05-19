@@ -16,24 +16,21 @@ import {
 
 const dependencyManager = makeProxy<DependencyManagerInterface>("DependencyManager");
 
-const dependenciesDomain = [
-  "nodejs",
-  "packageManager",
-  "androidEmulator",
-  "xcode",
-  "cocoaPods",
-  "nodeModules",
-  "ios",
-  "android",
-  "pods",
-  "reactNative",
-  "expo",
-  "expoRouter",
-  "storybook",
-  "easCli",
-] as const;
-
-type Dependency = (typeof dependenciesDomain)[number];
+type Dependency =
+  | "nodejs"
+  | "packageManager"
+  | "androidEmulator"
+  | "xcode"
+  | "cocoaPods"
+  | "nodeModules"
+  | "ios"
+  | "android"
+  | "pods"
+  | "reactNative"
+  | "expo"
+  | "expoRouter"
+  | "storybook"
+  | "easCli";
 
 type ErrorType = "ios" | "simulator" | "emulator" | "android" | "common";
 type Errors = Partial<Record<ErrorType, { message: string }>>;
@@ -135,8 +132,10 @@ function getErrors(statuses: DependencyRecord) {
           break;
         case "ios":
           setFirstError(dependency, "ios");
+          break;
         case "android":
           setFirstError(dependency, "android");
+          break;
         default:
           break;
       }

@@ -1,6 +1,7 @@
 .url-select-wrapper {
   position: relative;
   flex: 1;
+  margin-left: 2px;
 }
 
 .url-select-input {
