@@ -8,7 +8,7 @@
   display: inline-flex;
   align-items: center;
   height: var(--swm-button-size);
-  padding: 0 10px;
+  padding: 0 8px;
   font-size: 13px;
   line-height: 1;
   border: 0px solid transparent;
@@ -57,17 +57,18 @@
 }
 
 .url-select-label {
-  padding: 0 5px;
+  padding: 0 8px;
+  margin-bottom: 2px;
   font-size: 13px;
   line-height: 20px;
 }
 
 .url-select-separator {
   flex: 1;
-  width: calc(100% - 6px);
+  width: 100%;
   min-height: 1px;
+  margin-block: 2px;
   background-color: var(--swm-url-select-separator);
-  margin: 3px;
 }
 
 .url-select-separator-top {
@@ -85,7 +86,7 @@
   align-items: center;
   min-height: 30px;
   height: auto;
-  padding: 0 5px;
+  padding: 0 8px;
   position: relative;
   border-radius: 4px;
   color: var(--swm-default-text);

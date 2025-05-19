@@ -65,6 +65,7 @@ function UrlSelect({
     setInputValue(getNameFromId(id));
     onValueChange(id);
     setIsDropdownOpen(false);
+    textfieldRef.current?.blur();
   };
 
   const editDynamicPath = (id: string) => {
@@ -171,7 +172,6 @@ function UrlSelect({
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 closeDropdownWithValue(textfieldRef.current?.value ?? "");
-                textfieldRef.current?.blur();
               }
               if (e.key === "Escape") {
                 setIsDropdownOpen(false);
@@ -182,7 +182,7 @@ function UrlSelect({
                   navigateBetweenItems(
                     e,
                     undefined,
-                    document.querySelector(".url-select-item") as HTMLDivElement
+                    itemRefs.current[0]?.current as UrlSelectFocusable
                   );
                 }
               }
@@ -193,7 +193,7 @@ function UrlSelect({
         <Popover.Content
           className="url-select-content"
           side="bottom"
-          style={{ width: textfieldWidth + 20 }}
+          style={{ width: textfieldWidth + 16 }}
           onEscapeKeyDown={() => setIsDropdownOpen(false)}
           onPointerDownOutside={(e) => {
             const input = textfieldRef.current;
@@ -212,7 +212,6 @@ function UrlSelect({
               input?.blur();
             }
           }}>
-
           {(filteredItems.length > 0 || filteredOutItems.length > 0) && (
             <div className="url-select-separator-top" />
           )}
@@ -234,6 +233,7 @@ function UrlSelect({
                   getNameFromId={getNameFromId}
                   itemRefs={itemRefs.current}
                   textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                  noHighlight={true}
                 />
 
                 {recentItems.map(
@@ -249,6 +249,7 @@ function UrlSelect({
                         getNameFromId={getNameFromId}
                         itemRefs={itemRefs.current}
                         textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                        noHighlight={true}
                       />
                     )
                 )}
@@ -269,6 +270,7 @@ function UrlSelect({
                           getNameFromId={getNameFromId}
                           itemRefs={itemRefs.current}
                           textfieldRef={textfieldRef as React.RefObject<HTMLInputElement>}
+                          noHighlight={true}
                         />
                       )
                   )}

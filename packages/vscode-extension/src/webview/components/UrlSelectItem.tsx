@@ -15,6 +15,7 @@ interface UrlSelectItemProps {
     next?: UrlSelectFocusable
   ) => void;
   getNameFromId: (id: string) => string;
+  noHighlight?: boolean;
 }
 
 const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSelectItemProps>>(
@@ -29,6 +30,7 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
       onClose,
       onNavigate,
       getNameFromId,
+      noHighlight = false,
       ...props
     },
     forwardedRef
@@ -42,7 +44,8 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
     const fullNameLower = fullName.toLowerCase();
     const searchQuery = textfieldRef.current?.value ?? "";
     const searchQueryLower = searchQuery.toLowerCase();
-    const searchMatchStart = searchQuery ? fullNameLower.indexOf(searchQueryLower) : -1;
+    const searchMatchStart =
+      !noHighlight && searchQuery ? fullNameLower.indexOf(searchQueryLower) : -1;
     const searchMatchEnd = searchMatchStart !== -1 ? searchMatchStart + searchQuery.length : -1;
 
     const dynamicSegmentRanges = [];
@@ -56,7 +59,7 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
     let i = 0;
     while (i < fullName.length) {
       // If a part of the search query, highlight and skip other steps
-      if (searchQuery && searchMatchStart !== -1 && i === searchMatchStart) {
+      if (!noHighlight && searchQuery && searchMatchStart !== -1 && i === searchMatchStart) {
         segments.push({
           text: fullName.slice(i, searchMatchEnd),
           isSearch: true,
@@ -86,7 +89,7 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
 
       // Find next special substring
       let next = fullName.length;
-      if (searchQuery && searchMatchStart !== -1 && searchMatchStart > i) {
+      if (!noHighlight && searchQuery && searchMatchStart !== -1 && searchMatchStart > i) {
         next = Math.min(next, searchMatchStart);
       }
       dynamicSegmentRanges.forEach(([start, end]) => {

@@ -5,6 +5,7 @@ import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { useDevices } from "../providers/DevicesProvider";
+import { useRoutes } from "../providers/RoutesProvider";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
   const { deviceSessionsManager } = useDevices();
@@ -32,6 +33,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 function UrlBar({ disabled }: { disabled?: boolean }) {
   const { project, projectState } = useProject();
   const { dependencies } = useDependencies();
+  const routes = useRoutes();
 
   const MAX_URL_HISTORY_SIZE = 20;
   const MAX_RECENT_URL_SIZE = 5;
@@ -87,6 +89,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
 
   const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
   const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
+  const noExpoAndHistory = !isExpoRouterProject && urlHistory.length < 1;
 
   return (
     <>
@@ -128,7 +131,11 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         recentItems={recentUrlList}
         items={sortedUrlList}
         value={urlSelectValue}
-        disabled={disabledAlsoWhenStarting || (!isExpoRouterProject && urlHistory.length < 1)}
+        disabled={
+          disabledAlsoWhenStarting ||
+          (routes.length < 1 && urlHistory.length < 1) ||
+          noExpoAndHistory
+        }
         dropdownOnly={!isExpoRouterProject}
       />
     </>
