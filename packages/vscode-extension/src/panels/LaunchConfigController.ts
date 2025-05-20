@@ -103,17 +103,24 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
     return Promise.all(
       applicationRoots.map(async (appRootPath) => {
         const appRootAbsolutePath = path.resolve(workspacePath, appRootPath);
-        const appRootConfig = JSON.parse(
-          await promises.readFile(path.join(appRootAbsolutePath, "app.json"), "utf-8")
-        );
-        const name =
-          appRootConfig.expo?.name || appRootConfig.name || path.basename(appRootAbsolutePath);
-        const displayName = appRootConfig.displayName;
-        return {
-          path: appRootPath,
-          name,
-          displayName,
-        };
+        try {
+          const appRootConfig = JSON.parse(
+            await promises.readFile(path.join(appRootAbsolutePath, "app.json"), "utf-8")
+          );
+          const name =
+            appRootConfig.expo?.name || appRootConfig.name || path.basename(appRootAbsolutePath);
+          const displayName = appRootConfig.displayName;
+          return {
+            path: appRootPath,
+            name,
+            displayName,
+          };
+        } catch (e) {
+          return {
+            path: appRootPath,
+            name: path.basename(appRootAbsolutePath),
+          };
+        }
       })
     );
   }

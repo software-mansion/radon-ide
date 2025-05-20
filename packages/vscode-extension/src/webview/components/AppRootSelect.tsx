@@ -77,11 +77,13 @@ function renderAppRoots() {
 }
 
 function AppRootSelect() {
-  const { applicationRoots, appRoot } = useLaunchConfig();
+  const { applicationRoots, appRoot, update } = useLaunchConfig();
   const selectedAppRootName =
     applicationRoots.find((root) => root.path === appRoot)?.displayName || appRoot;
 
-  const handleAppRootChange = async (value: string) => {};
+  const handleAppRootChange = async (value: string) => {
+    update("appRoot", value);
+  };
 
   return (
     <Select.Root onValueChange={handleAppRootChange} value={appRoot}>
