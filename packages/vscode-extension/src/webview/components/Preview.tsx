@@ -41,6 +41,7 @@ type Props = {
   setInspectFrame: (inspectFrame: Frame | null) => void;
   setInspectStackData: (inspectStackData: InspectStackData | null) => void;
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
+  resetInspector: () => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
   replayData: MultimediaData | undefined;
@@ -69,6 +70,7 @@ function Preview({
   setInspectFrame,
   setInspectStackData,
   onInspectorItemSelected,
+  resetInspector,
   zoomLevel,
   onZoomChanged,
   replayData,
@@ -197,10 +199,6 @@ function Preview({
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
-  function resetInspector() {
-    setInspectFrame(null);
-    setInspectStackData(null);
-  }
 
   const shouldPreventInputEvents =
     debugPaused || projectStatus === "refreshing" || !showDevicePreview || !!replayData;
@@ -241,6 +239,9 @@ function Preview({
 
     if (isInspecting) {
       sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
+      setIsInspecting(false);
+    } else if (inspectFrame) {
+      resetInspector();
     } else if (!inspectFrame) {
       if (e.button === 2) {
         sendInspect(e, "RightButtonDown", true);
@@ -256,12 +257,7 @@ function Preview({
 
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isInspecting) {
-      setIsInspecting(false);
-    } else if (!isInspecting && inspectFrame) {
-      // if element is highlighted, we clear it here and ignore first click (don't send it to device)
-      resetInspector();
-    } else if (isPressing) {
+    if (!isInspecting && !inspectFrame && isPressing) {
       if (isMultiTouching) {
         sendMultiTouchForEvent(e, "Up");
       } else {
