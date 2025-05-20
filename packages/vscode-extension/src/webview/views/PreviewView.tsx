@@ -79,15 +79,8 @@ function ProfilingButton({
 }
 
 function PreviewView() {
-  const {
-    projectState,
-    project,
-    deviceSettings,
-    hasActiveLicense,
-    replayData,
-    isRecording,
-    setReplayData,
-  } = useProject();
+  const { projectState, project, deviceSettings, hasActiveLicense, replayData, setReplayData } =
+    useProject();
   const { showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
@@ -108,6 +101,7 @@ function PreviewView() {
   const hasNoDevices = projectState !== undefined && devices.length === 0;
   const isStarting = projectState.status === "starting";
   const isRunning = projectState.status === "running";
+  const isRecording = projectState.isRecordingScreen;
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === projectState?.selectedDevice?.modelId;

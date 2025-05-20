@@ -164,7 +164,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       throw new Error("No device session available");
     }
     this.deviceSession.startRecording();
-    this.eventEmitter.emit("isRecording", true);
 
     this.recordingTimeout = setTimeout(() => {
       this.stopRecording();
@@ -180,7 +179,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    this.eventEmitter.emit("isRecording", false);
     return this.deviceSession.captureAndStopRecording();
   }
 

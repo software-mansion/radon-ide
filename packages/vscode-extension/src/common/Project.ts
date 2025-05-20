@@ -63,6 +63,7 @@ export type DeviceSessionState = {
   isDebuggerPaused: boolean;
   logCounter: number;
   hasStaleBuildCache: boolean;
+  isRecordingScreen: boolean;
 };
 
 export const DeviceSessionInitialState: DeviceSessionState = {
@@ -79,6 +80,7 @@ export const DeviceSessionInitialState: DeviceSessionState = {
   isDebuggerPaused: false,
   logCounter: 0,
   hasStaleBuildCache: false,
+  isRecordingScreen: false,
 };
 
 export type ProjectState = {
@@ -162,7 +164,6 @@ export interface ProjectEventMap {
   deviceSettingsChanged: DeviceSettings;
   licenseActivationChanged: boolean;
   replayDataCreated: MultimediaData;
-  isRecording: boolean;
 }
 
 export interface ProjectEventListener<T> {

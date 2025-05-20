@@ -19,7 +19,7 @@ import { DeviceSessionInitialState } from "../common/Project";
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
 export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerInterface {
-  private deviceSessions: Set<DeviceSession> = new Set();
+  private deviceSessions: Map<string, DeviceSession> = new Map();
   private activeSession: DeviceSession | undefined;
   private findingDevice: boolean = false;
 
@@ -32,9 +32,11 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     private readonly deviceManager: DeviceManager,
     private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
   ) {
-    this.findInitialDeviceAndStartSession();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
+    // we try to set the initial device immediately, but if there's no device available, we listen to the devicesChanged event
+    // and use the new device once it is added to the list
     this.deviceManager.addListener("devicesChanged", this.findInitialDeviceAndStartSession);
+    this.findInitialDeviceAndStartSession();
   }
 
   public async reloadCurrentSession(type: ReloadAction) {
@@ -46,6 +48,15 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     return await deviceSession.performReloadAction(type);
   }
 
+  private async terminatePreviousSessions() {
+    const previousSessionEntries = Array.from(this.deviceSessions.entries()).filter(
+      ([_deviceId, session]) => this.selectedDeviceSession !== session
+    );
+    return Promise.all(
+      previousSessionEntries.map(([deviceId, _session]) => this.terminateSession(deviceId))
+    );
+  }
+
   public async startOrActivateSessionForDevice(
     deviceInfo: DeviceInfo,
     selectDeviceOptions?: SelectDeviceOptions
@@ -53,15 +64,12 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
 
     // if there's an existing session for the device, we use it instead of starting a new one
-    const existingDeviceSession = this.deviceSessions
-      .values()
-      .find((session) => session.deviceInfo.id === deviceInfo.id);
+    const existingDeviceSession = this.deviceSessions.get(deviceInfo.id);
     if (existingDeviceSession) {
       this.updateSelectedSession(existingDeviceSession);
-      const otherSessions = this.deviceSessions
-        .values()
-        .filter((session) => session !== existingDeviceSession);
-      await Promise.all(otherSessions.map((session) => this.terminateSession(session)));
+      if (killPreviousDeviceSession) {
+        await this.terminatePreviousSessions();
+      }
       return;
     }
 
@@ -72,7 +80,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     }
     Logger.debug("Selected device is ready");
 
-    const newDeviceSession = new DeviceSession(this.applicationContext, deviceInfo, device, {
+    const newDeviceSession = new DeviceSession(this.applicationContext, device, {
       onStateChange: (state) => {
         if (this.activeSession === newDeviceSession) {
           this.deviceSessionManagerDelegate.onActiveSessionStateChanged(state);
@@ -81,12 +89,11 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
       ensureDependenciesAndNodeVersion: async () => {},
     });
 
-    const previousSessions = Array.from(this.deviceSessions.values());
-    this.deviceSessions.add(newDeviceSession);
+    this.deviceSessions.set(deviceInfo.id, newDeviceSession);
     this.updateSelectedSession(newDeviceSession);
 
     if (killPreviousDeviceSession) {
-      await Promise.all(previousSessions.map((session) => this.terminateSession(session)));
+      await this.terminatePreviousSessions();
     }
 
     try {
@@ -130,11 +137,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   // used in callbacks, needs to be an arrow function
   private removeDeviceListener = async (device: DeviceInfo) => {
     // if the deleted device was running an active session, we need to terminate that session
-    this.deviceSessions.forEach((session) => {
-      if (session.deviceInfo.id === device.id) {
-        this.terminateSession(session);
-      }
-    });
+    await this.terminateSession(device.id);
   };
 
   private updateSelectedSession(session: DeviceSession | undefined) {
@@ -149,12 +152,15 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     }
   }
 
-  private async terminateSession(session: DeviceSession) {
-    this.deviceSessions.delete(session);
-    if (session === this.activeSession) {
-      this.updateSelectedSession(undefined);
+  private async terminateSession(deviceId: string) {
+    const session = this.deviceSessions.get(deviceId);
+    if (session) {
+      this.deviceSessions.delete(deviceId);
+      if (session === this.activeSession) {
+        this.updateSelectedSession(undefined);
+      }
+      await session.dispose();
     }
-    await session.dispose();
   }
 
   private async acquireDeviceByDeviceInfo(deviceInfo: DeviceInfo) {

@@ -26,7 +26,6 @@ interface ProjectContextProps {
   hasActiveLicense: boolean;
   replayData: MultimediaData | undefined;
   setReplayData: Dispatch<SetStateAction<MultimediaData | undefined>>;
-  isRecording: boolean;
 }
 
 const defaultProjectState: ProjectState = {
@@ -56,14 +55,12 @@ const ProjectContext = createContext<ProjectContextProps>({
   hasActiveLicense: false,
   replayData: undefined,
   setReplayData: () => {},
-  isRecording: false,
 });
 
 export default function ProjectProvider({ children }: PropsWithChildren) {
   const [projectState, setProjectState] = useState<ProjectState>(defaultProjectState);
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(defaultDeviceSettings);
   const [hasActiveLicense, setHasActiveLicense] = useState(true);
-  const [isRecording, setIsRecording] = useState(false);
   const [replayData, setReplayData] = useState<MultimediaData | undefined>(undefined);
 
   useEffect(() => {
@@ -76,7 +73,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     project.hasActiveLicense().then(setHasActiveLicense);
     project.addListener("licenseActivationChanged", setHasActiveLicense);
 
-    project.addListener("isRecording", setIsRecording);
     project.addListener("replayDataCreated", setReplayData);
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
@@ -93,17 +89,8 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
       hasActiveLicense,
       replayData,
       setReplayData,
-      isRecording,
     };
-  }, [
-    projectState,
-    deviceSettings,
-    project,
-    hasActiveLicense,
-    replayData,
-    setReplayData,
-    isRecording,
-  ]);
+  }, [projectState, deviceSettings, project, hasActiveLicense, replayData, setReplayData]);
 
   return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;
 }

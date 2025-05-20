@@ -29,7 +29,7 @@ import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/De
 import { throttle } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../builders/cancelToken";
-import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
+import { DevicePlatform } from "../common/DeviceManager";
 import { ToolKey, ToolsDelegate, ToolsManager } from "./tools";
 import { ReloadAction } from "../common/DeviceSessionsManager";
 import { focusSource } from "../utilities/focusSource";
@@ -82,6 +82,7 @@ export class DeviceSession
   private logCounter = 0;
   private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
+  private isRecordingScreen = false;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -100,7 +101,6 @@ export class DeviceSession
 
   constructor(
     private readonly applicationContext: ApplicationContext,
-    readonly deviceInfo: DeviceInfo,
     private readonly device: DeviceBase,
     private readonly deviceSessionDelegate: DeviceSessionDelegate
   ) {
@@ -126,12 +126,13 @@ export class DeviceSession
       profilingCPUState: this.profilingCPUState,
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
-      selectedDevice: this.deviceInfo,
+      selectedDevice: this.device.deviceInfo,
       previewURL: this.previewURL,
       toolsState: this.toolsManager.getToolsState(),
       isDebuggerPaused: this.isDebuggerPaused,
       logCounter: this.logCounter,
       hasStaleBuildCache: this.hasStaleBuildCache,
+      isRecordingScreen: this.isRecordingScreen,
     };
   }
 
@@ -520,6 +521,7 @@ export class DeviceSession
 
   private async reloadMetro() {
     this.startupMessage = StartupMessage.WaitingForAppToLoad;
+    this.stageProgress = 0;
     this.emitStateChange();
     const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
     const bundleErrorSubscription = this.metro.onBundleError(() => {
@@ -625,6 +627,7 @@ export class DeviceSession
   }) {
     const buildStartTime = Date.now();
     this.startupMessage = StartupMessage.Building;
+    this.stageProgress = 0;
     this.emitStateChange();
     this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
       appRoot,
@@ -793,10 +796,14 @@ export class DeviceSession
   }
 
   public startRecording() {
+    this.isRecordingScreen = true;
+    this.emitStateChange();
     return this.device.startRecording();
   }
 
   public async captureAndStopRecording() {
+    this.isRecordingScreen = false;
+    this.emitStateChange();
     return this.device.captureAndStopRecording();
   }
 
