@@ -2,6 +2,7 @@ import path from "path";
 import { EventEmitter } from "stream";
 import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
 import {
+  ApplicationRoot,
   LaunchConfig,
   LaunchConfigEventListener,
   LaunchConfigEventMap,
@@ -14,9 +15,44 @@ import { getIosSourceDir } from "../builders/buildIOS";
 import { readEasConfig } from "../utilities/eas";
 import { EasBuildConfig } from "../common/EasConfig";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { promises } from "fs";
 
 const CUSTOM_APPLICATION_ROOTS_KEY = "custom_application_roots_key";
+
+function readApplicationRoot(appRootPath: string): ApplicationRoot {
+  const appRootAbsolutePath = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRootPath);
+  try {
+    const appRootConfig = require(appRootAbsolutePath + "/app.json");
+    if (appRootConfig) {
+      return {
+        path: appRootPath,
+        name: appRootConfig.name ?? appRootConfig.expo?.name ?? path.basename(appRootPath),
+        displayName: appRootConfig.displayName,
+      };
+    }
+  } catch {}
+  try {
+    const configProvider = require(appRootAbsolutePath + "/app.config.js");
+    const appRootConfig = configProvider({ config: {} });
+    if (appRootConfig) {
+      return {
+        path: appRootPath,
+        name: appRootConfig.name ?? appRootConfig.expo?.name ?? path.basename(appRootPath),
+        displayName: appRootConfig.displayName,
+      };
+    }
+  } catch {}
+  try {
+    const appPackageJson = require(appRootAbsolutePath + "/package.json");
+    return {
+      path: appRootPath,
+      name: appPackageJson.name ?? path.basename(appRootPath),
+    };
+  } catch {}
+  return {
+    path: appRootPath,
+    name: path.basename(appRootPath),
+  };
+}
 
 export class LaunchConfigController implements Disposable, LaunchConfig {
   private config: LaunchConfigurationOptions;
@@ -100,29 +136,7 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
       return [];
     }
 
-    return Promise.all(
-      applicationRoots.map(async (appRootPath) => {
-        const appRootAbsolutePath = path.resolve(workspacePath, appRootPath);
-        try {
-          const appRootConfig = JSON.parse(
-            await promises.readFile(path.join(appRootAbsolutePath, "app.json"), "utf-8")
-          );
-          const name =
-            appRootConfig.expo?.name || appRootConfig.name || path.basename(appRootAbsolutePath);
-          const displayName = appRootConfig.displayName;
-          return {
-            path: appRootPath,
-            name,
-            displayName,
-          };
-        } catch (e) {
-          return {
-            path: appRootPath,
-            name: path.basename(appRootAbsolutePath),
-          };
-        }
-      })
-    );
+    return applicationRoots.map(readApplicationRoot);
   }
 
   async getAvailableXcodeSchemes() {
