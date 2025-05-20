@@ -40,6 +40,7 @@ export type ProjectState =
   | ProjectStateBuildError;
 
 type ProjectStateCommon = {
+  appRootPath: string | undefined;
   previewURL: string | undefined;
   selectedDevice: DeviceInfo | undefined;
   initialized: boolean;

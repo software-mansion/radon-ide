@@ -4,6 +4,7 @@ import "./DeviceSelect.css";
 import "./shared/Dropdown.css";
 import Tooltip from "./shared/Tooltip";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
+import { useProject } from "../providers/ProjectProvider";
 
 interface RichSelectItemProps extends Select.SelectItemProps {
   icon: React.ReactNode;
@@ -77,16 +78,19 @@ function renderAppRoots() {
 }
 
 function AppRootSelect() {
-  const { applicationRoots, appRoot, update } = useLaunchConfig();
+  const { applicationRoots, update } = useLaunchConfig();
+  const { projectState } = useProject();
+  const selectedAppRootPath = projectState.appRootPath;
+  const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
   const selectedAppRootName =
-    applicationRoots.find((root) => root.path === appRoot)?.displayName || appRoot;
+    selectedAppRoot?.displayName ?? selectedAppRoot?.name ?? selectedAppRootPath;
 
   const handleAppRootChange = async (value: string) => {
     update("appRoot", value);
   };
 
   return (
-    <Select.Root onValueChange={handleAppRootChange} value={appRoot}>
+    <Select.Root onValueChange={handleAppRootChange} value={selectedAppRootPath}>
       <Select.Trigger className="device-select-trigger" disabled={applicationRoots.length === 0}>
         <Select.Value placeholder="No applications found">
           <div className="device-select-value">

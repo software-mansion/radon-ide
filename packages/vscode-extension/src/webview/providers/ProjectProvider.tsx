@@ -35,6 +35,7 @@ interface ProjectContextProps {
 }
 
 const defaultProjectState: ProjectState = {
+  appRootPath: "./",
   status: "starting",
   startupMessage: StartupMessage.InitializingDevice,
   stageProgress: 0,
