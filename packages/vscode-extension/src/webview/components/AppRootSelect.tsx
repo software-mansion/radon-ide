@@ -1,5 +1,4 @@
 import * as Select from "@radix-ui/react-select";
-import "./DeviceSelect.css";
 import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
@@ -47,7 +46,7 @@ function AppRootSelect() {
     <Select.Root onValueChange={handleAppRootChange} value={selectedAppRootPath}>
       <Select.Trigger className="approot-select-trigger" disabled={applicationRoots.length === 0}>
         <Select.Value placeholder="No applications found">
-          <div className="device-select-value">
+          <div className="approot-select-value">
             <span className="codicon codicon-folder-opened" />
             {selectedAppRootName}
           </div>
@@ -56,16 +55,16 @@ function AppRootSelect() {
 
       <Select.Portal>
         <Select.Content
-          className="device-select-content"
+          className="approot-select-content"
           position="popper"
           onCloseAutoFocus={(e) => e.preventDefault()}>
-          <Select.ScrollUpButton className="device-select-scroll">
+          <Select.ScrollUpButton className="approot-select-scroll">
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>
-          <Select.Viewport className="device-select-viewport">
+          <Select.Viewport className="approot-select-viewport">
             {renderAppRoots(applicationRoots, selectedAppRootPath)}
           </Select.Viewport>
-          <Select.ScrollDownButton className="device-select-scroll">
+          <Select.ScrollDownButton className="approot-select-scroll">
             <span className="codicon codicon-chevron-down" />
           </Select.ScrollDownButton>
         </Select.Content>
