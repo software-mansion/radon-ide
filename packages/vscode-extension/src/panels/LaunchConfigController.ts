@@ -14,6 +14,7 @@ import { getIosSourceDir } from "../builders/buildIOS";
 import { readEasConfig } from "../utilities/eas";
 import { EasBuildConfig } from "../common/EasConfig";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { promises } from "fs";
 
 const CUSTOM_APPLICATION_ROOTS_KEY = "custom_application_roots_key";
 
@@ -99,7 +100,22 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
       return [];
     }
 
-    return applicationRoots;
+    return Promise.all(
+      applicationRoots.map(async (appRootPath) => {
+        const appRootAbsolutePath = path.resolve(workspacePath, appRootPath);
+        const appRootConfig = JSON.parse(
+          await promises.readFile(path.join(appRootAbsolutePath, "app.json"), "utf-8")
+        );
+        const name =
+          appRootConfig.expo?.name || appRootConfig.name || path.basename(appRootAbsolutePath);
+        const displayName = appRootConfig.displayName;
+        return {
+          path: appRootPath,
+          name,
+          displayName,
+        };
+      })
+    );
   }
 
   async getAvailableXcodeSchemes() {

@@ -54,7 +54,7 @@ function LaunchConfigurationView() {
       <AppRootConfiguration
         appRoot={appRoot}
         update={update}
-        applicationRoots={applicationRoots}
+        applicationRoots={applicationRoots.map((root) => root.path)}
         addCustomApplicationRoot={addCustomApplicationRoot}
       />
       <div className="launch-configuration-section-margin" />

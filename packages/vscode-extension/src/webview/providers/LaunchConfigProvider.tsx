@@ -10,6 +10,7 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import {
   AddCustomApplicationRoot,
+  ApplicationRoot,
   EasConfig,
   LaunchConfig,
   LaunchConfigUpdater,
@@ -22,7 +23,7 @@ const launchConfig = makeProxy<LaunchConfig>("LaunchConfig");
 type LaunchConfigContextType = LaunchConfigurationOptions & {
   update: LaunchConfigUpdater;
   xcodeSchemes: string[];
-  applicationRoots: string[];
+  applicationRoots: ApplicationRoot[];
   addCustomApplicationRoot: AddCustomApplicationRoot;
   easBuildProfiles: EasBuildConfig;
   eas?: {
@@ -42,7 +43,7 @@ const LaunchConfigContext = createContext<LaunchConfigContextType>({
 export default function LaunchConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<LaunchConfigurationOptions>({});
   const [xcodeSchemes, setXcodeSchemes] = useState<string[]>([]);
-  const [applicationRoots, setApplicationRoots] = useState<string[]>([]);
+  const [applicationRoots, setApplicationRoots] = useState<ApplicationRoot[]>([]);
   const [easBuildProfiles, setEasBuildProfiles] = useState<EasBuildConfig>({});
 
   useEffect(() => {

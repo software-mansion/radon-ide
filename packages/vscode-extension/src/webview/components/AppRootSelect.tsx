@@ -32,12 +32,12 @@ const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSe
 
     return (
       <Select.Item className="device-select-rich-item" {...props} ref={forwardedRef}>
-        {/* <div
+        <div
           className={
             isSelected ? "device-select-rich-item-icon-selected" : "device-select-rich-item-icon"
           }>
           {icon}
-        </div> */}
+        </div>
         <div>
           {isSelected ? (
             <div className="device-select-rich-item-title">
@@ -62,12 +62,12 @@ function renderAppRoots() {
 
   return (
     <Select.Group>
-      {applicationRoots.map((path) => (
+      {applicationRoots.map(({ path, displayName, name }) => (
         <RichSelectItem
           value={path}
           key={path}
-          icon={<span className="codicon codicon-device-mobile" />}
-          title={path}
+          icon={<span className="codicon codicon-folder" />}
+          title={displayName || name}
           subtitle={path}
           isSelected={path === appRoot}
         />
@@ -78,6 +78,8 @@ function renderAppRoots() {
 
 function AppRootSelect() {
   const { applicationRoots, appRoot } = useLaunchConfig();
+  const selectedAppRootName =
+    applicationRoots.find((root) => root.path === appRoot)?.displayName || appRoot;
 
   const handleAppRootChange = async (value: string) => {};
 
@@ -86,8 +88,8 @@ function AppRootSelect() {
       <Select.Trigger className="device-select-trigger" disabled={applicationRoots.length === 0}>
         <Select.Value placeholder="No applications found">
           <div className="device-select-value">
-            <span className="codicon codicon-root-folder-opened" />
-            {appRoot}
+            <span className="codicon codicon-folder-opened" />
+            {selectedAppRootName}
           </div>
         </Select.Value>
       </Select.Trigger>
