@@ -303,6 +303,7 @@ export class DeviceSession
       // to the device session, we won't be able to see the logs from the previous session
       // hence we reset the log counter.
       this.logCounter = 0;
+      this.emitStateChange();
       await this.debugSession.dispose();
     }
   }
