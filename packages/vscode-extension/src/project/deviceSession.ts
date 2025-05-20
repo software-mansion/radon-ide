@@ -299,6 +299,10 @@ export class DeviceSession
     if (this.isActive) {
       this.isActive = false;
       this.toolsManager.deactivate();
+      // detaching debugger will also stop the debug console, after switching back
+      // to the device session, we won't be able to see the logs from the previous session
+      // hence we reset the log counter.
+      this.logCounter = 0;
       await this.debugSession.dispose();
     }
   }
