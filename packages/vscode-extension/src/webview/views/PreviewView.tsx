@@ -342,8 +342,8 @@ function PreviewView() {
 
         <span className="group-separator" />
 
-        <DeviceSelect />
         <AppRootSelect />
+        <DeviceSelect />
 
         <div className="spacer" />
         {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}

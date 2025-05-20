@@ -134,6 +134,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   get relativeAppRootPath() {
     const relativePath = workspace.asRelativePath(this.applicationContext.appRootFolder);
+    if (relativePath === this.applicationContext.appRootFolder) {
+      return "./";
+    }
     if (relativePath.startsWith(".." + path.sep) || relativePath.startsWith("." + path.sep)) {
       return relativePath;
     }

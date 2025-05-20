@@ -1,0 +1,31 @@
+.approot-select-trigger {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  height: var(--swm-button-size);
+  border: 0px solid transparent;
+  border-radius: 18px 0 0 18px;
+  gap: 5px;
+  background-color: var(--swm-device-select-trigger);
+  color: var(--swm-device-select-trigger-text);
+  user-select: none;
+}
+.approot-select-trigger:hover {
+  background-color: var(--swm-device-select-trigger-hover);
+}
+.approot-select-trigger[data-state="open"] {
+  border-radius: 0 0 0 18px;
+}
+.approot-select-trigger[data-disabled] {
+  background-color: var(--swm-device-select-trigger-disabled);
+  color: var(--swm-secondary-text);
+  pointer-events: none;
+}
+.approot-select-trigger:focus {
+  box-shadow: var(--swm-focus-outline);
+}

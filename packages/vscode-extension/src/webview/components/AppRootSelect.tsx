@@ -1,10 +1,12 @@
 import React, { PropsWithChildren } from "react";
 import * as Select from "@radix-ui/react-select";
 import "./DeviceSelect.css";
+import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import Tooltip from "./shared/Tooltip";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { useProject } from "../providers/ProjectProvider";
+import { ApplicationRoot } from "../../common/LaunchConfig";
 
 interface RichSelectItemProps extends Select.SelectItemProps {
   icon: React.ReactNode;
@@ -55,8 +57,10 @@ const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSe
   }
 );
 
-function renderAppRoots() {
-  const { applicationRoots, appRoot } = useLaunchConfig();
+function renderAppRoots(
+  applicationRoots: ApplicationRoot[],
+  selectedAppRootPath: string | undefined
+) {
   if (applicationRoots.length === 0) {
     return null;
   }
@@ -70,7 +74,7 @@ function renderAppRoots() {
           icon={<span className="codicon codicon-folder" />}
           title={displayName || name}
           subtitle={path}
-          isSelected={path === appRoot}
+          isSelected={path === selectedAppRootPath}
         />
       ))}
     </Select.Group>
@@ -91,7 +95,7 @@ function AppRootSelect() {
 
   return (
     <Select.Root onValueChange={handleAppRootChange} value={selectedAppRootPath}>
-      <Select.Trigger className="device-select-trigger" disabled={applicationRoots.length === 0}>
+      <Select.Trigger className="approot-select-trigger" disabled={applicationRoots.length === 0}>
         <Select.Value placeholder="No applications found">
           <div className="device-select-value">
             <span className="codicon codicon-folder-opened" />
@@ -108,7 +112,9 @@ function AppRootSelect() {
           <Select.ScrollUpButton className="device-select-scroll">
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>
-          <Select.Viewport className="device-select-viewport">{renderAppRoots()}</Select.Viewport>
+          <Select.Viewport className="device-select-viewport">
+            {renderAppRoots(applicationRoots, selectedAppRootPath)}
+          </Select.Viewport>
           <Select.ScrollDownButton className="device-select-scroll">
             <span className="codicon codicon-chevron-down" />
           </Select.ScrollDownButton>
