@@ -342,7 +342,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   private async reloadMetro() {
     if (await this.deviceSession?.performReloadAction("reloadJs")) {
-      this.updateProjectState({ status: "running" });
       return true;
     }
     return false;
