@@ -4,7 +4,7 @@ import { UrlItem, UrlSelectFocusable } from "./UrlSelect";
 
 interface UrlSelectItemGroupProps {
   items: UrlItem[];
-  itemRefs: React.RefObject<HTMLDivElement>[];
+  itemsRef: React.RefObject<HTMLDivElement>[];
   refIndexOffset?: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   width: number;
@@ -20,7 +20,7 @@ interface UrlSelectItemGroupProps {
 
 const UrlSelectItemGroup: React.FC<UrlSelectItemGroupProps> = ({
   items,
-  itemRefs,
+  itemsRef,
   refIndexOffset = 0,
   textfieldRef,
   width,
@@ -35,7 +35,7 @@ const UrlSelectItemGroup: React.FC<UrlSelectItemGroupProps> = ({
         (item, index) =>
           item.name && (
             <UrlSelectItem
-              ref={itemRefs[index + refIndexOffset]}
+              ref={itemsRef[index + refIndexOffset]}
               item={item}
               refIndex={index + refIndexOffset}
               key={item.id}
@@ -43,7 +43,7 @@ const UrlSelectItemGroup: React.FC<UrlSelectItemGroupProps> = ({
               onClose={onClose}
               onNavigate={onNavigate}
               getNameFromId={getNameFromId}
-              itemRefs={itemRefs}
+              itemsRef={itemsRef}
               textfieldRef={textfieldRef}
               noHighlight={noHighlight}
             />

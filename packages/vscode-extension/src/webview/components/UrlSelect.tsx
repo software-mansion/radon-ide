@@ -39,7 +39,7 @@ function UrlSelect({
   const routes = useRoutes();
   const routeItems = useRoutesAsItems();
 
-  const itemRefs = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
+  const itemsRef = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
   const { project } = useProject();
 
   const getNameFromId = (id: string) => {
@@ -103,7 +103,7 @@ function UrlSelect({
   // Props for UrlSelectItems and UrlSelectItemGroups to reduce code duplication
   const commonItemProps = {
     width: textfieldWidth,
-    itemRefs: itemRefs.current,
+    itemsRef: itemsRef.current,
     textfieldRef: textfieldRef as React.RefObject<HTMLInputElement>,
     onNavigate: navigateBetweenItems,
     getNameFromId,
@@ -116,11 +116,11 @@ function UrlSelect({
   }, [value]);
 
   useEffect(() => {
-    itemRefs.current = [
+    itemsRef.current = [
       ...(dropdownOnly ? [{ id: "/", name: "/" }] : []),
       ...filteredItems,
       ...filteredOutItems,
-    ].map((_, i) => itemRefs.current[i] || React.createRef<HTMLDivElement>());
+    ].map((_, i) => itemsRef.current[i] || React.createRef<HTMLDivElement>());
   }, [allItems, filteredItems]);
 
   useEffect(() => {
@@ -194,7 +194,7 @@ function UrlSelect({
                   navigateBetweenItems(
                     e,
                     undefined,
-                    itemRefs.current[0]?.current as UrlSelectFocusable
+                    itemsRef.current[0]?.current as UrlSelectFocusable
                   );
                 }
               }
@@ -237,7 +237,7 @@ function UrlSelect({
                 <div className="url-select-label">Recent paths:</div>
                 <UrlSelectItem
                   item={{ id: "/", name: "/" }}
-                  ref={itemRefs.current[0]}
+                  ref={itemsRef.current[0]}
                   refIndex={0}
                   onClose={() => {
                     setInputValue("/");

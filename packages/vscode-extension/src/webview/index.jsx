@@ -1,6 +1,6 @@
 window.RNIDE_lastRouteList = null;
 window.addEventListener("message", (event) => {
-  if (event.data?.type === "RNIDE_routeListRetrieved") {
+  if (event.data?.type === "RNIDE_navigationRouteListUpdated") {
     window.RNIDE_lastRouteList = event.data.routes;
   }
 });

@@ -160,6 +160,9 @@ export class DeviceSession implements Disposable {
     devtools.onEvent("RNIDE_navigationChanged", (payload) => {
       this.deviceSessionDelegate.onAppEvent("navigationChanged", payload);
     });
+    devtools.onEvent("RNIDE_navigationRouteListUpdated", (payload) => {
+      this.deviceSessionDelegate.onAppEvent("routeListRetrieved", payload.routes);
+    });
     devtools.onEvent("RNIDE_fastRefreshStarted", () => {
       this.deviceSessionDelegate.onAppEvent("fastRefreshStarted", undefined);
     });
@@ -168,9 +171,6 @@ export class DeviceSession implements Disposable {
     });
     devtools.onEvent("RNIDE_isProfilingReact", (isProfiling) => {
       this.deviceSessionDelegate.onAppEvent("isProfilingReact", isProfiling);
-    });
-    devtools.onEvent("RNIDE_routeListRetrieved", (payload) => {
-      this.deviceSessionDelegate.onAppEvent("routeListRetrieved", payload.routes);
     });
     return devtools;
   }

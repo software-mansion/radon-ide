@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { store } from "expo-router/build/global-state/router-store.js";
 import { computeRouteIdentifier, extractNestedRouteList } from "./expo_router_helpers.js";
 
-function useRouterPluginMainHook({ onNavigationChange }) {
+function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();
   const routeInfo = useSyncExternalStore(
     store.subscribeToRootState,
@@ -25,11 +25,7 @@ function useRouterPluginMainHook({ onNavigationChange }) {
       return;
     }
     const routeList = extractNestedRouteList(store.routeNode);
-    if (global.__REACT_DEVTOOLS_GLOBAL_HOOK__?.reactDevtoolsAgent?._bridge) {
-      global.__REACT_DEVTOOLS_GLOBAL_HOOK__.reactDevtoolsAgent._bridge.send("RNIDE_routeListRetrieved", {
-        routes: routeList,
-      });
-    }
+    onRouteListChange(routeList);
   }, [store.routeNode]);
 
   useEffect(() => {

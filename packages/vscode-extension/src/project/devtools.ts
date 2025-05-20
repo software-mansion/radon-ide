@@ -18,6 +18,7 @@ import {
 export const DEVTOOLS_EVENTS = [
   "RNIDE_appReady",
   "RNIDE_navigationChanged",
+  "RNIDE_navigationRouteListUpdated",
   "RNIDE_fastRefreshStarted",
   "RNIDE_fastRefreshComplete",
   "RNIDE_openPreviewResult",
@@ -26,13 +27,13 @@ export const DEVTOOLS_EVENTS = [
   "RNIDE_rendersReported",
   "RNIDE_pluginMessage",
   "RNIDE_isProfilingReact",
-  "RNIDE_routeListRetrieved",
 ] as const;
 
 // Define the payload types for each event
 export interface DevtoolsEvents {
   RNIDE_appReady: [];
   RNIDE_navigationChanged: [{ displayName: string; id: string }];
+  RNIDE_navigationRouteListUpdated: [{ routes: Route[] }];
   RNIDE_fastRefreshStarted: [];
   RNIDE_fastRefreshComplete: [];
   RNIDE_openPreviewResult: [{ previewId: string; error?: string }];
@@ -41,7 +42,6 @@ export interface DevtoolsEvents {
   RNIDE_rendersReported: [any];
   RNIDE_pluginMessage: [{ scope: string; type: string; data: any }];
   RNIDE_isProfilingReact: [boolean];
-  RNIDE_routeListRetrieved: [{ routes: Route[] }];
 }
 
 function filePathForProfile() {

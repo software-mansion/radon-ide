@@ -5,7 +5,7 @@ interface UrlSelectItemProps {
   item: UrlItem;
   width: number;
   style?: React.CSSProperties;
-  itemRefs: React.RefObject<HTMLDivElement>[];
+  itemsRef: React.RefObject<HTMLDivElement>[];
   refIndex: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   onClose: (id: string) => void;
@@ -24,7 +24,7 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
       item,
       width,
       style,
-      itemRefs,
+      itemsRef,
       refIndex,
       textfieldRef,
       onClose,
@@ -139,8 +139,8 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
           } else {
             onNavigate(
               e,
-              itemRefs[refIndex - 1]?.current as UrlSelectFocusable,
-              itemRefs[refIndex + 1]?.current as UrlSelectFocusable
+              itemsRef[refIndex - 1]?.current as UrlSelectFocusable,
+              itemsRef[refIndex + 1]?.current as UrlSelectFocusable
             );
           }
         }}>
