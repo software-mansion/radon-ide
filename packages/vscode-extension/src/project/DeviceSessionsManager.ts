@@ -32,11 +32,9 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     private readonly deviceManager: DeviceManager,
     private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
   ) {
-    this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    // we try to set the initial device immediately, but if there's no device available, we listen to the devicesChanged event
-    // and use the new device once it is added to the list
-    this.deviceManager.addListener("devicesChanged", this.findInitialDeviceAndStartSession);
     this.findInitialDeviceAndStartSession();
+    this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
+    this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
   }
 
   public async reloadCurrentSession(type: ReloadAction) {
@@ -104,13 +102,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   }
 
   private findInitialDeviceAndStartSession = async () => {
-    if (this.selectedDeviceSession && !this.findingDevice) {
-      // this method can be triggered when new devices are added, we don't want to
-      // run the device selection process, if an existing session is already running
-      // or if we're already in the process of finding a device.
-      return;
-    }
-
     try {
       this.findingDevice = true;
 
@@ -138,6 +129,17 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   private removeDeviceListener = async (device: DeviceInfo) => {
     // if the deleted device was running an active session, we need to terminate that session
     await this.terminateSession(device.id);
+  };
+
+  private devicesChangedListener = async () => {
+    // this method is triggered when new devices are added, we don't want to
+    // run the device selection process, if an existing session is already running
+    // or if we're already in the process of finding a device (either because of a
+    // previous event or becuase we only just booted up the manager).
+    if (this.selectedDeviceSession && !this.findingDevice) {
+      return;
+    }
+    this.findInitialDeviceAndStartSession();
   };
 
   private updateSelectedSession(session: DeviceSession | undefined) {
@@ -196,6 +198,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   dispose() {
     disposeAll(this.deviceSessions.values().toArray());
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
-    this.deviceManager.removeListener("devicesChanged", this.findInitialDeviceAndStartSession);
+    this.deviceManager.removeListener("devicesChanged", this.devicesChangedListener);
   }
 }
