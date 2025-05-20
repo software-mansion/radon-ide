@@ -22,6 +22,7 @@ import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
+import AppRootSelect from "../components/AppRootSelect";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -342,6 +343,7 @@ function PreviewView() {
         <span className="group-separator" />
 
         <DeviceSelect />
+        <AppRootSelect />
 
         <div className="spacer" />
         {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
