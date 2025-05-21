@@ -141,10 +141,17 @@ export class DeviceSession
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
     this.buildError = undefined;
+    this.hasStaleBuildCache = false;
     this.profilingCPUState = "stopped";
     this.profilingReactState = "stopped";
     this.navigationBackTarget = undefined;
     this.navigationHomeTarget = undefined;
+    this.emitStateChange();
+  }
+
+  private updateStartupMessage(startupMessage: StartupMessage) {
+    this.startupMessage = startupMessage;
+    this.stageProgress = undefined;
     this.emitStateChange();
   }
 
@@ -216,7 +223,16 @@ export class DeviceSession
   //#region Build manager delegate methods
 
   onCacheStale = (platform: DevicePlatform) => {
-    if (platform === this.device.platform) {
+    if (
+      platform === this.device.platform &&
+      (this.status === "running" ||
+        this.status === "refreshing" ||
+        this.status === "debuggerPaused")
+    ) {
+      // we only consider "stale cache" in a non-error state that happens
+      // after the launch phase if complete. Otherwsie, it may be a result of
+      // the build process that triggers the callback in which case we don't want
+      // to warn users about it.
       this.hasStaleBuildCache = true;
       this.emitStateChange();
     }
@@ -443,8 +459,7 @@ export class DeviceSession
     }
 
     await cancelToken.adapt(this.restartDebugger());
-    this.startupMessage = StartupMessage.BootingDevice;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.BootingDevice);
     await cancelToken.adapt(this.device.reboot());
     await this.buildApp({
       appRoot: this.applicationContext.appRootFolder,
@@ -525,9 +540,7 @@ export class DeviceSession
   }
 
   private async reloadMetro() {
-    this.startupMessage = StartupMessage.WaitingForAppToLoad;
-    this.stageProgress = 0;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
     const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
     const bundleErrorSubscription = this.metro.onBundleError(() => {
       reject(new Error("Bundle error occurred during reload"));
@@ -538,8 +551,7 @@ export class DeviceSession
     } finally {
       bundleErrorSubscription.dispose();
     }
-    this.startupMessage = StartupMessage.AttachingDebugger;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.AttachingDebugger);
     await this.reconnectJSDebuggerIfNeeded();
   }
 
@@ -557,15 +569,13 @@ export class DeviceSession
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
     const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
-    this.startupMessage = StartupMessage.Launching;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.Launching);
     await cancelToken.adapt(
       this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port)
     );
 
     Logger.debug("Will wait for app ready and for preview");
-    this.startupMessage = StartupMessage.WaitingForAppToLoad;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
 
     let previewURL: string | undefined;
     if (shouldWaitForAppLaunch) {
@@ -593,8 +603,7 @@ export class DeviceSession
     );
 
     Logger.debug("App and preview ready, moving on...");
-    this.startupMessage = StartupMessage.AttachingDebugger;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.AttachingDebugger);
     if (this.isActive) {
       await cancelToken.adapt(this.connectJSDebugger());
     }
@@ -611,8 +620,7 @@ export class DeviceSession
   }
 
   private async bootDevice() {
-    this.startupMessage = StartupMessage.BootingDevice;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.BootingDevice);
     try {
       await this.device.bootDevice();
     } catch (e) {
@@ -631,9 +639,7 @@ export class DeviceSession
     cancelToken: CancelToken;
   }) {
     const buildStartTime = Date.now();
-    this.startupMessage = StartupMessage.Building;
-    this.stageProgress = 0;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.Building);
     this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
       appRoot,
       clean,
@@ -658,14 +664,12 @@ export class DeviceSession
   }
 
   private async installApp({ reinstall }: { reinstall: boolean }) {
-    this.startupMessage = StartupMessage.Installing;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.Installing);
     return this.device.installApp(this.buildResult, reinstall);
   }
 
   private async waitForMetroReady() {
-    this.startupMessage = StartupMessage.StartingPackager;
-    this.emitStateChange();
+    this.updateStartupMessage(StartupMessage.StartingPackager);
     // wait for metro/devtools to start before we continue
     await Promise.all([this.metro.ready(), this.devtools.ready()]);
     Logger.debug("Metro & devtools ready");
