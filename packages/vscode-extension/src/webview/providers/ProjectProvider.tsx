@@ -31,6 +31,7 @@ interface ProjectContextProps {
 const defaultProjectState: ProjectState = {
   ...DeviceSessionInitialState,
   previewZoom: undefined,
+  appRootPath: "./",
   initialized: false,
 };
 
