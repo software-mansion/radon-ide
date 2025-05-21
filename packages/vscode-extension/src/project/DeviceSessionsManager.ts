@@ -14,7 +14,7 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceSessionInitialState } from "../common/Project";
+import { DEVICE_SESSION_INITIAL_STATE } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
@@ -149,7 +149,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
       previousSession?.deactivate();
       session?.activate();
       this.deviceSessionManagerDelegate.onActiveSessionStateChanged(
-        session?.getState() ?? DeviceSessionInitialState
+        session?.getState() ?? DEVICE_SESSION_INITIAL_STATE
       );
     }
   }

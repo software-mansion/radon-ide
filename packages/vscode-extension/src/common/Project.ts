@@ -66,7 +66,7 @@ export type DeviceSessionState = {
   isRecordingScreen: boolean;
 };
 
-export const DeviceSessionInitialState: DeviceSessionState = {
+export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
   status: "starting",
   startupMessage: undefined,
   stageProgress: undefined,

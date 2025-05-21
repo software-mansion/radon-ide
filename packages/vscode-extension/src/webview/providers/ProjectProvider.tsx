@@ -10,7 +10,7 @@ import {
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
-  DeviceSessionInitialState,
+  DEVICE_SESSION_INITIAL_STATE,
   DeviceSettings,
   MultimediaData,
   ProjectInterface,
@@ -29,7 +29,7 @@ interface ProjectContextProps {
 }
 
 const defaultProjectState: ProjectState = {
-  ...DeviceSessionInitialState,
+  ...DEVICE_SESSION_INITIAL_STATE,
   previewZoom: undefined,
   appRootPath: "./",
   initialized: false,

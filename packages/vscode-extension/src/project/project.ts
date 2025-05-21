@@ -18,7 +18,7 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
-  DeviceSessionInitialState,
+  DEVICE_SESSION_INITIAL_STATE,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
@@ -85,7 +85,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
 
     this.projectState = {
-      ...DeviceSessionInitialState,
+      ...DEVICE_SESSION_INITIAL_STATE,
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
