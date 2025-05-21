@@ -11,7 +11,13 @@ export type Route = {
   type: string;
 };
 
-export default function RoutesProvider({ children, initialRoutes }: { children: React.ReactNode; initialRoutes?: Route[] }) {
+export default function RoutesProvider({
+  children,
+  initialRoutes,
+}: {
+  children: React.ReactNode;
+  initialRoutes?: Route[];
+}) {
   const [routes, setRoutes] = useState<Route[] | null>(initialRoutes ?? null);
   const { project } = useProject();
 
