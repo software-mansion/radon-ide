@@ -15,34 +15,35 @@ import { getIosSourceDir } from "../builders/buildIOS";
 import { readEasConfig } from "../utilities/eas";
 import { EasBuildConfig } from "../common/EasConfig";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
+import { requireNoCache } from "../utilities/requireNoCache";
 
 const CUSTOM_APPLICATION_ROOTS_KEY = "custom_application_roots_key";
 
+function readApplicationRootFromStaticConfig(appRootPath: string, configAbsolutePath: string) {
+  const appRootConfig = requireNoCache(configAbsolutePath);
+  if (appRootConfig) {
+    return {
+      path: appRootPath,
+      name: appRootConfig.name ?? appRootConfig.expo?.name ?? path.basename(appRootPath),
+      displayName: appRootConfig.displayName,
+    };
+  }
+  throw new Error("Could not read config file.");
+}
+
 function readApplicationRoot(appRootPath: string): ApplicationRoot {
-  const appRootAbsolutePath = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRootPath);
+  const appRootAbsolutePath = path.resolve(workspace.workspaceFolders![0].uri.path, appRootPath);
   try {
-    const appRootConfig = require(appRootAbsolutePath + "/app.json");
-    if (appRootConfig) {
-      return {
-        path: appRootPath,
-        name: appRootConfig.name ?? appRootConfig.expo?.name ?? path.basename(appRootPath),
-        displayName: appRootConfig.displayName,
-      };
-    }
+    return readApplicationRootFromStaticConfig(appRootPath, appRootAbsolutePath + "/app.json");
   } catch {}
   try {
-    const configProvider = require(appRootAbsolutePath + "/app.config.js");
-    const appRootConfig = configProvider({ config: {} });
-    if (appRootConfig) {
-      return {
-        path: appRootPath,
-        name: appRootConfig.name ?? appRootConfig.expo?.name ?? path.basename(appRootPath),
-        displayName: appRootConfig.displayName,
-      };
-    }
+    return readApplicationRootFromStaticConfig(
+      appRootPath,
+      appRootAbsolutePath + "/app.config.json"
+    );
   } catch {}
   try {
-    const appPackageJson = require(appRootAbsolutePath + "/package.json");
+    const appPackageJson = requireNoCache(appRootAbsolutePath + "/package.json");
     return {
       path: appRootPath,
       name: appPackageJson.name ?? path.basename(appRootPath),
