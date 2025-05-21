@@ -5,6 +5,9 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType } from "../common/Project";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
+import { extensionContext } from "../utilities/extensionContext";
+import { getTelemetryReporter } from "../utilities/telemetry";
+import { getChanges } from "../utilities/diffing";
 
 const LEFT_META_HID_CODE = 0xe3;
 const RIGHT_META_HID_CODE = 0xe7;
@@ -13,12 +16,31 @@ const C_KEY_HID_CODE = 0x06;
 
 export const REBOOT_TIMEOUT = 3000;
 
+export const DEVICE_SETTINGS_KEY = "device_settings_v4";
+export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
+  appearance: "dark",
+  contentSize: "normal",
+  location: {
+    latitude: 50.048653,
+    longitude: 19.965474,
+    isDisabled: false,
+  },
+  hasEnrolledBiometrics: false,
+  locale: "en_US",
+  replaysEnabled: false,
+  showTouches: false,
+};
+
 export abstract class DeviceBase implements Disposable {
   protected preview: Preview | undefined;
   private previewStartPromise: Promise<string> | undefined;
   private acquired = false;
   private pressingLeftMetaKey = false;
   private pressingRightMetaKey = false;
+  protected deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
+    DEVICE_SETTINGS_KEY,
+    DEVICE_SETTINGS_DEFAULT
+  );
 
   abstract get lockFilePath(): string;
 
@@ -26,13 +48,49 @@ export abstract class DeviceBase implements Disposable {
     return this.preview?.streamURL;
   }
 
+  public get previewReady() {
+    return this.preview?.streamURL !== undefined;
+  }
+
   async reboot(): Promise<void> {
     this.preview?.dispose();
     this.preview = undefined;
     this.previewStartPromise = undefined;
   }
-  abstract bootDevice(deviceSettings: DeviceSettings): Promise<void>;
-  abstract changeSettings(settings: DeviceSettings): Promise<boolean>;
+
+  async updateDeviceSettings(settings: DeviceSettings) {
+    const changes = getChanges(this.deviceSettings, settings);
+
+    getTelemetryReporter().sendTelemetryEvent("device-settings:update-device-settings", {
+      platform: this.platform,
+      changedSetting: JSON.stringify(changes),
+    });
+
+    extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
+    this.deviceSettings = settings;
+    this.applyPreviewSettings();
+
+    return this.changeSettings(settings);
+  }
+
+  private applyPreviewSettings() {
+    const preview = this.preview;
+    if (preview && preview.streamURL) {
+      if (this.deviceSettings.replaysEnabled) {
+        preview.startReplays();
+      } else {
+        preview.stopReplays();
+      }
+      if (this.deviceSettings.showTouches) {
+        preview.showTouches();
+      } else {
+        preview.hideTouches();
+      }
+    }
+  }
+
+  abstract bootDevice(): Promise<void>;
+  protected abstract changeSettings(settings: DeviceSettings): Promise<boolean>;
   abstract sendBiometricAuthorization(isMatch: boolean): Promise<void>;
   abstract getClipboard(): Promise<string | void>;
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
@@ -88,17 +146,6 @@ export abstract class DeviceBase implements Disposable {
       throw new Error("Preview not started");
     }
     return this.preview.captureAndStopRecording();
-  }
-
-  public enableReplay() {
-    if (!this.preview) {
-      throw new Error("Preview not started");
-    }
-    return this.preview.startReplays();
-  }
-
-  public disableReplays() {
-    return this.preview?.stopReplays();
   }
 
   public async captureReplay() {
@@ -165,6 +212,9 @@ export abstract class DeviceBase implements Disposable {
     if (!this.previewStartPromise) {
       this.preview = this.makePreview();
       this.previewStartPromise = this.preview.start();
+      this.previewStartPromise.then(() => {
+        this.applyPreviewSettings();
+      });
     }
     return this.previewStartPromise;
   }

@@ -216,9 +216,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   const handleRouteListChange = useCallback(
     (routeList) => {
-      devtoolsAgent?._bridge.send("RNIDE_navigationRouteListUpdated", {
-        routes: routeList,
-      });
+      devtoolsAgent?._bridge.send("RNIDE_navigationRouteListUpdated", routeList);
     },
     [devtoolsAgent]
   );

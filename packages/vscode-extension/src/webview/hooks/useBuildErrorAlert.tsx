@@ -57,13 +57,13 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
   const { deviceSessionsManager } = useDevices();
 
   let onReload = () => {
-    deviceSessionsManager.reload("autoReload");
+    deviceSessionsManager.reloadCurrentSession("autoReload");
   };
   let logsButtonDestination: LogsButtonDestination | undefined = undefined;
 
   let description = "Open extension logs to find out what went wrong.";
 
-  if (projectState.status === "buildError") {
+  if (projectState.status === "buildError" && projectState.buildError) {
     const { buildType, message } = projectState.buildError;
     description = message;
     if (buildType && [BuildType.Local, BuildType.EasLocal, BuildType.Custom].includes(buildType)) {
@@ -133,7 +133,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          deviceSessionsManager.reload("autoReload");
+          deviceSessionsManager.reloadCurrentSession("autoReload");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />

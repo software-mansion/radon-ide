@@ -1,8 +1,9 @@
 import React, { PropsWithChildren } from "react";
-import { UrlItem, UrlSelectFocusable } from "./UrlSelect";
+import { UrlSelectFocusable } from "./UrlSelect";
+import { NavigationHistoryItem } from "../../common/Project";
 
 interface UrlSelectItemProps {
-  item: UrlItem;
+  item: NavigationHistoryItem;
   width: number;
   style?: React.CSSProperties;
   itemsRef: React.RefObject<HTMLDivElement>[];

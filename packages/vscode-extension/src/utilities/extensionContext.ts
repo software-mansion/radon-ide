@@ -137,20 +137,6 @@ export function findAppRootFolder() {
 
   const appRootCandidates = findAppRootCandidates();
 
-  if (appRootCandidates.length > 1) {
-    const openLaunchConfigButton = "Open Launch Configuration";
-    window
-      .showWarningMessage(
-        `Multiple react-native applications were detected in the workspace. "${appRootCandidates[0]}" was automatically chosen as your application root. To change that or remove this warning in the future, you can setup a permanent appRoot in Launch Configuration.`,
-        openLaunchConfigButton
-      )
-      .then((item) => {
-        if (item === openLaunchConfigButton) {
-          commands.executeCommand("workbench.action.debug.configure");
-        }
-      });
-  }
-
   if (appRootCandidates.length > 0) {
     return appRootCandidates[0];
   }

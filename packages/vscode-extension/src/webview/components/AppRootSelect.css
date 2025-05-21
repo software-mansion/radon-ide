@@ -1,0 +1,57 @@
+.approot-select-trigger {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 2;
+  align-items: center;
+  padding: 0px 10px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 18px;
+  height: var(--swm-button-size);
+  color: var(--swm-device-select-trigger-text);
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.approot-select-trigger:hover {
+  background-color: var(--swm-device-select-trigger-hover);
+}
+.approot-select-trigger[data-state="open"] {
+  border-radius: 0 0 0 18px;
+}
+.approot-select-trigger[data-disabled] {
+  background-color: var(--swm-device-select-trigger-disabled);
+  color: var(--swm-secondary-text);
+  pointer-events: none;
+}
+.approot-select-trigger:focus {
+  box-shadow: var(--swm-focus-outline);
+}
+
+.approot-select-value {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.approot-select-content {
+  overflow: hidden;
+  background-color: var(--swm-device-select-background);
+  width: var(--swm-device-select-width);
+  border-radius: 18px;
+  padding-top: 4px;
+  max-height: var(--radix-select-content-available-height);
+  box-shadow: var(--swm-backdrop-shadow);
+}
+
+.approot-select-viewport {
+  padding: 6px;
+}
+
+.approot-select-scroll {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

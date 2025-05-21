@@ -1,10 +1,3 @@
-let initialRoutes = null;
-window.addEventListener("message", (event) => {
-  if (event.data?.type === "RNIDE_navigationRouteListUpdated") {
-    initialRoutes = event.data.routes;
-  }
-});
-
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
@@ -15,7 +8,6 @@ import ModalProvider from "./providers/ModalProvider";
 import ProjectProvider from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
 import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
-import RoutesProvider from "./providers/RoutesProvider";
 
 import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
 import { TelemetryProvider } from "./providers/TelemetryProvider";
@@ -39,9 +31,7 @@ root.render(
                 <DependenciesProvider>
                   <ModalProvider>
                     <AlertProvider>
-                      <RoutesProvider initialRoutes={initialRoutes}>
-                        <App />
-                      </RoutesProvider>
+                      <App />
                     </AlertProvider>
                   </ModalProvider>
                 </DependenciesProvider>

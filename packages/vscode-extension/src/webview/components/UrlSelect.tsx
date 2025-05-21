@@ -2,58 +2,58 @@ import React, { useEffect, useRef } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
 import { partition, differenceBy } from "lodash";
-import { useRoutes, useRoutesAsItems } from "../providers/RoutesProvider";
 import UrlSelectItem from "./UrlSelectItem";
 import UrlSelectItemGroup from "./UrlSelectItemGroup";
 import "./UrlSelect.css";
 import { useProject } from "../providers/ProjectProvider";
+import { NavigationHistoryItem, Route } from "../../common/Project";
 
-export type UrlItem = { id: string; name: string; dynamic?: boolean };
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
 interface UrlSelectProps {
-  value?: string;
   onValueChange: (newValue: string) => void;
-  recentItems: UrlItem[];
-  items: UrlItem[];
+  navigationHistory: NavigationHistoryItem[];
+  routeList: Route[];
   disabled?: boolean;
   dropdownOnly?: boolean;
 }
 
 function UrlSelect({
   onValueChange,
-  recentItems,
-  items,
-  value,
+  navigationHistory,
+  routeList,
   disabled,
   dropdownOnly,
 }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [allItems, setAllItems] = React.useState<UrlItem[]>([]);
-  const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
-  const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
+  const [allItems, setAllItems] = React.useState<NavigationHistoryItem[]>([]);
+  const [filteredItems, setFilteredItems] = React.useState<NavigationHistoryItem[]>([]);
+  const [filteredOutItems, setFilteredOutItems] = React.useState<NavigationHistoryItem[]>([]);
   const [inputValue, setInputValue] = React.useState("/");
   const [dynamicSegmentNames, setDynamicSegmentNames] = React.useState<string[]>([]);
   const [currentDynamicSegment, setCurrentDynamicSegment] = React.useState<number>(0);
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
   const textfieldRef = useRef<HTMLInputElement>(null);
 
-  const routes = useRoutes();
-  const routeItems = useRoutesAsItems();
-
   const itemsRef = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
   const { project } = useProject();
 
+  const routeItems = routeList.map((route) => ({
+    id: route.path,
+    displayName: route.path,
+    dynamic: route.dynamic ? true : false,
+  }));
+
   const getNameFromId = (id: string) => {
-    const itemForID = items.find((item) => item.id === id);
+    const itemForID = navigationHistory.find((item) => item.id === id);
     if (!itemForID) {
       return id;
     }
-    return itemForID.name;
+    return itemForID.displayName;
   };
 
-  const findDynamicSegments = (item: UrlItem) => {
-    const matchingRoute = routes.find((route) => route.path === item.id);
+  const findDynamicSegments = (item: NavigationHistoryItem) => {
+    const matchingRoute = routeList.find((route) => route.path === item.id);
     if (matchingRoute && matchingRoute.dynamic) {
       return matchingRoute.dynamic.map((segment) => segment.name);
     }
@@ -61,7 +61,7 @@ function UrlSelect({
   };
 
   const closeDropdownWithValue = (id: string) => {
-    const dynamicSegments = findDynamicSegments({ id, name: id });
+    const dynamicSegments = findDynamicSegments({ id, displayName: id });
     if (dynamicSegments && dynamicSegments.length > 0) {
       editDynamicPath(id, dynamicSegments);
       return;
@@ -130,11 +130,10 @@ function UrlSelect({
     getNameFromId,
   };
 
+  // FIXME - if no Expo Router, this will be the previous path on reload!
   useEffect(() => {
-    if (value !== undefined) {
-      setInputValue(getNameFromId(value));
-    }
-  }, [value]);
+    setInputValue(navigationHistory[0]?.displayName ?? "");
+  }, [navigationHistory[0]?.id]);
 
   // Update the itemsRef to ensure all items are focused correctly
   useEffect(() => {
@@ -147,12 +146,12 @@ function UrlSelect({
 
   // Update the combined recent/indexed route list
   useEffect(() => {
-    const routesNotInRecent = differenceBy(routeItems, recentItems, (item: UrlItem) =>
+    const routesNotInRecent = differenceBy(routeItems, navigationHistory, (item: NavigationHistoryItem) =>
       getNameFromId(item.id)
     );
-    const combinedItems = [...recentItems, ...routesNotInRecent];
+    const combinedItems = [...navigationHistory, ...routesNotInRecent];
     setAllItems(combinedItems);
-  }, [inputValue, recentItems]);
+  }, [inputValue, navigationHistory]);
 
   // Update the filtered items based on the input value
   useEffect(() => {
@@ -162,7 +161,7 @@ function UrlSelect({
     }
     const inputValueLowerCase = inputValue?.toLowerCase();
     const [filtered, filteredOut] = partition(allItems, (item) =>
-      item.name?.toLowerCase().includes(inputValueLowerCase)
+      item.displayName?.toLowerCase().includes(inputValueLowerCase)
     );
     setFilteredItems(filtered);
     setFilteredOutItems(filteredOut);
@@ -288,31 +287,21 @@ function UrlSelect({
               <div className="url-select-group">
                 <div className="url-select-label">Recent paths:</div>
                 <UrlSelectItem
-                  item={{ id: "/", name: "/" }}
+                  item={{ id: "/", displayName: "/" }}
                   ref={itemsRef.current[0]}
                   refIndex={0}
                   onClose={() => {
                     setInputValue("/");
                     setIsDropdownOpen(false);
-                    project.goHome("/{}");
+                    project.navigateHome();
                   }}
                   {...commonItemProps}
                   noHighlight={true}
                 />
 
                 <UrlSelectItemGroup
-                  items={recentItems}
+                  items={navigationHistory}
                   refIndexOffset={1}
-                  onClose={closeDropdownWithValue}
-                  noHighlight={true}
-                  {...commonItemProps}
-                />
-
-                <UrlSelectItemGroup
-                  items={items.filter(
-                    (item) => !recentItems.some((recentItem) => recentItem.id === item.id)
-                  )}
-                  refIndexOffset={1 + recentItems.length}
                   onClose={closeDropdownWithValue}
                   noHighlight={true}
                   {...commonItemProps}

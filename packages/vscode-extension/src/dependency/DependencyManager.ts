@@ -169,11 +169,16 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
     this.emitEvent("nodeModules", { status: "installing", isOptional: false });
 
-    // all package managers support the `install` command
-    await command(`${packageManager.name} install`, {
-      cwd: packageManager.workspacePath ?? appRoot,
-      quietErrorsOnExit: true,
-    });
+    try {
+      // all package managers support the `install` command
+      await command(`${packageManager.name} install`, {
+        cwd: packageManager.workspacePath ?? appRoot,
+        quietErrorsOnExit: true,
+      });
+    } catch (e) {
+      Logger.error("Failed to install node modules", e);
+      throw new Error("Failed to install node modules. Check the logs for details.");
+    }
 
     this.emitEvent("nodeModules", { status: "installed", isOptional: false });
 

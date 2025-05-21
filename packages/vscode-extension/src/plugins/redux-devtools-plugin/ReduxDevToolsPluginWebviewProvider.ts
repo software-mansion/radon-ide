@@ -120,7 +120,7 @@ export class ReduxDevToolsPluginWebviewProvider implements WebviewViewProvider {
     };
 
     const project = IDE.getInstanceIfExists()?.project;
-    const reduxDevtoolsPlugin = project?.deviceSession?.toolsManager.getPlugin(
+    const reduxDevtoolsPlugin = project?.deviceSession?.getPlugin(
       REDUX_PLUGIN_ID
     ) as ReduxDevtoolsPlugin;
     if (!reduxDevtoolsPlugin) {

@@ -1,9 +1,10 @@
 import React from "react";
 import UrlSelectItem from "./UrlSelectItem";
-import { UrlItem, UrlSelectFocusable } from "./UrlSelect";
+import { UrlSelectFocusable } from "./UrlSelect";
+import { NavigationHistoryItem } from "../../common/Project";
 
 interface UrlSelectItemGroupProps {
-  items: UrlItem[];
+  items: NavigationHistoryItem[];
   itemsRef: React.RefObject<HTMLDivElement>[];
   refIndexOffset?: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
@@ -33,7 +34,7 @@ const UrlSelectItemGroup: React.FC<UrlSelectItemGroupProps> = ({
     <>
       {items.map(
         (item, index) =>
-          item.name && (
+          item.displayName && (
             <UrlSelectItem
               ref={itemsRef[index + refIndexOffset]}
               item={item}

@@ -444,13 +444,10 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (projectStatus === "running") {
-      project.addListener("needsNativeRebuild", openRebuildAlert);
-      return () => {
-        project.removeListener("needsNativeRebuild", openRebuildAlert);
-      };
+    if (projectState.hasStaleBuildCache) {
+      openRebuildAlert();
     }
-  }, [project, openRebuildAlert, projectStatus]);
+  }, [projectState.hasStaleBuildCache]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === projectState?.selectedDevice?.modelId;
