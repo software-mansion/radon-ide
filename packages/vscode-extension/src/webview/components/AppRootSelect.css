@@ -8,7 +8,6 @@
   line-height: 1;
   cursor: pointer;
   border-radius: 18px;
-  background-color: var(--swm-device-select-trigger);
   height: var(--swm-button-size);
   color: var(--swm-device-select-trigger-text);
   user-select: none;
