@@ -129,6 +129,8 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   private removeDeviceListener = async (device: DeviceInfo) => {
     // if the deleted device was running an active session, we need to terminate that session
     await this.terminateSession(device.id);
+    // if the deleted device was the selected one, we try to select a new device
+    this.findInitialDeviceAndStartSession();
   };
 
   private devicesChangedListener = async () => {
