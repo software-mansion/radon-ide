@@ -60,11 +60,11 @@ type RestartOptions = {
 
 export type AppEvent = {
   navigationChanged: { displayName: string; id: string };
+  navigationRouteListUpdated: Route[];
   fastRefreshStarted: undefined;
   fastRefreshComplete: undefined;
   isProfilingReact: boolean;
   isSavingReactProfile: boolean;
-  routeListRetrieved: Route[];
 };
 
 export type DeviceSessionDelegate = {
@@ -161,7 +161,7 @@ export class DeviceSession implements Disposable {
       this.deviceSessionDelegate.onAppEvent("navigationChanged", payload);
     });
     devtools.onEvent("RNIDE_navigationRouteListUpdated", (payload) => {
-      this.deviceSessionDelegate.onAppEvent("routeListRetrieved", payload.routes);
+      this.deviceSessionDelegate.onAppEvent("navigationRouteListUpdated", payload.routes);
     });
     devtools.onEvent("RNIDE_fastRefreshStarted", () => {
       this.deviceSessionDelegate.onAppEvent("fastRefreshStarted", undefined);

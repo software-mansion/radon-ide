@@ -136,13 +136,13 @@ export interface ProjectEventMap {
   toolsStateChanged: ToolsState;
   licenseActivationChanged: boolean;
   navigationChanged: { displayName: string; id: string };
+  navigationRouteListUpdated: Route[];
   needsNativeRebuild: void;
   replayDataCreated: MultimediaData;
   isRecording: boolean;
   isProfilingCPU: boolean;
   isProfilingReact: boolean;
   isSavingReactProfile: boolean;
-  routeListRetrieved: Route[];
 }
 
 export interface ProjectEventListener<T> {

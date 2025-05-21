@@ -201,6 +201,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       case "navigationChanged":
         this.eventEmitter.emit("navigationChanged", payload);
         break;
+      case "navigationRouteListUpdated":
+        this.eventEmitter.emit("navigationRouteListUpdated", payload);
+        break;
       case "fastRefreshStarted":
         this.updateProjectState({ status: "refreshing" });
         break;
@@ -216,9 +219,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         break;
       case "isSavingReactProfile":
         this.eventEmitter.emit("isSavingReactProfile", payload);
-        break;
-      case "routeListRetrieved":
-        this.eventEmitter.emit("routeListRetrieved", payload);
         break;
     }
   };

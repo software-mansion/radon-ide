@@ -1,12 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useProject } from "./ProjectProvider";
 
-declare global {
-  interface Window {
-    RNIDE_lastRouteList?: Route[];
-  }
-}
-
 const RoutesContext = createContext<Route[] | null>(null);
 
 export type Route = {
@@ -17,21 +11,17 @@ export type Route = {
   type: string;
 };
 
-export default function RoutesProvider({ children }: { children: React.ReactNode }) {
-  const [routes, setRoutes] = useState<Route[] | null>(null);
+export default function RoutesProvider({ children, initialRoutes }: { children: React.ReactNode; initialRoutes?: Route[] }) {
+  const [routes, setRoutes] = useState<Route[] | null>(initialRoutes ?? null);
   const { project } = useProject();
 
   useEffect(() => {
-    if (window.RNIDE_lastRouteList) {
-      setRoutes(window.RNIDE_lastRouteList);
-    }
-
     function handleAppRouteList(receivedRoutes: Route[]) {
       setRoutes(receivedRoutes);
     }
-    project.addListener("routeListRetrieved", handleAppRouteList);
+    project.addListener("navigationRouteListUpdated", handleAppRouteList);
     return () => {
-      project.removeListener("routeListRetrieved", handleAppRouteList);
+      project.removeListener("navigationRouteListUpdated", handleAppRouteList);
     };
   }, [project]);
 

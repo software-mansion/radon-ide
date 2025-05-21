@@ -1,7 +1,7 @@
-window.RNIDE_lastRouteList = null;
+let initialRoutes = null;
 window.addEventListener("message", (event) => {
   if (event.data?.type === "RNIDE_navigationRouteListUpdated") {
-    window.RNIDE_lastRouteList = event.data.routes;
+    initialRoutes = event.data.routes;
   }
 });
 
@@ -39,7 +39,7 @@ root.render(
                 <DependenciesProvider>
                   <ModalProvider>
                     <AlertProvider>
-                      <RoutesProvider>
+                      <RoutesProvider initialRoutes={initialRoutes}>
                         <App />
                       </RoutesProvider>
                     </AlertProvider>
