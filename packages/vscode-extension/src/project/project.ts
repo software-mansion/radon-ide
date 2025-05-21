@@ -68,15 +68,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public deviceSessionsManager: DeviceSessionsManager;
 
-  private projectState: ProjectState = {
-    status: "starting",
-    stageProgress: 0,
-    startupMessage: StartupMessage.InitializingDevice,
-    previewURL: undefined,
-    previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
-    selectedDevice: undefined,
-    initialized: false,
-  };
+  private projectState: ProjectState;
 
   private disposables: Disposable[] = [];
 
@@ -98,6 +90,18 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         this.updateProjectState(newState);
       }
     );
+
+    this.projectState = {
+      // NOTE: `relativeAppRootPath` uses `applicationContext`, so it must be initialized after it
+      appRootPath: this.relativeAppRootPath,
+      status: "starting",
+      stageProgress: 0,
+      startupMessage: StartupMessage.InitializingDevice,
+      previewURL: undefined,
+      previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
+      selectedDevice: undefined,
+      initialized: false,
+    };
 
     this.disposables.push(refreshTokenPeriodically());
     this.disposables.push(
@@ -127,6 +131,17 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         }
       })
     );
+  }
+
+  get relativeAppRootPath() {
+    const relativePath = workspace.asRelativePath(this.applicationContext.appRootFolder);
+    if (relativePath === this.applicationContext.appRootFolder) {
+      return "./";
+    }
+    if (relativePath.startsWith(".." + path.sep) || relativePath.startsWith("." + path.sep)) {
+      return relativePath;
+    }
+    return `.${path.sep}${relativePath}`;
   }
 
   get appRootFolder() {
@@ -162,6 +177,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       }
     );
     oldDeviceSessionsManager.dispose();
+    this.updateProjectState({
+      appRootPath: this.relativeAppRootPath,
+    });
   }
 
   //#region Device Session Delegate
