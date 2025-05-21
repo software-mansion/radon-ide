@@ -301,8 +301,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       stackTrace?.callFrames.splice(0, originalCallFrameIndex);
     }
 
-    if (stackTrace?.callFrames) {
-      stackTrace.callFrames = stackTrace?.callFrames.filter((frame) => {
+    if (stackTrace) {
+      const filteredCallFrames = stackTrace?.callFrames.filter((frame) => {
         const { scriptId, lineNumber, columnNumber } = frame;
         const { sourceURL } = this.sourceMapRegistry.findOriginalPosition(
           scriptId,
@@ -311,6 +311,11 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         );
         return !this.shouldSkipFile(sourceURL);
       });
+      if (filteredCallFrames.length > 0) {
+        // we only filter frames if there's at least one frame left, otherwise we would still
+        // want some location information to be available so we keep the original one.
+        stackTrace.callFrames = filteredCallFrames;
+      }
     }
 
     this.consoleAPICalledEmitter.fire({});
