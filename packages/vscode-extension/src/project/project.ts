@@ -18,13 +18,14 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
+  DEVICE_SESSION_INITIAL_STATE,
+  DeviceSessionState,
   DeviceSettings,
   InspectData,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
-  StartupMessage,
   ToolsState,
   TouchPoint,
   ZoomLevelType,
@@ -33,10 +34,6 @@ import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
-import { throttle } from "../utilities/throttle";
-import { DebugSource } from "../debugging/DebugSession";
-import { AppEvent } from "./deviceSession";
-import { PanelLocation } from "../common/WorkspaceConfig";
 import {
   activateDevice,
   watchLicenseTokenChange,
@@ -49,10 +46,9 @@ import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
-import { focusSource } from "../utilities/focusSource";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager } from "./DeviceSessionsManager";
-import { DeviceSessionsManagerDelegate, ReloadAction } from "../common/DeviceSessionsManager";
+import { DeviceSessionsManagerDelegate } from "../common/DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
@@ -85,22 +81,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
-      this,
-      (newState) => {
-        this.updateProjectState(newState);
-      }
+      this
     );
 
     this.projectState = {
-      // NOTE: `relativeAppRootPath` uses `applicationContext`, so it must be initialized after it
-      appRootPath: this.relativeAppRootPath,
-      status: "starting",
-      stageProgress: 0,
-      startupMessage: StartupMessage.InitializingDevice,
-      previewURL: undefined,
-      previewZoom: extensionContext.workspaceState.get(PREVIEW_ZOOM_KEY),
-      selectedDevice: undefined,
+      ...DEVICE_SESSION_INITIAL_STATE,
       initialized: false,
+      appRootPath: this.relativeAppRootPath,
+      previewZoom: undefined,
     };
 
     this.disposables.push(refreshTokenPeriodically());
@@ -171,10 +159,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
-      this,
-      (newState) => {
-        this.updateProjectState(newState);
-      }
+      this
     );
     oldDeviceSessionsManager.dispose();
     this.updateProjectState({
@@ -182,93 +167,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     });
   }
 
-  //#region Device Session Delegate
-  onBuildProgress = (stageProgress: number): void => {
-    this.reportStageProgress(stageProgress, StartupMessage.Building);
+  onActiveSessionStateChanged = (state: DeviceSessionState) => {
+    this.updateProjectState(state);
   };
-
-  onStateChange = (state: StartupMessage): void => {
-    this.updateProjectState({ startupMessage: state });
-  };
-
-  public onReloadStarted(id: string): void {
-    this.updateProjectStateForDevice(id, {
-      status: "starting",
-      startupMessage: StartupMessage.Restarting,
-    });
-  }
-
-  public onReloadCompleted(id: string): void {
-    this.updateProjectStateForDevice(id, {
-      status: "running",
-    });
-  }
-
-  public onCacheStale(): void {
-    this.eventEmitter.emit("needsNativeRebuild");
-  }
-
-  public onPreviewReady(previewURL: string): void {
-    this.updateProjectState({ previewURL });
-  }
-
-  //#endregion
-
-  //#region App events
-  onAppEvent = <E extends keyof AppEvent, P = AppEvent[E]>(event: E, payload: P): void => {
-    switch (event) {
-      case "navigationChanged":
-        this.eventEmitter.emit("navigationChanged", payload);
-        break;
-      case "fastRefreshStarted":
-        this.updateProjectState({ status: "refreshing" });
-        break;
-      case "fastRefreshComplete":
-        const ignoredEvents = ["starting", "bundlingError"];
-        if (ignoredEvents.includes(this.projectState.status)) {
-          return;
-        }
-        this.updateProjectState({ status: "running" });
-        break;
-      case "isProfilingReact":
-        this.eventEmitter.emit("isProfilingReact", payload);
-        break;
-      case "isSavingReactProfile":
-        this.eventEmitter.emit("isSavingReactProfile", payload);
-        break;
-    }
-  };
-  //#endregion
-
-  //#region Debugger events
-  onConsoleLog(event: DebugSessionCustomEvent) {
-    this.eventEmitter.emit("log", event.body);
-  }
-
-  onDebuggerPaused(event: DebugSessionCustomEvent) {
-    this.updateProjectState({ status: "debuggerPaused" });
-
-    // we don't want to focus on debug side panel if it means hiding Radon IDE
-    const panelLocation = workspace
-      .getConfiguration("RadonIDE")
-      .get<PanelLocation>("panelLocation");
-
-    if (panelLocation === "tab") {
-      commands.executeCommand("workbench.view.debug");
-    }
-  }
-
-  onDebuggerResumed() {
-    const ignoredEvents = ["starting", "bundlingError"];
-    if (ignoredEvents.includes(this.projectState.status)) {
-      return;
-    }
-    this.updateProjectState({ status: "running" });
-  }
-
-  //#endregion
-
-  //#region Recordings and screenshots
 
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;
 
@@ -280,7 +181,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       throw new Error("No device session available");
     }
     this.deviceSession.startRecording();
-    this.eventEmitter.emit("isRecording", true);
 
     this.recordingTimeout = setTimeout(() => {
       this.stopRecording();
@@ -296,7 +196,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    this.eventEmitter.emit("isRecording", false);
     return this.deviceSession.captureAndStopRecording();
   }
 
@@ -317,19 +216,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   async startProfilingReact() {
-    await this.deviceSession?.devtools.startProfilingReact();
+    await this.deviceSession?.startProfilingReact();
   }
 
   async stopProfilingReact() {
-    try {
-      this.eventEmitter.emit("isSavingReactProfile", true);
-      const uri = await this.deviceSession?.devtools.stopProfilingReact();
-      if (uri) {
-        // open profile file in vscode using our custom editor
-        commands.executeCommand("vscode.open", uri);
-      }
-    } finally {
-      this.eventEmitter.emit("isSavingReactProfile", false);
+    const uri = await this.deviceSession?.stopProfilingReact();
+    if (uri) {
+      // open profile file in vscode using our custom editor
+      commands.executeCommand("vscode.open", uri);
     }
   }
 
@@ -440,26 +334,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     await this.utils.showToast("Copied from device clipboard", 2000);
   }
 
-  async onBundlingError(
-    message: string,
-    source: DebugSource,
-    _errorModulePath: string
-  ): Promise<void> {
-    await this.deviceSession?.appendDebugConsoleEntry(message, "error", source);
-
-    if (this.projectState.status === "starting") {
-      focusSource(source);
-    }
-
-    Logger.error("[Bundling Error]", message);
-
-    this.updateProjectState({ status: "bundlingError" });
-  }
-
-  onBundleProgress = throttle((stageProgress: number) => {
-    this.reportStageProgress(stageProgress, StartupMessage.WaitingForAppToLoad);
-  }, 100);
-
   async getProjectState(): Promise<ProjectState> {
     return this.projectState;
   }
@@ -484,14 +358,13 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   private async reloadMetro() {
-    if (await this.deviceSession?.perform("reloadJs")) {
-      this.updateProjectState({ status: "running" });
+    if (await this.deviceSession?.performReloadAction("reloadJs")) {
       return true;
     }
     return false;
   }
 
-  public async goHome(homeUrl: string) {
+  public async navigateHome() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
       platform: this.projectState.selectedDevice?.platform,
     });
@@ -504,29 +377,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
-      await this.openNavigation(homeUrl);
+      await this.deviceSession?.navigateHome();
     } else {
       await this.reloadMetro();
     }
   }
 
-  //#region Session lifecycle
-
-  onReloadRequested(type: ReloadAction) {
-    this.updateProjectState({ status: "starting", startupMessage: StartupMessage.Restarting });
-
-    getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
-      platform: this.projectState.selectedDevice?.platform,
-      method: type,
-    });
-  }
-
-  //#endregion
-
   async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
     if (needsRestart) {
-      await this.deviceSessionsManager.reload("restartProcess");
+      await this.deviceSessionsManager.reloadCurrentSession("restartProcess");
     }
   }
 
@@ -609,11 +469,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async focusDebugConsole() {
+    this.deviceSession?.resetLogCounter();
     commands.executeCommand("workbench.panel.repl.view.focus");
   }
 
   public async openNavigation(navigationItemID: string) {
     this.deviceSession?.openNavigation(navigationItemID);
+  }
+
+  public async navigateBack() {
+    this.deviceSession?.navigateBack();
   }
 
   public async openDevMenu() {
@@ -633,7 +498,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async openComponentPreview(fileName: string, lineNumber1Based: number) {
     try {
       const deviceSession = this.deviceSession;
-      if (!deviceSession || !deviceSession.isAppLaunched) {
+      if (!deviceSession) {
         window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
         return;
       }
@@ -672,7 +537,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.eventEmitter.emit("deviceSettingsChanged", settings);
 
       if (needsRestart) {
-        await this.deviceSessionsManager.reload("reboot");
+        await this.deviceSessionsManager.reloadCurrentSession("reboot");
       }
     }
   }
@@ -681,16 +546,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.eventEmitter.emit("toolsStateChanged", toolsState);
   };
 
-  public async getToolsState() {
-    return this.deviceSession?.toolsManager.getToolsState() ?? {};
-  }
-
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
-    await this.deviceSession?.toolsManager.updateToolEnabledState(toolName, enabled);
+    await this.deviceSession?.updateToolEnabledState(toolName, enabled);
   }
 
   public async openTool(toolName: ToolKey) {
-    await this.deviceSession?.toolsManager.openTool(toolName);
+    await this.deviceSession?.openTool(toolName);
   }
 
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
@@ -709,32 +570,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
 
-  private reportStageProgress(stageProgress: number, stage: string) {
-    if (stage !== this.projectState.startupMessage) {
-      return;
-    }
-    this.updateProjectState({ stageProgress });
-  }
-
   private updateProjectState(newState: Partial<ProjectState>) {
-    // NOTE: this is unsafe, but I'm not sure there's a way to enforce the type of `newState` correctly
-    const mergedState: any = { ...this.projectState, ...newState };
-    // stageProgress is tied to a startup stage, so when there is a change of status or startupMessage,
-    // we always want to reset the progress.
-    if (
-      newState.status !== undefined ||
-      ("startupMessage" in newState && newState.startupMessage !== undefined)
-    ) {
-      delete mergedState.stageProgress;
-    }
+    const mergedState = { ...this.projectState, ...newState, initialized: true };
     this.projectState = mergedState;
     this.eventEmitter.emit("projectStateChanged", this.projectState);
-  }
-
-  private updateProjectStateForDevice(id: string, newState: Partial<ProjectState>) {
-    if (id === this.projectState.selectedDevice?.id) {
-      this.updateProjectState(newState);
-    }
   }
 
   public async updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void> {
@@ -768,17 +607,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       );
     }
   }
-
-  //#region Select device
-
-  public async onDeviceSelected(deviceInfo: DeviceInfo, previewURL?: string) {
-    const newState: Partial<ProjectState> = previewURL
-      ? { selectedDevice: deviceInfo, previewURL }
-      : { selectedDevice: deviceInfo };
-    this.updateProjectState(newState);
-  }
-
-  //#endregion
 }
 
 export function isAppSourceFile(filePath: string) {

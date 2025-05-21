@@ -27,36 +27,67 @@ export type ToolsState = {
   [key: string]: ToolState;
 };
 
-export type ProjectState =
-  | ({
-      status:
-        | "starting"
-        | "running"
-        | "bootError"
-        | "bundlingError"
-        | "debuggerPaused"
-        | "refreshing";
-    } & ProjectStateCommon)
-  | ProjectStateBuildError;
-
-type ProjectStateCommon = {
-  appRootPath: string | undefined;
-  previewURL: string | undefined;
-  selectedDevice: DeviceInfo | undefined;
-  initialized: boolean;
-  previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
-  startupMessage: StartupMessage | undefined;
-  stageProgress: number | undefined;
+export type BuildErrorDescriptor = {
+  message: string;
+  platform: DevicePlatform;
+  buildType: BuildType | null;
 };
 
-type ProjectStateBuildError = {
-  status: "buildError";
-  buildError: {
-    message: string;
-    platform: DevicePlatform;
-    buildType: BuildType | null;
-  };
-} & ProjectStateCommon;
+export type ProfilingState = "stopped" | "profiling" | "saving";
+
+export type NavigationHistoryItem = {
+  displayName: string;
+  id: string;
+};
+
+export type DeviceSessionStatus =
+  | "starting"
+  | "running"
+  | "bootError"
+  | "bundlingError"
+  | "debuggerPaused"
+  | "refreshing"
+  | "buildError";
+
+export type DeviceSessionState = {
+  status: DeviceSessionStatus;
+  startupMessage: StartupMessage | undefined;
+  stageProgress: number | undefined;
+  buildError: BuildErrorDescriptor | undefined;
+  selectedDevice: DeviceInfo | undefined;
+  previewURL: string | undefined;
+  profilingReactState: ProfilingState;
+  profilingCPUState: ProfilingState;
+  navigationHistory: NavigationHistoryItem[];
+  toolsState: ToolsState;
+  isDebuggerPaused: boolean;
+  logCounter: number;
+  hasStaleBuildCache: boolean;
+  isRecordingScreen: boolean;
+};
+
+export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
+  status: "starting",
+  startupMessage: undefined,
+  stageProgress: undefined,
+  buildError: undefined,
+  selectedDevice: undefined,
+  previewURL: undefined,
+  profilingReactState: "stopped",
+  profilingCPUState: "stopped",
+  navigationHistory: [],
+  toolsState: {},
+  isDebuggerPaused: false,
+  logCounter: 0,
+  hasStaleBuildCache: false,
+  isRecordingScreen: false,
+};
+
+export type ProjectState = {
+  initialized: boolean;
+  appRootPath: string | undefined;
+  previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
+} & DeviceSessionState;
 
 export type ZoomLevelType = number | "Fit";
 
@@ -130,18 +161,10 @@ export enum ActivateDeviceResult {
 }
 
 export interface ProjectEventMap {
-  log: { type: string };
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
-  toolsStateChanged: ToolsState;
   licenseActivationChanged: boolean;
-  navigationChanged: { displayName: string; id: string };
-  needsNativeRebuild: void;
   replayDataCreated: MultimediaData;
-  isRecording: boolean;
-  isProfilingCPU: boolean;
-  isProfilingReact: boolean;
-  isSavingReactProfile: boolean;
 }
 
 export interface ProjectEventListener<T> {
@@ -156,7 +179,6 @@ export type MultimediaData = {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  goHome(homeUrl: string): Promise<void>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
@@ -164,7 +186,6 @@ export interface ProjectInterface {
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
   runCommand(command: string): Promise<void>;
 
-  getToolsState(): Promise<ToolsState>;
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;
 
@@ -174,6 +195,8 @@ export interface ProjectInterface {
   focusExtensionLogsOutput(): Promise<void>;
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
+  navigateBack(): Promise<void>;
+  navigateHome(): Promise<void>;
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;

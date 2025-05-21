@@ -48,6 +48,10 @@ export abstract class DeviceBase implements Disposable {
     return this.preview?.streamURL;
   }
 
+  public get previewReady() {
+    return this.preview?.streamURL !== undefined;
+  }
+
   async reboot(): Promise<void> {
     this.preview?.dispose();
     this.preview = undefined;
