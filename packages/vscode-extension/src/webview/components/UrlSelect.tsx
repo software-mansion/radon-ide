@@ -115,6 +115,7 @@ function UrlSelect({
     }
   }, [value]);
 
+  // Update the itemsRef to ensure all items are focused correctly
   useEffect(() => {
     itemsRef.current = [
       ...(dropdownOnly ? [{ id: "/", name: "/" }] : []),
@@ -123,6 +124,7 @@ function UrlSelect({
     ].map((_, i) => itemsRef.current[i] || React.createRef<HTMLDivElement>());
   }, [allItems, filteredItems]);
 
+  // Update the combined recent/indexed route list
   useEffect(() => {
     const routesNotInRecent = differenceBy(routeItems, recentItems, (item: UrlItem) =>
       getNameFromId(item.id)
@@ -131,6 +133,7 @@ function UrlSelect({
     setAllItems(combinedItems);
   }, [inputValue, recentItems]);
 
+  // Update the filtered items based on the input value
   useEffect(() => {
     if (disabled) {
       setFilteredItems([]);
@@ -144,6 +147,7 @@ function UrlSelect({
     setFilteredOutItems(filteredOut);
   }, [inputValue, allItems, disabled]);
 
+  // Watch the width of the textfield to adjust the dropdown width
   useEffect(() => {
     if (textfieldRef.current) {
       const resizeObserver = new ResizeObserver((entries) => {
@@ -157,6 +161,17 @@ function UrlSelect({
       return () => resizeObserver.disconnect();
     }
   }, []);
+
+  // Hacky way to change the cursor style of a readonly input,
+  // since the VscodeTextfield component doesn't provide any parts
+  // or props, and according to the authors, it's not going to.
+  useEffect(() => {
+    if (textfieldRef.current && textfieldRef.current.shadowRoot) {
+      const style = document.createElement('style');
+      style.textContent = 'input[readonly] { cursor: text !important; }';
+      textfieldRef.current.shadowRoot.appendChild(style);
+    }
+  }, [dropdownOnly]);
 
   return (
     <div className="url-select-wrapper">

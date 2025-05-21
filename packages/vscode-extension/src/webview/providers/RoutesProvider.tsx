@@ -7,7 +7,7 @@ export type Route = {
   path: string;
   filePath: string;
   children: Route[];
-  dynamic: { name: string; deep: boolean; notFound?: boolean } | null;
+  dynamic: { name: string; deep: boolean; notFound?: boolean }[] | null;
   type: string;
 };
 
