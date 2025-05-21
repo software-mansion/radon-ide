@@ -46,7 +46,7 @@ export type Route = {
   children: Route[];
   dynamic: { name: string; deep: boolean; notFound?: boolean }[] | null;
   type: string;
-}
+};
 
 export type DeviceSessionStatus =
   | "starting"

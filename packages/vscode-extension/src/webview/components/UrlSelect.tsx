@@ -146,8 +146,10 @@ function UrlSelect({
 
   // Update the combined recent/indexed route list
   useEffect(() => {
-    const routesNotInRecent = differenceBy(routeItems, navigationHistory, (item: NavigationHistoryItem) =>
-      getNameFromId(item.id)
+    const routesNotInRecent = differenceBy(
+      routeItems,
+      navigationHistory,
+      (item: NavigationHistoryItem) => getNameFromId(item.id)
     );
     const combinedItems = [...navigationHistory, ...routesNotInRecent];
     setAllItems(combinedItems);
