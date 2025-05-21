@@ -226,10 +226,11 @@ function UrlSelect({
             }}
             onKeyDown={(e) => {
               if (dynamicSegmentNames.length > 0 && e.key === "Tab") {
-                e.preventDefault();
                 if (e.shiftKey && currentDynamicSegment > 0) {
+                  e.preventDefault();
                   setCurrentDynamicSegment(currentDynamicSegment - 1);
                 } else if (!e.shiftKey && currentDynamicSegment < dynamicSegmentNames.length - 1) {
+                  e.preventDefault();
                   setCurrentDynamicSegment(currentDynamicSegment + 1);
                 }
               }
