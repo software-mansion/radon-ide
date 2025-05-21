@@ -5,6 +5,7 @@ import Label from "../components/shared/Label";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import {
   AddCustomApplicationRoot,
+  ApplicationRoot,
   EasConfig,
   LaunchConfigUpdater,
   LaunchConfigurationOptions,
@@ -54,7 +55,7 @@ function LaunchConfigurationView() {
       <AppRootConfiguration
         appRoot={appRoot}
         update={update}
-        applicationRoots={applicationRoots.map((root) => root.path)}
+        applicationRoots={applicationRoots}
         addCustomApplicationRoot={addCustomApplicationRoot}
       />
       <div className="launch-configuration-section-margin" />
@@ -193,7 +194,7 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
 interface appRootConfigurationProps {
   appRoot?: string;
   update: LaunchConfigUpdater;
-  applicationRoots: string[];
+  applicationRoots: ApplicationRoot[];
   addCustomApplicationRoot: AddCustomApplicationRoot;
 }
 
@@ -293,7 +294,7 @@ function AppRootConfiguration({
   };
 
   const availableAppRoots = applicationRoots.map((applicationRoot) => {
-    return { value: applicationRoot, label: applicationRoot };
+    return { value: applicationRoot.path, label: applicationRoot.path };
   });
 
   availableAppRoots.push({ value: "Auto", label: "Auto" });
