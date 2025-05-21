@@ -130,10 +130,10 @@
   display: flex;
   align-items: center;
   border-radius: 18px;
-  padding: 0 5px;
   height: var(--swm-button-size);
   background-color: var(--swm-device-select-trigger);
   user-select: none;
+  overflow: hidden;
 }
 
 @media (max-width: 385px) {

@@ -1,16 +1,20 @@
 .device-select-trigger {
   box-sizing: border-box;
-  display: inline-flex;
+  display: flex;
+  flex-shrink: 1;
   align-items: center;
-  justify-content: center;
-  padding: 5px 10px;
+  padding: 0px 10px;
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
   border: 0px solid transparent;
   border-radius: 18px;
+  height: var(--swm-button-size);
   color: var(--swm-device-select-trigger-text);
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .device-select-trigger:hover {
   background-color: var(--swm-device-select-trigger-hover);
