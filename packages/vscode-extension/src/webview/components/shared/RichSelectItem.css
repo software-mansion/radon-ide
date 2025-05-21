@@ -18,13 +18,13 @@
   pointer-events: none;
 }
 .rich-item-title {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--swm-device-select-rich-item-text);
   margin-bottom: 4px;
   padding-right: 10px;
 }
 .rich-item-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--swm-device-select-rich-item-subtitle);
   overflow: hidden;
   white-space: nowrap;

@@ -125,6 +125,17 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 
+.app-device-group {
+  border: 0px solid transparent;
+  display: flex;
+  align-items: center;
+  border-radius: 18px;
+  padding: 0 5px;
+  height: var(--swm-button-size);
+  background-color: var(--swm-device-select-trigger);
+  user-select: none;
+}
+
 @media (max-width: 385px) {
   .button-group-top,
   .button-group-bottom {
