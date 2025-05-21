@@ -29,10 +29,12 @@ function UrlSelect({
   dropdownOnly,
 }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState("/");
   const [allItems, setAllItems] = React.useState<UrlItem[]>([]);
   const [filteredItems, setFilteredItems] = React.useState<UrlItem[]>([]);
   const [filteredOutItems, setFilteredOutItems] = React.useState<UrlItem[]>([]);
+  const [inputValue, setInputValue] = React.useState("/");
+  const [dynamicSegmentNames, setDynamicSegmentNames] = React.useState<string[]>([]);
+  const [currentDynamicSegment, setCurrentDynamicSegment] = React.useState<number>(0);
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
   const textfieldRef = useRef<HTMLInputElement>(null);
 
@@ -50,30 +52,49 @@ function UrlSelect({
     return itemForID.name;
   };
 
-  const checkIsPathDynamic = (item: UrlItem) => {
+  const findDynamicSegments = (item: UrlItem) => {
     const matchingRoute = routes.find((route) => route.path === item.id);
     if (matchingRoute && matchingRoute.dynamic) {
-      return true;
+      return matchingRoute.dynamic.map((segment) => segment.name);
     }
-    return false;
+    return null;
   };
 
   const closeDropdownWithValue = (id: string) => {
-    if (checkIsPathDynamic({ id, name: id })) {
-      editDynamicPath(id);
+    const dynamicSegments = findDynamicSegments({ id, name: id });
+    if (dynamicSegments && dynamicSegments.length > 0) {
+      editDynamicPath(id, dynamicSegments);
       return;
     }
     setInputValue(getNameFromId(id));
     onValueChange(id);
     setIsDropdownOpen(false);
+    setDynamicSegmentNames([]);
+    setCurrentDynamicSegment(0);
     setTimeout(() => textfieldRef.current?.blur(), 0);
   };
 
-  const editDynamicPath = (id: string) => {
+  const editDynamicPath = (id: string, segmentNames: string[]) => {
     setInputValue(getNameFromId(id));
-    textfieldRef.current?.focus();
-    if (textfieldRef.current && textfieldRef.current.tagName === "INPUT") {
-      textfieldRef.current.setSelectionRange(0, id.length);
+    setDynamicSegmentNames(segmentNames);
+    setCurrentDynamicSegment(0);
+    setTimeout(() => {
+      textfieldRef.current?.focus();
+      selectCurrentDynamicSegment(segmentNames, 0);
+    }, 0);
+  };
+
+  const selectCurrentDynamicSegment = (segmentNames: string[], index: number) => {
+    const shadowInput = textfieldRef.current?.shadowRoot?.querySelector("input");
+    if (!shadowInput || !segmentNames[index]) {
+      return;
+    }
+    const segmentName = segmentNames[index];
+    const fieldValue = textfieldRef.current?.value ?? "";
+    const regex = new RegExp(`\\[${segmentName}\\]`, "g");
+    const match = regex.exec(fieldValue);
+    if (match) {
+      shadowInput.setSelectionRange(match.index, match.index + match[0].length);
     }
   };
 
@@ -147,6 +168,13 @@ function UrlSelect({
     setFilteredOutItems(filteredOut);
   }, [inputValue, allItems, disabled]);
 
+  // Update the dynamic segments to be highlighted/editable
+  useEffect(() => {
+    if (dynamicSegmentNames.length > 0) {
+      selectCurrentDynamicSegment(dynamicSegmentNames, currentDynamicSegment);
+    }
+  }, [currentDynamicSegment, dynamicSegmentNames, inputValue]);
+
   // Watch the width of the textfield to adjust the dropdown width
   useEffect(() => {
     if (textfieldRef.current) {
@@ -167,8 +195,8 @@ function UrlSelect({
   // or props, and according to the authors, it's not going to.
   useEffect(() => {
     if (textfieldRef.current && textfieldRef.current.shadowRoot) {
-      const style = document.createElement('style');
-      style.textContent = 'input[readonly] { cursor: text !important; }';
+      const style = document.createElement("style");
+      style.textContent = "input[readonly] { cursor: text !important; }";
       textfieldRef.current.shadowRoot.appendChild(style);
     }
   }, [dropdownOnly]);
@@ -197,6 +225,14 @@ function UrlSelect({
               }
             }}
             onKeyDown={(e) => {
+              if (dynamicSegmentNames.length > 0 && e.key === "Tab") {
+                e.preventDefault();
+                if (e.shiftKey && currentDynamicSegment > 0) {
+                  setCurrentDynamicSegment(currentDynamicSegment - 1);
+                } else if (!e.shiftKey && currentDynamicSegment < dynamicSegmentNames.length - 1) {
+                  setCurrentDynamicSegment(currentDynamicSegment + 1);
+                }
+              }
               if (e.key === "Enter") {
                 closeDropdownWithValue(textfieldRef.current?.value ?? "");
               }
