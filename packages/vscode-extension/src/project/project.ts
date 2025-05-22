@@ -581,7 +581,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
 
-  public async ensureDependenciesAndNodeVersion() {
+  // used in callbacks, needs to be an arrow function
+  public ensureDependenciesAndNodeVersion = async () => {
     if (this.dependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
@@ -606,7 +607,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
       );
     }
-  }
+  };
 }
 
 export function isAppSourceFile(filePath: string) {
