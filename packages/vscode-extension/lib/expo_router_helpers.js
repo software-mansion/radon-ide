@@ -1,5 +1,9 @@
 export function computeRouteIdentifier(pathname, params) {
-  return pathname + JSON.stringify(params);
+  if (!params || Object.keys(params).length === 0) {
+    return pathname;
+  }
+  const query = new URLSearchParams(params).toString();
+  return query ? `${pathname}?${query}` : pathname;
 }
 
 // Helper function to extract the route list from Expo Router's routeNode, which is a tree-like object

@@ -45,9 +45,7 @@ function UrlSelect({
   }));
 
   const getNameFromId = (id: string) => {
-    const itemForID = [...routeItems, ...navigationHistory].find(
-      (item) => item.id === id || item.displayName === id
-    );
+    const itemForID = [...navigationHistory, ...routeItems].find((item) => item.id === id);
     if (!itemForID) {
       return id;
     }
@@ -62,22 +60,22 @@ function UrlSelect({
     return null;
   };
 
-  const closeDropdownWithValue = (id: string) => {
-    const dynamicSegments = findDynamicSegments({ id, displayName: id });
+  const closeDropdownWithValue = (item: NavigationHistoryItem) => {
+    const dynamicSegments = findDynamicSegments(item);
     if (dynamicSegments && dynamicSegments.length > 0) {
-      editDynamicPath(id, dynamicSegments);
+      editDynamicPath(item, dynamicSegments);
       return;
     }
-    setInputValue(getNameFromId(id));
-    onValueChange(id);
+    setInputValue(item.displayName);
+    onValueChange(item.id);
     setIsDropdownOpen(false);
     setDynamicSegmentNames([]);
     setCurrentDynamicSegment(0);
     setTimeout(() => textfieldRef.current?.blur(), 0);
   };
 
-  const editDynamicPath = (id: string, segmentNames: string[]) => {
-    setInputValue(getNameFromId(id));
+  const editDynamicPath = (item: NavigationHistoryItem, segmentNames: string[]) => {
+    setInputValue(item.displayName);
     setDynamicSegmentNames(segmentNames);
     setCurrentDynamicSegment(0);
     setTimeout(() => {
@@ -133,15 +131,8 @@ function UrlSelect({
   };
 
   useEffect(() => {
-    setInputValue(navigationHistory[0]?.displayName ?? "/");
-  }, [navigationHistory]);
-
-  // Reset the displayed path to ensure the input is always in sync with the app
-  useEffect(() => {
-    if (projectState.status === "starting" || navigationHistory.length === 0) {
-      setInputValue("/");
-    }
-  }, [projectState.status, navigationHistory[0]?.id]);
+    setInputValue(navigationHistory[0]?.displayName ?? "");
+  }, [navigationHistory[0]?.id]);
 
   // Update the itemsRef to ensure all items are focused correctly
   useEffect(() => {
@@ -157,11 +148,11 @@ function UrlSelect({
     const routesNotInRecent = differenceBy(
       routeItems,
       navigationHistory,
-      (item: NavigationHistoryItem) => getNameFromId(item.id)
+      (item: NavigationHistoryItem) => item.displayName
     );
     const combinedItems = [...navigationHistory, ...routesNotInRecent];
     setAllItems(combinedItems);
-  }, [inputValue, navigationHistory]);
+  }, [inputValue, navigationHistory[0]?.id]);
 
   // Update the filtered items based on the input value
   useEffect(() => {
@@ -219,7 +210,7 @@ function UrlSelect({
             ref={textfieldRef}
             className="url-select-input"
             data-state={isDropdownOpen ? "open" : "closed"}
-            value={inputValue ?? "/"}
+            value={inputValue ?? ""}
             placeholder="Enter path..."
             disabled={disabled}
             readonly={dropdownOnly}
@@ -244,7 +235,10 @@ function UrlSelect({
                 }
               }
               if (e.key === "Enter") {
-                closeDropdownWithValue(textfieldRef.current?.value ?? "");
+                closeDropdownWithValue({
+                  id: textfieldRef.current?.value ?? "",
+                  displayName: textfieldRef.current?.value ?? "",
+                });
               }
               if (e.key === "Escape") {
                 setIsDropdownOpen(false);

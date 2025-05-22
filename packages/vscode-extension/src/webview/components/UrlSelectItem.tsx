@@ -9,7 +9,7 @@ interface UrlSelectItemProps {
   itemsRef: React.RefObject<HTMLDivElement>[];
   refIndex: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
-  onClose: (id: string) => void;
+  onClose: (item: NavigationHistoryItem) => void;
   onNavigate: (
     e: React.KeyboardEvent,
     prev?: UrlSelectFocusable,
@@ -133,10 +133,10 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
         ref={forwardedRef}
         className="url-select-item"
         style={style}
-        onClick={() => onClose(item.id)}
+        onClick={() => onClose(item)}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            onClose(item.id);
+            onClose(item);
           } else {
             onNavigate(
               e,

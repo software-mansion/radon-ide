@@ -9,7 +9,7 @@ interface UrlSelectItemGroupProps {
   refIndexOffset?: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   width: number;
-  onClose: (id: string) => void;
+  onClose: (item: NavigationHistoryItem) => void;
   onNavigate: (
     e: React.KeyboardEvent,
     prev?: UrlSelectFocusable,

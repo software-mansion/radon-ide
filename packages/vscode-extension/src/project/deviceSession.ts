@@ -896,9 +896,7 @@ export class DeviceSession
   }
 
   public navigateBack() {
-    if (this.navigationHistory.length > 1) {
-      this.devtools.send("RNIDE_openNavigation", { id: "__BACK__" });
-    }
+    this.devtools.send("RNIDE_openNavigation", { id: "__BACK__" });
   }
 
   public async openDevMenu() {
