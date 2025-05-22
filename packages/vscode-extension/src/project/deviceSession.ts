@@ -674,8 +674,7 @@ export class DeviceSession
     Logger.debug("Metro & devtools ready");
   }
 
-  // used in callbacks, needs to be an arrow function
-  private ensureDependenciesAndNodeVersion = async () => {
+  private async ensureDependenciesAndNodeVersion() {
     if (this.applicationContext.dependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
@@ -701,7 +700,7 @@ export class DeviceSession
         "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
       );
     }
-  };
+  }
 
   public async start() {
     try {
