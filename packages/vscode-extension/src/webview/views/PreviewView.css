@@ -137,6 +137,17 @@
   overflow: hidden;
 }
 
+.activate-license-button::before {
+  content: "Activate License";
+  text-wrap: nowrap;
+}
+
+@media (max-width: 400px) {
+  .activate-license-button::before {
+    content: "Activate";
+  }
+}
+
 @media (max-width: 385px) {
   .button-group-top,
   .button-group-bottom {
