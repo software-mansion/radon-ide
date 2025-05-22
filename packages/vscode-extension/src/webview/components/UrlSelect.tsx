@@ -36,7 +36,7 @@ function UrlSelect({
   const textfieldRef = useRef<HTMLInputElement>(null);
 
   const itemsRef = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
-  const { project } = useProject();
+  const { project, projectState } = useProject();
 
   const routeItems = routeList.map((route) => ({
     id: route.path,
@@ -45,7 +45,9 @@ function UrlSelect({
   }));
 
   const getNameFromId = (id: string) => {
-    const itemForID = navigationHistory.find((item) => item.id === id);
+    const itemForID = [...routeItems, ...navigationHistory].find(
+      (item) => item.id === id || item.displayName === id
+    );
     if (!itemForID) {
       return id;
     }
@@ -130,10 +132,16 @@ function UrlSelect({
     getNameFromId,
   };
 
-  // FIXME - if no Expo Router, this will be the previous path on reload!
   useEffect(() => {
     setInputValue(navigationHistory[0]?.displayName ?? "");
   }, [navigationHistory[0]?.id]);
+
+  // Reset the displayed path to ensure the input is always in sync with the app
+  useEffect(() => {
+    if (projectState.status === "starting" || navigationHistory.length === 0) {
+      setInputValue("/");
+    }
+  }, [projectState.status, navigationHistory[0]?.id]);
 
   // Update the itemsRef to ensure all items are focused correctly
   useEffect(() => {
