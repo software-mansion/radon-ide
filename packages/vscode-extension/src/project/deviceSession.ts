@@ -223,9 +223,7 @@ export class DeviceSession
   onCacheStale = (platform: DevicePlatform) => {
     if (
       platform === this.device.platform &&
-      (this.status === "running" ||
-        this.status === "refreshing" ||
-        this.status === "debuggerPaused")
+      (this.status === "running" || this.status === "refreshing")
     ) {
       // we only consider "stale cache" in a non-error state that happens
       // after the launch phase if complete. Otherwsie, it may be a result of

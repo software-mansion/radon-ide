@@ -45,7 +45,6 @@ export type DeviceSessionStatus =
   | "running"
   | "bootError"
   | "bundlingError"
-  | "debuggerPaused"
   | "refreshing"
   | "buildError";
 
