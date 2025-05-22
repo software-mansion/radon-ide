@@ -117,8 +117,8 @@ function UrlSelect({ onValueChange, navigationHistory, disabled, dropdownOnly }:
   };
 
   useEffect(() => {
-    setInputValue(navigationHistory[0]?.displayName ?? "");
-  }, [navigationHistory[0]?.id]);
+    setInputValue(navigationHistory[0]?.displayName ?? "/");
+  }, [navigationHistory]);
 
   useEffect(() => {
     if (disabled) {

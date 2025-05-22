@@ -77,7 +77,6 @@ export class DeviceSession
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
   private navigationHistory: NavigationHistoryItem[] = [];
-  private navigationBackTarget: NavigationHistoryItem | undefined;
   private navigationHomeTarget: NavigationHistoryItem | undefined;
   private logCounter = 0;
   private isDebuggerPaused = false;
@@ -144,7 +143,6 @@ export class DeviceSession
     this.hasStaleBuildCache = false;
     this.profilingCPUState = "stopped";
     this.profilingReactState = "stopped";
-    this.navigationBackTarget = undefined;
     this.navigationHomeTarget = undefined;
     this.emitStateChange();
   }
@@ -249,22 +247,9 @@ export class DeviceSession
     // of the devtools instance, which is disposed when we recreate the devtools or
     // when the device session is disposed
     devtools.onEvent("RNIDE_navigationChanged", (payload: NavigationHistoryItem) => {
-      const backTargetId = this.navigationBackTarget?.id;
-      if (backTargetId === payload.id) {
-        // we are navigating back, remove all items from history that are before the back target
-        const backTargetIndex = this.navigationHistory.findIndex(
-          (record) => record.id === backTargetId
-        );
-        if (backTargetIndex !== -1) {
-          this.navigationHistory = this.navigationHistory.slice(backTargetIndex + 1);
-        }
-      }
-
       if (!this.navigationHomeTarget) {
         this.navigationHomeTarget = payload;
       }
-
-      this.navigationBackTarget = undefined;
       this.navigationHistory = [
         payload,
         ...this.navigationHistory.filter((record) => record.id !== payload.id),
@@ -905,8 +890,7 @@ export class DeviceSession
 
   public navigateBack() {
     if (this.navigationHistory.length > 1) {
-      this.navigationBackTarget = this.navigationHistory[1];
-      this.devtools.send("RNIDE_openNavigation", { id: this.navigationBackTarget.id });
+      this.devtools.send("RNIDE_openNavigation", { id: "__BACK__" });
     }
   }
 
