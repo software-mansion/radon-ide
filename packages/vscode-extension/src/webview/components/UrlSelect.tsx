@@ -133,8 +133,8 @@ function UrlSelect({
   };
 
   useEffect(() => {
-    setInputValue(navigationHistory[0]?.displayName ?? "");
-  }, [navigationHistory[0]?.id]);
+    setInputValue(navigationHistory[0]?.displayName ?? "/");
+  }, [navigationHistory]);
 
   // Reset the displayed path to ensure the input is always in sync with the app
   useEffect(() => {

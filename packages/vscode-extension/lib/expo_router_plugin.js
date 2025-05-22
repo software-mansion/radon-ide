@@ -38,6 +38,12 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {
+    if (pathname === "__BACK__") {
+      if (router.canGoBack()) {
+        router.back();
+      }
+      return;
+    }
     router.navigate(pathname);
     router.setParams(params);
   }
