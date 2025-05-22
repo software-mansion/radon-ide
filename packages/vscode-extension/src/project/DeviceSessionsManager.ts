@@ -84,8 +84,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
           this.deviceSessionManagerDelegate.onActiveSessionStateChanged(state);
         }
       },
-      ensureDependenciesAndNodeVersion:
-        this.deviceSessionManagerDelegate.ensureDependenciesAndNodeVersion,
     });
 
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);

@@ -44,7 +44,6 @@ type RestartOptions = {
 
 export type DeviceSessionDelegate = {
   onStateChange(state: DeviceSessionState): void;
-  ensureDependenciesAndNodeVersion(): Promise<void>;
 };
 
 export class DeviceBootError extends Error {
@@ -675,6 +674,35 @@ export class DeviceSession
     Logger.debug("Metro & devtools ready");
   }
 
+  // used in callbacks, needs to be an arrow function
+  private ensureDependenciesAndNodeVersion = async () => {
+    if (this.applicationContext.dependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
+
+    const installed =
+      await this.applicationContext.dependencyManager.checkNodeModulesInstallationStatus();
+
+    if (!installed) {
+      Logger.info("Installing node modules");
+      await this.applicationContext.dependencyManager.installNodeModules();
+      Logger.debug("Installing node modules succeeded");
+    } else {
+      Logger.debug("Node modules already installed - skipping");
+    }
+
+    const supportedNodeInstalled =
+      await this.applicationContext.dependencyManager.checkSupportedNodeVersionInstalled();
+    if (!supportedNodeInstalled) {
+      throw new Error(
+        "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
+      );
+    }
+  };
+
   public async start() {
     try {
       this.resetStartingState(StartupMessage.InitializingDevice);
@@ -686,7 +714,7 @@ export class DeviceSession
       const cancelToken = new CancelToken();
       this.cancelToken = cancelToken;
 
-      const waitForNodeModules = this.deviceSessionDelegate.ensureDependenciesAndNodeVersion();
+      const waitForNodeModules = this.ensureDependenciesAndNodeVersion();
 
       Logger.debug(`Launching devtools`);
       this.devtools.start();

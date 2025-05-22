@@ -580,34 +580,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.updateProjectState({ previewZoom: zoom });
     extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
   }
-
-  // used in callbacks, needs to be an arrow function
-  public ensureDependenciesAndNodeVersion = async () => {
-    if (this.dependencyManager === undefined) {
-      Logger.error(
-        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
-      );
-      throw new Error("[PROJECT] Dependency manager not initialized");
-    }
-
-    const installed = await this.dependencyManager.checkNodeModulesInstallationStatus();
-
-    if (!installed) {
-      Logger.info("Installing node modules");
-      await this.dependencyManager.installNodeModules();
-      Logger.debug("Installing node modules succeeded");
-    } else {
-      Logger.debug("Node modules already installed - skipping");
-    }
-
-    const supportedNodeInstalled =
-      await this.dependencyManager.checkSupportedNodeVersionInstalled();
-    if (!supportedNodeInstalled) {
-      throw new Error(
-        "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
-      );
-    }
-  };
 }
 
 export function isAppSourceFile(filePath: string) {
