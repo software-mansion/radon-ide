@@ -40,7 +40,10 @@ function ActivateLicenseButton() {
         sendTelemetry("activateLicenseButtonClicked");
         openModal("Activate License", <ActivateLicenseView />);
       }}>
-      Activate License
+      <span className="activate-license-button-text">
+        Activate<span className="activate-license-button-text-short">...</span>{" "}
+        <span className="activate-license-button-text-long">License</span>
+      </span>
     </Button>
   );
 }

@@ -82,7 +82,7 @@ function DeviceSelect() {
         <Select.Value placeholder="No devices found">
           <div className="device-select-value">
             <span className="codicon codicon-device-mobile" />
-            {selectedDevice?.displayName}
+            <span className="device-select-value-text">{selectedDevice?.displayName}</span>
           </div>
         </Select.Value>
       </Select.Trigger>

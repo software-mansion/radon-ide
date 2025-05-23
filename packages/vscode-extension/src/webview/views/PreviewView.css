@@ -137,9 +137,22 @@
   overflow: hidden;
 }
 
+.activate-license-button-text-short {
+  display: none;
+}
+
 @media (max-width: 385px) {
   .button-group-top,
   .button-group-bottom {
     gap: 2px;
+  }
+}
+
+@media (max-width: 475px) {
+  .activate-license-button-text-long {
+    display: none;
+  }
+  .activate-license-button-text-short {
+    display: inline;
   }
 }

@@ -1,8 +1,8 @@
 .device-select-trigger {
   box-sizing: border-box;
-  display: flex;
+  /* display: flex; */
   flex-shrink: 1;
-  align-items: center;
+  /* align-items: center; */
   padding: 0px 10px;
   font-size: 13px;
   line-height: 1;
@@ -35,6 +35,14 @@
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+.device-select-value-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: block;
+  min-width: 0;
 }
 
 .device-select-content {
