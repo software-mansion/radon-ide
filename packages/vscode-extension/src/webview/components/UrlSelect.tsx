@@ -26,7 +26,6 @@ function UrlSelect({
   dropdownOnly,
 }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [allItems, setAllItems] = React.useState<NavigationHistoryItem[]>([]);
   const [filteredItems, setFilteredItems] = React.useState<NavigationHistoryItem[]>([]);
   const [filteredOutItems, setFilteredOutItems] = React.useState<NavigationHistoryItem[]>([]);
   const [inputValue, setInputValue] = React.useState("/");
@@ -38,11 +37,15 @@ function UrlSelect({
   const textfieldRef = useRef<HTMLInputElement>(null);
   const { project } = useProject();
 
-  const routeItems = routeList.map((route) => ({
-    id: route.path,
-    displayName: route.path,
-    dynamic: route.dynamic ? true : false,
-  }));
+  const routeItems = React.useMemo(
+    () =>
+      routeList.map((route) => ({
+        id: route.path,
+        displayName: route.path,
+        dynamic: route.dynamic ? true : false,
+      })),
+    [routeList]
+  );
 
   const getNameFromId = (id: string) => {
     const itemForID = [...navigationHistory, ...routeItems].find((item) => item.id === id);
@@ -130,6 +133,16 @@ function UrlSelect({
     getNameFromId,
   };
 
+  // Compute combinedItems inline
+  const combinedItems = React.useMemo(() => {
+    const routesNotInHistory = differenceBy(
+      routeItems,
+      navigationHistory,
+      (item: NavigationHistoryItem) => item.displayName
+    );
+    return [...navigationHistory, ...routesNotInHistory];
+  }, [navigationHistory, routeItems]);
+
   // Refresh the input value when the navigation history changes
   useEffect(() => {
     setInputValue(navigationHistory[0]?.displayName ?? "/");
@@ -145,18 +158,7 @@ function UrlSelect({
     dropdownItemsRef.current = allDropdownItems.map(
       (_, i) => dropdownItemsRef.current[i] || document.createElement("div")
     );
-  }, [allItems, filteredItems]);
-
-  // Update the combined recent/indexed route list
-  useEffect(() => {
-    const routesNotInHistory = differenceBy(
-      routeItems,
-      navigationHistory,
-      (item: NavigationHistoryItem) => item.displayName
-    );
-    const combinedItems = [...navigationHistory, ...routesNotInHistory];
-    setAllItems(combinedItems);
-  }, [inputValue, navigationHistory[0]?.id]);
+  }, [filteredItems, filteredOutItems, dropdownOnly]);
 
   // Update the filtered items based on the input value
   useEffect(() => {
@@ -165,12 +167,12 @@ function UrlSelect({
       return;
     }
     const inputValueLowerCase = inputValue?.toLowerCase();
-    const [filtered, filteredOut] = partition(allItems, (item) =>
+    const [filtered, filteredOut] = partition(combinedItems, (item) =>
       item.displayName?.toLowerCase().includes(inputValueLowerCase)
     );
     setFilteredItems(filtered);
     setFilteredOutItems(filteredOut);
-  }, [inputValue, allItems, disabled]);
+  }, [inputValue, combinedItems, disabled]);
 
   // Update the dynamic segments to be highlighted/editable
   useEffect(() => {
