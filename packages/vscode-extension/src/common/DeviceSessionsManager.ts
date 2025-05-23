@@ -3,6 +3,7 @@ import { DeviceSessionState } from "./Project";
 
 export type DeviceSessionsManagerDelegate = {
   onActiveSessionStateChanged(state: DeviceSessionState): void;
+  onInitialized(): void;
 };
 
 export type SelectDeviceOptions = {
