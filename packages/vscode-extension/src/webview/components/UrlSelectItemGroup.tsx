@@ -5,7 +5,7 @@ import { NavigationHistoryItem } from "../../common/Project";
 
 interface UrlSelectItemGroupProps {
   items: NavigationHistoryItem[];
-  itemRefs: React.RefObject<HTMLDivElement>[];
+  itemList: HTMLDivElement[];
   refIndexOffset?: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   width: number;
@@ -21,7 +21,7 @@ interface UrlSelectItemGroupProps {
 
 function UrlSelectItemGroup({
   items,
-  itemRefs,
+  itemList,
   refIndexOffset = 0,
   textfieldRef,
   width,
@@ -36,7 +36,6 @@ function UrlSelectItemGroup({
         (item, index) =>
           item.displayName && (
             <UrlSelectItem
-              ref={itemRefs[index + refIndexOffset]}
               item={item}
               refIndex={index + refIndexOffset}
               key={item.id}
@@ -44,7 +43,7 @@ function UrlSelectItemGroup({
               onConfirm={onConfirm}
               onArrowPress={onArrowPress}
               getNameFromId={getNameFromId}
-              itemRefs={itemRefs}
+              itemList={itemList}
               textfieldRef={textfieldRef}
               noHighlight={noHighlight}
             />

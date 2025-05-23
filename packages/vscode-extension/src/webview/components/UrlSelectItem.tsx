@@ -6,7 +6,7 @@ interface UrlSelectItemProps {
   item: NavigationHistoryItem;
   width: number;
   style?: React.CSSProperties;
-  itemRefs: React.RefObject<HTMLDivElement>[];
+  itemList: HTMLDivElement[];
   refIndex: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   onConfirm: (item: NavigationHistoryItem) => void;
@@ -25,7 +25,7 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
       item,
       width,
       style,
-      itemRefs,
+      itemList,
       refIndex,
       textfieldRef,
       onConfirm,
@@ -130,7 +130,10 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
       <div
         {...props}
         tabIndex={0}
-        ref={forwardedRef}
+        ref={(ref) => {
+          if (ref === null) return;
+          itemList[refIndex] = ref;
+        }}
         className="url-select-item"
         style={style}
         onClick={() => onConfirm(item)}
@@ -140,8 +143,8 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
           } else {
             onArrowPress(
               e,
-              itemRefs[refIndex - 1]?.current as UrlSelectFocusable,
-              itemRefs[refIndex + 1]?.current as UrlSelectFocusable
+              itemList[refIndex - 1] as UrlSelectFocusable,
+              itemList[refIndex + 1] as UrlSelectFocusable
             );
           }
         }}>

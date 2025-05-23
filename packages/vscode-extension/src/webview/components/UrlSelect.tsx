@@ -34,12 +34,7 @@ function UrlSelect({
   const [currentDynamicSegment, setCurrentDynamicSegment] = React.useState<number>(0);
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
 
-  // This ref is used to store the list of selectable items in the dropdown
-  // to allow for keyboard navigation between them.
-  // We need to keep the array throughout the component lifecycle,
-  // so we have to store it in a ref, because otherwise it would be recreated
-  // on every render, and the refs would just be lost.
-  const dropdownItemsRef = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
+  const dropdownItemsRef = React.useRef<Array<HTMLDivElement>>([]);
   const textfieldRef = useRef<HTMLInputElement>(null);
   const { project } = useProject();
 
@@ -129,7 +124,7 @@ function UrlSelect({
   // Props for UrlSelectItems and UrlSelectItemGroups to reduce code duplication
   const commonItemProps = {
     width: textfieldWidth,
-    itemRefs: dropdownItemsRef.current,
+    itemList: dropdownItemsRef.current,
     textfieldRef: textfieldRef as React.RefObject<HTMLInputElement>,
     onArrowPress: focusBetweenItems,
     getNameFromId,
@@ -148,7 +143,7 @@ function UrlSelect({
       ...filteredOutItems,
     ];
     dropdownItemsRef.current = allDropdownItems.map(
-      (_, i) => dropdownItemsRef.current[i] || React.createRef<HTMLDivElement>()
+      (_, i) => dropdownItemsRef.current[i] || document.createElement("div")
     );
   }, [allItems, filteredItems]);
 
@@ -258,7 +253,7 @@ function UrlSelect({
                   focusBetweenItems(
                     e,
                     undefined,
-                    dropdownItemsRef.current[0]?.current as UrlSelectFocusable
+                    dropdownItemsRef.current[0] as UrlSelectFocusable
                   );
                 }
               }
@@ -301,7 +296,10 @@ function UrlSelect({
                 <div className="url-select-label">Recent paths:</div>
                 <UrlSelectItem
                   item={{ id: "/", displayName: "/" }}
-                  ref={dropdownItemsRef.current[0]}
+                  ref={(ref) => {
+                    if (ref === null) return;
+                    dropdownItemsRef.current[0] = ref;
+                  }}
                   refIndex={0}
                   onConfirm={() => {
                     setIsDropdownOpen(false);
