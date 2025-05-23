@@ -131,7 +131,9 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
         {...props}
         tabIndex={0}
         ref={(ref) => {
-          if (ref === null) return;
+          if (ref === null) {
+            return;
+          }
           itemList[refIndex] = ref;
         }}
         className="url-select-item"

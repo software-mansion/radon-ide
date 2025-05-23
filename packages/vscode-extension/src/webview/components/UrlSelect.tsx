@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef } from "react";
+import React, { useEffect, useLayoutEffect } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
 import { partition, differenceBy } from "lodash";
@@ -34,7 +34,7 @@ function UrlSelect({
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
 
   const dropdownItemsRef = React.useRef<Array<HTMLDivElement>>([]);
-  const textfieldRef = useRef<HTMLInputElement>(null);
+  const textfieldRef = React.useRef<HTMLInputElement>(null);
   const { project } = useProject();
 
   const routeItems = React.useMemo(
@@ -299,7 +299,9 @@ function UrlSelect({
                 <UrlSelectItem
                   item={{ id: "/", displayName: "/" }}
                   ref={(ref) => {
-                    if (ref === null) return;
+                    if (ref === null) {
+                      return;
+                    }
                     dropdownItemsRef.current[0] = ref;
                   }}
                   refIndex={0}
