@@ -295,7 +295,7 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-zoom-select-separator: var(--navy-light-40);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(
+  --swm-replay-overlay-background: linear-gradient(
     0deg,
     rgba(232, 232, 232, 0.9),
     rgba(185, 185, 185, 0.9)
@@ -471,7 +471,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-zoom-select-separator: var(--background-dark-50);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(
+  --swm-replay-overlay-background: linear-gradient(
     0deg,
     rgba(0, 0, 0, 1),
     rgba(0, 0, 0, 0.5),
@@ -659,10 +659,10 @@ body[data-use-code-theme="true"] {
   --swm-zoom-select-separator: var(--vscode-dropdown-border);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(
+  --swm-replay-overlay-background: linear-gradient(
     0deg,
-    rgba(232, 232, 232, 0.9),
-    rgba(185, 185, 185, 0.9)
+    var(--vscode-editor-foldBackground),
+    var(--vscode-widget-shadow)
   );
 
   --swm-replay-len-select: var(--swm-default-text);
