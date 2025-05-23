@@ -265,6 +265,9 @@ export class DeviceSession
       this.emitStateChange();
     });
     devtools.onEvent("RNIDE_fastRefreshComplete", () => {
+      if (this.status !== "refreshing") {
+        return;
+      }
       this.status = "running";
       this.emitStateChange();
     });
