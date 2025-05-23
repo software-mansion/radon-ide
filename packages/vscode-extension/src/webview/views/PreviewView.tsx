@@ -85,6 +85,7 @@ function PreviewView() {
   const { showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
+  const [isInspectorActive, setIsInspectorActive] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
   const zoomLevel = projectState.previewZoom ?? "Fit";
@@ -114,6 +115,8 @@ function PreviewView() {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsInspecting(false);
+        setIsInspectorActive(false);
+        resetInspector();
       }
     };
     document.addEventListener("keydown", disableInspectorOnEscape, false);
@@ -180,6 +183,7 @@ function PreviewView() {
   }
 
   function resetInspector() {
+    setIsInspectorActive(false);
     setInspectFrame(null);
     setInspectStackData(null);
   }
@@ -268,6 +272,7 @@ function PreviewView() {
           key={selectedDevice.id}
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
+          resetInspector={resetInspector}
           inspectFrame={inspectFrame}
           setInspectFrame={setInspectFrame}
           setInspectStackData={setInspectStackData}
@@ -295,17 +300,30 @@ function PreviewView() {
               setInspectFrame(item.frame);
             }
           }}
-          onCancel={() => resetInspector()}
+          onCancel={() => {
+            setIsInspecting(false);
+            resetInspector();
+          }}
         />
       )}
 
       <div className="button-group-bottom">
         <IconButton
-          active={isInspecting}
+          active={isInspectorActive}
           tooltip={{
             label: "Select an element to inspect it",
           }}
-          onClick={() => setIsInspecting(!isInspecting)}
+          onClick={() => {
+            if (isInspecting && isInspectorActive) {
+              setIsInspecting(false);
+              resetInspector();
+            } else if (!isInspectorActive) {
+              setIsInspecting(true);
+              setIsInspectorActive(true);
+            } else {
+              resetInspector();
+            }
+          }}
           disabled={hasNoDevices}>
           <span className="codicon codicon-inspect" />
         </IconButton>
