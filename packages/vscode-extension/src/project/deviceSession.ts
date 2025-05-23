@@ -22,7 +22,7 @@ import {
   ToolsState,
   ProfilingState,
   NavigationHistoryItem,
-  Route,
+  NavigationRoute,
   DeviceSessionStatus,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
@@ -78,7 +78,7 @@ export class DeviceSession
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
   private navigationHistory: NavigationHistoryItem[] = [];
-  private navigationRouteList: Route[] = [];
+  private navigationRouteList: NavigationRoute[] = [];
   private navigationHomeTarget: NavigationHistoryItem | undefined;
   private logCounter = 0;
   private isDebuggerPaused = false;
@@ -259,7 +259,7 @@ export class DeviceSession
       ].slice(0, MAX_URL_HISTORY_SIZE);
       this.emitStateChange();
     });
-    devtools.onEvent("RNIDE_navigationRouteListUpdated", (payload: Route[]) => {
+    devtools.onEvent("RNIDE_navigationRouteListUpdated", (payload: NavigationRoute[]) => {
       this.navigationRouteList = payload;
       this.emitStateChange();
     });

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useRef } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
 import { partition, differenceBy } from "lodash";
@@ -6,14 +6,14 @@ import UrlSelectItem from "./UrlSelectItem";
 import UrlSelectItemGroup from "./UrlSelectItemGroup";
 import "./UrlSelect.css";
 import { useProject } from "../providers/ProjectProvider";
-import { NavigationHistoryItem, Route } from "../../common/Project";
+import { NavigationHistoryItem, NavigationRoute } from "../../common/Project";
 
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
 interface UrlSelectProps {
   onValueChange: (newValue: string) => void;
   navigationHistory: NavigationHistoryItem[];
-  routeList: Route[];
+  routeList: NavigationRoute[];
   disabled?: boolean;
   dropdownOnly?: boolean;
 }
@@ -33,10 +33,15 @@ function UrlSelect({
   const [dynamicSegmentNames, setDynamicSegmentNames] = React.useState<string[]>([]);
   const [currentDynamicSegment, setCurrentDynamicSegment] = React.useState<number>(0);
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
-  const textfieldRef = useRef<HTMLInputElement>(null);
 
-  const itemsRef = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
-  const { project, projectState } = useProject();
+  // This ref is used to store the list of selectable items in the dropdown
+  // to allow for keyboard navigation between them.
+  // We need to keep the array throughout the component lifecycle,
+  // so we have to store it in a ref, because otherwise it would be recreated
+  // on every render, and the refs would just be lost.
+  const dropdownItemsRef = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
+  const textfieldRef = useRef<HTMLInputElement>(null);
+  const { project } = useProject();
 
   const routeItems = routeList.map((route) => ({
     id: route.path,
@@ -98,7 +103,7 @@ function UrlSelect({
     }
   };
 
-  const navigateBetweenItems = (
+  const focusBetweenItems = (
     e: React.KeyboardEvent,
     prev?: UrlSelectFocusable,
     next?: UrlSelectFocusable
@@ -124,33 +129,37 @@ function UrlSelect({
   // Props for UrlSelectItems and UrlSelectItemGroups to reduce code duplication
   const commonItemProps = {
     width: textfieldWidth,
-    itemsRef: itemsRef.current,
+    itemRefs: dropdownItemsRef.current,
     textfieldRef: textfieldRef as React.RefObject<HTMLInputElement>,
-    onNavigate: navigateBetweenItems,
+    onArrowPress: focusBetweenItems,
     getNameFromId,
   };
 
+  // Refresh the input value when the navigation history changes
   useEffect(() => {
-    setInputValue(navigationHistory[0]?.displayName ?? "");
+    setInputValue(navigationHistory[0]?.displayName ?? "/");
   }, [navigationHistory[0]?.id]);
 
-  // Update the itemsRef to ensure all items are focused correctly
+  // Update the dropdownItemsRef to ensure all items are focused correctly
   useEffect(() => {
-    itemsRef.current = [
-      ...(dropdownOnly ? [{ id: "/", name: "/" }] : []),
+    const allDropdownItems = [
+      ...(dropdownOnly ? [{ id: "/", name: "/" }] : []), // Add the home item if there's no Router
       ...filteredItems,
       ...filteredOutItems,
-    ].map((_, i) => itemsRef.current[i] || React.createRef<HTMLDivElement>());
+    ];
+    dropdownItemsRef.current = allDropdownItems.map(
+      (_, i) => dropdownItemsRef.current[i] || React.createRef<HTMLDivElement>()
+    );
   }, [allItems, filteredItems]);
 
   // Update the combined recent/indexed route list
   useEffect(() => {
-    const routesNotInRecent = differenceBy(
+    const routesNotInHistory = differenceBy(
       routeItems,
       navigationHistory,
       (item: NavigationHistoryItem) => item.displayName
     );
-    const combinedItems = [...navigationHistory, ...routesNotInRecent];
+    const combinedItems = [...navigationHistory, ...routesNotInHistory];
     setAllItems(combinedItems);
   }, [inputValue, navigationHistory[0]?.id]);
 
@@ -193,7 +202,7 @@ function UrlSelect({
   // Hacky way to change the cursor style of a readonly input,
   // since the VscodeTextfield component doesn't provide any parts
   // or props, and according to the authors, it's not going to.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (textfieldRef.current && textfieldRef.current.shadowRoot) {
       const style = document.createElement("style");
       style.textContent = "input[readonly] { cursor: text !important; }";
@@ -246,10 +255,10 @@ function UrlSelect({
               }
               if (e.key === "ArrowDown") {
                 if (isDropdownOpen) {
-                  navigateBetweenItems(
+                  focusBetweenItems(
                     e,
                     undefined,
-                    itemsRef.current[0]?.current as UrlSelectFocusable
+                    dropdownItemsRef.current[0]?.current as UrlSelectFocusable
                   );
                 }
               }
@@ -292,12 +301,12 @@ function UrlSelect({
                 <div className="url-select-label">Recent paths:</div>
                 <UrlSelectItem
                   item={{ id: "/", displayName: "/" }}
-                  ref={itemsRef.current[0]}
+                  ref={dropdownItemsRef.current[0]}
                   refIndex={0}
-                  onClose={() => {
-                    setInputValue("/");
+                  onConfirm={() => {
                     setIsDropdownOpen(false);
                     project.navigateHome();
+                    setInputValue("/");
                   }}
                   {...commonItemProps}
                   noHighlight={true}
@@ -306,7 +315,7 @@ function UrlSelect({
                 <UrlSelectItemGroup
                   items={navigationHistory}
                   refIndexOffset={1}
-                  onClose={closeDropdownWithValue}
+                  onConfirm={closeDropdownWithValue}
                   noHighlight={true}
                   {...commonItemProps}
                 />
@@ -319,7 +328,7 @@ function UrlSelect({
                     <UrlSelectItemGroup
                       items={filteredItems}
                       refIndexOffset={0}
-                      onClose={closeDropdownWithValue}
+                      onConfirm={closeDropdownWithValue}
                       {...commonItemProps}
                     />
                   </div>
@@ -334,7 +343,7 @@ function UrlSelect({
                     <UrlSelectItemGroup
                       items={filteredOutItems}
                       refIndexOffset={filteredItems.length}
-                      onClose={closeDropdownWithValue}
+                      onConfirm={closeDropdownWithValue}
                       {...commonItemProps}
                     />
                   </div>

@@ -5,12 +5,12 @@ import { NavigationHistoryItem } from "../../common/Project";
 
 interface UrlSelectItemGroupProps {
   items: NavigationHistoryItem[];
-  itemsRef: React.RefObject<HTMLDivElement>[];
+  itemRefs: React.RefObject<HTMLDivElement>[];
   refIndexOffset?: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   width: number;
-  onClose: (item: NavigationHistoryItem) => void;
-  onNavigate: (
+  onConfirm: (item: NavigationHistoryItem) => void;
+  onArrowPress: (
     e: React.KeyboardEvent,
     prev?: UrlSelectFocusable,
     next?: UrlSelectFocusable
@@ -19,32 +19,32 @@ interface UrlSelectItemGroupProps {
   noHighlight?: boolean;
 }
 
-const UrlSelectItemGroup: React.FC<UrlSelectItemGroupProps> = ({
+function UrlSelectItemGroup({
   items,
-  itemsRef,
+  itemRefs,
   refIndexOffset = 0,
   textfieldRef,
   width,
-  onClose,
-  onNavigate,
+  onConfirm,
+  onArrowPress,
   getNameFromId,
   noHighlight = false,
-}) => {
+}: UrlSelectItemGroupProps) {
   return (
     <>
       {items.map(
         (item, index) =>
           item.displayName && (
             <UrlSelectItem
-              ref={itemsRef[index + refIndexOffset]}
+              ref={itemRefs[index + refIndexOffset]}
               item={item}
               refIndex={index + refIndexOffset}
               key={item.id}
               width={width}
-              onClose={onClose}
-              onNavigate={onNavigate}
+              onConfirm={onConfirm}
+              onArrowPress={onArrowPress}
               getNameFromId={getNameFromId}
-              itemsRef={itemsRef}
+              itemRefs={itemRefs}
               textfieldRef={textfieldRef}
               noHighlight={noHighlight}
             />
@@ -52,6 +52,6 @@ const UrlSelectItemGroup: React.FC<UrlSelectItemGroupProps> = ({
       )}
     </>
   );
-};
+}
 
 export default UrlSelectItemGroup;

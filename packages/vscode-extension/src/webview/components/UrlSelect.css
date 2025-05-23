@@ -119,10 +119,8 @@
   color: var(--swm-disabled-text);
 }
 
-@media (width <= 325px) {
-  .url-select-wrapper {
-    display: none;
-    opacity: 0;
-    pointer-events: none;
+@media (height <= 450px) {
+  .url-select-viewport {
+    max-height: 50vh;
   }
 }

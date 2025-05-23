@@ -4,7 +4,7 @@ import fs from "fs";
 import os from "os";
 import { Disposable, Uri } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
-import { Route } from "../common/Project";
+import { NavigationRoute } from "../common/Project";
 import { Logger } from "../Logger";
 import {
   createBridge,
@@ -33,7 +33,7 @@ export const DEVTOOLS_EVENTS = [
 export interface DevtoolsEvents {
   RNIDE_appReady: [];
   RNIDE_navigationChanged: [{ displayName: string; id: string }];
-  RNIDE_navigationRouteListUpdated: [Route[]];
+  RNIDE_navigationRouteListUpdated: [NavigationRoute[]];
   RNIDE_fastRefreshStarted: [];
   RNIDE_fastRefreshComplete: [];
   RNIDE_openPreviewResult: [{ previewId: string; error?: string }];

@@ -6,11 +6,11 @@ interface UrlSelectItemProps {
   item: NavigationHistoryItem;
   width: number;
   style?: React.CSSProperties;
-  itemsRef: React.RefObject<HTMLDivElement>[];
+  itemRefs: React.RefObject<HTMLDivElement>[];
   refIndex: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
-  onClose: (item: NavigationHistoryItem) => void;
-  onNavigate: (
+  onConfirm: (item: NavigationHistoryItem) => void;
+  onArrowPress: (
     e: React.KeyboardEvent,
     prev?: UrlSelectFocusable,
     next?: UrlSelectFocusable
@@ -25,11 +25,11 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
       item,
       width,
       style,
-      itemsRef,
+      itemRefs,
       refIndex,
       textfieldRef,
-      onClose,
-      onNavigate,
+      onConfirm,
+      onArrowPress,
       getNameFromId,
       noHighlight = false,
       ...props
@@ -133,15 +133,15 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
         ref={forwardedRef}
         className="url-select-item"
         style={style}
-        onClick={() => onClose(item)}
+        onClick={() => onConfirm(item)}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            onClose(item);
+            onConfirm(item);
           } else {
-            onNavigate(
+            onArrowPress(
               e,
-              itemsRef[refIndex - 1]?.current as UrlSelectFocusable,
-              itemsRef[refIndex + 1]?.current as UrlSelectFocusable
+              itemRefs[refIndex - 1]?.current as UrlSelectFocusable,
+              itemRefs[refIndex + 1]?.current as UrlSelectFocusable
             );
           }
         }}>

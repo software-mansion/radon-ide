@@ -40,10 +40,10 @@ export type NavigationHistoryItem = {
   id: string;
 };
 
-export type Route = {
+export type NavigationRoute = {
   path: string;
   filePath: string;
-  children: Route[];
+  children: NavigationRoute[];
   dynamic: { name: string; deep: boolean; notFound?: boolean }[] | null;
   type: string;
 };
@@ -67,7 +67,7 @@ export type DeviceSessionState = {
   profilingReactState: ProfilingState;
   profilingCPUState: ProfilingState;
   navigationHistory: NavigationHistoryItem[];
-  navigationRouteList: Route[];
+  navigationRouteList: NavigationRoute[];
   toolsState: ToolsState;
   isDebuggerPaused: boolean;
   logCounter: number;
