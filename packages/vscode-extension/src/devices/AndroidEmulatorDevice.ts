@@ -105,7 +105,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     // if user did not use the device before it might not have system_locales property
     // as en-US is the default locale, used by the system, when no setting is provided
     // we assume that no value in stdout is the same as en-US
-    if ((stdout ?? "en-US") === locale) {
+    if ((stdout ?? "en-US") === locale || stdout === "null") {
       return false;
     }
     return true;
