@@ -1,12 +1,9 @@
 import { useSyncExternalStore, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { store } from "expo-router/build/global-state/router-store.js";
+import { computeRouteIdentifier, extractNestedRouteList } from "./expo_router_helpers.js";
 
-function computeRouteIdentifier(pathname, params) {
-  return pathname + JSON.stringify(params);
-}
-
-function useRouterPluginMainHook({ onNavigationChange }) {
+function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();
   const routeInfo = useSyncExternalStore(
     store.subscribeToRootState,
@@ -22,6 +19,14 @@ function useRouterPluginMainHook({ onNavigationChange }) {
 
   const displayParams = new URLSearchParams(filteredParams).toString();
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
+
+  useEffect(() => {
+    if (!store.routeNode) {
+      return;
+    }
+    const routeList = extractNestedRouteList(store.routeNode);
+    onRouteListChange(routeList);
+  }, [store.routeNode]);
 
   useEffect(() => {
     onNavigationChange({

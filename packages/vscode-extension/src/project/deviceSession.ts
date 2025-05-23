@@ -22,6 +22,7 @@ import {
   ToolsState,
   ProfilingState,
   NavigationHistoryItem,
+  NavigationRoute,
   DeviceSessionStatus,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
@@ -76,6 +77,7 @@ export class DeviceSession
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
   private navigationHistory: NavigationHistoryItem[] = [];
+  private navigationRouteList: NavigationRoute[] = [];
   private navigationHomeTarget: NavigationHistoryItem | undefined;
   private logCounter = 0;
   private isDebuggerPaused = false;
@@ -124,6 +126,7 @@ export class DeviceSession
       profilingCPUState: this.profilingCPUState,
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
+      navigationRouteList: this.navigationRouteList,
       selectedDevice: this.device.deviceInfo,
       previewURL: this.previewURL,
       toolsState: this.toolsManager.getToolsState(),
@@ -251,6 +254,10 @@ export class DeviceSession
         payload,
         ...this.navigationHistory.filter((record) => record.id !== payload.id),
       ].slice(0, MAX_URL_HISTORY_SIZE);
+      this.emitStateChange();
+    });
+    devtools.onEvent("RNIDE_navigationRouteListUpdated", (payload: NavigationRoute[]) => {
+      this.navigationRouteList = payload;
       this.emitStateChange();
     });
     devtools.onEvent("RNIDE_fastRefreshStarted", () => {
@@ -914,9 +921,7 @@ export class DeviceSession
   }
 
   public navigateBack() {
-    if (this.navigationHistory.length > 1) {
-      this.devtools.send("RNIDE_openNavigation", { id: "__BACK__" });
-    }
+    this.devtools.send("RNIDE_openNavigation", { id: "__BACK__" });
   }
 
   public async openDevMenu() {

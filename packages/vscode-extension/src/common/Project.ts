@@ -40,6 +40,14 @@ export type NavigationHistoryItem = {
   id: string;
 };
 
+export type NavigationRoute = {
+  path: string;
+  filePath: string;
+  children: NavigationRoute[];
+  dynamic: { name: string; deep: boolean; notFound?: boolean }[] | null;
+  type: string;
+};
+
 export type DeviceSessionStatus =
   | "starting"
   | "running"
@@ -58,6 +66,7 @@ export type DeviceSessionState = {
   profilingReactState: ProfilingState;
   profilingCPUState: ProfilingState;
   navigationHistory: NavigationHistoryItem[];
+  navigationRouteList: NavigationRoute[];
   toolsState: ToolsState;
   isDebuggerPaused: boolean;
   logCounter: number;
@@ -75,6 +84,7 @@ export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
   profilingReactState: "stopped",
   profilingCPUState: "stopped",
   navigationHistory: [],
+  navigationRouteList: [],
   toolsState: {},
   isDebuggerPaused: false,
   logCounter: 0,

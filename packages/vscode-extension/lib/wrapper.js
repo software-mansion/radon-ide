@@ -214,9 +214,17 @@ export function AppWrapper({ children, initialProps, fabric }) {
     [devtoolsAgent]
   );
 
+  const handleRouteListChange = useCallback(
+    (routeList) => {
+      devtoolsAgent?._bridge.send("RNIDE_navigationRouteListUpdated", routeList);
+    },
+    [devtoolsAgent]
+  );
+
   const useNavigationMainHook = navigationPlugins[0]?.plugin.mainHook || emptyNavigationHook;
   const { requestNavigationChange } = useNavigationMainHook({
     onNavigationChange: handleNavigationChange,
+    onRouteListChange: handleRouteListChange,
   });
 
   const openPreview = useCallback(
