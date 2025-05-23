@@ -2,7 +2,7 @@ import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-
 import { EventEmitter } from "vscode";
 import { Minimatch } from "minimatch";
 import _ from "lodash";
-import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
+import { CDPProxyDelegate, IProtocolReply, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
 
@@ -128,7 +128,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public async handleDebuggerCommand(
     command: IProtocolCommand,
     tunnel: ProxyTunnel
-  ): Promise<IProtocolCommand> {
+  ): Promise<IProtocolCommand | IProtocolReply | undefined> {
     const { method } = command;
     switch (method) {
       case "Debugger.stepOver": {
@@ -165,6 +165,27 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
           command.params as Cdp.Debugger.SetBreakpointByUrlParams
         );
         return command;
+      }
+      case "Runtime.callFunctionOn": {
+        const callFunctionOnParams = command.params as Cdp.Runtime.CallFunctionOnParams;
+        if (
+          callFunctionOnParams.functionDeclaration.includes("Object.entries(this)") &&
+          callFunctionOnParams.objectId?.startsWith("-")
+        ) {
+          // We detect callFunctionOn that has Object.entries(this) and is called on an object
+          // with negative objectId.
+          // This is a workaround for a bug in Hermes where reading from globalThis.originalURLSearchParams
+          // causes the URLSearchParams object to no longer be usable and the process would crash on attempts
+          // to accessing things like URLSearchParams.has etc.
+          // The functionDeclaration that vscode-js-debug calls iterates over the values and effectively
+          // reads all the props. Since this only happens for objects in the global scope, we expect a negative
+          // objectId which indicates scopes in hermes.
+          // Finally, we replace the functionDeclaration with a dummy functon that simply returns an empty object.
+          // This workaround effectively disables the calls to vscode-js-debug `getStringyProps` on scope
+          // objects, but is has a minor consequence of certain scope properties not showing nice desriptions
+          // in the debugger's variable view.
+          callFunctionOnParams.functionDeclaration = `function(){ return {}; }`;
+        }
       }
     }
     return command;

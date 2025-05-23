@@ -53,6 +53,7 @@ export type DeviceSessionStatus =
   | "running"
   | "bootError"
   | "bundlingError"
+  | "debuggerPaused"
   | "refreshing"
   | "buildError";
 
@@ -68,7 +69,6 @@ export type DeviceSessionState = {
   navigationHistory: NavigationHistoryItem[];
   navigationRouteList: NavigationRoute[];
   toolsState: ToolsState;
-  isDebuggerPaused: boolean;
   logCounter: number;
   hasStaleBuildCache: boolean;
   isRecordingScreen: boolean;
@@ -86,7 +86,6 @@ export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
   navigationHistory: [],
   navigationRouteList: [],
   toolsState: {},
-  isDebuggerPaused: false,
   logCounter: 0,
   hasStaleBuildCache: false,
   isRecordingScreen: false,

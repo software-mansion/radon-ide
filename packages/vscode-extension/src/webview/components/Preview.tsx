@@ -93,7 +93,7 @@ function Preview({
   const hasBootError = projectStatus === "bootError";
   const hasBundlingError = projectStatus === "bundlingError";
 
-  const debugPaused = projectState.isDebuggerPaused;
+  const debugPaused = projectStatus === "debuggerPaused";
 
   const previewURL = projectState.previewURL;
 

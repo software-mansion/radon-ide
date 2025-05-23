@@ -80,7 +80,6 @@ export class DeviceSession
   private navigationRouteList: NavigationRoute[] = [];
   private navigationHomeTarget: NavigationHistoryItem | undefined;
   private logCounter = 0;
-  private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
   private isRecordingScreen = false;
 
@@ -130,7 +129,6 @@ export class DeviceSession
       selectedDevice: this.device.deviceInfo,
       previewURL: this.previewURL,
       toolsState: this.toolsManager.getToolsState(),
-      isDebuggerPaused: this.isDebuggerPaused,
       logCounter: this.logCounter,
       hasStaleBuildCache: this.hasStaleBuildCache,
       isRecordingScreen: this.isRecordingScreen,
@@ -195,16 +193,19 @@ export class DeviceSession
   };
 
   onDebuggerPaused = (event: DebugSessionCustomEvent): void => {
-    this.isDebuggerPaused = true;
+    this.status = "debuggerPaused";
     this.emitStateChange();
-
     if (this.isActive) {
       commands.executeCommand("workbench.view.debug");
     }
   };
 
   onDebuggerResumed = (event: DebugSessionCustomEvent): void => {
-    this.isDebuggerPaused = false;
+    const ignoredEvents = ["starting", "bundlingError"];
+    if (ignoredEvents.includes(this.status)) {
+      return;
+    }
+    this.status = "running";
     this.emitStateChange();
   };
 
@@ -225,7 +226,9 @@ export class DeviceSession
   onCacheStale = (platform: DevicePlatform) => {
     if (
       platform === this.device.platform &&
-      (this.status === "running" || this.status === "refreshing")
+      (this.status === "running" ||
+        this.status === "refreshing" ||
+        this.status === "debuggerPaused")
     ) {
       // we only consider "stale cache" in a non-error state that happens
       // after the launch phase if complete. Otherwsie, it may be a result of
