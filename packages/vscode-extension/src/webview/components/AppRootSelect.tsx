@@ -48,7 +48,7 @@ function AppRootSelect() {
         <Select.Value placeholder="No applications found">
           <div className="approot-select-value">
             <span className="codicon codicon-folder-opened" />
-            {selectedAppRootName}
+            <span className="approot-select-value-text">{selectedAppRootName}</span>
           </div>
         </Select.Value>
       </Select.Trigger>
