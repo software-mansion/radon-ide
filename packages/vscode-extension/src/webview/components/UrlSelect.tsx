@@ -148,16 +148,14 @@ function UrlSelect({
     setInputValue(navigationHistory[0]?.displayName ?? "/");
   }, [navigationHistory[0]?.id]);
 
-  // Update the dropdownItemsRef to ensure all items are focused correctly
+  // Update the dropdownItemsRef order when the filtered items change
   useEffect(() => {
     const allDropdownItems = [
       ...(dropdownOnly ? [{ id: "/", name: "/" }] : []), // Add the home item if there's no Router
       ...filteredItems,
       ...filteredOutItems,
     ];
-    dropdownItemsRef.current = allDropdownItems.map(
-      (_, i) => dropdownItemsRef.current[i] || document.createElement("div")
-    );
+    dropdownItemsRef.current = allDropdownItems.map((_, i) => dropdownItemsRef.current[i]);
   }, [filteredItems, filteredOutItems, dropdownOnly]);
 
   // Update the filtered items based on the input value
