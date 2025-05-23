@@ -265,7 +265,8 @@ export class DeviceSession
       this.emitStateChange();
     });
     devtools.onEvent("RNIDE_fastRefreshComplete", () => {
-      if (this.status !== "refreshing") {
+      const ignoredEvents = ["starting", "bundlingError"];
+      if (ignoredEvents.includes(this.status)) {
         return;
       }
       this.status = "running";
