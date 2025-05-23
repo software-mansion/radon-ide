@@ -1,8 +1,6 @@
 .approot-select-trigger {
   box-sizing: border-box;
-  /* display: flex; */
   flex-shrink: 2;
-  /* align-items: center; */
   padding: 0px 10px;
   font-size: 13px;
   line-height: 1;
