@@ -19,8 +19,7 @@ interface UrlSelectItemProps {
   noHighlight?: boolean;
 }
 
-const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSelectItemProps>>(
-  (
+function UrlSelectItem(
     {
       item,
       width,
@@ -33,9 +32,8 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
       getNameFromId,
       noHighlight = false,
       ...props
-    },
-    forwardedRef
-  ) => {
+    } : PropsWithChildren<UrlSelectItemProps>,
+  ) {
     // For readability, the substring that matches the search query is highlighted.
     // The dynamic segments from the routes are colored too, but need to be overridden
     // when the search query overlaps with them.
@@ -132,8 +130,8 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
         tabIndex={0}
         ref={(ref) => {
           if (ref === null) {
-            return;
-          }
+            return
+          };
           itemList[refIndex] = ref;
         }}
         className="url-select-item"
@@ -154,6 +152,5 @@ const UrlSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<UrlSele
       </div>
     );
   }
-);
 
 export default UrlSelectItem;

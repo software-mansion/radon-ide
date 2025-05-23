@@ -148,16 +148,6 @@ function UrlSelect({
     setInputValue(navigationHistory[0]?.displayName ?? "/");
   }, [navigationHistory[0]?.id]);
 
-  // Update the dropdownItemsRef order when the filtered items change
-  useEffect(() => {
-    const allDropdownItems = [
-      ...(dropdownOnly ? [{ id: "/", name: "/" }] : []), // Add the home item if there's no Router
-      ...filteredItems,
-      ...filteredOutItems,
-    ];
-    dropdownItemsRef.current = allDropdownItems.map((_, i) => dropdownItemsRef.current[i]);
-  }, [filteredItems, filteredOutItems, dropdownOnly]);
-
   // Update the filtered items based on the input value
   useEffect(() => {
     if (disabled) {
@@ -296,12 +286,6 @@ function UrlSelect({
                 <div className="url-select-label">Recent paths:</div>
                 <UrlSelectItem
                   item={{ id: "/", displayName: "/" }}
-                  ref={(ref) => {
-                    if (ref === null) {
-                      return;
-                    }
-                    dropdownItemsRef.current[0] = ref;
-                  }}
                   refIndex={0}
                   onConfirm={() => {
                     setIsDropdownOpen(false);
