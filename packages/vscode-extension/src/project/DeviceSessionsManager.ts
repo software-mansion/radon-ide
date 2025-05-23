@@ -88,6 +88,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
 
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
     this.updateSelectedSession(newDeviceSession);
+    this.deviceSessionManagerDelegate.onInitialized();
 
     if (killPreviousDeviceSession) {
       await this.terminatePreviousSessions();
@@ -121,6 +122,8 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
       }
     } finally {
       this.findingDevice = false;
+      // even if no device can be selected mark project as initialized
+      this.deviceSessionManagerDelegate.onInitialized();
     }
   };
 
