@@ -42,8 +42,8 @@ const InternalImports = {
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
   },
-  get updateInstrumentationOptions() {
-    return require("./instrumentation").updateInstrumentationOptions;
+  get setupRenderOutlinesPlugin() {
+    return require("./render_outlines").setup;
   },
 };
 
@@ -318,9 +318,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
         case "showStorybookStory":
           showStorybookStory(data.componentTitle, data.storyName);
           break;
-        case "updateInstrumentationOptions":
-          InternalImports.updateInstrumentationOptions(data);
-          break;
       }
     };
     inspectorBridge.addMessageListener(listener);
@@ -342,15 +339,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
       });
     };
 
-    InternalImports.updateInstrumentationOptions({
-      reportRenders: (blueprintOutlines) => {
-        inspectorBridge.sendMessage({
-          type: "rendersReported",
-          data: { blueprintOutlines },
-        });
-      },
-    });
-
+    InternalImports.setupRenderOutlinesPlugin();
     InternalImports.setupNetworkPlugin();
 
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();

@@ -22,8 +22,10 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
       })
     );
     this.devtoolsListeners.push(
-      this.inspectorBridge.onEvent("rendersReported", (payload) => {
-        this.eventEmitter.emit("rendersReported", payload);
+      this.inspectorBridge.onEvent("pluginMessage", ({ pluginId, type, data }) => {
+        if (pluginId === RENDER_OUTLINES_PLUGIN_ID && type === "rendersReported") {
+          this.eventEmitter.emit("rendersReported", data);
+        }
       })
     );
   }
@@ -47,9 +49,13 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
 
   setEnabled(isEnabled: boolean) {
     this.isEnabled = isEnabled;
-    this.inspectorBridge.sendPluginMessage("render-outlines", "updateInstrumentationOptions", {
-      isEnabled,
-    });
+    this.inspectorBridge.sendPluginMessage(
+      RENDER_OUTLINES_PLUGIN_ID,
+      "updateInstrumentationOptions",
+      {
+        isEnabled,
+      }
+    );
   }
 
   addEventListener<K extends keyof RenderOutlinesEventMap>(

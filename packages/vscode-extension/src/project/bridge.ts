@@ -10,13 +10,12 @@ export interface RadonInspectorBridgeEvents {
   openPreviewResult: [{ previewId: string; error?: string }];
   inspectData: [{ id: number }];
   devtoolPluginsChanged: [{ plugins: string[] }];
-  rendersReported: [any];
   pluginMessage: [{ pluginId: string; type: string; data: any }];
   isProfilingReact: [boolean];
 }
 
 export interface RadonInspectorBridge {
-  sendPluginMessage(scope: string, type: string, data: any): void;
+  sendPluginMessage(pluginId: string, type: string, data: any): void;
   sendInspectRequest(x: number, y: number, id: number, requestStack: boolean): void;
   sendOpenNavigationRequest(id: string): void;
   sendOpenPreviewRequest(previewId: string): void;
