@@ -1,0 +1,22 @@
+// const agent = require("./react_devtools_agent");
+const agent = globalThis.__radon_agent;
+
+const messageListeners = [];
+
+const inspectorBridge = {
+  sendMessage: (message) => {
+    agent.postMessage(message);
+  },
+  addMessageListener: (listener) => {
+    messageListeners.push(listener);
+  },
+  removeMessageListener: (listener) => {
+    messageListeners.splice(messageListeners.indexOf(listener), 1);
+  },
+};
+
+agent.onmessage = (message) => {
+  messageListeners.forEach((listener) => listener(message));
+};
+
+module.exports = inspectorBridge;

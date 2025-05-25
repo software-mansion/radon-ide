@@ -87,9 +87,9 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
 
     webview.html = generateWebviewContent(extensionContext, webview, extensionContext.extensionUri);
 
-    const devTools = IDE.getInstanceIfExists()?.project?.deviceSession?.devtools;
+    const inspectorBridge = IDE.getInstanceIfExists()?.project?.deviceSession?.inspectorBridge;
 
-    const listener = devTools?.onEvent("RNIDE_pluginMessage", (payload) => {
+    const listener = inspectorBridge?.onEvent("pluginMessage", (payload) => {
       if (payload.scope === REACT_QUERY_PLUGIN_ID) {
         const { scope, ...data } = payload;
         webview.postMessage({ scope, data });
@@ -97,7 +97,7 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
     });
 
     webview.onDidReceiveMessage((message) => {
-      devTools?.send("RNIDE_pluginMessage", message);
+      // inspectorBridge?.sendPluginMessage("RNIDE_pluginMessage", message); WTF!!!
     });
 
     webviewView.onDidChangeVisibility(() => {

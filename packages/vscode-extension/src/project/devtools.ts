@@ -13,36 +13,7 @@ import {
   Store,
   Wall,
 } from "../../third-party/react-devtools/headless";
-
-// Define event names as a const array to avoid duplication
-export const DEVTOOLS_EVENTS = [
-  "RNIDE_appReady",
-  "RNIDE_navigationChanged",
-  "RNIDE_navigationRouteListUpdated",
-  "RNIDE_fastRefreshStarted",
-  "RNIDE_fastRefreshComplete",
-  "RNIDE_openPreviewResult",
-  "RNIDE_inspectData",
-  "RNIDE_devtoolPluginsChanged",
-  "RNIDE_rendersReported",
-  "RNIDE_pluginMessage",
-  "RNIDE_isProfilingReact",
-] as const;
-
-// Define the payload types for each event
-export interface DevtoolsEvents {
-  RNIDE_appReady: [];
-  RNIDE_navigationChanged: [{ displayName: string; id: string }];
-  RNIDE_navigationRouteListUpdated: [NavigationRoute[]];
-  RNIDE_fastRefreshStarted: [];
-  RNIDE_fastRefreshComplete: [];
-  RNIDE_openPreviewResult: [{ previewId: string; error?: string }];
-  RNIDE_inspectData: [{ id: number }];
-  RNIDE_devtoolPluginsChanged: [{ plugins: string[] }];
-  RNIDE_rendersReported: [any];
-  RNIDE_pluginMessage: [{ scope: string; type: string; data: any }];
-  RNIDE_isProfilingReact: [boolean];
-}
+import { BaseInspectorBridge } from "./bridge";
 
 function filePathForProfile() {
   const fileName = `profile-${Date.now()}.reactprofile`;
@@ -50,12 +21,11 @@ function filePathForProfile() {
   return filePath;
 }
 
-export class Devtools implements Disposable {
+export class Devtools extends BaseInspectorBridge implements Disposable {
   private _port = 0;
   private server: any;
   private socket?: WebSocket;
   private startPromise: Promise<void> | undefined;
-  private listeners: Map<keyof DevtoolsEvents, Array<(...payload: any) => void>> = new Map();
   private store: Store | undefined;
 
   public get port() {
@@ -75,7 +45,7 @@ export class Devtools implements Disposable {
 
   public async appReady() {
     const { resolve, promise } = Promise.withResolvers<void>();
-    const listener = this.onEvent("RNIDE_appReady", () => {
+    const listener = this.onEvent("appReady", () => {
       resolve();
       listener.dispose();
     });
@@ -132,19 +102,15 @@ export class Devtools implements Disposable {
         }
       });
 
-      // Register bridge listeners for ALL custom event types
-      for (const event of DEVTOOLS_EVENTS) {
-        bridge.addListener(event, (payload) => {
-          this.listeners.get(event)?.forEach((listener) => listener(payload));
-        });
-      }
+      bridge.addListener("RNIDE_message", (payload: any) => {
+        const { type, data } = payload;
+        this.emitEvent(type, data);
+      });
 
       // Register for isProfiling event on the profiler store
       store.profilerStore.addListener("isProfiling", () => {
-        this.listeners
-          .get("RNIDE_isProfilingReact")
-          // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
-          ?.forEach((listener) => listener(store.profilerStore.isProfilingBasedOnUserInput));
+        // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
+        this.emitEvent("isProfilingReact", store.profilerStore.isProfilingBasedOnUserInput);
       });
     });
 
@@ -188,33 +154,7 @@ export class Devtools implements Disposable {
     this.server?.close();
   }
 
-  public send(event: string, payload?: any) {
-    this.socket?.send(JSON.stringify({ event, payload }));
-  }
-
-  public onEvent<K extends keyof DevtoolsEvents>(
-    eventName: K,
-    listener: (...payload: DevtoolsEvents[K]) => void
-  ): Disposable {
-    const listeners = this.listeners.get(eventName);
-    if (!listeners) {
-      this.listeners.set(eventName, [listener]);
-    } else {
-      const index = listeners.indexOf(listener);
-      if (index === -1) {
-        listeners.push(listener as (...payload: any) => void);
-      }
-    }
-    return {
-      dispose: () => {
-        const listenersToClean = this.listeners.get(eventName);
-        if (listenersToClean) {
-          const index = listenersToClean.indexOf(listener as (...payload: any) => void);
-          if (index !== -1) {
-            listenersToClean.splice(index, 1);
-          }
-        }
-      },
-    };
+  protected send(message: any) {
+    this.socket?.send(JSON.stringify({ event: "RNIDE_message", payload: message }));
   }
 }

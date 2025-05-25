@@ -1,6 +1,6 @@
 import { Disposable } from "vscode";
 import _ from "lodash";
-import { Devtools } from "./devtools";
+import { RadonInspectorBridge } from "./bridge";
 import { extensionContext } from "../utilities/extensionContext";
 import { ToolsState } from "../common/Project";
 import {
@@ -59,7 +59,7 @@ export class ToolsManager implements Disposable {
   private disposables: Disposable[] = [];
 
   public constructor(
-    public readonly devtools: Devtools,
+    public readonly inspectorBridge: RadonInspectorBridge,
     private readonly delegate: ToolsDelegate
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
@@ -70,12 +70,12 @@ export class ToolsManager implements Disposable {
     const reactQueryPlugin = createReactQueryDevtools();
     this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 
-    this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(devtools));
-    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(devtools));
-    this.plugins.set(RENDER_OUTLINES_PLUGIN_ID, new RenderOutlinesPlugin(devtools));
+    this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(inspectorBridge));
+    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(inspectorBridge));
+    this.plugins.set(RENDER_OUTLINES_PLUGIN_ID, new RenderOutlinesPlugin(inspectorBridge));
 
     this.disposables.push(
-      devtools.onEvent("RNIDE_devtoolPluginsChanged", (payload) => {
+      inspectorBridge.onEvent("devtoolPluginsChanged", (payload) => {
         // payload.plugins is a list of expo dev plugin names
         const availablePlugins = new Set(payload.plugins);
         let changed = false;

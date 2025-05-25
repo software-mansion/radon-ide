@@ -1,7 +1,7 @@
 import { commands, window, Webview, Disposable } from "vscode";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
-import { Devtools } from "../../project/devtools";
+import { RadonInspectorBridge } from "../../project/bridge";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
 
@@ -35,7 +35,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   private connectedWebviewListener?: Disposable;
   private devtoolsListeners: Disposable[] = [];
 
-  constructor(private readonly devtools: Devtools) {
+  constructor(private readonly inspectorBridge: RadonInspectorBridge) {
     initialize();
   }
 
@@ -43,7 +43,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     this.connectedWebviewListener?.dispose();
     this.connectedWebview = webview;
     this.connectedWebviewListener = webview.onDidReceiveMessage((message) => {
-      this.devtools.send("RNIDE_pluginMessage", { ...message, scope: REDUX_PLUGIN_ID });
+      this.inspectorBridge.sendPluginMessage(REDUX_PLUGIN_ID, message.type, message.data);
     });
   }
 
@@ -57,7 +57,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   activate() {
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
     this.devtoolsListeners.push(
-      this.devtools.onEvent("RNIDE_pluginMessage", (payload) => {
+      this.inspectorBridge.onEvent("pluginMessage", (payload) => {
         if (payload.scope === REDUX_PLUGIN_ID) {
           const { scope: _scope, ...data } = payload;
           this.connectedWebview?.postMessage({ scope: "RNIDE-redux-devtools", data });
@@ -65,7 +65,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
       })
     );
     this.devtoolsListeners.push(
-      this.devtools.onEvent("RNIDE_appReady", () => {
+      this.inspectorBridge.onEvent("appReady", () => {
         // Sometimes, the messaging channel (devtools) is established only after
         // the Redux store is created and after it sends the first message. In that
         // case, the "start" event never makes it to the webview.
