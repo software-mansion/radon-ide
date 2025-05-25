@@ -89,16 +89,14 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
 
     const inspectorBridge = IDE.getInstanceIfExists()?.project?.deviceSession?.inspectorBridge;
 
-    const listener = inspectorBridge?.onEvent("pluginMessage", (payload) => {
-      if (payload.pluginId === REACT_QUERY_PLUGIN_ID) {
-        const { scope, ...data } = payload;
-        webview.postMessage({ scope, data });
+    const listener = inspectorBridge?.onEvent("pluginMessage", ({ pluginId, type, data }) => {
+      if (pluginId === REACT_QUERY_PLUGIN_ID) {
+        webview.postMessage({ scope: pluginId, data: { data, type } });
       }
     });
 
     webview.onDidReceiveMessage((message) => {
-      console.log("MESSAGE", message);
-      // inspectorBridge?.sendPluginMessage("RNIDE_pluginMessage", message); WTF!!!
+      inspectorBridge?.sendPluginMessage(REACT_QUERY_PLUGIN_ID, message.type, message.data);
     });
 
     webviewView.onDidChangeVisibility(() => {
