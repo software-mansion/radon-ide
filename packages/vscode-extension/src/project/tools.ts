@@ -64,9 +64,9 @@ export class ToolsManager implements Disposable {
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
 
-    // for (const plugin of createExpoDevPluginTools()) {
-    //   this.plugins.set(plugin.id, plugin);
-    // }
+    for (const plugin of createExpoDevPluginTools()) {
+      this.plugins.set(plugin.id, plugin);
+    }
     const reactQueryPlugin = createReactQueryDevtools();
     this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 

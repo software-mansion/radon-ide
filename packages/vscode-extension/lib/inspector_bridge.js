@@ -1,7 +1,7 @@
 const agent = globalThis.__radon_agent;
 
 if (!agent) {
-  throw new Error("Radon connector agent is not installed");
+  throw new Error("Radon inspector bridge agent is not installed");
 }
 
 const messageListeners = [];
