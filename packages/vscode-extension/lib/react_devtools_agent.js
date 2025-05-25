@@ -37,5 +37,3 @@ if (hook.reactDevtoolsAgent) {
 }
 
 globalThis.__radon_agent = agent;
-
-module.exports = agent;

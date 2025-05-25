@@ -1,5 +1,8 @@
-// const agent = require("./react_devtools_agent");
 const agent = globalThis.__radon_agent;
+
+if (!agent) {
+  throw new Error("Radon connector agent is not installed");
+}
 
 const messageListeners = [];
 

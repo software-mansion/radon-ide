@@ -12,6 +12,7 @@ const {
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
 
+require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
 const inspectorBridge = require("./inspector_bridge");
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
@@ -204,12 +205,12 @@ export function AppWrapper({ children, initialProps, fabric }) {
     });
   });
 
-  const handleRouteListChange = useCallback(
-    (routeList) => {
-      devtoolsAgent?._bridge.send("RNIDE_navigationRouteListUpdated", routeList);
-    },
-    [devtoolsAgent]
-  );
+  const handleRouteListChange = useCallback((routeList) => {
+    inspectorBridge.sendMessage({
+      type: "navigationRouteListUpdated",
+      data: routeList,
+    });
+  }, []);
 
   const useNavigationMainHook = navigationPlugins[0]?.plugin.mainHook || emptyNavigationHook;
   const { requestNavigationChange } = useNavigationMainHook({
@@ -402,7 +403,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
       ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={() => {
-        // layoutCallback?.();
+        layoutCallback?.();
         setHasLayout(true);
       }}>
       {children}
