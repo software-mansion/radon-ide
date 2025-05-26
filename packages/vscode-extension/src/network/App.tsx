@@ -23,6 +23,9 @@ function App() {
       }
     }, 30);
 
+    handleResize();
+    handleResize.flush();
+
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
