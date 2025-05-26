@@ -10,9 +10,11 @@ enum EditorType {
   VSCODE = "vscode",
 }
 
+type InnerMcpEntries = { RadonAi?: Object; RadonAiLocal?: Object };
+
 type McpConfig = {
-  mcpServers?: { RadonAi?: Object }; // cursor
-  servers?: { RadonAi?: Object }; // vscode
+  mcpServers?: InnerMcpEntries; // cursor
+  servers?: InnerMcpEntries; // vscode
 };
 
 const VSCODE_DIR_PATH = ".vscode";
@@ -132,11 +134,23 @@ async function insertRadonEntry(incompleteConfig: McpConfig): Promise<boolean> {
     },
   };
 
+  const LOCAL_PORT = 21337;
+
+  const radonMcpLocalEntry = {
+    url: `http://localhost:${LOCAL_PORT}/sse`,
+    type: "sse",
+    headers: {
+      Authorization: "Bearer ${command:RNIDE.getLicenseToken}",
+    },
+  };
+
   if (incompleteConfig.servers) {
     incompleteConfig.servers.RadonAi = radonMcpEntry;
+    incompleteConfig.servers.RadonAiLocal = radonMcpLocalEntry;
     return true;
   } else if (incompleteConfig.mcpServers) {
     incompleteConfig.mcpServers.RadonAi = radonMcpEntry;
+    incompleteConfig.mcpServers.RadonAiLocal = radonMcpLocalEntry;
     return true;
   }
 
