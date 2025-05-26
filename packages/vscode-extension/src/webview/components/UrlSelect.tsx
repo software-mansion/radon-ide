@@ -35,7 +35,7 @@ function UrlSelect({
 
   const dropdownItemsRef = React.useRef<Array<HTMLDivElement>>([]);
   const textfieldRef = React.useRef<HTMLInputElement>(null);
-  const { project } = useProject();
+  const { project, projectState } = useProject();
 
   const routeItems = React.useMemo(
     () =>
@@ -142,6 +142,13 @@ function UrlSelect({
     );
     return [...navigationHistory, ...routesNotInHistory];
   }, [navigationHistory, routeItems]);
+
+  // Reset the input on app reload
+  useEffect(() => {
+    if (projectState.status === "starting") {
+      setInputValue("/");
+    }
+  }, [projectState.status]);
 
   // Refresh the input value when the navigation history changes
   useEffect(() => {
