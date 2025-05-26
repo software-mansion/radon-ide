@@ -56,6 +56,14 @@
   padding: 6px;
 }
 
+.approot-select-label {
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 25px;
+  color: var(--swm-device-select-label);
+  user-select: none;
+}
+
 .approot-select-scroll {
   display: flex;
   justify-content: center;
