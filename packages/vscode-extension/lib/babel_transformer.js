@@ -122,7 +122,10 @@ function transformWrapper({ filename, src, ...rest }) {
     if (version.startsWith("0.78") || version.startsWith("0.79")) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
-  } else if (isTransforming("node_modules/@tanstack/react-query/src/index.ts")) {
+  } else if (
+    isTransforming("node_modules/@tanstack/react-query/src/index.ts") ||
+    isTransforming("node_modules/@tanstack/react-query/build/lib/index.js")
+  ) {
     src = `require("__RNIDE_lib__/plugins/react-query-devtools.js");${src}`;
   } else if (isTransforming("/lib/rn-internals/rn-internals.js")) {
     const { version } = requireFromAppDir("react-native/package.json");
