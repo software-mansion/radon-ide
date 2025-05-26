@@ -1,5 +1,15 @@
+import path from "path";
+import fs from "fs";
 import _ from "lodash";
-import { commands, DebugSessionCustomEvent, Disposable, window } from "vscode";
+import {
+  commands,
+  DebugSessionCustomEvent,
+  Disposable,
+  extensions,
+  Uri,
+  window,
+  workspace,
+} from "vscode";
 import { MetroLauncher, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
 import { DeviceBase } from "../devices/DeviceBase";
@@ -216,6 +226,9 @@ export class DeviceSession
   onProfilingCPUStopped = (event: DebugSessionCustomEvent): void => {
     this.profilingCPUState = "stopped";
     this.emitStateChange();
+    if (event.body?.filePath) {
+      this.saveAndOpenCPUProfile(event.body.filePath);
+    }
   };
 
   //#endregion
@@ -784,6 +797,48 @@ export class DeviceSession
       Logger.debug("Connected to debugger, moving on...");
     } else {
       Logger.error("Couldn't connect to debugger");
+    }
+  }
+
+  private async saveAndOpenCPUProfile(tempFilePath: string) {
+    // Show save dialog to save the profile file to the workspace folder:
+    let defaultUri = Uri.file(tempFilePath);
+    const workspaceFolder = workspace.workspaceFolders?.[0];
+    if (workspaceFolder) {
+      defaultUri = Uri.file(path.join(workspaceFolder.uri.fsPath, path.basename(tempFilePath)));
+    }
+
+    const saveDialog = await window.showSaveDialog({
+      defaultUri,
+      filters: {
+        "CPU Profile": ["cpuprofile"],
+      },
+    });
+
+    if (saveDialog) {
+      await fs.promises.copyFile(tempFilePath, saveDialog.fsPath);
+      commands.executeCommand("vscode.open", Uri.file(saveDialog.fsPath));
+
+      // verify whether flame chart visualizer extension is installed
+      // flame chart visualizer is not necessary to open the cpuprofile file, but when it is installed,
+      // the user can use the flame button from cpuprofile view to visualize it differently
+      const flameChartExtension = extensions.getExtension("ms-vscode.vscode-js-profile-flame");
+      if (!flameChartExtension) {
+        const GO_TO_EXTENSION_BUTTON = "Go to Extension";
+        window
+          .showInformationMessage(
+            "Flame Chart Visualizer extension is not installed. It is recommended to install it for better profiling insights.",
+            GO_TO_EXTENSION_BUTTON
+          )
+          .then((action) => {
+            if (action === GO_TO_EXTENSION_BUTTON) {
+              commands.executeCommand(
+                "workbench.extensions.search",
+                "ms-vscode.vscode-js-profile-flame"
+              );
+            }
+          });
+      }
     }
   }
 
