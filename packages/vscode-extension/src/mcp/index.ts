@@ -125,12 +125,10 @@ async function insertRadonEntry(incompleteConfig: McpConfig): Promise<boolean> {
   }
 
   const radonMcpEntry = {
-    RadonAi: {
-      url: MCP_BACKEND_URL,
-      type: "sse",
-      headers: {
-        Authorization: "Bearer ${command:RNIDE.getLicenseToken}",
-      },
+    url: MCP_BACKEND_URL,
+    type: "sse",
+    headers: {
+      Authorization: "Bearer ${command:RNIDE.getLicenseToken}",
     },
   };
 
