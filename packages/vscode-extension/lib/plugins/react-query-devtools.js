@@ -1,9 +1,9 @@
 import { QueryClient } from "@tanstack/query-core";
 import { register } from "../expo_dev_plugins";
-import { AppExtensionProxy } from "./AppExtensionProxy";
+import { PluginMessageBridge } from "./PluginMessageBridge";
 
 function broadcastQueryClient(queryClient) {
-  const proxy = new AppExtensionProxy("react-query");
+  const proxy = new PluginMessageBridge("react-query");
 
   let transaction = false;
 
