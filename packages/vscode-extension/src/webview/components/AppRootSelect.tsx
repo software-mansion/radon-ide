@@ -16,6 +16,7 @@ function renderAppRoots(
 
   return (
     <Select.Group>
+      <Select.Label className="approot-select-label">Select project</Select.Label>
       {applicationRoots.map(({ path, displayName, name }) => (
         <RichSelectItem
           value={path}
