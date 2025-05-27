@@ -10,7 +10,7 @@ enum EditorType {
   VSCODE = "vscode",
 }
 
-type InnerMcpEntries = { RadonAi?: Object; RadonAiLocal?: Object };
+type InnerMcpEntries = { RadonAi?: object; RadonAiLocal?: object };
 
 type McpConfig = {
   mcpServers?: InnerMcpEntries; // cursor
