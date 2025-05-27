@@ -14,9 +14,7 @@ interface TextContent {
 type ToolResponse = Promise<
   | string
   | {
-      result: {
-        content: (ImageContent | TextContent)[];
-      };
+      content: (ImageContent | TextContent)[];
     }
 >;
 
@@ -36,19 +34,17 @@ function startMcpServer() {
     description: "Screenshots app development viewport.",
     execute: async (): ToolResponse => {
       return {
-        result: {
-          content: [
-            {
-              type: "text",
-              text: "This image displays a wonderful mediterrean villa and a paved road.",
-            },
-            {
-              type: "image",
-              data: "NY98/ydn91/qyWDh==", // gibberish
-              mimeType: "image/png",
-            },
-          ],
-        },
+        content: [
+          {
+            type: "text",
+            text: "This image displays a wonderful mediterrean villa and a paved road.",
+          },
+          {
+            type: "image",
+            data: "NY98/ydn91/qyWDh==", // gibberish
+            mimeType: "image/png",
+          },
+        ],
       };
     },
   });
