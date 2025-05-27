@@ -35,6 +35,8 @@ export type BuildErrorDescriptor = {
 
 export type ProfilingState = "stopped" | "profiling" | "saving";
 
+export type InspectorState = "disabled" | "inspecting" | "selected";
+
 export type NavigationHistoryItem = {
   displayName: string;
   id: string;

@@ -18,6 +18,7 @@ import {
   InspectDataStackItem,
   InspectStackData,
   ProfilingState,
+  InspectorState,
   ZoomLevelType,
 } from "../../common/Project";
 import { Platform, useUtils } from "../providers/UtilsProvider";
@@ -84,8 +85,11 @@ function PreviewView() {
     useProject();
   const { showDismissableError } = useUtils();
 
-  const [isInspecting, setIsInspecting] = useState(false);
-  const [isInspectorActive, setIsInspectorActive] = useState(false);
+  // The inspector can be in one of the following states:
+  // "disabled" - inspector is not active
+  // "inspecting" - inspector is active and inspecting an element
+  // "selected" - inspector is active with an element selected
+  const [inspectorState, setInspectorState] = useState<InspectorState>("disabled");
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
   const zoomLevel = projectState.previewZoom ?? "Fit";
@@ -114,9 +118,7 @@ function PreviewView() {
   useEffect(() => {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsInspecting(false);
-        setIsInspectorActive(false);
-        resetInspector();
+        setInspectorState("disabled");
       }
     };
     document.addEventListener("keydown", disableInspectorOnEscape, false);
@@ -125,6 +127,12 @@ function PreviewView() {
       document.removeEventListener("keydown", disableInspectorOnEscape, false);
     };
   }, []);
+
+  useEffect(() => {
+    if (inspectorState === "disabled") {
+      resetInspector();
+    }
+  }, [inspectorState]);
 
   useEffect(() => {
     if (isRecording) {
@@ -183,7 +191,7 @@ function PreviewView() {
   }
 
   function resetInspector() {
-    setIsInspectorActive(false);
+    setInspectorState("disabled");
     setInspectFrame(null);
     setInspectStackData(null);
   }
@@ -270,9 +278,8 @@ function PreviewView() {
       {selectedDevice && initialized ? (
         <Preview
           key={selectedDevice.id}
-          isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
-          resetInspector={resetInspector}
+          inspectorState={inspectorState}
+          setInspectorState={setInspectorState}
           inspectFrame={inspectFrame}
           setInspectFrame={setInspectFrame}
           setInspectStackData={setInspectStackData}
@@ -301,27 +308,28 @@ function PreviewView() {
             }
           }}
           onCancel={() => {
-            setIsInspecting(false);
-            resetInspector();
+            setInspectorState("disabled");
           }}
         />
       )}
 
       <div className="button-group-bottom">
         <IconButton
-          active={isInspectorActive}
+          active={inspectorState !== "disabled"}
           tooltip={{
             label: "Select an element to inspect it",
           }}
           onClick={() => {
-            if (isInspecting && isInspectorActive) {
-              setIsInspecting(false);
-              resetInspector();
-            } else if (!isInspectorActive) {
-              setIsInspecting(true);
-              setIsInspectorActive(true);
-            } else {
-              resetInspector();
+            switch (inspectorState) {
+              case "disabled":
+                setInspectorState("inspecting");
+                break;
+              case "inspecting":
+                setInspectorState("disabled");
+                break;
+              case "selected":
+                setInspectorState("disabled");
+                break;
             }
           }}
           disabled={hasNoDevices}>
