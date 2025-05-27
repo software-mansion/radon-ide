@@ -86,9 +86,9 @@ function PreviewView() {
   const { showDismissableError } = useUtils();
 
   // The inspector can be in one of the following states:
-  // "disabled" - inspector is not active
-  // "inspecting" - inspector is active and inspecting an element
-  // "selected" - inspector is active with an element selected
+  // "disabled" - inspector is not active, device is interactable
+  // "inspecting" - inspector is active and inspecting elements on hover
+  // "selected" - no more hover, but highlight is active on an element
   const [inspectorState, setInspectorState] = useState<InspectorState>("disabled");
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
