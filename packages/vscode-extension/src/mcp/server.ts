@@ -1,7 +1,8 @@
+import { readFileSync } from "fs";
 import { LiteMCP } from "litemcp";
 import { getOpenPort } from "../utilities/common";
 import { Logger } from "../Logger";
-
+import { IDE } from "../project/ide";
 interface ImageContent {
   type: "image";
   data: string;
@@ -35,15 +36,25 @@ async function startMcpServer() {
     name: "getScreenshot",
     description: "Screenshots app development viewport.",
     execute: async (): ToolResponse => {
+      const project = IDE.getInstanceIfExists()?.project;
+
+      if (!project || !project.deviceSession) {
+        return (
+          "Could not capture a screenshot!\n" +
+          "The development viewport device is likely turned off," +
+          "tell the user to turn on Radon IDE emulator before proceeding with a."
+        );
+      }
+
+      const screenshot = await project.deviceSession.captureScreenshot();
+
+      const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
+
       return {
         content: [
           {
-            type: "text",
-            text: "This image displays a wonderful mediterrean villa and a paved road.",
-          },
-          {
             type: "image",
-            data: "NY98/ydn91/qyWDh==", // gibberish
+            data: contents,
             mimeType: "image/png",
           },
         ],
