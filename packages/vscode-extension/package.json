@@ -773,6 +773,7 @@
     "fantasticon": "^3.0.0",
     "file-loader": "^6.2.0",
     "glob": "^7.1.6",
+    "litemcp": "^0.9.0",
     "lodash": "^4.17.21",
     "minimatch": "^9.0.4",
     "mocha": "^10.4.0",

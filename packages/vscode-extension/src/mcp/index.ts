@@ -173,7 +173,7 @@ function newMcpConfig(): McpConfig {
   };
 }
 
-export async function updateMcpConfig() {
+export async function updateMcpConfig(port: number) {
   let mcpConfig = {};
 
   try {

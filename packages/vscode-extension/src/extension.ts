@@ -35,6 +35,7 @@ import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebu
 import { Connector } from "./connect/Connector";
 import { updateMcpConfig } from "./mcp";
 import { getLicenseToken } from "./utilities/license";
+import { startLocalMcpServer } from "./mcp/server";
 
 const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
@@ -299,11 +300,14 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
+  // Starts local MCP server, todo: do not await
+  const mcpPort = await startLocalMcpServer();
+
   // You can configure the chat in package.json under the `chatParticipants` key
   registerChat(context);
 
   // Enables Radon AI tooling on editors utilizing MCP configs (e.g. Cursor, VSC Preview).
-  updateMcpConfig();
+  updateMcpConfig(mcpPort);
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
