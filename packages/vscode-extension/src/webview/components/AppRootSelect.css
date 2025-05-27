@@ -64,6 +64,10 @@
   user-select: none;
 }
 
+.approot-select-viewport .approot-select-item:last-child {
+  border-radius: 4px 4px 12px 12px;
+}
+
 .approot-select-scroll {
   display: flex;
   justify-content: center;

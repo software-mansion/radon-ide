@@ -83,6 +83,9 @@
   color: var(--swm-device-select-disabled-text);
   pointer-events: none;
 }
+.device-select-viewport .device-select-item:last-child {
+  border-radius: 4px 4px 12px 12px;
+}
 
 .device-select-label {
   padding: 0 10px;
