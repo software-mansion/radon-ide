@@ -22,7 +22,7 @@
     "workspaceContains:**/app.config.ts",
     "onWebviewPanel:RadonIDETabPanel"
   ],
-  "version": "1.7.0",
+  "version": "1.7.1",
   "engines": {
     "vscode": "^1.75.0"
   },
