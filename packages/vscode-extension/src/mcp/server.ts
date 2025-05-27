@@ -1,4 +1,6 @@
 import { LiteMCP } from "litemcp";
+import { getOpenPort } from "../utilities/common";
+import { Logger } from "../Logger";
 
 interface ImageContent {
   type: "image";
@@ -18,7 +20,7 @@ type ToolResponse = Promise<
     }
 >;
 
-function startMcpServer() {
+async function startMcpServer() {
   const server = new LiteMCP("RadonAiLocalServer", "1.0.0");
 
   server.addTool({
@@ -49,8 +51,9 @@ function startMcpServer() {
     },
   });
 
-  // todo: find a port programatically
-  const port = 21337;
+  const port = await getOpenPort();
+
+  Logger.info(`Starting local MCP server on port: ${port}`);
 
   // non-blocking, async
   server.start({
@@ -71,7 +74,7 @@ export async function startLocalMcpServer() {
     return runningPort;
   }
 
-  runningPort = startMcpServer();
+  runningPort = await startMcpServer();
 
   return runningPort;
 }
