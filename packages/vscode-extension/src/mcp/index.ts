@@ -105,13 +105,7 @@ async function writeMcpConfig(config: McpConfig) {
   const fsDirPath = path.join(folder.uri.fsPath, directoryPath);
   const fsPath = path.join(fsDirPath, MCP_FILE_NAME);
 
-  try {
-    await fs.mkdir(fsDirPath);
-    Logger.info(`MCP config info - Creating ${directoryPath} directory.`);
-  } catch {
-    // no-op - dir already exists
-    Logger.info(`MCP config info - Directory ${directoryPath} found.`);
-  }
+  await fs.mkdir(fsDirPath, { recursive: true });
 
   fs.writeFile(fsPath, jsonString).catch((err) => {
     if (err) {
@@ -120,12 +114,7 @@ async function writeMcpConfig(config: McpConfig) {
   });
 }
 
-async function insertRadonEntry(incompleteConfig: McpConfig): Promise<boolean> {
-  if (incompleteConfig.servers?.RadonAi || incompleteConfig.mcpServers?.RadonAi) {
-    Logger.info(`Valid MCP config already present.`);
-    return false;
-  }
-
+async function insertRadonEntry(incompleteConfig: McpConfig, port: number): Promise<boolean> {
   const radonMcpEntry = {
     url: MCP_BACKEND_URL,
     type: "sse",
@@ -134,14 +123,9 @@ async function insertRadonEntry(incompleteConfig: McpConfig): Promise<boolean> {
     },
   };
 
-  const LOCAL_PORT = 21337;
-
   const radonMcpLocalEntry = {
-    url: `http://localhost:${LOCAL_PORT}/sse`,
+    url: `http://localhost:${port}/sse`,
     type: "sse",
-    headers: {
-      Authorization: "Bearer ${command:RNIDE.getLicenseToken}",
-    },
   };
 
   if (incompleteConfig.servers) {
@@ -182,7 +166,7 @@ export async function updateMcpConfig(port: number) {
     mcpConfig = newMcpConfig();
   }
 
-  if (await insertRadonEntry(mcpConfig)) {
+  if (await insertRadonEntry(mcpConfig, port)) {
     writeMcpConfig(mcpConfig);
   }
 }
