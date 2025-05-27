@@ -295,7 +295,7 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-zoom-select-separator: var(--navy-light-40);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(
+  --swm-replay-overlay-background: linear-gradient(
     0deg,
     rgba(232, 232, 232, 0.9),
     rgba(185, 185, 185, 0.9)
@@ -471,7 +471,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-zoom-select-separator: var(--background-dark-50);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(
+  --swm-replay-overlay-background: linear-gradient(
     0deg,
     rgba(0, 0, 0, 1),
     rgba(0, 0, 0, 0.5),
@@ -575,7 +575,7 @@ body[data-use-code-theme="true"] {
 
   --swm-button-recording-on: var(--vscode-activityBarBadge-foreground);
   --swm-button-recording-on-background: var(--vscode-activityBarBadge-background);
-  --swm-button-replay-hover: var(--navy-light-transparent);
+  --swm-button-replay-hover: var(--swm-button-hover);
 
   /* Tooltip */
   --swm-tooltip-primary: var(--swm-default-text);
@@ -659,16 +659,16 @@ body[data-use-code-theme="true"] {
   --swm-zoom-select-separator: var(--vscode-dropdown-border);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(
+  --swm-replay-overlay-background: linear-gradient(
     0deg,
-    rgba(232, 232, 232, 0.9),
-    rgba(185, 185, 185, 0.9)
+    var(--vscode-editor-foldBackground),
+    var(--vscode-widget-shadow)
   );
 
-  --swm-replay-len-select: var(--swm-default-text);
-  --swm-replay-len-select-background: var(--grey-light-60);
-  --swm-replay-len-select-hover-background: var(--navy-light-transparent);
-  --swm-replay-len-select-highlighted-background: var(--grey-light-80);
+  --swm-replay-len-select: var(--swm-button);
+  --swm-replay-len-select-background: var(--swm-button-background);
+  --swm-replay-len-select-hover-background: var(--swm-button-hover);
+  --swm-replay-len-select-highlighted-background: var(--swm-button-selected-hover-background);
 
   /* Open Deep Link */
   --deep-link-history-border: var(--navy-light-10);

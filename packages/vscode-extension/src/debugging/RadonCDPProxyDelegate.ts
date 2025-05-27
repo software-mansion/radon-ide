@@ -53,6 +53,17 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return applicationCommand;
   }
 
+  private shouldSkipFile(sourceURL: string): boolean {
+    return this.ignoredPatterns.reduce((shouldSkip, p) => {
+      if (p.negate) {
+        // don't skip the file if some negated pattern matches it
+        return shouldSkip && !p.match(sourceURL);
+      } else {
+        return shouldSkip || p.match(sourceURL);
+      }
+    }, false);
+  }
+
   private shouldResumeImmediately(params: Cdp.Debugger.PausedEvent): boolean {
     if ((params.reason as string) === "other") {
       return false;
@@ -63,15 +74,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       lineNumber + 1,
       columnNumber ?? 0
     );
-    const shouldSkipFile = this.ignoredPatterns.reduce((shouldSkip, p) => {
-      if (p.negate) {
-        // don't skip the file if some negated pattern matches it
-        return shouldSkip && !p.match(sourceURL);
-      } else {
-        return shouldSkip || p.match(sourceURL);
-      }
-    }, false);
-    return shouldSkipFile;
+    return this.shouldSkipFile(sourceURL);
   }
 
   private handleDebuggerResumed(command: IProtocolCommand, tunnel: ProxyTunnel) {
@@ -296,6 +299,23 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       });
 
       stackTrace?.callFrames.splice(0, originalCallFrameIndex);
+    }
+
+    if (stackTrace) {
+      const filteredCallFrames = stackTrace?.callFrames.filter((frame) => {
+        const { scriptId, lineNumber, columnNumber } = frame;
+        const { sourceURL } = this.sourceMapRegistry.findOriginalPosition(
+          scriptId,
+          lineNumber + 1,
+          columnNumber ?? 0
+        );
+        return !this.shouldSkipFile(sourceURL);
+      });
+      if (filteredCallFrames.length > 0) {
+        // we only filter frames if there's at least one frame left, otherwise we would still
+        // want some location information to be available so we keep the original one.
+        stackTrace.callFrames = filteredCallFrames;
+      }
     }
 
     this.consoleAPICalledEmitter.fire({});

@@ -3,11 +3,11 @@ import * as Select from "@radix-ui/react-select";
 import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
 import "./DeviceSelect.css";
 import "./shared/Dropdown.css";
-import Tooltip from "./shared/Tooltip";
 import { useProject } from "../providers/ProjectProvider";
 import { useDevices } from "../providers/DevicesProvider";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
+import RichSelectItem from "./shared/RichSelectItem";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -15,55 +15,6 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
       <Select.ItemText>{children}</Select.ItemText>
     </Select.Item>
   )
-);
-
-interface RichSelectItemProps extends Select.SelectItemProps {
-  icon: React.ReactNode;
-  title: string;
-  subtitle?: string;
-  isSelected?: boolean;
-}
-
-const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSelectItemProps>>(
-  ({ children, icon, title, subtitle, isSelected, ...props }, forwardedRef) => {
-    function renderSubtitle() {
-      if (!subtitle) {
-        return null;
-      }
-
-      const subtitleComponent = <div className="device-select-rich-item-subtitle">{subtitle}</div>;
-      const isLongText = subtitle.length > 20;
-
-      if (isLongText) {
-        <Tooltip label={subtitle} side="right" instant>
-          {subtitleComponent}
-        </Tooltip>;
-      }
-      return subtitleComponent;
-    }
-
-    return (
-      <Select.Item className="device-select-rich-item" {...props} ref={forwardedRef}>
-        <div
-          className={
-            isSelected ? "device-select-rich-item-icon-selected" : "device-select-rich-item-icon"
-          }>
-          {icon}
-        </div>
-        <div>
-          {isSelected ? (
-            <div className="device-select-rich-item-title">
-              <b>{title}</b>
-            </div>
-          ) : (
-            <div className="device-select-rich-item-title">{title}</div>
-          )}
-
-          {renderSubtitle()}
-        </div>
-      </Select.Item>
-    );
-  }
 );
 
 function renderDevices(
@@ -118,7 +69,7 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = devices.find((d) => d.id === value);
       if (deviceInfo) {
-        deviceSessionsManager.selectDevice(deviceInfo);
+        deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
       }
     }
   };
@@ -131,7 +82,7 @@ function DeviceSelect() {
         <Select.Value placeholder="No devices found">
           <div className="device-select-value">
             <span className="codicon codicon-device-mobile" />
-            {selectedDevice?.displayName}
+            <span className="device-select-value-text">{selectedDevice?.displayName}</span>
           </div>
         </Select.Value>
       </Select.Trigger>
@@ -140,6 +91,7 @@ function DeviceSelect() {
         <Select.Content
           className="device-select-content"
           position="popper"
+          align="center"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <Select.ScrollUpButton className="device-select-scroll">
             <span className="codicon codicon-chevron-up" />

@@ -1,9 +1,9 @@
-import { DeviceSessionDelegate } from "../project/deviceSession";
 import { DeviceInfo } from "./DeviceManager";
+import { DeviceSessionState } from "./Project";
 
-export type DeviceSessionsManagerDelegate = DeviceSessionDelegate & {
-  onDeviceSelected: (deviceInfo: DeviceInfo, previewURL?: string) => void;
-  onReloadRequested: (type: ReloadAction) => void;
+export type DeviceSessionsManagerDelegate = {
+  onActiveSessionStateChanged(state: DeviceSessionState): void;
+  onInitialized(): void;
 };
 
 export type SelectDeviceOptions = {
@@ -20,7 +20,9 @@ export type ReloadAction =
   | "reloadJs"; // refetch JS scripts from metro
 
 export interface DeviceSessionsManagerInterface {
-  reload(type: ReloadAction): Promise<boolean>;
-  stopDevice(deviceId: string): Promise<boolean>;
-  selectDevice(deviceInfo: DeviceInfo, selectDeviceOptions?: SelectDeviceOptions): Promise<boolean>;
+  reloadCurrentSession(type: ReloadAction): Promise<boolean>;
+  startOrActivateSessionForDevice(
+    deviceInfo: DeviceInfo,
+    selectDeviceOptions?: SelectDeviceOptions
+  ): Promise<void>;
 }

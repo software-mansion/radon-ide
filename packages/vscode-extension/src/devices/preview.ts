@@ -21,6 +21,7 @@ export class Preview implements Disposable {
   private subprocess?: ChildProcess;
   private tokenChangeListener?: Disposable;
   public streamURL?: string;
+  private replaysStarted = false;
 
   constructor(private args: string[]) {}
 
@@ -167,10 +168,17 @@ export class Preview implements Disposable {
   }
 
   public startReplays() {
-    this.sendCommandOrThrow(`video replay start -m -b 50\n`); // 50MB buffer for in-memory video
+    if (!this.replaysStarted) {
+      // starting replay if one was already started will crop the previous buffer
+      // we therefore need to check if a replay is already started
+      this.replaysStarted = true;
+      this.sendCommandOrThrow(`video replay start -m -b 50\n`); // 50MB buffer for in-memory video
+    }
   }
 
   public stopReplays() {
+    // we don't need to check if replay was already stopped because the stop command is idempotent
+    this.replaysStarted = false;
     this.sendCommandOrThrow(`video replay stop\n`);
   }
 

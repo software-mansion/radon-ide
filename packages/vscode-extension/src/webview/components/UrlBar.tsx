@@ -1,6 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
 import { useProject } from "../providers/ProjectProvider";
-import UrlSelect, { UrlItem } from "./UrlSelect";
+import UrlSelect from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
 import { useDependencies } from "../providers/DependenciesProvider";
@@ -10,19 +9,19 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
   const { deviceSessionsManager } = useDevices();
   return (
     <IconButtonWithOptions
-      onClick={() => deviceSessionsManager.reload("autoReload")}
+      onClick={() => deviceSessionsManager.reloadCurrentSession("autoReload")}
       tooltip={{
         label: "Reload the app",
         side: "bottom",
       }}
       disabled={disabled}
       options={{
-        "Reload JS": () => deviceSessionsManager.reload("reloadJs"),
-        "Restart app process": () => deviceSessionsManager.reload("restartProcess"),
-        "Reinstall app": () => deviceSessionsManager.reload("reinstall"),
-        "Clear Metro cache": () => deviceSessionsManager.reload("clearMetro"),
-        "Reboot IDE": () => deviceSessionsManager.reload("reboot"),
-        "Clean rebuild": () => deviceSessionsManager.reload("rebuild"),
+        "Reload JS": () => deviceSessionsManager.reloadCurrentSession("reloadJs"),
+        "Restart app process": () => deviceSessionsManager.reloadCurrentSession("restartProcess"),
+        "Reinstall app": () => deviceSessionsManager.reloadCurrentSession("reinstall"),
+        "Clear Metro cache": () => deviceSessionsManager.reloadCurrentSession("clearMetro"),
+        "Reboot IDE": () => deviceSessionsManager.reloadCurrentSession("reboot"),
+        "Clean rebuild": () => deviceSessionsManager.reloadCurrentSession("rebuild"),
       }}>
       <span className="codicon codicon-refresh" />
     </IconButtonWithOptions>
@@ -33,57 +32,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const { project, projectState } = useProject();
   const { dependencies } = useDependencies();
 
-  const MAX_URL_HISTORY_SIZE = 20;
-  const MAX_RECENT_URL_SIZE = 5;
-
-  const [backNavigationPath, setBackNavigationPath] = useState<string>("");
-  const [urlList, setUrlList] = useState<UrlItem[]>([]);
-  const [recentUrlList, setRecentUrlList] = useState<UrlItem[]>([]);
-  const [urlHistory, setUrlHistory] = useState<string[]>([]);
-  const [urlSelectValue, setUrlSelectValue] = useState<string | undefined>(urlList[0]?.id || "/");
-
-  useEffect(() => {
-    function moveAsMostRecent(urls: UrlItem[], newUrl: UrlItem) {
-      return [newUrl, ...urls.filter((record) => record.id !== newUrl.id)];
-    }
-
-    function handleNavigationChanged(navigationData: { displayName: string; id: string }) {
-      if (backNavigationPath && backNavigationPath !== navigationData.id) {
-        return;
-      }
-
-      const newRecord: UrlItem = {
-        name: navigationData.displayName,
-        id: navigationData.id,
-      };
-      const isNotInHistory = urlHistory.length === 0 || urlHistory[0] !== newRecord.id;
-
-      setUrlList((currentUrlList) => moveAsMostRecent(currentUrlList, newRecord));
-      setRecentUrlList((currentRecentUrlList) => {
-        const updatedRecentUrls = moveAsMostRecent(currentRecentUrlList, newRecord);
-        return updatedRecentUrls.slice(0, MAX_RECENT_URL_SIZE);
-      });
-
-      if (isNotInHistory) {
-        setUrlHistory((currentUrlHistoryList) => {
-          const updatedUrlHistory = [newRecord.id, ...currentUrlHistoryList];
-          return updatedUrlHistory.slice(0, MAX_URL_HISTORY_SIZE);
-        });
-      }
-      setBackNavigationPath("");
-    }
-
-    project.addListener("navigationChanged", handleNavigationChanged);
-    return () => {
-      project.removeListener("navigationChanged", handleNavigationChanged);
-    };
-  }, [recentUrlList, urlHistory, backNavigationPath]);
-
-  const sortedUrlList = useMemo(() => {
-    const sorted = [...urlList].sort((a, b) => a.name.localeCompare(b.name));
-    setUrlSelectValue(urlList[0]?.id);
-    return sorted;
-  }, [urlList]);
+  const navigationHistory = projectState.navigationHistory;
+  const routeList = projectState.navigationRouteList;
 
   const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
   const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
@@ -95,25 +45,13 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabledAlsoWhenStarting || !isExpoRouterProject || urlHistory.length < 2}
-        onClick={() => {
-          setUrlHistory((prevUrlHistory) => {
-            const newUrlHistory = prevUrlHistory.slice(1);
-            setBackNavigationPath(newUrlHistory[0]);
-            project.openNavigation(newUrlHistory[0]);
-            return newUrlHistory;
-          });
-        }}>
+        disabled={disabledAlsoWhenStarting || !isExpoRouterProject || navigationHistory.length < 2}
+        onClick={() => project.navigateBack()}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
       <ReloadButton disabled={disabled ?? false} />
       <IconButton
-        onClick={() => {
-          project.goHome("/{}");
-          if (!isExpoRouterProject) {
-            setUrlSelectValue("/"); // sets UrlSelect trigger to a placeholder
-          }
-        }}
+        onClick={() => project.navigateHome()}
         tooltip={{
           label: "Go to main screen",
           side: "bottom",
@@ -125,10 +63,11 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         onValueChange={(value: string) => {
           project.openNavigation(value);
         }}
-        recentItems={recentUrlList}
-        items={sortedUrlList}
-        value={urlSelectValue}
-        disabled={disabledAlsoWhenStarting || (!isExpoRouterProject && urlHistory.length < 1)}
+        navigationHistory={navigationHistory}
+        routeList={routeList}
+        disabled={
+          disabledAlsoWhenStarting || (!isExpoRouterProject && navigationHistory.length < 1)
+        }
         dropdownOnly={!isExpoRouterProject}
       />
     </>

@@ -25,7 +25,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
 
   const handleDeviceChange = async () => {
     if (!isSelected) {
-      deviceSessionsManager.selectDevice(deviceInfo);
+      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
     }
   };
 
@@ -91,7 +91,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
         </IconButton>
         <IconButton
           tooltip={{
-            label: `Remove device with it's ${
+            label: `Remove device with its ${
               deviceInfo.platform === DevicePlatform.IOS ? "runtime" : "system image"
             }`,
             side: "bottom",

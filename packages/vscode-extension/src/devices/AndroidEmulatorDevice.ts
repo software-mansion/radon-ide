@@ -104,8 +104,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
     // if user did not use the device before it might not have system_locales property
     // as en-US is the default locale, used by the system, when no setting is provided
-    // we assume that no value in stdout is the same as en-US
-    if ((stdout ?? "en-US") === locale) {
+    // we assume that no value in stdout is the same as en-US on some devices
+    // stdout is a string "null" instead of undefined so we need to handle it separately
+    if ((stdout ?? "en-US") === locale || stdout === "null") {
       return false;
     }
     return true;
@@ -244,10 +245,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return promise;
   }
 
-  async bootDevice(deviceSettings: DeviceSettings): Promise<void> {
+  async bootDevice(): Promise<void> {
     await this.internalBootDevice();
 
-    let shouldRestart = await this.changeSettings(deviceSettings);
+    let shouldRestart = await this.changeSettings(this.deviceSettings);
     if (shouldRestart) {
       await this.forcefullyResetDevice();
     }

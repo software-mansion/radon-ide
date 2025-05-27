@@ -1,12 +1,13 @@
 import { useSyncExternalStore, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { store } from "expo-router/src/global-state/router-store";
+import { computeRouteIdentifier, extractNestedRouteList } from "./expo_router_helpers.js";
 
 function computeRouteIdentifier(pathname, params) {
   return pathname + JSON.stringify(params);
 }
 
-function useRouterPluginMainHook({ onNavigationChange }) {
+function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();
   const routeInfo = useSyncExternalStore(
     store.subscribeToRootState,
@@ -21,6 +22,14 @@ function useRouterPluginMainHook({ onNavigationChange }) {
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ''}`;
 
   useEffect(() => {
+    if (!store.routeNode) {
+      return;
+    }
+    const routeList = extractNestedRouteList(store.routeNode);
+    onRouteListChange(routeList);
+  }, [store.routeNode]);
+
+  useEffect(() => {
     onNavigationChange({
       name: displayName,
       pathname,
@@ -30,6 +39,12 @@ function useRouterPluginMainHook({ onNavigationChange }) {
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {
+    if (pathname === "__BACK__") {
+      if (router.canGoBack()) {
+        router.back();
+      }
+      return;
+    }
     router.push(pathname);
     router.setParams(params);
   }

@@ -176,17 +176,15 @@ async function isPnpmModulesInstalled(workspacePath: string): Promise<boolean> {
     if (packages && packages.length === 0) {
       return false;
     }
-
-    // check whether each package has dependencies with a valid versions to prevent issues
+    // check whether each package has dependencies
     for (const pkg of packages) {
-      if (!pkg || !pkg.dependencies || Object.keys(pkg.dependencies).length === 0) {
+      if (
+        !pkg ||
+        (!pkg.dependencies && !pkg.unsavedDependencies) ||
+        (Object.keys(pkg.dependencies ?? {}).length === 0 &&
+          Object.keys(pkg.unsavedDependencies ?? {}).length === 0)
+      ) {
         return false;
-      }
-
-      for (const depInfo of Object.values<{ version: string }>(pkg.dependencies)) {
-        if (!depInfo || !depInfo.version) {
-          return false;
-        }
       }
     }
 
