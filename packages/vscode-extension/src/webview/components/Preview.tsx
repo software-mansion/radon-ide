@@ -16,6 +16,7 @@ import {
   InspectDataStackItem,
   ZoomLevelType,
   InspectStackData,
+  InspectorState,
   MultimediaData,
 } from "../../common/Project";
 import { useResizableProps } from "../hooks/useResizableProps";
@@ -35,8 +36,8 @@ function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
 }
 
 type Props = {
-  isInspecting: boolean;
-  setIsInspecting: (isInspecting: boolean) => void;
+  inspectorState: string;
+  setInspectorState: (inspectorState: InspectorState) => void;
   inspectFrame: Frame | null;
   setInspectFrame: (inspectFrame: Frame | null) => void;
   setInspectStackData: (inspectStackData: InspectStackData | null) => void;
@@ -63,8 +64,8 @@ function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
 }
 
 function Preview({
-  isInspecting,
-  setIsInspecting,
+  inspectorState,
+  setInspectorState,
   inspectFrame,
   setInspectFrame,
   setInspectStackData,
@@ -197,19 +198,15 @@ function Preview({
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
-  function resetInspector() {
-    setInspectFrame(null);
-    setInspectStackData(null);
-  }
 
   const shouldPreventInputEvents =
     debugPaused || projectStatus === "refreshing" || !showDevicePreview || !!replayData;
 
-  const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
+  const shouldPreventFromSendingTouch = inspectorState === "inspecting" || !!inspectFrame;
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isInspecting) {
+    if (inspectorState === "inspecting") {
       sendInspect(e, "Move", false);
     } else if (isMultiTouching) {
       setTouchPoint(getTouchPosition(e));
@@ -238,30 +235,31 @@ function Preview({
   function onMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     wrapperDivRef.current!.focus();
-
-    if (isInspecting) {
-      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
-    } else if (!inspectFrame) {
-      if (e.button === 2) {
-        sendInspect(e, "RightButtonDown", true);
-      } else if (isMultiTouching) {
-        setIsPressing(true);
-        sendMultiTouchForEvent(e, "Down");
-      } else {
-        setIsPressing(true);
-        sendTouch(e, "Down");
-      }
+    switch (inspectorState) {
+      case "inspecting":
+        sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
+        setInspectorState("selected");
+        break;
+      case "selected":
+        setInspectorState("disabled");
+        break;
+      case "disabled":
+        if (e.button === 2) {
+          sendInspect(e, "RightButtonDown", true);
+        } else if (isMultiTouching) {
+          setIsPressing(true);
+          sendMultiTouchForEvent(e, "Down");
+        } else {
+          setIsPressing(true);
+          sendTouch(e, "Down");
+        }
+        break;
     }
   }
 
   function onMouseUp(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (isInspecting) {
-      setIsInspecting(false);
-    } else if (!isInspecting && inspectFrame) {
-      // if element is highlighted, we clear it here and ignore first click (don't send it to device)
-      resetInspector();
-    } else if (isPressing) {
+    if (inspectorState === "disabled" && isPressing) {
       if (isMultiTouching) {
         sendMultiTouchForEvent(e, "Up");
       } else {
@@ -297,7 +295,7 @@ function Preview({
       setIsPressing(false);
     }
 
-    if (isInspecting) {
+    if (inspectorState === "inspecting") {
       // we force inspect event here to make sure no extra events are throttled
       // and will be dispatched later on
       sendInspect(e, "Leave", true);
@@ -478,7 +476,7 @@ function Preview({
                 src={previewURL}
                 ref={previewRef}
                 style={{
-                  cursor: isInspecting ? "crosshair" : "default",
+                  cursor: inspectorState === "inspecting" ? "crosshair" : "default",
                 }}
                 className="phone-screen"
               />
@@ -527,7 +525,7 @@ function Preview({
                       height: `${inspectFrame.height * 100}%`,
                     }}
                   />
-                  {isInspecting && (
+                  {inspectorState === "inspecting" && (
                     <DimensionsBox
                       device={device}
                       frame={inspectFrame}
