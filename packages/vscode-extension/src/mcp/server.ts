@@ -7,6 +7,9 @@ interface ImageContent {
   type: "image";
   data: string;
   mimeType: `image/${string}`;
+  model_config: {
+    extra: "allow";
+  };
 }
 
 interface TextContent {
@@ -18,6 +21,7 @@ type ToolResponse = Promise<
   | string
   | {
       content: (ImageContent | TextContent)[];
+      isError: false;
     }
 >;
 
@@ -56,8 +60,12 @@ async function startMcpServer() {
             type: "image",
             data: contents,
             mimeType: "image/png",
+            model_config: {
+              extra: "allow",
+            },
           },
         ],
+        isError: false,
       };
     },
   });
