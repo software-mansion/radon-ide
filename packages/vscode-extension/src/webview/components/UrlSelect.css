@@ -124,3 +124,11 @@
     max-height: 50vh;
   }
 }
+@media (width <= 350px) {
+  .url-select-content {
+    display: none;
+  }
+  .url-select-input {
+    border-radius: 18px !important;
+  }
+}
