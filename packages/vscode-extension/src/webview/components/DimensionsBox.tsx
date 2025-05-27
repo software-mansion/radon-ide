@@ -10,7 +10,7 @@ const ARROW_SIZE = 8;
 type DimensionsBoxProps = {
   device?: DeviceProperties;
   frame: Frame;
-  wrapperDivRef: React.RefObject<HTMLDivElement>;
+  wrapperDivRef: React.RefObject<HTMLDivElement | null>;
 };
 
 type DimensionsBoxPosition = "above" | "below" | "left" | "right" | "inside";

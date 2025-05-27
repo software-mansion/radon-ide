@@ -5,7 +5,7 @@ import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
-import { DeviceBase } from "./DeviceBase";
+import { DeviceBase, REBOOT_TIMEOUT } from "./DeviceBase";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
@@ -18,7 +18,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
-import { CancelToken } from "../builders/cancelToken";
+import { CancelError, CancelToken } from "../builders/cancelToken";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -38,6 +38,7 @@ const ADB_PATH = path.join(
     linux: "adb",
   })
 );
+
 const DISPOSE_TIMEOUT = 9000;
 
 interface EmulatorProcessInfo {
@@ -56,7 +57,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private nativeLogsOutputChannel: OutputChannel | undefined;
   private nativeLogsCancelToken: CancelToken | undefined;
 
-  constructor(private readonly avdId: string, private readonly info: DeviceInfo) {
+  constructor(
+    private readonly avdId: string,
+    private readonly info: DeviceInfo
+  ) {
     super();
   }
 
@@ -100,8 +104,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
     // if user did not use the device before it might not have system_locales property
     // as en-US is the default locale, used by the system, when no setting is provided
-    // we assume that no value in stdout is the same as en-US
-    if ((stdout ?? "en-US") === locale) {
+    // we assume that no value in stdout is the same as en-US on some devices
+    // stdout is a string "null" instead of undefined so we need to handle it separately
+    if ((stdout ?? "en-US") === locale || stdout === "null") {
       return false;
     }
     return true;
@@ -211,10 +216,39 @@ export class AndroidEmulatorDevice extends DeviceBase {
     await this.internalBootDevice();
   }
 
-  async bootDevice(deviceSettings: DeviceSettings): Promise<void> {
+  public async reboot() {
+    super.reboot();
+    const { promise, resolve } = Promise.withResolvers<void>();
+
+    // Emulator might take a long time to exit gracefully, so we set a timeout
+    // to forcefully reset the device if it doesn't exit within the specified time.
+    const timeout = setTimeout(async () => {
+      this.emulatorProcess?.off("exit", exitListener);
+      await this.forcefullyResetDevice();
+      resolve();
+    }, REBOOT_TIMEOUT);
+
+    const exitListener = async () => {
+      clearTimeout(timeout);
+      await this.internalBootDevice();
+      resolve();
+    };
+
+    if (this.emulatorProcess) {
+      this.emulatorProcess.on("exit", exitListener);
+      this.emulatorProcess.kill();
+    } else {
+      await this.internalBootDevice();
+      resolve();
+    }
+
+    return promise;
+  }
+
+  async bootDevice(): Promise<void> {
     await this.internalBootDevice();
 
-    let shouldRestart = await this.changeSettings(deviceSettings);
+    let shouldRestart = await this.changeSettings(this.deviceSettings);
     if (shouldRestart) {
       await this.forcefullyResetDevice();
     }
@@ -832,39 +866,44 @@ async function parseAvdIniFile(filePath: string) {
 }
 
 async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
-  return new Promise<void>(async (resolve, reject) => {
-    let process: ChildProcess | undefined;
-    const timeout = setTimeout(() => {
-      process?.kill(9);
-      reject(new Error("Timeout waiting for emulator to boot"));
-    }, timeoutMs);
+  const cancelToken = new CancelToken();
+  const timeout = setTimeout(() => {
+    cancelToken.cancel();
+  }, timeoutMs);
 
-    process = exec(ADB_PATH, [
-      "-s",
-      serial,
-      "wait-for-device",
-      "shell",
-      "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
-    ]);
-
-    await process;
+  try {
+    await cancelToken.adapt(
+      exec(ADB_PATH, [
+        "-s",
+        serial,
+        "wait-for-device",
+        "shell",
+        "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
+      ])
+    );
 
     // If booting device and building the application was fast enough, the emulators network internals
     // would not be loaded before the start of the application. This in turn would cause PackagerStatusCheck
     // (https://github.com/facebook/react-native/blob/main/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/devsupport/PackagerStatusCheck.kt)
     // to fail and the application would think that there is no metro server.
-    process = exec(ADB_PATH, [
-      "-s",
-      serial,
-      "shell",
-      `while ! ping -c 1 10.0.2.2>/dev/null 2>&1; do sleep 0.5; done;`,
-    ]);
+    await cancelToken.adapt(
+      exec(ADB_PATH, [
+        "-s",
+        serial,
+        "shell",
+        `while ! ping -c 1 10.0.2.2>/dev/null 2>&1; do sleep 0.5; done;`,
+      ])
+    );
 
     await process;
 
     clearTimeout(timeout);
-    resolve();
-  });
+  } catch (error) {
+    if (error instanceof CancelError) {
+      throw new Error("Timeout waiting for emulator to boot");
+    }
+    throw error;
+  }
 }
 
 function getOrCreateAvdDirectory(avd?: string) {

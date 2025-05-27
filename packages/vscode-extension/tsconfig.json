@@ -23,6 +23,8 @@
     "webpack.config.js",
     ".vscode-test",
     "vite.config.js",
-    "plugins_dist/**/*"
+    "plugins_dist/**/*",
+    "third-party/**/*",
+    "eslint.config.mjs"
   ]
 }

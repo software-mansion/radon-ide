@@ -16,13 +16,13 @@ latest_tag=$(git describe --tags --abbrev=0)
 download_base_url="https://github.com/software-mansion/radon-ide/releases/download/${latest_tag}/"
 
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-    product_path="$output_dir/simulator-server-${latest_tag}-windows.exe"
+    product_path="$output_dir/simulator-server-windows.exe"
     download_url="${download_base_url}simulator-server-windows.exe"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    product_path="$output_dir/simulator-server-${latest_tag}-macos"
+    product_path="$output_dir/simulator-server-macos"
     download_url="${download_base_url}simulator-server-macos"
 else
-    product_path="$output_dir/simulator-server-${latest_tag}-linux"
+    product_path="$output_dir/simulator-server-linux"
     download_url="${download_base_url}simulator-server-linux"
 fi
 

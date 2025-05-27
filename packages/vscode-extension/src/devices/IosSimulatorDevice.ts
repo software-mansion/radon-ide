@@ -53,7 +53,10 @@ export class IosSimulatorDevice extends DeviceBase {
   private nativeLogsOutputChannel: OutputChannel | undefined;
   private runningAppProcess: ExecaChildProcess | undefined;
 
-  constructor(private readonly deviceUDID: string, private readonly _deviceInfo: DeviceInfo) {
+  constructor(
+    private readonly deviceUDID: string,
+    private readonly _deviceInfo: DeviceInfo
+  ) {
     super();
   }
 
@@ -84,13 +87,22 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  async bootDevice(settings: DeviceSettings) {
+  public async reboot() {
+    super.reboot();
+    this.runningAppProcess?.cancel();
+    await exec("xcrun", [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(this.deviceUDID),
+      "shutdown",
+      this.deviceUDID,
+    ]);
+
+    await this.internalBootDevice();
+  }
+
+  private async internalBootDevice() {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-
-    if (await this.shouldUpdateLocale(settings.locale)) {
-      await this.changeLocale(settings.locale);
-    }
-
     try {
       await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", this.deviceUDID], {
         allowNonZeroExit: true,
@@ -103,8 +115,16 @@ export class IosSimulatorDevice extends DeviceBase {
         throw e;
       }
     }
+  }
 
-    await this.changeSettings(settings);
+  async bootDevice() {
+    if (await this.shouldUpdateLocale(this.deviceSettings.locale)) {
+      await this.changeLocale(this.deviceSettings.locale);
+    }
+
+    await this.internalBootDevice();
+
+    await this.changeSettings(this.deviceSettings);
   }
 
   private async shouldUpdateLocale(locale: Locale): Promise<boolean> {

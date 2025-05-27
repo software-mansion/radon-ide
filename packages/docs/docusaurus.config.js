@@ -7,7 +7,7 @@ const autoNum = require("./src/remark/auto-num.js");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Radon IDE – An IDE for React Native",
+  title: "Radon IDE – The Best IDE for React Native",
   favicon: "img/favicon.png",
 
   url: "https://ide.swmansion.com",
@@ -42,6 +42,7 @@ const config = {
       }),
     ],
   ],
+  plugins: ["./src/plugins/changelog"],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -50,7 +51,7 @@ const config = {
       navbar: {
         hideOnScroll: true,
         logo: {
-          alt: "IDE logo",
+          alt: "Radon IDE logo",
           src: "img/logo.svg",
         },
         items: [
@@ -80,10 +81,12 @@ const config = {
           { to: "/legal/privacy-policy", label: "Privacy" },
           { to: "/legal", label: "Legal" },
           { to: "https://portal.ide.swmansion.com/", label: "Customer Portal" },
+          { to: "/docs/getting-started/changelog", label: "Changelog" },
         ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },
       prism: {
+        additionalLanguages: ["bash"],
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },

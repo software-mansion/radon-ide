@@ -70,6 +70,10 @@
   min-width: 200px;
 }
 
+.button-recording:not(.button-recording-on) {
+  width: 0;
+}
+
 .button-recording-on,
 .button-recording-on:hover {
   background-color: var(--swm-button-recording-on-background);
@@ -78,6 +82,10 @@
   border-radius: 10px;
   width: auto;
   padding: 0 8px;
+}
+
+.button-recording-on > span {
+  margin-right: 6px;
 }
 
 .recording-rec-indicator {
@@ -109,13 +117,35 @@
 }
 
 .recording-rec-dot {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
   background-color: red;
   align-self: center;
   border-radius: 50%;
-  margin-right: 6px;
   animation: pulse 1.5s ease-in-out infinite;
+}
+
+.app-device-group {
+  border: 0px solid transparent;
+  display: flex;
+  align-items: center;
+  border-radius: 18px;
+  height: var(--swm-button-size);
+  background-color: var(--swm-device-select-trigger);
+  color: var(--swm-device-select-trigger-text);
+  user-select: none;
+  overflow: hidden;
+}
+
+.activate-license-button::before {
+  content: "Activate License";
+  text-wrap: nowrap;
+}
+
+@media (max-width: 400px) {
+  .activate-license-button::before {
+    content: "Activate";
+  }
 }
 
 @media (max-width: 385px) {

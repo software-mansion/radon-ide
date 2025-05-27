@@ -1,7 +1,7 @@
 ---
 id: storybook-integration
 title: Storybook integration
-sidebar_position: 8
+sidebar_position: 9
 ---
 
 Radon IDE seamlessly integrates with Storybook. The extension automatically detects Storybook stories and provides a quick access to run them in the device preview.

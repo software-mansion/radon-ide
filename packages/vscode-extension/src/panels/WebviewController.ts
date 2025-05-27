@@ -1,9 +1,10 @@
-import { Webview, Disposable, commands, Uri } from "vscode";
+import { Webview, Disposable, commands, Uri, workspace } from "vscode";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
+import { PanelLocation } from "../common/WorkspaceConfig";
 
 type CallArgs = {
   callId: string;
@@ -40,17 +41,25 @@ export class WebviewController implements Disposable {
       ["DeviceManager", () => this.ide.deviceManager as object],
       ["DependencyManager", () => this.ide.project.dependencyManager as object],
       ["Project", () => this.ide.project as object],
+      ["DeviceSessionsManager", () => this.ide.project.deviceSessionsManager as object],
       ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
       ["LaunchConfig", () => this.ide.project.launchConfig as object],
       ["Utils", () => this.ide.utils as object],
       [
         "RenderOutlines",
-        () => this.ide.project.toolsManager.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
+        () => this.ide.project.deviceSession!.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
       ],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
-    getTelemetryReporter().sendTelemetryEvent("panelOpened");
+
+    const panelLocation = workspace
+      .getConfiguration("RadonIDE")
+      .get<PanelLocation>("panelLocation");
+
+    getTelemetryReporter().sendTelemetryEvent("panelOpened", {
+      panelLocation,
+    });
   }
 
   public asWebviewUri(uri: Uri) {

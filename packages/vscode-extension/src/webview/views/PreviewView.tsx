@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
@@ -13,7 +13,13 @@ import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
-import { Frame, InspectDataStackItem, InspectStackData, ZoomLevelType } from "../../common/Project";
+import {
+  Frame,
+  InspectDataStackItem,
+  InspectStackData,
+  ProfilingState,
+  ZoomLevelType,
+} from "../../common/Project";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
 import "./View.css";
@@ -22,29 +28,60 @@ import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
+import AppRootSelect from "../components/AppRootSelect";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
+  const { sendTelemetry } = useUtils();
   return (
     <Button
       className="activate-license-button"
-      onClick={() => openModal("Activate License", <ActivateLicenseView />)}>
-      Activate License
+      onClick={() => {
+        sendTelemetry("activateLicenseButtonClicked");
+        openModal("Activate License", <ActivateLicenseView />);
+      }}>
+      {""} {/* using empty string here as the content is controlled via css */}
     </Button>
   );
 }
 
+function ProfilingButton({
+  profilingState,
+  title,
+  onClick,
+}: {
+  profilingState: ProfilingState;
+  title: string;
+  onClick: () => void;
+}) {
+  const showButton = profilingState !== "stopped";
+  return (
+    <IconButton
+      className={showButton ? "button-recording-on button-recording" : "button-recording"}
+      tooltip={{
+        label: title,
+      }}
+      disabled={profilingState !== "profiling"}
+      onClick={onClick}>
+      {showButton && (
+        <>
+          <span
+            className={
+              profilingState === "saving"
+                ? "codicon codicon-loading codicon-modifier-spin"
+                : "recording-rec-dot"
+            }
+          />
+          <span>{title}</span>
+        </>
+      )}
+    </IconButton>
+  );
+}
+
 function PreviewView() {
-  const {
-    projectState,
-    project,
-    deviceSettings,
-    hasActiveLicense,
-    replayData,
-    isRecording,
-    isProfilingCPU,
-    setReplayData,
-  } = useProject();
+  const { projectState, project, deviceSettings, hasActiveLicense, replayData, setReplayData } =
+    useProject();
   const { showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
@@ -57,8 +94,6 @@ function PreviewView() {
     },
     [project]
   );
-  const [logCounter, setLogCounter] = useState(0);
-  const [resetKey, setResetKey] = useState(0);
   const [recordingTime, setRecordingTime] = useState(0);
   const { devices } = useDevices();
 
@@ -67,30 +102,13 @@ function PreviewView() {
   const hasNoDevices = projectState !== undefined && devices.length === 0;
   const isStarting = projectState.status === "starting";
   const isRunning = projectState.status === "running";
+  const isRecording = projectState.isRecordingScreen;
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === projectState?.selectedDevice?.modelId;
   });
 
   const { openFileAt } = useUtils();
-
-  useEffect(() => {
-    function incrementLogCounter() {
-      setLogCounter((c) => c + 1);
-    }
-    project.addListener("log", incrementLogCounter);
-
-    return () => {
-      project.removeListener("log", incrementLogCounter);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isStarting) {
-      setLogCounter(0);
-      setResetKey((prevKey) => prevKey + 1);
-    }
-  }, [setLogCounter, isStarting]);
 
   useEffect(() => {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {
@@ -141,6 +159,10 @@ function PreviewView() {
     project.stopProfilingCPU();
   }
 
+  function stopProfilingReact() {
+    project.stopProfilingReact();
+  }
+
   async function handleReplay() {
     try {
       await project.captureReplay();
@@ -172,23 +194,19 @@ function PreviewView() {
     <div className="panel-view">
       <div className="button-group-top">
         <div className="button-group-top-left">
-          <UrlBar key={resetKey} disabled={hasNoDevices} />
+          <UrlBar disabled={hasNoDevices} />
         </div>
         <div className="button-group-top-right">
-          <IconButton
-            className={isProfilingCPU ? "button-recording-on" : ""}
-            tooltip={{
-              label: "Stop profiling CPU",
-            }}
-            disabled={!isProfilingCPU}
-            onClick={stopProfilingCPU}>
-            {isProfilingCPU && (
-              <>
-                <div className="recording-rec-dot" />
-                <span>Profiling CPU</span>
-              </>
-            )}
-          </IconButton>
+          <ProfilingButton
+            profilingState={projectState.profilingCPUState}
+            title="Stop profiling CPU"
+            onClick={stopProfilingCPU}
+          />
+          <ProfilingButton
+            profilingState={projectState.profilingReactState}
+            title="Stop profiling React"
+            onClick={stopProfilingReact}
+          />
           <ToolsDropdown disabled={hasNoDevices || !isRunning}>
             <IconButton tooltip={{ label: "Tools", type: "primary" }}>
               <span className="codicon codicon-tools" />
@@ -229,11 +247,8 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
-            counter={logCounter}
-            onClick={() => {
-              setLogCounter(0);
-              project.focusDebugConsole();
-            }}
+            counter={projectState.logCounter}
+            onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",
             }}
@@ -264,7 +279,7 @@ function PreviewView() {
         />
       ) : (
         <div className="missing-device-filler">
-          {initialized ? <NoDeviceView hasNoDevices={hasNoDevices} /> : <VSCodeProgressRing />}
+          {initialized ? <NoDeviceView hasNoDevices={hasNoDevices} /> : <VscodeProgressRing />}
         </div>
       )}
 
@@ -297,7 +312,11 @@ function PreviewView() {
 
         <span className="group-separator" />
 
-        <DeviceSelect />
+        <div className="app-device-group">
+          <AppRootSelect />
+          <span className="codicon codicon-chevron-right" />
+          <DeviceSelect />
+        </div>
 
         <div className="spacer" />
         {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}

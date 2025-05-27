@@ -5,7 +5,8 @@ import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
-import { BuildType } from "../../common/Project";
+import { BuildType } from "../../common/BuildConfig";
+import { useDevices } from "../providers/DevicesProvider";
 
 type LogsButtonDestination = "build" | "extension";
 
@@ -51,26 +52,27 @@ function BuildErrorActions({
 }
 
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
-  const { projectState, project } = useProject();
+  const { projectState } = useProject();
   const { ios, xcodeSchemes } = useLaunchConfig();
+  const { deviceSessionsManager } = useDevices();
 
   let onReload = () => {
-    project.restart(false);
+    deviceSessionsManager.reloadCurrentSession("autoReload");
   };
   let logsButtonDestination: LogsButtonDestination | undefined = undefined;
 
   let description = "Open extension logs to find out what went wrong.";
 
-  if (projectState.status === "buildError") {
+  if (projectState.status === "buildError" && projectState.buildError) {
     const { buildType, message } = projectState.buildError;
     description = message;
-    if ([BuildType.Local, BuildType.Custom].includes(buildType)) {
+    if (buildType && [BuildType.Local, BuildType.EasLocal, BuildType.Custom].includes(buildType)) {
       logsButtonDestination = "build";
     } else {
       logsButtonDestination = "extension";
     }
 
-    if (buildType === BuildType.Unknown && !ios?.scheme && xcodeSchemes.length > 1) {
+    if (buildType === null && !ios?.scheme && xcodeSchemes.length > 1) {
       description = `Your project uses multiple build schemas. Currently used scheme: '${xcodeSchemes[0]}'. You can change it in the launch configuration.`;
     }
   }
@@ -117,6 +119,7 @@ export function useBootErrorAlert(shouldDisplayAlert: boolean) {
 
 function BundleErrorActions() {
   const { project } = useProject();
+  const { deviceSessionsManager } = useDevices();
   return (
     <>
       <IconButton
@@ -130,7 +133,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.restart(false);
+          deviceSessionsManager.reloadCurrentSession("autoReload");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />

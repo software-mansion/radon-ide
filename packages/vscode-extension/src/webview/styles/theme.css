@@ -160,7 +160,8 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
 
   /* Shadows */
   --swm-focus-outline: 0 0 0 2px var(--navy-light-20);
-  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1),
+  --swm-backdrop-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1),
     1px -4px 6px -3px rgb(0 0 0 / 0.1);
   /* Device select */
   --swm-device-select-background: var(--navy-light-10);
@@ -294,7 +295,7 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-zoom-select-separator: var(--navy-light-40);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(
+  --swm-replay-overlay-background: linear-gradient(
     0deg,
     rgba(232, 232, 232, 0.9),
     rgba(185, 185, 185, 0.9)
@@ -333,7 +334,8 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
 
   /* Shadows */
   --swm-focus-outline: 0 0 0 2px var(--background-dark-50);
-  --swm-backdrop-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1),
+  --swm-backdrop-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1),
     1px -4px 6px -3px rgb(0 0 0 / 0.1);
   /* Device select */
   --swm-device-select-background: var(--background-dark-80);
@@ -469,7 +471,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-zoom-select-separator: var(--background-dark-50);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(
+  --swm-replay-overlay-background: linear-gradient(
     0deg,
     rgba(0, 0, 0, 1),
     rgba(0, 0, 0, 0.5),
@@ -511,7 +513,8 @@ body[data-use-code-theme="true"] {
 
   /* Shadows */
   --swm-focus-outline: 0 0 0 2px var(--vscode-focusBorder);
-  --swm-backdrop-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1),
+  --swm-backdrop-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1),
     1px -4px 6px -3px rgba(0, 0, 0, 0.1);
   /* Device select */
   --swm-device-select-trigger: var(--vscode-input-background);
@@ -572,7 +575,7 @@ body[data-use-code-theme="true"] {
 
   --swm-button-recording-on: var(--vscode-activityBarBadge-foreground);
   --swm-button-recording-on-background: var(--vscode-activityBarBadge-background);
-  --swm-button-replay-hover: var(--navy-light-transparent);
+  --swm-button-replay-hover: var(--swm-button-hover);
 
   /* Tooltip */
   --swm-tooltip-primary: var(--swm-default-text);
@@ -656,16 +659,16 @@ body[data-use-code-theme="true"] {
   --swm-zoom-select-separator: var(--vscode-dropdown-border);
 
   /* Replay */
-  --swm-replay-overlay-backgroud: linear-gradient(
+  --swm-replay-overlay-background: linear-gradient(
     0deg,
-    rgba(232, 232, 232, 0.9),
-    rgba(185, 185, 185, 0.9)
+    var(--vscode-editor-foldBackground),
+    var(--vscode-widget-shadow)
   );
 
-  --swm-replay-len-select: var(--swm-default-text);
-  --swm-replay-len-select-background: var(--grey-light-60);
-  --swm-replay-len-select-hover-background: var(--navy-light-transparent);
-  --swm-replay-len-select-highlighted-background: var(--grey-light-80);
+  --swm-replay-len-select: var(--swm-button);
+  --swm-replay-len-select-background: var(--swm-button-background);
+  --swm-replay-len-select-hover-background: var(--swm-button-hover);
+  --swm-replay-len-select-highlighted-background: var(--swm-button-selected-hover-background);
 
   /* Open Deep Link */
   --deep-link-history-border: var(--navy-light-10);

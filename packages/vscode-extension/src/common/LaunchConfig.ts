@@ -1,6 +1,6 @@
 import { EasBuildConfig } from "./EasConfig";
 
-export type EasConfig = { profile: string; buildUUID?: string };
+export type EasConfig = { profile: string; buildUUID?: string; local?: boolean };
 export type CustomBuild = {
   buildCommand?: string;
   fingerprintCommand?: string;
@@ -51,12 +51,18 @@ export type LaunchConfigUpdater = <K extends keyof LaunchConfigurationOptions>(
 
 export type AddCustomApplicationRoot = (appRoot: string) => void;
 
+export type ApplicationRoot = {
+  path: string;
+  name: string;
+  displayName?: string;
+};
+
 export interface LaunchConfig {
   getConfig(): Promise<LaunchConfigurationOptions>;
   update: LaunchConfigUpdater;
   addCustomApplicationRoot: AddCustomApplicationRoot;
   getAvailableXcodeSchemes(): Promise<string[]>;
-  getAvailableApplicationRoots(): Promise<string[]>;
+  getAvailableApplicationRoots(): Promise<ApplicationRoot[]>;
   getAvailableEasProfiles(): Promise<EasBuildConfig>;
   addListener<K extends keyof LaunchConfigEventMap>(
     eventType: K,

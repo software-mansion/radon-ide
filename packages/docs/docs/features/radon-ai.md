@@ -1,7 +1,7 @@
 ---
 id: radon-ai
 title: Radon AI
-sidebar_position: 9
+sidebar_position: 10
 ---
 
 Radon AI is a [GitHub Copilot Chat participant](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#chat-participants) enhanced with up-to-date information about the React Native ecosystem.

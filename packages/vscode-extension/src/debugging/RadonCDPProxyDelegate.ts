@@ -1,5 +1,6 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
 import { EventEmitter } from "vscode";
+import { Minimatch } from "minimatch";
 import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
@@ -9,7 +10,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
-  private blackBoxPatterns: RegExp[] = [];
+  private ignoredPatterns: Minimatch[] = [];
 
   private justCalledStepOver = false;
   private resumeEventTimeout: NodeJS.Timeout | undefined;
@@ -18,7 +19,14 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
 
-  constructor(private sourceMapRegistry: SourceMapsRegistry) {}
+  constructor(
+    private sourceMapRegistry: SourceMapsRegistry,
+    skipFiles: string[]
+  ) {
+    this.ignoredPatterns = skipFiles.map(
+      (pattern) => new Minimatch(pattern, { flipNegate: true, dot: true })
+    );
+  }
 
   public async handleApplicationCommand(
     applicationCommand: IProtocolCommand,
@@ -45,6 +53,17 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return applicationCommand;
   }
 
+  private shouldSkipFile(sourceURL: string): boolean {
+    return this.ignoredPatterns.reduce((shouldSkip, p) => {
+      if (p.negate) {
+        // don't skip the file if some negated pattern matches it
+        return shouldSkip && !p.match(sourceURL);
+      } else {
+        return shouldSkip || p.match(sourceURL);
+      }
+    }, false);
+  }
+
   private shouldResumeImmediately(params: Cdp.Debugger.PausedEvent): boolean {
     if ((params.reason as string) === "other") {
       return false;
@@ -55,8 +74,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       lineNumber + 1,
       columnNumber ?? 0
     );
-    const shouldSkipFile = this.blackBoxPatterns.some((p) => p.exec(sourceURL)?.length);
-    return shouldSkipFile;
+    return this.shouldSkipFile(sourceURL);
   }
 
   private handleDebuggerResumed(command: IProtocolCommand, tunnel: ProxyTunnel) {
@@ -111,7 +129,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     command: IProtocolCommand,
     tunnel: ProxyTunnel
   ): Promise<IProtocolCommand> {
-    switch (command.method) {
+    const { method } = command;
+    switch (method) {
       case "Debugger.stepOver": {
         // setting this will cause the "resume" event from being slightly delayed as we
         // expect the "paused" event to be fired almost immediately.
@@ -128,10 +147,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return command;
       }
       // NOTE: setBlackbox* commands (as of 0.78) are not handled correctly by the Hermes debugger, so we need to disable them.
-      // Instead, we handle exception pauses in the blackboxed files explicitely in the `handleDebuggerPaused` method.
       case "Debugger.setBlackboxPatterns": {
-        const params = command.params as Cdp.Debugger.SetBlackboxPatternsParams;
-        this.blackBoxPatterns = params.patterns.map((p) => new RegExp(p));
         command.params = {
           patterns: [],
         };
@@ -245,9 +261,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
     } catch (e) {
       Logger.error("Could not process the source map", e);
-    } finally {
-      return command;
     }
+    return command;
   }
 
   private handleConsoleAPICalled(
@@ -284,6 +299,23 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       });
 
       stackTrace?.callFrames.splice(0, originalCallFrameIndex);
+    }
+
+    if (stackTrace) {
+      const filteredCallFrames = stackTrace?.callFrames.filter((frame) => {
+        const { scriptId, lineNumber, columnNumber } = frame;
+        const { sourceURL } = this.sourceMapRegistry.findOriginalPosition(
+          scriptId,
+          lineNumber + 1,
+          columnNumber ?? 0
+        );
+        return !this.shouldSkipFile(sourceURL);
+      });
+      if (filteredCallFrames.length > 0) {
+        // we only filter frames if there's at least one frame left, otherwise we would still
+        // want some location information to be available so we keep the original one.
+        stackTrace.callFrames = filteredCallFrames;
+      }
     }
 
     this.consoleAPICalledEmitter.fire({});

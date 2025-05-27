@@ -28,6 +28,10 @@
   line-height: 1.3;
 }
 
+.itemBody strong {
+  font-weight: 400;
+}
+
 .itemLabel {
   font-size: 18px;
   font-weight: bold;

@@ -25,7 +25,7 @@ interface SettingsDropdownProps {
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, themeType, update } = useWorkspaceConfig();
   const { openModal } = useModal();
-  const { movePanelToNewWindow, reportIssue } = useUtils();
+  const { movePanelTo, reportIssue } = useUtils();
   const { telemetryEnabled } = useTelemetry();
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
@@ -75,7 +75,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-layout" />
-              Change IDE panel location
+              Change IDE location
               <span className="codicon codicon-chevron-right right-slot" />
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
@@ -83,53 +83,26 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 className="dropdown-menu-subcontent"
                 sideOffset={2}
                 alignOffset={-5}>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => update("panelLocation", "tab")}>
-                  <span className="codicon codicon-layout-centered" />
-                  Editor tab
-                  {panelLocation === "tab" && <span className="codicon codicon-check right-slot" />}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => update("panelLocation", "side-panel")}>
-                  <span className="codicon codicon-layout-sidebar-right" />
-                  Side panel
-                  {panelLocation === "side-panel" && (
-                    <span className="codicon codicon-check right-slot" />
-                  )}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => {
-                    update("panelLocation", "secondary-side-panel");
-                    openModal(
-                      "Drag and drop to secondary side panel",
-                      <div>
-                        Drag and drop the IDE Panel by its icon from the side bar to move it to the
-                        secondary panel.
-                      </div>
-                    );
-                  }}>
-                  <span className="codicon codicon-layout-sidebar-left" />
-                  Secondary side panel
-                  {panelLocation === "secondary-side-panel" && (
-                    <span className="codicon codicon-check right-slot" />
-                  )}
-                </DropdownMenu.Item>
-                {panelLocation === "tab" && (
-                  <>
-                    <DropdownMenu.Separator className="dropdown-menu-separator" />
-                    <DropdownMenu.Item
-                      className="dropdown-menu-item"
-                      onSelect={() => {
-                        movePanelToNewWindow();
-                      }}>
-                      <span className="codicon codicon-multiple-windows" />
-                      New Window
-                    </DropdownMenu.Item>
-                  </>
+                {panelLocation !== "side-panel" && (
+                  <DropdownMenu.Item
+                    className="dropdown-menu-item"
+                    onSelect={() => movePanelTo("side-panel")}>
+                    <span className="codicon codicon-layout-sidebar-right" />
+                    Move to Side Panel
+                  </DropdownMenu.Item>
                 )}
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => movePanelTo("editor-tab")}>
+                  <span className="codicon codicon-layout-centered" />
+                  Move to Editor Tab
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="dropdown-menu-item"
+                  onSelect={() => movePanelTo("new-window")}>
+                  <span className="codicon codicon-multiple-windows" />
+                  Move to New Window
+                </DropdownMenu.Item>
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>

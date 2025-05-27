@@ -13,6 +13,7 @@ const OS: "macos" | "windows" | "linux" | "unsupported" = (() => {
       return "unsupported";
   }
 })();
+
 export const Platform = {
   OS,
   select: <R, T>(obj: { macos: R; windows: T; linux: T }) => {
@@ -20,5 +21,3 @@ export const Platform = {
     return Platform.OS !== "unsupported" ? obj[Platform.OS] : obj["macos"];
   },
 };
-
-export type Platform = typeof Platform;

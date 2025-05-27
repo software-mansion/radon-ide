@@ -74,7 +74,7 @@ function Preview({
   replayData,
   onReplayClose,
 }: Props) {
-  const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>();
+  const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
@@ -93,7 +93,7 @@ function Preview({
   const hasBootError = projectStatus === "bootError";
   const hasBundlingError = projectStatus === "bundlingError";
 
-  const debugPaused = projectStatus === "debuggerPaused";
+  const debugPaused = projectState.isDebuggerPaused;
 
   const previewURL = projectState.previewURL;
 
@@ -213,8 +213,12 @@ function Preview({
       sendInspect(e, "Move", false);
     } else if (isMultiTouching) {
       setTouchPoint(getTouchPosition(e));
-      isPanning && moveAnchorPoint(e);
-      isPressing && sendMultiTouchForEvent(e, "Move");
+      if (isPanning) {
+        moveAnchorPoint(e);
+      }
+      if (isPressing) {
+        sendMultiTouchForEvent(e, "Move");
+      }
     } else if (isPressing) {
       sendTouch(e, "Move");
     }
@@ -440,13 +444,10 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (projectStatus === "running") {
-      project.addListener("needsNativeRebuild", openRebuildAlert);
-      return () => {
-        project.removeListener("needsNativeRebuild", openRebuildAlert);
-      };
+    if (projectState.hasStaleBuildCache) {
+      openRebuildAlert();
     }
-  }, [project, openRebuildAlert, projectStatus]);
+  }, [projectState.hasStaleBuildCache]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === projectState?.selectedDevice?.modelId;

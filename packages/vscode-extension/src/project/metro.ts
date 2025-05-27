@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import WebSocket from "ws";
-import { Disposable, ExtensionMode, Uri, workspace } from "vscode";
+import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
 import stripAnsi from "strip-ansi";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
@@ -20,6 +20,7 @@ const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
 
 export interface MetroDelegate {
+  onBundleProgress(bundleProgress: number): void;
   onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
 }
 
@@ -73,7 +74,7 @@ type MetroEvent =
         string, // message
         string, // bundle
         string, // todo: ensure what this field means
-        string // todo: ensure what this field means
+        string, // todo: ensure what this field means
       ];
     };
 
@@ -82,6 +83,12 @@ export class Metro {
   protected _watchFolders: string[] | undefined = undefined;
   protected usesNewDebugger?: boolean;
   protected _expoPreludeLineCount = 0;
+  protected readonly bundleErrorEventEmitter = new EventEmitter<{
+    message: string;
+    source: DebugSource;
+    errorModulePath: string;
+  }>();
+  public readonly onBundleError = this.bundleErrorEventEmitter.event;
 
   constructor(port: number, watchFolders: string[] | undefined = undefined) {
     this._port = port;
@@ -230,7 +237,12 @@ export class Metro {
     const newDebuggerPages = this.filterNewDebuggerPages(listJson);
     if (newDebuggerPages.length > 0) {
       const description = newDebuggerPages[0].description;
-      const isExpoGo = description === EXPO_GO_BUNDLE_ID || description === EXPO_GO_PACKAGE_NAME;
+      const appId = newDebuggerPages[0]?.appId;
+      const isExpoGo =
+        description === EXPO_GO_BUNDLE_ID ||
+        description === EXPO_GO_PACKAGE_NAME ||
+        appId === EXPO_GO_BUNDLE_ID ||
+        appId === EXPO_GO_PACKAGE_NAME;
       if (isExpoGo) {
         // Expo go apps using the new debugger could report more then one page,
         // if it exist the first one being the Expo Go host runtime.
@@ -308,7 +320,10 @@ export class MetroLauncher extends Metro implements Disposable {
   private subprocess?: ChildProcess;
   private startPromise: Promise<void> | undefined;
 
-  constructor(private readonly devtools: Devtools, private readonly delegate: MetroDelegate) {
+  constructor(
+    private readonly devtools: Devtools,
+    private readonly delegate: MetroDelegate
+  ) {
     super(0);
   }
 
@@ -321,6 +336,34 @@ export class MetroLauncher extends Metro implements Disposable {
       throw new Error("metro not started");
     }
     await this.startPromise;
+  }
+
+  public async start({
+    resetCache,
+    dependencies,
+    appRoot,
+  }: {
+    resetCache: boolean;
+    dependencies: Promise<any>[];
+    appRoot: string;
+  }) {
+    if (this.startPromise) {
+      throw new Error("metro already started");
+    }
+    this.startPromise = this.startInternal(resetCache, dependencies, appRoot);
+    this.startPromise.then(() => {
+      // start promise is used to indicate that metro has started, however, sometimes
+      // the metro process may exit, in which case we need to update the promise to
+      // indicate an error.
+      this.subprocess
+        ?.catch(() => {
+          // ignore the error, we are only interested in the process exit
+        })
+        ?.then(() => {
+          this.startPromise = Promise.reject(new Error("Metro process exited"));
+        });
+    });
+    return this.startPromise;
   }
 
   private launchExpoMetro(
@@ -343,31 +386,6 @@ export class MetroLauncher extends Metro implements Disposable {
       env: metroEnv,
       buffer: false,
     });
-  }
-
-  public async start(
-    resetCache: boolean,
-    progressListener: (newStageProgress: number) => void,
-    dependencies: Promise<any>[],
-    appRoot: string
-  ) {
-    if (this.startPromise) {
-      throw new Error("metro already started");
-    }
-    this.startPromise = this.startInternal(resetCache, progressListener, dependencies, appRoot);
-    this.startPromise.then(() => {
-      // start promise is used to indicate that metro has started, however, sometimes
-      // the metro process may exit, in which case we need to update the promise to
-      // indicate an error.
-      this.subprocess
-        ?.catch(() => {
-          // ignore the error, we are only interested in the process exit
-        })
-        ?.then(() => {
-          this.startPromise = Promise.reject(new Error("Metro process exited"));
-        });
-    });
-    return this.startPromise;
   }
 
   private launchPackager(
@@ -402,12 +420,7 @@ export class MetroLauncher extends Metro implements Disposable {
     );
   }
 
-  public async startInternal(
-    resetCache: boolean,
-    progressListener: (newStageProgress: number) => void,
-    dependencies: Promise<any>[],
-    appRoot: string
-  ) {
+  public async startInternal(resetCache: boolean, dependencies: Promise<any>[], appRoot: string) {
     const launchConfiguration = getLaunchConfiguration();
     await Promise.all([this.devtools.ready()].concat(dependencies));
 
@@ -474,7 +487,7 @@ export class MetroLauncher extends Metro implements Disposable {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
-              progressListener(event.transformedFileCount / event.totalFileCount);
+              this.delegate.onBundleProgress(event.transformedFileCount / event.totalFileCount);
             }
           } else if (event.type === "client_log" && event.level === "error") {
             Logger.error(stripAnsi(event.data[0]));
@@ -502,15 +515,14 @@ export class MetroLauncher extends Metro implements Disposable {
               if (!filename && event.error.filename) {
                 filename = path.join(appRoot, event.error.filename);
               }
-              this.delegate.onBundlingError(
-                message,
-                {
-                  filename,
-                  line1based: event.error.lineNumber,
-                  column0based: event.error.columnNumber,
-                },
-                event.error.originModulePath
-              );
+              const source = {
+                filename,
+                line1based: event.error.lineNumber,
+                column0based: event.error.columnNumber,
+              };
+              const errorModulePath = event.error.originModulePath;
+              this.delegate.onBundlingError(message, source, errorModulePath);
+              this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
               break;
           }
         };

@@ -1,3 +1,4 @@
+import { BuildType } from "./BuildConfig";
 import { DeviceInfo, DevicePlatform } from "./DeviceManager";
 
 export type Locale = string;
@@ -26,43 +27,76 @@ export type ToolsState = {
   [key: string]: ToolState;
 };
 
-export type ProjectState =
-  | ({
-      status:
-        | "starting"
-        | "running"
-        | "bootError"
-        | "bundlingError"
-        | "debuggerPaused"
-        | "refreshing";
-    } & ProjectStateCommon)
-  | ProjectStateBuildError;
-
-type ProjectStateCommon = {
-  previewURL: string | undefined;
-  selectedDevice: DeviceInfo | undefined;
-  initialized: boolean;
-  previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
-  startupMessage: StartupMessage | undefined;
-  stageProgress: number | undefined;
+export type BuildErrorDescriptor = {
+  message: string;
+  platform: DevicePlatform;
+  buildType: BuildType | null;
 };
 
-type ProjectStateBuildError = {
-  status: "buildError";
-  buildError: {
-    message: string;
-    platform: DevicePlatform;
-    buildType: BuildType;
-  };
-} & ProjectStateCommon;
+export type ProfilingState = "stopped" | "profiling" | "saving";
 
-export enum BuildType {
-  Local = "local",
-  ExpoGo = "expoGo",
-  Eas = "eas",
-  Custom = "custom",
-  Unknown = "unknown",
-}
+export type NavigationHistoryItem = {
+  displayName: string;
+  id: string;
+};
+
+export type NavigationRoute = {
+  path: string;
+  filePath: string;
+  children: NavigationRoute[];
+  dynamic: { name: string; deep: boolean; notFound?: boolean }[] | null;
+  type: string;
+};
+
+export type DeviceSessionStatus =
+  | "starting"
+  | "running"
+  | "bootError"
+  | "bundlingError"
+  | "refreshing"
+  | "buildError";
+
+export type DeviceSessionState = {
+  status: DeviceSessionStatus;
+  startupMessage: StartupMessage | undefined;
+  stageProgress: number | undefined;
+  buildError: BuildErrorDescriptor | undefined;
+  selectedDevice: DeviceInfo | undefined;
+  previewURL: string | undefined;
+  profilingReactState: ProfilingState;
+  profilingCPUState: ProfilingState;
+  navigationHistory: NavigationHistoryItem[];
+  navigationRouteList: NavigationRoute[];
+  toolsState: ToolsState;
+  isDebuggerPaused: boolean;
+  logCounter: number;
+  hasStaleBuildCache: boolean;
+  isRecordingScreen: boolean;
+};
+
+export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
+  status: "starting",
+  startupMessage: undefined,
+  stageProgress: undefined,
+  buildError: undefined,
+  selectedDevice: undefined,
+  previewURL: undefined,
+  profilingReactState: "stopped",
+  profilingCPUState: "stopped",
+  navigationHistory: [],
+  navigationRouteList: [],
+  toolsState: {},
+  isDebuggerPaused: false,
+  logCounter: 0,
+  hasStaleBuildCache: false,
+  isRecordingScreen: false,
+};
+
+export type ProjectState = {
+  initialized: boolean;
+  appRootPath: string | undefined;
+  previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
+} & DeviceSessionState;
 
 export type ZoomLevelType = number | "Fit";
 
@@ -93,13 +127,6 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
-
-export type ReloadAction =
-  | "rebuild" // clean build, boot device, install app
-  | "reboot" // reboots device, launch app
-  | "reinstall" // force reinstall app
-  | "restartProcess" // relaunch app
-  | "reloadJs"; // refetch JS scripts from metro
 
 export type Frame = {
   x: number;
@@ -143,16 +170,10 @@ export enum ActivateDeviceResult {
 }
 
 export interface ProjectEventMap {
-  log: { type: string };
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
-  toolsStateChanged: ToolsState;
   licenseActivationChanged: boolean;
-  navigationChanged: { displayName: string; id: string };
-  needsNativeRebuild: void;
   replayDataCreated: MultimediaData;
-  isRecording: boolean;
-  isProfilingCPU: boolean;
 }
 
 export interface ProjectEventListener<T> {
@@ -167,10 +188,6 @@ export type MultimediaData = {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  reload(type: ReloadAction): Promise<boolean>;
-  restart(clean: "all" | "metro" | false): Promise<void>;
-  goHome(homeUrl: string): Promise<void>;
-  selectDevice(deviceInfo: DeviceInfo): Promise<boolean>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
@@ -178,7 +195,6 @@ export interface ProjectInterface {
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
   runCommand(command: string): Promise<void>;
 
-  getToolsState(): Promise<ToolsState>;
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;
 
@@ -188,6 +204,8 @@ export interface ProjectInterface {
   focusExtensionLogsOutput(): Promise<void>;
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
+  navigateBack(): Promise<void>;
+  navigateHome(): Promise<void>;
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
@@ -205,6 +223,9 @@ export interface ProjectInterface {
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
+
+  startProfilingReact(): void;
+  stopProfilingReact(): void;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;

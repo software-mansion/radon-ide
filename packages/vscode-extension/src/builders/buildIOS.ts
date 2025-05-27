@@ -6,16 +6,14 @@ import { CancelToken } from "./cancelToken";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DevicePlatform } from "../common/DeviceManager";
-import { EXPO_GO_BUNDLE_ID, downloadExpoGo, isExpoGoProject } from "./expoGo";
+import { EXPO_GO_BUNDLE_ID, downloadExpoGo } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
 import { runExternalBuild } from "./customBuild";
-import { fetchEasBuild } from "./eas";
+import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { getXcodebuildArch } from "../utilities/common";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { BuildError } from "./BuildManager";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
-import { BuildType } from "../common/Project";
+import { BuildType, IOSBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
@@ -74,26 +72,17 @@ function buildProject(
 }
 
 export async function buildIos(
-  appRoot: string,
-  forceCleanBuild: boolean,
+  buildConfig: IOSBuildConfig,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void,
   dependencyManager: DependencyManager,
   installPodsIfNeeded: () => Promise<void>
 ): Promise<IOSBuildResult> {
-  const launchConfig = getLaunchConfiguration();
-  const { customBuild, eas, env } = launchConfig;
+  const { appRoot, env, type: buildType } = buildConfig;
 
-  if (customBuild?.ios && eas?.ios) {
-    throw new BuildError(
-      "Both custom builds and EAS builds are configured for iOS. Please use only one build method.",
-      BuildType.Unknown
-    );
-  }
-
-  if (customBuild?.ios?.buildCommand) {
-    try {
+  switch (buildType) {
+    case BuildType.Custom: {
       getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
         platform: DevicePlatform.IOS,
       });
@@ -101,7 +90,7 @@ export async function buildIos(
 
       const appPath = await runExternalBuild(
         cancelToken,
-        customBuild.ios.buildCommand,
+        buildConfig.buildCommand,
         env,
         DevicePlatform.IOS,
         appRoot,
@@ -118,20 +107,15 @@ export async function buildIos(
         bundleID: await getBundleID(appPath),
         platform: DevicePlatform.IOS,
       };
-    } catch (e) {
-      throw new BuildError((e as Error).message, BuildType.Custom);
     }
-  }
-
-  if (eas?.ios) {
-    try {
+    case BuildType.Eas: {
       getTelemetryReporter().sendTelemetryEvent("build:eas-build-requested", {
         platform: DevicePlatform.IOS,
       });
 
       const appPath = await fetchEasBuild(
         cancelToken,
-        eas.ios,
+        buildConfig.config,
         DevicePlatform.IOS,
         appRoot,
         outputChannel
@@ -142,55 +126,57 @@ export async function buildIos(
         bundleID: await getBundleID(appPath),
         platform: DevicePlatform.IOS,
       };
-    } catch (e) {
-      throw new BuildError((e as Error).message, BuildType.Eas);
     }
-  }
+    case BuildType.EasLocal: {
+      getTelemetryReporter().sendTelemetryEvent("build:eas-local-build-requested", {
+        platform: DevicePlatform.IOS,
+      });
+      const appPath = await performLocalEasBuild(
+        buildConfig.profile,
+        DevicePlatform.IOS,
+        appRoot,
+        outputChannel,
+        cancelToken
+      );
 
-  if (await isExpoGoProject(appRoot)) {
-    try {
+      return {
+        appPath,
+        bundleID: await getBundleID(appPath),
+        platform: DevicePlatform.IOS,
+      };
+    }
+    case BuildType.ExpoGo: {
       getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
         platform: DevicePlatform.IOS,
       });
       const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken, appRoot);
       return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
-    } catch (e) {
-      throw new BuildError((e as Error).message, BuildType.ExpoGo);
     }
-  }
-
-  if (!(await dependencyManager.checkIOSDirectoryExists())) {
-    throw new BuildError(
-      'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.',
-      BuildType.Local
-    );
-  }
-
-  try {
-    return await buildLocal(
-      appRoot,
-      forceCleanBuild,
-      installPodsIfNeeded,
-      launchConfig,
-      cancelToken,
-      outputChannel,
-      progressListener
-    );
-  } catch (e) {
-    throw new BuildError((e as Error).message, BuildType.Local);
+    case BuildType.Local: {
+      if (!(await dependencyManager.checkIOSDirectoryExists())) {
+        throw new Error(
+          'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.'
+        );
+      }
+      return await buildLocal(
+        buildConfig,
+        installPodsIfNeeded,
+        cancelToken,
+        outputChannel,
+        progressListener
+      );
+    }
   }
 }
 
 async function buildLocal(
-  appRoot: string,
-  forceCleanBuild: boolean,
-  installPodsIfNeeded: Function,
-  launchConfiguration: LaunchConfigurationOptions,
+  buildConfig: IOSLocalBuildConfig,
+  installPodsIfNeeded: () => Promise<void>,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
 ): Promise<IOSBuildResult> {
-  const { ios: buildOptions } = launchConfiguration;
+  const { appRoot, forceCleanBuild, configuration = "Debug" } = buildConfig;
 
   const sourceDir = getIosSourceDir(appRoot);
 
@@ -215,17 +201,12 @@ async function buildLocal(
     }`
   );
 
-  const scheme = buildOptions?.scheme || (await findXcodeScheme(xcodeProject))[0];
+  const scheme = buildConfig.scheme ?? (await findXcodeScheme(xcodeProject))[0];
+
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
   const buildProcess = cancelToken.adapt(
-    buildProject(
-      xcodeProject,
-      sourceDir,
-      scheme,
-      buildOptions?.configuration || "Debug",
-      forceCleanBuild
-    )
+    buildProject(xcodeProject, sourceDir, scheme, configuration, forceCleanBuild)
   );
 
   const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
@@ -234,19 +215,25 @@ async function buildLocal(
     buildIOSProgressProcessor.processLine(line);
   });
 
-  await buildProcess;
+  try {
+    await buildProcess;
+  } catch (e) {
+    Logger.error("Error building iOS project", e);
+    throw new Error(
+      "Failed to build the iOS app with xcodebuild. Check the build logs for details."
+    );
+  }
 
-  const appPath = await getBuildPath(
-    xcodeProject,
-    sourceDir,
-    scheme,
-    buildOptions?.configuration || "Debug",
-    cancelToken
-  );
-
-  const bundleID = await getBundleID(appPath);
-
-  return { appPath, bundleID, platform: DevicePlatform.IOS };
+  try {
+    const appPath = await getBuildPath(xcodeProject, sourceDir, scheme, configuration, cancelToken);
+    const bundleID = await getBundleID(appPath);
+    return { appPath, bundleID, platform: DevicePlatform.IOS };
+  } catch (e) {
+    Logger.error("Error getting app path", e);
+    throw new Error(
+      "The iOS app build was successful, but the app file could not be accessed. See the build logs for details."
+    );
+  }
 }
 
 async function getBuildPath(

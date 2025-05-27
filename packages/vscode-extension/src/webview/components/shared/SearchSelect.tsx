@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import "./SearchSelect.css";
-import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import Label from "./Label";
 import { Input } from "./Input";
 
@@ -112,7 +112,9 @@ export const SearchSelect = ({
 
   const updateValue = (newValue: string, updateQuery: boolean) => {
     setValue(newValue);
-    updateQuery && setQuery(newValue);
+    if (updateQuery) {
+      setQuery(newValue);
+    }
   };
 
   const getOptionWithHighlight = (element: string): ReactNode => {
@@ -158,7 +160,7 @@ export const SearchSelect = ({
       <div className="matches-container" onMouseDown={(e) => e.preventDefault()}>
         {isLoading ? (
           <div className="loading-spinner-container">
-            <VSCodeProgressRing />
+            <VscodeProgressRing />
           </div>
         ) : matches.length > 0 ? (
           matches.map((element, index) => (

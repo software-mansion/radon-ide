@@ -38,7 +38,7 @@ function generateWebviewContent(
           media-src vscode-resource: http: https:;
           style-src ${webview.cspSource} 'unsafe-inline';
           script-src 'nonce-${nonce}';
-          font-src vscode-resource: https:;" 
+          font-src vscode-resource: https:;"
         />
         <script type="module" nonce="${nonce}" src="index.js"></script>
         <style>
@@ -85,24 +85,17 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, PATH)],
     };
 
-    webview.html = generateWebviewContent(extensionContext, webview, extensionContext.extensionUri);
+    const devTools = IDE.getInstanceIfExists()?.project?.deviceSession?.devtools;
 
-    const devTools = IDE.getInstanceIfExists()?.project?.toolsManager.devtools;
-
-    const handleDevToolsMessage = (event: string, payload: any) => {
-      if (event === REACT_QUERY_PLUGIN_ID) {
-        webview.postMessage({
-          scope: event,
-          data: payload,
-        });
+    const listener = devTools?.onEvent("RNIDE_pluginMessage", (payload) => {
+      if (payload.scope === REACT_QUERY_PLUGIN_ID) {
+        const { scope, ...data } = payload;
+        webview.postMessage({ scope, data });
       }
-    };
-
-    devTools?.addListener(handleDevToolsMessage);
+    });
 
     webview.onDidReceiveMessage((message) => {
-      const { scope, ...data } = message;
-      devTools?.send(scope, data);
+      devTools?.send("RNIDE_pluginMessage", message);
     });
 
     webviewView.onDidChangeVisibility(() => {
@@ -110,7 +103,14 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
     });
 
     webviewView.onDidDispose(() => {
-      devTools?.removeListener(handleDevToolsMessage);
+      listener?.dispose();
+    });
+
+    webview.html = generateWebviewContent(extensionContext, webview, extensionContext.extensionUri);
+
+    devTools?.send("RNIDE_pluginMessage", {
+      scope: REACT_QUERY_PLUGIN_ID,
+      type: "init",
     });
   }
 }

@@ -4,16 +4,13 @@ import * as vscode from "vscode";
 import { disposeAll } from "../utilities/disposables";
 import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
+import { extensionContext } from "../utilities/extensionContext";
+import { Logger } from "../Logger";
 
 const PING_TIMEOUT = 1000;
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
 const OLD_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
-
-// vscode-js-debug based debugger implementation is disabled for now because
-// of a very slow initialization times. We force the use of the original
-// debug adapter implementation here.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PROXY_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
 
 export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
@@ -39,16 +36,22 @@ export interface JSDebugConfiguration {
 
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
 
+type DebugSessionOptions = {
+  useParentDebugSession?: boolean;
+};
+
 export class DebugSession implements Disposable {
   private parentDebugSession: vscode.DebugSession | undefined;
   private jsDebugSession: vscode.DebugSession | undefined;
 
-  private useParentDebugSession = false;
   private disposables: Disposable[] = [];
 
   private currentWsTarget: string | undefined;
 
-  constructor(private delegate: DebugSessionDelegate) {
+  constructor(
+    private delegate: DebugSessionDelegate,
+    private options: DebugSessionOptions = {}
+  ) {
     this.disposables.push(
       debug.onDidTerminateDebugSession((session) => {
         if (session.id === this.jsDebugSession?.id) {
@@ -91,8 +94,7 @@ export class DebugSession implements Disposable {
       !this.jsDebugSession,
       "Cannot start parent debug session when js debug session is already running"
     );
-    this.useParentDebugSession = true;
-    this.parentDebugSession = await startDebugging(
+    const newParentDebugSession = await startDebugging(
       undefined,
       {
         type: MASTER_DEBUGGER_TYPE,
@@ -106,31 +108,36 @@ export class DebugSession implements Disposable {
         suppressSaveBeforeStart: true,
       }
     );
+    if (this.parentDebugSession) {
+      Logger.warn("Parent debugger session has spawned concurrently, dropping the earlier session");
+      debug.stopDebugging(this.parentDebugSession);
+    }
+    this.parentDebugSession = newParentDebugSession;
   }
 
   public async restart() {
     await this.stop();
-    if (this.useParentDebugSession) {
+    if (this.options.useParentDebugSession) {
       await this.startParentDebugSession();
     }
   }
 
-  private async stop() {
-    if (this.parentDebugSession) {
-      const parentDebugSession = this.parentDebugSession;
-      this.parentDebugSession = undefined;
-      await debug.stopDebugging(parentDebugSession);
-    }
+  public async stop() {
     if (this.jsDebugSession) {
       const jsDebugSession = this.jsDebugSession;
       this.jsDebugSession = undefined;
       await debug.stopDebugging(jsDebugSession);
     }
     this.currentWsTarget = undefined;
+    if (this.parentDebugSession) {
+      const parentDebugSession = this.parentDebugSession;
+      this.parentDebugSession = undefined;
+      await debug.stopDebugging(parentDebugSession);
+    }
   }
 
-  public dispose() {
-    this.stop()
+  public async dispose() {
+    return this.stop()
       .catch()
       .then(() => disposeAll(this.disposables));
   }
@@ -139,11 +146,16 @@ export class DebugSession implements Disposable {
     if (this.jsDebugSession) {
       await this.restart();
     }
+    if (this.options.useParentDebugSession && !this.parentDebugSession) {
+      await this.startParentDebugSession();
+    }
 
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
-    const debuggerType = OLD_JS_DEBUGGER_TYPE;
+    const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
 
-    this.jsDebugSession = await startDebugging(
+    const extensionPath = extensionContext.extensionUri.path;
+
+    const newDebugSession = await startDebugging(
       undefined,
       {
         type: debuggerType,
@@ -156,10 +168,7 @@ export class DebugSession implements Disposable {
         displayDebuggerOverlay: configuration.displayDebuggerOverlay,
         skipFiles: [
           "__source__",
-          "**/extension/lib/**/*.js",
-          "**/vscode-extension/lib/**/*.js",
-          "**/ReactFabric-dev.js",
-          "**/ReactNativeRenderer-dev.js",
+          `${extensionPath}/**/*`,
           "**/node_modules/**/*",
           "!**/node_modules/expo-router/**/*",
         ],
@@ -174,7 +183,11 @@ export class DebugSession implements Disposable {
         compact: true,
       }
     );
-
+    if (this.jsDebugSession) {
+      Logger.warn("JS debugger session has spawned concurrently, dropping the earlier session");
+      debug.stopDebugging(this.jsDebugSession);
+    }
+    this.jsDebugSession = newDebugSession;
     this.currentWsTarget = configuration.websocketAddress;
 
     return true;
@@ -197,10 +210,12 @@ export class DebugSession implements Disposable {
       return false;
     }
     const resultPromise = this.jsDebugSession.customRequest("RNIDE_ping").then((response) => {
-      return !!response.body.result;
+      return !!response.result;
     });
-    const timeout = sleep(PING_TIMEOUT).then(() => false);
-    return Promise.any([resultPromise, timeout]);
+    const timeout = sleep(PING_TIMEOUT).then(() => {
+      throw new Error("Ping timeout");
+    });
+    return Promise.race([resultPromise, timeout]).catch((_e) => false);
   }
 
   public async startProfilingCPU() {

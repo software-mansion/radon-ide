@@ -9,11 +9,10 @@ import {
   ConfigurationChangeEvent,
   DebugConfigurationProviderTriggerKind,
   DebugAdapterExecutable,
-  Disposable,
 } from "vscode";
 import vscode from "vscode";
 import { activate as activateJsDebug } from "vscode-js-debug/dist/src/extension";
-import { TabPanel } from "./panels/Tabpanel";
+import { TabPanel, TabPanelSerializer } from "./panels/Tabpanel";
 import { PreviewCodeLensProvider } from "./providers/PreviewCodeLensProvider";
 import { DebugConfigProvider } from "./providers/DebugConfigProvider";
 import {
@@ -36,8 +35,9 @@ import { Connector } from "./connect/Connector";
 import { updateMcpConfig } from "./mcp";
 import { getLicenseToken } from "./utilities/license";
 import { startLocalMcpServer } from "./mcp/server";
+import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
+import { IDEPanelMoveTarget } from "./common/utils";
 
-const OPEN_PANEL_ON_ACTIVATION = "open_panel_on_activation";
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
 function handleUncaughtErrors(context: ExtensionContext) {
@@ -70,6 +70,10 @@ export function deactivate(context: ExtensionContext): undefined {
 }
 
 export async function activate(context: ExtensionContext) {
+  context.subscriptions.push(
+    window.registerWebviewPanelSerializer(TabPanel.viewType, new TabPanelSerializer())
+  );
+
   handleUncaughtErrors(context);
   await activateJsDebug(context);
 
@@ -87,17 +91,41 @@ export async function activate(context: ExtensionContext) {
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
-  async function showIDEPanel() {
+  // this flag is used to prevent re-entry for showIDEPanel method, inside this method
+  // we update the configuration, and this method is also called as a result of configuration
+  // change such that we can monitor the changes that users make directly from the VSCode settings
+  let updatingConfigProgrammatically = false;
+
+  async function showIDEPanel(newLocation?: IDEPanelMoveTarget) {
+    if (updatingConfigProgrammatically) {
+      return;
+    }
     await commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
-    const panelLocation = workspace
-      .getConfiguration("RadonIDE")
-      .get<PanelLocation>("panelLocation");
+    const configuration = workspace.getConfiguration("RadonIDE");
+
+    let panelLocation = configuration.get<PanelLocation>("panelLocation");
+    if (newLocation) {
+      panelLocation = newLocation === "side-panel" ? "side-panel" : "tab";
+      updatingConfigProgrammatically = true;
+      if (configuration.inspect("panelLocation")?.workspaceValue) {
+        await configuration.update("panelLocation", panelLocation, false);
+      } else {
+        await configuration.update("panelLocation", panelLocation, true);
+      }
+      updatingConfigProgrammatically = false;
+    }
 
     if (panelLocation !== "tab") {
       SidePanelViewProvider.showView();
     } else {
-      TabPanel.render(context);
+      let tabNewLocation: "new-window" | "editor-tab" | undefined;
+      if (newLocation === "new-window") {
+        tabNewLocation = "new-window";
+      } else if (newLocation === "editor-tab") {
+        tabNewLocation = "editor-tab";
+      }
+      TabPanel.show(tabNewLocation);
     }
   }
 
@@ -150,6 +178,7 @@ export async function activate(context: ExtensionContext) {
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
+  context.subscriptions.push(ReactDevtoolsEditorProvider.register(context));
   context.subscriptions.push(
     commands.registerCommand("RNIDE.performBiometricAuthorization", performBiometricAuthorization)
   );
@@ -189,35 +218,6 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(commands.registerCommand("RNIDE.openChat", openChat));
   context.subscriptions.push(commands.registerCommand("RNIDE.getLicenseToken", getLicenseToken));
-
-  async function closeAuxiliaryBar(registeredCommandDisposable: Disposable) {
-    registeredCommandDisposable.dispose(); // must dispose to avoid endless loops
-
-    const wasIDEPanelVisible = SidePanelViewProvider.currentProvider?.view?.visible;
-
-    // run the built-in closeAuxiliaryBar command
-    await commands.executeCommand("workbench.action.closeAuxiliaryBar");
-
-    const isIDEPanelVisible = SidePanelViewProvider.currentProvider?.view?.visible;
-
-    // if closing of Auxiliary bar affected the visibility of SidePanelView, we assume that it means that it was pinned to the secondary sidebar.
-    if (wasIDEPanelVisible && !isIDEPanelVisible) {
-      commands.executeCommand("RNIDE.closePanel");
-    }
-
-    // re-register to continue intercepting closeAuxiliaryBar commands
-    registeredCommandDisposable = commands.registerCommand(
-      "workbench.action.closeAuxiliaryBar",
-      async (arg) => closeAuxiliaryBar(registeredCommandDisposable)
-    );
-    context.subscriptions.push(registeredCommandDisposable);
-  }
-
-  let closeAuxiliaryBarDisposable = commands.registerCommand(
-    "workbench.action.closeAuxiliaryBar",
-    async (arg) => closeAuxiliaryBar(closeAuxiliaryBarDisposable)
-  );
-  context.subscriptions.push(closeAuxiliaryBarDisposable);
 
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
@@ -311,7 +311,9 @@ export async function activate(context: ExtensionContext) {
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
-  shouldExtensionActivate && extensionActivated(context);
+  if (shouldExtensionActivate) {
+    extensionActivated(context);
+  }
 }
 
 class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
@@ -330,9 +332,6 @@ function extensionActivated(context: ExtensionContext) {
   if (context.extensionMode === ExtensionMode.Development) {
     // "Connector" implements experimental functionality that is available in development mode only
     Connector.getInstance().start();
-  }
-  if (extensionContext.workspaceState.get(OPEN_PANEL_ON_ACTIVATION)) {
-    commands.executeCommand("RNIDE.openPanel");
   }
 }
 

@@ -21,11 +21,11 @@ interface DeviceRowProps {
 }
 
 function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: DeviceRowProps) {
-  const { project } = useProject();
+  const { deviceSessionsManager } = useDevices();
 
   const handleDeviceChange = async () => {
     if (!isSelected) {
-      project.selectDevice(deviceInfo);
+      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
     }
   };
 

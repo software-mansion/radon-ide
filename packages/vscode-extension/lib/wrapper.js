@@ -33,8 +33,8 @@ const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
   },
-  get enableNetworkInspect() {
-    return require("./network").enableNetworkInspect;
+  get setupNetworkPlugin() {
+    return require("./network").setup;
   },
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
@@ -48,7 +48,7 @@ window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
   return InternalImports.reduxDevtoolsExtensionCompose(...args);
 };
 
-const RNInternals = require('./rn-internals/rn-internals');
+const RNInternals = require("./rn-internals/rn-internals");
 
 function getCurrentScene() {
   return RNInternals.SceneTracker.getActiveScene().name;
@@ -214,9 +214,17 @@ export function AppWrapper({ children, initialProps, fabric }) {
     [devtoolsAgent]
   );
 
+  const handleRouteListChange = useCallback(
+    (routeList) => {
+      devtoolsAgent?._bridge.send("RNIDE_navigationRouteListUpdated", routeList);
+    },
+    [devtoolsAgent]
+  );
+
   const useNavigationMainHook = navigationPlugins[0]?.plugin.mainHook || emptyNavigationHook;
   const { requestNavigationChange } = useNavigationMainHook({
     onNavigationChange: handleNavigationChange,
+    onRouteListChange: handleRouteListChange,
   });
 
   const openPreview = useCallback(
@@ -301,7 +309,14 @@ export function AppWrapper({ children, initialProps, fabric }) {
         openPreview(payload.id);
         return;
       }
-      const navigationDescriptor = navigationHistory.get(payload.id);
+
+      const navigationDescriptor = navigationHistory.get(payload.id) || {
+        id: payload.id,
+        name: payload.name || payload.id,
+        pathname: payload.id,
+        params: payload.params || {},
+      };
+
       closePreview().then(() => {
         navigationDescriptor && requestNavigationChange(navigationDescriptor);
       });
@@ -332,15 +347,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
       showStorybookStory(payload.componentTitle, payload.storyName);
     },
     [showStorybookStory]
-  );
-
-  useAgentListener(
-    devtoolsAgent,
-    "RNIDE_enableNetworkInspect",
-    (payload) => {
-      InternalImports.enableNetworkInspect(devtoolsAgent, payload);
-    },
-    []
   );
 
   useEffect(() => {
@@ -432,6 +438,10 @@ export function AppWrapper({ children, initialProps, fabric }) {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
     };
   }, [devtoolsAgent]);
+
+  useEffect(() => {
+    InternalImports.setupNetworkPlugin();
+  }, []);
 
   return (
     <View
