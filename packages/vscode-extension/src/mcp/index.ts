@@ -33,13 +33,22 @@ function getEditorType(): EditorType {
 
 async function readMcpConfig(): Promise<McpConfig> {
   return new Promise((resolve, reject) => {
+    const folders = vscode.workspace.workspaceFolders;
+
+    if (!folders || folders.length === 0) {
+      Logger.error(`Couldn't read MCP config - no workspace folder available.`);
+      reject();
+      return;
+    }
+
+    const folder = folders[0];
     const editorType = getEditorType();
     let filePath = "";
 
     if (editorType === EditorType.CURSOR) {
-      filePath = path.join(CURSOR_DIR_PATH, MCP_FILE_NAME);
+      filePath = path.join(folder.uri.fsPath, CURSOR_DIR_PATH, MCP_FILE_NAME);
     } else if (editorType === EditorType.VSCODE) {
-      filePath = path.join(VSCODE_DIR_PATH, MCP_FILE_NAME);
+      filePath = path.join(folder.uri.fsPath, VSCODE_DIR_PATH, MCP_FILE_NAME);
     } else {
       // Unknown editors will not be handled, as mcp.json is not standardized yet.
       Logger.error(`Couldn't read MCP config - unknown editor detected.`);
@@ -48,23 +57,10 @@ async function readMcpConfig(): Promise<McpConfig> {
 
     Logger.info(`Reading MCP config at ${filePath}`);
 
-    if (vscode.workspace.workspaceFolders?.length === 0) {
-      Logger.error(`Couldn't read MCP config - no workspace folder available.`);
-      reject();
-    }
-
-    const folder = vscode.workspace.workspaceFolders?.[0];
-
-    if (!folder) {
-      Logger.error(`Couldn't read MCP config - no workspace folder open.`);
-      reject();
-    }
-
-    // todo: handle lack of mcp.json separately
-
     fs.readFile(filePath, { encoding: "utf8" })
       .then((data) => {
         const config = JSON.parse(data);
+        Logger.info(`Found valid MCP config - updating.`);
         resolve(config);
       })
       .catch(() => {
@@ -107,11 +103,15 @@ async function writeMcpConfig(config: McpConfig) {
 
   await fs.mkdir(fsDirPath, { recursive: true });
 
-  fs.writeFile(fsPath, jsonString).catch((err) => {
-    if (err) {
-      Logger.error(`Failed writing MCP config - ${err}`);
-    }
-  });
+  fs.writeFile(fsPath, jsonString)
+    .then(() => {
+      Logger.info(`Wrote updated MCP config successfully.`);
+    })
+    .catch((err) => {
+      if (err) {
+        Logger.error(`Failed writing MCP config - ${err}`);
+      }
+    });
 }
 
 async function insertRadonEntry(incompleteConfig: McpConfig, port: number): Promise<boolean> {
