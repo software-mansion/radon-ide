@@ -5,7 +5,7 @@ import { NavigationHistoryItem } from "../../common/Project";
 
 interface UrlSelectItemGroupProps {
   items: NavigationHistoryItem[];
-  itemList: HTMLDivElement[];
+  itemList: UrlSelectFocusable[];
   refIndexOffset?: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   width: number;

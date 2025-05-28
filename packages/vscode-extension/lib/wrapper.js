@@ -195,6 +195,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
+  const latestRouteListRef = useRef();
 
   const mountCallback = initialProps?.__RNIDE_onMount;
   useEffect(() => {
@@ -216,7 +217,11 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   const handleRouteListChange = useCallback(
     (routeList) => {
-      devtoolsAgent?._bridge.send("RNIDE_navigationRouteListUpdated", routeList);
+      latestRouteListRef.current = routeList;
+      if (!devtoolsAgent) {
+        return;
+      }
+      devtoolsAgent._bridge.send("RNIDE_navigationRouteListUpdated", routeList);
     },
     [devtoolsAgent]
   );
@@ -351,6 +356,11 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   useEffect(() => {
     if (devtoolsAgent) {
+      // Sometimes the agent is not available immediately, so we need to cache
+      // the latest route list and send it when the agent becomes available.
+      if (latestRouteListRef.current) {
+        devtoolsAgent._bridge.send("RNIDE_navigationRouteListUpdated", latestRouteListRef.current);
+      }
       const LoadingView = RNInternals.LoadingView;
       LoadingView.showMessage = (message) => {
         devtoolsAgent._bridge.send("RNIDE_fastRefreshStarted");
@@ -365,15 +375,13 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   useEffect(() => {
     const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-    hook.off("react-devtools", setDevtoolsAgent);
+    hook.on("react-devtools", setDevtoolsAgent);
     if (hook.reactDevtoolsAgent) {
       setDevtoolsAgent(hook.reactDevtoolsAgent);
-    } else {
-      hook.on("react-devtools", setDevtoolsAgent);
-      return () => {
-        hook.off("react-devtools", setDevtoolsAgent);
-      };
     }
+    return () => {
+      hook.off("react-devtools", setDevtoolsAgent);
+    };
   }, [setDevtoolsAgent]);
 
   useEffect(() => {
