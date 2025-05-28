@@ -10,7 +10,7 @@ enum EditorType {
   VSCODE = "vscode",
 }
 
-type InnerMcpEntries = { RadonAi?: object; RadonAiLocal?: object };
+type InnerMcpEntries = { RadonAi?: object };
 
 type McpConfig = {
   mcpServers?: InnerMcpEntries; // cursor
@@ -20,7 +20,6 @@ type McpConfig = {
 const VSCODE_DIR_PATH = ".vscode";
 const CURSOR_DIR_PATH = ".cursor";
 const MCP_FILE_NAME = "mcp.json";
-const MCP_BACKEND_URL = "https://radon-ai-backend.swmansion.com/sse";
 
 function getEditorType(): EditorType {
   // heurestics, major == 0 means Cursor
@@ -116,25 +115,15 @@ async function writeMcpConfig(config: McpConfig) {
 
 async function insertRadonEntry(incompleteConfig: McpConfig, port: number): Promise<boolean> {
   const radonMcpEntry = {
-    url: MCP_BACKEND_URL,
-    type: "sse",
-    headers: {
-      Authorization: "Bearer ${command:RNIDE.getLicenseToken}",
-    },
-  };
-
-  const radonMcpLocalEntry = {
     url: `http://localhost:${port}/sse`,
     type: "sse",
   };
 
   if (incompleteConfig.servers) {
     incompleteConfig.servers.RadonAi = radonMcpEntry;
-    incompleteConfig.servers.RadonAiLocal = radonMcpLocalEntry;
     return true;
   } else if (incompleteConfig.mcpServers) {
     incompleteConfig.mcpServers.RadonAi = radonMcpEntry;
-    incompleteConfig.mcpServers.RadonAiLocal = radonMcpLocalEntry;
     return true;
   }
 
