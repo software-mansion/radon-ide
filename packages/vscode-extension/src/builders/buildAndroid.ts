@@ -66,7 +66,7 @@ export async function getAndroidBuildPaths(
   return { apkPath, packageName };
 }
 
-function makeBuildTaskName(productFlavor: string, buildType: string, appName?: string) {
+function makeBuildTaskName(productFlavor: string, buildType: string, appName: string) {
   // task name is in the format of :<appName>:assemble<ProductFlavor><BuildType> where productFlavor and buildType
   // are the names of the productFlavor and buildType that each start with a capital letter.
   // By default, Android Gradle Plugin always creates staging and release buildTypes and does not define any productFlavor.
@@ -75,8 +75,7 @@ function makeBuildTaskName(productFlavor: string, buildType: string, appName?: s
   const flavorUppercase =
     productFlavor && productFlavor.charAt(0).toUpperCase() + productFlavor.slice(1);
   const buildTypeUppercase = buildType && buildType.charAt(0).toUpperCase() + buildType.slice(1);
-  const prefix = appName ? `:${appName}:` : "";
-  return `${prefix}assemble${flavorUppercase}${buildTypeUppercase}`;
+  return `:${appName}:assemble${flavorUppercase}${buildTypeUppercase}`;
 }
 
 export async function buildAndroid(
@@ -176,10 +175,11 @@ async function buildLocal(
 ): Promise<AndroidBuildResult> {
   let { appRoot, forceCleanBuild, env, productFlavor = "", buildType = "debug" } = buildConfig;
   const androidSourceDir = getAndroidSourceDir(appRoot);
-  const androidAppName = loadConfig({
+  const androidConfig = loadConfig({
     projectRoot: appRoot,
     selectedPlatform: "android",
-  }).platforms.android?.projectConfig(appRoot)?.appName;
+  });
+  const androidAppName = androidConfig.platforms.android?.projectConfig(appRoot)?.appName ?? "app";
 
   const gradleArgs = [
     "-x",
