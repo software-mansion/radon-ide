@@ -815,7 +815,8 @@
     "vscode-js-debug": "file:../vscode-js-debug",
     "vscode-test": "^1.6.1",
     "ws": "^8.18.1",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "zod": "^3.25.32"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.40.0"
