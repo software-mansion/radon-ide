@@ -31,7 +31,7 @@ function getEditorType(): EditorType {
   return EditorType.VSCODE;
 }
 
-async function readMcpConfig(): Promise<McpConfig> {
+function readMcpConfig(): Promise<McpConfig> {
   return new Promise((resolve, reject) => {
     const folders = vscode.workspace.workspaceFolders;
 
