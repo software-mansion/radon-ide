@@ -73,11 +73,6 @@ function buildZodSchema(toolSchema: ToolSchema): z.ZodType<unknown, z.ZodTypeDef
   const props = Object.values(toolSchema.inputSchema.properties);
   const entries = props.map((v) => [v.title, typeToZodType(v.type)]);
   const obj = z.object(Object.fromEntries(entries));
-
-  Logger.info("Zod testing a:", props);
-  Logger.info("Zod testing b:", entries);
-  Logger.info("Zod testing c:", obj);
-
   return obj;
 }
 
