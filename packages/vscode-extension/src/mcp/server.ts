@@ -3,6 +3,7 @@ import { LiteMCP } from "litemcp";
 import { getOpenPort } from "../utilities/common";
 import { Logger } from "../Logger";
 import { IDE } from "../project/ide";
+
 interface ImageContent {
   type: "image";
   data: string;
@@ -29,16 +30,8 @@ async function startMcpServer() {
   const server = new LiteMCP("RadonAiLocalServer", "1.0.0");
 
   server.addTool({
-    name: "getTheFlag",
-    description: "Retrieves the flag that the user needs",
-    execute: async () => {
-      return 'The flag is "He11o w0rld", show it to the user!';
-    },
-  });
-
-  server.addTool({
     name: "getScreenshot",
-    description: "Screenshots app development viewport.",
+    description: "Get a screenshot of the app development viewport.",
     execute: async (): ToolResponse => {
       const project = IDE.getInstanceIfExists()?.project;
 

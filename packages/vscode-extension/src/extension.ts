@@ -300,13 +300,12 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  // Starts local MCP server, todo: do not await
   const mcpPort = await startLocalMcpServer();
 
   // You can configure the chat in package.json under the `chatParticipants` key
   registerChat(context);
 
-  // Enables Radon AI tooling on editors utilizing MCP configs (e.g. Cursor, VSC Preview).
+  // Enables Radon AI tooling on editors utilizing mcp.json configs.
   updateMcpConfig(mcpPort);
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
