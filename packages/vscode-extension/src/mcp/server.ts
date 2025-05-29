@@ -48,16 +48,18 @@ interface ToolsInfo {
 const DEBUG_BACKEND_URL = "http://localhost:8000/api/";
 const BACKEND_URL = DEBUG_BACKEND_URL; // "https://radon-ai-backend.swmansion.com/api/";
 const TOOL_INFO_URL = BACKEND_URL + "get_tool_schema/";
+const TOOL_CALL_URL = BACKEND_URL + "tool_calls/";
 
-// const TOOL_CALL_URL = BACKEND_URL + "tool_calls/";
-// async function _callTool(toolName: string, args: object) {
-//   const url = TOOL_CALL_URL + toolName;
-//   try {
-//     return await fetch(url, { method: "POST", body: JSON.stringify(args) });
-//   } catch {
-//     return "Failed tool call.";
-//   }
-// }
+async function callTool(toolName: string, args: unknown): ToolResponse {
+  const url = TOOL_CALL_URL + toolName;
+  try {
+    return await fetch(url, { method: "POST", body: JSON.stringify(args) }).then((res) =>
+      res.json()
+    );
+  } catch {
+    return "Failed tool call.";
+  }
+}
 
 function typeToZodType(schemaType: string): z.ZodType {
   switch (schemaType) {
@@ -120,7 +122,7 @@ async function startMcpServer() {
   const server = new LiteMCP("RadonAiServer", "1.0.0");
 
   server.addTool({
-    name: "getScreenshot",
+    name: "view_screenshot",
     description: "Get a screenshot of the app development viewport.",
     execute: screenshotToolDefinition,
   });
@@ -133,8 +135,8 @@ async function startMcpServer() {
       name: tool.name,
       description: tool.description,
       parameters: zodSchema,
-      execute: async (): ToolResponse => {
-        return "Foo bar baz.";
+      execute: async (args): ToolResponse => {
+        return await callTool(tool.name, args);
       },
     });
   }
