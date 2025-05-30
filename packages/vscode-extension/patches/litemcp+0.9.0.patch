@@ -1,17 +1,14 @@
 diff --git a/node_modules/litemcp/dist/index.js b/node_modules/litemcp/dist/index.js
-index 7bbf8fe..3a03bdb 100644
+index 7bbf8fe..5cc62fc 100644
 --- a/node_modules/litemcp/dist/index.js
 +++ b/node_modules/litemcp/dist/index.js
-@@ -114,8 +114,11 @@ var LiteMCP = class {
+@@ -114,6 +114,9 @@ var LiteMCP = class {
            content: [{ type: "text", text: result }]
          };
-       }      
+       }
 +      if (Array.isArray(result.content)) {
 +        return result;
 +      }
        return {
--        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
-+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
        };
-     });
-   }
