@@ -7,7 +7,7 @@ import { getOpenPort } from "../utilities/common";
 import { Logger } from "../Logger";
 import { IDE } from "../project/ide";
 import { ToolResponse, ToolSchema } from "./models";
-import { callTool, getToolSchema } from "./api";
+import { invokeToolCall, getToolSchema } from "./api";
 
 function buildZodSchema(toolSchema: ToolSchema): z.ZodType<unknown, z.ZodTypeDef, unknown> {
   const props = Object.values(toolSchema.inputSchema.properties);
@@ -64,7 +64,7 @@ async function startMcpServer() {
       description: tool.description,
       parameters: zodSchema,
       execute: async (args): ToolResponse => {
-        const toolResponse = await callTool(tool.name, args);
+        const toolResponse = await invokeToolCall(tool.name, args);
         return toolResponse;
       },
     });
