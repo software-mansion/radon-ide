@@ -53,9 +53,11 @@ const TOOL_CALL_URL = BACKEND_URL + "tool_calls/";
 async function callTool(toolName: string, args: unknown): ToolResponse {
   const url = TOOL_CALL_URL + toolName;
   try {
-    return await fetch(url, { method: "POST", body: JSON.stringify(args) }).then((res) =>
-      res.json()
-    );
+    return await fetch(url, {
+      method: "POST",
+      body: JSON.stringify(args),
+      headers: { Authorization: `Bearer ${getLicenseToken()}` },
+    }).then((res) => res.json());
   } catch {
     return "Failed tool call.";
   }
