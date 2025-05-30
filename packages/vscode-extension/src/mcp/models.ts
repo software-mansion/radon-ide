@@ -43,4 +43,16 @@ interface ToolResult {
   }[];
 }
 
-export { TextContent, ToolResponse, ToolResult, ToolSchema, ToolsInfo };
+enum EditorType {
+  CURSOR = "cursor",
+  VSCODE = "vscode",
+}
+
+type InnerMcpEntries = { RadonAi?: object };
+
+type McpConfig = {
+  mcpServers?: InnerMcpEntries; // cursor
+  servers?: InnerMcpEntries; // vscode
+};
+
+export { EditorType, McpConfig, TextContent, ToolResponse, ToolResult, ToolSchema, ToolsInfo };

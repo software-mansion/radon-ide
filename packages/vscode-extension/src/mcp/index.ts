@@ -5,18 +5,9 @@ import path from "node:path";
 import * as vscode from "vscode";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { EditorType, McpConfig } from "./models";
 
-enum EditorType {
-  CURSOR = "cursor",
-  VSCODE = "vscode",
-}
-
-type InnerMcpEntries = { RadonAi?: object };
-
-type McpConfig = {
-  mcpServers?: InnerMcpEntries; // cursor
-  servers?: InnerMcpEntries; // vscode
-};
+const MCP_LOG = "[MCP]";
 
 const VSCODE_DIR_PATH = ".vscode";
 const CURSOR_DIR_PATH = ".cursor";
@@ -51,12 +42,12 @@ async function readMcpConfig(): Promise<McpConfig> {
     throw new Error(`Couldn't read MCP config - unknown editor detected.`);
   }
 
-  Logger.info(`Reading MCP config at ${filePath}`);
+  Logger.info(MCP_LOG, `Reading MCP config at ${filePath}`);
 
   try {
     return await fs.readFile(filePath, { encoding: "utf8" }).then((data) => {
       const config = JSON.parse(data);
-      Logger.info(`Found valid MCP config - updating.`);
+      Logger.info(MCP_LOG, `Found valid MCP config - updating.`);
       return config;
     });
   } catch {
@@ -74,19 +65,19 @@ async function writeMcpConfig(config: McpConfig) {
     directoryPath = path.join(VSCODE_DIR_PATH);
   } else {
     // Unknown editors will not be handled, as mcp.json is not standardized yet.
-    Logger.error(`Failed writing MCP config - unknown editor detected.`);
+    Logger.error(MCP_LOG, `Failed writing MCP config - unknown editor detected.`);
     return;
   }
 
   if (vscode.workspace.workspaceFolders?.length === 0) {
-    Logger.error(`Failed writing MCP config - no workspace folder available.`);
+    Logger.error(MCP_LOG, `Failed writing MCP config - no workspace folder available.`);
     return;
   }
 
   const folder = vscode.workspace.workspaceFolders?.[0];
 
   if (!folder) {
-    Logger.error(`Failed writing MCP config - no workspace folder open.`);
+    Logger.error(MCP_LOG, `Failed writing MCP config - no workspace folder open.`);
     return;
   }
 
@@ -99,11 +90,11 @@ async function writeMcpConfig(config: McpConfig) {
 
   fs.writeFile(fsPath, jsonString)
     .then(() => {
-      Logger.info(`Wrote updated MCP config successfully.`);
+      Logger.info(MCP_LOG, `Wrote updated MCP config successfully.`);
     })
     .catch((err) => {
       if (err) {
-        Logger.error(`Failed writing MCP config - ${err}`);
+        Logger.error(MCP_LOG, `Failed writing MCP config - ${err}`);
       }
     });
 }
@@ -147,9 +138,9 @@ export async function updateMcpConfig(port: number) {
     mcpConfig = await readMcpConfig();
   } catch (info) {
     if (info instanceof Error) {
-      Logger.info(info.message);
+      Logger.info(MCP_LOG, info.message);
     } else {
-      Logger.info(String(info));
+      Logger.info(MCP_LOG, String(info));
     }
 
     mcpConfig = newMcpConfig();
@@ -160,10 +151,10 @@ export async function updateMcpConfig(port: number) {
     await writeMcpConfig(mcpConfig);
   } catch (error) {
     if (error instanceof Error) {
-      Logger.error(error.message);
+      Logger.error(MCP_LOG, error.message);
       getTelemetryReporter().sendTelemetryEvent("chat:error", { error: error.message });
     } else {
-      Logger.error(String(error));
+      Logger.error(MCP_LOG, String(error));
       getTelemetryReporter().sendTelemetryEvent("chat:error", { error: String(error) });
     }
   }
