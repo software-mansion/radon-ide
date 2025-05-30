@@ -6,12 +6,13 @@ import { z } from "zod";
 import { getOpenPort } from "../utilities/common";
 import { Logger } from "../Logger";
 import { IDE } from "../project/ide";
+import { getLicenseToken } from "../utilities/license";
 
 interface ImageContent {
   type: "image";
   data: string;
   mimeType: `image/${string}`;
-  model_config: {
+  model_config?: {
     extra: "allow";
   };
 }
@@ -25,7 +26,7 @@ type ToolResponse = Promise<
   | string
   | {
       content: (ImageContent | TextContent)[];
-      isError: false;
+      isError?: boolean;
     }
 >;
 
