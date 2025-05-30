@@ -59,7 +59,12 @@ export async function invokeToolCall(toolName: string, args: unknown): ToolRespo
 export async function getToolSchema(): Promise<ToolsInfo> {
   try {
     const url = new URL("/api/get_tool_schema/", BACKEND_URL);
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getLicenseToken()}`,
+      },
+    });
 
     if (response.status !== 200) {
       const msg = `Network error while fetching tool schema with status: ${response.status}`;
