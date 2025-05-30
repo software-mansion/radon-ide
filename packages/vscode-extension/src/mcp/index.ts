@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import * as vscode from "vscode";
 import { Logger } from "../Logger";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 enum EditorType {
   CURSOR = "cursor",
@@ -30,43 +31,37 @@ function getEditorType(): EditorType {
   return EditorType.VSCODE;
 }
 
-function readMcpConfig(): Promise<McpConfig> {
-  return new Promise((resolve, reject) => {
-    const folders = vscode.workspace.workspaceFolders;
+async function readMcpConfig(): Promise<McpConfig> {
+  const folders = vscode.workspace.workspaceFolders;
 
-    if (!folders || folders.length === 0) {
-      Logger.error(`Couldn't read MCP config - no workspace folder available.`);
-      reject();
-      return;
-    }
+  if (!folders || folders.length === 0) {
+    throw new Error(`Couldn't read MCP config - no workspace folder available.`);
+  }
 
-    const folder = folders[0];
-    const editorType = getEditorType();
-    let filePath = "";
+  const folder = folders[0];
+  const editorType = getEditorType();
+  let filePath = "";
 
-    if (editorType === EditorType.CURSOR) {
-      filePath = path.join(folder.uri.fsPath, CURSOR_DIR_PATH, MCP_FILE_NAME);
-    } else if (editorType === EditorType.VSCODE) {
-      filePath = path.join(folder.uri.fsPath, VSCODE_DIR_PATH, MCP_FILE_NAME);
-    } else {
-      // Unknown editors will not be handled, as mcp.json is not standardized yet.
-      Logger.error(`Couldn't read MCP config - unknown editor detected.`);
-      reject();
-    }
+  if (editorType === EditorType.CURSOR) {
+    filePath = path.join(folder.uri.fsPath, CURSOR_DIR_PATH, MCP_FILE_NAME);
+  } else if (editorType === EditorType.VSCODE) {
+    filePath = path.join(folder.uri.fsPath, VSCODE_DIR_PATH, MCP_FILE_NAME);
+  } else {
+    // Unknown editors will not be handled, as mcp.json is not standardized yet.
+    throw new Error(`Couldn't read MCP config - unknown editor detected.`);
+  }
 
-    Logger.info(`Reading MCP config at ${filePath}`);
+  Logger.info(`Reading MCP config at ${filePath}`);
 
-    fs.readFile(filePath, { encoding: "utf8" })
-      .then((data) => {
-        const config = JSON.parse(data);
-        Logger.info(`Found valid MCP config - updating.`);
-        resolve(config);
-      })
-      .catch(() => {
-        Logger.info(`Couldn't read MCP config - MCP config not found.`);
-        reject();
-      });
-  });
+  try {
+    return await fs.readFile(filePath, { encoding: "utf8" }).then((data) => {
+      const config = JSON.parse(data);
+      Logger.info(`Found valid MCP config - updating.`);
+      return config;
+    });
+  } catch {
+    throw new Error(`Couldn't read MCP config - MCP config not found.`);
+  }
 }
 
 async function writeMcpConfig(config: McpConfig) {
@@ -113,7 +108,7 @@ async function writeMcpConfig(config: McpConfig) {
     });
 }
 
-async function insertRadonEntry(incompleteConfig: McpConfig, port: number): Promise<boolean> {
+async function insertRadonEntry(incompleteConfig: McpConfig, port: number) {
   const radonMcpEntry = {
     url: `http://localhost:${port}/sse`,
     type: "sse",
@@ -121,15 +116,14 @@ async function insertRadonEntry(incompleteConfig: McpConfig, port: number): Prom
 
   if (incompleteConfig.servers) {
     incompleteConfig.servers.RadonAi = radonMcpEntry;
-    return true;
+    return;
   } else if (incompleteConfig.mcpServers) {
     incompleteConfig.mcpServers.RadonAi = radonMcpEntry;
-    return true;
+    return;
   }
 
   // mcp.json file has to have either 'servers' or 'mcpServers' field, otherwise it's invalid
-  Logger.error(`Failed updating MCP config - existing mcp.json file is corrupted.`);
-  return false;
+  throw new Error(`Failed updating MCP config - existing mcp.json file is corrupted.`);
 }
 
 function newMcpConfig(): McpConfig {
@@ -151,11 +145,26 @@ export async function updateMcpConfig(port: number) {
 
   try {
     mcpConfig = await readMcpConfig();
-  } catch {
+  } catch (info) {
+    if (info instanceof Error) {
+      Logger.info(info.message);
+    } else {
+      Logger.info(String(info));
+    }
+
     mcpConfig = newMcpConfig();
   }
 
-  if (await insertRadonEntry(mcpConfig, port)) {
-    writeMcpConfig(mcpConfig);
+  try {
+    await insertRadonEntry(mcpConfig, port);
+    await writeMcpConfig(mcpConfig);
+  } catch (error) {
+    if (error instanceof Error) {
+      Logger.error(error.message);
+      getTelemetryReporter().sendTelemetryEvent("chat:error", { error: error.message });
+    } else {
+      Logger.error(String(error));
+      getTelemetryReporter().sendTelemetryEvent("chat:error", { error: String(error) });
+    }
   }
 }
