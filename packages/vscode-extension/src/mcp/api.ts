@@ -28,10 +28,7 @@ export async function invokeToolCall(toolName: string, args: unknown): ToolRespo
     });
 
     if (response.status !== 200) {
-      const msg = `Failed to fetch response from Radon AI with status: ${response.status}`;
-      Logger.error(MCP_LOG, msg);
-      getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
-      return "Failed tool call. Check for call format validity.";
+      throw new Error(`Network error with status: ${response.status}`);
     }
 
     const results: ToolResult = await response.json();
@@ -67,12 +64,7 @@ export async function getToolSchema(): Promise<ToolsInfo> {
     });
 
     if (response.status !== 200) {
-      const msg = `Network error while fetching tool schema with status: ${response.status}`;
-      Logger.error(MCP_LOG, msg);
-      getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
-      return {
-        tools: [],
-      };
+      throw new Error(`Network error with status: ${response.status}`);
     }
 
     return response.json();
