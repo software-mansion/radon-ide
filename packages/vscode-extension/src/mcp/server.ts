@@ -64,8 +64,7 @@ async function startMcpServer() {
       description: tool.description,
       parameters: zodSchema,
       execute: async (args): ToolResponse => {
-        const toolResponse = await invokeToolCall(tool.name, args);
-        return toolResponse;
+        return await invokeToolCall(tool.name, args);
       },
     });
   }
