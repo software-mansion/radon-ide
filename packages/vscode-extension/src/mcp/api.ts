@@ -2,7 +2,7 @@ import { Logger } from "../Logger";
 import { getLicenseToken } from "../utilities/license";
 import { ToolResponse, ToolResult, ToolsInfo } from "./models";
 
-const BACKEND_URL = "http://localhost:8000/"; // "https://radon-ai-backend.swmansion.com/api/";
+const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";
 
 export async function callTool(toolName: string, args: unknown): ToolResponse {
   // this function is similar to `chat:invokeToolCall()`, could merge them in the future

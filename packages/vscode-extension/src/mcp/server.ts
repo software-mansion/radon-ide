@@ -22,8 +22,8 @@ async function screenshotToolDefinition(): ToolResponse {
   if (!project || !project.deviceSession) {
     return (
       "Could not capture a screenshot!\n" +
-      "The development viewport device is likely turned off," +
-      "tell the user to turn on Radon IDE emulator before proceeding with a."
+      "The development viewport device is likely turned off.\n" +
+      "Please turn on the Radon IDE emulator before proceeding."
     );
   }
 

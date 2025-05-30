@@ -33,7 +33,6 @@ import { registerChat } from "./chat";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
 import { updateMcpConfig } from "./mcp";
-import { getLicenseToken } from "./utilities/license";
 import { startLocalMcpServer } from "./mcp/server";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 import { IDEPanelMoveTarget } from "./common/utils";
@@ -217,7 +216,6 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.captureScreenshot", captureScreenshot)
   );
   context.subscriptions.push(commands.registerCommand("RNIDE.openChat", openChat));
-  context.subscriptions.push(commands.registerCommand("RNIDE.getLicenseToken", getLicenseToken));
 
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
