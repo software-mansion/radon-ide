@@ -16,8 +16,10 @@ function renderAppRoots(
 
   return (
     <Select.Group>
+      <Select.Label className="approot-select-label">Select application</Select.Label>
       {applicationRoots.map(({ path, displayName, name }) => (
         <RichSelectItem
+          className="approot-select-item"
           value={path}
           key={path}
           icon={<span className="codicon codicon-folder" />}

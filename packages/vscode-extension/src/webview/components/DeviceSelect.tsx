@@ -91,6 +91,7 @@ function DeviceSelect() {
         <Select.Content
           className="device-select-content"
           position="popper"
+          align="center"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <Select.ScrollUpButton className="device-select-scroll">
             <span className="codicon codicon-chevron-up" />

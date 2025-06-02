@@ -134,7 +134,8 @@
   background-color: var(--swm-device-select-trigger);
   color: var(--swm-device-select-trigger-text);
   user-select: none;
-  overflow: hidden;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .activate-license-button::before {

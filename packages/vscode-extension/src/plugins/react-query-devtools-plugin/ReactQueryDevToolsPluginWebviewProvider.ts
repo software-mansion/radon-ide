@@ -85,8 +85,6 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, PATH)],
     };
 
-    webview.html = generateWebviewContent(extensionContext, webview, extensionContext.extensionUri);
-
     const inspectorBridge = IDE.getInstanceIfExists()?.project?.deviceSession?.inspectorBridge;
 
     const listener = inspectorBridge?.onEvent("pluginMessage", ({ pluginId, type, data }) => {
@@ -106,5 +104,9 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
     webviewView.onDidDispose(() => {
       listener?.dispose();
     });
+
+    webview.html = generateWebviewContent(extensionContext, webview, extensionContext.extensionUri);
+
+    inspectorBridge?.sendPluginMessage(REACT_QUERY_PLUGIN_ID, "init", {});
   }
 }

@@ -135,7 +135,13 @@ const NetworkRequestLog = ({
     <div className="table-container" ref={containerRef}>
       <div style={{ width: "100%", overflowX: "hidden" }}>
         {/* DIRTY HACK: table rerenders on window resize, including scroll position which sucks */}
-        <VscodeTable zebra resizable responsive style={{ height: parentHeight }} key={parentHeight}>
+        <VscodeTable
+          zebra
+          bordered-columns
+          resizable
+          responsive
+          style={{ height: parentHeight }}
+          key={parentHeight}>
           <VscodeTableHeader slot="header">
             {logDetailsConfig.map(({ title }) => (
               <VscodeTableHeaderCell key={title}>{title}</VscodeTableHeaderCell>

@@ -3,6 +3,7 @@ import { register } from "../expo_dev_plugins";
 import { PluginMessageBridge } from "./PluginMessageBridge";
 
 function broadcastQueryClient(queryClient) {
+  register("react-query");
   const proxy = new PluginMessageBridge("react-query");
 
   let transaction = false;
@@ -72,9 +73,22 @@ function broadcastQueryClient(queryClient) {
       }
     });
   });
-}
 
-register("react-query");
+  proxy.addMessageListener("init", () => {
+    tx(() => {
+      queryClient
+        .getQueryCache()
+        .getAll()
+        .forEach((query) => {
+          proxy.sendMessage("updated", {
+            queryHash: query.queryHash,
+            queryKey: query.queryKey,
+            state: query.state,
+          });
+        });
+    });
+  });
+}
 
 const origMount = QueryClient.prototype.mount;
 
