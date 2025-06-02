@@ -461,7 +461,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     if (await this.dependencyManager.checkProjectUsesStorybook()) {
-      this.deviceSession!.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
+      this.deviceSession?.openStorybookStory(componentTitle, storyName);
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");
     }

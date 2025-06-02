@@ -1,5 +1,5 @@
 const RNInternals = require("./rn-internals/rn-internals");
-const { AppExtensionProxy } = require("./plugins/AppExtensionProxy");
+const { PluginMessageBridge } = require("./plugins/PluginMessageBridge");
 
 function mimeTypeFromResponseType(responseType) {
   switch (responseType) {
@@ -76,13 +76,13 @@ export function setup() {
   }
   setupCompleted = true;
 
-  const networkProxy = new AppExtensionProxy("network");
+  const messageBridge = new PluginMessageBridge("network");
 
   let enabled = false;
-  networkProxy.addMessageListener("cdp-message", (message) => {
+  messageBridge.addMessageListener("cdp-message", (message) => {
     if (message.method === "Network.enable" && !enabled) {
       enabled = true;
-      enableNetworkInspect(networkProxy);
+      enableNetworkInspect(messageBridge);
     } else if (message.method === "Network.disable" && enabled) {
       enabled = false;
       disableNetworkInspect();

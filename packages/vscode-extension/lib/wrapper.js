@@ -12,6 +12,9 @@ const {
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
 
+require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
+const inspectorBridge = require("./inspector_bridge");
+
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
 
@@ -39,8 +42,8 @@ const InternalImports = {
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;
   },
-  get updateInstrumentationOptions() {
-    return require("./instrumentation").updateInstrumentationOptions;
+  get setupRenderOutlinesPlugin() {
+    return require("./render_outlines").setup;
   },
 };
 
@@ -59,17 +62,6 @@ function emptyNavigationHook() {
     getCurrentNavigationDescriptor: () => undefined,
     requestNavigationChange: () => {},
   };
-}
-
-function useAgentListener(agent, eventName, listener, deps = []) {
-  useEffect(() => {
-    if (agent) {
-      agent._bridge.addListener(eventName, listener);
-      return () => {
-        agent._bridge.removeListener(eventName, listener);
-      };
-    }
-  }, [agent, ...deps]);
 }
 
 function getRendererConfig() {
@@ -192,7 +184,6 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
 
 export function AppWrapper({ children, initialProps, fabric }) {
   const rootTag = useContext(RootTagContext);
-  const [devtoolsAgent, setDevtoolsAgent] = useState(null);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
 
@@ -203,23 +194,23 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   const layoutCallback = initialProps?.__RNIDE_onLayout;
 
-  const handleNavigationChange = useCallback(
-    (navigationDescriptor) => {
-      navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
-      devtoolsAgent?._bridge.send("RNIDE_navigationChanged", {
+  const handleNavigationChange = useCallback((navigationDescriptor) => {
+    navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
+    inspectorBridge.sendMessage({
+      type: "navigationChanged",
+      data: {
         displayName: navigationDescriptor.name,
         id: navigationDescriptor.id,
-      });
-    },
-    [devtoolsAgent]
-  );
+      },
+    });
+  });
 
-  const handleRouteListChange = useCallback(
-    (routeList) => {
-      devtoolsAgent?._bridge.send("RNIDE_navigationRouteListUpdated", routeList);
-    },
-    [devtoolsAgent]
-  );
+  const handleRouteListChange = useCallback((routeList) => {
+    inspectorBridge.sendMessage({
+      type: "navigationRouteListUpdated",
+      data: routeList,
+    });
+  }, []);
 
   const useNavigationMainHook = navigationPlugins[0]?.plugin.mainHook || emptyNavigationHook;
   const { requestNavigationChange } = useNavigationMainHook({
@@ -274,47 +265,19 @@ export function AppWrapper({ children, initialProps, fabric }) {
     [handleNavigationChange]
   );
 
-  useAgentListener(
-    devtoolsAgent,
-    "RNIDE_openPreview",
-    (payload) => {
-      try {
-        openPreview(payload.previewId);
-        devtoolsAgent._bridge.send("RNIDE_openPreviewResult", payload);
-      } catch (e) {
-        devtoolsAgent._bridge.send("RNIDE_openPreviewResult", { ...payload, error: true });
-      }
-    },
-    [openPreview]
-  );
-
-  useAgentListener(
-    devtoolsAgent,
-    "RNIDE_openUrl",
-    (payload) => {
-      closePreview().then(() => {
-        const url = payload.url;
-        Linking.openURL(url);
-      });
-    },
-    [closePreview]
-  );
-
-  useAgentListener(
-    devtoolsAgent,
-    "RNIDE_openNavigation",
-    (payload) => {
-      const isPreviewUrl = payload.id.startsWith("preview://") || payload.id.startsWith("sb://");
+  const openNavigation = useCallback(
+    (message) => {
+      const isPreviewUrl = message.id.startsWith("preview://") || message.id.startsWith("sb://");
       if (isPreviewUrl) {
-        openPreview(payload.id);
+        openPreview(message.id);
         return;
       }
 
-      const navigationDescriptor = navigationHistory.get(payload.id) || {
-        id: payload.id,
-        name: payload.name || payload.id,
-        pathname: payload.id,
-        params: payload.params || {},
+      const navigationDescriptor = navigationHistory.get(message.id) || {
+        id: message.id,
+        name: message.name || message.id,
+        pathname: message.id,
+        params: message.params || {},
       };
 
       closePreview().then(() => {
@@ -324,101 +287,61 @@ export function AppWrapper({ children, initialProps, fabric }) {
     [openPreview, closePreview, requestNavigationChange]
   );
 
-  useAgentListener(
-    devtoolsAgent,
-    "RNIDE_inspect",
-    (payload) => {
-      const { id, x, y, requestStack } = payload;
+  useEffect(() => {
+    const listener = (message) => {
+      const { type, data } = message;
+      switch (type) {
+        case "openPreview":
+          openPreview(data.previewId);
+          break;
+        case "openUrl":
+          closePreview().then(() => {
+            const url = data.url;
+            Linking.openURL(url);
+          });
+          break;
+        case "openNavigation":
+          openNavigation(data);
+          break;
+        case "inspect":
+          const { id, x, y, requestStack } = data;
+          getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
+            inspectorBridge.sendMessage({
+              type: "inspectData",
+              data: {
+                id,
+                ...inspectorData,
+              },
+            });
+          });
+          break;
+        case "showStorybookStory":
+          showStorybookStory(data.componentTitle, data.storyName);
+          break;
+      }
+    };
+    inspectorBridge.addMessageListener(listener);
+    return () => inspectorBridge.removeMessageListener(listener);
+  }, [openPreview, closePreview, openNavigation, showStorybookStory]);
 
-      getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
-        devtoolsAgent._bridge.send("RNIDE_inspectData", {
-          id,
-          ...inspectorData,
-        });
+  useEffect(() => {
+    const LoadingView = RNInternals.LoadingView;
+    LoadingView.showMessage = (message) => {
+      inspectorBridge.sendMessage({
+        type: "fastRefreshStarted",
       });
-    },
-    [mainContainerRef]
-  );
-
-  useAgentListener(
-    devtoolsAgent,
-    "RNIDE_showStorybookStory",
-    (payload) => {
-      showStorybookStory(payload.componentTitle, payload.storyName);
-    },
-    [showStorybookStory]
-  );
-
-  useEffect(() => {
-    if (devtoolsAgent) {
-      const LoadingView = RNInternals.LoadingView;
-      LoadingView.showMessage = (message) => {
-        devtoolsAgent._bridge.send("RNIDE_fastRefreshStarted");
-      };
-      const originalHide = LoadingView.hide;
-      LoadingView.hide = () => {
-        originalHide();
-        devtoolsAgent._bridge.send("RNIDE_fastRefreshComplete");
-      };
-    }
-  }, [devtoolsAgent]);
-
-  useEffect(() => {
-    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-    hook.off("react-devtools", setDevtoolsAgent);
-    if (hook.reactDevtoolsAgent) {
-      setDevtoolsAgent(hook.reactDevtoolsAgent);
-    } else {
-      hook.on("react-devtools", setDevtoolsAgent);
-      return () => {
-        hook.off("react-devtools", setDevtoolsAgent);
-      };
-    }
-  }, [setDevtoolsAgent]);
-
-  useEffect(() => {
-    if (!!devtoolsAgent && hasLayout) {
-      const appKey = getCurrentScene();
-      devtoolsAgent._bridge.send("RNIDE_appReady", {
-        appKey,
-        navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
+    };
+    const originalHide = LoadingView.hide;
+    LoadingView.hide = () => {
+      originalHide();
+      inspectorBridge.sendMessage({
+        type: "fastRefreshComplete",
       });
-      devtoolPluginsChanged = () => {
-        devtoolsAgent._bridge.send("RNIDE_devtoolPluginsChanged", {
-          plugins: Array.from(devtoolPlugins.values()),
-        });
-      };
-      devtoolPluginsChanged();
-      return () => {
-        devtoolPluginsChanged = undefined;
-      };
-    }
-  }, [!!devtoolsAgent && hasLayout]);
+    };
 
-  useEffect(() => {
-    if (!devtoolsAgent) {
-      return;
-    }
-    InternalImports.updateInstrumentationOptions({
-      reportRenders: (blueprintOutlines) => {
-        devtoolsAgent._bridge.send("RNIDE_rendersReported", { blueprintOutlines });
-      },
-    });
-  }, [devtoolsAgent]);
+    InternalImports.setupRenderOutlinesPlugin();
+    InternalImports.setupNetworkPlugin();
 
-  useAgentListener(
-    devtoolsAgent,
-    "RNIDE_updateInstrumentationOptions",
-    (payload) => {
-      InternalImports.updateInstrumentationOptions(payload);
-    },
-    []
-  );
-
-  useEffect(() => {
-    if (!devtoolsAgent) {
-      return;
-    }
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
     LogBox.ignoreAllLogs(true);
 
@@ -437,11 +360,32 @@ export function AppWrapper({ children, initialProps, fabric }) {
     return () => {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
     };
-  }, [devtoolsAgent]);
+  }, []);
 
   useEffect(() => {
-    InternalImports.setupNetworkPlugin();
-  }, []);
+    if (hasLayout) {
+      const appKey = getCurrentScene();
+      inspectorBridge.sendMessage({
+        type: "appReady",
+        data: {
+          appKey,
+          navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
+        },
+      });
+      devtoolPluginsChanged = () => {
+        inspectorBridge.sendMessage({
+          type: "devtoolPluginsChanged",
+          data: {
+            plugins: Array.from(devtoolPlugins.values()),
+          },
+        });
+      };
+      devtoolPluginsChanged();
+      return () => {
+        devtoolPluginsChanged = undefined;
+      };
+    }
+  }, [hasLayout]);
 
   return (
     <View
