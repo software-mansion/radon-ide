@@ -375,13 +375,15 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   useEffect(() => {
     const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-    hook.on("react-devtools", setDevtoolsAgent);
+    hook.off("react-devtools", setDevtoolsAgent);
     if (hook.reactDevtoolsAgent) {
       setDevtoolsAgent(hook.reactDevtoolsAgent);
+    } else {
+      hook.on("react-devtools", setDevtoolsAgent);
+      return () => {
+        hook.off("react-devtools", setDevtoolsAgent);
+      };
     }
-    return () => {
-      hook.off("react-devtools", setDevtoolsAgent);
-    };
   }, [setDevtoolsAgent]);
 
   useEffect(() => {
