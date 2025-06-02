@@ -10,11 +10,12 @@ export async function invokeToolCall(toolName: string, args: unknown): ToolRespo
   // this function is similar to `chat:invokeToolCall()`, will merge them in the future
   try {
     const url = new URL("/api/tool_calls/", BACKEND_URL);
+    const token = await getLicenseToken();
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${getLicenseToken()}`,
+        "Authorization": `Bearer ${token}`,
       },
       body: JSON.stringify({
         tool_calls: [
@@ -56,10 +57,12 @@ export async function invokeToolCall(toolName: string, args: unknown): ToolRespo
 export async function getToolSchema(): Promise<ToolsInfo> {
   try {
     const url = new URL("/api/get_tool_schema/", BACKEND_URL);
+    const token = await getLicenseToken();
     const response = await fetch(url, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${getLicenseToken()}`,
+        "Authorization": `Bearer ${token}`,
       },
     });
 
