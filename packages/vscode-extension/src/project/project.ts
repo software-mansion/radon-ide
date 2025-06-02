@@ -139,6 +139,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   private setupAppRoot() {
     const newAppRoot = findAndSetupNewAppRootFolder();
+    if (newAppRoot === this.appRootFolder) {
+      return;
+    }
 
     const oldApplicationContext = this.applicationContext;
     this.applicationContext = new ApplicationContext(newAppRoot);
