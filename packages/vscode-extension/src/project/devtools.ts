@@ -4,7 +4,6 @@ import fs from "fs";
 import os from "os";
 import { Disposable, Uri } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
-import { NavigationRoute } from "../common/Project";
 import { Logger } from "../Logger";
 import {
   createBridge,
