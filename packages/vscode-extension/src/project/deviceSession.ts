@@ -159,6 +159,7 @@ export class DeviceSession
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
     this.buildError = undefined;
+    this.isRefreshing = false;
     this.hasStaleBuildCache = false;
     this.profilingCPUState = "stopped";
     this.profilingReactState = "stopped";
