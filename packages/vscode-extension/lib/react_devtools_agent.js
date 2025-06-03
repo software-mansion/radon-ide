@@ -31,7 +31,7 @@ const setDevtoolsAgent = (newDevtoolsAgent) => {
 
 const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
 if (hook.reactDevtoolsAgent) {
-  setDevtoolsAgent(hook.devtoolsAgent);
+  setDevtoolsAgent(hook.reactDevtoolsAgent);
 } else {
   hook.on("react-devtools", setDevtoolsAgent);
 }
