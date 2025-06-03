@@ -85,6 +85,7 @@ export class DeviceSession
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
   private buildError: BuildErrorDescriptor | undefined;
+  private isRefreshing: boolean = false;
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
   private navigationHistory: NavigationHistoryItem[] = [];
@@ -138,6 +139,7 @@ export class DeviceSession
       startupMessage: this.startupMessage,
       stageProgress: this.stageProgress,
       buildError: this.buildError,
+      isRefreshing: this.isRefreshing,
       profilingCPUState: this.profilingCPUState,
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
@@ -157,6 +159,7 @@ export class DeviceSession
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
     this.buildError = undefined;
+    this.isRefreshing = false;
     this.hasStaleBuildCache = false;
     this.profilingCPUState = "stopped";
     this.profilingReactState = "stopped";
@@ -241,10 +244,7 @@ export class DeviceSession
   //#region Build manager delegate methods
 
   onCacheStale = (platform: DevicePlatform) => {
-    if (
-      platform === this.device.platform &&
-      (this.status === "running" || this.status === "refreshing")
-    ) {
+    if (platform === this.device.platform && this.status === "running") {
       // we only consider "stale cache" in a non-error state that happens
       // after the launch phase if complete. Otherwsie, it may be a result of
       // the build process that triggers the callback in which case we don't want
@@ -279,15 +279,11 @@ export class DeviceSession
       this.emitStateChange();
     });
     devtools.onEvent("fastRefreshStarted", () => {
-      this.status = "refreshing";
+      this.isRefreshing = true;
       this.emitStateChange();
     });
     devtools.onEvent("fastRefreshComplete", () => {
-      const ignoredEvents = ["starting", "bundlingError"];
-      if (ignoredEvents.includes(this.status)) {
-        return;
-      }
-      this.status = "running";
+      this.isRefreshing = false;
       this.emitStateChange();
     });
     devtools.onEvent("isProfilingReact", (isProfiling) => {
