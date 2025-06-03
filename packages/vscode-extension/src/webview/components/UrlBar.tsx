@@ -50,15 +50,6 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         <span className="codicon codicon-arrow-left" />
       </IconButton>
       <ReloadButton disabled={disabled ?? false} />
-      <IconButton
-        onClick={() => project.navigateHome()}
-        tooltip={{
-          label: "Go to main screen",
-          side: "bottom",
-        }}
-        disabled={disabledAlsoWhenStarting}>
-        <span className="codicon codicon-home" />
-      </IconButton>
       <UrlSelect
         onValueChange={(value: string) => {
           project.openNavigation(value);
