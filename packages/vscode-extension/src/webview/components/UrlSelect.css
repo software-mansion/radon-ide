@@ -116,7 +116,7 @@
   font-weight: bold;
 }
 .url-select-item-text-dynamic {
-  color: var(--swm-disabled-text);
+  color: var(--swm-url-select-special-text);
 }
 
 .url-select-group-outside {

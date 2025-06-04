@@ -35,7 +35,8 @@ function UrlSelect({
   const [currentDynamicSegment, setCurrentDynamicSegment] = React.useState<number>(0);
   const [textfieldWidth, setTextfieldWidth] = React.useState<number>(0);
 
-  const dropdownItemsRef = React.useRef<Array<HTMLDivElement>>([]);
+  const dropdownItems: UrlSelectFocusable[] = [];
+
   const textfieldRef = React.useRef<HTMLInputElement>(null);
   const { project, projectState } = useProject();
   const { openModal } = useModal();
@@ -130,7 +131,7 @@ function UrlSelect({
   // Props for UrlSelectItems and UrlSelectItemGroups to reduce code duplication
   const commonItemProps = {
     width: textfieldWidth,
-    itemList: dropdownItemsRef.current,
+    itemList: dropdownItems,
     textfieldRef: textfieldRef as React.RefObject<HTMLInputElement>,
     onArrowPress: focusBetweenItems,
     getNameFromId,
@@ -252,11 +253,7 @@ function UrlSelect({
               }
               if (e.key === "ArrowDown") {
                 if (isDropdownOpen) {
-                  focusBetweenItems(
-                    e,
-                    undefined,
-                    dropdownItemsRef.current[0] as UrlSelectFocusable
-                  );
+                  focusBetweenItems(e, undefined, dropdownItems[0]);
                 }
               }
             }}
@@ -331,7 +328,7 @@ function UrlSelect({
                 project.navigateHome();
                 setInputValue("/");
               }}
-              itemList={dropdownItemsRef.current}
+              itemList={dropdownItems}
               onArrowPress={focusBetweenItems}>
               <span className="codicon codicon-home" />
               <span>Go to main screen</span>
@@ -343,7 +340,7 @@ function UrlSelect({
                 setIsDropdownOpen(false);
                 openModal("Open Deep Link", <OpenDeepLinkView />);
               }}
-              itemList={dropdownItemsRef.current}
+              itemList={dropdownItems}
               onArrowPress={focusBetweenItems}>
               <span className="codicon codicon-link" />
               <span>Open a deep link...</span>

@@ -1,22 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import classNames from "classnames";
 import "./DelayedFastRefreshIndicator.css";
-import { ProjectState } from "../../common/Project";
 
-export default function DelayedFastRefreshIndicator({
-  projectStatus,
-}: {
-  projectStatus: ProjectState["status"];
-}) {
+export default function DelayedFastRefreshIndicator({ isRefreshing }: { isRefreshing: boolean }) {
   const [showRefreshing, setShowRefreshing] = useState(false);
   const [showRefreshed, setShowRefreshed] = useState(false);
-  const lastProjectStatusRef = useRef<ProjectState["status"]>(projectStatus);
+  const lastIsRefreshing = useRef<boolean>(false);
 
   useEffect(() => {
-    const lastProjectStatus = lastProjectStatusRef.current;
-    lastProjectStatusRef.current = projectStatus;
+    const wasRefreshing = lastIsRefreshing.current;
+    lastIsRefreshing.current = isRefreshing;
 
-    if (projectStatus === "refreshing") {
+    if (isRefreshing) {
       const timer = setTimeout(() => {
         setShowRefreshing(true);
       }, 500);
@@ -25,7 +20,7 @@ export default function DelayedFastRefreshIndicator({
       setShowRefreshing(false);
     }
 
-    if (lastProjectStatus === "refreshing" && projectStatus === "running") {
+    if (wasRefreshing && !isRefreshing) {
       setShowRefreshed(true);
       const timer = setTimeout(() => {
         setShowRefreshed(false);
@@ -35,7 +30,7 @@ export default function DelayedFastRefreshIndicator({
         setShowRefreshed(false);
       };
     }
-  }, [projectStatus]);
+  }, [isRefreshing]);
 
   const showIndicator = showRefreshing || showRefreshed;
   return (

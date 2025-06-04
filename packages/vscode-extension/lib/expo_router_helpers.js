@@ -6,6 +6,53 @@ export function computeRouteIdentifier(pathname, params) {
   return query ? `${pathname}?${query}` : pathname;
 }
 
+export function checkNavigationDescriptorsEqual(a, b) {
+  if (a.pathname !== b.pathname || Object.keys(a.params).length !== Object.keys(b.params).length) {
+    return false;
+  }
+  return Object.keys(a.params).every(key => a.params[key] === b.params[key])
+}
+
+export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange) {
+  const pathname = routeInfo?.pathname;
+  const params = routeInfo?.params;
+  const filteredParams = getParamsWithoutDynamicSegments(routeInfo);
+  const displayParams = new URLSearchParams(filteredParams).toString();
+  const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
+  
+  if (
+    pathname &&
+    previousRouteInfo.current &&
+    !checkNavigationDescriptorsEqual(previousRouteInfo.current, routeInfo)
+  ) {
+    onNavigationChange({
+      name: displayName,
+      pathname,
+      params,
+      id: computeRouteIdentifier(pathname, params),
+    });
+  }
+  previousRouteInfo.current = routeInfo;
+}
+
+// Helper function to prevent duplicating dynamic segments of the route
+// in the params object, as they are already part of the route path.
+export function getParamsWithoutDynamicSegments(routeInfo) {
+  const params = routeInfo?.params || {};
+  const dynamicSegments = routeInfo?.segments.filter((segment) => segment.startsWith("[") && segment.endsWith("]")) || [];
+  const dynamicSegmentKeys = dynamicSegments.map((segment) => segment.slice(1, -1));
+  
+  Object.keys(params).forEach((key) => {
+    if (dynamicSegmentKeys.includes(key)) {
+      delete params[key];
+    }
+  });
+  delete params.__EXPO_ROUTER_key;
+  
+  return params;
+}
+
+
 // Helper function to extract the route list from Expo Router's routeNode, which is a tree-like object
 // returned by the router store and the getRoutes() function, containing all indexed routes.
 // For future reference: https://github.com/expo/expo/blob/main/packages/expo-router/src/getRoutes.ts
