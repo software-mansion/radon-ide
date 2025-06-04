@@ -3,7 +3,6 @@ import { readFileSync } from "fs";
 import { LiteMCP } from "litemcp";
 import { z } from "zod";
 
-import { getOpenPort } from "../utilities/common";
 import { Logger } from "../Logger";
 import { IDE } from "../project/ide";
 import { ToolResponse, ToolSchema } from "./models";
@@ -46,7 +45,7 @@ async function screenshotToolDefinition(): ToolResponse {
   };
 }
 
-async function startMcpServer() {
+export async function startLocalMcpServer(port: number) {
   const server = new LiteMCP("RadonAiServer", "1.0.0");
 
   server.addTool({
@@ -69,12 +68,9 @@ async function startMcpServer() {
     });
   }
 
-  const port = await getOpenPort();
-
   Logger.info(`Starting local MCP server on port: ${port}`);
 
-  // non-blocking, async
-  server.start({
+  await server.start({
     transportType: "sse",
     sse: {
       endpoint: `/sse`,
@@ -83,16 +79,4 @@ async function startMcpServer() {
   });
 
   return port;
-}
-
-let runningPort: number | null = null;
-
-export async function startLocalMcpServer() {
-  if (runningPort !== null) {
-    return runningPort;
-  }
-
-  runningPort = await startMcpServer();
-
-  return runningPort;
 }

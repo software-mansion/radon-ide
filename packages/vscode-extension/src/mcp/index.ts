@@ -6,6 +6,8 @@ import * as vscode from "vscode";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { EditorType, McpConfig } from "./models";
+import { getOpenPort } from "../utilities/common";
+import { startLocalMcpServer } from "./server";
 
 const MCP_LOG = "[MCP]";
 
@@ -131,7 +133,7 @@ function newMcpConfig(): McpConfig {
   };
 }
 
-export async function updateMcpConfig(port: number) {
+async function updateMcpConfig(port: number) {
   let mcpConfig = {};
 
   try {
@@ -158,4 +160,19 @@ export async function updateMcpConfig(port: number) {
       getTelemetryReporter().sendTelemetryEvent("chat:error", { error: String(error) });
     }
   }
+}
+
+let mcpPort: number | null = null;
+
+export default async function loadRadonAi() {
+  if (mcpPort !== null) {
+    return mcpPort;
+  }
+
+  mcpPort = await getOpenPort();
+
+  await startLocalMcpServer(mcpPort);
+
+  // Enables Radon AI tooling on editors utilizing mcp.json configs.
+  updateMcpConfig(mcpPort);
 }
