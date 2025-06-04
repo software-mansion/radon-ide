@@ -93,11 +93,14 @@ export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
   isRecordingScreen: false,
 };
 
+export type DeviceId = DeviceInfo["id"];
+
 export type ProjectState = {
   initialized: boolean;
   appRootPath: string | undefined;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
   activeDeviceSession: DeviceSessionState;
+  deviceSessions: Record<DeviceId, DeviceSessionState>;
 };
 
 export type ZoomLevelType = number | "Fit";

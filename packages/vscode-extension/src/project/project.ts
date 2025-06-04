@@ -1,6 +1,7 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
+import assert from "assert";
 import { env, Disposable, commands, workspace, window, ConfigurationChangeEvent } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
@@ -36,9 +37,9 @@ import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { DeviceSessionsManager } from "./DeviceSessionsManager";
-import { DeviceSessionsManagerDelegate } from "../common/DeviceSessionsManager";
+import { DeviceSessionsManager, DeviceSessionsManagerDelegate } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
+import { DeviceSession } from "./deviceSession";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -75,6 +76,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
     this.projectState = {
       activeDeviceSession: DEVICE_SESSION_INITIAL_STATE,
+      deviceSessions: {},
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
@@ -108,6 +110,50 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         }
       })
     );
+  }
+
+  onDeviceSessionSelected(session: DeviceSession | undefined): void {
+    this.projectState.activeDeviceSession = session?.getState() || DEVICE_SESSION_INITIAL_STATE;
+    this.onDeviceSessionChange(this.projectState.activeDeviceSession);
+  }
+
+  onDeviceSessionChange(state: DeviceSessionState): void {
+    const deviceInfo = state.deviceInfo;
+    if (!deviceInfo) {
+      // NOTE: if there's no deviceInfo passed, the sesssion is the DEVICE_SESSION_INITIAL_STATE placeholder
+      return;
+    }
+    const deviceId = deviceInfo.id;
+    if (!(deviceId in this.projectState.deviceSessions)) {
+      // NOTE: perhaps this should be asserted?
+      return;
+    }
+    const newDeviceSessions = { ...this.projectState.deviceSessions, [deviceId]: state };
+    let activeDeviceSession = this.projectState.activeDeviceSession;
+    if (deviceId === this.projectState.activeDeviceSession.deviceInfo?.id) {
+      activeDeviceSession = state;
+    }
+    this.updateProjectState({ deviceSessions: newDeviceSessions, activeDeviceSession });
+  }
+
+  onDeviceSessionStarted(deviceSession: DeviceSession): void {
+    const deviceInfo = deviceSession.getState().deviceInfo;
+    assert(deviceInfo !== undefined, "A running device session should have deviceInfo");
+    const deviceId = deviceInfo.id;
+    const newDeviceSessions = {
+      ...this.projectState.deviceSessions,
+      [deviceId]: deviceSession.getState(),
+    };
+    this.updateProjectState({ deviceSessions: newDeviceSessions });
+  }
+
+  onDeviceSessionStopped(deviceSession: DeviceSession): void {
+    const deviceInfo = deviceSession.getState().deviceInfo;
+    assert(deviceInfo !== undefined, "A running device session should have deviceInfo");
+    const deviceId = deviceInfo.id;
+    const newDeviceSessions = { ...this.projectState.deviceSessions };
+    delete newDeviceSessions[deviceId];
+    this.updateProjectState({ deviceSessions: newDeviceSessions });
   }
 
   get relativeAppRootPath() {
@@ -155,10 +201,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       appRootPath: this.relativeAppRootPath,
     });
   }
-
-  onActiveSessionStateChanged = (state: DeviceSessionState) => {
-    this.updateActiveDeviceState(state);
-  };
 
   onInitialized(): void {
     this.updateProjectState({ initialized: true });

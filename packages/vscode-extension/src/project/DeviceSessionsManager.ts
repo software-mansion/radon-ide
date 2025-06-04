@@ -9,14 +9,21 @@ import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import {
   DeviceSessionsManagerInterface,
-  DeviceSessionsManagerDelegate,
   ReloadAction,
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
-import { DEVICE_SESSION_INITIAL_STATE } from "../common/Project";
+import { DEVICE_SESSION_INITIAL_STATE, DeviceSessionState } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
+
+export type DeviceSessionsManagerDelegate = {
+  onDeviceSessionSelected(session: DeviceSession | undefined): void;
+  onDeviceSessionChange(state: DeviceSessionState): void;
+  onInitialized(): void;
+  onDeviceSessionStarted(session: DeviceSession): void;
+  onDeviceSessionStopped(session: DeviceSession): void;
+};
 
 export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerInterface {
   private deviceSessions: Map<string, DeviceSession> = new Map();
@@ -79,13 +86,10 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     Logger.debug("Selected device is ready");
 
     const newDeviceSession = new DeviceSession(this.applicationContext, device, {
-      onStateChange: (state) => {
-        if (this.activeSession === newDeviceSession) {
-          this.deviceSessionManagerDelegate.onActiveSessionStateChanged(state);
-        }
-      },
+      onStateChange: (state) => this.deviceSessionManagerDelegate.onDeviceSessionChange(state),
     });
 
+    this.deviceSessionManagerDelegate.onDeviceSessionStarted(newDeviceSession);
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
     this.updateSelectedSession(newDeviceSession);
     this.deviceSessionManagerDelegate.onInitialized();
@@ -152,7 +156,8 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     if (previousSession !== session) {
       previousSession?.deactivate();
       session?.activate();
-      this.deviceSessionManagerDelegate.onActiveSessionStateChanged(
+      this.deviceSessionManagerDelegate.onDeviceSessionSelected(session);
+      this.deviceSessionManagerDelegate.onDeviceSessionChange(
         session?.getState() ?? DEVICE_SESSION_INITIAL_STATE
       );
     }
@@ -161,6 +166,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   private async terminateSession(deviceId: string) {
     const session = this.deviceSessions.get(deviceId);
     if (session) {
+      this.deviceSessionManagerDelegate.onDeviceSessionStopped(session);
       this.deviceSessions.delete(deviceId);
       if (session === this.activeSession) {
         this.updateSelectedSession(undefined);
