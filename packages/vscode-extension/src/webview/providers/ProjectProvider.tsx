@@ -29,7 +29,7 @@ interface ProjectContextProps {
 }
 
 const defaultProjectState: ProjectState = {
-  ...DEVICE_SESSION_INITIAL_STATE,
+  activeDeviceSession: DEVICE_SESSION_INITIAL_STATE,
   previewZoom: undefined,
   appRootPath: "./",
   initialized: false,

@@ -87,20 +87,22 @@ function Preview({
 
   const { projectState, project } = useProject();
 
-  const projectStatus = projectState.status;
+  const projectStatus = projectState.activeDeviceSession.status;
 
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
   const hasBundlingError = projectStatus === "bundlingError";
 
-  const debugPaused = projectState.isDebuggerPaused;
-  const isRefreshing = projectState.isRefreshing;
+  const debugPaused = projectState.activeDeviceSession.isDebuggerPaused;
+  const isRefreshing = projectState.activeDeviceSession.isRefreshing;
 
-  const previewURL = projectState.previewURL;
+  const previewURL = projectState.activeDeviceSession.previewURL;
 
-  const isStarting = hasBundlingError ? false : !projectState || projectState.status === "starting";
+  const isStarting = hasBundlingError
+    ? false
+    : !projectState || projectState.activeDeviceSession.status === "starting";
   const showDevicePreview =
-    projectState?.previewURL &&
+    projectState?.activeDeviceSession.previewURL &&
     (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
   useBuildErrorAlert(hasBuildError);
@@ -445,13 +447,13 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (projectState.hasStaleBuildCache) {
+    if (projectState.activeDeviceSession.hasStaleBuildCache) {
       openRebuildAlert();
     }
-  }, [projectState.hasStaleBuildCache]);
+  }, [projectState.activeDeviceSession.hasStaleBuildCache]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === projectState?.selectedDevice?.modelId;
+    return sd.modelId === projectState?.activeDeviceSession.deviceInfo?.modelId;
   });
 
   const resizableProps = useResizableProps({

@@ -74,7 +74,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
 
     this.projectState = {
-      ...DEVICE_SESSION_INITIAL_STATE,
+      activeDeviceSession: DEVICE_SESSION_INITIAL_STATE,
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
@@ -160,7 +160,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   onActiveSessionStateChanged = (state: DeviceSessionState) => {
-    this.updateProjectState(state);
+    this.updateActiveDeviceState(state);
   };
 
   onInitialized(): void {
@@ -171,7 +171,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   startRecording(): void {
     getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -187,7 +187,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     clearTimeout(this.recordingTimeout);
 
     getTelemetryReporter().sendTelemetryEvent("recording:stop-recording", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -238,7 +238,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async captureReplay() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -249,7 +249,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async captureScreenshot() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -307,7 +307,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async navigateHome() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
     });
 
     if (this.dependencyManager === undefined) {
@@ -498,8 +498,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
     await this.deviceManager.renameDevice(deviceInfo, newDisplayName);
     deviceInfo.displayName = newDisplayName;
-    if (this.projectState.selectedDevice?.id === deviceInfo.id) {
-      this.updateProjectState({ selectedDevice: deviceInfo });
+    if (this.projectState.activeDeviceSession.deviceInfo?.id === deviceInfo.id) {
+      this.updateActiveDeviceState({ deviceInfo });
     }
   }
 
@@ -514,6 +514,13 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   private updateProjectState(newState: Partial<ProjectState>) {
     const mergedState = { ...this.projectState, ...newState };
     this.projectState = mergedState;
+    this.eventEmitter.emit("projectStateChanged", this.projectState);
+  }
+
+  private updateActiveDeviceState(newState: Partial<DeviceSessionState>) {
+    const currentState = this.projectState.activeDeviceSession;
+    const mergedState = { ...currentState, ...newState };
+    this.projectState = { ...this.projectState, activeDeviceSession: mergedState };
     this.eventEmitter.emit("projectStateChanged", this.projectState);
   }
 

@@ -98,14 +98,14 @@ function PreviewView() {
   const { devices } = useDevices();
 
   const initialized = projectState.initialized;
-  const selectedDevice = projectState.selectedDevice;
+  const selectedDevice = projectState.activeDeviceSession.deviceInfo;
   const hasNoDevices = projectState !== undefined && devices.length === 0;
-  const isStarting = projectState.status === "starting";
-  const isRunning = projectState.status === "running";
-  const isRecording = projectState.isRecordingScreen;
+  const isStarting = projectState.activeDeviceSession.status === "starting";
+  const isRunning = projectState.activeDeviceSession.status === "running";
+  const isRecording = projectState.activeDeviceSession.isRecordingScreen;
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === projectState?.selectedDevice?.modelId;
+    return sd.modelId === projectState?.activeDeviceSession.deviceInfo?.modelId;
   });
 
   const { openFileAt } = useUtils();
@@ -198,12 +198,12 @@ function PreviewView() {
         </div>
         <div className="button-group-top-right">
           <ProfilingButton
-            profilingState={projectState.profilingCPUState}
+            profilingState={projectState.activeDeviceSession.profilingCPUState}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
           />
           <ProfilingButton
-            profilingState={projectState.profilingReactState}
+            profilingState={projectState.activeDeviceSession.profilingReactState}
             title="Stop profiling React"
             onClick={stopProfilingReact}
           />
@@ -247,7 +247,7 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
-            counter={projectState.logCounter}
+            counter={projectState.activeDeviceSession.logCounter}
             onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",

@@ -61,7 +61,7 @@ export type DeviceSessionState = {
   stageProgress: number | undefined;
   buildError: BuildErrorDescriptor | undefined;
   isRefreshing: boolean;
-  selectedDevice: DeviceInfo | undefined;
+  deviceInfo: DeviceInfo | undefined;
   previewURL: string | undefined;
   profilingReactState: ProfilingState;
   profilingCPUState: ProfilingState;
@@ -80,7 +80,7 @@ export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
   stageProgress: undefined,
   buildError: undefined,
   isRefreshing: false,
-  selectedDevice: undefined,
+  deviceInfo: undefined,
   previewURL: undefined,
   profilingReactState: "stopped",
   profilingCPUState: "stopped",
@@ -97,7 +97,8 @@ export type ProjectState = {
   initialized: boolean;
   appRootPath: string | undefined;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
-} & DeviceSessionState;
+  activeDeviceSession: DeviceSessionState;
+};
 
 export type ZoomLevelType = number | "Fit";
 
