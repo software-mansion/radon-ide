@@ -15,8 +15,6 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const params = routeInfo?.params;
 
   const filteredParams = getParamsWithoutDynamicSegments(routeInfo);
-  delete filteredParams.__EXPO_ROUTER_key;
-
   const displayParams = new URLSearchParams(filteredParams).toString();
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
 

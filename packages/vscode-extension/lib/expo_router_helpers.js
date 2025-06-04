@@ -11,13 +11,15 @@ export function computeRouteIdentifier(pathname, params) {
 export function getParamsWithoutDynamicSegments(routeInfo) {
   const params = routeInfo?.params || {};
   const dynamicSegments = routeInfo?.segments.filter((segment) => segment.startsWith("[") && segment.endsWith("]")) || [];
-
+  const dynamicSegmentKeys = dynamicSegments.map((segment) => segment.slice(1, -1));
+  
   Object.keys(params).forEach((key) => {
-    if (dynamicSegments.map((segment) => segment.slice(1, -1)).includes(key)) {
+    if (dynamicSegmentKeys.includes(key)) {
       delete params[key];
     }
   });
-
+  delete params.__EXPO_ROUTER_key;
+  
   return params;
 }
 
