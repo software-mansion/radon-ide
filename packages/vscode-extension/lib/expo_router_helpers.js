@@ -6,16 +6,33 @@ export function computeRouteIdentifier(pathname, params) {
   return query ? `${pathname}?${query}` : pathname;
 }
 
-export function compareNavigationDescriptors(a, b) {
-  if (a.pathname !== b.pathname) {
+export function checkNavigationDescriptorsEqual(a, b) {
+  if (a.pathname !== b.pathname || Object.keys(a.params).length !== Object.keys(b.params).length) {
     return false;
   }
-  for (const key in a.params) {
-    if (a.params[key] !== b.params[key]) {
-      return false;
-    }
+  return Object.keys(a.params).every(key => a.params[key] === b.params[key])
+}
+
+export function uniqueOnNavigationChange(previousRouteInfo, routeInfo, onNavigationChange) {
+  const pathname = routeInfo?.pathname;
+  const params = routeInfo?.params;
+  const filteredParams = getParamsWithoutDynamicSegments(routeInfo);
+  const displayParams = new URLSearchParams(filteredParams).toString();
+  const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
+  
+  if (
+    pathname &&
+    previousRouteInfo.current &&
+    !checkNavigationDescriptorsEqual(previousRouteInfo.current, routeInfo)
+  ) {
+    onNavigationChange({
+      name: displayName,
+      pathname,
+      params,
+      id: computeRouteIdentifier(pathname, params),
+    });
   }
-  return true;
+  previousRouteInfo.current = routeInfo;
 }
 
 // Helper function to prevent duplicating dynamic segments of the route

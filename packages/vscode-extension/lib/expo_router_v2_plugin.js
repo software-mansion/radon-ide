@@ -4,13 +4,8 @@ import { store } from "expo-router/src/global-state/router-store";
 import { 
   computeRouteIdentifier,
   extractNestedRouteList,
-  compareNavigationDescriptors,
-  getParamsWithoutDynamicSegments
+  uniqueOnNavigationChange
 } from "./expo_router_helpers.js";
-
-function computeRouteIdentifier(pathname, params) {
-  return pathname + JSON.stringify(params);
-}
 
 function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();
@@ -23,11 +18,6 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
 
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
-  
-  const filteredParams = getParamsWithoutDynamicSegments(routeInfo);
-
-  const displayParams = new URLSearchParams(filteredParams).toString();
-  const displayName = `${pathname}${displayParams ? `?${displayParams}` : ''}`;
 
   useEffect(() => {
     if (!store.routeNode) {
@@ -38,19 +28,7 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }, [store.routeNode]);
 
   useEffect(() => {
-    if (
-      pathname &&
-      previousRouteInfo.current &&
-      !compareNavigationDescriptors(previousRouteInfo.current, routeInfo)
-    ) {
-      onNavigationChange({
-        name: displayName,
-        pathname,
-        params,
-        id: computeRouteIdentifier(pathname, params),
-      });
-    }
-    previousRouteInfo.current = routeInfo;
+    uniqueOnNavigationChange(previousRouteInfo, routeInfo, onNavigationChange);
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {
