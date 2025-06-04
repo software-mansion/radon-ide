@@ -13,7 +13,7 @@ export function checkNavigationDescriptorsEqual(a, b) {
   return Object.keys(a.params).every(key => a.params[key] === b.params[key])
 }
 
-export function uniqueOnNavigationChange(previousRouteInfo, routeInfo, onNavigationChange) {
+export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange) {
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
   const filteredParams = getParamsWithoutDynamicSegments(routeInfo);

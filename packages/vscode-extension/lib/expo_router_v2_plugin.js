@@ -4,7 +4,7 @@ import { store } from "expo-router/src/global-state/router-store";
 import { 
   computeRouteIdentifier,
   extractNestedRouteList,
-  uniqueOnNavigationChange
+  sendNavigationChange
 } from "./expo_router_helpers.js";
 
 function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
@@ -28,7 +28,7 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }, [store.routeNode]);
 
   useEffect(() => {
-    uniqueOnNavigationChange(previousRouteInfo, routeInfo, onNavigationChange);
+    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange);
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {
