@@ -21,7 +21,7 @@ export async function invokeToolCall(toolName: string, args: unknown): ToolRespo
         tool_calls: [
           {
             name: toolName,
-            id: "3241", // temporarily necessary placeholder
+            id: "3241", // this is needed by the API, but the value doesn't matter
             args,
           },
         ],
