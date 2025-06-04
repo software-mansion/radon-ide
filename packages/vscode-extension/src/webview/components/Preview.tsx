@@ -85,24 +85,24 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { projectState, project } = useProject();
+  const { projectState, activeDeviceSession, project } = useProject();
 
-  const projectStatus = projectState.activeDeviceSession.status;
+  const projectStatus = activeDeviceSession?.status;
 
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
   const hasBundlingError = projectStatus === "bundlingError";
 
-  const debugPaused = projectState.activeDeviceSession.isDebuggerPaused;
-  const isRefreshing = projectState.activeDeviceSession.isRefreshing;
+  const debugPaused = activeDeviceSession?.isDebuggerPaused;
+  const isRefreshing = activeDeviceSession?.isRefreshing ?? false;
 
-  const previewURL = projectState.activeDeviceSession.previewURL;
+  const previewURL = activeDeviceSession?.previewURL;
 
   const isStarting = hasBundlingError
     ? false
-    : !projectState || projectState.activeDeviceSession.status === "starting";
+    : !projectState || activeDeviceSession?.status === "starting";
   const showDevicePreview =
-    projectState?.activeDeviceSession.previewURL &&
+    activeDeviceSession?.previewURL &&
     (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
   useBuildErrorAlert(hasBuildError);
@@ -447,13 +447,13 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (projectState.activeDeviceSession.hasStaleBuildCache) {
+    if (activeDeviceSession?.hasStaleBuildCache) {
       openRebuildAlert();
     }
-  }, [projectState.activeDeviceSession.hasStaleBuildCache]);
+  }, [activeDeviceSession?.hasStaleBuildCache]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === projectState?.activeDeviceSession.deviceInfo?.modelId;
+    return sd.modelId === activeDeviceSession?.deviceInfo?.modelId;
   });
 
   const resizableProps = useResizableProps({

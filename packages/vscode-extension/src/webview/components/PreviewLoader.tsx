@@ -17,20 +17,20 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
 );
 
 function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => void }) {
-  const { projectState, project } = useProject();
+  const { projectState, activeDeviceSession, project } = useProject();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
 
-  const startupMessage = projectState.activeDeviceSession.startupMessage;
+  const startupMessage = activeDeviceSession?.startupMessage;
 
   useEffect(() => {
-    if (projectState.activeDeviceSession.startupMessage === StartupMessage.Restarting) {
+    if (activeDeviceSession?.startupMessage === StartupMessage.Restarting) {
       setProgress(0);
     } else {
       const currentIndex = StartupStageWeight.findIndex(
-        (item) => item.StartupMessage === projectState.activeDeviceSession.startupMessage
+        (item) => item.StartupMessage === activeDeviceSession?.startupMessage
       );
       const currentWeight = StartupStageWeight[currentIndex].weight;
       const startupStageWeightSumUntilNow = StartupStageWeight.slice(0, currentIndex)
@@ -39,8 +39,8 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
       let progressComponent = 0;
 
-      if (projectState.activeDeviceSession.stageProgress !== undefined) {
-        progressComponent = projectState.activeDeviceSession.stageProgress;
+      if (activeDeviceSession?.stageProgress !== undefined) {
+        progressComponent = activeDeviceSession?.stageProgress;
       }
       setProgress(
         ((startupStageWeightSumUntilNow + progressComponent * currentWeight) /
@@ -90,12 +90,12 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
               "preview-loader-message",
               isLoadingSlowly && "preview-loader-slow-progress"
             )}>
-            {projectState.activeDeviceSession.startupMessage}
+            {activeDeviceSession?.startupMessage}
             {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
           </StartupMessageComponent>
-          {projectState.activeDeviceSession.stageProgress !== undefined && (
+          {activeDeviceSession?.stageProgress !== undefined && (
             <div className="preview-loader-stage-progress">
-              {(projectState.activeDeviceSession.stageProgress * 100).toFixed(1)}%
+              {(activeDeviceSession?.stageProgress * 100).toFixed(1)}%
             </div>
           )}
         </div>
