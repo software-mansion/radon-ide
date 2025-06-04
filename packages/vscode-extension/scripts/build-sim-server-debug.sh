@@ -12,8 +12,7 @@ submodule_status=$(git submodule status ../simulator-server)
 if [[ $submodule_status == -* ]]; then # submodule is not initialized
 
 # get version of npm module
-latest_tag=$(git describe --tags --abbrev=0)
-download_base_url="https://github.com/software-mansion/radon-ide/releases/download/${latest_tag}/"
+download_base_url="https://github.com/software-mansion-labs/simulator-server-releases/releases/latest/download/"
 
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
     product_path="$output_dir/simulator-server-windows.exe"

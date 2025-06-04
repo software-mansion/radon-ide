@@ -25,7 +25,12 @@ async function getPathEnv(appRoot: string) {
   // which would otherwise fill missing variables with those from the currently running process.
   const { stdout } = await execa(
     shellPath,
-    ["-i", "-c", `cd "${appRoot}" && echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`],
+    [
+      "-i",
+      "-l",
+      "-c",
+      `cd "${appRoot}" && echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`,
+    ],
     {
       extendEnv: false,
       env: {},
