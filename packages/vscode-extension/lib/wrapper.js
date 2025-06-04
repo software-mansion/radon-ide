@@ -186,6 +186,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const rootTag = useContext(RootTagContext);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
+  const latestRouteListRef = useRef();
 
   const mountCallback = initialProps?.__RNIDE_onMount;
   useEffect(() => {
