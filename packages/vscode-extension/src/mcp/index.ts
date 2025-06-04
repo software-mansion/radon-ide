@@ -14,9 +14,9 @@ const CURSOR_DIR_PATH = ".cursor";
 const MCP_FILE_NAME = "mcp.json";
 
 function getEditorType(): EditorType {
-  // heurestics, major == 0 means Cursor
-  // found no better way of determining editor type
-  if (vscode.version[0] === "0") {
+  // Cursor features different settings than VSCode
+  const config = vscode.workspace.getConfiguration();
+  if (config.get("cursor") !== undefined) {
     return EditorType.CURSOR;
   }
   return EditorType.VSCODE;
