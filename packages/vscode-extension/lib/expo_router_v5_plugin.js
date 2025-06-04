@@ -1,7 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import { store, useRouteInfo } from "expo-router/build/global-state/router-store.js";
-import { computeRouteIdentifier, extractNestedRouteList, compareNavigationDescriptors } from "./expo_router_helpers.js";
+import { 
+  computeRouteIdentifier,
+  extractNestedRouteList,
+  compareNavigationDescriptors,
+  getParamsWithoutDynamicSegments
+} from "./expo_router_helpers.js";
 
 function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();
@@ -14,10 +19,8 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
 
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
-
-  const filteredParams = params ?? {};
-  delete filteredParams.__EXPO_ROUTER_key;
-
+  
+  const filteredParams = getParamsWithoutDynamicSegments(routeInfo);
   const displayParams = new URLSearchParams(filteredParams).toString();
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
 
