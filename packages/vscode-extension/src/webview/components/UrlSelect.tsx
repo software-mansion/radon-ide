@@ -42,8 +42,8 @@ function UrlSelect({
   const dropdownItems: UrlSelectFocusable[] = [];
 
   const textfieldRef = React.useRef<HTMLInputElement>(null);
-  const { project, projectState } = useProject();
   const { openModal } = useModal();
+  const { project, activeDeviceSession } = useProject();
 
   const routeItems = React.useMemo(
     () =>
@@ -165,10 +165,10 @@ function UrlSelect({
 
   // Reset the input on app reload
   useEffect(() => {
-    if (projectState.activeDeviceSession.status === "starting") {
+    if (activeDeviceSession?.status === "starting") {
       setInputValue("/");
     }
-  }, [projectState.activeDeviceSession.status]);
+  }, [activeDeviceSession?.status]);
 
   // Refresh the input value when the navigation history changes
   useEffect(() => {

@@ -80,8 +80,15 @@ function ProfilingButton({
 }
 
 function PreviewView() {
-  const { projectState, project, deviceSettings, hasActiveLicense, replayData, setReplayData } =
-    useProject();
+  const {
+    activeDeviceSession,
+    projectState,
+    project,
+    deviceSettings,
+    hasActiveLicense,
+    replayData,
+    setReplayData,
+  } = useProject();
   const { showDismissableError } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
@@ -98,14 +105,14 @@ function PreviewView() {
   const { devices } = useDevices();
 
   const initialized = projectState.initialized;
-  const selectedDevice = projectState.activeDeviceSession.deviceInfo;
+  const selectedDevice = activeDeviceSession?.deviceInfo;
   const hasNoDevices = projectState !== undefined && devices.length === 0;
-  const isStarting = projectState.activeDeviceSession.status === "starting";
-  const isRunning = projectState.activeDeviceSession.status === "running";
-  const isRecording = projectState.activeDeviceSession.isRecordingScreen;
+  const isStarting = activeDeviceSession?.status === "starting";
+  const isRunning = activeDeviceSession?.status === "running";
+  const isRecording = activeDeviceSession?.isRecordingScreen ?? false;
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === projectState?.activeDeviceSession.deviceInfo?.modelId;
+    return sd.modelId === activeDeviceSession?.deviceInfo?.modelId;
   });
 
   const { openFileAt } = useUtils();
@@ -198,12 +205,12 @@ function PreviewView() {
         </div>
         <div className="button-group-top-right">
           <ProfilingButton
-            profilingState={projectState.activeDeviceSession.profilingCPUState}
+            profilingState={activeDeviceSession?.profilingCPUState ?? "stopped"}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
           />
           <ProfilingButton
-            profilingState={projectState.activeDeviceSession.profilingReactState}
+            profilingState={activeDeviceSession?.profilingReactState ?? "stopped"}
             title="Stop profiling React"
             onClick={stopProfilingReact}
           />
@@ -247,7 +254,7 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
-            counter={projectState.activeDeviceSession.logCounter}
+            counter={activeDeviceSession?.logCounter}
             onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",

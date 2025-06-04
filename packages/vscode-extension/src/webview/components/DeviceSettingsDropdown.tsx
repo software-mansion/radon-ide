@@ -51,14 +51,12 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
 ];
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
-  const { project, deviceSettings, projectState } = useProject();
+  const { project, activeDeviceSession, deviceSettings } = useProject();
   const { showDeviceFrame, update } = useWorkspaceConfig();
   const { openModal } = useModal();
 
   const resetOptions =
-    projectState.activeDeviceSession.deviceInfo?.platform === "iOS"
-      ? resetOptionsIOS
-      : resetOptionsAndroid;
+    activeDeviceSession?.deviceInfo?.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
 
   return (
     <DropdownMenuRoot>
@@ -140,9 +138,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             label="Open App Switcher"
             icon="chrome-restore"
           />
-          {projectState.activeDeviceSession.deviceInfo?.platform === DevicePlatform.IOS && (
-            <BiometricsItem />
-          )}
+          {activeDeviceSession?.deviceInfo?.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {

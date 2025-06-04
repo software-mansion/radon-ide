@@ -71,14 +71,14 @@ function ToolsList({
 }
 
 function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
-  const { project, projectState } = useProject();
+  const { project, activeDeviceSession } = useProject();
 
-  const allTools = Object.entries(projectState.activeDeviceSession.toolsState);
+  const allTools = Object.entries(activeDeviceSession?.toolsState ?? {});
   const panelTools = allTools.filter(([key, tool]) => tool.panelAvailable);
   const nonPanelTools = allTools.filter(([key, tool]) => !tool.panelAvailable);
 
-  const isProfilingCPU = projectState.activeDeviceSession.profilingCPUState !== "stopped";
-  const isProfilingReact = projectState.activeDeviceSession.profilingReactState !== "stopped";
+  const isProfilingCPU = activeDeviceSession?.profilingCPUState !== "stopped";
+  const isProfilingReact = activeDeviceSession?.profilingReactState !== "stopped";
 
   return (
     <DropdownMenuRoot>

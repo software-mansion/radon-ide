@@ -8,7 +8,6 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
-  DEVICE_SESSION_INITIAL_STATE,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
@@ -75,7 +74,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
 
     this.projectState = {
-      activeDeviceSession: DEVICE_SESSION_INITIAL_STATE,
+      selectedSessionId: null,
       deviceSessions: {},
       initialized: false,
       appRootPath: this.relativeAppRootPath,
@@ -113,8 +112,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   onDeviceSessionSelected(session: DeviceSession | undefined): void {
-    this.projectState.activeDeviceSession = session?.getState() || DEVICE_SESSION_INITIAL_STATE;
-    this.onDeviceSessionChange(this.projectState.activeDeviceSession);
+    const sessionId = session?.getState().deviceInfo?.id ?? null;
+    this.updateProjectState({ selectedSessionId: sessionId });
   }
 
   onDeviceSessionChange(state: DeviceSessionState): void {
@@ -129,11 +128,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       return;
     }
     const newDeviceSessions = { ...this.projectState.deviceSessions, [deviceId]: state };
-    let activeDeviceSession = this.projectState.activeDeviceSession;
-    if (deviceId === this.projectState.activeDeviceSession.deviceInfo?.id) {
-      activeDeviceSession = state;
-    }
-    this.updateProjectState({ deviceSessions: newDeviceSessions, activeDeviceSession });
+    this.updateProjectState({ deviceSessions: newDeviceSessions });
   }
 
   onDeviceSessionStarted(deviceSession: DeviceSession): void {
@@ -183,6 +178,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.applicationContext.buildCache;
   }
 
+  private get selectedDeviceSessionState(): DeviceSessionState | undefined {
+    if (this.projectState.selectedSessionId === null) {
+      return undefined;
+    }
+    const selectedSessionState =
+      this.projectState.deviceSessions[this.projectState.selectedSessionId];
+    assert(selectedSessionState !== undefined, "Expected the selected session to exist");
+    return selectedSessionState;
+  }
+
   private async setupAppRoot() {
     const newAppRoot = findAndSetupNewAppRootFolder();
     if (newAppRoot === this.appRootFolder) {
@@ -210,7 +215,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   startRecording(): void {
     getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
-      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -226,7 +231,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     clearTimeout(this.recordingTimeout);
 
     getTelemetryReporter().sendTelemetryEvent("recording:stop-recording", {
-      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -277,7 +282,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async captureReplay() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
-      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -288,7 +293,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async captureScreenshot() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
-      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -346,7 +351,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async navigateHome() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
-      platform: this.projectState.activeDeviceSession.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
     });
 
     if (this.dependencyManager === undefined) {
@@ -541,9 +546,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
     await this.deviceManager.renameDevice(deviceInfo, newDisplayName);
     deviceInfo.displayName = newDisplayName;
-    if (this.projectState.activeDeviceSession.deviceInfo?.id === deviceInfo.id) {
-      this.updateActiveDeviceState({ deviceInfo });
-    }
   }
 
   public async runCommand(command: string): Promise<void> {
@@ -557,13 +559,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   private updateProjectState(newState: Partial<ProjectState>) {
     const mergedState = { ...this.projectState, ...newState };
     this.projectState = mergedState;
-    this.eventEmitter.emit("projectStateChanged", this.projectState);
-  }
-
-  private updateActiveDeviceState(newState: Partial<DeviceSessionState>) {
-    const currentState = this.projectState.activeDeviceSession;
-    const mergedState = { ...currentState, ...newState };
-    this.projectState = { ...this.projectState, activeDeviceSession: mergedState };
     this.eventEmitter.emit("projectStateChanged", this.projectState);
   }
 

@@ -109,8 +109,8 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
 }
 
 function ManageDevicesView() {
-  const { projectState } = useProject();
-  const selectedProjectDevice = projectState?.activeDeviceSession.deviceInfo;
+  const { activeDeviceSession } = useProject();
+  const selectedProjectDevice = activeDeviceSession?.deviceInfo;
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
