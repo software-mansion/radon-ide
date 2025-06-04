@@ -6,7 +6,7 @@ interface UrlSelectItemProps {
   item: NavigationHistoryItem;
   width: number;
   style?: React.CSSProperties;
-  itemList: HTMLDivElement[];
+  itemList: UrlSelectFocusable[];
   refIndex: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   onConfirm: (item: NavigationHistoryItem) => void;
@@ -141,8 +141,11 @@ function UrlSelectItem({
         } else {
           onArrowPress(
             e,
-            itemList[refIndex - 1] as UrlSelectFocusable,
-            itemList[refIndex + 1] as UrlSelectFocusable
+            // Find the closest non-empty item before and after the current one
+            // Usually just the first following or previous item, but sometimes
+            // a null can find itself in the list, and we need to skip those.
+            itemList.slice(0, refIndex).reverse().find(Boolean),
+            itemList.slice(refIndex + 1).find(Boolean)
           );
         }
       }}>

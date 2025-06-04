@@ -55,7 +55,6 @@ export type DeviceSessionStatus =
   | "running"
   | "bootError"
   | "bundlingError"
-  | "refreshing"
   | "buildError";
 
 export type DeviceSessionState = {
@@ -63,6 +62,7 @@ export type DeviceSessionState = {
   startupMessage: StartupMessage | undefined;
   stageProgress: number | undefined;
   buildError: BuildErrorDescriptor | undefined;
+  isRefreshing: boolean;
   selectedDevice: DeviceInfo | undefined;
   previewURL: string | undefined;
   profilingReactState: ProfilingState;
@@ -81,6 +81,7 @@ export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
   startupMessage: undefined,
   stageProgress: undefined,
   buildError: undefined,
+  isRefreshing: false,
   selectedDevice: undefined,
   previewURL: undefined,
   profilingReactState: "stopped",

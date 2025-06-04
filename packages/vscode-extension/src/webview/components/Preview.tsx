@@ -95,6 +95,7 @@ function Preview({
   const hasBundlingError = projectStatus === "bundlingError";
 
   const debugPaused = projectState.isDebuggerPaused;
+  const isRefreshing = projectState.isRefreshing;
 
   const previewURL = projectState.previewURL;
 
@@ -200,7 +201,7 @@ function Preview({
   const sendInspect = throttle(sendInspectUnthrottled, 50);
 
   const shouldPreventInputEvents =
-    debugPaused || projectStatus === "refreshing" || !showDevicePreview || !!replayData;
+    debugPaused || isRefreshing || !showDevicePreview || !!replayData;
 
   const shouldPreventFromSendingTouch = inspectorState === "inspecting" || !!inspectFrame;
 
@@ -534,7 +535,7 @@ function Preview({
                   )}
                 </div>
               )}
-              {projectStatus === "refreshing" && (
+              {isRefreshing && (
                 <div className="phone-screen phone-refreshing-overlay">
                   <div>Project is performing Fast Refresh...</div>
                   <div>(screen is inactive until refresh is complete)</div>
@@ -563,7 +564,7 @@ function Preview({
         )}
       </div>
 
-      <DelayedFastRefreshIndicator projectStatus={projectStatus} />
+      {showDevicePreview && <DelayedFastRefreshIndicator isRefreshing={isRefreshing} />}
 
       <div className="button-group-left-wrapper">
         <div className="button-group-left">

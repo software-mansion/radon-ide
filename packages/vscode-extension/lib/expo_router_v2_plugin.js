@@ -1,11 +1,11 @@
-import { useSyncExternalStore, useEffect } from "react";
+import { useSyncExternalStore, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import { store } from "expo-router/src/global-state/router-store";
-import { computeRouteIdentifier, extractNestedRouteList } from "./expo_router_helpers.js";
-
-function computeRouteIdentifier(pathname, params) {
-  return pathname + JSON.stringify(params);
-}
+import { 
+  computeRouteIdentifier,
+  extractNestedRouteList,
+  sendNavigationChange
+} from "./expo_router_helpers.js";
 
 function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();
@@ -14,12 +14,10 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
     store.routeInfoSnapshot,
     store.routeInfoSnapshot
   );
+  const previousRouteInfo = useRef();
 
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
-  
-  const displayParams = new URLSearchParams(params).toString();
-  const displayName = `${pathname}${displayParams ? `?${displayParams}` : ''}`;
 
   useEffect(() => {
     if (!store.routeNode) {
@@ -30,12 +28,7 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }, [store.routeNode]);
 
   useEffect(() => {
-    onNavigationChange({
-      name: displayName,
-      pathname,
-      params,
-      id: computeRouteIdentifier(pathname, params),
-    });
+    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange);
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {

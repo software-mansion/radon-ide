@@ -1,7 +1,7 @@
 import http, { Server } from "http";
 import { commands, Disposable, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
-import { Devtools } from "../../project/devtools";
+import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 
@@ -103,7 +103,7 @@ export class NetworkPlugin implements ToolPlugin {
   private readonly websocketBackend;
   private devtoolsListeners: Disposable[] = [];
 
-  constructor(private readonly devtools: Devtools) {
+  constructor(private readonly inspectorBridge: RadonInspectorBridge) {
     this.websocketBackend = new NetworkCDPWebsocketBackend(this.sendCDPMessage);
     initialize();
   }
@@ -113,25 +113,21 @@ export class NetworkPlugin implements ToolPlugin {
   }
 
   sendCDPMessage = (messageData: any) => {
-    this.devtools.send("RNIDE_pluginMessage", {
-      scope: "network",
-      type: "cdp-message",
-      data: messageData,
-    });
+    this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
   };
 
   activate(): void {
     this.websocketBackend.start().then(() => {
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
       this.devtoolsListeners.push(
-        this.devtools.onEvent("RNIDE_pluginMessage", (payload) => {
-          if (payload.scope === "network") {
+        this.inspectorBridge.onEvent("pluginMessage", (payload) => {
+          if (payload.pluginId === "network") {
             this.websocketBackend.broadcast(payload.data);
           }
         })
       );
       this.devtoolsListeners.push(
-        this.devtools.onEvent("RNIDE_appReady", () => {
+        this.inspectorBridge.onEvent("appReady", () => {
           this.sendCDPMessage({ method: "Network.enable", params: {} });
         })
       );
