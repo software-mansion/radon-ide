@@ -42,17 +42,10 @@ export async function invokeToolCall(toolName: string, args: unknown): ToolRespo
 
     return results.tool_results[0].content;
   } catch (error) {
-    if (error instanceof Error) {
-      const msg = `Failed tool call with error: ${error.message}`;
-      getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: error.message });
-      Logger.error(MCP_LOG, msg);
-      return msg;
-    } else {
-      const msg = `Failed tool call with error: ${String(error)}`;
-      getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: String(error) });
-      Logger.error(MCP_LOG, msg);
-      return msg;
-    }
+    let msg = `Failed tool call with error: ${error instanceof Error ? error.message : String(error)}`;
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+    return msg;
   }
 }
 
@@ -74,15 +67,9 @@ export async function getToolSchema(): Promise<ToolsInfo> {
 
     return response.json();
   } catch (error) {
-    if (error instanceof Error) {
-      const msg = `Failed fetching tool schema with error: ${error.message}`;
-      Logger.error(MCP_LOG, msg);
-      getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
-    } else {
-      const msg = `Failed fetching tool schema with error: ${String(error)}`;
-      Logger.error(MCP_LOG, msg);
-      getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
-    }
+    let msg = `Failed fetching tool schema with error: ${error instanceof Error ? error.message : String(error)}`;
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
     return {
       tools: [],
     };

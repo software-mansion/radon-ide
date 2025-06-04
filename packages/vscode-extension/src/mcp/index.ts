@@ -28,6 +28,7 @@ async function readMcpConfig(): Promise<McpConfig> {
   const folders = vscode.workspace.workspaceFolders;
 
   if (!folders || folders.length === 0) {
+    // This is an expected warning, don't report via telemetry.
     throw new Error(`Couldn't read MCP config - no workspace folder available.`);
   }
 
@@ -41,7 +42,10 @@ async function readMcpConfig(): Promise<McpConfig> {
     filePath = path.join(folder.uri.fsPath, VSCODE_DIR_PATH, MCP_FILE_NAME);
   } else {
     // Unknown editors will not be handled, as mcp.json is not standardized yet.
-    throw new Error(`Couldn't read MCP config - unknown editor detected.`);
+    let msg = `Couldn't read MCP config - unknown editor detected.`;
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+    throw new Error(msg);
   }
 
   Logger.info(MCP_LOG, `Reading MCP config at ${filePath}`);
@@ -53,6 +57,7 @@ async function readMcpConfig(): Promise<McpConfig> {
       return config;
     });
   } catch {
+    // This is an expected warning, don't report via telemetry.
     throw new Error(`Couldn't read MCP config - MCP config not found.`);
   }
 }
@@ -67,19 +72,25 @@ async function writeMcpConfig(config: McpConfig) {
     directoryPath = path.join(VSCODE_DIR_PATH);
   } else {
     // Unknown editors will not be handled, as mcp.json is not standardized yet.
-    Logger.error(MCP_LOG, `Failed writing MCP config - unknown editor detected.`);
+    let msg = `Failed writing MCP config - unknown editor detected`;
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
     return;
   }
 
   if (vscode.workspace.workspaceFolders?.length === 0) {
-    Logger.error(MCP_LOG, `Failed writing MCP config - no workspace folder available.`);
+    let msg = `Failed writing MCP config - no workspace folder available`;
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
     return;
   }
 
   const folder = vscode.workspace.workspaceFolders?.[0];
 
   if (!folder) {
-    Logger.error(MCP_LOG, `Failed writing MCP config - no workspace folder open.`);
+    let msg = `Failed writing MCP config - no workspace folder open`;
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
     return;
   }
 
@@ -94,9 +105,11 @@ async function writeMcpConfig(config: McpConfig) {
     .then(() => {
       Logger.info(MCP_LOG, `Wrote updated MCP config successfully.`);
     })
-    .catch((err) => {
-      if (err) {
-        Logger.error(MCP_LOG, `Failed writing MCP config - ${err}`);
+    .catch((error) => {
+      if (error) {
+        let msg = `Failed writing MCP config: ${error instanceof Error ? error.message : String(error)}`;
+        Logger.error(MCP_LOG, msg);
+        getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
       }
     });
 }
@@ -152,13 +165,9 @@ async function updateMcpConfig(port: number) {
     await insertRadonEntry(mcpConfig, port);
     await writeMcpConfig(mcpConfig);
   } catch (error) {
-    if (error instanceof Error) {
-      Logger.error(MCP_LOG, error.message);
-      getTelemetryReporter().sendTelemetryEvent("chat:error", { error: error.message });
-    } else {
-      Logger.error(MCP_LOG, String(error));
-      getTelemetryReporter().sendTelemetryEvent("chat:error", { error: String(error) });
-    }
+    let msg = error instanceof Error ? error.message : String(error);
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
   }
 }
 
@@ -179,10 +188,7 @@ export default async function loadRadonAi() {
 
     getTelemetryReporter().sendTelemetryEvent("mcp:started");
   } catch (error) {
-    let msg =
-      error instanceof Error
-        ? `Failed initializing MCP with error: ${error.message}`
-        : `Failed initializing MCP with error: ${String(error)}`;
+    let msg = `Failed initializing MCP with error: ${error instanceof Error ? error.message : String(error)}`;
     Logger.error(MCP_LOG, msg);
     getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
   }
