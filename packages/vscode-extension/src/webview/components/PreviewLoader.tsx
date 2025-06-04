@@ -23,14 +23,14 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
 
-  const startupMessage = projectState.startupMessage;
+  const startupMessage = projectState.activeDeviceSession.startupMessage;
 
   useEffect(() => {
-    if (projectState.startupMessage === StartupMessage.Restarting) {
+    if (projectState.activeDeviceSession.startupMessage === StartupMessage.Restarting) {
       setProgress(0);
     } else {
       const currentIndex = StartupStageWeight.findIndex(
-        (item) => item.StartupMessage === projectState.startupMessage
+        (item) => item.StartupMessage === projectState.activeDeviceSession.startupMessage
       );
       const currentWeight = StartupStageWeight[currentIndex].weight;
       const startupStageWeightSumUntilNow = StartupStageWeight.slice(0, currentIndex)
@@ -39,8 +39,8 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
       let progressComponent = 0;
 
-      if (projectState.stageProgress !== undefined) {
-        progressComponent = projectState.stageProgress;
+      if (projectState.activeDeviceSession.stageProgress !== undefined) {
+        progressComponent = projectState.activeDeviceSession.stageProgress;
       }
       setProgress(
         ((startupStageWeightSumUntilNow + progressComponent * currentWeight) /
@@ -90,12 +90,12 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
               "preview-loader-message",
               isLoadingSlowly && "preview-loader-slow-progress"
             )}>
-            {projectState.startupMessage}
+            {projectState.activeDeviceSession.startupMessage}
             {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
           </StartupMessageComponent>
-          {projectState.stageProgress !== undefined && (
+          {projectState.activeDeviceSession.stageProgress !== undefined && (
             <div className="preview-loader-stage-progress">
-              {(projectState.stageProgress * 100).toFixed(1)}%
+              {(projectState.activeDeviceSession.stageProgress * 100).toFixed(1)}%
             </div>
           )}
         </div>

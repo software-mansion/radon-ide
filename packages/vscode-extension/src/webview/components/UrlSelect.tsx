@@ -165,10 +165,10 @@ function UrlSelect({
 
   // Reset the input on app reload
   useEffect(() => {
-    if (projectState.status === "starting") {
+    if (projectState.activeDeviceSession.status === "starting") {
       setInputValue("/");
     }
-  }, [projectState.status]);
+  }, [projectState.activeDeviceSession.status]);
 
   // Refresh the input value when the navigation history changes
   useEffect(() => {

@@ -49,10 +49,10 @@ function DeviceSelect() {
   const { projectState } = useProject();
   const { devices, deviceSessionsManager } = useDevices();
   const { openModal } = useModal();
-  const selectedProjectDevice = projectState?.selectedDevice;
+  const selectedProjectDevice = projectState?.activeDeviceSession.deviceInfo;
 
   const hasNoDevices = devices.length === 0;
-  const selectedDevice = projectState.selectedDevice;
+  const selectedDevice = projectState.activeDeviceSession.deviceInfo;
 
   const iosDevices = devices.filter(
     ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0

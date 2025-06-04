@@ -144,7 +144,7 @@ export class DeviceSession
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
       navigationRouteList: this.navigationRouteList,
-      selectedDevice: this.device.deviceInfo,
+      deviceInfo: this.device.deviceInfo,
       previewURL: this.previewURL,
       toolsState: this.toolsManager.getToolsState(),
       isDebuggerPaused: this.isDebuggerPaused,

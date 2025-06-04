@@ -32,10 +32,11 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const { project, projectState } = useProject();
   const { dependencies } = useDependencies();
 
-  const navigationHistory = projectState.navigationHistory;
-  const routeList = projectState.navigationRouteList;
+  const navigationHistory = projectState.activeDeviceSession.navigationHistory;
+  const routeList = projectState.activeDeviceSession.navigationRouteList;
 
-  const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
+  const disabledAlsoWhenStarting =
+    disabled || projectState.activeDeviceSession.status === "starting";
   const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
 
   return (
