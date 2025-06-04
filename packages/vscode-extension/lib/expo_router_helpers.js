@@ -6,6 +6,18 @@ export function computeRouteIdentifier(pathname, params) {
   return query ? `${pathname}?${query}` : pathname;
 }
 
+export function compareNavigationDescriptors(a, b) {
+  if (a.pathname !== b.pathname) {
+    return false;
+  }
+  for (const key in a.params) {
+    if (a.params[key] !== b.params[key]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Helper function to extract the route list from Expo Router's routeNode, which is a tree-like object
 // returned by the router store and the getRoutes() function, containing all indexed routes.
 // For future reference: https://github.com/expo/expo/blob/main/packages/expo-router/src/getRoutes.ts
