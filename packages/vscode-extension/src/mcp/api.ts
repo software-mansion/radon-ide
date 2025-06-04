@@ -8,6 +8,7 @@ const MCP_LOG = "[MCP]";
 
 export async function invokeToolCall(toolName: string, args: unknown): ToolResponse {
   // this function is similar to `chat:invokeToolCall()`, will merge them in the future
+  getTelemetryReporter().sendTelemetryEvent("mcp:called", { toolName });
   try {
     const url = new URL("/api/tool_calls/", BACKEND_URL);
     const token = await getLicenseToken();
@@ -35,6 +36,7 @@ export async function invokeToolCall(toolName: string, args: unknown): ToolRespo
     const results: ToolResult = await response.json();
 
     if (results.tool_results.length === 0) {
+      getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: "Tool response empty." });
       return "Tool response empty.";
     }
 

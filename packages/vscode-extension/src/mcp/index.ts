@@ -169,10 +169,21 @@ export default async function loadRadonAi() {
     return mcpPort;
   }
 
-  mcpPort = await getOpenPort();
+  try {
+    mcpPort = await getOpenPort();
 
-  await startLocalMcpServer(mcpPort);
+    await startLocalMcpServer(mcpPort);
 
-  // Enables Radon AI tooling on editors utilizing mcp.json configs.
-  updateMcpConfig(mcpPort);
+    // Enables Radon AI tooling on editors utilizing mcp.json configs.
+    await updateMcpConfig(mcpPort);
+
+    getTelemetryReporter().sendTelemetryEvent("mcp:started");
+  } catch (error) {
+    let msg =
+      error instanceof Error
+        ? `Failed initializing MCP with error: ${error.message}`
+        : `Failed initializing MCP with error: ${String(error)}`;
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+  }
 }
