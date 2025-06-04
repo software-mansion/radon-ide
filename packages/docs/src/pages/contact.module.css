@@ -4,15 +4,80 @@
   gap: 24px;
 }
 
+.wrapper {
+  margin: 0 auto;
+  max-width: 70%;
+}
+
 .headingLabel {
   margin-top: 60px;
   text-align: center;
   text-wrap: balance;
+  margin-bottom: 20px;
 }
 
-.subheadlingLabel {
+.subheadingLabel {
   text-align: center;
   font-weight: normal;
   text-wrap: balance;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.card {
+  border: 1px solid var(--swm-navy-light-10);
+  background-color: var(--swm-off-white);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card h4 {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.card p {
+  color: var(--swm-navy-light-60);
+}
+
+.contactButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px;
+  border: 1px solid var(--swm-navy-light-100);
+  background-color: var(--swm-white);
+  transition-property: border, background-color;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
+}
+
+.contactButton svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+.contactButton:hover {
+  border: 1px solid var(--swm-green-light-80);
+  text-decoration: none;
+}
+
+.contactButton:hover svg {
+  transform: translateX(4px);
+}
+
+@media (max-width: 996px) {
+  .row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
 }
