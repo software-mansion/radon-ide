@@ -2,7 +2,6 @@ import { useProject } from "../providers/ProjectProvider";
 import UrlSelect from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
-import { useDependencies } from "../providers/DependenciesProvider";
 import { useDevices } from "../providers/DevicesProvider";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
@@ -29,14 +28,12 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 }
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
-  const { project, projectState } = useProject();
-  const { dependencies } = useDependencies();
+  const { project, projectState, isExpoRouterProject } = useProject();
 
   const navigationHistory = projectState.navigationHistory;
   const routeList = projectState.navigationRouteList;
 
   const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
-  const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
 
   return (
     <>

@@ -204,11 +204,13 @@ export interface ProjectInterface {
   focusBuildOutput(): Promise<void>;
   focusExtensionLogsOutput(): Promise<void>;
   focusDebugConsole(): Promise<void>;
+  
+  usesExpoRouter(): Promise<boolean>;
   openNavigation(navigationItemID: string): Promise<void>;
   navigateBack(): Promise<void>;
   navigateHome(): Promise<void>;
   openDevMenu(): Promise<void>;
-
+  
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
   hasActiveLicense(): Promise<boolean>;
 

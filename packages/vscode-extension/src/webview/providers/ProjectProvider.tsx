@@ -23,6 +23,7 @@ interface ProjectContextProps {
   projectState: ProjectState;
   deviceSettings: DeviceSettings;
   project: ProjectInterface;
+  isExpoRouterProject: boolean;
   hasActiveLicense: boolean;
   replayData: MultimediaData | undefined;
   setReplayData: Dispatch<SetStateAction<MultimediaData | undefined>>;
@@ -53,6 +54,7 @@ const ProjectContext = createContext<ProjectContextProps>({
   projectState: defaultProjectState,
   deviceSettings: defaultDeviceSettings,
   project,
+  isExpoRouterProject: false,
   hasActiveLicense: false,
   replayData: undefined,
   setReplayData: () => {},
@@ -61,6 +63,7 @@ const ProjectContext = createContext<ProjectContextProps>({
 export default function ProjectProvider({ children }: PropsWithChildren) {
   const [projectState, setProjectState] = useState<ProjectState>(defaultProjectState);
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(defaultDeviceSettings);
+  const [isExpoRouterProject, setIsExpoRouterProject] = useState(false);
   const [hasActiveLicense, setHasActiveLicense] = useState(true);
   const [replayData, setReplayData] = useState<MultimediaData | undefined>(undefined);
 
@@ -82,16 +85,29 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  useEffect(() => {
+    project.usesExpoRouter().then(setIsExpoRouterProject);
+  }, [projectState.appRootPath]);
+
   const contextValue = useMemo(() => {
     return {
       projectState,
       deviceSettings,
       project,
+      isExpoRouterProject,
       hasActiveLicense,
       replayData,
       setReplayData,
     };
-  }, [projectState, deviceSettings, project, hasActiveLicense, replayData, setReplayData]);
+  }, [
+    projectState,
+    deviceSettings,
+    project,
+    isExpoRouterProject,
+    hasActiveLicense,
+    replayData,
+    setReplayData,
+  ]);
 
   return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;
 }

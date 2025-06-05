@@ -414,10 +414,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     commands.executeCommand("workbench.panel.repl.view.focus");
   }
 
+  async usesExpoRouter(): Promise<boolean> {
+    return this.dependencyManager.checkProjectUsesExpoRouter();
+  }
+  
   public async openNavigation(navigationItemID: string) {
     this.deviceSession?.openNavigation(navigationItemID);
   }
-
+  
   public async navigateBack() {
     this.deviceSession?.navigateBack();
   }
