@@ -8,7 +8,7 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
-  DeviceId,
+  DeviceSessionsManagerState,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
@@ -111,31 +111,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
   }
 
-  onDeviceSessionSelected(sessionId: DeviceId | undefined): void {
-    this.updateProjectState({ selectedSessionId: sessionId });
-  }
-
-  onDeviceSessionChange(state: DeviceSessionState): void {
-    const deviceId = state.deviceInfo.id;
-    assert(deviceId in this.projectState.deviceSessions, "A session must already exist");
-    const newDeviceSessions = { ...this.projectState.deviceSessions, [deviceId]: state };
-    this.updateProjectState({ deviceSessions: newDeviceSessions });
-  }
-
-  onDeviceSessionStarted(state: DeviceSessionState): void {
-    const deviceId = state.deviceInfo.id;
-    const newDeviceSessions = {
-      ...this.projectState.deviceSessions,
-      [deviceId]: state,
-    };
-    this.updateProjectState({ deviceSessions: newDeviceSessions });
-  }
-
-  onDeviceSessionStopped(state: DeviceSessionState): void {
-    const deviceId = state.deviceInfo.id;
-    const newDeviceSessions = { ...this.projectState.deviceSessions };
-    delete newDeviceSessions[deviceId];
-    this.updateProjectState({ deviceSessions: newDeviceSessions });
+  onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
+    this.updateProjectState(state);
   }
 
   get relativeAppRootPath() {

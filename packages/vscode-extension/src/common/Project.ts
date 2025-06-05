@@ -76,13 +76,16 @@ export type DeviceSessionState = {
 
 export type DeviceId = DeviceInfo["id"];
 
+export interface DeviceSessionsManagerState {
+  selectedSessionId: DeviceId | null;
+  deviceSessions: Record<DeviceId, DeviceSessionState>;
+}
+
 export type ProjectState = {
   initialized: boolean;
   appRootPath: string | undefined;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
-  selectedSessionId: DeviceId | null;
-  deviceSessions: Record<DeviceId, DeviceSessionState>;
-};
+} & DeviceSessionsManagerState;
 
 export type ZoomLevelType = number | "Fit";
 

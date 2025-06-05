@@ -13,16 +13,13 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceId, DeviceSessionState } from "../common/Project";
+import { DeviceSessionsManagerState } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
 export type DeviceSessionsManagerDelegate = {
-  onDeviceSessionSelected(sessionId: DeviceId | undefined): void;
-  onDeviceSessionChange(state: DeviceSessionState): void;
   onInitialized(): void;
-  onDeviceSessionStarted(state: DeviceSessionState): void;
-  onDeviceSessionStopped(state: DeviceSessionState): void;
+  onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void;
 };
 
 export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerInterface {
@@ -42,6 +39,15 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     this.findInitialDeviceAndStartSession();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
+  }
+
+  private get state(): DeviceSessionsManagerState {
+    return {
+      selectedSessionId: this.activeSession?.getState().deviceInfo.id ?? null,
+      deviceSessions: Object.fromEntries(
+        this.deviceSessions.entries().map(([k, v]) => [k, v.getState()])
+      ),
+    };
   }
 
   public async reloadCurrentSession(type: ReloadAction) {
@@ -91,11 +97,11 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
           // NOTE: the device is being removed, we shouldn't report state updates
           return;
         }
-        this.deviceSessionManagerDelegate.onDeviceSessionChange(state);
+        this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
       },
     });
 
-    this.deviceSessionManagerDelegate.onDeviceSessionStarted(newDeviceSession.getState());
+    this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
     this.updateSelectedSession(newDeviceSession);
     this.deviceSessionManagerDelegate.onInitialized();
@@ -162,13 +168,13 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     if (previousSession === session) {
       return;
     }
-    this.deviceSessionManagerDelegate.onDeviceSessionSelected(session?.getState().deviceInfo.id);
     if (session === undefined) {
+      this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
       return;
     }
     previousSession?.deactivate();
     session.activate();
-    this.deviceSessionManagerDelegate.onDeviceSessionChange(session.getState());
+    this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
   }
 
   private async terminateSession(deviceId: string) {
@@ -177,8 +183,8 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
       if (session === this.activeSession) {
         this.updateSelectedSession(undefined);
       }
-      this.deviceSessionManagerDelegate.onDeviceSessionStopped(session.getState());
       this.deviceSessions.delete(deviceId);
+      this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
       await session.dispose();
     }
   }
