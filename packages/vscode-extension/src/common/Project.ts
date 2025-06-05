@@ -38,6 +38,7 @@ export type ProfilingState = "stopped" | "profiling" | "saving";
 export type NavigationHistoryItem = {
   displayName: string;
   id: string;
+  removable?: boolean;
 };
 
 export type NavigationRoute = {
@@ -207,6 +208,7 @@ export interface ProjectInterface {
   openNavigation(navigationItemID: string): Promise<void>;
   navigateBack(): Promise<void>;
   navigateHome(): Promise<void>;
+  removeNavigationHistoryEntry(id: string): Promise<void>;
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;

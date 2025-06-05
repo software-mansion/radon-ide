@@ -56,6 +56,10 @@ function UrlSelect({
     return itemForID.displayName;
   };
 
+  const removeHistoryEntry = (id: string) => {
+    project.removeNavigationHistoryEntry(id);
+  };
+
   const findDynamicSegments = (item: NavigationHistoryItem) => {
     const matchingRoute = routeList.find((route) => route.path === item.id);
     if (matchingRoute && matchingRoute.dynamic) {
@@ -132,16 +136,23 @@ function UrlSelect({
     textfieldRef: textfieldRef as React.RefObject<HTMLInputElement>,
     onArrowPress: focusBetweenItems,
     getNameFromId,
+    onRemove: removeHistoryEntry,
   };
 
   // Compute combinedItems inline
   const combinedItems = React.useMemo(() => {
+    // Items from navigation history can be removed except the current one,
+    // but all extracted routes should always be present in the dropdown.
+    const navigationHistoryWithRemovable = navigationHistory.map((item, index) => ({
+      ...item,
+      removable: index !== 0,
+    }));
     const routesNotInHistory = differenceBy(
       routeItems,
       navigationHistory,
       (item: NavigationHistoryItem) => item.displayName
     );
-    return [...navigationHistory, ...routesNotInHistory];
+    return [...navigationHistoryWithRemovable, ...routesNotInHistory];
   }, [navigationHistory, routeItems]);
 
   // Reset the input on app reload

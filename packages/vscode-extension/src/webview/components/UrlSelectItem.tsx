@@ -1,6 +1,7 @@
 import React, { PropsWithChildren } from "react";
 import { UrlSelectFocusable } from "./UrlSelect";
 import { NavigationHistoryItem } from "../../common/Project";
+import Tooltip from "./shared/Tooltip";
 
 interface UrlSelectItemProps {
   item: NavigationHistoryItem;
@@ -17,6 +18,7 @@ interface UrlSelectItemProps {
   ) => void;
   getNameFromId: (id: string) => string;
   noHighlight?: boolean;
+  onRemove?: (id: string) => void;
 }
 
 function UrlSelectItem({
@@ -30,6 +32,7 @@ function UrlSelectItem({
   onArrowPress,
   getNameFromId,
   noHighlight = false,
+  onRemove,
   ...props
 }: PropsWithChildren<UrlSelectItemProps>) {
   // For readability, the substring that matches the search query is highlighted.
@@ -150,6 +153,17 @@ function UrlSelectItem({
         }
       }}>
       <div className="url-select-item-text">{nameWithStyles}</div>
+      {item.removable && onRemove && (
+        <button
+          className="url-select-item-remove"
+          tabIndex={-1}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(item.id);
+          }}>
+          <span className="codicon codicon-close" />
+        </button>
+      )}
     </div>
   );
 }

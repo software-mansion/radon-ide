@@ -17,6 +17,7 @@ interface UrlSelectItemGroupProps {
   ) => void;
   getNameFromId: (id: string) => string;
   noHighlight?: boolean;
+  onRemove?: (id: string) => void;
 }
 
 function UrlSelectItemGroup({
@@ -29,6 +30,7 @@ function UrlSelectItemGroup({
   onArrowPress,
   getNameFromId,
   noHighlight = false,
+  onRemove,
 }: UrlSelectItemGroupProps) {
   return (
     <>
@@ -46,6 +48,7 @@ function UrlSelectItemGroup({
               itemList={itemList}
               textfieldRef={textfieldRef}
               noHighlight={noHighlight}
+              onRemove={onRemove}
             />
           )
       )}

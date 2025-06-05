@@ -324,6 +324,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
+  public async removeNavigationHistoryEntry(id: string): Promise<void> {
+    this.deviceSession?.removeNavigationHistoryEntry(id);
+  }
+
   async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
     if (needsRestart) {
