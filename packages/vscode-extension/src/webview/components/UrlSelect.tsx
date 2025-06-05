@@ -285,7 +285,6 @@ function UrlSelect({
               input?.blur();
             }
           }}>
-            
           <div className="url-select-separator-top" />
 
           <div className="url-select-viewport">
