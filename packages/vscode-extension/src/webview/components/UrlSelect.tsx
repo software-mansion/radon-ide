@@ -326,7 +326,6 @@ function UrlSelect({
               onConfirm={() => {
                 setIsDropdownOpen(false);
                 project.navigateHome();
-                setInputValue("/");
               }}
               itemList={dropdownItems}
               onArrowPress={focusBetweenItems}>

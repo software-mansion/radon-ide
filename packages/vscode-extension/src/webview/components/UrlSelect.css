@@ -149,6 +149,12 @@
     max-height: 50vh;
   }
 }
+@media (width <= 580px) {
+  .url-select-button {
+    display: flex;
+    width: 100%;
+  }
+}
 @media (width <= 350px) {
   .url-select-content {
     display: none;
