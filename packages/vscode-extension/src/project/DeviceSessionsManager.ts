@@ -86,7 +86,13 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     Logger.debug("Selected device is ready");
 
     const newDeviceSession = new DeviceSession(this.applicationContext, device, {
-      onStateChange: (state) => this.deviceSessionManagerDelegate.onDeviceSessionChange(state),
+      onStateChange: (state) => {
+        if (!this.deviceSessions.has(state.deviceInfo.id)) {
+          // NOTE: the device is being removed, we shouldn't report state updates
+          return;
+        }
+        this.deviceSessionManagerDelegate.onDeviceSessionChange(state);
+      },
     });
 
     this.deviceSessionManagerDelegate.onDeviceSessionStarted(newDeviceSession.getState());
@@ -168,11 +174,11 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   private async terminateSession(deviceId: string) {
     const session = this.deviceSessions.get(deviceId);
     if (session) {
-      this.deviceSessionManagerDelegate.onDeviceSessionStopped(session.getState());
-      this.deviceSessions.delete(deviceId);
       if (session === this.activeSession) {
         this.updateSelectedSession(undefined);
       }
+      this.deviceSessionManagerDelegate.onDeviceSessionStopped(session.getState());
+      this.deviceSessions.delete(deviceId);
       await session.dispose();
     }
   }
