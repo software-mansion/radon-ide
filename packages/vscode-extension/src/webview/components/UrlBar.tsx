@@ -56,9 +56,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         }}
         navigationHistory={navigationHistory}
         routeList={routeList}
-        disabled={
-          disabledAlsoWhenStarting || (!isExpoRouterProject && navigationHistory.length < 1)
-        }
+        disabled={disabledAlsoWhenStarting}
         dropdownOnly={!isExpoRouterProject}
       />
     </>

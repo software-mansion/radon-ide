@@ -285,9 +285,8 @@ function UrlSelect({
               input?.blur();
             }
           }}>
-          {(filteredItems.length > 0 || filteredOutItems.length > 0) && (
-            <div className="url-select-separator-top" />
-          )}
+            
+          <div className="url-select-separator-top" />
 
           <div className="url-select-viewport">
             {filteredItems.length > 0 && (
@@ -318,7 +317,9 @@ function UrlSelect({
             )}
           </div>
 
-          <div className="url-select-separator-bottom" />
+          {(filteredItems.length > 0 || filteredOutItems.length > 0) && (
+            <div className="url-select-separator-bottom" />
+          )}
 
           <div className="url-select-group url-select-group-outside">
             <UrlSelectButton

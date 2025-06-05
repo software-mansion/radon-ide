@@ -171,12 +171,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
-            <span className="codicon codicon-link" />
-            Open Deep Link
-          </DropdownMenu.Item>
           <div className="dropdown-menu-item">
             <ReplayIcon />
             Enable Replays
