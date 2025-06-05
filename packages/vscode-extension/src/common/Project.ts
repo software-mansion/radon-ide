@@ -38,7 +38,6 @@ export type ProfilingState = "stopped" | "profiling" | "saving";
 export type NavigationHistoryItem = {
   displayName: string;
   id: string;
-  removable?: boolean;
 };
 
 export type NavigationRoute = {
