@@ -5,8 +5,8 @@ import styles from "./contact.module.css";
 import MailIcon from "../components/MailIcon";
 import MessageIcon from "../components/MessageIcon";
 import FlagIcon from "../components/FlagIcon";
-import ArrowRightSmallIcon from "../components/ArrowRightSmallIcon";
 import UserIcon from "../components/UserIcon";
+import ContactCard from "../components/ContactCard";
 
 export default function Contact(): JSX.Element {
   return (
@@ -18,74 +18,36 @@ export default function Contact(): JSX.Element {
             <h3 className={styles.subheadingLabel}>Get in touch with our sales or support team.</h3>
 
             <div className={styles.row}>
-              <div className={styles.card}>
-                <div>
-                  <h4>
-                    <MailIcon color={"var(--swm-navy-light-60)"} /> Sales
-                  </h4>
-                  <p>Contact us about plans, pricings, and enterprise contracts.</p>
-                </div>
-
-                <div>
-                  <a
-                    href="mailto:projects@swmansion.com"
-                    target="_top"
-                    className={styles.contactButton}>
-                    Talk to Sales <ArrowRightSmallIcon />
-                  </a>
-                </div>
-              </div>
-
-              <div className={styles.card}>
-                <div>
-                  <h4>
-                    <MessageIcon color={"var(--swm-navy-light-60)"} /> Help & Support
-                  </h4>
-                  <p>
-                    Get help with your subscription, ask questions, report problems, or leave
-                    feedback.
-                  </p>
-                </div>
-                <div>
-                  <a href="mailto:ide@swmansion.com" target="_top" className={styles.contactButton}>
-                    Contact Support <ArrowRightSmallIcon />
-                  </a>
-                </div>
-              </div>
-
-              <div className={styles.card}>
-                <div>
-                  <h4>
-                    <FlagIcon color={"var(--swm-navy-light-60)"} /> Issues & Feature Requests
-                  </h4>
-                  <p>Found a bug or want to request a new feature?</p>
-                </div>
-                <div>
-                  <a
-                    href="https://github.com/software-mansion/radon-ide/issues/new/choose"
-                    target="_blank"
-                    className={styles.contactButton}>
-                    Open a GitHub Issue <ArrowRightSmallIcon />
-                  </a>
-                </div>
-              </div>
-
-              <div className={styles.card}>
-                <div>
-                  <h4>
-                    <UserIcon color={"var(--swm-navy-light-60)"} /> Customer Portal
-                  </h4>
-                  <p>Manage your subscription and access your license key.</p>
-                </div>
-                <div>
-                  <a
-                    href="https://portal.ide.swmansion.com/"
-                    target="_blank"
-                    className={styles.contactButton}>
-                    Visit Radon IDE Portal <ArrowRightSmallIcon />
-                  </a>
-                </div>
-              </div>
+              <ContactCard
+                icon={<MailIcon color={"var(--swm-navy-light-60)"} />}
+                title="Sales"
+                description="Contact us about plans, pricings, and enterprise contracts."
+                linkText="Talk to Sales"
+                linkHref="mailto:projects@swmansion.com"
+              />
+              <ContactCard
+                icon={<MessageIcon color={"var(--swm-navy-light-60)"} />}
+                title="Help & Support"
+                description="Get help with your subscription, ask questions, report problems, or leave feedback."
+                linkText="Contact Support"
+                linkHref="mailto:ide@swmansion.com"
+              />
+              <ContactCard
+                icon={<FlagIcon color={"var(--swm-navy-light-60)"} />}
+                title="Issues & Feature Requests"
+                description="Found a bug or want to request a new feature?"
+                linkText="Open a GitHub Issue"
+                linkHref="https://github.com/software-mansion/radon-ide/issues/new/choose"
+                linkTarget="_blank"
+              />
+              <ContactCard
+                icon={<UserIcon color={"var(--swm-navy-light-60)"} />}
+                title="Customer Portal"
+                description="Manage your subscription and access your license key."
+                linkText="Visit Radon IDE Portal"
+                linkHref="https://portal.ide.swmansion.com/"
+                linkTarget="_blank"
+              />
             </div>
           </div>
         </div>
