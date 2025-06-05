@@ -313,7 +313,8 @@ export class DeviceSession
       this.isActive = true;
       this.toolsManager.activate();
       if (this.startupMessage === StartupMessage.AttachingDebugger) {
-        await this.reconnectJSDebuggerIfNeeded();
+        this.debugSession = new DebugSession(this, { useParentDebugSession: true });
+        await this.connectJSDebugger();
       }
     }
   }
