@@ -533,6 +533,20 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
     await this.deviceManager.renameDevice(deviceInfo, newDisplayName);
     deviceInfo.displayName = newDisplayName;
+    // NOTE: this should probably be handled via some listener on Device instead:
+    const deviceId = deviceInfo.id;
+    if (!(deviceId in this.projectState.deviceSessions)) {
+      return;
+    }
+    const newDeviceState = {
+      ...this.projectState.deviceSessions[deviceId],
+      deviceInfo,
+    };
+    const newDeviceSessions = {
+      ...this.projectState.deviceSessions,
+      [deviceId]: newDeviceState,
+    };
+    this.updateProjectState({ deviceSessions: newDeviceSessions });
   }
 
   public async runCommand(command: string): Promise<void> {
