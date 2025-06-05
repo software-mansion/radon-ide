@@ -21,7 +21,7 @@ const project = makeProxy<ProjectInterface>("Project");
 
 interface ProjectContextProps {
   projectState: ProjectState;
-  activeDeviceSession: DeviceSessionState | undefined;
+  selectedDeviceSession: DeviceSessionState | undefined;
   deviceSettings: DeviceSettings;
   project: ProjectInterface;
   hasActiveLicense: boolean;
@@ -54,7 +54,7 @@ const defaultDeviceSettings: DeviceSettings = {
 const ProjectContext = createContext<ProjectContextProps>({
   projectState: defaultProjectState,
   deviceSettings: defaultDeviceSettings,
-  activeDeviceSession: undefined,
+  selectedDeviceSession: undefined,
   project,
   hasActiveLicense: false,
   replayData: undefined,
@@ -86,12 +86,12 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
   }, []);
 
   const contextValue = useMemo(() => {
-    const activeDeviceSession = projectState.selectedSessionId
+    const selectedDeviceSession = projectState.selectedSessionId
       ? projectState.deviceSessions[projectState.selectedSessionId]
       : undefined;
     return {
       projectState,
-      activeDeviceSession,
+      selectedDeviceSession,
       deviceSettings,
       project,
       hasActiveLicense,

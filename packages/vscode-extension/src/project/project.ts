@@ -8,6 +8,7 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
+  DeviceId,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
@@ -38,7 +39,6 @@ import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRoo
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager, DeviceSessionsManagerDelegate } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
-import { DeviceSession } from "./deviceSession";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -111,41 +111,28 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
   }
 
-  onDeviceSessionSelected(session: DeviceSession | undefined): void {
-    const sessionId = session?.getState().deviceInfo?.id ?? null;
+  onDeviceSessionSelected(sessionId: DeviceId | undefined): void {
     this.updateProjectState({ selectedSessionId: sessionId });
   }
 
   onDeviceSessionChange(state: DeviceSessionState): void {
-    const deviceInfo = state.deviceInfo;
-    if (!deviceInfo) {
-      // NOTE: if there's no deviceInfo passed, the sesssion is the DEVICE_SESSION_INITIAL_STATE placeholder
-      return;
-    }
-    const deviceId = deviceInfo.id;
-    if (!(deviceId in this.projectState.deviceSessions)) {
-      // NOTE: perhaps this should be asserted?
-      return;
-    }
+    const deviceId = state.deviceInfo.id;
+    assert(deviceId in this.projectState.deviceSessions, "A session must already exist");
     const newDeviceSessions = { ...this.projectState.deviceSessions, [deviceId]: state };
     this.updateProjectState({ deviceSessions: newDeviceSessions });
   }
 
-  onDeviceSessionStarted(deviceSession: DeviceSession): void {
-    const deviceInfo = deviceSession.getState().deviceInfo;
-    assert(deviceInfo !== undefined, "A running device session should have deviceInfo");
-    const deviceId = deviceInfo.id;
+  onDeviceSessionStarted(state: DeviceSessionState): void {
+    const deviceId = state.deviceInfo.id;
     const newDeviceSessions = {
       ...this.projectState.deviceSessions,
-      [deviceId]: deviceSession.getState(),
+      [deviceId]: state,
     };
     this.updateProjectState({ deviceSessions: newDeviceSessions });
   }
 
-  onDeviceSessionStopped(deviceSession: DeviceSession): void {
-    const deviceInfo = deviceSession.getState().deviceInfo;
-    assert(deviceInfo !== undefined, "A running device session should have deviceInfo");
-    const deviceId = deviceInfo.id;
+  onDeviceSessionStopped(state: DeviceSessionState): void {
+    const deviceId = state.deviceInfo.id;
     const newDeviceSessions = { ...this.projectState.deviceSessions };
     delete newDeviceSessions[deviceId];
     this.updateProjectState({ deviceSessions: newDeviceSessions });
@@ -215,7 +202,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   startRecording(): void {
     getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
-      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -231,7 +218,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     clearTimeout(this.recordingTimeout);
 
     getTelemetryReporter().sendTelemetryEvent("recording:stop-recording", {
-      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -282,7 +269,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async captureReplay() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
-      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -293,7 +280,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async captureScreenshot() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
-      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -351,7 +338,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async navigateHome() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
-      platform: this.selectedDeviceSessionState?.deviceInfo?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
 
     if (this.dependencyManager === undefined) {

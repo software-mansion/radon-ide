@@ -13,16 +13,16 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
-import { DEVICE_SESSION_INITIAL_STATE, DeviceSessionState } from "../common/Project";
+import { DeviceId, DeviceSessionState } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
 export type DeviceSessionsManagerDelegate = {
-  onDeviceSessionSelected(session: DeviceSession | undefined): void;
+  onDeviceSessionSelected(sessionId: DeviceId | undefined): void;
   onDeviceSessionChange(state: DeviceSessionState): void;
   onInitialized(): void;
-  onDeviceSessionStarted(session: DeviceSession): void;
-  onDeviceSessionStopped(session: DeviceSession): void;
+  onDeviceSessionStarted(state: DeviceSessionState): void;
+  onDeviceSessionStopped(state: DeviceSessionState): void;
 };
 
 export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerInterface {
@@ -89,7 +89,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
       onStateChange: (state) => this.deviceSessionManagerDelegate.onDeviceSessionChange(state),
     });
 
-    this.deviceSessionManagerDelegate.onDeviceSessionStarted(newDeviceSession);
+    this.deviceSessionManagerDelegate.onDeviceSessionStarted(newDeviceSession.getState());
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
     this.updateSelectedSession(newDeviceSession);
     this.deviceSessionManagerDelegate.onInitialized();
@@ -153,20 +153,22 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   private updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.activeSession;
     this.activeSession = session;
-    if (previousSession !== session) {
-      previousSession?.deactivate();
-      session?.activate();
-      this.deviceSessionManagerDelegate.onDeviceSessionSelected(session);
-      this.deviceSessionManagerDelegate.onDeviceSessionChange(
-        session?.getState() ?? DEVICE_SESSION_INITIAL_STATE
-      );
+    if (previousSession === session) {
+      return;
     }
+    this.deviceSessionManagerDelegate.onDeviceSessionSelected(session?.getState().deviceInfo.id);
+    if (session === undefined) {
+      return;
+    }
+    previousSession?.deactivate();
+    session.activate();
+    this.deviceSessionManagerDelegate.onDeviceSessionChange(session.getState());
   }
 
   private async terminateSession(deviceId: string) {
     const session = this.deviceSessions.get(deviceId);
     if (session) {
-      this.deviceSessionManagerDelegate.onDeviceSessionStopped(session);
+      this.deviceSessionManagerDelegate.onDeviceSessionStopped(session.getState());
       this.deviceSessions.delete(deviceId);
       if (session === this.activeSession) {
         this.updateSelectedSession(undefined);

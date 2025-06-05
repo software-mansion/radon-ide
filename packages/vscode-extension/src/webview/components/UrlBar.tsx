@@ -29,13 +29,13 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 }
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
-  const { project, activeDeviceSession } = useProject();
+  const { project, selectedDeviceSession } = useProject();
   const { dependencies } = useDependencies();
 
-  const navigationHistory = activeDeviceSession?.navigationHistory ?? [];
-  const routeList = activeDeviceSession?.navigationRouteList ?? [];
+  const navigationHistory = selectedDeviceSession?.navigationHistory ?? [];
+  const routeList = selectedDeviceSession?.navigationRouteList ?? [];
 
-  const disabledAlsoWhenStarting = disabled || activeDeviceSession?.status === "starting";
+  const disabledAlsoWhenStarting = disabled || selectedDeviceSession?.status === "starting";
   const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
 
   return (
