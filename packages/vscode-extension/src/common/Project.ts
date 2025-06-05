@@ -61,7 +61,7 @@ export type DeviceSessionState = {
   stageProgress: number | undefined;
   buildError: BuildErrorDescriptor | undefined;
   isRefreshing: boolean;
-  deviceInfo: DeviceInfo | undefined;
+  deviceInfo: DeviceInfo;
   previewURL: string | undefined;
   profilingReactState: ProfilingState;
   profilingCPUState: ProfilingState;
@@ -72,25 +72,6 @@ export type DeviceSessionState = {
   logCounter: number;
   hasStaleBuildCache: boolean;
   isRecordingScreen: boolean;
-};
-
-export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
-  status: "starting",
-  startupMessage: undefined,
-  stageProgress: undefined,
-  buildError: undefined,
-  isRefreshing: false,
-  deviceInfo: undefined,
-  previewURL: undefined,
-  profilingReactState: "stopped",
-  profilingCPUState: "stopped",
-  navigationHistory: [],
-  navigationRouteList: [],
-  toolsState: {},
-  isDebuggerPaused: false,
-  logCounter: 0,
-  hasStaleBuildCache: false,
-  isRecordingScreen: false,
 };
 
 export type DeviceId = DeviceInfo["id"];

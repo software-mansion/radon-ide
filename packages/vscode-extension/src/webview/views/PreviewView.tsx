@@ -81,7 +81,7 @@ function ProfilingButton({
 
 function PreviewView() {
   const {
-    activeDeviceSession,
+    selectedDeviceSession,
     projectState,
     project,
     deviceSettings,
@@ -105,14 +105,14 @@ function PreviewView() {
   const { devices } = useDevices();
 
   const initialized = projectState.initialized;
-  const selectedDevice = activeDeviceSession?.deviceInfo;
+  const selectedDevice = selectedDeviceSession?.deviceInfo;
   const hasNoDevices = projectState !== undefined && devices.length === 0;
-  const isStarting = activeDeviceSession?.status === "starting";
-  const isRunning = activeDeviceSession?.status === "running";
-  const isRecording = activeDeviceSession?.isRecordingScreen ?? false;
+  const isStarting = selectedDeviceSession?.status === "starting";
+  const isRunning = selectedDeviceSession?.status === "running";
+  const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === activeDeviceSession?.deviceInfo?.modelId;
+    return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
 
   const { openFileAt } = useUtils();
@@ -205,12 +205,12 @@ function PreviewView() {
         </div>
         <div className="button-group-top-right">
           <ProfilingButton
-            profilingState={activeDeviceSession?.profilingCPUState ?? "stopped"}
+            profilingState={selectedDeviceSession?.profilingCPUState ?? "stopped"}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
           />
           <ProfilingButton
-            profilingState={activeDeviceSession?.profilingReactState ?? "stopped"}
+            profilingState={selectedDeviceSession?.profilingReactState ?? "stopped"}
             title="Stop profiling React"
             onClick={stopProfilingReact}
           />
@@ -254,7 +254,7 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
-            counter={activeDeviceSession?.logCounter}
+            counter={selectedDeviceSession?.logCounter}
             onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",

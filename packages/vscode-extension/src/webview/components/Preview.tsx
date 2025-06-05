@@ -85,24 +85,24 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { projectState, activeDeviceSession, project } = useProject();
+  const { projectState, selectedDeviceSession, project } = useProject();
 
-  const projectStatus = activeDeviceSession?.status;
+  const projectStatus = selectedDeviceSession?.status;
 
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
   const hasBundlingError = projectStatus === "bundlingError";
 
-  const debugPaused = activeDeviceSession?.isDebuggerPaused;
-  const isRefreshing = activeDeviceSession?.isRefreshing ?? false;
+  const debugPaused = selectedDeviceSession?.isDebuggerPaused;
+  const isRefreshing = selectedDeviceSession?.isRefreshing ?? false;
 
-  const previewURL = activeDeviceSession?.previewURL;
+  const previewURL = selectedDeviceSession?.previewURL;
 
   const isStarting = hasBundlingError
     ? false
-    : !projectState || activeDeviceSession?.status === "starting";
+    : !projectState || selectedDeviceSession?.status === "starting";
   const showDevicePreview =
-    activeDeviceSession?.previewURL &&
+    selectedDeviceSession?.previewURL &&
     (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
   useBuildErrorAlert(hasBuildError);
@@ -447,13 +447,13 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (activeDeviceSession?.hasStaleBuildCache) {
+    if (selectedDeviceSession?.hasStaleBuildCache) {
       openRebuildAlert();
     }
-  }, [activeDeviceSession?.hasStaleBuildCache]);
+  }, [selectedDeviceSession?.hasStaleBuildCache]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === activeDeviceSession?.deviceInfo?.modelId;
+    return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
 
   const resizableProps = useResizableProps({
