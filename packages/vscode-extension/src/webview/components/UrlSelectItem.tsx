@@ -1,7 +1,6 @@
 import React, { PropsWithChildren } from "react";
 import { UrlSelectFocusable } from "./UrlSelect";
 import { NavigationHistoryItem } from "../../common/Project";
-import Tooltip from "./shared/Tooltip";
 
 interface UrlSelectItemProps {
   item: NavigationHistoryItem;
