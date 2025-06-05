@@ -1,10 +1,10 @@
 import React from "react";
 import UrlSelectItem from "./UrlSelectItem";
-import { UrlSelectFocusable } from "./UrlSelect";
+import { RemovableHistoryItem, UrlSelectFocusable } from "./UrlSelect";
 import { NavigationHistoryItem } from "../../common/Project";
 
 interface UrlSelectItemGroupProps {
-  items: NavigationHistoryItem[];
+  items: RemovableHistoryItem[];
   itemList: UrlSelectFocusable[];
   refIndexOffset?: number;
   textfieldRef: React.RefObject<HTMLInputElement>;

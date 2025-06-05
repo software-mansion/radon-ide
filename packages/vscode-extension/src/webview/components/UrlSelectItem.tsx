@@ -1,9 +1,9 @@
 import React, { PropsWithChildren } from "react";
-import { UrlSelectFocusable } from "./UrlSelect";
+import { UrlSelectFocusable, RemovableHistoryItem } from "./UrlSelect";
 import { NavigationHistoryItem } from "../../common/Project";
 
 interface UrlSelectItemProps {
-  item: NavigationHistoryItem;
+  item: RemovableHistoryItem;
   width: number;
   style?: React.CSSProperties;
   itemList: UrlSelectFocusable[];
