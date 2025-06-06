@@ -32,6 +32,7 @@ import { IDE } from "./project/ide";
 import { registerChat } from "./chat";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
+import loadRadonAi from "./mcp";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 import { IDEPanelMoveTarget } from "./common/utils";
 
@@ -295,6 +296,9 @@ export async function activate(context: ExtensionContext) {
       }
     })
   );
+
+  // Initializes MCP part of Radon AI
+  loadRadonAi();
 
   // You can configure the chat in package.json under the `chatParticipants` key
   registerChat(context);
