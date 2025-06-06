@@ -137,15 +137,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.applicationContext.buildCache;
   }
 
-  private setupAppRoot() {
+  private async setupAppRoot() {
     const newAppRoot = findAndSetupNewAppRootFolder();
     if (newAppRoot === this.appRootFolder) {
       return;
     }
-
-    const oldApplicationContext = this.applicationContext;
-    this.applicationContext = new ApplicationContext(newAppRoot);
-    oldApplicationContext.dispose();
+    await this.applicationContext.updateAppRootFolder(newAppRoot);
 
     const oldDeviceSessionsManager = this.deviceSessionsManager;
     this.deviceSessionsManager = new DeviceSessionsManager(
