@@ -13,7 +13,7 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceSessionsManagerState } from "../common/Project";
+import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 
@@ -23,13 +23,9 @@ export type DeviceSessionsManagerDelegate = {
 };
 
 export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerInterface {
-  private deviceSessions: Map<string, DeviceSession> = new Map();
-  private activeSession: DeviceSession | undefined;
+  private deviceSessions: Map<DeviceId, DeviceSession> = new Map();
+  private activeSessionId: DeviceId | undefined;
   private findingDevice: boolean = false;
-
-  public get selectedDeviceSession() {
-    return this.activeSession;
-  }
 
   constructor(
     private readonly applicationContext: ApplicationContext,
@@ -41,9 +37,13 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
   }
 
+  public get selectedDeviceSession(): DeviceSession | undefined {
+    return this.activeSessionId ? this.deviceSessions.get(this.activeSessionId) : undefined;
+  }
+
   private get state(): DeviceSessionsManagerState {
     return {
-      selectedSessionId: this.activeSession?.getState().deviceInfo.id ?? null,
+      selectedSessionId: this.activeSessionId ?? null,
       deviceSessions: Object.fromEntries(
         this.deviceSessions.entries().map(([k, v]) => [k, v.getState()])
       ),
@@ -61,7 +61,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
 
   private async terminatePreviousSessions() {
     const previousSessionEntries = Array.from(this.deviceSessions.entries()).filter(
-      ([_deviceId, session]) => this.selectedDeviceSession !== session
+      ([deviceId, _session]) => deviceId !== this.activeSessionId
     );
     return Promise.all(
       previousSessionEntries.map(([deviceId, _session]) => this.terminateSession(deviceId))
@@ -163,8 +163,8 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   };
 
   private updateSelectedSession(session: DeviceSession | undefined) {
-    const previousSession = this.activeSession;
-    this.activeSession = session;
+    const previousSession = this.selectedDeviceSession;
+    this.activeSessionId = session?.getState().deviceInfo.id;
     if (previousSession === session) {
       return;
     }
@@ -180,7 +180,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   private async terminateSession(deviceId: string) {
     const session = this.deviceSessions.get(deviceId);
     if (session) {
-      if (session === this.activeSession) {
+      if (session === this.selectedDeviceSession) {
         this.updateSelectedSession(undefined);
       }
       this.deviceSessions.delete(deviceId);
