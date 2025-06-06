@@ -41,6 +41,10 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     return this.activeSessionId ? this.deviceSessions.get(this.activeSessionId) : undefined;
   }
 
+  public async stopSession(deviceId: DeviceId): Promise<void> {
+    await this.terminateSession(deviceId);
+  }
+
   private get state(): DeviceSessionsManagerState {
     return {
       selectedSessionId: this.activeSessionId ?? null,

@@ -1,4 +1,5 @@
 import { DeviceInfo } from "./DeviceManager";
+import { DeviceId } from "./Project";
 
 export type SelectDeviceOptions = {
   preservePreviousDevice?: boolean;
@@ -19,4 +20,5 @@ export interface DeviceSessionsManagerInterface {
     deviceInfo: DeviceInfo,
     selectDeviceOptions?: SelectDeviceOptions
   ): Promise<void>;
+  stopSession(deviceId: DeviceId): Promise<void>;
 }

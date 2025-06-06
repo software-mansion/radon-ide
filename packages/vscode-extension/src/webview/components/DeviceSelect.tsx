@@ -69,7 +69,9 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = devices.find((d) => d.id === value);
       if (deviceInfo) {
-        deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
+        deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
+          preservePreviousDevice: true,
+        });
       }
     }
   };

@@ -18,16 +18,26 @@ interface DeviceRowProps {
   onDeviceRename: (device: DeviceInfo) => void;
   onDeviceDelete: (device: DeviceInfo) => void;
   isSelected: boolean;
+  isRunning: boolean;
 }
 
-function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: DeviceRowProps) {
+function DeviceRow({
+  deviceInfo,
+  onDeviceRename,
+  onDeviceDelete,
+  isSelected,
+  isRunning,
+}: DeviceRowProps) {
   const { deviceSessionsManager } = useDevices();
 
   const handleDeviceChange = async () => {
     if (!isSelected) {
-      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
+      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
+        preservePreviousDevice: true,
+      });
     }
   };
+  const handleDeviceStop = async () => deviceSessionsManager.stopSession(deviceInfo.id);
 
   const deviceModelName = mapIdToModel(deviceInfo.modelId);
   const deviceSubtitle =
@@ -58,20 +68,35 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
       </div>
       <span className="device-button-group">
         {!isSelected ? (
-          <IconButton
-            tooltip={{
-              label: "Select device",
-              side: "bottom",
-              type: "secondary",
-            }}
-            disabled={!deviceInfo.available}
-            onClick={async (e) => {
-              e.stopPropagation();
-              await handleDeviceChange();
-              closeModal();
-            }}>
-            <span className="codicon codicon-play" />
-          </IconButton>
+          isRunning ? (
+            <IconButton
+              tooltip={{
+                label: "Stop device",
+                side: "bottom",
+                type: "secondary",
+              }}
+              onClick={async (e) => {
+                e.stopPropagation();
+                await handleDeviceStop();
+              }}>
+              <span className="codicon codicon-stop" />
+            </IconButton>
+          ) : (
+            <IconButton
+              tooltip={{
+                label: "Select device",
+                side: "bottom",
+                type: "secondary",
+              }}
+              disabled={!deviceInfo.available}
+              onClick={async (e) => {
+                e.stopPropagation();
+                await handleDeviceChange();
+                closeModal();
+              }}>
+              <span className="codicon codicon-play" />
+            </IconButton>
+          )
         ) : (
           <IconButton onClick={() => {}} disabled={true}>
             <span className="codicon codicon-blank" />
@@ -109,7 +134,8 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
 }
 
 function ManageDevicesView() {
-  const { selectedDeviceSession } = useProject();
+  const { projectState, selectedDeviceSession } = useProject();
+  const { deviceSessions } = projectState;
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -164,34 +190,31 @@ function ManageDevicesView() {
     );
   }
 
+  function renderRow(deviceInfo: DeviceInfo) {
+    return (
+      <DeviceRow
+        key={deviceInfo.id}
+        deviceInfo={deviceInfo}
+        onDeviceRename={handleDeviceRename}
+        onDeviceDelete={handleDeviceDelete}
+        isSelected={deviceInfo.id === selectedProjectDevice?.id}
+        isRunning={Object.keys(deviceSessions).includes(deviceInfo.id)}
+      />
+    );
+  }
+
   return (
     <div className="manage-devices-container">
       {iosDevices.length > 0 && (
         <>
           <Label>iOS Devices</Label>
-          {iosDevices.map((deviceInfo) => (
-            <DeviceRow
-              key={deviceInfo.id}
-              deviceInfo={deviceInfo}
-              onDeviceRename={handleDeviceRename}
-              onDeviceDelete={handleDeviceDelete}
-              isSelected={deviceInfo.id === selectedProjectDevice?.id}
-            />
-          ))}
+          {iosDevices.map(renderRow)}
         </>
       )}
       {androidDevices.length > 0 && (
         <>
           <Label>Android Devices</Label>
-          {androidDevices.map((deviceInfo) => (
-            <DeviceRow
-              key={deviceInfo.id}
-              deviceInfo={deviceInfo}
-              onDeviceRename={handleDeviceRename}
-              onDeviceDelete={handleDeviceDelete}
-              isSelected={deviceInfo.id === selectedProjectDevice?.id}
-            />
-          ))}
+          {androidDevices.map(renderRow)}
         </>
       )}
       <Button autoFocus className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
