@@ -14,10 +14,23 @@ export class ApplicationContext implements Disposable {
     this.dependencyManager = new DependencyManager(appRootFolder);
 
     this.launchConfig = new LaunchConfigController(appRootFolder);
-
     this.buildCache = new BuildCache(appRootFolder);
 
     this.disposables.push(this.launchConfig, this.dependencyManager);
+  }
+
+  public async updateAppRootFolder(newAppRoot: string) {
+    if (this.appRootFolder === newAppRoot) {
+      return;
+    }
+
+    this.appRootFolder = newAppRoot;
+    this.dependencyManager.appRootFolder = newAppRoot;
+
+    await this.dependencyManager.runAllDependencyChecks();
+
+    this.launchConfig = new LaunchConfigController(newAppRoot);
+    this.buildCache = new BuildCache(newAppRoot);
   }
 
   public dispose() {
