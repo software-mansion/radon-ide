@@ -12,6 +12,10 @@ import "./UrlSelect.css";
 
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
+export type RemovableHistoryItem = NavigationHistoryItem & {
+  removable?: boolean;
+};
+
 interface UrlSelectProps {
   onValueChange: (newValue: string) => void;
   navigationHistory: NavigationHistoryItem[];
@@ -28,8 +32,8 @@ function UrlSelect({
   dropdownOnly,
 }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [filteredItems, setFilteredItems] = React.useState<NavigationHistoryItem[]>([]);
-  const [filteredOutItems, setFilteredOutItems] = React.useState<NavigationHistoryItem[]>([]);
+  const [filteredItems, setFilteredItems] = React.useState<RemovableHistoryItem[]>([]);
+  const [filteredOutItems, setFilteredOutItems] = React.useState<RemovableHistoryItem[]>([]);
   const [inputValue, setInputValue] = React.useState("/");
   const [dynamicSegmentNames, setDynamicSegmentNames] = React.useState<string[]>([]);
   const [currentDynamicSegment, setCurrentDynamicSegment] = React.useState<number>(0);
@@ -57,6 +61,10 @@ function UrlSelect({
       return id;
     }
     return itemForID.displayName;
+  };
+
+  const removeHistoryEntry = (id: string) => {
+    project.removeNavigationHistoryEntry(id);
   };
 
   const findDynamicSegments = (item: NavigationHistoryItem) => {
@@ -136,16 +144,23 @@ function UrlSelect({
     onArrowPress: focusBetweenItems,
     getNameFromId,
     noHighlight: dropdownOnly,
+    onRemove: removeHistoryEntry,
   };
 
   // Compute combinedItems inline
   const combinedItems = React.useMemo(() => {
+    // Items from navigation history can be removed except the current one,
+    // but all extracted routes should always be present in the dropdown.
+    const navigationHistoryWithRemovable = navigationHistory.map((item, index) => ({
+      ...item,
+      removable: index !== 0,
+    }));
     const routesNotInHistory = differenceBy(
       routeItems,
       navigationHistory,
       (item: NavigationHistoryItem) => item.displayName
     );
-    return [...navigationHistory, ...routesNotInHistory];
+    return [...navigationHistoryWithRemovable, ...routesNotInHistory];
   }, [navigationHistory, routeItems]);
 
   // Reset the input on app reload
