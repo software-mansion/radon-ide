@@ -61,7 +61,7 @@ export type DeviceSessionState = {
   stageProgress: number | undefined;
   buildError: BuildErrorDescriptor | undefined;
   isRefreshing: boolean;
-  selectedDevice: DeviceInfo | undefined;
+  deviceInfo: DeviceInfo;
   previewURL: string | undefined;
   profilingReactState: ProfilingState;
   profilingCPUState: ProfilingState;
@@ -74,30 +74,18 @@ export type DeviceSessionState = {
   isRecordingScreen: boolean;
 };
 
-export const DEVICE_SESSION_INITIAL_STATE: DeviceSessionState = {
-  status: "starting",
-  startupMessage: undefined,
-  stageProgress: undefined,
-  buildError: undefined,
-  isRefreshing: false,
-  selectedDevice: undefined,
-  previewURL: undefined,
-  profilingReactState: "stopped",
-  profilingCPUState: "stopped",
-  navigationHistory: [],
-  navigationRouteList: [],
-  toolsState: {},
-  isDebuggerPaused: false,
-  logCounter: 0,
-  hasStaleBuildCache: false,
-  isRecordingScreen: false,
-};
+export type DeviceId = DeviceInfo["id"];
+
+export interface DeviceSessionsManagerState {
+  selectedSessionId: DeviceId | null;
+  deviceSessions: Record<DeviceId, DeviceSessionState>;
+}
 
 export type ProjectState = {
   initialized: boolean;
   appRootPath: string | undefined;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
-} & DeviceSessionState;
+} & DeviceSessionsManagerState;
 
 export type ZoomLevelType = number | "Fit";
 

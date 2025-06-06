@@ -144,7 +144,7 @@ export class DeviceSession
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
       navigationRouteList: this.navigationRouteList,
-      selectedDevice: this.device.deviceInfo,
+      deviceInfo: this.device.deviceInfo,
       previewURL: this.previewURL,
       toolsState: this.toolsManager.getToolsState(),
       isDebuggerPaused: this.isDebuggerPaused,
@@ -313,7 +313,8 @@ export class DeviceSession
       this.isActive = true;
       this.toolsManager.activate();
       if (this.startupMessage === StartupMessage.AttachingDebugger) {
-        await this.reconnectJSDebuggerIfNeeded();
+        this.debugSession = new DebugSession(this, { useParentDebugSession: true });
+        await this.connectJSDebugger();
       }
     }
   }
