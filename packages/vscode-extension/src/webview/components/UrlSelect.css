@@ -84,6 +84,8 @@
   line-height: 1.2;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 4px;
   min-height: 30px;
   height: auto;
   padding: 0 8px;
@@ -117,6 +119,24 @@
 
 .url-select-item-text-dynamic {
   color: var(--swm-url-select-special-text);
+}
+
+.url-select-item-remove {
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--swm-icon-button);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms 0ms ease-in-out;
+}
+.url-select-item-remove:hover {
+  color: var(--swm-icon-button-hover);
+}
+.url-select-item-remove:active {
+  color: var(--swm-icon-button-active);
+  transform: scale(0.9);
 }
 
 @media (height <= 450px) {
