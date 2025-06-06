@@ -10,7 +10,7 @@ export function checkNavigationDescriptorsEqual(a, b) {
   if (a.pathname !== b.pathname || Object.keys(a.params).length !== Object.keys(b.params).length) {
     return false;
   }
-  return Object.keys(a.params).every(key => a.params[key] === b.params[key])
+  return Object.keys(a).every(key => deepEqual(a[key], b[key]));
 }
 
 export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange) {
@@ -107,4 +107,35 @@ export function extractNestedRouteList(rootNode) {
     }
     return aPath.length - bPath.length;
   });
+}
+
+
+// As it's an injected file, we can't use lodash or similar
+// so this is a simple deep equality check to compare
+// navigation descriptors, which can contain e.g. arrays.
+function deepEqual(x, y) {
+  if (x === y) {
+    return true;
+  }
+  if (typeof x !== typeof y) {
+    return false;
+  }
+  if (x && y && typeof x === 'object') {
+    if (Array.isArray(x) && Array.isArray(y)) {
+      if (x.length !== y.length) {
+        return false;
+      }
+      return x.every((item, i) => deepEqual(item, y[i]));
+    }
+    if (Array.isArray(x) !== Array.isArray(y)) {
+      return false;
+    }
+    const keysX = Object.keys(x);
+    const keysY = Object.keys(y);
+    if (keysX.length !== keysY.length) {
+      return false;
+    }
+    return keysX.every(key => deepEqual(x[key], y[key]));
+  }
+  return false;
 }
