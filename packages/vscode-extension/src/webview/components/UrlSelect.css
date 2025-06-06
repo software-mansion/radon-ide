@@ -164,9 +164,9 @@
   display: inline-block;
 }
 
-@media (height <= 450px) {
+@media (height <= 500px) {
   .url-select-viewport {
-    max-height: 50vh;
+    max-height: 30vh;
   }
 }
 @media (width <= 580px) {
