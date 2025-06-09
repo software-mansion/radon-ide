@@ -247,7 +247,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   public setUpKeyboard() {
     Logger.log(
-      "Keyboard setup completed. Keyboard setup is not required on on Android Emulator devices."
+      "Keyboard setup requested. Keyboard setup is not required on on Android Emulator devices."
     );
   }
 

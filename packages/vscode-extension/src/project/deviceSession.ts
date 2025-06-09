@@ -610,10 +610,6 @@ export class DeviceSession
       ])
     );
 
-    this.devtools.appReady().then(() => {
-      // set up keyboard
-    });
-
     Logger.debug("App and preview ready, moving on...");
     this.updateStartupMessage(StartupMessage.AttachingDebugger);
     if (this.isActive) {
