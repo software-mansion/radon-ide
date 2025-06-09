@@ -57,16 +57,18 @@ function partitionDevices(
     runningSessionIds.includes(id)
   );
 
-  // If there's only a single running device, we don't place it in a separate section.
-  if (runningDevices.length <= 1) {
-    stoppedDevices = validDevices;
-    runningDevices = [];
-  } else if (selectedDevice) {
-    // move the selected device to the top of the running devices list
-    const selectedDeviceIdx = runningDevices.findIndex(({ id }) => id === selectedDevice.id);
-    console.assert(selectedDeviceIdx !== -1, "Selected device must be running");
-    runningDevices.splice(selectedDeviceIdx, 1);
-    runningDevices.unshift(selectedDevice);
+  if (selectedDevice) {
+    // If there's only a single selected, running device, we don't place it in a separate section.
+    if (runningDevices.length <= 1) {
+      stoppedDevices = validDevices;
+      runningDevices = [];
+    } else {
+      // move the selected device to the top of the running devices list
+      const selectedDeviceIdx = runningDevices.findIndex(({ id }) => id === selectedDevice.id);
+      console.assert(selectedDeviceIdx !== -1, "Selected device must be running");
+      runningDevices.splice(selectedDeviceIdx, 1);
+      runningDevices.unshift(selectedDevice);
+    }
   }
 
   const [iosDevices, androidDevices] = _.partition(
