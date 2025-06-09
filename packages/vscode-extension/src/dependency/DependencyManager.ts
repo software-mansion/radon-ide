@@ -32,10 +32,25 @@ import { isEasCliInstalled } from "../builders/easCommand";
 import { getMinimumSupportedNodeVersion } from "../utilities/getMinimumSupportedNodeVersion";
 
 export class DependencyManager implements Disposable, DependencyManagerInterface {
-  constructor(private readonly appRootFolder: string) {}
+  private _appRootFolder: string;
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
   private eventEmitter = new EventEmitter();
   private packageManagerInternal: PackageManagerInfo | undefined;
+
+  constructor(appRootFolder: string) {
+    this._appRootFolder = appRootFolder;
+  }
+
+  get appRootFolder() {
+    return this._appRootFolder;
+  }
+
+  set appRootFolder(newRoot: string) {
+    if (this._appRootFolder !== newRoot) {
+      this._appRootFolder = newRoot;
+      this.packageManagerInternal = undefined;
+    }
+  }
 
   public dispose() {
     this.eventEmitter.removeAllListeners();

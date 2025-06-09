@@ -152,15 +152,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return selectedSessionState;
   }
 
-  private setupAppRoot() {
+  private async setupAppRoot() {
     const newAppRoot = findAndSetupNewAppRootFolder();
     if (newAppRoot === this.appRootFolder) {
       return;
     }
-
-    const oldApplicationContext = this.applicationContext;
-    this.applicationContext = new ApplicationContext(newAppRoot);
-    oldApplicationContext.dispose();
+    await this.applicationContext.updateAppRootFolder(newAppRoot);
 
     const oldDeviceSessionsManager = this.deviceSessionsManager;
     this.deviceSessionsManager = new DeviceSessionsManager(
@@ -333,6 +330,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     } else {
       await this.reloadMetro();
     }
+  }
+
+  public async removeNavigationHistoryEntry(id: string): Promise<void> {
+    this.deviceSession?.removeNavigationHistoryEntry(id);
   }
 
   async resetAppPermissions(permissionType: AppPermissionType) {

@@ -985,6 +985,11 @@ export class DeviceSession
     this.inspectorBridge.sendOpenNavigationRequest("__BACK__");
   }
 
+  public removeNavigationHistoryEntry(id: string) {
+    this.navigationHistory = this.navigationHistory.filter((record) => record.id !== id);
+    this.emitStateChange();
+  }
+
   public async openDevMenu() {
     await this.metro.openDevMenu();
   }

@@ -2,13 +2,19 @@ import React, { useEffect, useLayoutEffect } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { VscodeTextfield } from "@vscode-elements/react-elements";
 import { partition, differenceBy } from "lodash";
-import UrlSelectItem from "./UrlSelectItem";
+import UrlSelectButton from "./UrlSelectButton";
 import UrlSelectItemGroup from "./UrlSelectItemGroup";
-import "./UrlSelect.css";
+import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import { useProject } from "../providers/ProjectProvider";
+import { useModal } from "../providers/ModalProvider";
 import { NavigationHistoryItem, NavigationRoute } from "../../common/Project";
+import "./UrlSelect.css";
 
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
+
+export type RemovableHistoryItem = NavigationHistoryItem & {
+  removable?: boolean;
+};
 
 interface UrlSelectProps {
   onValueChange: (newValue: string) => void;
@@ -26,8 +32,8 @@ function UrlSelect({
   dropdownOnly,
 }: UrlSelectProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [filteredItems, setFilteredItems] = React.useState<NavigationHistoryItem[]>([]);
-  const [filteredOutItems, setFilteredOutItems] = React.useState<NavigationHistoryItem[]>([]);
+  const [filteredItems, setFilteredItems] = React.useState<RemovableHistoryItem[]>([]);
+  const [filteredOutItems, setFilteredOutItems] = React.useState<RemovableHistoryItem[]>([]);
   const [inputValue, setInputValue] = React.useState("/");
   const [dynamicSegmentNames, setDynamicSegmentNames] = React.useState<string[]>([]);
   const [currentDynamicSegment, setCurrentDynamicSegment] = React.useState<number>(0);
@@ -36,6 +42,7 @@ function UrlSelect({
   const dropdownItems: UrlSelectFocusable[] = [];
 
   const textfieldRef = React.useRef<HTMLInputElement>(null);
+  const { openModal } = useModal();
   const { project, selectedDeviceSession } = useProject();
 
   const routeItems = React.useMemo(
@@ -54,6 +61,10 @@ function UrlSelect({
       return id;
     }
     return itemForID.displayName;
+  };
+
+  const removeHistoryEntry = (id: string) => {
+    project.removeNavigationHistoryEntry(id);
   };
 
   const findDynamicSegments = (item: NavigationHistoryItem) => {
@@ -132,16 +143,24 @@ function UrlSelect({
     textfieldRef: textfieldRef as React.RefObject<HTMLInputElement>,
     onArrowPress: focusBetweenItems,
     getNameFromId,
+    noHighlight: dropdownOnly,
+    onRemove: removeHistoryEntry,
   };
 
   // Compute combinedItems inline
   const combinedItems = React.useMemo(() => {
+    // Items from navigation history can be removed except the current one,
+    // but all extracted routes should always be present in the dropdown.
+    const navigationHistoryWithRemovable = navigationHistory.map((item, index) => ({
+      ...item,
+      removable: index !== 0,
+    }));
     const routesNotInHistory = differenceBy(
       routeItems,
       navigationHistory,
       (item: NavigationHistoryItem) => item.displayName
     );
-    return [...navigationHistory, ...routesNotInHistory];
+    return [...navigationHistoryWithRemovable, ...routesNotInHistory];
   }, [navigationHistory, routeItems]);
 
   // Reset the input on app reload
@@ -158,8 +177,9 @@ function UrlSelect({
 
   // Update the filtered items based on the input value
   useEffect(() => {
-    if (disabled) {
+    if (disabled || dropdownOnly) {
       setFilteredItems([]);
+      setFilteredOutItems(combinedItems);
       return;
     }
     const inputValueLowerCase = inputValue?.toLowerCase();
@@ -280,64 +300,65 @@ function UrlSelect({
               input?.blur();
             }
           }}>
-          {(filteredItems.length > 0 || filteredOutItems.length > 0) && (
-            <div className="url-select-separator-top" />
-          )}
+          <div className="url-select-separator-top" />
 
           <div className="url-select-viewport">
-            {dropdownOnly ? (
+            {filteredItems.length > 0 && (
               <div className="url-select-group">
-                <div className="url-select-label">Recent paths:</div>
-                <UrlSelectItem
-                  item={{ id: "/", displayName: "/" }}
-                  refIndex={0}
-                  onConfirm={() => {
-                    setIsDropdownOpen(false);
-                    project.navigateHome();
-                    setInputValue("/");
-                  }}
-                  {...commonItemProps}
-                  noHighlight={true}
-                />
-
+                <div className="url-select-label">Suggested paths:</div>
                 <UrlSelectItemGroup
-                  items={navigationHistory}
-                  refIndexOffset={1}
+                  items={filteredItems}
+                  refIndexOffset={0}
                   onConfirm={closeDropdownWithValue}
-                  noHighlight={true}
                   {...commonItemProps}
                 />
               </div>
-            ) : (
-              <>
-                {filteredItems.length > 0 && (
-                  <div className="url-select-group url-select-group-suggested">
-                    <div className="url-select-label">Suggested paths:</div>
-                    <UrlSelectItemGroup
-                      items={filteredItems}
-                      refIndexOffset={0}
-                      onConfirm={closeDropdownWithValue}
-                      {...commonItemProps}
-                    />
-                  </div>
-                )}
-
-                {filteredItems.length > 0 && filteredOutItems.length > 0 && (
-                  <div className="url-select-separator" />
-                )}
-
-                {filteredOutItems.length > 0 && (
-                  <div className="url-select-group url-select-group-other">
-                    <UrlSelectItemGroup
-                      items={filteredOutItems}
-                      refIndexOffset={filteredItems.length}
-                      onConfirm={closeDropdownWithValue}
-                      {...commonItemProps}
-                    />
-                  </div>
-                )}
-              </>
             )}
+
+            {filteredItems.length > 0 && filteredOutItems.length > 0 && (
+              <div className="url-select-separator" />
+            )}
+
+            {filteredOutItems.length > 0 && (
+              <div className="url-select-group">
+                <UrlSelectItemGroup
+                  items={filteredOutItems}
+                  refIndexOffset={filteredItems.length}
+                  onConfirm={closeDropdownWithValue}
+                  {...commonItemProps}
+                />
+              </div>
+            )}
+          </div>
+
+          {(filteredItems.length > 0 || filteredOutItems.length > 0) && (
+            <div className="url-select-separator-bottom" />
+          )}
+
+          <div className="url-select-group url-select-group-outside">
+            <UrlSelectButton
+              refIndex={filteredItems.length + filteredOutItems.length}
+              onConfirm={() => {
+                setIsDropdownOpen(false);
+                project.navigateHome();
+              }}
+              itemList={dropdownItems}
+              onArrowPress={focusBetweenItems}>
+              <span className="codicon codicon-home" />
+              <span>Go to main screen</span>
+            </UrlSelectButton>
+
+            <UrlSelectButton
+              refIndex={filteredItems.length + filteredOutItems.length + 1}
+              onConfirm={() => {
+                setIsDropdownOpen(false);
+                openModal("Open Deep Link", <OpenDeepLinkView />);
+              }}
+              itemList={dropdownItems}
+              onArrowPress={focusBetweenItems}>
+              <span className="codicon codicon-link" />
+              <span>Open a deep link...</span>
+            </UrlSelectButton>
           </div>
         </Popover.Content>
       </Popover.Root>
