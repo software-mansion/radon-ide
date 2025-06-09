@@ -103,6 +103,10 @@ export class IosSimulatorDevice extends DeviceBase {
     await this.internalBootDevice();
   }
 
+  public setUpKeyboard() {
+    this.preview?.setUpKeyboard();
+  }
+
   private async internalBootDevice() {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     try {
