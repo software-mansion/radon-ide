@@ -5,6 +5,7 @@ export type WorkspaceConfigProps = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
   themeType: ThemeType;
+  preservePreviousDevice: boolean;
 };
 
 export interface WorkspaceConfigEventMap {

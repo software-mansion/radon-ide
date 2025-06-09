@@ -16,19 +16,20 @@ type WorkspaceConfigContextType = WorkspaceConfigProps & {
   update: <K extends keyof WorkspaceConfigProps>(key: K, value: WorkspaceConfigProps[K]) => void;
 };
 
-const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
+const INITIAL_WORKSPACE_CONFIG: WorkspaceConfigProps = {
   panelLocation: "tab",
   showDeviceFrame: true,
-  update: () => {},
   themeType: "vscode",
+  preservePreviousDevice: true,
+};
+
+const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
+  ...INITIAL_WORKSPACE_CONFIG,
+  update: () => {},
 });
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
-  const [config, setConfig] = useState<WorkspaceConfigProps>({
-    panelLocation: "tab",
-    showDeviceFrame: true,
-    themeType: "vscode",
-  });
+  const [config, setConfig] = useState<WorkspaceConfigProps>(INITIAL_WORKSPACE_CONFIG);
 
   useEffect(() => {
     function watchConfigChange(e: WorkspaceConfigProps) {

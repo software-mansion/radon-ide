@@ -8,6 +8,7 @@ import { useDevices } from "../providers/DevicesProvider";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
+import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -49,6 +50,7 @@ function DeviceSelect() {
   const { selectedDeviceSession } = useProject();
   const { devices, deviceSessionsManager } = useDevices();
   const { openModal } = useModal();
+  const { preservePreviousDevice } = useWorkspaceConfig();
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
 
   const hasNoDevices = devices.length === 0;
@@ -70,7 +72,7 @@ function DeviceSelect() {
       const deviceInfo = devices.find((d) => d.id === value);
       if (deviceInfo) {
         deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
-          preservePreviousDevice: true,
+          preservePreviousDevice,
         });
       }
     }

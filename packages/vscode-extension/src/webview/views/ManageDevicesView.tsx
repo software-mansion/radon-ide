@@ -1,5 +1,6 @@
 import "./ManageDevicesView.css";
 import { useEffect, useState } from "react";
+import * as Switch from "@radix-ui/react-switch";
 import IconButton from "../components/shared/IconButton";
 import DeviceRenameDialog from "../components/DeviceRenameDialog";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
@@ -12,6 +13,9 @@ import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
 import { mapIdToModel } from "../utilities/deviceContants";
+import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+
+import "../components/shared/SwitchGroup.css";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -29,11 +33,12 @@ function DeviceRow({
   isRunning,
 }: DeviceRowProps) {
   const { deviceSessionsManager } = useDevices();
+  const { preservePreviousDevice } = useWorkspaceConfig();
 
   const handleDeviceChange = async () => {
     if (!isSelected) {
       deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
-        preservePreviousDevice: true,
+        preservePreviousDevice,
       });
     }
   };
@@ -79,7 +84,7 @@ function DeviceRow({
                 e.stopPropagation();
                 await handleDeviceStop();
               }}>
-              <span className="codicon codicon-stop" />
+              <span className="codicon codicon-debug-stop" />
             </IconButton>
           ) : (
             <IconButton
@@ -141,6 +146,8 @@ function ManageDevicesView() {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
+
+  const { preservePreviousDevice, update } = useWorkspaceConfig();
 
   const { devices, reload } = useDevices();
 
@@ -221,6 +228,22 @@ function ManageDevicesView() {
         <span className="codicon codicon-add" />
         <div className="create-button-text">Create new device</div>
       </Button>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-around",
+          alignItems: "center",
+          marginTop: "16px",
+        }}>
+        <label>Shut down devices when switching:</label>
+        <Switch.Root
+          className="switch-root small-switch"
+          checked={!preservePreviousDevice}
+          onCheckedChange={(checked) => update("preservePreviousDevice", !checked)}>
+          <Switch.Thumb className="switch-thumb" />
+        </Switch.Root>
+      </div>
     </div>
   );
 }
