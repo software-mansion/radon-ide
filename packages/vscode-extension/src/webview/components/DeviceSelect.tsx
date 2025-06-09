@@ -117,7 +117,7 @@ function DeviceSelect() {
       onValueChange={handleDeviceDropdownChange}
       value={hasNoDevices ? undefined : selectedDevice?.id}>
       <Select.Trigger className="device-select-trigger" disabled={hasNoDevices}>
-        <Select.Value>
+        <Select.Value placeholder={placeholderText}>
           <div className="device-select-value">
             {selectedDevice !== undefined ? (
               <>
@@ -125,6 +125,7 @@ function DeviceSelect() {
                 <span className="device-select-value-text">{selectedDevice?.displayName}</span>
               </>
             ) : (
+              // NOTE: for some reason, the placeholder sometimes fails to show when the value is set to undefined, so we display it here as well
               <span className="device-select-value-text">{placeholderText}</span>
             )}
           </div>
