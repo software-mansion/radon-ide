@@ -74,35 +74,29 @@ function DeviceRow({
         <div className="device-subtitle">{deviceSubtitle}</div>
       </div>
       <span className="device-button-group">
-        {!isSelected ? (
-          isRunning ? (
-            <IconButton
-              tooltip={{
-                label: "Stop device",
-                side: "bottom",
-                type: "secondary",
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                stopDevice();
-              }}>
-              <span className="codicon codicon-debug-stop" />
-            </IconButton>
-          ) : (
-            <IconButton
-              tooltip={{
-                label: "Select device",
-                side: "bottom",
-                type: "secondary",
-              }}
-              disabled={!deviceInfo.available}
-              onClick={selectDevice}>
-              <span className="codicon codicon-play" />
-            </IconButton>
-          )
+        {isRunning ? (
+          <IconButton
+            tooltip={{
+              label: "Stop device",
+              side: "bottom",
+              type: "secondary",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              stopDevice();
+            }}>
+            <span className="codicon codicon-debug-stop" />
+          </IconButton>
         ) : (
-          <IconButton onClick={() => {}} disabled={true}>
-            <span className="codicon codicon-blank" />
+          <IconButton
+            tooltip={{
+              label: "Select device",
+              side: "bottom",
+              type: "secondary",
+            }}
+            disabled={!deviceInfo.available}
+            onClick={selectDevice}>
+            <span className="codicon codicon-play" />
           </IconButton>
         )}
         <IconButton

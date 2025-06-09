@@ -110,15 +110,23 @@ function DeviceSelect() {
     }
   };
 
+  const placeholderText = hasNoDevices ? "No devices found" : "Select device";
+
   return (
     <Select.Root
       onValueChange={handleDeviceDropdownChange}
       value={hasNoDevices ? undefined : selectedDevice?.id}>
       <Select.Trigger className="device-select-trigger" disabled={hasNoDevices}>
-        <Select.Value placeholder="No devices found">
+        <Select.Value>
           <div className="device-select-value">
-            <span className="codicon codicon-device-mobile" />
-            <span className="device-select-value-text">{selectedDevice?.displayName}</span>
+            {selectedDevice !== undefined ? (
+              <>
+                <span className="codicon codicon-device-mobile" />
+                <span className="device-select-value-text">{selectedDevice?.displayName}</span>
+              </>
+            ) : (
+              <span className="device-select-value-text">{placeholderText}</span>
+            )}
           </div>
         </Select.Value>
       </Select.Trigger>
