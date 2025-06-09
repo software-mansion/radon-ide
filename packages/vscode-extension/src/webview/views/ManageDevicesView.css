@@ -28,6 +28,9 @@
   border-radius: 6px;
   cursor: pointer;
 }
+.device-row[data-selected="true"] {
+  cursor: default;
+}
 
 .device-row:hover {
   outline: none;

@@ -37,13 +37,13 @@ function DeviceRow({
 
   const stopDevice = () => deviceSessionsManager.stopSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
-    e.stopPropagation();
     if (!isSelected) {
+      e.stopPropagation();
       deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
         preservePreviousDevice,
       });
+      closeModal();
     }
-    closeModal();
   };
 
   const deviceModelName = mapIdToModel(deviceInfo.modelId);
@@ -54,7 +54,7 @@ function DeviceRow({
 
   const { closeModal } = useModal();
   return (
-    <button className="device-row" onClick={selectDevice}>
+    <button className="device-row" onClick={selectDevice} data-selected={isSelected}>
       <div className={isSelected ? "device-icon-selected" : "device-icon"}>
         {!deviceInfo.available ? (
           <Tooltip
