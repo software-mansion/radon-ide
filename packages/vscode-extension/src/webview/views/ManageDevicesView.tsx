@@ -1,5 +1,5 @@
 import "./ManageDevicesView.css";
-import { useEffect, useState } from "react";
+import { MouseEventHandler, useEffect, useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
 import IconButton from "../components/shared/IconButton";
 import DeviceRenameDialog from "../components/DeviceRenameDialog";
@@ -35,14 +35,16 @@ function DeviceRow({
   const { deviceSessionsManager } = useDevices();
   const { preservePreviousDevice } = useWorkspaceConfig();
 
-  const handleDeviceChange = async () => {
+  const stopDevice = () => deviceSessionsManager.stopSession(deviceInfo.id);
+  const selectDevice: MouseEventHandler = (e) => {
+    e.stopPropagation();
     if (!isSelected) {
       deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
         preservePreviousDevice,
       });
     }
+    closeModal();
   };
-  const handleDeviceStop = async () => deviceSessionsManager.stopSession(deviceInfo.id);
 
   const deviceModelName = mapIdToModel(deviceInfo.modelId);
   const deviceSubtitle =
@@ -52,7 +54,7 @@ function DeviceRow({
 
   const { closeModal } = useModal();
   return (
-    <div className="device-row">
+    <button className="device-row" onClick={selectDevice}>
       <div className={isSelected ? "device-icon-selected" : "device-icon"}>
         {!deviceInfo.available ? (
           <Tooltip
@@ -80,9 +82,9 @@ function DeviceRow({
                 side: "bottom",
                 type: "secondary",
               }}
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
-                await handleDeviceStop();
+                stopDevice();
               }}>
               <span className="codicon codicon-debug-stop" />
             </IconButton>
@@ -94,11 +96,7 @@ function DeviceRow({
                 type: "secondary",
               }}
               disabled={!deviceInfo.available}
-              onClick={async (e) => {
-                e.stopPropagation();
-                await handleDeviceChange();
-                closeModal();
-              }}>
+              onClick={selectDevice}>
               <span className="codicon codicon-play" />
             </IconButton>
           )
@@ -113,7 +111,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
-          onClick={async (e) => {
+          onClick={(e) => {
             e.stopPropagation();
             onDeviceRename(deviceInfo);
           }}>
@@ -134,7 +132,7 @@ function DeviceRow({
           <span className="codicon codicon-trash delete-icon" />
         </IconButton>
       </span>
-    </div>
+    </button>
   );
 }
 
