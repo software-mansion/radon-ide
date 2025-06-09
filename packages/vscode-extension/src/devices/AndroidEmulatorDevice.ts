@@ -245,6 +245,12 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return promise;
   }
 
+  public setUpKeyboard() {
+    Logger.log(
+      "Keyboard setup completed. Keyboard setup is not required on on Android Emulator devices."
+    );
+  }
+
   async bootDevice(): Promise<void> {
     await this.internalBootDevice();
 

@@ -89,6 +89,7 @@ export abstract class DeviceBase implements Disposable {
     }
   }
 
+  abstract setUpKeyboard(): void;
   abstract bootDevice(): Promise<void>;
   protected abstract changeSettings(settings: DeviceSettings): Promise<boolean>;
   abstract sendBiometricAuthorization(isMatch: boolean): Promise<void>;

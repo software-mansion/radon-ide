@@ -259,6 +259,7 @@ export class DeviceSession
   private makeDevtools() {
     const devtools = new Devtools();
     devtools.onEvent("appReady", () => {
+      this.device.setUpKeyboard();
       Logger.debug("App ready");
     });
     // We don't need to store event disposables here as they are tied to the lifecycle
@@ -608,6 +609,10 @@ export class DeviceSession
         waitForAppReady,
       ])
     );
+
+    this.devtools.appReady().then(() => {
+      // set up keyboard
+    });
 
     Logger.debug("App and preview ready, moving on...");
     this.updateStartupMessage(StartupMessage.AttachingDebugger);

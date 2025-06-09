@@ -149,6 +149,10 @@ export class Preview implements Disposable {
     });
   }
 
+  setUpKeyboard() {
+    this.subprocess?.stdin?.write("setUpKeyboard\n");
+  }
+
   public showTouches() {
     this.subprocess?.stdin?.write("pointer show true\n");
   }
