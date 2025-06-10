@@ -117,19 +117,17 @@ function DeviceSelect() {
   return (
     <Select.Root
       onValueChange={handleDeviceDropdownChange}
-      value={hasNoDevices ? undefined : selectedDevice?.id}>
+      // NOTE: we pass the placeholder text as the value because passing `undefined` causes
+      // issues with the "manage devices" option.
+      // See https://github.com/software-mansion/radon-ide/pull/1231#pullrequestreview-2910304970
+      value={selectedDevice?.id ?? placeholderText}>
       <Select.Trigger className="device-select-trigger" disabled={hasNoDevices}>
-        <Select.Value placeholder={placeholderText}>
+        <Select.Value>
           <div className="device-select-value">
-            {selectedDevice !== undefined ? (
-              <>
-                <span className="codicon codicon-device-mobile" />
-                <span className="device-select-value-text">{selectedDevice?.displayName}</span>
-              </>
-            ) : (
-              // NOTE: for some reason, the placeholder sometimes fails to show when the value is set to undefined, so we display it here as well
-              <span className="device-select-value-text">{placeholderText}</span>
-            )}
+            <span className="codicon codicon-device-mobile" />
+            <span className="device-select-value-text">
+              {selectedDevice?.displayName ?? placeholderText}
+            </span>
           </div>
         </Select.Value>
       </Select.Trigger>
