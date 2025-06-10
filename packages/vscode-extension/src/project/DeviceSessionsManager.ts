@@ -41,8 +41,16 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     return this.activeSessionId ? this.deviceSessions.get(this.activeSessionId) : undefined;
   }
 
-  public async stopSession(deviceId: DeviceId): Promise<void> {
-    await this.terminateSession(deviceId);
+  public async terminateSession(deviceId: string) {
+    const session = this.deviceSessions.get(deviceId);
+    if (session) {
+      if (session === this.selectedDeviceSession) {
+        this.updateSelectedSession(undefined);
+      }
+      this.deviceSessions.delete(deviceId);
+      this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+      await session.dispose();
+    }
   }
 
   private get state(): DeviceSessionsManagerState {
@@ -179,18 +187,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     previousSession?.deactivate();
     session.activate();
     this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
-  }
-
-  private async terminateSession(deviceId: string) {
-    const session = this.deviceSessions.get(deviceId);
-    if (session) {
-      if (session === this.selectedDeviceSession) {
-        this.updateSelectedSession(undefined);
-      }
-      this.deviceSessions.delete(deviceId);
-      this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
-      await session.dispose();
-    }
   }
 
   private async acquireDeviceByDeviceInfo(deviceInfo: DeviceInfo) {

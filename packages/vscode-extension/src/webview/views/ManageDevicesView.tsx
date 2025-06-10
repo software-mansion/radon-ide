@@ -35,7 +35,7 @@ function DeviceRow({
   const { deviceSessionsManager } = useDevices();
   const { preservePreviousDevice } = useWorkspaceConfig();
 
-  const stopDevice = () => deviceSessionsManager.stopSession(deviceInfo.id);
+  const stopDevice = () => deviceSessionsManager.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();

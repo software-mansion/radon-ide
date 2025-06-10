@@ -20,5 +20,5 @@ export interface DeviceSessionsManagerInterface {
     deviceInfo: DeviceInfo,
     selectDeviceOptions?: SelectDeviceOptions
   ): Promise<void>;
-  stopSession(deviceId: DeviceId): Promise<void>;
+  terminateSession(deviceId: DeviceId): Promise<void>;
 }
