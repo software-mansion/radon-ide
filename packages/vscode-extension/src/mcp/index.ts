@@ -114,7 +114,7 @@ async function writeMcpConfig(config: McpConfig) {
     });
 }
 
-export async function insertRadonEntry(incompleteConfig: McpConfig, port: number) {
+export function insertRadonEntry(incompleteConfig: McpConfig, port: number) {
   const radonMcpEntry = {
     url: `http://localhost:${port}/sse` as const,
     type: "sse" as const,
@@ -162,7 +162,7 @@ async function updateMcpConfig(port: number) {
   }
 
   try {
-    await insertRadonEntry(mcpConfig, port);
+    insertRadonEntry(mcpConfig, port);
     await writeMcpConfig(mcpConfig);
   } catch (error) {
     let msg = error instanceof Error ? error.message : String(error);

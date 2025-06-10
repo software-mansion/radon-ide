@@ -30,7 +30,7 @@ describe("creatingMcpConfig", () => {
   it("should update the config", async () => {
     const config: McpConfig = { servers: {} };
 
-    await insertRadonEntry(config, realPort);
+    insertRadonEntry(config, realPort);
 
     assert.strictEqual(config.servers?.RadonAi?.url, realUrl);
     assert.strictEqual(config.servers?.RadonAi?.type, realType);
@@ -46,7 +46,7 @@ describe("creatingMcpConfig", () => {
       },
     };
 
-    await insertRadonEntry(config, realPort);
+    insertRadonEntry(config, realPort);
 
     assert.strictEqual(config.servers?.RadonAi?.url, realUrl);
     assert.strictEqual(config.servers?.RadonAi?.type, realType);
@@ -64,7 +64,7 @@ describe("creatingMcpConfig", () => {
       },
     };
 
-    await insertRadonEntry(config, newPort);
+    insertRadonEntry(config, newPort);
 
     assert.strictEqual(config.servers?.RadonAi?.url, newUrl);
     assert.strictEqual(config.servers?.RadonAi?.type, newType);
