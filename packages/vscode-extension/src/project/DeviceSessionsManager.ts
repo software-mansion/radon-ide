@@ -85,13 +85,13 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     deviceInfo: DeviceInfo,
     selectDeviceOptions?: SelectDeviceOptions
   ) {
-    const killPreviousDeviceSession = !selectDeviceOptions?.preservePreviousDevice;
+    const stopPreviousDevices = selectDeviceOptions?.stopPreviousDevices;
 
     // if there's an existing session for the device, we use it instead of starting a new one
     const existingDeviceSession = this.deviceSessions.get(deviceInfo.id);
     if (existingDeviceSession) {
       this.updateSelectedSession(existingDeviceSession);
-      if (killPreviousDeviceSession) {
+      if (stopPreviousDevices) {
         await this.terminatePreviousSessions();
       }
       return;
@@ -119,7 +119,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     this.updateSelectedSession(newDeviceSession);
     this.deviceSessionManagerDelegate.onInitialized();
 
-    if (killPreviousDeviceSession) {
+    if (stopPreviousDevices) {
       await this.terminatePreviousSessions();
     }
 

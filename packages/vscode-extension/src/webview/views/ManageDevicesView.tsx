@@ -33,14 +33,14 @@ function DeviceRow({
   isRunning,
 }: DeviceRowProps) {
   const { deviceSessionsManager } = useDevices();
-  const { preservePreviousDevice } = useWorkspaceConfig();
+  const { stopPreviousDevices } = useWorkspaceConfig();
 
   const stopDevice = () => deviceSessionsManager.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();
       deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
-        preservePreviousDevice,
+        stopPreviousDevices,
       });
       closeModal();
     }
@@ -139,7 +139,7 @@ function ManageDevicesView() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
 
-  const { preservePreviousDevice, update } = useWorkspaceConfig();
+  const { stopPreviousDevices, update } = useWorkspaceConfig();
 
   const { devices, reload } = useDevices();
 
@@ -231,8 +231,8 @@ function ManageDevicesView() {
         <label>Shut down devices when switching:</label>
         <Switch.Root
           className="switch-root small-switch"
-          checked={!preservePreviousDevice}
-          onCheckedChange={(checked) => update("preservePreviousDevice", !checked)}>
+          checked={stopPreviousDevices}
+          onCheckedChange={(checked) => update("stopPreviousDevices", checked)}>
           <Switch.Thumb className="switch-thumb" />
         </Switch.Root>
       </div>

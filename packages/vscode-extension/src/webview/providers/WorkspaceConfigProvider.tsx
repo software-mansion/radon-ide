@@ -20,7 +20,7 @@ const INITIAL_WORKSPACE_CONFIG: WorkspaceConfigProps = {
   panelLocation: "tab",
   showDeviceFrame: true,
   themeType: "vscode",
-  preservePreviousDevice: true,
+  stopPreviousDevices: false,
 };
 
 const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({

@@ -196,11 +196,11 @@
           "default": null,
           "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
         },
-        "RadonIDE.preservePreviousDevice": {
+        "RadonIDE.stopPreviousDevices": {
           "type": "string",
           "scope": "window",
-          "default": true,
-          "description": "When set, switching between devices will keep the previous device running in the background instead of shutting it down."
+          "default": false,
+          "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
         }
       }
     },

@@ -21,7 +21,7 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
       panelLocation: configuration.get<PanelLocation>("panelLocation")!,
       showDeviceFrame: configuration.get<boolean>("showDeviceFrame")!,
       themeType: configuration.get<ThemeType>("themeType")!,
-      preservePreviousDevice: configuration.get<boolean>("preservePreviousDevice")!,
+      stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
     };
 
     this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
@@ -34,7 +34,7 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
         panelLocation: config.get<PanelLocation>("panelLocation")!,
         showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
         themeType: config.get<ThemeType>("themeType")!,
-        preservePreviousDevice: config.get<boolean>("preservePreviousDevice")!,
+        stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
       };
 
       if (newConfig.panelLocation !== this.config.panelLocation) {
