@@ -672,12 +672,6 @@
         }
       }
     },
-    "mcpServerDefinitionProviders": [
-      {
-        "id": "radon-ai",
-        "label": "Get up-to-date answers related to React Native."
-      }
-    ],
     "chatParticipants": [
       {
         "id": "chat.radon-ai",
