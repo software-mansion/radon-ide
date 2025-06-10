@@ -132,7 +132,7 @@ export async function insertRadonEntry(incompleteConfig: McpConfig, port: number
   throw new Error(`Failed updating MCP config - existing mcp.json file is corrupted.`);
 }
 
-function newMcpConfig(): McpConfig {
+export function newMcpConfig(): McpConfig {
   const editorType = getEditorType();
 
   if (editorType === EditorType.VSCODE) {

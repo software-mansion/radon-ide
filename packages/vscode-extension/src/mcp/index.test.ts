@@ -1,6 +1,8 @@
 import assert from "assert";
 import { describe, it } from "mocha";
-import { insertRadonEntry } from ".";
+import { default as proxyquire } from "proxyquire";
+import { stub } from "sinon";
+import { insertRadonEntry, newMcpConfig } from ".";
 import { McpConfig } from "./models";
 
 type ExtendedMcpConfig = {
@@ -66,5 +68,17 @@ describe("creatingMcpConfig", () => {
 
     assert.strictEqual(config.servers?.RadonAi?.url, newUrl);
     assert.strictEqual(config.servers?.RadonAi?.type, newType);
+  });
+
+  it("should differenciate vscode and cursor", async () => {
+    const cursorStub = stub().withArgs("cursor").returns({});
+    const onCursor = proxyquire(".", {
+      vscode: { workspace: { getConfiguration: () => ({ get: cursorStub }) } },
+    });
+
+    const vscodeConfig: McpConfig = newMcpConfig();
+    const cursorConfig: McpConfig = onCursor.newMcpConfig();
+    assert.notStrictEqual(vscodeConfig.servers, undefined);
+    assert.notStrictEqual(cursorConfig.mcpServers, undefined);
   });
 });
