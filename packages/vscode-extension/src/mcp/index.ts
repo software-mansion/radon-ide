@@ -4,9 +4,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import * as vscode from "vscode";
 import { Logger } from "../Logger";
+import { getOpenPort } from "../utilities/common";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { EditorType, McpConfig } from "./models";
-import { getOpenPort } from "../utilities/common";
 import { startLocalMcpServer } from "./server";
 
 const MCP_LOG = "[MCP]";
@@ -181,10 +181,10 @@ export default async function loadRadonAi() {
   try {
     mcpPort = await getOpenPort();
 
-    await startLocalMcpServer(mcpPort);
-
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
     await updateMcpConfig(mcpPort);
+
+    await startLocalMcpServer(mcpPort);
 
     getTelemetryReporter().sendTelemetryEvent("mcp:started");
   } catch (error) {
