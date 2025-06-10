@@ -114,10 +114,10 @@ async function writeMcpConfig(config: McpConfig) {
     });
 }
 
-async function insertRadonEntry(incompleteConfig: McpConfig, port: number) {
+export async function insertRadonEntry(incompleteConfig: McpConfig, port: number) {
   const radonMcpEntry = {
-    url: `http://localhost:${port}/sse`,
-    type: "sse",
+    url: `http://localhost:${port}/sse` as const,
+    type: "sse" as const,
   };
 
   if (incompleteConfig.servers) {
