@@ -76,7 +76,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
   public dispose() {
     super.dispose();
-    this.nativeLogsOutputChannel?.dispose();
+    const nativeLogsOutputChannel = this.nativeLogsOutputChannel;
+    this.nativeLogsOutputChannel = undefined;
+    nativeLogsOutputChannel?.dispose();
     this.runningAppProcess?.cancel();
     return exec("xcrun", [
       "simctl",
@@ -99,6 +101,10 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
 
     await this.internalBootDevice();
+  }
+
+  public setUpKeyboard() {
+    this.preview?.setUpKeyboard();
   }
 
   private async internalBootDevice() {
@@ -385,7 +391,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
     this.runningAppProcess = exec("xcrun", launchAppArgs);
 
-    lineReader(this.runningAppProcess).onLineRead(this.nativeLogsOutputChannel.appendLine);
+    lineReader(this.runningAppProcess).onLineRead((line) =>
+      this.nativeLogsOutputChannel?.appendLine(line)
+    );
   }
 
   async launchWithExpoDeeplink(bundleID: string, expoDeeplink: string) {

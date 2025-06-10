@@ -1,0 +1,38 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.wrapper {
+  margin: 0 auto;
+  max-width: 70%;
+}
+
+.headingLabel {
+  margin-top: 60px;
+  text-align: center;
+  text-wrap: balance;
+  margin-bottom: 20px;
+}
+
+.subheadingLabel {
+  text-align: center;
+  font-weight: normal;
+  text-wrap: balance;
+  margin-bottom: 32px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+@media (max-width: 996px) {
+  .row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

@@ -52,7 +52,7 @@ function BuildErrorActions({
 }
 
 export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
-  const { projectState } = useProject();
+  const { selectedDeviceSession } = useProject();
   const { ios, xcodeSchemes } = useLaunchConfig();
   const { deviceSessionsManager } = useDevices();
 
@@ -63,8 +63,8 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
 
   let description = "Open extension logs to find out what went wrong.";
 
-  if (projectState.status === "buildError" && projectState.buildError) {
-    const { buildType, message } = projectState.buildError;
+  if (selectedDeviceSession?.status === "buildError" && selectedDeviceSession?.buildError) {
+    const { buildType, message } = selectedDeviceSession.buildError;
     description = message;
     if (buildType && [BuildType.Local, BuildType.EasLocal, BuildType.Custom].includes(buildType)) {
       logsButtonDestination = "build";

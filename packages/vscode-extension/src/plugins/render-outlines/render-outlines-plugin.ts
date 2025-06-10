@@ -6,7 +6,7 @@ import {
   RenderOutlinesEventMap,
   RenderOutlinesInterface,
 } from "../../common/RenderOutlines";
-import { Devtools } from "../../project/devtools";
+import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolPlugin } from "../../project/tools";
 import { disposeAll } from "../../utilities/disposables";
 
@@ -15,15 +15,17 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   private isEnabled = false;
   private devtoolsListeners: Disposable[] = [];
 
-  constructor(private devtools: Devtools) {
+  constructor(private inspectorBridge: RadonInspectorBridge) {
     this.devtoolsListeners.push(
-      this.devtools.onEvent("RNIDE_appReady", () => {
+      this.inspectorBridge.onEvent("appReady", () => {
         this.setEnabled(this.isEnabled);
       })
     );
     this.devtoolsListeners.push(
-      this.devtools.onEvent("RNIDE_rendersReported", (payload) => {
-        this.eventEmitter.emit("rendersReported", payload);
+      this.inspectorBridge.onEvent("pluginMessage", ({ pluginId, type, data }) => {
+        if (pluginId === RENDER_OUTLINES_PLUGIN_ID && type === "rendersReported") {
+          this.eventEmitter.emit("rendersReported", data);
+        }
       })
     );
   }
@@ -47,7 +49,13 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
 
   setEnabled(isEnabled: boolean) {
     this.isEnabled = isEnabled;
-    this.devtools.send("RNIDE_updateInstrumentationOptions", { isEnabled });
+    this.inspectorBridge.sendPluginMessage(
+      RENDER_OUTLINES_PLUGIN_ID,
+      "updateInstrumentationOptions",
+      {
+        isEnabled,
+      }
+    );
   }
 
   addEventListener<K extends keyof RenderOutlinesEventMap>(

@@ -85,21 +85,24 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { projectState, project } = useProject();
+  const { projectState, selectedDeviceSession, project } = useProject();
 
-  const projectStatus = projectState.status;
+  const projectStatus = selectedDeviceSession?.status;
 
   const hasBuildError = projectStatus === "buildError";
   const hasBootError = projectStatus === "bootError";
   const hasBundlingError = projectStatus === "bundlingError";
 
-  const debugPaused = projectState.isDebuggerPaused;
+  const debugPaused = selectedDeviceSession?.isDebuggerPaused;
+  const isRefreshing = selectedDeviceSession?.isRefreshing ?? false;
 
-  const previewURL = projectState.previewURL;
+  const previewURL = selectedDeviceSession?.previewURL;
 
-  const isStarting = hasBundlingError ? false : !projectState || projectState.status === "starting";
+  const isStarting = hasBundlingError
+    ? false
+    : !projectState || selectedDeviceSession?.status === "starting";
   const showDevicePreview =
-    projectState?.previewURL &&
+    selectedDeviceSession?.previewURL &&
     (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
   useBuildErrorAlert(hasBuildError);
@@ -203,7 +206,7 @@ function Preview({
   }
 
   const shouldPreventInputEvents =
-    debugPaused || projectStatus === "refreshing" || !showDevicePreview || !!replayData;
+    debugPaused || isRefreshing || !showDevicePreview || !!replayData;
 
   const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
 
@@ -444,13 +447,13 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (projectState.hasStaleBuildCache) {
+    if (selectedDeviceSession?.hasStaleBuildCache) {
       openRebuildAlert();
     }
-  }, [projectState.hasStaleBuildCache]);
+  }, [selectedDeviceSession?.hasStaleBuildCache]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === projectState?.selectedDevice?.modelId;
+    return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
 
   const resizableProps = useResizableProps({
@@ -536,7 +539,7 @@ function Preview({
                   )}
                 </div>
               )}
-              {projectStatus === "refreshing" && (
+              {isRefreshing && (
                 <div className="phone-screen phone-refreshing-overlay">
                   <div>Project is performing Fast Refresh...</div>
                   <div>(screen is inactive until refresh is complete)</div>
@@ -565,7 +568,7 @@ function Preview({
         )}
       </div>
 
-      <DelayedFastRefreshIndicator projectStatus={projectStatus} />
+      {showDevicePreview && <DelayedFastRefreshIndicator isRefreshing={isRefreshing} />}
 
       <div className="button-group-left-wrapper">
         <div className="button-group-left">

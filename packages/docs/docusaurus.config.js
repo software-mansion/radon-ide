@@ -82,6 +82,7 @@ const config = {
           { to: "/legal", label: "Legal" },
           { to: "https://portal.ide.swmansion.com/", label: "Customer Portal" },
           { to: "/docs/getting-started/changelog", label: "Changelog" },
+          { to: "/contact", label: "Contact" },
         ],
         copyright: "All trademarks and copyrights belong to their respective owners.",
       },

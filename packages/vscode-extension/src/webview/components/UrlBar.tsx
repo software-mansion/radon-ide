@@ -29,13 +29,13 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 }
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
-  const { project, projectState } = useProject();
+  const { project, selectedDeviceSession } = useProject();
   const { dependencies } = useDependencies();
 
-  const navigationHistory = projectState.navigationHistory;
-  const routeList = projectState.navigationRouteList;
+  const navigationHistory = selectedDeviceSession?.navigationHistory ?? [];
+  const routeList = selectedDeviceSession?.navigationRouteList ?? [];
 
-  const disabledAlsoWhenStarting = disabled || projectState.status === "starting";
+  const disabledAlsoWhenStarting = disabled || selectedDeviceSession?.status === "starting";
   const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
 
   return (
@@ -50,24 +50,13 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         <span className="codicon codicon-arrow-left" />
       </IconButton>
       <ReloadButton disabled={disabled ?? false} />
-      <IconButton
-        onClick={() => project.navigateHome()}
-        tooltip={{
-          label: "Go to main screen",
-          side: "bottom",
-        }}
-        disabled={disabledAlsoWhenStarting}>
-        <span className="codicon codicon-home" />
-      </IconButton>
       <UrlSelect
         onValueChange={(value: string) => {
           project.openNavigation(value);
         }}
         navigationHistory={navigationHistory}
         routeList={routeList}
-        disabled={
-          disabledAlsoWhenStarting || (!isExpoRouterProject && navigationHistory.length < 1)
-        }
+        disabled={disabledAlsoWhenStarting}
         dropdownOnly={!isExpoRouterProject}
       />
     </>

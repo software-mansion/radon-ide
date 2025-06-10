@@ -12,6 +12,7 @@ import {
 } from "vscode";
 import { MetroLauncher, MetroDelegate } from "./metro";
 import { Devtools } from "./devtools";
+import { RadonInspectorBridge } from "./bridge";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import {
@@ -74,7 +75,7 @@ export class DeviceSession
   private toolsManager: ToolsManager;
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
-  public devtools; // TODO: make this private!
+  private devtools: Devtools;
   private debugSession: DebugSession;
   private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
@@ -84,6 +85,7 @@ export class DeviceSession
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
   private buildError: BuildErrorDescriptor | undefined;
+  private isRefreshing: boolean = false;
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
   private navigationHistory: NavigationHistoryItem[] = [];
@@ -109,6 +111,10 @@ export class DeviceSession
     return this.device.platform;
   }
 
+  public get inspectorBridge(): RadonInspectorBridge {
+    return this.devtools;
+  }
+
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
@@ -116,7 +122,7 @@ export class DeviceSession
   ) {
     this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools, this);
-    this.toolsManager = new ToolsManager(this.devtools, this);
+    this.toolsManager = new ToolsManager(this.inspectorBridge, this);
 
     this.buildManager = new BuildManager(
       applicationContext.dependencyManager,
@@ -133,11 +139,12 @@ export class DeviceSession
       startupMessage: this.startupMessage,
       stageProgress: this.stageProgress,
       buildError: this.buildError,
+      isRefreshing: this.isRefreshing,
       profilingCPUState: this.profilingCPUState,
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
       navigationRouteList: this.navigationRouteList,
-      selectedDevice: this.device.deviceInfo,
+      deviceInfo: this.device.deviceInfo,
       previewURL: this.previewURL,
       toolsState: this.toolsManager.getToolsState(),
       isDebuggerPaused: this.isDebuggerPaused,
@@ -152,6 +159,7 @@ export class DeviceSession
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
     this.buildError = undefined;
+    this.isRefreshing = false;
     this.hasStaleBuildCache = false;
     this.profilingCPUState = "stopped";
     this.profilingReactState = "stopped";
@@ -236,10 +244,7 @@ export class DeviceSession
   //#region Build manager delegate methods
 
   onCacheStale = (platform: DevicePlatform) => {
-    if (
-      platform === this.device.platform &&
-      (this.status === "running" || this.status === "refreshing")
-    ) {
+    if (platform === this.device.platform && this.status === "running") {
       // we only consider "stale cache" in a non-error state that happens
       // after the launch phase if complete. Otherwsie, it may be a result of
       // the build process that triggers the callback in which case we don't want
@@ -253,13 +258,14 @@ export class DeviceSession
 
   private makeDevtools() {
     const devtools = new Devtools();
-    devtools.onEvent("RNIDE_appReady", () => {
+    devtools.onEvent("appReady", () => {
+      this.device.setUpKeyboard();
       Logger.debug("App ready");
     });
     // We don't need to store event disposables here as they are tied to the lifecycle
     // of the devtools instance, which is disposed when we recreate the devtools or
     // when the device session is disposed
-    devtools.onEvent("RNIDE_navigationChanged", (payload: NavigationHistoryItem) => {
+    devtools.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
       if (!this.navigationHomeTarget) {
         this.navigationHomeTarget = payload;
       }
@@ -269,23 +275,19 @@ export class DeviceSession
       ].slice(0, MAX_URL_HISTORY_SIZE);
       this.emitStateChange();
     });
-    devtools.onEvent("RNIDE_navigationRouteListUpdated", (payload: NavigationRoute[]) => {
+    devtools.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
       this.navigationRouteList = payload;
       this.emitStateChange();
     });
-    devtools.onEvent("RNIDE_fastRefreshStarted", () => {
-      this.status = "refreshing";
+    devtools.onEvent("fastRefreshStarted", () => {
+      this.isRefreshing = true;
       this.emitStateChange();
     });
-    devtools.onEvent("RNIDE_fastRefreshComplete", () => {
-      const ignoredEvents = ["starting", "bundlingError"];
-      if (ignoredEvents.includes(this.status)) {
-        return;
-      }
-      this.status = "running";
+    devtools.onEvent("fastRefreshComplete", () => {
+      this.isRefreshing = false;
       this.emitStateChange();
     });
-    devtools.onEvent("RNIDE_isProfilingReact", (isProfiling) => {
+    devtools.onEvent("isProfilingReact", (isProfiling) => {
       if (this.profilingReactState !== "saving") {
         this.profilingReactState = isProfiling ? "profiling" : "stopped";
         this.emitStateChange();
@@ -312,7 +314,8 @@ export class DeviceSession
       this.isActive = true;
       this.toolsManager.activate();
       if (this.startupMessage === StartupMessage.AttachingDebugger) {
-        await this.reconnectJSDebuggerIfNeeded();
+        this.debugSession = new DebugSession(this, { useParentDebugSession: true });
+        await this.connectJSDebugger();
       }
     }
   }
@@ -960,27 +963,32 @@ export class DeviceSession
     callback: (inspectData: any) => void
   ) {
     const id = this.inspectCallID++;
-    const listener = this.devtools.onEvent("RNIDE_inspectData", (payload) => {
+    const listener = this.devtools.onEvent("inspectData", (payload) => {
       if (payload.id === id) {
         listener.dispose();
         callback(payload);
       }
     });
-    this.devtools.send("RNIDE_inspect", { x: xRatio, y: yRatio, id, requestStack });
+    this.inspectorBridge.sendInspectRequest(xRatio, yRatio, id, requestStack);
   }
 
   public openNavigation(id: string) {
-    this.devtools.send("RNIDE_openNavigation", { id });
+    this.inspectorBridge.sendOpenNavigationRequest(id);
   }
 
   public navigateHome() {
     if (this.navigationHomeTarget) {
-      this.devtools.send("RNIDE_openNavigation", { id: this.navigationHomeTarget.id });
+      this.inspectorBridge.sendOpenNavigationRequest(this.navigationHomeTarget.id);
     }
   }
 
   public navigateBack() {
-    this.devtools.send("RNIDE_openNavigation", { id: "__BACK__" });
+    this.inspectorBridge.sendOpenNavigationRequest("__BACK__");
+  }
+
+  public removeNavigationHistoryEntry(id: string) {
+    this.navigationHistory = this.navigationHistory.filter((record) => record.id !== id);
+    this.emitStateChange();
   }
 
   public async openDevMenu() {
@@ -989,7 +997,7 @@ export class DeviceSession
 
   public async startPreview(previewId: string) {
     const { resolve, reject, promise } = Promise.withResolvers<void>();
-    const listener = this.devtools.onEvent("RNIDE_openPreviewResult", (payload) => {
+    const listener = this.devtools.onEvent("openPreviewResult", (payload) => {
       if (payload.previewId === previewId) {
         listener.dispose();
         if (payload.error) {
@@ -999,7 +1007,7 @@ export class DeviceSession
         }
       }
     });
-    this.devtools.send("RNIDE_openPreview", { previewId });
+    this.inspectorBridge.sendOpenPreviewRequest(previewId);
     return promise;
   }
 
@@ -1017,6 +1025,10 @@ export class DeviceSession
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
     this.toolsManager.updateToolEnabledState(toolName, enabled);
+  }
+
+  public async openStorybookStory(componentTitle: string, storyName: string) {
+    await this.inspectorBridge.sendShowStorybookStoryRequest(componentTitle, storyName);
   }
 
   public async openTool(toolName: ToolKey) {

@@ -46,13 +46,13 @@ function renderDevices(
 }
 
 function DeviceSelect() {
-  const { projectState } = useProject();
+  const { selectedDeviceSession } = useProject();
   const { devices, deviceSessionsManager } = useDevices();
   const { openModal } = useModal();
-  const selectedProjectDevice = projectState?.selectedDevice;
+  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
 
   const hasNoDevices = devices.length === 0;
-  const selectedDevice = projectState.selectedDevice;
+  const selectedDevice = selectedDeviceSession?.deviceInfo;
 
   const iosDevices = devices.filter(
     ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
@@ -91,6 +91,7 @@ function DeviceSelect() {
         <Select.Content
           className="device-select-content"
           position="popper"
+          align="center"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <Select.ScrollUpButton className="device-select-scroll">
             <span className="codicon codicon-chevron-up" />

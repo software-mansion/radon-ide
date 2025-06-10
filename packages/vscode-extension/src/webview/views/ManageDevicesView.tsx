@@ -91,7 +91,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
         </IconButton>
         <IconButton
           tooltip={{
-            label: `Remove device with it's ${
+            label: `Remove device with its ${
               deviceInfo.platform === DevicePlatform.IOS ? "runtime" : "system image"
             }`,
             side: "bottom",
@@ -109,8 +109,8 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
 }
 
 function ManageDevicesView() {
-  const { projectState } = useProject();
-  const selectedProjectDevice = projectState?.selectedDevice;
+  const { selectedDeviceSession } = useProject();
+  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);

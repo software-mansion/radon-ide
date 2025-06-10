@@ -1,12 +1,12 @@
 import React, { PropsWithChildren } from "react";
-import { UrlSelectFocusable } from "./UrlSelect";
+import { UrlSelectFocusable, RemovableHistoryItem } from "./UrlSelect";
 import { NavigationHistoryItem } from "../../common/Project";
 
 interface UrlSelectItemProps {
-  item: NavigationHistoryItem;
+  item: RemovableHistoryItem;
   width: number;
   style?: React.CSSProperties;
-  itemList: HTMLDivElement[];
+  itemList: UrlSelectFocusable[];
   refIndex: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   onConfirm: (item: NavigationHistoryItem) => void;
@@ -17,6 +17,7 @@ interface UrlSelectItemProps {
   ) => void;
   getNameFromId: (id: string) => string;
   noHighlight?: boolean;
+  onRemove?: (id: string) => void;
 }
 
 function UrlSelectItem({
@@ -30,6 +31,7 @@ function UrlSelectItem({
   onArrowPress,
   getNameFromId,
   noHighlight = false,
+  onRemove,
   ...props
 }: PropsWithChildren<UrlSelectItemProps>) {
   // For readability, the substring that matches the search query is highlighted.
@@ -141,12 +143,26 @@ function UrlSelectItem({
         } else {
           onArrowPress(
             e,
-            itemList[refIndex - 1] as UrlSelectFocusable,
-            itemList[refIndex + 1] as UrlSelectFocusable
+            // Find the closest non-empty item before and after the current one
+            // Usually just the first following or previous item, but sometimes
+            // a null can find itself in the list, and we need to skip those.
+            itemList.slice(0, refIndex).reverse().find(Boolean),
+            itemList.slice(refIndex + 1).find(Boolean)
           );
         }
       }}>
       <div className="url-select-item-text">{nameWithStyles}</div>
+      {item.removable && onRemove && (
+        <button
+          className="url-select-item-remove"
+          tabIndex={-1}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(item.id);
+          }}>
+          <span className="codicon codicon-close" />
+        </button>
+      )}
     </div>
   );
 }

@@ -10,10 +10,11 @@ interface RichSelectItemProps extends Select.SelectItemProps {
   title: string;
   subtitle?: string;
   isSelected?: boolean;
+  className?: string;
 }
 
 const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSelectItemProps>>(
-  ({ children, icon, title, subtitle, isSelected, ...props }, forwardedRef) => {
+  ({ children, icon, title, subtitle, isSelected, className, ...props }, forwardedRef) => {
     function renderSubtitle() {
       if (!subtitle) {
         return null;
@@ -31,7 +32,10 @@ const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSe
     }
 
     return (
-      <Select.Item className="rich-item" {...props} ref={forwardedRef}>
+      <Select.Item
+        className={["rich-item", className].filter(Boolean).join(" ")}
+        ref={forwardedRef}
+        {...props}>
         <div className={isSelected ? "rich-item-icon-selected" : "rich-item-icon"}>{icon}</div>
         <div>
           {isSelected ? (

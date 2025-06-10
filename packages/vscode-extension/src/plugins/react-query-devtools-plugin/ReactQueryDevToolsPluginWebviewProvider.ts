@@ -85,17 +85,16 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
       localResourceRoots: [Uri.joinPath(this.context.extensionUri, PATH)],
     };
 
-    const devTools = IDE.getInstanceIfExists()?.project?.deviceSession?.devtools;
+    const inspectorBridge = IDE.getInstanceIfExists()?.project?.deviceSession?.inspectorBridge;
 
-    const listener = devTools?.onEvent("RNIDE_pluginMessage", (payload) => {
-      if (payload.scope === REACT_QUERY_PLUGIN_ID) {
-        const { scope, ...data } = payload;
-        webview.postMessage({ scope, data });
+    const listener = inspectorBridge?.onEvent("pluginMessage", ({ pluginId, type, data }) => {
+      if (pluginId === REACT_QUERY_PLUGIN_ID) {
+        webview.postMessage({ scope: pluginId, data: { data, type } });
       }
     });
 
     webview.onDidReceiveMessage((message) => {
-      devTools?.send("RNIDE_pluginMessage", message);
+      inspectorBridge?.sendPluginMessage(REACT_QUERY_PLUGIN_ID, message.type, message.data);
     });
 
     webviewView.onDidChangeVisibility(() => {
@@ -108,9 +107,6 @@ export class ReactQueryDevToolsPluginWebviewProvider implements WebviewViewProvi
 
     webview.html = generateWebviewContent(extensionContext, webview, extensionContext.extensionUri);
 
-    devTools?.send("RNIDE_pluginMessage", {
-      scope: REACT_QUERY_PLUGIN_ID,
-      type: "init",
-    });
+    inspectorBridge?.sendPluginMessage(REACT_QUERY_PLUGIN_ID, "init", {});
   }
 }

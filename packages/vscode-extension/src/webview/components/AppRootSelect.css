@@ -3,7 +3,6 @@
   flex-shrink: 2;
   padding: 0px 10px;
   font-size: 13px;
-  line-height: 1;
   cursor: pointer;
   border-radius: 18px;
   height: var(--swm-button-size);
@@ -35,6 +34,7 @@
 }
 
 .approot-select-value-text {
+  height: fit-content;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -62,6 +62,13 @@
   line-height: 25px;
   color: var(--swm-device-select-label);
   user-select: none;
+}
+
+.approot-select-item {
+  line-height: 1.2;
+}
+.approot-select-viewport .approot-select-item:last-child {
+  border-radius: 4px 4px 12px 12px;
 }
 
 .approot-select-scroll {

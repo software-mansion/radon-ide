@@ -1,13 +1,14 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
+import assert from "assert";
 import { env, Disposable, commands, workspace, window, ConfigurationChangeEvent } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
-  DEVICE_SESSION_INITIAL_STATE,
+  DeviceSessionsManagerState,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
@@ -36,8 +37,7 @@ import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { DeviceSessionsManager } from "./DeviceSessionsManager";
-import { DeviceSessionsManagerDelegate } from "../common/DeviceSessionsManager";
+import { DeviceSessionsManager, DeviceSessionsManagerDelegate } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
@@ -74,7 +74,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
 
     this.projectState = {
-      ...DEVICE_SESSION_INITIAL_STATE,
+      selectedSessionId: null,
+      deviceSessions: {},
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
@@ -110,6 +111,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
   }
 
+  onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
+    this.updateProjectState(state);
+  }
+
   get relativeAppRootPath() {
     const relativePath = workspace.asRelativePath(this.applicationContext.appRootFolder);
     if (relativePath === this.applicationContext.appRootFolder) {
@@ -137,12 +142,22 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.applicationContext.buildCache;
   }
 
-  private setupAppRoot() {
-    const newAppRoot = findAndSetupNewAppRootFolder();
+  private get selectedDeviceSessionState(): DeviceSessionState | undefined {
+    if (this.projectState.selectedSessionId === null) {
+      return undefined;
+    }
+    const selectedSessionState =
+      this.projectState.deviceSessions[this.projectState.selectedSessionId];
+    assert(selectedSessionState !== undefined, "Expected the selected session to exist");
+    return selectedSessionState;
+  }
 
-    const oldApplicationContext = this.applicationContext;
-    this.applicationContext = new ApplicationContext(newAppRoot);
-    oldApplicationContext.dispose();
+  private async setupAppRoot() {
+    const newAppRoot = findAndSetupNewAppRootFolder();
+    if (newAppRoot === this.appRootFolder) {
+      return;
+    }
+    await this.applicationContext.updateAppRootFolder(newAppRoot);
 
     const oldDeviceSessionsManager = this.deviceSessionsManager;
     this.deviceSessionsManager = new DeviceSessionsManager(
@@ -156,10 +171,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     });
   }
 
-  onActiveSessionStateChanged = (state: DeviceSessionState) => {
-    this.updateProjectState(state);
-  };
-
   onInitialized(): void {
     this.updateProjectState({ initialized: true });
   }
@@ -168,7 +179,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   startRecording(): void {
     getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -184,7 +195,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     clearTimeout(this.recordingTimeout);
 
     getTelemetryReporter().sendTelemetryEvent("recording:stop-recording", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -235,7 +246,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async captureReplay() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -246,7 +257,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async captureScreenshot() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -304,7 +315,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async navigateHome() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
-      platform: this.projectState.selectedDevice?.platform,
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
 
     if (this.dependencyManager === undefined) {
@@ -319,6 +330,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     } else {
       await this.reloadMetro();
     }
+  }
+
+  public async removeNavigationHistoryEntry(id: string): Promise<void> {
+    this.deviceSession?.removeNavigationHistoryEntry(id);
   }
 
   async resetAppPermissions(permissionType: AppPermissionType) {
@@ -458,7 +473,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     if (await this.dependencyManager.checkProjectUsesStorybook()) {
-      this.deviceSession!.devtools.send("RNIDE_showStorybookStory", { componentTitle, storyName });
+      this.deviceSession?.openStorybookStory(componentTitle, storyName);
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");
     }
@@ -495,9 +510,20 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async renameDevice(deviceInfo: DeviceInfo, newDisplayName: string) {
     await this.deviceManager.renameDevice(deviceInfo, newDisplayName);
     deviceInfo.displayName = newDisplayName;
-    if (this.projectState.selectedDevice?.id === deviceInfo.id) {
-      this.updateProjectState({ selectedDevice: deviceInfo });
+    // NOTE: this should probably be handled via some listener on Device instead:
+    const deviceId = deviceInfo.id;
+    if (!(deviceId in this.projectState.deviceSessions)) {
+      return;
     }
+    const newDeviceState = {
+      ...this.projectState.deviceSessions[deviceId],
+      deviceInfo,
+    };
+    const newDeviceSessions = {
+      ...this.projectState.deviceSessions,
+      [deviceId]: newDeviceState,
+    };
+    this.updateProjectState({ deviceSessions: newDeviceSessions });
   }
 
   public async runCommand(command: string): Promise<void> {
