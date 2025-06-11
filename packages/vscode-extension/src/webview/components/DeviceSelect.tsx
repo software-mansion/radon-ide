@@ -113,6 +113,8 @@ function DeviceSelect() {
   };
 
   const placeholderText = hasNoDevices ? "No devices found" : "Select device";
+  const text = selectedDevice?.displayName ?? placeholderText;
+  const backgroundDeviceCounter = runningSessionIds.length - (selectedDevice ? 1 : 0);
 
   return (
     <Select.Root
@@ -125,12 +127,13 @@ function DeviceSelect() {
         <Select.Value>
           <div className="device-select-value">
             <span className="codicon codicon-device-mobile" />
-            <span className="device-select-value-text">
-              {selectedDevice?.displayName ?? placeholderText}
-            </span>
+            <span className="device-select-value-text">{text}</span>
           </div>
         </Select.Value>
       </Select.Trigger>
+      {backgroundDeviceCounter > 0 && (
+        <span className="device-select-counter">+{backgroundDeviceCounter}</span>
+      )}
 
       <Select.Portal>
         <Select.Content

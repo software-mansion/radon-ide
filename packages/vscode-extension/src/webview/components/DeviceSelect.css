@@ -100,3 +100,18 @@
   justify-content: center;
   align-items: center;
 }
+
+.device-select-counter {
+  display: inline-block;
+  border: 0px solid transparent;
+  border-radius: 4px;
+  color: var(--swm-button-counter);
+  background-color: var(--swm-button-counter-background);
+  border: 1px solid var(--swm-button-counter-border);
+  padding: 2px 4px;
+  font-size: 10px;
+  transform: translate(-50%, -75%);
+  transition:
+    left 200ms ease-in-out,
+    opacity 200ms ease-in-out;
+}
