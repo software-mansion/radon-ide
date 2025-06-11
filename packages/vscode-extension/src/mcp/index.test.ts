@@ -2,7 +2,7 @@ import assert from "assert";
 import { describe, it } from "mocha";
 import { default as proxyquire } from "proxyquire";
 import { stub } from "sinon";
-import { insertRadonEntry, newMcpConfig } from ".";
+import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { McpConfig } from "./models";
 
 type ExtendedMcpConfig = {
