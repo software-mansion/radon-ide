@@ -3,6 +3,7 @@ import path from "path";
 import * as vscode from "vscode";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { newMcpConfig } from "./configCreator";
 import { EditorType, McpConfig } from "./models";
 import { getEditorType, MCP_LOG } from "./utils";
 
@@ -43,8 +44,8 @@ export async function readMcpConfig(): Promise<McpConfig> {
       return config;
     });
   } catch {
-    // This is an expected warning, don't report via telemetry.
-    throw new Error(`Couldn't read MCP config - MCP config not found.`);
+    // Config file not found - creating new one.
+    return newMcpConfig();
   }
 }
 

@@ -1,27 +1,14 @@
 import { Logger } from "../Logger";
 import { getOpenPort } from "../utilities/common";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { insertRadonEntry, newMcpConfig } from "./configCreator";
+import { insertRadonEntry } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
 import { startLocalMcpServer } from "./server";
 import { MCP_LOG } from "./utils";
 
 async function updateMcpConfig(port: number) {
-  let mcpConfig = {};
-
   try {
-    mcpConfig = await readMcpConfig();
-  } catch (info) {
-    if (info instanceof Error) {
-      Logger.info(MCP_LOG, info.message);
-    } else {
-      Logger.info(MCP_LOG, String(info));
-    }
-
-    mcpConfig = newMcpConfig();
-  }
-
-  try {
+    const mcpConfig = await readMcpConfig();
     insertRadonEntry(mcpConfig, port);
     await writeMcpConfig(mcpConfig);
   } catch (error) {
