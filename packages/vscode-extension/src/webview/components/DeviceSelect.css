@@ -110,7 +110,6 @@
   border: 1px solid var(--swm-button-counter-border);
   padding: 2px 4px;
   font-size: 10px;
-  transform: translate(-50%, -75%);
   transition:
     left 200ms ease-in-out,
     opacity 200ms ease-in-out;

@@ -128,12 +128,12 @@ function DeviceSelect() {
           <div className="device-select-value">
             <span className="codicon codicon-device-mobile" />
             <span className="device-select-value-text">{text}</span>
+            {backgroundDeviceCounter > 0 && (
+              <span className="device-select-counter">+{backgroundDeviceCounter}</span>
+            )}
           </div>
         </Select.Value>
       </Select.Trigger>
-      {backgroundDeviceCounter > 0 && (
-        <span className="device-select-counter">+{backgroundDeviceCounter}</span>
-      )}
 
       <Select.Portal>
         <Select.Content
