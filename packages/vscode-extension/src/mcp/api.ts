@@ -8,7 +8,7 @@ const MCP_LOG = "[MCP]";
 
 export async function invokeToolCall(toolName: string, args: unknown): ToolResponse {
   // this function is similar to `chat:invokeToolCall()`, will merge them in the future
-  getTelemetryReporter().sendTelemetryEvent("mcp:called", { toolName });
+  getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-called", { toolName });
   try {
     const url = new URL("/api/tool_calls/", BACKEND_URL);
     const token = await getLicenseToken();
@@ -36,15 +36,16 @@ export async function invokeToolCall(toolName: string, args: unknown): ToolRespo
     const results: ToolResult = await response.json();
 
     if (results.tool_results.length === 0) {
-      getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: "Tool response empty." });
-      return "Tool response empty.";
+      const msg = "Tool response empty.";
+      getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-calling-error", { error: msg });
+      return msg;
     }
 
     return results.tool_results[0].content;
   } catch (error) {
     let msg = `Failed tool call with error: ${error instanceof Error ? error.message : String(error)}`;
     Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-calling-error", { error: msg });
     return msg;
   }
 }
@@ -69,7 +70,7 @@ export async function getToolSchema(): Promise<ToolsInfo> {
   } catch (error) {
     let msg = `Failed fetching tool schema with error: ${error instanceof Error ? error.message : String(error)}`;
     Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-retrieval-error", { error: msg });
     return {
       tools: [],
     };

@@ -5,8 +5,8 @@ import { z } from "zod";
 
 import { Logger } from "../Logger";
 import { IDE } from "../project/ide";
+import { getToolSchema, invokeToolCall } from "./api";
 import { ToolResponse, ToolSchema } from "./models";
-import { invokeToolCall, getToolSchema } from "./api";
 
 function buildZodSchema(toolSchema: ToolSchema): z.ZodType<unknown, z.ZodTypeDef, unknown> {
   const props = Object.values(toolSchema.inputSchema.properties);

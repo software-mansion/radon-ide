@@ -31,7 +31,7 @@ export async function readMcpConfig(): Promise<McpConfig> {
     // Unknown editors will not be handled, as mcp.json is not standardized yet.
     let msg = `Couldn't read MCP config - unknown editor detected.`;
     Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:unknown-editor-error", { error: msg });
     throw new Error(msg);
   }
 
@@ -61,14 +61,16 @@ export async function writeMcpConfig(config: McpConfig) {
     // Unknown editors will not be handled, as mcp.json is not standardized yet.
     let msg = `Failed writing MCP config - unknown editor detected`;
     Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:unknown-editor-error", { error: msg });
     return;
   }
 
   if (vscode.workspace.workspaceFolders?.length === 0) {
     let msg = `Failed writing MCP config - no workspace folder available`;
     Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:no-workspace-available-error", {
+      error: msg,
+    });
     return;
   }
 
@@ -77,7 +79,7 @@ export async function writeMcpConfig(config: McpConfig) {
   if (!folder) {
     let msg = `Failed writing MCP config - no workspace folder open`;
     Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:no-workspace-open-error", { error: msg });
     return;
   }
 
@@ -96,7 +98,7 @@ export async function writeMcpConfig(config: McpConfig) {
       if (error) {
         let msg = `Failed writing MCP config: ${error instanceof Error ? error.message : String(error)}`;
         Logger.error(MCP_LOG, msg);
-        getTelemetryReporter().sendTelemetryEvent("mcp:error", { error: msg });
+        getTelemetryReporter().sendTelemetryEvent("radon-ai:config-write-error", { error: msg });
       }
     });
 }
