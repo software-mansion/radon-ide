@@ -745,6 +745,7 @@
     "@radix-ui/react-switch": "^1.1.4",
     "@radix-ui/react-tooltip": "^1.2.0",
     "@react-native-community/cli-config": "^18.0.0",
+    "@react-native-community/cli-config-apple": "^18.0.0",
     "@react-native-community/cli-types": "^18.0.0",
     "@types/d3": "^7.4.3",
     "@types/lodash": "^4.17.16",

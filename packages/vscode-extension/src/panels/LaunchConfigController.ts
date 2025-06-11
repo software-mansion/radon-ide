@@ -153,7 +153,7 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
     Logger.debug(
       `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${
-        xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation
+        xcodeProject.xcodeProjectLocation
       }`
     );
     return await findXcodeScheme(xcodeProject);
