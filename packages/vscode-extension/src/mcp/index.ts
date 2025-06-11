@@ -1,5 +1,7 @@
+import { kill } from "process";
 import { Logger } from "../Logger";
 import { getOpenPort } from "../utilities/common";
+import { watchLicenseTokenChange } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { insertRadonEntry } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
@@ -14,7 +16,7 @@ async function updateMcpConfig(port: number) {
 
 let mcpPort: number | null = null;
 
-export default async function loadRadonAi() {
+async function loadRadonAi() {
   if (mcpPort !== null) {
     return mcpPort;
   }
@@ -33,4 +35,15 @@ export default async function loadRadonAi() {
     Logger.error(MCP_LOG, msg);
     getTelemetryReporter().sendTelemetryEvent("radon-ai:mcp-initialization-error", { error: msg });
   }
+}
+
+export default function registerRadonAi() {
+  watchLicenseTokenChange(() => {
+    // starts regardless of token validity - offline tools don't require a valid token
+    if (mcpPort !== null) {
+      // kill previous instance
+      kill(mcpPort);
+    }
+    loadRadonAi();
+  });
 }
