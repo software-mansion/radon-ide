@@ -3,7 +3,9 @@ import { describe, it } from "mocha";
 import { default as proxyquire } from "proxyquire";
 import { stub } from "sinon";
 import { insertRadonEntry, newMcpConfig } from "./configCreator";
-import { McpConfig } from "./models";
+
+// jsonc-parser by default builds a UMD bundle that esbuild can't resolve.
+const { parse }: typeof import("jsonc-parser/lib/esm/main") = require("jsonc-parser");
 
 type ExtendedMcpConfig = {
   servers?: Record<
@@ -28,16 +30,17 @@ describe("creatingMcpConfig", () => {
   const newType = realType;
 
   it("should update the config", async () => {
-    const config: McpConfig = { servers: {} };
+    const empty = JSON.stringify({ servers: {} });
+    const updated = insertRadonEntry(empty, realPort);
 
-    insertRadonEntry(config, realPort);
+    const config = parse(updated);
 
     assert.strictEqual(config.servers?.RadonAi?.url, realUrl);
     assert.strictEqual(config.servers?.RadonAi?.type, realType);
   });
 
   it("should not overwrite other entries", async () => {
-    const config: ExtendedMcpConfig = {
+    const populated: ExtendedMcpConfig = {
       servers: {
         MockAi: {
           url: mockUrl,
@@ -46,7 +49,9 @@ describe("creatingMcpConfig", () => {
       },
     };
 
-    insertRadonEntry(config, realPort);
+    const serialized = JSON.stringify(populated);
+    const updated = insertRadonEntry(serialized, realPort);
+    const config = parse(updated);
 
     assert.strictEqual(config.servers?.RadonAi?.url, realUrl);
     assert.strictEqual(config.servers?.RadonAi?.type, realType);
@@ -55,7 +60,7 @@ describe("creatingMcpConfig", () => {
   });
 
   it("should update existing RadonAi entry", async () => {
-    const config: McpConfig = {
+    const stale: ExtendedMcpConfig = {
       servers: {
         RadonAi: {
           url: realUrl,
@@ -64,7 +69,9 @@ describe("creatingMcpConfig", () => {
       },
     };
 
-    insertRadonEntry(config, newPort);
+    const serialized = JSON.stringify(stale);
+    const updated = insertRadonEntry(serialized, newPort);
+    const config = parse(updated);
 
     assert.strictEqual(config.servers?.RadonAi?.url, newUrl);
     assert.strictEqual(config.servers?.RadonAi?.type, newType);
@@ -76,8 +83,12 @@ describe("creatingMcpConfig", () => {
       vscode: { workspace: { getConfiguration: () => ({ get: cursorStub }) } },
     });
 
-    const vscodeConfig: McpConfig = newMcpConfig();
-    const cursorConfig: McpConfig = onCursor.newMcpConfig();
+    const vscodeText = newMcpConfig();
+    const cursorText = onCursor.newMcpConfig();
+
+    const vscodeConfig = parse(vscodeText);
+    const cursorConfig = parse(cursorText);
+
     assert.notStrictEqual(vscodeConfig.servers, undefined);
     assert.notStrictEqual(cursorConfig.mcpServers, undefined);
   });
