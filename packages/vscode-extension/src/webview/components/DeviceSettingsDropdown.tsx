@@ -20,6 +20,7 @@ import { DevicePlatform } from "../../common/DeviceManager";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
+import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
@@ -317,97 +318,17 @@ const BiometricsItem = () => {
 };
 
 const CameraItem = () => {
-  const { project, deviceSettings } = useProject();
-
-  const backCameraOptions = [
-    { label: "Emulated", value: "emulated" },
-    { label: "Virtual Scene", value: "virtualscene" },
-    { label: "Webcam", value: "webcam0" },
-    { label: "None", value: "none" },
-  ];
-
-  const frontCameraOptions = [
-    { label: "Emulated", value: "emulated" },
-    { label: "Webcam", value: "webcam0" },
-    { label: "None", value: "none" },
-  ];
-
+  const { openModal } = useModal();
+  
   return (
-    <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger className="dropdown-menu-item">
-        <span className="codicon codicon-camera" />
-        Camera Settings
-        <span className="codicon codicon-chevron-right right-slot" />
-      </DropdownMenu.SubTrigger>
-
-      <DropdownMenu.Portal>
-        <DropdownMenu.SubContent className="dropdown-menu-subcontent">
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
-              <span className="codicon codicon-camera" />
-              Back Camera: {backCameraOptions.find(opt => opt.value === deviceSettings.camera.back)?.label}
-              <span className="codicon codicon-chevron-right right-slot" />
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="dropdown-menu-subcontent" sideOffset={2} alignOffset={-5}>
-                {backCameraOptions.map((option) => (
-                  <DropdownMenu.Item
-                    key={option.value}
-                    className="dropdown-menu-item"
-                    onSelect={() => {
-                      project.updateDeviceSettings({
-                        ...deviceSettings,
-                        camera: {
-                          ...deviceSettings.camera,
-                          back: option.value as DeviceSettings["camera"]["back"],
-                        },
-                      });
-                    }}>
-                    <span className="codicon codicon-camera" />
-                    {option.label}
-                    {deviceSettings.camera.back === option.value && (
-                      <span className="codicon codicon-check right-slot" />
-                    )}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
-              <span className="codicon codicon-camera" />
-              Front Camera: {frontCameraOptions.find(opt => opt.value === deviceSettings.camera.front)?.label}
-              <span className="codicon codicon-chevron-right right-slot" />
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="dropdown-menu-subcontent" sideOffset={2} alignOffset={-5}>
-                {frontCameraOptions.map((option) => (
-                  <DropdownMenu.Item
-                    key={option.value}
-                    className="dropdown-menu-item"
-                    onSelect={() => {
-                      project.updateDeviceSettings({
-                        ...deviceSettings,
-                        camera: {
-                          ...deviceSettings.camera,
-                          front: option.value as DeviceSettings["camera"]["front"],
-                        },
-                      });
-                    }}>
-                    <span className="codicon codicon-camera" />
-                    {option.label}
-                    {deviceSettings.camera.front === option.value && (
-                      <span className="codicon codicon-check right-slot" />
-                    )}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-        </DropdownMenu.SubContent>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Sub>
+    <DropdownMenu.Item
+      className="dropdown-menu-item"
+      onSelect={() => {
+        openModal("Camera Settings", <CameraSettingsView />);
+      }}>
+      <span className="codicon codicon-camera" />
+      Camera Settings
+    </DropdownMenu.Item>
   );
 };
 
