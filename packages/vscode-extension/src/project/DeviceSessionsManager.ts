@@ -1,4 +1,5 @@
 import { commands, Disposable, window } from "vscode";
+import _ from "lodash";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { Logger } from "../Logger";
@@ -16,6 +17,7 @@ import { disposeAll } from "../utilities/disposables";
 import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
+const SWITCH_DEVICE_THROTTLE_MS = 300;
 
 export type DeviceSessionsManagerDelegate = {
   onInitialized(): void;
@@ -38,11 +40,15 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
     this.disposables.push(
-      commands.registerCommand("RNIDE.nextRunningDevice", () => this.selectNextNthRunningSession(1))
+      commands.registerCommand(
+        "RNIDE.nextRunningDevice",
+        _.throttle(() => this.selectNextNthRunningSession(1), SWITCH_DEVICE_THROTTLE_MS)
+      )
     );
     this.disposables.push(
-      commands.registerCommand("RNIDE.previousRunningDevice", () =>
-        this.selectNextNthRunningSession(-1)
+      commands.registerCommand(
+        "RNIDE.previousRunningDevice",
+        _.throttle(() => this.selectNextNthRunningSession(-1), SWITCH_DEVICE_THROTTLE_MS)
       )
     );
   }
