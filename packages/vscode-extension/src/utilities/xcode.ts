@@ -1,7 +1,7 @@
 import path from "path";
 import { RelativePattern, workspace } from "vscode";
-import { Logger } from "../Logger";
 import { getProjectConfig } from "@react-native-community/cli-config-apple";
+import { Logger } from "../Logger";
 const getIOSProjectConfig = getProjectConfig({ platformName: "ios" });
 
 export type IOSProjectInfo = {
@@ -10,7 +10,7 @@ export type IOSProjectInfo = {
 };
 
 export async function findXcodeScheme(xcodeProject: IOSProjectInfo) {
-  const basename = xcodeProject.xcodeProjectLocation
+  const basename = xcodeProject.isWorkspace
     ? path.basename(xcodeProject.xcodeProjectLocation, ".xcworkspace")
     : path.basename(xcodeProject.xcodeProjectLocation, ".xcodeproj");
 
