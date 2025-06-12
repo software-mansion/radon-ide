@@ -48,25 +48,9 @@ enum EditorType {
   VSCODE = "vscode",
 }
 
-type InnerMcpEntries = {
-  RadonAi?: {
-    url: `http://localhost:${number}/sse`;
-    type: "sse";
-  };
+type McpEntry = {
+  url: `http://localhost:${number}/sse`;
+  type: "sse";
 };
 
-type McpConfig = {
-  mcpServers?: InnerMcpEntries; // cursor
-  servers?: InnerMcpEntries; // vscode
-};
-
-export {
-  EditorType,
-  InnerMcpEntries,
-  McpConfig,
-  TextContent,
-  ToolResponse,
-  ToolResult,
-  ToolSchema,
-  ToolsInfo,
-};
+export { EditorType, McpEntry, TextContent, ToolResponse, ToolResult, ToolSchema, ToolsInfo };

@@ -1,34 +1,30 @@
-import { EditorType, McpConfig } from "./models";
+import { EditorType, McpEntry } from "./models";
 import { getEditorType } from "./utils";
 
-export function insertRadonEntry(incompleteConfig: McpConfig, port: number) {
-  const radonMcpEntry = {
+// jsonc-parser by default builds a UMD bundle that esbuild can't resolve.
+const { applyEdits, modify }: typeof import("jsonc-parser/lib/esm/main") = require("jsonc-parser");
+
+export function insertRadonEntry(incompleteConfig: string, port: number): string {
+  const rootKey = getEditorType() === EditorType.VSCODE ? "servers" : "mcpServers";
+  const entryKey = "RadonAi";
+  const radonMcpEntry: McpEntry = {
     url: `http://localhost:${port}/sse` as const,
     type: "sse" as const,
   };
 
-  if (incompleteConfig.servers) {
-    incompleteConfig.servers.RadonAi = radonMcpEntry;
-    return;
-  } else if (incompleteConfig.mcpServers) {
-    incompleteConfig.mcpServers.RadonAi = radonMcpEntry;
-    return;
+  try {
+    const edits = modify(incompleteConfig, [rootKey, entryKey], radonMcpEntry, {});
+    const config = applyEdits(incompleteConfig, edits);
+    return config;
+  } catch {
+    // mcp.json syntax error
+    throw new Error(`Failed updating MCP config - existing mcp.json file is corrupted.`);
   }
-
-  // mcp.json file has to have either 'servers' or 'mcpServers' field, otherwise it's invalid
-  throw new Error(`Failed updating MCP config - existing mcp.json file is corrupted.`);
 }
 
-export function newMcpConfig(): McpConfig {
-  const editorType = getEditorType();
+const vscodeConfig = JSON.stringify({ servers: {} });
+const cursorConfig = JSON.stringify({ mcpServers: {} });
 
-  if (editorType === EditorType.VSCODE) {
-    return {
-      servers: {},
-    };
-  }
-
-  return {
-    mcpServers: {},
-  };
+export function newMcpConfig(): string {
+  return getEditorType() === EditorType.VSCODE ? vscodeConfig : cursorConfig;
 }

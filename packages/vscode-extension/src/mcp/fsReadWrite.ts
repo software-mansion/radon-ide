@@ -3,15 +3,14 @@ import path from "path";
 import * as vscode from "vscode";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { newMcpConfig } from "./configCreator";
-import { EditorType, McpConfig } from "./models";
+import { EditorType } from "./models";
 import { getEditorType, MCP_LOG } from "./utils";
 
 const VSCODE_DIR_PATH = ".vscode";
 const CURSOR_DIR_PATH = ".cursor";
 const MCP_FILE_NAME = "mcp.json";
 
-export async function readMcpConfig(): Promise<McpConfig> {
+export async function readMcpConfig(): Promise<string | null> {
   const folders = vscode.workspace.workspaceFolders;
 
   if (!folders || folders.length === 0) {
@@ -39,17 +38,16 @@ export async function readMcpConfig(): Promise<McpConfig> {
 
   try {
     return await fs.readFile(filePath, { encoding: "utf8" }).then((data) => {
-      const config = JSON.parse(data);
       Logger.info(MCP_LOG, `Found valid MCP config - updating.`);
-      return config;
+      return data;
     });
   } catch {
-    // Config file not found - creating new one.
-    return newMcpConfig();
+    // Config file not found - create new one.
+    return null;
   }
 }
 
-export async function writeMcpConfig(config: McpConfig) {
+export async function writeMcpConfig(configText: string) {
   const editorType = getEditorType();
   let directoryPath = "";
 
@@ -83,14 +81,12 @@ export async function writeMcpConfig(config: McpConfig) {
     return;
   }
 
-  const jsonString = JSON.stringify(config, null, 2);
-
   const fsDirPath = path.join(folder.uri.fsPath, directoryPath);
   const fsPath = path.join(fsDirPath, MCP_FILE_NAME);
 
   await fs.mkdir(fsDirPath, { recursive: true });
 
-  fs.writeFile(fsPath, jsonString)
+  fs.writeFile(fsPath, configText)
     .then(() => {
       Logger.info(MCP_LOG, `Wrote updated MCP config successfully.`);
     })

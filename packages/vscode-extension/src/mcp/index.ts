@@ -3,15 +3,15 @@ import { Logger } from "../Logger";
 import { getOpenPort } from "../utilities/common";
 import { watchLicenseTokenChange } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { insertRadonEntry } from "./configCreator";
+import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
 import { startLocalMcpServer } from "./server";
 import { MCP_LOG } from "./utils";
 
 async function updateMcpConfig(port: number) {
-  const mcpConfig = await readMcpConfig();
-  insertRadonEntry(mcpConfig, port);
-  await writeMcpConfig(mcpConfig);
+  const mcpConfig = (await readMcpConfig()) || newMcpConfig();
+  const updatedConfig = insertRadonEntry(mcpConfig, port);
+  await writeMcpConfig(updatedConfig);
 }
 
 let mcpPort: number | null = null;
