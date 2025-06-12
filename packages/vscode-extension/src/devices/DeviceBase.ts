@@ -29,6 +29,10 @@ export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
   locale: "en_US",
   replaysEnabled: false,
   showTouches: false,
+  camera: {
+    back: "virtualscene",
+    front: "emulated",
+  },
 };
 
 export abstract class DeviceBase implements Disposable {
