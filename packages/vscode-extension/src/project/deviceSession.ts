@@ -445,6 +445,9 @@ export class DeviceSession
     const cancelToken = new CancelToken();
     this.cancelToken = cancelToken;
 
+    this.status = "starting";
+    this.updateStartupMessage(StartupMessage.InitializingDevice);
+
     if (cleanCache) {
       const oldDevtools = this.devtools;
       const oldMetro = this.metro;
