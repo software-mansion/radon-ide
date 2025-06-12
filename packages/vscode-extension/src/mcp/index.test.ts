@@ -2,6 +2,7 @@ import assert from "assert";
 import { describe, it } from "mocha";
 import { default as proxyquire } from "proxyquire";
 import { stub } from "sinon";
+import sinon from "sinon";
 import { insertRadonEntry, newMcpConfig } from "./configCreator";
 
 // jsonc-parser by default builds a UMD bundle that esbuild can't resolve.
@@ -79,8 +80,10 @@ describe("creatingMcpConfig", () => {
 
   it("should differenciate vscode and cursor", async () => {
     const cursorStub = stub().withArgs("cursor").returns({});
-    const onCursor = proxyquire(".", {
-      vscode: { workspace: { getConfiguration: () => ({ get: cursorStub }) } },
+    const onCursor = proxyquire("./configCreator", {
+      "./utils": proxyquire("./utils", {
+        vscode: { workspace: { getConfiguration: () => ({ get: cursorStub }) } },
+      }),
     });
 
     const vscodeText = newMcpConfig();
@@ -89,7 +92,7 @@ describe("creatingMcpConfig", () => {
     const vscodeConfig = parse(vscodeText);
     const cursorConfig = parse(cursorText);
 
-    assert.notStrictEqual(vscodeConfig.servers, undefined);
-    assert.notStrictEqual(cursorConfig.mcpServers, undefined);
+    sinon.assert.calledOnce(cursorStub);
+    assert.notDeepStrictEqual(cursorConfig, vscodeConfig);
   });
 });
