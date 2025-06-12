@@ -156,6 +156,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
       await this.changeLocale(settings.locale);
     }
 
+    if (await this.shouldUpdateCameraSettings(settings.camera)) {
+      shouldRestart = true;
+      await this.updateCameraSettings(settings.camera);
+    }
+
     await exec(ADB_PATH, [
       "-s",
       this.serial!,
@@ -204,6 +209,56 @@ export class AndroidEmulatorDevice extends DeviceBase {
       await exec(ADB_PATH, ["-s", this.serial!, "emu", "geo", "fix", long, lat]);
     }
     return shouldRestart;
+  }
+
+  private async shouldUpdateCameraSettings(newCameraSettings: DeviceSettings["camera"]) {
+    const avdDirectory = getAvdDirectoryLocation(this.avdId);
+    const configIni = path.join(avdDirectory, `${this.avdId}.avd`, "config.ini");
+    
+    try {
+      const configContent = await fs.promises.readFile(configIni, "utf-8");
+      let currentBackCamera = "emulated";
+      let currentFrontCamera = "none";
+      
+      configContent.split("\n").forEach((line: string) => {
+        const [key, value] = line.split("=");
+        if (key === "hw.camera.back") {
+          currentBackCamera = value;
+        } else if (key === "hw.camera.front") {
+          currentFrontCamera = value;
+        }
+      });
+      
+      return currentBackCamera !== newCameraSettings.back || currentFrontCamera !== newCameraSettings.front;
+    } catch (e) {
+      Logger.warn("Failed to read AVD config for camera settings comparison", e);
+      return false;
+    }
+  }
+
+  private async updateCameraSettings(cameraSettings: DeviceSettings["camera"]) {
+    const avdDirectory = getAvdDirectoryLocation(this.avdId);
+    const configIni = path.join(avdDirectory, `${this.avdId}.avd`, "config.ini");
+    
+    try {
+      const configContent = await fs.promises.readFile(configIni, "utf-8");
+      const lines = configContent.split("\n");
+      
+      for (let i = 0; i < lines.length; i++) {
+        const [key, value] = lines[i].split("=");
+        if (key === "hw.camera.back") {
+          lines[i] = `hw.camera.back=${cameraSettings.back}`;
+        } else if (key === "hw.camera.front") {
+          lines[i] = `hw.camera.front=${cameraSettings.front}`;
+        }
+      }
+      
+      const updatedContent = lines.join("\n");
+      await fs.promises.writeFile(configIni, updatedContent, "utf-8");
+    } catch (e) {
+      Logger.error("Failed to update AVD camera settings", e);
+      throw new Error("Failed to update camera settings");
+    }
   }
 
   /**
