@@ -4,8 +4,11 @@ import { getEditorType } from "./utils";
 // jsonc-parser by default builds a UMD bundle that esbuild can't resolve.
 const { applyEdits, modify }: typeof import("jsonc-parser/lib/esm/main") = require("jsonc-parser");
 
+const CURSOR_KEY = "mcpServers";
+const VSCODE_KEY = "servers";
+
 export function insertRadonEntry(incompleteConfig: string, port: number): string {
-  const rootKey = getEditorType() === EditorType.VSCODE ? "servers" : "mcpServers";
+  const rootKey = getEditorType() === EditorType.VSCODE ? VSCODE_KEY : CURSOR_KEY;
   const entryKey = "RadonAi";
   const radonMcpEntry: McpEntry = {
     url: `http://localhost:${port}/sse` as const,
