@@ -1,7 +1,8 @@
 import { DeviceInfo } from "./DeviceManager";
+import { DeviceId } from "./Project";
 
 export type SelectDeviceOptions = {
-  preservePreviousDevice?: boolean;
+  stopPreviousDevices?: boolean;
 };
 
 export type ReloadAction =
@@ -19,4 +20,5 @@ export interface DeviceSessionsManagerInterface {
     deviceInfo: DeviceInfo,
     selectDeviceOptions?: SelectDeviceOptions
   ): Promise<void>;
+  terminateSession(deviceId: DeviceId): Promise<void>;
 }

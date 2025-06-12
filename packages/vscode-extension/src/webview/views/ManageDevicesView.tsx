@@ -1,5 +1,6 @@
 import "./ManageDevicesView.css";
-import { useEffect, useState } from "react";
+import { MouseEventHandler, useEffect, useState } from "react";
+import * as Switch from "@radix-ui/react-switch";
 import IconButton from "../components/shared/IconButton";
 import DeviceRenameDialog from "../components/DeviceRenameDialog";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
@@ -12,20 +13,36 @@ import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
 import { mapIdToModel } from "../utilities/deviceContants";
+import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+
+import "../components/shared/SwitchGroup.css";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
   onDeviceRename: (device: DeviceInfo) => void;
   onDeviceDelete: (device: DeviceInfo) => void;
   isSelected: boolean;
+  isRunning: boolean;
 }
 
-function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: DeviceRowProps) {
+function DeviceRow({
+  deviceInfo,
+  onDeviceRename,
+  onDeviceDelete,
+  isSelected,
+  isRunning,
+}: DeviceRowProps) {
   const { deviceSessionsManager } = useDevices();
+  const { stopPreviousDevices } = useWorkspaceConfig();
 
-  const handleDeviceChange = async () => {
+  const stopDevice = () => deviceSessionsManager.terminateSession(deviceInfo.id);
+  const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
-      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
+      e.stopPropagation();
+      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
+        stopPreviousDevices,
+      });
+      closeModal();
     }
   };
 
@@ -37,7 +54,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
 
   const { closeModal } = useModal();
   return (
-    <div className="device-row">
+    <button className="device-row" onClick={selectDevice} data-selected={isSelected}>
       <div className={isSelected ? "device-icon-selected" : "device-icon"}>
         {!deviceInfo.available ? (
           <Tooltip
@@ -57,7 +74,20 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
         <div className="device-subtitle">{deviceSubtitle}</div>
       </div>
       <span className="device-button-group">
-        {!isSelected ? (
+        {isRunning ? (
+          <IconButton
+            tooltip={{
+              label: "Stop device",
+              side: "bottom",
+              type: "secondary",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              stopDevice();
+            }}>
+            <span className="codicon codicon-debug-stop" />
+          </IconButton>
+        ) : (
           <IconButton
             tooltip={{
               label: "Select device",
@@ -65,16 +95,8 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
               type: "secondary",
             }}
             disabled={!deviceInfo.available}
-            onClick={async (e) => {
-              e.stopPropagation();
-              await handleDeviceChange();
-              closeModal();
-            }}>
+            onClick={selectDevice}>
             <span className="codicon codicon-play" />
-          </IconButton>
-        ) : (
-          <IconButton onClick={() => {}} disabled={true}>
-            <span className="codicon codicon-blank" />
           </IconButton>
         )}
         <IconButton
@@ -83,7 +105,7 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
             side: "bottom",
             type: "secondary",
           }}
-          onClick={async (e) => {
+          onClick={(e) => {
             e.stopPropagation();
             onDeviceRename(deviceInfo);
           }}>
@@ -104,17 +126,20 @@ function DeviceRow({ deviceInfo, onDeviceRename, onDeviceDelete, isSelected }: D
           <span className="codicon codicon-trash delete-icon" />
         </IconButton>
       </span>
-    </div>
+    </button>
   );
 }
 
 function ManageDevicesView() {
-  const { selectedDeviceSession } = useProject();
+  const { projectState, selectedDeviceSession } = useProject();
+  const { deviceSessions } = projectState;
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
+
+  const { stopPreviousDevices, update } = useWorkspaceConfig();
 
   const { devices, reload } = useDevices();
 
@@ -164,40 +189,53 @@ function ManageDevicesView() {
     );
   }
 
+  function renderRow(deviceInfo: DeviceInfo) {
+    return (
+      <DeviceRow
+        key={deviceInfo.id}
+        deviceInfo={deviceInfo}
+        onDeviceRename={handleDeviceRename}
+        onDeviceDelete={handleDeviceDelete}
+        isSelected={deviceInfo.id === selectedProjectDevice?.id}
+        isRunning={Object.keys(deviceSessions).includes(deviceInfo.id)}
+      />
+    );
+  }
+
   return (
     <div className="manage-devices-container">
       {iosDevices.length > 0 && (
         <>
           <Label>iOS Devices</Label>
-          {iosDevices.map((deviceInfo) => (
-            <DeviceRow
-              key={deviceInfo.id}
-              deviceInfo={deviceInfo}
-              onDeviceRename={handleDeviceRename}
-              onDeviceDelete={handleDeviceDelete}
-              isSelected={deviceInfo.id === selectedProjectDevice?.id}
-            />
-          ))}
+          {iosDevices.map(renderRow)}
         </>
       )}
       {androidDevices.length > 0 && (
         <>
           <Label>Android Devices</Label>
-          {androidDevices.map((deviceInfo) => (
-            <DeviceRow
-              key={deviceInfo.id}
-              deviceInfo={deviceInfo}
-              onDeviceRename={handleDeviceRename}
-              onDeviceDelete={handleDeviceDelete}
-              isSelected={deviceInfo.id === selectedProjectDevice?.id}
-            />
-          ))}
+          {androidDevices.map(renderRow)}
         </>
       )}
       <Button autoFocus className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
         <span className="codicon codicon-add" />
         <div className="create-button-text">Create new device</div>
       </Button>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-around",
+          alignItems: "center",
+          marginTop: "16px",
+        }}>
+        <label>Shut down devices when switching:</label>
+        <Switch.Root
+          className="switch-root small-switch"
+          checked={stopPreviousDevices}
+          onCheckedChange={(checked) => update("stopPreviousDevices", checked)}>
+          <Switch.Thumb className="switch-thumb" />
+        </Switch.Root>
+      </div>
     </div>
   );
 }

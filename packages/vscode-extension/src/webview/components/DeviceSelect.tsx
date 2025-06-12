@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React, { PropsWithChildren } from "react";
 import * as Select from "@radix-ui/react-select";
 import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
@@ -8,6 +9,7 @@ import { useDevices } from "../providers/DevicesProvider";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
+import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -18,7 +20,7 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
 );
 
 function renderDevices(
-  deviceType: DevicePlatform,
+  deviceLabel: string,
   devices: DeviceInfo[],
   selectedProjectDevice?: DeviceInfo
 ) {
@@ -26,7 +28,6 @@ function renderDevices(
     return null;
   }
 
-  const deviceLabel = deviceType === DevicePlatform.IOS ? "iOS" : "Android";
   return (
     <Select.Group>
       <Select.Label className="device-select-label">{deviceLabel}</Select.Label>
@@ -45,21 +46,56 @@ function renderDevices(
   );
 }
 
+function partitionDevices(
+  devices: DeviceInfo[],
+  runningSessionIds: string[],
+  selectedDevice: DeviceInfo | undefined
+): Record<string, DeviceInfo[]> {
+  const validDevices = devices.filter(({ modelId }) => modelId.length > 0);
+
+  let [runningDevices, stoppedDevices] = _.partition(validDevices, ({ id }) =>
+    runningSessionIds.includes(id)
+  );
+
+  if (selectedDevice) {
+    // If there's only a single selected, running device, we don't place it in a separate section.
+    if (runningDevices.length <= 1) {
+      stoppedDevices = validDevices;
+      runningDevices = [];
+    } else {
+      // move the selected device to the top of the running devices list
+      const selectedDeviceIdx = runningDevices.findIndex(({ id }) => id === selectedDevice.id);
+      console.assert(selectedDeviceIdx !== -1, "Selected device must be running");
+      runningDevices.splice(selectedDeviceIdx, 1);
+      runningDevices.unshift(selectedDevice);
+    }
+  }
+
+  const [iosDevices, androidDevices] = _.partition(
+    stoppedDevices,
+    ({ platform }) => platform === DevicePlatform.IOS
+  );
+  return {
+    "Running devices": runningDevices,
+    "iOS": iosDevices,
+    "Android": androidDevices,
+  };
+}
+
 function DeviceSelect() {
-  const { selectedDeviceSession } = useProject();
+  const { selectedDeviceSession, projectState } = useProject();
   const { devices, deviceSessionsManager } = useDevices();
   const { openModal } = useModal();
+  const { stopPreviousDevices } = useWorkspaceConfig();
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
 
   const hasNoDevices = devices.length === 0;
   const selectedDevice = selectedDeviceSession?.deviceInfo;
 
-  const iosDevices = devices.filter(
-    ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
-  );
-  const androidDevices = devices.filter(
-    ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
-  );
+  const { deviceSessions } = projectState;
+  const runningSessionIds = Object.keys(deviceSessions);
+
+  const deviceSections = partitionDevices(devices, runningSessionIds, selectedDevice);
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
@@ -69,20 +105,32 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = devices.find((d) => d.id === value);
       if (deviceInfo) {
-        deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
+        deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
+          stopPreviousDevices,
+        });
       }
     }
   };
 
+  const placeholderText = hasNoDevices ? "No devices found" : "Select device";
+  const text = selectedDevice?.displayName ?? placeholderText;
+  const backgroundDeviceCounter = runningSessionIds.length - (selectedDevice ? 1 : 0);
+
   return (
     <Select.Root
       onValueChange={handleDeviceDropdownChange}
-      value={hasNoDevices ? undefined : selectedDevice?.id}>
+      // NOTE: we pass the placeholder text as the value because passing `undefined` causes
+      // issues with the "manage devices" option.
+      // See https://github.com/software-mansion/radon-ide/pull/1231#pullrequestreview-2910304970
+      value={selectedDevice?.id ?? placeholderText}>
       <Select.Trigger className="device-select-trigger" disabled={hasNoDevices}>
-        <Select.Value placeholder="No devices found">
+        <Select.Value>
           <div className="device-select-value">
             <span className="codicon codicon-device-mobile" />
-            <span className="device-select-value-text">{selectedDevice?.displayName}</span>
+            <span className="device-select-value-text">{text}</span>
+            {backgroundDeviceCounter > 0 && (
+              <span className="device-select-counter">+{backgroundDeviceCounter}</span>
+            )}
           </div>
         </Select.Value>
       </Select.Trigger>
@@ -97,8 +145,9 @@ function DeviceSelect() {
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>
           <Select.Viewport className="device-select-viewport">
-            {renderDevices(DevicePlatform.IOS, iosDevices, selectedProjectDevice)}
-            {renderDevices(DevicePlatform.Android, androidDevices, selectedProjectDevice)}
+            {Object.entries(deviceSections).map(([label, sectionDevices]) =>
+              renderDevices(label, sectionDevices, selectedProjectDevice)
+            )}
             {devices.length > 0 && <Select.Separator className="device-select-separator" />}
             <SelectItem value="manage">Manage devices...</SelectItem>
           </Select.Viewport>

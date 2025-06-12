@@ -1,4 +1,5 @@
 import { EventEmitter } from "stream";
+import _ from "lodash";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
   IosSimulatorDevice,
@@ -89,6 +90,9 @@ export class DeviceManager implements DeviceManagerInterface {
   private loadDevicesPromise: Promise<DeviceInfo[]> | undefined;
 
   private async loadDevices(forceReload = false) {
+    const previousDevices = extensionContext.globalState.get(DEVICE_LIST_CACHE_KEY) as
+      | DeviceInfo[]
+      | undefined;
     if (forceReload) {
       // Clear the cache when force reload is requested
       extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, undefined);
@@ -100,7 +104,12 @@ export class DeviceManager implements DeviceManagerInterface {
         return devices;
       });
     }
-    return this.loadDevicesPromise;
+    const devices = await this.loadDevicesPromise;
+    if (!_.isEqual(previousDevices, devices)) {
+      // Emit event only if the devices list has changed
+      this.eventEmitter.emit("devicesChanged", devices);
+    }
+    return devices;
   }
 
   private async loadDevicesInternal() {
@@ -124,7 +133,6 @@ export class DeviceManager implements DeviceManagerInterface {
       : Promise.resolve([]);
     const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
     const devices = [...androidDevices, ...iosDevices];
-    this.eventEmitter.emit("devicesChanged", devices);
     return devices;
   }
 
