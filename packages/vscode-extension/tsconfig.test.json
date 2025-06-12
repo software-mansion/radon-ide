@@ -11,7 +11,10 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "allowJs": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "jsonc-parser": ["./node_modules/jsonc-parser/lib/esm/main.js"]
+    }
   },
   "include": ["src/**/*.test.ts"]
 }
