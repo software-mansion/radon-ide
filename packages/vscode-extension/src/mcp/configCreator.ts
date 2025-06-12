@@ -13,7 +13,9 @@ export function insertRadonEntry(incompleteConfig: string, port: number): string
   };
 
   try {
-    const edits = modify(incompleteConfig, [rootKey, entryKey], radonMcpEntry, {});
+    const edits = modify(incompleteConfig, [rootKey, entryKey], radonMcpEntry, {
+      formattingOptions: { insertSpaces: true, tabSize: 2 },
+    });
     const config = applyEdits(incompleteConfig, edits);
     return config;
   } catch {
