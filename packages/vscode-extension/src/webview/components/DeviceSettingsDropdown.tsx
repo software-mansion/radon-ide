@@ -326,7 +326,7 @@ const CameraItem = () => {
       onSelect={() => {
         openModal("Camera Settings", <CameraSettingsView />);
       }}>
-      <span className="codicon codicon-camera" />
+      <span className="codicon codicon-device-camera" />
       Camera Settings
     </DropdownMenu.Item>
   );
