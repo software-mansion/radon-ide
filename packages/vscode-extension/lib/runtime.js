@@ -59,10 +59,10 @@ function wrapConsole(logFunctionKey) {
   };
 }
 
-console.log = wrapConsole("log");
-console.warn = wrapConsole("warn");
-console.error = wrapConsole("error");
-console.info = wrapConsole("info");
+// console.log = wrapConsole("log");
+// console.warn = wrapConsole("warn");
+// console.error = wrapConsole("error");
+// console.info = wrapConsole("info");
 
 // This variable can be used by external integrations to detect if they are running in the IDE
 global.__RNIDE_enabled = true;
