@@ -191,6 +191,7 @@ async function buildLocal(
   const xcodeProject = findXcodeProject(appRoot);
 
   if (!xcodeProject) {
+    getTelemetryReporter().sendTelemetryEvent("build:xcode-project-not-found");
     throw new Error(
       `Could not find Xcode project files in "${sourceDir}" folder. Verify the iOS project is set up correctly.`
     );
