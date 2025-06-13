@@ -29,10 +29,9 @@ import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { PanelLocation } from "./common/WorkspaceConfig";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
-import { registerChat } from "./ai/chat";
+import { registerRadonChat, registerRadonAi } from "./ai";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
-import registerRadonAi from "./ai/mcp";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 import { IDEPanelMoveTarget } from "./common/utils";
 
@@ -301,7 +300,7 @@ export async function activate(context: ExtensionContext) {
   registerRadonAi();
 
   // You can configure the chat in package.json under the `chatParticipants` key
-  registerChat(context);
+  registerRadonChat(context);
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 

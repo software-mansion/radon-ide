@@ -45,7 +45,7 @@ async function processChatResponse(
   return [];
 }
 
-export function registerChat(context: vscode.ExtensionContext) {
+export function registerRadonChat(context: vscode.ExtensionContext) {
   const chatHandler: vscode.ChatRequestHandler = async (
     request,
     chatContext,
