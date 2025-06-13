@@ -17,7 +17,7 @@ import { disposeAll } from "../utilities/disposables";
 import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
-const SWITCH_DEVICE_THROTTLE_MS = 300;
+const SWITCH_DEVICE_THROTTLE_MS = 500;
 
 export type DeviceSessionsManagerDelegate = {
   onInitialized(): void;
