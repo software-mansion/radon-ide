@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { RelativePattern } from "vscode";
-import { Logger } from "../Logger";
-import { findAppRootFolder } from "../utilities/extensionContext";
-import { calculateMD5 } from "../utilities/common";
+import { Logger } from "../../Logger";
+import { findAppRootFolder } from "../../utilities/extensionContext";
+import { calculateMD5 } from "../../utilities/common";
 import { CHAT_LOG } from ".";
 
 interface Package {

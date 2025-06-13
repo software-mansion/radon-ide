@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { CHAT_PARTICIPANT_ID } from ".";
+import { CHAT_PARTICIPANT_ID } from "../chat";
 
 export function getChatHistory(context: vscode.ChatContext): vscode.LanguageModelChatMessage[] {
   const chatMessageHistory = context.history.filter(

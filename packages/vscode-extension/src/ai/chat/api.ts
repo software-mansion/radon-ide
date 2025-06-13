@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
-import { Logger } from "../Logger";
-import { getTelemetryReporter } from "../utilities/telemetry";
+import { Logger } from "../../Logger";
+import { getTelemetryReporter } from "../../utilities/telemetry";
 import { CHAT_LOG } from ".";
 
 const BASE_RADON_AI_URL = "https://radon-ai-backend.swmansion.com";

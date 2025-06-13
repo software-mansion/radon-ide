@@ -1,6 +1,6 @@
-import { Logger } from "../Logger";
-import { getLicenseToken } from "../utilities/license";
-import { getTelemetryReporter } from "../utilities/telemetry";
+import { Logger } from "../../Logger";
+import { getLicenseToken } from "../../utilities/license";
+import { getTelemetryReporter } from "../../utilities/telemetry";
 import { ToolResponse, ToolResult, ToolsInfo } from "./models";
 
 const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";

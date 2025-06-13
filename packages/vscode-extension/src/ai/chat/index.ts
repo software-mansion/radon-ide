@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { Logger } from "../Logger";
-import { getLicenseToken } from "../utilities/license";
-import { getTelemetryReporter } from "../utilities/telemetry";
+import { Logger } from "../../Logger";
+import { getLicenseToken } from "../../utilities/license";
+import { getTelemetryReporter } from "../../utilities/telemetry";
 import { invokeToolCall, getSystemPrompt } from "./api";
 import { getChatHistory } from "./history";
 import { getReactNativePackagesPrompt } from "./packages";

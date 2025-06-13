@@ -1,8 +1,8 @@
 import { kill } from "process";
-import { Logger } from "../Logger";
-import { getOpenPort } from "../utilities/common";
-import { watchLicenseTokenChange } from "../utilities/license";
-import { getTelemetryReporter } from "../utilities/telemetry";
+import { Logger } from "../../Logger";
+import { getOpenPort } from "../../utilities/common";
+import { watchLicenseTokenChange } from "../../utilities/license";
+import { getTelemetryReporter } from "../../utilities/telemetry";
 import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
 import { startLocalMcpServer } from "./server";

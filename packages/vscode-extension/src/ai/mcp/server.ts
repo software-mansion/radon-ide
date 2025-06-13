@@ -3,8 +3,8 @@ import { readFileSync } from "fs";
 import { LiteMCP } from "litemcp";
 import { z } from "zod";
 
-import { Logger } from "../Logger";
-import { IDE } from "../project/ide";
+import { Logger } from "../../Logger";
+import { IDE } from "../../project/ide";
 import { getToolSchema, invokeToolCall } from "./api";
 import { ToolResponse, ToolSchema } from "./models";
 
