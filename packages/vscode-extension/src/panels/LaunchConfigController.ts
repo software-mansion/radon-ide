@@ -144,7 +144,7 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
     const appRoot = this.appRootFolder;
     const sourceDir = getIosSourceDir(appRoot);
 
-    const xcodeProject = await findXcodeProject(appRoot);
+    const xcodeProject = findXcodeProject(appRoot);
 
     if (!xcodeProject) {
       Logger.debug(`Could not find Xcode project files in "${sourceDir}" folder`);
@@ -153,7 +153,7 @@ export class LaunchConfigController implements Disposable, LaunchConfig {
 
     Logger.debug(
       `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${
-        xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation
+        xcodeProject.xcodeProjectLocation
       }`
     );
     return await findXcodeScheme(xcodeProject);

@@ -43,7 +43,7 @@ function buildProject(
 ) {
   const xcodebuildArgs = [
     xcodeProject.isWorkspace ? "-workspace" : "-project",
-    xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation,
+    xcodeProject.xcodeProjectLocation,
     "-configuration",
     configuration,
     "-scheme",
@@ -188,16 +188,17 @@ async function buildLocal(
     );
   }
 
-  const xcodeProject = await findXcodeProject(appRoot);
+  const xcodeProject = findXcodeProject(appRoot);
 
   if (!xcodeProject) {
+    getTelemetryReporter().sendTelemetryEvent("build:xcode-project-not-found");
     throw new Error(
       `Could not find Xcode project files in "${sourceDir}" folder. Verify the iOS project is set up correctly.`
     );
   }
   Logger.debug(
     `Found Xcode ${xcodeProject.isWorkspace ? "workspace" : "project"} ${
-      xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation
+      xcodeProject.xcodeProjectLocation
     }`
   );
 
@@ -255,7 +256,7 @@ async function getBuildPath(
       "xcodebuild",
       [
         xcodeProject.isWorkspace ? "-workspace" : "-project",
-        xcodeProject.workspaceLocation || xcodeProject.xcodeprojLocation,
+        xcodeProject.xcodeProjectLocation,
         "-scheme",
         scheme,
         "-sdk",
