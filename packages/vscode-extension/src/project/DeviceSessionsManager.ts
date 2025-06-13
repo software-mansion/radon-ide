@@ -17,7 +17,7 @@ import { disposeAll } from "../utilities/disposables";
 import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
-const SWITCH_DEVICE_THROTTLE_MS = 500;
+const SWITCH_DEVICE_THROTTLE_MS = 300;
 
 export type DeviceSessionsManagerDelegate = {
   onInitialized(): void;
@@ -40,15 +40,11 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
     this.disposables.push(
-      commands.registerCommand(
-        "RNIDE.nextRunningDevice",
-        _.throttle(() => this.selectNextNthRunningSession(1), SWITCH_DEVICE_THROTTLE_MS)
-      )
+      commands.registerCommand("RNIDE.nextRunningDevice", () => this.selectNextNthRunningSession(1))
     );
     this.disposables.push(
-      commands.registerCommand(
-        "RNIDE.previousRunningDevice",
-        _.throttle(() => this.selectNextNthRunningSession(-1), SWITCH_DEVICE_THROTTLE_MS)
+      commands.registerCommand("RNIDE.previousRunningDevice", () =>
+        this.selectNextNthRunningSession(-1)
       )
     );
   }
@@ -196,7 +192,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     }
   };
 
-  private updateSelectedSession(session: DeviceSession | undefined) {
+  private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
     this.activeSessionId = session?.getState().deviceInfo.id;
     if (previousSession === session) {
@@ -206,8 +202,8 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
       this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
       return;
     }
-    previousSession?.deactivate();
-    session.activate();
+    await previousSession?.deactivate();
+    await session.activate();
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
     this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
   }
@@ -241,14 +237,14 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     return undefined;
   }
 
-  private selectNextNthRunningSession(offset: number) {
+  private selectNextNthRunningSession = _.throttle((offset: number) => {
     const runningSessions = this.deviceSessions.keys().toArray();
     const currentSessionIndex =
       this.activeSessionId !== undefined ? runningSessions.indexOf(this.activeSessionId) : -offset;
     const nextSessionIndex =
       (currentSessionIndex + offset + runningSessions.length) % runningSessions.length;
     this.updateSelectedSession(this.deviceSessions.get(runningSessions[nextSessionIndex]));
-  }
+  }, SWITCH_DEVICE_THROTTLE_MS);
 
   dispose() {
     disposeAll(this.disposables);
