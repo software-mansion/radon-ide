@@ -31,6 +31,13 @@ function wrapConsole(logFunctionKey) {
   let logFunctionReentryStack = null;
   let logFunctionReentryFlag = false;
 
+  if (parseErrorStack === undefined) {
+    // This is a dummy evaluation to ensure that the parseErrorStack function is available
+    // before the new console function is returned. This is seeden becae since RN 0.80 
+    // a "metroRequire" function that is called the first time an import is used 
+    // is may call a "conosole.warn", whitch would trigger an infinite loop
+  }
+
   return function (...args) {
     const stack = parseErrorStack(new Error().stack);
 
