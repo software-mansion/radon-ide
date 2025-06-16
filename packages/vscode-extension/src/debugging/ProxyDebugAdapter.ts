@@ -223,21 +223,21 @@ export class ProxyDebugAdapter extends DebugSession {
     args: DebugProtocol.DisconnectArguments,
     request?: DebugProtocol.Request
   ) {
-    this.terminate();
+    await this.terminate();
     // since the application resumes once the debugger is disconnected, we need to send a continued event
     // to the frontend to update the UI
     this.sendEvent(new Event("RNIDE_continued"));
     this.sendResponse(response);
   }
 
-  private terminate() {
+  private async terminate() {
     if (this.terminated) {
       return;
     }
     this.terminated = true;
-    this.cdpProxy.stopServer();
+    await this.cdpProxy.stopServer();
     disposeAll(this.disposables);
-    vscode.commands.executeCommand("workbench.action.debug.stop", undefined, {
+    await vscode.commands.executeCommand("workbench.action.debug.stop", undefined, {
       sessionId: this.session.id,
     });
   }
