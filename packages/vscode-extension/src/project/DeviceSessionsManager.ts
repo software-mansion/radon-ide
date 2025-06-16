@@ -24,6 +24,9 @@ export type DeviceSessionsManagerDelegate = {
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void;
 };
 
+const MAX_ALLOWED_IOS_DEVICES = 3;
+const MAX_ALLOWED_ANDROID_DEVICES = 1;
+
 export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerInterface {
   private deviceSessions: Map<DeviceId, DeviceSession> = new Map();
   private activeSessionId: DeviceId | undefined;
@@ -127,6 +130,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
 
     this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
+    this.maybeWarnAboutRunningDevices();
     this.updateSelectedSession(newDeviceSession);
     this.deviceSessionManagerDelegate.onInitialized();
 
@@ -138,6 +142,36 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
       await newDeviceSession.start();
     } catch (e) {
       Logger.error("Couldn't start device session", e instanceof Error ? e.message : e);
+    }
+  }
+
+  private maybeWarnAboutRunningDevices() {
+    const shouldWarn = extensionContext.globalState.get<boolean>("warnAboutMultipleDevices", true);
+    if (!shouldWarn) {
+      return;
+    }
+
+    const [iosDevices, androidDevices] = _.partition(
+      this.deviceSessions.values().toArray(),
+      (session) => session.getState().deviceInfo.platform === DevicePlatform.IOS
+    );
+
+    if (
+      iosDevices.length > MAX_ALLOWED_IOS_DEVICES ||
+      androidDevices.length > MAX_ALLOWED_ANDROID_DEVICES
+    ) {
+      window
+        .showWarningMessage(
+          "You have multiple devices running. This may cause performance issues. " +
+            "Consider stopping some of them.",
+          "Don't show this again",
+          "Dismiss"
+        )
+        .then((selection) => {
+          if (selection === "Don't show this again") {
+            extensionContext.globalState.update("warnAboutMultipleDevices", false);
+          }
+        });
     }
   }
 
