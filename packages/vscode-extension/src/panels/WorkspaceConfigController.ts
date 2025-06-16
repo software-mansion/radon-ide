@@ -34,7 +34,7 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
         panelLocation: config.get<PanelLocation>("panelLocation")!,
         showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
         themeType: config.get<ThemeType>("themeType")!,
-        stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
+        stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
       };
 
       if (newConfig.panelLocation !== this.config.panelLocation) {
