@@ -29,8 +29,11 @@ export class ApplicationContext implements Disposable {
 
     await this.dependencyManager.runAllDependencyChecks();
 
+    disposeAll(this.disposables);
+
     this.launchConfig = new LaunchConfigController(newAppRoot);
     this.buildCache = new BuildCache(newAppRoot);
+    this.disposables.push(this.launchConfig, this.dependencyManager);
   }
 
   public dispose() {

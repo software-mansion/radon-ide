@@ -216,6 +216,16 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(commands.registerCommand("RNIDE.openChat", openChat));
 
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.nextRunningDevice", () =>
+      IDE.getInstanceIfExists()?.project.deviceSessionsManager.selectNextNthRunningSession(1)
+    )
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.previousRunningDevice", () =>
+      IDE.getInstanceIfExists()?.project.deviceSessionsManager.selectNextNthRunningSession(-1)
+    )
+  );
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
   // When it does happen, we open the IDE panel and restart the app.
