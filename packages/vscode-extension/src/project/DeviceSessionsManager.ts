@@ -193,6 +193,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     }
     previousSession?.deactivate();
     session.activate();
+    extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
     this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
   }
 
@@ -220,7 +221,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
 
     if (device) {
       Logger.debug("Device selected", deviceInfo.displayName);
-      extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, deviceInfo.id);
       return device;
     }
     return undefined;
