@@ -116,6 +116,18 @@
         "title": "Chat with Radon AI",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.nextRunningDevice",
+        "title": "Switch to next running device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.previousRunningDevice",
+        "title": "Switch to previous running device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -159,6 +171,16 @@
         "command": "RNIDE.captureScreenshot",
         "key": "ctrl+shift+A",
         "mac": "cmd+shift+A"
+      },
+      {
+        "command": "RNIDE.nextRunningDevice",
+        "key": "ctrl+shift+]",
+        "mac": "cmd+shift+]"
+      },
+      {
+        "command": "RNIDE.previousRunningDevice",
+        "key": "ctrl+shift+[",
+        "mac": "cmd+shift+["
       }
     ],
     "configuration": {
