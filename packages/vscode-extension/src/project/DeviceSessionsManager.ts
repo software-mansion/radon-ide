@@ -1,4 +1,4 @@
-import { commands, Disposable, window } from "vscode";
+import { Disposable, window } from "vscode";
 import _ from "lodash";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
@@ -32,7 +32,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   private activeSessionId: DeviceId | undefined;
   private findingDevice: boolean = false;
   private previousDevices: DeviceInfo[] = [];
-  private disposables: Disposable[] = [];
 
   constructor(
     private readonly applicationContext: ApplicationContext,
@@ -42,14 +41,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     this.findInitialDeviceAndStartSession();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
-    this.disposables.push(
-      commands.registerCommand("RNIDE.nextRunningDevice", () => this.selectNextNthRunningSession(1))
-    );
-    this.disposables.push(
-      commands.registerCommand("RNIDE.previousRunningDevice", () =>
-        this.selectNextNthRunningSession(-1)
-      )
-    );
   }
 
   public get selectedDeviceSession(): DeviceSession | undefined {
@@ -271,7 +262,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     return undefined;
   }
 
-  private selectNextNthRunningSession = _.throttle((offset: number) => {
+  public selectNextNthRunningSession = _.throttle((offset: number) => {
     const runningSessions = this.deviceSessions.keys().toArray();
     const currentSessionIndex =
       this.activeSessionId !== undefined ? runningSessions.indexOf(this.activeSessionId) : -offset;
@@ -281,7 +272,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   }, SWITCH_DEVICE_THROTTLE_MS);
 
   dispose() {
-    disposeAll(this.disposables);
     disposeAll(this.deviceSessions.values().toArray());
     this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.removeListener("devicesChanged", this.devicesChangedListener);
