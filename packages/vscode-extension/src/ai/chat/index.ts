@@ -2,9 +2,9 @@ import * as vscode from "vscode";
 import { Logger } from "../../Logger";
 import { getLicenseToken } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
-import { invokeToolCall, getSystemPrompt } from "./api";
 import { getChatHistory } from "./history";
 import { getReactNativePackagesPrompt } from "./packages";
+import { getSystemPrompt, invokeToolCall } from "../shared/api";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 const TOOLS_INTERACTION_LIMIT = 3;
@@ -19,20 +19,25 @@ async function processChatResponse(
     if (chunk instanceof vscode.LanguageModelTextPart) {
       stream.markdown(chunk.value);
     } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
+      const toolCall = chunk;
       Logger.info(CHAT_LOG, "Tool call requested");
-      const results = await invokeToolCall(chunk, jwt);
-
-      if (results.length === 0) {
-        stream.markdown("Radon AI couldn't execute tool call.");
-        return null;
+      const results = await invokeToolCall(toolCall.name, toolCall.input, toolCall.callId);
+      const toolMessages = [];
+      for (const response of results.content) {
+        if (response.type === "text") {
+          toolMessages.push(
+            vscode.LanguageModelChatMessage.Assistant(
+              `"${chunk.name}" has been called - results:\n\n\`\`\`\n${response}\n\`\`\``
+            )
+          );
+        } else {
+          // Chats with chat-participants do not support image tool outputs yet.
+          // This `else` is unreachable in practice, but might become reachable as a result of a coding mistake.
+          const msg = `"${chunk.name}" has been called - image-returning tools are not supported in participant chats.`;
+          getTelemetryReporter().sendTelemetryEvent("radon-chat:tool-output-error", { error: msg });
+          toolMessages.push(vscode.LanguageModelChatMessage.Assistant(msg));
+        }
       }
-
-      const toolMessages = results.map((result) =>
-        // result.content will always be a 1-long array of strings
-        vscode.LanguageModelChatMessage.Assistant(
-          `"${chunk.name}" has been called - results:\n\n\`\`\`\n${result.content[0]}\n\`\`\``
-        )
-      );
 
       return [
         ...toolMessages,
@@ -70,7 +75,7 @@ export function registerRadonChat(context: vscode.ExtensionContext) {
     const packages = await getReactNativePackagesPrompt();
 
     try {
-      const data = await getSystemPrompt(request.prompt, jwt);
+      const data = await getSystemPrompt(request.prompt);
       if (!data) {
         stream.markdown("Couldn't connect to Radon AI.");
         return { metadata: { command: "" } };

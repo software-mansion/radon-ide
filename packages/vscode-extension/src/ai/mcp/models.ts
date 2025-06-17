@@ -12,13 +12,10 @@ interface TextContent {
   text: string;
 }
 
-type ToolResponse = Promise<
-  | string
-  | {
-      content: (ImageContent | TextContent)[];
-      isError?: boolean;
-    }
->;
+type ToolResponse = {
+  content: (ImageContent | TextContent)[];
+  isError?: boolean;
+};
 
 interface ToolSchema {
   name: string;

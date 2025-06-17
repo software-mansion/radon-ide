@@ -5,8 +5,9 @@ import { z } from "zod";
 
 import { Logger } from "../../Logger";
 import { IDE } from "../../project/ide";
-import { getToolSchema, invokeToolCall } from "./api";
+import { getToolSchema, invokeToolCall } from "../shared/api";
 import { ToolResponse, ToolSchema } from "./models";
+import { textToToolResponse } from "./utils";
 
 function buildZodSchema(toolSchema: ToolSchema): z.ZodType<unknown, z.ZodTypeDef, unknown> {
   const props = Object.values(toolSchema.inputSchema.properties);
@@ -15,14 +16,14 @@ function buildZodSchema(toolSchema: ToolSchema): z.ZodType<unknown, z.ZodTypeDef
   return obj;
 }
 
-async function screenshotToolDefinition(): ToolResponse {
+async function screenshotToolDefinition(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
 
   if (!project || !project.deviceSession) {
-    return (
+    return textToToolResponse(
       "Could not capture a screenshot!\n" +
-      "The development viewport device is likely turned off.\n" +
-      "Please turn on the Radon IDE emulator before proceeding."
+        "The development viewport device is likely turned off.\n" +
+        "Please turn on the Radon IDE emulator before proceeding."
     );
   }
 
@@ -62,7 +63,7 @@ export async function startLocalMcpServer(port: number) {
       name: tool.name,
       description: tool.description,
       parameters: zodSchema,
-      execute: async (args): ToolResponse => {
+      execute: async (args): Promise<ToolResponse> => {
         return await invokeToolCall(tool.name, args);
       },
     });
