@@ -24,10 +24,11 @@ async function loadRadonAi() {
   try {
     mcpPort = await getOpenPort();
 
+    // Server has to be online before the config is written
+    await startLocalMcpServer(mcpPort);
+
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
     await updateMcpConfig(mcpPort);
-
-    await startLocalMcpServer(mcpPort);
 
     getTelemetryReporter().sendTelemetryEvent("radon-ai:mcp-started");
   } catch (error) {
