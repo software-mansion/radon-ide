@@ -63,7 +63,7 @@ function getHttpServer(): Express {
   });
 
   const handleSessionRequest = async (req: express.Request, res: express.Response) => {
-    const sessionId = req.headers["Mcp-Session-Id"] as string | undefined;
+    const sessionId = req.headers["mcp-session-id"] as string | undefined;
     if (!sessionId || !transports[sessionId]) {
       res.status(400).send("Invalid or missing session ID");
       return;
