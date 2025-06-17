@@ -10,6 +10,7 @@ import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -19,13 +20,34 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
   )
 );
 
+function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEvent) => void }) {
+  return (
+    <div
+      onPointerUpCapture={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onClick={onStopClick}>
+      <Badge variant="activity-bar-counter" className="running-badge-button">
+        <span />
+      </Badge>
+    </div>
+  );
+}
+
 function renderDevices(
   deviceLabel: string,
   devices: DeviceInfo[],
-  selectedProjectDevice?: DeviceInfo
+  selectedProjectDevice: DeviceInfo | undefined,
+  runningSessionIds: string[],
+  handleDeviceStop: (deviceId: string) => void
 ) {
   if (devices.length === 0) {
     return null;
+  }
+
+  function isRunning(deviceId: string) {
+    return runningSessionIds.includes(deviceId);
   }
 
   return (
@@ -39,46 +61,26 @@ function renderDevices(
           title={device.displayName}
           subtitle={device.systemName}
           disabled={!device.available}
-          isSelected={device.id === selectedProjectDevice?.id}
-        />
+          isSelected={device.id === selectedProjectDevice?.id}>
+          {isRunning(device.id) && (
+            <RunningBadgeButton onStopClick={() => handleDeviceStop(device.id)} />
+          )}
+        </RichSelectItem>
       ))}
     </Select.Group>
   );
 }
 
-function partitionDevices(
-  devices: DeviceInfo[],
-  runningSessionIds: string[],
-  selectedDevice: DeviceInfo | undefined
-): Record<string, DeviceInfo[]> {
+function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
   const validDevices = devices.filter(({ modelId }) => modelId.length > 0);
 
-  let [runningDevices, stoppedDevices] = _.partition(validDevices, ({ id }) =>
-    runningSessionIds.includes(id)
-  );
-
-  if (selectedDevice) {
-    // If there's only a single selected, running device, we don't place it in a separate section.
-    if (runningDevices.length <= 1) {
-      stoppedDevices = validDevices;
-      runningDevices = [];
-    } else {
-      // move the selected device to the top of the running devices list
-      const selectedDeviceIdx = runningDevices.findIndex(({ id }) => id === selectedDevice.id);
-      console.assert(selectedDeviceIdx !== -1, "Selected device must be running");
-      runningDevices.splice(selectedDeviceIdx, 1);
-      runningDevices.unshift(selectedDevice);
-    }
-  }
-
   const [iosDevices, androidDevices] = _.partition(
-    stoppedDevices,
+    validDevices,
     ({ platform }) => platform === DevicePlatform.IOS
   );
   return {
-    "Running devices": runningDevices,
-    "iOS": iosDevices,
-    "Android": androidDevices,
+    iOS: iosDevices,
+    Android: androidDevices,
   };
 }
 
@@ -95,7 +97,7 @@ function DeviceSelect() {
   const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
 
-  const deviceSections = partitionDevices(devices, runningSessionIds, selectedDevice);
+  const deviceSections = partitionDevices(devices);
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
@@ -110,6 +112,10 @@ function DeviceSelect() {
         });
       }
     }
+  };
+
+  const handleDeviceStop = (deviceId: string) => {
+    deviceSessionsManager.terminateSession(deviceId);
   };
 
   const placeholderText = hasNoDevices ? "No devices found" : "Select device";
@@ -146,7 +152,13 @@ function DeviceSelect() {
           </Select.ScrollUpButton>
           <Select.Viewport className="device-select-viewport">
             {Object.entries(deviceSections).map(([label, sectionDevices]) =>
-              renderDevices(label, sectionDevices, selectedProjectDevice)
+              renderDevices(
+                label,
+                sectionDevices,
+                selectedProjectDevice,
+                runningSessionIds,
+                handleDeviceStop
+              )
             )}
             {devices.length > 0 && <Select.Separator className="device-select-separator" />}
             <SelectItem value="manage">Manage devices...</SelectItem>

@@ -71,7 +71,9 @@ function DeviceRow({
         <div className="device-title">
           {isSelected ? <b>{deviceInfo.displayName}</b> : deviceInfo.displayName}
         </div>
-        <div className="device-subtitle">{deviceSubtitle}</div>
+        <div className="device-subtitle" title={deviceSubtitle}>
+          {deviceSubtitle}
+        </div>
       </div>
       <span className="device-button-group">
         {isRunning ? (
