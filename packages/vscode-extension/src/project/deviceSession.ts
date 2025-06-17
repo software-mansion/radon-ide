@@ -569,8 +569,6 @@ export class DeviceSession
   }
 
   private async launchApp(cancelToken: CancelToken) {
-    cancelToken.cancel();
-
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
