@@ -58,7 +58,6 @@ function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
     ({ platform }) => platform === DevicePlatform.IOS
   );
   return {
-    // "Running devices": runningDevices,
     iOS: iosDevices,
     Android: androidDevices,
   };
