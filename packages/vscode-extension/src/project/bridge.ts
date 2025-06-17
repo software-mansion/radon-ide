@@ -1,5 +1,6 @@
 import { Disposable } from "vscode";
 import { NavigationRoute } from "../common/Project";
+import { Logger } from "../Logger";
 
 export interface RadonInspectorBridgeEvents {
   appReady: [];
@@ -38,7 +39,22 @@ export abstract class BaseInspectorBridge implements RadonInspectorBridge {
     event: K,
     payload: RadonInspectorBridgeEvents[K]
   ) {
-    this.listeners.get(event)?.forEach((listener) => listener(payload));
+    const listeners = this.listeners.get(event);
+    if (!listeners) {
+      return;
+    }
+
+    // We need to clone the listeners array to avoid issues with concurrent modifications
+    // it is a common pattern to create listeners that dispose themselves which could lead to 
+    // issues if we modify the array while iterating over it.
+    const listenersIterable = [...listeners]
+    listenersIterable.forEach((listener) => {
+      try {
+        listener(payload);
+      } catch (error) {
+        Logger.error(`[Inspector Bridge] Error in listener for event ${event}:`, error);
+      }
+    });
   }
 
   onEvent<K extends keyof RadonInspectorBridgeEvents>(
