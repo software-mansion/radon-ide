@@ -65,9 +65,6 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.device-label:hover .device-subtitle {
-  white-space: normal;
-}
 .device-icon,
 .device-icon-selected {
   width: 32px;

@@ -14,7 +14,7 @@ function DeviceRemovalConfirmation({
 }) {
   const [loading, setLoading] = useState(false);
 
-  const { deviceManager } = useDevices();
+  const { deviceManager, deviceSessionsManager } = useDevices();
 
   const { showHeader } = useModal();
   useEffect(() => {
@@ -45,6 +45,7 @@ function DeviceRemovalConfirmation({
           onClick={async () => {
             setLoading(true);
             try {
+              await deviceSessionsManager.terminateSession(deviceInfo.id);
               await deviceManager.removeDevice(deviceInfo);
             } finally {
               onClose();

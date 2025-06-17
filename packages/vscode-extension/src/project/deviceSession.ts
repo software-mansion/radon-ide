@@ -301,6 +301,7 @@ export class DeviceSession
   build in vscode dispose system ignores async keyword and works synchronously.
   */
   public async dispose() {
+    this.cancelToken?.cancel();
     await this.deactivate();
     await this.debugSession?.dispose();
     this.disposableBuild?.dispose();
@@ -568,8 +569,6 @@ export class DeviceSession
   }
 
   private async launchApp(cancelToken: CancelToken) {
-    cancelToken.cancel();
-
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
