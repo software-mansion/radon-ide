@@ -5,7 +5,6 @@ import "./Dropdown.css";
 import "./RichSelectItem.css";
 import Tooltip from "./Tooltip";
 import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
-import Button from "./Button";
 
 function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEvent) => void }) {
   return (
