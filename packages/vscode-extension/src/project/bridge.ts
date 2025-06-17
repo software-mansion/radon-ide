@@ -45,9 +45,9 @@ export abstract class BaseInspectorBridge implements RadonInspectorBridge {
     }
 
     // We need to clone the listeners array to avoid issues with concurrent modifications
-    // it is a common pattern to create listeners that dispose themselves which could lead to 
+    // it is a common pattern to create listeners that dispose themselves which could lead to
     // issues if we modify the array while iterating over it.
-    const listenersIterable = [...listeners]
+    const listenersIterable = [...listeners];
     listenersIterable.forEach((listener) => {
       try {
         listener(payload);

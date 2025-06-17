@@ -68,7 +68,8 @@ export class DeviceBootError extends Error {
 }
 
 export class DeviceSession
-  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate, BuildManagerDelegate {
+  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate, BuildManagerDelegate
+{
   private isActive = false;
   private metro: MetroLauncher;
   private toolsManager: ToolsManager;
@@ -576,7 +577,7 @@ export class DeviceSession
     // seems like a problem with app connecting to Metro and using embedded
     // bundle instead.
     const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
-    const waitForAppReady = shouldWaitForAppLaunch ? cancelToken.adapt(this.devtools.appReady()) : Promise.resolve();
+    const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.updateStartupMessage(StartupMessage.Launching);
     await cancelToken.adapt(
