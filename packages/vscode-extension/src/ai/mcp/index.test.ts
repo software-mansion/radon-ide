@@ -20,14 +20,14 @@ type ExtendedMcpConfig = {
 
 describe("creatingMcpConfig", () => {
   const realPort = 1234;
-  const realUrl = `http://localhost:${realPort}/mcp`;
+  const realUrl = `http://127.0.0.1:${realPort}/mcp`;
   const realType = "http";
 
   const mockUrl = "https://mock-url.local/mock";
   const mockType = "mock";
 
   const newPort = 4321;
-  const newUrl = `http://localhost:${newPort}/mcp`;
+  const newUrl = `http://127.0.0.1:${newPort}/mcp`;
   const newType = realType;
 
   it("should update the config", async () => {
