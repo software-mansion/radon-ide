@@ -20,6 +20,5 @@ export function textToToolResponse(text: string): ToolResponse {
         text,
       },
     ],
-    isError: false,
   };
 }

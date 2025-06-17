@@ -1,20 +1,18 @@
 interface ImageContent {
+  [x: string]: unknown;
   type: "image";
   data: string;
   mimeType: `image/${string}`;
-  model_config?: {
-    extra: "allow";
-  };
 }
 
 interface TextContent {
+  [x: string]: unknown;
   type: "text";
   text: string;
 }
 
 type ToolResponse = {
   content: (ImageContent | TextContent)[];
-  isError?: boolean;
 };
 
 interface ToolSchema {
@@ -46,8 +44,8 @@ enum EditorType {
 }
 
 type McpEntry = {
-  url: `http://localhost:${number}/sse`;
-  type: "sse";
+  url: `http://localhost:${number}/mcp`;
+  type: "http";
 };
 
 export { EditorType, McpEntry, TextContent, ToolResponse, ToolResult, ToolSchema, ToolsInfo };

@@ -1,35 +1,40 @@
-import { LiteMCP } from "litemcp";
 import { z } from "zod";
 
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { getToolSchema, invokeToolCall } from "../shared/api";
-import { ToolResponse, ToolSchema } from "./models";
+import { ToolSchema } from "./models";
 import { screenshotToolDef } from "./toolDefinitions";
 
-function buildZodSchema(toolSchema: ToolSchema): z.ZodType<unknown, z.ZodTypeDef, unknown> {
+function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
   const props = Object.values(toolSchema.inputSchema.properties);
   const entries = props.map((v) => [v.title, z.string()]);
-  const obj = z.object(Object.fromEntries(entries));
+  const obj = Object.fromEntries(entries);
   return obj;
 }
 
-export async function registerMcpTools(server: LiteMCP) {
-  server.addTool({
-    name: "view_screenshot",
-    description: "Get a screenshot of the app development viewport.",
-    execute: screenshotToolDef,
-  });
+export async function registerMcpTools(server: McpServer) {
+  server.registerTool(
+    "view_screenshot",
+    {
+      description: "Get a screenshot of the app development viewport.",
+      inputSchema: {},
+    },
+    screenshotToolDef
+  );
 
   const toolSchema = await getToolSchema();
 
   for (const tool of toolSchema.tools) {
     const zodSchema = buildZodSchema(tool);
-    server.addTool({
-      name: tool.name,
-      description: tool.description,
-      parameters: zodSchema,
-      execute: async (args): Promise<ToolResponse> => {
-        return await invokeToolCall(tool.name, args);
+    server.registerTool(
+      tool.name,
+      {
+        description: tool.description,
+        inputSchema: zodSchema,
       },
-    });
+      async (args) => {
+        return await invokeToolCall(tool.name, args);
+      }
+    );
   }
 }

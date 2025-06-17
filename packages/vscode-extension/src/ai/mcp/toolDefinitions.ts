@@ -1,8 +1,8 @@
 import { readFileSync } from "fs";
 
 import { IDE } from "../../project/ide";
-import { ToolResponse } from "./models";
 import { textToToolResponse } from "./utils";
+import { ToolResponse } from "./models";
 
 export async function screenshotToolDef(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -25,11 +25,7 @@ export async function screenshotToolDef(): Promise<ToolResponse> {
         type: "image",
         data: contents,
         mimeType: "image/png",
-        model_config: {
-          extra: "allow",
-        },
       },
     ],
-    isError: false,
   };
 }
