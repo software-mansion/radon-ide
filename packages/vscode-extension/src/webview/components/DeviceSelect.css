@@ -121,7 +121,7 @@
 
 .running-badge-button:hover {
   background-color: var(--swm-device-select-stop-badge-background);
-  color: var(--swm-device-select-stop-badge-foreground)
+  color: var(--swm-device-select-stop-badge-foreground);
 }
 
 /* Invisible text for layout stability */
