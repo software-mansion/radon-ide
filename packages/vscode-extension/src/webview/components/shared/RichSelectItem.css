@@ -1,12 +1,15 @@
 .rich-item {
-  display: grid;
-  grid-template-columns: 32px 1fr;
+  display: flex;
+  min-width: 132px;
   align-items: center;
   gap: 5px;
   line-height: 1;
   height: 48px;
   border-radius: 4px;
   padding: 0 5px;
+}
+.rich-item-content {
+  flex: 1;
 }
 .rich-item[data-highlighted] {
   outline: none;
@@ -29,7 +32,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  width: 185px;
+  max-width: 185px;
 }
 .rich-item-icon,
 .rich-item-icon-selected {

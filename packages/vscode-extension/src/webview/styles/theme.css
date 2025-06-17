@@ -171,6 +171,8 @@ body[data-vscode-theme-kind="vscode-high-contrast-light"] {
   --swm-device-select-separator: var(--navy-light-40);
   --swm-device-select-highlighted: var(--off-white);
   --swm-device-select-disabled-text: var(--navy-light-20);
+  --swm-device-select-stop-badge-background: var(--red-light-100);
+  --swm-device-select-stop-badge-foreground: var(--navy-light-10);
   --swm-device-select-label: var(--navy-light-60);
   --swm-device-select-rich-item-text: var(--navy-light-100);
   --swm-device-select-rich-item-subtitle: var(--navy-light-40);
@@ -347,6 +349,8 @@ body[data-vscode-theme-kind="vscode-high-contrast"] {
   --swm-device-select-separator: var(--background-dark-50);
   --swm-device-select-highlighted: var(--background-dark-60);
   --swm-device-select-disabled-text: var(--background-dark-60);
+  --swm-device-select-stop-badge-background: var(--red-dark-100);
+  --swm-device-select-stop-badge-foreground: var(--off-white);
   --swm-device-select-label: var(--background-dark-30);
   --swm-device-select-rich-item-text: var(--off-white);
   --swm-device-select-rich-item-subtitle: var(--background-dark-10);
@@ -530,6 +534,8 @@ body[data-use-code-theme="true"] {
   --swm-device-select-highlighted: var(--vscode-list-hoverBackground);
   --swm-device-select-disabled-text: var(--vscode-disabledForeground);
   --swm-device-select-label: var(--vscode-textSecondaryForeground);
+  --swm-device-select-stop-badge-background: var(--vscode-statusBarItem-errorBackground);
+  --swm-device-select-stop-badge-foreground: var(--vscode-statusBarItem-errorForeground);
   --swm-device-select-rich-item-text: var(--vscode-foreground);
   --swm-device-select-rich-item-subtitle: var(--vscode-textSecondaryForeground);
   --swm-device-select-rich-item-icon: var(--vscode-textSecondaryForeground);

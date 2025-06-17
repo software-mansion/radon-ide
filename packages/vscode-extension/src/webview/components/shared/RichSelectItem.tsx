@@ -37,17 +37,11 @@ const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSe
         ref={forwardedRef}
         {...props}>
         <div className={isSelected ? "rich-item-icon-selected" : "rich-item-icon"}>{icon}</div>
-        <div>
-          {isSelected ? (
-            <div className="rich-item-title">
-              <b>{title}</b>
-            </div>
-          ) : (
-            <div className="rich-item-title">{title}</div>
-          )}
-
+        <div className="rich-item-content">
+          <div className="rich-item-title">{isSelected ? <b>{title}</b> : title}</div>
           {renderSubtitle()}
         </div>
+        {children}
       </Select.Item>
     );
   }
