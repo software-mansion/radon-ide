@@ -1,12 +1,15 @@
 .rich-item {
-  display: grid;
-  grid-template-columns: 32px 1fr;
+  display: flex;
   align-items: center;
   gap: 5px;
   line-height: 1;
   height: 48px;
   border-radius: 4px;
   padding: 0 5px;
+  /* max-width: 185px; */
+}
+.rich-item-content {
+  flex: 1;
 }
 .rich-item[data-highlighted] {
   outline: none;
@@ -29,7 +32,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  width: 185px;
+  max-width: 185px;
 }
 .rich-item-icon,
 .rich-item-icon-selected {
@@ -45,4 +48,36 @@
 .rich-item-icon-selected {
   background-color: var(--swm-device-icon-background-selected);
   color: var(--swm-device-icon-selected);
+}
+
+.running-badge-button {
+  cursor: pointer;
+}
+
+.running-badge-button:hover {
+  background-color: var(--swm-device-select-stop-badge-background);
+  color: var(--swm-device-select-stop-badge-foreground)
+}
+
+/* Invisible text for layout stability */
+.running-badge-button::before {
+  content: "Running";
+  visibility: hidden;
+  display: block;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Actual visible text */
+.running-badge-button span {
+  display: inline-block;
+  transition: opacity 0.3s ease;
+}
+
+.running-badge-button:hover span::before {
+  content: "Stop";
+}
+
+.running-badge-button span::before {
+  content: "Running";
 }

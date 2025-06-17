@@ -530,6 +530,8 @@ body[data-use-code-theme="true"] {
   --swm-device-select-highlighted: var(--vscode-list-hoverBackground);
   --swm-device-select-disabled-text: var(--vscode-disabledForeground);
   --swm-device-select-label: var(--vscode-textSecondaryForeground);
+  --swm-device-select-stop-badge-background: var(--vscode-statusBarItem-errorBackground);
+  --swm-device-select-stop-badge-foreground: var(--vscode-statusBarItem-errorForeground);
   --swm-device-select-rich-item-text: var(--vscode-foreground);
   --swm-device-select-rich-item-subtitle: var(--vscode-textSecondaryForeground);
   --swm-device-select-rich-item-icon: var(--vscode-textSecondaryForeground);
