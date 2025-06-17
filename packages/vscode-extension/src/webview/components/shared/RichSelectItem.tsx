@@ -4,38 +4,17 @@ import "../DeviceSelect.css";
 import "./Dropdown.css";
 import "./RichSelectItem.css";
 import Tooltip from "./Tooltip";
-import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
-
-function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEvent) => void }) {
-  return (
-    <div
-      onPointerUpCapture={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onClick={onStopClick}>
-      <Badge variant="activity-bar-counter" className="running-badge-button">
-        <span />
-      </Badge>
-    </div>
-  );
-}
 
 interface RichSelectItemProps extends Select.SelectItemProps {
   icon: React.ReactNode;
   title: string;
   subtitle?: string;
   isSelected?: boolean;
-  isRunning?: boolean;
-  onStopClick?: (e: React.MouseEvent) => void;
   className?: string;
 }
 
 const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSelectItemProps>>(
-  (
-    { children, icon, title, subtitle, isSelected, isRunning, onStopClick, className, ...props },
-    forwardedRef
-  ) => {
+  ({ children, icon, title, subtitle, isSelected, className, ...props }, forwardedRef) => {
     function renderSubtitle() {
       if (!subtitle) {
         return null;
@@ -62,7 +41,7 @@ const RichSelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<RichSe
           <div className="rich-item-title">{isSelected ? <b>{title}</b> : title}</div>
           {renderSubtitle()}
         </div>
-        {isRunning && <RunningBadgeButton onStopClick={onStopClick} />}
+        {children}
       </Select.Item>
     );
   }

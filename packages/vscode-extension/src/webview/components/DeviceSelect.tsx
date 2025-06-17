@@ -10,6 +10,7 @@ import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -18,6 +19,21 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
     </Select.Item>
   )
 );
+
+function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEvent) => void }) {
+  return (
+    <div
+      onPointerUpCapture={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onClick={onStopClick}>
+      <Badge variant="activity-bar-counter" className="running-badge-button">
+        <span />
+      </Badge>
+    </div>
+  );
+}
 
 function renderDevices(
   deviceLabel: string,
@@ -28,6 +44,10 @@ function renderDevices(
 ) {
   if (devices.length === 0) {
     return null;
+  }
+
+  function isRunning(deviceId: string) {
+    return runningSessionIds.includes(deviceId);
   }
 
   return (
@@ -41,10 +61,11 @@ function renderDevices(
           title={device.displayName}
           subtitle={device.systemName}
           disabled={!device.available}
-          isSelected={device.id === selectedProjectDevice?.id}
-          isRunning={runningSessionIds.includes(device.id)}
-          onStopClick={() => handleDeviceStop(device.id)}
-        />
+          isSelected={device.id === selectedProjectDevice?.id}>
+          {isRunning(device.id) && (
+            <RunningBadgeButton onStopClick={() => handleDeviceStop(device.id)} />
+          )}
+        </RichSelectItem>
       ))}
     </Select.Group>
   );

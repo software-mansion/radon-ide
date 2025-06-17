@@ -114,3 +114,36 @@
     left 200ms ease-in-out,
     opacity 200ms ease-in-out;
 }
+
+.running-badge-button {
+  cursor: pointer;
+}
+
+.running-badge-button:hover {
+  background-color: var(--swm-device-select-stop-badge-background);
+  color: var(--swm-device-select-stop-badge-foreground)
+}
+
+/* Invisible text for layout stability */
+.running-badge-button::before {
+  content: "Running";
+  visibility: hidden;
+  display: block;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Actual visible text */
+.running-badge-button span {
+  display: inline-block;
+  transition: opacity 0.3s ease;
+}
+
+.running-badge-button:hover span::before {
+  content: "Stop";
+}
+
+.running-badge-button span::before {
+  content: "Running";
+}
+
