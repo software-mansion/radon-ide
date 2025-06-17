@@ -1,5 +1,6 @@
 .rich-item {
   display: flex;
+  min-width: 132px;
   align-items: center;
   gap: 5px;
   line-height: 1;
