@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { default as express, Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import z from "zod";
 import { registerMcpTools } from "./toolRegistration";
 import { Logger } from "../../Logger";
 
@@ -41,17 +40,6 @@ function getHttpServer(): Express {
         name: "example-server",
         version: "1.0.0",
       });
-
-      server.registerTool(
-        "add",
-        {
-          description: "Add two numbers",
-          inputSchema: { a: z.number(), b: z.number() },
-        },
-        async ({ a, b }) => ({
-          content: [{ type: "text", text: String(a + b) }],
-        })
-      );
 
       await registerMcpTools(server);
 
