@@ -37,7 +37,7 @@ function getHttpServer(): Express {
         }
       };
       const server = new McpServer({
-        name: "example-server",
+        name: "RadonAI",
         version: "1.0.0",
       });
 
