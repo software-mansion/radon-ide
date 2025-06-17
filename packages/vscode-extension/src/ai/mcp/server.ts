@@ -86,7 +86,7 @@ export async function startLocalMcpServer(port: number) {
   await new Promise<void>((resolve, reject) => {
     try {
       server.once("error", reject);
-      server.listen(port, () => {
+      server.listen(port, "127.0.0.1", () => {
         server.off("error", reject);
         resolve();
       });
