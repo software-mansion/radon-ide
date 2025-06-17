@@ -6,7 +6,7 @@ import { CHAT_LOG } from "../chat";
 import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
 
-const BACKEND_URL = "http://localhost:8000/api/";
+const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";
 const MCP_LOG = "[MCP]";
 const PLACEHOLDER_ID = "3241"; // this placeholder is needed by the API, but the value doesn't matter
 
