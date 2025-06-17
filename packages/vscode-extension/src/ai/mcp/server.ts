@@ -1,73 +1,12 @@
-import { readFileSync } from "fs";
-
 import { LiteMCP } from "litemcp";
-import { z } from "zod";
 
 import { Logger } from "../../Logger";
-import { IDE } from "../../project/ide";
-import { getToolSchema, invokeToolCall } from "../shared/api";
-import { ToolResponse, ToolSchema } from "./models";
-import { textToToolResponse } from "./utils";
-
-function buildZodSchema(toolSchema: ToolSchema): z.ZodType<unknown, z.ZodTypeDef, unknown> {
-  const props = Object.values(toolSchema.inputSchema.properties);
-  const entries = props.map((v) => [v.title, z.string()]);
-  const obj = z.object(Object.fromEntries(entries));
-  return obj;
-}
-
-async function screenshotToolDefinition(): Promise<ToolResponse> {
-  const project = IDE.getInstanceIfExists()?.project;
-
-  if (!project || !project.deviceSession) {
-    return textToToolResponse(
-      "Could not capture a screenshot!\n" +
-        "The development viewport device is likely turned off.\n" +
-        "Please turn on the Radon IDE emulator before proceeding."
-    );
-  }
-
-  const screenshot = await project.deviceSession.captureScreenshot();
-
-  const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
-
-  return {
-    content: [
-      {
-        type: "image",
-        data: contents,
-        mimeType: "image/png",
-        model_config: {
-          extra: "allow",
-        },
-      },
-    ],
-    isError: false,
-  };
-}
+import { registerMcpTools } from "./toolRegistration";
 
 export async function startLocalMcpServer(port: number) {
   const server = new LiteMCP("RadonAiServer", "1.0.0");
 
-  server.addTool({
-    name: "view_screenshot",
-    description: "Get a screenshot of the app development viewport.",
-    execute: screenshotToolDefinition,
-  });
-
-  const toolSchema = await getToolSchema();
-
-  for (const tool of toolSchema.tools) {
-    const zodSchema = buildZodSchema(tool);
-    server.addTool({
-      name: tool.name,
-      description: tool.description,
-      parameters: zodSchema,
-      execute: async (args): Promise<ToolResponse> => {
-        return await invokeToolCall(tool.name, args);
-      },
-    });
-  }
+  await registerMcpTools(server);
 
   Logger.info(`Starting local MCP server on port: ${port}`);
 
