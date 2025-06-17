@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { AddressInfo } from "node:net";
 import { default as express, Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -78,22 +79,21 @@ function getHttpServer(): Express {
   return app;
 }
 
-export async function startLocalMcpServer(port: number) {
+export async function startLocalMcpServer(): Promise<number> {
   const server = getHttpServer();
 
-  Logger.info(`Starting local MCP server on port: ${port}`);
-
-  await new Promise<void>((resolve, reject) => {
+  return await new Promise<number>((resolve, reject) => {
     try {
       server.once("error", reject);
-      server.listen(port, "127.0.0.1", () => {
-        server.off("error", reject);
-        resolve();
+      const listener = server.listen(0, "127.0.0.1");
+      listener.on("listening", () => {
+        // on "listening", listener.address() will always return AddressInfo
+        const addressInfo = listener.address() as AddressInfo;
+        Logger.info(`Started local MCP server on port ${addressInfo.port}.`);
+        resolve(addressInfo.port);
       });
     } catch {
       reject();
     }
   });
-
-  return port;
 }

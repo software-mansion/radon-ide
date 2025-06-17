@@ -1,6 +1,4 @@
-import { kill } from "process";
 import { Logger } from "../../Logger";
-import { getOpenPort } from "../../utilities/common";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
 import { insertRadonEntry, newMcpConfig } from "./configCreator";
@@ -14,18 +12,10 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-let mcpPort: number | null = null;
-
 async function loadRadonAi() {
-  if (mcpPort !== null) {
-    return mcpPort;
-  }
-
   try {
-    mcpPort = await getOpenPort();
-
     // Server has to be online before the config is written
-    await startLocalMcpServer(mcpPort);
+    const mcpPort = await startLocalMcpServer();
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
     await updateMcpConfig(mcpPort);
@@ -41,10 +31,6 @@ async function loadRadonAi() {
 export default function registerRadonAi() {
   watchLicenseTokenChange(() => {
     // starts regardless of token validity - offline tools don't require a valid token
-    if (mcpPort !== null) {
-      // kill previous instance
-      kill(mcpPort);
-    }
     loadRadonAi();
   });
 }
