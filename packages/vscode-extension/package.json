@@ -37,6 +37,12 @@
   },
   "main": "./dist/extension.js",
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "RadonAIMCPProvider",
+        "label": "MCP server integrating with Radon IDE"
+      }
+    ],
     "commands": [
       {
         "command": "RNIDE.openDevMenu",
