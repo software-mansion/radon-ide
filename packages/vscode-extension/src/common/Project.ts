@@ -15,6 +15,10 @@ export type DeviceSettings = {
   locale: Locale;
   replaysEnabled: boolean;
   showTouches: boolean;
+  camera: {
+    back: "emulated" | "none" | "webcam0" | "virtualscene";
+    front: "emulated" | "none" | "webcam0";
+  };
 };
 
 export type ToolState = {

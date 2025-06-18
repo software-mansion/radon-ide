@@ -1,0 +1,106 @@
+.camera-settings-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 300px;
+}
+
+.camera-settings-content {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.camera-setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.camera-setting-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--vscode-foreground);
+}
+
+.camera-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--vscode-dropdown-background);
+  color: var(--vscode-dropdown-foreground);
+  border: 1px solid var(--vscode-dropdown-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  min-width: 200px;
+  transition: background-color 0.1s;
+}
+
+.camera-dropdown-trigger:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.camera-dropdown-trigger:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.camera-settings-footer {
+  padding: 20px;
+  border-top: 1px solid var(--vscode-widget-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Confirmation view styles */
+.camera-change-wrapper {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 400px;
+}
+
+.camera-change-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--vscode-foreground);
+  margin: 0;
+}
+
+.camera-change-subtitle {
+  font-size: 13px;
+  color: var(--vscode-descriptionForeground);
+  margin: 0;
+}
+
+.camera-change-details {
+  background-color: var(--vscode-textBlockQuote-background);
+  border-left: 3px solid var(--vscode-textBlockQuote-border);
+  padding: 12px 16px;
+  border-radius: 4px;
+}
+
+.camera-change-details p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+.camera-change-details strong {
+  color: var(--vscode-foreground);
+}
+
+.camera-change-button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.camera-change-button {
+  min-width: 100px;
+} 

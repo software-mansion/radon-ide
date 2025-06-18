@@ -49,6 +49,10 @@ const defaultDeviceSettings: DeviceSettings = {
   locale: "en_US",
   replaysEnabled: false,
   showTouches: false,
+  camera: {
+    back: "virtualscene",
+    front: "emulated",
+  },
 };
 
 const ProjectContext = createContext<ProjectContextProps>({
