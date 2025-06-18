@@ -5,7 +5,7 @@ import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
 import { startLocalMcpServer } from "./server";
 import { MCP_LOG } from "./utils";
-import { lm, McpHttpServerDefinition, Uri, EventEmitter } from "vscode";
+import { lm, McpHttpServerDefinition, Uri, EventEmitter, version } from "vscode";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
 
@@ -15,7 +15,7 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-export function loadRadonAIOnVscode1_100() {
+export function loadRadonAIOnVscode1_101() {
   const serverStartPromise = startLocalMcpServer();
   const didChangeEmitter = new EventEmitter<void>();
 
@@ -66,13 +66,16 @@ async function loadRadonAI() {
 }
 
 export default function registerRadonAi() {
-  // @ts-ignore lm.registerMcpServerDefinitionProvider API is only availble in VSCode 1.100+, we do runtime check here as it shouldn't be used in Cursor or Windsurf
-  if (lm.registerMcpServerDefinitionProvider) {
+  if (
+    // @ts-ignore lm.registerMcpServerDefinitionProvider API is only availble in VSCode 1.101+, we do runtime check here as it shouldn't be used in Cursor or Windsurf
+    lm.registerMcpServerDefinitionProvider &&
+    version.localeCompare("1.101.0", undefined, { numeric: true }) >= 0
+  ) {
     // We need to register MCP definition before extension's activate resolves.
     // As this is a sync call, we don't need to await for the server to actually load
     // and we can simply return here to not delay the activation flow.
     // We will need the server to start before
-    return loadRadonAIOnVscode1_100();
+    return loadRadonAIOnVscode1_101();
   } else {
     watchLicenseTokenChange(() => {
       loadRadonAI();
