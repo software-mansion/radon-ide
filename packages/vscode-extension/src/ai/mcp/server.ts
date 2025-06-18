@@ -5,38 +5,30 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { registerMcpTools } from "./toolRegistration";
 import { Logger } from "../../Logger";
+import { Session } from "./models";
 
-// Persistant store for MCP sessions.
-const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
+let session: Session = null;
 
 function getHttpServer(): Express {
   const app = express();
   app.use(express.json());
 
   app.post("/mcp", async (req, res) => {
-    // Check for existing session ID
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
-    let transport: StreamableHTTPServerTransport;
 
-    if (sessionId && transports[sessionId]) {
-      // Recycle transport
-      transport = transports[sessionId];
-    } else if (!sessionId) {
-      // New transport
-      transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (sid) => {
-          // Store the transport by session ID
-          transports[sid] = transport;
-        },
-      });
-
-      // Clean up transport when closed
-      transport.onclose = () => {
-        if (transport.sessionId) {
-          delete transports[transport.sessionId];
-        }
+    if (!sessionId || !session || sessionId !== session.sessionId) {
+      const newSessionId = randomUUID();
+      session = {
+        sessionId: newSessionId,
+        transport: new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => newSessionId,
+        }),
       };
+
+      session.transport.onclose = () => {
+        session = null;
+      };
+
       const server = new McpServer({
         name: "RadonAI",
         version: "1.0.0",
@@ -44,34 +36,20 @@ function getHttpServer(): Express {
 
       await registerMcpTools(server);
 
-      // Connect to the MCP server
-      await server.connect(transport);
-    } else {
-      // Invalid request
-      res.status(400).json({
-        jsonrpc: "2.0",
-        error: {
-          code: -32000,
-          message: "Bad Request: No valid session ID provided",
-        },
-        id: null,
-      });
-      return;
+      await server.connect(session.transport);
     }
 
-    // Handle the request
-    await transport.handleRequest(req, res, req.body);
+    await session?.transport.handleRequest(req, res, req.body);
   });
 
   const handleSessionRequest = async (req: express.Request, res: express.Response) => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
-    if (!sessionId || !transports[sessionId]) {
+    if (!sessionId || !session || sessionId !== session.sessionId) {
       res.status(400).send("Invalid or missing session ID");
       return;
     }
 
-    const transport = transports[sessionId];
-    await transport.handleRequest(req, res);
+    await session.transport.handleRequest(req, res);
   };
 
   app.get("/mcp", handleSessionRequest);

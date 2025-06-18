@@ -1,3 +1,5 @@
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
+
 interface ImageContent {
   [x: string]: unknown;
   type: "image";
@@ -48,4 +50,18 @@ type McpEntry = {
   type: "http";
 };
 
-export { EditorType, McpEntry, TextContent, ToolResponse, ToolResult, ToolSchema, ToolsInfo };
+type Session = {
+  sessionId: string;
+  transport: StreamableHTTPServerTransport;
+} | null;
+
+export {
+  EditorType,
+  Session,
+  McpEntry,
+  TextContent,
+  ToolResponse,
+  ToolResult,
+  ToolSchema,
+  ToolsInfo,
+};
