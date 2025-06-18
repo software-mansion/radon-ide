@@ -29,7 +29,6 @@ import RecordingIcon from "../components/icons/RecordingIcon";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
 import AppRootSelect from "../components/AppRootSelect";
-import { vscode } from "../utilities/vscode";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -199,18 +198,7 @@ function PreviewView() {
     .padStart(2, "0")}`;
 
   return (
-    <div
-      className="panel-view"
-      onFocus={(e) => {
-        vscode.postMessage({
-          command: "focusPreview",
-        });
-      }}
-      onBlur={(e) => {
-        vscode.postMessage({
-          command: "blurPreview",
-        });
-      }}>
+    <div className="panel-view">
       <div className="button-group-top">
         <div className="button-group-top-left">
           <UrlBar disabled={hasNoDevices} />

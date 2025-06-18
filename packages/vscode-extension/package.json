@@ -121,13 +121,13 @@
         "command": "RNIDE.nextRunningDevice",
         "title": "Switch to next running device",
         "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && RNIDE.isPreviewFocused"
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       },
       {
         "command": "RNIDE.previousRunningDevice",
         "title": "Switch to previous running device",
         "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && RNIDE.isPreviewFocused"
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -174,13 +174,13 @@
       },
       {
         "command": "RNIDE.nextRunningDevice",
-        "key": "ctrl+shift+]",
-        "mac": "cmd+shift+]"
+        "key": "ctrl+shift+0",
+        "mac": "cmd+shift+0"
       },
       {
         "command": "RNIDE.previousRunningDevice",
-        "key": "ctrl+shift+[",
-        "mac": "cmd+shift+["
+        "key": "ctrl+shift+9",
+        "mac": "cmd+shift+9"
       }
     ],
     "configuration": {
