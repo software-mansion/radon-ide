@@ -4,7 +4,7 @@ import { IDE } from "../../project/ide";
 import { textToToolResponse } from "./utils";
 import { ToolResponse } from "./models";
 
-export async function screenshotToolDef(): Promise<ToolResponse> {
+export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
 
   if (!project || !project.deviceSession) {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { getToolSchema, invokeToolCall } from "../shared/api";
 import { ToolSchema } from "./models";
-import { screenshotToolDef } from "./toolDefinitions";
+import { screenshotToolExec } from "./toolExecutors";
 
 function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
   const props = Object.values(toolSchema.inputSchema.properties);
@@ -19,7 +19,7 @@ export async function registerMcpTools(server: McpServer) {
       description: "Get a screenshot of the app development viewport.",
       inputSchema: {},
     },
-    screenshotToolDef
+    screenshotToolExec
   );
 
   const toolSchema = await getToolSchema();
