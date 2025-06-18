@@ -15,8 +15,8 @@ Radon IDE lets you perform some repetitive actions through keyboard shortcuts.
 | Perform biometric authorization        | Command + Shift + M   | Control + Shift + M  |
 | Perform failed biometric authorization | Option + Command + Shift + M   | Control + Alt + Shift + M |
 | Close IDE Panel with confirmation      | Command + W           | Control + W          |
-| Switch to next running device          | Command + Shift + \]  | Control + Shift + \] |
-| Switch to previous running device      | Command + Shift + \[  | Control + Shift + \[ |
+| Switch to next running device          | Command + Shift + \)  | Control + Shift + \) |
+| Switch to previous running device      | Command + Shift + \(  | Control + Shift + \( |
 
 ## Customize shortcuts
 
