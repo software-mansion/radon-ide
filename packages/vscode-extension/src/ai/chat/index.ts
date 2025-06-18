@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
-import { Logger } from "../Logger";
-import { getLicenseToken } from "../utilities/license";
-import { getTelemetryReporter } from "../utilities/telemetry";
-import { invokeToolCall, getSystemPrompt } from "./api";
+import { Logger } from "../../Logger";
+import { getLicenseToken } from "../../utilities/license";
+import { getTelemetryReporter } from "../../utilities/telemetry";
 import { getChatHistory } from "./history";
 import { getReactNativePackagesPrompt } from "./packages";
+import { getSystemPrompt, invokeToolCall } from "../shared/api";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 const TOOLS_INTERACTION_LIMIT = 3;
@@ -19,20 +19,25 @@ async function processChatResponse(
     if (chunk instanceof vscode.LanguageModelTextPart) {
       stream.markdown(chunk.value);
     } else if (chunk instanceof vscode.LanguageModelToolCallPart) {
+      const toolCall = chunk;
       Logger.info(CHAT_LOG, "Tool call requested");
-      const results = await invokeToolCall(chunk, jwt);
-
-      if (!results) {
-        stream.markdown("Radon AI couldn't execute tool call.");
-        return null;
+      const results = await invokeToolCall(toolCall.name, toolCall.input, toolCall.callId);
+      const toolMessages = [];
+      for (const response of results.content) {
+        if (response.type === "text") {
+          toolMessages.push(
+            vscode.LanguageModelChatMessage.Assistant(
+              `"${chunk.name}" has been called - results:\n\n\`\`\`\n${response}\n\`\`\``
+            )
+          );
+        } else {
+          // Chats with chat-participants do not support image tool outputs yet.
+          // This `else` is unreachable in practice, but might become reachable as a result of a coding mistake.
+          const msg = `"${chunk.name}" has been called - image-returning tools are not supported in participant chats.`;
+          getTelemetryReporter().sendTelemetryEvent("radon-chat:tool-output-error", { error: msg });
+          toolMessages.push(vscode.LanguageModelChatMessage.Assistant(msg));
+        }
       }
-
-      const toolMessages = results.map((result) =>
-        // result.content will always be a 1-long array of strings
-        vscode.LanguageModelChatMessage.Assistant(
-          `"${chunk.name}" has been called - results:\n\n\`\`\`\n${result.content[0]}\n\`\`\``
-        )
-      );
 
       return [
         ...toolMessages,
@@ -45,7 +50,7 @@ async function processChatResponse(
   return [];
 }
 
-export function registerChat(context: vscode.ExtensionContext) {
+export function registerRadonChat(context: vscode.ExtensionContext) {
   const chatHandler: vscode.ChatRequestHandler = async (
     request,
     chatContext,
@@ -54,24 +59,23 @@ export function registerChat(context: vscode.ExtensionContext) {
   ): Promise<vscode.ChatResult> => {
     stream.progress("Thinking...");
     Logger.info(CHAT_LOG, "Chat requested");
-    getTelemetryReporter().sendTelemetryEvent("chat:requested");
+    getTelemetryReporter().sendTelemetryEvent("radon-chat:requested");
 
     const jwt = await getLicenseToken();
 
     if (!jwt) {
-      Logger.warn(CHAT_LOG, "No license found. Please activate your license.");
-      getTelemetryReporter().sendTelemetryEvent("chat:requested:no-license");
-
-      stream.markdown(
-        "You need to have a valid license to use the Radon AI Chat. Please activate your license."
-      );
+      const msg =
+        "You need to have a valid license to use the Radon AI Chat. Please activate your license.";
+      Logger.warn(CHAT_LOG, msg);
+      getTelemetryReporter().sendTelemetryEvent("radon-chat:no-license-error", { error: msg });
+      stream.markdown(msg);
       return { metadata: { command: "" } };
     }
 
     const packages = await getReactNativePackagesPrompt();
 
     try {
-      const data = await getSystemPrompt(request.prompt, jwt);
+      const data = await getSystemPrompt(request.prompt);
       if (!data) {
         stream.markdown("Couldn't connect to Radon AI.");
         return { metadata: { command: "" } };
@@ -80,12 +84,10 @@ export function registerChat(context: vscode.ExtensionContext) {
       const { system, context: documentation, tools } = data;
 
       if (!system || !documentation) {
-        Logger.error(CHAT_LOG, "No system prompt received from Radon AI.");
-        getTelemetryReporter().sendTelemetryEvent("chat:error", {
-          error: "No system prompt received from Radon AI.",
-        });
-
-        stream.markdown("Couldn't connect to Radon AI.");
+        let msg = `Failed to fetch system prompt.`;
+        Logger.error(CHAT_LOG, msg);
+        getTelemetryReporter().sendTelemetryEvent("radon-chat:retrieval-error", { error: msg });
+        stream.markdown("Couldn't connect to Radon AI. Is your Radon IDE license active?");
         return { metadata: { command: "" } };
       }
 
@@ -127,7 +129,7 @@ export function registerChat(context: vscode.ExtensionContext) {
       handleError(err, stream);
     }
 
-    getTelemetryReporter().sendTelemetryEvent("chat:responded");
+    getTelemetryReporter().sendTelemetryEvent("radon-chat:responded");
     return { metadata: { command: "" } };
   };
 
@@ -140,7 +142,7 @@ export function registerChat(context: vscode.ExtensionContext) {
       // unhelpful / totalRequests is a good success metric
       const kind =
         feedback.kind === vscode.ChatResultFeedbackKind.Unhelpful ? "unhelpful" : "helpful";
-      getTelemetryReporter().sendTelemetryEvent(`chat:feedback:${kind}`);
+      getTelemetryReporter().sendTelemetryEvent(`radon-chat:feedback:${kind}`);
     })
   );
 }
@@ -148,7 +150,7 @@ export function registerChat(context: vscode.ExtensionContext) {
 function handleError(err: unknown, stream: vscode.ChatResponseStream): void {
   if (err instanceof vscode.LanguageModelError) {
     Logger.error(CHAT_LOG, err.message, err.code, err.cause);
-    getTelemetryReporter().sendTelemetryEvent("chat:error", {
+    getTelemetryReporter().sendTelemetryEvent("radon-chat:error", {
       error: err.message,
       code: err.code,
     });
@@ -176,7 +178,9 @@ function handleError(err: unknown, stream: vscode.ChatResponseStream): void {
     }
   } else {
     Logger.error(CHAT_LOG, err);
-    getTelemetryReporter().sendTelemetryEvent("chat:error", { error: "Unknown error" });
+    getTelemetryReporter().sendTelemetryEvent("radon-chat:unknown-error", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     // re-throw other errors so they show up in the UI
     throw err;
   }

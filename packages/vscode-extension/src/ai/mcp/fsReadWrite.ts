@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import path from "path";
 import * as vscode from "vscode";
-import { Logger } from "../Logger";
-import { getTelemetryReporter } from "../utilities/telemetry";
+import { Logger } from "../../Logger";
+import { getTelemetryReporter } from "../../utilities/telemetry";
 import { EditorType } from "./models";
 import { getEditorType, MCP_LOG } from "./utils";
 

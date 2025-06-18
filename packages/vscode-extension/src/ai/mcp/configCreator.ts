@@ -11,8 +11,8 @@ export function insertRadonEntry(incompleteConfig: string, port: number): string
   const rootKey = getEditorType() === EditorType.VSCODE ? VSCODE_KEY : CURSOR_KEY;
   const entryKey = "RadonAi";
   const radonMcpEntry: McpEntry = {
-    url: `http://localhost:${port}/sse` as const,
-    type: "sse" as const,
+    url: `http://127.0.0.1:${port}/mcp` as const,
+    type: "http" as const,
   };
 
   try {

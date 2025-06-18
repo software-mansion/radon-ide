@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { EditorType } from "./models";
+import { EditorType, ToolResponse } from "./models";
 
 export const MCP_LOG = "[MCP]";
 
@@ -10,4 +10,15 @@ export function getEditorType(): EditorType {
     return EditorType.CURSOR;
   }
   return EditorType.VSCODE;
+}
+
+export function textToToolResponse(text: string): ToolResponse {
+  return {
+    content: [
+      {
+        type: "text",
+        text,
+      },
+    ],
+  };
 }

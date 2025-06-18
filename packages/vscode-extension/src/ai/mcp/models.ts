@@ -1,24 +1,21 @@
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
+
 interface ImageContent {
+  [x: string]: unknown;
   type: "image";
   data: string;
   mimeType: `image/${string}`;
-  model_config?: {
-    extra: "allow";
-  };
 }
 
 interface TextContent {
+  [x: string]: unknown;
   type: "text";
   text: string;
 }
 
-type ToolResponse = Promise<
-  | string
-  | {
-      content: (ImageContent | TextContent)[];
-      isError?: boolean;
-    }
->;
+type ToolResponse = {
+  content: (ImageContent | TextContent)[];
+};
 
 interface ToolSchema {
   name: string;
@@ -49,8 +46,22 @@ enum EditorType {
 }
 
 type McpEntry = {
-  url: `http://localhost:${number}/sse`;
-  type: "sse";
+  url: `http://127.0.0.1:${number}/mcp`;
+  type: "http";
 };
 
-export { EditorType, McpEntry, TextContent, ToolResponse, ToolResult, ToolSchema, ToolsInfo };
+type Session = {
+  sessionId: string;
+  transport: StreamableHTTPServerTransport;
+} | null;
+
+export {
+  EditorType,
+  Session,
+  McpEntry,
+  TextContent,
+  ToolResponse,
+  ToolResult,
+  ToolSchema,
+  ToolsInfo,
+};

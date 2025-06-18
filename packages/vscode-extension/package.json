@@ -37,6 +37,12 @@
   },
   "main": "./dist/extension.js",
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "RadonAIMCPProvider",
+        "label": "MCP server integrating with Radon IDE"
+      }
+    ],
     "commands": [
       {
         "command": "RNIDE.openDevMenu",
@@ -759,6 +765,7 @@
     "@eslint/compat": "^1.2.8",
     "@expo/fingerprint": "^0.11.11",
     "@expo/package-manager": "^1.7.2",
+    "@modelcontextprotocol/sdk": "^1.12.3",
     "@msgpack/msgpack": "^3.1.1",
     "@radix-ui/react-alert-dialog": "^1.1.7",
     "@radix-ui/react-context-menu": "^2.2.7",
@@ -776,6 +783,7 @@
     "@react-native-community/cli-config-apple": "^18.0.0",
     "@react-native-community/cli-types": "^18.0.0",
     "@types/d3": "^7.4.3",
+    "@types/express": "^5.0.3",
     "@types/kill-port": "^2.0.3",
     "@types/lodash": "^4.17.16",
     "@types/node": "^22.14.1",
@@ -812,12 +820,12 @@
     "eslint-import-resolver-typescript": "^4.3.2",
     "eslint-plugin-import": "^2.31.0",
     "execa": "^5.1.1",
+    "express": "^5.1.0",
     "fantasticon": "^3.0.0",
     "file-loader": "^6.2.0",
     "globals": "^16.1.0",
     "jsonc-parser": "^3.3.1",
     "kill-port": "^2.0.1",
-    "litemcp": "^0.9.0",
     "lodash": "^4.17.21",
     "minimatch": "^10.0.1",
     "mocha": "^10.2.0",
