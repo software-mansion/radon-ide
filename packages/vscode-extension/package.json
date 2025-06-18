@@ -121,13 +121,13 @@
         "command": "RNIDE.nextRunningDevice",
         "title": "Switch to next running device",
         "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && RNIDE.isPreviewFocused"
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       },
       {
         "command": "RNIDE.previousRunningDevice",
         "title": "Switch to previous running device",
         "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen && RNIDE.isPreviewFocused"
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [

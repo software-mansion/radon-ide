@@ -82,10 +82,6 @@ export class WebviewController implements Disposable {
 
         if (message.command === "call") {
           this.handleRemoteCall(message);
-        } else if (message.command === "focusPreview") {
-          commands.executeCommand("setContext", "RNIDE.isPreviewFocused", true);
-        } else if (message.command === "blurPreview") {
-          commands.executeCommand("setContext", "RNIDE.isPreviewFocused", false);
         }
       },
       undefined,
