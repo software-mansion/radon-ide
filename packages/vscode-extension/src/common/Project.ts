@@ -34,17 +34,12 @@ export type BuildErrorDescriptor = {
   buildType: BuildType | null;
 };
 
-export type BundleErrorDescriptor = {
-  kind: "bundle";
-  message: string;
-};
-
 export type DeviceErrorDescriptor = {
   kind: "device";
   message: string;
 };
 
-export type ErrorDescriptor = BuildErrorDescriptor | BundleErrorDescriptor | DeviceErrorDescriptor;
+export type FatalErrorDescriptor = BuildErrorDescriptor | DeviceErrorDescriptor;
 
 export type ProfilingState = "stopped" | "profiling" | "saving";
 
@@ -83,14 +78,20 @@ export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
   stageProgress: number | undefined;
 };
 
+export type BundleErrorDescriptor = {
+  kind: "bundle";
+  message: string;
+};
+
 export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
   status: "running";
   isRefreshing: boolean;
+  bundleError: BundleErrorDescriptor | undefined;
 };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
   status: "fatalError";
-  error: ErrorDescriptor;
+  error: FatalErrorDescriptor;
 };
 
 export type DeviceSessionState =

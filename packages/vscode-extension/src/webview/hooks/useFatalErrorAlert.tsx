@@ -7,7 +7,7 @@ import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { BuildType } from "../../common/BuildConfig";
 import { useDevices } from "../providers/DevicesProvider";
-import { BuildErrorDescriptor, ErrorDescriptor } from "../../common/Project";
+import { BuildErrorDescriptor, FatalErrorDescriptor } from "../../common/Project";
 import { DeviceSessionsManagerInterface } from "../../common/DeviceSessionsManager";
 
 type LogsButtonDestination = "build" | "extension";
@@ -79,38 +79,6 @@ const bootErrorAlert = {
   actions: <BootErrorActions />,
 };
 
-function BundleErrorActions() {
-  const { project } = useProject();
-  const { deviceSessionsManager } = useDevices();
-  return (
-    <>
-      <IconButton
-        type="secondary"
-        onClick={() => {
-          project.focusDebugConsole();
-        }}
-        tooltip={{ label: "Open debug console", side: "bottom" }}>
-        <span className="codicon codicon-output" />
-      </IconButton>
-      <IconButton
-        type="secondary"
-        onClick={() => {
-          deviceSessionsManager.reloadCurrentSession("autoReload");
-        }}
-        tooltip={{ label: "Reload Metro", side: "bottom" }}>
-        <span className="codicon codicon-refresh" />
-      </IconButton>
-    </>
-  );
-}
-
-const bundleErrorAlert = {
-  id: FATAL_ERROR_ALERT_ID,
-  title: "Bundle error",
-  description: "Open IDE logs to find out what went wrong.",
-  actions: <BundleErrorActions />,
-};
-
 const noErrorAlert = {
   id: FATAL_ERROR_ALERT_ID,
   title: "",
@@ -157,7 +125,7 @@ function createBuildErrorAlert(
   };
 }
 
-export function useFatalErrorAlert(errorDescriptor: ErrorDescriptor | undefined) {
+export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
   const { ios, xcodeSchemes } = useLaunchConfig();
   const { deviceSessionsManager } = useDevices();
@@ -169,8 +137,6 @@ export function useFatalErrorAlert(errorDescriptor: ErrorDescriptor | undefined)
       ios?.scheme !== undefined,
       xcodeSchemes || []
     );
-  } else if (errorDescriptor?.kind === "bundle") {
-    errorAlert = bundleErrorAlert;
   } else if (errorDescriptor?.kind === "device") {
     errorAlert = bootErrorAlert;
   }

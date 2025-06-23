@@ -5,6 +5,7 @@ import { useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
 import PreviewLoader from "./PreviewLoader";
 import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
+import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
@@ -81,13 +82,10 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { projectState, selectedDeviceSession, project } = useProject();
+  const { selectedDeviceSession, project } = useProject();
 
   const hasFatalError = selectedDeviceSession?.status === "fatalError";
-  const errorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
-  const hasBuildError = errorDescriptor?.kind === "build";
-  const hasBootError = errorDescriptor?.kind === "device";
-  const hasBundlingError = errorDescriptor?.kind === "bundle";
+  const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
 
   const debugPaused = selectedDeviceSession?.isDebuggerPaused;
 
@@ -96,14 +94,13 @@ function Preview({
 
   const previewURL = selectedDeviceSession?.previewURL;
 
-  const isStarting = hasBundlingError
-    ? false
-    : !projectState || selectedDeviceSession?.status === "starting";
   const showDevicePreview =
-    selectedDeviceSession?.previewURL &&
-    (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
+    selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
 
-  useFatalErrorAlert(errorDescriptor);
+  useFatalErrorAlert(fatalErrorDescriptor);
+
+  const bundleErrorDescriptor = isRunning ? selectedDeviceSession?.bundleError : undefined;
+  useBundleErrorAlert(bundleErrorDescriptor);
 
   const openRebuildAlert = useNativeRebuildAlert();
 
@@ -560,7 +557,7 @@ function Preview({
             </div>
           </Device>
         )}
-        {(hasBuildError || hasBootError) && (
+        {hasFatalError && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized extension-error-screen" />
           </Device>

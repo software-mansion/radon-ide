@@ -35,7 +35,8 @@ import {
   NavigationHistoryItem,
   NavigationRoute,
   DeviceSessionStatus,
-  ErrorDescriptor,
+  FatalErrorDescriptor,
+  BundleErrorDescriptor,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
@@ -85,7 +86,8 @@ export class DeviceSession
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
-  private fatalError: ErrorDescriptor | undefined;
+  private fatalError: FatalErrorDescriptor | undefined;
+  private bundleError: BundleErrorDescriptor | undefined;
   private isRefreshing: boolean = false;
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
@@ -160,6 +162,7 @@ export class DeviceSession
         ...commonState,
         status: "running",
         isRefreshing: this.isRefreshing,
+        bundleError: this.bundleError,
       };
     } else if (this.status === "fatalError") {
       assert(this.fatalError, "Expected error to be defined in fatal error state");
@@ -177,6 +180,7 @@ export class DeviceSession
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
     this.fatalError = undefined;
+    this.bundleError = undefined;
     this.isRefreshing = false;
     this.hasStaleBuildCache = false;
     this.profilingCPUState = "stopped";
@@ -209,8 +213,8 @@ export class DeviceSession
 
     Logger.error("[Bundling Error]", message);
 
-    this.status = "fatalError";
-    this.fatalError = {
+    this.status = "running";
+    this.bundleError = {
       kind: "bundle",
       message,
     };
@@ -282,6 +286,11 @@ export class DeviceSession
     const devtools = new Devtools();
     devtools.onEvent("appReady", () => {
       this.device.setUpKeyboard();
+      // NOTE: since this is triggered by the JS bundle,
+      // we can assume that if it fires, the bundle loaded successfully.
+      // This is necessary to reset the bundle error state when the app reload
+      // is triggered from the app itself (e.g. by in-app dev menu or redbox).
+      this.bundleError = undefined;
       Logger.debug("App ready");
     });
     // We don't need to store event disposables here as they are tied to the lifecycle
@@ -303,6 +312,7 @@ export class DeviceSession
     });
     devtools.onEvent("fastRefreshStarted", () => {
       this.isRefreshing = true;
+      this.bundleError = undefined;
       this.emitStateChange();
     });
     devtools.onEvent("fastRefreshComplete", () => {
