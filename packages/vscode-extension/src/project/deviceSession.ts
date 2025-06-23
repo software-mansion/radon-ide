@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import assert from "assert";
 import _ from "lodash";
 import {
   commands,
@@ -29,12 +30,12 @@ import {
   TouchPoint,
   DeviceButtonType,
   DeviceSessionState,
-  BuildErrorDescriptor,
   ToolsState,
   ProfilingState,
   NavigationHistoryItem,
   NavigationRoute,
   DeviceSessionStatus,
+  ErrorDescriptor,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
@@ -84,7 +85,7 @@ export class DeviceSession
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
-  private buildError: BuildErrorDescriptor | undefined;
+  private fatalError: ErrorDescriptor | undefined;
   private isRefreshing: boolean = false;
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
@@ -134,12 +135,7 @@ export class DeviceSession
   }
 
   public getState(): DeviceSessionState {
-    return {
-      status: this.status,
-      startupMessage: this.startupMessage,
-      stageProgress: this.stageProgress,
-      buildError: this.buildError,
-      isRefreshing: this.isRefreshing,
+    const commonState = {
       profilingCPUState: this.profilingCPUState,
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
@@ -152,13 +148,35 @@ export class DeviceSession
       hasStaleBuildCache: this.hasStaleBuildCache,
       isRecordingScreen: this.isRecordingScreen,
     };
+    if (this.status === "starting") {
+      return {
+        ...commonState,
+        status: "starting",
+        startupMessage: this.startupMessage,
+        stageProgress: this.stageProgress,
+      };
+    } else if (this.status === "running") {
+      return {
+        ...commonState,
+        status: "running",
+        isRefreshing: this.isRefreshing,
+      };
+    } else if (this.status === "fatalError") {
+      assert(this.fatalError, "Expected error to be defined in fatal error state");
+      return {
+        ...commonState,
+        status: "fatalError",
+        error: this.fatalError,
+      };
+    }
+    assert(false, "Unexpected device session status: " + this.status);
   }
 
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
     this.status = "starting";
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
-    this.buildError = undefined;
+    this.fatalError = undefined;
     this.isRefreshing = false;
     this.hasStaleBuildCache = false;
     this.profilingCPUState = "stopped";
@@ -191,7 +209,11 @@ export class DeviceSession
 
     Logger.error("[Bundling Error]", message);
 
-    this.status = "bundlingError";
+    this.status = "fatalError";
+    this.fatalError = {
+      kind: "bundle",
+      message,
+    };
     this.emitStateChange();
   };
 
@@ -355,8 +377,9 @@ export class DeviceSession
         // reload got cancelled, we don't show any errors
         return false;
       } else if (e instanceof BuildError) {
-        this.status = "buildError";
-        this.buildError = {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "build",
           message: e.message,
           buildType: e.buildType,
           platform: this.device.platform,
@@ -756,17 +779,23 @@ export class DeviceSession
       if (e instanceof CancelError) {
         Logger.info("Device selection was canceled", e);
       } else if (e instanceof DeviceBootError) {
-        this.status = "bootError";
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "device",
+          message: e.message,
+        };
       } else if (e instanceof BuildError) {
-        this.status = "buildError";
-        this.buildError = {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "build",
           message: e.message,
           buildType: e.buildType,
           platform: this.device.platform,
         };
       } else {
-        this.status = "buildError";
-        this.buildError = {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "build",
           message: (e as Error).message,
           buildType: null,
           platform: this.device.platform,

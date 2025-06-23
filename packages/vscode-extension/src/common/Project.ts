@@ -28,10 +28,23 @@ export type ToolsState = {
 };
 
 export type BuildErrorDescriptor = {
+  kind: "build";
   message: string;
   platform: DevicePlatform;
   buildType: BuildType | null;
 };
+
+export type BundleErrorDescriptor = {
+  kind: "bundle";
+  message: string;
+};
+
+export type DeviceErrorDescriptor = {
+  kind: "device";
+  message: string;
+};
+
+export type ErrorDescriptor = BuildErrorDescriptor | BundleErrorDescriptor | DeviceErrorDescriptor;
 
 export type ProfilingState = "stopped" | "profiling" | "saving";
 
@@ -48,19 +61,9 @@ export type NavigationRoute = {
   type: string;
 };
 
-export type DeviceSessionStatus =
-  | "starting"
-  | "running"
-  | "bootError"
-  | "bundlingError"
-  | "buildError";
+export type DeviceSessionStatus = "starting" | "running" | "fatalError";
 
-export type DeviceSessionState = {
-  status: DeviceSessionStatus;
-  startupMessage: StartupMessage | undefined;
-  stageProgress: number | undefined;
-  buildError: BuildErrorDescriptor | undefined;
-  isRefreshing: boolean;
+type DeviceSessionStateCommon = {
   deviceInfo: DeviceInfo;
   previewURL: string | undefined;
   profilingReactState: ProfilingState;
@@ -73,6 +76,27 @@ export type DeviceSessionState = {
   hasStaleBuildCache: boolean;
   isRecordingScreen: boolean;
 };
+
+export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
+  status: "starting";
+  startupMessage: StartupMessage | undefined;
+  stageProgress: number | undefined;
+};
+
+export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
+  status: "running";
+  isRefreshing: boolean;
+};
+
+export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
+  status: "fatalError";
+  error: ErrorDescriptor;
+};
+
+export type DeviceSessionState =
+  | DeviceSessionStateStarting
+  | DeviceSessionStateRunning
+  | DeviceSessionStateFatalError;
 
 export type DeviceId = DeviceInfo["id"];
 

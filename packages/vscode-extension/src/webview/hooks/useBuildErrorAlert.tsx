@@ -7,6 +7,7 @@ import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { BuildType } from "../../common/BuildConfig";
 import { useDevices } from "../providers/DevicesProvider";
+import { BuildErrorDescriptor } from "../../common/Project";
 
 type LogsButtonDestination = "build" | "extension";
 
@@ -51,8 +52,7 @@ function BuildErrorActions({
   );
 }
 
-export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
-  const { selectedDeviceSession } = useProject();
+export function useBuildErrorAlert(buildErrorDescriptor: BuildErrorDescriptor | undefined) {
   const { ios, xcodeSchemes } = useLaunchConfig();
   const { deviceSessionsManager } = useDevices();
 
@@ -63,8 +63,8 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
 
   let description = "Open extension logs to find out what went wrong.";
 
-  if (selectedDeviceSession?.status === "buildError" && selectedDeviceSession?.buildError) {
-    const { buildType, message } = selectedDeviceSession.buildError;
+  if (buildErrorDescriptor !== undefined) {
+    const { buildType, message } = buildErrorDescriptor;
     description = message;
     if (buildType && [BuildType.Local, BuildType.EasLocal, BuildType.Custom].includes(buildType)) {
       logsButtonDestination = "build";
@@ -88,7 +88,7 @@ export function useBuildErrorAlert(shouldDisplayAlert: boolean) {
     actions,
   };
 
-  useToggleableAlert(shouldDisplayAlert, buildErrorAlert);
+  useToggleableAlert(buildErrorDescriptor !== undefined, buildErrorAlert);
 }
 
 function BootErrorActions() {

@@ -87,14 +87,16 @@ function Preview({
 
   const { projectState, selectedDeviceSession, project } = useProject();
 
-  const projectStatus = selectedDeviceSession?.status;
-
-  const hasBuildError = projectStatus === "buildError";
-  const hasBootError = projectStatus === "bootError";
-  const hasBundlingError = projectStatus === "bundlingError";
+  const hasFatalError = selectedDeviceSession?.status === "fatalError";
+  const errorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
+  const hasBuildError = errorDescriptor?.kind === "build";
+  const hasBootError = errorDescriptor?.kind === "device";
+  const hasBundlingError = errorDescriptor?.kind === "bundle";
 
   const debugPaused = selectedDeviceSession?.isDebuggerPaused;
-  const isRefreshing = selectedDeviceSession?.isRefreshing ?? false;
+
+  const isRunning = selectedDeviceSession?.status === "running";
+  const isRefreshing = isRunning && selectedDeviceSession.isRefreshing;
 
   const previewURL = selectedDeviceSession?.previewURL;
 
@@ -105,7 +107,7 @@ function Preview({
     selectedDeviceSession?.previewURL &&
     (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
-  useBuildErrorAlert(hasBuildError);
+  useBuildErrorAlert(errorDescriptor?.kind === "build" ? errorDescriptor : undefined);
   useBootErrorAlert(hasBootError);
   useBundleErrorAlert(hasBundlingError);
 
@@ -553,11 +555,14 @@ function Preview({
             </div>
           </Device>
         )}
-        {!showDevicePreview && !hasBuildError && !hasBootError && (
+        {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
-              <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
+              <PreviewLoader
+                startingSessionState={selectedDeviceSession}
+                onRequestShowPreview={() => setShowPreviewRequested(true)}
+              />
             </div>
           </Device>
         )}
