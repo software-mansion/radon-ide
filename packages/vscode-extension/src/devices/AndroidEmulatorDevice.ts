@@ -5,7 +5,12 @@ import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
-import { DeviceBase, REBOOT_TIMEOUT } from "./DeviceBase";
+import {
+  DEVICE_SETTINGS_DEFAULT,
+  DEVICE_SETTINGS_KEY,
+  DeviceBase,
+  REBOOT_TIMEOUT,
+} from "./DeviceBase";
 import { retry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
@@ -19,6 +24,7 @@ import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoG
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
+import { extensionContext } from "../utilities/extensionContext";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -41,6 +47,14 @@ const ADB_PATH = path.join(
 
 const DISPOSE_TIMEOUT = 9000;
 
+const DEVICE_SETTINGS_EMULATOR_DEFAULT = {
+  ...DEVICE_SETTINGS_DEFAULT,
+  camera: {
+    back: "virtualscene" as const,
+    front: "emulated" as const,
+  },
+};
+
 interface EmulatorProcessInfo {
   pid: number;
   serialPort: number;
@@ -56,6 +70,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private serial: string | undefined;
   private nativeLogsOutputChannel: OutputChannel | undefined;
   private nativeLogsCancelToken: CancelToken | undefined;
+  protected override deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
+    DEVICE_SETTINGS_KEY,
+    DEVICE_SETTINGS_EMULATOR_DEFAULT
+  );
 
   constructor(
     private readonly avdId: string,
@@ -97,7 +115,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
       new CameraSettingApplier(settings.camera),
     ];
 
-    const { bootSettingsChanged, runtimeSettingsChanged } = await this.tryUpdateConfigurationSettings(settingAppliers);
+    const { bootSettingsChanged } = await this.tryUpdateConfigurationSettings(settingAppliers);
 
     // Apply runtime settings that don't require boot
     await exec(ADB_PATH, [
@@ -170,16 +188,18 @@ export class AndroidEmulatorDevice extends DeviceBase {
       if (await applier.shouldUpdate(configLines)) {
         const results = await Promise.all([
           applier.updateRuntime(configLines),
-          applier.updateBoot(configLines)
+          applier.updateBoot(configLines),
         ] as const);
 
         const [runtimeUpdateResult, bootUpdateResult] = results;
 
-        if (bootUpdateResult.bootChanged && bootUpdateResult.updatedConfigLines !== undefined) { 
+        if (bootUpdateResult.bootChanged && bootUpdateResult.updatedConfigLines !== undefined) {
           configLines = bootUpdateResult.updatedConfigLines;
           bootSettingsChanged = true;
         }
-        if (runtimeUpdateResult) { runtimeSettingsChanged = true; }
+        if (runtimeUpdateResult) {
+          runtimeSettingsChanged = true;
+        }
       }
     }
 
@@ -981,18 +1001,20 @@ interface SettingApplier {
    * @param configLines - The lines of the config.ini file.
    * @returns True if the boot settings were changed, false otherwise. The updated config lines are returned.
    */
-  updateBoot(configLines: string[]): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }>;
+  updateBoot(
+    configLines: string[]
+  ): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }>;
 }
 
 class LocaleSettingApplier implements SettingApplier {
   constructor(
     private newLocale: Locale,
-    private serial: string | undefined,
+    private serial: string | undefined
   ) {}
 
   async shouldUpdate(configLines: string[]): Promise<boolean> {
     if (!this.serial) return false;
-    
+
     const newLocale = this.newLocale.replace("_", "-");
     const { stdout } = await exec(ADB_PATH, [
       "-s",
@@ -1008,7 +1030,7 @@ class LocaleSettingApplier implements SettingApplier {
     // as en-US is the default locale, used by the system, when no setting is provided
     // we assume that no value in stdout is the same as en-US on some devices
     // stdout is a string "null" instead of undefined so we need to handle it separately
-    const currentLocale = (stdout === "null" || stdout === undefined) ? "en-US" : stdout;
+    const currentLocale = stdout === "null" || stdout === undefined ? "en-US" : stdout;
     return currentLocale !== newLocale;
   }
 
@@ -1016,7 +1038,9 @@ class LocaleSettingApplier implements SettingApplier {
     return false;
   }
 
-  async updateBoot(configLines: string[]): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }> {
+  async updateBoot(
+    configLines: string[]
+  ): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }> {
     try {
       const locale = this.newLocale.replace("_", "-");
 
@@ -1066,7 +1090,7 @@ class CameraSettingApplier implements SettingApplier {
     try {
       let currentBackCamera = "emulated";
       let currentFrontCamera = "none";
-      
+
       configLines.forEach((line: string) => {
         const [key, value] = line.split("=");
         if (key === "hw.camera.back") {
@@ -1075,10 +1099,13 @@ class CameraSettingApplier implements SettingApplier {
           currentFrontCamera = value;
         }
       });
-      
-      const backNeedsUpdate = this.cameraSettings.back !== undefined && currentBackCamera !== this.cameraSettings.back;
-      const frontNeedsUpdate = this.cameraSettings.front !== undefined && currentFrontCamera !== this.cameraSettings.front;
-      
+
+      const backNeedsUpdate =
+        this.cameraSettings?.back !== undefined && currentBackCamera !== this.cameraSettings.back;
+      const frontNeedsUpdate =
+        this.cameraSettings?.front !== undefined &&
+        currentFrontCamera !== this.cameraSettings.front;
+
       return backNeedsUpdate || frontNeedsUpdate;
     } catch (e) {
       Logger.warn("Failed to read AVD config for camera settings comparison", e);
@@ -1090,15 +1117,17 @@ class CameraSettingApplier implements SettingApplier {
     return false;
   }
 
-  async updateBoot(configLines: string[]): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }> {
+  async updateBoot(
+    configLines: string[]
+  ): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }> {
     try {
       let hasChanges = false;
       for (let i = 0; i < configLines.length; i++) {
-        const [key, value] = configLines[i].split("=");
-        if (key === "hw.camera.back" && this.cameraSettings.back !== undefined) {
+        const [key] = configLines[i].split("=");
+        if (key === "hw.camera.back" && this.cameraSettings?.back !== undefined) {
           configLines[i] = `hw.camera.back=${this.cameraSettings.back}`;
           hasChanges = true;
-        } else if (key === "hw.camera.front" && this.cameraSettings.front !== undefined) {
+        } else if (key === "hw.camera.front" && this.cameraSettings?.front !== undefined) {
           configLines[i] = `hw.camera.front=${this.cameraSettings.front}`;
           hasChanges = true;
         }

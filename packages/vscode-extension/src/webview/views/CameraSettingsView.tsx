@@ -1,20 +1,20 @@
 import { useState } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
-import { DeviceSettings } from "../../common/Project";
+import { BackCameraSource, FrontCameraSource } from "../../common/Project";
 import Button from "../components/shared/Button";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import "../components/shared/Dropdown.css";
 import "./CameraSettingsView.css";
 
-const backCameraOptions = [
+const backCameraOptions: Array<{ label: string; value: BackCameraSource }> = [
   { label: "Emulated", value: "emulated" },
   { label: "Virtual Scene", value: "virtualscene" },
   { label: "Webcam", value: "webcam0" },
   { label: "None", value: "none" },
 ];
 
-const frontCameraOptions = [
+const frontCameraOptions: Array<{ label: string; value: FrontCameraSource }> = [
   { label: "Emulated", value: "emulated" },
   { label: "Webcam", value: "webcam0" },
   { label: "None", value: "none" },
@@ -23,16 +23,26 @@ const frontCameraOptions = [
 export function CameraSettingsView() {
   const { deviceSettings } = useProject();
   const { openModal } = useModal();
-  
-  const [selectedBackCamera, setSelectedBackCamera] = useState(deviceSettings.camera.back);
-  const [selectedFrontCamera, setSelectedFrontCamera] = useState(deviceSettings.camera.front);
+
+  const [selectedBackCamera, setSelectedBackCamera] = useState<BackCameraSource>(
+    deviceSettings.camera?.back ?? "virtualscene"
+  );
+  const [selectedFrontCamera, setSelectedFrontCamera] = useState<FrontCameraSource>(
+    deviceSettings.camera?.front ?? "emulated"
+  );
 
   const handleApplyChanges = () => {
-    if (selectedBackCamera !== deviceSettings.camera.back || selectedFrontCamera !== deviceSettings.camera.front) {
-      openModal("", <CameraChangeConfirmationView 
-        backCamera={selectedBackCamera} 
-        frontCamera={selectedFrontCamera} 
-      />);
+    if (
+      selectedBackCamera !== deviceSettings.camera?.back ||
+      selectedFrontCamera !== deviceSettings.camera?.front
+    ) {
+      openModal(
+        "",
+        <CameraChangeConfirmationView
+          backCamera={selectedBackCamera}
+          frontCamera={selectedFrontCamera}
+        />
+      );
     }
   };
 
@@ -43,7 +53,9 @@ export function CameraSettingsView() {
           <label className="camera-setting-label">Back Camera</label>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger className="camera-dropdown-trigger">
-              <span>{backCameraOptions.find(opt => opt.value === selectedBackCamera)?.label}</span>
+              <span>
+                {backCameraOptions.find((opt) => opt.value === selectedBackCamera)?.label}
+              </span>
               <span className="codicon codicon-chevron-down" />
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
@@ -52,7 +64,7 @@ export function CameraSettingsView() {
                   <DropdownMenu.Item
                     key={option.value}
                     className="dropdown-menu-item"
-                    onSelect={() => setSelectedBackCamera(option.value as DeviceSettings["camera"]["back"])}>
+                    onSelect={() => setSelectedBackCamera(option.value)}>
                     {option.label}
                     {selectedBackCamera === option.value && (
                       <span className="codicon codicon-check right-slot" />
@@ -68,7 +80,9 @@ export function CameraSettingsView() {
           <label className="camera-setting-label">Front Camera</label>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger className="camera-dropdown-trigger">
-              <span>{frontCameraOptions.find(opt => opt.value === selectedFrontCamera)?.label}</span>
+              <span>
+                {frontCameraOptions.find((opt) => opt.value === selectedFrontCamera)?.label}
+              </span>
               <span className="codicon codicon-chevron-down" />
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
@@ -77,7 +91,7 @@ export function CameraSettingsView() {
                   <DropdownMenu.Item
                     key={option.value}
                     className="dropdown-menu-item"
-                    onSelect={() => setSelectedFrontCamera(option.value as DeviceSettings["camera"]["front"])}>
+                    onSelect={() => setSelectedFrontCamera(option.value as FrontCameraSource)}>
                     {option.label}
                     {selectedFrontCamera === option.value && (
                       <span className="codicon codicon-check right-slot" />
@@ -91,10 +105,13 @@ export function CameraSettingsView() {
       </div>
 
       <div className="camera-settings-footer">
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           onClick={handleApplyChanges}
-          disabled={selectedBackCamera === deviceSettings.camera.back && selectedFrontCamera === deviceSettings.camera.front}>
+          disabled={
+            selectedBackCamera === deviceSettings.camera?.back &&
+            selectedFrontCamera === deviceSettings.camera?.front
+          }>
           Apply Changes
         </Button>
       </div>
@@ -103,8 +120,8 @@ export function CameraSettingsView() {
 }
 
 type CameraChangeConfirmationViewProps = {
-  backCamera: string;
-  frontCamera: string;
+  backCamera: BackCameraSource;
+  frontCamera: FrontCameraSource;
 };
 
 const CameraChangeConfirmationView = ({
@@ -120,15 +137,19 @@ const CameraChangeConfirmationView = ({
 
   return (
     <div className="camera-change-wrapper">
-      <h2 className="camera-change-title">
-        Confirm Camera Settings Change
-      </h2>
+      <h2 className="camera-change-title">Confirm Camera Settings Change</h2>
       <p className="camera-change-subtitle">
         Changing camera settings will require a device reboot to take effect.
       </p>
       <div className="camera-change-details">
-        <p><strong>Back Camera:</strong> {backCameraOptions.find(opt => opt.value === backCamera)?.label}</p>
-        <p><strong>Front Camera:</strong> {frontCameraOptions.find(opt => opt.value === frontCamera)?.label}</p>
+        <p>
+          <strong>Back Camera:</strong>{" "}
+          {backCameraOptions.find((opt) => opt.value === backCamera)?.label}
+        </p>
+        <p>
+          <strong>Front Camera:</strong>{" "}
+          {frontCameraOptions.find((opt) => opt.value === frontCamera)?.label}
+        </p>
       </div>
       <div className="camera-change-button-group">
         <Button type="secondary" className="camera-change-button" onClick={onCancel}>
@@ -141,8 +162,8 @@ const CameraChangeConfirmationView = ({
             project.updateDeviceSettings({
               ...deviceSettings,
               camera: {
-                back: backCamera as DeviceSettings["camera"]["back"],
-                front: frontCamera as DeviceSettings["camera"]["front"],
+                back: backCamera,
+                front: frontCamera,
               },
             });
             closeModal();
@@ -152,4 +173,4 @@ const CameraChangeConfirmationView = ({
       </div>
     </div>
   );
-}; 
+};

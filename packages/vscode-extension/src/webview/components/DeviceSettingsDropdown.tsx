@@ -149,9 +149,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Location
           </DropdownMenu.Item>
           <LocalizationItem />
-          {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.Android && (
-            <CameraItem />
-          )}
+          {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.Android && <CameraItem />}
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-redo" />
@@ -319,7 +317,7 @@ const BiometricsItem = () => {
 
 const CameraItem = () => {
   const { openModal } = useModal();
-  
+
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"

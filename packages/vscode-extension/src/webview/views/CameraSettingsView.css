@@ -62,7 +62,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-width: 400px;
 }
 
 .camera-change-title {
@@ -97,10 +96,12 @@
 .camera-change-button-group {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-top: 8px;
+  flex-wrap: wrap-reverse;
 }
 
 .camera-change-button {
-  min-width: 100px;
-} 
+  flex: 1;
+  text-wrap: nowrap;
+}
