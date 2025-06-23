@@ -4,11 +4,7 @@ import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
 import PreviewLoader from "./PreviewLoader";
-import {
-  useBootErrorAlert,
-  useBuildErrorAlert,
-  useBundleErrorAlert,
-} from "../hooks/useBuildErrorAlert";
+import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
@@ -107,9 +103,7 @@ function Preview({
     selectedDeviceSession?.previewURL &&
     (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
 
-  useBuildErrorAlert(errorDescriptor?.kind === "build" ? errorDescriptor : undefined);
-  useBootErrorAlert(hasBootError);
-  useBundleErrorAlert(hasBundlingError);
+  useFatalErrorAlert(errorDescriptor);
 
   const openRebuildAlert = useNativeRebuildAlert();
 

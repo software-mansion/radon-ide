@@ -470,6 +470,7 @@ export class DeviceSession
     this.cancelToken = cancelToken;
 
     this.status = "starting";
+    this.fatalError = undefined;
     this.updateStartupMessage(StartupMessage.InitializingDevice);
 
     if (cleanCache) {
