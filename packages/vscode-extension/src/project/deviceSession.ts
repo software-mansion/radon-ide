@@ -47,6 +47,7 @@ import { ToolKey, ToolsDelegate, ToolsManager } from "./tools";
 import { ReloadAction } from "../common/DeviceSessionsManager";
 import { focusSource } from "../utilities/focusSource";
 import { ApplicationContext } from "./ApplicationContext";
+import { BuildCache } from "../builders/BuildCache";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -79,7 +80,9 @@ export class DeviceSession
   private devtools: Devtools;
   private debugSession: DebugSession;
   private buildManager: BuildManager;
+  private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
+  private cacheStaleSubscription: Disposable;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -124,13 +127,15 @@ export class DeviceSession
     this.metro = new MetroLauncher(this.devtools, this);
     this.toolsManager = new ToolsManager(this.inspectorBridge, this);
 
+    this.buildCache = this.applicationContext.buildCache;
     this.buildManager = new BuildManager(
       applicationContext.dependencyManager,
-      applicationContext.buildCache,
-      this,
-      device.platform
+      applicationContext.buildCache
     );
-    this.debugSession = new DebugSession(this, { useParentDebugSession: true });
+    this.debugSession = new DebugSession(this, {
+      useParentDebugSession: true,
+    });
+    this.cacheStaleSubscription = this.buildCache.onCacheStale(this.onCacheStale);
   }
 
   public getState(): DeviceSessionState {
@@ -307,6 +312,7 @@ export class DeviceSession
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
+    this.cacheStaleSubscription.dispose();
   }
 
   public async activate() {
@@ -490,7 +496,7 @@ export class DeviceSession
 
     this.resetStartingState();
     try {
-      if (this.buildManager.shouldRebuild()) {
+      if (await this.buildCache.isCacheStale(this.device.platform)) {
         await this.restart({ forceClean: false, cleanCache: false });
         return;
       }
@@ -659,6 +665,7 @@ export class DeviceSession
       launchConfiguration,
       buildType
     );
+    this.hasStaleBuildCache = false;
     this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
       progressListener: throttle((stageProgress: number) => {
         if (this.startupMessage === StartupMessage.Building) {

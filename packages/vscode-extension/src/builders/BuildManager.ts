@@ -12,10 +12,6 @@ import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { isExpoGoProject } from "./expoGo";
 import { LaunchConfigurationOptions } from "../common/LaunchConfig";
-import { throttleAsync } from "../utilities/throttle";
-import { watchProjectFiles } from "../utilities/watchProjectFiles";
-
-const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -34,29 +30,6 @@ export class BuildError extends Error {
     public readonly buildType: BuildType | null
   ) {
     super(message);
-  }
-}
-
-class WorkspaceChangeListener implements Disposable {
-  private watcher: Disposable | undefined;
-
-  constructor(private readonly onChange: () => void) {}
-
-  public startWatching() {
-    if (this.watcher === undefined) {
-      this.watcher = watchProjectFiles(() => {
-        this.onChange();
-      });
-    }
-  }
-
-  public stopWatching() {
-    this.watcher?.dispose();
-    this.watcher = undefined;
-  }
-
-  public dispose() {
-    this.watcher?.dispose();
   }
 }
 
@@ -202,27 +175,12 @@ export async function inferBuildType(
 }
 
 export class BuildManager implements Disposable {
-  private isCachedBuildStale: boolean;
-
-  private workspaceChangeListener: WorkspaceChangeListener;
-
   constructor(
     private readonly dependencyManager: DependencyManager,
-    private readonly buildCache: BuildCache,
-    private readonly buildManagerDelegate: BuildManagerDelegate,
-    private readonly platform: DevicePlatform
+    private readonly buildCache: BuildCache
   ) {
-    this.isCachedBuildStale = false;
     // Note: in future implementations decoupled from device session we
     // should make this logic platform independent
-    this.workspaceChangeListener = new WorkspaceChangeListener(() => {
-      this.checkIfNativeChangedForPlatform();
-    });
-    this.workspaceChangeListener.startWatching();
-  }
-
-  public shouldRebuild() {
-    return this.isCachedBuildStale;
   }
 
   private buildOutputChannel: OutputChannel | undefined;
@@ -352,7 +310,6 @@ export class BuildManager implements Disposable {
 
     try {
       await this.buildCache.storeBuild(buildFingerprint, buildResult);
-      this.isCachedBuildStale = false;
     } catch (e) {
       // NOTE: this is a fallible operation (since it does file system operations), but we don't want to fail the whole build if we fail to store it in a cache.
       Logger.warn("Failed to store the build in cache.", e);
@@ -360,19 +317,7 @@ export class BuildManager implements Disposable {
     return buildResult;
   }
 
-  private checkIfNativeChangedForPlatform = throttleAsync(async () => {
-    if (!this.isCachedBuildStale) {
-      const isCacheStale = await this.buildCache.isCacheStale(this.platform);
-
-      if (isCacheStale) {
-        this.isCachedBuildStale = true;
-        this.buildManagerDelegate.onCacheStale(this.platform);
-      }
-    }
-  }, FINGERPRINT_THROTTLE_MS);
-
   public dispose() {
-    this.workspaceChangeListener.dispose();
     this.buildOutputChannel?.dispose();
   }
 }
