@@ -129,6 +129,7 @@ export class DeviceSession
     this.buildCache = this.applicationContext.buildCache;
     this.buildManager = this.applicationContext.buildManager;
     this.debugSession = new DebugSession(this, {
+      displayName: this.device.deviceInfo.displayName,
       useParentDebugSession: true,
     });
     this.cacheStaleSubscription = this.buildCache.onCacheStale(this.onCacheStale);
@@ -316,7 +317,10 @@ export class DeviceSession
       this.isActive = true;
       this.toolsManager.activate();
       if (this.startupMessage === StartupMessage.AttachingDebugger) {
-        this.debugSession = new DebugSession(this, { useParentDebugSession: true });
+        this.debugSession = new DebugSession(this, {
+          displayName: this.device.deviceInfo.displayName,
+          useParentDebugSession: true,
+        });
         await this.connectJSDebugger();
       }
     }

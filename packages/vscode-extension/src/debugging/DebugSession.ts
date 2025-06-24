@@ -37,6 +37,7 @@ export interface JSDebugConfiguration {
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
 
 type DebugSessionOptions = {
+  displayName: string;
   useParentDebugSession?: boolean;
 };
 
@@ -50,7 +51,7 @@ export class DebugSession implements Disposable {
 
   constructor(
     private delegate: DebugSessionDelegate,
-    private options: DebugSessionOptions = {}
+    private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }
   ) {
     this.disposables.push(
       debug.onDidTerminateDebugSession((session) => {
@@ -98,7 +99,7 @@ export class DebugSession implements Disposable {
       undefined,
       {
         type: MASTER_DEBUGGER_TYPE,
-        name: "Radon IDE Debugger",
+        name: `${this.options.displayName} (Metro)`,
         request: "attach",
       },
       {
@@ -159,7 +160,7 @@ export class DebugSession implements Disposable {
       undefined,
       {
         type: debuggerType,
-        name: "React Native JS Debugger",
+        name: this.options.displayName,
         request: "attach",
         breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
         sourceMapPathOverrides: configuration.sourceMapPathOverrides,

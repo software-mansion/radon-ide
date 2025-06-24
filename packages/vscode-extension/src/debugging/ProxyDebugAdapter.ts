@@ -157,7 +157,7 @@ export class ProxyDebugAdapter extends DebugSession {
         undefined,
         {
           type: CHILD_SESSION_TYPE,
-          name: "Radon IDE Debugger",
+          name: `${this.session.name} (JS)`,
           request: "attach",
           port: this.cdpProxy.port!,
           continueOnAttach: true,
