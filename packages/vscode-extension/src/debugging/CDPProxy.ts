@@ -8,6 +8,7 @@ import {
   WebSocketTransport,
 } from "vscode-cdp-proxy";
 import { Logger } from "../Logger";
+import { WebSocket } from "ws";
 
 type IProtocolReply = IProtocolSuccess | IProtocolError;
 
@@ -28,6 +29,7 @@ export interface CDPProxyDelegate {
     reply: IProtocolReply,
     tunnel: ProxyTunnel
   ): Promise<IProtocolReply | undefined>;
+  handleHMRSocketEvent(event: any): Promise<void>;
 }
 
 export class CDPProxy {
@@ -94,7 +96,30 @@ export class CDPProxy {
       await WebSocketTransport.create(this.browserInspectUri)
     );
 
-    this.tunnel = new ProxyTunnel(applicationTarget, debuggerTarget, this.cdpProxyDelegate);
+    const uri = new URL(this.browserInspectUri);
+    const hostname = uri.hostname;
+    const port = uri.port;
+
+    const hmrSocket = new WebSocket(`ws://${hostname}:${port}/hot`);
+
+    hmrSocket.on("open", () => {
+      Logger.debug("HMR WebSocket opened");
+    });
+
+    hmrSocket.on("error", (err) => {
+      Logger.error("HMR WebSocket error", err);
+    });
+
+    hmrSocket.on("close", () => {
+      Logger.debug("HMR WebSocket closed");
+    });
+
+    this.tunnel = new ProxyTunnel(
+      applicationTarget,
+      debuggerTarget,
+      hmrSocket,
+      this.cdpProxyDelegate
+    );
 
     // dequeue any messages we got in the meantime
     debuggerTarget.unpause();
@@ -126,6 +151,7 @@ export class ProxyTunnel {
   constructor(
     applicationTarget: Connection,
     debuggerTarget: Connection,
+    public readonly HMRSocket: WebSocket,
     private cdpProxyDelegate: CDPProxyDelegate
   ) {
     this.applicationTarget = applicationTarget;
@@ -142,6 +168,8 @@ export class ProxyTunnel {
 
     this.applicationTarget.onEnd(this.onApplicationTargetClosed.bind(this));
     this.debuggerTarget.onEnd(this.onDebuggerTargetClosed.bind(this));
+
+    this.HMRSocket.on("message", this.handleHMRSocketMessage.bind(this));
   }
 
   public async injectDebuggerCommand(command: IProtocolCommand): Promise<object> {
@@ -158,6 +186,10 @@ export class ProxyTunnel {
     this.debuggerTarget?.send(command);
     this.debuggerReplyResolvers.set(command.id, { resolve, reject });
     return promise;
+  }
+
+  public async sendHMRSocketMessage(message: string) {
+    this.HMRSocket.send(message);
   }
 
   public async close(): Promise<void> {
@@ -200,6 +232,10 @@ export class ProxyTunnel {
     } else {
       this.debuggerTarget?.send(processedMessage);
     }
+  }
+
+  private handleHMRSocketMessage(event: any) {
+    this.cdpProxyDelegate.handleHMRSocketEvent(event);
   }
 
   private async handleDebuggerTargetReply(event: IProtocolReply) {
