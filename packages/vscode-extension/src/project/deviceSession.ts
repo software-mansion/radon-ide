@@ -128,10 +128,7 @@ export class DeviceSession
     this.toolsManager = new ToolsManager(this.inspectorBridge, this);
 
     this.buildCache = this.applicationContext.buildCache;
-    this.buildManager = new BuildManager(
-      applicationContext.dependencyManager,
-      applicationContext.buildCache
-    );
+    this.buildManager = this.applicationContext.buildManager;
     this.debugSession = new DebugSession(this, {
       useParentDebugSession: true,
     });
