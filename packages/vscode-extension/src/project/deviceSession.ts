@@ -21,7 +21,6 @@ import {
   BuildManagerDelegate,
   BuildResult,
   createBuildConfig,
-  DisposableBuild,
   inferBuildType,
 } from "../builders/BuildManager";
 import {
@@ -79,7 +78,6 @@ export class DeviceSession
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private debugSession: DebugSession;
-  private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
   private cancelToken: CancelToken | undefined;
 

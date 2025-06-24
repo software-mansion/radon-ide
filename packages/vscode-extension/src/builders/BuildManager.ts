@@ -19,10 +19,6 @@ const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
-export interface DisposableBuild<R> extends Disposable {
-  readonly build: Promise<R>;
-}
-
 export interface BuildManagerDelegate {
   onCacheStale: (platform: DevicePlatform) => void;
 }
